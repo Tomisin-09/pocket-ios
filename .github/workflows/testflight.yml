@@ -1,0 +1,41 @@
+name: TestFlight
+
+# Distributes an internal TestFlight build on every merge to main (the mobile
+# equivalent of "dev auto-deploys on merge"). External/App Store releases are
+# cut from tags, not here.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  beta:
+    name: Build & upload to TestFlight
+    runs-on: macos-15
+    timeout-minutes: 45
+    # Requires secrets to be configured first — see fastlane/README notes.
+    if: ${{ github.repository_owner != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode_16.app
+
+      - name: Install tools
+        run: brew install xcodegen fastlane
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Fastlane beta
+        run: fastlane beta
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}

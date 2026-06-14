@@ -1,0 +1,46 @@
+# Xcode / generated project
+Ore.xcodeproj/
+*.xcworkspace/
+!default.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+*.moved-aside
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods / Carthage (not used, but guard anyway)
+Pods/
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+fastlane/README.md
+
+# Signing — never commit certs/profiles or local team config
+*.mobileprovision
+*.p12
+*.cer
+*.certSigningRequest
+*.local.xcconfig
+
+# Secrets / env
+.env
+.env.*
+*.secret
+
+# Terraform
+infrastructure/**/.terraform/
+infrastructure/**/*.tfstate
+infrastructure/**/*.tfstate.*
+infrastructure/**/*.tfvars
+!infrastructure/**/*.example.tfvars
+
+# macOS
+.DS_Store

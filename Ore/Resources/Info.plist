@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Apple Music library access is browse/metadata only in V1. This string is
+	     surfaced verbatim in the system permission prompt; vague strings cause
+	     App Store rejection. -->
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Ore reads your music library so you can pick songs to practise and see which ones you've already added loops and notes to.</string>
+
+	<!-- Playback continues with the screen off during practice. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+
+	<!-- NOTE: no NSMicrophoneUsageDescription. No V1 feature uses the mic
+	     (the pedal modeller is parked; the metronome is output-only). Do not
+	     add the key until a feature needs it. -->
+
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+</dict>
+</plist>

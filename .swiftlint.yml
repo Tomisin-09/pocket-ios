@@ -1,0 +1,33 @@
+# SwiftLint configuration. Run `swiftlint` before every push (see AGENTS.md).
+disabled_rules:
+  - todo # TODOs are tracked as ore-0XX tickets, not flagged by the linter
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - first_where
+  - force_unwrapping
+  - sorted_imports
+  - unused_import
+
+excluded:
+  - .build
+  - DerivedData
+  - Ore.xcodeproj
+  - fastlane
+
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+
+identifier_name:
+  excluded:
+    - id
+    - to
+    - a
+    - b
+
+force_cast: error
+force_try: error
+force_unwrapping: warning

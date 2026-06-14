@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Empty for Phase 0. CloudKit + iCloud container entitlements are added in
+	     Phase 4 when sync lands; Sign in with Apple is added with the AI planner.
+	     Do not add entitlements before the feature that needs them. -->
+</dict>
+</plist>

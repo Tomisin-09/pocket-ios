@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-build-test:
+    name: Lint · Build · Test
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode_16.app
+
+      - name: Install tools
+        run: brew install xcodegen swiftlint xcbeautify
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: SwiftLint
+        run: swiftlint --strict
+
+      - name: Build & test
+        run: |
+          xcodebuild test \
+            -scheme Ore \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -resultBundlePath TestResults \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify
+        env:
+          NSUnbufferedIO: YES
