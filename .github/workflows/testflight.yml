@@ -1,11 +1,14 @@
 name: TestFlight
 
-# Distributes an internal TestFlight build on every merge to main (the mobile
-# equivalent of "dev auto-deploys on merge"). External/App Store releases are
-# cut from tags, not here.
+# Distributes an internal TestFlight build.
+#
+# GATED TO MANUAL until code-signing secrets exist (match + App Store Connect
+# API key). Once those are configured (Phase 4 / first TestFlight), switch the
+# trigger back to `push: branches: [main]` so merges auto-distribute — the
+# mobile equivalent of "dev auto-deploys on merge". App Store releases are cut
+# from tags, not here.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: testflight
