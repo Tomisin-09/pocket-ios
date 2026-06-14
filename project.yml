@@ -33,11 +33,15 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: click.decooperations.ore
         INFOPLIST_FILE: Ore/Resources/Info.plist
         CODE_SIGN_STYLE: Manual
+      # Backend base URL is injected per-config in Phase 4 (when the proxy
+      # exists). Note: '//' in an Xcode build setting is treated as a comment,
+      # so the URL is supplied via an .xcconfig using the `$()//` escape, not
+      # inline here. Placeholders below are host-only to avoid that footgun.
       configs:
         Debug:
-          ORE_API_BASE_URL: "http:\\/\\/localhost:8787"
+          ORE_API_HOST: "localhost:8787"
         Release:
-          ORE_API_BASE_URL: "https:\\/\\/api.ore.example.com"
+          ORE_API_HOST: "api.ore.example.com"
     entitlements:
       path: Ore/Resources/Ore.entitlements
 
