@@ -7,8 +7,6 @@ opt_in_rules:
   - explicit_init
   - first_where
   - force_unwrapping
-  - sorted_imports
-  - unused_import
 
 excluded:
   - .build

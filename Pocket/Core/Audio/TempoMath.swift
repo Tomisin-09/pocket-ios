@@ -27,23 +27,23 @@ enum TempoMath {
     /// Map a slider position in `0...1` to a playback speed in `0.25...2.0`,
     /// using the two-segment asymmetric scale.
     static func speed(forPosition position: Double) -> Double {
-        let p = position.clamped(to: 0...1)
-        if p <= splitPosition {
-            let t = p / splitPosition
-            return minSpeed + t * (defaultSpeed - minSpeed)
+        let pos = position.clamped(to: 0...1)
+        if pos <= splitPosition {
+            let frac = pos / splitPosition
+            return minSpeed + frac * (defaultSpeed - minSpeed)
         } else {
-            let t = (p - splitPosition) / (1 - splitPosition)
-            return defaultSpeed + t * (maxSpeed - defaultSpeed)
+            let frac = (pos - splitPosition) / (1 - splitPosition)
+            return defaultSpeed + frac * (maxSpeed - defaultSpeed)
         }
     }
 
     /// Inverse of `speed(forPosition:)` — map a speed back to a slider position.
     static func position(forSpeed speed: Double) -> Double {
-        let s = speed.clamped(to: minSpeed...maxSpeed)
-        if s <= defaultSpeed {
-            return splitPosition * (s - minSpeed) / (defaultSpeed - minSpeed)
+        let spd = speed.clamped(to: minSpeed...maxSpeed)
+        if spd <= defaultSpeed {
+            return splitPosition * (spd - minSpeed) / (defaultSpeed - minSpeed)
         } else {
-            return splitPosition + (1 - splitPosition) * (s - defaultSpeed) / (maxSpeed - defaultSpeed)
+            return splitPosition + (1 - splitPosition) * (spd - defaultSpeed) / (maxSpeed - defaultSpeed)
         }
     }
 
