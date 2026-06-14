@@ -1,6 +1,6 @@
 # Infrastructure
 
-Ore's only backend component is a **thin proxy for the Claude API** used by the
+Pocket's only backend component is a **thin proxy for the Claude API** used by the
 practice planner (Phase 4). The API key lives here, never in the app. See
 `docs/decisions/0002-ai-proxy-backend.md`.
 
@@ -20,7 +20,7 @@ infrastructure/
 
 | Env | Where | How the app reaches it |
 |---|---|---|
-| Local dev | A local server, or a non-AWS host (Cloudflare Worker / Vercel) | Debug build → `ORE_API_BASE_URL = http://localhost:8787` |
+| Local dev | A local server, or a non-AWS host (Cloudflare Worker / Vercel) | Debug build → `POCKET_API_HOST = localhost:8787` |
 | Prod | AWS (Lambda + API Gateway), Terraform-managed | Release build → prod base URL |
 
 Running the proxy locally / off-AWS for dev is intentional: it keeps the

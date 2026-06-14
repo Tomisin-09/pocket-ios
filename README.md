@@ -1,8 +1,8 @@
-# Ore
+# Pocket
 
-A native iOS guitar-practice app. Ore attaches practice data — loops, markers,
-notes, routines — to the songs in your music library. *Ore* means "friend" in
-Yoruba.
+A native iOS guitar-practice app. Pocket attaches practice data — loops, markers,
+notes, routines — to the songs in your music library, keeping everything you've
+worked on in one place.
 
 > **Status:** Phase 0 scaffold. The practice engine, screens, and backend are
 > built in later phases. See `PROJECT.md` for the current state and the build
@@ -33,7 +33,7 @@ Generate the Xcode project and open it:
 
 ```sh
 xcodegen generate
-open Ore.xcodeproj
+open Pocket.xcodeproj
 ```
 
 ## Pre-push checks
@@ -44,14 +44,14 @@ See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild te
 ## Project layout
 
 ```
-Ore/
+Pocket/
   App/         App entry, root scene
   Features/    Library · Waveform · Planner · Repertoire
   Core/        Audio (engine + pure tempo math) · Models · Services
   UI/          Shared components, design tokens
   Resources/   Info.plist, PrivacyInfo.xcprivacy
-OreTests/      Unit tests (pure logic)
-OreUITests/    XCUITest flows
+PocketTests/      Unit tests (pure logic)
+PocketUITests/    XCUITest flows
 infrastructure/  Terraform for the Phase 4 Claude proxy (prod)
 docs/          architecture.md, decisions/ (ADRs)
 ```

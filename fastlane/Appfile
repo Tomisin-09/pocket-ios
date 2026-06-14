@@ -1,5 +1,5 @@
 # Fill these in once the App Store Connect app record exists.
-app_identifier("click.decooperations.ore")
+app_identifier("click.decooperations.pocket")
 # apple_id and team_id are supplied via App Store Connect API key in CI;
 # set them locally only if running fastlane interactively.
 # apple_id("you@example.com")

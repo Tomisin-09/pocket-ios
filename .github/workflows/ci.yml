@@ -32,7 +32,7 @@ jobs:
       - name: Build & test
         run: |
           xcodebuild test \
-            -scheme Ore \
+            -scheme Pocket \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -resultBundlePath TestResults \
             CODE_SIGNING_ALLOWED=NO \

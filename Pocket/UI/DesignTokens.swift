@@ -9,7 +9,7 @@ import SwiftUI
 /// - fine    (blue)   — Fine-mode precision selection
 /// - pin     (purple) — waveform markers
 /// - danger  (red)    — delete / destructive
-enum OreColor {
+enum PocketColor {
     /// Near-black, not true black (#0f0f0f). Dark-first interface.
     static let background = Color(red: 0x0f / 255, green: 0x0f / 255, blue: 0x0f / 255)
 
@@ -29,7 +29,7 @@ enum OreColor {
 
 /// Typography: monospace for all time values and BPM; system sans for the rest.
 extension Font {
-    static func oreMono(_ style: Font.TextStyle) -> Font {
+    static func pocketMono(_ style: Font.TextStyle) -> Font {
         .system(style, design: .monospaced)
     }
 }

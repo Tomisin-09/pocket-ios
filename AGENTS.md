@@ -1,6 +1,6 @@
 # Working in this repo
 
-Ore is a **native iOS** app (Swift / SwiftUI, iOS 17+). This is not a web
+Pocket is a **native iOS** app (Swift / SwiftUI, iOS 17+). This is not a web
 project — there is no `npm`. The build is defined as code via XcodeGen
 (`project.yml`); regenerate the Xcode project with `xcodegen generate` after
 changing files or targets.
@@ -24,12 +24,12 @@ Run these before every commit that touches app code. Do not push until all pass.
 
 1. **Lint** — `swiftlint`. Fix all errors. Suppress only with
    `// swiftlint:disable:next <rule>` on the exact line, never file-wide.
-2. **Build** — `xcodebuild build -scheme Ore -destination 'generic/platform=iOS Simulator'`.
+2. **Build** — `xcodebuild build -scheme Pocket -destination 'generic/platform=iOS Simulator'`.
    Fix all errors and warnings. This catches breakage in files with no test
    coverage — do not skip it.
-3. **Tests** — `xcodebuild test -scheme Ore -destination 'platform=iOS Simulator,name=iPhone 15 Pro'`.
+3. **Tests** — `xcodebuild test -scheme Pocket -destination 'platform=iOS Simulator,name=iPhone 15 Pro'`.
    When adding or changing a feature, update the relevant test. When adding a
-   new module with non-trivial logic, add a test under `OreTests/`. Pure,
+   new module with non-trivial logic, add a test under `PocketTests/`. Pure,
    UI-free logic (tempo math, slider mapping, automator stepping, planner
    weighting, identity) MUST be unit-tested — that's the logic that breaks
    silently otherwise.

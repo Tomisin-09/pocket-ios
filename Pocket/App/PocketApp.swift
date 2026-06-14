@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct OreApp: App {
+struct PocketApp: App {
     var body: some Scene {
         WindowGroup {
             HomeView()

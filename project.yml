@@ -1,9 +1,9 @@
 # XcodeGen spec. The .xcodeproj is generated from this file, not hand-edited —
 # this keeps the project diffable and avoids .pbxproj merge conflicts.
 # Regenerate with: xcodegen generate
-name: Ore
+name: Pocket
 options:
-  bundleIdPrefix: click.decooperations.ore
+  bundleIdPrefix: click.decooperations.pocket
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -21,17 +21,17 @@ configs:
   Release: release
 
 targets:
-  Ore:
+  Pocket:
     type: application
     platform: iOS
     sources:
-      - path: Ore
+      - path: Pocket
     info:
-      path: Ore/Resources/Info.plist
+      path: Pocket/Resources/Info.plist
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: click.decooperations.ore
-        INFOPLIST_FILE: Ore/Resources/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: click.decooperations.pocket
+        INFOPLIST_FILE: Pocket/Resources/Info.plist
         CODE_SIGN_STYLE: Manual
       # Backend base URL is injected per-config in Phase 4 (when the proxy
       # exists). Note: '//' in an Xcode build setting is treated as a comment,
@@ -39,35 +39,35 @@ targets:
       # inline here. Placeholders below are host-only to avoid that footgun.
       configs:
         Debug:
-          ORE_API_HOST: "localhost:8787"
+          POCKET_API_HOST: "localhost:8787"
         Release:
-          ORE_API_HOST: "api.ore.example.com"
+          POCKET_API_HOST: "api.pocket.example.com"
     entitlements:
-      path: Ore/Resources/Ore.entitlements
+      path: Pocket/Resources/Pocket.entitlements
 
-  OreTests:
+  PocketTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - path: OreTests
+      - path: PocketTests
     dependencies:
-      - target: Ore
+      - target: Pocket
 
-  OreUITests:
+  PocketUITests:
     type: bundle.ui-testing
     platform: iOS
     sources:
-      - path: OreUITests
+      - path: PocketUITests
     dependencies:
-      - target: Ore
+      - target: Pocket
 
 schemes:
-  Ore:
+  Pocket:
     build:
       targets:
-        Ore: all
+        Pocket: all
     test:
       targets:
-        - OreTests
-        - OreUITests
+        - PocketTests
+        - PocketUITests
       gatherCoverageData: true

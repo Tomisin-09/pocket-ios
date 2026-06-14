@@ -1,9 +1,14 @@
 # Changelog
 
-All notable changes to Ore are documented here. Format loosely follows
+All notable changes to Pocket are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); this project is pre-release.
 
 ## [Unreleased]
+
+### Changed
+- Renamed the product from "Ore" to **Pocket** (module, targets, bundle id
+  `click.decooperations.pocket`, repo `pocket-ios`, all docs). Dropped the
+  Yoruba "friend" etymology, which no longer applies to the new name.
 
 ### Added
 - Project scaffold (Phase 0): repo structure, XcodeGen `project.yml`, SwiftLint

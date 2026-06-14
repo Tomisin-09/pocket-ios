@@ -13,7 +13,7 @@ opt_in_rules:
 excluded:
   - .build
   - DerivedData
-  - Ore.xcodeproj
+  - Pocket.xcodeproj
   - fastlane
 
 line_length:

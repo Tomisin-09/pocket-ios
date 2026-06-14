@@ -1,17 +1,17 @@
-# Ore — Project Reference
+# Pocket — Project Reference
 
-The living description of how Ore is built. Update this whenever a screen, data
+The living description of how Pocket is built. Update this whenever a screen, data
 model, service, entitlement, build config, or architecture decision changes
 (see the doc table in `AGENTS.md`).
 
-## What Ore is
+## What Pocket is
 
 A native iOS guitar-practice tool that attaches practice data (loops, markers,
 notes, session history, routines) to songs in the user's music library. The app
 is an intelligence layer over the library — it never replaces it.
 
 - **Platform:** iOS 17+, phone-first, Swift / SwiftUI.
-- **Name:** "Ore" means *friend* in Yoruba.
+- **Name:** Pocket.
 
 ## Audio sources (decided)
 
@@ -35,7 +35,7 @@ See `docs/decisions/0001-audio-source-local-first.md`.
 
 ## Identity model
 
-Practice data attaches to a `SongRef` (`Ore/Core/Models/SongRef.swift`), a
+Practice data attaches to a `SongRef` (`Pocket/Core/Models/SongRef.swift`), a
 stable `(id, source)` identity that works for both local files and Apple Music.
 Local files carry a security-scoped bookmark for resolution; the bookmark is
 **not** part of identity, so a refreshed bookmark doesn't orphan loops/markers.
@@ -44,15 +44,15 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 
 | Path | Responsibility |
 |---|---|
-| `Ore/App/` | App entry, root scene |
-| `Ore/Features/Library/` | Music library + file browsing |
-| `Ore/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
-| `Ore/Features/Planner/` | Home screen / practice planner, routines |
-| `Ore/Features/Repertoire/` | Song cards, song info |
-| `Ore/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
-| `Ore/Core/Models/` | Song, Loop, Marker, Routine, Session, SongRef |
-| `Ore/Core/Services/` | MusicKit, persistence, sync, AI client |
-| `Ore/UI/` | Shared components, design tokens |
+| `Pocket/App/` | App entry, root scene |
+| `Pocket/Features/Library/` | Music library + file browsing |
+| `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
+| `Pocket/Features/Planner/` | Home screen / practice planner, routines |
+| `Pocket/Features/Repertoire/` | Song cards, song info |
+| `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
+| `Pocket/Core/Models/` | Song, Loop, Marker, Routine, Session, SongRef |
+| `Pocket/Core/Services/` | MusicKit, persistence, sync, AI client |
+| `Pocket/UI/` | Shared components, design tokens |
 
 ## Environments
 

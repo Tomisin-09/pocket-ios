@@ -21,10 +21,10 @@ platform :ios do
 
     increment_build_number(
       build_number: latest_testflight_build_number(api_key: api_key) + 1,
-      xcodeproj: "Ore.xcodeproj"
+      xcodeproj: "Pocket.xcodeproj"
     )
 
-    build_app(scheme: "Ore", export_method: "app-store")
+    build_app(scheme: "Pocket", export_method: "app-store")
 
     upload_to_testflight(
       api_key: api_key,
@@ -35,6 +35,6 @@ platform :ios do
 
   desc "Run the test suite"
   lane :test do
-    run_tests(scheme: "Ore", devices: ["iPhone 16"])
+    run_tests(scheme: "Pocket", devices: ["iPhone 16"])
   end
 end

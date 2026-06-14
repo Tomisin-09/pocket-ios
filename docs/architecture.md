@@ -45,7 +45,7 @@ only. See `docs/decisions/0001`.
 
 ## Testing
 
-- **Unit (OreTests):** pure logic — tempo math, slider mapping, automator
+- **Unit (PocketTests):** pure logic — tempo math, slider mapping, automator
   stepping, identity, planner weighting. Must be covered.
-- **UI (OreUITests):** XCUITest for key flows.
+- **UI (PocketUITests):** XCUITest for key flows.
 - Audio / MusicKit behaviour is validated on device/simulator, not unit-tested.

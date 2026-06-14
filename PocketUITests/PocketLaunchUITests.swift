@@ -1,6 +1,6 @@
 import XCTest
 
-final class OreLaunchUITests: XCTestCase {
+final class PocketLaunchUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -10,6 +10,6 @@ final class OreLaunchUITests: XCTestCase {
     func testAppLaunches() throws {
         let app = XCUIApplication()
         app.launch()
-        XCTAssertTrue(app.staticTexts["Ore"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Pocket"].waitForExistence(timeout: 5))
     }
 }

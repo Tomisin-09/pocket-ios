@@ -11,7 +11,7 @@ project will be hosted on AWS, but the team also wants test environments that
 are more accessible than a hardened prod, and is open to hosting some interfaces
 outside AWS during development.
 
-Separately, most of Ore needs no server at all: solo data is SwiftData +
+Separately, most of Pocket needs no server at all: solo data is SwiftData +
 CloudKit (Apple's iCloud), and the AWS collaboration layer is parked.
 
 ## Decision

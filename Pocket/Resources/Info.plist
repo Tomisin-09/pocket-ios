@@ -6,7 +6,7 @@
 	     surfaced verbatim in the system permission prompt; vague strings cause
 	     App Store rejection. -->
 	<key>NSAppleMusicUsageDescription</key>
-	<string>Ore reads your music library so you can pick songs to practise and see which ones you've already added loops and notes to.</string>
+	<string>Pocket reads your music library so you can pick songs to practise and see which ones you've already added loops and notes to.</string>
 
 	<!-- Playback continues with the screen off during practice. -->
 	<key>UIBackgroundModes</key>

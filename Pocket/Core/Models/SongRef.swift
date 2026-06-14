@@ -1,9 +1,9 @@
 import Foundation
 
-/// A stable, source-agnostic identity for a song that Ore data (loops, markers,
+/// A stable, source-agnostic identity for a song that Pocket data (loops, markers,
 /// song info) attaches to.
 ///
-/// The product brief keyed every model off `MusicItemID`, but Ore's primary
+/// The product brief keyed every model off `MusicItemID`, but Pocket's primary
 /// audio source is DRM-free local / iCloud files (Apple Music streaming audio
 /// cannot be tapped for waveform/speed — see docs/decisions/0001). Local files
 /// have no `MusicItemID`, so identity is modelled here instead.
