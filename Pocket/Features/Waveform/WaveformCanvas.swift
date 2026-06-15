@@ -57,6 +57,8 @@ struct Minimap: View {
     let song: WaveformMock.Song
     let activeLoop: WaveformMock.Loop?
     let markers: [WaveformMock.Marker]
+    /// Live playhead position (0...1), driven by the audio engine.
+    let playheadFraction: Double
 
     var body: some View {
         Canvas { context, size in
@@ -88,7 +90,7 @@ struct Minimap: View {
                            with: .color(PocketColor.textPrimary.opacity(0.5)), lineWidth: 1)
 
             // Playhead.
-            let playheadX = size.width * song.playheadFraction
+            let playheadX = size.width * playheadFraction
             var line = Path()
             line.move(to: CGPoint(x: playheadX, y: 0))
             line.addLine(to: CGPoint(x: playheadX, y: size.height))

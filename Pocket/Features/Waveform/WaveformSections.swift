@@ -208,7 +208,8 @@ struct TimeRuler: View {
 // MARK: - 8. Transport bar
 
 struct TransportBar: View {
-    @Binding var isPlaying: Bool
+    let isPlaying: Bool
+    let onPlayPause: () -> Void
     @Binding var repeatOn: Bool
     @Binding var mode: WaveformPracticeView.InteractionMode
     let currentTime: TimeInterval
@@ -220,7 +221,7 @@ struct TransportBar: View {
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 14) {
-                Button { isPlaying.toggle() } label: {
+                Button(action: onPlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.title2)
                         .foregroundStyle(PocketColor.active)

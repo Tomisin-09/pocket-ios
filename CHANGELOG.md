@@ -37,6 +37,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   real interaction), and an **unknown-tempo** state: `Song.bpm` is now optional
   and the speed bar shows a "Set BPM" affordance when it's absent — the speed
   multiplier works regardless. BPM derivation strategy recorded in ADR 0004.
+- **Audio playback engine** (`PracticeAudioEngine`): real play/pause, seek, and
+  pitch-preserving speed via `AVAudioUnitTimePitch`, with a live playhead. The
+  practice screen's transport, speed bar and playhead are now driven by actual
+  audio. A generated arpeggio (`SampleToneGenerator`) is the dev source (real
+  file import is a later piece), and the waveform is downsampled from it.
+  Pure helpers in `AudioMath` are unit-tested.
 - SwiftUI `#Preview`s for the screen and each component (`WaveformPreviews`).
 - Project scaffold (Phase 0): repo structure, XcodeGen `project.yml`, SwiftLint
   config, GitHub Actions (lint + build + test on PR; TestFlight on merge),

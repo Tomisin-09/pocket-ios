@@ -58,7 +58,9 @@ enum WaveformMock {
     }
 
     static let song: Song = {
-        let duration: TimeInterval = 144 // 2:24
+        // Matches the generated dev sample length (SampleToneGenerator) so the
+        // playhead, loops and markers line up with real playback.
+        let duration: TimeInterval = 30 // 0:30
         return Song(
             title: "Little Wing",
             artist: "Jimi Hendrix",
@@ -76,8 +78,8 @@ enum WaveformMock {
                 Loop(name: "Chorus bend", start: 0.62, end: 0.71, speed: 1.0, repeats: 2, duration: duration)
             ],
             markers: [
-                Marker(seconds: 18, label: "Intro turnaround"),
-                Marker(seconds: 75, label: "Tricky bend")
+                Marker(seconds: 8, label: "Intro turnaround"),
+                Marker(seconds: 22, label: "Tricky bend")
             ]
         )
     }()

@@ -62,17 +62,17 @@ import SwiftUI
         PocketColor.background.ignoresSafeArea()
         Minimap(song: WaveformMock.song,
                 activeLoop: WaveformMock.song.activeLoop,
-                markers: WaveformMock.song.markers).padding()
+                markers: WaveformMock.song.markers,
+                playheadFraction: WaveformMock.song.playheadFraction).padding()
     }
 }
 
 #Preview("Transport bar") {
-    @Previewable @State var isPlaying = false
     @Previewable @State var repeatOn = true
     @Previewable @State var mode = WaveformPracticeView.InteractionMode.scroll
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        TransportBar(isPlaying: $isPlaying, repeatOn: $repeatOn, mode: $mode,
+        TransportBar(isPlaying: false, onPlayPause: {}, repeatOn: $repeatOn, mode: $mode,
                      currentTime: WaveformMock.song.playheadSeconds,
                      loop: WaveformMock.song.activeLoop,
                      onCapture: {}).padding()

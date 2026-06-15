@@ -37,8 +37,11 @@ struct WaveformPracticeView: View {
     @State private var songInfoExpanded = false   // demoted to the scroll area
     @State private var loopsExpanded = true
     @State private var markersExpanded = false
-    @State private var isPlaying = false
     @State private var repeatOn = true
+
+    // Audio engine + the waveform amplitudes it loaded from the sample.
+    @State private var engine = PracticeAudioEngine()
+    @State private var amplitudes: [Double] = WaveformMock.song.amplitudes
 
     // Loops/markers are mutable so they can be activated, renamed and deleted.
     @State private var loops = WaveformMock.song.loops
@@ -61,6 +64,15 @@ struct WaveformPracticeView: View {
     /// The loop currently loaded into the transport/waveform, if any.
     private var activeLoop: WaveformMock.Loop? { loops.first { $0.id == activeLoopID } }
 
+    /// Live playhead as a fraction of the song (0...1), driven by the engine.
+    private var playheadFraction: Double {
+        engine.duration > 0 ? engine.currentTime / engine.duration : 0
+    }
+
+    private var isPreview: Bool {
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+    }
+
     var body: some View {
         ZStack {
             PocketColor.background.ignoresSafeArea()
@@ -73,15 +85,17 @@ struct WaveformPracticeView: View {
                     SpeedBar(speed: $speed, displayedBPM: displayedBPM,      // 3
                              onSetBPM: setBPM)
                     ModeDescriptionLine(mode: mode)                          // 4
-                    WaveformView(amplitudes: song.amplitudes,                // 5
-                                 playheadFraction: song.playheadFraction,
+                    WaveformView(amplitudes: amplitudes,                     // 5
+                                 playheadFraction: playheadFraction,
                                  loop: activeLoop)
-                    TimeRuler(duration: song.duration)                      // 6
-                    Minimap(song: song, activeLoop: activeLoop, markers: markers) // 7
-                    TransportBar(isPlaying: $isPlaying,                      // 8
+                    TimeRuler(duration: engine.duration > 0 ? engine.duration : song.duration) // 6
+                    Minimap(song: song, activeLoop: activeLoop, markers: markers, // 7
+                            playheadFraction: playheadFraction)
+                    TransportBar(isPlaying: engine.isPlaying,                // 8
+                                 onPlayPause: engine.togglePlay,
                                  repeatOn: $repeatOn,
                                  mode: $mode,
-                                 currentTime: song.playheadSeconds,
+                                 currentTime: engine.currentTime,
                                  loop: activeLoop,
                                  onCapture: capture)
                 }
@@ -114,7 +128,7 @@ struct WaveformPracticeView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         LoopsPanel(loops: loops, expanded: $loopsExpanded,       // 10
-                                   activeLoopID: activeLoopID, isPlaying: isPlaying,
+                                   activeLoopID: activeLoopID, isPlaying: engine.isPlaying,
                                    onActivate: activate, onEdit: { editingLoop = $0 })
                         MarkersPanel(markers: markers, expanded: $markersExpanded, // 11
                                      onEdit: { editingMarker = $0 })
@@ -132,6 +146,18 @@ struct WaveformPracticeView: View {
         .sheet(item: $editingMarker) { marker in
             MarkerEditSheet(marker: marker, onSave: updateMarker, onDelete: { deleteMarker(marker) })
         }
+        .task { await loadSample() }
+        .onChange(of: speed) { _, newValue in engine.setRate(newValue) }
+    }
+
+    /// Generate the dev sample and hand it to the engine (skipped in previews to
+    /// keep the canvas light and avoid spinning up AVAudioEngine).
+    private func loadSample() async {
+        guard !isPreview, engine.duration == 0 else { return }
+        guard let sample = try? SampleToneGenerator.makeSample(duration: song.duration) else { return }
+        amplitudes = sample.amplitudes
+        try? engine.load(url: sample.url)
+        engine.setRate(speed)
     }
 
     // MARK: Loop/marker actions
@@ -139,7 +165,7 @@ struct WaveformPracticeView: View {
     /// Capture a draft loop around the playhead and open the creation panel.
     private func capture() {
         guard draftLoop == nil else { return }
-        let start = min(song.playheadFraction, 0.85)
+        let start = min(playheadFraction, 0.85)
         let end = min(start + 0.12, 0.98)
         let draft = WaveformMock.Loop(name: "", start: start, end: end,
                                       speed: speed, repeats: 4, duration: song.duration)
@@ -167,13 +193,15 @@ struct WaveformPracticeView: View {
         // TODO: present tap-tempo / manual BPM entry (see ADR 0004).
     }
 
-    /// Tapping a loop's play button: activate it, or toggle play if already active.
+    /// Tapping a loop's play button: jump to its start and play; if it's already
+    /// the active, playing loop, pause. (Region looping arrives in commit 2.)
     private func activate(_ loop: WaveformMock.Loop) {
-        if activeLoopID == loop.id {
-            isPlaying.toggle()
+        if activeLoopID == loop.id && engine.isPlaying {
+            engine.pause()
         } else {
             activeLoopID = loop.id
-            isPlaying = true
+            engine.seek(toSeconds: loop.startSeconds)
+            engine.play()
         }
     }
 
