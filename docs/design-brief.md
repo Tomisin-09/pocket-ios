@@ -110,25 +110,42 @@ vision if useful, but know that **Phase 1** is what gets built first.
 | **P1** | Library / file browser | Pick local/iCloud files; song cards with a blue badge ("4 loops", "2 markers"). |
 | P2 | Loops panel + Loop active panel | Active panel has speed, repeat, tempo automator, session notes. |
 | P2 | Markers panel + Pin Marker popover | Single-point annotations; purple. |
-| P2 | Song info / Repertoire panel | Collapsible, top of the practice screen; key, proficiency, progression, collections. |
+| P2 | Song info / Repertoire panel | Collapsible, bottom of the practice screen (scrollable), collapsed by default; key, proficiency, progression, collections. |
 | P3 | Home / Practice planner | The home screen *is* the planner: time selector, routine cards, session blocks. |
 
-### 4.1 Waveform practice screen — layout (top → bottom)
+### 4.1 Waveform practice screen — layout
+
+Structured as a **fixed practice cockpit over a scrollable reference area** (see
+`docs/decisions/0003-practice-screen-layout.md`).
+
+**Fixed (pinned — never scrolls):**
 
 1. Song strip — name, artist, duration, key
-2. Song info panel (collapsible, open by default)
-3. Speed / BPM bar (always visible)
-4. Mode description line
-5. Waveform (detail view) — **SoundCloud-style mirrored bars**: top half full
+2. Speed / BPM bar (always visible)
+3. Mode description line
+4. Waveform (detail view) — **SoundCloud-style mirrored bars**: top half full
    opacity, bottom half ~60% reflection
-6. Time ruler
-7. Minimap (full song, compressed) — viewport indicator, loop regions (amber),
+5. Time ruler
+6. Minimap (full song, compressed) — viewport indicator, loop regions (amber),
    fine selection (blue), marker dots (purple), playhead
-8. Transport bar — play/pause · time · loop info · mode pills (Scroll/Tap/Fine)
+7. Transport bar — play/pause · time · loop info · mode pills (Scroll/Tap/Fine)
    · repeat · clear
-9. Loop creation sheet (inline, when a loop is captured)
-10. Loops panel (collapsible)
-11. Markers panel (collapsible)
+
+A hairline separates the cockpit from the scroll area below.
+
+**Scrollable (reference):**
+
+8. Loops panel (collapsible) — each loop shows a **name** + time range · speed ·
+   repeats. Tap a row to edit (name / speed / repeats / delete); tap the
+   trailing **play button** to activate it. The active loop drives the
+   waveform/minimap highlight and the transport loop range.
+9. Markers panel (collapsible) — name + timecode; tap a row to edit
+   (rename / delete).
+10. Song info panel (collapsible, **collapsed by default**) — demoted here from
+    the top; key, proficiency, progression, collections.
+
+The **loop creation sheet** slides in inline (below the transport) only while a
+loop is being captured.
 
 **Three interaction modes** (pills in the transport bar):
 - **Scroll** (default): tap to set playhead; **hold 650ms** → amber ring fills
@@ -138,10 +155,12 @@ vision if useful, but know that **Phase 1** is what gets built first.
 - **Fine:** two draggable blue handles define loop bounds; creation sheet opens
   on entering the mode.
 
-**Speed bar:** large speed display (`0.90×`), slider 0.25×–2.0× with an
-**asymmetric scale** (0.25–1.0 occupies ~54% of the track, so 1.0 sits slightly
-left of centre — slow practice deserves more precision), presets 0.25/0.50/0.75,
-reset to 1.0, and a read-only BPM display `round(songBPM × speed)`.
+**Speed bar:** the speed readout (`0.90×`), the slider, and the read-only BPM
+display (`round(songBPM × speed)`) share **one row** to stay compact in the
+pinned cockpit; presets 0.25/0.50/0.75 and reset-to-1.0 sit beneath. The slider
+uses an **asymmetric scale** (0.25–1.0 occupies ~54% of the track, so 1.0 sits
+slightly left of centre — slow practice deserves more precision) — still to be
+implemented; a linear slider stands in for now.
 
 ---
 
