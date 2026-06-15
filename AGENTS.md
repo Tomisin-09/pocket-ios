@@ -42,6 +42,7 @@ Run these before every commit that touches app code. Do not push until all pass.
    | `PROJECT.md` | New/changed screen, data model, service, entitlement, env/config, or architecture decision |
    | `docs/architecture.md` | New/changed module, audio pipeline stage, persistence/sync change, or third-party service |
    | `docs/decisions/` | Any decision that closes off an alternative (new ADR, numbered) |
+   | `docs/design-brief.md` | Changes to the design system/tokens, screen inventory, or the design working protocol |
    | `README.md` | Changes to project structure, build/CI, or the "How it works" summary |
 
    **What counts as significant:** new screen, new model/service, schema or
