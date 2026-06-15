@@ -52,7 +52,11 @@ struct WaveformPracticeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Read-only BPM display: round(songBPM × speed) — brief §4.1 speed bar.
-    private var displayedBPM: Int { Int((Double(song.bpm) * speed).rounded()) }
+    /// `nil` when the song has no known tempo (see ADR 0004); the speed
+    /// multiplier still works regardless.
+    private var displayedBPM: Int? {
+        song.bpm.map { Int((Double($0) * speed).rounded()) }
+    }
 
     /// The loop currently loaded into the transport/waveform, if any.
     private var activeLoop: WaveformMock.Loop? { loops.first { $0.id == activeLoopID } }
@@ -66,7 +70,8 @@ struct WaveformPracticeView: View {
                 // pinned so they never scroll away (brief items 1, 3–8).
                 VStack(spacing: 16) {
                     SongStrip(song: song)                                    // 1
-                    SpeedBar(speed: $speed, displayedBPM: displayedBPM)      // 3
+                    SpeedBar(speed: $speed, displayedBPM: displayedBPM,      // 3
+                             onSetBPM: setBPM)
                     ModeDescriptionLine(mode: mode)                          // 4
                     WaveformView(amplitudes: song.amplitudes,                // 5
                                  playheadFraction: song.playheadFraction,
@@ -154,6 +159,12 @@ struct WaveformPracticeView: View {
 
     private func dismissDraft() {
         withAnimation(.easeOut(duration: 0.2)) { draftLoop = nil }
+    }
+
+    /// Entry point for setting an unknown tempo. The tap-tempo / manual-entry
+    /// flow is a follow-up commit; for now this is the affordance only.
+    private func setBPM() {
+        // TODO: present tap-tempo / manual BPM entry (see ADR 0004).
     }
 
     /// Tapping a loop's play button: activate it, or toggle play if already active.

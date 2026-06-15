@@ -35,7 +35,16 @@ import SwiftUI
     @Previewable @State var speed = 0.90
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        SpeedBar(speed: $speed, displayedBPM: Int((76 * speed).rounded())).padding()
+        SpeedBar(speed: $speed, displayedBPM: Int((76 * speed).rounded()),
+                 onSetBPM: {}).padding()
+    }
+}
+
+#Preview("Speed bar — no BPM") {
+    @Previewable @State var speed = 0.90
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        SpeedBar(speed: $speed, displayedBPM: nil, onSetBPM: {}).padding()
     }
 }
 
@@ -91,6 +100,23 @@ import SwiftUI
                          onEdit: { _ in })
         }
         .padding()
+    }
+}
+
+#Preview("Loops — empty") {
+    @Previewable @State var expanded = true
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        LoopsPanel(loops: [], expanded: $expanded, activeLoopID: nil, isPlaying: false,
+                   onActivate: { _ in }, onEdit: { _ in }).padding()
+    }
+}
+
+#Preview("Markers — empty") {
+    @Previewable @State var expanded = true
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        MarkersPanel(markers: [], expanded: $expanded, onEdit: { _ in }).padding()
     }
 }
 

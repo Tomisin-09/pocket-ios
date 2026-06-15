@@ -33,6 +33,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   below the transport (name field + range + Save/Discard, with a Reduce Motion
   fallback). Capture is triggered by a transport **+** button standing in for
   the Tap/Fine waveform gesture until the gesture engine lands.
+- **Empty states** for the Loops and Markers panels (with hints that teach the
+  real interaction), and an **unknown-tempo** state: `Song.bpm` is now optional
+  and the speed bar shows a "Set BPM" affordance when it's absent — the speed
+  multiplier works regardless. BPM derivation strategy recorded in ADR 0004.
 - SwiftUI `#Preview`s for the screen and each component (`WaveformPreviews`).
 - Project scaffold (Phase 0): repo structure, XcodeGen `project.yml`, SwiftLint
   config, GitHub Actions (lint + build + test on PR; TestFlight on merge),

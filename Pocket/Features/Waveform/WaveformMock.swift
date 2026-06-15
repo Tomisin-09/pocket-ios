@@ -10,7 +10,10 @@ enum WaveformMock {
         let title: String
         let artist: String
         let key: String
-        let bpm: Int
+        /// Optional: not every song has a known tempo. Metadata may lack it and
+        /// on-device estimation is approximate, so `nil` ("unknown") is a normal
+        /// state — the speed multiplier works without it. See ADR 0004.
+        let bpm: Int?
         /// 0–5 stars.
         let proficiency: Int
         let progression: String

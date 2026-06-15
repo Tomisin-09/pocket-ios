@@ -87,7 +87,9 @@ private struct LabeledRow: View {
 
 struct SpeedBar: View {
     @Binding var speed: Double
-    let displayedBPM: Int
+    /// `nil` when the song's tempo is unknown — shows a "Set BPM" affordance.
+    let displayedBPM: Int?
+    let onSetBPM: () -> Void
 
     private let presets: [Double] = [0.25, 0.50, 0.75]
 
@@ -107,16 +109,30 @@ struct SpeedBar: View {
                     .tint(PocketColor.active)
                     .accessibilityLabel("Playback speed")
 
-                VStack(alignment: .trailing, spacing: 0) {
-                    Text("\(displayedBPM)")
-                        .font(.pocketMono(.headline))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text("BPM")
-                        .font(.caption2)
-                        .foregroundStyle(PocketColor.textSecondary)
+                if let displayedBPM {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text("\(displayedBPM)")
+                            .font(.pocketMono(.headline))
+                            .foregroundStyle(PocketColor.textPrimary)
+                        Text("BPM")
+                            .font(.caption2)
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(displayedBPM) beats per minute")
+                } else {
+                    // Unknown tempo — speed (×) still works; offer to set it.
+                    Button(action: onSetBPM) {
+                        Text("Set BPM")
+                            .font(.pocketMono(.footnote))
+                            .foregroundStyle(PocketColor.marker)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.white.opacity(0.10)))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Set tempo")
                 }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(displayedBPM) beats per minute")
             }
 
             HStack(spacing: 8) {
@@ -274,115 +290,5 @@ private struct ModePill: View {
                 )
         }
         .buttonStyle(.plain)
-    }
-}
-
-// MARK: - 10. Loops panel
-
-struct LoopsPanel: View {
-    let loops: [WaveformMock.Loop]
-    @Binding var expanded: Bool
-    let activeLoopID: WaveformMock.Loop.ID?
-    let isPlaying: Bool
-    /// Trailing play button — activate (and play) this loop.
-    let onActivate: (WaveformMock.Loop) -> Void
-    /// Tap the row body — open the edit sheet.
-    let onEdit: (WaveformMock.Loop) -> Void
-
-    var body: some View {
-        CollapsiblePanel(title: "Loops",
-                         summary: "\(loops.count) loop\(loops.count == 1 ? "" : "s")",
-                         expanded: $expanded) {
-            VStack(spacing: 8) {
-                ForEach(loops) { loop in
-                    LoopRow(loop: loop,
-                            isActive: loop.id == activeLoopID,
-                            isPlaying: isPlaying,
-                            onActivate: { onActivate(loop) },
-                            onEdit: { onEdit(loop) })
-                }
-            }
-        }
-    }
-}
-
-private struct LoopRow: View {
-    let loop: WaveformMock.Loop
-    let isActive: Bool
-    let isPlaying: Bool
-    let onActivate: () -> Void
-    let onEdit: () -> Void
-
-    var body: some View {
-        HStack(spacing: 10) {
-            // Active accent (green) down the leading edge.
-            RoundedRectangle(cornerRadius: 1.5)
-                .fill(isActive ? PocketColor.active : Color.clear)
-                .frame(width: 3, height: 38)
-
-            Button(action: onEdit) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(loop.name)
-                        .font(.subheadline)
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .lineLimit(1)
-                    Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds)) · "
-                         + String(format: "%.2f× · ×%d", loop.speed, loop.repeats))
-                        .font(.pocketMono(.footnote))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .lineLimit(1)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            Button(action: onActivate) {
-                Image(systemName: isActive && isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(isActive ? PocketColor.active : PocketColor.textSecondary)
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isActive && isPlaying ? "Pause loop" : "Activate \(loop.name)")
-        }
-    }
-}
-
-// MARK: - 11. Markers panel
-
-struct MarkersPanel: View {
-    let markers: [WaveformMock.Marker]
-    @Binding var expanded: Bool
-    /// Tap the row — open the edit sheet (rename / delete).
-    let onEdit: (WaveformMock.Marker) -> Void
-
-    var body: some View {
-        CollapsiblePanel(title: "Markers",
-                         summary: "\(markers.count) marker\(markers.count == 1 ? "" : "s")",
-                         expanded: $expanded) {
-            VStack(spacing: 8) {
-                ForEach(markers) { marker in
-                    Button { onEdit(marker) } label: {
-                        HStack(spacing: 10) {
-                            Circle().fill(PocketColor.pin).frame(width: 8, height: 8)
-                            Text(marker.label)
-                                .font(.subheadline)
-                                .foregroundStyle(PocketColor.textPrimary)
-                                .lineLimit(1)
-                            Spacer()
-                            Text(timecode(marker.seconds))
-                                .font(.pocketMono(.footnote))
-                                .foregroundStyle(PocketColor.textSecondary)
-                            Image(systemName: "chevron.right")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(PocketColor.textSecondary)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
     }
 }
