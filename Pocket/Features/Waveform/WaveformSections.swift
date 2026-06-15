@@ -197,6 +197,9 @@ struct TransportBar: View {
     @Binding var mode: WaveformPracticeView.InteractionMode
     let currentTime: TimeInterval
     let loop: WaveformMock.Loop?
+    /// Capture a loop → opens the creation panel. Stands in for the Tap/Fine
+    /// gesture capture until the waveform gesture engine exists.
+    let onCapture: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
@@ -220,6 +223,14 @@ struct TransportBar: View {
                 }
 
                 Spacer()
+
+                Button(action: onCapture) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(PocketColor.marker)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Capture loop")
 
                 Button { repeatOn.toggle() } label: {
                     Image(systemName: "repeat")

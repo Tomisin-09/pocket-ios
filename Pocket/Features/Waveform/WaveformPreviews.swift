@@ -65,7 +65,15 @@ import SwiftUI
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: $isPlaying, repeatOn: $repeatOn, mode: $mode,
                      currentTime: WaveformMock.song.playheadSeconds,
-                     loop: WaveformMock.song.activeLoop).padding()
+                     loop: WaveformMock.song.activeLoop,
+                     onCapture: {}).padding()
+    }
+}
+
+#Preview("Loop creation") {
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        LoopCreationPanel(range: "0:42–1:08", onSave: { _ in }, onDiscard: {}).padding()
     }
 }
 

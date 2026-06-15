@@ -29,6 +29,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 - Loops & markers panels with **named, editable** entries: tap a row to edit
   (name/speed/repeats/delete) via a native sheet; activate a loop from its
   trailing play button. ADR 0003 records the interaction decisions.
+- **Naming-on-capture** — capturing a loop slides in an inline creation panel
+  below the transport (name field + range + Save/Discard, with a Reduce Motion
+  fallback). Capture is triggered by a transport **+** button standing in for
+  the Tap/Fine waveform gesture until the gesture engine lands.
 - SwiftUI `#Preview`s for the screen and each component (`WaveformPreviews`).
 - Project scaffold (Phase 0): repo structure, XcodeGen `project.yml`, SwiftLint
   config, GitHub Actions (lint + build + test on PR; TestFlight on merge),

@@ -46,6 +46,10 @@ struct WaveformPracticeView: View {
     @State private var activeLoopID: WaveformMock.Loop.ID? = WaveformMock.song.loops.first?.id
     @State private var editingLoop: WaveformMock.Loop?
     @State private var editingMarker: WaveformMock.Marker?
+    /// The loop being captured (drives the inline creation panel).
+    @State private var draftLoop: WaveformMock.Loop?
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Read-only BPM display: round(songBPM × speed) — brief §4.1 speed bar.
     private var displayedBPM: Int { Int((Double(song.bpm) * speed).rounded()) }
@@ -73,11 +77,26 @@ struct WaveformPracticeView: View {
                                  repeatOn: $repeatOn,
                                  mode: $mode,
                                  currentTime: song.playheadSeconds,
-                                 loop: activeLoop)
+                                 loop: activeLoop,
+                                 onCapture: capture)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
                 .padding(.bottom, 12)
+
+                // 9. Loop creation sheet — slides in below the transport while a
+                //    loop is being captured, so it can be named on capture.
+                if let draft = draftLoop {
+                    LoopCreationPanel(
+                        range: "\(timecode(draft.startSeconds))–\(timecode(draft.endSeconds))",
+                        onSave: saveCapturedLoop,
+                        onDiscard: dismissDraft)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+                        .transition(reduceMotion
+                                    ? .opacity
+                                    : .move(edge: .bottom).combined(with: .opacity))
+                }
 
                 // Hairline boundary between the fixed surface and the scroll area.
                 Rectangle()
@@ -111,6 +130,31 @@ struct WaveformPracticeView: View {
     }
 
     // MARK: Loop/marker actions
+
+    /// Capture a draft loop around the playhead and open the creation panel.
+    private func capture() {
+        guard draftLoop == nil else { return }
+        let start = min(song.playheadFraction, 0.85)
+        let end = min(start + 0.12, 0.98)
+        let draft = WaveformMock.Loop(name: "", start: start, end: end,
+                                      speed: speed, repeats: 4, duration: song.duration)
+        withAnimation(.easeOut(duration: 0.28)) { draftLoop = draft }
+    }
+
+    /// Save the captured loop with its name (empty → fall back to the range).
+    private func saveCapturedLoop(_ name: String) {
+        guard var draft = draftLoop else { return }
+        let range = "\(timecode(draft.startSeconds))–\(timecode(draft.endSeconds))"
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        draft.name = trimmed.isEmpty ? range : trimmed
+        loops.append(draft)
+        activeLoopID = draft.id
+        withAnimation(.easeOut(duration: 0.28)) { draftLoop = nil }
+    }
+
+    private func dismissDraft() {
+        withAnimation(.easeOut(duration: 0.2)) { draftLoop = nil }
+    }
 
     /// Tapping a loop's play button: activate it, or toggle play if already active.
     private func activate(_ loop: WaveformMock.Loop) {
