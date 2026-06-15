@@ -5,6 +5,7 @@ Pocket.xcodeproj/
 xcuserdata/
 DerivedData/
 build/
+build-device/
 *.xcuserstate
 *.moved-aside
 
