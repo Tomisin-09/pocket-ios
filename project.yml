@@ -26,8 +26,11 @@ targets:
     platform: iOS
     sources:
       - path: Pocket
-    info:
-      path: Pocket/Resources/Info.plist
+    # No `info:` block on purpose: the Info.plist is hand-maintained (it carries
+    # documented usage strings, background modes and the portrait lock). An
+    # `info:` block makes XcodeGen *generate* — i.e. overwrite — that file on
+    # every `xcodegen generate`, silently dropping those keys. The build picks
+    # it up via INFOPLIST_FILE below instead.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: click.decooperations.pocket

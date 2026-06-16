@@ -36,6 +36,20 @@ xcodegen generate
 open Pocket.xcodeproj
 ```
 
+### Run on a physical iPhone
+
+Audio can't be heard in the Xcode `#Preview` canvas (it skips the engine), so
+test sound on-device. With the iPhone plugged in, unlocked, and Developer Mode
+on:
+
+```sh
+scripts/run-device.sh        # incremental build → install → launch
+scripts/run-device.sh -n     # skip build; just install + launch the existing .app
+```
+
+First launch needs a one-time Trust: Settings → General → VPN & Device
+Management → Developer App → Trust.
+
 ## Pre-push checks
 
 See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild test`

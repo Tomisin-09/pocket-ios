@@ -5,6 +5,7 @@ Pocket.xcodeproj/
 xcuserdata/
 DerivedData/
 build/
+build-device/
 *.xcuserstate
 *.moved-aside
 
@@ -44,3 +45,6 @@ infrastructure/**/*.tfvars
 
 # macOS
 .DS_Store
+
+# Local preview screenshots (not committed)
+.preview/

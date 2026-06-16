@@ -10,6 +10,9 @@ final class PocketLaunchUITests: XCTestCase {
     func testAppLaunches() throws {
         let app = XCUIApplication()
         app.launch()
-        XCTAssertTrue(app.staticTexts["Pocket"].waitForExistence(timeout: 5))
+        // The app currently launches into the waveform practice screen
+        // (temporary until navigation lands — see PocketApp). Assert a stable
+        // control on it: the transport's play button.
+        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5))
     }
 }
