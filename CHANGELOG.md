@@ -6,10 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
-- **Transport bar slimmed**: the redundant **"+" quick-capture is removed** (Tap
-  and Fine gestures own loop creation now), and the loop controls (range · repeat
-  · clear) only appear when a loop is active. The **clear (✕) button now works** —
-  it deactivates the active loop (was a no-op).
+- **Transport bar simplified**: the **"+" quick-capture** and the per-loop
+  **repeat/clear controls** are gone — loop creation is owned by the Tap/Fine
+  gestures, and an active loop simply loops (the explicit toggle was redundant;
+  real region looping lands on a later branch). When a loop is active the
+  transport now shows its **name** over its time range.
 - **Confirm pill** is smaller and now lives on the **mode-instructions row
   (trailing)** in every mode, instead of floating over the waveform. On a Tap
   second-punch the captured loop **stays highlighted green** while you confirm.

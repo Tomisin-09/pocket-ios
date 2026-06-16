@@ -222,12 +222,9 @@ struct TimeRuler: View {
 struct TransportBar: View {
     let isPlaying: Bool
     let onPlayPause: () -> Void
-    @Binding var repeatOn: Bool
     @Binding var mode: WaveformPracticeView.InteractionMode
     let currentTime: TimeInterval
     let loop: WaveformMock.Loop?
-    /// Clear (deactivate) the active loop.
-    let onClearLoop: () -> Void
 
     var body: some View {
         VStack(spacing: 10) {
@@ -246,27 +243,21 @@ struct TransportBar: View {
 
                 Spacer()
 
-                // Loop controls — only meaningful (and only shown) when a loop is
-                // active. Capture is now done by the Tap/Fine gestures, so the old
-                // "+" quick-capture is gone.
+                // Active loop — name (primary) over its range. It loops by
+                // default; on/off controls were removed (region looping, with a
+                // proper enter/exit model, lands on a later branch).
                 if let loop {
-                    Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
-                        .font(.pocketMono(.footnote))
-                        .foregroundStyle(PocketColor.marker)
-
-                    Button { repeatOn.toggle() } label: {
-                        Image(systemName: "repeat")
-                            .foregroundStyle(repeatOn ? PocketColor.active : PocketColor.textSecondary)
-                            .frame(width: 40, height: 40)
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text(loop.name)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(PocketColor.active)
+                            .lineLimit(1)
+                        Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
+                            .font(.pocketMono(.caption2))
+                            .foregroundStyle(PocketColor.textSecondary)
                     }
-                    .accessibilityLabel(repeatOn ? "Repeat on" : "Repeat off")
-
-                    Button(action: onClearLoop) {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(PocketColor.danger)
-                            .frame(width: 40, height: 40)
-                    }
-                    .accessibilityLabel("Clear loop")
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Looping \(loop.name)")
                 }
             }
 

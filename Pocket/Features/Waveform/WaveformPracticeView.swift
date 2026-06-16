@@ -34,7 +34,6 @@ struct WaveformPracticeView: View {
     @State private var songInfoExpanded = false   // demoted to the scroll area
     @State private var loopsExpanded = true
     @State private var markersExpanded = false
-    @State private var repeatOn = true
 
     // Audio engine + the waveform amplitudes it loaded from the sample.
     @State private var engine = PracticeAudioEngine()
@@ -145,11 +144,9 @@ struct WaveformPracticeView: View {
                             onSeek: seekToFraction)
                     TransportBar(isPlaying: engine.isPlaying,                // 8
                                  onPlayPause: engine.togglePlay,
-                                 repeatOn: $repeatOn,
                                  mode: $mode,
                                  currentTime: engine.currentTime,
-                                 loop: activeLoop,
-                                 onClearLoop: clearActiveLoop)
+                                 loop: activeLoop)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -281,12 +278,6 @@ extension WaveformPracticeView {
                 withAnimation(.easeOut(duration: 0.2)) { capture = nil }
             }
         }
-    }
-
-    /// Transport ✕ — deactivate the active loop (the saved loop is untouched).
-    private func clearActiveLoop() {
-        engine.pause()
-        activeLoopID = nil
     }
 
     /// Confirm ✓ — write back an existing loop's range, or open naming (the
