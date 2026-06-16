@@ -106,12 +106,12 @@ struct SpeedBar: View {
     private let presets: [Double] = [0.25, 0.50, 0.75]
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             // Readout + slider share one row to keep this (the heaviest fixed
             // element) compact in the pinned cockpit.
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 Text(String(format: "%.2f×", speed))
-                    .font(.pocketMono(.title))
+                    .font(.pocketMono(.title3))
                     .foregroundStyle(PocketColor.textPrimary)
 
                 // NOTE: brief §4.1 wants an asymmetric scale (0.25–1.0 occupies
@@ -161,7 +161,7 @@ struct SpeedBar: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
         .background(panelBackground)
     }
 }
@@ -222,22 +222,18 @@ struct TimeRuler: View {
 struct TransportBar: View {
     let isPlaying: Bool
     let onPlayPause: () -> Void
-    @Binding var repeatOn: Bool
     @Binding var mode: WaveformPracticeView.InteractionMode
     let currentTime: TimeInterval
     let loop: WaveformMock.Loop?
-    /// Capture a loop → opens the creation panel. Stands in for the Tap/Fine
-    /// gesture capture until the waveform gesture engine exists.
-    let onCapture: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 14) {
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Button(action: onPlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.title2)
                         .foregroundStyle(PocketColor.active)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 44, height: 40)
                 }
                 .accessibilityLabel(isPlaying ? "Pause" : "Play")
 
@@ -245,35 +241,24 @@ struct TransportBar: View {
                     .font(.pocketMono(.body))
                     .foregroundStyle(PocketColor.textPrimary)
 
-                if let loop {
-                    Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
-                        .font(.pocketMono(.footnote))
-                        .foregroundStyle(PocketColor.marker)
-                }
-
                 Spacer()
 
-                Button(action: onCapture) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(PocketColor.marker)
-                        .frame(width: 44, height: 44)
+                // Active loop — name (primary) over its range. It loops by
+                // default; on/off controls were removed (region looping, with a
+                // proper enter/exit model, lands on a later branch).
+                if let loop {
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text(loop.name)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(PocketColor.active)
+                            .lineLimit(1)
+                        Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
+                            .font(.pocketMono(.caption2))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Looping \(loop.name)")
                 }
-                .accessibilityLabel("Capture loop")
-
-                Button { repeatOn.toggle() } label: {
-                    Image(systemName: "repeat")
-                        .foregroundStyle(repeatOn ? PocketColor.active : PocketColor.textSecondary)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Repeat loop")
-
-                Button {} label: {
-                    Image(systemName: "xmark")
-                        .foregroundStyle(PocketColor.danger)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Clear loop")
             }
 
             HStack(spacing: 8) {
@@ -282,7 +267,7 @@ struct TransportBar: View {
                 }
             }
         }
-        .padding(12)
+        .padding(10)
         .background(panelBackground)
     }
 }

@@ -32,6 +32,9 @@ struct WaveformView: View {
     let formingStart: Double?
     /// Fine mode: the selection being dragged by the two blue handles.
     let fineSelection: (start: Double, end: Double)?
+    /// Tap mode: the captured region awaiting confirm — a static green highlight
+    /// so the punched loop stays visible while the confirm pill is up.
+    let tapSelection: (start: Double, end: Double)?
     /// Live playhead time, shown in a bubble pinned to the playhead.
     let playheadLabel: String
 
@@ -113,6 +116,13 @@ struct WaveformView: View {
             let upper = max(formingStart, playheadFraction)
             let rect = CGRect(x: size.width * lower, y: 0,
                               width: size.width * (upper - lower), height: size.height)
+            context.fill(Path(rect), with: .color(PocketColor.active.opacity(0.22)))
+        }
+
+        // Captured Tap loop awaiting confirm — static green highlight.
+        if let tapSelection {
+            let rect = CGRect(x: size.width * tapSelection.start, y: 0,
+                              width: size.width * (tapSelection.end - tapSelection.start), height: size.height)
             context.fill(Path(rect), with: .color(PocketColor.active.opacity(0.22)))
         }
 
@@ -292,8 +302,35 @@ struct Minimap: View {
     let fineSelection: (start: Double, end: Double)?
     /// Live playhead position (0...1), driven by the audio engine.
     let playheadFraction: Double
+    /// Tap or drag anywhere on the minimap to move the playhead.
+    let onSeek: (Double) -> Void
 
     var body: some View {
+        GeometryReader { geo in
+            canvas
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0).onChanged { value in
+                        onSeek(WaveformGesture.fraction(atX: value.location.x, width: geo.size.width))
+                    }
+                )
+        }
+        .frame(height: 28)
+        .accessibilityElement()
+        .accessibilityLabel("Song position")
+        .accessibilityValue("\(Int((playheadFraction * 100).rounded()))%")
+        .accessibilityHint("Adjust to move the playhead")
+        .accessibilityAdjustableAction { direction in
+            let step = 0.05
+            switch direction {
+            case .increment: onSeek(min(1, playheadFraction + step))
+            case .decrement: onSeek(max(0, playheadFraction - step))
+            @unknown default: break
+            }
+        }
+    }
+
+    private var canvas: some View {
         Canvas { context, size in
             // Base track.
             let base = CGRect(x: 0, y: size.height * 0.35, width: size.width, height: size.height * 0.3)
@@ -339,7 +376,5 @@ struct Minimap: View {
             line.addLine(to: CGPoint(x: playheadX, y: size.height))
             context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.8)), lineWidth: 1)
         }
-        .frame(height: 36)
-        .accessibilityHidden(true)
     }
 }
