@@ -81,7 +81,8 @@ import SwiftUI
                 activeLoop: WaveformMock.song.activeLoop,
                 markers: WaveformMock.song.markers,
                 fineSelection: nil,
-                playheadFraction: WaveformMock.song.playheadFraction).padding()
+                playheadFraction: WaveformMock.song.playheadFraction,
+                onSeek: { _ in }).padding()
     }
 }
 

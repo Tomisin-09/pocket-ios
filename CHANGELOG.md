@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Cockpit chrome slimmed**: the speed/tempo bar is more compact (smaller `×`
+  readout, tighter spacing) and the minimap is shorter. The **minimap is now
+  seekable** — tap or drag anywhere on it to move the playhead (also VoiceOver-
+  adjustable), reclaiming vertical space in the pinned cockpit.
 - **Loop capture flow refined** (2nd round of on-device feedback): the keyboard-
   free confirm step is now an **icon-only ✓/✗ pill floating over the waveform**
   (the old bar read as if the name were editable there). **Tap mode is now punch

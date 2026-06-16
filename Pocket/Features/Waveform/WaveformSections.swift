@@ -106,12 +106,12 @@ struct SpeedBar: View {
     private let presets: [Double] = [0.25, 0.50, 0.75]
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             // Readout + slider share one row to keep this (the heaviest fixed
             // element) compact in the pinned cockpit.
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 Text(String(format: "%.2f×", speed))
-                    .font(.pocketMono(.title))
+                    .font(.pocketMono(.title3))
                     .foregroundStyle(PocketColor.textPrimary)
 
                 // NOTE: brief §4.1 wants an asymmetric scale (0.25–1.0 occupies
@@ -161,7 +161,7 @@ struct SpeedBar: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
         .background(panelBackground)
     }
 }

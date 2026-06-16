@@ -292,8 +292,35 @@ struct Minimap: View {
     let fineSelection: (start: Double, end: Double)?
     /// Live playhead position (0...1), driven by the audio engine.
     let playheadFraction: Double
+    /// Tap or drag anywhere on the minimap to move the playhead.
+    let onSeek: (Double) -> Void
 
     var body: some View {
+        GeometryReader { geo in
+            canvas
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0).onChanged { value in
+                        onSeek(WaveformGesture.fraction(atX: value.location.x, width: geo.size.width))
+                    }
+                )
+        }
+        .frame(height: 28)
+        .accessibilityElement()
+        .accessibilityLabel("Song position")
+        .accessibilityValue("\(Int((playheadFraction * 100).rounded()))%")
+        .accessibilityHint("Adjust to move the playhead")
+        .accessibilityAdjustableAction { direction in
+            let step = 0.05
+            switch direction {
+            case .increment: onSeek(min(1, playheadFraction + step))
+            case .decrement: onSeek(max(0, playheadFraction - step))
+            @unknown default: break
+            }
+        }
+    }
+
+    private var canvas: some View {
         Canvas { context, size in
             // Base track.
             let base = CGRect(x: 0, y: size.height * 0.35, width: size.width, height: size.height * 0.3)
@@ -339,7 +366,5 @@ struct Minimap: View {
             line.addLine(to: CGPoint(x: playheadX, y: size.height))
             context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.8)), lineWidth: 1)
         }
-        .frame(height: 36)
-        .accessibilityHidden(true)
     }
 }

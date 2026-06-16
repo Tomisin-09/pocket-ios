@@ -136,7 +136,8 @@ struct WaveformPracticeView: View {
                     TimeRuler(duration: duration)                            // 6
                     Minimap(song: song, activeLoop: activeLoop, markers: markers, // 7
                             fineSelection: fineSelection,
-                            playheadFraction: playheadFraction)
+                            playheadFraction: playheadFraction,
+                            onSeek: seekToFraction)
                     TransportBar(isPlaying: engine.isPlaying,                // 8
                                  onPlayPause: engine.togglePlay,
                                  repeatOn: $repeatOn,
