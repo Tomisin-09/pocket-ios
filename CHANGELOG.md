@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Transport bar slimmed**: the redundant **"+" quick-capture is removed** (Tap
+  and Fine gestures own loop creation now), and the loop controls (range · repeat
+  · clear) only appear when a loop is active. The **clear (✕) button now works** —
+  it deactivates the active loop (was a no-op).
+- **Confirm pill** is smaller and now lives on the **mode-instructions row
+  (trailing)** in every mode, instead of floating over the waveform. On a Tap
+  second-punch the captured loop **stays highlighted green** while you confirm.
 - **Cockpit chrome slimmed**: the speed/tempo bar is more compact (smaller `×`
   readout, tighter spacing) and the minimap is shorter. The **minimap is now
   seekable** — tap or drag anywhere on it to move the playhead (also VoiceOver-

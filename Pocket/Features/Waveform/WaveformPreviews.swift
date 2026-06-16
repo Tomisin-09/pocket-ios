@@ -55,6 +55,7 @@ import SwiftUI
                      playheadFraction: WaveformMock.song.playheadFraction,
                      loop: WaveformMock.song.activeLoop,
                      mode: .scroll, formingStart: nil, fineSelection: nil,
+                     tapSelection: nil,
                      playheadLabel: "0:10",
                      onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
                      onScrub: { _ in }, onMoveHandle: { _, _ in }).padding()
@@ -68,6 +69,7 @@ import SwiftUI
                      playheadFraction: WaveformMock.song.playheadFraction,
                      loop: nil,
                      mode: .fine, formingStart: nil, fineSelection: (0.30, 0.62),
+                     tapSelection: nil,
                      playheadLabel: "0:10",
                      onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
                      onScrub: { _ in }, onMoveHandle: { _, _ in }).padding()
@@ -94,7 +96,7 @@ import SwiftUI
         TransportBar(isPlaying: false, onPlayPause: {}, repeatOn: $repeatOn, mode: $mode,
                      currentTime: WaveformMock.song.playheadSeconds,
                      loop: WaveformMock.song.activeLoop,
-                     onCapture: {}).padding()
+                     onClearLoop: {}).padding()
     }
 }
 

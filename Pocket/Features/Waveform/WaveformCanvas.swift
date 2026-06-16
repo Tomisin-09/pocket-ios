@@ -32,6 +32,9 @@ struct WaveformView: View {
     let formingStart: Double?
     /// Fine mode: the selection being dragged by the two blue handles.
     let fineSelection: (start: Double, end: Double)?
+    /// Tap mode: the captured region awaiting confirm — a static green highlight
+    /// so the punched loop stays visible while the confirm pill is up.
+    let tapSelection: (start: Double, end: Double)?
     /// Live playhead time, shown in a bubble pinned to the playhead.
     let playheadLabel: String
 
@@ -113,6 +116,13 @@ struct WaveformView: View {
             let upper = max(formingStart, playheadFraction)
             let rect = CGRect(x: size.width * lower, y: 0,
                               width: size.width * (upper - lower), height: size.height)
+            context.fill(Path(rect), with: .color(PocketColor.active.opacity(0.22)))
+        }
+
+        // Captured Tap loop awaiting confirm — static green highlight.
+        if let tapSelection {
+            let rect = CGRect(x: size.width * tapSelection.start, y: 0,
+                              width: size.width * (tapSelection.end - tapSelection.start), height: size.height)
             context.fill(Path(rect), with: .color(PocketColor.active.opacity(0.22)))
         }
 

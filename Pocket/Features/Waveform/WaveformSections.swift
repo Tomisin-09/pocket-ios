@@ -226,18 +226,17 @@ struct TransportBar: View {
     @Binding var mode: WaveformPracticeView.InteractionMode
     let currentTime: TimeInterval
     let loop: WaveformMock.Loop?
-    /// Capture a loop → opens the creation panel. Stands in for the Tap/Fine
-    /// gesture capture until the waveform gesture engine exists.
-    let onCapture: () -> Void
+    /// Clear (deactivate) the active loop.
+    let onClearLoop: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 14) {
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Button(action: onPlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.title2)
                         .foregroundStyle(PocketColor.active)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 44, height: 40)
                 }
                 .accessibilityLabel(isPlaying ? "Pause" : "Play")
 
@@ -245,35 +244,30 @@ struct TransportBar: View {
                     .font(.pocketMono(.body))
                     .foregroundStyle(PocketColor.textPrimary)
 
+                Spacer()
+
+                // Loop controls — only meaningful (and only shown) when a loop is
+                // active. Capture is now done by the Tap/Fine gestures, so the old
+                // "+" quick-capture is gone.
                 if let loop {
                     Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
                         .font(.pocketMono(.footnote))
                         .foregroundStyle(PocketColor.marker)
-                }
 
-                Spacer()
+                    Button { repeatOn.toggle() } label: {
+                        Image(systemName: "repeat")
+                            .foregroundStyle(repeatOn ? PocketColor.active : PocketColor.textSecondary)
+                            .frame(width: 40, height: 40)
+                    }
+                    .accessibilityLabel(repeatOn ? "Repeat on" : "Repeat off")
 
-                Button(action: onCapture) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(PocketColor.marker)
-                        .frame(width: 44, height: 44)
+                    Button(action: onClearLoop) {
+                        Image(systemName: "xmark")
+                            .foregroundStyle(PocketColor.danger)
+                            .frame(width: 40, height: 40)
+                    }
+                    .accessibilityLabel("Clear loop")
                 }
-                .accessibilityLabel("Capture loop")
-
-                Button { repeatOn.toggle() } label: {
-                    Image(systemName: "repeat")
-                        .foregroundStyle(repeatOn ? PocketColor.active : PocketColor.textSecondary)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Repeat loop")
-
-                Button {} label: {
-                    Image(systemName: "xmark")
-                        .foregroundStyle(PocketColor.danger)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Clear loop")
             }
 
             HStack(spacing: 8) {
@@ -282,7 +276,7 @@ struct TransportBar: View {
                 }
             }
         }
-        .padding(12)
+        .padding(10)
         .background(panelBackground)
     }
 }

@@ -86,6 +86,12 @@ struct WaveformPracticeView: View {
         return (capture.start, capture.end)
     }
 
+    /// The Tap-mode captured region to keep highlighted green while confirming.
+    private var tapSelection: (start: Double, end: Double)? {
+        guard let capture, !capture.fromFine else { return nil }
+        return (capture.start, capture.end)
+    }
+
     /// True while adjusting an existing loop's range — the reference area dims to
     /// focus the waveform.
     private var isRangeEditing: Bool { capture?.editingLoopID != nil }
@@ -108,31 +114,30 @@ struct WaveformPracticeView: View {
                     SongStrip(song: song)                                    // 1
                     SpeedBar(speed: $speed, displayedBPM: displayedBPM,      // 3
                              onSetBPM: setBPM)
-                    ModeDescriptionLine(mode: mode)                          // 4
+                    // 4. Mode instructions + the confirm pill (trailing) once captured.
+                    HStack(spacing: 8) {
+                        ModeDescriptionLine(mode: mode)
+                        if showConfirm {
+                            ConfirmPopup(isEditing: capture?.editingLoopID != nil,
+                                         onConfirm: confirmCapture,
+                                         onCancel: cancelCapture)
+                                .transition(reduceMotion ? .opacity
+                                            : .scale(scale: 0.85).combined(with: .opacity))
+                        }
+                    }
                     WaveformView(amplitudes: amplitudes,                     // 5
                                  playheadFraction: playheadFraction,
                                  loop: activeLoop,
                                  mode: mode,
                                  formingStart: pendingStart,
                                  fineSelection: fineSelection,
+                                 tapSelection: tapSelection,
                                  playheadLabel: timecode(engine.currentTime),
                                  onSeek: seekToFraction,
                                  onDropMarker: dropMarker,
                                  onTapPunch: tapPunch,
                                  onScrub: seekToFraction,
                                  onMoveHandle: moveFineHandle)
-                        // 9. Icon-only confirm pill, floating over the waveform
-                        //    once a region is captured (hidden while naming).
-                        .overlay(alignment: .bottom) {
-                            if showConfirm {
-                                ConfirmPopup(isEditing: capture?.editingLoopID != nil,
-                                             onConfirm: confirmCapture,
-                                             onCancel: cancelCapture)
-                                    .padding(.bottom, 8)
-                                    .transition(reduceMotion ? .opacity
-                                                : .scale(scale: 0.85).combined(with: .opacity))
-                            }
-                        }
                     TimeRuler(duration: duration)                            // 6
                     Minimap(song: song, activeLoop: activeLoop, markers: markers, // 7
                             fineSelection: fineSelection,
@@ -144,7 +149,7 @@ struct WaveformPracticeView: View {
                                  mode: $mode,
                                  currentTime: engine.currentTime,
                                  loop: activeLoop,
-                                 onCapture: quickCapture)
+                                 onClearLoop: clearActiveLoop)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -278,19 +283,14 @@ extension WaveformPracticeView {
         }
     }
 
-    /// Quick-capture a loop around the playhead (transport **+** button). Gesture
-    /// capture (Tap/Fine) is primary; this is a one-tap, VoiceOver-friendly path.
-    private func quickCapture() {
-        guard capture == nil else { return }
-        let (start, end) = defaultSelection()
-        withAnimation(.easeOut(duration: 0.28)) {
-            capture = CaptureDraft(start: start, end: end, fromFine: false, editingLoopID: nil)
-        }
+    /// Transport ✕ — deactivate the active loop (the saved loop is untouched).
+    private func clearActiveLoop() {
+        engine.pause()
+        activeLoopID = nil
     }
 
-    /// Confirm ✓ — write back an existing loop's range, or open naming. The
-    /// capture is kept open while naming so a discarded name can restore it
-    /// (the pill hides because `namingDraft` is set).
+    /// Confirm ✓ — write back an existing loop's range, or open naming (the
+    /// capture is kept open during naming so a discard can restore it).
     private func confirmCapture() {
         guard let draft = capture else { return }
         if let id = draft.editingLoopID {

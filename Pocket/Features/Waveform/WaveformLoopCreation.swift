@@ -39,27 +39,26 @@ struct ConfirmPopup: View {
     let onCancel: () -> Void
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             iconButton("xmark", tint: PocketColor.danger, action: onCancel)
                 .accessibilityLabel("Discard")
             iconButton("checkmark", tint: PocketColor.active, action: onConfirm)
                 .accessibilityLabel(isEditing ? "Save range" : "Name loop")
         }
-        .padding(6)
+        .padding(3)
         .background(
             Capsule()
                 .fill(PocketColor.background.opacity(0.9))
                 .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-                .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
         )
     }
 
     private func iconButton(_ symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(tint)
-                .frame(width: 40, height: 40)
+                .frame(width: 30, height: 30)
                 .background(Circle().fill(tint.opacity(0.15)))
         }
         .buttonStyle(.plain)
