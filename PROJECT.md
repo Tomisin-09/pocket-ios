@@ -70,7 +70,8 @@ cockpit over a scrollable reference area, with named/editable loops & markers
 pitch-preserving speed) fed by a generated dev sample until file import lands.
 The three transport modes are live as a **gesture engine** (Scroll seek + hold-
 to-marker, Tap scrub + two-tap loop capture, Fine draggable handles; ADR 0005),
-with the pure gesture math in unit-tested `WaveformGesture`. The app temporarily
-launches straight into this screen; it reverts to the planner once navigation
-lands in Phase 3. Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`,
+with the pure gesture math in unit-tested `WaveformGesture`. The screen's state
+and handlers live in an `@Observable` `WaveformPracticeModel`, with the view as a
+thin observing body (ADR 0007). The app temporarily launches straight into this
+screen; it reverts to the planner once navigation lands in Phase 3. Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`,
 `WaveformGesture`. See `CHANGELOG.md` and the build plan for sequencing.

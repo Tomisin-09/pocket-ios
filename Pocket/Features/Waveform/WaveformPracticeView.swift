@@ -4,9 +4,11 @@ import SwiftUI
 /// scrollable reference area, driven (for now) by mock song data plus a generated
 /// dev audio sample. Real playback runs through `PracticeAudioEngine`; the three
 /// transport modes are live as a gesture engine (Scroll/Tap/Fine — ADRs 0003,
-/// 0005). Loop capture is a keyboard-free confirm step then a naming sheet. Real
-/// file import and the asymmetric speed scale are later iterations. Sections
-/// live in `WaveformSections.swift`; shared chrome in `WaveformChrome.swift`.
+/// 0005). Loop capture is a keyboard-free confirm step then a naming sheet.
+///
+/// State + handlers live in `WaveformPracticeModel` (ADR 0007); this view is the
+/// thin body that observes and binds to it. Sections live in
+/// `WaveformSections.swift`; shared chrome in `WaveformChrome.swift`.
 struct WaveformPracticeView: View {
 
     /// Transport interaction modes — pills in the transport bar (brief §4.1).
@@ -26,83 +28,11 @@ struct WaveformPracticeView: View {
         }
     }
 
-    private let song = WaveformMock.song
-
-    // UI state (visual only in this iteration — no engine wired yet).
-    @State private var speed: Double = 1.0
-    @State private var mode: InteractionMode = .scroll
-    @State private var songInfoExpanded = false   // demoted to the scroll area
-    @State private var loopsExpanded = true
-    @State private var markersExpanded = false
-
-    // Audio engine + the waveform amplitudes it loaded from the sample.
-    @State private var engine = PracticeAudioEngine()
-    @State private var amplitudes: [Double] = WaveformMock.song.amplitudes
-
-    // Loops/markers are mutable so they can be activated, renamed and deleted.
-    @State private var loops = WaveformMock.song.loops
-    @State private var markers = WaveformMock.song.markers
-    @State private var activeLoopID: WaveformMock.Loop.ID? = WaveformMock.song.loops.first?.id
-    @State private var editingLoop: WaveformMock.Loop?
-    @State private var editingMarker: WaveformMock.Marker?
-
-    /// Tap mode: the start of the loop being captured (the green forming
-    /// region), awaiting its closing tap.
-    @State private var pendingStart: Double?
-    /// The captured loop awaiting confirmation (drives the ConfirmBar). Bounds
-    /// are mutable so Fine handles drag them live; `fromFine` shows the blue
-    /// handles; a non-nil `editingLoopID` means we're adjusting an existing
-    /// loop's range rather than creating one.
-    @State private var capture: CaptureDraft?
-    /// The confirmed loop awaiting a name (drives the naming sheet).
-    @State private var namingDraft: NamingDraft?
-
+    @State private var model = WaveformPracticeModel()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Read-only BPM display: round(songBPM × speed) — brief §4.1 speed bar.
-    /// `nil` when the song has no known tempo (see ADR 0004); the speed
-    /// multiplier still works regardless.
-    private var displayedBPM: Int? {
-        song.bpm.map { Int((Double($0) * speed).rounded()) }
-    }
-
-    /// The loop currently loaded into the transport/waveform, if any.
-    private var activeLoop: WaveformMock.Loop? { loops.first { $0.id == activeLoopID } }
-
-    /// Live playhead as a fraction of the song (0...1), driven by the engine.
-    private var playheadFraction: Double {
-        engine.duration > 0 ? engine.currentTime / engine.duration : 0
-    }
-
-    /// Effective song length — the engine's once loaded, else the mock's.
-    private var duration: TimeInterval {
-        engine.duration > 0 ? engine.duration : song.duration
-    }
-
-    /// The Fine-mode selection to render (blue handles), if one is being defined.
-    private var fineSelection: (start: Double, end: Double)? {
-        guard let capture, capture.fromFine else { return nil }
-        return (capture.start, capture.end)
-    }
-
-    /// The Tap-mode captured region to keep highlighted green while confirming.
-    private var tapSelection: (start: Double, end: Double)? {
-        guard let capture, !capture.fromFine else { return nil }
-        return (capture.start, capture.end)
-    }
-
-    /// True while adjusting an existing loop's range — the reference area dims to
-    /// focus the waveform.
-    private var isRangeEditing: Bool { capture?.editingLoopID != nil }
-
-    /// The confirm pill shows while a region is captured but not yet being named.
-    private var showConfirm: Bool { capture != nil && namingDraft == nil }
-
-    private var isPreview: Bool {
-        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
-    }
-
     var body: some View {
+        @Bindable var model = model
         ZStack {
             PocketColor.background.ignoresSafeArea()
 
@@ -110,44 +40,45 @@ struct WaveformPracticeView: View {
                 // Fixed practice surface — the controls you touch constantly,
                 // pinned so they never scroll away (brief items 1, 3–8).
                 VStack(spacing: 16) {
-                    SongStrip(song: song)                                    // 1
-                    SpeedBar(speed: $speed, displayedBPM: displayedBPM,      // 3
-                             onSetBPM: setBPM)
+                    SongStrip(song: model.song)                                  // 1
+                    SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
+                             onSetBPM: model.setBPM)
                     // 4. Mode instructions + the confirm pill (trailing) once captured.
                     HStack(spacing: 8) {
-                        ModeDescriptionLine(mode: mode)
-                        if showConfirm {
-                            ConfirmPopup(isEditing: capture?.editingLoopID != nil,
-                                         onConfirm: confirmCapture,
-                                         onCancel: cancelCapture)
+                        ModeDescriptionLine(mode: model.mode)
+                        if model.showConfirm {
+                            ConfirmPopup(isEditing: model.capture?.editingLoopID != nil,
+                                         onConfirm: model.confirmCapture,
+                                         onCancel: model.cancelCapture)
                                 .transition(reduceMotion ? .opacity
                                             : .scale(scale: 0.85).combined(with: .opacity))
                         }
                     }
-                    WaveformView(amplitudes: amplitudes,                     // 5
-                                 playheadFraction: playheadFraction,
-                                 loop: activeLoop,
-                                 mode: mode,
-                                 formingStart: pendingStart,
-                                 fineSelection: fineSelection,
-                                 tapSelection: tapSelection,
-                                 playheadLabel: timecode(engine.currentTime),
-                                 onSeek: seekToFraction,
-                                 onDropMarker: dropMarker,
-                                 onTapPunch: tapPunch,
-                                 onScrub: seekToFraction,
-                                 onMoveHandle: moveFineHandle)
-                    TimeRuler(duration: duration)                            // 6
-                    Minimap(song: song, activeLoop: activeLoop, markers: markers, // 7
-                            fineSelection: fineSelection,
-                            playheadFraction: playheadFraction,
-                            onSeek: seekToFraction)
-                    TransportBar(isPlaying: engine.isPlaying,                // 8
-                                 onPlayPause: engine.togglePlay,
-                                 mode: $mode,
-                                 currentTime: engine.currentTime,
-                                 loop: activeLoop,
-                                 onClearLoop: clearActiveLoop)
+                    WaveformView(amplitudes: model.amplitudes,                   // 5
+                                 playheadFraction: model.playheadFraction,
+                                 loop: model.activeLoop,
+                                 mode: model.mode,
+                                 formingStart: model.pendingStart,
+                                 fineSelection: model.fineSelection,
+                                 tapSelection: model.tapSelection,
+                                 playheadLabel: timecode(model.engine.currentTime),
+                                 onSeek: model.seekToFraction,
+                                 onDropMarker: model.dropMarker,
+                                 onTapPunch: model.tapPunch,
+                                 onScrub: model.seekToFraction,
+                                 onMoveHandle: model.moveFineHandle)
+                    TimeRuler(duration: model.duration)                         // 6
+                    Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
+                            markers: model.markers,
+                            fineSelection: model.fineSelection,
+                            playheadFraction: model.playheadFraction,
+                            onSeek: model.seekToFraction)
+                    TransportBar(isPlaying: model.engine.isPlaying,             // 8
+                                 onPlayPause: model.engine.togglePlay,
+                                 mode: $model.mode,
+                                 currentTime: model.engine.currentTime,
+                                 loop: model.activeLoop,
+                                 onClearLoop: model.clearActiveLoop)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -163,235 +94,35 @@ struct WaveformPracticeView: View {
                 // adjusting a loop's range, to focus the waveform.
                 ScrollView {
                     VStack(spacing: 16) {
-                        LoopsPanel(loops: loops, expanded: $loopsExpanded,       // 10
-                                   activeLoopID: activeLoopID, isPlaying: engine.isPlaying,
-                                   onActivate: activate, onEdit: { editingLoop = $0 })
-                        MarkersPanel(markers: markers, expanded: $markersExpanded, // 11
-                                     onSeek: seekToMarker, onEdit: { editingMarker = $0 })
-                        SongInfoPanel(song: song, expanded: $songInfoExpanded)   // 2
+                        LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
+                                   activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
+                                   onActivate: model.activate, onEdit: { model.editingLoop = $0 })
+                        MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
+                                     onSeek: model.seekToMarker, onEdit: { model.editingMarker = $0 })
+                        SongInfoPanel(song: model.song, expanded: $model.songInfoExpanded) // 2
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                 }
-                .opacity(isRangeEditing ? 0.25 : 1)
-                .disabled(isRangeEditing)
-                .animation(.easeOut(duration: 0.2), value: isRangeEditing)
+                .opacity(model.isRangeEditing ? 0.25 : 1)
+                .disabled(model.isRangeEditing)
+                .animation(.easeOut(duration: 0.2), value: model.isRangeEditing)
             }
         }
         .preferredColorScheme(.dark)
-        .sheet(item: $editingLoop) { loop in
-            LoopEditSheet(loop: loop, onSave: updateLoop, onDelete: { deleteLoop(loop) },
-                          onAdjustRange: { startRangeEdit(loop) })
+        .sheet(item: $model.editingLoop) { loop in
+            LoopEditSheet(loop: loop, onSave: model.updateLoop, onDelete: { model.deleteLoop(loop) },
+                          onAdjustRange: { model.startRangeEdit(loop) })
         }
-        .sheet(item: $editingMarker) { marker in
-            MarkerEditSheet(marker: marker, onSave: updateMarker, onDelete: { deleteMarker(marker) })
+        .sheet(item: $model.editingMarker) { marker in
+            MarkerEditSheet(marker: marker, onSave: model.updateMarker, onDelete: { model.deleteMarker(marker) })
         }
-        .sheet(item: $namingDraft, onDismiss: namingDismissed) { draft in
-            LoopNameSheet(range: rangeString(draft.start, draft.end), onSave: saveNamed)
+        .sheet(item: $model.namingDraft, onDismiss: model.namingDismissed) { draft in
+            LoopNameSheet(range: model.rangeString(draft.start, draft.end), onSave: model.saveNamed)
         }
-        .task { await loadSample() }
-        .onChange(of: speed) { _, newValue in engine.setRate(newValue) }
-        .onChange(of: mode) { _, newMode in modeChanged(to: newMode) }
-    }
-
-    /// Generate the dev sample and hand it to the engine (skipped in previews).
-    private func loadSample() async {
-        guard !isPreview, engine.duration == 0 else { return }
-        guard let sample = try? SampleToneGenerator.makeSample(duration: song.duration) else { return }
-        amplitudes = sample.amplitudes
-        try? engine.load(url: sample.url)
-        engine.setRate(speed)
-    }
-}
-
-// MARK: - Actions & gesture handlers
-
-extension WaveformPracticeView {
-
-    /// Scroll-mode tap and Tap-mode scrub: move the playhead to a song fraction.
-    private func seekToFraction(_ fraction: Double) {
-        engine.seek(toSeconds: fraction * duration)
-    }
-
-    /// Tap a marker in the list: seek the playhead to it.
-    private func seekToMarker(_ marker: WaveformMock.Marker) {
-        engine.seek(toSeconds: marker.seconds)
-        haptic(.light)
-    }
-
-    /// Scroll-mode hold: drop a marker at the held fraction, then open it to name.
-    private func dropMarker(_ fraction: Double) {
-        let marker = WaveformMock.Marker(seconds: fraction * duration, label: "Marker")
-        markers.append(marker)
-        markers.sort { $0.seconds < $1.seconds }
-        editingMarker = marker
-    }
-
-    /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd stops + confirms.
-    private func tapPunch() {
-        if let start = pendingStart {
-            let bounds = WaveformGesture.loopBounds(start, playheadFraction)
-            engine.pause()
-            pendingStart = nil
-            haptic(.medium)
-            withAnimation(.easeOut(duration: 0.28)) {
-                capture = CaptureDraft(start: bounds.start, end: bounds.end,
-                                       fromFine: false, editingLoopID: nil)
-            }
-        } else {
-            pendingStart = playheadFraction
-            engine.play()
-        }
-    }
-
-    /// Fine mode: drag a blue handle (bounds stay ordered + min-width apart).
-    private func moveFineHandle(_ handle: WaveformGesture.Handle, _ fraction: Double) {
-        guard let current = capture else { return }
-        let bounds = WaveformGesture.movingHandle(handle, toFraction: fraction,
-                                                  start: current.start, end: current.end)
-        capture = CaptureDraft(start: bounds.start, end: bounds.end,
-                               fromFine: true, editingLoopID: current.editingLoopID)
-    }
-
-    /// Enter Fine → seed selection + pill; leave → drop unsaved; any switch clears a Tap capture.
-    private func modeChanged(to newMode: InteractionMode) {
-        if pendingStart != nil {
-            pendingStart = nil
-            engine.pause()
-        }
-        switch newMode {
-        case .fine:
-            if capture?.fromFine != true {
-                let seed = activeLoop.map { ($0.start, $0.end) } ?? defaultSelection()
-                withAnimation(.easeOut(duration: 0.28)) {
-                    capture = CaptureDraft(start: seed.0, end: seed.1, fromFine: true, editingLoopID: nil)
-                }
-            }
-        case .scroll, .tap:
-            if capture?.fromFine == true {
-                withAnimation(.easeOut(duration: 0.2)) { capture = nil }
-            }
-        }
-    }
-
-    /// Confirm ✓ — write back a range edit, or open naming (capture kept so a discard can restore it).
-    private func confirmCapture() {
-        guard let draft = capture else { return }
-        if let id = draft.editingLoopID {
-            if let index = loops.firstIndex(where: { $0.id == id }) {
-                loops[index].start = draft.start
-                loops[index].end = draft.end
-            }
-            activeLoopID = id
-            applyActiveLoopToEngine()
-            haptic(.medium)
-            finishCapture()
-        } else {
-            namingDraft = NamingDraft(start: draft.start, end: draft.end)
-        }
-    }
-
-    /// Confirm ✗ — discard the capture outright (and leave Fine).
-    private func cancelCapture() { finishCapture() }
-
-    /// Clear the capture and leave Fine for the default Scroll mode.
-    private func finishCapture() {
-        withAnimation(.easeOut(duration: 0.2)) {
-            capture = nil
-            if mode == .fine { mode = .scroll }
-        }
-    }
-
-    /// Naming dismissed: Save consumed `capture`; survivor = Discard → keep Fine, drop Tap.
-    private func namingDismissed() {
-        guard let draft = capture, !draft.fromFine else { return }
-        withAnimation(.easeOut(duration: 0.2)) { capture = nil }
-    }
-
-    /// Naming-sheet Save — create the loop (empty name → range), then leave Fine.
-    private func saveNamed(_ name: String) {
-        guard let draft = namingDraft else { return }
-        let range = rangeString(draft.start, draft.end)
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        let loop = WaveformMock.Loop(name: trimmed.isEmpty ? range : trimmed,
-                                     start: draft.start, end: draft.end,
-                                     speed: speed, repeats: 4, duration: duration)
-        loops.append(loop)
-        activeLoopID = loop.id
-        applyActiveLoopToEngine()
-        capture = nil
-        namingDraft = nil
-        if mode == .fine { mode = .scroll }
-    }
-
-    /// "Adjust range" from a loop's edit sheet → Fine mode seeded with its bounds.
-    private func startRangeEdit(_ loop: WaveformMock.Loop) {
-        capture = CaptureDraft(start: loop.start, end: loop.end, fromFine: true, editingLoopID: loop.id)
-        withAnimation(.easeOut(duration: 0.2)) { mode = .fine }
-    }
-
-    private func rangeString(_ start: Double, _ end: Double) -> String {
-        "\(timecode(duration * start))–\(timecode(duration * end))"
-    }
-
-    /// A default loop span at the playhead, clamped so it never spills off the end.
-    private func defaultSelection() -> (Double, Double) {
-        let start = min(playheadFraction, 0.85)
-        return (start, min(start + 0.12, 0.98))
-    }
-
-    /// Set an unknown tempo — tap-tempo / manual entry is a follow-up (ADR 0004).
-    private func setBPM() {
-        // TODO: present tap-tempo / manual BPM entry (see ADR 0004).
-    }
-
-    /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
-    private func activate(_ loop: WaveformMock.Loop) {
-        if activeLoopID == loop.id && engine.isPlaying {
-            engine.pause()
-        } else {
-            activeLoopID = loop.id
-            applyActiveLoopToEngine()
-            engine.seek(toSeconds: loop.startSeconds)
-            engine.play()
-        }
-    }
-
-    /// Exit-loop chip — stop looping and play on through the song.
-    private func clearActiveLoop() {
-        activeLoopID = nil
-        applyActiveLoopToEngine()
-    }
-
-    /// Keep the engine's loop region in sync with the active loop (or clear it).
-    private func applyActiveLoopToEngine() {
-        if let activeLoop {
-            engine.setLoop(start: activeLoop.startSeconds, end: activeLoop.endSeconds)
-        } else {
-            engine.clearLoop()
-        }
-    }
-
-    private func updateLoop(_ loop: WaveformMock.Loop) {
-        guard let index = loops.firstIndex(where: { $0.id == loop.id }) else { return }
-        loops[index] = loop
-    }
-
-    private func deleteLoop(_ loop: WaveformMock.Loop) {
-        loops.removeAll { $0.id == loop.id }
-        if activeLoopID == loop.id {
-            activeLoopID = loops.first?.id
-            applyActiveLoopToEngine()
-        }
-    }
-
-    private func updateMarker(_ marker: WaveformMock.Marker) {
-        guard let index = markers.firstIndex(where: { $0.id == marker.id }) else { return }
-        markers[index] = marker
-    }
-
-    private func deleteMarker(_ marker: WaveformMock.Marker) {
-        markers.removeAll { $0.id == marker.id }
+        .task { await model.loadSample() }
+        .onChange(of: model.speed) { _, newValue in model.engine.setRate(newValue) }
+        .onChange(of: model.mode) { _, newMode in model.modeChanged(to: newMode) }
     }
 }
 

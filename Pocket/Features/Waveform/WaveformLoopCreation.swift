@@ -10,7 +10,7 @@ import SwiftUI
 //   2. `LoopNameSheet` — a native sheet (manages its own keyboard inset) that
 //      opens on ✓ to name the loop.
 
-extension WaveformPracticeView {
+extension WaveformPracticeModel {
     /// A loop being captured, awaiting confirmation. Bounds are mutable so Fine
     /// handles drag them live; `fromFine` shows the blue handles; a non-nil
     /// `editingLoopID` means we're adjusting an existing loop, not creating one.
