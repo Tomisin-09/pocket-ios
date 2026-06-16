@@ -90,3 +90,22 @@ First-finger testing surfaced refinements, now decided:
 to `WaveformChrome.swift`, capture models to `WaveformLoopCreation.swift`, and the
 action handlers into a same-file extension. Region looping, pinch-to-zoom, undo,
 and snap-to-marker remain follow-ups on their own branches.
+
+## Update (2026-06-16, round 2) — capture flow
+
+A second on-device pass tightened the capture interaction:
+
+- **Confirm is an icon-only pill over the waveform**, not a bar below the
+  transport. The bar showed the range as text, which read as an editable name
+  field; the pill is just ✓/✗ floating on the waveform and commits/discards the
+  highlighted region. Naming still happens in the sheet after ✓.
+- **Tap mode is punch in/out.** Taps no longer seek — they mark the loop start
+  and end at the *current playhead* (playback runs between them, filling green).
+  The only way to move the playhead in Tap mode is to drag. This removed the
+  "tap jumps the playhead to my finger" surprise; tapping is a transport-style
+  punch, not a position set.
+- **Discarding a name keeps a Fine selection.** The capture stays live while the
+  naming sheet is open; a Save consumes it, but a Discard leaves a Fine
+  selection's handles + pill in place to re-adjust (a Tap capture still clears).
+  The `naming-sheet onDismiss` distinguishes the two by whether `capture`
+  survived the Save.
