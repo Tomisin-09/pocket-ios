@@ -5,6 +5,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Region looping** — an active loop now actually loops: playback wraps from the
+  loop's end back to its start continuously (`PracticeAudioEngine` loop region,
+  with the boundary math in unit-tested `AudioMath.loopSegment`). A loop just
+  loops (no on/off toggle — the per-loop `repeats` count is reserved for the
+  future automator); a small **✕ exit chip** by the loop name returns to
+  full-song playback. Decisions in ADR 0006.
+
 ### Changed
 - **Transport bar simplified**: the **"+" quick-capture** and the per-loop
   **repeat/clear controls** are gone — loop creation is owned by the Tap/Fine

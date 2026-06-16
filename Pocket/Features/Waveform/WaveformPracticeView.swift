@@ -146,7 +146,8 @@ struct WaveformPracticeView: View {
                                  onPlayPause: engine.togglePlay,
                                  mode: $mode,
                                  currentTime: engine.currentTime,
-                                 loop: activeLoop)
+                                 loop: activeLoop,
+                                 onClearLoop: clearActiveLoop)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -193,8 +194,7 @@ struct WaveformPracticeView: View {
         .onChange(of: mode) { _, newMode in modeChanged(to: newMode) }
     }
 
-    /// Generate the dev sample and hand it to the engine (skipped in previews to
-    /// keep the canvas light and avoid spinning up AVAudioEngine).
+    /// Generate the dev sample and hand it to the engine (skipped in previews).
     private func loadSample() async {
         guard !isPreview, engine.duration == 0 else { return }
         guard let sample = try? SampleToneGenerator.makeSample(duration: song.duration) else { return }
@@ -227,10 +227,7 @@ extension WaveformPracticeView {
         editingMarker = marker
     }
 
-    /// Tap mode = punch in / out at the **current playhead** (taps never move it —
-    /// only drag scrubs). First punch: mark the start and play on from where the
-    /// playhead already is, the region filling green as it goes. Second punch:
-    /// stop and open the confirm pill (bounds ordered + min-width by the helper).
+    /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd stops + confirms.
     private func tapPunch() {
         if let start = pendingStart {
             let bounds = WaveformGesture.loopBounds(start, playheadFraction)
@@ -247,8 +244,7 @@ extension WaveformPracticeView {
         }
     }
 
-    /// Fine mode: drag a blue handle, keeping the bounds ordered and at least the
-    /// minimum width apart. Preserves whether we're editing an existing loop.
+    /// Fine mode: drag a blue handle (bounds stay ordered + min-width apart).
     private func moveFineHandle(_ handle: WaveformGesture.Handle, _ fraction: Double) {
         guard let current = capture else { return }
         let bounds = WaveformGesture.movingHandle(handle, toFraction: fraction,
@@ -257,9 +253,7 @@ extension WaveformPracticeView {
                                fromFine: true, editingLoopID: current.editingLoopID)
     }
 
-    /// Entering Fine seeds a selection (the active loop, else a span at the
-    /// playhead) and opens the confirm bar; leaving Fine drops an unsaved one.
-    /// Any mode switch also clears a half-finished Tap capture + its preview.
+    /// Enter Fine → seed selection + pill; leave → drop unsaved; any switch clears a Tap capture.
     private func modeChanged(to newMode: InteractionMode) {
         if pendingStart != nil {
             pendingStart = nil
@@ -280,8 +274,7 @@ extension WaveformPracticeView {
         }
     }
 
-    /// Confirm ✓ — write back an existing loop's range, or open naming (the
-    /// capture is kept open during naming so a discard can restore it).
+    /// Confirm ✓ — write back a range edit, or open naming (capture kept so a discard can restore it).
     private func confirmCapture() {
         guard let draft = capture else { return }
         if let id = draft.editingLoopID {
@@ -290,6 +283,7 @@ extension WaveformPracticeView {
                 loops[index].end = draft.end
             }
             activeLoopID = id
+            applyActiveLoopToEngine()
             haptic(.medium)
             finishCapture()
         } else {
@@ -308,16 +302,13 @@ extension WaveformPracticeView {
         }
     }
 
-    /// The naming sheet was dismissed. A Save already consumed `capture`; if it
-    /// survived, this was a Discard — keep a **Fine** selection in place (its
-    /// confirm pill reappears so it can be re-adjusted), but drop a Tap capture.
+    /// Naming dismissed: Save consumed `capture`; survivor = Discard → keep Fine, drop Tap.
     private func namingDismissed() {
         guard let draft = capture, !draft.fromFine else { return }
         withAnimation(.easeOut(duration: 0.2)) { capture = nil }
     }
 
-    /// Naming-sheet Save — create the loop (empty name → the range), consume the
-    /// kept capture, and leave Fine.
+    /// Naming-sheet Save — create the loop (empty name → range), then leave Fine.
     private func saveNamed(_ name: String) {
         guard let draft = namingDraft else { return }
         let range = rangeString(draft.start, draft.end)
@@ -327,6 +318,7 @@ extension WaveformPracticeView {
                                      speed: speed, repeats: 4, duration: duration)
         loops.append(loop)
         activeLoopID = loop.id
+        applyActiveLoopToEngine()
         capture = nil
         namingDraft = nil
         if mode == .fine { mode = .scroll }
@@ -348,21 +340,35 @@ extension WaveformPracticeView {
         return (start, min(start + 0.12, 0.98))
     }
 
-    /// Entry point for setting an unknown tempo. The tap-tempo / manual-entry
-    /// flow is a follow-up commit; for now this is the affordance only.
+    /// Set an unknown tempo — tap-tempo / manual entry is a follow-up (ADR 0004).
     private func setBPM() {
         // TODO: present tap-tempo / manual BPM entry (see ADR 0004).
     }
 
-    /// Tapping a loop row: jump to its start and play; if it's already the
-    /// active, playing loop, pause. (Region looping arrives on a later branch.)
+    /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
     private func activate(_ loop: WaveformMock.Loop) {
         if activeLoopID == loop.id && engine.isPlaying {
             engine.pause()
         } else {
             activeLoopID = loop.id
+            applyActiveLoopToEngine()
             engine.seek(toSeconds: loop.startSeconds)
             engine.play()
+        }
+    }
+
+    /// Exit-loop chip — stop looping and play on through the song.
+    private func clearActiveLoop() {
+        activeLoopID = nil
+        applyActiveLoopToEngine()
+    }
+
+    /// Keep the engine's loop region in sync with the active loop (or clear it).
+    private func applyActiveLoopToEngine() {
+        if let activeLoop {
+            engine.setLoop(start: activeLoop.startSeconds, end: activeLoop.endSeconds)
+        } else {
+            engine.clearLoop()
         }
     }
 
@@ -373,7 +379,10 @@ extension WaveformPracticeView {
 
     private func deleteLoop(_ loop: WaveformMock.Loop) {
         loops.removeAll { $0.id == loop.id }
-        if activeLoopID == loop.id { activeLoopID = loops.first?.id }
+        if activeLoopID == loop.id {
+            activeLoopID = loops.first?.id
+            applyActiveLoopToEngine()
+        }
     }
 
     private func updateMarker(_ marker: WaveformMock.Marker) {

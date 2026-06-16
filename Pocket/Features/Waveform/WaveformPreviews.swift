@@ -94,7 +94,7 @@ import SwiftUI
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: false, onPlayPause: {}, mode: $mode,
                      currentTime: WaveformMock.song.playheadSeconds,
-                     loop: WaveformMock.song.activeLoop).padding()
+                     loop: WaveformMock.song.activeLoop, onClearLoop: {}).padding()
     }
 }
 
