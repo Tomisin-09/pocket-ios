@@ -106,8 +106,12 @@ final class PracticeAudioEngine {
         guard frameCount > 0 else { return }
         generation += 1
         let token = generation
+        // `.dataPlayedBack` fires when the audio has actually been rendered out —
+        // the legacy handler is `.dataConsumed`, which fires ~a buffer early (the
+        // player reads ahead), making a loop wrap noticeably before its end.
         player.scheduleSegment(file, startingFrame: seekFrame,
-                               frameCount: AVAudioFrameCount(frameCount), at: nil) { [weak self] in
+                               frameCount: AVAudioFrameCount(frameCount), at: nil,
+                               completionCallbackType: .dataPlayedBack) { [weak self] _ in
             Task { @MainActor in self?.handleReachedEnd(token: token) }
         }
         scheduled = true
