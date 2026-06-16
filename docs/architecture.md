@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath (pure)
+│              TempoMath · AudioMath · WaveformGesture (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -34,8 +34,10 @@
 time-pitch → mixer; play/pause/seek/rate + a published `currentTime`) with pure
 helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) aren't built yet,
 so a generated arpeggio (`SampleToneGenerator`) feeds the engine for development;
-the displayed waveform is downsampled from that same buffer. Region looping and
-marker-seek land next, then real file import replaces the generated source.
+the displayed waveform is downsampled from that same buffer. Tap-to-seek, scrub,
+and loop/marker capture are now driven by the waveform **gesture engine** (pure
+math in `WaveformGesture`, ADR 0005). Region looping (acting on the repeat
+toggle) lands next, then real file import replaces the generated source.
 
 Apple Music tracks skip stages 2–4 (no raw audio) — they are browse/metadata
 only. See `docs/decisions/0001`.

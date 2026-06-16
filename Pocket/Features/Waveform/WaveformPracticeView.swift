@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// The core practice screen (design brief §4.1). Iteration 1 is the **static
-/// layout skeleton in its default (paused) state**: the vertical rhythm,
-/// hierarchy and token usage for every section, driven by mock data. Gestures,
-/// the audio engine, the asymmetric speed scale, the loop-creation sheet and the
-/// non-default states (loading/empty/error/playing) are later single-axis
-/// iterations.
+/// The core practice screen (design brief §4.1): a fixed practice cockpit over a
+/// scrollable reference area, driven (for now) by mock song data plus a generated
+/// dev audio sample. Real playback runs through `PracticeAudioEngine`; the three
+/// transport modes are live as a gesture engine (Scroll/Tap/Fine — ADRs 0003,
+/// 0005). Loop capture is a keyboard-free confirm step then a naming sheet. Real
+/// file import and the asymmetric speed scale are later iterations.
 ///
 /// Everything references `PocketColor` / `Font.pocketMono` — no raw hex, no
 /// hard-coded point sizes where a text style fits. The individual sections live
@@ -23,7 +23,7 @@ struct WaveformPracticeView: View {
         var blurb: String {
             switch self {
             case .scroll: "Tap to set the playhead · hold to drop a marker"
-            case .tap: "Tap to set loop start, tap again to close the loop"
+            case .tap: "Drag to scrub · tap to set loop start, tap again to close"
             case .fine: "Drag the blue handles to fine-tune the loop bounds"
             }
         }
@@ -49,8 +49,17 @@ struct WaveformPracticeView: View {
     @State private var activeLoopID: WaveformMock.Loop.ID? = WaveformMock.song.loops.first?.id
     @State private var editingLoop: WaveformMock.Loop?
     @State private var editingMarker: WaveformMock.Marker?
-    /// The loop being captured (drives the inline creation panel).
-    @State private var draftLoop: WaveformMock.Loop?
+
+    /// Tap mode: the start of the loop being captured (the green forming
+    /// region), awaiting its closing tap.
+    @State private var pendingStart: Double?
+    /// The captured loop awaiting confirmation (drives the ConfirmBar). Bounds
+    /// are mutable so Fine handles drag them live; `fromFine` shows the blue
+    /// handles; a non-nil `editingLoopID` means we're adjusting an existing
+    /// loop's range rather than creating one.
+    @State private var capture: CaptureDraft?
+    /// The confirmed loop awaiting a name (drives the naming sheet).
+    @State private var namingDraft: NamingDraft?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -68,6 +77,21 @@ struct WaveformPracticeView: View {
     private var playheadFraction: Double {
         engine.duration > 0 ? engine.currentTime / engine.duration : 0
     }
+
+    /// Effective song length — the engine's once loaded, else the mock's.
+    private var duration: TimeInterval {
+        engine.duration > 0 ? engine.duration : song.duration
+    }
+
+    /// The Fine-mode selection to render (blue handles), if one is being defined.
+    private var fineSelection: (start: Double, end: Double)? {
+        guard let capture, capture.fromFine else { return nil }
+        return (capture.start, capture.end)
+    }
+
+    /// True while adjusting an existing loop's range — the reference area dims to
+    /// focus the waveform.
+    private var isRangeEditing: Bool { capture?.editingLoopID != nil }
 
     private var isPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
@@ -87,9 +111,19 @@ struct WaveformPracticeView: View {
                     ModeDescriptionLine(mode: mode)                          // 4
                     WaveformView(amplitudes: amplitudes,                     // 5
                                  playheadFraction: playheadFraction,
-                                 loop: activeLoop)
-                    TimeRuler(duration: engine.duration > 0 ? engine.duration : song.duration) // 6
+                                 loop: activeLoop,
+                                 mode: mode,
+                                 formingStart: pendingStart,
+                                 fineSelection: fineSelection,
+                                 playheadLabel: timecode(engine.currentTime),
+                                 onSeek: seekToFraction,
+                                 onDropMarker: dropMarker,
+                                 onTapBound: tapLoopBound,
+                                 onScrub: seekToFraction,
+                                 onMoveHandle: moveFineHandle)
+                    TimeRuler(duration: duration)                            // 6
                     Minimap(song: song, activeLoop: activeLoop, markers: markers, // 7
+                            fineSelection: fineSelection,
                             playheadFraction: playheadFraction)
                     TransportBar(isPlaying: engine.isPlaying,                // 8
                                  onPlayPause: engine.togglePlay,
@@ -97,19 +131,21 @@ struct WaveformPracticeView: View {
                                  mode: $mode,
                                  currentTime: engine.currentTime,
                                  loop: activeLoop,
-                                 onCapture: capture)
+                                 onCapture: quickCapture)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
                 .padding(.bottom, 12)
 
-                // 9. Loop creation sheet — slides in below the transport while a
-                //    loop is being captured, so it can be named on capture.
-                if let draft = draftLoop {
-                    LoopCreationPanel(
-                        range: "\(timecode(draft.startSeconds))–\(timecode(draft.endSeconds))",
-                        onSave: saveCapturedLoop,
-                        onDiscard: dismissDraft)
+                // 9. Confirm bar — slides in below the transport once a loop is
+                //    captured (Tap close / Fine selection / range edit). Keyboard-
+                //    free: ✓ moves on to naming (or saves a range edit), ✗ discards.
+                if let capture {
+                    ConfirmBar(
+                        range: rangeString(capture.start, capture.end),
+                        isEditing: capture.editingLoopID != nil,
+                        onConfirm: confirmCapture,
+                        onCancel: cancelCapture)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 12)
                         .transition(reduceMotion
@@ -123,31 +159,39 @@ struct WaveformPracticeView: View {
                     .frame(height: 1)
 
                 // Scrollable reference — loops, markers, then song info (demoted
-                // to the bottom, collapsed by default). Item 9 (the loop-creation
-                // sheet) appears only while a loop is being captured.
+                // to the bottom, collapsed by default). Dimmed + disabled while
+                // adjusting a loop's range, to focus the waveform.
                 ScrollView {
                     VStack(spacing: 16) {
                         LoopsPanel(loops: loops, expanded: $loopsExpanded,       // 10
                                    activeLoopID: activeLoopID, isPlaying: engine.isPlaying,
                                    onActivate: activate, onEdit: { editingLoop = $0 })
                         MarkersPanel(markers: markers, expanded: $markersExpanded, // 11
-                                     onEdit: { editingMarker = $0 })
+                                     onSeek: seekToMarker, onEdit: { editingMarker = $0 })
                         SongInfoPanel(song: song, expanded: $songInfoExpanded)   // 2
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                 }
+                .opacity(isRangeEditing ? 0.25 : 1)
+                .disabled(isRangeEditing)
+                .animation(.easeOut(duration: 0.2), value: isRangeEditing)
             }
         }
         .preferredColorScheme(.dark)
         .sheet(item: $editingLoop) { loop in
-            LoopEditSheet(loop: loop, onSave: updateLoop, onDelete: { deleteLoop(loop) })
+            LoopEditSheet(loop: loop, onSave: updateLoop, onDelete: { deleteLoop(loop) },
+                          onAdjustRange: { startRangeEdit(loop) })
         }
         .sheet(item: $editingMarker) { marker in
             MarkerEditSheet(marker: marker, onSave: updateMarker, onDelete: { deleteMarker(marker) })
         }
+        .sheet(item: $namingDraft) { draft in
+            LoopNameSheet(range: rangeString(draft.start, draft.end), onSave: saveNamed)
+        }
         .task { await loadSample() }
         .onChange(of: speed) { _, newValue in engine.setRate(newValue) }
+        .onChange(of: mode) { _, newMode in modeChanged(to: newMode) }
     }
 
     /// Generate the dev sample and hand it to the engine (skipped in previews to
@@ -159,32 +203,149 @@ struct WaveformPracticeView: View {
         try? engine.load(url: sample.url)
         engine.setRate(speed)
     }
+}
 
-    // MARK: Loop/marker actions
+// MARK: - Actions & gesture handlers
 
-    /// Capture a draft loop around the playhead and open the creation panel.
-    private func capture() {
-        guard draftLoop == nil else { return }
-        let start = min(playheadFraction, 0.85)
-        let end = min(start + 0.12, 0.98)
-        let draft = WaveformMock.Loop(name: "", start: start, end: end,
-                                      speed: speed, repeats: 4, duration: song.duration)
-        withAnimation(.easeOut(duration: 0.28)) { draftLoop = draft }
+extension WaveformPracticeView {
+
+    /// Scroll-mode tap and Tap-mode scrub: move the playhead to a song fraction.
+    private func seekToFraction(_ fraction: Double) {
+        engine.seek(toSeconds: fraction * duration)
     }
 
-    /// Save the captured loop with its name (empty → fall back to the range).
-    private func saveCapturedLoop(_ name: String) {
-        guard var draft = draftLoop else { return }
-        let range = "\(timecode(draft.startSeconds))–\(timecode(draft.endSeconds))"
+    /// Tap a marker in the list: seek the playhead to it.
+    private func seekToMarker(_ marker: WaveformMock.Marker) {
+        engine.seek(toSeconds: marker.seconds)
+        haptic(.light)
+    }
+
+    /// Scroll-mode hold: drop a marker at the held fraction, then open it to name.
+    private func dropMarker(_ fraction: Double) {
+        let marker = WaveformMock.Marker(seconds: fraction * duration, label: "Marker")
+        markers.append(marker)
+        markers.sort { $0.seconds < $1.seconds }
+        editingMarker = marker
+    }
+
+    /// Tap mode. First tap: set the loop start and preview-play from there (the
+    /// region fills green as it goes). Second tap: stop and open the confirm bar
+    /// (bounds ordered + min-width by the helper).
+    private func tapLoopBound(_ fraction: Double) {
+        if let start = pendingStart {
+            let bounds = WaveformGesture.loopBounds(start, fraction)
+            engine.pause()
+            pendingStart = nil
+            haptic(.medium)
+            withAnimation(.easeOut(duration: 0.28)) {
+                capture = CaptureDraft(start: bounds.start, end: bounds.end,
+                                       fromFine: false, editingLoopID: nil)
+            }
+        } else {
+            pendingStart = fraction
+            engine.seek(toSeconds: fraction * duration)
+            engine.play()
+        }
+    }
+
+    /// Fine mode: drag a blue handle, keeping the bounds ordered and at least the
+    /// minimum width apart. Preserves whether we're editing an existing loop.
+    private func moveFineHandle(_ handle: WaveformGesture.Handle, _ fraction: Double) {
+        guard let current = capture else { return }
+        let bounds = WaveformGesture.movingHandle(handle, toFraction: fraction,
+                                                  start: current.start, end: current.end)
+        capture = CaptureDraft(start: bounds.start, end: bounds.end,
+                               fromFine: true, editingLoopID: current.editingLoopID)
+    }
+
+    /// Entering Fine seeds a selection (the active loop, else a span at the
+    /// playhead) and opens the confirm bar; leaving Fine drops an unsaved one.
+    /// Any mode switch also clears a half-finished Tap capture + its preview.
+    private func modeChanged(to newMode: InteractionMode) {
+        if pendingStart != nil {
+            pendingStart = nil
+            engine.pause()
+        }
+        switch newMode {
+        case .fine:
+            if capture?.fromFine != true {
+                let seed = activeLoop.map { ($0.start, $0.end) } ?? defaultSelection()
+                withAnimation(.easeOut(duration: 0.28)) {
+                    capture = CaptureDraft(start: seed.0, end: seed.1, fromFine: true, editingLoopID: nil)
+                }
+            }
+        case .scroll, .tap:
+            if capture?.fromFine == true {
+                withAnimation(.easeOut(duration: 0.2)) { capture = nil }
+            }
+        }
+    }
+
+    /// Quick-capture a loop around the playhead (transport **+** button). Gesture
+    /// capture (Tap/Fine) is primary; this is a one-tap, VoiceOver-friendly path.
+    private func quickCapture() {
+        guard capture == nil else { return }
+        let (start, end) = defaultSelection()
+        withAnimation(.easeOut(duration: 0.28)) {
+            capture = CaptureDraft(start: start, end: end, fromFine: false, editingLoopID: nil)
+        }
+    }
+
+    /// ConfirmBar ✓ — write back an existing loop's range, or move on to naming.
+    private func confirmCapture() {
+        guard let draft = capture else { return }
+        if let id = draft.editingLoopID {
+            if let index = loops.firstIndex(where: { $0.id == id }) {
+                loops[index].start = draft.start
+                loops[index].end = draft.end
+            }
+            activeLoopID = id
+            haptic(.medium)
+            finishCapture()
+        } else {
+            withAnimation(.easeOut(duration: 0.2)) { capture = nil }
+            namingDraft = NamingDraft(start: draft.start, end: draft.end)
+        }
+    }
+
+    /// ConfirmBar ✗ — discard the capture.
+    private func cancelCapture() { finishCapture() }
+
+    /// Clear the confirm bar and leave Fine for the default Scroll mode.
+    private func finishCapture() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            capture = nil
+            if mode == .fine { mode = .scroll }
+        }
+    }
+
+    /// Naming-sheet Save — create the loop (empty name → the range).
+    private func saveNamed(_ name: String) {
+        guard let draft = namingDraft else { return }
+        let range = rangeString(draft.start, draft.end)
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        draft.name = trimmed.isEmpty ? range : trimmed
-        loops.append(draft)
-        activeLoopID = draft.id
-        withAnimation(.easeOut(duration: 0.28)) { draftLoop = nil }
+        let loop = WaveformMock.Loop(name: trimmed.isEmpty ? range : trimmed,
+                                     start: draft.start, end: draft.end,
+                                     speed: speed, repeats: 4, duration: duration)
+        loops.append(loop)
+        activeLoopID = loop.id
+        namingDraft = nil
     }
 
-    private func dismissDraft() {
-        withAnimation(.easeOut(duration: 0.2)) { draftLoop = nil }
+    /// "Adjust range" from a loop's edit sheet → Fine mode seeded with its bounds.
+    private func startRangeEdit(_ loop: WaveformMock.Loop) {
+        capture = CaptureDraft(start: loop.start, end: loop.end, fromFine: true, editingLoopID: loop.id)
+        withAnimation(.easeOut(duration: 0.2)) { mode = .fine }
+    }
+
+    private func rangeString(_ start: Double, _ end: Double) -> String {
+        "\(timecode(duration * start))–\(timecode(duration * end))"
+    }
+
+    /// A default loop span at the playhead, clamped so it never spills off the end.
+    private func defaultSelection() -> (Double, Double) {
+        let start = min(playheadFraction, 0.85)
+        return (start, min(start + 0.12, 0.98))
     }
 
     /// Entry point for setting an unknown tempo. The tap-tempo / manual-entry
@@ -193,8 +354,8 @@ struct WaveformPracticeView: View {
         // TODO: present tap-tempo / manual BPM entry (see ADR 0004).
     }
 
-    /// Tapping a loop's play button: jump to its start and play; if it's already
-    /// the active, playing loop, pause. (Region looping arrives in commit 2.)
+    /// Tapping a loop row: jump to its start and play; if it's already the
+    /// active, playing loop, pause. (Region looping arrives on a later branch.)
     private func activate(_ loop: WaveformMock.Loop) {
         if activeLoopID == loop.id && engine.isPlaying {
             engine.pause()
@@ -223,66 +384,6 @@ struct WaveformPracticeView: View {
     private func deleteMarker(_ marker: WaveformMock.Marker) {
         markers.removeAll { $0.id == marker.id }
     }
-}
-
-// MARK: - Shared chrome
-
-/// Collapsible panel: chevron + a summary line when collapsed, so the user is
-/// never left wondering what's hidden (brief §3.4).
-struct CollapsiblePanel<Content: View>: View {
-    let title: String
-    let summary: String
-    @Binding var expanded: Bool
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
-            } label: {
-                HStack {
-                    Text(title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Spacer()
-                    if !expanded {
-                        Text(summary)
-                            .font(.footnote)
-                            .foregroundStyle(PocketColor.textSecondary)
-                            .lineLimit(1)
-                    }
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .rotationEffect(.degrees(expanded ? 90 : 0))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            if expanded { content }
-        }
-        .padding(14)
-        .background(panelBackground)
-    }
-}
-
-/// Standard panel surface — a hair lighter than the near-black background.
-var panelBackground: some View {
-    RoundedRectangle(cornerRadius: 12, style: .continuous)
-        .fill(Color.white.opacity(0.04))
-}
-
-// MARK: - Formatting helpers
-
-/// `M:SS` monospace timecode (brief §3.2 — mono for all time values).
-func timecode(_ seconds: TimeInterval) -> String {
-    let total = Int(seconds.rounded())
-    return String(format: "%d:%02d", total / 60, total % 60)
-}
-
-func stars(_ filled: Int) -> String {
-    String(repeating: "★", count: filled) + String(repeating: "☆", count: max(0, 5 - filled))
 }
 
 #Preview {

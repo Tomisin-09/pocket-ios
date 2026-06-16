@@ -48,12 +48,29 @@ import SwiftUI
     }
 }
 
-#Preview("Waveform") {
+#Preview("Waveform — Scroll") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
         WaveformView(amplitudes: WaveformMock.song.amplitudes,
                      playheadFraction: WaveformMock.song.playheadFraction,
-                     loop: WaveformMock.song.activeLoop).padding()
+                     loop: WaveformMock.song.activeLoop,
+                     mode: .scroll, formingStart: nil, fineSelection: nil,
+                     playheadLabel: "0:10",
+                     onSeek: { _ in }, onDropMarker: { _ in }, onTapBound: { _ in },
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }).padding()
+    }
+}
+
+#Preview("Waveform — Fine handles") {
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        WaveformView(amplitudes: WaveformMock.song.amplitudes,
+                     playheadFraction: WaveformMock.song.playheadFraction,
+                     loop: nil,
+                     mode: .fine, formingStart: nil, fineSelection: (0.30, 0.62),
+                     playheadLabel: "0:10",
+                     onSeek: { _ in }, onDropMarker: { _ in }, onTapBound: { _ in },
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }).padding()
     }
 }
 
@@ -63,6 +80,7 @@ import SwiftUI
         Minimap(song: WaveformMock.song,
                 activeLoop: WaveformMock.song.activeLoop,
                 markers: WaveformMock.song.markers,
+                fineSelection: nil,
                 playheadFraction: WaveformMock.song.playheadFraction).padding()
     }
 }
@@ -79,11 +97,24 @@ import SwiftUI
     }
 }
 
-#Preview("Loop creation") {
+#Preview("Confirm bar — new") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        LoopCreationPanel(range: "0:42–1:08", onSave: { _ in }, onDiscard: {}).padding()
+        ConfirmBar(range: "0:42–1:08", isEditing: false,
+                   onConfirm: {}, onCancel: {}).padding()
     }
+}
+
+#Preview("Confirm bar — adjust") {
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        ConfirmBar(range: "0:42–1:08", isEditing: true,
+                   onConfirm: {}, onCancel: {}).padding()
+    }
+}
+
+#Preview("Loop name sheet") {
+    LoopNameSheet(range: "0:42–1:08", onSave: { _ in })
 }
 
 #Preview("Loops + Markers") {
@@ -97,7 +128,7 @@ import SwiftUI
                        activeLoopID: song.loops.first?.id, isPlaying: false,
                        onActivate: { _ in }, onEdit: { _ in })
             MarkersPanel(markers: song.markers, expanded: $markersExpanded,
-                         onEdit: { _ in })
+                         onSeek: { _ in }, onEdit: { _ in })
         }
         .padding()
     }
@@ -116,10 +147,11 @@ import SwiftUI
     @Previewable @State var expanded = true
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        MarkersPanel(markers: [], expanded: $expanded, onEdit: { _ in }).padding()
+        MarkersPanel(markers: [], expanded: $expanded, onSeek: { _ in }, onEdit: { _ in }).padding()
     }
 }
 
 #Preview("Edit loop sheet") {
-    LoopEditSheet(loop: WaveformMock.song.loops[0], onSave: { _ in }, onDelete: {})
+    LoopEditSheet(loop: WaveformMock.song.loops[0], onSave: { _ in }, onDelete: {},
+                  onAdjustRange: {})
 }

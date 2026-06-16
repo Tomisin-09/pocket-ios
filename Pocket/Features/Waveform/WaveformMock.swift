@@ -38,10 +38,11 @@ enum WaveformMock {
         let id = UUID()
         /// User-given name; editable. Falls back to the time range when empty.
         var name: String
-        /// Bounds as fractions of the song (0...1). Edited via waveform gestures,
-        /// not the edit sheet, so they stay `let` here.
-        let start: Double
-        let end: Double
+        /// Bounds as fractions of the song (0...1). Edited on the waveform via
+        /// Fine mode ("Adjust range"), not by typing, but mutable so that edit
+        /// can write them back.
+        var start: Double
+        var end: Double
         var speed: Double
         var repeats: Int
 

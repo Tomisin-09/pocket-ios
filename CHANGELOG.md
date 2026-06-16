@@ -22,6 +22,23 @@ All notable changes to Pocket are documented here. Format loosely follows
   string, background-audio mode and portrait lock on every `xcodegen generate`.
 
 ### Added
+- **Waveform gesture engine — UX polish** (from on-device feedback): Scroll mode
+  now **drags to scrub** the playhead (tap still jumps, hold still drops a
+  marker); Tap mode **plays a preview** from the first tap, filling the loop
+  region green, and stops on the second; a live **time bubble** rides the
+  playhead in every mode. Loop capture is now a keyboard-free **confirm bar
+  (✓/✗)** that opens a native **naming sheet** (no more keyboard hiding the
+  field). Loop & marker lists are **unified** — tap a row to use it (activate
+  loop / seek to marker), edit via a trailing pencil. An existing loop's range
+  can be **adjusted in Fine mode** via "Adjust range" (the reference area dims to
+  focus the waveform). Name fields gained a **clear (✕)** button. ADR 0005 updated.
+- **Waveform gesture engine** — the three transport modes are now live on the
+  waveform: **Scroll** taps to seek and holds 650 ms (amber ring) to drop a
+  marker; **Tap** drags to scrub and two taps capture a loop; **Fine** drags two
+  blue handles to set loop bounds. Loop capture is named inline as before. The
+  pure gesture math (point→fraction, bound ordering + min width, handle
+  hit-testing) lives in unit-tested `WaveformGesture`. The transport **+** button
+  remains as an accessible quick-capture. Decisions in ADR 0005.
 - **Waveform practice screen** (Phase 1 skeleton) — SoundCloud-style mirrored
   waveform, speed/BPM bar, time ruler, minimap, transport bar with Scroll/Tap/
   Fine mode pills, all on the design tokens. Driven by mock data; audio engine,

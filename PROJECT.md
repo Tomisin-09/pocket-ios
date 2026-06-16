@@ -64,9 +64,13 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 
 ## Status
 
-Phase 1 (in progress) — the **waveform practice screen** exists as a UI skeleton
-on mock data (no audio engine yet): a fixed practice cockpit over a scrollable
-reference area, with named/editable loops & markers (see ADR 0003). The app
-temporarily launches straight into it; it reverts to the planner once navigation
-lands in Phase 3. Verified pure logic: `TempoMath`, `SongRef`. See `CHANGELOG.md`
-and the build plan in the repo for sequencing.
+Phase 1 (in progress) — the **waveform practice screen**: a fixed practice
+cockpit over a scrollable reference area, with named/editable loops & markers
+(ADR 0003). Real playback runs through `PracticeAudioEngine` (play/pause/seek/
+pitch-preserving speed) fed by a generated dev sample until file import lands.
+The three transport modes are live as a **gesture engine** (Scroll seek + hold-
+to-marker, Tap scrub + two-tap loop capture, Fine draggable handles; ADR 0005),
+with the pure gesture math in unit-tested `WaveformGesture`. The app temporarily
+launches straight into this screen; it reverts to the planner once navigation
+lands in Phase 3. Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`,
+`WaveformGesture`. See `CHANGELOG.md` and the build plan for sequencing.

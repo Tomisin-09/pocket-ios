@@ -10,9 +10,9 @@ struct LoopsPanel: View {
     @Binding var expanded: Bool
     let activeLoopID: WaveformMock.Loop.ID?
     let isPlaying: Bool
-    /// Trailing play button — activate (and play) this loop.
+    /// Tap the row — activate (and play / toggle) this loop.
     let onActivate: (WaveformMock.Loop) -> Void
-    /// Tap the row body — open the edit sheet.
+    /// Trailing pencil — open the edit sheet.
     let onEdit: (WaveformMock.Loop) -> Void
 
     var body: some View {
@@ -50,37 +50,51 @@ private struct LoopRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            // Active accent (green) down the leading edge.
-            RoundedRectangle(cornerRadius: 1.5)
-                .fill(isActive ? PocketColor.active : Color.clear)
-                .frame(width: 3, height: 38)
-
-            Button(action: onEdit) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(loop.name)
-                        .font(.subheadline)
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .lineLimit(1)
-                    Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds)) · "
-                         + String(format: "%.2f× · ×%d", loop.speed, loop.repeats))
-                        .font(.pocketMono(.footnote))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .lineLimit(1)
+            // Tap the row to activate (and play / toggle) the loop.
+            Button(action: onActivate) {
+                HStack(spacing: 10) {
+                    // Active accent (green) down the leading edge.
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(isActive ? PocketColor.active : Color.clear)
+                        .frame(width: 3, height: 38)
+                    Image(systemName: isActive && isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(isActive ? PocketColor.active : PocketColor.textSecondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(loop.name)
+                            .font(.subheadline)
+                            .foregroundStyle(PocketColor.textPrimary)
+                            .lineLimit(1)
+                        Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds)) · "
+                             + String(format: "%.2f× · ×%d", loop.speed, loop.repeats))
+                            .font(.pocketMono(.footnote))
+                            .foregroundStyle(PocketColor.textSecondary)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(isActive && isPlaying ? "Pause \(loop.name)" : "Play \(loop.name)")
 
-            Button(action: onActivate) {
-                Image(systemName: isActive && isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(isActive ? PocketColor.active : PocketColor.textSecondary)
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isActive && isPlaying ? "Pause loop" : "Activate \(loop.name)")
+            EditPencil { onEdit() }
+                .accessibilityLabel("Edit \(loop.name)")
         }
+    }
+}
+
+/// Shared trailing edit affordance for loop and marker rows.
+private struct EditPencil: View {
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "pencil")
+                .font(.body)
+                .foregroundStyle(PocketColor.textSecondary)
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -89,7 +103,9 @@ private struct LoopRow: View {
 struct MarkersPanel: View {
     let markers: [WaveformMock.Marker]
     @Binding var expanded: Bool
-    /// Tap the row — open the edit sheet (rename / delete).
+    /// Tap the row — seek the playhead to the marker.
+    let onSeek: (WaveformMock.Marker) -> Void
+    /// Trailing pencil — open the edit sheet (rename / delete).
     let onEdit: (WaveformMock.Marker) -> Void
 
     var body: some View {
@@ -105,24 +121,28 @@ struct MarkersPanel: View {
             } else {
                 VStack(spacing: 8) {
                     ForEach(markers) { marker in
-                        Button { onEdit(marker) } label: {
-                            HStack(spacing: 10) {
-                                Circle().fill(PocketColor.pin).frame(width: 8, height: 8)
-                                Text(marker.label)
-                                    .font(.subheadline)
-                                    .foregroundStyle(PocketColor.textPrimary)
-                                    .lineLimit(1)
-                                Spacer()
-                                Text(timecode(marker.seconds))
-                                    .font(.pocketMono(.footnote))
-                                    .foregroundStyle(PocketColor.textSecondary)
-                                Image(systemName: "chevron.right")
-                                    .font(.caption2.weight(.semibold))
-                                    .foregroundStyle(PocketColor.textSecondary)
+                        HStack(spacing: 10) {
+                            // Tap the row to seek the playhead to the marker.
+                            Button { onSeek(marker) } label: {
+                                HStack(spacing: 10) {
+                                    Circle().fill(PocketColor.pin).frame(width: 8, height: 8)
+                                    Text(marker.label)
+                                        .font(.subheadline)
+                                        .foregroundStyle(PocketColor.textPrimary)
+                                        .lineLimit(1)
+                                    Spacer(minLength: 0)
+                                    Text(timecode(marker.seconds))
+                                        .font(.pocketMono(.footnote))
+                                        .foregroundStyle(PocketColor.textSecondary)
+                                }
+                                .contentShape(Rectangle())
                             }
-                            .contentShape(Rectangle())
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Go to \(marker.label)")
+
+                            EditPencil { onEdit(marker) }
+                                .accessibilityLabel("Edit \(marker.label)")
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }

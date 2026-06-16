@@ -2,8 +2,20 @@ import SwiftUI
 
 // The individual sections of the waveform practice screen, top → bottom
 // (design brief §4.1). Split out of `WaveformPracticeView` to keep each file
-// focused; shared chrome (`CollapsiblePanel`, `panelBackground`) and the
-// formatting helpers live alongside the screen.
+// focused; shared chrome (`CollapsiblePanel`, `panelBackground`) lives alongside
+// the screen.
+
+// MARK: - Formatting helpers
+
+/// `M:SS` monospace timecode (brief §3.2 — mono for all time values).
+func timecode(_ seconds: TimeInterval) -> String {
+    let total = Int(seconds.rounded())
+    return String(format: "%d:%02d", total / 60, total % 60)
+}
+
+func stars(_ filled: Int) -> String {
+    String(repeating: "★", count: filled) + String(repeating: "☆", count: max(0, 5 - filled))
+}
 
 // MARK: - 1. Song strip
 

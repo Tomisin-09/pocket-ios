@@ -9,6 +9,8 @@ struct LoopEditSheet: View {
     let loop: WaveformMock.Loop
     let onSave: (WaveformMock.Loop) -> Void
     let onDelete: () -> Void
+    /// Enter Fine mode on the waveform to adjust this loop's bounds.
+    let onAdjustRange: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var name: String
@@ -17,10 +19,12 @@ struct LoopEditSheet: View {
 
     init(loop: WaveformMock.Loop,
          onSave: @escaping (WaveformMock.Loop) -> Void,
-         onDelete: @escaping () -> Void) {
+         onDelete: @escaping () -> Void,
+         onAdjustRange: @escaping () -> Void) {
         self.loop = loop
         self.onSave = onSave
         self.onDelete = onDelete
+        self.onAdjustRange = onAdjustRange
         _name = State(initialValue: loop.name)
         _speed = State(initialValue: loop.speed)
         _repeats = State(initialValue: loop.repeats)
@@ -30,12 +34,18 @@ struct LoopEditSheet: View {
         NavigationStack {
             Form {
                 Section("Name") {
-                    TextField("Loop name", text: $name)
+                    ClearableTextField("Loop name", text: $name)
                 }
                 Section("Range") {
                     LabeledContent("Loop") {
                         Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
                             .font(.pocketMono(.body))
+                    }
+                    Button {
+                        dismiss()
+                        onAdjustRange()
+                    } label: {
+                        Label("Adjust range on waveform", systemImage: "slider.horizontal.below.rectangle")
                     }
                 }
                 Section("Playback") {
@@ -98,7 +108,7 @@ struct MarkerEditSheet: View {
         NavigationStack {
             Form {
                 Section("Name") {
-                    TextField("Marker name", text: $label)
+                    ClearableTextField("Marker name", text: $label)
                 }
                 Section("Position") {
                     LabeledContent("At") {
