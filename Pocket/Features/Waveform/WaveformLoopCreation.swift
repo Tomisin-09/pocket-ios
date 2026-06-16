@@ -3,9 +3,10 @@ import SwiftUI
 // Loop capture models + flow (design brief §4.1 #9), in two keyboard-free-then-
 // named steps so the naming field is never hidden behind the keyboard:
 //
-//   1. `ConfirmBar` — slides in below the transport once a loop is captured
-//      (Tap close / Fine selection). Just the range + ✓/✗, no keyboard, so the
-//      range can be verified (and re-heard) before committing.
+//   1. `ConfirmPopup` — an icon-only ✓/✗ pill floating over the waveform once a
+//      loop is captured (Tap punch-out / Fine selection). Deliberately has no
+//      text or range, so it never reads as an editable name — it just commits or
+//      discards the highlighted region.
 //   2. `LoopNameSheet` — a native sheet (manages its own keyboard inset) that
 //      opens on ✓ to name the loop.
 
@@ -28,49 +29,40 @@ extension WaveformPracticeView {
     }
 }
 
-/// Step 1 — confirm the captured range (or, when adjusting, the new bounds).
-struct ConfirmBar: View {
-    let range: String
+/// Step 1 — an icon-only ✓/✗ pill that floats over the waveform to commit or
+/// discard the highlighted region. `isEditing` only changes the accessibility
+/// label (✓ saves a range edit vs. opens naming); there is no on-pill text.
+struct ConfirmPopup: View {
     /// `true` when adjusting an existing loop's range rather than creating one.
     let isEditing: Bool
     let onConfirm: () -> Void
     let onCancel: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Text(isEditing ? "Adjust range" : "New loop")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-            Text(range)
-                .font(.pocketMono(.footnote))
-                .foregroundStyle(PocketColor.marker)
-            Spacer()
-            Button(action: onCancel) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(PocketColor.danger)
-                    .frame(width: 44, height: 44)
-            }
-            .accessibilityLabel("Discard")
-            Button(action: onConfirm) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(PocketColor.active)
-                    .frame(width: 44, height: 44)
-            }
-            .accessibilityLabel(isEditing ? "Save range" : "Name loop")
+        HStack(spacing: 6) {
+            iconButton("xmark", tint: PocketColor.danger, action: onCancel)
+                .accessibilityLabel("Discard")
+            iconButton("checkmark", tint: PocketColor.active, action: onConfirm)
+                .accessibilityLabel(isEditing ? "Save range" : "Name loop")
         }
-        .padding(.leading, 14)
-        .padding(.trailing, 4)
-        .padding(.vertical, 4)
+        .padding(6)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(PocketColor.active.opacity(0.5), lineWidth: 1)
-                )
+            Capsule()
+                .fill(PocketColor.background.opacity(0.9))
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
         )
+    }
+
+    private func iconButton(_ symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(tint)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(tint.opacity(0.15)))
+        }
+        .buttonStyle(.plain)
     }
 }
 

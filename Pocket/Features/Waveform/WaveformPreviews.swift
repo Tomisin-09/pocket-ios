@@ -56,7 +56,7 @@ import SwiftUI
                      loop: WaveformMock.song.activeLoop,
                      mode: .scroll, formingStart: nil, fineSelection: nil,
                      playheadLabel: "0:10",
-                     onSeek: { _ in }, onDropMarker: { _ in }, onTapBound: { _ in },
+                     onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
                      onScrub: { _ in }, onMoveHandle: { _, _ in }).padding()
     }
 }
@@ -69,7 +69,7 @@ import SwiftUI
                      loop: nil,
                      mode: .fine, formingStart: nil, fineSelection: (0.30, 0.62),
                      playheadLabel: "0:10",
-                     onSeek: { _ in }, onDropMarker: { _ in }, onTapBound: { _ in },
+                     onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
                      onScrub: { _ in }, onMoveHandle: { _, _ in }).padding()
     }
 }
@@ -97,19 +97,10 @@ import SwiftUI
     }
 }
 
-#Preview("Confirm bar — new") {
+#Preview("Confirm popup") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        ConfirmBar(range: "0:42–1:08", isEditing: false,
-                   onConfirm: {}, onCancel: {}).padding()
-    }
-}
-
-#Preview("Confirm bar — adjust") {
-    ZStack {
-        PocketColor.background.ignoresSafeArea()
-        ConfirmBar(range: "0:42–1:08", isEditing: true,
-                   onConfirm: {}, onCancel: {}).padding()
+        ConfirmPopup(isEditing: false, onConfirm: {}, onCancel: {})
     }
 }
 

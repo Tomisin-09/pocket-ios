@@ -5,11 +5,8 @@ import SwiftUI
 /// dev audio sample. Real playback runs through `PracticeAudioEngine`; the three
 /// transport modes are live as a gesture engine (Scroll/Tap/Fine — ADRs 0003,
 /// 0005). Loop capture is a keyboard-free confirm step then a naming sheet. Real
-/// file import and the asymmetric speed scale are later iterations.
-///
-/// Everything references `PocketColor` / `Font.pocketMono` — no raw hex, no
-/// hard-coded point sizes where a text style fits. The individual sections live
-/// in `WaveformSections.swift`.
+/// file import and the asymmetric speed scale are later iterations. Sections
+/// live in `WaveformSections.swift`; shared chrome in `WaveformChrome.swift`.
 struct WaveformPracticeView: View {
 
     /// Transport interaction modes — pills in the transport bar (brief §4.1).
@@ -93,6 +90,9 @@ struct WaveformPracticeView: View {
     /// focus the waveform.
     private var isRangeEditing: Bool { capture?.editingLoopID != nil }
 
+    /// The confirm pill shows while a region is captured but not yet being named.
+    private var showConfirm: Bool { capture != nil && namingDraft == nil }
+
     private var isPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
@@ -118,9 +118,21 @@ struct WaveformPracticeView: View {
                                  playheadLabel: timecode(engine.currentTime),
                                  onSeek: seekToFraction,
                                  onDropMarker: dropMarker,
-                                 onTapBound: tapLoopBound,
+                                 onTapPunch: tapPunch,
                                  onScrub: seekToFraction,
                                  onMoveHandle: moveFineHandle)
+                        // 9. Icon-only confirm pill, floating over the waveform
+                        //    once a region is captured (hidden while naming).
+                        .overlay(alignment: .bottom) {
+                            if showConfirm {
+                                ConfirmPopup(isEditing: capture?.editingLoopID != nil,
+                                             onConfirm: confirmCapture,
+                                             onCancel: cancelCapture)
+                                    .padding(.bottom, 8)
+                                    .transition(reduceMotion ? .opacity
+                                                : .scale(scale: 0.85).combined(with: .opacity))
+                            }
+                        }
                     TimeRuler(duration: duration)                            // 6
                     Minimap(song: song, activeLoop: activeLoop, markers: markers, // 7
                             fineSelection: fineSelection,
@@ -136,22 +148,6 @@ struct WaveformPracticeView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
                 .padding(.bottom, 12)
-
-                // 9. Confirm bar — slides in below the transport once a loop is
-                //    captured (Tap close / Fine selection / range edit). Keyboard-
-                //    free: ✓ moves on to naming (or saves a range edit), ✗ discards.
-                if let capture {
-                    ConfirmBar(
-                        range: rangeString(capture.start, capture.end),
-                        isEditing: capture.editingLoopID != nil,
-                        onConfirm: confirmCapture,
-                        onCancel: cancelCapture)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 12)
-                        .transition(reduceMotion
-                                    ? .opacity
-                                    : .move(edge: .bottom).combined(with: .opacity))
-                }
 
                 // Hairline boundary between the fixed surface and the scroll area.
                 Rectangle()
@@ -186,7 +182,7 @@ struct WaveformPracticeView: View {
         .sheet(item: $editingMarker) { marker in
             MarkerEditSheet(marker: marker, onSave: updateMarker, onDelete: { deleteMarker(marker) })
         }
-        .sheet(item: $namingDraft) { draft in
+        .sheet(item: $namingDraft, onDismiss: namingDismissed) { draft in
             LoopNameSheet(range: rangeString(draft.start, draft.end), onSave: saveNamed)
         }
         .task { await loadSample() }
@@ -228,12 +224,13 @@ extension WaveformPracticeView {
         editingMarker = marker
     }
 
-    /// Tap mode. First tap: set the loop start and preview-play from there (the
-    /// region fills green as it goes). Second tap: stop and open the confirm bar
-    /// (bounds ordered + min-width by the helper).
-    private func tapLoopBound(_ fraction: Double) {
+    /// Tap mode = punch in / out at the **current playhead** (taps never move it —
+    /// only drag scrubs). First punch: mark the start and play on from where the
+    /// playhead already is, the region filling green as it goes. Second punch:
+    /// stop and open the confirm pill (bounds ordered + min-width by the helper).
+    private func tapPunch() {
         if let start = pendingStart {
-            let bounds = WaveformGesture.loopBounds(start, fraction)
+            let bounds = WaveformGesture.loopBounds(start, playheadFraction)
             engine.pause()
             pendingStart = nil
             haptic(.medium)
@@ -242,8 +239,7 @@ extension WaveformPracticeView {
                                        fromFine: false, editingLoopID: nil)
             }
         } else {
-            pendingStart = fraction
-            engine.seek(toSeconds: fraction * duration)
+            pendingStart = playheadFraction
             engine.play()
         }
     }
@@ -291,7 +287,9 @@ extension WaveformPracticeView {
         }
     }
 
-    /// ConfirmBar ✓ — write back an existing loop's range, or move on to naming.
+    /// Confirm ✓ — write back an existing loop's range, or open naming. The
+    /// capture is kept open while naming so a discarded name can restore it
+    /// (the pill hides because `namingDraft` is set).
     private func confirmCapture() {
         guard let draft = capture else { return }
         if let id = draft.editingLoopID {
@@ -303,15 +301,14 @@ extension WaveformPracticeView {
             haptic(.medium)
             finishCapture()
         } else {
-            withAnimation(.easeOut(duration: 0.2)) { capture = nil }
             namingDraft = NamingDraft(start: draft.start, end: draft.end)
         }
     }
 
-    /// ConfirmBar ✗ — discard the capture.
+    /// Confirm ✗ — discard the capture outright (and leave Fine).
     private func cancelCapture() { finishCapture() }
 
-    /// Clear the confirm bar and leave Fine for the default Scroll mode.
+    /// Clear the capture and leave Fine for the default Scroll mode.
     private func finishCapture() {
         withAnimation(.easeOut(duration: 0.2)) {
             capture = nil
@@ -319,7 +316,16 @@ extension WaveformPracticeView {
         }
     }
 
-    /// Naming-sheet Save — create the loop (empty name → the range).
+    /// The naming sheet was dismissed. A Save already consumed `capture`; if it
+    /// survived, this was a Discard — keep a **Fine** selection in place (its
+    /// confirm pill reappears so it can be re-adjusted), but drop a Tap capture.
+    private func namingDismissed() {
+        guard let draft = capture, !draft.fromFine else { return }
+        withAnimation(.easeOut(duration: 0.2)) { capture = nil }
+    }
+
+    /// Naming-sheet Save — create the loop (empty name → the range), consume the
+    /// kept capture, and leave Fine.
     private func saveNamed(_ name: String) {
         guard let draft = namingDraft else { return }
         let range = rangeString(draft.start, draft.end)
@@ -329,7 +335,9 @@ extension WaveformPracticeView {
                                      speed: speed, repeats: 4, duration: duration)
         loops.append(loop)
         activeLoopID = loop.id
+        capture = nil
         namingDraft = nil
+        if mode == .fine { mode = .scroll }
     }
 
     /// "Adjust range" from a loop's edit sheet → Fine mode seeded with its bounds.

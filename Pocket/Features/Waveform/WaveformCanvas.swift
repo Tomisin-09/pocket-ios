@@ -37,7 +37,9 @@ struct WaveformView: View {
 
     let onSeek: (Double) -> Void
     let onDropMarker: (Double) -> Void
-    let onTapBound: (Double) -> Void
+    /// Tap mode: a location-less punch — marks the loop start/end at the *current
+    /// playhead*, never at the tap position (only drag scrubs the playhead).
+    let onTapPunch: () -> Void
     let onScrub: (Double) -> Void
     let onMoveHandle: (WaveformGesture.Handle, Double) -> Void
 
@@ -198,7 +200,7 @@ struct WaveformView: View {
         case .tap:
             if !didScrub && moved <= scrubThreshold {
                 haptic(.light)
-                onTapBound(fraction)                                          // sets / closes a bound
+                onTapPunch()                                                  // punch in / out at the playhead
             }
         case .fine:
             grabbedHandle = nil

@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Loop capture flow refined** (2nd round of on-device feedback): the keyboard-
+  free confirm step is now an **icon-only ✓/✗ pill floating over the waveform**
+  (the old bar read as if the name were editable there). **Tap mode is now punch
+  in/out** — taps mark the loop at the *current playhead* and never move it; only
+  dragging scrubs. Discarding the name from a **Fine** selection now **keeps the
+  selection** (handles + pill return) so it can be re-adjusted. ADR 0005 updated.
 - Renamed the product from "Ore" to **Pocket** (module, targets, bundle id
   `click.decooperations.pocket`, repo `pocket-ios`, all docs). Dropped the
   Yoruba "friend" etymology, which no longer applies to the new name.
