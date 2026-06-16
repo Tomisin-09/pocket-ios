@@ -225,6 +225,8 @@ struct TransportBar: View {
     @Binding var mode: WaveformPracticeView.InteractionMode
     let currentTime: TimeInterval
     let loop: WaveformMock.Loop?
+    /// Exit the active loop (stop looping, play on through the song).
+    let onClearLoop: () -> Void
 
     var body: some View {
         VStack(spacing: 10) {
@@ -243,9 +245,8 @@ struct TransportBar: View {
 
                 Spacer()
 
-                // Active loop — name (primary) over its range. It loops by
-                // default; on/off controls were removed (region looping, with a
-                // proper enter/exit model, lands on a later branch).
+                // Active loop — name (primary) over its range, with an exit chip.
+                // The loop just loops; the ✕ is the way out (back to full song).
                 if let loop {
                     VStack(alignment: .trailing, spacing: 1) {
                         Text(loop.name)
@@ -258,6 +259,16 @@ struct TransportBar: View {
                     }
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("Looping \(loop.name)")
+
+                    Button(action: onClearLoop) {
+                        Image(systemName: "xmark")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(PocketColor.textSecondary)
+                            .frame(width: 30, height: 30)
+                            .background(Circle().fill(Color.white.opacity(0.08)))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Exit loop")
                 }
             }
 

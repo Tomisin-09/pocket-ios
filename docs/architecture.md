@@ -35,9 +35,11 @@ time-pitch → mixer; play/pause/seek/rate + a published `currentTime`) with pur
 helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) aren't built yet,
 so a generated arpeggio (`SampleToneGenerator`) feeds the engine for development;
 the displayed waveform is downsampled from that same buffer. Tap-to-seek, scrub,
-and loop/marker capture are now driven by the waveform **gesture engine** (pure
-math in `WaveformGesture`, ADR 0005). Region looping (acting on the repeat
-toggle) lands next, then real file import replaces the generated source.
+and loop/marker capture are driven by the waveform **gesture engine** (pure math
+in `WaveformGesture`, ADR 0005). An active loop **loops continuously** — the
+engine wraps from the loop end back to its start (reschedule-on-end; boundary
+math in `AudioMath.loopSegment`, ADR 0006). Real file import replaces the
+generated source next.
 
 Apple Music tracks skip stages 2–4 (no raw audio) — they are browse/metadata
 only. See `docs/decisions/0001`.

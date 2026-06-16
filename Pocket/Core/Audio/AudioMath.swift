@@ -36,4 +36,18 @@ enum AudioMath {
         guard sampleRate > 0 else { return 0 }
         return Double(frames) / sampleRate
     }
+
+    /// Frame range for a loop region, clamped to the file. Returns the start
+    /// frame and the number of frames to play before wrapping back to the start.
+    /// `start`/`end` are seconds; out-of-order or out-of-range inputs are clamped
+    /// so the result is always a valid, non-negative segment inside the file.
+    static func loopSegment(start: TimeInterval, end: TimeInterval,
+                            sampleRate: Double, totalFrames: Int) -> (startFrame: Int, frameCount: Int) {
+        guard sampleRate > 0, totalFrames > 0 else { return (0, 0) }
+        let lower = min(start, end)
+        let upper = max(start, end)
+        let startFrame = min(max(0, secondsToFrames(lower, sampleRate: sampleRate)), totalFrames)
+        let endFrame = min(max(0, secondsToFrames(upper, sampleRate: sampleRate)), totalFrames)
+        return (startFrame, max(0, endFrame - startFrame))
+    }
 }

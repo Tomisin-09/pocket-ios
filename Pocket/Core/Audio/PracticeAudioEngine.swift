@@ -3,10 +3,10 @@ import Observation
 
 /// Minimal practice playback engine: AVAudioEngine → player → time-pitch
 /// (pitch-preserving speed) → mixer. AVFoundation lives here in Core/Audio; the
-/// pure math stays in `AudioMath`. See docs/architecture.md and ADR 0001.
+/// pure math stays in `AudioMath`. See docs/architecture.md, ADRs 0001 & 0006.
 ///
-/// Looping a region and reacting to repeat are layered on later; this is
-/// play / pause / seek / rate with a published `currentTime`.
+/// play / pause / seek / rate, plus continuous **region looping** (an active
+/// loop wraps back to its start), with a published `currentTime`.
 @MainActor
 @Observable
 final class PracticeAudioEngine {
@@ -28,6 +28,9 @@ final class PracticeAudioEngine {
     /// stale "reached end" can't reset state for the new segment.
     private var generation = 0
     private var displayTimer: Timer?
+    /// When set, playback loops this region (seconds): reaching its end wraps
+    /// back to its start. `nil` plays straight through.
+    private var loopRegion: (start: TimeInterval, end: TimeInterval)?
 
     init() {
         engine.attach(player)
@@ -82,29 +85,59 @@ final class PracticeAudioEngine {
         timePitch.rate = Float(min(2.0, max(0.25, rate)))
     }
 
+    /// Loop a region (seconds) continuously. Takes effect on the next schedule —
+    /// callers that want it to start now should follow with `seek(toSeconds:)`.
+    func setLoop(start: TimeInterval, end: TimeInterval) {
+        loopRegion = (start: start, end: end)
+    }
+
+    /// Stop looping; if playing, re-arm from the current position so it plays
+    /// straight through to the end instead of stopping at the old loop end.
+    func clearLoop() {
+        loopRegion = nil
+        if isPlaying { seek(toSeconds: currentTime) }
+    }
+
     // MARK: - Private
 
     private func scheduleFromSeek() {
         guard let file else { return }
-        let remaining = totalFrames - seekFrame
-        guard remaining > 0 else { return }
+        let frameCount = segmentEndFrame() - seekFrame
+        guard frameCount > 0 else { return }
         generation += 1
         let token = generation
+        // `.dataPlayedBack` fires when the audio has actually been rendered out —
+        // the legacy handler is `.dataConsumed`, which fires ~a buffer early (the
+        // player reads ahead), making a loop wrap noticeably before its end.
         player.scheduleSegment(file, startingFrame: seekFrame,
-                               frameCount: AVAudioFrameCount(remaining), at: nil) { [weak self] in
+                               frameCount: AVAudioFrameCount(frameCount), at: nil,
+                               completionCallbackType: .dataPlayedBack) { [weak self] _ in
             Task { @MainActor in self?.handleReachedEnd(token: token) }
         }
         scheduled = true
     }
 
+    /// Where the current segment ends — the loop end when looping, else the end
+    /// of the file.
+    private func segmentEndFrame() -> AVAudioFramePosition {
+        guard let loopRegion else { return totalFrames }
+        let seg = AudioMath.loopSegment(start: loopRegion.start, end: loopRegion.end,
+                                        sampleRate: sampleRate, totalFrames: Int(totalFrames))
+        return AVAudioFramePosition(seg.startFrame + seg.frameCount)
+    }
+
     private func handleReachedEnd(token: Int) {
         guard token == generation else { return }   // a newer segment superseded this one
-        player.stop()
-        scheduled = false
-        isPlaying = false
-        seekFrame = 0
-        currentTime = 0
-        stopTimer()
+        if let loopRegion, isPlaying {
+            seek(toSeconds: loopRegion.start)        // wrap to the loop start, keep playing
+        } else {
+            player.stop()
+            scheduled = false
+            isPlaying = false
+            seekFrame = 0
+            currentTime = 0
+            stopTimer()
+        }
     }
 
     private func updateCurrentTime() {
