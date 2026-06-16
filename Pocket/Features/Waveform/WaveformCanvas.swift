@@ -45,6 +45,8 @@ struct WaveformView: View {
     let onTapPunch: () -> Void
     let onScrub: (Double) -> Void
     let onMoveHandle: (WaveformGesture.Handle, Double) -> Void
+    /// Fine mode: the drag finished — commit the live audio preview to the new bounds.
+    let onMoveHandleEnded: () -> Void
 
     // Gesture bookkeeping.
     @State private var dragStartX: CGFloat?
@@ -213,6 +215,7 @@ struct WaveformView: View {
                 onTapPunch()                                                  // punch in / out at the playhead
             }
         case .fine:
+            if grabbedHandle != nil { onMoveHandleEnded() }   // audition the new bounds
             grabbedHandle = nil
         }
         dragStartX = nil
@@ -362,12 +365,9 @@ struct Minimap: View {
                 context.fill(Path(ellipseIn: dot), with: .color(PocketColor.pin))
             }
 
-            // Viewport indicator (the slice the detail waveform is showing).
-            let viewportRect = CGRect(x: size.width * song.viewport.start, y: 0,
-                                      width: size.width * (song.viewport.end - song.viewport.start),
-                                      height: size.height)
-            context.stroke(Path(roundedRect: viewportRect, cornerRadius: 3),
-                           with: .color(PocketColor.textPrimary.opacity(0.5)), lineWidth: 1)
+            // Viewport indicator returns with pinch-to-zoom — until the detail
+            // waveform can show a sub-slice, `song.viewport` is static, so drawing
+            // the box just adds a meaningless rectangle. (Data kept in WaveformMock.)
 
             // Playhead.
             let playheadX = size.width * playheadFraction

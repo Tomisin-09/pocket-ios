@@ -109,3 +109,22 @@ A second on-device pass tightened the capture interaction:
   selection's handles + pill in place to re-adjust (a Tap capture still clears).
   The `naming-sheet onDismiss` distinguishes the two by whether `capture`
   survived the Save.
+
+## Update (2026-06-16, round 3) — edit mode is modal
+
+On-device, the loop-edit state read too much like "just being in Fine mode" — you
+couldn't tell you were mid-edit (and had to confirm/discard), and a newly-captured
+loop couldn't be heard before saving.
+
+- **The transport bar greys out and locks while a loop is captured** (a capture is
+  active), so the edit state is unmistakably modal. The play button and mode pills
+  go dim/disabled; you leave edit mode via Y/N, not by switching modes.
+- **The mode-instructions line is replaced by an `EditToolbar`** — a ▶︎ audition
+  button, a **"New loop" / "Editing loop"** state label, and the decision pill.
+- **The decision is Y/N letters, not ✓/✗.** Same green-confirm / red-discard scheme;
+  letters read less like an icon you might confuse with the loop name.
+- **Audition before saving.** The ▶︎ loops the *captured* region (Tap or Fine) so you
+  hear exactly what you made before committing. The engine loop is armed to the
+  capture on creation (`previewCapture`); the button toggles play/pause
+  (`auditionCapture`). This supersedes round 2's "icon-only ✓/✗ pill over the
+  waveform".

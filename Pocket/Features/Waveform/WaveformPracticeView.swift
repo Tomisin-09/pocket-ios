@@ -43,17 +43,22 @@ struct WaveformPracticeView: View {
                     SongStrip(song: model.song)                                  // 1
                     SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
                              onSetBPM: model.setBPM)
-                    // 4. Mode instructions + the confirm pill (trailing) once captured.
-                    HStack(spacing: 8) {
-                        ModeDescriptionLine(mode: model.mode)
+                    // 4. Mode instructions — replaced by the edit toolbar (audition
+                    //    + state label + Y/N) while a loop is captured.
+                    ZStack {
                         if model.showConfirm {
-                            ConfirmPopup(isEditing: model.capture?.editingLoopID != nil,
-                                         onConfirm: model.confirmCapture,
-                                         onCancel: model.cancelCapture)
-                                .transition(reduceMotion ? .opacity
-                                            : .scale(scale: 0.85).combined(with: .opacity))
+                            EditToolbar(isPlaying: model.engine.isPlaying,
+                                        isEditingExisting: model.capture?.editingLoopID != nil,
+                                        onPlayPause: model.auditionCapture,
+                                        onConfirm: model.confirmCapture,
+                                        onCancel: model.cancelCapture)
+                                .transition(.opacity)
+                        } else {
+                            ModeDescriptionLine(mode: model.mode)
+                                .transition(.opacity)
                         }
                     }
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)
                     WaveformView(amplitudes: model.amplitudes,                   // 5
                                  playheadFraction: model.playheadFraction,
                                  loop: model.activeLoop,
@@ -66,19 +71,25 @@ struct WaveformPracticeView: View {
                                  onDropMarker: model.dropMarker,
                                  onTapPunch: model.tapPunch,
                                  onScrub: model.seekToFraction,
-                                 onMoveHandle: model.moveFineHandle)
+                                 onMoveHandle: model.moveFineHandle,
+                                 onMoveHandleEnded: model.previewCapture)
                     TimeRuler(duration: model.duration)                         // 6
                     Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
                             markers: model.markers,
                             fineSelection: model.fineSelection,
                             playheadFraction: model.playheadFraction,
                             onSeek: model.seekToFraction)
+                    // Greyed + locked while editing — controls move to the edit
+                    //    toolbar (you leave edit mode via Y/N, not the mode pills).
                     TransportBar(isPlaying: model.engine.isPlaying,             // 8
                                  onPlayPause: model.engine.togglePlay,
                                  mode: $model.mode,
                                  currentTime: model.engine.currentTime,
                                  loop: model.activeLoop,
                                  onClearLoop: model.clearActiveLoop)
+                        .opacity(model.showConfirm ? 0.35 : 1)
+                        .disabled(model.showConfirm)
+                        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)

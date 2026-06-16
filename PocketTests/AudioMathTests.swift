@@ -66,4 +66,65 @@ final class AudioMathTests: XCTestCase {
         XCTAssertEqual(AudioMath.loopSegment(start: 0, end: 1, sampleRate: 44_100, totalFrames: 0).frameCount, 0)
         XCTAssertEqual(AudioMath.loopSegment(start: 0, end: 1, sampleRate: 0, totalFrames: 100).frameCount, 0)
     }
+
+    // MARK: loopedPlayhead
+
+    func testLoopedPlayheadAtStartOfLoop() {
+        // No time elapsed → sit at the loop start.
+        XCTAssertEqual(AudioMath.loopedPlayhead(elapsed: 0, loopStart: 1, loopLength: 2), 1, accuracy: 1e-9)
+    }
+
+    func testLoopedPlayheadMidLoop() {
+        // 1.5s into a 2s loop starting at 1s → 2.5s.
+        XCTAssertEqual(AudioMath.loopedPlayhead(elapsed: 1.5, loopStart: 1, loopLength: 2), 2.5, accuracy: 1e-9)
+    }
+
+    func testLoopedPlayheadWrapsAtBoundary() {
+        // Exactly one loop length elapsed wraps back to the start.
+        XCTAssertEqual(AudioMath.loopedPlayhead(elapsed: 2, loopStart: 1, loopLength: 2), 1, accuracy: 1e-9)
+    }
+
+    func testLoopedPlayheadWrapsMultipleTimes() {
+        // 1.5 loops in (3s of a 2s loop) → halfway through the loop again.
+        XCTAssertEqual(AudioMath.loopedPlayhead(elapsed: 3, loopStart: 1, loopLength: 2), 2, accuracy: 1e-9)
+    }
+
+    func testLoopedPlayheadGuardsZeroLength() {
+        XCTAssertEqual(AudioMath.loopedPlayhead(elapsed: 5, loopStart: 1.25, loopLength: 0), 1.25, accuracy: 1e-9)
+    }
+
+    // MARK: crossfadeGains
+
+    func testCrossfadeGainsStartIsAllTail() {
+        // At the seam start the head is silent and the tail is full.
+        let gains = AudioMath.crossfadeGains(position: 0, length: 100)
+        XCTAssertEqual(gains.fadeIn, 0, accuracy: 1e-6)
+        XCTAssertEqual(gains.fadeOut, 1, accuracy: 1e-6)
+    }
+
+    func testCrossfadeGainsEndIsAllHead() {
+        let gains = AudioMath.crossfadeGains(position: 100, length: 100)
+        XCTAssertEqual(gains.fadeIn, 1, accuracy: 1e-6)
+        XCTAssertEqual(gains.fadeOut, 0, accuracy: 1e-6)
+    }
+
+    func testCrossfadeGainsMidpointIsEqualPower() {
+        let gains = AudioMath.crossfadeGains(position: 50, length: 100)
+        XCTAssertEqual(gains.fadeIn, Float(2).squareRoot() / 2, accuracy: 1e-6)   // ≈0.707
+        XCTAssertEqual(gains.fadeOut, Float(2).squareRoot() / 2, accuracy: 1e-6)
+    }
+
+    func testCrossfadeGainsAreConstantPower() {
+        // fadeIn² + fadeOut² == 1 everywhere (no level dip across the fade).
+        for position in stride(from: 0, through: 100, by: 10) {
+            let gains = AudioMath.crossfadeGains(position: position, length: 100)
+            XCTAssertEqual(gains.fadeIn * gains.fadeIn + gains.fadeOut * gains.fadeOut, 1, accuracy: 1e-5)
+        }
+    }
+
+    func testCrossfadeGainsGuardsZeroLength() {
+        let gains = AudioMath.crossfadeGains(position: 5, length: 0)
+        XCTAssertEqual(gains.fadeIn, 1, accuracy: 1e-6)
+        XCTAssertEqual(gains.fadeOut, 0, accuracy: 1e-6)
+    }
 }

@@ -7,13 +7,31 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ### Added
 - **Region looping** — an active loop now actually loops: playback wraps from the
-  loop's end back to its start continuously (`PracticeAudioEngine` loop region,
-  with the boundary math in unit-tested `AudioMath.loopSegment`). A loop just
-  loops (no on/off toggle — the per-loop `repeats` count is reserved for the
-  future automator); a small **✕ exit chip** by the loop name returns to
-  full-song playback. Decisions in ADR 0006.
+  loop's end back to its start continuously and **seamlessly** — gapless *and*
+  click-free, via a pre-rendered loop buffer whose seam is equal-power
+  **crossfaded** (`AudioMath.crossfadeGains`) and played on `.loops` (boundary math
+  in unit-tested `AudioMath.loopSegment`, wrap math in `AudioMath.loopedPlayhead`).
+  A loop just loops (no on/off toggle — the per-loop `repeats` count is reserved for
+  the future automator); a small **✕ exit chip** by the loop name returns to
+  full-song playback. Decisions in ADRs 0006 & 0008.
+- **Loop edit mode is now a distinct, modal state.** While creating or adjusting a
+  loop the **transport bar greys out and locks**, and the mode-instructions line is
+  replaced by an **edit toolbar**: a ▶︎ **audition** button (loop the captured region
+  to hear it before saving — for Tap *and* Fine loops), a state label (**"New loop"**
+  / **"Editing loop"**), and a **Y/N** decision (green **Y** = save, red **N** =
+  discard — letters instead of ✓/✗ so they can't be mistaken for the loop's name).
+  You leave edit mode via Y/N, not by switching modes.
+- **Live loop-range preview** — adjusting a loop's bounds in Fine mode auditions the
+  new region on handle-release (you hear only the edited loop, not the saved one);
+  discarding restores the saved bounds.
 
 ### Changed
+- **Transport bar slimmed further** — tighter vertical spacing/padding and a smaller
+  play control, to reclaim cockpit height. The freed space is reserved for the future
+  automator entry (see ADR 0009).
+- **Minimap viewport box hidden** until pinch-to-zoom exists — the detail waveform
+  always shows the whole song for now, so the box was static and meaningless; it
+  returns (live) with zoom. (`song.viewport` data retained.)
 - **Practice screen refactored to a view model** (no behaviour change): state and
   the gesture/loop handlers moved out of `WaveformPracticeView` into an
   `@Observable` `WaveformPracticeModel` (+ `…+Actions` extension). The view drops

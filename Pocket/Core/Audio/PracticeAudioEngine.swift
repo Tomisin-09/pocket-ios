@@ -3,10 +3,11 @@ import Observation
 
 /// Minimal practice playback engine: AVAudioEngine → player → time-pitch
 /// (pitch-preserving speed) → mixer. AVFoundation lives here in Core/Audio; the
-/// pure math stays in `AudioMath`. See docs/architecture.md, ADRs 0001 & 0006.
+/// pure math stays in `AudioMath`. See docs/architecture.md, ADRs 0001, 0006 & 0008.
 ///
-/// play / pause / seek / rate, plus continuous **region looping** (an active
-/// loop wraps back to its start), with a published `currentTime`.
+/// play / pause / seek / rate, plus continuous **seamless region looping**: an
+/// active loop plays a pre-rendered, crossfaded buffer on `.loops`, so the wrap is
+/// gapless *and* click-free. Publishes `currentTime`.
 @MainActor
 @Observable
 final class PracticeAudioEngine {
@@ -24,13 +25,22 @@ final class PracticeAudioEngine {
     private var totalFrames: AVAudioFramePosition = 0
     private var seekFrame: AVAudioFramePosition = 0
     private var scheduled = false
-    /// Invalidates in-flight segment completion handlers across stop/seek so a
-    /// stale "reached end" can't reset state for the new segment.
+    /// Invalidates the in-flight straight-through segment's completion across
+    /// stop/seek/loop changes so a stale "reached end" can't reset state.
     private var generation = 0
     private var displayTimer: Timer?
-    /// When set, playback loops this region (seconds): reaching its end wraps
-    /// back to its start. `nil` plays straight through.
+
+    /// When set, playback loops this region (seconds) via a crossfaded `.loops`
+    /// buffer. `nil` plays straight through.
     private var loopRegion: (start: TimeInterval, end: TimeInterval)?
+    /// Loop-buffer bookkeeping for the playhead: the region's start frame, the
+    /// looped length (region minus crossfade), and the player sampleTime at which
+    /// the current loop buffer began (so elapsed-in-loop = now − base).
+    private var loopAnchorFrame = 0
+    private var loopBufferFrames = 0
+    private var loopBaseSampleTime: AVAudioFramePosition = 0
+    /// Equal-power crossfade length folded into the loop seam.
+    private let crossfadeSeconds: TimeInterval = 0.015
 
     init() {
         engine.attach(player)
@@ -56,7 +66,7 @@ final class PracticeAudioEngine {
     func play() {
         guard file != nil else { return }
         startEngineIfNeeded()
-        if !scheduled { scheduleFromSeek() }
+        if !scheduled { primeSchedule() }
         player.play()
         isPlaying = true
         startTimer()
@@ -68,12 +78,13 @@ final class PracticeAudioEngine {
         stopTimer()
     }
 
-    /// Move the play position; resumes from `seconds` if it was playing.
+    /// Move the play position; resumes from `seconds` if it was playing. (When a
+    /// loop is active the buffer restarts at the loop start regardless.)
     func seek(toSeconds seconds: TimeInterval) {
         let clamped = min(max(0, seconds), duration)
         seekFrame = AVAudioFramePosition(AudioMath.secondsToFrames(clamped, sampleRate: sampleRate))
         let wasPlaying = isPlaying
-        generation += 1            // invalidate the in-flight segment's completion
+        generation += 1
         player.stop()
         scheduled = false
         currentTime = clamped
@@ -85,66 +96,139 @@ final class PracticeAudioEngine {
         timePitch.rate = Float(min(2.0, max(0.25, rate)))
     }
 
-    /// Loop a region (seconds) continuously. Takes effect on the next schedule —
-    /// callers that want it to start now should follow with `seek(toSeconds:)`.
+    /// Loop a region (seconds). When playing, the crossfaded loop buffer is rebuilt
+    /// and swapped in immediately (`.interrupts`) so the change is heard at once
+    /// with no overlap; when paused it takes effect on the next `play`.
     func setLoop(start: TimeInterval, end: TimeInterval) {
         loopRegion = (start: start, end: end)
+        guard isPlaying else { return }
+        generation += 1                 // kill any pending straight-through completion
+        if scheduleLoopBuffer() { scheduled = true }
     }
 
-    /// Stop looping; if playing, re-arm from the current position so it plays
-    /// straight through to the end instead of stopping at the old loop end.
+    /// Stop looping; if playing, resume straight through from the current position.
     func clearLoop() {
         loopRegion = nil
+        loopBufferFrames = 0
         if isPlaying { seek(toSeconds: currentTime) }
     }
 
     // MARK: - Private
 
-    private func scheduleFromSeek() {
-        guard let file else { return }
-        let frameCount = segmentEndFrame() - seekFrame
-        guard frameCount > 0 else { return }
-        generation += 1
-        let token = generation
-        // `.dataPlayedBack` fires when the audio has actually been rendered out —
-        // the legacy handler is `.dataConsumed`, which fires ~a buffer early (the
-        // player reads ahead), making a loop wrap noticeably before its end.
-        player.scheduleSegment(file, startingFrame: seekFrame,
-                               frameCount: AVAudioFrameCount(frameCount), at: nil,
-                               completionCallbackType: .dataPlayedBack) { [weak self] _ in
-            Task { @MainActor in self?.handleReachedEnd(token: token) }
+    /// The active loop as concrete frames, or `nil` when not looping (or the
+    /// region is degenerate). Pure math in `AudioMath.loopSegment`.
+    private func currentLoopSegment() -> (startFrame: Int, frameCount: Int)? {
+        guard let loopRegion else { return nil }
+        let seg = AudioMath.loopSegment(start: loopRegion.start, end: loopRegion.end,
+                                        sampleRate: sampleRate, totalFrames: Int(totalFrames))
+        return seg.frameCount > 0 ? seg : nil
+    }
+
+    /// Schedule the active loop's crossfaded buffer, or the straight-through
+    /// segment to the file end when not looping.
+    private func primeSchedule() {
+        if currentLoopSegment() != nil {
+            _ = scheduleLoopBuffer()
+        } else if let file {
+            scheduleSegment(file, fromFrame: Int(seekFrame), toFrame: Int(totalFrames))
         }
         scheduled = true
     }
 
-    /// Where the current segment ends — the loop end when looping, else the end
-    /// of the file.
-    private func segmentEndFrame() -> AVAudioFramePosition {
-        guard let loopRegion else { return totalFrames }
-        let seg = AudioMath.loopSegment(start: loopRegion.start, end: loopRegion.end,
-                                        sampleRate: sampleRate, totalFrames: Int(totalFrames))
-        return AVAudioFramePosition(seg.startFrame + seg.frameCount)
+    /// Build the crossfaded loop buffer and schedule it on `.loops` (`.interrupts`
+    /// so it cleanly replaces any currently-playing buffer). Records the playhead
+    /// anchor. Returns `false` if the buffer couldn't be built.
+    @discardableResult
+    private func scheduleLoopBuffer() -> Bool {
+        guard let buffer = makeLoopBuffer() else { return false }
+        loopBaseSampleTime = isPlaying ? currentSampleTime() : 0
+        player.scheduleBuffer(buffer, at: nil, options: [.loops, .interrupts], completionHandler: nil)
+        return true
     }
 
-    private func handleReachedEnd(token: Int) {
-        guard token == generation else { return }   // a newer segment superseded this one
-        if let loopRegion, isPlaying {
-            seek(toSeconds: loopRegion.start)        // wrap to the loop start, keep playing
-        } else {
-            player.stop()
-            scheduled = false
-            isPlaying = false
-            seekFrame = 0
-            currentTime = 0
-            stopTimer()
+    /// Read the loop region into a buffer and crossfade its seam: fold the last
+    /// `fade` frames into the first `fade` with equal-power gains, looping `R − fade`
+    /// frames so the wrap is sample-continuous and click-free
+    /// (`AudioMath.crossfadeGains`).
+    private func makeLoopBuffer() -> AVAudioPCMBuffer? {
+        guard let file, let loop = currentLoopSegment() else { return nil }
+        let format = file.processingFormat
+        guard let region = AVAudioPCMBuffer(pcmFormat: format,
+                                            frameCapacity: AVAudioFrameCount(loop.frameCount)) else { return nil }
+        do {
+            file.framePosition = AVAudioFramePosition(loop.startFrame)
+            try file.read(into: region, frameCount: AVAudioFrameCount(loop.frameCount))
+        } catch { return nil }
+
+        let regionFrames = Int(region.frameLength)
+        let fade = min(Int(crossfadeSeconds * sampleRate), regionFrames / 2)
+        let loopFrames = regionFrames - fade
+        guard loopFrames > 0,
+              let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(loopFrames)),
+              let src = region.floatChannelData, let dst = out.floatChannelData else { return nil }
+        out.frameLength = AVAudioFrameCount(loopFrames)
+
+        for channel in 0..<Int(format.channelCount) {
+            for frame in 0..<loopFrames { dst[channel][frame] = src[channel][frame] }  // body + head
+            for frame in 0..<fade {                                  // crossfade head with the folded tail
+                let gains = AudioMath.crossfadeGains(position: frame, length: fade)
+                dst[channel][frame] = src[channel][frame] * gains.fadeIn
+                                    + src[channel][loopFrames + frame] * gains.fadeOut
+            }
         }
+
+        loopAnchorFrame = loop.startFrame
+        loopBufferFrames = loopFrames
+        return out
+    }
+
+    /// Schedule a straight-through segment `[fromFrame, toFrame)` that stops at the
+    /// file end (`.dataPlayedBack`, after the tail has played out).
+    private func scheduleSegment(_ file: AVAudioFile, fromFrame: Int, toFrame: Int) {
+        let count = toFrame - fromFrame
+        guard count > 0 else { return }
+        let token = generation
+        player.scheduleSegment(file, startingFrame: AVAudioFramePosition(fromFrame),
+                               frameCount: AVAudioFrameCount(count), at: nil,
+                               completionCallbackType: .dataPlayedBack) { [weak self] _ in
+            Task { @MainActor in self?.handleReachedEnd(token: token) }
+        }
+    }
+
+    /// The straight-through segment finished — stop and reset to the top.
+    private func handleReachedEnd(token: Int) {
+        guard token == generation else { return }   // a newer schedule superseded this one
+        player.stop()
+        scheduled = false
+        isPlaying = false
+        seekFrame = 0
+        currentTime = 0
+        generation += 1
+        stopTimer()
+    }
+
+    /// The player's current render position (source frames since it started).
+    private func currentSampleTime() -> AVAudioFramePosition {
+        guard let nodeTime = player.lastRenderTime,
+              let playerTime = player.playerTime(forNodeTime: nodeTime) else { return 0 }
+        return playerTime.sampleTime
     }
 
     private func updateCurrentTime() {
         guard let nodeTime = player.lastRenderTime,
               let playerTime = player.playerTime(forNodeTime: nodeTime) else { return }
-        let played = Double(playerTime.sampleTime) / playerTime.sampleRate
-        currentTime = min(duration, Double(seekFrame) / sampleRate + max(0, played))
+        if loopBufferFrames > 0, currentLoopSegment() != nil {
+            // The loop buffer runs continuously; map elapsed-since-its-start back
+            // into the region. Length is region − crossfade, so the playhead wraps
+            // in lockstep with the audio.
+            let elapsed = max(0, Double(playerTime.sampleTime - loopBaseSampleTime) / playerTime.sampleRate)
+            currentTime = AudioMath.loopedPlayhead(elapsed: elapsed,
+                                                   loopStart: Double(loopAnchorFrame) / sampleRate,
+                                                   loopLength: Double(loopBufferFrames) / sampleRate)
+        } else {
+            let played = max(0, Double(playerTime.sampleTime) / playerTime.sampleRate)
+            currentTime = min(duration, Double(seekFrame) / sampleRate + played)
+        }
     }
 
     private func startEngineIfNeeded() {
