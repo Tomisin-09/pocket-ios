@@ -14,6 +14,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   full-song playback. Decisions in ADR 0006.
 
 ### Changed
+- **Practice screen refactored to a view model** (no behaviour change): state and
+  the gesture/loop handlers moved out of `WaveformPracticeView` into an
+  `@Observable` `WaveformPracticeModel` (+ `…+Actions` extension). The view drops
+  from the SwiftLint file-length limit (400 → ~130 lines), making room for the
+  next features. Decisions in ADR 0007.
 - **Transport bar simplified**: the **"+" quick-capture** and the per-loop
   **repeat/clear controls** are gone — loop creation is owned by the Tap/Fine
   gestures, and an active loop simply loops (the explicit toggle was redundant;

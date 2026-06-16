@@ -41,6 +41,10 @@ engine wraps from the loop end back to its start (reschedule-on-end; boundary
 math in `AudioMath.loopSegment`, ADR 0006). Real file import replaces the
 generated source next.
 
+The practice screen's state and handlers live in an `@Observable`
+`WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body
+that observes and binds to it (ADR 0007).
+
 Apple Music tracks skip stages 2–4 (no raw audio) — they are browse/metadata
 only. See `docs/decisions/0001`.
 
