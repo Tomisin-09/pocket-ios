@@ -13,7 +13,7 @@ final class WaveformPracticeModel {
 
     // UI state.
     var speed: Double = 1.0
-    var mode: WaveformPracticeView.InteractionMode = .scroll
+    var mode: WaveformPracticeView.InteractionMode = .navigate
     var songInfoExpanded = false   // demoted to the scroll area
     var loopsExpanded = true
     var markersExpanded = false
@@ -32,6 +32,9 @@ final class WaveformPracticeModel {
     var activeLoopID: WaveformMock.Loop.ID? = WaveformMock.song.loops.first?.id
     var editingLoop: WaveformMock.Loop?
     var editingMarker: WaveformMock.Marker?
+    /// A freshly-dropped marker awaiting a name (drives the name-only sheet). It's
+    /// added to `markers` only on save; cancelling discards it.
+    var namingMarker: WaveformMock.Marker?
 
     /// Tap mode: the start of the loop being captured (the green forming
     /// region), awaiting its closing tap.

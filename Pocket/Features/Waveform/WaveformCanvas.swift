@@ -10,39 +10,33 @@ import UIKit
 // MARK: - 5. Waveform — SoundCloud-style mirrored bars + gesture engine
 
 /// The detail waveform. Renders the mirrored bars, the active loop region, the
-/// in-progress selection (Tap/Fine), the playhead, and the long-press ring; and
-/// recognises the three interaction modes (brief §4.1):
+/// in-progress selection, and the playhead, and recognises two interaction modes
+/// (brief §4.1 / ADR 0005):
 ///
-/// - **Scroll:** tap → seek the playhead; hold 650 ms → drop a marker (an amber
-///   ring fills under the finger first).
-/// - **Tap:** drag → scrub; a short tap sets the loop start, a second tap closes
-///   it. The in-progress selection draws green.
-/// - **Fine:** drag the two blue handles to nudge the active selection's bounds.
+/// - **Navigate** (default): tap → seek the playhead; drag → scrub; pinch → zoom.
+/// - **Fine:** drag the two blue handles to set the loop bounds.
 ///
-/// All gesture math (point → fraction, bound ordering, handle hit-testing) lives
-/// in the pure, unit-tested `WaveformGesture`. The view emits *fractions* (0…1)
-/// so the parent screen never deals in points.
+/// Marker drop and loop punch are *not* gestures — they're buttons on the transport
+/// action bar (they act at the playhead). All gesture math (point → fraction, zoom
+/// viewport, handle hit-testing) lives in the pure, unit-tested `WaveformGesture`;
+/// the view emits *song fractions* (0…1) so the parent never deals in points.
 struct WaveformView: View {
     let amplitudes: [Double]
     let playheadFraction: Double
     let loop: WaveformMock.Loop?
     let mode: WaveformPracticeView.InteractionMode
-    /// Tap mode: the start of the loop being captured. The region from here to
-    /// the live playhead fills green as playback previews it.
+    /// Loop punch in progress: the start of the loop being captured. The region from
+    /// here to the live playhead fills green as playback previews it.
     let formingStart: Double?
     /// Fine mode: the selection being dragged by the two blue handles.
     let fineSelection: (start: Double, end: Double)?
-    /// Tap mode: the captured region awaiting confirm — a static green highlight
-    /// so the punched loop stays visible while the confirm pill is up.
+    /// A punched loop awaiting confirm — a static green highlight so it stays visible
+    /// while the edit toolbar is up.
     let tapSelection: (start: Double, end: Double)?
     /// Live playhead time, shown in a bubble pinned to the playhead.
     let playheadLabel: String
 
     let onSeek: (Double) -> Void
-    let onDropMarker: (Double) -> Void
-    /// Tap mode: a location-less punch — marks the loop start/end at the *current
-    /// playhead*, never at the tap position (only drag scrubs the playhead).
-    let onTapPunch: () -> Void
     let onScrub: (Double) -> Void
     let onMoveHandle: (WaveformGesture.Handle, Double) -> Void
     /// Fine mode: the drag finished — commit the live audio preview to the new bounds.
@@ -55,17 +49,11 @@ struct WaveformView: View {
 
     // Gesture bookkeeping.
     @State private var dragStartX: CGFloat?
-    @State private var didScrub = false                     // Tap mode: moved enough to be a scrub
+    @State private var didScrub = false                     // moved enough to be a scrub (not a tap)
     @State private var grabbedHandle: WaveformGesture.Handle?  // Fine mode
     @State private var pinchBaseSpan: Double?               // zoom span captured at pinch start
-    @State private var holdTimer: Timer?
-    @State private var holdFired = false                    // Scroll mode: hold already dropped a marker
-    @State private var holdFraction: Double?                // where the ring draws
-    @State private var holdProgress: CGFloat = 0            // 0…1 ring fill
 
-    private let holdDuration = 0.65
-    private let scrubThreshold: CGFloat = 6                 // px before a Tap-mode press counts as a scrub
-    private let dragCancelsHold: CGFloat = 10               // px of movement that cancels a Scroll hold
+    private let scrubThreshold: CGFloat = 6                 // px before a press counts as a scrub vs a tap
     private let handleTolerance = 0.06                      // fraction either side of a handle that grabs it
 
     var body: some View {
@@ -79,17 +67,6 @@ struct WaveformView: View {
                 TimeBubble(text: playheadLabel)
                     .position(x: bubbleX(width: geo.size.width), y: 12)
                     .allowsHitTesting(false)
-                // Long-press ring (Scroll mode) — fills radially before the
-                // marker drops, so the hold is legible (brief §4.1).
-                if let holdFraction, holdProgress > 0 {
-                    Circle()
-                        .stroke(PocketColor.marker.opacity(0.85), lineWidth: 2)
-                        .frame(width: 40, height: 40)
-                        .scaleEffect(0.4 + holdProgress)
-                        .opacity(Double(holdProgress))
-                        .position(x: geo.size.width * CGFloat(screenX(holdFraction)), y: geo.size.height / 2)
-                        .allowsHitTesting(false)
-                }
             }
             .contentShape(Rectangle())
             .gesture(dragGesture(width: geo.size.width))
@@ -212,21 +189,17 @@ struct WaveformView: View {
     }
 
     private func handleChanged(_ value: DragGesture.Value, width: CGFloat) {
-        guard pinchBaseSpan == nil else { cancelHold(); return }   // ignore the drag while pinching
+        guard pinchBaseSpan == nil else { return }   // ignore the drag while pinching
         let fraction = songFraction(atX: value.location.x, width: width)
-        if dragStartX == nil { beginDrag(value, width: width, fraction: fraction) }
-
+        if dragStartX == nil {
+            dragStartX = value.startLocation.x
+            didScrub = false
+            if mode == .fine { grabbedHandle = pickHandle(at: fraction) }
+        }
         let moved = abs(value.location.x - (dragStartX ?? value.location.x))
         switch mode {
-        case .scroll:
-            // A drag isn't a hold — cancel the marker timer and scrub instead.
-            if didScrub || moved > dragCancelsHold {
-                didScrub = true
-                cancelHold()
-                onScrub(fraction)
-            }
-        case .tap:
-            if didScrub || moved > scrubThreshold {
+        case .navigate:
+            if didScrub || moved > scrubThreshold {     // a real drag scrubs the playhead
                 didScrub = true
                 onScrub(fraction)
             }
@@ -235,36 +208,18 @@ struct WaveformView: View {
         }
     }
 
-    /// First touch of a drag — record the start and arm the per-mode behaviour.
-    private func beginDrag(_ value: DragGesture.Value, width: CGFloat, fraction: Double) {
-        dragStartX = value.startLocation.x
-        didScrub = false
-        switch mode {
-        case .scroll: startHold(at: songFraction(atX: value.startLocation.x, width: width))
-        case .tap:    break
-        case .fine:   grabbedHandle = pickHandle(at: fraction)
-        }
-    }
-
     private func handleEnded(_ value: DragGesture.Value, width: CGFloat) {
-        guard pinchBaseSpan == nil else { dragStartX = nil; cancelHold(); return }
+        guard pinchBaseSpan == nil else { dragStartX = nil; return }
         let fraction = songFraction(atX: value.location.x, width: width)
         let moved = abs(value.location.x - (dragStartX ?? value.location.x))
         switch mode {
-        case .scroll:
-            cancelHold()
-            if !holdFired && !didScrub && moved <= dragCancelsHold { onSeek(fraction) }  // a tap
-        case .tap:
-            if !didScrub && moved <= scrubThreshold {
-                haptic(.light)
-                onTapPunch()                                                  // punch in / out at the playhead
-            }
+        case .navigate:
+            if !didScrub && moved <= scrubThreshold { onSeek(fraction) }   // a tap = seek
         case .fine:
             if grabbedHandle != nil { onMoveHandleEnded() }   // audition the new bounds
             grabbedHandle = nil
         }
         dragStartX = nil
-        holdFired = false
     }
 
     /// X for the time bubble — the playhead position, clamped so the bubble
@@ -285,31 +240,6 @@ struct WaveformView: View {
                                              start: fineSelection.start, end: fineSelection.end,
                                              tolerance: tolerance)
             ?? (abs(fraction - fineSelection.start) <= abs(fraction - fineSelection.end) ? .start : .end)
-    }
-
-    // MARK: Long press (Scroll mode marker drop)
-
-    private func startHold(at fraction: Double) {
-        holdFired = false
-        holdFraction = fraction
-        withAnimation(.linear(duration: holdDuration)) { holdProgress = 1 }
-        holdTimer?.invalidate()
-        holdTimer = Timer.scheduledTimer(withTimeInterval: holdDuration, repeats: false) { _ in
-            Task { @MainActor in
-                holdFired = true
-                haptic(.medium)
-                onDropMarker(fraction)
-                holdFraction = nil
-                holdProgress = 0
-            }
-        }
-    }
-
-    private func cancelHold() {
-        holdTimer?.invalidate()
-        holdTimer = nil
-        holdFraction = nil
-        withAnimation(.easeOut(duration: 0.15)) { holdProgress = 0 }
     }
 }
 

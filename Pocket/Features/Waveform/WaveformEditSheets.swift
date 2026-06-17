@@ -87,6 +87,47 @@ struct LoopEditSheet: View {
     }
 }
 
+/// Name a freshly-dropped marker. Just a name — its position is the playhead and
+/// Cancel discards it (so no position readout, no delete). Editing an *existing*
+/// marker uses the fuller `MarkerEditSheet`.
+struct MarkerNameSheet: View {
+    let onSave: (String) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+    @FocusState private var nameFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Name") {
+                    ClearableTextField("Name this marker", text: $name)
+                        .focused($nameFocused)
+                        .submitLabel(.done)
+                        .onSubmit { save() }
+                }
+            }
+            .navigationTitle("New marker")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Discard", role: .cancel) { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                }
+            }
+        }
+        .presentationDetents([.height(180)])
+        .onAppear { nameFocused = true }
+    }
+
+    private func save() {
+        onSave(name)
+        dismiss()
+    }
+}
+
 struct MarkerEditSheet: View {
     let marker: WaveformMock.Marker
     let onSave: (WaveformMock.Marker) -> Void

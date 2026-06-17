@@ -20,12 +20,20 @@ extension WaveformPracticeModel {
         haptic(.light)
     }
 
-    /// Scroll-mode hold: drop a marker at the held fraction, then open it to name.
-    func dropMarker(_ fraction: Double) {
-        let marker = WaveformMock.Marker(seconds: fraction * duration, label: "Marker")
+    /// Mark button — start a new marker at the playhead. The name-only sheet adds it
+    /// on save; cancelling discards it (so the sheet needs no position or delete).
+    func dropMarkerAtPlayhead() {
+        namingMarker = WaveformMock.Marker(seconds: playheadFraction * duration, label: "")
+    }
+
+    /// Name-sheet Save for a new marker — add it (empty name → "Marker").
+    func saveMarkerName(_ name: String) {
+        guard var marker = namingMarker else { return }
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        marker.label = trimmed.isEmpty ? "Marker" : trimmed
         markers.append(marker)
         markers.sort { $0.seconds < $1.seconds }
-        editingMarker = marker
+        namingMarker = nil
     }
 
     /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd stops + confirms.
@@ -72,7 +80,7 @@ extension WaveformPracticeModel {
                 }
                 previewCapture()   // arm the selection for audition / live preview
             }
-        case .scroll, .tap:
+        case .navigate:
             if capture?.fromFine == true {
                 withAnimation(.easeOut(duration: 0.2)) { capture = nil }
                 applyActiveLoopToEngine()   // drop the live preview, restore the saved loop
@@ -104,7 +112,7 @@ extension WaveformPracticeModel {
     func finishCapture() {
         withAnimation(.easeOut(duration: 0.2)) {
             capture = nil
-            if mode == .fine { mode = .scroll }
+            if mode == .fine { mode = .navigate }
         }
         applyActiveLoopToEngine()   // a discard reverts the live preview; a commit re-applies the same bounds
     }
@@ -128,7 +136,7 @@ extension WaveformPracticeModel {
         applyActiveLoopToEngine()
         capture = nil
         namingDraft = nil
-        if mode == .fine { mode = .scroll }
+        if mode == .fine { mode = .navigate }
     }
 
     /// "Adjust range" from a loop's edit sheet → Fine mode seeded with its bounds.

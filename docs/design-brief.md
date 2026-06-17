@@ -127,13 +127,15 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
 4. Waveform (detail view) — **SoundCloud-style mirrored bars**: top half full
    opacity, bottom half ~60% reflection. **Pinch to zoom** into a section (the view
    tracks the playhead).
-5. Time ruler
+5. Time ruler — labels the **visible window** (follows the zoom)
 6. Minimap (full song, compressed) — loop regions (amber), fine selection (blue),
    marker dots (purple), playhead, and the **viewport box** (the zoomed slice) when
    the detail waveform is zoomed.
-7. Transport bar — play/pause · time · loop info (name + range + ✕ exit chip) ·
-   mode pills (Scroll/Tap/Fine). **Greys out and locks while a loop is being
-   created/edited** — controls move up to the edit toolbar (item 3).
+7. Transport bar — row 1: play/pause · time · loop info (name + range + ✕ exit chip).
+   Row 2: the **action bar** — **Mark** (drop marker), **Loop** (punch in/out),
+   **Fine** (precise-edit toggle), and a reserved **Auto** slot (automator, ADR 0009).
+   **Greys out and locks while a loop is being created/edited** — controls move up to
+   the edit toolbar (item 3).
 
 A hairline separates the cockpit from the scroll area below.
 
@@ -154,13 +156,14 @@ toolbar (▶ audition · state label · Y/N). **Y** opens the naming sheet for a
 loop (or commits a range edit); **N** discards. You leave edit mode via Y/N, not by
 switching modes.
 
-**Three interaction modes** (pills in the transport bar):
-- **Scroll** (default): tap to set playhead; **hold 650ms** → amber ring fills
-  radially around the playhead → Pin Marker popover.
-- **Tap:** drag to scrub; short tap sets loop start, second tap closes the loop
-  (green region fills, edit toolbar appears).
-- **Fine:** two draggable blue handles define loop bounds; edit toolbar appears
-  on entering the mode.
+**Interaction (ADR 0005 round 4):** one rule for touch — **tap = seek, drag =
+scrub, pinch = zoom** (the "Navigate" default). Capturing at the playhead is done
+with the **action-bar buttons**, not gestures:
+- **Mark** → drop a marker at the playhead (then name it).
+- **Loop** → punch the loop in, then out, at the playhead (green region fills; the
+  edit toolbar appears on the out-punch).
+- **Fine** → toggle precise editing: two draggable blue handles define the loop
+  bounds; the edit toolbar appears.
 
 **Speed bar:** the speed readout (`0.90×`), the slider, and the read-only BPM
 display (`round(songBPM × speed)`) share **one row** to stay compact in the

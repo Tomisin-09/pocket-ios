@@ -31,6 +31,18 @@ All notable changes to Pocket are documented here. Format loosely follows
   discarding restores the saved bounds.
 
 ### Changed
+- **Naming a new loop or marker is now just a name** — no position/range readout and
+  no delete button (Cancel already discards a brand-new one). A dropped marker isn't
+  added until you save it. Editing an *existing* loop/marker keeps the full sheet
+  (range/position, playback, delete). The transport's **Loop and Mark buttons swapped**
+  positions (Loop first).
+- **Waveform interaction rationalised** (after pinch-zoom surfaced gesture clashes):
+  **tap now seeks everywhere** — Scroll and Tap modes collapse into one *Navigate*
+  behaviour (tap = seek · drag = scrub · pinch = zoom). Capturing at the playhead moves
+  to **buttons on the transport**: **Mark** (drop a marker), **Loop** (punch in/out), a
+  **Fine** toggle (precise handle-editing), and a reserved **Auto** slot for the future
+  automator. The **hold-to-drop-marker** gesture is gone (it raced with pinch). The
+  **time ruler now follows the zoom**, labelling the visible window. ADR 0005 (round 4).
 - **Transport bar slimmed further** — tighter vertical spacing/padding and a smaller
   play control, to reclaim cockpit height. The freed space is reserved for the future
   automator entry (see ADR 0009).
