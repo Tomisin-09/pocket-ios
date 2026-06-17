@@ -10,6 +10,7 @@ struct LibraryView: View {
     @Query(sort: \Song.title) private var songs: [Song]
     @State private var importing = false
     @State private var importError: String?
+    @State private var editingSong: Song?
 
     var body: some View {
         NavigationStack {
@@ -36,6 +37,9 @@ struct LibraryView: View {
             } message: {
                 Text(importError ?? "")
             }
+            .sheet(item: $editingSong) { song in
+                SongEditSheet(song: song)
+            }
         }
         .preferredColorScheme(.dark)
     }
@@ -49,8 +53,16 @@ struct LibraryView: View {
                     SongRow(song: song)
                 }
                 .listRowBackground(PocketColor.background)
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) { context.delete(song) } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    Button { editingSong = song } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(PocketColor.active)
+                }
             }
-            .onDelete(perform: delete)
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
@@ -74,10 +86,6 @@ struct LibraryView: View {
     }
 
     private func addDemo() { context.insert(Song.sample()) }
-
-    private func delete(at offsets: IndexSet) {
-        for index in offsets { context.delete(songs[index]) }
-    }
 }
 
 /// A single library row: title, artist (when known), and proficiency.
@@ -171,4 +179,13 @@ private struct LibraryEmptyState: View {
     let container = try! ModelContainer(for: Song.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
     return LibraryView().modelContainer(container)
+}
+
+#Preview("Song edit sheet") {
+    // swiftlint:disable:next force_try
+    let container = try! ModelContainer(for: Song.self,
+                                        configurations: .init(isStoredInMemoryOnly: true))
+    let song = Song.sample()
+    container.mainContext.insert(song)
+    return SongEditSheet(song: song).modelContainer(container)
 }

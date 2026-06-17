@@ -6,9 +6,11 @@ extension Song {
     /// `bookmark == nil` flags it as the sample (no real file behind it).
     static func sample() -> Song {
         let duration: TimeInterval = 30
-        let song = Song(title: "Little Wing", artist: "Jimi Hendrix", key: "G minor",
+        let song = Song(title: "Little Wing", artist: "Jimi Hendrix",
+                        album: "Axis: Bold as Love", year: 1967, key: "G minor",
                         bpm: 76, proficiency: 3, progression: "Groove / lead phrasing",
                         collections: ["Hendrix study", "Bends & vibrato"],
+                        comment: "Watch the thumb-over chord voicings in the intro.",
                         duration: duration, amplitudes: demoAmplitudes(count: 120),
                         ref: SongRef(id: "sample", source: .localFile, bookmark: nil))
         let loops = [

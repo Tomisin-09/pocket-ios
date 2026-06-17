@@ -64,6 +64,26 @@ final class SongTests: XCTestCase {
         XCTAssertEqual(loop.endSeconds, 0)
     }
 
+    // MARK: - Annotation stats
+
+    func testAnnotationCountIsZeroWithoutLoopsOrMarkers() {
+        XCTAssertEqual(makeSong().annotationCount, 0)
+    }
+
+    func testAnnotationCountSumsLoopsAndMarkers() {
+        let song = makeSong()
+        song.loops = [
+            Loop(name: "a", start: 0.1, end: 0.2, speed: 1, repeats: 1),
+            Loop(name: "b", start: 0.3, end: 0.4, speed: 1, repeats: 1)
+        ]
+        song.markers = [
+            Marker(seconds: 5, label: "x"),
+            Marker(seconds: 9, label: "y"),
+            Marker(seconds: 12, label: "z")
+        ]
+        XCTAssertEqual(song.annotationCount, 5)
+    }
+
     // MARK: - First-launch seed
 
     func testSampleIsFlaggedAsDemoWithBackReferencedChildren() {

@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Song metadata editing** — **swipe a library row → Edit** to open a metadata sheet
+  (`SongEditSheet`): title, artist, **album**, **year**, key, BPM, proficiency
+  (tappable stars), and progression; **collection tags** (add / swipe-to-remove); a
+  free-form **note**; and read-only **practice stats** — *Loops · Markers · Annotations*
+  (annotations = loops + markers). The song record is where we enrich the data that
+  drives practice routines. Filename-derived suggestions, a practice **journal**, and
+  collections-as-playlists are planned next. ADR 0012.
 - **Loading state when opening a song** — the practice screen now dims with a
   **spinner + "Loading song…"** while the audio file opens, instead of looking frozen.
   The file open (and the demo render) moved **off the main actor**, so the UI stays

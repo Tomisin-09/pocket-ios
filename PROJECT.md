@@ -45,7 +45,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | Path | Responsibility |
 |---|---|
 | `Pocket/App/` | App entry, root scene |
-| `Pocket/Features/Library/` | Music library + file browsing |
+| `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
 | `Pocket/Features/Planner/` | Home screen / practice planner, routines |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
@@ -78,6 +78,11 @@ not gestures (ADR 0005 round 4); pure gesture/zoom math in unit-tested
 (`LibraryView`); importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),
 persisting a `Song` to practice, while an empty state offers import or a bundled
-demo. Richer song-metadata editing and navigation/planner are next (Phase 3).
+demo. Swiping a library row → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
+for title/artist/album/year/key/BPM/proficiency/progression, lightweight **collection
+tags**, a free-form **note**, and read-only **practice stats** (loops · markers ·
+annotations) — the record we enrich to drive routines (ADR 0012). Filename
+suggestions, a practice **journal** (per-loop/marker/song), and **collections as real
+playlists** are next. Navigation/planner follow (Phase 3).
 Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`, `WaveformGesture`, `Song`.
 See `CHANGELOG.md` for the full history.

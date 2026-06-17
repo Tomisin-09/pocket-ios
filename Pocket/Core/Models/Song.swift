@@ -9,12 +9,21 @@ import SwiftData
 final class Song {
     var title: String
     var artist: String
+    // Defaults on the *declarations* (not just `init`) so SwiftData lightweight
+    // migration can fill these for songs saved before ADR 0012 — without a
+    // declaration default a non-optional attribute is "mandatory" and the in-place
+    // migration fails (CoreData 134110), wiping the existing store.
+    var album: String = ""
+    /// `nil` when the release year is unknown — a normal state, like `bpm`.
+    var year: Int?
     var key: String
     /// `nil` when the tempo is unknown — a normal state (ADR 0004).
     var bpm: Int?
     var proficiency: Int          // 0–5 stars
     var progression: String
     var collections: [String]
+    /// A free-form note about the song (the edit sheet's "Notes" field).
+    var comment: String = ""
     var duration: TimeInterval
     /// Per-bar amplitudes for the detail waveform (0...1), extracted at import.
     var amplitudes: [Double]
@@ -28,16 +37,20 @@ final class Song {
     @Relationship(deleteRule: .cascade, inverse: \Loop.song) var loops: [Loop] = []
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
 
-    init(title: String, artist: String = "", key: String = "", bpm: Int? = nil,
-         proficiency: Int = 0, progression: String = "", collections: [String] = [],
+    init(title: String, artist: String = "", album: String = "", year: Int? = nil,
+         key: String = "", bpm: Int? = nil, proficiency: Int = 0, progression: String = "",
+         collections: [String] = [], comment: String = "",
          duration: TimeInterval, amplitudes: [Double] = [], ref: SongRef) {
         self.title = title
         self.artist = artist
+        self.album = album
+        self.year = year
         self.key = key
         self.bpm = bpm
         self.proficiency = proficiency
         self.progression = progression
         self.collections = collections
+        self.comment = comment
         self.duration = duration
         self.amplitudes = amplitudes
         self.sourceID = ref.id
@@ -52,6 +65,10 @@ final class Song {
 
     var loopsByStart: [Loop] { loops.sorted { $0.start < $1.start } }
     var markersByTime: [Marker] { markers.sorted { $0.seconds < $1.seconds } }
+
+    /// Total practice annotations on this song — loops plus markers. Surfaced as a
+    /// stat in the edit sheet; journal entries will join this once journaling ships.
+    var annotationCount: Int { loops.count + markers.count }
 }
 
 @Model

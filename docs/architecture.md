@@ -64,6 +64,13 @@ only. See `docs/decisions/0001`.
 - **SwiftData `@Model` domain** (`Core/Models/`): `Song` is the aggregate root, with
   cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
   persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.
+- **Song metadata editing** (`Features/Library/SongEditSheet.swift`, ADR 0012): the
+  editable counterpart to the read-only `SongInfoPanel`. Reached by swiping a library
+  row → Edit, it edits local `@State` and writes back to the `@Model` on Done (Cancel
+  discards), mirroring the loop/marker sheets. `Song` carries the scalar fields
+  (`album`, `year`, `comment` joined `title`/`artist`/`key`/`bpm`/`proficiency`/
+  `progression`/`collections`); `annotationCount` (= loops + markers) is the
+  pure, unit-tested stat shown in the sheet.
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
