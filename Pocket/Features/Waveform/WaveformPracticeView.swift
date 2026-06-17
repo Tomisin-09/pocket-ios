@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The core practice screen (design brief §4.1): a fixed practice cockpit over a
@@ -25,8 +26,12 @@ struct WaveformPracticeView: View {
         }
     }
 
-    @State private var model = WaveformPracticeModel()
+    @State private var model: WaveformPracticeModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(song: Song, context: ModelContext) {
+        _model = State(initialValue: WaveformPracticeModel(song: song, context: context))
+    }
 
     var body: some View {
         @Bindable var model = model
@@ -45,7 +50,7 @@ struct WaveformPracticeView: View {
                     ZStack {
                         if model.showConfirm {
                             EditToolbar(isPlaying: model.engine.isPlaying,
-                                        isEditingExisting: model.capture?.editingLoopID != nil,
+                                        isEditingExisting: model.capture?.editingLoop != nil,
                                         onPlayPause: model.auditionCapture,
                                         onConfirm: model.confirmCapture,
                                         onCancel: model.cancelCapture)
@@ -124,11 +129,11 @@ struct WaveformPracticeView: View {
         }
         .preferredColorScheme(.dark)
         .sheet(item: $model.editingLoop) { loop in
-            LoopEditSheet(loop: loop, onSave: model.updateLoop, onDelete: { model.deleteLoop(loop) },
+            LoopEditSheet(loop: loop, onDelete: { model.deleteLoop(loop) },
                           onAdjustRange: { model.startRangeEdit(loop) })
         }
         .sheet(item: $model.editingMarker) { marker in
-            MarkerEditSheet(marker: marker, onSave: model.updateMarker, onDelete: { model.deleteMarker(marker) })
+            MarkerEditSheet(marker: marker, onDelete: { model.deleteMarker(marker) })
         }
         .sheet(item: $model.namingMarker) { _ in
             MarkerNameSheet(onSave: model.saveMarkerName)
@@ -143,5 +148,11 @@ struct WaveformPracticeView: View {
 }
 
 #Preview {
-    WaveformPracticeView()
+    // swiftlint:disable:next force_try
+    let container = try! ModelContainer(for: Song.self,
+                                        configurations: .init(isStoredInMemoryOnly: true))
+    let song = Song.sample()
+    container.mainContext.insert(song)
+    return WaveformPracticeView(song: song, context: container.mainContext)
+        .modelContainer(container)
 }

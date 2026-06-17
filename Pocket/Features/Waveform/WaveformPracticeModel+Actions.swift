@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 // MARK: - Actions & gesture handlers
@@ -15,7 +16,7 @@ extension WaveformPracticeModel {
     }
 
     /// Tap a marker in the list: seek the playhead to it.
-    func seekToMarker(_ marker: WaveformMock.Marker) {
+    func seekToMarker(_ marker: Marker) {
         engine.seek(toSeconds: marker.seconds)
         haptic(.light)
     }
@@ -23,16 +24,16 @@ extension WaveformPracticeModel {
     /// Mark button — start a new marker at the playhead. The name-only sheet adds it
     /// on save; cancelling discards it (so the sheet needs no position or delete).
     func dropMarkerAtPlayhead() {
-        namingMarker = WaveformMock.Marker(seconds: playheadFraction * duration, label: "")
+        namingMarker = Marker(seconds: playheadFraction * duration, label: "")
     }
 
-    /// Name-sheet Save for a new marker — add it (empty name → "Marker").
+    /// Name-sheet Save for a new marker — persist it (empty name → "Marker").
     func saveMarkerName(_ name: String) {
-        guard var marker = namingMarker else { return }
+        guard let marker = namingMarker else { return }
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         marker.label = trimmed.isEmpty ? "Marker" : trimmed
-        markers.append(marker)
-        markers.sort { $0.seconds < $1.seconds }
+        context.insert(marker)
+        marker.song = song          // attach → shows in `markers`, persists
         namingMarker = nil
     }
 
@@ -45,7 +46,7 @@ extension WaveformPracticeModel {
             haptic(.medium)
             withAnimation(.easeOut(duration: 0.28)) {
                 capture = CaptureDraft(start: bounds.start, end: bounds.end,
-                                       fromFine: false, editingLoopID: nil)
+                                       fromFine: false, editingLoop: nil)
             }
             previewCapture()   // arm the engine loop so the punch can be auditioned
         } else {
@@ -60,7 +61,7 @@ extension WaveformPracticeModel {
         let bounds = WaveformGesture.movingHandle(handle, toFraction: fraction,
                                                   start: current.start, end: current.end)
         capture = CaptureDraft(start: bounds.start, end: bounds.end,
-                               fromFine: true, editingLoopID: current.editingLoopID)
+                               fromFine: true, editingLoop: current.editingLoop)
         // Audio preview is committed on handle release (onMoveHandleEnded →
         // previewCapture), not per drag-frame — dragging only moves the handles.
     }
@@ -76,7 +77,7 @@ extension WaveformPracticeModel {
             if capture?.fromFine != true {
                 let seed = activeLoop.map { ($0.start, $0.end) } ?? defaultSelection()
                 withAnimation(.easeOut(duration: 0.28)) {
-                    capture = CaptureDraft(start: seed.0, end: seed.1, fromFine: true, editingLoopID: nil)
+                    capture = CaptureDraft(start: seed.0, end: seed.1, fromFine: true, editingLoop: nil)
                 }
                 previewCapture()   // arm the selection for audition / live preview
             }
@@ -91,12 +92,10 @@ extension WaveformPracticeModel {
     /// Confirm ✓ — write back a range edit, or open naming (capture kept so a discard can restore it).
     func confirmCapture() {
         guard let draft = capture else { return }
-        if let id = draft.editingLoopID {
-            if let index = loops.firstIndex(where: { $0.id == id }) {
-                loops[index].start = draft.start
-                loops[index].end = draft.end
-            }
-            activeLoopID = id
+        if let loop = draft.editingLoop {
+            loop.start = draft.start          // mutating the @Model persists
+            loop.end = draft.end
+            activeLoopID = loop.uid
             applyActiveLoopToEngine()
             haptic(.medium)
             finishCapture()
@@ -128,11 +127,11 @@ extension WaveformPracticeModel {
         guard let draft = namingDraft else { return }
         let range = rangeString(draft.start, draft.end)
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        let loop = WaveformMock.Loop(name: trimmed.isEmpty ? range : trimmed,
-                                     start: draft.start, end: draft.end,
-                                     speed: speed, repeats: 4, duration: duration)
-        loops.append(loop)
-        activeLoopID = loop.id
+        let loop = Loop(name: trimmed.isEmpty ? range : trimmed,
+                        start: draft.start, end: draft.end, speed: speed, repeats: 4)
+        context.insert(loop)
+        loop.song = song          // attach → shows in `loops`, persists
+        activeLoopID = loop.uid
         applyActiveLoopToEngine()
         capture = nil
         namingDraft = nil
@@ -142,9 +141,9 @@ extension WaveformPracticeModel {
     /// "Adjust range" from a loop's edit sheet → Fine mode seeded with its bounds.
     /// Activates the loop so it's the one you hear while refining it (and so a
     /// discard restores its original bounds).
-    func startRangeEdit(_ loop: WaveformMock.Loop) {
-        activeLoopID = loop.id
-        capture = CaptureDraft(start: loop.start, end: loop.end, fromFine: true, editingLoopID: loop.id)
+    func startRangeEdit(_ loop: Loop) {
+        activeLoopID = loop.uid
+        capture = CaptureDraft(start: loop.start, end: loop.end, fromFine: true, editingLoop: loop)
         previewCapture()
         withAnimation(.easeOut(duration: 0.2)) { mode = .fine }
     }
@@ -165,11 +164,11 @@ extension WaveformPracticeModel {
     }
 
     /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
-    func activate(_ loop: WaveformMock.Loop) {
-        if activeLoopID == loop.id && engine.isPlaying {
+    func activate(_ loop: Loop) {
+        if activeLoopID == loop.uid && engine.isPlaying {
             engine.pause()
         } else {
-            activeLoopID = loop.id
+            activeLoopID = loop.uid
             applyActiveLoopToEngine()
             engine.seek(toSeconds: loop.startSeconds)
             engine.play()
@@ -212,25 +211,18 @@ extension WaveformPracticeModel {
         }
     }
 
-    func updateLoop(_ loop: WaveformMock.Loop) {
-        guard let index = loops.firstIndex(where: { $0.id == loop.id }) else { return }
-        loops[index] = loop
-    }
-
-    func deleteLoop(_ loop: WaveformMock.Loop) {
-        loops.removeAll { $0.id == loop.id }
-        if activeLoopID == loop.id {
-            activeLoopID = loops.first?.id
+    /// Delete a loop. Edits to an existing loop are written straight to the @Model by
+    /// its edit sheet (auto-persisting), so there's no `updateLoop`.
+    func deleteLoop(_ loop: Loop) {
+        let wasActive = activeLoopID == loop.uid
+        context.delete(loop)
+        if wasActive {
+            activeLoopID = loops.first?.uid
             applyActiveLoopToEngine()
         }
     }
 
-    func updateMarker(_ marker: WaveformMock.Marker) {
-        guard let index = markers.firstIndex(where: { $0.id == marker.id }) else { return }
-        markers[index] = marker
-    }
-
-    func deleteMarker(_ marker: WaveformMock.Marker) {
-        markers.removeAll { $0.id == marker.id }
+    func deleteMarker(_ marker: Marker) {
+        context.delete(marker)
     }
 }

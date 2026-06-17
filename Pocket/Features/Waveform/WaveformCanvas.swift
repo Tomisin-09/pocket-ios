@@ -23,7 +23,7 @@ import UIKit
 struct WaveformView: View {
     let amplitudes: [Double]
     let playheadFraction: Double
-    let loop: WaveformMock.Loop?
+    let loop: Loop?
     let mode: WaveformPracticeView.InteractionMode
     /// Loop punch in progress: the start of the loop being captured. The region from
     /// here to the live playhead fills green as playback previews it.

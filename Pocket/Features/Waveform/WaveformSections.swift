@@ -20,7 +20,7 @@ func stars(_ filled: Int) -> String {
 // MARK: - 1. Song strip
 
 struct SongStrip: View {
-    let song: WaveformMock.Song
+    let song: Song
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -50,7 +50,7 @@ struct SongStrip: View {
 // MARK: - 2. Song info panel (collapsible, open by default)
 
 struct SongInfoPanel: View {
-    let song: WaveformMock.Song
+    let song: Song
     @Binding var expanded: Bool
 
     private var summary: String {
@@ -227,7 +227,7 @@ struct TransportBar: View {
     let onPlayPause: () -> Void
     @Binding var mode: WaveformPracticeView.InteractionMode
     let currentTime: TimeInterval
-    let loop: WaveformMock.Loop?
+    let loop: Loop?
     /// Exit the active loop (stop looping, play on through the song).
     let onClearLoop: () -> Void
     /// Action bar: drop a marker at the playhead.

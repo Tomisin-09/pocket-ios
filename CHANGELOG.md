@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Persistence (SwiftData)** — loops and markers now **survive relaunches**. The
+  domain (`Song` / `Loop` / `Marker`) is SwiftData `@Model`s, replacing the in-memory
+  `WaveformMock`; the practice screen binds to a persisted `Song` via the model context,
+  and the app seeds one demo song on first launch. A CloudKit-ready foundation for the
+  library, routines, and sync still to come. ADR 0011.
 - **Pinch-to-zoom the waveform** — pinch the detail waveform to zoom into a section.
   The view **tracks the playhead**, so you navigate by seeking (tap / scrub / minimap)
   and the waveform follows — no separate pan gesture. The minimap **viewport box

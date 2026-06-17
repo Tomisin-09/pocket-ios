@@ -13,12 +13,12 @@ import SwiftUI
 extension WaveformPracticeModel {
     /// A loop being captured, awaiting confirmation. Bounds are mutable so Fine
     /// handles drag them live; `fromFine` shows the blue handles; a non-nil
-    /// `editingLoopID` means we're adjusting an existing loop, not creating one.
+    /// `editingLoop` means we're adjusting an existing loop, not creating one.
     struct CaptureDraft {
         var start: Double
         var end: Double
         var fromFine: Bool
-        var editingLoopID: WaveformMock.Loop.ID?
+        var editingLoop: Loop?
     }
 
     /// A confirmed loop awaiting a name (drives the naming sheet).

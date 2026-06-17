@@ -54,8 +54,13 @@ only. See `docs/decisions/0001`.
 
 ## Persistence
 
-- SwiftData models, CloudKit-backed (Phase 4) for cross-device solo sync.
-- `SongRef` is the attachment point for all practice data.
+- **SwiftData `@Model` domain** (`Core/Models/`): `Song` is the aggregate root, with
+  cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
+  persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.
+- `SongRef` is the song's identity (stored on `Song`), so practice data survives the
+  underlying file being moved or re-granted.
+- CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
+  a re-model.
 
 ## Backend
 

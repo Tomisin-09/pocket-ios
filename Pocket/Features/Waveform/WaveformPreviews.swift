@@ -11,7 +11,7 @@ import SwiftUI
 #Preview("Song strip") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        SongStrip(song: WaveformMock.song).padding()
+        SongStrip(song: Song.sample()).padding()
     }
 }
 
@@ -19,7 +19,7 @@ import SwiftUI
     @Previewable @State var expanded = true
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        SongInfoPanel(song: WaveformMock.song, expanded: $expanded).padding()
+        SongInfoPanel(song: Song.sample(), expanded: $expanded).padding()
     }
 }
 
@@ -27,7 +27,7 @@ import SwiftUI
     @Previewable @State var expanded = false
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        SongInfoPanel(song: WaveformMock.song, expanded: $expanded).padding()
+        SongInfoPanel(song: Song.sample(), expanded: $expanded).padding()
     }
 }
 
@@ -51,9 +51,9 @@ import SwiftUI
 #Preview("Waveform — Navigate") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        WaveformView(amplitudes: WaveformMock.song.amplitudes,
-                     playheadFraction: WaveformMock.song.playheadFraction,
-                     loop: WaveformMock.song.activeLoop,
+        WaveformView(amplitudes: Song.sample().amplitudes,
+                     playheadFraction: 0.35,
+                     loop: Song.sample().loops.first,
                      mode: .navigate, formingStart: nil, fineSelection: nil,
                      tapSelection: nil,
                      playheadLabel: "0:10",
@@ -66,8 +66,8 @@ import SwiftUI
 #Preview("Waveform — Fine handles") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        WaveformView(amplitudes: WaveformMock.song.amplitudes,
-                     playheadFraction: WaveformMock.song.playheadFraction,
+        WaveformView(amplitudes: Song.sample().amplitudes,
+                     playheadFraction: 0.35,
                      loop: nil,
                      mode: .fine, formingStart: nil, fineSelection: (0.30, 0.62),
                      tapSelection: nil,
@@ -81,11 +81,11 @@ import SwiftUI
 #Preview("Minimap") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        Minimap(song: WaveformMock.song,
-                activeLoop: WaveformMock.song.activeLoop,
-                markers: WaveformMock.song.markers,
+        Minimap(song: Song.sample(),
+                activeLoop: Song.sample().loops.first,
+                markers: Song.sample().markers,
                 fineSelection: nil,
-                playheadFraction: WaveformMock.song.playheadFraction,
+                playheadFraction: 0.35,
                 viewport: (0.25, 0.65),
                 onSeek: { _ in }).padding()
     }
@@ -96,8 +96,8 @@ import SwiftUI
     ZStack {
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: false, onPlayPause: {}, mode: $mode,
-                     currentTime: WaveformMock.song.playheadSeconds,
-                     loop: WaveformMock.song.activeLoop, onClearLoop: {},
+                     currentTime: 10,
+                     loop: Song.sample().loops.first, onClearLoop: {},
                      onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
     }
 }
@@ -121,12 +121,12 @@ import SwiftUI
 #Preview("Loops + Markers") {
     @Previewable @State var loopsExpanded = true
     @Previewable @State var markersExpanded = true
-    let song = WaveformMock.song
+    let song = Song.sample()
     ZStack {
         PocketColor.background.ignoresSafeArea()
         VStack(spacing: 16) {
             LoopsPanel(loops: song.loops, expanded: $loopsExpanded,
-                       activeLoopID: song.loops.first?.id, isPlaying: false,
+                       activeLoopID: song.loops.first?.uid, isPlaying: false,
                        onActivate: { _ in }, onEdit: { _ in })
             MarkersPanel(markers: song.markers, expanded: $markersExpanded,
                          onSeek: { _ in }, onEdit: { _ in })
@@ -153,6 +153,6 @@ import SwiftUI
 }
 
 #Preview("Edit loop sheet") {
-    LoopEditSheet(loop: WaveformMock.song.loops[0], onSave: { _ in }, onDelete: {},
+    LoopEditSheet(loop: Song.sample().loops[0], onDelete: {},
                   onAdjustRange: {})
 }

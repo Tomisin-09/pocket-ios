@@ -64,14 +64,17 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 
 ## Status
 
-Phase 1 (in progress) — the **waveform practice screen**: a fixed practice
+Phase 1 (mostly complete) — the **waveform practice screen**: a fixed practice
 cockpit over a scrollable reference area, with named/editable loops & markers
-(ADR 0003). Real playback runs through `PracticeAudioEngine` (play/pause/seek/
-pitch-preserving speed) fed by a generated dev sample until file import lands.
-The three transport modes are live as a **gesture engine** (Scroll seek + hold-
-to-marker, Tap scrub + two-tap loop capture, Fine draggable handles; ADR 0005),
-with the pure gesture math in unit-tested `WaveformGesture`. The screen's state
-and handlers live in an `@Observable` `WaveformPracticeModel`, with the view as a
-thin observing body (ADR 0007). The app temporarily launches straight into this
-screen; it reverts to the planner once navigation lands in Phase 3. Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`,
-`WaveformGesture`. See `CHANGELOG.md` and the build plan for sequencing.
+(ADR 0003). Real playback runs through `PracticeAudioEngine` — play/pause/seek,
+pitch-preserving speed, and **seamless, click-free region looping** (a crossfaded
+`.loops` buffer, ADRs 0006 & 0008) — fed by a generated dev sample until file
+import lands. Interaction: **tap = seek, drag = scrub, pinch = zoom** (ADR 0010);
+capture is via a transport **action bar** (Mark · Loop · Fine · reserved Auto),
+not gestures (ADR 0005 round 4); pure gesture/zoom math in unit-tested
+`WaveformGesture`. State + handlers live in an `@Observable` `WaveformPracticeModel`
+(ADR 0007), now bound to a **persisted `Song`** — loops/markers are SwiftData
+`@Model`s that survive relaunches (ADR 0011). The app launches into the practice
+screen on a seeded demo song; a real library + **file import** is the next slice,
+and navigation/planner is Phase 3. Verified pure logic: `TempoMath`, `SongRef`,
+`AudioMath`, `WaveformGesture`. See `CHANGELOG.md` for the full history.
