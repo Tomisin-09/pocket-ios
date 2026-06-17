@@ -53,6 +53,12 @@ targets:
     platform: iOS
     sources:
       - path: PocketTests
+    # Test bundles have no hand-maintained Info.plist; let Xcode generate one.
+    # Xcode 26.5 no longer defaults this on, so without it the bundle can't
+    # code-sign and the suite fails to build.
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
     dependencies:
       - target: Pocket
 
@@ -61,6 +67,9 @@ targets:
     platform: iOS
     sources:
       - path: PocketUITests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
     dependencies:
       - target: Pocket
 
