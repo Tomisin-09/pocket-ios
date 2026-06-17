@@ -32,9 +32,10 @@
 
 **Current status:** stages 3–5 exist as `PracticeAudioEngine` (player →
 time-pitch → mixer; play/pause/seek/rate + a published `currentTime`) with pure
-helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) aren't built yet,
-so a generated arpeggio (`SampleToneGenerator`) feeds the engine for development;
-the displayed waveform is downsampled from that same buffer. Tap-to-seek, scrub,
+helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) now exist:
+`SongImporter` (the `LibraryView` file picker) stores a security-scoped bookmark, and
+the practice model resolves it to feed the engine the real file; the generated arpeggio
+(`SampleToneGenerator`) remains only as the bundled demo song. Tap-to-seek, scrub,
 and loop/marker capture are driven by the waveform **gesture engine** (pure math
 in `WaveformGesture`, ADR 0005), which also handles **pinch-to-zoom** — the detail
 waveform shows a viewport that tracks the playhead (ADR 0010). An active loop **loops continuously, gaplessly and click-free** — the
@@ -42,11 +43,10 @@ engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
 both gapless and free of the splice click; the visual playhead wraps via pure
 `AudioMath.loopedPlayhead`, decoupled from the audio (region math in
-`AudioMath.loopSegment`; ADRs 0006 & 0008). Stage 4's offline waveform extraction
-for real files now exists as `WaveformExtractor` (chunked AVFoundation read →
-`AudioMath.mixToMono`/`downsample`, with the reduction unit-tested); the file
-**importer** (stage 1) that resolves a bookmark and feeds it a URL is next
-(ADR 0011, Slice 2).
+`AudioMath.loopSegment`; ADRs 0006 & 0008). Stage 4's waveform for real files is
+extracted up front by `WaveformExtractor` (chunked AVFoundation read →
+`AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
+the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body

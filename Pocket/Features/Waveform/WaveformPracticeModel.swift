@@ -29,6 +29,11 @@ final class WaveformPracticeModel {
     let engine = PracticeAudioEngine()
     var amplitudes: [Double]
 
+    /// Holds the imported file's security scope open while it plays (the engine reads
+    /// lazily); released automatically when this model — and so this property — is
+    /// deallocated. `nil` for the generated demo sample.
+    private var fileAccess: SecurityScopedAccess?
+
     /// The active loop, tracked by its stable `Loop.uid`.
     var activeLoopID: UUID?
     var editingLoop: Loop?
@@ -108,12 +113,46 @@ final class WaveformPracticeModel {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
 
-    /// Generate the dev sample and hand it to the engine (skipped in previews).
-    func loadSample() async {
+    /// Hand the song's audio to the engine: the resolved real file for an imported
+    /// song, or the generated dev sample for the demo (`bookmark == nil`). Skipped
+    /// in previews.
+    func loadAudio() async {
         guard !isPreview, engine.duration == 0 else { return }
+        if let bookmark = song.ref.bookmark {
+            loadImportedFile(bookmark: bookmark)
+        } else {
+            loadDemoSample()
+        }
+        engine.setRate(speed)
+    }
+
+    /// Resolve the security-scoped bookmark and load the real file. Access is held
+    /// open (`securityScopedURL`) for the engine's lazy reads, released on deinit.
+    /// `amplitudes` already holds the waveform extracted at import (set in `init`).
+    private func loadImportedFile(bookmark: Data) {
+        var isStale = false
+        guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
+              let access = SecurityScopedAccess(url) else { return }
+        fileAccess = access
+        try? engine.load(url: url)
+    }
+
+    /// Generate the dev arpeggio and hand it to the engine (the demo sample).
+    private func loadDemoSample() {
         guard let sample = try? SampleToneGenerator.makeSample(duration: song.duration) else { return }
         amplitudes = sample.amplitudes
         try? engine.load(url: sample.url)
-        engine.setRate(speed)
     }
+}
+
+/// Holds a security-scoped resource open for its lifetime, releasing it on dealloc.
+/// Lets a `@MainActor` owner release access implicitly via property teardown, with
+/// no nonisolated `deinit` reaching into actor-isolated state (Swift 6).
+private final class SecurityScopedAccess {
+    private let url: URL
+    init?(_ url: URL) {
+        guard url.startAccessingSecurityScopedResource() else { return nil }
+        self.url = url
+    }
+    deinit { url.stopAccessingSecurityScopedResource() }
 }

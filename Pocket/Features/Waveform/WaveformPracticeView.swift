@@ -141,7 +141,7 @@ struct WaveformPracticeView: View {
         .sheet(item: $model.namingDraft, onDismiss: model.namingDismissed) { _ in
             LoopNameSheet(onSave: model.saveNamed)
         }
-        .task { await model.loadSample() }
+        .task { await model.loadAudio() }
         .onChange(of: model.speed) { _, newValue in model.engine.setRate(newValue) }
         .onChange(of: model.mode) { _, newMode in model.modeChanged(to: newMode) }
     }

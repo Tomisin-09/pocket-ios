@@ -6,11 +6,17 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Song library + file import** — the app now opens to a **library** of your songs
+  (`LibraryView`). Import any DRM-free local/iCloud **audio file** (the `+` button, or
+  the empty-state button): Pocket takes a **security-scoped bookmark** for durable
+  access, **extracts the real waveform** up front (`WaveformExtractor`), and persists it
+  as a `Song` you open and practice with its **actual audio**. A first-run **empty
+  state** offers Import or a bundled demo, retiring the auto-seeded arpeggio. The title
+  defaults to the file name; richer metadata editing is next. ADRs 0011 (Slice 2) & 0001.
 - **Persistence (SwiftData)** — loops and markers now **survive relaunches**. The
   domain (`Song` / `Loop` / `Marker`) is SwiftData `@Model`s, replacing the in-memory
-  `WaveformMock`; the practice screen binds to a persisted `Song` via the model context,
-  and the app seeds one demo song on first launch. A CloudKit-ready foundation for the
-  library, routines, and sync still to come. ADR 0011.
+  `WaveformMock`; the practice screen binds to a persisted `Song` via the model context.
+  A CloudKit-ready foundation for the library, routines, and sync still to come. ADR 0011.
 - **Pinch-to-zoom the waveform** — pinch the detail waveform to zoom into a section.
   The view **tracks the playhead**, so you navigate by seeking (tap / scrub / minimap)
   and the waveform follows — no separate pan gesture. The minimap **viewport box
