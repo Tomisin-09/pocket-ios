@@ -88,11 +88,13 @@ final class Loop {
 
     // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
     // SwiftData lightweight migration fills them for loops saved before this — see the
-    // ADR 0012 migration note (init-only defaults fail with CoreData 134110).
+    // ADR 0012 migration note (init-only defaults fail with CoreData 134110). The loop's
+    // existing `speed` is the ramp start; these add the target, the step count, and the
+    // passes per step.
     var automatorEnabled: Bool = false
-    var automatorStepSpeed: Double = 0.05
-    var automatorCeilingSpeed: Double = 1.0
-    var automatorRepeatsPerStep: Int = 2
+    var automatorTargetSpeed: Double = 1.0
+    var automatorStepCount: Int = 6
+    var automatorLoopsPerStep: Int = 2
 
     init(name: String, start: Double, end: Double, speed: Double, repeats: Int) {
         self.uid = UUID()
@@ -110,15 +112,15 @@ final class Loop {
     /// rest are the automator-specific fields. Setting it writes them back through.
     var automator: AutomatorConfig {
         get {
-            AutomatorConfig(startSpeed: speed, stepSpeed: automatorStepSpeed,
-                            ceilingSpeed: automatorCeilingSpeed,
-                            repeatsPerStep: automatorRepeatsPerStep, enabled: automatorEnabled)
+            AutomatorConfig(startSpeed: speed, targetSpeed: automatorTargetSpeed,
+                            stepCount: automatorStepCount, loopsPerStep: automatorLoopsPerStep,
+                            enabled: automatorEnabled)
         }
         set {
             speed = newValue.startSpeed
-            automatorStepSpeed = newValue.stepSpeed
-            automatorCeilingSpeed = newValue.ceilingSpeed
-            automatorRepeatsPerStep = newValue.repeatsPerStep
+            automatorTargetSpeed = newValue.targetSpeed
+            automatorStepCount = newValue.stepCount
+            automatorLoopsPerStep = newValue.loopsPerStep
             automatorEnabled = newValue.enabled
         }
     }

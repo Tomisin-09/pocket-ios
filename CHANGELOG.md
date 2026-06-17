@@ -7,13 +7,15 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ### Added
 - **Automator — per-loop speed trainer** — each loop row now has an **"A" control**
-  (replacing the old speed·repeats text). Set a **start / step / target speed** and how
-  many passes between steps, and the loop **ramps its speed up as it repeats**, holding
-  once it reaches the target. Speed-based so it works for any song; the setup popup shows
-  the equivalent **BPM** when the tempo is known. Grabbing the speed slider hands control
-  back (manual wins). The stepping is pure, unit-tested math (`AutomatorConfig`); the
-  engine counts loop wraps in source frames so the ramp stays in step across speed
-  changes. The song-level (tempo-bar) automator comes next. ADR 0013.
+  (replacing the old speed·repeats text). Set a **start %**, a **target %**, how many
+  **steps** to get there, and how many **loops per step** — the loop then ramps its speed
+  in even steps as it repeats and **holds at the target**. It climbs *or* descends (target
+  below start = a slow-down trainer); the per-step change is shown for you ("+5% each"). The
+  setup sheet is a visual **ramp** with a climbing/falling graphic and **BPM** equivalents
+  when the song's tempo is known; **Set ramp** arms it, **Turn off** disarms, and grabbing
+  the speed slider hands control back. The stepping is pure, unit-tested math
+  (`AutomatorConfig`); the engine counts loop wraps in source frames so the steps stay
+  evenly spaced across speed changes. ADR 0013.
 - **Song metadata editing** — **swipe a library row → Edit** to open a metadata sheet
   (`SongEditSheet`): title, artist, **album**, **year**, key, BPM, proficiency
   (tappable stars), and progression; **collection tags** (add / swipe-to-remove); a

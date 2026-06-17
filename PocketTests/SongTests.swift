@@ -90,17 +90,18 @@ final class SongTests: XCTestCase {
         let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 0.8, repeats: 4)
         XCTAssertEqual(loop.automator.startSpeed, 0.8, accuracy: 1e-9, "start maps to loop.speed")
         XCTAssertFalse(loop.automator.enabled)
-        XCTAssertEqual(loop.automator.repeatsPerStep, 2)
+        XCTAssertEqual(loop.automator.stepCount, 6)
+        XCTAssertEqual(loop.automator.loopsPerStep, 2)
     }
 
     func testLoopAutomatorSetterWritesThrough() {
         let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 0.8, repeats: 4)
-        loop.automator = AutomatorConfig(startSpeed: 0.6, stepSpeed: 0.1, ceilingSpeed: 1.2,
-                                         repeatsPerStep: 3, enabled: true)
+        loop.automator = AutomatorConfig(startSpeed: 0.6, targetSpeed: 1.2, stepCount: 5,
+                                         loopsPerStep: 3, enabled: true)
         XCTAssertEqual(loop.speed, 0.6, accuracy: 1e-9, "start writes back to loop.speed")
-        XCTAssertEqual(loop.automatorStepSpeed, 0.1, accuracy: 1e-9)
-        XCTAssertEqual(loop.automatorCeilingSpeed, 1.2, accuracy: 1e-9)
-        XCTAssertEqual(loop.automatorRepeatsPerStep, 3)
+        XCTAssertEqual(loop.automatorTargetSpeed, 1.2, accuracy: 1e-9)
+        XCTAssertEqual(loop.automatorStepCount, 5)
+        XCTAssertEqual(loop.automatorLoopsPerStep, 3)
         XCTAssertTrue(loop.automatorEnabled)
     }
 
