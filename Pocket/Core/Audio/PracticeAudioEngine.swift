@@ -15,6 +15,10 @@ final class PracticeAudioEngine {
     private(set) var isPlaying = false
     private(set) var currentTime: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
+    /// How many times the active loop has wrapped since its buffer started (0-based) —
+    /// drives the per-loop automator's speed ramp (ADR 0013). Resets when the loop
+    /// (re)starts; stays 0 when not looping.
+    private(set) var loopIteration = 0
 
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
@@ -100,6 +104,7 @@ final class PracticeAudioEngine {
         generation += 1
         player.stop()
         scheduled = false
+        loopIteration = 0
         currentTime = clamped
         if wasPlaying { play() }
     }
@@ -123,6 +128,7 @@ final class PracticeAudioEngine {
     func clearLoop() {
         loopRegion = nil
         loopBufferFrames = 0
+        loopIteration = 0
         if isPlaying { seek(toSeconds: currentTime) }
     }
 
@@ -155,6 +161,7 @@ final class PracticeAudioEngine {
     private func scheduleLoopBuffer() -> Bool {
         guard let buffer = makeLoopBuffer() else { return false }
         loopBaseSampleTime = isPlaying ? currentSampleTime() : 0
+        loopIteration = 0
         player.scheduleBuffer(buffer, at: nil, options: [.loops, .interrupts], completionHandler: nil)
         return true
     }
@@ -234,7 +241,12 @@ final class PracticeAudioEngine {
             // The loop buffer runs continuously; map elapsed-since-its-start back
             // into the region. Length is region − crossfade, so the playhead wraps
             // in lockstep with the audio.
-            let elapsed = max(0, Double(playerTime.sampleTime - loopBaseSampleTime) / playerTime.sampleRate)
+            let elapsedFrames = max(0, Double(playerTime.sampleTime - loopBaseSampleTime))
+            // Wrap count is in *source* frames (the buffer's own length), so it's stable
+            // even as the automator changes playback rate mid-loop.
+            let iteration = Int(elapsedFrames / Double(loopBufferFrames))
+            if iteration != loopIteration { loopIteration = iteration }
+            let elapsed = elapsedFrames / playerTime.sampleRate
             currentTime = AudioMath.loopedPlayhead(elapsed: elapsed,
                                                    loopStart: Double(loopAnchorFrame) / sampleRate,
                                                    loopLength: Double(loopBufferFrames) / sampleRate)

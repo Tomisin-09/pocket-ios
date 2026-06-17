@@ -81,9 +81,20 @@ final class Loop {
     /// Bounds as fractions of the song (0...1), edited on the waveform in Fine mode.
     var start: Double
     var end: Double
+    /// The loop's playback speed — also the **start** of its automator ramp (ADR 0013).
     var speed: Double
     var repeats: Int
     var song: Song?
+
+    // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
+    // SwiftData lightweight migration fills them for loops saved before this — see the
+    // ADR 0012 migration note (init-only defaults fail with CoreData 134110). The loop's
+    // existing `speed` is the ramp start; these add the target, the step count, and the
+    // passes per step.
+    var automatorEnabled: Bool = false
+    var automatorTargetSpeed: Double = 1.0
+    var automatorStepCount: Int = 6
+    var automatorLoopsPerStep: Int = 2
 
     init(name: String, start: Double, end: Double, speed: Double, repeats: Int) {
         self.uid = UUID()
@@ -96,6 +107,23 @@ final class Loop {
 
     var startSeconds: TimeInterval { (song?.duration ?? 0) * start }
     var endSeconds: TimeInterval { (song?.duration ?? 0) * end }
+
+    /// The loop's speed-ramp config (pure value type). `speed` is the ramp start; the
+    /// rest are the automator-specific fields. Setting it writes them back through.
+    var automator: AutomatorConfig {
+        get {
+            AutomatorConfig(startSpeed: speed, targetSpeed: automatorTargetSpeed,
+                            stepCount: automatorStepCount, loopsPerStep: automatorLoopsPerStep,
+                            enabled: automatorEnabled)
+        }
+        set {
+            speed = newValue.startSpeed
+            automatorTargetSpeed = newValue.targetSpeed
+            automatorStepCount = newValue.stepCount
+            automatorLoopsPerStep = newValue.loopsPerStep
+            automatorEnabled = newValue.enabled
+        }
+    }
 }
 
 @Model

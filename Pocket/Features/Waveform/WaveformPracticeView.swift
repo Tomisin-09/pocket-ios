@@ -44,7 +44,7 @@ struct WaveformPracticeView: View {
                 VStack(spacing: 16) {
                     SongStrip(song: model.song)                                  // 1
                     SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
-                             onSetBPM: model.setBPM)
+                             onSetBPM: model.setBPM, onUserAdjust: model.userAdjustedSpeed)
                     // 4. Mode instructions — replaced by the edit toolbar (audition
                     //    + state label + Y/N) while a loop is captured.
                     ZStack {
@@ -114,7 +114,8 @@ struct WaveformPracticeView: View {
                     VStack(spacing: 16) {
                         LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
                                    activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
-                                   onActivate: model.activate, onEdit: { model.editingLoop = $0 })
+                                   onActivate: model.activate, onEdit: { model.editingLoop = $0 },
+                                   onAutomator: { model.editingAutomatorLoop = $0 })
                         MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
                                      onSeek: model.seekToMarker, onEdit: { model.editingMarker = $0 })
                         SongInfoPanel(song: model.song, expanded: $model.songInfoExpanded) // 2
@@ -149,9 +150,22 @@ struct WaveformPracticeView: View {
         .sheet(item: $model.namingDraft, onDismiss: model.namingDismissed) { _ in
             LoopNameSheet(onSave: model.saveNamed)
         }
+        .sheet(item: $model.editingAutomatorLoop) { loop in
+            AutomatorSheet(loop: loop, song: model.song,
+                           onSet: { model.startAutomator(for: loop) },
+                           onTurnOff: { model.turnOffAutomator(for: loop) })
+        }
         .task { await model.loadAudio() }
         .onChange(of: model.speed) { _, newValue in model.engine.setRate(newValue) }
         .onChange(of: model.mode) { _, newMode in model.modeChanged(to: newMode) }
+        // Per-loop automator: step the speed as the active loop wraps, and snap to the
+        // ramp's current step when playback (re)starts (ADR 0013).
+        .onChange(of: model.engine.loopIteration) { _, iteration in
+            model.automatorAdvance(toLoopIteration: iteration)
+        }
+        .onChange(of: model.engine.isPlaying) { _, playing in
+            if playing { model.automatorAdvance(toLoopIteration: model.engine.loopIteration) }
+        }
     }
 }
 

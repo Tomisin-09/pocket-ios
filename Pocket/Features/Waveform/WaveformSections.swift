@@ -102,6 +102,9 @@ struct SpeedBar: View {
     /// `nil` when the song's tempo is unknown — shows a "Set BPM" affordance.
     let displayedBPM: Int?
     let onSetBPM: () -> Void
+    /// Fired when the user grabs the slider, so a running loop automator can stand down
+    /// (manual control wins). Defaults to a no-op for previews/standalone use.
+    var onUserAdjust: () -> Void = {}
 
     private let presets: [Double] = [0.25, 0.50, 0.75]
 
@@ -117,7 +120,8 @@ struct SpeedBar: View {
                 // NOTE: brief §4.1 wants an asymmetric scale (0.25–1.0 occupies
                 // ~54% of the track). That custom track mapping is a later
                 // single-axis iteration; a linear slider stands in for now.
-                Slider(value: $speed, in: 0.25...2.0)
+                Slider(value: $speed, in: 0.25...2.0,
+                       onEditingChanged: { editing in if editing { onUserAdjust() } })
                     .tint(PocketColor.active)
                     .accessibilityLabel("Playback speed")
 

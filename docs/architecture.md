@@ -50,7 +50,17 @@ the demo's waveform is still downsampled from its generated buffer (ADR 0011, Sl
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body
-that observes and binds to it (ADR 0007). Opening a song's audio is **async and
+that observes and binds to it (ADR 0007). Each loop has a per-loop **automator**
+(speed trainer, ADR 0013): the engine publishes `loopIteration` (loop wraps counted
+in *source* frames, so it's stable across rate changes), the view feeds it to
+`WaveformPracticeModel.automatorAdvance`, which sets `speed` from the pure
+`AutomatorConfig.speed(atLoopIteration:)` (interpolates start→target over N steps, a few
+loops each, up *or* down — or level when start = target). The ramp is **finite**: it runs
+`AutomatorConfig.totalLoops` passes — the `stepCount + 1` plateaus (start, the steps, and
+the target) × `loopsPerStep` — then `automatorAdvance` **pauses and rewinds** the engine to
+the loop start, so it can be replayed. **Set ramp** arms the config and *starts the loop
+playing* from the top (`startAutomator`). Setting `speed` reuses the existing
+speed→engine path; grabbing the slider disables the loop's ramp. Opening a song's audio is **async and
 off the main actor** — the engine reads the file header on a detached task (it can
 block on large or not-yet-downloaded iCloud files), so the UI stays responsive; the
 model exposes `isLoadingAudio` and the view shows a dimming **loading overlay**
