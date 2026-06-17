@@ -26,6 +26,24 @@ enum AudioMath {
         return peaks.map { $0 / maxPeak }
     }
 
+    /// Average parallel channel sample arrays into a single mono signal — so a
+    /// hard-panned track still contributes to the extracted waveform. Channels are
+    /// assumed equal length; the result is the length of the shortest. Empty input
+    /// returns empty; a single channel passes straight through (no copy of work).
+    static func mixToMono(_ channels: [[Float]]) -> [Float] {
+        guard let first = channels.first else { return [] }
+        guard channels.count > 1 else { return first }
+        let frames = channels.map(\.count).min() ?? 0
+        guard frames > 0 else { return [] }
+        var mono = [Float](repeating: 0, count: frames)
+        for channel in channels {
+            for index in 0..<frames { mono[index] += channel[index] }
+        }
+        let scale = 1 / Float(channels.count)
+        for index in 0..<frames { mono[index] *= scale }
+        return mono
+    }
+
     /// Sample-frame index for a position in seconds.
     static func secondsToFrames(_ seconds: TimeInterval, sampleRate: Double) -> Int {
         Int((seconds * sampleRate).rounded())

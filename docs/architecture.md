@@ -42,8 +42,11 @@ engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
 both gapless and free of the splice click; the visual playhead wraps via pure
 `AudioMath.loopedPlayhead`, decoupled from the audio (region math in
-`AudioMath.loopSegment`; ADRs 0006 & 0008). Real file import replaces the
-generated source next.
+`AudioMath.loopSegment`; ADRs 0006 & 0008). Stage 4's offline waveform extraction
+for real files now exists as `WaveformExtractor` (chunked AVFoundation read →
+`AudioMath.mixToMono`/`downsample`, with the reduction unit-tested); the file
+**importer** (stage 1) that resolves a bookmark and feeds it a URL is next
+(ADR 0011, Slice 2).
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body
