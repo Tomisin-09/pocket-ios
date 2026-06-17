@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Loading state when opening a song** — the practice screen now dims with a
+  **spinner + "Loading song…"** while the audio file opens, instead of looking frozen.
+  The file open (and the demo render) moved **off the main actor**, so the UI stays
+  responsive on slow/iCloud reads and the overlay also blocks taps on the half-ready
+  controls until playback is ready.
 - **Song library + file import** — the app now opens to a **library** of your songs
   (`LibraryView`). Import any DRM-free local/iCloud **audio file** (the `+` button, or
   the empty-state button): Pocket takes a **security-scoped bookmark** for durable

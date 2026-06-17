@@ -48,3 +48,27 @@ var panelBackground: some View {
     RoundedRectangle(cornerRadius: 12, style: .continuous)
         .fill(Color.white.opacity(0.04))
 }
+
+/// Shown over the practice surface while a song's audio opens (brief §5 — every
+/// state is designed). Dims the screen and absorbs touches so the half-ready
+/// controls can't be tapped, and the user sees progress instead of a frozen app.
+struct AudioLoadingOverlay: View {
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea()
+            VStack(spacing: 12) {
+                ProgressView()
+                    .controlSize(.large)
+                    .tint(PocketColor.active)
+                Text("Loading song…")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(PocketColor.textPrimary)
+            }
+            .padding(28)
+            .background(panelBackground)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Loading song")
+    }
+}

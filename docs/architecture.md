@@ -50,7 +50,11 @@ the demo's waveform is still downsampled from its generated buffer (ADR 0011, Sl
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body
-that observes and binds to it (ADR 0007).
+that observes and binds to it (ADR 0007). Opening a song's audio is **async and
+off the main actor** — the engine reads the file header on a detached task (it can
+block on large or not-yet-downloaded iCloud files), so the UI stays responsive; the
+model exposes `isLoadingAudio` and the view shows a dimming **loading overlay**
+(`AudioLoadingOverlay`) that also blocks taps on the half-ready controls until ready.
 
 Apple Music tracks skip stages 2–4 (no raw audio) — they are browse/metadata
 only. See `docs/decisions/0001`.

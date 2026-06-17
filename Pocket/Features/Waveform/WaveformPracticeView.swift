@@ -126,7 +126,15 @@ struct WaveformPracticeView: View {
                 .disabled(model.isRangeEditing)
                 .animation(.easeOut(duration: 0.2), value: model.isRangeEditing)
             }
+
+            // Dim + spinner while the audio opens, so a slow file read reads as
+            // "loading" rather than "frozen" (and blocks taps on half-ready controls).
+            if model.isLoadingAudio {
+                AudioLoadingOverlay()
+                    .transition(.opacity)
+            }
         }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
         .preferredColorScheme(.dark)
         .sheet(item: $model.editingLoop) { loop in
             LoopEditSheet(loop: loop, onDelete: { model.deleteLoop(loop) },

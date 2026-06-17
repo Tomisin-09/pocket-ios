@@ -156,3 +156,27 @@ import SwiftUI
     LoopEditSheet(loop: Song.sample().loops[0], onDelete: {},
                   onAdjustRange: {})
 }
+
+#Preview("Loading overlay") {
+    let song = Song.sample()
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        // Faux practice surface underneath, so the dim + card read realistically.
+        VStack(spacing: 16) {
+            SongStrip(song: song)
+            WaveformView(amplitudes: song.amplitudes,
+                         playheadFraction: 0.35,
+                         loop: song.loops.first,
+                         mode: .navigate, formingStart: nil, fineSelection: nil,
+                         tapSelection: nil,
+                         playheadLabel: "0:10",
+                         onSeek: { _ in },
+                         onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                         viewport: (0, 1), onSetZoomSpan: { _ in })
+            Spacer()
+        }
+        .padding()
+        AudioLoadingOverlay()
+    }
+    .preferredColorScheme(.dark)
+}

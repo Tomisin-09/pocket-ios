@@ -29,6 +29,11 @@ final class WaveformPracticeModel {
     let engine = PracticeAudioEngine()
     var amplitudes: [Double]
 
+    /// True while the song's audio is being opened/prepared, so the view can show a
+    /// loading overlay instead of an apparently-frozen surface (the file open and the
+    /// demo-sample render both run off the main actor).
+    private(set) var isLoadingAudio = false
+
     /// Holds the imported file's security scope open while it plays (the engine reads
     /// lazily); released automatically when this model — and so this property — is
     /// deallocated. `nil` for the generated demo sample.
@@ -118,30 +123,40 @@ final class WaveformPracticeModel {
     /// in previews.
     func loadAudio() async {
         guard !isPreview, engine.duration == 0 else { return }
+        isLoadingAudio = true
+        defer { isLoadingAudio = false }
         if let bookmark = song.ref.bookmark {
-            loadImportedFile(bookmark: bookmark)
+            await loadImportedFile(bookmark: bookmark)
         } else {
-            loadDemoSample()
+            await loadDemoSample()
         }
         engine.setRate(speed)
     }
 
     /// Resolve the security-scoped bookmark and load the real file. Access is held
-    /// open (`securityScopedURL`) for the engine's lazy reads, released on deinit.
-    /// `amplitudes` already holds the waveform extracted at import (set in `init`).
-    private func loadImportedFile(bookmark: Data) {
+    /// open (`fileAccess`) for the engine's lazy reads, released on deinit. The
+    /// engine opens the file off the main actor; `amplitudes` already holds the
+    /// waveform extracted at import (set in `init`).
+    private func loadImportedFile(bookmark: Data) async {
         var isStale = false
         guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
               let access = SecurityScopedAccess(url) else { return }
         fileAccess = access
-        try? engine.load(url: url)
+        try? await engine.load(url: url)
     }
 
-    /// Generate the dev arpeggio and hand it to the engine (the demo sample).
-    private func loadDemoSample() {
-        guard let sample = try? SampleToneGenerator.makeSample(duration: song.duration) else { return }
+    /// Generate the dev arpeggio off the main actor and hand it to the engine (the
+    /// demo sample). The render writes a WAV, so it's kept off the main thread too.
+    private func loadDemoSample() async {
+        guard let sample = try? await Self.makeDemoSample(duration: song.duration) else { return }
         amplitudes = sample.amplitudes
-        try? engine.load(url: sample.url)
+        try? await engine.load(url: sample.url)
+    }
+
+    private static func makeDemoSample(duration: TimeInterval) async throws -> SampleToneGenerator.Sample {
+        try await Task.detached(priority: .userInitiated) {
+            try SampleToneGenerator.makeSample(duration: duration)
+        }.value
     }
 }
 
