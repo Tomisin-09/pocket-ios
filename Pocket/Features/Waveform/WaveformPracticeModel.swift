@@ -46,6 +46,8 @@ final class WaveformPracticeModel {
     /// A freshly-dropped marker awaiting a name (drives the name-only sheet). It's a
     /// detached `@Model` — persisted only on save; cancelling drops it.
     var namingMarker: Marker?
+    /// The loop whose automator (speed ramp) is being set up (drives the sheet, ADR 0013).
+    var editingAutomatorLoop: Loop?
 
     init(song: Song, context: ModelContext) {
         self.song = song
@@ -78,6 +80,32 @@ final class WaveformPracticeModel {
 
     /// The loop currently loaded into the transport/waveform, if any.
     var activeLoop: Loop? { loops.first { $0.uid == activeLoopID } }
+
+    // MARK: - Automator (per-loop speed ramp, ADR 0013)
+
+    /// Apply the active loop's speed ramp at a new loop iteration (driven by the engine's
+    /// `loopIteration`). No-op unless that loop's automator is enabled and it's playing.
+    /// Sets `speed`, which the view feeds to the engine via its existing `onChange`.
+    func automatorAdvance(toLoopIteration iteration: Int) {
+        guard let loop = activeLoop, loop.automatorEnabled, engine.isPlaying else { return }
+        let target = loop.automator.speed(atLoopIteration: iteration)
+        if abs(target - speed) > 0.0001 { speed = target }
+    }
+
+    /// Called when a loop's automator is configured. If we just armed the ramp on the
+    /// loop that's currently playing, restart it so the ramp begins cleanly at the start
+    /// speed rather than jumping in at the current pass.
+    func automatorConfigured(for loop: Loop) {
+        guard loop === activeLoop, loop.automatorEnabled, engine.isPlaying else { return }
+        speed = loop.automator.speed(atLoopIteration: 0)
+        engine.seek(toSeconds: loop.startSeconds)
+    }
+
+    /// The user grabbed the speed slider — hand control back by disabling the active
+    /// loop's ramp, so it stops fighting the manual setting.
+    func userAdjustedSpeed() {
+        activeLoop?.automatorEnabled = false
+    }
 
     /// Live playhead as a fraction of the song (0...1), driven by the engine.
     var playheadFraction: Double {

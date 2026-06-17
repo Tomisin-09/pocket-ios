@@ -127,7 +127,7 @@ import SwiftUI
         VStack(spacing: 16) {
             LoopsPanel(loops: song.loops, expanded: $loopsExpanded,
                        activeLoopID: song.loops.first?.uid, isPlaying: false,
-                       onActivate: { _ in }, onEdit: { _ in })
+                       onActivate: { _ in }, onEdit: { _ in }, onAutomator: { _ in })
             MarkersPanel(markers: song.markers, expanded: $markersExpanded,
                          onSeek: { _ in }, onEdit: { _ in })
         }
@@ -140,7 +140,7 @@ import SwiftUI
     ZStack {
         PocketColor.background.ignoresSafeArea()
         LoopsPanel(loops: [], expanded: $expanded, activeLoopID: nil, isPlaying: false,
-                   onActivate: { _ in }, onEdit: { _ in }).padding()
+                   onActivate: { _ in }, onEdit: { _ in }, onAutomator: { _ in }).padding()
     }
 }
 
@@ -155,6 +155,11 @@ import SwiftUI
 #Preview("Edit loop sheet") {
     LoopEditSheet(loop: Song.sample().loops[0], onDelete: {},
                   onAdjustRange: {})
+}
+
+#Preview("Automator sheet") {
+    let song = Song.sample()
+    return AutomatorSheet(loop: song.loops[0], song: song, onSave: {})
 }
 
 #Preview("Loading overlay") {

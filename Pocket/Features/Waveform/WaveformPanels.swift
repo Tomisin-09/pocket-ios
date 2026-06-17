@@ -14,6 +14,8 @@ struct LoopsPanel: View {
     let onActivate: (Loop) -> Void
     /// Trailing pencil — open the edit sheet.
     let onEdit: (Loop) -> Void
+    /// The "A" control — open this loop's automator (speed ramp) sheet.
+    let onAutomator: (Loop) -> Void
 
     var body: some View {
         CollapsiblePanel(title: "Loops",
@@ -33,6 +35,7 @@ struct LoopsPanel: View {
                                 isActive: loop.uid == activeLoopID,
                                 isPlaying: isPlaying,
                                 onActivate: { onActivate(loop) },
+                                onAutomator: { onAutomator(loop) },
                                 onEdit: { onEdit(loop) })
                     }
                 }
@@ -46,6 +49,7 @@ private struct LoopRow: View {
     let isActive: Bool
     let isPlaying: Bool
     let onActivate: () -> Void
+    let onAutomator: () -> Void
     let onEdit: () -> Void
 
     var body: some View {
@@ -65,8 +69,9 @@ private struct LoopRow: View {
                             .font(.subheadline)
                             .foregroundStyle(PocketColor.textPrimary)
                             .lineLimit(1)
-                        Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds)) · "
-                             + String(format: "%.2f× · ×%d", loop.speed, loop.repeats))
+                        // Speed/repeats moved into the automator (ADR 0013) — the row
+                        // shows just the range now; the "A" control holds the ramp.
+                        Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
                             .font(.pocketMono(.footnote))
                             .foregroundStyle(PocketColor.textSecondary)
                             .lineLimit(1)
@@ -78,9 +83,33 @@ private struct LoopRow: View {
             .buttonStyle(.plain)
             .accessibilityLabel(isActive && isPlaying ? "Pause \(loop.name)" : "Play \(loop.name)")
 
+            AutomatorButton(isOn: loop.automatorEnabled, action: onAutomator)
+                .accessibilityLabel(loop.automatorEnabled
+                                    ? "Automator on for \(loop.name)" : "Set up automator for \(loop.name)")
+
             EditPencil { onEdit() }
                 .accessibilityLabel("Edit \(loop.name)")
         }
+    }
+}
+
+/// The "A" speed-ramp control on a loop row — tinted green when the loop's automator is
+/// armed. A 44pt touch target around a compact badge.
+private struct AutomatorButton: View {
+    let isOn: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text("A")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(isOn ? PocketColor.active : PocketColor.textSecondary)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(isOn ? PocketColor.active.opacity(0.18) : Color.white.opacity(0.06)))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
