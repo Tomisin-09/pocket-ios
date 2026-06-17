@@ -36,9 +36,12 @@ helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) aren't built ye
 so a generated arpeggio (`SampleToneGenerator`) feeds the engine for development;
 the displayed waveform is downsampled from that same buffer. Tap-to-seek, scrub,
 and loop/marker capture are driven by the waveform **gesture engine** (pure math
-in `WaveformGesture`, ADR 0005). An active loop **loops continuously** — the
-engine wraps from the loop end back to its start (reschedule-on-end; boundary
-math in `AudioMath.loopSegment`, ADR 0006). Real file import replaces the
+in `WaveformGesture`, ADR 0005). An active loop **loops continuously, gaplessly and click-free** — the
+engine pre-renders the loop region into a buffer whose seam is equal-power
+**crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
+both gapless and free of the splice click; the visual playhead wraps via pure
+`AudioMath.loopedPlayhead`, decoupled from the audio (region math in
+`AudioMath.loopSegment`; ADRs 0006 & 0008). Real file import replaces the
 generated source next.
 
 The practice screen's state and handlers live in an `@Observable`

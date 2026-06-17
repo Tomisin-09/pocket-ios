@@ -34,6 +34,7 @@ extension WaveformPracticeModel {
                 capture = CaptureDraft(start: bounds.start, end: bounds.end,
                                        fromFine: false, editingLoopID: nil)
             }
+            previewCapture()   // arm the engine loop so the punch can be auditioned
         } else {
             pendingStart = playheadFraction
             engine.play()
@@ -47,6 +48,8 @@ extension WaveformPracticeModel {
                                                   start: current.start, end: current.end)
         capture = CaptureDraft(start: bounds.start, end: bounds.end,
                                fromFine: true, editingLoopID: current.editingLoopID)
+        // Audio preview is committed on handle release (onMoveHandleEnded →
+        // previewCapture), not per drag-frame — dragging only moves the handles.
     }
 
     /// Enter Fine → seed selection + pill; leave → drop unsaved; any switch clears a Tap capture.
@@ -62,10 +65,12 @@ extension WaveformPracticeModel {
                 withAnimation(.easeOut(duration: 0.28)) {
                     capture = CaptureDraft(start: seed.0, end: seed.1, fromFine: true, editingLoopID: nil)
                 }
+                previewCapture()   // arm the selection for audition / live preview
             }
         case .scroll, .tap:
             if capture?.fromFine == true {
                 withAnimation(.easeOut(duration: 0.2)) { capture = nil }
+                applyActiveLoopToEngine()   // drop the live preview, restore the saved loop
             }
         }
     }
@@ -96,6 +101,7 @@ extension WaveformPracticeModel {
             capture = nil
             if mode == .fine { mode = .scroll }
         }
+        applyActiveLoopToEngine()   // a discard reverts the live preview; a commit re-applies the same bounds
     }
 
     /// Naming dismissed: Save consumed `capture`; survivor = Discard → keep Fine, drop Tap.
@@ -121,8 +127,12 @@ extension WaveformPracticeModel {
     }
 
     /// "Adjust range" from a loop's edit sheet → Fine mode seeded with its bounds.
+    /// Activates the loop so it's the one you hear while refining it (and so a
+    /// discard restores its original bounds).
     func startRangeEdit(_ loop: WaveformMock.Loop) {
+        activeLoopID = loop.id
         capture = CaptureDraft(start: loop.start, end: loop.end, fromFine: true, editingLoopID: loop.id)
+        previewCapture()
         withAnimation(.easeOut(duration: 0.2)) { mode = .fine }
     }
 
@@ -157,6 +167,27 @@ extension WaveformPracticeModel {
     func clearActiveLoop() {
         activeLoopID = nil
         applyActiveLoopToEngine()
+    }
+
+    /// Arm the engine loop to the in-progress capture (Tap or Fine) so it can be
+    /// auditioned and — if playing — heard immediately. Reverting a discard is just
+    /// `applyActiveLoopToEngine()`.
+    func previewCapture() {
+        guard let capture else { return }
+        engine.setLoop(start: capture.start * duration, end: capture.end * duration)
+    }
+
+    /// The edit-toolbar ▶ — audition the captured region before saving. Toggles:
+    /// pause if playing, else loop the capture from its start.
+    func auditionCapture() {
+        guard let capture else { return }
+        if engine.isPlaying {
+            engine.pause()
+        } else {
+            engine.setLoop(start: capture.start * duration, end: capture.end * duration)
+            engine.seek(toSeconds: capture.start * duration)
+            engine.play()
+        }
     }
 
     /// Keep the engine's loop region in sync with the active loop (or clear it).

@@ -50,4 +50,29 @@ enum AudioMath {
         let endFrame = min(max(0, secondsToFrames(upper, sampleRate: sampleRate)), totalFrames)
         return (startFrame, max(0, endFrame - startFrame))
     }
+
+    /// Equal-power crossfade gains at `position` frames into a fade of `length`
+    /// frames. `fadeIn` rises 0→1, `fadeOut` falls 1→0 along a quarter sine/cosine,
+    /// so `fadeIn² + fadeOut² == 1` (constant power — no dip at the seam). Used to
+    /// fold a loop's tail into its head for a click-free wrap. Guards `length <= 0`
+    /// (returns full head) and clamps `position` into `[0, length]`.
+    static func crossfadeGains(position: Int, length: Int) -> (fadeIn: Float, fadeOut: Float) {
+        guard length > 0 else { return (1, 0) }
+        let progress = Float(min(max(0, position), length)) / Float(length)
+        let angle = progress * .pi / 2
+        return (sin(angle), cos(angle))
+    }
+
+    /// Map continuous elapsed playback time back into a loop region for the
+    /// playhead. With gapless looping the player runs without stopping, so
+    /// elapsed time grows past the loop end; this wraps it via modulo.
+    /// `elapsed` is seconds since the loop's first frame began playing. Guards a
+    /// non-positive `loopLength` (returns `loopStart`) and normalises any
+    /// negative remainder.
+    static func loopedPlayhead(elapsed: TimeInterval, loopStart: TimeInterval,
+                               loopLength: TimeInterval) -> TimeInterval {
+        guard loopLength > 0 else { return loopStart }
+        let pos = elapsed.truncatingRemainder(dividingBy: loopLength)
+        return loopStart + (pos < 0 ? pos + loopLength : pos)
+    }
 }

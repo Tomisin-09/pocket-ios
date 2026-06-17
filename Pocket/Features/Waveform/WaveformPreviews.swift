@@ -58,7 +58,7 @@ import SwiftUI
                      tapSelection: nil,
                      playheadLabel: "0:10",
                      onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }).padding()
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {}).padding()
     }
 }
 
@@ -72,7 +72,7 @@ import SwiftUI
                      tapSelection: nil,
                      playheadLabel: "0:10",
                      onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }).padding()
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {}).padding()
     }
 }
 
@@ -98,10 +98,11 @@ import SwiftUI
     }
 }
 
-#Preview("Confirm popup") {
+#Preview("Edit toolbar") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        ConfirmPopup(isEditing: false, onConfirm: {}, onCancel: {})
+        EditToolbar(isPlaying: false, isEditingExisting: false,
+                    onPlayPause: {}, onConfirm: {}, onCancel: {}).padding()
     }
 }
 

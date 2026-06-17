@@ -122,14 +122,16 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
 
 1. Song strip — name, artist, duration, key
 2. Speed / BPM bar (always visible)
-3. Mode description line
+3. Mode description line — replaced by the **edit toolbar** (▶ audition ·
+   "New loop" / "Editing loop" · **Y/N**) while a loop is captured
 4. Waveform (detail view) — **SoundCloud-style mirrored bars**: top half full
    opacity, bottom half ~60% reflection
 5. Time ruler
-6. Minimap (full song, compressed) — viewport indicator, loop regions (amber),
-   fine selection (blue), marker dots (purple), playhead
-7. Transport bar — play/pause · time · loop info · mode pills (Scroll/Tap/Fine)
-   · repeat · clear
+6. Minimap (full song, compressed) — loop regions (amber), fine selection (blue),
+   marker dots (purple), playhead. (Viewport indicator returns with pinch-to-zoom.)
+7. Transport bar — play/pause · time · loop info (name + range + ✕ exit chip) ·
+   mode pills (Scroll/Tap/Fine). **Greys out and locks while a loop is being
+   created/edited** — controls move up to the edit toolbar (item 3).
 
 A hairline separates the cockpit from the scroll area below.
 
@@ -144,15 +146,18 @@ A hairline separates the cockpit from the scroll area below.
 10. Song info panel (collapsible, **collapsed by default**) — demoted here from
     the top; key, proficiency, progression, collections.
 
-The **loop creation sheet** slides in inline (below the transport) only while a
-loop is being captured.
+While a loop is being created or its range adjusted, the cockpit enters **edit
+mode**: the transport greys out and locks, and the mode line becomes the edit
+toolbar (▶ audition · state label · Y/N). **Y** opens the naming sheet for a new
+loop (or commits a range edit); **N** discards. You leave edit mode via Y/N, not by
+switching modes.
 
 **Three interaction modes** (pills in the transport bar):
 - **Scroll** (default): tap to set playhead; **hold 650ms** → amber ring fills
   radially around the playhead → Pin Marker popover.
 - **Tap:** drag to scrub; short tap sets loop start, second tap closes the loop
-  (green region fills, creation sheet slides in).
-- **Fine:** two draggable blue handles define loop bounds; creation sheet opens
+  (green region fills, edit toolbar appears).
+- **Fine:** two draggable blue handles define loop bounds; edit toolbar appears
   on entering the mode.
 
 **Speed bar:** the speed readout (`0.90×`), the slider, and the read-only BPM

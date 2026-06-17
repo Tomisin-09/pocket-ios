@@ -229,13 +229,13 @@ struct TransportBar: View {
     let onClearLoop: () -> Void
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             HStack(spacing: 12) {
                 Button(action: onPlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.title2)
+                        .font(.title3)
                         .foregroundStyle(PocketColor.active)
-                        .frame(width: 44, height: 40)
+                        .frame(width: 44, height: 34)
                 }
                 .accessibilityLabel(isPlaying ? "Pause" : "Play")
 
@@ -278,7 +278,8 @@ struct TransportBar: View {
                 }
             }
         }
-        .padding(10)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
         .background(panelBackground)
     }
 }
@@ -293,7 +294,7 @@ private struct ModePill: View {
                 .font(.subheadline.weight(isSelected ? .semibold : .regular))
                 .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, 6)
                 .background(
                     Capsule().fill(isSelected ? PocketColor.fine : Color.white.opacity(0.10))
                 )

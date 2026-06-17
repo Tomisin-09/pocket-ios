@@ -3,12 +3,12 @@ import SwiftUI
 // Loop capture models + flow (design brief §4.1 #9), in two keyboard-free-then-
 // named steps so the naming field is never hidden behind the keyboard:
 //
-//   1. `ConfirmPopup` — an icon-only ✓/✗ pill floating over the waveform once a
-//      loop is captured (Tap punch-out / Fine selection). Deliberately has no
-//      text or range, so it never reads as an editable name — it just commits or
-//      discards the highlighted region.
+//   1. `EditToolbar` — the edit-mode control strip (▶ audition · state label ·
+//      Y/N) shown in place of the mode-instructions line once a loop is captured
+//      (Tap punch-out / Fine selection), with the transport greyed/locked. Y commits
+//      / opens naming, N discards — letters, so the decision never reads as a name.
 //   2. `LoopNameSheet` — a native sheet (manages its own keyboard inset) that
-//      opens on ✓ to name the loop.
+//      opens on Y (for a new loop) to name it.
 
 extension WaveformPracticeModel {
     /// A loop being captured, awaiting confirmation. Bounds are mutable so Fine
@@ -29,34 +29,57 @@ extension WaveformPracticeModel {
     }
 }
 
-/// Step 1 — an icon-only ✓/✗ pill that floats over the waveform to commit or
-/// discard the highlighted region. `isEditing` only changes the accessibility
-/// label (✓ saves a range edit vs. opens naming); there is no on-pill text.
-struct ConfirmPopup: View {
-    /// `true` when adjusting an existing loop's range rather than creating one.
-    let isEditing: Bool
+/// Step 1 — the edit-mode control strip, shown in place of the mode-instructions
+/// line while a loop is being created or its range adjusted (the whole transport is
+/// greyed/locked meanwhile, so this is the only live control surface). A ▶/⏸ button
+/// **auditions** the captured region, a label says which state you're in, and a
+/// **Y/N** pill commits (Y → save / open naming) or discards (N). Letters, not ✓/✗,
+/// so the decision can't be mistaken for the loop's name.
+struct EditToolbar: View {
+    let isPlaying: Bool
+    /// `true` when adjusting an existing loop's range rather than creating a new one.
+    let isEditingExisting: Bool
+    let onPlayPause: () -> Void
     let onConfirm: () -> Void
     let onCancel: () -> Void
 
     var body: some View {
-        HStack(spacing: 4) {
-            iconButton("xmark", tint: PocketColor.danger, action: onCancel)
-                .accessibilityLabel("Discard")
-            iconButton("checkmark", tint: PocketColor.active, action: onConfirm)
-                .accessibilityLabel(isEditing ? "Save range" : "Name loop")
+        HStack(spacing: 10) {
+            Button(action: onPlayPause) {
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(PocketColor.active)
+                    .frame(width: 38, height: 30)
+                    .background(Capsule().fill(PocketColor.active.opacity(0.15)))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isPlaying ? "Pause preview" : "Play preview")
+
+            Text(isEditingExisting ? "Editing loop" : "New loop")
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(PocketColor.textSecondary)
+
+            Spacer()
+
+            HStack(spacing: 4) {
+                letterButton("N", tint: PocketColor.danger, action: onCancel)
+                    .accessibilityLabel("Discard")
+                letterButton("Y", tint: PocketColor.active, action: onConfirm)
+                    .accessibilityLabel(isEditingExisting ? "Save range" : "Name loop")
+            }
+            .padding(3)
+            .background(
+                Capsule()
+                    .fill(PocketColor.background.opacity(0.9))
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+            )
         }
-        .padding(3)
-        .background(
-            Capsule()
-                .fill(PocketColor.background.opacity(0.9))
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-        )
     }
 
-    private func iconButton(_ symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
+    private func letterButton(_ letter: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 13, weight: .bold))
+            Text(letter)
+                .font(.system(size: 14, weight: .heavy))
                 .foregroundStyle(tint)
                 .frame(width: 30, height: 30)
                 .background(Circle().fill(tint.opacity(0.15)))
