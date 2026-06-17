@@ -125,10 +125,12 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
 3. Mode description line — replaced by the **edit toolbar** (▶ audition ·
    "New loop" / "Editing loop" · **Y/N**) while a loop is captured
 4. Waveform (detail view) — **SoundCloud-style mirrored bars**: top half full
-   opacity, bottom half ~60% reflection
+   opacity, bottom half ~60% reflection. **Pinch to zoom** into a section (the view
+   tracks the playhead).
 5. Time ruler
 6. Minimap (full song, compressed) — loop regions (amber), fine selection (blue),
-   marker dots (purple), playhead. (Viewport indicator returns with pinch-to-zoom.)
+   marker dots (purple), playhead, and the **viewport box** (the zoomed slice) when
+   the detail waveform is zoomed.
 7. Transport bar — play/pause · time · loop info (name + range + ✕ exit chip) ·
    mode pills (Scroll/Tap/Fine). **Greys out and locks while a loop is being
    created/edited** — controls move up to the edit toolbar (item 3).

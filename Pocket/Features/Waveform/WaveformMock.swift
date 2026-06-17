@@ -24,8 +24,6 @@ enum WaveformMock {
         let amplitudes: [Double]
         /// Playhead position as a fraction of the song.
         let playheadFraction: Double
-        /// The slice of the song the detail waveform is showing (minimap viewport).
-        let viewport: (start: Double, end: Double)
 
         let loops: [Loop]
         let markers: [Marker]
@@ -73,7 +71,6 @@ enum WaveformMock {
             duration: duration,
             amplitudes: amplitudes(count: 120),
             playheadFraction: 0.35,
-            viewport: (0.20, 0.55),
             loops: [
                 Loop(name: "Verse riff", start: 0.29, end: 0.47, speed: 0.75, repeats: 4, duration: duration),
                 Loop(name: "Chorus bend", start: 0.62, end: 0.71, speed: 1.0, repeats: 2, duration: duration)

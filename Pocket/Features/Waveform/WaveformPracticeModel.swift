@@ -18,6 +18,10 @@ final class WaveformPracticeModel {
     var loopsExpanded = true
     var markersExpanded = false
 
+    /// Pinch-to-zoom: the fraction of the song the detail waveform shows (`1` =
+    /// whole song). The visible window tracks the playhead — see `viewport`.
+    var zoomSpan: Double = 1
+
     // Audio engine + the waveform amplitudes it loaded from the sample.
     let engine = PracticeAudioEngine()
     var amplitudes: [Double] = WaveformMock.song.amplitudes
@@ -58,6 +62,12 @@ final class WaveformPracticeModel {
     /// Effective song length — the engine's once loaded, else the mock's.
     var duration: TimeInterval {
         engine.duration > 0 ? engine.duration : song.duration
+    }
+
+    /// The visible window of the song (song fractions), centred on the playhead at
+    /// the current `zoomSpan`. Drives both the waveform render and the minimap box.
+    var viewport: (start: Double, end: Double) {
+        WaveformGesture.viewport(center: playheadFraction, span: zoomSpan)
     }
 
     /// The Fine-mode selection to render (blue handles), if one is being defined.

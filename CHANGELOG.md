@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Pinch-to-zoom the waveform** — pinch the detail waveform to zoom into a section.
+  The view **tracks the playhead**, so you navigate by seeking (tap / scrub / minimap)
+  and the waveform follows — no separate pan gesture. The minimap **viewport box
+  returns**, now live, showing the visible slice. The zoom + screen↔song-fraction
+  mapping is pure, unit-tested math in `WaveformGesture`. ADR 0010.
 - **Region looping** — an active loop now actually loops: playback wraps from the
   loop's end back to its start continuously and **seamlessly** — gapless *and*
   click-free, via a pre-rendered loop buffer whose seam is equal-power

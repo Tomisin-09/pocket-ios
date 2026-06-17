@@ -58,7 +58,8 @@ import SwiftUI
                      tapSelection: nil,
                      playheadLabel: "0:10",
                      onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {}).padding()
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     viewport: (0, 1), onSetZoomSpan: { _ in }).padding()
     }
 }
 
@@ -72,7 +73,8 @@ import SwiftUI
                      tapSelection: nil,
                      playheadLabel: "0:10",
                      onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {}).padding()
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     viewport: (0.25, 0.65), onSetZoomSpan: { _ in }).padding()
     }
 }
 
@@ -84,6 +86,7 @@ import SwiftUI
                 markers: WaveformMock.song.markers,
                 fineSelection: nil,
                 playheadFraction: WaveformMock.song.playheadFraction,
+                viewport: (0.25, 0.65),
                 onSeek: { _ in }).padding()
     }
 }

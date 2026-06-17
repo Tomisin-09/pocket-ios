@@ -72,12 +72,15 @@ struct WaveformPracticeView: View {
                                  onTapPunch: model.tapPunch,
                                  onScrub: model.seekToFraction,
                                  onMoveHandle: model.moveFineHandle,
-                                 onMoveHandleEnded: model.previewCapture)
+                                 onMoveHandleEnded: model.previewCapture,
+                                 viewport: model.viewport,
+                                 onSetZoomSpan: model.setZoomSpan)
                     TimeRuler(duration: model.duration)                         // 6
                     Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
                             markers: model.markers,
                             fineSelection: model.fineSelection,
                             playheadFraction: model.playheadFraction,
+                            viewport: model.viewport,
                             onSeek: model.seekToFraction)
                     // Greyed + locked while editing — controls move to the edit
                     //    toolbar (you leave edit mode via Y/N, not the mode pills).

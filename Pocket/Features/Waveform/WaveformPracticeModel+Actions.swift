@@ -4,6 +4,11 @@ import SwiftUI
 
 extension WaveformPracticeModel {
 
+    /// Pinch-to-zoom: set how much of the song the waveform shows (clamped).
+    func setZoomSpan(_ span: Double) {
+        zoomSpan = WaveformGesture.clampSpan(span)
+    }
+
     /// Scroll-mode tap and Tap-mode scrub: move the playhead to a song fraction.
     func seekToFraction(_ fraction: Double) {
         engine.seek(toSeconds: fraction * duration)

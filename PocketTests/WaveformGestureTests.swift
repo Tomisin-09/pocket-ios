@@ -101,4 +101,51 @@ final class WaveformGestureTests: XCTestCase {
         let bounds = WaveformGesture.movingHandle(.end, toFraction: 1.5, start: 0.30, end: 0.70)
         XCTAssertEqual(bounds.end, 1.0, accuracy: 0.0001)
     }
+
+    // MARK: Zoom — span / viewport / mapping
+
+    func testClampSpanBounds() {
+        XCTAssertEqual(WaveformGesture.clampSpan(2.0), 1.0, accuracy: 1e-9)        // no more than whole song
+        XCTAssertEqual(WaveformGesture.clampSpan(0.001), WaveformGesture.minZoomSpan, accuracy: 1e-9)
+        XCTAssertEqual(WaveformGesture.clampSpan(0.4), 0.4, accuracy: 1e-9)
+    }
+
+    func testViewportCentresOnPoint() {
+        let viewport = WaveformGesture.viewport(center: 0.5, span: 0.2)
+        XCTAssertEqual(viewport.start, 0.4, accuracy: 1e-9)
+        XCTAssertEqual(viewport.end, 0.6, accuracy: 1e-9)
+    }
+
+    func testViewportClampsAtStart() {
+        // Centre near the head — the window stops at 0 but keeps its width.
+        let viewport = WaveformGesture.viewport(center: 0.02, span: 0.2)
+        XCTAssertEqual(viewport.start, 0, accuracy: 1e-9)
+        XCTAssertEqual(viewport.end, 0.2, accuracy: 1e-9)
+    }
+
+    func testViewportClampsAtEnd() {
+        let viewport = WaveformGesture.viewport(center: 0.98, span: 0.2)
+        XCTAssertEqual(viewport.start, 0.8, accuracy: 1e-9)
+        XCTAssertEqual(viewport.end, 1.0, accuracy: 1e-9)
+    }
+
+    func testViewportFullSongSpansWholeTrack() {
+        let viewport = WaveformGesture.viewport(center: 0.3, span: 1)
+        XCTAssertEqual(viewport.start, 0, accuracy: 1e-9)
+        XCTAssertEqual(viewport.end, 1, accuracy: 1e-9)
+    }
+
+    func testSongFractionMapsThroughViewport() {
+        let viewport = (start: 0.4, end: 0.6)
+        XCTAssertEqual(WaveformGesture.songFraction(screenFraction: 0, viewport: viewport), 0.4, accuracy: 1e-9)
+        XCTAssertEqual(WaveformGesture.songFraction(screenFraction: 0.5, viewport: viewport), 0.5, accuracy: 1e-9)
+        XCTAssertEqual(WaveformGesture.songFraction(screenFraction: 1, viewport: viewport), 0.6, accuracy: 1e-9)
+    }
+
+    func testScreenFractionIsInverse() {
+        let viewport = (start: 0.4, end: 0.6)
+        XCTAssertEqual(WaveformGesture.screenFraction(songFraction: 0.4, viewport: viewport), 0, accuracy: 1e-9)
+        XCTAssertEqual(WaveformGesture.screenFraction(songFraction: 0.5, viewport: viewport), 0.5, accuracy: 1e-9)
+        XCTAssertEqual(WaveformGesture.screenFraction(songFraction: 0.6, viewport: viewport), 1, accuracy: 1e-9)
+    }
 }
