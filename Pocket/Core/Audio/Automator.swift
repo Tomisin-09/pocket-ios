@@ -45,4 +45,12 @@ struct AutomatorConfig: Equatable {
         guard abs(targetSpeed - startSpeed) > 1e-9, stepCount > 0 else { return 0 }
         return (targetSpeed - startSpeed) / Double(stepCount)
     }
+
+    /// Total loop passes the ramp runs before playback stops. There are `stepCount + 1`
+    /// plateaus — the start, each intermediate step, and the held target — and each plays
+    /// `loopsPerStep` passes; once `loopIteration` reaches this count the loop has played
+    /// its last automated pass and stops (ADR 0013). Components treated as ≥ 1.
+    var totalLoops: Int {
+        (max(0, stepCount) + 1) * max(1, loopsPerStep)
+    }
 }

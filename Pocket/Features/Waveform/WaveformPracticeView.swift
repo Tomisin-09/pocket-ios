@@ -152,7 +152,8 @@ struct WaveformPracticeView: View {
         }
         .sheet(item: $model.editingAutomatorLoop) { loop in
             AutomatorSheet(loop: loop, song: model.song,
-                           onSave: { model.automatorConfigured(for: loop) })
+                           onSet: { model.startAutomator(for: loop) },
+                           onTurnOff: { model.turnOffAutomator(for: loop) })
         }
         .task { await model.loadAudio() }
         .onChange(of: model.speed) { _, newValue in model.engine.setRate(newValue) }

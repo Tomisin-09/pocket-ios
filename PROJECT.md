@@ -83,8 +83,9 @@ for title/artist/album/year/key/BPM/proficiency/progression, lightweight **colle
 tags**, a free-form **note**, and read-only **practice stats** (loops · markers ·
 annotations) — the record we enrich to drive routines (ADR 0012). Each loop carries a
 per-loop **automator** (the "A" control on its row): a speed-trainer ramp — start % →
-target % over N steps, a few loops each — that climbs or descends and holds at the target,
-driven by the engine counting loop wraps (ADR 0013). Filename suggestions, a practice
+target % over N steps, a few loops each — that climbs, descends, or sits level, runs a
+**fixed number of passes and then stops** (Set ramp also starts it playing), driven by the
+engine counting loop wraps (ADR 0013). Filename suggestions, a practice
 **journal** (per-loop/marker/song), **collections as real playlists**, and a **metronome**
 (the transport "Auto" slot) are next. Navigation/planner follow (Phase 3).
 Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`, `WaveformGesture`, `Song`, `AutomatorConfig`.

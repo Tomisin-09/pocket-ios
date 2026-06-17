@@ -22,7 +22,13 @@ concrete, unblocked surface: ramping a **loop's** playback speed as it repeats.
   (× of tempo, displayed as percentages), a **steps-to-target** count, and **loops-per-step**;
   the per-step size is *derived* and shown signed ("+5% / −5% each"). It works for songs with
   no BPM set; the sheet shows BPM equivalents (`TempoMath.effectiveBPM`) when `song.bpm != nil`.
-  The ramp climbs **or descends** (target below start) and holds once it reaches the target.
+  The ramp climbs **or descends** (target below start), or sits **level** when start = target.
+- **The ramp is finite and stops itself.** Rather than holding at the target indefinitely, the
+  loop plays a fixed number of passes — `AutomatorConfig.totalLoops` = `(stepCount + 1)`
+  plateaus (start, the intermediate steps, and the target) × `loopsPerStep` — and then
+  `automatorAdvance` **pauses** playback and rewinds to the loop start so the ramp can be
+  replayed cleanly. This matches the speed-trainer mental model: ramp up, nail it a few times
+  at tempo, stop. (User decision; supersedes the original "hold at target forever".)
 - **Pure stepping math** lives in `AutomatorConfig` (`Core/Audio/Automator.swift`):
   `speed(atLoopIteration:)` interpolates start→target across `stepCount` steps (advancing one
   step every `loopsPerStep` passes), rounding intermediate speeds to **0.1%** and landing
@@ -40,9 +46,11 @@ concrete, unblocked surface: ramping a **loop's** playback speed as it repeats.
   `AutomatorConfig`. **Declaration-level defaults** keep SwiftData lightweight migration
   safe (see ADR 0012's CoreData 134110 note).
 - **The setup sheet** (`WaveformAutomatorSheet`) is a visual "ramp" layout: a hero staircase
-  that climbs or descends, four stepper fields (start / target / steps / loops-per-step), and
-  the BPM range. No enable toggle — a bottom **Set ramp** arms it (and restarts the ramp if
-  the loop is playing); **Turn off** appears for an armed loop; **Cancel** discards.
+  that climbs, descends, or sits flat, four stepper fields (start / target / steps /
+  loops-per-step), and the BPM range. No enable toggle — a bottom **Set ramp** arms it **and
+  starts the loop playing** from the top (`startAutomator`: activates the loop, sets the start
+  speed, plays from the loop start); a full-width red **Turn off ramp** (same size as Set)
+  appears for an armed loop and disarms; **Cancel** discards.
 
 ## Consequences
 

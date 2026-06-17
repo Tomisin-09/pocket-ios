@@ -85,21 +85,35 @@ final class WaveformPracticeModel {
 
     /// Apply the active loop's speed ramp at a new loop iteration (driven by the engine's
     /// `loopIteration`). No-op unless that loop's automator is enabled and it's playing.
-    /// Sets `speed`, which the view feeds to the engine via its existing `onChange`.
+    /// Sets `speed`, which the view feeds to the engine via its existing `onChange`. Once
+    /// the ramp has played its last automated pass (`totalLoops`), playback **stops** and
+    /// rewinds to the loop start so the ramp can be replayed from the top (ADR 0013).
     func automatorAdvance(toLoopIteration iteration: Int) {
         guard let loop = activeLoop, loop.automatorEnabled, engine.isPlaying else { return }
-        let target = loop.automator.speed(atLoopIteration: iteration)
+        let config = loop.automator
+        if iteration >= config.totalLoops {
+            engine.pause()
+            engine.seek(toSeconds: loop.startSeconds)   // rewind (resets the wrap counter) so a replay starts fresh
+            return
+        }
+        let target = config.speed(atLoopIteration: iteration)
         if abs(target - speed) > 0.0001 { speed = target }
     }
 
-    /// Called when a loop's automator is configured. If we just armed the ramp on the
-    /// loop that's currently playing, restart it so the ramp begins cleanly at the start
-    /// speed rather than jumping in at the current pass.
-    func automatorConfigured(for loop: Loop) {
-        guard loop === activeLoop, loop.automatorEnabled, engine.isPlaying else { return }
-        speed = loop.automator.speed(atLoopIteration: 0)
+    /// "Set ramp" on the automator sheet: arm the loop's ramp, make it the active loop,
+    /// and start playing it from the top at the ramp's start speed (ADR 0013).
+    func startAutomator(for loop: Loop) {
+        speed = loop.automator.speed(atLoopIteration: 0)   // begin at the ramp start
+        activeLoopID = loop.uid
+        applyActiveLoopToEngine()
         engine.seek(toSeconds: loop.startSeconds)
+        engine.play()
     }
+
+    /// "Turn off ramp" on the automator sheet: the sheet has already written
+    /// `enabled = false`, so the next loop wrap's `automatorAdvance` simply no-ops and the
+    /// speed stops changing. Nothing else to do — kept as a named hook for the view.
+    func turnOffAutomator(for loop: Loop) {}
 
     /// The user grabbed the speed slider — hand control back by disabling the active
     /// loop's ramp, so it stops fighting the manual setting.

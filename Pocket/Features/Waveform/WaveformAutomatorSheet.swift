@@ -8,7 +8,8 @@ import SwiftUI
 struct AutomatorSheet: View {
     let loop: Loop
     let song: Song
-    let onSave: () -> Void
+    let onSet: () -> Void
+    let onTurnOff: () -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -18,10 +19,11 @@ struct AutomatorSheet: View {
     @State private var loops: Int
     private let wasEnabled: Bool
 
-    init(loop: Loop, song: Song, onSave: @escaping () -> Void) {
+    init(loop: Loop, song: Song, onSet: @escaping () -> Void, onTurnOff: @escaping () -> Void) {
         self.loop = loop
         self.song = song
-        self.onSave = onSave
+        self.onSet = onSet
+        self.onTurnOff = onTurnOff
         let config = loop.automator
         _start = State(initialValue: config.startSpeed)
         _target = State(initialValue: config.targetSpeed)
@@ -34,7 +36,12 @@ struct AutomatorSheet: View {
         AutomatorConfig(startSpeed: start, targetSpeed: target, stepCount: steps,
                         loopsPerStep: loops, enabled: true)
     }
-    private var ascending: Bool { target >= start }
+    /// The ramp's direction — drives both the staircase graphic and the BPM arrow.
+    /// Equal start/target reads as **level** (flat on both sides), not ascending.
+    private var shape: RampShape {
+        if abs(target - start) < 1e-9 { return .level }
+        return target > start ? .ascending : .descending
+    }
 
     var body: some View {
         NavigationStack {
@@ -49,7 +56,7 @@ struct AutomatorSheet: View {
                 }
                 if let bpm = song.bpm {
                     Text("\(TempoMath.effectiveBPM(songBPM: bpm, speed: start)) BPM"
-                         + "  \(ascending ? "──►" : "◄──")  "
+                         + "  \(shape.arrow)  "
                          + "\(TempoMath.effectiveBPM(songBPM: bpm, speed: target)) BPM")
                         .font(.pocketMono(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
@@ -73,7 +80,7 @@ struct AutomatorSheet: View {
 
     private var hero: some View {
         VStack(spacing: 8) {
-            RampStairs(ascending: ascending, steps: steps)
+            RampStairs(shape: shape, steps: steps)
             Text("\(percent(start))  →  \(percent(target))")
                 .font(.title2.weight(.semibold).monospacedDigit())
                 .foregroundStyle(PocketColor.textPrimary)
@@ -87,17 +94,18 @@ struct AutomatorSheet: View {
     }
 
     private var bottomBar: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
             Button(action: setRamp) {
                 Text("Set ramp").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 15)
             }
             .background(PocketColor.active, in: .rect(cornerRadius: 14))
             .foregroundStyle(.black)
             if wasEnabled {
-                Button("Turn off ramp", action: turnOff)
-                    .font(.subheadline)
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .padding(.top, 2)
+                Button(action: turnOff) {
+                    Text("Turn off ramp").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 15)
+                }
+                .background(PocketColor.danger, in: .rect(cornerRadius: 14))
+                .foregroundStyle(.white)
             }
         }
         .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 8)
@@ -151,7 +159,7 @@ struct AutomatorSheet: View {
         var config = draft
         config.enabled = true
         loop.automator = config
-        onSave()
+        onSet()
         dismiss()
     }
 
@@ -159,14 +167,36 @@ struct AutomatorSheet: View {
         var config = draft
         config.enabled = false
         loop.automator = config
-        onSave()
+        onTurnOff()
         dismiss()
     }
 }
 
-/// The hero climb: a row of bars rising (or falling) left→right to show the ramp shape.
+/// The ramp's direction, shared by the staircase graphic and the BPM-arrow label.
+private enum RampShape {
+    case ascending, level, descending
+
+    /// 0→1 bar height fraction across the staircase (left→right). Level is flat.
+    func fraction(at position: Double) -> Double {
+        switch self {
+        case .ascending: position
+        case .descending: 1 - position
+        case .level: 0.5
+        }
+    }
+
+    var arrow: String {
+        switch self {
+        case .ascending: "──►"
+        case .descending: "◄──"
+        case .level: "───"
+        }
+    }
+}
+
+/// The hero ramp: a row of bars rising, falling, or flat left→right to show the shape.
 private struct RampStairs: View {
-    let ascending: Bool
+    let shape: RampShape
     let steps: Int
 
     var body: some View {
@@ -174,14 +204,14 @@ private struct RampStairs: View {
         HStack(alignment: .bottom, spacing: 5) {
             ForEach(0..<barCount, id: \.self) { index in
                 let pos = Double(index) / Double(barCount - 1)   // 0→1 left→right
-                let frac = ascending ? pos : 1 - pos             // flip for a descending ramp
+                let frac = shape.fraction(at: pos)               // up / down / level
                 RoundedRectangle(cornerRadius: 2)
                     .fill(PocketColor.active.opacity(0.4 + 0.6 * frac))
                     .frame(width: 13, height: 14 + 44 * frac)
             }
         }
         .frame(height: 60, alignment: .bottom)
-        .animation(.easeOut(duration: 0.2), value: ascending)
+        .animation(.easeOut(duration: 0.2), value: shape)
         .accessibilityHidden(true)
     }
 }

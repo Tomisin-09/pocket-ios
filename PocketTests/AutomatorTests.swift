@@ -69,4 +69,21 @@ final class AutomatorTests: XCTestCase {
         XCTAssertEqual(config(start: 1.0, target: 0.70).stepSize, -0.05, accuracy: 1e-9)   // descending
         XCTAssertEqual(config(start: 0.8, target: 0.8).stepSize, 0, accuracy: 1e-9)        // flat
     }
+
+    func testTotalLoops() {
+        // (stepCount + 1) plateaus — start, 5 intermediate, held target — × loopsPerStep.
+        XCTAssertEqual(config(steps: 6, loops: 2).totalLoops, 14)
+        XCTAssertEqual(config(steps: 4, loops: 3).totalLoops, 15)
+    }
+
+    func testTargetPlateauGetsItsLoopsThenTotalLoopsIsTheStop() {
+        let cfg = config(steps: 6, loops: 2)   // target first reached at iter 12, held for 2 passes
+        XCTAssertEqual(cfg.speed(atLoopIteration: 12), 1.0, accuracy: 1e-9)
+        XCTAssertEqual(cfg.speed(atLoopIteration: 13), 1.0, accuracy: 1e-9)
+        XCTAssertEqual(cfg.totalLoops, 14, "stop once iteration reaches this — after the target's last pass")
+    }
+
+    func testTotalLoopsTreatsComponentsAsAtLeastOne() {
+        XCTAssertEqual(config(steps: 0, loops: 0).totalLoops, 1)   // 1 plateau × 1 pass
+    }
 }

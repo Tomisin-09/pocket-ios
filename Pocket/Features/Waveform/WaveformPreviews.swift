@@ -159,7 +159,9 @@ import SwiftUI
 
 #Preview("Automator sheet") {
     let song = Song.sample()
-    return AutomatorSheet(loop: song.loops[0], song: song, onSave: {})
+    let loop = song.loops[0]
+    loop.automatorEnabled = true   // so the red "Turn off ramp" button renders too
+    return AutomatorSheet(loop: loop, song: song, onSet: {}, onTurnOff: {})
 }
 
 #Preview("Loading overlay") {
