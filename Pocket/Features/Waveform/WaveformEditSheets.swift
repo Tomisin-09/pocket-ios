@@ -6,8 +6,8 @@ import SwiftUI
 // so the screen owns the source of truth.
 
 struct LoopEditSheet: View {
-    let loop: WaveformMock.Loop
-    let onSave: (WaveformMock.Loop) -> Void
+    /// The persisted loop — edits apply straight to it on Done (so Cancel discards).
+    let loop: Loop
     let onDelete: () -> Void
     /// Enter Fine mode on the waveform to adjust this loop's bounds.
     let onAdjustRange: () -> Void
@@ -17,12 +17,8 @@ struct LoopEditSheet: View {
     @State private var speed: Double
     @State private var repeats: Int
 
-    init(loop: WaveformMock.Loop,
-         onSave: @escaping (WaveformMock.Loop) -> Void,
-         onDelete: @escaping () -> Void,
-         onAdjustRange: @escaping () -> Void) {
+    init(loop: Loop, onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void) {
         self.loop = loop
-        self.onSave = onSave
         self.onDelete = onDelete
         self.onAdjustRange = onAdjustRange
         _name = State(initialValue: loop.name)
@@ -73,11 +69,9 @@ struct LoopEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        var updated = loop
-                        updated.name = name
-                        updated.speed = speed
-                        updated.repeats = repeats
-                        onSave(updated)
+                        loop.name = name        // mutating the @Model persists
+                        loop.speed = speed
+                        loop.repeats = repeats
                         dismiss()
                     }
                 }
@@ -129,18 +123,14 @@ struct MarkerNameSheet: View {
 }
 
 struct MarkerEditSheet: View {
-    let marker: WaveformMock.Marker
-    let onSave: (WaveformMock.Marker) -> Void
+    let marker: Marker
     let onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var label: String
 
-    init(marker: WaveformMock.Marker,
-         onSave: @escaping (WaveformMock.Marker) -> Void,
-         onDelete: @escaping () -> Void) {
+    init(marker: Marker, onDelete: @escaping () -> Void) {
         self.marker = marker
-        self.onSave = onSave
         self.onDelete = onDelete
         _label = State(initialValue: marker.label)
     }
@@ -171,9 +161,7 @@ struct MarkerEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        var updated = marker
-                        updated.label = label
-                        onSave(updated)
+                        marker.label = label
                         dismiss()
                     }
                 }

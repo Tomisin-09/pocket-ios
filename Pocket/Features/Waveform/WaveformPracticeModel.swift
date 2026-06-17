@@ -1,15 +1,18 @@
+import SwiftData
 import SwiftUI
 
 /// State + behaviour for the practice screen (design brief §4.1), extracted from
-/// `WaveformPracticeView` so the view stays thin and the gesture/loop handlers
-/// have a shared home (cross-file extensions can't reach a view's `private`
-/// `@State`). The view observes this model; the handlers live in
-/// `WaveformPracticeModel+Actions.swift`. See docs/decisions/0007.
+/// `WaveformPracticeView` so the view stays thin and the gesture/loop handlers have
+/// a shared home. Bound to a persisted `Song`: `loops`/`markers` are its SwiftData
+/// relationships, created/edited/deleted through `context`. The view observes this
+/// model; handlers live in `WaveformPracticeModel+Actions.swift`. See ADRs 0007 & 0011.
 @MainActor
 @Observable
 final class WaveformPracticeModel {
 
-    let song = WaveformMock.song
+    /// The persisted song being practised, and the context its data lives in.
+    let song: Song
+    let context: ModelContext
 
     // UI state.
     var speed: Double = 1.0
@@ -22,26 +25,45 @@ final class WaveformPracticeModel {
     /// whole song). The visible window tracks the playhead — see `viewport`.
     var zoomSpan: Double = 1
 
-    // Audio engine + the waveform amplitudes it loaded from the sample.
+    // Audio engine + the waveform amplitudes it's showing.
     let engine = PracticeAudioEngine()
-    var amplitudes: [Double] = WaveformMock.song.amplitudes
+    var amplitudes: [Double]
 
-    // Loops/markers are mutable so they can be activated, renamed and deleted.
-    var loops = WaveformMock.song.loops
-    var markers = WaveformMock.song.markers
-    var activeLoopID: WaveformMock.Loop.ID? = WaveformMock.song.loops.first?.id
-    var editingLoop: WaveformMock.Loop?
-    var editingMarker: WaveformMock.Marker?
-    /// A freshly-dropped marker awaiting a name (drives the name-only sheet). It's
-    /// added to `markers` only on save; cancelling discards it.
-    var namingMarker: WaveformMock.Marker?
+    /// True while the song's audio is being opened/prepared, so the view can show a
+    /// loading overlay instead of an apparently-frozen surface (the file open and the
+    /// demo-sample render both run off the main actor).
+    private(set) var isLoadingAudio = false
+
+    /// Holds the imported file's security scope open while it plays (the engine reads
+    /// lazily); released automatically when this model — and so this property — is
+    /// deallocated. `nil` for the generated demo sample.
+    private var fileAccess: SecurityScopedAccess?
+
+    /// The active loop, tracked by its stable `Loop.uid`.
+    var activeLoopID: UUID?
+    var editingLoop: Loop?
+    var editingMarker: Marker?
+    /// A freshly-dropped marker awaiting a name (drives the name-only sheet). It's a
+    /// detached `@Model` — persisted only on save; cancelling drops it.
+    var namingMarker: Marker?
+
+    init(song: Song, context: ModelContext) {
+        self.song = song
+        self.context = context
+        self.amplitudes = song.amplitudes
+        self.activeLoopID = song.loopsByStart.first?.uid
+    }
+
+    /// The song's loops/markers in a stable display order (SwiftData relationships).
+    var loops: [Loop] { song.loopsByStart }
+    var markers: [Marker] { song.markersByTime }
 
     /// Tap mode: the start of the loop being captured (the green forming
     /// region), awaiting its closing tap.
     var pendingStart: Double?
     /// The captured loop awaiting confirmation (drives the ConfirmBar). Bounds
     /// are mutable so Fine handles drag them live; `fromFine` shows the blue
-    /// handles; a non-nil `editingLoopID` means we're adjusting an existing
+    /// handles; a non-nil `editingLoop` means we're adjusting an existing
     /// loop's range rather than creating one.
     var capture: CaptureDraft?
     /// The confirmed loop awaiting a name (drives the naming sheet).
@@ -55,7 +77,7 @@ final class WaveformPracticeModel {
     }
 
     /// The loop currently loaded into the transport/waveform, if any.
-    var activeLoop: WaveformMock.Loop? { loops.first { $0.id == activeLoopID } }
+    var activeLoop: Loop? { loops.first { $0.uid == activeLoopID } }
 
     /// Live playhead as a fraction of the song (0...1), driven by the engine.
     var playheadFraction: Double {
@@ -87,7 +109,7 @@ final class WaveformPracticeModel {
 
     /// True while adjusting an existing loop's range — the reference area dims to
     /// focus the waveform.
-    var isRangeEditing: Bool { capture?.editingLoopID != nil }
+    var isRangeEditing: Bool { capture?.editingLoop != nil }
 
     /// The confirm pill shows while a region is captured but not yet being named.
     var showConfirm: Bool { capture != nil && namingDraft == nil }
@@ -96,12 +118,56 @@ final class WaveformPracticeModel {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
 
-    /// Generate the dev sample and hand it to the engine (skipped in previews).
-    func loadSample() async {
+    /// Hand the song's audio to the engine: the resolved real file for an imported
+    /// song, or the generated dev sample for the demo (`bookmark == nil`). Skipped
+    /// in previews.
+    func loadAudio() async {
         guard !isPreview, engine.duration == 0 else { return }
-        guard let sample = try? SampleToneGenerator.makeSample(duration: song.duration) else { return }
-        amplitudes = sample.amplitudes
-        try? engine.load(url: sample.url)
+        isLoadingAudio = true
+        defer { isLoadingAudio = false }
+        if let bookmark = song.ref.bookmark {
+            await loadImportedFile(bookmark: bookmark)
+        } else {
+            await loadDemoSample()
+        }
         engine.setRate(speed)
     }
+
+    /// Resolve the security-scoped bookmark and load the real file. Access is held
+    /// open (`fileAccess`) for the engine's lazy reads, released on deinit. The
+    /// engine opens the file off the main actor; `amplitudes` already holds the
+    /// waveform extracted at import (set in `init`).
+    private func loadImportedFile(bookmark: Data) async {
+        var isStale = false
+        guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
+              let access = SecurityScopedAccess(url) else { return }
+        fileAccess = access
+        try? await engine.load(url: url)
+    }
+
+    /// Generate the dev arpeggio off the main actor and hand it to the engine (the
+    /// demo sample). The render writes a WAV, so it's kept off the main thread too.
+    private func loadDemoSample() async {
+        guard let sample = try? await Self.makeDemoSample(duration: song.duration) else { return }
+        amplitudes = sample.amplitudes
+        try? await engine.load(url: sample.url)
+    }
+
+    private static func makeDemoSample(duration: TimeInterval) async throws -> SampleToneGenerator.Sample {
+        try await Task.detached(priority: .userInitiated) {
+            try SampleToneGenerator.makeSample(duration: duration)
+        }.value
+    }
+}
+
+/// Holds a security-scoped resource open for its lifetime, releasing it on dealloc.
+/// Lets a `@MainActor` owner release access implicitly via property teardown, with
+/// no nonisolated `deinit` reaching into actor-isolated state (Swift 6).
+private final class SecurityScopedAccess {
+    private let url: URL
+    init?(_ url: URL) {
+        guard url.startAccessingSecurityScopedResource() else { return nil }
+        self.url = url
+    }
+    deinit { url.stopAccessingSecurityScopedResource() }
 }

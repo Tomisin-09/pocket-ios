@@ -7,9 +7,9 @@ import SwiftUI
 /// playhead, and — when the detail waveform is zoomed — a **viewport box** showing
 /// which slice is on screen. Tap or drag anywhere to move the playhead.
 struct Minimap: View {
-    let song: WaveformMock.Song
-    let activeLoop: WaveformMock.Loop?
-    let markers: [WaveformMock.Marker]
+    let song: Song
+    let activeLoop: Loop?
+    let markers: [Marker]
     /// Fine-mode selection mirrored from the detail waveform (blue).
     let fineSelection: (start: Double, end: Double)?
     /// Live playhead position (0...1), driven by the audio engine.

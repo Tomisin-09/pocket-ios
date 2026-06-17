@@ -4,9 +4,11 @@ A native iOS guitar-practice app. Pocket attaches practice data — loops, marke
 notes, routines — to the songs in your music library, keeping everything you've
 worked on in one place.
 
-> **Status:** Phase 0 scaffold. The practice engine, screens, and backend are
-> built in later phases. See `PROJECT.md` for the current state and the build
-> plan for sequencing.
+> **Status:** Phase 1. The **waveform practice screen** is built — real audio engine,
+> seamless click-free looping, pinch-to-zoom — loops/markers now **persist** (SwiftData),
+> and you can **import audio files** into a **song library** to practice with their real
+> waveform. Planner, navigation, and backend come next. See `PROJECT.md` for the current
+> state.
 
 ## How it works
 

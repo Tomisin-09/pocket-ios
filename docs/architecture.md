@@ -32,9 +32,10 @@
 
 **Current status:** stages 3–5 exist as `PracticeAudioEngine` (player →
 time-pitch → mixer; play/pause/seek/rate + a published `currentTime`) with pure
-helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) aren't built yet,
-so a generated arpeggio (`SampleToneGenerator`) feeds the engine for development;
-the displayed waveform is downsampled from that same buffer. Tap-to-seek, scrub,
+helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) now exist:
+`SongImporter` (the `LibraryView` file picker) stores a security-scoped bookmark, and
+the practice model resolves it to feed the engine the real file; the generated arpeggio
+(`SampleToneGenerator`) remains only as the bundled demo song. Tap-to-seek, scrub,
 and loop/marker capture are driven by the waveform **gesture engine** (pure math
 in `WaveformGesture`, ADR 0005), which also handles **pinch-to-zoom** — the detail
 waveform shows a viewport that tracks the playhead (ADR 0010). An active loop **loops continuously, gaplessly and click-free** — the
@@ -42,20 +43,38 @@ engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
 both gapless and free of the splice click; the visual playhead wraps via pure
 `AudioMath.loopedPlayhead`, decoupled from the audio (region math in
-`AudioMath.loopSegment`; ADRs 0006 & 0008). Real file import replaces the
-generated source next.
+`AudioMath.loopSegment`; ADRs 0006 & 0008). Stage 4's waveform for real files is
+extracted up front by `WaveformExtractor` (chunked AVFoundation read →
+`AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
+the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body
-that observes and binds to it (ADR 0007).
+that observes and binds to it (ADR 0007). Opening a song's audio is **async and
+off the main actor** — the engine reads the file header on a detached task (it can
+block on large or not-yet-downloaded iCloud files), so the UI stays responsive; the
+model exposes `isLoadingAudio` and the view shows a dimming **loading overlay**
+(`AudioLoadingOverlay`) that also blocks taps on the half-ready controls until ready.
 
 Apple Music tracks skip stages 2–4 (no raw audio) — they are browse/metadata
 only. See `docs/decisions/0001`.
 
 ## Persistence
 
-- SwiftData models, CloudKit-backed (Phase 4) for cross-device solo sync.
-- `SongRef` is the attachment point for all practice data.
+- **SwiftData `@Model` domain** (`Core/Models/`): `Song` is the aggregate root, with
+  cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
+  persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.
+- **Song metadata editing** (`Features/Library/SongEditSheet.swift`, ADR 0012): the
+  editable counterpart to the read-only `SongInfoPanel`. Reached by swiping a library
+  row → Edit, it edits local `@State` and writes back to the `@Model` on Done (Cancel
+  discards), mirroring the loop/marker sheets. `Song` carries the scalar fields
+  (`album`, `year`, `comment` joined `title`/`artist`/`key`/`bpm`/`proficiency`/
+  `progression`/`collections`); `annotationCount` (= loops + markers) is the
+  pure, unit-tested stat shown in the sheet.
+- `SongRef` is the song's identity (stored on `Song`), so practice data survives the
+  underlying file being moved or re-granted.
+- CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
+  a re-model.
 
 ## Backend
 

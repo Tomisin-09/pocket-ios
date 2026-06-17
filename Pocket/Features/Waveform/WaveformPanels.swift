@@ -6,14 +6,14 @@ import SwiftUI
 // MARK: - 10. Loops panel
 
 struct LoopsPanel: View {
-    let loops: [WaveformMock.Loop]
+    let loops: [Loop]
     @Binding var expanded: Bool
-    let activeLoopID: WaveformMock.Loop.ID?
+    let activeLoopID: UUID?
     let isPlaying: Bool
     /// Tap the row — activate (and play / toggle) this loop.
-    let onActivate: (WaveformMock.Loop) -> Void
+    let onActivate: (Loop) -> Void
     /// Trailing pencil — open the edit sheet.
-    let onEdit: (WaveformMock.Loop) -> Void
+    let onEdit: (Loop) -> Void
 
     var body: some View {
         CollapsiblePanel(title: "Loops",
@@ -24,13 +24,13 @@ struct LoopsPanel: View {
                 EmptyPanelMessage(
                     systemImage: "repeat",
                     title: "No loops yet",
-                    message: "In Tap or Fine mode, select a section of the "
-                        + "waveform to make your first loop.")
+                    message: "Use the Loop button to punch a section as it plays, "
+                        + "or Fine to drag the bounds.")
             } else {
                 VStack(spacing: 8) {
                     ForEach(loops) { loop in
                         LoopRow(loop: loop,
-                                isActive: loop.id == activeLoopID,
+                                isActive: loop.uid == activeLoopID,
                                 isPlaying: isPlaying,
                                 onActivate: { onActivate(loop) },
                                 onEdit: { onEdit(loop) })
@@ -42,7 +42,7 @@ struct LoopsPanel: View {
 }
 
 private struct LoopRow: View {
-    let loop: WaveformMock.Loop
+    let loop: Loop
     let isActive: Bool
     let isPlaying: Bool
     let onActivate: () -> Void
@@ -101,12 +101,12 @@ private struct EditPencil: View {
 // MARK: - 11. Markers panel
 
 struct MarkersPanel: View {
-    let markers: [WaveformMock.Marker]
+    let markers: [Marker]
     @Binding var expanded: Bool
     /// Tap the row — seek the playhead to the marker.
-    let onSeek: (WaveformMock.Marker) -> Void
+    let onSeek: (Marker) -> Void
     /// Trailing pencil — open the edit sheet (rename / delete).
-    let onEdit: (WaveformMock.Marker) -> Void
+    let onEdit: (Marker) -> Void
 
     var body: some View {
         CollapsiblePanel(title: "Markers",
@@ -117,7 +117,7 @@ struct MarkersPanel: View {
                 EmptyPanelMessage(
                     systemImage: "mappin",
                     title: "No markers yet",
-                    message: "In Scroll mode, hold on the waveform to drop a marker.")
+                    message: "Use the Mark button to drop a marker at the playhead.")
             } else {
                 VStack(spacing: 8) {
                     ForEach(markers) { marker in

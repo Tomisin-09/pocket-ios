@@ -25,6 +25,25 @@ final class AudioMathTests: XCTestCase {
         XCTAssertTrue(AudioMath.downsample([], to: 10).isEmpty)
     }
 
+    // MARK: mixToMono
+
+    func testMixToMonoEmptyInput() {
+        XCTAssertTrue(AudioMath.mixToMono([]).isEmpty)
+    }
+
+    func testMixToMonoSingleChannelPassesThrough() {
+        XCTAssertEqual(AudioMath.mixToMono([[0.1, -0.2, 0.3]]), [0.1, -0.2, 0.3])
+    }
+
+    func testMixToMonoAveragesChannels() {
+        // L and R average per frame: (1+0)/2, (-1+1)/2, (0.5+0.5)/2.
+        XCTAssertEqual(AudioMath.mixToMono([[1, -1, 0.5], [0, 1, 0.5]]), [0.5, 0, 0.5])
+    }
+
+    func testMixToMonoTruncatesToShortestChannel() {
+        XCTAssertEqual(AudioMath.mixToMono([[1, 1, 1], [0, 0]]), [0.5, 0.5])
+    }
+
     func testSecondsFramesRoundTrip() {
         XCTAssertEqual(AudioMath.secondsToFrames(1.0, sampleRate: 44_100), 44_100)
         XCTAssertEqual(AudioMath.framesToSeconds(44_100, sampleRate: 44_100), 1.0, accuracy: 1e-9)

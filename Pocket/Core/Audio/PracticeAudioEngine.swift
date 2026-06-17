@@ -47,8 +47,12 @@ final class PracticeAudioEngine {
         engine.attach(timePitch)
     }
 
-    func load(url: URL) throws {
-        let audioFile = try AVAudioFile(forReading: url)
+    /// Open `url` and wire it into the graph. The header read happens off the main
+    /// actor — `AVAudioFile(forReading:)` can block on I/O for large or
+    /// not-yet-downloaded iCloud files — so the UI stays responsive (and a loading
+    /// state can render) while it opens; the graph wiring runs back on the main actor.
+    func load(url: URL) async throws {
+        let audioFile = try await Self.openFile(at: url).value
         file = audioFile
         let format = audioFile.processingFormat
         sampleRate = format.sampleRate
@@ -57,6 +61,15 @@ final class PracticeAudioEngine {
         engine.connect(player, to: timePitch, format: format)
         engine.connect(timePitch, to: engine.mainMixerNode, format: format)
         configureSession()
+    }
+
+    /// Open an `AVAudioFile` off the main actor. The file is non-`Sendable`, but it's
+    /// constructed here and only ever touched on the main actor afterwards, so it's
+    /// safe to hand back across the boundary in an unchecked box.
+    private static func openFile(at url: URL) async throws -> UncheckedSendableBox<AVAudioFile> {
+        try await Task.detached(priority: .userInitiated) {
+            UncheckedSendableBox(try AVAudioFile(forReading: url))
+        }.value
     }
 
     func togglePlay() {
@@ -253,4 +266,11 @@ final class PracticeAudioEngine {
         displayTimer?.invalidate()
         displayTimer = nil
     }
+}
+
+/// Carries a non-`Sendable` value across an actor boundary when the caller
+/// guarantees single-threaded use (here: open off-main, then main-actor only).
+private struct UncheckedSendableBox<Value>: @unchecked Sendable {
+    let value: Value
+    init(_ value: Value) { self.value = value }
 }
