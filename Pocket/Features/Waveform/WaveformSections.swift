@@ -202,13 +202,16 @@ struct ModeDescriptionLine: View {
 // MARK: - 6. Time ruler
 
 struct TimeRuler: View {
-    let duration: TimeInterval
+    /// The visible window in seconds — the whole song, or the zoomed slice when
+    /// pinch-zoomed, so the axis labels match what's on screen.
+    let start: TimeInterval
+    let end: TimeInterval
     private let ticks = 5
 
     var body: some View {
         HStack {
             ForEach(0...ticks, id: \.self) { tick in
-                Text(timecode(duration * Double(tick) / Double(ticks)))
+                Text(timecode(start + (end - start) * Double(tick) / Double(ticks)))
                     .font(.pocketMono(.caption2))
                     .foregroundStyle(PocketColor.textSecondary)
                 if tick < ticks { Spacer() }
@@ -227,6 +230,12 @@ struct TransportBar: View {
     let loop: WaveformMock.Loop?
     /// Exit the active loop (stop looping, play on through the song).
     let onClearLoop: () -> Void
+    /// Action bar: drop a marker at the playhead.
+    let onDropMarker: () -> Void
+    /// Action bar: punch the loop in / out at the playhead (a toggle).
+    let onPunch: () -> Void
+    /// True between the in- and out-punch, so the Loop button reads "armed".
+    let isPunchActive: Bool
 
     var body: some View {
         VStack(spacing: 8) {
@@ -272,10 +281,16 @@ struct TransportBar: View {
                 }
             }
 
+            // Action bar — capture at the playhead + the precise-edit toggle.
+            // (`A`utomator slot reserved, ADR 0009.)
             HStack(spacing: 8) {
-                ForEach(WaveformPracticeView.InteractionMode.allCases) { item in
-                    ModePill(label: item.rawValue, isSelected: mode == item) { mode = item }
-                }
+                ActionButton(icon: "repeat", label: "Loop", tint: PocketColor.active,
+                             isActive: isPunchActive, action: onPunch)
+                ActionButton(icon: "mappin", label: "Mark", tint: PocketColor.pin, action: onDropMarker)
+                ActionButton(icon: "slider.horizontal.3", label: "Fine", tint: PocketColor.fine,
+                             isActive: mode == .fine) { mode = (mode == .fine ? .navigate : .fine) }
+                ActionButton(icon: "metronome", label: "Auto", tint: PocketColor.textSecondary,
+                             isEnabled: false, action: {})
             }
         }
         .padding(.horizontal, 10)
@@ -284,21 +299,33 @@ struct TransportBar: View {
     }
 }
 
-private struct ModePill: View {
+/// One capsule button on the transport action bar (icon over a small label).
+private struct ActionButton: View {
+    let icon: String
     let label: String
-    let isSelected: Bool
+    var tint: Color = PocketColor.textPrimary
+    var isActive: Bool = false
+    var isEnabled: Bool = true
     let action: () -> Void
+
     var body: some View {
         Button(action: action) {
-            Text(label)
-                .font(.subheadline.weight(isSelected ? .semibold : .regular))
-                .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule().fill(isSelected ? PocketColor.fine : Color.white.opacity(0.10))
-                )
+            VStack(spacing: 2) {
+                Image(systemName: icon).font(.system(size: 15, weight: .semibold))
+                Text(label).font(.caption2)
+            }
+            .foregroundStyle(foreground)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(isActive ? tint : Color.white.opacity(0.08)))
         }
         .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .accessibilityLabel(label)
+    }
+
+    private var foreground: Color {
+        if !isEnabled { return PocketColor.textSecondary.opacity(0.4) }
+        return isActive ? PocketColor.background : tint
     }
 }

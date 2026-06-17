@@ -13,8 +13,41 @@ enum WaveformGesture {
     /// zero-width loop.
     static let minLoopWidth = 0.02
 
+    /// Tightest pinch-zoom: the smallest fraction of the song the detail waveform
+    /// will show (≈20× zoom). `1` is the whole song (no zoom).
+    static let minZoomSpan = 0.05
+
     /// Which loop boundary a Fine-mode touch is grabbing.
     enum Handle { case start, end }
+
+    /// Clamp a zoom span (visible fraction of the song) to `minZoomSpan...1`.
+    static func clampSpan(_ span: Double) -> Double {
+        span.clamped(to: minZoomSpan...1)
+    }
+
+    /// The visible window `(start, end)` when `span` of the song is shown centred on
+    /// `center` (a song fraction). Clamped inside `0...1` while keeping the width
+    /// equal to `span`, so panning past either end stops cleanly.
+    static func viewport(center: Double, span: Double) -> (start: Double, end: Double) {
+        let width = span.clamped(to: 0...1)
+        var start = (center - width / 2).clamped(to: 0...(1 - width))
+        if width >= 1 { start = 0 }
+        return (start, start + width)
+    }
+
+    /// Map a `0...1` position on the *visible* waveform to a song fraction within
+    /// `viewport`. (Inverse of `screenFraction`.)
+    static func songFraction(screenFraction: Double, viewport: (start: Double, end: Double)) -> Double {
+        viewport.start + screenFraction * (viewport.end - viewport.start)
+    }
+
+    /// Map a song fraction to its `0...1` position on the visible waveform. Falls
+    /// outside `0...1` when the song fraction is off-screen (caller skips/clamps).
+    static func screenFraction(songFraction: Double, viewport: (start: Double, end: Double)) -> Double {
+        let span = viewport.end - viewport.start
+        guard span > 0 else { return 0 }
+        return (songFraction - viewport.start) / span
+    }
 
     /// Map a horizontal position `point` (points) within a waveform of `width`
     /// points to a song fraction in `0...1`. Out-of-bounds touches clamp.

@@ -88,11 +88,11 @@ struct EditToolbar: View {
     }
 }
 
-/// Step 2 — name the loop. A native sheet, so the keyboard never occludes it.
+/// Step 2 — name the new loop. Just a name (its range is already shown on the
+/// waveform); a native sheet, so the keyboard never occludes it. Editing an existing
+/// loop uses the fuller `LoopEditSheet`.
 struct LoopNameSheet: View {
-    /// The captured range, preformatted (e.g. `0:42–1:08`).
-    let range: String
-    /// Save with the entered name (empty → caller falls back to the range).
+    /// Save with the entered name (empty → caller falls back to the range string).
     let onSave: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -108,11 +108,6 @@ struct LoopNameSheet: View {
                         .submitLabel(.done)
                         .onSubmit { save() }
                 }
-                Section("Range") {
-                    LabeledContent("Loop") {
-                        Text(range).font(.pocketMono(.body))
-                    }
-                }
             }
             .navigationTitle("New loop")
             .navigationBarTitleDisplayMode(.inline)
@@ -125,7 +120,7 @@ struct LoopNameSheet: View {
                 }
             }
         }
-        .presentationDetents([.height(240)])
+        .presentationDetents([.height(180)])
         .onAppear { nameFocused = true }
     }
 

@@ -12,18 +12,15 @@ import SwiftUI
 struct WaveformPracticeView: View {
 
     /// Transport interaction modes — pills in the transport bar (brief §4.1).
-    enum InteractionMode: String, CaseIterable, Identifiable {
-        case scroll = "Scroll"
-        case tap = "Tap"
+    enum InteractionMode: String {
+        case navigate = "Navigate"
         case fine = "Fine"
-        var id: String { rawValue }
 
-        /// One-line description shown under the speed bar.
+        /// One-line hint shown under the speed bar (when not editing a capture).
         var blurb: String {
             switch self {
-            case .scroll: "Tap to set the playhead · hold to drop a marker"
-            case .tap: "Drag to scrub · tap to set loop start, tap again to close"
-            case .fine: "Drag the blue handles to fine-tune the loop bounds"
+            case .navigate: "Tap to seek · drag to scrub · pinch to zoom"
+            case .fine: "Drag the blue handles to set the loop bounds"
             }
         }
     }
@@ -68,16 +65,18 @@ struct WaveformPracticeView: View {
                                  tapSelection: model.tapSelection,
                                  playheadLabel: timecode(model.engine.currentTime),
                                  onSeek: model.seekToFraction,
-                                 onDropMarker: model.dropMarker,
-                                 onTapPunch: model.tapPunch,
                                  onScrub: model.seekToFraction,
                                  onMoveHandle: model.moveFineHandle,
-                                 onMoveHandleEnded: model.previewCapture)
-                    TimeRuler(duration: model.duration)                         // 6
+                                 onMoveHandleEnded: model.previewCapture,
+                                 viewport: model.viewport,
+                                 onSetZoomSpan: model.setZoomSpan)
+                    TimeRuler(start: model.viewport.start * model.duration,      // 6
+                              end: model.viewport.end * model.duration)
                     Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
                             markers: model.markers,
                             fineSelection: model.fineSelection,
                             playheadFraction: model.playheadFraction,
+                            viewport: model.viewport,
                             onSeek: model.seekToFraction)
                     // Greyed + locked while editing — controls move to the edit
                     //    toolbar (you leave edit mode via Y/N, not the mode pills).
@@ -86,7 +85,10 @@ struct WaveformPracticeView: View {
                                  mode: $model.mode,
                                  currentTime: model.engine.currentTime,
                                  loop: model.activeLoop,
-                                 onClearLoop: model.clearActiveLoop)
+                                 onClearLoop: model.clearActiveLoop,
+                                 onDropMarker: model.dropMarkerAtPlayhead,
+                                 onPunch: model.tapPunch,
+                                 isPunchActive: model.pendingStart != nil)
                         .opacity(model.showConfirm ? 0.35 : 1)
                         .disabled(model.showConfirm)
                         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)
@@ -128,8 +130,11 @@ struct WaveformPracticeView: View {
         .sheet(item: $model.editingMarker) { marker in
             MarkerEditSheet(marker: marker, onSave: model.updateMarker, onDelete: { model.deleteMarker(marker) })
         }
-        .sheet(item: $model.namingDraft, onDismiss: model.namingDismissed) { draft in
-            LoopNameSheet(range: model.rangeString(draft.start, draft.end), onSave: model.saveNamed)
+        .sheet(item: $model.namingMarker) { _ in
+            MarkerNameSheet(onSave: model.saveMarkerName)
+        }
+        .sheet(item: $model.namingDraft, onDismiss: model.namingDismissed) { _ in
+            LoopNameSheet(onSave: model.saveNamed)
         }
         .task { await model.loadSample() }
         .onChange(of: model.speed) { _, newValue in model.engine.setRate(newValue) }

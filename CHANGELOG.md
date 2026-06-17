@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Pinch-to-zoom the waveform** — pinch the detail waveform to zoom into a section.
+  The view **tracks the playhead**, so you navigate by seeking (tap / scrub / minimap)
+  and the waveform follows — no separate pan gesture. The minimap **viewport box
+  returns**, now live, showing the visible slice. The zoom + screen↔song-fraction
+  mapping is pure, unit-tested math in `WaveformGesture`. ADR 0010.
 - **Region looping** — an active loop now actually loops: playback wraps from the
   loop's end back to its start continuously and **seamlessly** — gapless *and*
   click-free, via a pre-rendered loop buffer whose seam is equal-power
@@ -26,6 +31,18 @@ All notable changes to Pocket are documented here. Format loosely follows
   discarding restores the saved bounds.
 
 ### Changed
+- **Naming a new loop or marker is now just a name** — no position/range readout and
+  no delete button (Cancel already discards a brand-new one). A dropped marker isn't
+  added until you save it. Editing an *existing* loop/marker keeps the full sheet
+  (range/position, playback, delete). The transport's **Loop and Mark buttons swapped**
+  positions (Loop first).
+- **Waveform interaction rationalised** (after pinch-zoom surfaced gesture clashes):
+  **tap now seeks everywhere** — Scroll and Tap modes collapse into one *Navigate*
+  behaviour (tap = seek · drag = scrub · pinch = zoom). Capturing at the playhead moves
+  to **buttons on the transport**: **Mark** (drop a marker), **Loop** (punch in/out), a
+  **Fine** toggle (precise handle-editing), and a reserved **Auto** slot for the future
+  automator. The **hold-to-drop-marker** gesture is gone (it raced with pinch). The
+  **time ruler now follows the zoom**, labelling the visible window. ADR 0005 (round 4).
 - **Transport bar slimmed further** — tighter vertical spacing/padding and a smaller
   play control, to reclaim cockpit height. The freed space is reserved for the future
   automator entry (see ADR 0009).

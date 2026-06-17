@@ -13,10 +13,14 @@ final class WaveformPracticeModel {
 
     // UI state.
     var speed: Double = 1.0
-    var mode: WaveformPracticeView.InteractionMode = .scroll
+    var mode: WaveformPracticeView.InteractionMode = .navigate
     var songInfoExpanded = false   // demoted to the scroll area
     var loopsExpanded = true
     var markersExpanded = false
+
+    /// Pinch-to-zoom: the fraction of the song the detail waveform shows (`1` =
+    /// whole song). The visible window tracks the playhead — see `viewport`.
+    var zoomSpan: Double = 1
 
     // Audio engine + the waveform amplitudes it loaded from the sample.
     let engine = PracticeAudioEngine()
@@ -28,6 +32,9 @@ final class WaveformPracticeModel {
     var activeLoopID: WaveformMock.Loop.ID? = WaveformMock.song.loops.first?.id
     var editingLoop: WaveformMock.Loop?
     var editingMarker: WaveformMock.Marker?
+    /// A freshly-dropped marker awaiting a name (drives the name-only sheet). It's
+    /// added to `markers` only on save; cancelling discards it.
+    var namingMarker: WaveformMock.Marker?
 
     /// Tap mode: the start of the loop being captured (the green forming
     /// region), awaiting its closing tap.
@@ -58,6 +65,12 @@ final class WaveformPracticeModel {
     /// Effective song length — the engine's once loaded, else the mock's.
     var duration: TimeInterval {
         engine.duration > 0 ? engine.duration : song.duration
+    }
+
+    /// The visible window of the song (song fractions), centred on the playhead at
+    /// the current `zoomSpan`. Drives both the waveform render and the minimap box.
+    var viewport: (start: Double, end: Double) {
+        WaveformGesture.viewport(center: playheadFraction, span: zoomSpan)
     }
 
     /// The Fine-mode selection to render (blue handles), if one is being defined.

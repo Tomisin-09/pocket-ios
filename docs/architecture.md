@@ -36,7 +36,8 @@ helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) aren't built ye
 so a generated arpeggio (`SampleToneGenerator`) feeds the engine for development;
 the displayed waveform is downsampled from that same buffer. Tap-to-seek, scrub,
 and loop/marker capture are driven by the waveform **gesture engine** (pure math
-in `WaveformGesture`, ADR 0005). An active loop **loops continuously, gaplessly and click-free** — the
+in `WaveformGesture`, ADR 0005), which also handles **pinch-to-zoom** — the detail
+waveform shows a viewport that tracks the playhead (ADR 0010). An active loop **loops continuously, gaplessly and click-free** — the
 engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
 both gapless and free of the splice click; the visual playhead wraps via pure

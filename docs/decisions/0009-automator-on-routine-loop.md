@@ -51,8 +51,34 @@ model automator onto `Loop`.
 - **Automator baked into `Loop`** (today's mock shape) — rejected: couples
   how-you-practice into the reusable entity; the same loop can't be drilled
   differently across routines.
-- **Automator per song, or global** — rejected: too coarse; the unit of practice is a
-  loop within a routine, not a whole song.
+- **Automator *only* per song, or global** — rejected as the sole granularity: too
+  coarse; the unit of practice is a loop within a routine. (Song-level *availability*
+  is still wanted — see the 2026-06-16 update — but as a default a routine can scope
+  per loop, not the only level.)
 - **Static per-loop notes instead of a log** — considered for the loops row, but a
   **dated, append-only log** better matches tracking progress over time; recorded here
   so the eventual build uses a log, not a single note field.
+
+## Update (2026-06-16) — automator is a song-level tool, shared with a metronome
+
+Refinement to the scoping above:
+
+- **The automator is available in the song itself**, not only inside a routine. You
+  can set up a tempo progression while practicing a song standalone (reached from the
+  practice screen — the "A" entry the slimmed transport reserves space for). So the
+  earlier "only meaningful inside a routine" framing is relaxed: the automator is a
+  song-level tool; a routine, when it exists, *overrides/scopes* it per loop.
+- **The automator is one shared tempo-progression engine**, not a loop-only feature.
+  Its math is `TempoMath.automatorStepCount`; it is surfaced in (a) loop playback
+  (ramp the loop's speed over repeats), (b) the song/practice screen, and (c) a
+  **metronome tool** (below).
+- **New planned component — a metronome tool.** A click track (BPM + time signature)
+  that the automator can drive (auto-increase tempo over bars — a "speed trainer").
+  The automator and the metronome share the same tempo-progression core. The
+  metronome is a project goal (its own future ADR + build); recorded here because it
+  reshapes where the automator lives.
+
+**Still holds:** the automator is *not* baked into the reusable `Loop` region.
+**Open (settle at build time):** how a song-level automator default layers with a
+routine's per-loop override, and whether automator config persists on the song, the
+routine↔loop item, or both.

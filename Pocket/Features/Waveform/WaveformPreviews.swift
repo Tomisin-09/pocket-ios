@@ -48,17 +48,18 @@ import SwiftUI
     }
 }
 
-#Preview("Waveform — Scroll") {
+#Preview("Waveform — Navigate") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
         WaveformView(amplitudes: WaveformMock.song.amplitudes,
                      playheadFraction: WaveformMock.song.playheadFraction,
                      loop: WaveformMock.song.activeLoop,
-                     mode: .scroll, formingStart: nil, fineSelection: nil,
+                     mode: .navigate, formingStart: nil, fineSelection: nil,
                      tapSelection: nil,
                      playheadLabel: "0:10",
-                     onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {}).padding()
+                     onSeek: { _ in },
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     viewport: (0, 1), onSetZoomSpan: { _ in }).padding()
     }
 }
 
@@ -71,8 +72,9 @@ import SwiftUI
                      mode: .fine, formingStart: nil, fineSelection: (0.30, 0.62),
                      tapSelection: nil,
                      playheadLabel: "0:10",
-                     onSeek: { _ in }, onDropMarker: { _ in }, onTapPunch: {},
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {}).padding()
+                     onSeek: { _ in },
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     viewport: (0.25, 0.65), onSetZoomSpan: { _ in }).padding()
     }
 }
 
@@ -84,17 +86,19 @@ import SwiftUI
                 markers: WaveformMock.song.markers,
                 fineSelection: nil,
                 playheadFraction: WaveformMock.song.playheadFraction,
+                viewport: (0.25, 0.65),
                 onSeek: { _ in }).padding()
     }
 }
 
 #Preview("Transport bar") {
-    @Previewable @State var mode = WaveformPracticeView.InteractionMode.scroll
+    @Previewable @State var mode = WaveformPracticeView.InteractionMode.navigate
     ZStack {
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: false, onPlayPause: {}, mode: $mode,
                      currentTime: WaveformMock.song.playheadSeconds,
-                     loop: WaveformMock.song.activeLoop, onClearLoop: {}).padding()
+                     loop: WaveformMock.song.activeLoop, onClearLoop: {},
+                     onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
     }
 }
 
@@ -107,7 +111,11 @@ import SwiftUI
 }
 
 #Preview("Loop name sheet") {
-    LoopNameSheet(range: "0:42–1:08", onSave: { _ in })
+    LoopNameSheet(onSave: { _ in })
+}
+
+#Preview("Marker name sheet") {
+    MarkerNameSheet(onSave: { _ in })
 }
 
 #Preview("Loops + Markers") {

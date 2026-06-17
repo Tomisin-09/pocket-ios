@@ -128,3 +128,24 @@ loop couldn't be heard before saving.
   capture on creation (`previewCapture`); the button toggles play/pause
   (`auditionCapture`). This supersedes round 2's "icon-only ✓/✗ pill over the
   waveform".
+
+## Update (2026-06-17, round 4) — tap = seek; capture via buttons
+
+Pinch-to-zoom (ADR 0010) showed the three-mode model was overloaded: tap meant three
+different things, and the hold-to-drop-marker gesture raced with pinch (both start on
+the first finger down). Rationalised:
+
+- **Tap always seeks.** Scroll and Tap modes collapse into one **navigate** behaviour
+  (tap = seek · drag = scrub · pinch = zoom). `InteractionMode` is now `{ navigate, fine }`.
+- **Capture moves to buttons** on the transport's second row (the old mode pills): a
+  **Mark** button (`mappin`) drops a marker at the playhead, a **Loop** button (`repeat`,
+  a single in→out toggle) punches the loop at the playhead, and a **Fine** toggle
+  (`slider.horizontal.3`) enters precise handle-editing. A reserved **A** slot
+  (`metronome`) is the future automator entry (ADR 0009). The underlying `dropMarker`
+  and `tapPunch` logic is unchanged — just button-triggered.
+- **The hold-to-drop-marker gesture is removed entirely** (timer, fill ring, and all),
+  which deletes the pinch↔hold race and a chunk of `WaveformView` state.
+- **The time ruler follows the zoom** — it labels the visible window, not the whole song.
+
+This supersedes round 2's "Tap mode is punch in/out" and the original Scroll-hold marker
+drop. Fine mode and the loop edit flow (audition + Y/N, ADR 0005 round 3) are unchanged.
