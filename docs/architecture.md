@@ -60,7 +60,10 @@ loops each, up *or* down — or level when start = target). The ramp is **finite
 the target) × `loopsPerStep` — then `automatorAdvance` **pauses and rewinds** the engine to
 the loop start, so it can be replayed. **Set ramp** arms the config and *starts the loop
 playing* from the top (`startAutomator`). Setting `speed` reuses the existing
-speed→engine path; grabbing the slider disables the loop's ramp. Opening a song's audio is **async and
+speed→engine path; grabbing the slider disables the loop's ramp. A later slice adds a
+**clean-before-fast** advance gate — an `.onConfirm` mode that holds each plateau until
+the user taps step-up, plus a single-step back-off — because Pocket plays the reference
+track but can't sense the user's own accuracy (ADR 0016). Opening a song's audio is **async and
 off the main actor** — the engine reads the file header on a detached task (it can
 block on large or not-yet-downloaded iCloud files), so the UI stays responsive; the
 model exposes `isLoadingAudio` and the view shows a dimming **loading overlay**
@@ -94,6 +97,6 @@ only. See `docs/decisions/0001`.
 ## Testing
 
 - **Unit (PocketTests):** pure logic — tempo math, slider mapping, automator
-  stepping, identity, planner weighting. Must be covered.
+  stepping, identity, planner weighting + candidate selection (ADR 0015). Must be covered.
 - **UI (PocketUITests):** XCUITest for key flows.
 - Audio / MusicKit behaviour is validated on device/simulator, not unit-tested.

@@ -87,6 +87,11 @@ target % over N steps, a few loops each — that climbs, descends, or sits level
 **fixed number of passes and then stops** (Set ramp also starts it playing), driven by the
 engine counting loop wraps (ADR 0013). Filename suggestions, a practice
 **journal** (per-loop/marker/song), **collections as real playlists**, and a **metronome**
-(the transport "Auto" slot) are next. Navigation/planner follow (Phase 3).
+(the transport "Auto" slot) are next. Navigation/planner follow (Phase 3) — the
+planner's **selection** (goals → required skills from a **technique taxonomy**
+(`docs/practice-techniques.md`) → candidate items, *prioritised, not balanced*; ADR 0015)
+and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
+serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
+gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
 Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`, `WaveformGesture`, `Song`, `AutomatorConfig`.
 See `CHANGELOG.md` for the full history.
