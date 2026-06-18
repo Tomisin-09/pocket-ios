@@ -48,3 +48,8 @@ infrastructure/**/*.tfvars
 
 # Local preview screenshots (not committed)
 .preview/
+
+# Third-party reference material — raw sources are reference-only, never
+# committed or shipped. Our derivatives live in docs/research/ instead.
+# Anchored to repo root so it does NOT match docs/research/.
+/research/
