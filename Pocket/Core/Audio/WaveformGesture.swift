@@ -81,6 +81,16 @@ enum WaveformGesture {
         return (point / width).clamped(to: 0...1)
     }
 
+    /// Order a long-press-drag selection's `anchor` and `current` points into
+    /// bounds (`start <= end`), clamped to `0...1`. Unlike `loopBounds` this does
+    /// **not** widen to a minimum width — the live drag region tracks the finger
+    /// exactly, so you see precisely what you're selecting. Widening to
+    /// `minLoopWidth` is applied only when the drag commits (`loopBounds`).
+    static func selectionBounds(anchor: Double, current: Double) -> (start: Double, end: Double) {
+        (Swift.min(anchor, current).clamped(to: 0...1),
+         Swift.max(anchor, current).clamped(to: 0...1))
+    }
+
     /// Order two tapped fractions into a valid loop (`start < end`) and widen to
     /// `minWidth` if the points landed too close together, keeping the result
     /// inside `0...1`.

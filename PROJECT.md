@@ -69,13 +69,14 @@ cockpit over a scrollable reference area, with named/editable loops & markers
 (ADR 0003). Real playback runs through `PracticeAudioEngine` — play/pause/seek,
 pitch-preserving speed, and **seamless, click-free region looping** (a crossfaded
 `.loops` buffer, ADRs 0006 & 0008) — fed by an imported file's real audio (or a
-generated dev sample for the demo). Interaction: **tap = seek, drag = scrub, pinch = zoom**
+generated dev sample for the demo). Interaction: **tap = seek, drag = scrub, hold-drag = select a loop, pinch = zoom**
 (a **page-mode** viewport — the window holds still and the playhead sweeps/pages across it,
 with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
 the source file** for crisp detail, debounced + cached, ADR 0020);
-capture is via a transport **action bar** (Mark · Loop · Fine · reserved Auto),
-not gestures (ADR 0005 round 4); pure gesture/zoom math in unit-tested
-`WaveformGesture`. The waveform and minimap show the **whole** annotation library —
+playhead capture is via a transport **action bar** (Mark · Loop · Fine · reserved Auto),
+while a loop's **range** is drawn directly on the waveform by a **long-press-drag** (ADR 0005
+round 5) — a still hold arms a selection that the drag paints, released into a confirmable
+draft. Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform and minimap show the **whole** annotation library —
 markers as pins from the top, **all** saved loops as brackets along the bottom;
 overlapping/nested loops **stack into lanes** (pure, unit-tested `LoopLanes`) so
 overlap reads by position while colour stays reserved for state, the active loop

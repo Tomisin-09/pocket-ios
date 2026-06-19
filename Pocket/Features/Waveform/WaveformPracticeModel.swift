@@ -91,6 +91,14 @@ final class WaveformPracticeModel {
     /// loop's range rather than creating one.
     var capture: CaptureDraft?
 
+    /// Long-press-drag select (ADR 0005 round 5): the anchor fraction where the
+    /// hold fired. The drag extends from here; cleared on commit/cancel.
+    @ObservationIgnored var dragSelectAnchor: Double?
+    /// True *while* a long-press-drag is being painted, before release. The
+    /// `capture` is live (so the green region renders) but the edit toolbar and
+    /// transport lock are held back until the drag commits — see `showConfirm`.
+    var isDragSelecting = false
+
     /// A transient "Deleted X · Undo" toast after a destructive action (ADR 0019).
     /// Auto-dismisses after a few seconds; tapping Undo runs its closure.
     var undoToast: UndoToast?
@@ -188,8 +196,10 @@ final class WaveformPracticeModel {
     /// focus the waveform.
     var isRangeEditing: Bool { capture?.editingLoop != nil }
 
-    /// The confirm pill shows while a region is captured.
-    var showConfirm: Bool { capture != nil }
+    /// The confirm pill (edit toolbar + transport lock) shows while a region is
+    /// captured — but *not* mid-drag-select, where the region is still being
+    /// painted and the transport should stay live until release.
+    var showConfirm: Bool { capture != nil && !isDragSelecting }
 
     var isPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"

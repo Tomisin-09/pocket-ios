@@ -13,11 +13,13 @@ import UIKit
 /// in-progress selection, and the playhead, and recognises two interaction modes
 /// (brief §4.1 / ADR 0005):
 ///
-/// - **Navigate** (default): tap → seek the playhead; drag → scrub; pinch → zoom.
+/// - **Navigate** (default): tap → seek the playhead; drag → scrub; **hold-drag →
+///   select a loop region** (ADR 0005 round 5); pinch → zoom.
 /// - **Fine:** drag the two blue handles to set the loop bounds.
 ///
-/// Marker drop and loop punch are *not* gestures — they're buttons on the transport
-/// action bar (they act at the playhead). All gesture math (point → fraction, zoom
+/// Marker drop and loop punch are also buttons on the transport action bar (they act
+/// at the playhead); the hold-drag is the on-waveform path to define a loop *range*.
+/// All gesture math (point → fraction, zoom
 /// viewport, handle hit-testing) lives in the pure, unit-tested `WaveformGesture`;
 /// the view emits *song fractions* (0…1) so the parent never deals in points.
 /// Crisp deep-zoom (ADR 0020): a re-downsample of just the visible window plus the
@@ -60,21 +62,38 @@ struct WaveformView: View {
     let onMoveHandle: (WaveformGesture.Handle, Double) -> Void
     /// Fine mode: the drag finished — commit the live audio preview to the new bounds.
     let onMoveHandleEnded: () -> Void
+    /// Long-press-drag select (navigate mode): a hold fired — begin a selection at
+    /// this fraction. The drag then extends it (`onSelectChanged`).
+    let onSelectBegan: (Double) -> Void
+    /// The hold-drag moved — grow the live selection to this fraction.
+    let onSelectChanged: (Double) -> Void
+    /// The hold-drag released — commit the selection into a confirmable draft.
+    let onSelectEnded: () -> Void
+    /// A pinch (or other interruption) took over mid-hold-drag — abort the selection.
+    let onSelectCancelled: () -> Void
     /// Pinch-to-zoom: the visible window of the song (song fractions). Both the
     /// rendering and the touch→song-fraction mapping go through it.
     let viewport: (start: Double, end: Double)
     /// Pinch magnification → set the new zoom span (visible fraction of the song).
     let onSetZoomSpan: (Double) -> Void
 
-    // Gesture bookkeeping.
-    @State private var dragStartX: CGFloat?
-    @State private var didScrub = false                     // moved enough to be a scrub (not a tap)
-    @State private var grabbedHandle: WaveformGesture.Handle?  // Fine mode
-    @State private var pinchBaseSpan: Double?               // zoom span captured at pinch start
-    @State private var didPinch = false                    // a pinch happened — swallow the trailing tap/scrub
+    // Gesture bookkeeping. Not `private` — the gesture recogniser lives in a
+    // `WaveformView` extension in `WaveformCanvasGestures.swift`, so it reads this
+    // state across files within the module.
+    @State var dragStartX: CGFloat?
+    @State var didScrub = false                     // moved enough to be a scrub (not a tap)
+    @State var grabbedHandle: WaveformGesture.Handle?  // Fine mode
+    @State var pinchBaseSpan: Double?               // zoom span captured at pinch start
+    @State var didPinch = false                     // a pinch happened — swallow the trailing tap/scrub
+    // Long-press-drag select (navigate). A still hold arms a selection; the drag
+    // then paints it instead of scrubbing (ADR 0005 round 5).
+    @State var longPressTask: Task<Void, Never>?    // pending hold timer
+    @State var isSelecting = false                  // armed — the drag is painting a loop
+    @State var holdFraction: Double = 0             // where a firing hold anchors (tracks the still finger)
 
-    private let scrubThreshold: CGFloat = 6                 // px before a press counts as a scrub vs a tap
-    private let handleTolerance = 0.06                      // fraction either side of a handle that grabs it
+    let scrubThreshold: CGFloat = 6                 // px before a press counts as a scrub vs a tap
+    let handleTolerance = 0.06                      // fraction either side of a handle that grabs it
+    let longPressDuration: Duration = .milliseconds(350)  // still-hold before a drag becomes a selection
 
     var body: some View {
         GeometryReader { geo in
@@ -262,75 +281,11 @@ struct WaveformView: View {
     }
 
     /// A touch's x (points) → song fraction, mapped through the zoom viewport.
-    private func songFraction(atX point: CGFloat, width: CGFloat) -> Double {
+    /// Not `private` — the gesture recogniser extension (other file) maps through it.
+    func songFraction(atX point: CGFloat, width: CGFloat) -> Double {
         WaveformGesture.songFraction(
             screenFraction: WaveformGesture.fraction(atX: point, width: width),
             viewport: viewport)
-    }
-
-    /// Pinch to set the zoom span — `MagnifyGesture` (iOS 17+). The span at pinch
-    /// start is captured so the magnification scales it directly.
-    private var magnifyGesture: some Gesture {
-        MagnifyGesture()
-            .onChanged { value in
-                didPinch = true   // latched until the drag's onEnded clears it (ordering: magnify ends first)
-                let base = pinchBaseSpan ?? (viewport.end - viewport.start)
-                pinchBaseSpan = base
-                onSetZoomSpan(WaveformGesture.clampSpan(base / value.magnification))
-            }
-            // Leave `didPinch` set — magnify.onEnded fires *before* drag.onEnded, so
-            // the drag uses it to swallow the trailing phantom tap, then clears it.
-            .onEnded { _ in pinchBaseSpan = nil }
-    }
-
-    // MARK: Gesture
-
-    private func dragGesture(width: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: 0)
-            .onChanged { value in handleChanged(value, width: width) }
-            .onEnded { value in handleEnded(value, width: width) }
-    }
-
-    private func handleChanged(_ value: DragGesture.Value, width: CGFloat) {
-        if dragStartX == nil, pinchBaseSpan == nil { didPinch = false }   // fresh touch — clear any stale pinch latch
-        guard pinchBaseSpan == nil, !didPinch else { return }   // ignore the drag while/after pinching
-        let fraction = songFraction(atX: value.location.x, width: width)
-        if dragStartX == nil {
-            dragStartX = value.startLocation.x
-            didScrub = false
-            if mode == .fine { grabbedHandle = pickHandle(at: fraction) }
-        }
-        let moved = abs(value.location.x - (dragStartX ?? value.location.x))
-        switch mode {
-        case .navigate:
-            if didScrub || moved > scrubThreshold {     // a real drag scrubs the playhead
-                didScrub = true
-                onScrub(fraction)
-            }
-        case .fine:
-            if let grabbedHandle { onMoveHandle(grabbedHandle, fraction) }
-        }
-    }
-
-    private func handleEnded(_ value: DragGesture.Value, width: CGFloat) {
-        // A pinch this touch sequence — swallow the lift-off tap/scrub, then reset
-        // the latch for the next gesture. (Fixes pinch-zoom firing a phantom seek.)
-        if didPinch || pinchBaseSpan != nil {
-            didPinch = false
-            grabbedHandle = nil
-            dragStartX = nil
-            return
-        }
-        let fraction = songFraction(atX: value.location.x, width: width)
-        let moved = abs(value.location.x - (dragStartX ?? value.location.x))
-        switch mode {
-        case .navigate:
-            if !didScrub && moved <= scrubThreshold { onSeek(fraction) }   // a tap = seek
-        case .fine:
-            if grabbedHandle != nil { onMoveHandleEnded() }   // audition the new bounds
-            grabbedHandle = nil
-        }
-        dragStartX = nil
     }
 
     /// X for the time bubble — the playhead position, clamped so the bubble
@@ -338,19 +293,6 @@ struct WaveformView: View {
     private func bubbleX(width: CGFloat) -> CGFloat {
         let half: CGFloat = 28
         return min(max(half, width * CGFloat(screenX(playheadFraction))), width - half)
-    }
-
-    /// Which Fine handle a touch grabs — defaults to `.start` when there's no
-    /// selection yet, so the first drag always moves something.
-    private func pickHandle(at fraction: Double) -> WaveformGesture.Handle {
-        guard let fineSelection else { return .start }
-        // Tolerance is a song fraction; scale by the zoom span so the grab zone
-        // stays a constant size on screen.
-        let tolerance = handleTolerance * (viewport.end - viewport.start)
-        return WaveformGesture.nearestHandle(toFraction: fraction,
-                                             start: fineSelection.start, end: fineSelection.end,
-                                             tolerance: tolerance)
-            ?? (abs(fraction - fineSelection.start) <= abs(fraction - fineSelection.end) ? .start : .end)
     }
 }
 
