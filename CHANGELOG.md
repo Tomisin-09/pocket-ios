@@ -5,6 +5,17 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Waveform reads musically** — the per-bar envelope is now **energy-based and
+  transient-resistant** instead of peak: each bar takes the median of several short
+  RMS sub-windows, so it tracks the sustained level of the music and steps over
+  rhythmic spikes (a snare no longer dominates the picture), then normalises to a
+  high percentile rather than the single loudest sample. Brick-walled masters that
+  used to render as a flat block now show verses dipping and choruses swelling. The
+  stored resolution also grew (240 → 512 bars) for finer detail. Songs imported
+  before this **re-extract their waveform automatically** the next time you open
+  them. ADR 0017.
+
 ### Added
 - **Automator — per-loop speed trainer** — each loop row now has an **"A" control**
   (replacing the old speed·repeats text). Set a **start %**, a **target %**, how many

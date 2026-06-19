@@ -8,9 +8,15 @@ enum WaveformExtractor {
 
     enum ExtractError: Error { case emptyFile }
 
-    /// Envelope buckets sampled across the whole song for the detail waveform —
-    /// dense enough to read as music, on the order of the seeded sample's detail.
-    static let defaultBuckets = 240
+    /// Envelope buckets sampled across the whole song for the detail waveform.
+    /// Bumped from 240 with ADR 0017 so the envelope reads finely — ~0.42 s per bar
+    /// on a 3.5-min song — and holds up better when zoomed. This count also doubles
+    /// as the stored-format version: a persisted waveform with a different count
+    /// predates the current reduction and is re-extracted on next open (see
+    /// `WaveformPracticeModel.refreshWaveformIfOutdated`), so it is bumped whenever
+    /// the reduction changes (240 peak → 480 RMS → 512 transient-resistant). Crisp
+    /// *deep* zoom still wants per-viewport re-downsampling — page-mode (ADR 0010).
+    static let defaultBuckets = 512
 
     /// Decode `url` to mono PCM and reduce it to a stored waveform. Reads in
     /// frame-bounded chunks so a long file never pulls the whole buffer into memory
