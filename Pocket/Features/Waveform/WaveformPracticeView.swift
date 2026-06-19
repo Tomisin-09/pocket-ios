@@ -77,6 +77,16 @@ struct WaveformPracticeView: View {
                                  onMoveHandleEnded: model.previewCapture,
                                  viewport: model.viewport,
                                  onSetZoomSpan: model.setZoomSpan)
+                        // Fit / 1× reset — only while zoomed; sits above the
+                        //    waveform's gestures so its tap wins (ADR 0010).
+                        .overlay(alignment: .topTrailing) {
+                            if model.isZoomed {
+                                ZoomResetButton(action: model.resetZoom)
+                                    .padding(8)
+                                    .transition(.opacity)
+                            }
+                        }
+                        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isZoomed)
                     TimeRuler(start: model.viewport.start * model.duration,      // 6
                               end: model.viewport.end * model.duration)
                     Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
@@ -163,6 +173,9 @@ struct WaveformPracticeView: View {
                            onTurnOff: { model.turnOffAutomator(for: loop) })
         }
         .task { await model.loadAudio() }
+        // Page-mode (ADR 0010): as the playhead advances, hold the window still until
+        // it sweeps to ~90%, then page forward. Only re-anchors at page edges.
+        .onChange(of: model.playheadFraction) { _, _ in model.advancePageIfNeeded() }
         .onChange(of: model.speed) { _, newValue in model.engine.setRate(newValue) }
         .onChange(of: model.mode) { _, newMode in model.modeChanged(to: newMode) }
         // Per-loop automator: step the speed as the active loop wraps, and snap to the

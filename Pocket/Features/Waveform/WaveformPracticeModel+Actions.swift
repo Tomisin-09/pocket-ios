@@ -5,9 +5,30 @@ import SwiftUI
 
 extension WaveformPracticeModel {
 
-    /// Pinch-to-zoom: set how much of the song the waveform shows (clamped).
+    /// Pinch-to-zoom: set how much of the song the waveform shows (clamped), then
+    /// re-anchor the window so the playhead stays on screen at the new span.
     func setZoomSpan(_ span: Double) {
         zoomSpan = WaveformGesture.clampSpan(span)
+        advancePageIfNeeded()
+    }
+
+    /// Page-mode (ADR 0010): hold the window still until the playhead sweeps to ~90%
+    /// of it, then page so the playhead reappears near the left; also pages back if
+    /// the playhead is seeked before the window. Driven by the playhead advancing
+    /// (the view's `onChange`). Cheap: `viewportStart` only changes at page edges, so
+    /// the envelope is redrawn on a flip, not every engine tick.
+    func advancePageIfNeeded() {
+        let newStart = WaveformGesture.pagedStart(
+            currentStart: viewportStart, span: zoomSpan, playhead: playheadFraction)
+        if abs(newStart - viewportStart) > 1e-9 { viewportStart = newStart }
+    }
+
+    /// Fit / 1× — reset the zoom to the whole song (the explicit reset affordance;
+    /// double-tap is reserved for seek, ADR 0010).
+    func resetZoom() {
+        zoomSpan = 1
+        viewportStart = 0
+        haptic(.light)
     }
 
     /// Scroll-mode tap and Tap-mode scrub: move the playhead to a song fraction.

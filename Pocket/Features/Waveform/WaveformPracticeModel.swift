@@ -22,8 +22,14 @@ final class WaveformPracticeModel {
     var markersExpanded = false
 
     /// Pinch-to-zoom: the fraction of the song the detail waveform shows (`1` =
-    /// whole song). The visible window tracks the playhead — see `viewport`.
+    /// whole song). Paired with `viewportStart` to form the `viewport` window.
     var zoomSpan: Double = 1
+
+    /// Page-mode (ADR 0010): the **anchored** left edge of the visible window (a song
+    /// fraction). Owned state — not derived from the playhead — so the window holds
+    /// still while the playhead sweeps across it, then pages forward (see
+    /// `advancePageIfNeeded`). `0` with `zoomSpan == 1` is the whole song.
+    var viewportStart: Double = 0
 
     // Audio engine + the waveform amplitudes it's showing.
     let engine = PracticeAudioEngine()
@@ -137,11 +143,18 @@ final class WaveformPracticeModel {
         engine.duration > 0 ? engine.duration : song.duration
     }
 
-    /// The visible window of the song (song fractions), centred on the playhead at
-    /// the current `zoomSpan`. Drives both the waveform render and the minimap box.
+    /// The visible window of the song (song fractions): the owned `viewportStart`
+    /// plus `zoomSpan`, clamped inside `0...1`. Drives both the waveform render and
+    /// the minimap box. Paged (not playhead-centred) — see `advancePageIfNeeded`.
     var viewport: (start: Double, end: Double) {
-        WaveformGesture.viewport(center: playheadFraction, span: zoomSpan)
+        let span = zoomSpan.clamped(to: 0...1)
+        let start = viewportStart.clamped(to: 0...max(0, 1 - span))
+        return (start, start + span)
     }
+
+    /// True when zoomed in (showing less than the whole song) — drives the Fit/1×
+    /// reset affordance.
+    var isZoomed: Bool { zoomSpan < 0.999 }
 
     /// The Fine-mode selection to render (blue handles), if one is being defined.
     var fineSelection: (start: Double, end: Double)? {

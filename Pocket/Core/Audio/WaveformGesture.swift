@@ -25,14 +25,28 @@ enum WaveformGesture {
         span.clamped(to: minZoomSpan...1)
     }
 
-    /// The visible window `(start, end)` when `span` of the song is shown centred on
-    /// `center` (a song fraction). Clamped inside `0...1` while keeping the width
-    /// equal to `span`, so panning past either end stops cleanly.
-    static func viewport(center: Double, span: Double) -> (start: Double, end: Double) {
-        let width = span.clamped(to: 0...1)
-        var start = (center - width / 2).clamped(to: 0...(1 - width))
-        if width >= 1 { start = 0 }
-        return (start, start + width)
+    /// **Page-mode** anchoring (ADR 0010): the visible window of width `span` holds
+    /// still at `currentStart` while the playhead sweeps across it, then **pages** so
+    /// the playhead stays visible. Returns the window start (a song fraction).
+    ///
+    /// - The window holds still while the playhead sits within `[start, start +
+    ///   advanceThreshold·span]` (the comfortable zone, default to ~90% across).
+    /// - When the playhead crosses that point — or is seeked outside the window
+    ///   entirely (forward *or* back) — the window re-anchors so the playhead lands
+    ///   `leadIn·span` in from the left edge, giving a little context behind it.
+    /// - Always clamped to `0...(1 - span)`, so paging stops cleanly at the song ends.
+    ///
+    /// This supersedes the playhead-*centred* `viewport(center:span:)`: there the
+    /// window slid under a pinned playhead every frame; here it only moves at page
+    /// boundaries, so the playhead visibly travels and the envelope stays put.
+    static func pagedStart(currentStart: Double, span: Double, playhead: Double,
+                           advanceThreshold: Double = 0.9, leadIn: Double = 0.1) -> Double {
+        let maxStart = Swift.max(0, 1 - span)
+        let start = currentStart.clamped(to: 0...maxStart)
+        guard span > 0 else { return start }
+        let comfortable = playhead >= start && playhead <= start + advanceThreshold * span
+        if comfortable { return start }
+        return (playhead - leadIn * span).clamped(to: 0...maxStart)
     }
 
     /// Map a `0...1` position on the *visible* waveform to a song fraction within
