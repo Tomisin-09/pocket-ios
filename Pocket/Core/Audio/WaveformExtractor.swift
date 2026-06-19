@@ -46,4 +46,46 @@ enum WaveformExtractor {
         }
         return (duration, AudioMath.downsample(mono, to: buckets))
     }
+
+    /// Re-reduce just the `[startFraction, endFraction]` slice of `url` to `buckets`
+    /// bars, for crisp deep-zoom (ADR 0020). At a deep zoom the stored whole-song
+    /// envelope has only a handful of bars in the visible window; reading that
+    /// window from the source and reducing it afresh restores full detail where the
+    /// user is working. Returns `nil` for a degenerate (zero-frame) window so the
+    /// caller can fall back to the stretched stored bars.
+    ///
+    /// Mirrors `extract`'s chunked read so a wide window on a long file never pulls
+    /// the whole range into memory at once. The reduction is the same pure
+    /// `AudioMath.downsample`; only the seek + bounded read are added here.
+    static func extractWindow(from url: URL, startFraction: Double, endFraction: Double,
+                              buckets: Int = defaultBuckets) throws -> [Double]? {
+        let file = try AVAudioFile(forReading: url)
+        let format = file.processingFormat
+        let totalFrames = Int(file.length)
+        let range = AudioMath.windowFrameRange(startFraction: startFraction,
+                                               endFraction: endFraction, totalFrames: totalFrames)
+        guard range.frameCount > 0 else { return nil }
+
+        file.framePosition = AVAudioFramePosition(range.startFrame)
+        let channelCount = Int(format.channelCount)
+        var mono = [Float]()
+        mono.reserveCapacity(range.frameCount)
+
+        let chunkCapacity: AVAudioFrameCount = 1 << 20  // ~1M frames per read
+        var remaining = range.frameCount
+        while remaining > 0 {
+            let want = AVAudioFrameCount(min(Int(chunkCapacity), remaining))
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: want) else { break }
+            try file.read(into: buffer, frameCount: want)
+            let frames = Int(buffer.frameLength)
+            guard frames > 0, let channelData = buffer.floatChannelData else { break }
+            let channels = (0..<channelCount).map { channel in
+                Array(UnsafeBufferPointer(start: channelData[channel], count: frames))
+            }
+            mono.append(contentsOf: AudioMath.mixToMono(channels))
+            remaining -= frames
+        }
+        guard !mono.isEmpty else { return nil }
+        return AudioMath.downsample(mono, to: buckets)
+    }
 }

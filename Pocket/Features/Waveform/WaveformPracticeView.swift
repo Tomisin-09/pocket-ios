@@ -62,6 +62,7 @@ struct WaveformPracticeView: View {
                     }
                     .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)
                     WaveformView(amplitudes: model.amplitudes,                   // 5
+                                 detailBars: model.detailBars,
                                  playheadFraction: model.playheadFraction,
                                  loop: model.activeLoop,
                                  loops: model.loops,
@@ -178,6 +179,10 @@ struct WaveformPracticeView: View {
         // Page-mode (ADR 0010): as the playhead advances, hold the window still until
         // it sweeps to ~90%, then page forward. Only re-anchors at page edges.
         .onChange(of: model.playheadFraction) { _, _ in model.advancePageIfNeeded() }
+        // Crisp deep-zoom (ADR 0020): re-downsample the visible window when the
+        // viewport changes. `viewport` is derived purely from these two, both Equatable.
+        .onChange(of: model.zoomSpan) { _, _ in model.scheduleDetailRefresh() }
+        .onChange(of: model.viewportStart) { _, _ in model.scheduleDetailRefresh() }
         .onChange(of: model.speed) { _, newValue in model.engine.setRate(newValue) }
         .onChange(of: model.mode) { _, newMode in model.modeChanged(to: newMode) }
         // Per-loop automator: step the speed as the active loop wraps, and snap to the

@@ -20,8 +20,20 @@ import UIKit
 /// action bar (they act at the playhead). All gesture math (point → fraction, zoom
 /// viewport, handle hit-testing) lives in the pure, unit-tested `WaveformGesture`;
 /// the view emits *song fractions* (0…1) so the parent never deals in points.
+/// Crisp deep-zoom (ADR 0020): a re-downsample of just the visible window plus the
+/// song range `[start, end]` it covers. When the waveform has one, it's drawn instead
+/// of stretching the stored whole-song envelope, so a deep zoom resolves real detail.
+struct WaveformDetailBars: Equatable {
+    let bars: [Double]
+    let start: Double
+    let end: Double
+}
+
 struct WaveformView: View {
     let amplitudes: [Double]
+    /// The crisp windowed bars to draw, or `nil` to fall back to the stored whole-song
+    /// envelope (`amplitudes`, covering `[0, 1]`).
+    let detailBars: WaveformDetailBars?
     let playheadFraction: Double
     let loop: Loop?
     /// Every saved loop on the song — drawn as lane-stacked brackets along the
@@ -89,12 +101,10 @@ struct WaveformView: View {
     // MARK: Drawing
 
     private func draw(in context: GraphicsContext, size: CGSize) {
-        guard !amplitudes.isEmpty else { return }
-        let count = amplitudes.count
-        let span = max(0.0001, viewport.end - viewport.start)
-        let barSpacing: CGFloat = 1
-        let pitch = size.width / (CGFloat(count) * CGFloat(span))   // on-screen distance between bars
-        let barWidth = max(1, pitch - barSpacing)
+        // Crisp windowed bars when available, else the stretched whole-song envelope
+        // (ADR 0020). The set carries the song range its bars describe.
+        let barSet = detailBars ?? WaveformDetailBars(bars: amplitudes, start: 0, end: 1)
+        guard !barSet.bars.isEmpty else { return }
         let midY = size.height / 2
         // Song fraction → on-screen x (through the zoom viewport).
         func atX(_ songFraction: Double) -> CGFloat { CGFloat(screenX(songFraction)) * size.width }
@@ -137,7 +147,7 @@ struct WaveformView: View {
             }
         }
 
-        drawBars(in: context, size: size, barWidth: barWidth, midY: midY, playheadX: playheadX)
+        drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX)
 
         // Saved-loop brackets (bottom, lane-stacked) and marker pins (top). Drawn
         // over the bars so the whole loop/marker library reads against the timeline.
@@ -151,12 +161,24 @@ struct WaveformView: View {
         context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.8)), lineWidth: 1.5)
     }
 
-    /// Mirrored bars for the visible slice of the song, stretched to fill the width.
+    /// Mirrored bars for the visible slice of the song. `barSet` either covers the
+    /// whole song (`[0, 1]`, stretched through the viewport) or just the zoomed window
+    /// (crisp re-downsample, ADR 0020); each bar is placed at its centre within the
+    /// range it covers, then mapped through the viewport.
     private func drawBars(in context: GraphicsContext, size: CGSize,
-                          barWidth: CGFloat, midY: CGFloat, playheadX: CGFloat) {
-        let count = amplitudes.count
-        for (index, amp) in amplitudes.enumerated() {
-            let barX = CGFloat(screenX(Double(index) / Double(count))) * size.width
+                          barSet: WaveformDetailBars, playheadX: CGFloat) {
+        let count = barSet.bars.count
+        guard count > 0 else { return }
+        let midY = size.height / 2
+        let span = max(0.0001, viewport.end - viewport.start)
+        // On-screen distance between bars: each covers (covered span)/count of the
+        // song, and the viewport's span maps to the full width.
+        let pitch = size.width * CGFloat(barSet.end - barSet.start) / (CGFloat(count) * CGFloat(span))
+        let barWidth = max(1, pitch - 1)   // 1px inter-bar spacing
+        for (index, amp) in barSet.bars.enumerated() {
+            let songFraction = WaveformGesture.barCentreFraction(
+                index: index, count: count, coveredStart: barSet.start, coveredEnd: barSet.end)
+            let barX = CGFloat(screenX(songFraction)) * size.width
             guard barX > -barWidth, barX < size.width else { continue }   // off-screen
             let color = barX <= playheadX ? PocketColor.barPlayed : PocketColor.barDefault
             let topHeight = CGFloat(amp) * midY

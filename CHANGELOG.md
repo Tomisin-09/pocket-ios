@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Deep zoom now shows real detail, not stretched blocks** — when you pinch in close,
+  the waveform **re-reads that slice of the song from the file** and draws it at full
+  resolution, so individual note onsets and transients resolve where you're working
+  (it used to just stretch the whole-song envelope, so a deep zoom looked chunky). The
+  refresh is debounced and cached, and falls back to the stored envelope while it
+  computes. ADR 0020.
 - **Zoomed waveform now reads like GarageBand** — when you pinch to zoom in, the
   window **holds still** and the **playhead sweeps across it**, paging forward when it
   reaches the edge (it used to pin the playhead to the centre and slide the whole

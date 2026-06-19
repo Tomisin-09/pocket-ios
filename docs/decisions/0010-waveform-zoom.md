@@ -68,9 +68,9 @@ re-shifting the envelope on every engine tick stuttered.
 
 ## Out of scope (follow-ups)
 
-- **Bar fidelity.** V1 stretches the existing fixed downsampled bars, so a deep zoom
-  looks chunky. Crisper zoom = re-downsample the visible range from the source buffer
-  when the viewport changes. (Pairs naturally with this branch.)
+- **Bar fidelity.** ~~V1 stretches the existing fixed downsampled bars, so a deep zoom
+  looks chunky.~~ **Resolved in ADR 0020** — the visible window is re-downsampled from
+  the source file when the viewport changes.
 - Free pan / two-finger scroll.
 
 ## Alternatives considered

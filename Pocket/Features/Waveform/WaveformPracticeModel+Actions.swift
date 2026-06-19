@@ -31,6 +31,61 @@ extension WaveformPracticeModel {
         haptic(.light)
     }
 
+    // MARK: Crisp deep-zoom (ADR 0020)
+
+    private static let detailSettle: Duration = .milliseconds(120)
+    private static let detailCacheLimit = 24
+
+    /// Re-downsample the visible window from the source file at full detail, so a deep
+    /// zoom resolves real transients instead of stretched whole-song bars (ADR 0020).
+    /// Driven by the view's `onChange` on the viewport (`zoomSpan` / `viewportStart`).
+    /// Debounced so a continuous pinch or a burst of page flips coalesces into one
+    /// read; cached by window so paging back reuses a prior read. Falls back to the
+    /// stored `amplitudes` when zoomed out, when there's no source URL, or on failure.
+    func scheduleDetailRefresh() {
+        detailRefreshTask?.cancel()
+        guard isZoomed, let url = sourceURL else {
+            detailBars = nil
+            return
+        }
+        let window = viewport
+        let key = Self.windowKey(window)
+        if let cached = detailCache[key] {
+            detailBars = WaveformDetailBars(bars: cached, start: window.start, end: window.end)
+            return
+        }
+        detailRefreshTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.detailSettle)   // settle: coalesce a pinch / flip burst
+            guard !Task.isCancelled else { return }
+            let extracted = try? await Task.detached(priority: .userInitiated) {
+                try WaveformExtractor.extractWindow(from: url,
+                                                    startFraction: window.start, endFraction: window.end)
+            }.value
+            guard !Task.isCancelled, let self, let bars = extracted ?? nil else { return }
+            cacheDetail(bars, key: key)
+            // Only paint it if the viewport hasn't moved on since this read started.
+            if Self.windowKey(viewport) == key {
+                detailBars = WaveformDetailBars(bars: bars, start: window.start, end: window.end)
+            }
+        }
+    }
+
+    /// Quantise a window to ~0.1% so near-identical viewports share a cache entry.
+    private static func windowKey(_ window: (start: Double, end: Double)) -> String {
+        let start = (window.start * 1000).rounded() / 1000
+        let span = ((window.end - window.start) * 1000).rounded() / 1000
+        return "\(start)|\(span)"
+    }
+
+    /// Insert into the windowed-read cache, evicting the oldest beyond the cap.
+    private func cacheDetail(_ bars: [Double], key: String) {
+        if detailCache[key] == nil { detailCacheOrder.append(key) }
+        detailCache[key] = bars
+        while detailCacheOrder.count > Self.detailCacheLimit {
+            detailCache.removeValue(forKey: detailCacheOrder.removeFirst())
+        }
+    }
+
     /// Scroll-mode tap and Tap-mode scrub: move the playhead to a song fraction.
     func seekToFraction(_ fraction: Double) {
         engine.seek(toSeconds: fraction * duration)
