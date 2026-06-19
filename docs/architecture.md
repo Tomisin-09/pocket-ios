@@ -47,6 +47,11 @@ both gapless and free of the splice click; the visual playhead wraps via pure
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).
+The reduction is **transient-resistant energy, percentile-normalised** (512 bars) —
+each bar is the median of several short RMS sub-windows, so the envelope tracks the
+sustained music and steps over rhythmic spikes (a snare) rather than flat-topping on
+loud masters; the bucket count doubles as a stored-format version that re-extracts
+pre-ADR-0017 waveforms on open.
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body

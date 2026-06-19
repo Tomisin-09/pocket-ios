@@ -52,7 +52,7 @@ Run these before every commit that touches app code. Do not push until all pass.
 
 # Conventions
 
-- **Branches:** `ore-0XX-short-title` (zero-padded, incrementing). Create the
+- **Branches:** `pocket-0XX-short-title` (zero-padded, incrementing). Create the
   branch before editing; don't work on `main`.
 - **Permissions:** never add an `Info.plist` usage string or entitlement the app
   doesn't actually exercise — over-broad permissions cause rejection.

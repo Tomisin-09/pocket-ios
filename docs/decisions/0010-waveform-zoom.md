@@ -58,3 +58,27 @@ paths — and the navigation question: once zoomed, how do you move around?
 - **Zoom centred on the pinch midpoint** — rejected: centring on the playhead ties
   cleanly to the follow-the-playhead model and keeps the bubble/playhead stable.
 - **`MagnificationGesture`** — rejected: deprecated on iOS 17; use `MagnifyGesture`.
+
+## Update (2026-06-19) — moving to page-mode (decided, not yet built)
+
+On-device the follow-the-playhead model reads poorly: because the viewport is
+recomputed every frame as `viewport(center: playheadFraction, span:)`, the
+playhead is pinned to screen-centre and the **whole waveform slides underneath
+it** — so the playhead never appears to move, and the envelope is re-shifted on
+every engine tick, which stutters.
+
+**Decision: switch to GarageBand-style page-mode.** The window stays put, the
+**playhead sweeps left→right across it**, and when it reaches ~90% the view
+**pages forward by one window**. Consequences: the playhead visibly moves (and
+moves *faster* the deeper the zoom — same screen width spans fewer song-seconds);
+rendering is smoother and cheaper (a static envelope, only the 1px playhead line
+animates); and a **Fit / 1× reset** affordance is added (double-tap is reserved
+for seek, so reset is an explicit control). The minimap remains the whole-song
+reference + live viewport box, so "where am I overall" is answered there.
+
+This supersedes the playhead-centred viewport above. It requires `viewport` to
+become **owned state** (anchored start + paging) rather than a function of
+`playheadFraction`. Build lands on its own `pocket-0XX-` branch; this ADR's
+body will be rewritten to "Accepted — page-mode" when it ships. See the P1
+waveform-UX roadmap. Crisp deep-zoom (re-downsampling the visible range, the
+"Bar fidelity" follow-up above) pairs naturally with this branch.

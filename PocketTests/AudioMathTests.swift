@@ -8,21 +8,104 @@ final class AudioMathTests: XCTestCase {
         XCTAssertEqual(AudioMath.downsample(samples, to: 120).count, 120)
     }
 
-    func testDownsampleTakesPeakPerBinAndNormalises() {
-        // Two bins: first peaks at 1.0, second peaks at 0.5 → normalised to [1, 0.5].
-        let samples: [Float] = [0, 0.5, 1, 0.5, 0, 0.25, 0.5, 0.25]
-        XCTAssertEqual(AudioMath.downsample(samples, to: 2), [1.0, 0.5])
+    func testDownsampleNormalisesToPercentileReference() {
+        // subFrames:1 isolates the normalisation: bar energies 1.0 and 0.5; the
+        // 95th-percentile reference (0.975) maps the loud bar to ≥1 (clamped) and the
+        // quiet bar proportionally below it.
+        let samples: [Float] = [1, 1, 1, 1, 0.5, 0.5, 0.5, 0.5]
+        let result = AudioMath.downsample(samples, to: 2, subFrames: 1)
+        XCTAssertEqual(result[0], 1.0, accuracy: 1e-9)        // clamped at the top
+        XCTAssertEqual(result[1], 0.5 / 0.975, accuracy: 1e-6)
     }
 
-    func testDownsampleUsesAbsoluteValue() {
-        let samples: [Float] = [-1, -0.5, 0.25, 0.5]
-        let result = AudioMath.downsample(samples, to: 2)
-        XCTAssertEqual(result[0], 1.0)      // |-1| is the peak, normalises to 1
-        XCTAssertEqual(result[1], 0.5)      // |0.5| / 1.0
+    func testDownsampleIsSignAgnostic() {
+        // RMS squares the samples, so negative phase contributes the same energy.
+        let samples: [Float] = [-1, -1, 0.5, 0.5]
+        let result = AudioMath.downsample(samples, to: 2, subFrames: 1)
+        XCTAssertEqual(result[0], 1.0, accuracy: 1e-9)
+        XCTAssertEqual(result[1], 0.5 / 0.975, accuracy: 1e-6)
+    }
+
+    func testDownsampleKeepsProportionsAcrossBuckets() {
+        // Four constant bars 0.2/0.4/0.8/1.0 → 95th-pct reference 0.97; the loudest
+        // clamps to 1 and the rest stay proportional (the quiet/loud contrast survives).
+        let samples: [Float] = [0.2, 0.2, 0.2, 0.2, 0.4, 0.4, 0.4, 0.4,
+                                0.8, 0.8, 0.8, 0.8, 1.0, 1.0, 1.0, 1.0]
+        let result = AudioMath.downsample(samples, to: 4, subFrames: 1)
+        XCTAssertEqual(result[0], 0.2 / 0.97, accuracy: 1e-6)
+        XCTAssertEqual(result[1], 0.4 / 0.97, accuracy: 1e-6)
+        XCTAssertEqual(result[2], 0.8 / 0.97, accuracy: 1e-6)
+        XCTAssertEqual(result[3], 1.0, accuracy: 1e-9)
     }
 
     func testDownsampleEmptyInput() {
         XCTAssertTrue(AudioMath.downsample([], to: 10).isEmpty)
+    }
+
+    // MARK: sectionEnergy (transient rejection)
+
+    func testSectionEnergyMedianStepsOverTransient() {
+        // One bar, 4 sub-windows: three quiet (0.2) + one loud (1.0), as if a snare
+        // hit one sub-window. The median (reject 0.5) reads the sustained 0.2 level.
+        let samples: [Float] = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 1.0]
+        let result = AudioMath.sectionEnergy(samples, to: 1, subFrames: 4, reject: 0.5)
+        XCTAssertEqual(result[0], 0.2, accuracy: 1e-6)   // Float 0.2 ≈ 0.20000000298
+    }
+
+    func testSectionEnergyPeakRejectIncludesTransient() {
+        // reject 1.0 takes the loudest sub-window, so the transient leads the bar —
+        // the very behaviour the median avoids.
+        let samples: [Float] = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 1.0]
+        let result = AudioMath.sectionEnergy(samples, to: 1, subFrames: 4, reject: 1.0)
+        XCTAssertEqual(result[0], 1.0, accuracy: 1e-9)
+    }
+
+    func testSectionEnergyEmptyInput() {
+        XCTAssertTrue(AudioMath.sectionEnergy([], to: 4).isEmpty)
+    }
+
+    // MARK: bucketRMS
+
+    func testBucketRMSComputesRootMeanSquarePerBucket() {
+        let samples: [Float] = [1, 1, 1, 1, 0.5, 0.5, 0.5, 0.5]
+        XCTAssertEqual(AudioMath.bucketRMS(samples, to: 2), [1.0, 0.5])
+    }
+
+    func testBucketRMSMixedBucketEnergy() {
+        // sqrt((0² + 1²)/2) = sqrt(0.5) ≈ 0.7071 for a bucket that's half-silent.
+        let samples: [Float] = [0, 1, 0, 1]
+        let result = AudioMath.bucketRMS(samples, to: 1)
+        XCTAssertEqual(result[0], (0.5).squareRoot(), accuracy: 1e-9)
+    }
+
+    func testBucketRMSEmptyInput() {
+        XCTAssertTrue(AudioMath.bucketRMS([], to: 4).isEmpty)
+    }
+
+    // MARK: percentile
+
+    func testPercentileInterpolatesBetweenRanks() {
+        XCTAssertEqual(AudioMath.percentile([0.5, 1.0], 0.95), 0.975, accuracy: 1e-9)
+    }
+
+    func testPercentileExactRankNoInterpolation() {
+        XCTAssertEqual(AudioMath.percentile([0, 1, 2, 3, 4], 0.5), 2.0, accuracy: 1e-9)
+    }
+
+    func testPercentileIgnoresOrderOfInput() {
+        XCTAssertEqual(AudioMath.percentile([3, 0, 4, 1, 2], 0.5), 2.0, accuracy: 1e-9)
+    }
+
+    func testPercentileClampsQAboveOne() {
+        XCTAssertEqual(AudioMath.percentile([1, 2, 3], 2.0), 3.0, accuracy: 1e-9)
+    }
+
+    func testPercentileSingleValue() {
+        XCTAssertEqual(AudioMath.percentile([10], 0.9), 10.0, accuracy: 1e-9)
+    }
+
+    func testPercentileEmptyInput() {
+        XCTAssertEqual(AudioMath.percentile([], 0.5), 0)
     }
 
     // MARK: mixToMono

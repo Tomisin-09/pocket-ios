@@ -1,6 +1,6 @@
 # SwiftLint configuration. Run `swiftlint` before every push (see AGENTS.md).
 disabled_rules:
-  - todo # TODOs are tracked as ore-0XX tickets, not flagged by the linter
+  - todo # TODOs are tracked as pocket-0XX tickets, not flagged by the linter
 
 opt_in_rules:
   - empty_count

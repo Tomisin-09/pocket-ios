@@ -4,26 +4,92 @@ import Foundation
 /// AGENTS.md: pure logic stays free of AVFoundation imports).
 enum AudioMath {
 
-    /// Reduce raw samples to `bars` normalised peak values (0...1) for drawing a
-    /// waveform. Always returns exactly `bars` values (when input is non-empty).
-    static func downsample(_ samples: [Float], to bars: Int) -> [Double] {
+    /// Sub-windows each display bar is split into before reducing it (ADR 0017). A
+    /// snare/transient occupies only a few of these, so a percentile across them can
+    /// step over it.
+    static let transientSubFrames = 16
+    /// Percentile taken across a bar's sub-windows to set its level. 0.5 (median)
+    /// reads the *sustained* energy and steps over brief loud hits like a snare;
+    /// lower rejects transients harder, 1.0 is the bar's peak (fully transient-led).
+    static let transientReject = 0.5
+
+    /// Reduce raw samples to `bars` normalised values (0...1) for drawing a waveform.
+    /// Always returns exactly `bars` values (when input is non-empty).
+    ///
+    /// The envelope is **energy-based and transient-resistant** (ADR 0017). Peak
+    /// per bar reads flat on brick-walled masters; a straight RMS reads better but
+    /// *squares* loud brief events, so a rhythmic snare towers over the musical bed
+    /// and the shape looks spiky/murky. Instead each bar is split into `subFrames`
+    /// short sub-windows and reduced to the `reject`-percentile (median) of their
+    /// RMS — the snare lands in only a few sub-windows, so the median reads the level
+    /// the rest of the bar sits at. See `sectionEnergy`.
+    ///
+    /// Normalisation divides by the 95th percentile of the bar energies, not the
+    /// single max, so one loud bar can't crush the rest; bars above it clamp to 1.
+    static func downsample(_ samples: [Float], to bars: Int,
+                           subFrames: Int = transientSubFrames,
+                           reject: Double = transientReject) -> [Double] {
+        guard bars > 0, !samples.isEmpty else { return [] }
+        let energies = sectionEnergy(samples, to: bars, subFrames: subFrames, reject: reject)
+        let reference = percentile(energies, 0.95)
+        guard reference > 0 else { return energies }
+        return energies.map { min(1, $0 / reference) }
+    }
+
+    /// Transient-resistant energy per display bar (un-normalised). Each bar is split
+    /// into `subFrames` short sub-windows; the bar's value is the `reject`-percentile
+    /// of those sub-windows' RMS. A snare hit lands in only a few sub-windows, so a
+    /// median (`reject` = 0.5) reads the sustained level and steps over the hit —
+    /// unlike a straight RMS over the whole bar, which squares the transient and lets
+    /// it dominate. Composed from the tested `bucketRMS` + `percentile`.
+    static func sectionEnergy(_ samples: [Float], to bars: Int,
+                              subFrames: Int = transientSubFrames,
+                              reject: Double = transientReject) -> [Double] {
+        guard bars > 0, subFrames > 0, !samples.isEmpty else { return [] }
+        let frames = bucketRMS(samples, to: bars * subFrames)
+        return (0..<bars).map { bar in
+            let lower = bar * subFrames
+            let upper = lower + subFrames
+            return percentile(Array(frames[lower..<upper]), reject)
+        }
+    }
+
+    /// Per-bucket RMS energy (un-normalised) — `samples` split into `bars` even
+    /// buckets, each reduced to `sqrt(mean(sample²))`. Pulled out of `downsample`
+    /// so the energy reduction and the normalisation can be tested in isolation.
+    static func bucketRMS(_ samples: [Float], to bars: Int) -> [Double] {
         guard bars > 0, !samples.isEmpty else { return [] }
         let count = samples.count
-        var peaks = [Double](repeating: 0, count: bars)
+        var energies = [Double](repeating: 0, count: bars)
         for bar in 0..<bars {
             let start = bar * count / bars
             let end = max(start + 1, (bar + 1) * count / bars)
-            var peak: Float = 0
+            var sumSquares = 0.0
+            var sampleCount = 0
             var index = start
             while index < end && index < count {
-                peak = max(peak, abs(samples[index]))
+                let value = Double(samples[index])
+                sumSquares += value * value
                 index += 1
+                sampleCount += 1
             }
-            peaks[bar] = Double(peak)
+            energies[bar] = sampleCount > 0 ? (sumSquares / Double(sampleCount)).squareRoot() : 0
         }
-        let maxPeak = peaks.max() ?? 0
-        guard maxPeak > 0 else { return peaks }
-        return peaks.map { $0 / maxPeak }
+        return energies
+    }
+
+    /// Linearly-interpolated `quantile`-percentile (in 0...1) of `values`. Used to
+    /// pick a robust normalisation reference that ignores a few loud outliers. Empty
+    /// input returns 0; `quantile` is clamped to `0...1`.
+    static func percentile(_ values: [Double], _ quantile: Double) -> Double {
+        guard !values.isEmpty else { return 0 }
+        let sorted = values.sorted()
+        let rank = Double(sorted.count - 1) * quantile.clamped(to: 0...1)
+        let low = Int(rank.rounded(.down))
+        let high = Int(rank.rounded(.up))
+        guard low != high else { return sorted[low] }
+        let frac = rank - Double(low)
+        return sorted[low] * (1 - frac) + sorted[high] * frac
     }
 
     /// Average parallel channel sample arrays into a single mono signal — so a

@@ -184,7 +184,23 @@ final class WaveformPracticeModel {
         guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
               let access = SecurityScopedAccess(url) else { return }
         fileAccess = access
+        await refreshWaveformIfOutdated(url: url)
         try? await engine.load(url: url)
+    }
+
+    /// Re-extract the stored waveform when it predates the current reduction (ADR
+    /// 0017). A bucket count other than `WaveformExtractor.defaultBuckets` means the
+    /// song was imported under the old peak-based envelope, so we re-reduce from the
+    /// file and persist — self-healing without a separate schema-version field. The
+    /// decode runs off the main actor; a failure leaves the old waveform in place.
+    private func refreshWaveformIfOutdated(url: URL) async {
+        guard song.amplitudes.count != WaveformExtractor.defaultBuckets else { return }
+        guard let extracted = try? await Task.detached(priority: .utility, operation: {
+            try WaveformExtractor.extract(from: url)
+        }).value else { return }
+        song.amplitudes = extracted.amplitudes
+        amplitudes = extracted.amplitudes
+        try? context.save()
     }
 
     /// Generate the dev arpeggio off the main actor and hand it to the engine (the
