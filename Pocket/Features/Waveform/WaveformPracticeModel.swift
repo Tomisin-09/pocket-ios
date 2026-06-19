@@ -35,6 +35,22 @@ final class WaveformPracticeModel {
     let engine = PracticeAudioEngine()
     var amplitudes: [Double]
 
+    /// Crisp deep-zoom (ADR 0020): a re-downsample of just the visible window, read
+    /// from the source file at full detail, with the song range it covers. `nil` when
+    /// zoomed out (the stored `amplitudes` already cover the whole song) or while a
+    /// read is in flight — the view falls back to stretching `amplitudes`.
+    var detailBars: WaveformDetailBars?
+
+    /// The resolved source file (imported file or demo sample) crisp deep-zoom reads
+    /// windowed slices from. Held for the model's lifetime alongside `fileAccess`.
+    private(set) var sourceURL: URL?
+
+    /// Debounced windowed-read task and a small insertion-ordered window cache so
+    /// paging back and forth reuses prior reads instead of hitting the file again.
+    @ObservationIgnored var detailRefreshTask: Task<Void, Never>?
+    @ObservationIgnored var detailCache: [String: [Double]] = [:]
+    @ObservationIgnored var detailCacheOrder: [String] = []
+
     /// True while the song's audio is being opened/prepared, so the view can show a
     /// loading overlay instead of an apparently-frozen surface (the file open and the
     /// demo-sample render both run off the main actor).
@@ -203,6 +219,7 @@ final class WaveformPracticeModel {
         guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
               let access = SecurityScopedAccess(url) else { return }
         fileAccess = access
+        sourceURL = url
         await refreshWaveformIfOutdated(url: url)
         try? await engine.load(url: url)
     }
@@ -227,6 +244,7 @@ final class WaveformPracticeModel {
     private func loadDemoSample() async {
         guard let sample = try? await Self.makeDemoSample(duration: song.duration) else { return }
         amplitudes = sample.amplitudes
+        sourceURL = sample.url
         try? await engine.load(url: sample.url)
     }
 

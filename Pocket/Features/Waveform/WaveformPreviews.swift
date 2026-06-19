@@ -59,6 +59,7 @@ import SwiftUI
     return ZStack {
         PocketColor.background.ignoresSafeArea()
         WaveformView(amplitudes: Song.sample().amplitudes,
+                     detailBars: nil,
                      playheadFraction: 0.35,
                      loop: loops.first,
                      loops: loops,
@@ -76,6 +77,7 @@ import SwiftUI
     ZStack {
         PocketColor.background.ignoresSafeArea()
         WaveformView(amplitudes: Song.sample().amplitudes,
+                     detailBars: nil,
                      playheadFraction: 0.35,
                      loop: nil,
                      loops: Song.sample().loops,
@@ -95,6 +97,9 @@ import SwiftUI
     ZStack {
         PocketColor.background.ignoresSafeArea()
         WaveformView(amplitudes: Song.sample().amplitudes,
+                     // Crisp re-downsample covering just the zoomed window (ADR 0020):
+                     // the full envelope mapped into [0.30, 0.50] reads at full density.
+                     detailBars: WaveformDetailBars(bars: Song.sample().amplitudes, start: 0.30, end: 0.50),
                      playheadFraction: 0.40,
                      loop: Song.sample().loops.first,
                      loops: Song.sample().loops,
@@ -207,6 +212,7 @@ import SwiftUI
         VStack(spacing: 16) {
             SongStrip(song: song)
             WaveformView(amplitudes: song.amplitudes,
+                         detailBars: nil,
                          playheadFraction: 0.35,
                          loop: song.loops.first,
                          loops: song.loops,

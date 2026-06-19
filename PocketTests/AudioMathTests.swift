@@ -229,4 +229,30 @@ final class AudioMathTests: XCTestCase {
         XCTAssertEqual(gains.fadeIn, 1, accuracy: 1e-6)
         XCTAssertEqual(gains.fadeOut, 0, accuracy: 1e-6)
     }
+
+    // MARK: windowFrameRange (crisp deep-zoom, ADR 0020)
+
+    func testWindowFrameRangeMapsFractionsToFrames() {
+        let range = AudioMath.windowFrameRange(startFraction: 0.25, endFraction: 0.5, totalFrames: 1000)
+        XCTAssertEqual(range.startFrame, 250)
+        XCTAssertEqual(range.frameCount, 250)
+    }
+
+    func testWindowFrameRangeClampsAndOrders() {
+        // Reversed + out-of-range fractions still produce a valid span inside the file.
+        let range = AudioMath.windowFrameRange(startFraction: 1.4, endFraction: -0.2, totalFrames: 800)
+        XCTAssertEqual(range.startFrame, 0)
+        XCTAssertEqual(range.frameCount, 800)
+    }
+
+    func testWindowFrameRangeDegenerateWindowIsEmpty() {
+        let range = AudioMath.windowFrameRange(startFraction: 0.5, endFraction: 0.5, totalFrames: 1000)
+        XCTAssertEqual(range.frameCount, 0)
+    }
+
+    func testWindowFrameRangeGuardsEmptyFile() {
+        let range = AudioMath.windowFrameRange(startFraction: 0.1, endFraction: 0.9, totalFrames: 0)
+        XCTAssertEqual(range.startFrame, 0)
+        XCTAssertEqual(range.frameCount, 0)
+    }
 }

@@ -124,6 +124,29 @@ final class WaveformGestureTests: XCTestCase {
         XCTAssertEqual(WaveformGesture.screenFraction(songFraction: 0.6, viewport: viewport), 1, accuracy: 1e-9)
     }
 
+    // MARK: Crisp deep-zoom — barCentreFraction (ADR 0020)
+
+    func testBarCentreFractionFullSongCovers0To1() {
+        // 4 bars across the whole song → centres at 1/8, 3/8, 5/8, 7/8.
+        XCTAssertEqual(WaveformGesture.barCentreFraction(index: 0, count: 4, coveredStart: 0, coveredEnd: 1),
+                       0.125, accuracy: 1e-9)
+        XCTAssertEqual(WaveformGesture.barCentreFraction(index: 3, count: 4, coveredStart: 0, coveredEnd: 1),
+                       0.875, accuracy: 1e-9)
+    }
+
+    func testBarCentreFractionWindowedRangeMapsIntoWindow() {
+        // A crisp window covering [0.4, 0.6]: bar centres land inside that span.
+        XCTAssertEqual(WaveformGesture.barCentreFraction(index: 0, count: 4, coveredStart: 0.4, coveredEnd: 0.6),
+                       0.425, accuracy: 1e-9)
+        XCTAssertEqual(WaveformGesture.barCentreFraction(index: 3, count: 4, coveredStart: 0.4, coveredEnd: 0.6),
+                       0.575, accuracy: 1e-9)
+    }
+
+    func testBarCentreFractionGuardsZeroCount() {
+        XCTAssertEqual(WaveformGesture.barCentreFraction(index: 0, count: 0, coveredStart: 0.3, coveredEnd: 0.7),
+                       0.3, accuracy: 1e-9)
+    }
+
     // MARK: Page-mode — pagedStart
 
     func testPagedStartHoldsStillWithinComfortZone() {

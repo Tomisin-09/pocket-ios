@@ -49,6 +49,17 @@ enum WaveformGesture {
         return (playhead - leadIn * span).clamped(to: 0...maxStart)
     }
 
+    /// Song fraction at the *centre* of bar `index` of a `count`-bar set that
+    /// covers the song range `[coveredStart, coveredEnd]`. Used to place each
+    /// waveform bar: the stored envelope covers `[0, 1]`; a crisp re-downsample
+    /// covers just its zoomed window (ADR 0020). Centres (the `+ 0.5`) keep the
+    /// bars symmetric within their slots. `count <= 0` returns `coveredStart`.
+    static func barCentreFraction(index: Int, count: Int,
+                                  coveredStart: Double, coveredEnd: Double) -> Double {
+        guard count > 0 else { return coveredStart }
+        return coveredStart + (Double(index) + 0.5) / Double(count) * (coveredEnd - coveredStart)
+    }
+
     /// Map a `0...1` position on the *visible* waveform to a song fraction within
     /// `viewport`. (Inverse of `screenFraction`.)
     static func songFraction(screenFraction: Double, viewport: (start: Double, end: Double)) -> Double {

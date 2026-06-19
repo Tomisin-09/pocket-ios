@@ -121,6 +121,21 @@ enum AudioMath {
         return Double(frames) / sampleRate
     }
 
+    /// Frame range covering a `0...1` slice of the file, for re-reading a zoomed
+    /// window at full detail (crisp deep-zoom, ADR 0020). `startFraction`/
+    /// `endFraction` are clamped to `0...1` and ordered; the result is always a
+    /// valid, non-negative span inside `0..<totalFrames`. A degenerate window
+    /// (zero/negative frames) returns a `frameCount` of 0 so callers can skip it.
+    static func windowFrameRange(startFraction: Double, endFraction: Double,
+                                 totalFrames: Int) -> (startFrame: Int, frameCount: Int) {
+        guard totalFrames > 0 else { return (0, 0) }
+        let lower = min(startFraction, endFraction).clamped(to: 0...1)
+        let upper = max(startFraction, endFraction).clamped(to: 0...1)
+        let startFrame = min(Int((lower * Double(totalFrames)).rounded()), totalFrames)
+        let endFrame = min(Int((upper * Double(totalFrames)).rounded()), totalFrames)
+        return (startFrame, max(0, endFrame - startFrame))
+    }
+
     /// Frame range for a loop region, clamped to the file. Returns the start
     /// frame and the number of frames to play before wrapping back to the start.
     /// `start`/`end` are seconds; out-of-order or out-of-range inputs are clamped

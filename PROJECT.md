@@ -71,7 +71,8 @@ pitch-preserving speed, and **seamless, click-free region looping** (a crossfade
 `.loops` buffer, ADRs 0006 & 0008) — fed by an imported file's real audio (or a
 generated dev sample for the demo). Interaction: **tap = seek, drag = scrub, pinch = zoom**
 (a **page-mode** viewport — the window holds still and the playhead sweeps/pages across it,
-with a Fit / 1× reset; ADR 0010);
+with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
+the source file** for crisp detail, debounced + cached, ADR 0020);
 capture is via a transport **action bar** (Mark · Loop · Fine · reserved Auto),
 not gestures (ADR 0005 round 4); pure gesture/zoom math in unit-tested
 `WaveformGesture`. The waveform and minimap show the **whole** annotation library —

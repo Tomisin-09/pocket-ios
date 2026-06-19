@@ -40,7 +40,12 @@ and loop/marker capture are driven by the waveform **gesture engine** (pure math
 in `WaveformGesture`, ADR 0005), which also handles **pinch-to-zoom** — a **page-mode**
 viewport (owned `zoomSpan` + `viewportStart`): the window holds still while the
 playhead sweeps across it, then pages forward at ~90% (`WaveformGesture.pagedStart`),
-with a Fit / 1× reset (ADR 0010). An active loop **loops continuously, gaplessly and click-free** — the
+with a Fit / 1× reset (ADR 0010). When zoomed in, the visible window is **re-downsampled
+from the source file at full detail** (`WaveformExtractor.extractWindow` → the same
+`AudioMath.downsample`, off the main actor, debounced on viewport settle and cached by
+window) so a deep zoom resolves real transients instead of stretching the stored
+whole-song envelope; the stored 512-bar envelope stays the zoomed-out and fallback path
+(ADR 0020). An active loop **loops continuously, gaplessly and click-free** — the
 engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
 both gapless and free of the splice click; the visual playhead wraps via pure
