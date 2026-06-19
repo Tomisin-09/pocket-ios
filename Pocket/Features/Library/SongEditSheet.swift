@@ -17,6 +17,7 @@ struct SongEditSheet: View {
     @State private var year: String          // numeric text → Int? on save
     @State private var key: String
     @State private var bpm: String           // numeric text → Int? on save
+    @State private var downbeat: String      // decimal seconds → TimeInterval? on save (ADR 0022)
     @State private var proficiency: Int
     @State private var progression: String
     @State private var collections: [String]
@@ -31,6 +32,7 @@ struct SongEditSheet: View {
         _year = State(initialValue: song.year.map(String.init) ?? "")
         _key = State(initialValue: song.key)
         _bpm = State(initialValue: song.bpm.map(String.init) ?? "")
+        _downbeat = State(initialValue: song.downbeatSeconds.map { String(format: "%g", $0) } ?? "")
         _proficiency = State(initialValue: song.proficiency)
         _progression = State(initialValue: song.progression)
         _collections = State(initialValue: song.collections)
@@ -69,6 +71,10 @@ struct SongEditSheet: View {
             NumberRow(label: "Year", text: $year)
             ClearableTextField("Key", text: $key)
             NumberRow(label: "BPM", text: $bpm)
+            // Downbeat phase anchor for the beat grid (ADR 0022) — the seconds at
+            // which bar 1 lands. Decimal seconds; empty ⇒ no grid. Needs BPM to do
+            // anything, so it reads as "off" until both are set.
+            NumberRow(label: "Downbeat (s)", text: $downbeat, keyboard: .decimalPad)
             ProficiencyPicker(value: $proficiency)
             ClearableTextField("Progression", text: $progression)
         }
@@ -134,6 +140,7 @@ struct SongEditSheet: View {
         song.year = Int(year)
         song.key = key
         song.bpm = Int(bpm)
+        song.downbeatSeconds = Double(downbeat.trimmingCharacters(in: .whitespaces))
         song.proficiency = proficiency
         song.progression = progression
         song.collections = collections
@@ -147,13 +154,14 @@ struct SongEditSheet: View {
 private struct NumberRow: View {
     let label: String
     @Binding var text: String
+    var keyboard: UIKeyboardType = .numberPad
 
     var body: some View {
         HStack {
             Text(label).foregroundStyle(PocketColor.textSecondary)
             Spacer()
             TextField("—", text: $text)
-                .keyboardType(.numberPad)
+                .keyboardType(keyboard)
                 .multilineTextAlignment(.trailing)
                 .font(.pocketMono(.body))
                 .frame(maxWidth: 90)

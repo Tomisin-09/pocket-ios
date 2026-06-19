@@ -64,6 +64,7 @@ import SwiftUI
                      loop: loops.first,
                      loops: loops,
                      markerFractions: [0.27, 0.6],
+                     beats: BeatGrid.beats(bpm: 76, duration: Song.sample().duration, downbeat: 0.3),
                      mode: .navigate, formingStart: nil, fineSelection: nil,
                      tapSelection: nil,
                      playheadLabel: "0:10",
@@ -72,6 +73,30 @@ import SwiftUI
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
                      viewport: (0, 1), onSetZoomSpan: { _ in }).padding()
+    }
+}
+
+#Preview("Waveform — beat grid (zoomed)") {
+    // Beat grid (ADR 0022): faint per-beat lines with brighter bar-start downbeats,
+    // zoomed in so individual beats and bars are clearly spaced. 96 BPM, downbeat at
+    // 0.5 s; viewport on the first few bars.
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        WaveformView(amplitudes: Song.sample().amplitudes,
+                     detailBars: nil,
+                     playheadFraction: 0.12,
+                     loop: nil,
+                     loops: [],
+                     markerFractions: [],
+                     beats: BeatGrid.beats(bpm: 96, duration: Song.sample().duration, downbeat: 0.5),
+                     mode: .navigate, formingStart: nil, fineSelection: nil,
+                     tapSelection: nil,
+                     playheadLabel: "0:04",
+                     onSeek: { _ in },
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     onSelectBegan: { _ in }, onSelectChanged: { _ in },
+                     onSelectEnded: {}, onSelectCancelled: {},
+                     viewport: (0.0, 0.25), onSetZoomSpan: { _ in }).padding()
     }
 }
 

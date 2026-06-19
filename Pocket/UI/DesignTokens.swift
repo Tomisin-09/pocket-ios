@@ -22,9 +22,15 @@ enum PocketColor {
     static let pin = Color.purple
     static let danger = Color.red
 
-    // Waveform bar states.
+    // Neutral "off" fill — empty proficiency dots, the minimap base track.
     static let barDefault = Color.white.opacity(0.35)
     static let barPlayed = Color.white.opacity(0.18)
+
+    // Detail-waveform bars — tinted the app's green accent so the song's energy reads
+    // as themed content, clearly distinct from the neutral (white) beat grid behind it
+    // (ADR 0022 follow-up). Upcoming (ahead of the playhead) brighter; played recedes.
+    static let waveformBar = Color.green.opacity(0.75)
+    static let waveformBarPlayed = Color.green.opacity(0.4)
 }
 
 /// Typography: monospace for all time values and BPM; system sans for the rest.

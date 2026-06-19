@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Beat grid & snap to the beat** — give a song a **BPM** and a **downbeat** (the
+  seconds where bar 1 lands, set on the song's edit sheet next to BPM) and the
+  waveform draws a faint **beat grid** — thin lines per beat, brighter on the bar
+  starts. Releasing a drawn loop edge, a Fine handle, or a tap-seek then **catches
+  the nearest beat** as well as markers and loop edges, so loops start and end on
+  the pulse. The grid thins out automatically when you zoom out so it never smears.
+  No downbeat set ⇒ no grid (we don't guess where bar 1 is). Assumes 4/4. ADR 0022.
 - **Loops and seeks snap to what you can see** — when you release a drawn loop edge,
   drag a Fine handle off a blue dot, or tap to seek, the boundary now **catches a
   nearby marker or saved-loop edge** if you land close to one (a light haptic
@@ -20,6 +27,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   punches one at the playhead). ADR 0005 (round 5).
 
 ### Changed
+- **The waveform is now green** — the detail waveform's bars are tinted the app's
+  green accent (brighter ahead of the playhead, receding behind it) instead of plain
+  white, so the song reads as themed content and stands clearly apart from the faint
+  white **beat grid** drawn behind it (they used to both be white and blur together).
 - **Deep zoom now shows real detail, not stretched blocks** — when you pinch in close,
   the waveform **re-reads that slice of the song from the file** and draws it at full
   resolution, so individual note onsets and transients resolve where you're working

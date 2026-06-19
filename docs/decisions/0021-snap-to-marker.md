@@ -3,6 +3,15 @@
 - **Status:** Accepted
 - **Date:** 2026-06-19 (`pocket-023-snap-to-marker`)
 
+> **Amendment (2026-06-19, `pocket-025`):** device testing showed the catch fired in
+> **Fine** mode (handle release → `endMoveHandle`) but **not** in **Navigate** mode:
+> tap-seek only snapped when the tap stayed under the scrub threshold, and a real
+> finger routinely drifts past it, reclassifying the tap as a scrub — which this ADR
+> left un-snapped. Fix: the **Navigate release** now seek-and-snaps for both a tap and
+> a scrub (the *live* drag stays raw so it still tracks the finger; only the resting
+> position catches). The "continuous moves stay un-snapped" rule below therefore means
+> *during* the drag — the release catches.
+
 ## Context
 
 The substrate slices are now in: the waveform reads musically (ADR 0017),

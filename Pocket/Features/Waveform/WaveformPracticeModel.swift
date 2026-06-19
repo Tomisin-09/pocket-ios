@@ -121,6 +121,16 @@ final class WaveformPracticeModel {
     /// The loop currently loaded into the transport/waveform, if any.
     var activeLoop: Loop? { loops.first { $0.uid == activeLoopID } }
 
+    /// The beat grid (ADR 0022): beats + bar-start downbeats as song fractions.
+    /// Empty unless the song has **both** a tempo (`bpm`) and a **downbeat anchor**
+    /// (`downbeatSeconds`) — BPM fixes the interval, the anchor fixes the phase, and we
+    /// don't guess the phase. Drawn faintly on the waveform and fed into the snap
+    /// candidates (`snapCandidates`). Assumes 4/4: every 4th beat is a downbeat.
+    var beatGrid: [BeatGrid.Beat] {
+        guard let bpm = song.bpm, let downbeat = song.downbeatSeconds, duration > 0 else { return [] }
+        return BeatGrid.beats(bpm: bpm, duration: duration, downbeat: downbeat)
+    }
+
     // MARK: - Automator (per-loop speed ramp, ADR 0013)
 
     /// Apply the active loop's speed ramp at a new loop iteration (driven by the engine's

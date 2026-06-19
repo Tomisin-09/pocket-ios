@@ -78,7 +78,10 @@ while a loop's **range** is drawn directly on the waveform by a **long-press-dra
 round 5) — a still hold arms a selection that the drag paints, released into a confirmable
 draft. On **release**, a drawn edge / Fine handle / tap-seek **snaps to a nearby marker or
 saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, light haptic;
-scrub + minimap stay free; ADR 0021). Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform and minimap show the **whole** annotation library —
+scrub + minimap stay free; ADR 0021). When a song has a **BPM and a downbeat anchor**, a
+faint **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on
+zoom) and its beats join the snap candidates, so edges/seeks catch the pulse too — pure,
+unit-tested `BeatGrid`, assumes 4/4 (ADR 0022). Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform and minimap show the **whole** annotation library —
 markers as pins from the top, **all** saved loops as brackets along the bottom;
 overlapping/nested loops **stack into lanes** (pure, unit-tested `LoopLanes`) so
 overlap reads by position while colour stays reserved for state, the active loop
@@ -94,7 +97,7 @@ State + handlers live in an `@Observable` `WaveformPracticeModel`
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),
 persisting a `Song` to practice, while an empty state offers import or a bundled
 demo. Swiping a library row → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
-for title/artist/album/year/key/BPM/proficiency/progression, lightweight **collection
+for title/artist/album/year/key/BPM/**downbeat**/proficiency/progression, lightweight **collection
 tags**, a free-form **note**, and read-only **practice stats** (loops · markers ·
 annotations) — the record we enrich to drive routines (ADR 0012). Each loop carries a
 per-loop **automator** (the "A" control on its row): a speed-trainer ramp — start % →
@@ -108,5 +111,5 @@ planner's **selection** (goals → required skills from a **technique taxonomy**
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`, `WaveformGesture`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`.
+Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`.
 See `CHANGELOG.md` for the full history.
