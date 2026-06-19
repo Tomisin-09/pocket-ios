@@ -121,12 +121,15 @@ import SwiftUI
     }
 }
 
-#Preview("Loop name sheet") {
-    LoopNameSheet(onSave: { _ in })
-}
-
 #Preview("Marker name sheet") {
     MarkerNameSheet(onSave: { _ in })
+}
+
+#Preview("Undo toast") {
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        UndoToastView(message: "Deleted Chorus bend", onUndo: {}).padding()
+    }
 }
 
 #Preview("Loops + Markers") {

@@ -37,18 +37,21 @@ extension WaveformPracticeModel {
         namingMarker = nil
     }
 
-    /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd stops + confirms.
+    /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd closes the loop and
+    /// **starts looping the punched region immediately** (no separate ▶), still as a
+    /// draft you confirm with Y / discard with N.
     func tapPunch() {
         if let start = pendingStart {
             let bounds = WaveformGesture.loopBounds(start, playheadFraction)
-            engine.pause()
             pendingStart = nil
             haptic(.medium)
             withAnimation(.easeOut(duration: 0.28)) {
                 capture = CaptureDraft(start: bounds.start, end: bounds.end,
                                        fromFine: false, editingLoop: nil)
             }
-            previewCapture()   // arm the engine loop so the punch can be auditioned
+            previewCapture()                              // arm the engine loop region…
+            engine.seek(toSeconds: bounds.start * duration)
+            engine.play()                                 // …and loop it at once, so the 2nd tap plays
         } else {
             pendingStart = playheadFraction
             engine.play()
@@ -89,7 +92,8 @@ extension WaveformPracticeModel {
         }
     }
 
-    /// Confirm ✓ — write back a range edit, or open naming (capture kept so a discard can restore it).
+    /// Confirm ✓ — write back a range edit, or create a new loop instantly (auto-named
+    /// and activated, no naming step — rename later from its row; ADR 0019).
     func confirmCapture() {
         guard let draft = capture else { return }
         if let loop = draft.editingLoop {
@@ -97,11 +101,26 @@ extension WaveformPracticeModel {
             loop.end = draft.end
             activeLoopID = loop.uid
             applyActiveLoopToEngine()
-            haptic(.medium)
-            finishCapture()
         } else {
-            namingDraft = NamingDraft(start: draft.start, end: draft.end)
+            createLoop(start: draft.start, end: draft.end)
         }
+        haptic(.medium)
+        finishCapture()
+    }
+
+    /// Create, persist, and activate a new loop with an auto name ("Loop 3"). No
+    /// naming sheet — the range is visible on the waveform and it's renamed from the
+    /// loop row (ADR 0019). Starts looping straight away (seek to start + play) so a
+    /// freshly punched loop plays without a separate tap on ▶.
+    func createLoop(start: Double, end: Double) {
+        let name = AutoName.next(prefix: "Loop", existing: loops.map(\.name))
+        let loop = Loop(name: name, start: start, end: end, speed: speed, repeats: 4)
+        context.insert(loop)
+        loop.song = song          // attach → shows in `loops`, persists
+        activeLoopID = loop.uid
+        applyActiveLoopToEngine()
+        engine.seek(toSeconds: loop.startSeconds)
+        engine.play()
     }
 
     /// Confirm ✗ — discard the capture outright (and leave Fine).
@@ -116,28 +135,6 @@ extension WaveformPracticeModel {
         applyActiveLoopToEngine()   // a discard reverts the live preview; a commit re-applies the same bounds
     }
 
-    /// Naming dismissed: Save consumed `capture`; survivor = Discard → keep Fine, drop Tap.
-    func namingDismissed() {
-        guard let draft = capture, !draft.fromFine else { return }
-        withAnimation(.easeOut(duration: 0.2)) { capture = nil }
-    }
-
-    /// Naming-sheet Save — create the loop (empty name → range), then leave Fine.
-    func saveNamed(_ name: String) {
-        guard let draft = namingDraft else { return }
-        let range = rangeString(draft.start, draft.end)
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        let loop = Loop(name: trimmed.isEmpty ? range : trimmed,
-                        start: draft.start, end: draft.end, speed: speed, repeats: 4)
-        context.insert(loop)
-        loop.song = song          // attach → shows in `loops`, persists
-        activeLoopID = loop.uid
-        applyActiveLoopToEngine()
-        capture = nil
-        namingDraft = nil
-        if mode == .fine { mode = .navigate }
-    }
-
     /// "Adjust range" from a loop's edit sheet → Fine mode seeded with its bounds.
     /// Activates the loop so it's the one you hear while refining it (and so a
     /// discard restores its original bounds).
@@ -146,10 +143,6 @@ extension WaveformPracticeModel {
         capture = CaptureDraft(start: loop.start, end: loop.end, fromFine: true, editingLoop: loop)
         previewCapture()
         withAnimation(.easeOut(duration: 0.2)) { mode = .fine }
-    }
-
-    func rangeString(_ start: Double, _ end: Double) -> String {
-        "\(timecode(duration * start))–\(timecode(duration * end))"
     }
 
     /// A default loop span at the playhead, clamped so it never spills off the end.
@@ -211,18 +204,79 @@ extension WaveformPracticeModel {
         }
     }
 
-    /// Delete a loop. Edits to an existing loop are written straight to the @Model by
-    /// its edit sheet (auto-persisting), so there's no `updateLoop`.
+    /// Delete a loop, with an Undo toast (ADR 0019). Edits to an existing loop are
+    /// written straight to the @Model by its edit sheet (auto-persisting), so there's
+    /// no `updateLoop`. Undo re-creates the loop from a snapshot (same uid + automator)
+    /// and restores it as active if it was.
     func deleteLoop(_ loop: Loop) {
         let wasActive = activeLoopID == loop.uid
+        let (uid, name) = (loop.uid, loop.name)
+        let (start, end, lspeed, repeats) = (loop.start, loop.end, loop.speed, loop.repeats)
+        let automator = loop.automator
         context.delete(loop)
         if wasActive {
             activeLoopID = loops.first?.uid
             applyActiveLoopToEngine()
         }
+        presentUndo("Deleted \(name)") { [weak self] in
+            guard let self else { return }
+            let restored = Loop(name: name, start: start, end: end, speed: lspeed, repeats: repeats)
+            restored.uid = uid
+            restored.automator = automator
+            self.context.insert(restored)
+            restored.song = self.song
+            if wasActive {
+                self.activeLoopID = restored.uid
+                self.applyActiveLoopToEngine()
+            }
+        }
     }
 
+    /// Delete a marker, with an Undo toast (ADR 0019). Undo re-creates it from a
+    /// snapshot (same uid).
     func deleteMarker(_ marker: Marker) {
+        let (uid, seconds, label) = (marker.uid, marker.seconds, marker.label)
         context.delete(marker)
+        presentUndo("Deleted \(label)") { [weak self] in
+            guard let self else { return }
+            let restored = Marker(seconds: seconds, label: label)
+            restored.uid = uid
+            self.context.insert(restored)
+            restored.song = self.song
+        }
+    }
+}
+
+// MARK: - Undo toast (ADR 0019)
+
+extension WaveformPracticeModel {
+    /// A transient "Deleted X · Undo" message with the closure that reverses the action.
+    struct UndoToast: Identifiable {
+        let id = UUID()
+        let message: String
+        let undo: () -> Void
+    }
+
+    /// Show an Undo toast, auto-dismissing after a few seconds. A second destructive
+    /// action replaces it — the latest delete is the one you can undo.
+    func presentUndo(_ message: String, undo: @escaping () -> Void) {
+        undoDismiss?.cancel()
+        withAnimation(.easeOut(duration: 0.2)) {
+            undoToast = UndoToast(message: message, undo: undo)
+        }
+        undoDismiss = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.2)) { self?.undoToast = nil }
+        }
+    }
+
+    /// Tapped Undo — run the restore and dismiss the toast.
+    func performUndo() {
+        undoDismiss?.cancel()
+        let toast = undoToast
+        withAnimation(.easeOut(duration: 0.2)) { undoToast = nil }
+        toast?.undo()
+        haptic(.light)
     }
 }

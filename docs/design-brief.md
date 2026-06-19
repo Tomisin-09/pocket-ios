@@ -159,9 +159,11 @@ A hairline separates the cockpit from the scroll area below.
 
 While a loop is being created or its range adjusted, the cockpit enters **edit
 mode**: the transport greys out and locks, and the mode line becomes the edit
-toolbar (▶ audition · state label · Y/N). **Y** opens the naming sheet for a new
-loop (or commits a range edit); **N** discards. You leave edit mode via Y/N, not by
-switching modes.
+toolbar (▶ audition · state label · Y/N). **Y** creates the loop **instantly** — it's
+auto-named ("Loop 3") and made active, no naming sheet (or commits a range edit);
+rename it later from its row. **N** discards. You leave edit mode via Y/N, not by
+switching modes. Deleting a loop or marker raises a **"Deleted X · Undo"** toast at
+the bottom of the cockpit (auto-dismiss ~4s) to reverse an accidental delete (ADR 0019).
 
 **Interaction (ADR 0005 round 4):** one rule for touch — **tap = seek, drag =
 scrub, pinch = zoom** (the "Navigate" default). Capturing at the playhead is done

@@ -68,8 +68,14 @@ final class WaveformPracticeModel {
     /// handles; a non-nil `editingLoop` means we're adjusting an existing
     /// loop's range rather than creating one.
     var capture: CaptureDraft?
-    /// The confirmed loop awaiting a name (drives the naming sheet).
-    var namingDraft: NamingDraft?
+
+    /// A transient "Deleted X · Undo" toast after a destructive action (ADR 0019).
+    /// Auto-dismisses after a few seconds; tapping Undo runs its closure.
+    var undoToast: UndoToast?
+    /// The pending auto-dismiss for `undoToast`, cancelled when it's replaced or acted
+    /// on. Internal (not `private`) so the `+Actions` extension in its own file can
+    /// manage it; `@ObservationIgnored` so the timer handle isn't observed.
+    @ObservationIgnored var undoDismiss: Task<Void, Never>?
 
     /// Read-only BPM display: round(songBPM × speed) — brief §4.1 speed bar.
     /// `nil` when the song has no known tempo (see ADR 0004); the speed
@@ -153,8 +159,8 @@ final class WaveformPracticeModel {
     /// focus the waveform.
     var isRangeEditing: Bool { capture?.editingLoop != nil }
 
-    /// The confirm pill shows while a region is captured but not yet being named.
-    var showConfirm: Bool { capture != nil && namingDraft == nil }
+    /// The confirm pill shows while a region is captured.
+    var showConfirm: Bool { capture != nil }
 
     var isPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"

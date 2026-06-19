@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · AudioMath · WaveformGesture · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef
+│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -55,7 +55,11 @@ pre-ADR-0017 waveforms on open. The detail waveform and minimap draw the **whole
 loop/marker library — markers as pins from the top, loops as brackets along the
 bottom; overlapping/nested loops **stack into lanes** (pure `LoopLanes` interval
 packing, unit-tested) so overlap reads by position while colour stays reserved for
-state (the active loop is drawn brighter). ADR 0018.
+state (the active loop is drawn brighter). ADR 0018. New loops are created
+**instantly** on confirm — auto-named ("Loop 3", pure `AutoName`), activated, and
+**looping immediately** (seek to start + play), no naming sheet (markers keep theirs);
+deleting a loop/marker shows an **Undo** toast
+that restores it from a snapshot with its original `uid`. ADR 0019.
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body

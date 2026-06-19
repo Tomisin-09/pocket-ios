@@ -1,14 +1,11 @@
 import SwiftUI
 
-// Loop capture models + flow (design brief §4.1 #9), in two keyboard-free-then-
-// named steps so the naming field is never hidden behind the keyboard:
-//
-//   1. `EditToolbar` — the edit-mode control strip (▶ audition · state label ·
-//      Y/N) shown in place of the mode-instructions line once a loop is captured
-//      (Tap punch-out / Fine selection), with the transport greyed/locked. Y commits
-//      / opens naming, N discards — letters, so the decision never reads as a name.
-//   2. `LoopNameSheet` — a native sheet (manages its own keyboard inset) that
-//      opens on Y (for a new loop) to name it.
+// Loop capture flow (design brief §4.1 #9): `EditToolbar` is the edit-mode control
+// strip (▶ audition · state label · Y/N) shown in place of the mode-instructions
+// line once a loop is captured (Tap punch-out / Fine selection), with the transport
+// greyed/locked. Y commits (a new loop is created instantly, auto-named, and
+// activated — no naming step; ADR 0019), N discards. Letters, not ✓/✗, so the
+// decision never reads as a name. New loops are renamed later from their row.
 
 extension WaveformPracticeModel {
     /// A loop being captured, awaiting confirmation. Bounds are mutable so Fine
@@ -20,21 +17,14 @@ extension WaveformPracticeModel {
         var fromFine: Bool
         var editingLoop: Loop?
     }
-
-    /// A confirmed loop awaiting a name (drives the naming sheet).
-    struct NamingDraft: Identifiable {
-        let id = UUID()
-        var start: Double
-        var end: Double
-    }
 }
 
 /// Step 1 — the edit-mode control strip, shown in place of the mode-instructions
 /// line while a loop is being created or its range adjusted (the whole transport is
 /// greyed/locked meanwhile, so this is the only live control surface). A ▶/⏸ button
 /// **auditions** the captured region, a label says which state you're in, and a
-/// **Y/N** pill commits (Y → save / open naming) or discards (N). Letters, not ✓/✗,
-/// so the decision can't be mistaken for the loop's name.
+/// **Y/N** pill commits (Y → save) or discards (N). Letters, not ✓/✗, so the
+/// decision can't be mistaken for the loop's name.
 struct EditToolbar: View {
     let isPlaying: Bool
     /// `true` when adjusting an existing loop's range rather than creating a new one.
@@ -65,7 +55,7 @@ struct EditToolbar: View {
                 letterButton("N", tint: PocketColor.danger, action: onCancel)
                     .accessibilityLabel("Discard")
                 letterButton("Y", tint: PocketColor.active, action: onConfirm)
-                    .accessibilityLabel(isEditingExisting ? "Save range" : "Name loop")
+                    .accessibilityLabel(isEditingExisting ? "Save range" : "Save loop")
             }
             .padding(3)
             .background(
@@ -85,48 +75,6 @@ struct EditToolbar: View {
                 .background(Circle().fill(tint.opacity(0.15)))
         }
         .buttonStyle(.plain)
-    }
-}
-
-/// Step 2 — name the new loop. Just a name (its range is already shown on the
-/// waveform); a native sheet, so the keyboard never occludes it. Editing an existing
-/// loop uses the fuller `LoopEditSheet`.
-struct LoopNameSheet: View {
-    /// Save with the entered name (empty → caller falls back to the range string).
-    let onSave: (String) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var name = ""
-    @FocusState private var nameFocused: Bool
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Name") {
-                    ClearableTextField("Name this loop", text: $name)
-                        .focused($nameFocused)
-                        .submitLabel(.done)
-                        .onSubmit { save() }
-                }
-            }
-            .navigationTitle("New loop")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Discard", role: .cancel) { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                }
-            }
-        }
-        .presentationDetents([.height(180)])
-        .onAppear { nameFocused = true }
-    }
-
-    private func save() {
-        onSave(name)
-        dismiss()
     }
 }
 

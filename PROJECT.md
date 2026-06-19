@@ -76,7 +76,12 @@ not gestures (ADR 0005 round 4); pure gesture/zoom math in unit-tested
 markers as pins from the top, **all** saved loops as brackets along the bottom;
 overlapping/nested loops **stack into lanes** (pure, unit-tested `LoopLanes`) so
 overlap reads by position while colour stays reserved for state, the active loop
-brighter (ADR 0018). State + handlers live in an `@Observable` `WaveformPracticeModel`
+brighter (ADR 0018). New loops are created **instantly** on confirm — auto-named
+("Loop 3", via pure `AutoName`), activated, and **looping immediately** (no separate
+play tap), no naming sheet (markers still ask for a label, since a marker *is* its
+label); deleting a loop or marker offers an
+**Undo** toast that restores it with its original identity (ADR 0019).
+State + handlers live in an `@Observable` `WaveformPracticeModel`
 (ADR 0007), now bound to a **persisted `Song`** — loops/markers are SwiftData
 `@Model`s that survive relaunches (ADR 0011). The app opens to a **song library**
 (`LibraryView`); importing a DRM-free local/iCloud **audio file** takes a
@@ -97,5 +102,5 @@ planner's **selection** (goals → required skills from a **technique taxonomy**
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`, `WaveformGesture`, `LoopLanes`, `Song`, `AutomatorConfig`.
+Verified pure logic: `TempoMath`, `SongRef`, `AudioMath`, `WaveformGesture`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`.
 See `CHANGELOG.md` for the full history.
