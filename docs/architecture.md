@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · AudioMath · WaveformGesture · LoopLanes (pure)
+│              TempoMath · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -49,7 +49,12 @@ whole-song envelope; the stored 512-bar envelope stays the zoomed-out and fallba
 the boundary **snaps to a nearby marker or saved-loop edge** if one is within an
 on-screen tolerance (pure `WaveformGesture.snap`, candidates sourced and tolerance
 scaled by zoom in `WaveformPracticeModel+Snap.swift`, light haptic on a catch);
-continuous scrub and the minimap stay un-snapped (ADR 0021). An active loop **loops
+continuous scrub and the minimap stay un-snapped (ADR 0021). When a song has a **BPM
+and a downbeat anchor** (`Song.downbeatSeconds`), pure `BeatGrid` turns tempo + phase
+into per-beat song fractions (flagging bar-start downbeats, 4/4); these are drawn as a
+faint, density-aware grid behind the bars and **added to the snap candidates**, so a
+release also catches the pulse — no grid is drawn or snapped to without both BPM and
+the anchor (ADR 0022). An active loop **loops
 continuously, gaplessly and click-free** — the
 engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is

@@ -45,6 +45,11 @@ struct WaveformView: View {
     let loops: [Loop]
     /// Saved markers as song fractions (0…1) — drawn as pins dropping from the top.
     let markerFractions: [Double]
+    /// The beat grid (ADR 0022): beats + bar-start downbeats as song fractions, drawn
+    /// faintly behind the bars (downbeats brighter). Empty when the song has no tempo
+    /// or no downbeat anchor, so the whole grid simply doesn't render. Defaulted so
+    /// the many component previews/call sites that don't care opt out for free.
+    var beats: [BeatGrid.Beat] = []
     let mode: WaveformPracticeView.InteractionMode
     /// Loop punch in progress: the start of the loop being captured. The region from
     /// here to the live playhead fills green as playback previews it.
@@ -128,6 +133,10 @@ struct WaveformView: View {
         // Song fraction → on-screen x (through the zoom viewport).
         func atX(_ songFraction: Double) -> CGFloat { CGFloat(screenX(songFraction)) * size.width }
         let playheadX = atX(playheadFraction)
+
+        // Beat grid behind everything (ADR 0022) — faint structure the bars, regions,
+        // and annotations all sit on top of.
+        drawBeatGrid(in: context, size: size, atX: atX)
 
         // Active loop region (amber while paused — green is reserved for playing).
         if let loop {
@@ -271,6 +280,30 @@ struct WaveformView: View {
             context.stroke(stem, with: .color(PocketColor.pin), lineWidth: 1.5)
             context.fill(Path(ellipseIn: CGRect(x: pinX - 2.5, y: 0, width: 5, height: 5)),
                          with: .color(PocketColor.pin))
+        }
+    }
+
+    /// Faint vertical grid behind the bars (ADR 0022): a thin line per beat with the
+    /// bar-start downbeats brighter and slightly heavier. Density-aware so a zoomed-out
+    /// view doesn't smear into a wash — sub-beats drop out once they'd sit under ~5 pt
+    /// apart, and the whole grid is skipped once even the downbeats would crowd.
+    private func drawBeatGrid(in context: GraphicsContext, size: CGSize,
+                              atX: (Double) -> CGFloat) {
+        guard beats.count >= 2 else { return }
+        let span = max(0.0001, viewport.end - viewport.start)
+        let beatPx = size.width * abs(beats[1].fraction - beats[0].fraction) / span
+        guard beatPx >= 1 else { return }          // even downbeats would crowd — no grid
+        let showSubBeats = beatPx >= 5
+        for beat in beats {
+            guard beat.isDownbeat || showSubBeats else { continue }
+            let lineX = atX(beat.fraction)
+            guard lineX > -1, lineX < size.width + 1 else { continue }   // off-screen
+            var line = Path()
+            line.move(to: CGPoint(x: lineX, y: 0))
+            line.addLine(to: CGPoint(x: lineX, y: size.height))
+            let opacity = beat.isDownbeat ? 0.14 : 0.06
+            context.stroke(line, with: .color(PocketColor.textPrimary.opacity(opacity)),
+                           lineWidth: beat.isDownbeat ? 1 : 0.75)
         }
     }
 

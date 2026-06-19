@@ -15,15 +15,16 @@ extension WaveformPracticeModel {
         WaveformGesture.snapTolerance * (viewport.end - viewport.start)
     }
 
-    /// Fractions a released gesture can snap to: every marker plus every saved loop's
-    /// start and end. `excluded` drops the loop being range-edited so its own edges
-    /// don't capture the handle that's moving them.
+    /// Fractions a released gesture can snap to: every marker, every saved loop's start
+    /// and end, plus every **beat** of the grid when the song has one (ADR 0022 — so a
+    /// loop edge or seek can catch the pulse, not just markers/edges). `excluded` drops
+    /// the loop being range-edited so its own edges don't capture the handle moving them.
     func snapCandidates(excluding excluded: Loop? = nil) -> [Double] {
         let markerFractions = duration > 0 ? markers.map { $0.seconds / duration } : []
         let loopEdges = loops
             .filter { $0.uid != excluded?.uid }
             .flatMap { [$0.start, $0.end] }
-        return markerFractions + loopEdges
+        return markerFractions + loopEdges + beatGrid.map(\.fraction)
     }
 
     /// The marker / loop-edge `fraction` should snap to, or `nil` if none is within

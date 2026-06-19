@@ -19,6 +19,12 @@ final class Song {
     var key: String
     /// `nil` when the tempo is unknown — a normal state (ADR 0004).
     var bpm: Int?
+    /// Seconds at which a bar-1 **downbeat** lands — the phase anchor for the beat
+    /// grid (ADR 0022). `bpm` fixes the beat interval; this fixes where the grid sits,
+    /// so a song with lead-in silence still lines up. `nil` ⇒ no grid is drawn or
+    /// snapped to (we don't guess the phase). Optional, like `bpm`/`year`, so SwiftData
+    /// lightweight migration fills pre-0022 songs with nil — no declaration default needed.
+    var downbeatSeconds: TimeInterval?
     var proficiency: Int          // 0–5 stars
     var progression: String
     var collections: [String]
@@ -38,7 +44,8 @@ final class Song {
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
 
     init(title: String, artist: String = "", album: String = "", year: Int? = nil,
-         key: String = "", bpm: Int? = nil, proficiency: Int = 0, progression: String = "",
+         key: String = "", bpm: Int? = nil, downbeatSeconds: TimeInterval? = nil,
+         proficiency: Int = 0, progression: String = "",
          collections: [String] = [], comment: String = "",
          duration: TimeInterval, amplitudes: [Double] = [], ref: SongRef) {
         self.title = title
@@ -47,6 +54,7 @@ final class Song {
         self.year = year
         self.key = key
         self.bpm = bpm
+        self.downbeatSeconds = downbeatSeconds
         self.proficiency = proficiency
         self.progression = progression
         self.collections = collections
