@@ -17,6 +17,12 @@ enum WaveformGesture {
     /// will show (≈20× zoom). `1` is the whole song (no zoom).
     static let minZoomSpan = 0.05
 
+    /// Snap catch-radius as a fraction of the *visible* window (scaled by zoom span
+    /// at the call site, like the Fine-handle grab zone, so it's a constant size on
+    /// screen). Tighter than `handleTolerance` (0.06): snapping should assist precise
+    /// placement, not hijack it. See `snap(_:to:tolerance:)` and ADR 0021.
+    static let snapTolerance = 0.03
+
     /// Which loop boundary a Fine-mode touch is grabbing.
     enum Handle { case start, end }
 
@@ -107,6 +113,25 @@ enum WaveformGesture {
         if start < 0 { start = 0; end = minWidth }
         if end > 1 { end = 1; start = 1 - minWidth }
         return (start, end)
+    }
+
+    /// Snap `fraction` to the nearest value in `candidates` when one lies within
+    /// `tolerance` (all song fractions), else return `nil`. On gesture *release* this
+    /// catches a loop edge, Fine handle, or tap-seek to a nearby marker or saved-loop
+    /// boundary; `nil` lets the caller keep the raw fraction and skip the snap haptic.
+    /// Candidates may be unsorted and may include duplicates; the nearest within range
+    /// wins. A non-positive `tolerance` snaps only on an exact hit (ADR 0021).
+    static func snap(_ fraction: Double, to candidates: [Double], tolerance: Double) -> Double? {
+        var best: Double?
+        var bestDistance = tolerance
+        for candidate in candidates {
+            let distance = abs(candidate - fraction)
+            if distance <= bestDistance {
+                best = candidate
+                bestDistance = distance
+            }
+        }
+        return best
     }
 
     /// Which handle a touch at fraction `point` is grabbing, or `nil` if neither

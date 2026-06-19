@@ -91,6 +91,10 @@ final class WaveformPracticeModel {
     /// loop's range rather than creating one.
     var capture: CaptureDraft?
 
+    /// The Fine handle last moved by a drag, so its release can snap *that* edge to a
+    /// nearby marker / loop boundary (ADR 0021). Cleared once the release is handled.
+    @ObservationIgnored var lastFineHandle: WaveformGesture.Handle?
+
     /// Long-press-drag select (ADR 0005 round 5): the anchor fraction where the
     /// hold fired. The drag extends from here; cleared on commit/cancel.
     @ObservationIgnored var dragSelectAnchor: Double?

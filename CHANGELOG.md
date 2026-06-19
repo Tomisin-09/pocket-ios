@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Loops and seeks snap to what you can see** — when you release a drawn loop edge,
+  drag a Fine handle off a blue dot, or tap to seek, the boundary now **catches a
+  nearby marker or saved-loop edge** if you land close to one (a light haptic
+  confirms the catch). The catch zone is a constant size on screen at any zoom and
+  it's tight enough to assist, not hijack — land clear of a marker and nothing snaps.
+  Scrubbing and the minimap stay free. ADR 0021.
 - **Draw a loop right on the waveform** — in Navigate mode, **press and hold, then drag**
   to paint a loop region (a haptic confirms when the hold arms). Release and the region
   becomes a confirmable loop — auto-named and looping at once on **Y**, like a punch. A

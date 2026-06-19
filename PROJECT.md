@@ -76,7 +76,9 @@ the source file** for crisp detail, debounced + cached, ADR 0020);
 playhead capture is via a transport **action bar** (Mark · Loop · Fine · reserved Auto),
 while a loop's **range** is drawn directly on the waveform by a **long-press-drag** (ADR 0005
 round 5) — a still hold arms a selection that the drag paints, released into a confirmable
-draft. Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform and minimap show the **whole** annotation library —
+draft. On **release**, a drawn edge / Fine handle / tap-seek **snaps to a nearby marker or
+saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, light haptic;
+scrub + minimap stay free; ADR 0021). Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform and minimap show the **whole** annotation library —
 markers as pins from the top, **all** saved loops as brackets along the bottom;
 overlapping/nested loops **stack into lanes** (pure, unit-tested `LoopLanes`) so
 overlap reads by position while colour stays reserved for state, the active loop
