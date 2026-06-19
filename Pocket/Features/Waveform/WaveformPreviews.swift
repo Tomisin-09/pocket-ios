@@ -69,6 +69,8 @@ import SwiftUI
                      playheadLabel: "0:10",
                      onSeek: { _ in },
                      onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     onSelectBegan: { _ in }, onSelectChanged: { _ in },
+                     onSelectEnded: {}, onSelectCancelled: {},
                      viewport: (0, 1), onSetZoomSpan: { _ in }).padding()
     }
 }
@@ -87,6 +89,8 @@ import SwiftUI
                      playheadLabel: "0:10",
                      onSeek: { _ in },
                      onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     onSelectBegan: { _ in }, onSelectChanged: { _ in },
+                     onSelectEnded: {}, onSelectCancelled: {},
                      viewport: (0.25, 0.65), onSetZoomSpan: { _ in }).padding()
     }
 }
@@ -109,6 +113,8 @@ import SwiftUI
                      playheadLabel: "0:24",
                      onSeek: { _ in },
                      onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     onSelectBegan: { _ in }, onSelectChanged: { _ in },
+                     onSelectEnded: {}, onSelectCancelled: {},
                      viewport: (0.30, 0.50), onSetZoomSpan: { _ in })
             .overlay(alignment: .bottomTrailing) { ZoomResetButton(action: {}).padding(8) }
             .padding()
@@ -222,6 +228,8 @@ import SwiftUI
                          playheadLabel: "0:10",
                          onSeek: { _ in },
                          onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                         onSelectBegan: { _ in }, onSelectChanged: { _ in },
+                         onSelectEnded: {}, onSelectCancelled: {},
                          viewport: (0, 1), onSetZoomSpan: { _ in })
             Spacer()
         }

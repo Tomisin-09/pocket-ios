@@ -20,7 +20,7 @@ struct WaveformPracticeView: View {
         /// One-line hint shown under the speed bar (when not editing a capture).
         var blurb: String {
             switch self {
-            case .navigate: "Tap to seek · drag to scrub · pinch to zoom"
+            case .navigate: "Tap seek · drag scrub · hold-drag to select a loop · pinch zoom"
             case .fine: "Drag the blue handles to set the loop bounds"
             }
         }
@@ -76,6 +76,10 @@ struct WaveformPracticeView: View {
                                  onScrub: model.seekToFraction,
                                  onMoveHandle: model.moveFineHandle,
                                  onMoveHandleEnded: model.previewCapture,
+                                 onSelectBegan: model.beginDragSelection,
+                                 onSelectChanged: model.updateDragSelection,
+                                 onSelectEnded: model.endDragSelection,
+                                 onSelectCancelled: model.cancelDragSelection,
                                  viewport: model.viewport,
                                  onSetZoomSpan: model.setZoomSpan)
                         // Fit / 1× reset — only while zoomed; sits above the

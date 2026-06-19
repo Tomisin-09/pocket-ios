@@ -50,6 +50,34 @@ final class WaveformGestureTests: XCTestCase {
         XCTAssertEqual(bounds.end, 1, accuracy: 0.0001)
     }
 
+    // MARK: selectionBounds (long-press-drag select)
+
+    func testSelectionBoundsOrdersForwardDrag() {
+        let bounds = WaveformGesture.selectionBounds(anchor: 0.30, current: 0.62)
+        XCTAssertEqual(bounds.start, 0.30, accuracy: 0.0001)
+        XCTAssertEqual(bounds.end, 0.62, accuracy: 0.0001)
+    }
+
+    func testSelectionBoundsOrdersBackwardDrag() {
+        // Dragging left of the anchor still yields start < end.
+        let bounds = WaveformGesture.selectionBounds(anchor: 0.62, current: 0.30)
+        XCTAssertEqual(bounds.start, 0.30, accuracy: 0.0001)
+        XCTAssertEqual(bounds.end, 0.62, accuracy: 0.0001)
+    }
+
+    func testSelectionBoundsDoesNotWidenTinyDrag() {
+        // Unlike loopBounds, a tiny drag stays tiny — no min-width widening live.
+        let bounds = WaveformGesture.selectionBounds(anchor: 0.500, current: 0.502)
+        XCTAssertEqual(bounds.end - bounds.start, 0.002, accuracy: 0.0001)
+        XCTAssertLessThan(bounds.end - bounds.start, WaveformGesture.minLoopWidth)
+    }
+
+    func testSelectionBoundsClampsOutOfRange() {
+        let bounds = WaveformGesture.selectionBounds(anchor: -0.3, current: 1.4)
+        XCTAssertEqual(bounds.start, 0, accuracy: 0.0001)
+        XCTAssertEqual(bounds.end, 1, accuracy: 0.0001)
+    }
+
     // MARK: nearestHandle
 
     func testNearestHandlePicksCloser() {

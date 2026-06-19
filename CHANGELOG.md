@@ -5,6 +5,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Draw a loop right on the waveform** — in Navigate mode, **press and hold, then drag**
+  to paint a loop region (a haptic confirms when the hold arms). Release and the region
+  becomes a confirmable loop — auto-named and looping at once on **Y**, like a punch. A
+  quick drag still scrubs and a tap still seeks; only a deliberate hold starts a selection.
+  This is the direct on-waveform way to set a loop's *range* (the **Loop** button still
+  punches one at the playhead). ADR 0005 (round 5).
+
 ### Changed
 - **Deep zoom now shows real detail, not stretched blocks** — when you pinch in close,
   the waveform **re-reads that slice of the song from the file** and draws it at full

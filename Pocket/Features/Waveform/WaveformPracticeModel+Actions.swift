@@ -134,6 +134,50 @@ extension WaveformPracticeModel {
         }
     }
 
+    // MARK: Long-press-drag select (ADR 0005 round 5)
+
+    /// A hold fired (navigate) — anchor a new green selection at `fraction` and start
+    /// painting it. The edit toolbar/transport lock stay back until release
+    /// (`isDragSelecting`); the medium haptic confirms the switch from scrub to select.
+    func beginDragSelection(at fraction: Double) {
+        guard capture == nil else { return }   // don't clobber a capture mid-confirm
+        dragSelectAnchor = fraction
+        isDragSelecting = true
+        capture = CaptureDraft(start: fraction, end: fraction, fromFine: false, editingLoop: nil)
+        haptic(.medium)
+    }
+
+    /// The hold-drag moved — grow the selection from its anchor to `fraction`, exact
+    /// (no min-width) so the region tracks the finger; min-width is enforced on release.
+    func updateDragSelection(to fraction: Double) {
+        guard let anchor = dragSelectAnchor, capture != nil else { return }
+        let bounds = WaveformGesture.selectionBounds(anchor: anchor, current: fraction)
+        capture = CaptureDraft(start: bounds.start, end: bounds.end, fromFine: false, editingLoop: nil)
+    }
+
+    /// The hold-drag released — finalise into a confirmable draft (widened to
+    /// `minLoopWidth` if tiny) and audition it immediately (like a Loop punch).
+    /// `showConfirm` flips true, raising the Y/N edit toolbar.
+    func endDragSelection() {
+        guard let draft = capture, dragSelectAnchor != nil else { return }
+        let bounds = WaveformGesture.loopBounds(draft.start, draft.end)
+        capture = CaptureDraft(start: bounds.start, end: bounds.end, fromFine: false, editingLoop: nil)
+        dragSelectAnchor = nil
+        isDragSelecting = false
+        haptic(.medium)
+        previewCapture()
+        engine.seek(toSeconds: bounds.start * duration)
+        engine.play()
+    }
+
+    /// Abort an in-progress hold-drag (e.g. a pinch took over) — drop the draft.
+    func cancelDragSelection() {
+        dragSelectAnchor = nil
+        isDragSelecting = false
+        capture = nil
+        applyActiveLoopToEngine()
+    }
+
     /// Fine mode: drag a blue handle (bounds stay ordered + min-width apart).
     func moveFineHandle(_ handle: WaveformGesture.Handle, _ fraction: Double) {
         guard let current = capture else { return }
@@ -320,39 +364,5 @@ extension WaveformPracticeModel {
             self.context.insert(restored)
             restored.song = self.song
         }
-    }
-}
-
-// MARK: - Undo toast (ADR 0019)
-
-extension WaveformPracticeModel {
-    /// A transient "Deleted X · Undo" message with the closure that reverses the action.
-    struct UndoToast: Identifiable {
-        let id = UUID()
-        let message: String
-        let undo: () -> Void
-    }
-
-    /// Show an Undo toast, auto-dismissing after a few seconds. A second destructive
-    /// action replaces it — the latest delete is the one you can undo.
-    func presentUndo(_ message: String, undo: @escaping () -> Void) {
-        undoDismiss?.cancel()
-        withAnimation(.easeOut(duration: 0.2)) {
-            undoToast = UndoToast(message: message, undo: undo)
-        }
-        undoDismiss = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(4))
-            guard !Task.isCancelled else { return }
-            withAnimation(.easeOut(duration: 0.2)) { self?.undoToast = nil }
-        }
-    }
-
-    /// Tapped Undo — run the restore and dismiss the toast.
-    func performUndo() {
-        undoDismiss?.cancel()
-        let toast = undoToast
-        withAnimation(.easeOut(duration: 0.2)) { undoToast = nil }
-        toast?.undo()
-        haptic(.light)
     }
 }

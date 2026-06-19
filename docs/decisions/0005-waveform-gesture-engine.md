@@ -149,3 +149,36 @@ the first finger down). Rationalised:
 
 This supersedes round 2's "Tap mode is punch in/out" and the original Scroll-hold marker
 drop. Fine mode and the loop edit flow (audition + Y/N, ADR 0005 round 3) are unchanged.
+
+## Update (2026-06-19, round 5) — long-press-drag to select a loop
+
+The action-bar **Loop** button punches a loop at the *playhead* (in→out), but defining a
+loop's **range directly on the waveform** still meant entering Fine and nudging two handles.
+Round 4 freed the long-press slot (the hold-to-drop-marker gesture was deleted), so it's
+now the primary deliberate loop-creation gesture:
+
+- **Navigate mode: a still hold (~350 ms) then drag paints a loop region.** The hold arms
+  the selection (medium haptic confirms the switch from scrub to select); the drag grows the
+  green region under the finger; release commits it to a confirmable draft (auto-named on Y,
+  ADR 0019). A quick drag (movement before the hold fires) is still a scrub; a tap is still a
+  seek — disambiguated purely by **hold duration**, the established single-`DragGesture`
+  threshold model.
+- **Still one `DragGesture(minimumDistance: 0)`, not a composed `LongPressGesture`.** The hold
+  is a cancellable `Task` timer inside the existing recogniser (the same mechanism the original
+  650 ms marker-hold used, re-expressed Swift-6-clean as a `Task` instead of a `Timer`). This
+  keeps ADR 0005's core decision intact: one pipeline, explicit thresholds, no cross-gesture
+  composition.
+- **Live drag is exact; commit widens to the minimum.** New pure `WaveformGesture.selectionBounds`
+  orders anchor+current with no min-width, so the region tracks the finger precisely; the
+  commit runs it through `loopBounds` (min-width) so a barely-moved hold still makes a usable
+  loop. Both unit-tested.
+
+**Gesture arbitration re-checked (now four gestures).** Reintroducing a hold timer reintroduces
+the pinch↔hold race round 4 had removed (both start on the first finger). Mitigation: the hold
+`Task` is cancelled, and any already-armed selection aborted (`onSelectCancelled`), the moment
+`MagnifyGesture.onChanged` fires — so a second finger is always authoritative for zoom. The
+existing `didPinch` latch (magnify's `onEnded` precedes the drag's, swallowing the phantom
+tap) is unchanged; the drag's `onEnded` cancels the hold and commits a selection only when no
+pinch was involved. The selection is also gated so it can't start while a capture/forming
+region is already live (`canBeginSelection`), and the edit toolbar/transport lock stay back
+until release (`isDragSelecting` gates `showConfirm`) so the transport doesn't flicker mid-drag.

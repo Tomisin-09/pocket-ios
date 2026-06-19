@@ -165,9 +165,12 @@ rename it later from its row. **N** discards. You leave edit mode via Y/N, not b
 switching modes. Deleting a loop or marker raises a **"Deleted X · Undo"** toast at
 the bottom of the cockpit (auto-dismiss ~4s) to reverse an accidental delete (ADR 0019).
 
-**Interaction (ADR 0005 round 4):** one rule for touch — **tap = seek, drag =
-scrub, pinch = zoom** (the "Navigate" default). Capturing at the playhead is done
-with the **action-bar buttons**, not gestures:
+**Interaction (ADR 0005 rounds 4–5):** one rule for touch — **tap = seek, drag =
+scrub, hold-drag = select a loop, pinch = zoom** (the "Navigate" default). A still
+**hold (~350 ms) then drag** paints a loop region directly on the waveform (a haptic
+confirms the hold armed; release commits it to a confirmable draft) — the on-waveform
+way to set a loop's *range*. Capturing **at the playhead** is done with the
+**action-bar buttons**:
 - **Mark** → drop a marker at the playhead (then name it).
 - **Loop** → punch the loop in, then out, at the playhead (green region fills; the
   edit toolbar appears on the out-punch).
