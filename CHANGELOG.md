@@ -17,6 +17,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   them. ADR 0017.
 
 ### Added
+- **See your whole loop & marker library on the waveform** — the detail waveform and
+  minimap now draw **all** saved loops and markers, not just the active one. Markers
+  hang as **pins from the top**; loops sit as **brackets along the bottom**. When loops
+  **overlap or nest**, they **stack into lanes** (the later one drops a row) so overlap
+  reads by position — colour stays reserved for state, with the **active loop** drawn
+  brighter (plus its usual fill). ADR 0018.
 - **Automator — per-loop speed trainer** — each loop row now has an **"A" control**
   (replacing the old speed·repeats text). Set a **start %**, a **target %**, how many
   **steps** to get there, and how many **loops per step** — the loop then ramps its speed

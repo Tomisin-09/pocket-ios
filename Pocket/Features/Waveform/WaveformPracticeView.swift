@@ -64,6 +64,8 @@ struct WaveformPracticeView: View {
                     WaveformView(amplitudes: model.amplitudes,                   // 5
                                  playheadFraction: model.playheadFraction,
                                  loop: model.activeLoop,
+                                 loops: model.loops,
+                                 markerFractions: model.markers.map { $0.seconds / model.duration },
                                  mode: model.mode,
                                  formingStart: model.pendingStart,
                                  fineSelection: model.fineSelection,

@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · AudioMath · WaveformGesture (pure)
+│              TempoMath · AudioMath · WaveformGesture · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -51,7 +51,11 @@ The reduction is **transient-resistant energy, percentile-normalised** (512 bars
 each bar is the median of several short RMS sub-windows, so the envelope tracks the
 sustained music and steps over rhythmic spikes (a snare) rather than flat-topping on
 loud masters; the bucket count doubles as a stored-format version that re-extracts
-pre-ADR-0017 waveforms on open.
+pre-ADR-0017 waveforms on open. The detail waveform and minimap draw the **whole**
+loop/marker library — markers as pins from the top, loops as brackets along the
+bottom; overlapping/nested loops **stack into lanes** (pure `LoopLanes` interval
+packing, unit-tested) so overlap reads by position while colour stays reserved for
+state (the active loop is drawn brighter). ADR 0018.
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body

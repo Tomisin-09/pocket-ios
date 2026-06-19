@@ -49,11 +49,20 @@ import SwiftUI
 }
 
 #Preview("Waveform — Navigate") {
-    ZStack {
+    // Overlapping + nested loops to show lane-stacking (ADR 0018): a wide loop
+    // with a tight one nested inside, plus an overlapping third, and two markers.
+    let loops = [
+        Loop(name: "Whole solo", start: 0.18, end: 0.78, speed: 1.0, repeats: 2),
+        Loop(name: "Hard lick", start: 0.40, end: 0.50, speed: 0.6, repeats: 6),
+        Loop(name: "Outro", start: 0.70, end: 0.92, speed: 0.9, repeats: 2)
+    ]
+    return ZStack {
         PocketColor.background.ignoresSafeArea()
         WaveformView(amplitudes: Song.sample().amplitudes,
                      playheadFraction: 0.35,
-                     loop: Song.sample().loops.first,
+                     loop: loops.first,
+                     loops: loops,
+                     markerFractions: [0.27, 0.6],
                      mode: .navigate, formingStart: nil, fineSelection: nil,
                      tapSelection: nil,
                      playheadLabel: "0:10",
@@ -69,6 +78,8 @@ import SwiftUI
         WaveformView(amplitudes: Song.sample().amplitudes,
                      playheadFraction: 0.35,
                      loop: nil,
+                     loops: Song.sample().loops,
+                     markerFractions: [],
                      mode: .fine, formingStart: nil, fineSelection: (0.30, 0.62),
                      tapSelection: nil,
                      playheadLabel: "0:10",
@@ -174,6 +185,8 @@ import SwiftUI
             WaveformView(amplitudes: song.amplitudes,
                          playheadFraction: 0.35,
                          loop: song.loops.first,
+                         loops: song.loops,
+                         markerFractions: song.markers.map { $0.seconds / song.duration },
                          mode: .navigate, formingStart: nil, fineSelection: nil,
                          tapSelection: nil,
                          playheadLabel: "0:10",

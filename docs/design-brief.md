@@ -126,11 +126,18 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
    "New loop" / "Editing loop" · **Y/N**) while a loop is captured
 4. Waveform (detail view) — **SoundCloud-style mirrored bars**: top half full
    opacity, bottom half ~60% reflection. **Pinch to zoom** into a section (the view
-   tracks the playhead).
+   tracks the playhead). Draws the **whole** annotation library: **markers as pins
+   from the top** (purple), **all saved loops as brackets along the bottom** (amber).
+   Overlapping/nested loops **stack into lanes** so overlap reads by position, not
+   colour — colour means *state*: the **active loop** is the brighter bracket (plus
+   its translucent fill), saved loops are dimmed. Lanes are capped (deeper nesting
+   clamps into the last lane); brackets overlay the bars' dead space, so the waveform
+   never changes height. ADR 0018.
 5. Time ruler — labels the **visible window** (follows the zoom)
-6. Minimap (full song, compressed) — loop regions (amber), fine selection (blue),
-   marker dots (purple), playhead, and the **viewport box** (the zoomed slice) when
-   the detail waveform is zoomed.
+6. Minimap (full song, compressed) — the active loop region (amber fill), **all saved
+   loops** as thin underlines along the bottom (compressed, ≤2 lanes), fine selection
+   (blue), marker dots (purple), playhead, and the **viewport box** (the zoomed slice)
+   when the detail waveform is zoomed.
 7. Transport bar — row 1: play/pause · time · loop info (name + range + ✕ exit chip).
    Row 2: the **action bar** — **Mark** (drop marker), **Loop** (punch in/out),
    **Fine** (precise-edit toggle), and a reserved **Auto** slot (automator, ADR 0009).

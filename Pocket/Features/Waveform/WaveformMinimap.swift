@@ -51,12 +51,32 @@ struct Minimap: View {
             context.fill(Path(roundedRect: base, cornerRadius: 2),
                          with: .color(PocketColor.barPlayed))
 
-            // Loop region (amber).
+            // Active loop region (amber fill) — the prominent one.
             if let loop = activeLoop {
                 let startX = size.width * loop.start
                 let rect = CGRect(x: startX, y: 0, width: size.width * (loop.end - loop.start), height: size.height)
                 context.fill(Path(roundedRect: rect, cornerRadius: 2),
                              with: .color(PocketColor.marker.opacity(0.5)))
+            }
+
+            // Every saved loop as a thin underline along the bottom — a compressed
+            // version of the detail waveform's brackets, so the minimap shows the
+            // whole loop library at a glance (ADR 0018). Overlaps stack into at
+            // most two lanes; deeper nesting clamps into the last lane.
+            let allLoops = song.loopsByStart
+            if !allLoops.isEmpty {
+                let packing = LoopLanes.pack(allLoops.map {
+                    LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
+                })
+                let maxLanes = 2
+                for loop in allLoops {
+                    let lane = min(packing.lane(for: loop.uid), maxLanes - 1)
+                    let lineY = size.height - 1.5 - CGFloat(lane) * 3
+                    var line = Path()
+                    line.move(to: CGPoint(x: size.width * loop.start, y: lineY))
+                    line.addLine(to: CGPoint(x: size.width * loop.end, y: lineY))
+                    context.stroke(line, with: .color(PocketColor.marker.opacity(0.45)), lineWidth: 1.5)
+                }
             }
 
             // Fine selection (blue) — brief §4.1 minimap.
