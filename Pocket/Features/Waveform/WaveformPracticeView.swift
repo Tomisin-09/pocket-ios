@@ -78,8 +78,10 @@ struct WaveformPracticeView: View {
                                  viewport: model.viewport,
                                  onSetZoomSpan: model.setZoomSpan)
                         // Fit / 1× reset — only while zoomed; sits above the
-                        //    waveform's gestures so its tap wins (ADR 0010).
-                        .overlay(alignment: .topTrailing) {
+                        //    waveform's gestures so its tap wins (ADR 0010). Pinned
+                        //    bottom-trailing so it clears the top-pinned time bubble,
+                        //    which slides along the top edge toward the song's end.
+                        .overlay(alignment: .bottomTrailing) {
                             if model.isZoomed {
                                 ZoomResetButton(action: model.resetZoom)
                                     .padding(8)

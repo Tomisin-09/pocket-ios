@@ -105,7 +105,7 @@ import SwiftUI
                      onSeek: { _ in },
                      onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
                      viewport: (0.30, 0.50), onSetZoomSpan: { _ in })
-            .overlay(alignment: .topTrailing) { ZoomResetButton(action: {}).padding(8) }
+            .overlay(alignment: .bottomTrailing) { ZoomResetButton(action: {}).padding(8) }
             .padding()
     }
 }
