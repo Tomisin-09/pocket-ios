@@ -24,6 +24,13 @@ struct WaveformView: View {
     let amplitudes: [Double]
     let playheadFraction: Double
     let loop: Loop?
+    /// Every saved loop on the song — drawn as lane-stacked brackets along the
+    /// bottom so the whole loop library reads against the timeline, not just the
+    /// active one. Overlap is shown by lane (vertical position); colour stays
+    /// reserved for state (the active loop's bracket is brighter). See ADR 0018.
+    let loops: [Loop]
+    /// Saved markers as song fractions (0…1) — drawn as pins dropping from the top.
+    let markerFractions: [Double]
     let mode: WaveformPracticeView.InteractionMode
     /// Loop punch in progress: the start of the loop being captured. The region from
     /// here to the live playhead fills green as playback previews it.
@@ -131,6 +138,11 @@ struct WaveformView: View {
 
         drawBars(in: context, size: size, barWidth: barWidth, midY: midY, playheadX: playheadX)
 
+        // Saved-loop brackets (bottom, lane-stacked) and marker pins (top). Drawn
+        // over the bars so the whole loop/marker library reads against the timeline.
+        drawLoopBrackets(in: context, size: size, atX: atX)
+        drawMarkerPins(in: context, size: size, atX: atX)
+
         // Playhead.
         var line = Path()
         line.move(to: CGPoint(x: playheadX, y: 0))
@@ -152,6 +164,71 @@ struct WaveformView: View {
             // Reflection at ~60% — brief §4.1.
             context.fill(Path(CGRect(x: barX, y: midY, width: barWidth, height: topHeight * 0.6)),
                          with: .color(color.opacity(0.6)))
+        }
+    }
+
+    // Bracket layout (overlay, ADR 0018): brackets live in the dead space below
+    // the reflected bars, stacked upward from the bottom. Capped at `maxLanes` so
+    // deep nesting can't march up into the bars — anything deeper clamps into the
+    // last lane.
+    private static let maxLanes = 3
+    private static let laneHeight: CGFloat = 7
+    private static let bracketPadding: CGFloat = 3
+    private static let bracketFoot: CGFloat = 5
+
+    /// All saved loops as lane-stacked brackets along the bottom. Overlap is shown
+    /// by lane; colour is reserved for state — the active loop's bracket is full
+    /// amber, the rest are dimmed. The active loop is drawn last so it stays on top.
+    private func drawLoopBrackets(in context: GraphicsContext, size: CGSize,
+                                  atX: (Double) -> CGFloat) {
+        guard !loops.isEmpty else { return }
+        let packing = LoopLanes.pack(loops.map {
+            LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
+        })
+
+        func bracket(_ loop: Loop, isActive: Bool) {
+            let startX = atX(loop.start)
+            let endX = atX(loop.end)
+            guard endX > 0, startX < size.width else { return }       // off-screen
+            let lane = min(packing.lane(for: loop.uid), Self.maxLanes - 1)
+            let baseY = size.height - Self.bracketPadding - CGFloat(lane) * Self.laneHeight
+
+            var path = Path()
+            path.move(to: CGPoint(x: max(0, startX), y: baseY))
+            path.addLine(to: CGPoint(x: min(size.width, endX), y: baseY))
+            // Feet point up at the *true* ends — only where the end is on-screen.
+            if startX >= 0 {
+                path.move(to: CGPoint(x: startX, y: baseY))
+                path.addLine(to: CGPoint(x: startX, y: baseY - Self.bracketFoot))
+            }
+            if endX <= size.width {
+                path.move(to: CGPoint(x: endX, y: baseY))
+                path.addLine(to: CGPoint(x: endX, y: baseY - Self.bracketFoot))
+            }
+            let color = PocketColor.marker.opacity(isActive ? 1.0 : 0.5)
+            context.stroke(path, with: .color(color), lineWidth: isActive ? 2 : 1.5)
+        }
+
+        let activeUID = loop?.uid
+        for loop in loops where loop.uid != activeUID { bracket(loop, isActive: false) }
+        if let active = loop, loops.contains(where: { $0.uid == active.uid }) {
+            bracket(active, isActive: true)
+        }
+    }
+
+    /// All saved markers as pins dropping from the top — a dot head with a short stem.
+    private func drawMarkerPins(in context: GraphicsContext, size: CGSize,
+                                atX: (Double) -> CGFloat) {
+        let stemHeight: CGFloat = 10
+        for fraction in markerFractions {
+            let pinX = atX(fraction)
+            guard pinX > -3, pinX < size.width + 3 else { continue }  // off-screen
+            var stem = Path()
+            stem.move(to: CGPoint(x: pinX, y: 0))
+            stem.addLine(to: CGPoint(x: pinX, y: stemHeight))
+            context.stroke(stem, with: .color(PocketColor.pin), lineWidth: 1.5)
+            context.fill(Path(ellipseIn: CGRect(x: pinX - 2.5, y: 0, width: 5, height: 5)),
+                         with: .color(PocketColor.pin))
         }
     }
 
