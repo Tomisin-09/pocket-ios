@@ -89,6 +89,27 @@ import SwiftUI
     }
 }
 
+#Preview("Waveform — zoomed + Fit reset") {
+    // Page-mode (ADR 0010): a zoomed window with the playhead mid-sweep and the
+    // Fit / 1× reset pill in the top-trailing corner.
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        WaveformView(amplitudes: Song.sample().amplitudes,
+                     playheadFraction: 0.40,
+                     loop: Song.sample().loops.first,
+                     loops: Song.sample().loops,
+                     markerFractions: [0.42],
+                     mode: .navigate, formingStart: nil, fineSelection: nil,
+                     tapSelection: nil,
+                     playheadLabel: "0:24",
+                     onSeek: { _ in },
+                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     viewport: (0.30, 0.50), onSetZoomSpan: { _ in })
+            .overlay(alignment: .bottomTrailing) { ZoomResetButton(action: {}).padding(8) }
+            .padding()
+    }
+}
+
 #Preview("Minimap") {
     ZStack {
         PocketColor.background.ignoresSafeArea()

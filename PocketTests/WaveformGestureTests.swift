@@ -110,31 +110,6 @@ final class WaveformGestureTests: XCTestCase {
         XCTAssertEqual(WaveformGesture.clampSpan(0.4), 0.4, accuracy: 1e-9)
     }
 
-    func testViewportCentresOnPoint() {
-        let viewport = WaveformGesture.viewport(center: 0.5, span: 0.2)
-        XCTAssertEqual(viewport.start, 0.4, accuracy: 1e-9)
-        XCTAssertEqual(viewport.end, 0.6, accuracy: 1e-9)
-    }
-
-    func testViewportClampsAtStart() {
-        // Centre near the head — the window stops at 0 but keeps its width.
-        let viewport = WaveformGesture.viewport(center: 0.02, span: 0.2)
-        XCTAssertEqual(viewport.start, 0, accuracy: 1e-9)
-        XCTAssertEqual(viewport.end, 0.2, accuracy: 1e-9)
-    }
-
-    func testViewportClampsAtEnd() {
-        let viewport = WaveformGesture.viewport(center: 0.98, span: 0.2)
-        XCTAssertEqual(viewport.start, 0.8, accuracy: 1e-9)
-        XCTAssertEqual(viewport.end, 1.0, accuracy: 1e-9)
-    }
-
-    func testViewportFullSongSpansWholeTrack() {
-        let viewport = WaveformGesture.viewport(center: 0.3, span: 1)
-        XCTAssertEqual(viewport.start, 0, accuracy: 1e-9)
-        XCTAssertEqual(viewport.end, 1, accuracy: 1e-9)
-    }
-
     func testSongFractionMapsThroughViewport() {
         let viewport = (start: 0.4, end: 0.6)
         XCTAssertEqual(WaveformGesture.songFraction(screenFraction: 0, viewport: viewport), 0.4, accuracy: 1e-9)
@@ -147,5 +122,43 @@ final class WaveformGestureTests: XCTestCase {
         XCTAssertEqual(WaveformGesture.screenFraction(songFraction: 0.4, viewport: viewport), 0, accuracy: 1e-9)
         XCTAssertEqual(WaveformGesture.screenFraction(songFraction: 0.5, viewport: viewport), 0.5, accuracy: 1e-9)
         XCTAssertEqual(WaveformGesture.screenFraction(songFraction: 0.6, viewport: viewport), 1, accuracy: 1e-9)
+    }
+
+    // MARK: Page-mode — pagedStart
+
+    func testPagedStartHoldsStillWithinComfortZone() {
+        // Playhead inside [start, start + 0.9·span] → window does not move.
+        let start = WaveformGesture.pagedStart(currentStart: 0.20, span: 0.20, playhead: 0.30)
+        XCTAssertEqual(start, 0.20, accuracy: 1e-9)
+    }
+
+    func testPagedStartPagesForwardAtThreshold() {
+        // Crossing ~90% across re-anchors so the playhead lands leadIn·span (0.02) in.
+        // start 0.20, span 0.20 → trigger at 0.20 + 0.18 = 0.38; playhead just past it.
+        let start = WaveformGesture.pagedStart(currentStart: 0.20, span: 0.20, playhead: 0.39)
+        XCTAssertEqual(start, 0.39 - 0.1 * 0.20, accuracy: 1e-9)   // 0.37
+    }
+
+    func testPagedStartPagesBackWhenPlayheadSeekedBeforeWindow() {
+        // Seek to before the window → it pages back so the playhead is visible again.
+        let start = WaveformGesture.pagedStart(currentStart: 0.50, span: 0.20, playhead: 0.10)
+        XCTAssertEqual(start, 0.10 - 0.1 * 0.20, accuracy: 1e-9)   // 0.08
+    }
+
+    func testPagedStartClampsAtSongEnd() {
+        // Near the end, the re-anchored window can't run past 1 − span.
+        let start = WaveformGesture.pagedStart(currentStart: 0.70, span: 0.20, playhead: 0.99)
+        XCTAssertEqual(start, 0.80, accuracy: 1e-9)               // 1 − span
+    }
+
+    func testPagedStartFullSongNeverMoves() {
+        // span == 1 → maxStart 0; the window is the whole song wherever the playhead is.
+        XCTAssertEqual(WaveformGesture.pagedStart(currentStart: 0, span: 1, playhead: 0.95), 0, accuracy: 1e-9)
+    }
+
+    func testPagedStartClampsNegativeAnchorAtHead() {
+        // Re-anchoring near the head can't produce a negative start.
+        let start = WaveformGesture.pagedStart(currentStart: 0.50, span: 0.20, playhead: 0.01)
+        XCTAssertEqual(start, 0, accuracy: 1e-9)
     }
 }

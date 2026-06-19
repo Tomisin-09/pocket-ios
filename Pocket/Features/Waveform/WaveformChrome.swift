@@ -73,6 +73,32 @@ struct AudioLoadingOverlay: View {
     }
 }
 
+/// "Fit" pill shown in the waveform's top-trailing corner while zoomed in — the
+/// explicit reset back to the whole song (1× zoom). Double-tap is reserved for
+/// seek, so reset is its own control (ADR 0010 page-mode).
+struct ZoomResetButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label("Fit", systemImage: "arrow.left.and.right")
+                .font(.caption2.weight(.semibold))
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(PocketColor.textPrimary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .fill(PocketColor.background.opacity(0.85))
+                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Fit whole song")
+        .accessibilityHint("Resets zoom to show the entire song")
+    }
+}
+
 /// Transient "Deleted X · Undo" toast after a destructive action (ADR 0019). A
 /// floating pill at the bottom of the cockpit: the message, then an Undo action.
 /// Auto-dismisses on a timer (owned by the model); this view just renders + acts.
