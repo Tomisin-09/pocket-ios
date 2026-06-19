@@ -139,6 +139,14 @@ struct WaveformPracticeView: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
         .preferredColorScheme(.dark)
+        .overlay(alignment: .bottom) {
+            if let toast = model.undoToast {
+                UndoToastView(message: toast.message, onUndo: model.performUndo)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .sheet(item: $model.editingLoop) { loop in
             LoopEditSheet(loop: loop, onDelete: { model.deleteLoop(loop) },
                           onAdjustRange: { model.startRangeEdit(loop) })
@@ -148,9 +156,6 @@ struct WaveformPracticeView: View {
         }
         .sheet(item: $model.namingMarker) { _ in
             MarkerNameSheet(onSave: model.saveMarkerName)
-        }
-        .sheet(item: $model.namingDraft, onDismiss: model.namingDismissed) { _ in
-            LoopNameSheet(onSave: model.saveNamed)
         }
         .sheet(item: $model.editingAutomatorLoop) { loop in
             AutomatorSheet(loop: loop, song: model.song,

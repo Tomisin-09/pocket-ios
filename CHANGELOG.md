@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Loops are created instantly — no naming step.** Confirming a captured region
+  (**Y**) now creates the loop immediately, **auto-named** ("Loop 3") and active —
+  rename it later from its row. The pop-up naming sheet is gone. Markers still ask
+  for a name (a marker *is* its label). ADR 0019.
 - **Waveform reads musically** — the per-bar envelope is now **energy-based and
   transient-resistant** instead of peak: each bar takes the median of several short
   RMS sub-windows, so it tracks the sustained level of the music and steps over
@@ -17,6 +21,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   them. ADR 0017.
 
 ### Added
+- **Undo a delete** — deleting a loop or marker now shows a **"Deleted X · Undo"**
+  toast for a few seconds; tap **Undo** to bring it back exactly as it was (same
+  identity, and re-activated if it was the active loop). ADR 0019.
 - **See your whole loop & marker library on the waveform** — the detail waveform and
   minimap now draw **all** saved loops and markers, not just the active one. Markers
   hang as **pins from the top**; loops sit as **brackets along the bottom**. When loops
