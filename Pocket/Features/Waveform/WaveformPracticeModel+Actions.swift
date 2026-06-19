@@ -86,10 +86,15 @@ extension WaveformPracticeModel {
         }
     }
 
-    /// Scroll-mode tap and Tap-mode scrub: move the playhead to a song fraction.
+    /// Scroll-mode tap and Tap-mode scrub: move the playhead to a song fraction. Used
+    /// for *continuous* moves (scrub, minimap) where snapping would feel jumpy — the
+    /// snapping variant `seekSnapping` is wired only to the tap-seek *release*.
     func seekToFraction(_ fraction: Double) {
         engine.seek(toSeconds: fraction * duration)
     }
+
+    // Snap-to-marker/loop-edge helpers (`snapTarget`, `seekSnapping`, …) live in
+    // `WaveformPracticeModel+Snap.swift` (ADR 0021), split out for file length.
 
     /// Tap a marker in the list: seek the playhead to it.
     func seekToMarker(_ marker: Marker) {
@@ -160,7 +165,11 @@ extension WaveformPracticeModel {
     /// `showConfirm` flips true, raising the Y/N edit toolbar.
     func endDragSelection() {
         guard let draft = capture, dragSelectAnchor != nil else { return }
-        let bounds = WaveformGesture.loopBounds(draft.start, draft.end)
+        // Snap each edge to a nearby marker / saved-loop boundary (ADR 0021). The
+        // commit `haptic(.medium)` below is the catch feedback — no extra snap buzz.
+        let snappedStart = snapTarget(draft.start) ?? draft.start
+        let snappedEnd = snapTarget(draft.end) ?? draft.end
+        let bounds = WaveformGesture.loopBounds(snappedStart, snappedEnd)
         capture = CaptureDraft(start: bounds.start, end: bounds.end, fromFine: false, editingLoop: nil)
         dragSelectAnchor = nil
         isDragSelecting = false
@@ -181,12 +190,32 @@ extension WaveformPracticeModel {
     /// Fine mode: drag a blue handle (bounds stay ordered + min-width apart).
     func moveFineHandle(_ handle: WaveformGesture.Handle, _ fraction: Double) {
         guard let current = capture else { return }
+        lastFineHandle = handle          // remember which edge to snap on release
         let bounds = WaveformGesture.movingHandle(handle, toFraction: fraction,
                                                   start: current.start, end: current.end)
         capture = CaptureDraft(start: bounds.start, end: bounds.end,
                                fromFine: true, editingLoop: current.editingLoop)
         // Audio preview is committed on handle release (onMoveHandleEnded →
-        // previewCapture), not per drag-frame — dragging only moves the handles.
+        // endMoveHandle), not per drag-frame — dragging only moves the handles.
+    }
+
+    /// Fine handle *release* — snap the just-moved edge to a nearby marker / loop
+    /// boundary (excluding the loop being range-edited, so it doesn't catch its own
+    /// edges), then audition the new bounds (ADR 0021). The other handle stays put;
+    /// `movingHandle` keeps the min-width, so a snap can't collapse the loop.
+    func endMoveHandle() {
+        if let handle = lastFineHandle, let current = capture {
+            let edge = handle == .start ? current.start : current.end
+            if let target = snapTarget(edge, excluding: current.editingLoop) {
+                let bounds = WaveformGesture.movingHandle(handle, toFraction: target,
+                                                          start: current.start, end: current.end)
+                capture = CaptureDraft(start: bounds.start, end: bounds.end,
+                                       fromFine: true, editingLoop: current.editingLoop)
+                haptic(.light)
+            }
+        }
+        lastFineHandle = nil
+        previewCapture()
     }
 
     /// Enter Fine → seed selection + pill; leave → drop unsaved; any switch clears a Tap capture.

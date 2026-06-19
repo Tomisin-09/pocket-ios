@@ -45,7 +45,12 @@ from the source file at full detail** (`WaveformExtractor.extractWindow` → the
 `AudioMath.downsample`, off the main actor, debounced on viewport settle and cached by
 window) so a deep zoom resolves real transients instead of stretching the stored
 whole-song envelope; the stored 512-bar envelope stays the zoomed-out and fallback path
-(ADR 0020). An active loop **loops continuously, gaplessly and click-free** — the
+(ADR 0020). On a gesture **release** — a drawn loop edge, a Fine handle, or a tap-seek —
+the boundary **snaps to a nearby marker or saved-loop edge** if one is within an
+on-screen tolerance (pure `WaveformGesture.snap`, candidates sourced and tolerance
+scaled by zoom in `WaveformPracticeModel+Snap.swift`, light haptic on a catch);
+continuous scrub and the minimap stay un-snapped (ADR 0021). An active loop **loops
+continuously, gaplessly and click-free** — the
 engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
 both gapless and free of the splice click; the visual playhead wraps via pure

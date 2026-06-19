@@ -212,4 +212,38 @@ final class WaveformGestureTests: XCTestCase {
         let start = WaveformGesture.pagedStart(currentStart: 0.50, span: 0.20, playhead: 0.01)
         XCTAssertEqual(start, 0, accuracy: 1e-9)
     }
+
+    // MARK: Snap to markers / loop edges — snap(_:to:tolerance:) (ADR 0021)
+
+    func testSnapCatchesNearestCandidateWithinTolerance() throws {
+        // 0.32 is within 0.05 of the candidate at 0.30 → snaps to it.
+        let snapped = try XCTUnwrap(WaveformGesture.snap(0.32, to: [0.10, 0.30, 0.80], tolerance: 0.05))
+        XCTAssertEqual(snapped, 0.30, accuracy: 1e-9)
+    }
+
+    func testSnapReturnsNilWhenNothingInRange() {
+        // Closest candidate (0.30) is 0.10 away, beyond the 0.05 tolerance → no snap.
+        XCTAssertNil(WaveformGesture.snap(0.40, to: [0.10, 0.30, 0.80], tolerance: 0.05))
+    }
+
+    func testSnapPicksNearerOfTwoInRange() throws {
+        // Both 0.30 and 0.34 are within tolerance of 0.33; the nearer (0.34) wins.
+        let snapped = try XCTUnwrap(WaveformGesture.snap(0.33, to: [0.30, 0.34], tolerance: 0.05))
+        XCTAssertEqual(snapped, 0.34, accuracy: 1e-9)
+    }
+
+    func testSnapAtExactBoundaryCatches() throws {
+        // Distance exactly equal to tolerance still snaps (inclusive).
+        let snapped = try XCTUnwrap(WaveformGesture.snap(0.25, to: [0.30], tolerance: 0.05))
+        XCTAssertEqual(snapped, 0.30, accuracy: 1e-9)
+    }
+
+    func testSnapEmptyCandidatesReturnsNil() {
+        XCTAssertNil(WaveformGesture.snap(0.5, to: [], tolerance: 0.05))
+    }
+
+    func testSnapZeroToleranceOnlyOnExactHit() {
+        XCTAssertNil(WaveformGesture.snap(0.50001, to: [0.5], tolerance: 0))
+        XCTAssertEqual(WaveformGesture.snap(0.5, to: [0.5], tolerance: 0), 0.5)
+    }
 }
