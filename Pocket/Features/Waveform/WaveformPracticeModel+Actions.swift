@@ -37,18 +37,21 @@ extension WaveformPracticeModel {
         namingMarker = nil
     }
 
-    /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd stops + confirms.
+    /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd closes the loop and
+    /// **starts looping the punched region immediately** (no separate ▶), still as a
+    /// draft you confirm with Y / discard with N.
     func tapPunch() {
         if let start = pendingStart {
             let bounds = WaveformGesture.loopBounds(start, playheadFraction)
-            engine.pause()
             pendingStart = nil
             haptic(.medium)
             withAnimation(.easeOut(duration: 0.28)) {
                 capture = CaptureDraft(start: bounds.start, end: bounds.end,
                                        fromFine: false, editingLoop: nil)
             }
-            previewCapture()   // arm the engine loop so the punch can be auditioned
+            previewCapture()                              // arm the engine loop region…
+            engine.seek(toSeconds: bounds.start * duration)
+            engine.play()                                 // …and loop it at once, so the 2nd tap plays
         } else {
             pendingStart = playheadFraction
             engine.play()
@@ -107,7 +110,8 @@ extension WaveformPracticeModel {
 
     /// Create, persist, and activate a new loop with an auto name ("Loop 3"). No
     /// naming sheet — the range is visible on the waveform and it's renamed from the
-    /// loop row (ADR 0019).
+    /// loop row (ADR 0019). Starts looping straight away (seek to start + play) so a
+    /// freshly punched loop plays without a separate tap on ▶.
     func createLoop(start: Double, end: Double) {
         let name = AutoName.next(prefix: "Loop", existing: loops.map(\.name))
         let loop = Loop(name: name, start: start, end: end, speed: speed, repeats: 4)
@@ -115,6 +119,8 @@ extension WaveformPracticeModel {
         loop.song = song          // attach → shows in `loops`, persists
         activeLoopID = loop.uid
         applyActiveLoopToEngine()
+        engine.seek(toSeconds: loop.startSeconds)
+        engine.play()
     }
 
     /// Confirm ✗ — discard the capture outright (and leave Fine).

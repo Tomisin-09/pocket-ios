@@ -77,8 +77,9 @@ markers as pins from the top, **all** saved loops as brackets along the bottom;
 overlapping/nested loops **stack into lanes** (pure, unit-tested `LoopLanes`) so
 overlap reads by position while colour stays reserved for state, the active loop
 brighter (ADR 0018). New loops are created **instantly** on confirm — auto-named
-("Loop 3", via pure `AutoName`) and activated, no naming sheet (markers still ask
-for a label, since a marker *is* its label); deleting a loop or marker offers an
+("Loop 3", via pure `AutoName`), activated, and **looping immediately** (no separate
+play tap), no naming sheet (markers still ask for a label, since a marker *is* its
+label); deleting a loop or marker offers an
 **Undo** toast that restores it with its original identity (ADR 0019).
 State + handlers live in an `@Observable` `WaveformPracticeModel`
 (ADR 0007), now bound to a **persisted `Song`** — loops/markers are SwiftData

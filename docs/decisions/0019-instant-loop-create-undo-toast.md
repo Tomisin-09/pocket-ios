@@ -26,6 +26,14 @@ sheet destroyed it with no safety net.
   ("Loop 3"). The naming sheet, `NamingDraft`, `saveNamed`, and `namingDismissed`
   are removed; `confirmCapture` calls `createLoop`. You rename later from the loop
   row (`LoopEditSheet`), where renaming already lived.
+- **A loop plays the moment it's closed, not just on commit.** In Tap (loop) mode the
+  **second punch tap** now starts looping the punched region immediately — `tapPunch`
+  arms the loop and plays from the region start instead of pausing into a silent draft.
+  The Y/N draft is still there (audition, then keep or discard), but you *hear* the loop
+  while deciding. `createLoop` also seeks-and-plays on commit, so every create path
+  (including Fine mode) ends up looping. Quick-capture intent is "draw → hear it"; an
+  armed-but-silent loop would still need a play tap, which is the friction this slice
+  removes.
 - **Auto names track a high-water mark, not a count.** `AutoName.next(prefix:existing:)`
   returns one past the highest trailing number among existing `"Loop <n>"` names,
   ignoring user-typed names. So deleting "Loop 2" of {1,2,3} yields "Loop 4", never
@@ -48,7 +56,7 @@ sheet destroyed it with no safety net.
 
 ## Consequences
 
-- Loop capture is one tap shorter: draw → **Y** → looping, named, done. The
+- Loop capture is one tap shorter: draw → **Y** → looping (audibly), named, done. The
   loops panel fills with "Loop 1/2/3…" until renamed.
 - Undo restores identity faithfully (same `uid`), so anything keyed on the loop's
   business id (active tracking, future journal links) survives a delete+undo.
