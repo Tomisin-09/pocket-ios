@@ -67,8 +67,17 @@ Colour carries meaning and is consistent everywhere:
 | `fine` | blue | Fine-mode precision selection |
 | `pin` | purple | Waveform markers (single-point) |
 | `danger` | red | Delete / destructive |
-| `barDefault` | white @ 35% | Waveform bar, default |
-| `barPlayed` | white @ 18% | Waveform bar, before playhead |
+| `barDefault` | white @ 35% | Neutral "off" fill — empty proficiency dots, minimap base track |
+| `barPlayed` | white @ 18% | Neutral track (minimap) |
+| `waveformBar` | green @ 75% | Detail-waveform bar, ahead of the playhead |
+| `waveformBarPlayed` | green @ 40% | Detail-waveform bar, behind the playhead (recedes) |
+
+The detail waveform is tinted the **green** accent so the song's energy reads as
+themed content and stays clearly distinct from the neutral (white) **beat grid**
+drawn behind it (ADR 0022). Green therefore reads as "the live audio" — the
+playing/active-loop cue it also carries (`active`) is consistent with that:
+both are about the sound that's moving. The capture overlays (forming/punch
+green wash) still sit *over* the bars and remain bounded by the playhead.
 
 No gradients **except** the tempo-automator progress bar (green → amber, to
 signal progression from comfortable to target speed).

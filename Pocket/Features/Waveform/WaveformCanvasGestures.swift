@@ -88,10 +88,15 @@ extension WaveformView {
             return
         }
         let fraction = songFraction(atX: value.location.x, width: width)
-        let moved = abs(value.location.x - (dragStartX ?? value.location.x))
         switch mode {
         case .navigate:
-            if !didScrub && moved <= scrubThreshold { onSeek(fraction) }   // a tap = seek
+            // Seek-and-snap on release for BOTH a tap and a scrub. The live scrub in
+            // `.onChanged` stayed raw (un-snapped) so it tracked the finger, but the
+            // *release* catches the nearest marker / loop edge / beat. Previously only a
+            // clean tap (≤ scrubThreshold) snapped; a tap that drifted past the threshold
+            // fell through and never caught — the Navigate-mode gap behind ADR 0021's
+            // catch (it worked in Fine mode via `endMoveHandle`). ADR 0021 amendment.
+            onSeek(fraction)
         case .fine:
             if grabbedHandle != nil { onMoveHandleEnded() }   // audition the new bounds
             grabbedHandle = nil

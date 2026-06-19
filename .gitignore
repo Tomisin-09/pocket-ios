@@ -53,3 +53,6 @@ infrastructure/**/*.tfvars
 # committed or shipped. Our derivatives live in docs/research/ instead.
 # Anchored to repo root so it does NOT match docs/research/.
 /research/
+
+# graphify knowledge-graph output (local tooling, not part of the app)
+graphify-out/

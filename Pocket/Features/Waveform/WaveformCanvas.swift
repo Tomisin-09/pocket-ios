@@ -208,7 +208,7 @@ struct WaveformView: View {
                 index: index, count: count, coveredStart: barSet.start, coveredEnd: barSet.end)
             let barX = CGFloat(screenX(songFraction)) * size.width
             guard barX > -barWidth, barX < size.width else { continue }   // off-screen
-            let color = barX <= playheadX ? PocketColor.barPlayed : PocketColor.barDefault
+            let color = barX <= playheadX ? PocketColor.waveformBarPlayed : PocketColor.waveformBar
             let topHeight = CGFloat(amp) * midY
             context.fill(Path(CGRect(x: barX, y: midY - topHeight, width: barWidth, height: topHeight)),
                          with: .color(color))

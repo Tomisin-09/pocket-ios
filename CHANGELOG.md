@@ -27,6 +27,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   punches one at the playhead). ADR 0005 (round 5).
 
 ### Changed
+- **The waveform is now green** — the detail waveform's bars are tinted the app's
+  green accent (brighter ahead of the playhead, receding behind it) instead of plain
+  white, so the song reads as themed content and stands clearly apart from the faint
+  white **beat grid** drawn behind it (they used to both be white and blur together).
 - **Deep zoom now shows real detail, not stretched blocks** — when you pinch in close,
   the waveform **re-reads that slice of the song from the file** and draws it at full
   resolution, so individual note onsets and transients resolve where you're working
