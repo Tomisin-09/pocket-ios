@@ -95,6 +95,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   new region on handle-release (you hear only the edited loop, not the saved one);
   discarding restores the saved bounds.
 
+### Fixed
+- **Pinch-to-zoom no longer jumps the playhead** — finishing a pinch used to fire a
+  stray tap-to-seek (and the spread could scrub mid-pinch), because the tap gesture
+  only knew a pinch was happening while it was *mid*-pinch. The waveform now latches
+  that a pinch occurred for the whole touch and swallows the trailing seek/scrub.
+
 ### Changed
 - **Naming a new loop or marker is now just a name** — no position/range readout and
   no delete button (Cancel already discards a brand-new one). A dropped marker isn't

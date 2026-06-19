@@ -59,6 +59,7 @@ struct WaveformView: View {
     @State private var didScrub = false                     // moved enough to be a scrub (not a tap)
     @State private var grabbedHandle: WaveformGesture.Handle?  // Fine mode
     @State private var pinchBaseSpan: Double?               // zoom span captured at pinch start
+    @State private var didPinch = false                    // a pinch happened — swallow the trailing tap/scrub
 
     private let scrubThreshold: CGFloat = 6                 // px before a press counts as a scrub vs a tap
     private let handleTolerance = 0.06                      // fraction either side of a handle that grabs it
@@ -250,10 +251,13 @@ struct WaveformView: View {
     private var magnifyGesture: some Gesture {
         MagnifyGesture()
             .onChanged { value in
+                didPinch = true   // latched until the drag's onEnded clears it (ordering: magnify ends first)
                 let base = pinchBaseSpan ?? (viewport.end - viewport.start)
                 pinchBaseSpan = base
                 onSetZoomSpan(WaveformGesture.clampSpan(base / value.magnification))
             }
+            // Leave `didPinch` set — magnify.onEnded fires *before* drag.onEnded, so
+            // the drag uses it to swallow the trailing phantom tap, then clears it.
             .onEnded { _ in pinchBaseSpan = nil }
     }
 
@@ -266,7 +270,8 @@ struct WaveformView: View {
     }
 
     private func handleChanged(_ value: DragGesture.Value, width: CGFloat) {
-        guard pinchBaseSpan == nil else { return }   // ignore the drag while pinching
+        if dragStartX == nil, pinchBaseSpan == nil { didPinch = false }   // fresh touch — clear any stale pinch latch
+        guard pinchBaseSpan == nil, !didPinch else { return }   // ignore the drag while/after pinching
         let fraction = songFraction(atX: value.location.x, width: width)
         if dragStartX == nil {
             dragStartX = value.startLocation.x
@@ -286,7 +291,14 @@ struct WaveformView: View {
     }
 
     private func handleEnded(_ value: DragGesture.Value, width: CGFloat) {
-        guard pinchBaseSpan == nil else { dragStartX = nil; return }
+        // A pinch this touch sequence — swallow the lift-off tap/scrub, then reset
+        // the latch for the next gesture. (Fixes pinch-zoom firing a phantom seek.)
+        if didPinch || pinchBaseSpan != nil {
+            didPinch = false
+            grabbedHandle = nil
+            dragStartX = nil
+            return
+        }
         let fraction = songFraction(atX: value.location.x, width: width)
         let moved = abs(value.location.x - (dragStartX ?? value.location.x))
         switch mode {
