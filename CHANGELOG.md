@@ -31,6 +31,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   green accent (brighter ahead of the playhead, receding behind it) instead of plain
   white, so the song reads as themed content and stands clearly apart from the faint
   white **beat grid** drawn behind it (they used to both be white and blur together).
+- **Loop brackets and marker pins are cleaner and easier to read** — a visual polish
+  pass on the saved-loop brackets and marker pins drawn along the waveform: rounded
+  caps, a clearer active-vs-saved weight (the active loop's bracket is heavier with
+  taller feet; parked loops sit back at lower contrast), slightly larger pin heads, and
+  a subtle halo so a parked bracket or a pin stays legible where it crosses a loud part
+  of the waveform. No behaviour change — purely how they look. ADR 0018 follow-up.
 - **Deep zoom now shows real detail, not stretched blocks** — when you pinch in close,
   the waveform **re-reads that slice of the song from the file** and draws it at full
   resolution, so individual note onsets and transients resolve where you're working

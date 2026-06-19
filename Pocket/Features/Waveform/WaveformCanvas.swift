@@ -225,11 +225,19 @@ struct WaveformView: View {
     private static let maxLanes = 3
     private static let laneHeight: CGFloat = 7
     private static let bracketPadding: CGFloat = 3
-    private static let bracketFoot: CGFloat = 5
+    // Feet are taller on the active loop so it reads as the foreground even where a
+    // parked bracket shares its lane height (visual-polish pass, ADR 0018 follow-up).
+    private static let bracketFootActive: CGFloat = 6
+    private static let bracketFootSaved: CGFloat = 4
 
     /// All saved loops as lane-stacked brackets along the bottom. Overlap is shown
     /// by lane; colour is reserved for state — the active loop's bracket is full
     /// amber, the rest are dimmed. The active loop is drawn last so it stays on top.
+    ///
+    /// Polish pass (ADR 0018 follow-up): rounded caps soften the corners, the active
+    /// loop is heavier (2.5 pt, full opacity, taller feet) against dimmer parked
+    /// brackets (1.5 pt, 0.4 opacity), and a near-background halo lifts every bracket
+    /// off the bar reflections so a parked loop stays legible over a loud transient.
     private func drawLoopBrackets(in context: GraphicsContext, size: CGSize,
                                   atX: (Double) -> CGFloat) {
         guard !loops.isEmpty else { return }
@@ -243,6 +251,7 @@ struct WaveformView: View {
             guard endX > 0, startX < size.width else { return }       // off-screen
             let lane = min(packing.lane(for: loop.uid), Self.maxLanes - 1)
             let baseY = size.height - Self.bracketPadding - CGFloat(lane) * Self.laneHeight
+            let foot = isActive ? Self.bracketFootActive : Self.bracketFootSaved
 
             var path = Path()
             path.move(to: CGPoint(x: max(0, startX), y: baseY))
@@ -250,14 +259,18 @@ struct WaveformView: View {
             // Feet point up at the *true* ends — only where the end is on-screen.
             if startX >= 0 {
                 path.move(to: CGPoint(x: startX, y: baseY))
-                path.addLine(to: CGPoint(x: startX, y: baseY - Self.bracketFoot))
+                path.addLine(to: CGPoint(x: startX, y: baseY - foot))
             }
             if endX <= size.width {
                 path.move(to: CGPoint(x: endX, y: baseY))
-                path.addLine(to: CGPoint(x: endX, y: baseY - Self.bracketFoot))
+                path.addLine(to: CGPoint(x: endX, y: baseY - foot))
             }
-            let color = PocketColor.marker.opacity(isActive ? 1.0 : 0.5)
-            context.stroke(path, with: .color(color), lineWidth: isActive ? 2 : 1.5)
+            let width: CGFloat = isActive ? 2.5 : 1.5
+            // Contrast halo behind, then the amber bracket. Round caps on both.
+            context.stroke(path, with: .color(PocketColor.background.opacity(0.55)),
+                           style: StrokeStyle(lineWidth: width + 1.5, lineCap: .round, lineJoin: .round))
+            context.stroke(path, with: .color(PocketColor.marker.opacity(isActive ? 1.0 : 0.4)),
+                           style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
         }
 
         let activeUID = loop?.uid
@@ -267,19 +280,30 @@ struct WaveformView: View {
         }
     }
 
-    /// All saved markers as pins dropping from the top — a dot head with a short stem.
+    /// All saved markers as pins dropping from the top — a round head on a short stem.
+    ///
+    /// Polish pass (ADR 0018 follow-up): the head is a touch larger (6 pt) with a
+    /// rounded stem cap, and a near-background halo rings the head and backs the stem
+    /// so a purple pin stays crisp where it crosses bright bars near the top edge.
     private func drawMarkerPins(in context: GraphicsContext, size: CGSize,
                                 atX: (Double) -> CGFloat) {
-        let stemHeight: CGFloat = 10
+        let stemHeight: CGFloat = 11
+        let headRadius: CGFloat = 3
         for fraction in markerFractions {
             let pinX = atX(fraction)
-            guard pinX > -3, pinX < size.width + 3 else { continue }  // off-screen
+            guard pinX > -4, pinX < size.width + 4 else { continue }  // off-screen
             var stem = Path()
             stem.move(to: CGPoint(x: pinX, y: 0))
             stem.addLine(to: CGPoint(x: pinX, y: stemHeight))
-            context.stroke(stem, with: .color(PocketColor.pin), lineWidth: 1.5)
-            context.fill(Path(ellipseIn: CGRect(x: pinX - 2.5, y: 0, width: 5, height: 5)),
-                         with: .color(PocketColor.pin))
+            // Halo, then the purple stem — round caps on both.
+            context.stroke(stem, with: .color(PocketColor.background.opacity(0.55)),
+                           style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+            context.stroke(stem, with: .color(PocketColor.pin),
+                           style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            let head = CGRect(x: pinX - headRadius, y: 0, width: headRadius * 2, height: headRadius * 2)
+            context.fill(Path(ellipseIn: head.insetBy(dx: -1, dy: -1)),
+                         with: .color(PocketColor.background.opacity(0.55)))
+            context.fill(Path(ellipseIn: head), with: .color(PocketColor.pin))
         }
     }
 
