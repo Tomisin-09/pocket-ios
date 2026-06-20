@@ -197,15 +197,26 @@ struct WaveformPracticeView: View {
                          model.beginSetDownbeat()
                      })
         }
-        .task { await model.loadAudio() }
+        .task { await model.loadAudio(); model.beginPlaybackSession() }
+        // Stop-on-exit (ADR 0025): halt playback and remove the lock-screen command
+        // targets when leaving the screen, so audio stops and nothing keeps the
+        // engine alive via the global command center.
+        .onDisappear { model.endPlaybackSession() }
         // Page-mode (ADR 0010): as the playhead advances, hold the window still until
-        // it sweeps to ~90%, then page forward. Only re-anchors at page edges.
-        .onChange(of: model.playheadFraction) { _, _ in model.advancePageIfNeeded() }
+        // it sweeps to ~90%, then page forward. Only re-anchors at page edges. Also
+        // refresh the lock-screen clock (throttled) so a seek shows up there.
+        .onChange(of: model.playheadFraction) { _, _ in
+            model.advancePageIfNeeded()
+            model.refreshNowPlaying()
+        }
         // Crisp deep-zoom (ADR 0020): re-downsample the visible window when the
         // viewport changes. `viewport` is derived purely from these two, both Equatable.
         .onChange(of: model.zoomSpan) { _, _ in model.scheduleDetailRefresh() }
         .onChange(of: model.viewportStart) { _, _ in model.scheduleDetailRefresh() }
-        .onChange(of: model.speed) { _, newValue in model.engine.setRate(newValue) }
+        .onChange(of: model.speed) { _, newValue in
+            model.engine.setRate(newValue)
+            model.refreshNowPlaying(force: true)   // rate change re-anchors the lock-screen clock
+        }
         .onChange(of: model.mode) { _, newMode in model.modeChanged(to: newMode) }
         // Per-loop automator: step the speed as the active loop wraps, and snap to the
         // ramp's current step when playback (re)starts (ADR 0013).
@@ -214,6 +225,7 @@ struct WaveformPracticeView: View {
         }
         .onChange(of: model.engine.isPlaying) { _, playing in
             if playing { model.automatorAdvance(toLoopIteration: model.engine.loopIteration) }
+            model.refreshNowPlaying(force: true)   // play/pause flips the lock-screen control + clock
         }
     }
 }

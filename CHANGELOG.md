@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Lock-screen play/pause & stop-on-exit** — practice audio now appears on the
+  **lock screen and Control Center** (song title, artist, and a working
+  play/pause), so you can pause without unlocking. Leaving the practice screen now
+  **stops playback** immediately rather than letting it linger. Backgrounding or
+  locking the phone *while practising* keeps the audio going. Play/pause only —
+  no scrub or skip on the lock screen (the waveform is where you seek). ADR 0025.
 - **Set the tempo by ear** — the **"Set BPM"** affordance now opens a tempo editor.
   **Tap** along to the beat and it reads your tempo from the playhead (so tapping
   inside a loop or at a slowed-down speed still finds the song's true tempo), or

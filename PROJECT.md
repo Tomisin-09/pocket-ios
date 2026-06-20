@@ -69,7 +69,12 @@ cockpit over a scrollable reference area, with named/editable loops & markers
 (ADR 0003). Real playback runs through `PracticeAudioEngine` — play/pause/seek,
 pitch-preserving speed, and **seamless, click-free region looping** (a crossfaded
 `.loops` buffer, ADRs 0006 & 0008) — fed by an imported file's real audio (or a
-generated dev sample for the demo). Interaction: **tap = seek, drag = scrub, hold-drag = select a loop, pinch = zoom**
+generated dev sample for the demo). Playback surfaces on the **lock screen /
+Control Center** (title, artist, play/pause only) via a `NowPlayingController`
+bridge over `MPNowPlayingInfoCenter` + `MPRemoteCommandCenter`, driven by a pure
+unit-tested `NowPlayingState`; leaving the screen **stops** audio and removes the
+global command targets (`onDisappear` → `endPlaybackSession`), while locking the
+phone mid-practice keeps it playing (ADR 0025). Interaction: **tap = seek, drag = scrub, hold-drag = select a loop, pinch = zoom**
 (a **page-mode** viewport — the window holds still and the playhead sweeps/pages across it,
 with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
 the source file** for crisp detail, debounced + cached, ADR 0020);
