@@ -74,6 +74,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   before this **re-extract their waveform automatically** the next time you open
   them. ADR 0017.
 
+### Fixed
+- **Haptics feel instant** — gesture buzzes (tap-tempo taps, loop catches, confirms)
+  no longer lag on the first tap. The Taptic Engine is now kept warm via a cached,
+  pre-prepared feedback generator instead of being re-allocated cold on every call,
+  and the tempo editor warms it up front when it opens.
+
 ### Added
 - **Undo a delete** — deleting a loop or marker now shows a **"Deleted X · Undo"**
   toast for a few seconds; tap **Undo** to bring it back exactly as it was (same
