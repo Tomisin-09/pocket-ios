@@ -5,8 +5,10 @@ import Foundation
 extension WaveformPracticeModel {
 
     /// "Set BPM" affordance — present the tap-tempo / manual-entry sheet (ADR 0024).
+    /// Warm the Taptic Engine up front so the first tap-tempo buzz is instant.
     func setBPM() {
         settingBPM = true
+        prepareHaptics(.light)
     }
 
     /// Commit a tempo from the BPM sheet. `bpm` is the full-precision value; we store it
