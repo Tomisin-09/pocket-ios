@@ -4,33 +4,79 @@ import SwiftUI
 /// it is never decorative. Keep these definitions as the single source of truth;
 /// do not hard-code hex values in views.
 ///
-/// - active  (green)  — playing / active loop
-/// - marker  (amber)  — loop markers and selection
-/// - fine    (blue)   — Fine-mode precision selection
-/// - pin     (purple) — waveform markers
-/// - danger  (red)    — delete / destructive
+/// Organised by **semantic role** below, not by hue — this is the seam a future
+/// swappable `Theme` would slot into (each role becomes a `Theme` property; the
+/// current values become the "blue" theme). Until then `PocketColor` *is* the one
+/// theme. Identity (blue bars anchored on #2a6796) and live state (green) are kept
+/// in different hue families so they never read as the same thing (ADR 0023).
+///
+/// Roles:
+/// - background        — app surface (near-black)
+/// - waveformBar(Played) — the song's bars (blue #2a6796); "identity-neutral" chrome
+/// - active            — live state: playing, the forming loop, the active region
+/// - fine              — Fine-mode precision selection (cyan)
+/// - marker            — active-loop region fill base / selection (amber)
+/// - pin               — waveform markers (purple inverted triangles)
+/// - confirm / danger  — save ✓ (green) / discard·delete ✗ (red)
+/// - loopPalette       — per-loop *identity* hues (see ADR 0023)
 enum PocketColor {
-    /// Near-black, not true black (#0f0f0f). Dark-first interface.
-    static let background = Color(red: 0x0f / 255, green: 0x0f / 255, blue: 0x0f / 255)
+    /// 0xRRGGBB → Color. Keeps the token table readable.
+    private static func hex(_ rgb: UInt32) -> Color {
+        Color(red: Double((rgb >> 16) & 0xFF) / 255,
+              green: Double((rgb >> 8) & 0xFF) / 255,
+              blue: Double(rgb & 0xFF) / 255)
+    }
 
+    // MARK: Surfaces
+    /// Near-black, not true black (#0F0F0F). Dark-first interface — the blue accents
+    /// and per-loop colours read best against black (ADR 0023).
+    static let background = hex(0x0F0F0F)
+    /// Detail-waveform bars — the blue identity anchor (#2a6796), so the song reads as
+    /// themed chrome and the green live-state + per-loop colours pop against it
+    /// (ADR 0023). Upcoming (ahead of the playhead) brighter; played recedes.
+    static let waveformBar = hex(0x2A6796).opacity(0.85)
+    static let waveformBarPlayed = hex(0x2A6796).opacity(0.4)
+
+    // MARK: Text
     static let textPrimary = Color.white
     static let textSecondary = Color.white.opacity(0.6)
 
+    // MARK: State
+    /// Live state — playing, the forming loop, the active region. Green reads as
+    /// "live/go" and stays clear of the blue song chrome (ADR 0023).
     static let active = Color.green
-    static let marker = Color.orange
-    static let fine = Color.blue
-    static let pin = Color.purple
+    /// Confirm / save — the green ✓ of the loop-capture toolbar (same family as `active`).
+    static let confirm = Color.green
+    /// Discard / delete / destructive — the red ✗ of the loop-capture toolbar.
     static let danger = Color.red
 
-    // Neutral "off" fill — empty proficiency dots, the minimap base track.
+    // MARK: Selection & annotation
+    /// Fine precision — cyan, hue-shifted so it stays distinct from `active` and the bars.
+    static let fine = hex(0x56C6D9)
+    /// Active-loop region fill base / selection accent.
+    static let marker = Color.orange
+    /// Waveform markers (purple inverted triangles).
+    static let pin = Color.purple
+
+    // MARK: Neutral fills
+    /// Neutral "off" fill — empty proficiency dots, the minimap base track.
     static let barDefault = Color.white.opacity(0.35)
     static let barPlayed = Color.white.opacity(0.18)
 
-    // Detail-waveform bars — tinted the app's green accent so the song's energy reads
-    // as themed content, clearly distinct from the neutral (white) beat grid behind it
-    // (ADR 0022 follow-up). Upcoming (ahead of the playhead) brighter; played recedes.
-    static let waveformBar = Color.green.opacity(0.75)
-    static let waveformBarPlayed = Color.green.opacity(0.4)
+    // MARK: Loop identity
+    /// Per-loop identity palette (ADR 0023 — supersedes ADR 0018's colour=state).
+    /// Each saved loop draws in its own hue (assigned deterministically by
+    /// `LoopColors.slot`); overlap is still shown by vertical lane. Deliberately
+    /// avoids the functional hues — blue (bars/fine), purple (markers), and green
+    /// (live state) — so a loop never reads as chrome or as the active wash.
+    static let loopPalette: [Color] = [
+        hex(0xF59E0B),   // amber
+        hex(0xFACC15),   // gold
+        hex(0xFB7185),   // coral
+        hex(0xEC4899),   // magenta
+        hex(0xA78BFA),   // violet
+        hex(0x14B8A6)    // teal (blue-green; distinct from the green active wash)
+    ]
 }
 
 /// Typography: monospace for all time values and BPM; system sans for the rest.

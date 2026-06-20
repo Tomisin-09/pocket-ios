@@ -33,8 +33,9 @@ tool. Animations should feel like a musical phrase, not a form submission.
   targets, standard gestures. Avoid web-isms (hover states, custom scrollbars,
   CSS-only effects) that don't map to SwiftUI.
 - **Dark-first.** The practice screen is used in low light (evening practice, on
-  a stand). Background is **near-black `#0F0F0F`**, not pure black. Design dark
-  first; a light theme is not a V1 requirement.
+  a stand). Background is **near-black `#0F0F0F`**, not pure black — the blue
+  accents and per-loop colours read best against black. Design dark first; a light
+  theme is not a V1 requirement. (ADR 0023.)
 - **Audio reality:** the waveform/speed/loop engine runs on **DRM-free local &
   iCloud files** only. Apple Music is **browse/metadata only** — do not design a
   waveform or speed control for Apple Music tracks; design their cards to show
@@ -57,30 +58,40 @@ new token and note it so it can be added to the code in the same change.
 
 Colour carries meaning and is consistent everywhere:
 
+Blue identity (the song's bars, anchored on `#2a6796`) with **green** as the live
+state, on a near-black background (ADR 0023). Hue carries meaning: blue = the song,
+green = live/go, and the per-loop identity hues are kept out of both families. The
+table is grouped by **semantic role** — the seam a future swappable theme slots into.
+
 | Token | Value | Meaning |
 |---|---|---|
 | `background` | `#0F0F0F` | App background (near-black) |
+| `waveformBar` | `#2a6796` @ 85% | Detail-waveform bar, ahead of the playhead (the song) |
+| `waveformBarPlayed` | `#2a6796` @ 40% | Detail-waveform bar, behind the playhead (recedes) |
 | `textPrimary` | white | Primary text |
 | `textSecondary` | white @ 60% | Secondary/labels |
-| `active` | green | Playing / active loop |
-| `marker` | amber/orange | Loop markers & selection |
-| `fine` | blue | Fine-mode precision selection |
+| `active` | green | Live state — playing, the forming loop, the active region |
+| `confirm` | green | Confirm / save (the loop-capture ✓) |
+| `danger` | red | Discard / delete / destructive (the loop-capture ✗) |
+| `fine` | cyan `#56C6D9` | Fine-mode precision selection |
+| `marker` | amber/orange | Active-loop region fill base / selection |
 | `pin` | purple | Waveform markers (single-point) |
-| `danger` | red | Delete / destructive |
+| `loopPalette` | amber, gold, coral, magenta, violet, teal | Per-loop **identity** colour (ADR 0023) |
 | `barDefault` | white @ 35% | Neutral "off" fill — empty proficiency dots, minimap base track |
 | `barPlayed` | white @ 18% | Neutral track (minimap) |
-| `waveformBar` | green @ 75% | Detail-waveform bar, ahead of the playhead |
-| `waveformBarPlayed` | green @ 40% | Detail-waveform bar, behind the playhead (recedes) |
 
-The detail waveform is tinted the **green** accent so the song's energy reads as
-themed content and stays clearly distinct from the neutral (white) **beat grid**
-drawn behind it (ADR 0022). Green therefore reads as "the live audio" — the
-playing/active-loop cue it also carries (`active`) is consistent with that:
-both are about the sound that's moving. The capture overlays (forming/punch
-green wash) still sit *over* the bars and remain bounded by the playhead.
+The detail waveform is tinted the **blue anchor** so the song reads as themed chrome,
+stays distinct from the neutral (white) **beat grid** behind it (ADR 0022), and lets
+the **green** live state and the **per-loop coloured** annotations pop against it. The
+capture overlays (forming/punch wash) use `active` (green) and remain bounded by the
+playhead. Per-loop colour encodes loop **identity**, with overlap shown by row
+position and loop *state* carried by line weight/opacity (ADR 0023, superseding ADR
+0018's colour-is-state rule). The `loopPalette` deliberately avoids the functional
+hues — blue (bars/fine), purple (markers), and green (live state) — so a loop never
+blends into the chrome or the active wash.
 
-No gradients **except** the tempo-automator progress bar (green → amber, to
-signal progression from comfortable to target speed).
+No gradients **except** the tempo-automator progress bar (to signal progression
+from comfortable to target speed).
 
 ### 3.2 Typography
 
@@ -133,20 +144,23 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
 2. Speed / BPM bar (always visible)
 3. Mode description line — replaced by the **edit toolbar** (▶ audition ·
    "New loop" / "Editing loop" · **Y/N**) while a loop is captured
-4. Waveform (detail view) — **SoundCloud-style mirrored bars**: top half full
-   opacity, bottom half ~60% reflection. **Pinch to zoom** into a section (the view
-   tracks the playhead). Draws the **whole** annotation library: **markers as pins
-   from the top** (purple), **all saved loops as brackets along the bottom** (amber).
-   Overlapping/nested loops **stack into lanes** so overlap reads by position, not
-   colour — colour means *state*: the **active loop** is the brighter bracket (plus
-   its translucent fill), saved loops are dimmed. Lanes are capped (deeper nesting
-   clamps into the last lane); brackets overlay the bars' dead space, so the waveform
-   never changes height. ADR 0018.
+4. Waveform (detail view) — **SoundCloud-style mirrored bars** (blue): top half
+   full opacity, bottom half ~60% reflection. **Pinch to zoom** into a section (the
+   view tracks the playhead). The annotation library draws on the **borders**, off
+   the bars (ADR 0023): **markers as purple inverted triangles** along the top edge,
+   **all saved loops as coloured lines** along the bottom edge. Each loop has its own
+   colour (**identity**); overlapping/nested loops **stack into rows (lanes)** so
+   overlap reads by position. Loop *state* is carried by weight — the **active loop**
+   is heavier/full-strength (plus its translucent fill in its own hue), saved loops
+   dimmed. Lanes are capped (deeper nesting clamps into the last lane); the bands sit
+   within the fixed frame, so the waveform never changes height. ADR 0023
+   (supersedes the colour-is-state rule of ADR 0018).
 5. Time ruler — labels the **visible window** (follows the zoom)
 6. Minimap (full song, compressed) — the active loop region (amber fill), **all saved
    loops** as thin underlines along the bottom (compressed, ≤2 lanes), fine selection
-   (blue), marker dots (purple), playhead, and the **viewport box** (the zoomed slice)
-   when the detail waveform is zoomed.
+   (cyan), marker dots (purple), playhead, and the **viewport box** (the zoomed slice)
+   when the detail waveform is zoomed. (Minimap not yet updated to per-loop colours /
+   the triangle glyph — ADR 0023 deferred it.)
 7. Transport bar — row 1: play/pause · time · loop info (name + range + ✕ exit chip).
    Row 2: the **action bar** — **Mark** (drop marker), **Loop** (punch in/out),
    **Fine** (precise-edit toggle), and a reserved **Auto** slot (automator, ADR 0009).

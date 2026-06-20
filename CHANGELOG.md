@@ -27,10 +27,19 @@ All notable changes to Pocket are documented here. Format loosely follows
   punches one at the playhead). ADR 0005 (round 5).
 
 ### Changed
-- **The waveform is now green** — the detail waveform's bars are tinted the app's
-  green accent (brighter ahead of the playhead, receding behind it) instead of plain
-  white, so the song reads as themed content and stands clearly apart from the faint
-  white **beat grid** drawn behind it (they used to both be white and blur together).
+- **New blue look** — the waveform **bars are now blue** (anchored on `#2a6796`) on
+  the near-black background, so the song reads as its own themed surface. Green is kept
+  for the **live state** (playing / the loop you're capturing) and Fine-mode precision
+  is cyan, so each still reads apart from the bars. ADR 0023.
+- **Clearer loop confirm/discard** — when you capture a loop, the confirm/discard
+  pair is now a **green ✓ and a red ✗** (was a blue/red Y/N). ADR 0023.
+- **Loops and markers now sit on the borders, off the song** — the saved-loop
+  indicators and markers no longer draw over the waveform bars. Markers are **purple
+  inverted triangles** along the top edge; each saved loop is a **coloured line** along
+  the bottom edge, **stacked into rows when loops overlap**. ADR 0023.
+- **Every loop has its own colour** — saved loops are now distinguishable at a glance,
+  each drawn in its own hue (the active loop heavier and full-strength, parked loops
+  lighter). Overlap is still shown by row position. ADR 0023.
 - **Deep zoom now shows real detail, not stretched blocks** — when you pinch in close,
   the waveform **re-reads that slice of the song from the file** and draws it at full
   resolution, so individual note onsets and transients resolve where you're working

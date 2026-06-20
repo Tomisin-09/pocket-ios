@@ -38,12 +38,14 @@ struct WaveformView: View {
     let detailBars: WaveformDetailBars?
     let playheadFraction: Double
     let loop: Loop?
-    /// Every saved loop on the song — drawn as lane-stacked brackets along the
-    /// bottom so the whole loop library reads against the timeline, not just the
-    /// active one. Overlap is shown by lane (vertical position); colour stays
-    /// reserved for state (the active loop's bracket is brighter). See ADR 0018.
+    /// Every saved loop on the song — drawn as lane-stacked coloured lines along the
+    /// bottom border so the whole loop library reads against the timeline, not just
+    /// the active one. Overlap is shown by lane (vertical position); colour encodes
+    /// loop *identity* (each loop its own hue), with state carried by line weight.
+    /// See ADR 0023 (supersedes ADR 0018's colour-is-state rule).
     let loops: [Loop]
-    /// Saved markers as song fractions (0…1) — drawn as pins dropping from the top.
+    /// Saved markers as song fractions (0…1) — drawn as purple inverted triangles
+    /// along the top border (ADR 0023).
     let markerFractions: [Double]
     /// The beat grid (ADR 0022): beats + bar-start downbeats as song fractions, drawn
     /// faintly behind the bars (downbeats brighter). Empty when the song has no tempo
@@ -106,10 +108,10 @@ struct WaveformView: View {
                 Canvas { context, size in
                     draw(in: context, size: size)
                 }
-                // Live time bubble, pinned above the playhead and clamped so it
-                // never runs off either edge.
+                // Live time bubble, pinned to the playhead and vertically centred,
+                // clamped so it never runs off either edge.
                 TimeBubble(text: playheadLabel)
-                    .position(x: bubbleX(width: geo.size.width), y: 12)
+                    .position(x: bubbleX(width: geo.size.width), y: geo.size.height / 2)
                     .allowsHitTesting(false)
             }
             .contentShape(Rectangle())
@@ -129,58 +131,62 @@ struct WaveformView: View {
         // (ADR 0020). The set carries the song range its bars describe.
         let barSet = detailBars ?? WaveformDetailBars(bars: amplitudes, start: 0, end: 1)
         guard !barSet.bars.isEmpty else { return }
-        let midY = size.height / 2
+        // Annotation border bands (ADR 0023): markers in a top band, loop lines in a
+        // bottom band, so the bars in the middle read clean. Bars fill the region between.
+        let region = BarRegion(top: Self.markerBand, bottom: size.height - Self.loopBand)
         // Song fraction → on-screen x (through the zoom viewport).
         func atX(_ songFraction: Double) -> CGFloat { CGFloat(screenX(songFraction)) * size.width }
         let playheadX = atX(playheadFraction)
 
-        // Beat grid behind everything (ADR 0022) — faint structure the bars, regions,
-        // and annotations all sit on top of.
-        drawBeatGrid(in: context, size: size, atX: atX)
+        // A filled rect spanning the bar region between two song fractions.
+        func regionRect(_ from: Double, _ upTo: Double) -> CGRect {
+            let startX = atX(from)
+            return CGRect(x: startX, y: region.top, width: atX(upTo) - startX, height: region.height)
+        }
 
-        // Active loop region (amber while paused — green is reserved for playing).
+        // Beat grid behind everything (ADR 0022), confined to the bar region.
+        drawBeatGrid(in: context, size: size, atX: atX, region: region)
+
+        // Active loop region — tinted the active loop's own identity colour (ADR 0023).
         if let loop {
-            let startX = atX(loop.start)
-            let rect = CGRect(x: startX, y: 0, width: atX(loop.end) - startX, height: size.height)
-            context.fill(Path(rect), with: .color(PocketColor.marker.opacity(0.14)))
+            context.fill(Path(regionRect(loop.start, loop.end)),
+                         with: .color(loopColor(for: loop).opacity(0.14)))
         }
 
-        // Forming loop (Tap mode) — fills green from the start to the playhead as
-        // playback previews the section being captured.
+        // Forming loop (Tap mode) — fills with the playing colour from the start to
+        // the playhead as playback previews the section being captured.
         if let formingStart {
-            let lowerX = atX(min(formingStart, playheadFraction))
-            let upperX = atX(max(formingStart, playheadFraction))
-            context.fill(Path(CGRect(x: lowerX, y: 0, width: upperX - lowerX, height: size.height)),
+            context.fill(Path(regionRect(min(formingStart, playheadFraction),
+                                         max(formingStart, playheadFraction))),
                          with: .color(PocketColor.active.opacity(0.22)))
         }
 
-        // Captured Tap loop awaiting confirm — static green highlight.
+        // Captured Tap loop awaiting confirm — static highlight in the playing colour.
         if let tapSelection {
-            let startX = atX(tapSelection.start)
-            context.fill(Path(CGRect(x: startX, y: 0, width: atX(tapSelection.end) - startX, height: size.height)),
+            context.fill(Path(regionRect(tapSelection.start, tapSelection.end)),
                          with: .color(PocketColor.active.opacity(0.22)))
         }
 
-        // Fine selection (blue region + two draggable handles).
+        // Fine selection (cyan region + two draggable handles).
         if let fineSelection {
             let startX = atX(fineSelection.start)
             let endX = atX(fineSelection.end)
-            let rect = CGRect(x: startX, y: 0, width: endX - startX, height: size.height)
-            context.fill(Path(rect), with: .color(PocketColor.fine.opacity(0.18)))
+            context.fill(Path(regionRect(fineSelection.start, fineSelection.end)),
+                         with: .color(PocketColor.fine.opacity(0.18)))
             for handleX in [startX, endX] {
-                let bar = CGRect(x: handleX - 1.5, y: 0, width: 3, height: size.height)
+                let bar = CGRect(x: handleX - 1.5, y: region.top, width: 3, height: region.height)
                 context.fill(Path(bar), with: .color(PocketColor.fine))
-                let knob = CGRect(x: handleX - 5, y: midY - 9, width: 10, height: 18)
+                let knob = CGRect(x: handleX - 5, y: region.midY - 9, width: 10, height: 18)
                 context.fill(Path(roundedRect: knob, cornerRadius: 3), with: .color(PocketColor.fine))
             }
         }
 
-        drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX)
+        drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX, region: region)
 
-        // Saved-loop brackets (bottom, lane-stacked) and marker pins (top). Drawn
-        // over the bars so the whole loop/marker library reads against the timeline.
-        drawLoopBrackets(in: context, size: size, atX: atX)
-        drawMarkerPins(in: context, size: size, atX: atX)
+        // Annotations on the borders (ADR 0023): per-loop coloured lines along the
+        // bottom (lane-stacked), purple inverted triangles along the top.
+        drawLoopLines(in: context, size: size, atX: atX)
+        drawMarkerTriangles(in: context, size: size, atX: atX)
 
         // Playhead.
         var line = Path()
@@ -194,10 +200,9 @@ struct WaveformView: View {
     /// (crisp re-downsample, ADR 0020); each bar is placed at its centre within the
     /// range it covers, then mapped through the viewport.
     private func drawBars(in context: GraphicsContext, size: CGSize,
-                          barSet: WaveformDetailBars, playheadX: CGFloat) {
+                          barSet: WaveformDetailBars, playheadX: CGFloat, region: BarRegion) {
         let count = barSet.bars.count
         guard count > 0 else { return }
-        let midY = size.height / 2
         let span = max(0.0001, viewport.end - viewport.start)
         // On-screen distance between bars: each covers (covered span)/count of the
         // song, and the viewport's span maps to the full width.
@@ -209,35 +214,61 @@ struct WaveformView: View {
             let barX = CGFloat(screenX(songFraction)) * size.width
             guard barX > -barWidth, barX < size.width else { continue }   // off-screen
             let color = barX <= playheadX ? PocketColor.waveformBarPlayed : PocketColor.waveformBar
-            let topHeight = CGFloat(amp) * midY
-            context.fill(Path(CGRect(x: barX, y: midY - topHeight, width: barWidth, height: topHeight)),
+            let topHeight = CGFloat(amp) * region.scale
+            context.fill(Path(CGRect(x: barX, y: region.axis - topHeight, width: barWidth, height: topHeight)),
                          with: .color(color))
             // Reflection at ~60% — brief §4.1.
-            context.fill(Path(CGRect(x: barX, y: midY, width: barWidth, height: topHeight * 0.6)),
+            context.fill(Path(CGRect(x: barX, y: region.axis, width: barWidth, height: topHeight * 0.6)),
                          with: .color(color.opacity(0.6)))
         }
     }
 
-    // Bracket layout (overlay, ADR 0018): brackets live in the dead space below
-    // the reflected bars, stacked upward from the bottom. Capped at `maxLanes` so
-    // deep nesting can't march up into the bars — anything deeper clamps into the
-    // last lane.
+    /// The vertical band the bars occupy, between the marker (top) and loop (bottom)
+    /// border bands. `axis`/`scale` place the mirror so a full bar plus its 60%
+    /// reflection exactly fills the region (ADR 0023).
+    struct BarRegion {
+        let top: CGFloat
+        let bottom: CGFloat
+        var height: CGFloat { bottom - top }
+        var scale: CGFloat { max(1, height / 1.6) }
+        var axis: CGFloat { top + scale }
+        var midY: CGFloat { (top + bottom) / 2 }
+    }
+
+    // Border bands (ADR 0023): annotations sit on the borders, off the bars. The
+    // top band holds marker triangles; the bottom band holds lane-stacked loop
+    // lines. The bars are drawn in the region between them.
+    private static let markerBand: CGFloat = 16     // top: marker triangles
+    private static let loopBand: CGFloat = 24       // bottom: loop lines (maxLanes × laneHeight + pad)
+    // Loop lines stack upward from the bottom edge. Capped at `maxLanes` so deep
+    // nesting can't march up out of the band — anything deeper clamps into the last lane.
     private static let maxLanes = 3
     private static let laneHeight: CGFloat = 7
     private static let bracketPadding: CGFloat = 3
-    private static let bracketFoot: CGFloat = 5
 
-    /// All saved loops as lane-stacked brackets along the bottom. Overlap is shown
-    /// by lane; colour is reserved for state — the active loop's bracket is full
-    /// amber, the rest are dimmed. The active loop is drawn last so it stays on top.
-    private func drawLoopBrackets(in context: GraphicsContext, size: CGSize,
-                                  atX: (Double) -> CGFloat) {
+    /// The identity colour for a loop (ADR 0023): a deterministic palette slot by
+    /// start-order, so each loop reads as its own hue. Overlap is still shown by lane.
+    private func loopColor(for loop: Loop) -> Color {
+        let intervals = loops.map { LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end) }
+        let slot = LoopColors.slot(for: loop.uid, among: intervals,
+                                   paletteCount: PocketColor.loopPalette.count)
+        return PocketColor.loopPalette[slot]
+    }
+
+    /// All saved loops as lane-stacked horizontal lines along the bottom border.
+    /// Colour encodes loop **identity** (ADR 0023, superseding ADR 0018's
+    /// colour-is-state rule); overlap is shown by lane. State is carried by weight
+    /// and opacity instead — the active loop is heavier (2.5 pt, full opacity), the
+    /// rest dimmed (1.5 pt, 0.55). A near-background halo lifts each line off the
+    /// background. The active loop is drawn last so it stays on top.
+    private func drawLoopLines(in context: GraphicsContext, size: CGSize,
+                               atX: (Double) -> CGFloat) {
         guard !loops.isEmpty else { return }
         let packing = LoopLanes.pack(loops.map {
             LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
         })
 
-        func bracket(_ loop: Loop, isActive: Bool) {
+        func line(_ loop: Loop, isActive: Bool) {
             let startX = atX(loop.start)
             let endX = atX(loop.end)
             guard endX > 0, startX < size.width else { return }       // off-screen
@@ -247,39 +278,48 @@ struct WaveformView: View {
             var path = Path()
             path.move(to: CGPoint(x: max(0, startX), y: baseY))
             path.addLine(to: CGPoint(x: min(size.width, endX), y: baseY))
-            // Feet point up at the *true* ends — only where the end is on-screen.
-            if startX >= 0 {
-                path.move(to: CGPoint(x: startX, y: baseY))
-                path.addLine(to: CGPoint(x: startX, y: baseY - Self.bracketFoot))
-            }
-            if endX <= size.width {
-                path.move(to: CGPoint(x: endX, y: baseY))
-                path.addLine(to: CGPoint(x: endX, y: baseY - Self.bracketFoot))
-            }
-            let color = PocketColor.marker.opacity(isActive ? 1.0 : 0.5)
-            context.stroke(path, with: .color(color), lineWidth: isActive ? 2 : 1.5)
+            let width: CGFloat = isActive ? 2.5 : 1.5
+            // Contrast halo behind, then the loop's identity colour. Round caps.
+            context.stroke(path, with: .color(PocketColor.background.opacity(0.55)),
+                           style: StrokeStyle(lineWidth: width + 1.5, lineCap: .round))
+            context.stroke(path, with: .color(loopColor(for: loop).opacity(isActive ? 1.0 : 0.55)),
+                           style: StrokeStyle(lineWidth: width, lineCap: .round))
         }
 
         let activeUID = loop?.uid
-        for loop in loops where loop.uid != activeUID { bracket(loop, isActive: false) }
+        for loop in loops where loop.uid != activeUID { line(loop, isActive: false) }
         if let active = loop, loops.contains(where: { $0.uid == active.uid }) {
-            bracket(active, isActive: true)
+            line(active, isActive: true)
         }
     }
 
-    /// All saved markers as pins dropping from the top — a dot head with a short stem.
-    private func drawMarkerPins(in context: GraphicsContext, size: CGSize,
-                                atX: (Double) -> CGFloat) {
-        let stemHeight: CGFloat = 10
+    /// All saved markers as purple inverted triangles along the top border, apex
+    /// pointing down at the marker position (ADR 0023 — replaces the stem+dot pin).
+    /// A near-background halo keeps the triangle crisp, and a short tick drops from
+    /// the apex into the bar region to pin the exact location.
+    private func drawMarkerTriangles(in context: GraphicsContext, size: CGSize,
+                                     atX: (Double) -> CGFloat) {
+        let halfWidth: CGFloat = 3.5
+        let triHeight: CGFloat = 6
+        let apexY = Self.markerBand - 3        // apex sits just above the bars
+        let topY = apexY - triHeight
         for fraction in markerFractions {
             let pinX = atX(fraction)
-            guard pinX > -3, pinX < size.width + 3 else { continue }  // off-screen
-            var stem = Path()
-            stem.move(to: CGPoint(x: pinX, y: 0))
-            stem.addLine(to: CGPoint(x: pinX, y: stemHeight))
-            context.stroke(stem, with: .color(PocketColor.pin), lineWidth: 1.5)
-            context.fill(Path(ellipseIn: CGRect(x: pinX - 2.5, y: 0, width: 5, height: 5)),
-                         with: .color(PocketColor.pin))
+            guard pinX > -halfWidth, pinX < size.width + halfWidth else { continue }  // off-screen
+            var triangle = Path()
+            triangle.move(to: CGPoint(x: pinX - halfWidth, y: topY))
+            triangle.addLine(to: CGPoint(x: pinX + halfWidth, y: topY))
+            triangle.addLine(to: CGPoint(x: pinX, y: apexY))
+            triangle.closeSubpath()
+            // Halo outline behind, then the purple fill.
+            context.stroke(triangle, with: .color(PocketColor.background.opacity(0.55)),
+                           style: StrokeStyle(lineWidth: 2.5, lineJoin: .round))
+            context.fill(triangle, with: .color(PocketColor.pin))
+            // Precision tick from the apex into the bar region.
+            var tick = Path()
+            tick.move(to: CGPoint(x: pinX, y: apexY))
+            tick.addLine(to: CGPoint(x: pinX, y: apexY + 3))
+            context.stroke(tick, with: .color(PocketColor.pin.opacity(0.6)), lineWidth: 1)
         }
     }
 
@@ -288,7 +328,7 @@ struct WaveformView: View {
     /// view doesn't smear into a wash — sub-beats drop out once they'd sit under ~5 pt
     /// apart, and the whole grid is skipped once even the downbeats would crowd.
     private func drawBeatGrid(in context: GraphicsContext, size: CGSize,
-                              atX: (Double) -> CGFloat) {
+                              atX: (Double) -> CGFloat, region: BarRegion) {
         guard beats.count >= 2 else { return }
         let span = max(0.0001, viewport.end - viewport.start)
         let beatPx = size.width * abs(beats[1].fraction - beats[0].fraction) / span
@@ -299,8 +339,8 @@ struct WaveformView: View {
             let lineX = atX(beat.fraction)
             guard lineX > -1, lineX < size.width + 1 else { continue }   // off-screen
             var line = Path()
-            line.move(to: CGPoint(x: lineX, y: 0))
-            line.addLine(to: CGPoint(x: lineX, y: size.height))
+            line.move(to: CGPoint(x: lineX, y: region.top))
+            line.addLine(to: CGPoint(x: lineX, y: region.bottom))
             let opacity = beat.isDownbeat ? 0.14 : 0.06
             context.stroke(line, with: .color(PocketColor.textPrimary.opacity(opacity)),
                            lineWidth: beat.isDownbeat ? 1 : 0.75)
@@ -345,18 +385,5 @@ private struct TimeBubble: View {
     }
 }
 
-/// Light haptic for gesture confirmations — no-op where UIKit is unavailable.
-@MainActor func haptic(_ style: HapticStyle) {
-    #if canImport(UIKit)
-    UIImpactFeedbackGenerator(style: style.uiStyle).impactOccurred()
-    #endif
-}
-
-enum HapticStyle {
-    case light, medium
-    #if canImport(UIKit)
-    var uiStyle: UIImpactFeedbackGenerator.FeedbackStyle { self == .light ? .light : .medium }
-    #endif
-}
-
 // Minimap (item 7) lives in `WaveformMinimap.swift`.
+// Haptic helpers live in `Haptics.swift`.
