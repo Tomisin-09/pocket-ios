@@ -47,6 +47,31 @@ enum TempoMath {
         }
     }
 
+    /// Musical bounds for a tapped tempo. A double-tap or a long pause would
+    /// otherwise yield an absurd BPM; clamping keeps the result usable (ADR 0024).
+    static let minTapBPM = 30.0
+    static let maxTapBPM = 300.0
+
+    /// BPM inferred from a series of tap timestamps in **song-time seconds**,
+    /// ascending. Averages the inter-tap intervals, discarding any non-positive
+    /// gap — a tap whose loop wrapped playback back to an earlier song position
+    /// straddles the boundary and can't measure tempo (ADR 0024). Returns `nil`
+    /// with fewer than two usable taps; clamps the result to `minTapBPM...maxTapBPM`.
+    /// Capturing song-time (not wall-clock) is what makes tapping inside a loop or
+    /// at a reduced speed read the song's true tempo automatically.
+    static func bpm(fromTapTimes times: [TimeInterval]) -> Double? {
+        guard times.count >= 2 else { return nil }
+        var intervals: [TimeInterval] = []
+        for index in 1..<times.count {
+            let gap = times[index] - times[index - 1]
+            if gap > 0 { intervals.append(gap) }
+        }
+        guard !intervals.isEmpty else { return nil }
+        let mean = intervals.reduce(0, +) / Double(intervals.count)
+        guard mean > 0 else { return nil }
+        return (60.0 / mean).clamped(to: minTapBPM...maxTapBPM)
+    }
+
     /// Number of discrete steps a tempo automator will take from start to
     /// ceiling, inclusive of the starting BPM. A non-positive step yields a
     /// single (start-only) step rather than diverging.

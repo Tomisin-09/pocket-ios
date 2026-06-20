@@ -48,7 +48,11 @@ struct WaveformPracticeView: View {
                     // 4. Mode instructions — replaced by the edit toolbar (audition
                     //    + state label + Y/N) while a loop is captured.
                     ZStack {
-                        if model.showConfirm {
+                        if model.isSettingDownbeat {
+                            DownbeatBar(onConfirm: model.confirmDownbeat,
+                                        onCancel: model.cancelSetDownbeat)
+                                .transition(.opacity)
+                        } else if model.showConfirm {
                             EditToolbar(isPlaying: model.engine.isPlaying,
                                         isEditingExisting: model.capture?.editingLoop != nil,
                                         onPlayPause: model.auditionCapture,
@@ -61,6 +65,7 @@ struct WaveformPracticeView: View {
                         }
                     }
                     .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
                     WaveformView(amplitudes: model.amplitudes,                   // 5
                                  detailBars: model.detailBars,
                                  playheadFraction: model.playheadFraction,
@@ -82,7 +87,10 @@ struct WaveformPracticeView: View {
                                  onSelectEnded: model.endDragSelection,
                                  onSelectCancelled: model.cancelDragSelection,
                                  viewport: model.viewport,
-                                 onSetZoomSpan: model.setZoomSpan)
+                                 onSetZoomSpan: model.setZoomSpan,
+                                 downbeatDraft: model.downbeatDraft,
+                                 onDownbeatMove: model.moveDownbeatDraft,
+                                 onDownbeatEnded: model.endDownbeatDrag)
                         // Fit / 1× reset — only while zoomed; sits above the
                         //    waveform's gestures so its tap wins (ADR 0010). Pinned
                         //    bottom-trailing so it clears the top-pinned time bubble,
@@ -114,9 +122,10 @@ struct WaveformPracticeView: View {
                                  onDropMarker: model.dropMarkerAtPlayhead,
                                  onPunch: model.tapPunch,
                                  isPunchActive: model.pendingStart != nil)
-                        .opacity(model.showConfirm ? 0.35 : 1)
-                        .disabled(model.showConfirm)
+                        .opacity(model.showConfirm || model.isSettingDownbeat ? 0.35 : 1)
+                        .disabled(model.showConfirm || model.isSettingDownbeat)
                         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)
+                        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -179,6 +188,14 @@ struct WaveformPracticeView: View {
             AutomatorSheet(loop: loop, song: model.song,
                            onSet: { model.startAutomator(for: loop) },
                            onTurnOff: { model.turnOffAutomator(for: loop) })
+        }
+        .sheet(isPresented: $model.settingBPM) {
+            BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,
+                     onCommit: model.commitTempo,
+                     onSetOnWaveform: { bpm in
+                         model.commitTempo(bpm: bpm, downbeat: nil)
+                         model.beginSetDownbeat()
+                     })
         }
         .task { await model.loadAudio() }
         // Page-mode (ADR 0010): as the playhead advances, hold the window still until

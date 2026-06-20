@@ -105,6 +105,25 @@ final class SongTests: XCTestCase {
         XCTAssertTrue(loop.automatorEnabled)
     }
 
+    // MARK: - Tempo precision (ADR 0024)
+
+    func testTempoBPMIsNilWhenNoTempoKnown() {
+        XCTAssertNil(makeSong().tempoBPM)
+    }
+
+    func testTempoBPMFallsBackToRoundedBPM() {
+        let song = makeSong()
+        song.bpm = 120
+        XCTAssertEqual(song.tempoBPM ?? 0, 120, accuracy: 1e-9)
+    }
+
+    func testTempoBPMPrefersPreciseValueOverRoundedMirror() {
+        let song = makeSong()
+        song.bpm = 150          // rounded display mirror
+        song.preciseBPM = 149.55
+        XCTAssertEqual(song.tempoBPM ?? 0, 149.55, accuracy: 1e-9)
+    }
+
     // MARK: - First-launch seed
 
     func testSampleIsFlaggedAsDemoWithBackReferencedChildren() {

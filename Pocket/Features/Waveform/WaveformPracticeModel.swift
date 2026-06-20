@@ -70,6 +70,8 @@ final class WaveformPracticeModel {
     var namingMarker: Marker?
     /// The loop whose automator (speed ramp) is being set up (drives the sheet, ADR 0013).
     var editingAutomatorLoop: Loop?
+    /// Drives the tap-tempo / manual BPM sheet (ADR 0024), opened from "Set BPM".
+    var settingBPM = false
 
     init(song: Song, context: ModelContext) {
         self.song = song
@@ -103,6 +105,12 @@ final class WaveformPracticeModel {
     /// transport lock are held back until the drag commits — see `showConfirm`.
     var isDragSelecting = false
 
+    /// "Set the 1 on the waveform" (ADR 0024): the downbeat fraction being placed by
+    /// dragging a handle, snapped to the nearest transient peak on release. Non-nil ⇒
+    /// the downbeat-set overlay is active (its own confirm toolbar; the transport locks
+    /// like a capture). Confirming writes `Song.downbeatSeconds`; cancelling discards.
+    var downbeatDraft: Double?
+
     /// A transient "Deleted X · Undo" toast after a destructive action (ADR 0019).
     /// Auto-dismisses after a few seconds; tapping Undo runs its closure.
     var undoToast: UndoToast?
@@ -118,6 +126,11 @@ final class WaveformPracticeModel {
         song.bpm.map { Int((Double($0) * speed).rounded()) }
     }
 
+    /// Live **song-time** position (seconds) — what the BPM sheet captures per tap and
+    /// when marking the 1. Song-time (not wall-clock) so tapping inside a loop or at a
+    /// reduced speed still reads the song's true tempo and phase (ADR 0024).
+    var currentSongTime: TimeInterval { engine.currentTime }
+
     /// The loop currently loaded into the transport/waveform, if any.
     var activeLoop: Loop? { loops.first { $0.uid == activeLoopID } }
 
@@ -127,7 +140,7 @@ final class WaveformPracticeModel {
     /// don't guess the phase. Drawn faintly on the waveform and fed into the snap
     /// candidates (`snapCandidates`). Assumes 4/4: every 4th beat is a downbeat.
     var beatGrid: [BeatGrid.Beat] {
-        guard let bpm = song.bpm, let downbeat = song.downbeatSeconds, duration > 0 else { return [] }
+        guard let bpm = song.tempoBPM, let downbeat = song.downbeatSeconds, duration > 0 else { return [] }
         return BeatGrid.beats(bpm: bpm, duration: duration, downbeat: downbeat)
     }
 
@@ -214,6 +227,17 @@ final class WaveformPracticeModel {
     /// captured — but *not* mid-drag-select, where the region is still being
     /// painted and the transport should stay live until release.
     var showConfirm: Bool { capture != nil && !isDragSelecting }
+
+    /// True while placing the downbeat on the waveform (ADR 0024) — drives the
+    /// downbeat handle, its confirm toolbar, and the transport lock.
+    var isSettingDownbeat: Bool { downbeatDraft != nil }
+
+    /// The bars currently drawn on the waveform and the song range they cover: the
+    /// crisp zoomed window when present (ADR 0020), else the whole-song envelope. The
+    /// downbeat snap searches these, so zooming in sharpens the peaks it can catch.
+    var displayedBars: WaveformDetailBars {
+        detailBars ?? WaveformDetailBars(bars: amplitudes, start: 0, end: 1)
+    }
 
     var isPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"

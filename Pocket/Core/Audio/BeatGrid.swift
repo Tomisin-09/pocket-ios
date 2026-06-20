@@ -28,11 +28,13 @@ enum BeatGrid {
     /// `beatsPerBar` groups them into bars, so every `beatsPerBar`-th beat counting
     /// from the anchor is a downbeat (the anchor itself is one). Returns `[]` for a
     /// non-positive `bpm`/`duration`, or when the grid would exceed `maxBeats`.
-    /// `beatsPerBar` is treated as at least 1.
-    static func beats(bpm: Int, duration: TimeInterval, downbeat: TimeInterval,
+    /// `beatsPerBar` is treated as at least 1. `bpm` is a `Double` so a tap-tempo or
+    /// metadata tempo keeps its sub-integer precision (ADR 0024) — rounding it to an
+    /// `Int` would drift the grid ~1 beat across a multi-minute song.
+    static func beats(bpm: Double, duration: TimeInterval, downbeat: TimeInterval,
                       beatsPerBar: Int = 4) -> [Beat] {
         guard bpm > 0, duration > 0 else { return [] }
-        let interval = 60.0 / Double(bpm)
+        let interval = 60.0 / bpm
         guard interval > 0 else { return [] }
         let perBar = max(1, beatsPerBar)
 
@@ -58,7 +60,7 @@ enum BeatGrid {
 
     /// Just the beat fractions (downbeats included) — the snap candidates a released
     /// gesture catches, the same shape `WaveformGesture.snap` already consumes.
-    static func beatFractions(bpm: Int, duration: TimeInterval, downbeat: TimeInterval,
+    static func beatFractions(bpm: Double, duration: TimeInterval, downbeat: TimeInterval,
                               beatsPerBar: Int = 4) -> [Double] {
         beats(bpm: bpm, duration: duration, downbeat: downbeat, beatsPerBar: beatsPerBar)
             .map(\.fraction)

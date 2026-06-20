@@ -38,7 +38,8 @@ plan needs an explicit fallback.
 
 - `Song.bpm` is **optional**; the derived display is `Int?` (nil → "Set BPM").
 - The tap-tempo / manual-entry flow behind "Set BPM" is a follow-up; this change
-  ships the affordance only.
+  ships the affordance only. (Rung 3 shipped in **ADR 0024** — tap-tempo, manual
+  entry, and a peak-snapped downbeat, with tempo stored at full precision.)
 - Any estimated BPM must be presented as estimated and be easy to correct
   (estimates are often half/double off).
 - The metronome and tempo automator must handle a nil/uncertain BPM gracefully.

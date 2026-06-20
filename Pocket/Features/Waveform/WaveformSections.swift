@@ -126,6 +126,9 @@ struct SpeedBar: View {
                     .accessibilityLabel("Playback speed")
 
                 if let displayedBPM {
+                    // Long-press to re-open the tempo editor (Tap/Manual) so a wrong
+                    // tempo or downbeat can be corrected — the readout otherwise
+                    // replaces the "Set BPM" entry point once a tempo is known (ADR 0024).
                     VStack(alignment: .trailing, spacing: 0) {
                         Text("\(displayedBPM)")
                             .font(.pocketMono(.headline))
@@ -134,8 +137,12 @@ struct SpeedBar: View {
                             .font(.caption2)
                             .foregroundStyle(PocketColor.textSecondary)
                     }
+                    .contentShape(Rectangle())
+                    .onLongPressGesture { onSetBPM() }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("\(displayedBPM) beats per minute")
+                    .accessibilityHint("Long press to change the tempo")
+                    .accessibilityAction(named: "Change tempo") { onSetBPM() }
                 } else {
                     // Unknown tempo — speed (×) still works; offer to set it.
                     Button(action: onSetBPM) {

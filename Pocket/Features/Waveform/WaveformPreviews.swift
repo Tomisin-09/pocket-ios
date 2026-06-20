@@ -48,6 +48,16 @@ import SwiftUI
     }
 }
 
+#Preview("BPM sheet — tap-tempo (ADR 0024)") {
+    BPMSheet(engine: PracticeAudioEngine(), currentBPM: nil, onCommit: { _, _ in }, onSetOnWaveform: { _ in })
+        .preferredColorScheme(.dark)
+}
+
+#Preview("BPM sheet — prefilled") {
+    BPMSheet(engine: PracticeAudioEngine(), currentBPM: 128, onCommit: { _, _ in }, onSetOnWaveform: { _ in })
+        .preferredColorScheme(.dark)
+}
+
 #Preview("Waveform — Navigate") {
     // Overlapping + nested loops to show lane-stacking (ADR 0018): a wide loop
     // with a tight one nested inside, plus an overlapping third, and two markers.
