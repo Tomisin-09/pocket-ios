@@ -51,8 +51,12 @@ enum PocketColor {
     static let danger = Color.red
 
     // MARK: Selection & annotation
-    /// Fine precision — cyan, hue-shifted so it stays distinct from `active` and the bars.
-    static let fine = hex(0x56C6D9)
+    /// Fine precision (selection handles + the downbeat "1" handle) — a high-key cool
+    /// white. The old cyan sat in the same blue family as the bars (`#2a6796`) and blended
+    /// in; every saturated hue is already reserved (green = live, purple = markers, the
+    /// warm palette = loop identity, red = danger), so contrast comes from luminance, not
+    /// hue. TODO: revisit as part of any theme redesign (ADR 0023 follow-up).
+    static let fine = hex(0xEAF2FF)
     /// Active-loop region fill base / selection accent.
     static let marker = Color.orange
     /// Waveform markers (purple inverted triangles).

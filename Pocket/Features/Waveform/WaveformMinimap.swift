@@ -3,9 +3,11 @@ import SwiftUI
 // MARK: - 7. Minimap (full song, compressed)
 
 /// The full-song overview strip (brief §4.1, item 7): a compressed track with the
-/// active loop (amber), Fine selection (blue), marker dots (purple), the live
-/// playhead, and — when the detail waveform is zoomed — a **viewport box** showing
-/// which slice is on screen. Tap or drag anywhere to move the playhead.
+/// saved loops drawn in their **identity colours** (matching the detail waveform,
+/// ADR 0023), the active loop's region washed in its own hue, the Fine selection
+/// (blue), marker dots (purple), the live playhead, and — when the detail waveform
+/// is zoomed — a **viewport box** showing which slice is on screen. Tap or drag
+/// anywhere to move the playhead.
 struct Minimap: View {
     let song: Song
     let activeLoop: Loop?
@@ -44,6 +46,54 @@ struct Minimap: View {
         }
     }
 
+    /// The identity colour for a loop (ADR 0023): the same deterministic palette slot
+    /// by start-order the detail waveform uses (`WaveformCanvas.loopColor`), so a loop
+    /// reads as one hue in both places.
+    private func loopColor(for loop: Loop) -> Color {
+        let intervals = song.loopsByStart.map {
+            LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
+        }
+        let slot = LoopColors.slot(for: loop.uid, among: intervals,
+                                   paletteCount: PocketColor.loopPalette.count)
+        return PocketColor.loopPalette[slot]
+    }
+
+    /// The active-loop region wash plus every saved loop's identity-coloured underline
+    /// (ADR 0023). Colour encodes loop **identity** (matching the detail waveform); state
+    /// is carried by weight + opacity — the active loop heavier (2 pt, full) and drawn
+    /// last, the rest dimmed (1.5 pt, 0.55). Overlaps stack into at most two lanes;
+    /// deeper nesting clamps into the last lane.
+    private func drawLoops(in context: GraphicsContext, size: CGSize) {
+        // Active loop region — washed in its own identity colour, the prominent one.
+        if let loop = activeLoop {
+            let startX = size.width * loop.start
+            let rect = CGRect(x: startX, y: 0, width: size.width * (loop.end - loop.start), height: size.height)
+            context.fill(Path(roundedRect: rect, cornerRadius: 2),
+                         with: .color(loopColor(for: loop).opacity(0.5)))
+        }
+
+        let allLoops = song.loopsByStart
+        guard !allLoops.isEmpty else { return }
+        let packing = LoopLanes.pack(allLoops.map {
+            LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
+        })
+        let maxLanes = 2
+        func underline(_ loop: Loop, isActive: Bool) {
+            let lane = min(packing.lane(for: loop.uid), maxLanes - 1)
+            let lineY = size.height - 1.5 - CGFloat(lane) * 3
+            var line = Path()
+            line.move(to: CGPoint(x: size.width * loop.start, y: lineY))
+            line.addLine(to: CGPoint(x: size.width * loop.end, y: lineY))
+            context.stroke(line, with: .color(loopColor(for: loop).opacity(isActive ? 1.0 : 0.55)),
+                           lineWidth: isActive ? 2 : 1.5)
+        }
+        let activeUID = activeLoop?.uid
+        for loop in allLoops where loop.uid != activeUID { underline(loop, isActive: false) }
+        if let active = activeLoop, allLoops.contains(where: { $0.uid == active.uid }) {
+            underline(active, isActive: true)   // drawn last → stays on top
+        }
+    }
+
     private var canvas: some View {
         Canvas { context, size in
             // Base track.
@@ -51,33 +101,10 @@ struct Minimap: View {
             context.fill(Path(roundedRect: base, cornerRadius: 2),
                          with: .color(PocketColor.barPlayed))
 
-            // Active loop region (amber fill) — the prominent one.
-            if let loop = activeLoop {
-                let startX = size.width * loop.start
-                let rect = CGRect(x: startX, y: 0, width: size.width * (loop.end - loop.start), height: size.height)
-                context.fill(Path(roundedRect: rect, cornerRadius: 2),
-                             with: .color(PocketColor.marker.opacity(0.5)))
-            }
-
-            // Every saved loop as a thin underline along the bottom — a compressed
-            // version of the detail waveform's brackets, so the minimap shows the
-            // whole loop library at a glance (ADR 0018). Overlaps stack into at
-            // most two lanes; deeper nesting clamps into the last lane.
-            let allLoops = song.loopsByStart
-            if !allLoops.isEmpty {
-                let packing = LoopLanes.pack(allLoops.map {
-                    LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
-                })
-                let maxLanes = 2
-                for loop in allLoops {
-                    let lane = min(packing.lane(for: loop.uid), maxLanes - 1)
-                    let lineY = size.height - 1.5 - CGFloat(lane) * 3
-                    var line = Path()
-                    line.move(to: CGPoint(x: size.width * loop.start, y: lineY))
-                    line.addLine(to: CGPoint(x: size.width * loop.end, y: lineY))
-                    context.stroke(line, with: .color(PocketColor.marker.opacity(0.45)), lineWidth: 1.5)
-                }
-            }
+            // Active loop region wash + every saved loop's identity-coloured underline.
+            // Kept in an instance method (like `WaveformCanvas.drawLoopLines`) so the
+            // main-actor `loopColor(for:)` isn't called straight from the Canvas closure.
+            drawLoops(in: context, size: size)
 
             // Fine selection (blue) — brief §4.1 minimap.
             if let fineSelection {

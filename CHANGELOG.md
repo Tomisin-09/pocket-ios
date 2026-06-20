@@ -48,6 +48,16 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **Every loop has its own colour** — saved loops are now distinguishable at a glance,
   each drawn in its own hue (the active loop heavier and full-strength, parked loops
   lighter). Overlap is still shown by row position. ADR 0023.
+- **The minimap matches the waveform's loop colours** — the loop underlines on the
+  full-song minimap now use each loop's **identity hue** (and the active loop's region
+  is washed in its own colour), instead of all reading flat orange. A loop is the same
+  colour in the overview as in the detail waveform. ADR 0023.
+- **Fine-mode handles read clearly** — the precise-edit handles now draw **in front of
+  the waveform bars** (they used to be partly hidden behind them) and are a **high-contrast
+  cool white** instead of the old cyan, which blended into the blue bars. The "1" downbeat
+  handle picks up the same colour. (Flagged for revisiting in a future theme pass.) ADR 0023.
+- **The Mark button matches the markers** — the transport "Mark" icon is now an **inverted
+  triangle**, the same shape markers take on the waveform (was a map-pin). ADR 0023.
 - **Deep zoom now shows real detail, not stretched blocks** — when you pinch in close,
   the waveform **re-reads that slice of the song from the file** and draws it at full
   resolution, so individual note onsets and transients resolve where you're working
@@ -75,6 +85,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   them. ADR 0017.
 
 ### Fixed
+- **Pinch-to-zoom no longer moves the loop bounds in Fine mode** — when you pinched to
+  zoom while adjusting a loop's handles, the first pinch finger grabbed a handle and
+  nudged the boundary. The handle now snaps back to where it was grabbed the moment a
+  pinch takes over, so zooming and bound-adjustment stay independent.
 - **Haptics feel instant** — gesture buzzes (tap-tempo taps, loop catches, confirms)
   no longer lag on the first tap. The Taptic Engine is now kept warm via a cached,
   pre-prepared feedback generator instead of being re-allocated cold on every call,

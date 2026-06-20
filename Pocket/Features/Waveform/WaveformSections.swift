@@ -297,7 +297,9 @@ struct TransportBar: View {
             HStack(spacing: 8) {
                 ActionButton(icon: "repeat", label: "Loop", tint: PocketColor.active,
                              isActive: isPunchActive, action: onPunch)
-                ActionButton(icon: "mappin", label: "Mark", tint: PocketColor.pin, action: onDropMarker)
+                // Inverted triangle to match the markers' shape on the waveform (ADR 0023).
+                ActionButton(icon: "arrowtriangle.down.fill", label: "Mark",
+                             tint: PocketColor.pin, action: onDropMarker)
                 ActionButton(icon: "slider.horizontal.3", label: "Fine", tint: PocketColor.fine,
                              isActive: mode == .fine) { mode = (mode == .fine ? .navigate : .fine) }
                 ActionButton(icon: "metronome", label: "Auto", tint: PocketColor.textSecondary,
