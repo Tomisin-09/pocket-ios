@@ -1,6 +1,7 @@
 # 0018 — Loop & marker visibility: lane-stacked brackets, colour = state
 
-- **Status:** Accepted
+- **Status:** Accepted; **colour = state superseded by [ADR 0023](0023-blue-theme-bordered-loop-identity.md)**
+  (lane stacking retained, colour now encodes loop identity).
 - **Date:** 2026-06-19
 
 ## Context

@@ -81,11 +81,14 @@ saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, li
 scrub + minimap stay free; ADR 0021). When a song has a **BPM and a downbeat anchor**, a
 faint **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on
 zoom) and its beats join the snap candidates, so edges/seeks catch the pulse too — pure,
-unit-tested `BeatGrid`, assumes 4/4 (ADR 0022). Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform and minimap show the **whole** annotation library —
-markers as pins from the top, **all** saved loops as brackets along the bottom;
-overlapping/nested loops **stack into lanes** (pure, unit-tested `LoopLanes`) so
-overlap reads by position while colour stays reserved for state, the active loop
-brighter (ADR 0018). New loops are created **instantly** on confirm — auto-named
+unit-tested `BeatGrid`, assumes 4/4 (ADR 0022). Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform shows the **whole** annotation library on its **borders** (off the
+bars): markers as **purple inverted triangles** along the top, **all** saved loops
+as **per-loop coloured lines** along the bottom; overlapping/nested loops **stack
+into lanes** (pure, unit-tested `LoopLanes`) so overlap reads by position. Colour
+now encodes loop **identity** (deterministic palette slot, pure unit-tested
+`LoopColors`) with state carried by line weight, the active loop heavier — ADR 0023
+(supersedes the colour-is-state rule of ADR 0018). The blue theme (blue bars anchored
+on `#2a6796`) sits on the near-black background (ADR 0023). New loops are created **instantly** on confirm — auto-named
 ("Loop 3", via pure `AutoName`), activated, and **looping immediately** (no separate
 play tap), no naming sheet (markers still ask for a label, since a marker *is* its
 label); deleting a loop or marker offers an

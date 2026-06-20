@@ -68,11 +68,14 @@ The reduction is **transient-resistant energy, percentile-normalised** (512 bars
 each bar is the median of several short RMS sub-windows, so the envelope tracks the
 sustained music and steps over rhythmic spikes (a snare) rather than flat-topping on
 loud masters; the bucket count doubles as a stored-format version that re-extracts
-pre-ADR-0017 waveforms on open. The detail waveform and minimap draw the **whole**
-loop/marker library — markers as pins from the top, loops as brackets along the
-bottom; overlapping/nested loops **stack into lanes** (pure `LoopLanes` interval
-packing, unit-tested) so overlap reads by position while colour stays reserved for
-state (the active loop is drawn brighter). ADR 0018. New loops are created
+pre-ADR-0017 waveforms on open. The detail waveform draws the **whole**
+loop/marker library on its **borders** — markers as purple inverted triangles along
+the top, loops as **per-loop coloured lines** along the bottom; overlapping/nested
+loops **stack into lanes** (pure `LoopLanes` interval packing, unit-tested) so
+overlap reads by position. Colour encodes loop **identity** (deterministic palette
+slot, pure unit-tested `LoopColors`) with state carried by line weight; the theme is
+the blue palette (blue bars anchored on `#2a6796`) on the near-black background. ADR
+0023 (supersedes the colour-is-state rule of ADR 0018). New loops are created
 **instantly** on confirm — auto-named ("Loop 3", pure `AutoName`), activated, and
 **looping immediately** (seek to start + play), no naming sheet (markers keep theirs);
 deleting a loop/marker shows an **Undo** toast

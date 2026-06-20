@@ -1,11 +1,11 @@
 import SwiftUI
 
 // Loop capture flow (design brief §4.1 #9): `EditToolbar` is the edit-mode control
-// strip (▶ audition · state label · Y/N) shown in place of the mode-instructions
+// strip (▶ audition · state label · ✗/✓) shown in place of the mode-instructions
 // line once a loop is captured (Tap punch-out / Fine selection), with the transport
-// greyed/locked. Y commits (a new loop is created instantly, auto-named, and
-// activated — no naming step; ADR 0019), N discards. Letters, not ✓/✗, so the
-// decision never reads as a name. New loops are renamed later from their row.
+// greyed/locked. The green ✓ commits (a new loop is created instantly, auto-named,
+// and activated — no naming step; ADR 0019), the red ✗ discards. New loops are
+// renamed later from their row.
 
 extension WaveformPracticeModel {
     /// A loop being captured, awaiting confirmation. Bounds are mutable so Fine
@@ -52,9 +52,9 @@ struct EditToolbar: View {
             Spacer()
 
             HStack(spacing: 4) {
-                letterButton("N", tint: PocketColor.danger, action: onCancel)
+                iconButton("xmark", tint: PocketColor.danger, action: onCancel)
                     .accessibilityLabel("Discard")
-                letterButton("Y", tint: PocketColor.active, action: onConfirm)
+                iconButton("checkmark", tint: PocketColor.confirm, action: onConfirm)
                     .accessibilityLabel(isEditingExisting ? "Save range" : "Save loop")
             }
             .padding(3)
@@ -66,9 +66,10 @@ struct EditToolbar: View {
         }
     }
 
-    private func letterButton(_ letter: String, tint: Color, action: @escaping () -> Void) -> some View {
+    /// A round icon button — the loop-capture confirm/discard pair: red ✗, green ✓.
+    private func iconButton(_ systemName: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(letter)
+            Image(systemName: systemName)
                 .font(.system(size: 14, weight: .heavy))
                 .foregroundStyle(tint)
                 .frame(width: 30, height: 30)
