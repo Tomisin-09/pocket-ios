@@ -17,8 +17,17 @@ final class Song {
     /// `nil` when the release year is unknown — a normal state, like `bpm`.
     var year: Int?
     var key: String
-    /// `nil` when the tempo is unknown — a normal state (ADR 0004).
+    /// `nil` when the tempo is unknown — a normal state (ADR 0004). This is the
+    /// **rounded display mirror** of the tempo; the precise value lives in
+    /// `preciseBPM` and drives the beat grid (ADR 0024). Kept as the canonical
+    /// display field so existing readouts (`displayedBPM`, the edit sheet) are unchanged.
     var bpm: Int?
+    /// The full-precision tempo (BPM) from tap-tempo or metadata, when known.
+    /// `bpm` rounds this for display, but the beat grid uses the precise value so it
+    /// doesn't drift ~1 beat across a multi-minute song (ADR 0024). Optional with no
+    /// declaration default, like `bpm`/`year`/`downbeatSeconds`, so SwiftData
+    /// lightweight migration fills pre-0026 songs with nil (additive field, no store wipe).
+    var preciseBPM: Double?
     /// Seconds at which a bar-1 **downbeat** lands — the phase anchor for the beat
     /// grid (ADR 0022). `bpm` fixes the beat interval; this fixes where the grid sits,
     /// so a song with lead-in silence still lines up. `nil` ⇒ no grid is drawn or
@@ -44,7 +53,8 @@ final class Song {
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
 
     init(title: String, artist: String = "", album: String = "", year: Int? = nil,
-         key: String = "", bpm: Int? = nil, downbeatSeconds: TimeInterval? = nil,
+         key: String = "", bpm: Int? = nil, preciseBPM: Double? = nil,
+         downbeatSeconds: TimeInterval? = nil,
          proficiency: Int = 0, progression: String = "",
          collections: [String] = [], comment: String = "",
          duration: TimeInterval, amplitudes: [Double] = [], ref: SongRef) {
@@ -54,6 +64,7 @@ final class Song {
         self.year = year
         self.key = key
         self.bpm = bpm
+        self.preciseBPM = preciseBPM
         self.downbeatSeconds = downbeatSeconds
         self.proficiency = proficiency
         self.progression = progression
@@ -70,6 +81,11 @@ final class Song {
     var ref: SongRef {
         SongRef(id: sourceID, source: SongRef.Source(rawValue: sourceRaw) ?? .localFile, bookmark: bookmark)
     }
+
+    /// The full-precision tempo to drive the beat grid: `preciseBPM` when set, else
+    /// the rounded `bpm` promoted to `Double` (so a song that only ever had an integer
+    /// tempo still grids), else `nil` when the tempo is unknown (ADR 0024).
+    var tempoBPM: Double? { preciseBPM ?? bpm.map(Double.init) }
 
     var loopsByStart: [Loop] { loops.sorted { $0.start < $1.start } }
     var markersByTime: [Marker] { markers.sorted { $0.seconds < $1.seconds } }

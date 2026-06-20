@@ -47,6 +47,51 @@ final class TempoMathTests: XCTestCase {
         XCTAssertEqual(TempoMath.speed(forPosition: 2), 2.0, accuracy: 0.0001)
     }
 
+    // MARK: tap tempo (ADR 0024)
+
+    func testTapTempoFromEvenTaps() {
+        // Taps 0.5 s apart ⇒ 120 BPM.
+        let times: [TimeInterval] = [0, 0.5, 1.0, 1.5, 2.0]
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: times) ?? 0, 120, accuracy: 1e-6)
+    }
+
+    func testTapTempoAveragesJitter() {
+        // Slightly uneven taps average toward the true tempo (~100 BPM).
+        let times: [TimeInterval] = [0, 0.58, 1.22, 1.80]   // gaps 0.58, 0.64, 0.58 → mean 0.6
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: times) ?? 0, 100, accuracy: 1e-6)
+    }
+
+    func testTapTempoKeepsSubIntegerPrecision() {
+        // Mean gap 0.4012 s ⇒ 149.55 BPM, which an Int would drift; Double keeps it.
+        let times: [TimeInterval] = [0, 0.4012, 0.8024]
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: times) ?? 0, 60.0 / 0.4012, accuracy: 1e-6)
+    }
+
+    func testTapTempoNeedsTwoTaps() {
+        XCTAssertNil(TempoMath.bpm(fromTapTimes: []))
+        XCTAssertNil(TempoMath.bpm(fromTapTimes: [1.0]))
+    }
+
+    func testTapTempoDiscardsLoopWrapStraddle() {
+        // A tap that wraps the loop back to an earlier song position gives a
+        // non-positive gap (1.5 → 0.2); that interval is dropped, leaving the two
+        // clean 0.5 s gaps ⇒ 120 BPM.
+        let times: [TimeInterval] = [0.5, 1.0, 1.5, 0.2, 0.7]   // gaps .5, .5, -1.3, .5
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: times) ?? 0, 120, accuracy: 1e-6)
+    }
+
+    func testTapTempoReturnsNilWhenNoUsableGap() {
+        // Every gap non-positive (equal or descending timestamps) ⇒ unmeasurable.
+        XCTAssertNil(TempoMath.bpm(fromTapTimes: [1.0, 1.0, 1.0]))
+        XCTAssertNil(TempoMath.bpm(fromTapTimes: [2.0, 1.0]))
+    }
+
+    func testTapTempoClampsToMusicalRange() {
+        // Very fast double-tap clamps to the ceiling; a very slow pair to the floor.
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: [0, 0.01]) ?? 0, TempoMath.maxTapBPM, accuracy: 1e-6)
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: [0, 10]) ?? 0, TempoMath.minTapBPM, accuracy: 1e-6)
+    }
+
     // MARK: automator step count
 
     func testAutomatorStepCountExact() {

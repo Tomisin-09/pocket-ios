@@ -79,6 +79,52 @@ struct EditToolbar: View {
     }
 }
 
+/// The "set the 1" control strip (ADR 0024), shown in place of the mode-instructions
+/// line while the downbeat handle is being dragged on the waveform (transport locked,
+/// like loop capture). A hint says what to do; the **Y/N** pill commits the placed
+/// downbeat (✓) or discards it (✗).
+struct DownbeatBar: View {
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "1.circle")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(PocketColor.fine)
+            Text("Drag the 1 onto a downbeat")
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(PocketColor.textSecondary)
+
+            Spacer()
+
+            HStack(spacing: 4) {
+                iconButton("xmark", tint: PocketColor.danger, action: onCancel)
+                    .accessibilityLabel("Discard downbeat")
+                iconButton("checkmark", tint: PocketColor.confirm, action: onConfirm)
+                    .accessibilityLabel("Save downbeat")
+            }
+            .padding(3)
+            .background(
+                Capsule()
+                    .fill(PocketColor.background.opacity(0.9))
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+            )
+        }
+    }
+
+    private func iconButton(_ systemName: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 14, weight: .heavy))
+                .foregroundStyle(tint)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(tint.opacity(0.15)))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 /// A text field with a trailing clear (✕) button that appears once it has text.
 struct ClearableTextField: View {
     let placeholder: String

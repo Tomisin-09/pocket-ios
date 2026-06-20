@@ -6,6 +6,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Set the tempo by ear** — the **"Set BPM"** affordance now opens a tempo editor.
+  **Tap** along to the beat and it reads your tempo from the playhead (so tapping
+  inside a loop or at a slowed-down speed still finds the song's true tempo), or
+  type it in **Manually**. To place **the 1** (the downbeat the beat grid needs),
+  drag a handle onto a snare/kick **peak on the waveform** — it snaps to the loudest
+  nearby transient (zoom in for finer placement) — or "Mark the 1" at the playhead.
+  Tempo is now stored at full precision so the grid doesn't drift across a long
+  song. Long-press the BPM readout to re-open the editor and correct it. ADR 0024.
 - **Beat grid & snap to the beat** — give a song a **BPM** and a **downbeat** (the
   seconds where bar 1 lands, set on the song's edit sheet next to BPM) and the
   waveform draws a faint **beat grid** — thin lines per beat, brighter on the bar

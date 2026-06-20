@@ -78,6 +78,17 @@ final class BeatGridTests: XCTestCase {
         XCTAssertTrue(beats.allSatisfy(\.isDownbeat))
     }
 
+    func testFractionalBPMKeepsPrecision() {
+        // 90.0 BPM ⇒ 1.5 s spacing; 90.06 BPM places beats fractionally tighter.
+        // An Int-rounded tempo would collapse 90.06 → 90 and lose the offset (ADR 0024).
+        let interval = 60.0 / 90.06
+        let beats = BeatGrid.beats(bpm: 90.06, duration: 4, downbeat: 0)
+        XCTAssertEqual(beats.first?.fraction ?? -1, 0, accuracy: 1e-9)
+        // Second beat sits at one interval / duration — distinct from the 90.0 case.
+        XCTAssertEqual(beats[1].fraction, interval / 4, accuracy: 1e-9)
+        XCTAssertNotEqual(beats[1].fraction, (60.0 / 90.0) / 4, accuracy: 1e-6)
+    }
+
     func testBeatFractionsMatchBeats() {
         let fractions = BeatGrid.beatFractions(bpm: 90, duration: 12, downbeat: 0.25)
         let beats = BeatGrid.beats(bpm: 90, duration: 12, downbeat: 0.25).map(\.fraction)

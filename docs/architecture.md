@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
+│              TempoMath · TempoPeaks · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -54,7 +54,15 @@ and a downbeat anchor** (`Song.downbeatSeconds`), pure `BeatGrid` turns tempo + 
 into per-beat song fractions (flagging bar-start downbeats, 4/4); these are drawn as a
 faint, density-aware grid behind the bars and **added to the snap candidates**, so a
 release also catches the pulse — no grid is drawn or snapped to without both BPM and
-the anchor (ADR 0022). An active loop **loops
+the anchor (ADR 0022). Tempo and the downbeat are set behind **"Set BPM"** (`BPMSheet`):
+**tap-tempo** captures the engine's song-time per tap (pure `TempoMath.bpm(fromTapTimes:)`,
+so in-loop / slowed tapping reads the true tempo) or **manual** entry, and **the 1** is
+placed by a draggable waveform handle that **snaps to the loudest transient** near the drop
+(pure `TempoPeaks.snap`, against the displayed bars so a deep zoom sharpens it). Tempo is
+persisted full-precision in `Song.preciseBPM` — an **additive** optional so SwiftData
+lightweight migration is safe (a type change on `bpm` is not); `Song.bpm: Int?` remains the
+rounded display mirror and `Song.tempoBPM` feeds the `Double`-tempo `BeatGrid` so the grid
+doesn't drift across a long song (ADR 0024). An active loop **loops
 continuously, gaplessly and click-free** — the
 engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is

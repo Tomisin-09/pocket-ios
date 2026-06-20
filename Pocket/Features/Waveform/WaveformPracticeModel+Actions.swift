@@ -300,11 +300,6 @@ extension WaveformPracticeModel {
         return (start, min(start + 0.12, 0.98))
     }
 
-    /// Set an unknown tempo — tap-tempo / manual entry is a follow-up (ADR 0004).
-    func setBPM() {
-        // TODO: present tap-tempo / manual BPM entry (see ADR 0004).
-    }
-
     /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
     func activate(_ loop: Loop) {
         if activeLoopID == loop.uid && engine.isPlaying {

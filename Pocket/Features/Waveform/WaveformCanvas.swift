@@ -84,6 +84,15 @@ struct WaveformView: View {
     /// Pinch magnification → set the new zoom span (visible fraction of the song).
     let onSetZoomSpan: (Double) -> Void
 
+    /// "Set the 1 on the waveform" (ADR 0024): the downbeat fraction being placed, or
+    /// `nil` when not in downbeat mode. When set, a labelled "1" handle is drawn here
+    /// and any drag on the waveform moves it (snapped on release) instead of seeking.
+    var downbeatDraft: Double?
+    /// Live drag of the downbeat handle → this fraction (raw, tracks the finger).
+    var onDownbeatMove: (Double) -> Void = { _ in }
+    /// The downbeat drag released — snap to the nearest transient peak.
+    var onDownbeatEnded: () -> Void = {}
+
     // Gesture bookkeeping. Not `private` — the gesture recogniser lives in a
     // `WaveformView` extension in `WaveformCanvasGestures.swift`, so it reads this
     // state across files within the module.
@@ -144,9 +153,6 @@ struct WaveformView: View {
             return CGRect(x: startX, y: region.top, width: atX(upTo) - startX, height: region.height)
         }
 
-        // Beat grid behind everything (ADR 0022), confined to the bar region.
-        drawBeatGrid(in: context, size: size, atX: atX, region: region)
-
         // Active loop region — tinted the active loop's own identity colour (ADR 0023).
         if let loop {
             context.fill(Path(regionRect(loop.start, loop.end)),
@@ -183,6 +189,10 @@ struct WaveformView: View {
 
         drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX, region: region)
 
+        // Beat grid ON TOP of the bars (ADR 0022; restyled ADR 0024 follow-up) so each
+        // line reads consistently instead of being unevenly occluded by tall bars.
+        drawBeatGrid(in: context, size: size, atX: atX, region: region)
+
         // Annotations on the borders (ADR 0023): per-loop coloured lines along the
         // bottom (lane-stacked), purple inverted triangles along the top.
         drawLoopLines(in: context, size: size, atX: atX)
@@ -193,6 +203,12 @@ struct WaveformView: View {
         line.move(to: CGPoint(x: playheadX, y: 0))
         line.addLine(to: CGPoint(x: playheadX, y: size.height))
         context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.8)), lineWidth: 1.5)
+
+        // Downbeat handle on top of everything while placing the 1 (ADR 0024). The
+        // drawing helper lives in `WaveformDownbeat.swift` (file-length budget).
+        if let downbeatDraft {
+            drawDownbeatHandle(in: context, size: size, atX: atX(downbeatDraft))
+        }
     }
 
     /// Mirrored bars for the visible slice of the song. `barSet` either covers the
@@ -323,9 +339,12 @@ struct WaveformView: View {
         }
     }
 
-    /// Faint vertical grid behind the bars (ADR 0022): a thin line per beat with the
-    /// bar-start downbeats brighter and slightly heavier. Density-aware so a zoomed-out
-    /// view doesn't smear into a wash — sub-beats drop out once they'd sit under ~5 pt
+    /// Vertical beat grid drawn **on top of** the bars (ADR 0022; restyled ADR 0024
+    /// follow-up). Drawing behind the bars let tall bars occlude the lines unevenly, so
+    /// some downbeats "stuck out" more than others; on top, each line is full-height and
+    /// consistent. Bar-start **downbeats** get a dark halo + brighter line (the ADR 0023
+    /// halo trick) so they read over both the bright blue bars and the dark gaps;
+    /// sub-beats stay a fainter plain line. Density-aware: sub-beats drop out under ~5 pt
     /// apart, and the whole grid is skipped once even the downbeats would crowd.
     private func drawBeatGrid(in context: GraphicsContext, size: CGSize,
                               atX: (Double) -> CGFloat, region: BarRegion) {
@@ -341,9 +360,15 @@ struct WaveformView: View {
             var line = Path()
             line.move(to: CGPoint(x: lineX, y: region.top))
             line.addLine(to: CGPoint(x: lineX, y: region.bottom))
-            let opacity = beat.isDownbeat ? 0.14 : 0.06
-            context.stroke(line, with: .color(PocketColor.textPrimary.opacity(opacity)),
-                           lineWidth: beat.isDownbeat ? 1 : 0.75)
+            if beat.isDownbeat {
+                // A *soft* halo (not the full ADR 0023 strength) gives the line even
+                // contrast over bright bars and dark gaps without making it pop, then a
+                // low-opacity line keeps it noticeable-but-quiet.
+                context.stroke(line, with: .color(PocketColor.background.opacity(0.09)), lineWidth: 1.5)
+                context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.07)), lineWidth: 1)
+            } else {
+                context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.04)), lineWidth: 0.75)
+            }
         }
     }
 
@@ -366,22 +391,6 @@ struct WaveformView: View {
     private func bubbleX(width: CGFloat) -> CGFloat {
         let half: CGFloat = 28
         return min(max(half, width * CGFloat(screenX(playheadFraction))), width - half)
-    }
-}
-
-/// Small mono time readout pinned above the playhead (brief §3.2 — mono time).
-private struct TimeBubble: View {
-    let text: String
-    var body: some View {
-        Text(text)
-            .font(.pocketMono(.caption2))
-            .foregroundStyle(PocketColor.textPrimary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(
-                Capsule().fill(PocketColor.background.opacity(0.85))
-                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-            )
     }
 }
 

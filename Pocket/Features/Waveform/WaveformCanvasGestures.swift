@@ -38,6 +38,13 @@ extension WaveformView {
         if dragStartX == nil, pinchBaseSpan == nil { didPinch = false }   // fresh touch — clear any stale pinch latch
         guard pinchBaseSpan == nil, !didPinch else { return }   // ignore the drag while/after pinching
         let fraction = songFraction(atX: value.location.x, width: width)
+        // Setting the 1 (ADR 0024): the whole surface places the downbeat handle —
+        // any drag/tap moves it (snapped on release), nothing seeks or selects.
+        if downbeatDraft != nil {
+            dragStartX = value.startLocation.x
+            onDownbeatMove(fraction)
+            return
+        }
         if dragStartX == nil {
             dragStartX = value.startLocation.x
             didScrub = false
@@ -54,6 +61,13 @@ extension WaveformView {
             return
         }
         let moved = abs(value.location.x - (dragStartX ?? value.location.x))
+        applyModeDrag(fraction: fraction, moved: moved)
+    }
+
+    /// The mode-specific body of a continuing drag (extracted to keep `handleChanged`
+    /// within the cyclomatic-complexity budget): navigate scrubs the playhead once the
+    /// finger has moved past the threshold; Fine drags the grabbed handle.
+    private func applyModeDrag(fraction: Double, moved: CGFloat) {
         switch mode {
         case .navigate:
             if didScrub || moved > scrubThreshold {     // a real drag scrubs the playhead
@@ -76,6 +90,12 @@ extension WaveformView {
             didPinch = false
             grabbedHandle = nil
             isSelecting = false
+            dragStartX = nil
+            return
+        }
+        // Setting the 1 (ADR 0024) — snap the placed downbeat to the nearest peak.
+        if downbeatDraft != nil {
+            onDownbeatEnded()
             dragStartX = nil
             return
         }
