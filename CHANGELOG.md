@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Minimap snaps to markers & loop edges** — releasing a tap or drag on the full-song
+  minimap now catches a nearby **marker** dot or **saved-loop boundary** (light haptic),
+  so jumping to a marked spot or a loop edge lands exactly on it. The live scrub still
+  tracks your finger un-snapped; only the release catches, and beats are excluded (the
+  compressed strip is too dense for the grid).
 - **Loop rows are tidier** (ADR 0028). The always-visible **edit pencil** is gone —
   **press and hold a loop** (with a haptic) to open its edit sheet, where you rename,
   adjust the range, or delete it. The "A" automator control stays where it was. The
