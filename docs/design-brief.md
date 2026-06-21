@@ -161,12 +161,19 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
    (cyan), marker dots (purple), playhead, and the **viewport box** (the zoomed slice)
    when the detail waveform is zoomed. (Minimap not yet updated to per-loop colours /
    the triangle glyph — ADR 0023 deferred it.)
-7. Transport bar — row 1: play/pause · time · loop info (name + range + ✕ exit chip).
-   Row 2: the **action bar** — **Loop** (punch in/out), **Mark** (drop marker),
-   **Fine** (precise-edit toggle, calipers glyph). Click moved to the speed bar
-   (ADR 0027). **Greys out and locks while a loop is being created/edited** — controls
-   move up to the edit toolbar (item 3). *(A less real-estate-hungry loop-exit
-   affordance is still being explored; the ✕ chip stands for now.)*
+7. Transport bar — three zones (ADR 0030). **Left:** three identity controls, each a
+   **glyph in a circle** (no captions) — **Loop** (green `repeat`, punch in/out),
+   **Mark** (pink triangle, drop marker), **Fine** (blue calipers, precise-edit toggle);
+   the active one's circle fills with its colour. **Centre:** a header (fixed height,
+   matched font size so the states cross-fade without the row shifting) over a
+   background-free **rewind · pause · forward** cluster — the header is the loop name +
+   range when a loop is active, else the live playhead time. Rewind: 1× restart, 2×
+   previous loop; forward: next loop (cross-song deferred — forward/prev dim with no
+   loop). **Right (loop active only):** a strip in the loop's **identity colour** with an
+   ✕ deactivator — the "a loop is armed" signal. Click lives on the speed bar (ADR 0027).
+   **Greys out and locks while a loop is being created/edited** — controls move up to the
+   edit toolbar (item 3). A left-edge **swipe-back guard** keeps a scrub from popping the
+   screen back to the library.
 
 A hairline separates the cockpit from the scroll area below.
 

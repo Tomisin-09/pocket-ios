@@ -92,6 +92,11 @@ struct WaveformView: View {
     var onDownbeatMove: (Double) -> Void = { _ in }
     /// The downbeat drag released — snap to the nearest transient peak.
     var onDownbeatEnded: () -> Void = {}
+    /// A finger landed on / lifted off the waveform — brackets every touch so the
+    /// screen can suppress the swipe-back during a scrub (ADR 0030). Defaulted so the
+    /// component previews/call sites that don't care opt out for free.
+    var onTouchBegan: () -> Void = {}
+    var onTouchEnded: () -> Void = {}
 
     // Gesture bookkeeping. Not `private` — the gesture recogniser lives in a
     // `WaveformView` extension in `WaveformCanvasGestures.swift`, so it reads this
@@ -260,14 +265,9 @@ struct WaveformView: View {
     private static let laneHeight: CGFloat = 7
     private static let bracketPadding: CGFloat = 3
 
-    /// The identity colour for a loop (ADR 0023): a deterministic palette slot by
-    /// start-order, so each loop reads as its own hue. Overlap is still shown by lane.
-    private func loopColor(for loop: Loop) -> Color {
-        let intervals = loops.map { LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end) }
-        let slot = LoopColors.slot(for: loop.uid, among: intervals,
-                                   paletteCount: PocketColor.loopPalette.count)
-        return PocketColor.loopPalette[slot]
-    }
+    /// The identity colour for a loop (ADR 0023) — shared via `LoopColor` so the
+    /// waveform, minimap, and transport strip all resolve the same hue.
+    private func loopColor(for loop: Loop) -> Color { LoopColor.color(for: loop, among: loops) }
 
     /// All saved loops as lane-stacked horizontal lines along the bottom border.
     /// Colour encodes loop **identity** (ADR 0023, superseding ADR 0018's

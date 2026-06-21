@@ -97,7 +97,9 @@ struct WaveformPracticeView: View {
                                  onSetZoomSpan: model.setZoomSpan,
                                  downbeatDraft: model.downbeatDraft,
                                  onDownbeatMove: model.moveDownbeatDraft,
-                                 onDownbeatEnded: model.endDownbeatDrag)
+                                 onDownbeatEnded: model.endDownbeatDrag,
+                                 onTouchBegan: model.beginWaveformTouch,
+                                 onTouchEnded: model.endWaveformTouch)
                         // Fit / 1× reset — only while zoomed; sits above the
                         //    waveform's gestures so its tap wins (ADR 0010). Pinned
                         //    bottom-trailing so it clears the top-pinned time bubble,
@@ -123,9 +125,15 @@ struct WaveformPracticeView: View {
                     //    toolbar (you leave edit mode via Y/N, not the mode pills).
                     TransportBar(isPlaying: model.engine.isPlaying,             // 8
                                  onPlayPause: model.engine.togglePlay,
+                                 onRestart: model.transportRestart,
+                                 onPrevious: model.transportPrevious,
+                                 onNext: model.transportNext,
+                                 hasPrevious: model.hasPreviousTarget,
+                                 hasNext: model.hasNextTarget,
                                  mode: $model.mode,
                                  currentTime: model.engine.currentTime,
                                  loop: model.activeLoop,
+                                 loopColor: model.activeLoopColor,
                                  onClearLoop: model.clearActiveLoop,
                                  onDropMarker: model.dropMarkerAtPlayhead,
                                  onPunch: model.tapPunch,
@@ -175,6 +183,9 @@ struct WaveformPracticeView: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
         .preferredColorScheme(.dark)
+        // Stop a playhead scrub near the left edge from popping back to the library
+        // (ADR 0030): suppress the interactive swipe-back while a finger is on the waveform.
+        .background(SwipeBackGuard(disabled: model.isScrubbing))
         .overlay(alignment: .bottom) {
             if let toast = model.undoToast {
                 UndoToastView(message: toast.message, onUndo: model.performUndo)

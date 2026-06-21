@@ -56,6 +56,7 @@ extension WaveformView {
             dragStartX = value.startLocation.x
             didScrub = false
             holdFraction = fraction
+            onTouchBegan()   // arm the swipe-back guard for this touch (ADR 0030)
             if mode == .fine {
                 let handle = pickHandle(at: fraction)
                 grabbedHandle = handle
@@ -95,6 +96,7 @@ extension WaveformView {
 
     private func handleEnded(_ value: DragGesture.Value, width: CGFloat) {
         cancelHold()
+        onTouchEnded()   // release the swipe-back guard, whatever path this gesture took (ADR 0030)
         // A pinch this touch sequence — swallow the lift-off tap/scrub, then reset
         // the latch for the next gesture. (Fixes pinch-zoom firing a phantom seek.)
         if didPinch || pinchBaseSpan != nil {

@@ -53,17 +53,10 @@ struct Minimap: View {
         }
     }
 
-    /// The identity colour for a loop (ADR 0023): the same deterministic palette slot
-    /// by start-order the detail waveform uses (`WaveformCanvas.loopColor`), so a loop
-    /// reads as one hue in both places.
-    private func loopColor(for loop: Loop) -> Color {
-        let intervals = song.loopsByStart.map {
-            LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
-        }
-        let slot = LoopColors.slot(for: loop.uid, among: intervals,
-                                   paletteCount: PocketColor.loopPalette.count)
-        return PocketColor.loopPalette[slot]
-    }
+    /// The identity colour for a loop (ADR 0023) — shared via `LoopColor`, the same
+    /// hue the detail waveform and transport strip use, so a loop reads as one colour
+    /// everywhere.
+    private func loopColor(for loop: Loop) -> Color { LoopColor.color(for: loop, among: song.loopsByStart) }
 
     /// The active-loop region wash plus every saved loop's identity-coloured underline
     /// (ADR 0023). Colour encodes loop **identity** (matching the detail waveform); state
