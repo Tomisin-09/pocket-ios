@@ -19,6 +19,9 @@ struct BPMSheet: View {
     let engine: PracticeAudioEngine
     /// The song's current precise/rounded tempo, to prefill Manual mode.
     let currentBPM: Double?
+    /// The song's current downbeat ("the 1"), so reopening the sheet — e.g. after
+    /// placing it on the waveform — shows the value that's set rather than "Not set".
+    let currentDownbeat: TimeInterval?
     /// `(bpm, downbeatSeconds)` — either may be `nil`; the model sets only what's given.
     let onCommit: (Double?, TimeInterval?) -> Void
     /// "Set the 1 on the waveform" — commits the current BPM (if any) and hands off to
@@ -53,16 +56,18 @@ struct BPMSheet: View {
     /// True when the estimate found no confident tempo (flat/ambient material).
     @State private var estimateFailed = false
 
-    init(engine: PracticeAudioEngine, currentBPM: Double?,
+    init(engine: PracticeAudioEngine, currentBPM: Double?, currentDownbeat: TimeInterval?,
          onCommit: @escaping (Double?, TimeInterval?) -> Void,
          onSetOnWaveform: @escaping (Double?) -> Void,
          onEstimate: @escaping () async -> (bpm: Double, downbeat: TimeInterval?)?) {
         self.engine = engine
         self.currentBPM = currentBPM
+        self.currentDownbeat = currentDownbeat
         self.onCommit = onCommit
         self.onSetOnWaveform = onSetOnWaveform
         self.onEstimate = onEstimate
         _manualText = State(initialValue: currentBPM.map { String(Int($0.rounded())) } ?? "")
+        _downbeat = State(initialValue: currentDownbeat)
     }
 
     /// Whether the value currently in Manual mode is the unedited estimate, so the

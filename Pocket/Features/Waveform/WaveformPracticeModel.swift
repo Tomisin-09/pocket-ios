@@ -119,6 +119,11 @@ final class WaveformPracticeModel {
     /// like a capture). Confirming writes `Song.downbeatSeconds`; cancelling discards.
     var downbeatDraft: Double?
 
+    /// When the downbeat placement was launched from the BPM sheet ("Set the 1 on the
+    /// waveform"), re-present that sheet once the 1 is confirmed/cancelled so the user
+    /// lands back in the tempo editor rather than on a bare waveform.
+    @ObservationIgnored var resumeBPMSheetAfterDownbeat = false
+
     /// A transient "Deleted X · Undo" toast after a destructive action (ADR 0019).
     /// Auto-dismisses after a few seconds; tapping Undo runs its closure.
     var undoToast: UndoToast?

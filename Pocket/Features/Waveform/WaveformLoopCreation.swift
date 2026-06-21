@@ -80,36 +80,60 @@ struct EditToolbar: View {
 }
 
 /// The "set the 1" control strip (ADR 0024), shown in place of the mode-instructions
-/// line while the downbeat handle is being dragged on the waveform (transport locked,
-/// like loop capture). A hint says what to do; the **Y/N** pill commits the placed
-/// downbeat (✓) or discards it (✗).
+/// line while the downbeat is being placed on the waveform. Two ways to land it: **play
+/// along and tap the 1** (the dedicated transport + "Tap the 1" capture here, since the
+/// main transport is locked during placement) or **drag the handle** onto a peak. The
+/// **✗/✓** pill discards or commits.
 struct DownbeatBar: View {
+    let isPlaying: Bool
+    let onTogglePlay: () -> Void
+    let onCapture: () -> Void
     let onConfirm: () -> Void
     let onCancel: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "1.circle")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(PocketColor.fine)
-            Text("Drag the 1 onto a downbeat")
-                .font(.footnote.weight(.medium))
-                .foregroundStyle(PocketColor.textSecondary)
-
-            Spacer()
-
-            HStack(spacing: 4) {
-                iconButton("xmark", tint: PocketColor.danger, action: onCancel)
-                    .accessibilityLabel("Discard downbeat")
-                iconButton("checkmark", tint: PocketColor.confirm, action: onConfirm)
-                    .accessibilityLabel("Save downbeat")
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "1.circle")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(PocketColor.fine)
+                Text("Play and tap the 1 — or drag the handle")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(PocketColor.textSecondary)
             }
-            .padding(3)
-            .background(
-                Capsule()
-                    .fill(PocketColor.background.opacity(0.9))
-                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-            )
+
+            HStack(spacing: 8) {
+                iconButton(isPlaying ? "pause.fill" : "play.fill",
+                           tint: PocketColor.textPrimary, action: onTogglePlay)
+                    .accessibilityLabel(isPlaying ? "Pause" : "Play")
+
+                Button(action: onCapture) {
+                    Label("Tap the 1", systemImage: "hand.tap.fill")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(PocketColor.fine)
+                        .padding(.horizontal, 12)
+                        .frame(height: 30)
+                        .background(Capsule().fill(PocketColor.fine.opacity(0.18)))
+                        .overlay(Capsule().strokeBorder(PocketColor.fine.opacity(0.5), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Set the 1 at the playhead")
+
+                Spacer()
+
+                HStack(spacing: 4) {
+                    iconButton("xmark", tint: PocketColor.danger, action: onCancel)
+                        .accessibilityLabel("Discard downbeat")
+                    iconButton("checkmark", tint: PocketColor.confirm, action: onConfirm)
+                        .accessibilityLabel("Save downbeat")
+                }
+                .padding(3)
+                .background(
+                    Capsule()
+                        .fill(PocketColor.background.opacity(0.9))
+                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                )
+            }
         }
     }
 
