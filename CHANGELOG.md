@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Practice opens on the full song** (ADR 0029). Entering a song no longer silently
+  arms its first saved loop — playback starts on the whole song at 1.0×, and a loop
+  only arms when you tap its row, punch a new one, or run an automator. Leaving the
+  screen wipes the transient session state (active loop, speed, click, mode); your
+  saved BPM, downbeat, loops, and markers are untouched. Deleting the loop you're
+  hearing now plays through the song instead of jumping to another saved region.
 - **Minimap snaps to markers & loop edges** — releasing a tap or drag on the full-song
   minimap now catches a nearby **marker** dot or **saved-loop boundary** (light haptic),
   so jumping to a marked spot or a loop edge lands exactly on it. The live scrub still

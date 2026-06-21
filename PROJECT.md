@@ -118,7 +118,10 @@ on `#2a6796`) sits on the near-black background (ADR 0023). New loops are create
 ("Loop 3", via pure `AutoName`), activated, and **looping immediately** (no separate
 play tap), no naming sheet (markers still ask for a label, since a marker *is* its
 label); deleting a loop or marker offers an
-**Undo** toast that restores it with its original identity (ADR 0019).
+**Undo** toast that restores it with its original identity (ADR 0019). Practice
+opens on the **full song** — no loop is armed until you pick one — and leaving the
+screen **wipes** the transient session knobs (active loop, speed, click, mode) while
+persisted song data is left untouched (ADR 0029).
 State + handlers live in an `@Observable` `WaveformPracticeModel`
 (ADR 0007), now bound to a **persisted `Song`** — loops/markers are SwiftData
 `@Model`s that survive relaunches (ADR 0011). The app opens to a **song library**

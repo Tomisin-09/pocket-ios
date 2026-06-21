@@ -364,7 +364,9 @@ extension WaveformPracticeModel {
         let automator = loop.automator
         context.delete(loop)
         if wasActive {
-            activeLoopID = loops.first?.uid
+            // Clean state (ADR 0029): deleting the loop you're hearing plays through
+            // the song rather than silently arming a different saved region.
+            activeLoopID = nil
             applyActiveLoopToEngine()
         }
         presentUndo("Deleted \(name)") { [weak self] in
