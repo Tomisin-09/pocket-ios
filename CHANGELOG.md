@@ -5,7 +5,26 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Transport playback controls** (ADR 0030). The transport bar gains a
+  **rewind · pause · forward** cluster. With a loop active: rewind restarts it
+  (double-tap → previous loop), forward jumps to the next loop. With no loop:
+  rewind restarts the song; previous/next *song* is coming in a follow-up, so those
+  buttons dim for now. Skips keep your play/pause state.
+- **Clearer active-loop signal** (ADR 0030). When a loop is armed, a vertical strip
+  in the loop's own colour appears on the right of the transport bar with an ✕ to
+  deactivate it — so it's obvious at a glance whether you're looping a region or
+  playing the whole song. The bar's centre shows the loop name + range when looping,
+  or the live playhead time on the full song.
+- **No accidental exit while scrubbing** (ADR 0030). Adjusting the playhead near the
+  left edge no longer triggers the swipe-back to the library; the edge gesture is
+  suppressed only while your finger is on the waveform.
+
 ### Changed
+- **Transport action buttons are now identity controls** (ADR 0030). Loop / Mark / Fine
+  drop their text captions for a glyph in a circle (green repeat / pink triangle / blue
+  calipers; the active one's circle fills with its colour), freeing room for the
+  playback cluster.
 - **Practice opens on the full song** (ADR 0029). Entering a song no longer silently
   arms its first saved loop — playback starts on the whole song at 1.0×, and a loop
   only arms when you tap its row, punch a new one, or run an automator. Leaving the

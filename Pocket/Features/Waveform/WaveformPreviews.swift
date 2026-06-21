@@ -173,14 +173,31 @@ import SwiftUI
     }
 }
 
-#Preview("Transport bar") {
+#Preview("Transport bar — loop active") {
+    @Previewable @State var mode = WaveformPracticeView.InteractionMode.navigate
+    let song = Song.sample()
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        TransportBar(isPlaying: false, onPlayPause: {},
+                     onRestart: {}, onPrevious: {}, onNext: {},
+                     hasPrevious: false, hasNext: true,
+                     mode: $mode, currentTime: 10,
+                     loop: song.loops.first,
+                     loopColor: song.loops.first.map { LoopColor.color(for: $0, among: song.loopsByStart) },
+                     onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
+    }
+}
+
+#Preview("Transport bar — no loop") {
     @Previewable @State var mode = WaveformPracticeView.InteractionMode.navigate
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        TransportBar(isPlaying: false, onPlayPause: {}, mode: $mode,
-                     currentTime: 10,
-                     loop: Song.sample().loops.first, onClearLoop: {},
-                     onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
+        TransportBar(isPlaying: true, onPlayPause: {},
+                     onRestart: {}, onPrevious: {}, onNext: {},
+                     hasPrevious: false, hasNext: false,
+                     mode: $mode, currentTime: 47,
+                     loop: nil, loopColor: nil,
+                     onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
     }
 }
 

@@ -142,6 +142,15 @@ block on large or not-yet-downloaded iCloud files), so the UI stays responsive; 
 model exposes `isLoadingAudio` and the view shows a dimming **loading overlay**
 (`AudioLoadingOverlay`) that also blocks taps on the half-ready controls until ready.
 
+The transport bar (ADR 0030) carries a **rewind · pause · forward** playback cluster
+alongside the Loop/Mark/Fine identity dots; skip targets are loops ordered by start
+(neighbour lookup is the pure, unit-tested `TransportNav`; cross-song skip is deferred).
+An **active-loop colour strip** (the loop's identity hue via the shared `LoopColor`, the
+same slot the waveform/minimap use) makes the looping state unmistakable. A scrub starting
+near the screen edge is stopped from popping the screen: the model brackets each waveform
+touch (`isScrubbing`) and `SwipeBackGuard` disables the nav stack's interactive pop while a
+finger is down (ADR 0030).
+
 Apple Music tracks skip stages 2–4 (no raw audio) — they are browse/metadata
 only. See `docs/decisions/0001`.
 

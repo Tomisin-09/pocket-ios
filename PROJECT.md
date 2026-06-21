@@ -78,8 +78,11 @@ phone mid-practice keeps it playing (ADR 0025). Interaction: **tap = seek, drag 
 (a **page-mode** viewport — the window holds still and the playhead sweeps/pages across it,
 with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
 the source file** for crisp detail, debounced + cached, ADR 0020);
-playhead capture is via a transport **action bar** (Loop · Mark · Fine — calipers glyph;
-**Click** moved to the speed bar, ADR 0027),
+playhead capture is via three transport **identity dots** (Loop · Mark · Fine — coloured
+dots, no captions; **Click** moved to the speed bar, ADR 0027 / 0030), and the transport
+bar carries a **rewind · pause · forward** playback cluster (restart / prev-loop / next-loop;
+cross-song deferred) plus an **active-loop colour strip** with an ✕ deactivator (ADR 0030);
+a left-edge **swipe-back guard** stops a scrub from popping back to the library mid-adjust,
 while a loop's **range** is drawn directly on the waveform by a **long-press-drag** (ADR 0005
 round 5) — a still hold arms a selection that the drag paints, released into a confirmable
 draft. On **release**, a drawn edge / Fine handle / tap-seek **snaps to a nearby marker or
