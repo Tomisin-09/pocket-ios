@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Loop rows are tidier** (ADR 0028). The always-visible **edit pencil** is gone —
+  **press and hold a loop** (with a haptic) to open its edit sheet, where you rename,
+  adjust the range, or delete it. The "A" automator control stays where it was. The
+  loop edit sheet itself dropped its **Speed** and **Repeats** controls — those live
+  in the automator now, so the sheet is just Name · Range · Delete.
 - **Transport rework** — the practice cockpit is tidier (ADR 0027). The **Click**
   toggle moved off the transport bar to sit next to the **BPM** readout on the speed
   bar, in its own teal colour, so it reads as a tempo tool instead of another play

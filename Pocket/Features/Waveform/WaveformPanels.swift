@@ -12,8 +12,10 @@ struct LoopsPanel: View {
     let isPlaying: Bool
     /// Tap the row — activate (and play / toggle) this loop.
     let onActivate: (Loop) -> Void
-    /// Trailing pencil — open the edit sheet.
+    /// Swipe-Edit or hold the row — open the edit sheet (ADR 0028). Replaces the pencil.
     let onEdit: (Loop) -> Void
+    /// Swipe-Delete — remove the loop without opening the sheet first.
+    let onDelete: (Loop) -> Void
     /// The "A" control — open this loop's automator (speed ramp) sheet.
     let onAutomator: (Loop) -> Void
 
@@ -36,7 +38,8 @@ struct LoopsPanel: View {
                                 isPlaying: isPlaying,
                                 onActivate: { onActivate(loop) },
                                 onAutomator: { onAutomator(loop) },
-                                onEdit: { onEdit(loop) })
+                                onEdit: { onEdit(loop) },
+                                onDelete: { onDelete(loop) })
                     }
                 }
             }
@@ -51,44 +54,55 @@ private struct LoopRow: View {
     let onActivate: () -> Void
     let onAutomator: () -> Void
     let onEdit: () -> Void
+    let onDelete: () -> Void
 
     var body: some View {
         HStack(spacing: 10) {
-            // Tap the row to activate (and play / toggle) the loop.
-            Button(action: onActivate) {
-                HStack(spacing: 10) {
-                    // Active accent (green) down the leading edge.
-                    RoundedRectangle(cornerRadius: 1.5)
-                        .fill(isActive ? PocketColor.active : Color.clear)
-                        .frame(width: 3, height: 38)
-                    Image(systemName: isActive && isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(isActive ? PocketColor.active : PocketColor.textSecondary)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(loop.name)
-                            .font(.subheadline)
-                            .foregroundStyle(PocketColor.textPrimary)
-                            .lineLimit(1)
-                        // Speed/repeats moved into the automator (ADR 0013) — the row
-                        // shows just the range now; the "A" control holds the ramp.
-                        Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
-                            .font(.pocketMono(.footnote))
-                            .foregroundStyle(PocketColor.textSecondary)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 0)
+            // Tap the play area to activate (and play / toggle) the loop; press and
+            // hold it (with a haptic) to open the edit sheet — rename, range, delete
+            // all live there now (ADR 0028). No pencil, no swipe: the hold is the one
+            // way in, which keeps the row's gestures clear of the scroll view. It's a
+            // bare tap target rather than a Button so tap + long-press compose cleanly.
+            HStack(spacing: 10) {
+                // Active accent (green) down the leading edge.
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(isActive ? PocketColor.active : Color.clear)
+                    .frame(width: 3, height: 38)
+                Image(systemName: isActive && isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(isActive ? PocketColor.active : PocketColor.textSecondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(loop.name)
+                        .font(.subheadline)
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .lineLimit(1)
+                    // Speed/repeats moved into the automator (ADR 0013) — the row
+                    // shows just the range now; the "A" control holds the ramp.
+                    Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
+                        .font(.pocketMono(.footnote))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .lineLimit(1)
                 }
-                .contentShape(Rectangle())
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onActivate)
+            .onLongPressGesture(minimumDuration: 0.4) {
+                haptic(.medium)     // confirm the hold landed before the sheet appears
+                onEdit()
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
             .accessibilityLabel(isActive && isPlaying ? "Pause \(loop.name)" : "Play \(loop.name)")
+            // VoiceOver can't long-press, so surface the same actions explicitly.
+            .accessibilityActions {
+                Button("Edit", action: onEdit)
+                Button("Delete", action: onDelete)
+            }
 
             AutomatorButton(isOn: loop.automatorEnabled, action: onAutomator)
                 .accessibilityLabel(loop.automatorEnabled
                                     ? "Automator on for \(loop.name)" : "Set up automator for \(loop.name)")
-
-            EditPencil { onEdit() }
-                .accessibilityLabel("Edit \(loop.name)")
         }
     }
 }
