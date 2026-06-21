@@ -49,7 +49,10 @@ struct WaveformPracticeView: View {
                     //    + state label + Y/N) while a loop is captured.
                     ZStack {
                         if model.isSettingDownbeat {
-                            DownbeatBar(onConfirm: model.confirmDownbeat,
+                            DownbeatBar(isPlaying: model.engine.isPlaying,
+                                        onTogglePlay: model.engine.togglePlay,
+                                        onCapture: model.captureDownbeatAtPlayhead,
+                                        onConfirm: model.confirmDownbeat,
                                         onCancel: model.cancelSetDownbeat)
                                 .transition(.opacity)
                         } else if model.showConfirm {
@@ -191,10 +194,11 @@ struct WaveformPracticeView: View {
         }
         .sheet(isPresented: $model.settingBPM) {
             BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,
+                     currentDownbeat: model.song.downbeatSeconds,
                      onCommit: model.commitTempo,
                      onSetOnWaveform: { bpm in
                          model.commitTempo(bpm: bpm, downbeat: nil)
-                         model.beginSetDownbeat()
+                         model.beginSetDownbeat(resumeSheet: true)
                      },
                      onEstimate: {
                          await model.estimateTempoFromAudio().map { ($0.bpm, $0.downbeatSeconds) }

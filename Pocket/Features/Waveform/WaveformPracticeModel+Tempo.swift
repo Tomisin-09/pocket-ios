@@ -48,11 +48,31 @@ extension WaveformPracticeModel {
     // MARK: Set the 1 on the waveform (draggable downbeat handle, ADR 0024)
 
     /// Enter downbeat-placement: seed the handle at the existing downbeat, or the
-    /// playhead if none. The waveform then drags it (snapping to peaks) and the
-    /// downbeat toolbar confirms/cancels.
-    func beginSetDownbeat() {
+    /// playhead if none. The waveform then drags it (snapping to peaks), the transport
+    /// stays live so the user can **play along and tap the 1**, and the downbeat toolbar
+    /// confirms/cancels. `resumeSheet` re-presents the BPM sheet on exit (set when this
+    /// was launched from "Set the 1 on the waveform").
+    func beginSetDownbeat(resumeSheet: Bool = false) {
+        resumeBPMSheetAfterDownbeat = resumeSheet
         let seed = song.downbeatSeconds.map { duration > 0 ? $0 / duration : 0 } ?? playheadFraction
         downbeatDraft = seed.clamped(to: 0...1)
+        haptic(.medium)
+    }
+
+    /// Play-along capture: drop the 1 at the **live playhead** the moment the user feels
+    /// the downbeat, and pause so they can confirm or nudge it. A tap is a little late, so
+    /// the position snaps to the nearest transient within a short (~120 ms) window —
+    /// enough to land on the actual kick/snare without the big jumps a zoom-proportional
+    /// radius would cause at full zoom. No peak that close ⇒ keep the raw playhead.
+    func captureDownbeatAtPlayhead() {
+        guard downbeatDraft != nil, duration > 0 else { return }
+        engine.pause()
+        let captured = playheadFraction
+        let displayed = displayedBars
+        let radius = 0.12 / duration
+        downbeatDraft = TempoPeaks.snap(toFraction: captured, bars: displayed.bars,
+                                        coveredStart: displayed.start, coveredEnd: displayed.end,
+                                        searchRadius: radius) ?? captured
         haptic(.medium)
     }
 
@@ -78,15 +98,26 @@ extension WaveformPracticeModel {
         }
     }
 
-    /// Confirm ✓ — commit the placed downbeat as the grid's phase anchor and exit.
+    /// Confirm ✓ — commit the placed downbeat as the grid's phase anchor and exit,
+    /// returning to the BPM sheet if we came from it.
     func confirmDownbeat() {
         guard let draft = downbeatDraft else { return }
         downbeatDraft = nil
         commitTempo(bpm: nil, downbeat: draft * duration)
+        resumeBPMSheetIfNeeded()
     }
 
-    /// Cancel ✗ — discard the placement, leaving any existing downbeat untouched.
+    /// Cancel ✗ — discard the placement, leaving any existing downbeat untouched, and
+    /// return to the BPM sheet if we came from it.
     func cancelSetDownbeat() {
         downbeatDraft = nil
+        resumeBPMSheetIfNeeded()
+    }
+
+    /// Re-present the BPM sheet after a downbeat placement that was launched from it.
+    private func resumeBPMSheetIfNeeded() {
+        guard resumeBPMSheetAfterDownbeat else { return }
+        resumeBPMSheetAfterDownbeat = false
+        settingBPM = true
     }
 }

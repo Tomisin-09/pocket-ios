@@ -6,6 +6,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Set the 1 by playing along** — placing the downbeat on the waveform now has a
+  **Play/Pause** and a **"Tap the 1"** button: play the song and tap the moment you
+  feel the downbeat, and it drops the 1 at the playhead (nudged onto the nearest
+  transient) and pauses so you can fine-tune or confirm — more intuitive than scrubbing
+  to a peak. Dragging the handle still works. After you confirm (or cancel) the 1, you
+  now return to the tempo editor instead of being left on the waveform, and the editor
+  shows the downbeat you just set.
+
 - **Estimate the tempo & downbeat from the audio** — the tempo editor now has an
   **"Estimate from audio"** button that analyses the track's onsets on-device and
   prefills both the **BPM** and **the 1** (the downbeat), flagged as estimates for
