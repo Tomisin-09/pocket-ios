@@ -99,6 +99,7 @@ struct WaveformView: View {
     @State var dragStartX: CGFloat?
     @State var didScrub = false                     // moved enough to be a scrub (not a tap)
     @State var grabbedHandle: WaveformGesture.Handle?  // Fine mode
+    @State var grabbedHandleOrigin: Double?            // its value at grab-time, to revert on a pinch takeover
     @State var pinchBaseSpan: Double?               // zoom span captured at pinch start
     @State var didPinch = false                     // a pinch happened — swallow the trailing tap/scrub
     // Long-press-drag select (navigate). A still hold arms a selection; the drag
@@ -173,18 +174,11 @@ struct WaveformView: View {
                          with: .color(PocketColor.active.opacity(0.22)))
         }
 
-        // Fine selection (cyan region + two draggable handles).
+        // Fine selection wash — behind the bars, like the other region tints. The
+        // draggable handles draw *in front* of the bars below (so they aren't occluded).
         if let fineSelection {
-            let startX = atX(fineSelection.start)
-            let endX = atX(fineSelection.end)
             context.fill(Path(regionRect(fineSelection.start, fineSelection.end)),
                          with: .color(PocketColor.fine.opacity(0.18)))
-            for handleX in [startX, endX] {
-                let bar = CGRect(x: handleX - 1.5, y: region.top, width: 3, height: region.height)
-                context.fill(Path(bar), with: .color(PocketColor.fine))
-                let knob = CGRect(x: handleX - 5, y: region.midY - 9, width: 10, height: 18)
-                context.fill(Path(roundedRect: knob, cornerRadius: 3), with: .color(PocketColor.fine))
-            }
         }
 
         drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX, region: region)
@@ -197,6 +191,10 @@ struct WaveformView: View {
         // bottom (lane-stacked), purple inverted triangles along the top.
         drawLoopLines(in: context, size: size, atX: atX)
         drawMarkerTriangles(in: context, size: size, atX: atX)
+
+        // Fine handles in front of the bars (helper in `WaveformDownbeat.swift`, ADR 0023
+        // follow-up); the wash already went down behind the bars above.
+        drawFineHandles(in: context, region: region, atX: atX)
 
         // Playhead.
         var line = Path()

@@ -1,12 +1,25 @@
 import SwiftUI
 
-// Split out of `WaveformCanvas.swift` (file-length budget): the downbeat-handle
-// drawing for "set the 1" (ADR 0024), plus the playhead time bubble. Both are small
-// Canvas/overlay pieces that don't need to sit in the main draw routine.
+// Split out of `WaveformCanvas.swift` (file-length budget): the Fine + downbeat
+// handle drawing, plus the playhead time bubble. Both handle helpers draw *in front*
+// of the bars so the grab targets stay legible.
 
 extension WaveformView {
 
-    /// The draggable "set the 1" handle (ADR 0024): a bright cyan line — the app's
+    /// The two Fine-mode selection handles (ADR 0023): a thin vertical bar plus a rounded
+    /// knob at each selection edge, in the high-contrast `fine` colour. Drawn after the
+    /// bars so they read in front instead of being occluded.
+    func drawFineHandles(in context: GraphicsContext, region: BarRegion, atX: (Double) -> CGFloat) {
+        guard let fineSelection else { return }
+        for handleX in [atX(fineSelection.start), atX(fineSelection.end)] {
+            let bar = CGRect(x: handleX - 1.5, y: region.top, width: 3, height: region.height)
+            context.fill(Path(bar), with: .color(PocketColor.fine))
+            let knob = CGRect(x: handleX - 5, y: region.midY - 9, width: 10, height: 18)
+            context.fill(Path(roundedRect: knob, cornerRadius: 3), with: .color(PocketColor.fine))
+        }
+    }
+
+    /// The draggable "set the 1" handle (ADR 0024): a high-contrast line — the app's
     /// draggable-handle colour (cf. Fine handles) — with a rounded "1" badge at the top
     /// so it reads as the bar-1 downbeat being positioned.
     func drawDownbeatHandle(in context: GraphicsContext, size: CGSize, atX handleX: CGFloat) {

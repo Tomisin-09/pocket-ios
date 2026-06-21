@@ -19,6 +19,13 @@ extension WaveformView {
                 // abort a selection that already armed in the gap before recognition.
                 cancelHold()
                 if isSelecting { isSelecting = false; onSelectCancelled() }
+                // A Fine handle grabbed by the first pinch finger: snap it back to where
+                // it was grabbed and release it, so pinch-to-zoom never moves the bound.
+                if let handle = grabbedHandle {
+                    if let origin = grabbedHandleOrigin { onMoveHandle(handle, origin) }
+                    grabbedHandle = nil
+                    grabbedHandleOrigin = nil
+                }
                 let base = pinchBaseSpan ?? (viewport.end - viewport.start)
                 pinchBaseSpan = base
                 onSetZoomSpan(WaveformGesture.clampSpan(base / value.magnification))
@@ -50,7 +57,11 @@ extension WaveformView {
             didScrub = false
             holdFraction = fraction
             if mode == .fine {
-                grabbedHandle = pickHandle(at: fraction)
+                let handle = pickHandle(at: fraction)
+                grabbedHandle = handle
+                // Remember where the handle started so a pinch taking over this touch
+                // can snap it back (the first pinch finger would otherwise nudge it).
+                grabbedHandleOrigin = fineSelection.map { handle == .start ? $0.start : $0.end }
             } else if canBeginSelection {        // navigate — start the hold-to-select timer
                 startHold()
             }
@@ -89,6 +100,7 @@ extension WaveformView {
         if didPinch || pinchBaseSpan != nil {
             didPinch = false
             grabbedHandle = nil
+            grabbedHandleOrigin = nil
             isSelecting = false
             dragStartX = nil
             return
@@ -120,6 +132,7 @@ extension WaveformView {
         case .fine:
             if grabbedHandle != nil { onMoveHandleEnded() }   // audition the new bounds
             grabbedHandle = nil
+            grabbedHandleOrigin = nil
         }
         dragStartX = nil
     }
