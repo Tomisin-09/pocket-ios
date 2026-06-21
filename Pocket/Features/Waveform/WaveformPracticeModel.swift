@@ -69,7 +69,10 @@ final class WaveformPracticeModel {
     /// deallocated. `nil` for the generated demo sample.
     private var fileAccess: SecurityScopedAccess?
 
-    /// The active loop, tracked by its stable `Loop.uid`.
+    /// The active loop, tracked by its stable `Loop.uid`. Starts `nil` on every
+    /// screen entry — practice opens on the **full song**, not silently armed to a
+    /// saved region (ADR 0029). A loop only arms when you tap its row, punch a new
+    /// one, or run an automator.
     var activeLoopID: UUID?
     var editingLoop: Loop?
     var editingMarker: Marker?
@@ -92,7 +95,7 @@ final class WaveformPracticeModel {
         self.song = song
         self.context = context
         self.amplitudes = song.amplitudes
-        self.activeLoopID = song.loopsByStart.first?.uid
+        // Clean state on entry (ADR 0029): no loop armed — open on the full song.
     }
 
     /// The song's loops/markers in a stable display order (SwiftData relationships).
@@ -226,47 +229,23 @@ final class WaveformPracticeModel {
     func endPlaybackSession() {
         nowPlaying.teardown()
         engine.stop()
+        wipeTransientState()
     }
 
-    // MARK: - Automator (per-loop speed ramp, ADR 0013)
-
-    /// Apply the active loop's speed ramp at a new loop iteration (driven by the engine's
-    /// `loopIteration`). No-op unless that loop's automator is enabled and it's playing.
-    /// Sets `speed`, which the view feeds to the engine via its existing `onChange`. Once
-    /// the ramp has played its last automated pass (`totalLoops`), playback **stops** and
-    /// rewinds to the loop start so the ramp can be replayed from the top (ADR 0013).
-    func automatorAdvance(toLoopIteration iteration: Int) {
-        guard let loop = activeLoop, loop.automatorEnabled, engine.isPlaying else { return }
-        let config = loop.automator
-        if iteration >= config.totalLoops {
-            engine.pause()
-            engine.seek(toSeconds: loop.startSeconds)   // rewind (resets the wrap counter) so a replay starts fresh
-            return
-        }
-        let target = config.speed(atLoopIteration: iteration)
-        if abs(target - speed) > 0.0001 { speed = target }
+    /// Wipe-on-exit (ADR 0029): reset the transient practice state so a later entry
+    /// can't inherit a stale loop/speed/click. The model is normally recreated per
+    /// entry, so this is belt-and-suspenders — but it makes the lifecycle contract
+    /// explicit and survives any future model reuse. Persisted song data (BPM,
+    /// downbeat, saved loops/markers) is **never** touched — only the session knobs.
+    private func wipeTransientState() {
+        activeLoopID = nil
+        speed = 1.0
+        if metronomeOn { metronomeOn = false }
+        mode = .navigate
     }
 
-    /// "Set ramp" on the automator sheet: arm the loop's ramp, make it the active loop,
-    /// and start playing it from the top at the ramp's start speed (ADR 0013).
-    func startAutomator(for loop: Loop) {
-        speed = loop.automator.speed(atLoopIteration: 0)   // begin at the ramp start
-        activeLoopID = loop.uid
-        applyActiveLoopToEngine()
-        engine.seek(toSeconds: loop.startSeconds)
-        engine.play()
-    }
-
-    /// "Turn off ramp" on the automator sheet: the sheet has already written
-    /// `enabled = false`, so the next loop wrap's `automatorAdvance` simply no-ops and the
-    /// speed stops changing. Nothing else to do — kept as a named hook for the view.
-    func turnOffAutomator(for loop: Loop) {}
-
-    /// The user grabbed the speed slider — hand control back by disabling the active
-    /// loop's ramp, so it stops fighting the manual setting.
-    func userAdjustedSpeed() {
-        activeLoop?.automatorEnabled = false
-    }
+    // MARK: - Derived transport state
+    // Automator (per-loop speed ramp, ADR 0013) lives in `+Automator.swift`.
 
     /// Live playhead as a fraction of the song (0...1), driven by the engine.
     var playheadFraction: Double {
