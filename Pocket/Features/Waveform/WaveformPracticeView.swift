@@ -44,7 +44,10 @@ struct WaveformPracticeView: View {
                 VStack(spacing: 16) {
                     SongStrip(song: model.song)                                  // 1
                     SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
-                             onSetBPM: model.setBPM, onUserAdjust: model.userAdjustedSpeed)
+                             onSetBPM: model.setBPM, onUserAdjust: model.userAdjustedSpeed,
+                             metronomeOn: model.metronomeOn,
+                             canUseMetronome: model.canUseMetronome,
+                             onToggleMetronome: model.toggleMetronome)
                     // 4. Mode instructions — replaced by the edit toolbar (audition
                     //    + state label + Y/N) while a loop is captured.
                     ZStack {
@@ -124,10 +127,7 @@ struct WaveformPracticeView: View {
                                  onClearLoop: model.clearActiveLoop,
                                  onDropMarker: model.dropMarkerAtPlayhead,
                                  onPunch: model.tapPunch,
-                                 isPunchActive: model.pendingStart != nil,
-                                 metronomeOn: model.metronomeOn,
-                                 canUseMetronome: model.canUseMetronome,
-                                 onToggleMetronome: model.toggleMetronome)
+                                 isPunchActive: model.pendingStart != nil)
                         .opacity(model.showConfirm || model.isSettingDownbeat ? 0.35 : 1)
                         .disabled(model.showConfirm || model.isSettingDownbeat)
                         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)

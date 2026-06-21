@@ -78,7 +78,8 @@ phone mid-practice keeps it playing (ADR 0025). Interaction: **tap = seek, drag 
 (a **page-mode** viewport — the window holds still and the playhead sweeps/pages across it,
 with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
 the source file** for crisp detail, debounced + cached, ADR 0020);
-playhead capture is via a transport **action bar** (Mark · Loop · Fine · **Click**),
+playhead capture is via a transport **action bar** (Loop · Mark · Fine — calipers glyph;
+**Click** moved to the speed bar, ADR 0027),
 while a loop's **range** is drawn directly on the waveform by a **long-press-drag** (ADR 0005
 round 5) — a still hold arms a selection that the drag paints, released into a confirmable
 draft. On **release**, a drawn edge / Fine handle / tap-seek **snaps to a nearby marker or
@@ -97,7 +98,8 @@ The editor can also **estimate the tempo and the 1 from the audio** — an on-de
 the track's onset envelope (`WaveformExtractor.extractOnsetEnvelope` + pure `TempoEstimator`):
 autocorrelation for the BPM (weighted by a ~120 BPM prior to fold half/double errors) and a
 comb-filter for the downbeat phase. It **prefills** both, flagged as estimated for the user to
-confirm, never auto-committing (rung 2 of ADR 0004). A transport **Click** toggle plays a
+confirm, never auto-committing (rung 2 of ADR 0004). A **Click** toggle on the **speed bar**
+(beside the BPM, its own teal — ADR 0027) plays a
 **metronome** over the song that **follows the speed control** (50% → half-BPM, locked to the
 slowed track): pure unit-tested `MetronomeSchedule` schedules each beat `delay = (beat − now) /
 rate` ahead, played by a `ClickVoice` (a second player node on the same engine, straight to the
