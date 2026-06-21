@@ -42,7 +42,8 @@ struct WaveformPracticeView: View {
                 // Fixed practice surface — the controls you touch constantly,
                 // pinned so they never scroll away (brief items 1, 3–8).
                 VStack(spacing: 16) {
-                    SongStrip(song: model.song)                                  // 1
+                    SongStrip(song: model.song,                                  // 1
+                              onHoldTitle: { model.showingSongDetails = true })
                     SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
                              onSetBPM: model.setBPM, onUserAdjust: model.userAdjustedSpeed,
                              metronomeOn: model.metronomeOn,
@@ -196,6 +197,9 @@ struct WaveformPracticeView: View {
             AutomatorSheet(loop: loop, song: model.song,
                            onSet: { model.startAutomator(for: loop) },
                            onTurnOff: { model.turnOffAutomator(for: loop) })
+        }
+        .sheet(isPresented: $model.showingSongDetails) {
+            SongDetailsSheet(song: model.song)
         }
         .sheet(isPresented: $model.settingBPM) {
             BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,
