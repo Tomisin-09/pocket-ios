@@ -49,9 +49,10 @@ struct SongStrip: View {
             .accessibilityAction(named: "Song details", onHoldTitle)
             Spacer(minLength: 12)
             VStack(alignment: .trailing, spacing: 2) {
-                Text(song.key)
+                Text(stars(song.proficiency))
                     .font(.subheadline)
-                    .foregroundStyle(PocketColor.textPrimary)
+                    .foregroundStyle(PocketColor.marker)
+                    .accessibilityLabel("Proficiency \(song.proficiency) of 5")
                 Text(timecode(song.duration))
                     .font(.pocketMono(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)

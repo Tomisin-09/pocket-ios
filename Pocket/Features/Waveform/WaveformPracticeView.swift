@@ -199,7 +199,7 @@ struct WaveformPracticeView: View {
                            onTurnOff: { model.turnOffAutomator(for: loop) })
         }
         .sheet(isPresented: $model.showingSongDetails) {
-            SongEditSheet(song: model.song)
+            SongDetailsSheet(song: model.song)
         }
         .sheet(isPresented: $model.settingBPM) {
             BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,

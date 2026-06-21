@@ -80,7 +80,7 @@ final class WaveformPracticeModel {
     var editingAutomatorLoop: Loop?
     /// Drives the tap-tempo / manual BPM sheet (ADR 0024), opened from "Set BPM".
     var settingBPM = false
-    /// Drives the song-details sheet (library's `SongEditSheet`), opened by holding the title.
+    /// Drives the read-first `SongDetailsSheet` (Edit → `SongEditSheet`), opened by holding the title.
     var showingSongDetails = false
 
     /// In-song metronome click (ADR 0026). The click rides `beatGrid` and follows
