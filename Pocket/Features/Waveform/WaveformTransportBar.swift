@@ -46,7 +46,7 @@ struct TransportBar: View {
     var body: some View {
         HStack(spacing: 12) {
             controls
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 header
                 transportRow
             }
@@ -56,9 +56,9 @@ struct TransportBar: View {
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
-        .frame(height: 90)        // definite bar height so the colour strip reliably fills it
+        .frame(height: 74)        // definite bar height so the colour strip reliably fills it
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.vertical, 7)
         .background(panelBackground)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: loop?.uid)
     }
@@ -69,12 +69,12 @@ struct TransportBar: View {
         VStack(spacing: 0) {
             TransportControl(icon: "repeat", color: PocketColor.active,
                              isActive: isPunchActive, label: "Loop", action: onPunch)
-            Spacer(minLength: 6)
+            Spacer(minLength: 0)
             // Equilateral triangle, rotated to point down — matches the inverted marker
             // glyph on the waveform (the arrowtriangle variant read as elongated).
             TransportControl(icon: "triangle.fill", rotation: 180, color: PocketColor.pin,
                              label: "Marker", action: onDropMarker)
-            Spacer(minLength: 6)
+            Spacer(minLength: 0)
             TransportControl(icon: "arrow.left.and.right", color: PocketColor.fine,
                              isActive: mode == .fine, label: "Fine") {
                 mode = (mode == .fine ? .navigate : .fine)
@@ -105,7 +105,7 @@ struct TransportBar: View {
                     .accessibilityLabel("Playback position \(timecode(currentTime))")
             }
         }
-        .frame(height: 36)        // reserve both states' height so the transport row holds still
+        .frame(height: 32)        // reserve both states' height so the transport row holds still
         .transition(.opacity)
     }
 
@@ -123,7 +123,7 @@ struct TransportBar: View {
 // MARK: - Components
 
 private let transportGlyphSize: CGFloat = 26
-private let controlDiameter: CGFloat = 26
+private let controlDiameter: CGFloat = 23
 
 /// One identity control in the left column — a glyph in a circle. Idle: the glyph in
 /// its colour on a faint fill. Active: the circle fills with the colour, glyph flips
