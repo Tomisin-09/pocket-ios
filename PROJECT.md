@@ -139,8 +139,10 @@ per-loop **automator** (the "A" control on its row): a speed-trainer ramp — st
 target % over N steps, a few loops each — that climbs, descends, or sits level, runs a
 **fixed number of passes and then stops** (Set ramp also starts it playing), driven by the
 engine counting loop wraps (ADR 0013). Loop rows carry no edit pencil — **press and
-hold** a row (with a haptic) to open the edit sheet for rename / range / delete
-(ADR 0028). Filename suggestions, a practice
+hold** a row (with a haptic) to open the edit sheet for rename / range / colour /
+delete (ADR 0028); the colour row pins a loop's identity hue — Auto, a preset, or a
+custom colour wheel (low-contrast colours get an advisory hint) — or leaves it
+automatic (ADR 0031). Filename suggestions, a practice
 **journal** (per-loop/marker/song), **collections as real playlists**, and a **metronome**
 (the transport "Auto" slot) are next. Navigation/planner follow (Phase 3) — the
 planner's **selection** (goals → required skills from a **technique taxonomy**

@@ -183,7 +183,10 @@ A hairline separates the cockpit from the scroll area below.
    **"A"** automator (speed-ramp) control trailing. Tap a row to activate it; the
    active loop drives the waveform/minimap highlight and the transport loop range.
    **Press and hold** a row (haptic) to open the edit sheet — rename / adjust range /
-   delete. Speed and repeats live in the automator, not the row (ADR 0013 / 0028).
+   colour / delete. The colour row offers Auto (the automatic hue), the palette, and a
+   custom colour wheel (low-contrast picks get an advisory hint), pinning a loop's
+   colour everywhere it shows (ADR 0031). Speed and repeats live in the automator, not
+   the row (ADR 0013 / 0028).
 9. Markers panel (collapsible) — name + timecode; tap a row to edit
    (rename / delete).
 10. Song info panel (collapsible, **collapsed by default**) — demoted here from

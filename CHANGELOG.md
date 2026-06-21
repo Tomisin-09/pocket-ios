@@ -6,6 +6,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Choose a loop's colour** (ADR 0031). The loop edit sheet gains a **Colour** row —
+  an **Auto** swatch (the automatic colour, as before), the preset palette, and a
+  **custom colour wheel** (the trailing rainbow swatch) for any other colour. Pick one
+  to pin a loop's colour everywhere it shows (waveform, minimap, transport strip); pick
+  Auto to go back to the automatic, all-distinct assignment. A custom colour that's hard
+  to see on the dark background shows a low-contrast hint (but is still allowed). A
+  manual choice can match another loop's colour — overlap still reads by lane on the
+  waveform.
 - **Transport playback controls** (ADR 0030). The transport bar gains a
   **rewind · pause · forward** cluster. With a loop active: rewind restarts it
   (double-tap → previous loop), forward jumps to the next loop. With no loop:
