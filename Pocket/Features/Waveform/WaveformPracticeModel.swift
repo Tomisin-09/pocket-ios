@@ -35,6 +35,14 @@ final class WaveformPracticeModel {
     let engine = PracticeAudioEngine()
     var amplitudes: [Double]
 
+    /// Lock-screen / Control Center bridge (ADR 0025). Owned here because Now
+    /// Playing needs both the song's metadata and the engine's transport. Its
+    /// command targets are removed in `endPlaybackSession` on screen exit.
+    @ObservationIgnored private let nowPlaying = NowPlayingController()
+    /// Rate-limits throttled Now Playing pushes (playhead ticks): transport and
+    /// rate changes force a push, the 30 Hz playhead does not.
+    @ObservationIgnored private var lastNowPlayingPush: Date = .distantPast
+
     /// Crisp deep-zoom (ADR 0020): a re-downsample of just the visible window, read
     /// from the source file at full detail, with the song range it covers. `nil` when
     /// zoomed out (the stored `amplitudes` already cover the whole song) or while a
@@ -142,6 +150,48 @@ final class WaveformPracticeModel {
     var beatGrid: [BeatGrid.Beat] {
         guard let bpm = song.tempoBPM, let downbeat = song.downbeatSeconds, duration > 0 else { return [] }
         return BeatGrid.beats(bpm: bpm, duration: duration, downbeat: downbeat)
+    }
+
+    // MARK: - Playback lifecycle & Now Playing (ADR 0025)
+
+    /// A snapshot for the lock screen / Control Center, built from the song's
+    /// metadata and the engine's live transport.
+    private var nowPlayingState: NowPlayingState {
+        NowPlayingState(title: song.title, artist: song.artist,
+                        duration: duration, elapsedTime: engine.currentTime,
+                        isPlaying: engine.isPlaying, speed: speed)
+    }
+
+    /// Begin the lock-screen session: wire the remote play/pause commands to the
+    /// transport and push the initial metadata. Called once the view appears.
+    /// Skipped in previews (no audio session, no command center worth touching).
+    func beginPlaybackSession() {
+        guard !isPreview else { return }
+        nowPlaying.activate(onPlay: { [weak self] in self?.engine.play() },
+                            onPause: { [weak self] in self?.engine.pause() },
+                            onToggle: { [weak self] in self?.engine.togglePlay() })
+        refreshNowPlaying(force: true)
+    }
+
+    /// Push current metadata to the lock screen. `force` for transport/rate/seek
+    /// events; the un-forced playhead tick is throttled so the 30 Hz timer doesn't
+    /// rebuild the info dictionary on every frame (the system extrapolates between
+    /// pushes from the elapsed time + reported rate).
+    func refreshNowPlaying(force: Bool = false) {
+        guard !isPreview else { return }
+        let now = Date()
+        if !force, now.timeIntervalSince(lastNowPlayingPush) < 0.5 { return }
+        lastNowPlayingPush = now
+        nowPlaying.update(nowPlayingState)
+    }
+
+    /// Stop-on-exit (ADR 0025): remove the remote-command targets, clear the Now
+    /// Playing info, and tear the engine down so audio halts immediately as the
+    /// screen is dismissed — rather than lingering until the model deallocs (and
+    /// the global command center would otherwise keep the engine alive).
+    func endPlaybackSession() {
+        nowPlaying.teardown()
+        engine.stop()
     }
 
     // MARK: - Automator (per-loop speed ramp, ADR 0013)

@@ -68,7 +68,17 @@ engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
 both gapless and free of the splice click; the visual playhead wraps via pure
 `AudioMath.loopedPlayhead`, decoupled from the audio (region math in
-`AudioMath.loopSegment`; ADRs 0006 & 0008). Stage 4's waveform for real files is
+`AudioMath.loopSegment`; ADRs 0006 & 0008). Playback is surfaced to the system
+**lock screen / Control Center** (play/pause only) by `NowPlayingController` — a
+`@MainActor` bridge that owns the `MPRemoteCommandCenter` targets and pushes
+`MPNowPlayingInfoCenter` updates from a pure, unit-tested `NowPlayingState`
+(`reportedRate` = speed while playing, 0 when paused). Because the command center
+is a process-global singleton, its targets are removed on screen exit:
+`WaveformPracticeView.onDisappear` → `model.endPlaybackSession()` clears the info,
+removes the targets, and calls `engine.stop()` (halt → deactivate the session), so
+audio stops on leaving the screen and nothing keeps the engine alive — while
+backgrounding mid-practice keeps playing under the existing `audio`
+`UIBackgroundMode` (ADR 0025). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).

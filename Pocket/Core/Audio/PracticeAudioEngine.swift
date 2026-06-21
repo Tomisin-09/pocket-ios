@@ -95,6 +95,18 @@ final class PracticeAudioEngine {
         stopTimer()
     }
 
+    /// Tear down for screen exit (ADR 0025): halt playback, stop the engine, and
+    /// release the shared audio session so nothing keeps rendering — or holding
+    /// the session active — after the practice view is dismissed. The owning model
+    /// is recreated per visit, so the next entry reconfigures from scratch.
+    func stop() {
+        pause()
+        player.stop()
+        engine.stop()
+        scheduled = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
     /// Move the play position; resumes from `seconds` if it was playing. (When a
     /// loop is active the buffer restarts at the loop start regardless.)
     func seek(toSeconds seconds: TimeInterval) {
