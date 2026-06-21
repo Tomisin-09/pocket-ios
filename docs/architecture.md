@@ -89,7 +89,18 @@ is a process-global singleton, its targets are removed on screen exit:
 removes the targets, and calls `engine.stop()` (halt → deactivate the session), so
 audio stops on leaving the screen and nothing keeps the engine alive — while
 backgrounding mid-practice keeps playing under the existing `audio`
-`UIBackgroundMode` (ADR 0025). Stage 4's waveform for real files is
+`UIBackgroundMode` (ADR 0025). A **metronome** can click over the song
+(transport **Click** toggle): pure `MetronomeSchedule` takes the `BeatGrid`
+(in source seconds), the playhead, and the playback rate and returns the beats
+due in the next ~1 s with **how far ahead each sounds** — `delay = (beat − now) /
+rate`, so the click *follows playback speed* (50% → half-BPM, locked to the slowed
+track). The audio is a `ClickVoice`: a second `AVAudioPlayerNode` on the **same
+engine** wired straight to the mixer (bypassing time-pitch, so ticks aren't
+stretched) with two synthesized buffers (accented downbeat / plain beat). The
+engine refreshes the schedule on its 0.03 s display timer, deduping by a watermark,
+and flushes-and-refills on any discontinuity (rate / seek / loop / pause). It's
+enabled only when the grid exists (BPM + the 1) and **never writes back** to the
+song's tempo; it's silenced on pause and screen exit (ADR 0026). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).

@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Metronome click** — a new **Click** button on the transport plays a metronome
+  over the song, accenting the downbeat. It **rides the song and follows the speed
+  control**: at 50% it clicks at 50% of the song's BPM, locked to the slowed track;
+  speed it up and the click keeps pace. It's there to play along to and never
+  changes the song's saved BPM (that's what the tempo editor is for). Available once
+  the song has both a tempo and the 1 set. ADR 0026.
 - **Set the 1 by playing along** — placing the downbeat on the waveform now has a
   **Play/Pause** and a **"Tap the 1"** button: play the song and tap the moment you
   feel the downbeat, and it drops the 1 at the playhead (nudged onto the nearest

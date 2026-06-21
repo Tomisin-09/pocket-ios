@@ -24,6 +24,20 @@ final class PracticeAudioEngine {
     private let player = AVAudioPlayerNode()
     private let timePitch = AVAudioUnitTimePitch()
 
+    /// Metronome (ADR 0026): a click voice on this same engine — so it shares the
+    /// player's render clock and stays sample-locked to the (possibly time-stretched)
+    /// song. `metronomeBeats` is the song's grid in *source* seconds; the click follows
+    /// playback rate via `MetronomeSchedule`. `clickWatermark` is the source time of the
+    /// last beat already queued, so each beat is scheduled exactly once across the
+    /// 0.03 s refresh ticks; it resets on any discontinuity (seek / rate / loop wrap).
+    private(set) var metronomeOn = false
+    private let clickVoice = ClickVoice()
+    private var metronomeBeats: [(time: TimeInterval, isDownbeat: Bool)] = []
+    private var clickWatermark: TimeInterval = -.infinity
+    private var metronomeLoopIteration = 0
+    /// How far ahead (real seconds) clicks are scheduled; refreshed each timer tick.
+    private let metronomeHorizon: TimeInterval = 1.0
+
     private var file: AVAudioFile?
     private var sampleRate: Double = 44_100
     private var totalFrames: AVAudioFramePosition = 0
@@ -49,6 +63,7 @@ final class PracticeAudioEngine {
     init() {
         engine.attach(player)
         engine.attach(timePitch)
+        clickVoice.attach(to: engine)
     }
 
     /// Open `url` and wire it into the graph. The header read happens off the main
@@ -86,12 +101,14 @@ final class PracticeAudioEngine {
         if !scheduled { primeSchedule() }
         player.play()
         isPlaying = true
+        armMetronome()
         startTimer()
     }
 
     func pause() {
         player.pause()
         isPlaying = false
+        clickVoice.stopAll()
         stopTimer()
     }
 
@@ -101,6 +118,7 @@ final class PracticeAudioEngine {
     /// is recreated per visit, so the next entry reconfigures from scratch.
     func stop() {
         pause()
+        clickVoice.stopAll()
         player.stop()
         engine.stop()
         scheduled = false
@@ -115,15 +133,18 @@ final class PracticeAudioEngine {
         let wasPlaying = isPlaying
         generation += 1
         player.stop()
+        flushMetronome()
         scheduled = false
         loopIteration = 0
         currentTime = clamped
         if wasPlaying { play() }
     }
 
-    /// Pitch-preserving playback speed (0.25×–2.0×).
+    /// Pitch-preserving playback speed (0.25×–2.0×). Queued clicks were timed at the old
+    /// rate, so flush and let the next tick refill at the new one.
     func setRate(_ rate: Double) {
         timePitch.rate = Float(min(2.0, max(0.25, rate)))
+        flushMetronome()
     }
 
     /// Loop a region (seconds). When playing, the crossfaded loop buffer is rebuilt
@@ -131,6 +152,7 @@ final class PracticeAudioEngine {
     /// with no overlap; when paused it takes effect on the next `play`.
     func setLoop(start: TimeInterval, end: TimeInterval) {
         loopRegion = (start: start, end: end)
+        flushMetronome()
         guard isPlaying else { return }
         generation += 1                 // kill any pending straight-through completion
         if scheduleLoopBuffer() { scheduled = true }
@@ -141,6 +163,7 @@ final class PracticeAudioEngine {
         loopRegion = nil
         loopBufferFrames = 0
         loopIteration = 0
+        flushMetronome()
         if isPlaying { seek(toSeconds: currentTime) }
     }
 
@@ -282,13 +305,82 @@ final class PracticeAudioEngine {
     private func startTimer() {
         stopTimer()
         displayTimer = Timer.scheduledTimer(withTimeInterval: 0.03, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.updateCurrentTime() }
+            Task { @MainActor in
+                self?.updateCurrentTime()
+                self?.refreshMetronome()
+            }
         }
     }
 
     private func stopTimer() {
         displayTimer?.invalidate()
         displayTimer = nil
+    }
+}
+
+// MARK: - Metronome (ADR 0026)
+
+extension PracticeAudioEngine {
+
+    /// Turn the in-song click on/off. The song's beat grid is supplied separately via
+    /// `setMetronomeBeats`; with no grid (tempo/downbeat unset) nothing schedules.
+    func setMetronome(enabled: Bool) {
+        metronomeOn = enabled
+        if enabled {
+            armMetronome()
+        } else {
+            clickVoice.stopAll()
+        }
+    }
+
+    /// Update the song's beat grid (source seconds + downbeat flags), e.g. when the BPM
+    /// or downbeat changes. Drops any stale schedule.
+    func setMetronomeBeats(_ beats: [(time: TimeInterval, isDownbeat: Bool)]) {
+        metronomeBeats = beats
+        flushMetronome()
+    }
+
+    /// Begin (or resume) the click voice for the current playback and reset the dedup
+    /// watermark so the next tick refills from the live playhead.
+    func armMetronome() {
+        guard metronomeOn, isPlaying else { return }
+        clickVoice.start()
+        clickWatermark = -.infinity
+        metronomeLoopIteration = loopIteration
+    }
+
+    /// Cancel queued clicks and reset the watermark; re-arm if still playing. Called on
+    /// any timing discontinuity (seek / rate / loop change / grid change) so a click is
+    /// never heard at a stale time.
+    func flushMetronome() {
+        clickVoice.stopAll()
+        clickWatermark = -.infinity
+        if metronomeOn, isPlaying {
+            clickVoice.start()
+            metronomeLoopIteration = loopIteration
+        }
+    }
+
+    /// Schedule the clicks now due within the lookahead horizon (one per beat, deduped
+    /// by the watermark). Follows the playback rate, so the click tracks a slowed or
+    /// sped track. During an active loop, a new pass resets the watermark so the
+    /// region's beats re-fire, and beats past the loop end are skipped (playback wraps
+    /// before reaching them).
+    func refreshMetronome() {
+        guard metronomeOn, isPlaying, !metronomeBeats.isEmpty else { return }
+        if loopIteration != metronomeLoopIteration {
+            metronomeLoopIteration = loopIteration
+            clickWatermark = -.infinity            // new loop pass ⇒ re-fire the region
+        }
+        let cutoff = loopRegion?.end ?? .infinity
+        let clicks = MetronomeSchedule.upcoming(beats: metronomeBeats,
+                                                currentSourceTime: currentTime,
+                                                rate: Double(timePitch.rate),
+                                                horizon: metronomeHorizon)
+        for click in clicks where click.time > clickWatermark && click.time < cutoff {
+            clickVoice.schedule(delay: click.delay, accented: click.isDownbeat)
+            clickWatermark = click.time
+        }
     }
 }
 

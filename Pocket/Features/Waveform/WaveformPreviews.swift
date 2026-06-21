@@ -178,7 +178,8 @@ import SwiftUI
         TransportBar(isPlaying: false, onPlayPause: {}, mode: $mode,
                      currentTime: 10,
                      loop: Song.sample().loops.first, onClearLoop: {},
-                     onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
+                     onDropMarker: {}, onPunch: {}, isPunchActive: false,
+                     metronomeOn: true, canUseMetronome: true, onToggleMetronome: {}).padding()
     }
 }
 
