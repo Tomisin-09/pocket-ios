@@ -41,7 +41,14 @@ plan needs an explicit fallback.
   ships the affordance only. (Rung 3 shipped in **ADR 0024** — tap-tempo, manual
   entry, and a peak-snapped downbeat, with tempo stored at full precision.)
 - Any estimated BPM must be presented as estimated and be easy to correct
-  (estimates are often half/double off).
+  (estimates are often half/double off). Rung 2 shipped after rung 3: the tempo
+  editor's **"Estimate from audio"** runs an on-device autocorrelation of the track's
+  onset envelope (`TempoEstimator`, weighted by a ~120 BPM prior to fold the
+  half/double error) and **prefills** the value flagged as estimated for the user to
+  confirm — it never auto-commits, so speed still never depends on it. The same pass
+  also comb-filters the onset envelope to **auto-place the 1** (the beat-grid phase
+  anchor); it pins the beat phase reliably but not bar-1 specifically, so the anchor
+  is presented as an estimate the user can nudge.
 - The metronome and tempo automator must handle a nil/uncertain BPM gracefully.
 
 ## Alternatives considered

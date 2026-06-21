@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · TempoPeaks · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
+│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -62,7 +62,18 @@ placed by a draggable waveform handle that **snaps to the loudest transient** ne
 persisted full-precision in `Song.preciseBPM` — an **additive** optional so SwiftData
 lightweight migration is safe (a type change on `bpm` is not); `Song.bpm: Int?` remains the
 rounded display mirror and `Song.tempoBPM` feeds the `Double`-tempo `BeatGrid` so the grid
-doesn't drift across a long song (ADR 0024). An active loop **loops
+doesn't drift across a long song (ADR 0024). The sheet can also **estimate the tempo
+on-device** (ADR 0004, rung 2): `WaveformExtractor.extractOnsetEnvelope` decodes the
+source to a ~100 Hz onset-strength curve (`AudioMath.onsetEnvelope` — frame RMS reduced
+to its half-wave-rectified rises) off the main actor, and pure `TempoEstimator.estimateBPM`
+takes the autocorrelation peak of that curve, weighting each candidate lag by a log-normal
+**tempo prior** (~120 BPM) to fold the common half/double-tempo error; a flat/ambient curve
+yields `nil` (no confident read). It also places **the 1**: a comb-filter
+(`TempoEstimator.estimateDownbeat`) slides a pulse train at the detected period across the
+envelope and keeps the phase whose beats collect the most onset energy — pinning the beat
+phase to real hits (the *bar-1* beat isn't disambiguated, so the anchor can sit a beat off).
+The estimate only **prefills** the sheet (BPM + downbeat) flagged as estimated — the user
+still confirms it, so speed never depends on a guess. An active loop **loops
 continuously, gaplessly and click-free** — the
 engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is
