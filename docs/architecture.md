@@ -115,7 +115,12 @@ loops **stack into lanes** (pure `LoopLanes` interval packing, unit-tested) so
 overlap reads by position. Colour encodes loop **identity** (deterministic palette
 slot, pure unit-tested `LoopColors`) with state carried by line weight; the theme is
 the blue palette (blue bars anchored on `#2a6796`) on the near-black background. ADR
-0023 (supersedes the colour-is-state rule of ADR 0018). New loops are created
+0023 (supersedes the colour-is-state rule of ADR 0018). A loop may also carry a manual
+colour override — a palette `Loop.colorIndex` or a free `Loop.customColorHex` (colour
+wheel), chosen in its edit sheet. `LoopColor.color` resolves precedence custom →
+palette (pure `LoopColors.resolvedSlot`) → derived, so the waveform/minimap/transport
+strip all honour it from one place; a low-contrast custom colour gets an advisory
+warning via the pure `ColorContrast` (`HexColor` bridges `Color` ⇄ hex). ADR 0031. New loops are created
 **instantly** on confirm — auto-named ("Loop 3", pure `AutoName`), activated, and
 **looping immediately** (seek to start + play), no naming sheet (markers keep theirs);
 deleting a loop/marker shows an **Undo** toast

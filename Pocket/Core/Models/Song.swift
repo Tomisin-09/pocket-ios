@@ -120,6 +120,14 @@ final class Loop {
     var automatorStepCount: Int = 6
     var automatorLoopsPerStep: Int = 2
 
+    /// Manual identity-colour override: an index into `PocketColor.loopPalette`, or
+    /// `nil` to derive the colour from start-order (ADR 0023 / 0031). Optional, so
+    /// SwiftData lightweight migration leaves loops saved before this as `nil` (auto).
+    var colorIndex: Int?
+    /// A free custom colour as `#RRGGBB`, set from the colour wheel (ADR 0031). Takes
+    /// precedence over `colorIndex` / derived when present; `nil` means no custom colour.
+    var customColorHex: String?
+
     init(name: String, start: Double, end: Double, speed: Double, repeats: Int) {
         self.uid = UUID()
         self.name = name

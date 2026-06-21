@@ -61,4 +61,34 @@ final class LoopColorsTests: XCTestCase {
         XCTAssertEqual(LoopColors.slot(for: shortLoop.id, among: loops, paletteCount: 6), 0)
         XCTAssertEqual(LoopColors.slot(for: longLoop.id, among: loops, paletteCount: 6), 1)
     }
+
+    // MARK: Manual override (ADR 0031)
+
+    func testValidOverrideWins() {
+        // First in start-order (derives slot 0) but pinned to 4 → 4.
+        let first = interval(0.1, 0.2)
+        let last = interval(0.7, 0.8)
+        let loops = [first, last]
+        XCTAssertEqual(LoopColors.resolvedSlot(override: 4, for: first.id,
+                                               among: loops, paletteCount: 6), 4)
+    }
+
+    func testNilOverrideFallsBackToDerived() {
+        let first = interval(0.1, 0.2)
+        let last = interval(0.7, 0.8)
+        let loops = [first, last]
+        XCTAssertEqual(LoopColors.resolvedSlot(override: nil, for: last.id,
+                                               among: loops, paletteCount: 6), 1)
+    }
+
+    func testOutOfRangeOverrideFallsBackToDerived() {
+        // A stale index past the palette must not be used (no crash / blank).
+        let first = interval(0.1, 0.2)
+        let last = interval(0.7, 0.8)
+        let loops = [first, last]
+        XCTAssertEqual(LoopColors.resolvedSlot(override: 9, for: last.id,
+                                               among: loops, paletteCount: 6), 1)
+        XCTAssertEqual(LoopColors.resolvedSlot(override: -1, for: first.id,
+                                               among: loops, paletteCount: 6), 0)
+    }
 }

@@ -8,18 +8,55 @@ import SwiftUI
 struct LoopEditSheet: View {
     /// The persisted loop — edits apply straight to it on Done (so Cancel discards).
     let loop: Loop
+    /// The loop's auto (start-order) colour, for the "Auto" swatch (ADR 0031).
+    let autoColor: Color
     let onDelete: () -> Void
     /// Enter Fine mode on the waveform to adjust this loop's bounds.
     let onAdjustRange: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var name: String
+    @State private var colorChoice: LoopColorChoice
 
-    init(loop: Loop, onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void) {
+    init(loop: Loop, autoColor: Color,
+         onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void) {
         self.loop = loop
+        self.autoColor = autoColor
         self.onDelete = onDelete
         self.onAdjustRange = onAdjustRange
         _name = State(initialValue: loop.name)
+        _colorChoice = State(initialValue: Self.choice(for: loop))
+    }
+
+    /// Map the loop's stored colour fields to a picker choice (custom wins over palette).
+    private static func choice(for loop: Loop) -> LoopColorChoice {
+        if let hex = loop.customColorHex { return .custom(hex) }
+        if let index = loop.colorIndex { return .palette(index) }
+        return .auto
+    }
+
+    /// True when the chosen custom colour is low-contrast on the dark background — an
+    /// advisory warning only; the colour is still allowed (ADR 0031).
+    private var lowContrast: Bool {
+        guard case .custom(let hex) = colorChoice, let color = HexColor.color(from: hex) else { return false }
+        return !ColorContrast.isLegible(foreground: HexColor.components(of: color),
+                                        background: HexColor.components(of: PocketColor.background))
+    }
+
+    /// Write the picked choice back to the loop's colour fields (custom and palette are
+    /// mutually exclusive; auto clears both).
+    private func applyColorChoice() {
+        switch colorChoice {
+        case .auto:
+            loop.colorIndex = nil
+            loop.customColorHex = nil
+        case .palette(let index):
+            loop.colorIndex = index
+            loop.customColorHex = nil
+        case .custom(let hex):
+            loop.customColorHex = hex
+            loop.colorIndex = nil
+        }
     }
 
     var body: some View {
@@ -41,6 +78,16 @@ struct LoopEditSheet: View {
                     }
                 }
                 Section {
+                    LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
+                } header: {
+                    Text("Colour")
+                } footer: {
+                    if lowContrast {
+                        Label("Low contrast on the dark background", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                }
+                Section {
                     Button("Delete loop", role: .destructive) {
                         onDelete()
                         dismiss()
@@ -55,7 +102,8 @@ struct LoopEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        loop.name = name        // mutating the @Model persists
+                        loop.name = name              // mutating the @Model persists
+                        applyColorChoice()
                         dismiss()
                     }
                 }

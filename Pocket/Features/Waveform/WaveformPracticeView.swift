@@ -195,7 +195,9 @@ struct WaveformPracticeView: View {
             }
         }
         .sheet(item: $model.editingLoop) { loop in
-            LoopEditSheet(loop: loop, onDelete: { model.deleteLoop(loop) },
+            LoopEditSheet(loop: loop,
+                          autoColor: LoopColor.derivedColor(for: loop, among: model.loops),
+                          onDelete: { model.deleteLoop(loop) },
                           onAdjustRange: { model.startRangeEdit(loop) })
         }
         .sheet(item: $model.editingMarker) { marker in

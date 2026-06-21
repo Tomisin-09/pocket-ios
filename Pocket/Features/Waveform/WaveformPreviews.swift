@@ -256,8 +256,10 @@ import SwiftUI
 }
 
 #Preview("Edit loop sheet") {
-    LoopEditSheet(loop: Song.sample().loops[0], onDelete: {},
-                  onAdjustRange: {})
+    let song = Song.sample()
+    LoopEditSheet(loop: song.loops[0],
+                  autoColor: LoopColor.derivedColor(for: song.loops[0], among: song.loopsByStart),
+                  onDelete: {}, onAdjustRange: {})
 }
 
 #Preview("Automator sheet") {

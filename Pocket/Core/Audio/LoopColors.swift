@@ -28,4 +28,13 @@ enum LoopColors {
         guard let index = ordered.firstIndex(where: { $0.id == id }) else { return 0 }
         return index % paletteCount
     }
+
+    /// The slot to actually draw: a valid manual `override` wins (ADR 0031), else the
+    /// derived start-order `slot`. An out-of-range or `nil` override falls back to
+    /// derived, so a stale index (e.g. after the palette shrinks) can't crash or blank.
+    static func resolvedSlot(override: Int?, for id: UUID,
+                             among intervals: [LoopLanes.Interval], paletteCount: Int) -> Int {
+        if let override, paletteCount > 0, (0..<paletteCount).contains(override) { return override }
+        return slot(for: id, among: intervals, paletteCount: paletteCount)
+    }
 }
