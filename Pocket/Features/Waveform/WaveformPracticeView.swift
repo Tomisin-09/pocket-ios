@@ -195,6 +195,9 @@ struct WaveformPracticeView: View {
                      onSetOnWaveform: { bpm in
                          model.commitTempo(bpm: bpm, downbeat: nil)
                          model.beginSetDownbeat()
+                     },
+                     onEstimate: {
+                         await model.estimateTempoFromAudio().map { ($0.bpm, $0.downbeatSeconds) }
                      })
         }
         .task { await model.loadAudio(); model.beginPlaybackSession() }

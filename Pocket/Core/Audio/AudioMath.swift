@@ -78,6 +78,24 @@ enum AudioMath {
         return energies
     }
 
+    /// An **onset-strength envelope** for tempo estimation (ADR 0004, rung 2): a
+    /// coarse per-frame energy curve reduced to the *increases* in energy, which is
+    /// where note/drum onsets live. `samples` is split into `frames` even buckets
+    /// (each ~1/100 s in practice); the value of frame `i` is the half-wave-rectified
+    /// rise in RMS from `i-1`, `max(0, rms[i] - rms[i-1])`. Steady tone → ~0; a kick or
+    /// strum → a spike. This is what `TempoEstimator` autocorrelates, so it must be
+    /// fine enough to resolve a beat: at 100 frames/s a 200 BPM beat is still 30 frames
+    /// apart. The first frame is 0 (no predecessor). Built on the tested `bucketRMS`.
+    static func onsetEnvelope(_ samples: [Float], frames: Int) -> [Double] {
+        guard frames > 0, !samples.isEmpty else { return [] }
+        let rms = bucketRMS(samples, to: frames)
+        var onsets = [Double](repeating: 0, count: rms.count)
+        for index in 1..<rms.count {
+            onsets[index] = max(0, rms[index] - rms[index - 1])
+        }
+        return onsets
+    }
+
     /// Linearly-interpolated `quantile`-percentile (in 0...1) of `values`. Used to
     /// pick a robust normalisation reference that ignores a few loud outliers. Empty
     /// input returns 0; `quantile` is clamped to `0...1`.

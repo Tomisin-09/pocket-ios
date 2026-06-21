@@ -24,6 +24,10 @@ struct BPMSheet: View {
     /// "Set the 1 on the waveform" — commits the current BPM (if any) and hands off to
     /// the on-waveform downbeat handle. The sheet dismisses first.
     let onSetOnWaveform: (Double?) -> Void
+    /// On-device tempo estimate from the audio (ADR 0004, rung 2). Returns the estimated
+    /// BPM and (when found) a downbeat phase in seconds, or `nil` when there's no
+    /// analysable source or no confident read.
+    let onEstimate: () async -> (bpm: Double, downbeat: TimeInterval?)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -40,15 +44,33 @@ struct BPMSheet: View {
     @State private var manualText: String
     /// The bar-1 downbeat ("the 1"), shared by both modes. `nil` ⇒ leave phase as-is.
     @State private var downbeat: TimeInterval?
+    /// The last on-device estimate (full precision). Manual mode is prefilled with its
+    /// rounded value; the "estimated" flag shows only while `manualText` still matches
+    /// it (any manual edit makes it a user value, not an estimate — ADR 0004).
+    @State private var lastEstimate: Double?
+    /// True while the off-main estimate is running, to show progress and avoid re-entry.
+    @State private var isEstimating = false
+    /// True when the estimate found no confident tempo (flat/ambient material).
+    @State private var estimateFailed = false
 
     init(engine: PracticeAudioEngine, currentBPM: Double?,
          onCommit: @escaping (Double?, TimeInterval?) -> Void,
-         onSetOnWaveform: @escaping (Double?) -> Void) {
+         onSetOnWaveform: @escaping (Double?) -> Void,
+         onEstimate: @escaping () async -> (bpm: Double, downbeat: TimeInterval?)?) {
         self.engine = engine
         self.currentBPM = currentBPM
         self.onCommit = onCommit
         self.onSetOnWaveform = onSetOnWaveform
+        self.onEstimate = onEstimate
         _manualText = State(initialValue: currentBPM.map { String(Int($0.rounded())) } ?? "")
+    }
+
+    /// Whether the value currently in Manual mode is the unedited estimate, so the
+    /// "estimated — confirm or adjust" flag is shown. Editing the text clears it
+    /// automatically (the strings stop matching) without an `onChange` race.
+    private var showingEstimate: Bool {
+        guard let estimate = lastEstimate else { return false }
+        return manualText == String(Int(estimate.rounded()))
     }
 
     /// The BPM the current mode would commit (full precision), or `nil` if not set.
@@ -74,6 +96,8 @@ struct BPMSheet: View {
                 .listRowBackground(Color.clear)
 
                 if mode == .tap { tapSection } else { manualSection }
+
+                estimateSection
 
                 downbeatSection
             }
@@ -147,6 +171,57 @@ struct BPMSheet: View {
                     .font(.caption)
                     .foregroundStyle(PocketColor.textSecondary)
             }
+        }
+    }
+
+    // MARK: Estimate from audio (ADR 0004, rung 2)
+
+    private var estimateSection: some View {
+        Section {
+            Button { Task { await runEstimate() } } label: {
+                HStack {
+                    Label("Estimate from audio", systemImage: "wand.and.stars")
+                    Spacer()
+                    if isEstimating { ProgressView() }
+                }
+            }
+            .disabled(isEstimating)
+
+            if showingEstimate, let estimate = lastEstimate {
+                Label("Estimated \(Int(estimate.rounded())) BPM — confirm or adjust",
+                      systemImage: "info.circle")
+                    .font(.footnote)
+                    .foregroundStyle(PocketColor.textSecondary)
+            } else if estimateFailed {
+                Label("Couldn't detect a clear tempo — tap or type it instead",
+                      systemImage: "exclamationmark.triangle")
+                    .font(.footnote)
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+        } footer: {
+            Text("Analyses the track's onsets to guess the tempo and place the 1. The "
+                 + "tempo can land on half or double time and the 1 can be a beat off, so "
+                 + "check both against the music.")
+        }
+    }
+
+    /// Run the on-device estimate, prefilling Manual mode with the tempo and (when found)
+    /// the downbeat — both flagged as estimated until edited. A `nil` result means no
+    /// analysable source or no confident read — surface that rather than silently doing
+    /// nothing.
+    private func runEstimate() async {
+        isEstimating = true
+        estimateFailed = false
+        let result = await onEstimate()
+        isEstimating = false
+        if let result {
+            lastEstimate = result.bpm
+            mode = .manual
+            manualText = String(Int(result.bpm.rounded()))
+            if let phase = result.downbeat { downbeat = phase }
+        } else {
+            lastEstimate = nil
+            estimateFailed = true
         }
     }
 

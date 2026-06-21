@@ -11,6 +11,22 @@ extension WaveformPracticeModel {
         prepareHaptics(.light)
     }
 
+    /// Estimate the song's tempo **and downbeat phase** on-device from its audio — rung 2
+    /// of ADR 0004's fallback chain. Decodes an onset envelope off the main actor, then
+    /// autocorrelates it for the tempo and comb-filters it for the phase (`TempoEstimator`).
+    /// Returns `nil` when there's no source file (the demo sample) or the material is too
+    /// flat/ambient for a confident read. The estimate is *not* committed here — the BPM
+    /// sheet prefills it, flagged as estimated, for the user to confirm or correct (ADR
+    /// 0004: estimates aren't truth).
+    func estimateTempoFromAudio() async -> TempoEstimator.Estimate? {
+        guard let url = sourceURL else { return nil }
+        return await Task.detached(priority: .userInitiated) {
+            guard let extracted = try? WaveformExtractor.extractOnsetEnvelope(from: url) else { return nil }
+            return TempoEstimator.estimate(onsets: extracted.onsets,
+                                           framesPerSecond: extracted.framesPerSecond)
+        }.value
+    }
+
     /// Commit a tempo from the BPM sheet. `bpm` is the full-precision value; we store it
     /// in `preciseBPM` (drives the beat grid without Int-rounding drift) and mirror the
     /// rounded value into `bpm` for the display readout. `downbeat` (the seconds a bar-1

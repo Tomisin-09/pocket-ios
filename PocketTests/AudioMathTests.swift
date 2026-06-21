@@ -255,4 +255,35 @@ final class AudioMathTests: XCTestCase {
         XCTAssertEqual(range.startFrame, 0)
         XCTAssertEqual(range.frameCount, 0)
     }
+
+    // MARK: onsetEnvelope (tempo estimation, ADR 0004)
+
+    func testOnsetEnvelopeFlatSignalHasNoOnsets() {
+        // A constant-amplitude signal has constant per-frame RMS, so no energy *rises*.
+        let flat = [Float](repeating: 0.5, count: 4000)
+        let onsets = AudioMath.onsetEnvelope(flat, frames: 100)
+        XCTAssertEqual(onsets.count, 100)
+        XCTAssertEqual(onsets.max() ?? 0, 0, accuracy: 1e-9)
+    }
+
+    func testOnsetEnvelopeSpikesOnEnergyRise() {
+        // Silence then a loud second half: the onset lands at the transition frame and
+        // the quiet frames before it stay flat.
+        var samples = [Float](repeating: 0, count: 2000)
+        samples += [Float](repeating: 0.8, count: 2000)
+        let onsets = AudioMath.onsetEnvelope(samples, frames: 100)
+        XCTAssertEqual(onsets.count, 100)
+        XCTAssertEqual(onsets[10], 0, accuracy: 1e-9)        // still in silence
+        XCTAssertGreaterThan(onsets[50], 0.1)                // the rise into loud
+    }
+
+    func testOnsetEnvelopeFirstFrameIsZero() {
+        let onsets = AudioMath.onsetEnvelope([Float](repeating: 0.3, count: 500), frames: 50)
+        XCTAssertEqual(onsets.first, 0)
+    }
+
+    func testOnsetEnvelopeGuardsEmptyInput() {
+        XCTAssertTrue(AudioMath.onsetEnvelope([], frames: 100).isEmpty)
+        XCTAssertTrue(AudioMath.onsetEnvelope([0.1, 0.2], frames: 0).isEmpty)
+    }
 }

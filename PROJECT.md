@@ -93,7 +93,11 @@ still reads the true tempo — pure `TempoMath.bpm(fromTapTimes:)`) or **manual*
 (pure `TempoPeaks`) or marked at the playhead. Tempo is stored full-precision in
 `Song.preciseBPM` (`Song.bpm: Int?` is the rounded display mirror; `tempoBPM` feeds the grid)
 so it doesn't drift across a long song; long-press the BPM readout to re-open the editor.
-Auto-estimating BPM from the peaks (rung 2 of ADR 0004) is deferred (ADR 0024). Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform shows the **whole** annotation library on its **borders** (off the
+The editor can also **estimate the tempo and the 1 from the audio** — an on-device pass over
+the track's onset envelope (`WaveformExtractor.extractOnsetEnvelope` + pure `TempoEstimator`):
+autocorrelation for the BPM (weighted by a ~120 BPM prior to fold half/double errors) and a
+comb-filter for the downbeat phase. It **prefills** both, flagged as estimated for the user to
+confirm, never auto-committing (rung 2 of ADR 0004). Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform shows the **whole** annotation library on its **borders** (off the
 bars): markers as **purple inverted triangles** along the top, **all** saved loops
 as **per-loop coloured lines** along the bottom; overlapping/nested loops **stack
 into lanes** (pure, unit-tested `LoopLanes`) so overlap reads by position. Colour
@@ -126,5 +130,5 @@ planner's **selection** (goals → required skills from a **technique taxonomy**
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `TempoPeaks`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`.
+Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`.
 See `CHANGELOG.md` for the full history.

@@ -88,4 +88,47 @@ enum WaveformExtractor {
         guard !mono.isEmpty else { return nil }
         return AudioMath.downsample(mono, to: buckets)
     }
+
+    /// Onset frames per second the tempo envelope is reduced to. Fine enough to
+    /// resolve a beat across the whole search band (a 210 BPM beat is still ~28 frames
+    /// apart at 100 Hz) while keeping the envelope small — a 4-minute song is ~24k
+    /// values — so the autocorrelation is cheap (ADR 0004, rung 2).
+    static let onsetFramesPerSecond = 100.0
+
+    /// Decode `url` to mono PCM and reduce it to an onset-strength envelope for
+    /// on-device tempo estimation (`TempoEstimator`). Returns the envelope and the
+    /// frames-per-second it was sampled at (which `TempoEstimator` needs to turn a lag
+    /// back into BPM), or `nil` for an empty/degenerate file. Mirrors `extract`'s
+    /// chunked read so a long file never pulls the whole buffer in at once; the
+    /// reduction is the pure, tested `AudioMath.onsetEnvelope`. Run off the main actor.
+    static func extractOnsetEnvelope(from url: URL) throws
+        -> (onsets: [Double], framesPerSecond: Double)? {
+        let file = try AVAudioFile(forReading: url)
+        let format = file.processingFormat
+        let totalFrames = file.length
+        let duration = AudioMath.framesToSeconds(Int(totalFrames), sampleRate: format.sampleRate)
+        guard totalFrames > 0, duration > 0 else { return nil }
+
+        let channelCount = Int(format.channelCount)
+        var mono = [Float]()
+        mono.reserveCapacity(Int(totalFrames))
+
+        let chunkCapacity: AVAudioFrameCount = 1 << 20
+        while file.framePosition < totalFrames {
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: chunkCapacity) else { break }
+            try file.read(into: buffer)
+            let frames = Int(buffer.frameLength)
+            guard frames > 0, let channelData = buffer.floatChannelData else { break }
+            let channels = (0..<channelCount).map { channel in
+                Array(UnsafeBufferPointer(start: channelData[channel], count: frames))
+            }
+            mono.append(contentsOf: AudioMath.mixToMono(channels))
+        }
+        guard !mono.isEmpty else { return nil }
+
+        let onsetFrames = max(1, Int((duration * onsetFramesPerSecond).rounded()))
+        let onsets = AudioMath.onsetEnvelope(mono, frames: onsetFrames)
+        // Report the rate actually achieved, not the target, so lag→BPM is exact.
+        return (onsets, Double(onsetFrames) / duration)
+    }
 }

@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Estimate the tempo & downbeat from the audio** — the tempo editor now has an
+  **"Estimate from audio"** button that analyses the track's onsets on-device and
+  prefills both the **BPM** and **the 1** (the downbeat), flagged as estimates for
+  you to confirm or adjust. The tempo can land on half/double time and the 1 can sit
+  a beat off, so neither is trusted blindly (and the speed control never depended on
+  it) — rung 2 of ADR 0004's BPM fallback chain. Not available for the built-in demo
+  sample (no source file to analyse).
 - **Lock-screen play/pause & stop-on-exit** — practice audio now appears on the
   **lock screen and Control Center** (song title, artist, and a working
   play/pause), so you can pause without unlocking. Leaving the practice screen now
