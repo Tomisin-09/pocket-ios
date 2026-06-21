@@ -141,14 +141,19 @@ extension WaveformPracticeModel {
 
     // MARK: Long-press-drag select (ADR 0005 round 5)
 
-    /// A hold fired (navigate) — anchor a new green selection at `fraction` and start
-    /// painting it. The edit toolbar/transport lock stay back until release
-    /// (`isDragSelecting`); the medium haptic confirms the switch from scrub to select.
+    /// A hold fired (navigate) — anchor a new green selection at the **playhead** and
+    /// start painting it out to `fraction` (the held point). Anchoring at the playhead
+    /// (not the touch) makes the hold-drag punch in where playback is, matching Tap-mode
+    /// (`tapPunch`); the drag then sets the other end. The edit toolbar/transport lock
+    /// stay back until release (`isDragSelecting`); the medium haptic confirms the switch
+    /// from scrub to select. ADR 0005 (round 5, amended).
     func beginDragSelection(at fraction: Double) {
         guard capture == nil else { return }   // don't clobber a capture mid-confirm
-        dragSelectAnchor = fraction
+        let anchor = playheadFraction
+        dragSelectAnchor = anchor
         isDragSelecting = true
-        capture = CaptureDraft(start: fraction, end: fraction, fromFine: false, editingLoop: nil)
+        let bounds = WaveformGesture.selectionBounds(anchor: anchor, current: fraction)
+        capture = CaptureDraft(start: bounds.start, end: bounds.end, fromFine: false, editingLoop: nil)
         haptic(.medium)
     }
 

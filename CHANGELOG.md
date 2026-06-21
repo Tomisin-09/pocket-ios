@@ -69,11 +69,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   it's tight enough to assist, not hijack — land clear of a marker and nothing snaps.
   Scrubbing and the minimap stay free. ADR 0021.
 - **Draw a loop right on the waveform** — in Navigate mode, **press and hold, then drag**
-  to paint a loop region (a haptic confirms when the hold arms). Release and the region
-  becomes a confirmable loop — auto-named and looping at once on **Y**, like a punch. A
-  quick drag still scrubs and a tap still seeks; only a deliberate hold starts a selection.
-  This is the direct on-waveform way to set a loop's *range* (the **Loop** button still
-  punches one at the playhead). ADR 0005 (round 5).
+  to paint a loop region (a haptic confirms when the hold arms). The region **starts at
+  the playhead** and grows out to your finger, so the hold-drag punches a loop in where
+  playback is (just like the **Loop** button) and the drag sets the other end. Release and
+  the region becomes a confirmable loop — auto-named and looping at once on **Y**, like a
+  punch. A quick drag still scrubs and a tap still seeks; only a deliberate hold starts a
+  selection. ADR 0005 (round 5).
 
 ### Changed
 - **New blue look** — the waveform **bars are now blue** (anchored on `#2a6796`) on

@@ -3,6 +3,14 @@
 - **Status:** Accepted
 - **Date:** 2026-06-15
 
+> **Amendment (2026-06-21, `pocket-036`):** the long-press-drag select (round 5)
+> originally anchored the selection at the **touch point** where the hold fired.
+> It now anchors at the **playhead** and paints out to the finger, so a hold-drag
+> punches a loop in *where playback is* — matching Tap-mode's punch-in-at-playhead
+> (`tapPunch`) — and the drag sets the other end. Only `beginDragSelection`'s anchor
+> changed (`dragSelectAnchor = playheadFraction`, initial bounds via the same pure
+> `selectionBounds`); the live drag, release, and commit are untouched.
+
 ## Context
 
 The practice screen has three interaction modes (Scroll / Tap / Fine, brief
