@@ -247,6 +247,11 @@ struct TransportBar: View {
     let onPunch: () -> Void
     /// True between the in- and out-punch, so the Loop button reads "armed".
     let isPunchActive: Bool
+    /// In-song metronome click (ADR 0026): current on/off, whether a grid exists to
+    /// click against (tempo + downbeat set), and the toggle.
+    let metronomeOn: Bool
+    let canUseMetronome: Bool
+    let onToggleMetronome: () -> Void
 
     var body: some View {
         VStack(spacing: 8) {
@@ -302,8 +307,10 @@ struct TransportBar: View {
                              tint: PocketColor.pin, action: onDropMarker)
                 ActionButton(icon: "slider.horizontal.3", label: "Fine", tint: PocketColor.fine,
                              isActive: mode == .fine) { mode = (mode == .fine ? .navigate : .fine) }
-                ActionButton(icon: "metronome", label: "Auto", tint: PocketColor.textSecondary,
-                             isEnabled: false, action: {})
+                // Metronome click (ADR 0026) — disabled until the song has a tempo + the 1.
+                ActionButton(icon: "metronome", label: "Click", tint: PocketColor.active,
+                             isActive: metronomeOn, isEnabled: canUseMetronome || metronomeOn,
+                             action: onToggleMetronome)
             }
         }
         .padding(.horizontal, 10)

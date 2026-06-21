@@ -81,6 +81,11 @@ final class WaveformPracticeModel {
     /// Drives the tap-tempo / manual BPM sheet (ADR 0024), opened from "Set BPM".
     var settingBPM = false
 
+    /// In-song metronome click (ADR 0026). The click rides `beatGrid` and follows
+    /// playback speed; it never alters the song's stored BPM. Only available when the
+    /// song has a grid (both tempo and downbeat set).
+    var metronomeOn = false
+
     init(song: Song, context: ModelContext) {
         self.song = song
         self.context = context
@@ -155,6 +160,28 @@ final class WaveformPracticeModel {
     var beatGrid: [BeatGrid.Beat] {
         guard let bpm = song.tempoBPM, let downbeat = song.downbeatSeconds, duration > 0 else { return [] }
         return BeatGrid.beats(bpm: bpm, duration: duration, downbeat: downbeat)
+    }
+
+    // MARK: - Metronome (ADR 0026)
+
+    /// A click can run only when there's a grid — both a tempo and a downbeat anchor.
+    /// Drives the transport toggle's enabled state (the button greys out without one).
+    var canUseMetronome: Bool { !beatGrid.isEmpty }
+
+    /// Toggle the in-song click. Pushes the current grid to the engine and flips the
+    /// click on/off; the engine schedules against the live (rate-following) playhead.
+    func toggleMetronome() {
+        guard canUseMetronome || metronomeOn else { return }
+        metronomeOn.toggle()
+        if metronomeOn { pushMetronomeGrid() }
+        engine.setMetronome(enabled: metronomeOn)
+    }
+
+    /// Hand the engine the beat grid in *source* seconds (fractions × duration). Called
+    /// when the click turns on and whenever the grid changes (tempo/downbeat edits).
+    func pushMetronomeGrid() {
+        let beats = beatGrid.map { (time: $0.fraction * duration, isDownbeat: $0.isDownbeat) }
+        engine.setMetronomeBeats(beats)
     }
 
     // MARK: - Playback lifecycle & Now Playing (ADR 0025)

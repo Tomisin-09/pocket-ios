@@ -124,7 +124,10 @@ struct WaveformPracticeView: View {
                                  onClearLoop: model.clearActiveLoop,
                                  onDropMarker: model.dropMarkerAtPlayhead,
                                  onPunch: model.tapPunch,
-                                 isPunchActive: model.pendingStart != nil)
+                                 isPunchActive: model.pendingStart != nil,
+                                 metronomeOn: model.metronomeOn,
+                                 canUseMetronome: model.canUseMetronome,
+                                 onToggleMetronome: model.toggleMetronome)
                         .opacity(model.showConfirm || model.isSettingDownbeat ? 0.35 : 1)
                         .disabled(model.showConfirm || model.isSettingDownbeat)
                         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)

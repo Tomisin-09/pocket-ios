@@ -43,6 +43,7 @@ extension WaveformPracticeModel {
         }
         settingBPM = false
         if bpm != nil || downbeat != nil { haptic(.medium) }
+        if metronomeOn { pushMetronomeGrid() }   // grid changed — keep the click in sync (ADR 0026)
     }
 
     // MARK: Set the 1 on the waveform (draggable downbeat handle, ADR 0024)
