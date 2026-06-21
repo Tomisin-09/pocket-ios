@@ -25,6 +25,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   on the drawing board).
 
 ### Added
+- **Hold the song title for details** — press and hold the title/artist at the top of
+  the practice screen (with a haptic) to open the song details sheet, where you can view
+  and edit its metadata and see practice stats — the same sheet reached from the library.
+- **Haptic on the BPM hold** — holding the **BPM** readout to re-open the tempo editor
+  now confirms the hold with a haptic, matching the loop-row and title holds.
 - **Metronome click** — a new **Click** button on the transport plays a metronome
   over the song, accenting the downbeat. It **rides the song and follows the speed
   control**: at 50% it clicks at 50% of the song's BPM, locked to the slowed track;
