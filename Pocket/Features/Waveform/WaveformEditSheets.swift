@@ -14,16 +14,12 @@ struct LoopEditSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var name: String
-    @State private var speed: Double
-    @State private var repeats: Int
 
     init(loop: Loop, onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void) {
         self.loop = loop
         self.onDelete = onDelete
         self.onAdjustRange = onAdjustRange
         _name = State(initialValue: loop.name)
-        _speed = State(initialValue: loop.speed)
-        _repeats = State(initialValue: loop.repeats)
     }
 
     var body: some View {
@@ -44,16 +40,6 @@ struct LoopEditSheet: View {
                         Label("Adjust range on waveform", systemImage: "slider.horizontal.below.rectangle")
                     }
                 }
-                Section("Playback") {
-                    VStack(alignment: .leading) {
-                        LabeledContent("Speed") {
-                            Text(String(format: "%.2f×", speed)).font(.pocketMono(.body))
-                        }
-                        Slider(value: $speed, in: 0.25...2.0, step: 0.05)
-                            .tint(PocketColor.active)
-                    }
-                    Stepper("Repeats: \(repeats)", value: $repeats, in: 1...16)
-                }
                 Section {
                     Button("Delete loop", role: .destructive) {
                         onDelete()
@@ -70,8 +56,6 @@ struct LoopEditSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         loop.name = name        // mutating the @Model persists
-                        loop.speed = speed
-                        loop.repeats = repeats
                         dismiss()
                     }
                 }

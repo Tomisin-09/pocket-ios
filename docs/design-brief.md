@@ -172,10 +172,11 @@ A hairline separates the cockpit from the scroll area below.
 
 **Scrollable (reference):**
 
-8. Loops panel (collapsible) — each loop shows a **name** + time range · speed ·
-   repeats. Tap a row to edit (name / speed / repeats / delete); tap the
-   trailing **play button** to activate it. The active loop drives the
-   waveform/minimap highlight and the transport loop range.
+8. Loops panel (collapsible) — each loop shows a **name** + time range, with the
+   **"A"** automator (speed-ramp) control trailing. Tap a row to activate it; the
+   active loop drives the waveform/minimap highlight and the transport loop range.
+   **Press and hold** a row (haptic) to open the edit sheet — rename / adjust range /
+   delete. Speed and repeats live in the automator, not the row (ADR 0013 / 0028).
 9. Markers panel (collapsible) — name + timecode; tap a row to edit
    (rename / delete).
 10. Song info panel (collapsible, **collapsed by default**) — demoted here from

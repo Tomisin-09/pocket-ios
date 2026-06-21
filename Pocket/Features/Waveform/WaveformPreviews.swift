@@ -211,7 +211,7 @@ import SwiftUI
         VStack(spacing: 16) {
             LoopsPanel(loops: song.loops, expanded: $loopsExpanded,
                        activeLoopID: song.loops.first?.uid, isPlaying: false,
-                       onActivate: { _ in }, onEdit: { _ in }, onAutomator: { _ in })
+                       onActivate: { _ in }, onEdit: { _ in }, onDelete: { _ in }, onAutomator: { _ in })
             MarkersPanel(markers: song.markers, expanded: $markersExpanded,
                          onSeek: { _ in }, onEdit: { _ in })
         }
@@ -224,7 +224,8 @@ import SwiftUI
     ZStack {
         PocketColor.background.ignoresSafeArea()
         LoopsPanel(loops: [], expanded: $expanded, activeLoopID: nil, isPlaying: false,
-                   onActivate: { _ in }, onEdit: { _ in }, onAutomator: { _ in }).padding()
+                   onActivate: { _ in }, onEdit: { _ in }, onDelete: { _ in },
+                   onAutomator: { _ in }).padding()
     }
 }
 
