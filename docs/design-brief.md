@@ -162,10 +162,11 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
    when the detail waveform is zoomed. (Minimap not yet updated to per-loop colours /
    the triangle glyph — ADR 0023 deferred it.)
 7. Transport bar — row 1: play/pause · time · loop info (name + range + ✕ exit chip).
-   Row 2: the **action bar** — **Mark** (drop marker), **Loop** (punch in/out),
-   **Fine** (precise-edit toggle), and a reserved **Auto** slot (automator, ADR 0009).
-   **Greys out and locks while a loop is being created/edited** — controls move up to
-   the edit toolbar (item 3).
+   Row 2: the **action bar** — **Loop** (punch in/out), **Mark** (drop marker),
+   **Fine** (precise-edit toggle, calipers glyph). Click moved to the speed bar
+   (ADR 0027). **Greys out and locks while a loop is being created/edited** — controls
+   move up to the edit toolbar (item 3). *(A less real-estate-hungry loop-exit
+   affordance is still being explored; the ✕ chip stands for now.)*
 
 A hairline separates the cockpit from the scroll area below.
 
@@ -200,9 +201,12 @@ way to set a loop's *range*. Capturing **at the playhead** is done with the
 - **Fine** → toggle precise editing: two draggable blue handles define the loop
   bounds; the edit toolbar appears.
 
-**Speed bar:** the speed readout (`0.90×`), the slider, and the read-only BPM
-display (`round(songBPM × speed)`) share **one row** to stay compact in the
-pinned cockpit; presets 0.25/0.50/0.75 and reset-to-1.0 sit beneath. The slider
+**Speed bar:** the speed readout (`0.90×`), the slider, the read-only BPM
+display (`round(songBPM × speed)`), and the **Click** (metronome) toggle share
+**one row** to stay compact in the pinned cockpit; presets 0.25/0.50/0.75 and
+reset-to-1.0 sit beneath. The Click rides next to the BPM because it's a tempo
+tool, in its own teal so it never reads as a transport control (ADR 0027); it
+greys out until the song has a tempo + the 1. The slider
 uses an **asymmetric scale** (0.25–1.0 occupies ~54% of the track, so 1.0 sits
 slightly left of centre — slow practice deserves more precision) — still to be
 implemented; a linear slider stands in for now.

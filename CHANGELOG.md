@@ -5,6 +5,15 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Transport rework** — the practice cockpit is tidier (ADR 0027). The **Click**
+  toggle moved off the transport bar to sit next to the **BPM** readout on the speed
+  bar, in its own teal colour, so it reads as a tempo tool instead of another play
+  button. The **Fine** button's icon changed to a calipers glyph ("drag the edges").
+  The transport action bar is now **Loop · Mark · Fine**; the active loop's name/range
+  and its ✕ exit stay in the transport's top row (a better loop-exit affordance is still
+  on the drawing board).
+
 ### Added
 - **Metronome click** — a new **Click** button on the transport plays a metronome
   over the song, accenting the downbeat. It **rides the song and follows the speed

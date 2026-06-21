@@ -105,6 +105,14 @@ struct SpeedBar: View {
     /// Fired when the user grabs the slider, so a running loop automator can stand down
     /// (manual control wins). Defaults to a no-op for previews/standalone use.
     var onUserAdjust: () -> Void = {}
+    /// In-song metronome click (ADR 0027 — relocated here from the transport bar, where
+    /// it sat next to play/loop and read as another transport control). The click is
+    /// tempo context, so it lives by the BPM readout. On/off, whether a grid exists to
+    /// click against (tempo + downbeat set), and the toggle. Defaulted off/disabled for
+    /// previews and standalone use.
+    var metronomeOn: Bool = false
+    var canUseMetronome: Bool = false
+    var onToggleMetronome: () -> Void = {}
 
     private let presets: [Double] = [0.25, 0.50, 0.75]
 
@@ -156,6 +164,12 @@ struct SpeedBar: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Set tempo")
                 }
+
+                // In-song click (ADR 0027). Compact, icon-only — it's a tempo tool, so
+                // it rides next to the BPM. Greyed until the song has a grid (tempo + 1).
+                MetronomeToggle(isOn: metronomeOn,
+                                isEnabled: canUseMetronome || metronomeOn,
+                                action: onToggleMetronome)
             }
 
             HStack(spacing: 8) {
@@ -174,6 +188,37 @@ struct SpeedBar: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .background(panelBackground)
+    }
+}
+
+/// In-song metronome click toggle on the speed bar (ADR 0027). Icon-only, in the
+/// metronome's own teal so it doesn't read as a transport control; greys out until
+/// the song has a beat grid (tempo + downbeat). A 44pt target around a 30pt badge.
+private struct MetronomeToggle: View {
+    let isOn: Bool
+    let isEnabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "metronome")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(foreground)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(isOn ? PocketColor.metronome : Color.white.opacity(0.08)))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .accessibilityLabel("Metronome click")
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityHint("Plays a click on the beat while the song plays")
+    }
+
+    private var foreground: Color {
+        if !isEnabled { return PocketColor.textSecondary.opacity(0.4) }
+        return isOn ? PocketColor.background : PocketColor.metronome
     }
 }
 
@@ -247,11 +292,6 @@ struct TransportBar: View {
     let onPunch: () -> Void
     /// True between the in- and out-punch, so the Loop button reads "armed".
     let isPunchActive: Bool
-    /// In-song metronome click (ADR 0026): current on/off, whether a grid exists to
-    /// click against (tempo + downbeat set), and the toggle.
-    let metronomeOn: Bool
-    let canUseMetronome: Bool
-    let onToggleMetronome: () -> Void
 
     var body: some View {
         VStack(spacing: 8) {
@@ -297,20 +337,18 @@ struct TransportBar: View {
                 }
             }
 
-            // Action bar — capture at the playhead + the precise-edit toggle.
-            // (`A`utomator slot reserved, ADR 0009.)
+            // Action bar — capture at the playhead + the precise-edit toggle. Click moved
+            // to the speed bar (tempo context, ADR 0027); the `A`utomator slot is per-loop.
             HStack(spacing: 8) {
                 ActionButton(icon: "repeat", label: "Loop", tint: PocketColor.active,
                              isActive: isPunchActive, action: onPunch)
                 // Inverted triangle to match the markers' shape on the waveform (ADR 0023).
                 ActionButton(icon: "arrowtriangle.down.fill", label: "Mark",
                              tint: PocketColor.pin, action: onDropMarker)
-                ActionButton(icon: "slider.horizontal.3", label: "Fine", tint: PocketColor.fine,
+                // Calipers — "drag the edges" — for Fine bound-editing (ADR 0027); the old
+                // sliders glyph read as generic settings, not edge handles.
+                ActionButton(icon: "arrow.left.and.right", label: "Fine", tint: PocketColor.fine,
                              isActive: mode == .fine) { mode = (mode == .fine ? .navigate : .fine) }
-                // Metronome click (ADR 0026) — disabled until the song has a tempo + the 1.
-                ActionButton(icon: "metronome", label: "Click", tint: PocketColor.active,
-                             isActive: metronomeOn, isEnabled: canUseMetronome || metronomeOn,
-                             action: onToggleMetronome)
             }
         }
         .padding(.horizontal, 10)

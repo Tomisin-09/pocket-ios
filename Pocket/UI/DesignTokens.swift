@@ -49,6 +49,11 @@ enum PocketColor {
     static let confirm = Color.green
     /// Discard / delete / destructive — the red ✗ of the loop-capture toolbar.
     static let danger = Color.red
+    /// In-song metronome click (ADR 0026 / 0027). A teal that sits clear of every
+    /// other functional hue — green (live), the blue bars, orange (markers), purple
+    /// (pins), red (danger) — so the click reads as its own thing, not "another play
+    /// control." Lives next to the BPM readout on the speed bar (ADR 0027).
+    static let metronome = hex(0x35C8C8)
 
     // MARK: Selection & annotation
     /// Fine precision (selection handles + the downbeat "1" handle) — a high-key cool
