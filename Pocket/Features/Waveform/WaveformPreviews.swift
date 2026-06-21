@@ -168,7 +168,8 @@ import SwiftUI
                 fineSelection: nil,
                 playheadFraction: 0.35,
                 viewport: (0.25, 0.65),
-                onSeek: { _ in }).padding()
+                onSeek: { _ in },
+                onSeekEnded: { _ in }).padding()
     }
 }
 

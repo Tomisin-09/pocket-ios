@@ -18,17 +18,24 @@ struct Minimap: View {
     let playheadFraction: Double
     /// The detail waveform's zoom window — drawn as the viewport box when zoomed in.
     let viewport: (start: Double, end: Double)
-    /// Tap or drag anywhere on the minimap to move the playhead.
+    /// Tap or drag anywhere on the minimap to move the playhead. Fired continuously
+    /// (un-snapped) so the scrub tracks the finger.
     let onSeek: (Double) -> Void
+    /// Drag *release* — lets the caller snap the final position to a nearby marker.
+    let onSeekEnded: (Double) -> Void
 
     var body: some View {
         GeometryReader { geo in
             canvas
                 .contentShape(Rectangle())
                 .gesture(
-                    DragGesture(minimumDistance: 0).onChanged { value in
-                        onSeek(WaveformGesture.fraction(atX: value.location.x, width: geo.size.width))
-                    }
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            onSeek(WaveformGesture.fraction(atX: value.location.x, width: geo.size.width))
+                        }
+                        .onEnded { value in
+                            onSeekEnded(WaveformGesture.fraction(atX: value.location.x, width: geo.size.width))
+                        }
                 )
         }
         .frame(height: 28)

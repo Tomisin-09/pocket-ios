@@ -84,7 +84,9 @@ while a loop's **range** is drawn directly on the waveform by a **long-press-dra
 round 5) — a still hold arms a selection that the drag paints, released into a confirmable
 draft. On **release**, a drawn edge / Fine handle / tap-seek **snaps to a nearby marker or
 saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, light haptic;
-scrub + minimap stay free; ADR 0021). When a song has a **BPM and a downbeat anchor**, a
+the continuous scrub stays free; ADR 0021). The **minimap** snaps a released seek to a
+nearby **marker or saved-loop edge** (but not beats — the full-song strip is too compressed
+for the grid to land cleanly), so a tap or drag near a marker dot or loop boundary catches it. When a song has a **BPM and a downbeat anchor**, a
 faint **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on
 zoom) and its beats join the snap candidates, so edges/seeks catch the pulse too — pure,
 unit-tested `BeatGrid`, assumes 4/4 (ADR 0022). The **"Set BPM"** affordance opens a tempo

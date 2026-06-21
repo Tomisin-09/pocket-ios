@@ -44,4 +44,22 @@ extension WaveformPracticeModel {
             seekToFraction(fraction)
         }
     }
+
+    /// Minimap seek *release* — snap the playhead to a nearby **marker or saved-loop
+    /// edge** with a light haptic on a catch. Excludes the **beat grid** (unlike the
+    /// detail waveform's `seekSnapping`): on the compressed full-song strip the beats
+    /// pack too densely to land cleanly, whereas markers and loop edges are the sparse
+    /// landmarks actually drawn there. The live drag (`onChanged`) stays un-snapped so
+    /// the scrub tracks the finger; this fires once, on release.
+    func seekMinimapSnapping(_ fraction: Double) {
+        let markerFractions = duration > 0 ? markers.map { $0.seconds / duration } : []
+        let loopEdges = loops.flatMap { [$0.start, $0.end] }
+        if let target = WaveformGesture.snap(fraction, to: markerFractions + loopEdges,
+                                             tolerance: WaveformGesture.snapTolerance) {
+            haptic(.light)
+            seekToFraction(target)
+        } else {
+            seekToFraction(fraction)
+        }
+    }
 }

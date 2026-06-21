@@ -116,7 +116,8 @@ struct WaveformPracticeView: View {
                             fineSelection: model.fineSelection,
                             playheadFraction: model.playheadFraction,
                             viewport: model.viewport,
-                            onSeek: model.seekToFraction)
+                            onSeek: model.seekToFraction,
+                            onSeekEnded: model.seekMinimapSnapping)
                     // Greyed + locked while editing — controls move to the edit
                     //    toolbar (you leave edit mode via Y/N, not the mode pills).
                     TransportBar(isPlaying: model.engine.isPlaying,             // 8
