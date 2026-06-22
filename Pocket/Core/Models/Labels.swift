@@ -53,4 +53,13 @@ enum Labels {
             .filter { !taken.contains($0.lowercased()) }
             .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
     }
+
+    /// Whether `itemLabels` satisfies an **intersection (AND)** filter: true when the
+    /// item carries *every* one of `selected` (matched case-insensitively). An empty
+    /// `selected` matches everything (no filter). The common single-select case is
+    /// AND-of-one — tap a collection, get its items. Drives the library filter (ADR 0033).
+    static func matches(_ itemLabels: [String], allOf selected: [String]) -> Bool {
+        let have = Set(normalized(itemLabels).map { $0.lowercased() })
+        return normalized(selected).allSatisfy { have.contains($0.lowercased()) }
+    }
 }

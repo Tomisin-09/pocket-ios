@@ -82,4 +82,26 @@ final class LabelsTests: XCTestCase {
     func testSuggestionsEmptyWhenPoolExhaustedByCurrent() {
         XCTAssertEqual(Labels.suggestions(from: ["Blues"], excluding: ["BLUES"]), [])
     }
+
+    // MARK: - matches (library filter)
+
+    func testEmptyFilterMatchesEverything() {
+        XCTAssertTrue(Labels.matches([], allOf: []))
+        XCTAssertTrue(Labels.matches(["Blues"], allOf: []))
+    }
+
+    func testSingleSelectMatchesCaseInsensitively() {
+        XCTAssertTrue(Labels.matches(["Blues", "Jazz"], allOf: ["blues"]))
+        XCTAssertFalse(Labels.matches(["Jazz"], allOf: ["Blues"]))
+    }
+
+    func testMultiSelectRequiresAllSelected() {
+        // Intersection (AND): the song must carry every selected collection.
+        XCTAssertTrue(Labels.matches(["Blues", "Jazz", "Rock"], allOf: ["Blues", "Jazz"]))
+        XCTAssertFalse(Labels.matches(["Blues"], allOf: ["Blues", "Jazz"]))
+    }
+
+    func testMatchesIgnoresWhitespaceVariants() {
+        XCTAssertTrue(Labels.matches(["  blues "], allOf: ["Blues"]))
+    }
 }

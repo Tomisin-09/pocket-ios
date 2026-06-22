@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Filter the library by collection** (ADR 0033). The song list gains a row of
+  collection chips; tap one (or several) to narrow the library to songs in **all** the
+  chosen collections, **All** to clear. An empty result shows a clear "no songs in this
+  collection" state with a one-tap reset.
 - **Collection suggestions** (ADR 0033). The song edit sheet now offers the collections
   you already use elsewhere in your library as tappable chips — tap one to add it
   (in its canonical spelling) instead of re-typing, so songs converge on the same
