@@ -6,6 +6,22 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Filter the library by collection** (ADR 0033). The song list gains a row of
+  collection chips; tap one (or several) to narrow the library to songs in **all** the
+  chosen collections, **All** to clear. An empty result shows a clear "no songs in this
+  collection" state with a one-tap reset.
+- **Collection suggestions** (ADR 0033). The song edit sheet now offers the collections
+  you already use elsewhere in your library as tappable chips — tap one to add it
+  (in its canonical spelling) instead of re-typing, so songs converge on the same
+  collection names. Collections already on the song aren't re-offered.
+
+### Changed
+- **Collections no longer fragment** (ADR 0033). Adding a collection to a song now
+  tidies whitespace and de-duplicates case-insensitively, so `Blues`, `blues`, and
+  `blues ` are treated as the same collection (the first-seen spelling is kept) instead
+  of becoming three. Shared with the upcoming loop **Tags** (ADR 0034).
+
+### Added
 - **Choose a loop's colour** (ADR 0031). The loop edit sheet gains a **Colour** row —
   an **Auto** swatch (the automatic colour, as before), the preset palette, and a
   **custom colour wheel** (the trailing rainbow swatch) for any other colour. Pick one

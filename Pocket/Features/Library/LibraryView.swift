@@ -11,6 +11,9 @@ struct LibraryView: View {
     @State private var importing = false
     @State private var importError: String?
     @State private var editingSong: Song?
+    /// Canonical collection names the library is filtered by; empty ⇒ no filter
+    /// (intersection/AND semantics — a song matches if it has all selected). ADR 0033.
+    @State private var selectedCollections: Set<String> = []
 
     var body: some View {
         NavigationStack {
@@ -18,7 +21,17 @@ struct LibraryView: View {
                 if songs.isEmpty {
                     LibraryEmptyState(onImport: { importing = true }, onTryDemo: addDemo)
                 } else {
-                    songList
+                    VStack(spacing: 0) {
+                        if !availableCollections.isEmpty {
+                            CollectionFilterBar(available: availableCollections,
+                                                selected: $selectedCollections)
+                        }
+                        if filteredSongs.isEmpty {
+                            NoMatchesState { selectedCollections.removeAll() }
+                        } else {
+                            songList
+                        }
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -44,9 +57,22 @@ struct LibraryView: View {
         .preferredColorScheme(.dark)
     }
 
+    /// Distinct collection names across the library, canonicalised and sorted — the
+    /// filter chips (ADR 0033).
+    private var availableCollections: [String] {
+        Labels.normalized(songs.flatMap(\.collections))
+            .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    /// Songs narrowed by the active collection filter (intersection/AND). Order is the
+    /// `@Query` title sort, preserved by `filter`.
+    private var filteredSongs: [Song] {
+        songs.filter { Labels.matches($0.collections, allOf: Array(selectedCollections)) }
+    }
+
     private var songList: some View {
         List {
-            ForEach(songs) { song in
+            ForEach(filteredSongs) { song in
                 NavigationLink {
                     WaveformPracticeView(song: song, context: context)
                 } label: {
@@ -86,6 +112,80 @@ struct LibraryView: View {
     }
 
     private func addDemo() { context.insert(Song.sample()) }
+}
+
+/// Horizontal row of collection filter chips above the song list (ADR 0033). A
+/// leading **All** chip clears the filter; tapping a collection toggles it in/out of
+/// the intersection. Hidden entirely when no song carries a collection.
+private struct CollectionFilterBar: View {
+    let available: [String]
+    @Binding var selected: Set<String>
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                FilterChip(label: "All", isSelected: selected.isEmpty) { selected.removeAll() }
+                ForEach(available, id: \.self) { collection in
+                    FilterChip(label: collection, isSelected: selected.contains(collection)) {
+                        toggle(collection)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .background(PocketColor.background)
+    }
+
+    private func toggle(_ collection: String) {
+        if selected.contains(collection) {
+            selected.remove(collection)
+        } else {
+            selected.insert(collection)
+        }
+    }
+}
+
+private struct FilterChip: View {
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.pocketMono(.caption))
+                .lineLimit(1)
+                .fixedSize()
+                .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(isSelected ? PocketColor.active : Color.white.opacity(0.10)))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Shown when the active collection filter excludes every song — a clear message and
+/// a one-tap way back to the full library (ADR 0033).
+private struct NoMatchesState: View {
+    let onClear: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+                .font(.system(size: 40))
+                .foregroundStyle(PocketColor.textSecondary)
+            Text("No songs in this collection")
+                .font(.headline)
+                .foregroundStyle(PocketColor.textPrimary)
+            Button("Clear filter", action: onClear)
+                .font(.subheadline)
+                .foregroundStyle(PocketColor.active)
+        }
+        .padding(40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 }
 
 /// A single library row: title, artist (when known), and proficiency.

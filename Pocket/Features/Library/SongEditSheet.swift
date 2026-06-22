@@ -10,6 +10,8 @@ struct SongEditSheet: View {
     let song: Song
 
     @Environment(\.dismiss) private var dismiss
+    // All songs, to suggest collections already used across the library (ADR 0033).
+    @Query private var allSongs: [Song]
 
     @State private var title: String
     @State private var artist: String
@@ -82,8 +84,8 @@ struct SongEditSheet: View {
 
     private var collectionsSection: some View {
         Section("Collections") {
-            ForEach(collections, id: \.self) { tag in
-                Text(tag).foregroundStyle(PocketColor.textPrimary)
+            ForEach(collections, id: \.self) { collection in
+                Text(collection).foregroundStyle(PocketColor.textPrimary)
             }
             .onDelete { collections.remove(atOffsets: $0) }
             HStack {
@@ -91,9 +93,40 @@ struct SongEditSheet: View {
                     .submitLabel(.done)
                     .onSubmit(addCollection)
                 Button("Add", action: addCollection)
-                    .disabled(trimmedNewCollection.isEmpty)
+                    .disabled(Labels.canonical(newCollection) == nil)
+            }
+            if !collectionSuggestions.isEmpty {
+                suggestionChips
             }
         }
+    }
+
+    /// Tappable chips of collections already used elsewhere in the library — tap to
+    /// add the canonical form (reuse over re-entry, the convergence mechanism).
+    private var suggestionChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(collectionSuggestions, id: \.self) { suggestion in
+                    Button {
+                        collections = Labels.adding(suggestion, to: collections)
+                    } label: {
+                        Text(suggestion)
+                            .font(.pocketMono(.caption))
+                            .lineLimit(1)
+                            .foregroundStyle(PocketColor.textPrimary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Color.white.opacity(0.10)))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+    }
+
+    private var collectionSuggestions: [String] {
+        Labels.suggestions(from: allSongs.flatMap(\.collections), excluding: collections)
     }
 
     private var notesSection: some View {
@@ -119,15 +152,11 @@ struct SongEditSheet: View {
 
     // MARK: - Actions
 
-    private var trimmedNewCollection: String {
-        newCollection.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     private func addCollection() {
-        let tag = trimmedNewCollection
+        // Canonicalise and de-dup case-insensitively through the shared normaliser
+        // (ADR 0033) so the collection set doesn't fragment into Blues/blues/"blues ".
+        collections = Labels.adding(newCollection, to: collections)
         newCollection = ""
-        guard !tag.isEmpty, !collections.contains(tag) else { return }
-        collections.append(tag)
     }
 
     /// Write the edited values back to the persisted `Song`. Title falls back to the
