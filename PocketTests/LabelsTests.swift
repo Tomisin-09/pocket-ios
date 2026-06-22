@@ -63,4 +63,23 @@ final class LabelsTests: XCTestCase {
     func testNormalizedPreservesOrderOfFirstAppearance() {
         XCTAssertEqual(Labels.normalized(["b", "a", "B", "A"]), ["b", "a"])
     }
+
+    // MARK: - suggestions
+
+    func testSuggestionsAreDistinctNormalisedAndSorted() {
+        // Pool spans multiple songs (duplicates, case + whitespace variants); the
+        // suggestion list is distinct, canonical, and case-insensitively sorted.
+        let pool = ["Blues", "blues", "Jazz", "  rock ", "JAZZ"]
+        XCTAssertEqual(Labels.suggestions(from: pool, excluding: []), ["Blues", "Jazz", "rock"])
+    }
+
+    func testSuggestionsExcludeLabelsAlreadyOnTheItem() {
+        // "blues" is already on this song (as "Blues") → not re-offered.
+        let pool = ["Blues", "Jazz", "Rock"]
+        XCTAssertEqual(Labels.suggestions(from: pool, excluding: ["blues"]), ["Jazz", "Rock"])
+    }
+
+    func testSuggestionsEmptyWhenPoolExhaustedByCurrent() {
+        XCTAssertEqual(Labels.suggestions(from: ["Blues"], excluding: ["BLUES"]), [])
+    }
 }

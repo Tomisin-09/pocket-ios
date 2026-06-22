@@ -41,4 +41,16 @@ enum Labels {
             result = adding(raw, to: result)
         }
     }
+
+    /// Suggestion candidates for an editor: the distinct normalised labels drawn from
+    /// `pool` (the labels already used across the library), **excluding** any already
+    /// on the current item (`current`, matched case-insensitively), sorted
+    /// case-insensitively. This is the convergence mechanism — offering the labels you
+    /// already use so many items share the *same* one instead of re-typed variants.
+    static func suggestions(from pool: [String], excluding current: [String]) -> [String] {
+        let taken = Set(normalized(current).map { $0.lowercased() })
+        return normalized(pool)
+            .filter { !taken.contains($0.lowercased()) }
+            .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
+    }
 }

@@ -10,6 +10,8 @@ struct SongEditSheet: View {
     let song: Song
 
     @Environment(\.dismiss) private var dismiss
+    // All songs, to suggest collections already used across the library (ADR 0033).
+    @Query private var allSongs: [Song]
 
     @State private var title: String
     @State private var artist: String
@@ -93,7 +95,38 @@ struct SongEditSheet: View {
                 Button("Add", action: addCollection)
                     .disabled(Labels.canonical(newCollection) == nil)
             }
+            if !collectionSuggestions.isEmpty {
+                suggestionChips
+            }
         }
+    }
+
+    /// Tappable chips of collections already used elsewhere in the library — tap to
+    /// add the canonical form (reuse over re-entry, the convergence mechanism).
+    private var suggestionChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(collectionSuggestions, id: \.self) { suggestion in
+                    Button {
+                        collections = Labels.adding(suggestion, to: collections)
+                    } label: {
+                        Text(suggestion)
+                            .font(.pocketMono(.caption))
+                            .lineLimit(1)
+                            .foregroundStyle(PocketColor.textPrimary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Color.white.opacity(0.10)))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+    }
+
+    private var collectionSuggestions: [String] {
+        Labels.suggestions(from: allSongs.flatMap(\.collections), excluding: collections)
     }
 
     private var notesSection: some View {

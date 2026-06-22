@@ -5,6 +5,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Collection suggestions** (ADR 0033). The song edit sheet now offers the collections
+  you already use elsewhere in your library as tappable chips — tap one to add it
+  (in its canonical spelling) instead of re-typing, so songs converge on the same
+  collection names. Collections already on the song aren't re-offered.
+
 ### Changed
 - **Collections no longer fragment** (ADR 0033). Adding a collection to a song now
   tidies whitespace and de-duplicates case-insensitively, so `Blues`, `blues`, and
