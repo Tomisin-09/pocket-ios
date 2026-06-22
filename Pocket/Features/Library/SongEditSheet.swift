@@ -82,8 +82,8 @@ struct SongEditSheet: View {
 
     private var collectionsSection: some View {
         Section("Collections") {
-            ForEach(collections, id: \.self) { tag in
-                Text(tag).foregroundStyle(PocketColor.textPrimary)
+            ForEach(collections, id: \.self) { collection in
+                Text(collection).foregroundStyle(PocketColor.textPrimary)
             }
             .onDelete { collections.remove(atOffsets: $0) }
             HStack {
@@ -91,7 +91,7 @@ struct SongEditSheet: View {
                     .submitLabel(.done)
                     .onSubmit(addCollection)
                 Button("Add", action: addCollection)
-                    .disabled(trimmedNewCollection.isEmpty)
+                    .disabled(Labels.canonical(newCollection) == nil)
             }
         }
     }
@@ -119,15 +119,11 @@ struct SongEditSheet: View {
 
     // MARK: - Actions
 
-    private var trimmedNewCollection: String {
-        newCollection.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     private func addCollection() {
-        let tag = trimmedNewCollection
+        // Canonicalise and de-dup case-insensitively through the shared normaliser
+        // (ADR 0033) so the collection set doesn't fragment into Blues/blues/"blues ".
+        collections = Labels.adding(newCollection, to: collections)
         newCollection = ""
-        guard !tag.isEmpty, !collections.contains(tag) else { return }
-        collections.append(tag)
     }
 
     /// Write the edited values back to the persisted `Song`. Title falls back to the

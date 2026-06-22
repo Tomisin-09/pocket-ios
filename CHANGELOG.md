@@ -5,6 +5,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Collections no longer fragment** (ADR 0033). Adding a collection to a song now
+  tidies whitespace and de-duplicates case-insensitively, so `Blues`, `blues`, and
+  `blues ` are treated as the same collection (the first-seen spelling is kept) instead
+  of becoming three. Shared with the upcoming loop **Tags** (ADR 0034).
+
 ### Added
 - **Choose a loop's colour** (ADR 0031). The loop edit sheet gains a **Colour** row —
   an **Auto** swatch (the automatic colour, as before), the preset palette, and a
