@@ -16,6 +16,8 @@ struct LibraryView: View {
     @State private var selectedCollections: Set<String> = []
     /// How the list is grouped/ordered (ADR 0035) — persisted across launches.
     @AppStorage("libraryGrouping") private var grouping: SongGrouping = .title
+    /// Title/artist search query (ADR 0035).
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -28,12 +30,9 @@ struct LibraryView: View {
                             CollectionFilterBar(available: availableCollections,
                                                 selected: $selectedCollections)
                         }
-                        if filteredSongs.isEmpty {
-                            NoMatchesState { selectedCollections.removeAll() }
-                        } else {
-                            groupedList
-                        }
+                        libraryContent
                     }
+                    .searchable(text: $searchText, prompt: "Songs and artists")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -69,18 +68,38 @@ struct LibraryView: View {
             .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
     }
 
-    /// Songs narrowed by the active collection filter (intersection/AND). Order is the
-    /// `@Query` title sort, preserved by `filter`.
+    /// Songs narrowed by the active collection filter (AND) and the search query. Order
+    /// is the `@Query` title sort, preserved by `filter`.
     private var filteredSongs: [Song] {
-        songs.filter { Labels.matches($0.collections, allOf: Array(selectedCollections)) }
+        songs.filter {
+            Labels.matches($0.collections, allOf: Array(selectedCollections))
+                && LibrarySectioning.matchesSearch(fields(for: $0), query: searchText)
+        }
+    }
+
+    /// The grouping/search projection of a song (ADR 0035).
+    private func fields(for song: Song) -> SongGroupFields {
+        SongGroupFields(title: song.title, artist: song.artist, album: song.album,
+                        genre: song.genre, proficiency: song.proficiency,
+                        dateAdded: song.dateAdded)
     }
 
     /// The filtered songs grouped into ordered sections by the current key (ADR 0035).
     private var sections: [LibrarySection<Song>] {
-        LibrarySectioning.sections(filteredSongs, by: grouping) { song in
-            SongGroupFields(title: song.title, artist: song.artist, album: song.album,
-                            genre: song.genre, proficiency: song.proficiency,
-                            dateAdded: song.dateAdded)
+        LibrarySectioning.sections(filteredSongs, by: grouping, fields: fields(for:))
+    }
+
+    /// The list, or the right empty state when the filter/search excludes everything.
+    @ViewBuilder
+    private var libraryContent: some View {
+        if filteredSongs.isEmpty {
+            if !searchText.isEmpty {
+                ContentUnavailableView.search(text: searchText)
+            } else {
+                NoMatchesState { selectedCollections.removeAll() }
+            }
+        } else {
+            groupedList
         }
     }
 

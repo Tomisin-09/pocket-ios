@@ -74,6 +74,18 @@ enum LibrarySectioning {
             }
     }
 
+    /// Whether a song matches a search `query` — a case- and diacritic-insensitive
+    /// substring of its title or artist. An empty/whitespace query matches everything.
+    static func matchesSearch(_ fields: SongGroupFields, query: String) -> Bool {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return true }
+        return contains(fields.title, trimmed) || contains(fields.artist, trimmed)
+    }
+
+    private static func contains(_ haystack: String, _ needle: String) -> Bool {
+        haystack.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+    }
+
     // MARK: - Bucket helpers (pure, individually tested)
 
     /// Proficiency (0–5 stars) → a practice tier, surfaced needs-work first.

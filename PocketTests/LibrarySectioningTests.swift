@@ -146,4 +146,22 @@ final class LibrarySectioningTests: XCTestCase {
     func testEmptyInputYieldsNoSections() {
         XCTAssertTrue(sections([], by: .title).isEmpty)
     }
+
+    // MARK: - matchesSearch
+
+    func testEmptyQueryMatchesEverything() {
+        XCTAssertTrue(LibrarySectioning.matchesSearch(fields("Anything"), query: ""))
+        XCTAssertTrue(LibrarySectioning.matchesSearch(fields("Anything"), query: "   "))
+    }
+
+    func testSearchMatchesTitleOrArtistCaseInsensitively() {
+        let song = fields("Blue Hour", artist: "The Allmans")
+        XCTAssertTrue(LibrarySectioning.matchesSearch(song, query: "blue"))
+        XCTAssertTrue(LibrarySectioning.matchesSearch(song, query: "ALLMAN"))
+        XCTAssertFalse(LibrarySectioning.matchesSearch(song, query: "zydeco"))
+    }
+
+    func testSearchIgnoresDiacritics() {
+        XCTAssertTrue(LibrarySectioning.matchesSearch(fields("Café del Mar"), query: "cafe"))
+    }
 }
