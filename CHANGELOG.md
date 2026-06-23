@@ -6,6 +6,9 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Song genre** (ADR 0035). The song edit sheet gains a **Genre** field (typed in, not
+  read from the file). It feeds the upcoming "group by genre" in the library; songs are
+  also now stamped with an import date for "Recently Added" grouping.
 - **Filter the library by collection** (ADR 0033). The song list gains a row of
   collection chips; tap one (or several) to narrow the library to songs in **all** the
   chosen collections, **All** to clear. An empty result shows a clear "no songs in this

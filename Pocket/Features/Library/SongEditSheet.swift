@@ -16,6 +16,7 @@ struct SongEditSheet: View {
     @State private var title: String
     @State private var artist: String
     @State private var album: String
+    @State private var genre: String
     @State private var year: String          // numeric text → Int? on save
     @State private var key: String
     @State private var bpm: String           // numeric text → Int? on save
@@ -31,6 +32,7 @@ struct SongEditSheet: View {
         _title = State(initialValue: song.title)
         _artist = State(initialValue: song.artist)
         _album = State(initialValue: song.album)
+        _genre = State(initialValue: song.genre)
         _year = State(initialValue: song.year.map(String.init) ?? "")
         _key = State(initialValue: song.key)
         _bpm = State(initialValue: song.bpm.map(String.init) ?? "")
@@ -70,6 +72,7 @@ struct SongEditSheet: View {
             ClearableTextField("Title", text: $title)
             ClearableTextField("Artist", text: $artist)
             ClearableTextField("Album", text: $album)
+            ClearableTextField("Genre", text: $genre)
             NumberRow(label: "Year", text: $year)
             ClearableTextField("Key", text: $key)
             NumberRow(label: "BPM", text: $bpm)
@@ -166,6 +169,7 @@ struct SongEditSheet: View {
         song.title = trimmedTitle.isEmpty ? song.title : trimmedTitle
         song.artist = artist
         song.album = album
+        song.genre = genre
         song.year = Int(year)
         song.key = key
         song.bpm = Int(bpm)

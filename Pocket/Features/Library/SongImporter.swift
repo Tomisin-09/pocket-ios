@@ -31,7 +31,8 @@ enum SongImporter {
         let bookmark = try url.bookmarkData()
         let (duration, amplitudes) = try WaveformExtractor.extract(from: url)
         let song = Song(title: title(for: url), duration: duration,
-                        amplitudes: amplitudes, ref: .localFile(bookmark: bookmark))
+                        amplitudes: amplitudes, dateAdded: .now,
+                        ref: .localFile(bookmark: bookmark))
         context.insert(song)
         return song
     }
