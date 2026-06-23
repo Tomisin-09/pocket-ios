@@ -132,7 +132,7 @@ State + handlers live in an `@Observable` `WaveformPracticeModel`
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),
 persisting a `Song` to practice, while an empty state offers import or a bundled
 demo. Swiping a library row → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
-for title/artist/album/year/key/BPM/**downbeat**/proficiency/progression, lightweight **collections**,
+for title/artist/album/**genre**/year/key/BPM/**downbeat**/proficiency/progression, lightweight **collections**,
 a free-form **note**, and read-only **practice stats** (loops · markers ·
 annotations) — the record we enrich to drive routines (ADR 0012). Collections are
 canonicalised on write and **suggested from the ones already in the library** (so they

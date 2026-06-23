@@ -12,6 +12,6 @@ final class PocketLaunchUITests: XCTestCase {
         app.launch()
         // The app launches into the song library (LibraryView). Assert a stable
         // element present whether or not the library has songs yet: the nav title.
-        XCTAssertTrue(app.navigationBars["Songs"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 5))
     }
 }

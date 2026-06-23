@@ -14,6 +14,10 @@ final class Song {
     // declaration default a non-optional attribute is "mandatory" and the in-place
     // migration fails (CoreData 134110), wiping the existing store.
     var album: String = ""
+    /// Free-text genre, entered in the edit sheet (manual-only — ADR 0035). Empty ⇒
+    /// "Unknown Genre" when the library groups by genre. Declaration default so
+    /// SwiftData lightweight migration fills pre-0035 songs (like `album`).
+    var genre: String = ""
     /// `nil` when the release year is unknown — a normal state, like `bpm`.
     var year: Int?
     var key: String
@@ -42,6 +46,10 @@ final class Song {
     var duration: TimeInterval
     /// Per-bar amplitudes for the detail waveform (0...1), extracted at import.
     var amplitudes: [Double]
+    /// When the song was imported — the "Recently Added" sort/group key (ADR 0035).
+    /// `nil` for songs saved before this field (lightweight migration) and the bundled
+    /// demo; those bucket as "Earlier". Optional with no declaration default, like `bpm`.
+    var dateAdded: Date?
 
     // Import identity (`SongRef`), flattened for storage. `bookmark == nil` marks
     // the generated demo sample (no real file behind it).
@@ -52,15 +60,18 @@ final class Song {
     @Relationship(deleteRule: .cascade, inverse: \Loop.song) var loops: [Loop] = []
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
 
-    init(title: String, artist: String = "", album: String = "", year: Int? = nil,
+    init(title: String, artist: String = "", album: String = "", genre: String = "",
+         year: Int? = nil,
          key: String = "", bpm: Int? = nil, preciseBPM: Double? = nil,
          downbeatSeconds: TimeInterval? = nil,
          proficiency: Int = 0, progression: String = "",
          collections: [String] = [], comment: String = "",
-         duration: TimeInterval, amplitudes: [Double] = [], ref: SongRef) {
+         duration: TimeInterval, amplitudes: [Double] = [], dateAdded: Date? = nil,
+         ref: SongRef) {
         self.title = title
         self.artist = artist
         self.album = album
+        self.genre = genre
         self.year = year
         self.key = key
         self.bpm = bpm
@@ -72,6 +83,7 @@ final class Song {
         self.comment = comment
         self.duration = duration
         self.amplitudes = amplitudes
+        self.dateAdded = dateAdded
         self.sourceID = ref.id
         self.sourceRaw = ref.source.rawValue
         self.bookmark = ref.bookmark

@@ -14,6 +14,10 @@ struct LibraryView: View {
     /// Canonical collection names the library is filtered by; empty ⇒ no filter
     /// (intersection/AND semantics — a song matches if it has all selected). ADR 0033.
     @State private var selectedCollections: Set<String> = []
+    /// How the list is grouped/ordered (ADR 0035) — persisted across launches.
+    @AppStorage("libraryGrouping") private var grouping: SongGrouping = .title
+    /// Title/artist search query (ADR 0035).
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -26,18 +30,18 @@ struct LibraryView: View {
                             CollectionFilterBar(available: availableCollections,
                                                 selected: $selectedCollections)
                         }
-                        if filteredSongs.isEmpty {
-                            NoMatchesState { selectedCollections.removeAll() }
-                        } else {
-                            songList
-                        }
+                        libraryContent
                     }
+                    .searchable(text: $searchText, prompt: "Songs and artists")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(PocketColor.background.ignoresSafeArea())
-            .navigationTitle("Songs")
+            .navigationTitle("Library")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if !songs.isEmpty { groupByMenu }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { importing = true } label: { Image(systemName: "plus") }
                         .tint(PocketColor.active)
@@ -64,29 +68,76 @@ struct LibraryView: View {
             .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
     }
 
-    /// Songs narrowed by the active collection filter (intersection/AND). Order is the
-    /// `@Query` title sort, preserved by `filter`.
+    /// Songs narrowed by the active collection filter (AND) and the search query. Order
+    /// is the `@Query` title sort, preserved by `filter`.
     private var filteredSongs: [Song] {
-        songs.filter { Labels.matches($0.collections, allOf: Array(selectedCollections)) }
+        songs.filter {
+            Labels.matches($0.collections, allOf: Array(selectedCollections))
+                && LibrarySectioning.matchesSearch(fields(for: $0), query: searchText)
+        }
     }
 
-    private var songList: some View {
-        List {
-            ForEach(filteredSongs) { song in
-                NavigationLink {
-                    WaveformPracticeView(song: song, context: context)
-                } label: {
-                    SongRow(song: song)
+    /// The grouping/search projection of a song (ADR 0035).
+    private func fields(for song: Song) -> SongGroupFields {
+        SongGroupFields(title: song.title, artist: song.artist, album: song.album,
+                        genre: song.genre, proficiency: song.proficiency,
+                        dateAdded: song.dateAdded)
+    }
+
+    /// The filtered songs grouped into ordered sections by the current key (ADR 0035).
+    private var sections: [LibrarySection<Song>] {
+        LibrarySectioning.sections(filteredSongs, by: grouping, fields: fields(for:))
+    }
+
+    /// The list, or the right empty state when the filter/search excludes everything.
+    @ViewBuilder
+    private var libraryContent: some View {
+        if filteredSongs.isEmpty {
+            if !searchText.isEmpty {
+                ContentUnavailableView.search(text: searchText)
+            } else {
+                NoMatchesState { selectedCollections.removeAll() }
+            }
+        } else {
+            groupedList
+        }
+    }
+
+    private var groupByMenu: some View {
+        Menu {
+            Picker("Group by", selection: $grouping) {
+                ForEach(SongGrouping.allCases) { key in
+                    Text(key.label).tag(key)
                 }
-                .listRowBackground(PocketColor.background)
-                .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) { context.delete(song) } label: {
-                        Label("Delete", systemImage: "trash")
+            }
+        } label: {
+            Label("Group by", systemImage: "arrow.up.arrow.down")
+                .tint(PocketColor.active)
+        }
+        .accessibilityLabel("Group by \(grouping.label)")
+    }
+
+    private var groupedList: some View {
+        List {
+            ForEach(sections, id: \.title) { section in
+                Section(section.title) {
+                    ForEach(section.items) { song in
+                        NavigationLink {
+                            WaveformPracticeView(song: song, context: context)
+                        } label: {
+                            SongCard(song: song)
+                        }
+                        .listRowBackground(PocketColor.background)
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) { context.delete(song) } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            Button { editingSong = song } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            .tint(PocketColor.active)
+                        }
                     }
-                    Button { editingSong = song } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    .tint(PocketColor.active)
                 }
             }
         }
@@ -188,46 +239,6 @@ private struct NoMatchesState: View {
     }
 }
 
-/// A single library row: title, artist (when known), and proficiency.
-private struct SongRow: View {
-    let song: Song
-
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(song.title)
-                    .font(.headline)
-                    .foregroundStyle(PocketColor.textPrimary)
-                if !song.artist.isEmpty {
-                    Text(song.artist)
-                        .font(.subheadline)
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-            }
-            Spacer(minLength: 8)
-            if song.proficiency > 0 { ProficiencyDots(filled: song.proficiency) }
-        }
-        .padding(.vertical, 4)
-        .contentShape(Rectangle())
-    }
-}
-
-/// Proficiency as up to five small dots (0–5), amber when filled.
-private struct ProficiencyDots: View {
-    let filled: Int
-
-    var body: some View {
-        HStack(spacing: 3) {
-            ForEach(0..<5, id: \.self) { index in
-                Circle()
-                    .fill(index < filled ? PocketColor.marker : PocketColor.barDefault)
-                    .frame(width: 6, height: 6)
-            }
-        }
-        .accessibilityLabel("Proficiency \(filled) of 5")
-    }
-}
-
 /// First-run / empty library: offer import or the bundled demo — ADR 0011 retires
 /// the auto-seed in favour of this explicit choice.
 private struct LibraryEmptyState: View {
@@ -266,11 +277,43 @@ private struct LibraryEmptyState: View {
     }
 }
 
+/// Varied songs for the library preview so each Group-by key has buckets to show.
+private struct PreviewSeed {
+    let title: String
+    let artist: String
+    let genre: String
+    let proficiency: Int
+    let collections: [String]
+
+    static let library: [PreviewSeed] = [
+        .init(title: "Blue Hour", artist: "The Allmans", genre: "Blues",
+              proficiency: 3, collections: ["blues"]),
+        .init(title: "Red Moon", artist: "Zydeco Trio", genre: "Folk",
+              proficiency: 1, collections: ["blues", "needs-work"]),
+        .init(title: "Apex", artist: "Arc", genre: "Rock",
+              proficiency: 5, collections: ["rock"]),
+        .init(title: "Little Wing", artist: "Jimi Hendrix", genre: "Rock",
+              proficiency: 2, collections: []),
+        .init(title: "3 Strikes", artist: "", genre: "",
+              proficiency: 0, collections: ["needs-work"])
+    ]
+}
+
 #Preview("Library — with songs") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(for: Song.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
-    container.mainContext.insert(Song.sample())
+    // A few varied songs so the Group-by control has something to bucket.
+    for seed in PreviewSeed.library {
+        let song = Song.sample()
+        song.title = seed.title
+        song.artist = seed.artist
+        song.genre = seed.genre
+        song.proficiency = seed.proficiency
+        song.collections = seed.collections
+        song.dateAdded = .now
+        container.mainContext.insert(song)
+    }
     return LibraryView().modelContainer(container)
 }
 
