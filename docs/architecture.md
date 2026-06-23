@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning (pure)
+│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -168,9 +168,15 @@ only. See `docs/decisions/0001`.
   editable counterpart to the read-only `SongInfoPanel`. Reached by swiping a library
   row → Edit, it edits local `@State` and writes back to the `@Model` on Done (Cancel
   discards), mirroring the loop/marker sheets. `Song` carries the scalar fields
-  (`album`, `year`, `comment` joined `title`/`artist`/`key`/`bpm`/`proficiency`/
-  `progression`/`collections`); `annotationCount` (= loops + markers) is the
-  pure, unit-tested stat shown in the sheet.
+  (`album`, `year`, `comment` joined `title`/`artist`/`key`/`bpm`/`collections`);
+  `annotationCount` (= loops + markers) is the pure, unit-tested stat shown in the sheet.
+- **Field-model taxonomy & derived mastery** (ADR 0036): every `Song`/`Loop` field is one
+  of four buckets — *intrinsic fact*, *scalar/enum* the app reasons about, *descriptive
+  tag* (`[String]`), or *named grouping* (`collections`). The song's practice **Mastery**
+  is no longer stored: it is **derived** from its loops via `MasteryRollup.rollup`
+  (rounded average, `nil` ⇒ "Unrated"), kept SwiftData-free and unit-tested per the
+  pure-logic rule. `Loop.mastery` is the stored source; `Song.lastPracticed` feeds the
+  planner (ADR 0014).
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not

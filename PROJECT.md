@@ -132,13 +132,16 @@ State + handlers live in an `@Observable` `WaveformPracticeModel`
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),
 persisting a `Song` to practice, while an empty state offers import or a bundled
 demo. Swiping a library row → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
-for title/artist/album/**genre**/year/key/BPM/**downbeat**/proficiency/progression, lightweight **collections**,
+for title/artist/album/**genre**/year/key/BPM/**downbeat**, lightweight **collections**,
 a free-form **note**, and read-only **practice stats** (loops · markers ·
 annotations) — the record we enrich to drive routines (ADR 0012). Collections are
 canonicalised on write and **suggested from the ones already in the library** (so they
 converge instead of fragmenting), and the library can be **filtered by collection**
 (tap chips; intersection/AND) — ADR 0033. The same `[String]` machinery will back
-loop-level **Tags** (ADR 0034). Each loop carries a
+loop-level **Tags** (ADR 0034). A song's **Mastery** is no longer stored — it is **derived**
+as the rounded average of its loops' `mastery` (`MasteryRollup`, pure/unit-tested), shown as
+stars and as a library group with an **Unrated** bucket for songs with no loops; the song also
+records `lastPracticed` for "recently practised" ordering and the planner (ADR 0036). Each loop carries a
 per-loop **automator** (the "A" control on its row): a speed-trainer ramp — start % →
 target % over N steps, a few loops each — that climbs, descends, or sits level, runs a
 **fixed number of passes and then stops** (Set ramp also starts it playing), driven by the

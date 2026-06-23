@@ -68,7 +68,7 @@ enum PocketColor {
     static let pin = Color.purple
 
     // MARK: Neutral fills
-    /// Neutral "off" fill — empty proficiency dots, the minimap base track.
+    /// Neutral "off" fill — empty mastery dots, the minimap base track.
     static let barDefault = Color.white.opacity(0.35)
     static let barPlayed = Color.white.opacity(0.18)
 

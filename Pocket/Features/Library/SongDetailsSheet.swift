@@ -70,10 +70,13 @@ struct SongDetailsSheet: View {
             DetailLabeledContent(label: "Tempo") {
                 Text(tempoText).font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
             }
-            DetailLabeledContent(label: "Proficiency") {
-                Text(stars(song.proficiency)).foregroundStyle(PocketColor.marker)
+            DetailLabeledContent(label: "Mastery") {
+                if let mastery = song.mastery {
+                    Text(stars(mastery)).foregroundStyle(PocketColor.marker)
+                } else {
+                    Text("Unrated").foregroundStyle(PocketColor.textSecondary)
+                }
             }
-            detailRow("Progression", song.progression.isEmpty ? "—" : song.progression)
             DetailLabeledContent(label: "Length") {
                 Text(timecode(song.duration)).font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
             }

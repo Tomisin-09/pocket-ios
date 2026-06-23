@@ -8,7 +8,7 @@ extension Song {
         let duration: TimeInterval = 30
         let song = Song(title: "Little Wing", artist: "Jimi Hendrix",
                         album: "Axis: Bold as Love", year: 1967, key: "G minor",
-                        bpm: 76, proficiency: 3, progression: "Groove / lead phrasing",
+                        bpm: 76,
                         collections: ["Hendrix study", "Bends & vibrato"],
                         comment: "Watch the thumb-over chord voicings in the intro.",
                         duration: duration, amplitudes: demoAmplitudes(count: 120),
@@ -17,6 +17,8 @@ extension Song {
             Loop(name: "Verse riff", start: 0.29, end: 0.47, speed: 0.75, repeats: 4),
             Loop(name: "Chorus bend", start: 0.62, end: 0.71, speed: 1.0, repeats: 2)
         ]
+        loops[0].mastery = 4   // rolls up to a derived song mastery of 3 (ADR 0036)
+        loops[1].mastery = 2
         let markers = [
             Marker(seconds: 8, label: "Intro turnaround"),
             Marker(seconds: 22, label: "Tricky bend")

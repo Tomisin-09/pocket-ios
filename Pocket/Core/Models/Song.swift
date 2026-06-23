@@ -38,8 +38,6 @@ final class Song {
     /// snapped to (we don't guess the phase). Optional, like `bpm`/`year`, so SwiftData
     /// lightweight migration fills pre-0022 songs with nil — no declaration default needed.
     var downbeatSeconds: TimeInterval?
-    var proficiency: Int          // 0–5 stars
-    var progression: String
     var collections: [String]
     /// A free-form note about the song (the edit sheet's "Notes" field).
     var comment: String = ""
@@ -50,6 +48,11 @@ final class Song {
     /// `nil` for songs saved before this field (lightweight migration) and the bundled
     /// demo; those bucket as "Earlier". Optional with no declaration default, like `bpm`.
     var dateAdded: Date?
+    /// When this song was last practised — the "recently practised" sort key and a direct
+    /// planner input (ADR 0014/0036). `nil` until the first practice session is recorded.
+    /// Optional with no declaration default, like `bpm`/`dateAdded`, so SwiftData lightweight
+    /// migration fills pre-0036 songs with nil (additive field, no store wipe).
+    var lastPracticed: Date?
 
     // Import identity (`SongRef`), flattened for storage. `bookmark == nil` marks
     // the generated demo sample (no real file behind it).
@@ -64,9 +67,9 @@ final class Song {
          year: Int? = nil,
          key: String = "", bpm: Int? = nil, preciseBPM: Double? = nil,
          downbeatSeconds: TimeInterval? = nil,
-         proficiency: Int = 0, progression: String = "",
          collections: [String] = [], comment: String = "",
          duration: TimeInterval, amplitudes: [Double] = [], dateAdded: Date? = nil,
+         lastPracticed: Date? = nil,
          ref: SongRef) {
         self.title = title
         self.artist = artist
@@ -77,13 +80,12 @@ final class Song {
         self.bpm = bpm
         self.preciseBPM = preciseBPM
         self.downbeatSeconds = downbeatSeconds
-        self.proficiency = proficiency
-        self.progression = progression
         self.collections = collections
         self.comment = comment
         self.duration = duration
         self.amplitudes = amplitudes
         self.dateAdded = dateAdded
+        self.lastPracticed = lastPracticed
         self.sourceID = ref.id
         self.sourceRaw = ref.source.rawValue
         self.bookmark = ref.bookmark
@@ -98,6 +100,12 @@ final class Song {
     /// the rounded `bpm` promoted to `Double` (so a song that only ever had an integer
     /// tempo still grids), else `nil` when the tempo is unknown (ADR 0024).
     var tempoBPM: Double? { preciseBPM ?? bpm.map(Double.init) }
+
+    /// Derived practice mastery (0–5): the rounded average of this song's loops'
+    /// `mastery`, or `nil` when the song has no loops (shown as "unrated"). A loop-centric
+    /// app tracks mastery where practice happens — on loops — and rolls it up (ADR 0036),
+    /// so there is no stored song-level proficiency. Pure-derived, no manual override.
+    var mastery: Int? { MasteryRollup.rollup(loops.map(\.mastery)) }
 
     var loopsByStart: [Loop] { loops.sorted { $0.start < $1.start } }
     var markersByTime: [Marker] { markers.sorted { $0.seconds < $1.seconds } }
@@ -121,6 +129,12 @@ final class Loop {
     var speed: Double
     var repeats: Int
     var song: Song?
+
+    /// How cleanly the player owns this loop, 0–5 (ADR 0036). The source the song's
+    /// derived `mastery` rolls up from. Declaration default (not init-only) so SwiftData
+    /// lightweight migration fills pre-0036 loops without a store wipe (CoreData 134110).
+    /// Edit controls land with the rest of the loop structured fields (ADR 0036 slice 3).
+    var mastery: Int = 0
 
     // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
     // SwiftData lightweight migration fills them for loops saved before this — see the

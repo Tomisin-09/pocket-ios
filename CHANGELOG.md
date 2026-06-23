@@ -6,6 +6,20 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Song mastery is now derived from your loops** (ADR 0036). What used to be a song's
+  manually-set **Proficiency** stars is replaced by **Mastery** — the rounded average of
+  the song's loops' mastery — shown on the practice screen, song details, and library
+  cards. A song with no loops reads as **Unrated**. The library's **Group by → Proficiency**
+  becomes **Group by → Mastery** and gains an **Unrated** section. The song edit sheet drops
+  the proficiency star input (mastery is now read-only at the song level) and the
+  **Progression** field.
+
+### Removed
+- **Song "Progression" field** (ADR 0036) — it was free text standing in for chord
+  structure, which is really per-section; the song **Key** covers the song-level summary
+  and a future per-loop chord field will cover the rest.
+
+### Changed
 - **Redesigned song library** (ADR 0035). The library is now a list of richer **song
   cards** — title, **artist**, a metadata line (key · BPM · loop/marker counts), collection chips,
   proficiency dots, and a colour accent that reflects how polished the song is — with a

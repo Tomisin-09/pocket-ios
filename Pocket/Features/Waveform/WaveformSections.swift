@@ -49,10 +49,14 @@ struct SongStrip: View {
             .accessibilityAction(named: "Song details", onHoldTitle)
             Spacer(minLength: 12)
             VStack(alignment: .trailing, spacing: 2) {
-                Text(stars(song.proficiency))
-                    .font(.subheadline)
-                    .foregroundStyle(PocketColor.marker)
-                    .accessibilityLabel("Proficiency \(song.proficiency) of 5")
+                // Derived song mastery (ADR 0036) — shown only when the song has loops
+                // to roll up; an unrated song just shows its length.
+                if let mastery = song.mastery {
+                    Text(stars(mastery))
+                        .font(.subheadline)
+                        .foregroundStyle(PocketColor.marker)
+                        .accessibilityLabel("Mastery \(mastery) of 5")
+                }
                 Text(timecode(song.duration))
                     .font(.pocketMono(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
@@ -67,16 +71,18 @@ struct SongInfoPanel: View {
     let song: Song
     @Binding var expanded: Bool
 
+    /// Derived song mastery as stars, or "Unrated" when the song has no loops (ADR 0036).
+    private var masteryText: String { song.mastery.map(stars) ?? "Unrated" }
+
     private var summary: String {
-        "\(song.key) · \(stars(song.proficiency)) · \(song.progression)"
+        "\(song.key) · \(masteryText)"
     }
 
     var body: some View {
         CollapsiblePanel(title: "Song info", summary: summary, expanded: $expanded) {
             VStack(alignment: .leading, spacing: 10) {
                 LabeledRow(label: "Key", value: song.key)
-                LabeledRow(label: "Proficiency", value: stars(song.proficiency))
-                LabeledRow(label: "Progression", value: song.progression)
+                LabeledRow(label: "Mastery", value: masteryText)
                 HStack(spacing: 8) {
                     ForEach(song.collections, id: \.self) { name in
                         Text(name)
