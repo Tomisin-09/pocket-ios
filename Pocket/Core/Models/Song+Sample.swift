@@ -7,7 +7,7 @@ extension Song {
     static func sample() -> Song {
         let duration: TimeInterval = 30
         let song = Song(title: "Little Wing", artist: "Jimi Hendrix",
-                        album: "Axis: Bold as Love", year: 1967, key: "G minor",
+                        album: "Axis: Bold as Love", year: 1967, key: MusicalKey.gMinor.rawValue,
                         bpm: 76,
                         collections: ["Hendrix study", "Bends & vibrato"],
                         comment: "Watch the thumb-over chord voicings in the intro.",

@@ -149,8 +149,14 @@ key) are false positives.
    no longer matches, so an existing "group by proficiency" preference falls back to the Title
    default — acceptable for a view preference). SwiftLint's `inclusive_language` rule flags the
    substring "master"; `mastery` is added to `override_allowed_terms` in `.swiftlint.yml`.
-2. **`key` enum.** Introduce `MusicalKey`; migration mapping pass for existing strings; edit
-   sheet picker; display string. Tests: parse/round-trip, unrecognised → `.unknown`.
+2. **`key` enum.** ✅ **Done** (pocket-046). Introduce `MusicalKey` (12 roots × major/minor +
+   `.unknown`); edit-sheet picker; display string. Tests: parse/round-trip, flats fold to sharps,
+   unrecognised → `.unknown`. **Storage call:** the stored attribute stays `Song.key: String`;
+   `Song.musicalKey` parses it on read and rewrites the canonical `rawValue` on save. This keeps
+   the mapping pass (`MusicalKey.parse`, parse-on-read + normalise-on-write) without a SwiftData
+   schema change — chosen over storing the enum directly, which would fail to decode legacy
+   free-text values and risk a store wipe (migration note 2 / CoreData 134110). Effect is the
+   same as a one-time pass: legacy strings read as their case and converge to canonical on next save.
 3. **Loop structured fields.** Add `focus`, `commandTempo`, `loopType` (declaration
    defaults) — `mastery` already landed in slice 1 as the rollup source. Edit-sheet controls in
    `LoopEditSheet` (including the now-storable `mastery`). Tests: defaults present on migrated loops.

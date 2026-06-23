@@ -18,7 +18,7 @@ struct SongEditSheet: View {
     @State private var album: String
     @State private var genre: String
     @State private var year: String          // numeric text → Int? on save
-    @State private var key: String
+    @State private var key: MusicalKey        // closed picker → Song.musicalKey on save (ADR 0036)
     @State private var bpm: String           // numeric text → Int? on save
     @State private var downbeat: String      // decimal seconds → TimeInterval? on save (ADR 0022)
     @State private var collections: [String]
@@ -32,7 +32,7 @@ struct SongEditSheet: View {
         _album = State(initialValue: song.album)
         _genre = State(initialValue: song.genre)
         _year = State(initialValue: song.year.map(String.init) ?? "")
-        _key = State(initialValue: song.key)
+        _key = State(initialValue: song.musicalKey)
         _bpm = State(initialValue: song.bpm.map(String.init) ?? "")
         _downbeat = State(initialValue: song.downbeatSeconds.map { String(format: "%g", $0) } ?? "")
         _collections = State(initialValue: song.collections)
@@ -70,7 +70,12 @@ struct SongEditSheet: View {
             ClearableTextField("Album", text: $album)
             ClearableTextField("Genre", text: $genre)
             NumberRow(label: "Year", text: $year)
-            ClearableTextField("Key", text: $key)
+            Picker("Key", selection: $key) {
+                ForEach(MusicalKey.pickerOrder) { key in
+                    Text(key.pickerLabel).tag(key)
+                }
+            }
+            .foregroundStyle(PocketColor.textSecondary)
             NumberRow(label: "BPM", text: $bpm)
             // Downbeat phase anchor for the beat grid (ADR 0022) — the seconds at
             // which bar 1 lands. Decimal seconds; empty ⇒ no grid. Needs BPM to do
@@ -165,7 +170,7 @@ struct SongEditSheet: View {
         song.album = album
         song.genre = genre
         song.year = Int(year)
-        song.key = key
+        song.musicalKey = key
         song.bpm = Int(bpm)
         song.downbeatSeconds = Double(downbeat.trimmingCharacters(in: .whitespaces))
         song.collections = collections
