@@ -26,6 +26,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   becomes **Group by → Mastery** and gains an **Unrated** section. The song edit sheet drops
   the proficiency star input (mastery is now read-only at the song level) and the
   **Progression** field.
+- **Genre tidies up as you type** (ADR 0036). When you edit a song's **Genre**, it's
+  trimmed of stray spaces and snapped to a genre you've already used if it matches
+  (so `blues` becomes `Blues` if that's how you spelled it elsewhere) — keeping the
+  library's **Group by → Genre** from splitting one genre across several near-duplicate
+  spellings.
 
 ### Removed
 - **Song "Progression" field** (ADR 0036) — it was free text standing in for chord

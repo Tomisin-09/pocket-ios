@@ -173,7 +173,15 @@ key) are false positives.
    `focus` (`Int`) and `commandTempo` (`Double`) are primitives, so their declaration defaults
    migrate cleanly. Tests: defaults present on migrated loops; `LoopType` raw-value
    stability/round-trip/picker order.
-4. **`genre` normalisation.** Route writes through the shared canonicaliser (no type change).
+4. **`genre` normalisation.** ✅ **Done** (pocket-048). Route writes through the shared
+   canonicaliser (no type change). `Labels.canonicalSingle(_:against:)` whitespace-canonicalises
+   the entered genre and folds it onto an existing library genre's first-seen display form when one
+   matches case-insensitively — so group-by-genre (ADR 0035) doesn't splinter into `Blues`/`blues`.
+   Applied in `SongEditSheet.save()` (the sole user write site — genre is manual-only per ADR 0035),
+   passing the *other* songs' genres as the pool so a deliberate case change of the only holder isn't
+   folded back. Empty ⇒ `""` (the "Unknown Genre" bucket), unlike a tag which is dropped. The stored
+   attribute stays `Song.genre: String`; no migration. Tests: whitespace canonicalisation, empty→`""`,
+   case-fold onto pool, new-genre passthrough.
 5. **Loop tags** — ADR 0034 slices 1–2, against the now-settled model.
 
 `techniques` and `Loop.chords` are deferred (no slice). Collections promotion is trigger-gated
