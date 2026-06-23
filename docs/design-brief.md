@@ -127,7 +127,7 @@ vision if useful, but know that **Phase 1** is what gets built first.
 |---|---|---|
 | **P1** | **Waveform practice screen** | The core. See §4.1 — design this first and most carefully. |
 | **P1** | Loop creation sheet | Slides in below the transport when a loop is captured. |
-| **P1** | Library / file browser | Pick local/iCloud files; song cards with a blue badge ("4 loops", "2 markers"). |
+| **P1** | Library / file browser | Pick local/iCloud files. **Text-forward song cards** (title, key · BPM · loop/marker counts, collection chips, proficiency dots, a proficiency-tier colour accent — no artwork) in one list with a **Group by** control: Proficiency · Recently Added · Title · Artist · Album · Genre. Collection filter chips above the list. ADR 0035. |
 | P2 | Loops panel + Loop active panel | Active panel has speed, repeat, tempo automator, session notes. |
 | P2 | Markers panel + Pin Marker popover | Single-point annotations; purple. |
 | P2 | Song info / Repertoire panel | Collapsible, bottom of the practice screen (scrollable), collapsed by default; key, proficiency, progression, collections. |
