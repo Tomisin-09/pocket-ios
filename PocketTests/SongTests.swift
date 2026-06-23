@@ -105,6 +105,18 @@ final class SongTests: XCTestCase {
         XCTAssertTrue(loop.automatorEnabled)
     }
 
+    // MARK: - Loop structured-field defaults (ADR 0036 slice 3)
+
+    func testLoopStructuredFieldsHaveDeclarationDefaults() {
+        // Declaration defaults are what SwiftData lightweight migration writes into
+        // pre-0036 loops; a freshly-constructed loop exercises the same defaults.
+        let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 1, repeats: 1)
+        XCTAssertEqual(loop.mastery, 0)
+        XCTAssertEqual(loop.focus, 1)
+        XCTAssertEqual(loop.commandTempo, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(loop.loopType, .unset)
+    }
+
     // MARK: - Tempo precision (ADR 0024)
 
     func testTempoBPMIsNilWhenNoTempoKnown() {

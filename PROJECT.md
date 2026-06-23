@@ -150,7 +150,12 @@ engine counting loop wraps (ADR 0013). Loop rows carry no edit pencil — **pres
 hold** a row (with a haptic) to open the edit sheet for rename / range / colour /
 delete (ADR 0028); the colour row pins a loop's identity hue — Auto, a preset, or a
 custom colour wheel (low-contrast colours get an advisory hint) — or leaves it
-automatic (ADR 0031). Filename suggestions, a practice
+automatic (ADR 0031). The edit sheet's **Practice** section carries the loop's
+structured fields (ADR 0036): **Mastery** (0–5 dot rating, the source the song
+rolls up from), **Focus** (Backburner / Active / Sharpening intent, stored 1–3),
+**Type** (a closed `LoopType` — Lick / Riff / Chords, single-select), and
+**Command tempo** (the fastest tempo you own the loop at, as a % of original) —
+the structured practice signal the planner reads. Filename suggestions, a practice
 **journal** (per-loop/marker/song), **collections as real playlists**, and a **metronome**
 (the transport "Auto" slot) are next. Navigation/planner follow (Phase 3) — the
 planner's **selection** (goals → required skills from a **technique taxonomy**

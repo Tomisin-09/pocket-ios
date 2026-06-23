@@ -180,7 +180,14 @@ only. See `docs/decisions/0001`.
   roots × major/minor + `.unknown`) is the typed vocabulary, with `MusicalKey.parse`
   folding legacy free text and flats onto cases. The SwiftData attribute stays
   `Song.key: String`; `Song.musicalKey` parses on read and writes the canonical raw value
-  on save, so the typed model lands without a schema migration.
+  on save, so the typed model lands without a schema migration. The loop adds the rest of
+  the scalar/enum bucket — `Loop.focus` (`Int` 1–3 intent), `Loop.commandTempo` (`Double`,
+  fastest owned tempo as a fraction), and `Loop.loopType` (the pure `LoopType` enum —
+  Lick / Riff / Chords + `.unset`). `loopType` stores a backing `String` (`loopTypeRaw`)
+  with a computed enum over it — like `key`/`MusicalKey` — because a custom enum `@Model`
+  attribute does **not** survive lightweight migration (existing rows fault on first read);
+  declaration defaults only backfill primitive scalars (`focus`, `commandTempo`, `mastery`).
+  All four fill pre-0036 loops without a store wipe.
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
