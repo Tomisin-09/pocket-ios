@@ -173,6 +173,14 @@ final class Loop {
         set { loopTypeRaw = newValue.rawValue }
     }
 
+    /// The loop-level descriptive annotation axis (ADR 0034): open `[String]` tags
+    /// ("solo", "needs-work", "chorus") routed through the shared `Labels` canonicaliser,
+    /// the loop analogue of `Song.collections`. Declaration default (not init-only) so
+    /// SwiftData lightweight migration fills pre-0034 loops without a store wipe — the
+    /// CoreData 134110 rule (ADR 0012), same as `mastery`/`focus`/`collections`. A scalar
+    /// array stays CloudKit-clean. Promotion to a `LoopTag` `@Model` stays out of scope.
+    var tags: [String] = []
+
     // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
     // SwiftData lightweight migration fills them for loops saved before this — see the
     // ADR 0012 migration note (init-only defaults fail with CoreData 134110). The loop's

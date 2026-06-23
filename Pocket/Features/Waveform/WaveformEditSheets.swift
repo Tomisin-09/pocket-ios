@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 // Edit sheets for loops and markers (brief: native system sheets). Tapping a
@@ -15,6 +16,9 @@ struct LoopEditSheet: View {
     let onAdjustRange: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    // All loops across the library, to suggest tags already used elsewhere (ADR 0034) —
+    // the cross-song convergence read ADR 0032 forecast, here a top-level `@Query`.
+    @Query private var allLoops: [Loop]
     @State private var name: String
     @State private var colorChoice: LoopColorChoice
     // Structured practice fields (ADR 0036 slice 3) — edited as local copies, written
@@ -23,6 +27,9 @@ struct LoopEditSheet: View {
     @State private var focus: Int
     @State private var commandTempo: Double
     @State private var loopType: LoopType
+    // Loop tags (ADR 0034) — local copy, written back on Done.
+    @State private var tags: [String]
+    @State private var newTag = ""
 
     init(loop: Loop, autoColor: Color,
          onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void) {
@@ -36,6 +43,7 @@ struct LoopEditSheet: View {
         _focus = State(initialValue: loop.focus)
         _commandTempo = State(initialValue: loop.commandTempo)
         _loopType = State(initialValue: loop.loopType)
+        _tags = State(initialValue: loop.tags)
     }
 
     /// Map the loop's stored colour fields to a picker choice (custom wins over palette).
@@ -88,6 +96,7 @@ struct LoopEditSheet: View {
                     }
                 }
                 practiceSection
+                tagsSection
                 Section {
                     LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
                 } header: {
@@ -118,6 +127,7 @@ struct LoopEditSheet: View {
                         loop.focus = focus
                         loop.commandTempo = commandTempo
                         loop.loopType = loopType
+                        loop.tags = tags
                         applyColorChoice()
                         dismiss()
                     }
@@ -184,6 +194,67 @@ struct LoopEditSheet: View {
             }
             Slider(value: $commandTempo, in: 0.25...1.5, step: 0.05)
         }
+    }
+
+    // MARK: - Tags (ADR 0034)
+
+    /// The loop's descriptive tags — mirrors `SongEditSheet`'s collections UI: a list with
+    /// swipe-to-remove, an add field, and tappable chips of tags already used on any loop
+    /// in the library (the convergence mechanism — many loops sharing the *same* tag).
+    private var tagsSection: some View {
+        Section("Tags") {
+            ForEach(tags, id: \.self) { tag in
+                Text(tag).foregroundStyle(PocketColor.textPrimary)
+            }
+            .onDelete { tags.remove(atOffsets: $0) }
+            HStack {
+                TextField("Add a tag", text: $newTag)
+                    .submitLabel(.done)
+                    .onSubmit(addTag)
+                Button("Add", action: addTag)
+                    .disabled(Labels.canonical(newTag) == nil)
+            }
+            if !tagSuggestions.isEmpty {
+                tagSuggestionChips
+            }
+        }
+    }
+
+    /// Tappable chips of tags already used on other loops — tap to add the canonical form.
+    private var tagSuggestionChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(tagSuggestions, id: \.self) { suggestion in
+                    Button {
+                        tags = Labels.adding(suggestion, to: tags)
+                    } label: {
+                        Text(suggestion)
+                            .font(.pocketMono(.caption))
+                            .lineLimit(1)
+                            .foregroundStyle(PocketColor.textPrimary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Color.white.opacity(0.10)))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+    }
+
+    /// Distinct, normalised tags used across every loop in the library, excluding those
+    /// already on this loop. The flat-map is the loop-set aggregation (ADR 0034 slice 1);
+    /// `Labels.suggestions` does the distinct/normalise/exclude/sort, shared with collections.
+    private var tagSuggestions: [String] {
+        Labels.suggestions(from: allLoops.flatMap(\.tags), excluding: tags)
+    }
+
+    /// Canonicalise and de-dup case-insensitively through the shared normaliser (ADR 0034,
+    /// reusing ADR 0033's machinery) so the tag set never fragments into needs-work / Needs-work.
+    private func addTag() {
+        tags = Labels.adding(newTag, to: tags)
+        newTag = ""
     }
 }
 
@@ -285,6 +356,7 @@ struct MarkerEditSheet: View {
     loop.focus = 2
     loop.commandTempo = 0.85
     loop.loopType = .riff
+    loop.tags = ["solo", "needs-work"]
     return LoopEditSheet(loop: loop, autoColor: PocketColor.marker,
                          onDelete: {}, onAdjustRange: {})
         .preferredColorScheme(.dark)
