@@ -11,6 +11,7 @@ enum LoopType: String, CaseIterable, Identifiable, Codable {
     case lick               // melodic
     case riff               // melodic + rhythm
     case chords             // rhythmic
+    case passage            // composite — multiple licks/riffs/chords in one stretch
 
     var id: String { rawValue }
 
@@ -21,9 +22,11 @@ enum LoopType: String, CaseIterable, Identifiable, Codable {
         case .lick: return "Lick"
         case .riff: return "Riff"
         case .chords: return "Chords"
+        case .passage: return "Passage"
         }
     }
 
-    /// Picker order: unset first, then the three real types in increasing density.
-    static var pickerOrder: [LoopType] { [.unset, .lick, .riff, .chords] }
+    /// Picker order: unset first, then the three single-element types in increasing
+    /// density, and finally `.passage` — the composite that spans more than one of them.
+    static var pickerOrder: [LoopType] { [.unset, .lick, .riff, .chords, .passage] }
 }

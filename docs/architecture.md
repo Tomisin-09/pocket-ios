@@ -165,8 +165,8 @@ only. See `docs/decisions/0001`.
   cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
   persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.
 - **Song metadata editing** (`Features/Library/SongEditSheet.swift`, ADR 0012): the
-  editable counterpart to the read-only `SongInfoPanel`. Reached by swiping a library
-  row → Edit, it edits local `@State` and writes back to the `@Model` on Done (Cancel
+  editable counterpart to the read-only `SongInfoPanel`. Reached by holding a library
+  card → Edit (context menu), it edits local `@State` and writes back to the `@Model` on Done (Cancel
   discards), mirroring the loop/marker sheets. `Song` carries the scalar fields
   (`album`, `year`, `comment` joined `title`/`artist`/`key`/`bpm`/`collections`);
   `annotationCount` (= loops + markers) is the pure, unit-tested stat shown in the sheet.
@@ -183,7 +183,8 @@ only. See `docs/decisions/0001`.
   on save, so the typed model lands without a schema migration. The loop adds the rest of
   the scalar/enum bucket — `Loop.focus` (`Int` 1–3 intent), `Loop.commandTempo` (`Double`,
   fastest owned tempo as a fraction), and `Loop.loopType` (the pure `LoopType` enum —
-  Lick / Riff / Chords + `.unset`). `loopType` stores a backing `String` (`loopTypeRaw`)
+  Lick / Riff / Chords / Passage + `.unset`, where Passage is the composite for a loop that
+  spans more than one). `loopType` stores a backing `String` (`loopTypeRaw`)
   with a computed enum over it — like `key`/`MusicalKey` — because a custom enum `@Model`
   attribute does **not** survive lightweight migration (existing rows fault on first read);
   declaration defaults only backfill primitive scalars (`focus`, `commandTempo`, `mastery`).
