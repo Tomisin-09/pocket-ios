@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Song key is now a picker, not free text** (ADR 0036). The edit sheet's **Key** field is a
+  closed list of the 12 keys in major and minor (plus **Unknown**), so keys stay consistent and
+  the app can sort and reason about them. Existing typed-in keys are matched automatically —
+  `"A minor"`, `"Am"`, `"Bb"` all map to the right key — and shown as a tidy label like
+  **A minor**; anything it can't recognise reads as **Unknown**.
 - **Song mastery is now derived from your loops** (ADR 0036). What used to be a song's
   manually-set **Proficiency** stars is replaced by **Mastery** — the rounded average of
   the song's loops' mastery — shown on the practice screen, song details, and library

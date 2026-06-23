@@ -20,6 +20,9 @@ final class Song {
     var genre: String = ""
     /// `nil` when the release year is unknown — a normal state, like `bpm`.
     var year: Int?
+    /// Raw musical-key storage. Kept a `String` so the SwiftData attribute is unchanged
+    /// (no migration / store-wipe risk); read and write it through `musicalKey` for the
+    /// typed, validated view (ADR 0036).
     var key: String
     /// `nil` when the tempo is unknown — a normal state (ADR 0004). This is the
     /// **rounded display mirror** of the tempo; the precise value lives in
@@ -106,6 +109,14 @@ final class Song {
     /// app tracks mastery where practice happens — on loops — and rolls it up (ADR 0036),
     /// so there is no stored song-level proficiency. Pure-derived, no manual override.
     var mastery: Int? { MasteryRollup.rollup(loops.map(\.mastery)) }
+
+    /// The typed, validated view of `key` (ADR 0036): parses the stored string on read and
+    /// rewrites it canonically on set, folding legacy free text (`"A minor"`, flats) onto the
+    /// closed `MusicalKey` vocabulary. `.unknown` for unset or unrecognised values.
+    var musicalKey: MusicalKey {
+        get { MusicalKey.parse(key) }
+        set { key = newValue.rawValue }
+    }
 
     var loopsByStart: [Loop] { loops.sorted { $0.start < $1.start } }
     var markersByTime: [Marker] { markers.sorted { $0.seconds < $1.seconds } }

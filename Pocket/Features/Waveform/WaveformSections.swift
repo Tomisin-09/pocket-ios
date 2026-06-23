@@ -75,13 +75,14 @@ struct SongInfoPanel: View {
     private var masteryText: String { song.mastery.map(stars) ?? "Unrated" }
 
     private var summary: String {
-        "\(song.key) · \(masteryText)"
+        let keyText = song.musicalKey == .unknown ? nil : song.musicalKey.displayName
+        return [keyText, masteryText].compactMap { $0 }.joined(separator: " · ")
     }
 
     var body: some View {
         CollapsiblePanel(title: "Song info", summary: summary, expanded: $expanded) {
             VStack(alignment: .leading, spacing: 10) {
-                LabeledRow(label: "Key", value: song.key)
+                LabeledRow(label: "Key", value: song.musicalKey == .unknown ? "—" : song.musicalKey.displayName)
                 LabeledRow(label: "Mastery", value: masteryText)
                 HStack(spacing: 8) {
                     ForEach(song.collections, id: \.self) { name in

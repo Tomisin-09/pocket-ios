@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup (pure)
+│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -176,7 +176,11 @@ only. See `docs/decisions/0001`.
   is no longer stored: it is **derived** from its loops via `MasteryRollup.rollup`
   (rounded average, `nil` ⇒ "Unrated"), kept SwiftData-free and unit-tested per the
   pure-logic rule. `Loop.mastery` is the stored source; `Song.lastPracticed` feeds the
-  planner (ADR 0014).
+  planner (ADR 0014). The song **key** is the scalar/enum bucket: `MusicalKey` (pure, 12
+  roots × major/minor + `.unknown`) is the typed vocabulary, with `MusicalKey.parse`
+  folding legacy free text and flats onto cases. The SwiftData attribute stays
+  `Song.key: String`; `Song.musicalKey` parses on read and writes the canonical raw value
+  on save, so the typed model lands without a schema migration.
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not

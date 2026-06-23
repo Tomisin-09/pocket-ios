@@ -66,7 +66,7 @@ struct SongDetailsSheet: View {
 
     private var detailsSection: some View {
         Section {
-            detailRow("Key", song.key.isEmpty ? "—" : song.key)
+            detailRow("Key", song.musicalKey == .unknown ? "—" : song.musicalKey.displayName)
             DetailLabeledContent(label: "Tempo") {
                 Text(tempoText).font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
             }

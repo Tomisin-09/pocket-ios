@@ -52,7 +52,7 @@ struct SongCard: View {
     /// "C · 120 BPM · 4 loops · 2 markers" — known facts only, in that order.
     private var metadata: String {
         var parts: [String] = []
-        if !song.key.isEmpty { parts.append(song.key) }
+        if song.musicalKey != .unknown { parts.append(song.musicalKey.displayName) }
         if let bpm = song.bpm { parts.append("\(bpm) BPM") }
         let loops = song.loops.count
         if loops > 0 { parts.append("\(loops) loop\(loops == 1 ? "" : "s")") }
@@ -110,7 +110,7 @@ struct MasteryDots: View {
     let container = try! ModelContainer(for: Song.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
     let song = Song.sample()
-    song.key = "Am"
+    song.musicalKey = .aMinor
     song.bpm = 92
     song.collections = ["blues", "needs-work"]
     song.loops.forEach { $0.mastery = 3 }   // derived song mastery → 3 (ADR 0036)
