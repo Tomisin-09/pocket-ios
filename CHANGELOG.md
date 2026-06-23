@@ -7,7 +7,7 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ### Changed
 - **Redesigned song library** (ADR 0035). The library is now a list of richer **song
-  cards** — title, a metadata line (key · BPM · loop/marker counts), collection chips,
+  cards** — title, **artist**, a metadata line (key · BPM · loop/marker counts), collection chips,
   proficiency dots, and a colour accent that reflects how polished the song is — with a
   **Group by** control (⬍ in the toolbar) to organise by **Proficiency · Recently Added ·
   Title · Artist · Album · Genre**, plus a **search** field for title/artist. No cover

@@ -20,6 +20,13 @@ struct SongCard: View {
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(1)
 
+                if !song.artist.isEmpty {
+                    Text(song.artist)
+                        .font(.subheadline)
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .lineLimit(1)
+                }
+
                 if !metadata.isEmpty {
                     Text(metadata)
                         .font(.pocketMono(.caption))
