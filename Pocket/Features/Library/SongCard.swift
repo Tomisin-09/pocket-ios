@@ -3,15 +3,15 @@ import SwiftUI
 
 /// A rich, text-forward library card (ADR 0035): a leading colour accent (in place of
 /// artwork), the title, a metadata line (key · BPM · loops · markers), collection chips,
-/// and proficiency dots. The colour accent is derived from the proficiency tier, so the
-/// list reads as practice state at a glance without any cover art.
+/// and mastery dots. The colour accent is derived from the (derived) mastery tier, so the
+/// list reads as practice state at a glance without any cover art (ADR 0036).
 struct SongCard: View {
     let song: Song
 
     var body: some View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(Self.accentColor(for: song.proficiency))
+                .fill(Self.accentColor(for: song.mastery))
                 .frame(width: 4)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -41,8 +41,8 @@ struct SongCard: View {
 
             Spacer(minLength: 8)
 
-            if song.proficiency > 0 {
-                ProficiencyDots(filled: song.proficiency)
+            if let mastery = song.mastery, mastery > 0 {
+                MasteryDots(filled: mastery)
             }
         }
         .padding(.vertical, 6)
@@ -76,20 +76,21 @@ struct SongCard: View {
         .lineLimit(1)
     }
 
-    /// Proficiency tier → accent colour (mirrors `LibrarySectioning.proficiencyTier`):
-    /// needs work warm, solid blue, polished green. Colour is a UI concern, so the
-    /// mapping lives here rather than in the pure module.
-    static func accentColor(for proficiency: Int) -> Color {
-        switch proficiency {
-        case ...1: PocketColor.marker
-        case 2...3: PocketColor.waveformBar
-        default: PocketColor.active
+    /// Mastery tier → accent colour (mirrors `LibrarySectioning.masteryTier`): unrated
+    /// (no loops) neutral, needs work warm, solid blue, polished green. Colour is a UI
+    /// concern, so the mapping lives here rather than in the pure module (ADR 0036).
+    static func accentColor(for mastery: Int?) -> Color {
+        guard let mastery else { return PocketColor.barDefault }
+        switch mastery {
+        case ...1: return PocketColor.marker
+        case 2...3: return PocketColor.waveformBar
+        default: return PocketColor.active
         }
     }
 }
 
-/// Proficiency as up to five small dots (0–5), amber when filled.
-struct ProficiencyDots: View {
+/// Mastery as up to five small dots (0–5), amber when filled.
+struct MasteryDots: View {
     let filled: Int
 
     var body: some View {
@@ -100,7 +101,7 @@ struct ProficiencyDots: View {
                     .frame(width: 6, height: 6)
             }
         }
-        .accessibilityLabel("Proficiency \(filled) of 5")
+        .accessibilityLabel("Mastery \(filled) of 5")
     }
 }
 
@@ -112,7 +113,7 @@ struct ProficiencyDots: View {
     song.key = "Am"
     song.bpm = 92
     song.collections = ["blues", "needs-work"]
-    song.proficiency = 3
+    song.loops.forEach { $0.mastery = 3 }   // derived song mastery → 3 (ADR 0036)
     container.mainContext.insert(song)
     return List { SongCard(song: song) }
         .listStyle(.plain)

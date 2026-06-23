@@ -80,7 +80,7 @@ struct LibraryView: View {
     /// The grouping/search projection of a song (ADR 0035).
     private func fields(for song: Song) -> SongGroupFields {
         SongGroupFields(title: song.title, artist: song.artist, album: song.album,
-                        genre: song.genre, proficiency: song.proficiency,
+                        genre: song.genre, mastery: song.mastery,
                         dateAdded: song.dateAdded)
     }
 
@@ -282,20 +282,22 @@ private struct PreviewSeed {
     let title: String
     let artist: String
     let genre: String
-    let proficiency: Int
+    /// Target derived mastery — applied to the sample's loops so `Song.mastery` rolls up to
+    /// it. `nil` clears the loops so the song lands in the "Unrated" bucket (ADR 0036).
+    let mastery: Int?
     let collections: [String]
 
     static let library: [PreviewSeed] = [
         .init(title: "Blue Hour", artist: "The Allmans", genre: "Blues",
-              proficiency: 3, collections: ["blues"]),
+              mastery: 3, collections: ["blues"]),
         .init(title: "Red Moon", artist: "Zydeco Trio", genre: "Folk",
-              proficiency: 1, collections: ["blues", "needs-work"]),
+              mastery: 1, collections: ["blues", "needs-work"]),
         .init(title: "Apex", artist: "Arc", genre: "Rock",
-              proficiency: 5, collections: ["rock"]),
+              mastery: 5, collections: ["rock"]),
         .init(title: "Little Wing", artist: "Jimi Hendrix", genre: "Rock",
-              proficiency: 2, collections: []),
+              mastery: 2, collections: []),
         .init(title: "3 Strikes", artist: "", genre: "",
-              proficiency: 0, collections: ["needs-work"])
+              mastery: nil, collections: ["needs-work"])
     ]
 }
 
@@ -309,7 +311,11 @@ private struct PreviewSeed {
         song.title = seed.title
         song.artist = seed.artist
         song.genre = seed.genre
-        song.proficiency = seed.proficiency
+        if let mastery = seed.mastery {
+            song.loops.forEach { $0.mastery = mastery }
+        } else {
+            song.loops = []   // no loops → derived mastery is nil ("Unrated")
+        }
         song.collections = seed.collections
         song.dateAdded = .now
         container.mainContext.insert(song)

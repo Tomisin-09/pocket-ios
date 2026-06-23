@@ -26,6 +26,12 @@ identifier_name:
     - a
     - b
 
+# "Mastery" (skill mastery — ADR 0036's loop/song practice field) contains the
+# substring "master" but is unrelated to the master/slave lexicon the rule targets.
+inclusive_language:
+  override_allowed_terms:
+    - mastery
+
 force_cast: error
 force_try: error
 force_unwrapping: warning

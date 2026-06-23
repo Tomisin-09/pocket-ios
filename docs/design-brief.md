@@ -77,7 +77,7 @@ table is grouped by **semantic role** — the seam a future swappable theme slot
 | `marker` | amber/orange | Active-loop region fill base / selection |
 | `pin` | purple | Waveform markers (single-point) |
 | `loopPalette` | amber, gold, coral, magenta, violet, teal | Per-loop **identity** colour (ADR 0023) |
-| `barDefault` | white @ 35% | Neutral "off" fill — empty proficiency dots, minimap base track |
+| `barDefault` | white @ 35% | Neutral "off" fill — empty mastery dots, minimap base track |
 | `barPlayed` | white @ 18% | Neutral track (minimap) |
 
 The detail waveform is tinted the **blue anchor** so the song reads as themed chrome,
@@ -127,10 +127,10 @@ vision if useful, but know that **Phase 1** is what gets built first.
 |---|---|---|
 | **P1** | **Waveform practice screen** | The core. See §4.1 — design this first and most carefully. |
 | **P1** | Loop creation sheet | Slides in below the transport when a loop is captured. |
-| **P1** | Library / file browser | Pick local/iCloud files. **Text-forward song cards** (title, key · BPM · loop/marker counts, collection chips, proficiency dots, a proficiency-tier colour accent — no artwork) in one list with a **Group by** control: Proficiency · Recently Added · Title · Artist · Album · Genre. Collection filter chips above the list. ADR 0035. |
+| **P1** | Library / file browser | Pick local/iCloud files. **Text-forward song cards** (title, key · BPM · loop/marker counts, collection chips, mastery dots, a mastery-tier colour accent — no artwork) in one list with a **Group by** control: Mastery · Recently Added · Title · Artist · Album · Genre. Collection filter chips above the list. ADR 0035/0036. |
 | P2 | Loops panel + Loop active panel | Active panel has speed, repeat, tempo automator, session notes. |
 | P2 | Markers panel + Pin Marker popover | Single-point annotations; purple. |
-| P2 | Song info / Repertoire panel | Collapsible, bottom of the practice screen (scrollable), collapsed by default; key, proficiency, progression, collections. |
+| P2 | Song info / Repertoire panel | Collapsible, bottom of the practice screen (scrollable), collapsed by default; key, mastery (derived), collections. |
 | P3 | Home / Practice planner | The home screen *is* the planner: time selector, routine cards, session blocks. |
 
 ### 4.1 Waveform practice screen — layout
@@ -190,7 +190,7 @@ A hairline separates the cockpit from the scroll area below.
 9. Markers panel (collapsible) — name + timecode; tap a row to edit
    (rename / delete).
 10. Song info panel (collapsible, **collapsed by default**) — demoted here from
-    the top; key, proficiency, progression, collections.
+    the top; key, mastery (derived), collections.
 
 While a loop is being created or its range adjusted, the cockpit enters **edit
 mode**: the transport greys out and locks, and the mode line becomes the edit

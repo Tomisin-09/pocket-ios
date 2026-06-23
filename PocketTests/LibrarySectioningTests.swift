@@ -17,25 +17,29 @@ final class LibrarySectioningTests: XCTestCase {
     private let hour: TimeInterval = 3_600
 
     private func fields(_ title: String, artist: String = "", album: String = "",
-                        genre: String = "", proficiency: Int = 0,
+                        genre: String = "", mastery: Int? = 0,
                         dateAdded: Date? = nil) -> SongGroupFields {
         SongGroupFields(title: title, artist: artist, album: album, genre: genre,
-                        proficiency: proficiency, dateAdded: dateAdded)
+                        mastery: mastery, dateAdded: dateAdded)
     }
 
     private func sections(_ items: [SongGroupFields], by grouping: SongGrouping) -> [LibrarySection<SongGroupFields>] {
         LibrarySectioning.sections(items, by: grouping, now: now, calendar: calendar) { $0 }
     }
 
-    // MARK: - proficiencyTier
+    // MARK: - masteryTier
 
-    func testProficiencyTierBoundaries() {
-        XCTAssertEqual(LibrarySectioning.proficiencyTier(0).title, "Needs work")
-        XCTAssertEqual(LibrarySectioning.proficiencyTier(1).title, "Needs work")
-        XCTAssertEqual(LibrarySectioning.proficiencyTier(2).title, "Solid")
-        XCTAssertEqual(LibrarySectioning.proficiencyTier(3).title, "Solid")
-        XCTAssertEqual(LibrarySectioning.proficiencyTier(4).title, "Polished")
-        XCTAssertEqual(LibrarySectioning.proficiencyTier(5).title, "Polished")
+    func testMasteryTierBoundaries() {
+        XCTAssertEqual(LibrarySectioning.masteryTier(0).title, "Needs work")
+        XCTAssertEqual(LibrarySectioning.masteryTier(1).title, "Needs work")
+        XCTAssertEqual(LibrarySectioning.masteryTier(2).title, "Solid")
+        XCTAssertEqual(LibrarySectioning.masteryTier(3).title, "Solid")
+        XCTAssertEqual(LibrarySectioning.masteryTier(4).title, "Polished")
+        XCTAssertEqual(LibrarySectioning.masteryTier(5).title, "Polished")
+    }
+
+    func testMasteryTierNilIsUnrated() {
+        XCTAssertEqual(LibrarySectioning.masteryTier(nil).title, "Unrated")
     }
 
     // MARK: - dateBucket
@@ -70,15 +74,16 @@ final class LibrarySectioningTests: XCTestCase {
         XCTAssertEqual(LibrarySectioning.alphaSection("   ", emptyTitle: "Unknown Artist").title, "Unknown Artist")
     }
 
-    // MARK: - sections: proficiency
+    // MARK: - sections: mastery
 
-    func testProficiencySectionsOrderedNeedsWorkFirst() {
+    func testMasterySectionsOrderedNeedsWorkFirstUnratedLast() {
         let result = sections([
-            fields("Polished one", proficiency: 5),
-            fields("Rough one", proficiency: 0),
-            fields("Solid one", proficiency: 3)
-        ], by: .proficiency)
-        XCTAssertEqual(result.map(\.title), ["Needs work", "Solid", "Polished"])
+            fields("Polished one", mastery: 5),
+            fields("Rough one", mastery: 0),
+            fields("Solid one", mastery: 3),
+            fields("Loopless one", mastery: nil)
+        ], by: .mastery)
+        XCTAssertEqual(result.map(\.title), ["Needs work", "Solid", "Polished", "Unrated"])
     }
 
     // MARK: - sections: recentlyAdded

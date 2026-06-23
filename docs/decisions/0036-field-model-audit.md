@@ -137,15 +137,23 @@ key) are false positives.
 
 ## Build (sliced)
 
-1. **Song scalars + derivation.** Add `lastPracticed: Date?`; replace stored `proficiency`
-   with computed `mastery: Int?` (rounded loop average, `nil` when no loops). Update ADR 0035
+1. **Song scalars + derivation.** ✅ **Done** (pocket-045). Add `lastPracticed: Date?`; replace stored
+   `proficiency` with computed `mastery: Int?` (rounded loop average, `nil` when no loops). Update ADR 0035
    library reads (unrated bucket) and ADR 0012 edit sheet (drop the star input). Remove
    `progression` (drop the field + its three display sites + edit row). Tests: rollup average,
-   rounding, empty-loops → nil. (Pure-logic rollup is unit-tested per AGENTS.md.)
+   rounding, empty-loops → nil. (Pure-logic rollup is unit-tested per AGENTS.md — `MasteryRollup`.)
+   **Sequencing note:** the derived `Song.mastery` reads `Loop.mastery`, so the *stored*
+   `Loop.mastery` field (declaration default `0`) was pulled forward into this slice as its
+   source. Its **edit controls** still land in slice 3 with the other loop structured fields.
+   The grouping enum case `proficiency` was renamed to `mastery` (its `@AppStorage` raw value
+   no longer matches, so an existing "group by proficiency" preference falls back to the Title
+   default — acceptable for a view preference). SwiftLint's `inclusive_language` rule flags the
+   substring "master"; `mastery` is added to `override_allowed_terms` in `.swiftlint.yml`.
 2. **`key` enum.** Introduce `MusicalKey`; migration mapping pass for existing strings; edit
    sheet picker; display string. Tests: parse/round-trip, unrecognised → `.unknown`.
-3. **Loop structured fields.** Add `mastery`, `focus`, `commandTempo`, `loopType` (declaration
-   defaults). Edit-sheet controls in `LoopEditSheet`. Tests: defaults present on migrated loops.
+3. **Loop structured fields.** Add `focus`, `commandTempo`, `loopType` (declaration
+   defaults) — `mastery` already landed in slice 1 as the rollup source. Edit-sheet controls in
+   `LoopEditSheet` (including the now-storable `mastery`). Tests: defaults present on migrated loops.
 4. **`genre` normalisation.** Route writes through the shared canonicaliser (no type change).
 5. **Loop tags** — ADR 0034 slices 1–2, against the now-settled model.
 

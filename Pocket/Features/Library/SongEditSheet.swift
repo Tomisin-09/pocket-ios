@@ -21,8 +21,6 @@ struct SongEditSheet: View {
     @State private var key: String
     @State private var bpm: String           // numeric text → Int? on save
     @State private var downbeat: String      // decimal seconds → TimeInterval? on save (ADR 0022)
-    @State private var proficiency: Int
-    @State private var progression: String
     @State private var collections: [String]
     @State private var comment: String
     @State private var newCollection = ""
@@ -37,8 +35,6 @@ struct SongEditSheet: View {
         _key = State(initialValue: song.key)
         _bpm = State(initialValue: song.bpm.map(String.init) ?? "")
         _downbeat = State(initialValue: song.downbeatSeconds.map { String(format: "%g", $0) } ?? "")
-        _proficiency = State(initialValue: song.proficiency)
-        _progression = State(initialValue: song.progression)
         _collections = State(initialValue: song.collections)
         _comment = State(initialValue: song.comment)
     }
@@ -80,8 +76,6 @@ struct SongEditSheet: View {
             // which bar 1 lands. Decimal seconds; empty ⇒ no grid. Needs BPM to do
             // anything, so it reads as "off" until both are set.
             NumberRow(label: "Downbeat (s)", text: $downbeat, keyboard: .decimalPad)
-            ProficiencyPicker(value: $proficiency)
-            ClearableTextField("Progression", text: $progression)
         }
     }
 
@@ -174,8 +168,6 @@ struct SongEditSheet: View {
         song.key = key
         song.bpm = Int(bpm)
         song.downbeatSeconds = Double(downbeat.trimmingCharacters(in: .whitespaces))
-        song.proficiency = proficiency
-        song.progression = progression
         song.collections = collections
         song.comment = comment
         dismiss()
@@ -198,41 +190,6 @@ private struct NumberRow: View {
                 .multilineTextAlignment(.trailing)
                 .font(.pocketMono(.body))
                 .frame(maxWidth: 90)
-        }
-    }
-}
-
-/// A 0–5 star proficiency control. Tapping a star sets that level; tapping the
-/// current level steps back down one (so 0 is reachable). Amber matches the
-/// library row's `ProficiencyDots`.
-private struct ProficiencyPicker: View {
-    @Binding var value: Int
-
-    var body: some View {
-        HStack {
-            Text("Proficiency").foregroundStyle(PocketColor.textSecondary)
-            Spacer()
-            HStack(spacing: 6) {
-                ForEach(1...5, id: \.self) { level in
-                    Button {
-                        value = (value == level) ? level - 1 : level
-                    } label: {
-                        Image(systemName: level <= value ? "star.fill" : "star")
-                            .foregroundStyle(level <= value ? PocketColor.marker : PocketColor.barDefault)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Proficiency")
-            .accessibilityValue("\(value) of 5")
-            .accessibilityAdjustableAction { direction in
-                switch direction {
-                case .increment: value = min(5, value + 1)
-                case .decrement: value = max(0, value - 1)
-                @unknown default: break
-                }
-            }
         }
     }
 }

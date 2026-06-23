@@ -3,13 +3,13 @@ import Foundation
 /// How the song library is grouped and ordered (ADR 0035). The user picks one key;
 /// the same cards re-bucket and re-sort under it. The raw value persists the choice.
 enum SongGrouping: String, CaseIterable, Identifiable {
-    case proficiency, recentlyAdded, title, artist, album, genre
+    case mastery, recentlyAdded, title, artist, album, genre
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .proficiency: "Proficiency"
+        case .mastery: "Mastery"
         case .recentlyAdded: "Recently Added"
         case .title: "Title"
         case .artist: "Artist"
@@ -27,7 +27,8 @@ struct SongGroupFields {
     let artist: String
     let album: String
     let genre: String
-    let proficiency: Int
+    /// Derived song mastery (0–5), or `nil` when the song has no loops ("unrated"). ADR 0036.
+    let mastery: Int?
     let dateAdded: Date?
 }
 
@@ -88,12 +89,14 @@ enum LibrarySectioning {
 
     // MARK: - Bucket helpers (pure, individually tested)
 
-    /// Proficiency (0–5 stars) → a practice tier, surfaced needs-work first.
-    static func proficiencyTier(_ proficiency: Int) -> (order: Int, title: String) {
-        switch proficiency {
-        case ...1: (0, "Needs work")
-        case 2...3: (1, "Solid")
-        default: (2, "Polished")
+    /// Derived mastery (0–5) → a practice tier, surfaced needs-work first. `nil` (a song
+    /// with no loops) buckets as "Unrated", which sorts last (ADR 0036).
+    static func masteryTier(_ mastery: Int?) -> (order: Int, title: String) {
+        guard let mastery else { return (3, "Unrated") }
+        switch mastery {
+        case ...1: return (0, "Needs work")
+        case 2...3: return (1, "Solid")
+        default: return (2, "Polished")
         }
     }
 
@@ -121,7 +124,7 @@ enum LibrarySectioning {
     private static func sectionKey(for grouping: SongGrouping, fields: SongGroupFields,
                                    now: Date, calendar: Calendar) -> (order: Int, title: String) {
         switch grouping {
-        case .proficiency: proficiencyTier(fields.proficiency)
+        case .mastery: masteryTier(fields.mastery)
         case .recentlyAdded: dateBucket(fields.dateAdded, now: now, calendar: calendar)
         case .title: alphaSection(fields.title, emptyTitle: "—")
         case .artist: alphaSection(fields.artist, emptyTitle: "Unknown Artist")
@@ -147,7 +150,7 @@ enum LibrarySectioning {
         case .artist: return bySecondary(left.artist, right.artist, then: left, right)
         case .album: return bySecondary(left.album, right.album, then: left, right)
         case .genre: return bySecondary(left.genre, right.genre, then: left, right)
-        case .title, .proficiency: return byTitle(left, right)
+        case .title, .mastery: return byTitle(left, right)
         }
     }
 
