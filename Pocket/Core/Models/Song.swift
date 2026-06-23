@@ -144,8 +144,34 @@ final class Loop {
     /// How cleanly the player owns this loop, 0–5 (ADR 0036). The source the song's
     /// derived `mastery` rolls up from. Declaration default (not init-only) so SwiftData
     /// lightweight migration fills pre-0036 loops without a store wipe (CoreData 134110).
-    /// Edit controls land with the rest of the loop structured fields (ADR 0036 slice 3).
     var mastery: Int = 0
+
+    /// Deliberate practice intent, 1–3 (ADR 0036): `1` Backburner (not actively working
+    /// it) · `2` Active (in current rotation) · `3` Sharpening (pushing it now / gig prep).
+    /// Kept separate from `mastery` — a well-played loop can still be high intent and a
+    /// rough one low intent; the planner reads mastery as *need* and focus as *intent*.
+    /// Declaration default fills pre-0036 loops (CoreData 134110).
+    var focus: Int = 1
+
+    /// The fastest tempo the player owns this loop at, as a fraction of original (ADR 0036)
+    /// — distinct from `speed`, the *current* practice playback rate. `1.0` = full tempo
+    /// ("you command this at 85%" → `0.85`). Declaration default fills pre-0036 loops.
+    var commandTempo: Double = 1.0
+
+    /// Backing storage for `loopType` — a plain `String` raw value, **not** the enum
+    /// itself. A custom enum attribute does not survive SwiftData lightweight migration:
+    /// pre-0036 loop rows have no value to decode and fault → crash when the attribute is
+    /// first read. Storing the `String` lets migration fill old rows with `""` (= `.unset`)
+    /// without a store wipe, mirroring `Song.key`/`MusicalKey` and `SongRef.sourceRaw`
+    /// (the ADR 0012 / CoreData 134110 rule). Default `""` so the column has a value.
+    var loopTypeRaw: String = ""
+
+    /// What kind of material the loop is — lick / riff / chords, single-select (ADR 0036).
+    /// Typed view over `loopTypeRaw`; unrecognised/empty reads as `.unset`.
+    var loopType: LoopType {
+        get { LoopType(rawValue: loopTypeRaw) ?? .unset }
+        set { loopTypeRaw = newValue.rawValue }
+    }
 
     // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
     // SwiftData lightweight migration fills them for loops saved before this — see the

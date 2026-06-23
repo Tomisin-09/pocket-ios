@@ -157,9 +157,22 @@ key) are false positives.
    schema change — chosen over storing the enum directly, which would fail to decode legacy
    free-text values and risk a store wipe (migration note 2 / CoreData 134110). Effect is the
    same as a one-time pass: legacy strings read as their case and converge to canonical on next save.
-3. **Loop structured fields.** Add `focus`, `commandTempo`, `loopType` (declaration
-   defaults) — `mastery` already landed in slice 1 as the rollup source. Edit-sheet controls in
-   `LoopEditSheet` (including the now-storable `mastery`). Tests: defaults present on migrated loops.
+3. **Loop structured fields.** ✅ **Done** (pocket-047). Add `focus` (`Int`, default `1`),
+   `commandTempo` (`Double`, default `1.0`), `loopType` (`LoopType` enum, default `.unset`) —
+   all declaration defaults — `mastery` already landed in slice 1 as the rollup source. A
+   "Practice" section in `LoopEditSheet` adds the controls (mastery dot-rating, focus segmented,
+   type picker, command-tempo slider), including the now-editable `mastery`. **Storage call:**
+   `loopType` stores a backing `String` (`loopTypeRaw`, default `""`) with a computed
+   `loopType: LoopType` over it — **not** the enum directly. A custom enum `@Model` attribute
+   does *not* survive lightweight migration: pre-0036 loop rows have no value to decode and
+   fault → crash on first read (found on-device — in-memory test stores never migrate, so the
+   crash was invisible to the suite). The `String` backing lets migration fill old rows with
+   `""` without a store wipe, mirroring `Song.key`/`MusicalKey` and `SongRef.sourceRaw` (the
+   ADR 0012 / CoreData 134110 rule). The migration-note-3 assumption that a declaration default
+   suffices holds only for **primitive** scalars (`Int`/`Double`/`Bool`), not custom enums.
+   `focus` (`Int`) and `commandTempo` (`Double`) are primitives, so their declaration defaults
+   migrate cleanly. Tests: defaults present on migrated loops; `LoopType` raw-value
+   stability/round-trip/picker order.
 4. **`genre` normalisation.** Route writes through the shared canonicaliser (no type change).
 5. **Loop tags** — ADR 0034 slices 1–2, against the now-settled model.
 

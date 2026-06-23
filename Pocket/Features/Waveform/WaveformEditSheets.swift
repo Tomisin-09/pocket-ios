@@ -17,6 +17,12 @@ struct LoopEditSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name: String
     @State private var colorChoice: LoopColorChoice
+    // Structured practice fields (ADR 0036 slice 3) — edited as local copies, written
+    // back on Done so Cancel discards.
+    @State private var mastery: Int
+    @State private var focus: Int
+    @State private var commandTempo: Double
+    @State private var loopType: LoopType
 
     init(loop: Loop, autoColor: Color,
          onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void) {
@@ -26,6 +32,10 @@ struct LoopEditSheet: View {
         self.onAdjustRange = onAdjustRange
         _name = State(initialValue: loop.name)
         _colorChoice = State(initialValue: Self.choice(for: loop))
+        _mastery = State(initialValue: loop.mastery)
+        _focus = State(initialValue: loop.focus)
+        _commandTempo = State(initialValue: loop.commandTempo)
+        _loopType = State(initialValue: loop.loopType)
     }
 
     /// Map the loop's stored colour fields to a picker choice (custom wins over palette).
@@ -77,6 +87,7 @@ struct LoopEditSheet: View {
                         Label("Adjust range on waveform", systemImage: "slider.horizontal.below.rectangle")
                     }
                 }
+                practiceSection
                 Section {
                     LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
                 } header: {
@@ -103,6 +114,10 @@ struct LoopEditSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         loop.name = name              // mutating the @Model persists
+                        loop.mastery = mastery
+                        loop.focus = focus
+                        loop.commandTempo = commandTempo
+                        loop.loopType = loopType
                         applyColorChoice()
                         dismiss()
                     }
@@ -110,6 +125,65 @@ struct LoopEditSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    // MARK: - Practice fields (ADR 0036)
+
+    private var practiceSection: some View {
+        Section("Practice") {
+            masteryRow
+            focusRow
+            Picker("Type", selection: $loopType) {
+                ForEach(LoopType.pickerOrder) { type in
+                    Text(type.label).tag(type)
+                }
+            }
+            .foregroundStyle(PocketColor.textSecondary)
+            commandTempoRow
+        }
+    }
+
+    /// Mastery as a 0–5 dot rating. Tap a dot to set that value; tapping the highest
+    /// filled dot clears it by one, so you can walk back down to 0 (unrated).
+    private var masteryRow: some View {
+        LabeledContent("Mastery") {
+            HStack(spacing: 10) {
+                ForEach(1...5, id: \.self) { value in
+                    Circle()
+                        .fill(value <= mastery ? PocketColor.marker : PocketColor.barDefault)
+                        .frame(width: 18, height: 18)
+                        .onTapGesture { mastery = (mastery == value) ? value - 1 : value }
+                        .accessibilityLabel("Set mastery to \(value)")
+                }
+            }
+        }
+    }
+
+    /// Practice intent 1–3 as a segmented control. Stored as `Int` per ADR 0036 (the
+    /// planner reads the raw value); the labels live here, in the presentation layer.
+    private var focusRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Focus").foregroundStyle(PocketColor.textSecondary)
+            Picker("Focus", selection: $focus) {
+                Text("Backburner").tag(1)
+                Text("Active").tag(2)
+                Text("Sharpening").tag(3)
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    /// Command tempo as a percentage of original (ADR 0036) — the fastest tempo you own
+    /// the loop at, distinct from the current practice `speed`.
+    private var commandTempoRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            LabeledContent("Command tempo") {
+                Text("\(Int((commandTempo * 100).rounded()))%")
+                    .font(.pocketMono(.body))
+                    .foregroundStyle(PocketColor.textPrimary)
+            }
+            Slider(value: $commandTempo, in: 0.25...1.5, step: 0.05)
+        }
     }
 }
 
@@ -201,4 +275,17 @@ struct MarkerEditSheet: View {
         }
         .presentationDetents([.medium])
     }
+}
+
+#Preview("Edit loop") {
+    let song = Song.sample()
+    let loop = Loop(name: "Verse riff", start: 0.2, end: 0.35, speed: 0.85, repeats: 4)
+    loop.song = song
+    loop.mastery = 3
+    loop.focus = 2
+    loop.commandTempo = 0.85
+    loop.loopType = .riff
+    return LoopEditSheet(loop: loop, autoColor: PocketColor.marker,
+                         onDelete: {}, onAdjustRange: {})
+        .preferredColorScheme(.dark)
 }
