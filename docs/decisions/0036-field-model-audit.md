@@ -182,7 +182,16 @@ key) are false positives.
    folded back. Empty ⇒ `""` (the "Unknown Genre" bucket), unlike a tag which is dropped. The stored
    attribute stays `Song.genre: String`; no migration. Tests: whitespace canonicalisation, empty→`""`,
    case-fold onto pool, new-genre passthrough.
-5. **Loop tags** — ADR 0034 slices 1–2, against the now-settled model.
+5. **Loop tags.** ✅ **Done** (pocket-049). ADR 0034 slices 1–2, against the now-settled model.
+   Add `Loop.tags: [String] = []` (declaration default — migration-safe, like `collections`; a
+   `[String]` array is **not** a custom-enum attribute so it survives lightweight migration without
+   the slice-3 backing-string dance). A **Tags** section in `LoopEditSheet` mirrors `SongEditSheet`'s
+   collections UI (add field, swipe-remove, tappable suggestion chips), routing writes through the
+   shared `Labels` canonicaliser. Cross-loop suggestions come from a top-level `@Query private var
+   allLoops: [Loop]` reduced via `Labels.suggestions(from: allLoops.flatMap(\.tags), excluding: tags)`
+   — the loop-set aggregation is the flat-map; `Labels.suggestions` (shared with collections, already
+   tested) does the distinct/normalise/exclude/sort, so no second helper. Tags filter/browse stays
+   ADR 0034 slice 3, gated on its consumer (planner). Tests: `tags` default `[]`.
 
 `techniques` and `Loop.chords` are deferred (no slice). Collections promotion is trigger-gated
 (no slice).

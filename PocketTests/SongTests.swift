@@ -117,6 +117,13 @@ final class SongTests: XCTestCase {
         XCTAssertEqual(loop.loopType, .unset)
     }
 
+    func testLoopTagsDefaultToEmpty() {
+        // Loop tags (ADR 0034) carry a declaration default of `[]` so SwiftData lightweight
+        // migration fills pre-0034 loops without a store wipe (CoreData 134110).
+        let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 1, repeats: 1)
+        XCTAssertEqual(loop.tags, [])
+    }
+
     // MARK: - Tempo precision (ADR 0024)
 
     func testTempoBPMIsNilWhenNoTempoKnown() {

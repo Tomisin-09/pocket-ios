@@ -140,8 +140,8 @@ a free-form **note**, and read-only **practice stats** (loops · markers ·
 annotations) — the record we enrich to drive routines (ADR 0012). Collections are
 canonicalised on write and **suggested from the ones already in the library** (so they
 converge instead of fragmenting), and the library can be **filtered by collection**
-(tap chips; intersection/AND) — ADR 0033. The same `[String]` machinery will back
-loop-level **Tags** (ADR 0034). A song's **Mastery** is no longer stored — it is **derived**
+(tap chips; intersection/AND) — ADR 0033. The same `[String]` machinery (the shared
+`Labels` canonicaliser) now backs loop-level **Tags** (ADR 0034). A song's **Mastery** is no longer stored — it is **derived**
 as the rounded average of its loops' `mastery` (`MasteryRollup`, pure/unit-tested), shown as
 stars and as a library group with an **Unrated** bucket for songs with no loops; the song also
 records `lastPracticed` for "recently practised" ordering and the planner (ADR 0036). Each loop carries a
@@ -157,7 +157,11 @@ structured fields (ADR 0036): **Mastery** (0–5 dot rating, the source the song
 rolls up from), **Focus** (Backburner / Active / Sharpening intent, stored 1–3),
 **Type** (a closed `LoopType` — Lick / Riff / Chords, single-select), and
 **Command tempo** (the fastest tempo you own the loop at, as a % of original) —
-the structured practice signal the planner reads. Filename suggestions, a practice
+the structured practice signal the planner reads. A **Tags** section (ADR 0034)
+adds the loop's open descriptive axis (`Loop.tags: [String]`) — the loop analogue of
+song collections, canonicalised on write and **suggested from tags already used on any
+loop** (cross-loop `@Query`); the cross-song filter-by-tag payoff is deferred to its first
+consumer (the planner). Filename suggestions, a practice
 **journal** (per-loop/marker/song), **collections as real playlists**, and a **metronome**
 (the transport "Auto" slot) are next. Navigation/planner follow (Phase 3) — the
 planner's **selection** (goals → required skills from a **technique taxonomy**

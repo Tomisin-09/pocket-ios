@@ -188,6 +188,15 @@ only. See `docs/decisions/0001`.
   attribute does **not** survive lightweight migration (existing rows fault on first read);
   declaration defaults only backfill primitive scalars (`focus`, `commandTempo`, `mastery`).
   All four fill pre-0036 loops without a store wipe.
+- **Two-axis annotation** (`[String]`, shared `Labels` canonicaliser): the descriptive-tag
+  bucket is `Song.collections` (song scope, ADR 0033) and `Loop.tags` (loop scope, ADR 0034) —
+  one scope-agnostic normaliser (trim → collapse whitespace → case-insensitive de-dup, first-seen
+  form), two callers, so neither set fragments into `Blues`/`blues`. Both edit sheets suggest from
+  values already used across the library (`Labels.suggestions` over a `flatMap`-aggregated pool —
+  all songs' collections / all loops' tags via a top-level `@Query`) so entries converge rather than
+  multiply. Both are declaration-default `[String]` arrays (migration-safe, CloudKit-clean — no
+  `@Model` promotion). The cross-song *filter by tag* payoff is gated on its first consumer (the
+  planner, ADR 0014); collections already filter the library (intersection/AND, ADR 0033).
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not

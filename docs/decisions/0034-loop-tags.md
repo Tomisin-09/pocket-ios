@@ -1,6 +1,6 @@
 # 0034 — Loop tags: the loop-level annotation axis (`[String]`, normalize/suggest, filter gated on a consumer)
 
-- **Status:** Accepted (design recorded; build sequenced — annotation slice now, the cross-song payoff lands with its first consumer)
+- **Status:** Accepted (slices 1–2 built, pocket-049 / ADR 0036 slice 5; the cross-song filter payoff, slice 3, lands with its first consumer)
 - **Date:** 2026-06-22
 
 ## Context
@@ -113,14 +113,18 @@ blur — that rename is a prerequisite, owned by the collections build.
 
 ## Build (sliced)
 
-1. **Model + normaliser reuse.** Add `Loop.tags: [String] = []` (declaration default;
-   migration-safe). Route tag writes through ADR 0033's scope-agnostic normaliser
-   (built as a `Core` module over `[String]`, per the constraint above). Pure aggregation
-   helper: distinct normalised tags across a loop set (+ tests: distinct, sorted, excludes
-   current loop's tags, normalised). No prominent UI yet.
-2. **Tags section in `LoopEditSheet`.** Add field + suggestion chips mirroring
-   `SongEditSheet` collections; swipe/✕ remove; cross-loop suggestions via
-   `FetchDescriptor<Loop>` aggregation. Tags become editable and converge.
+1. **Model + normaliser reuse.** ✅ **Done** (pocket-049). Added `Loop.tags: [String] = []`
+   (declaration default; migration-safe — CoreData 134110). Tag writes route through the shared
+   `Labels` canonicaliser (the scope-agnostic `Core` module ADR 0033 shipped, over `[String]`).
+   The "distinct normalised tags across a loop set" aggregation **is** `Labels.suggestions(from:
+   loops.flatMap(\.tags), excluding:)` — the flat-map is the loop-set aggregation and
+   `Labels.suggestions` (already tested: distinct, sorted, excludes-current, normalised) does the
+   rest, shared with collections rather than a second helper. Test: `tags` default `[]`.
+2. **Tags section in `LoopEditSheet`.** ✅ **Done** (pocket-049). Add field + suggestion chips
+   mirroring `SongEditSheet` collections; swipe-remove; cross-loop suggestions via a top-level
+   `@Query private var allLoops: [Loop]` (the app-level `modelContainer` reaches the sheet) reduced
+   over `flatMap(\.tags)` — the same top-level-loop read ADR 0032 forecast, via SwiftUI's `@Query`
+   rather than a hand-rolled `FetchDescriptor`. Tags become editable and converge.
 3. **Filter/browse — deferred, ships with its consumer** (planner ADR 0014 or a loop
    browser). Pure tag-filter predicate (intersection semantics; + tests), resolve matches
    to playback by `uid` (ADR 0032). Not a standalone branch — folded into the consumer's

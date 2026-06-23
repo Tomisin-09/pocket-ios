@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Loop tags** (ADR 0034). Editing a loop now has a **Tags** section — add short
+  descriptive tags like `solo`, `needs-work`, or `chorus`, with tappable chips suggesting
+  tags you've already used on other loops so the same tag is reused instead of re-typed
+  (and spacing/capitalisation tidies up automatically). Tags are saved on each loop now;
+  filtering across songs by tag arrives later with the session planner.
 - **Loop practice details** (ADR 0036). Editing a loop now has a **Practice** section:
   **Mastery** (a 0–5 rating of how cleanly you own it — this is what rolls up into the
   song's mastery), **Focus** (Backburner / Active / Sharpening — how hard you're working
