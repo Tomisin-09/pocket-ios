@@ -168,7 +168,11 @@ struct SongEditSheet: View {
         song.title = trimmedTitle.isEmpty ? song.title : trimmedTitle
         song.artist = artist
         song.album = album
-        song.genre = genre
+        // Canonicalise genre through the shared normaliser and converge it onto an existing
+        // library genre's display form (ADR 0036 slice 4) so group-by-genre doesn't fragment
+        // into Blues / blues / "blues ". Pool excludes this song so a deliberate case change of
+        // its own genre isn't folded back onto the old form.
+        song.genre = Labels.canonicalSingle(genre, against: allSongs.filter { $0 !== song }.map(\.genre))
         song.year = Int(year)
         song.musicalKey = key
         song.bpm = Int(bpm)

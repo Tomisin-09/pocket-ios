@@ -42,6 +42,20 @@ enum Labels {
         }
     }
 
+    /// The canonical form of a **single-valued** group-key field (song `genre`, ADR 0036)
+    /// chosen against the library's existing values. Whitespace is canonicalised, and when an
+    /// existing value matches case-insensitively the input folds onto that value's first-seen
+    /// display form — so a group key doesn't splinter into `Blues` / `blues` the way an
+    /// un-normalised string would. Empty (or whitespace-only) input ⇒ `""`: a single field keeps
+    /// its unset state (which buckets as "Unknown Genre" in the library), unlike a tag, which is
+    /// dropped. Pass `pool` as the *other* items' values (exclude the item being edited) so a
+    /// deliberate case change of the only holder isn't folded back onto its old form.
+    static func canonicalSingle(_ raw: String, against pool: [String]) -> String {
+        guard let label = canonical(raw) else { return "" }
+        let folded = label.lowercased()
+        return normalized(pool).first { $0.lowercased() == folded } ?? label
+    }
+
     /// Suggestion candidates for an editor: the distinct normalised labels drawn from
     /// `pool` (the labels already used across the library), **excluding** any already
     /// on the current item (`current`, matched case-insensitively), sorted

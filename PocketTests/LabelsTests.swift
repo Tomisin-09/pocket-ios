@@ -64,6 +64,32 @@ final class LabelsTests: XCTestCase {
         XCTAssertEqual(Labels.normalized(["b", "a", "B", "A"]), ["b", "a"])
     }
 
+    // MARK: - canonicalSingle (single-valued group key, e.g. genre)
+
+    func testCanonicalSingleWhitespaceCanonicalisesWhenNoPoolMatch() {
+        XCTAssertEqual(Labels.canonicalSingle("  Blues ", against: []), "Blues")
+        XCTAssertEqual(Labels.canonicalSingle("rock  solid", against: []), "rock solid")
+    }
+
+    func testCanonicalSingleEmptyOrWhitespaceBecomesEmptyString() {
+        // Unlike a tag (dropped), a single field keeps its unset state as "".
+        XCTAssertEqual(Labels.canonicalSingle("", against: ["Blues"]), "")
+        XCTAssertEqual(Labels.canonicalSingle("   ", against: ["Blues"]), "")
+    }
+
+    func testCanonicalSingleFoldsOntoExistingDisplayForm() {
+        // "blues" with "Blues" already used in the library converges onto "Blues".
+        XCTAssertEqual(Labels.canonicalSingle("blues", against: ["Blues", "Jazz"]), "Blues")
+        // Whitespace + case both fold.
+        XCTAssertEqual(Labels.canonicalSingle("  JAZZ ", against: ["Blues", "Jazz"]), "Jazz")
+    }
+
+    func testCanonicalSingleKeepsNewGenreWhenPoolHasNoMatch() {
+        // Pool excludes the edited song, so renaming the only holder's case is respected.
+        XCTAssertEqual(Labels.canonicalSingle("blues", against: []), "blues")
+        XCTAssertEqual(Labels.canonicalSingle("Folk", against: ["Blues", "Jazz"]), "Folk")
+    }
+
     // MARK: - suggestions
 
     func testSuggestionsAreDistinctNormalisedAndSorted() {
