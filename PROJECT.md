@@ -131,7 +131,8 @@ State + handlers live in an `@Observable` `WaveformPracticeModel`
 (`LibraryView`); importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),
 persisting a `Song` to practice, while an empty state offers import or a bundled
-demo. Swiping a library row → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
+demo. **Holding a song card** → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
+(a context menu — swipe still offers a quick Delete, a tap opens the song for practice)
 for title/artist/album/**genre** (canonicalised on write through `Labels.canonicalSingle`
 and converged onto an existing library genre's spelling, ADR 0036)/year/**key** (a closed
 `MusicalKey` picker — 12 roots × major/minor + Unknown — parsed from any legacy free text,
@@ -139,8 +140,10 @@ ADR 0036)/BPM/**downbeat**, lightweight **collections**,
 a free-form **note**, and read-only **practice stats** (loops · markers ·
 annotations) — the record we enrich to drive routines (ADR 0012). Collections are
 canonicalised on write and **suggested from the ones already in the library** (so they
-converge instead of fragmenting), and the library can be **filtered by collection**
-(tap chips; intersection/AND) — ADR 0033. The same `[String]` machinery (the shared
+converge instead of fragmenting), and the library can be **filtered by collection** from a
+toolbar **filter menu** (the funnel; intersection/AND) — ADR 0033. The library toolbar also
+**names the current sort category** (e.g. "↑ Title") and lets you **flip ascending/descending**
+(ADR 0035). The same `[String]` machinery (the shared
 `Labels` canonicaliser) now backs loop-level **Tags** (ADR 0034). A song's **Mastery** is no longer stored — it is **derived**
 as the rounded average of its loops' `mastery` (`MasteryRollup`, pure/unit-tested), shown as
 stars and as a library group with an **Unrated** bucket for songs with no loops; the song also
@@ -155,7 +158,8 @@ custom colour wheel (low-contrast colours get an advisory hint) — or leaves it
 automatic (ADR 0031). The edit sheet's **Practice** section carries the loop's
 structured fields (ADR 0036): **Mastery** (0–5 dot rating, the source the song
 rolls up from), **Focus** (Backburner / Active / Sharpening intent, stored 1–3),
-**Type** (a closed `LoopType` — Lick / Riff / Chords, single-select), and
+**Type** (a closed `LoopType` — Lick / Riff / Chords / Passage, single-select; Passage is the
+composite for a loop spanning more than one), and
 **Command tempo** (the fastest tempo you own the loop at, as a % of original) —
 the structured practice signal the planner reads. A **Tags** section (ADR 0034)
 adds the loop's open descriptive axis (`Loop.tags: [String]`) — the loop analogue of

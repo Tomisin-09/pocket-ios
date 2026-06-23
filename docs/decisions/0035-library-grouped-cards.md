@@ -111,3 +111,23 @@ grouped view).
 - When the UI slices land: update `design-brief.md` (screen inventory — the library screen
   changes shape), `PROJECT.md`, `CHANGELOG.md`, and note `LibrarySectioning` in
   `docs/architecture.md`.
+
+## Amendment (pocket-050) — sort direction, label, and filter relocation
+
+Three UX refinements after living with the redesign, all within this ADR's scope:
+
+- **Sort direction.** `LibrarySectioning.sections` gains an `ascending: Bool = true`
+  parameter; `false` flips the whole list (section order **and** each section's items
+  reversed — a literal flip, not a separate descending comparator, which is what "reverse
+  the order" means to a user). Persisted as `@AppStorage("librarySortAscending")`.
+- **Explicit sort label.** The toolbar control now spells out the current category as text
+  with a direction arrow (e.g. "↑ Title") instead of a generic ⬍ icon — the user couldn't
+  tell at a glance what the list was sorted by.
+- **Collection filter → toolbar menu.** The horizontal chip bar across the header (ADR 0033)
+  is replaced by a **filter menu** (funnel icon, fills when active) so the header is less
+  busy; filtering semantics (intersection/AND, `Labels.matches`) are unchanged. The
+  `CollectionFilterBar`/`FilterChip` views are removed.
+
+Card interaction also changes (aligning with the loop sheets' hold-to-edit, ADR 0028):
+**hold a card** for a context menu (Edit / Delete) rather than swipe→Edit; swipe keeps a
+quick Delete and tap still opens the song for practice.

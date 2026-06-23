@@ -16,6 +16,9 @@ struct LibraryView: View {
     @State private var selectedCollections: Set<String> = []
     /// How the list is grouped/ordered (ADR 0035) — persisted across launches.
     @AppStorage("libraryGrouping") private var grouping: SongGrouping = .title
+    /// Sort direction within the current grouping — `true` is the natural order (A→Z,
+    /// newest-first); `false` flips the whole list. Persisted across launches.
+    @AppStorage("librarySortAscending") private var sortAscending = true
     /// Title/artist search query (ADR 0035).
     @State private var searchText = ""
 
@@ -25,14 +28,8 @@ struct LibraryView: View {
                 if songs.isEmpty {
                     LibraryEmptyState(onImport: { importing = true }, onTryDemo: addDemo)
                 } else {
-                    VStack(spacing: 0) {
-                        if !availableCollections.isEmpty {
-                            CollectionFilterBar(available: availableCollections,
-                                                selected: $selectedCollections)
-                        }
-                        libraryContent
-                    }
-                    .searchable(text: $searchText, prompt: "Songs and artists")
+                    libraryContent
+                        .searchable(text: $searchText, prompt: "Songs and artists")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -40,9 +37,10 @@ struct LibraryView: View {
             .navigationTitle("Library")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    if !songs.isEmpty { groupByMenu }
+                    if !songs.isEmpty { sortMenu }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    if !availableCollections.isEmpty { filterMenu }
                     Button { importing = true } label: { Image(systemName: "plus") }
                         .tint(PocketColor.active)
                         .accessibilityLabel("Import a song")
@@ -84,9 +82,10 @@ struct LibraryView: View {
                         dateAdded: song.dateAdded)
     }
 
-    /// The filtered songs grouped into ordered sections by the current key (ADR 0035).
+    /// The filtered songs grouped into ordered sections by the current key and direction (ADR 0035).
     private var sections: [LibrarySection<Song>] {
-        LibrarySectioning.sections(filteredSongs, by: grouping, fields: fields(for:))
+        LibrarySectioning.sections(filteredSongs, by: grouping, ascending: sortAscending,
+                                   fields: fields(for:))
     }
 
     /// The list, or the right empty state when the filter/search excludes everything.
@@ -103,18 +102,67 @@ struct LibraryView: View {
         }
     }
 
-    private var groupByMenu: some View {
+    /// The sort control — a menu whose **label spells out the current category** (so it's
+    /// always clear what the list is sorted by) with a direction arrow, and whose contents
+    /// pick the category and flip ascending/descending (ADR 0035).
+    private var sortMenu: some View {
         Menu {
-            Picker("Group by", selection: $grouping) {
+            Picker("Sort by", selection: $grouping) {
                 ForEach(SongGrouping.allCases) { key in
                     Text(key.label).tag(key)
                 }
             }
+            Picker("Order", selection: $sortAscending) {
+                Label("Ascending", systemImage: "arrow.up").tag(true)
+                Label("Descending", systemImage: "arrow.down").tag(false)
+            }
         } label: {
-            Label("Group by", systemImage: "arrow.up.arrow.down")
+            HStack(spacing: 4) {
+                Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
+                Text(grouping.label)
+            }
+            .tint(PocketColor.active)
+        }
+        .accessibilityLabel("Sort by \(grouping.label), \(sortAscending ? "ascending" : "descending")")
+    }
+
+    /// Collection filter, relocated from the old header chip bar into a toolbar menu
+    /// (ADR 0033 / 0035): toggle collections (intersection/AND), with a clear option. The
+    /// icon fills when a filter is active. Shown only when some song carries a collection.
+    private var filterMenu: some View {
+        Menu {
+            if !selectedCollections.isEmpty {
+                Button { selectedCollections.removeAll() } label: {
+                    Label("Clear filter", systemImage: "xmark.circle")
+                }
+                Divider()
+            }
+            ForEach(availableCollections, id: \.self) { collection in
+                Button { toggleCollection(collection) } label: {
+                    if selectedCollections.contains(collection) {
+                        Label(collection, systemImage: "checkmark")
+                    } else {
+                        Text(collection)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: selectedCollections.isEmpty
+                  ? "line.3.horizontal.decrease.circle"
+                  : "line.3.horizontal.decrease.circle.fill")
                 .tint(PocketColor.active)
         }
-        .accessibilityLabel("Group by \(grouping.label)")
+        .accessibilityLabel(selectedCollections.isEmpty
+                            ? "Filter by collection"
+                            : "Filtering by \(selectedCollections.count) collection(s)")
+    }
+
+    private func toggleCollection(_ collection: String) {
+        if selectedCollections.contains(collection) {
+            selectedCollections.remove(collection)
+        } else {
+            selectedCollections.insert(collection)
+        }
     }
 
     private var groupedList: some View {
@@ -128,14 +176,20 @@ struct LibraryView: View {
                             SongCard(song: song)
                         }
                         .listRowBackground(PocketColor.background)
+                        // Hold a card for its actions (Edit opens the metadata sheet); swipe
+                        // still offers a quick Delete. Tap opens the song for practice.
+                        .contextMenu {
+                            Button { editingSong = song } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) { context.delete(song) } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) { context.delete(song) } label: {
                                 Label("Delete", systemImage: "trash")
                             }
-                            Button { editingSong = song } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            .tint(PocketColor.active)
                         }
                     }
                 }
@@ -163,58 +217,6 @@ struct LibraryView: View {
     }
 
     private func addDemo() { context.insert(Song.sample()) }
-}
-
-/// Horizontal row of collection filter chips above the song list (ADR 0033). A
-/// leading **All** chip clears the filter; tapping a collection toggles it in/out of
-/// the intersection. Hidden entirely when no song carries a collection.
-private struct CollectionFilterBar: View {
-    let available: [String]
-    @Binding var selected: Set<String>
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                FilterChip(label: "All", isSelected: selected.isEmpty) { selected.removeAll() }
-                ForEach(available, id: \.self) { collection in
-                    FilterChip(label: collection, isSelected: selected.contains(collection)) {
-                        toggle(collection)
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-        }
-        .background(PocketColor.background)
-    }
-
-    private func toggle(_ collection: String) {
-        if selected.contains(collection) {
-            selected.remove(collection)
-        } else {
-            selected.insert(collection)
-        }
-    }
-}
-
-private struct FilterChip: View {
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(.pocketMono(.caption))
-                .lineLimit(1)
-                .fixedSize()
-                .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(isSelected ? PocketColor.active : Color.white.opacity(0.10)))
-        }
-        .buttonStyle(.plain)
-    }
 }
 
 /// Shown when the active collection filter excludes every song — a clear message and

@@ -146,6 +146,21 @@ final class LibrarySectioningTests: XCTestCase {
         XCTAssertEqual(result.map(\.title), ["B", "Unknown Genre"])
     }
 
+    // MARK: - sections: descending flip
+
+    func testDescendingReversesSectionAndItemOrder() {
+        let input = [fields("apple"), fields("Banana"), fields("Berry")]
+        let asc = sections(input, by: .title)
+        let desc = LibrarySectioning.sections(input, by: .title, ascending: false,
+                                              now: now, calendar: calendar) { $0 }
+        // Ascending: A [apple], B [Banana, Berry].
+        XCTAssertEqual(asc.map(\.title), ["A", "B"])
+        XCTAssertEqual(asc[1].items.map(\.title), ["Banana", "Berry"])
+        // Descending flips both the section order and each section's items.
+        XCTAssertEqual(desc.map(\.title), ["B", "A"])
+        XCTAssertEqual(desc[0].items.map(\.title), ["Berry", "Banana"])
+    }
+
     // MARK: - empty
 
     func testEmptyInputYieldsNoSections() {

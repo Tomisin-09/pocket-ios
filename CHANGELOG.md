@@ -14,11 +14,20 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **Loop practice details** (ADR 0036). Editing a loop now has a **Practice** section:
   **Mastery** (a 0–5 rating of how cleanly you own it — this is what rolls up into the
   song's mastery), **Focus** (Backburner / Active / Sharpening — how hard you're working
-  it right now), **Type** (Lick / Riff / Chords), and **Command tempo** (the fastest tempo
-  you can play it at, as a % of the original). Loops you already had keep working and start
-  at sensible defaults.
+  it right now), **Type** (Lick / Riff / Chords / **Passage** — a longer stretch that
+  mixes more than one of those), and **Command tempo** (the fastest tempo you can play it
+  at, as a % of the original). Loops you already had keep working and start at sensible
+  defaults.
 
 ### Changed
+- **Clearer library sorting + tidier header** (ADR 0035). The toolbar now spells out
+  **what the list is sorted by** (e.g. "↑ Title") instead of a generic icon, and you can
+  **flip the order** (ascending ⇄ descending) from the same menu. The collection chips that
+  sat across the top have moved into a **filter menu** (the funnel button), so the header is
+  cleaner while filtering by collection still works.
+- **Hold a song to edit it.** Press and hold a song card in the library for its actions —
+  **Edit** opens the metadata sheet, **Delete** removes it. (Swipe still offers a quick
+  Delete, and tapping a card still opens it for practice.)
 - **Song key is now a picker, not free text** (ADR 0036). The edit sheet's **Key** field is a
   closed list of the 12 keys in major and minor (plus **Unknown**), so keys stay consistent and
   the app can sort and reason about them. Existing typed-in keys are matched automatically —

@@ -45,9 +45,13 @@ struct LibrarySection<Item> {
 enum LibrarySectioning {
 
     /// Group `items` under `grouping` into ordered sections, each with its items ordered.
+    /// `ascending` is the natural order for the key (A→Z, newest-first, needs-work-first);
+    /// `false` **flips the whole list** — section order and each section's item order are
+    /// reversed — so the user can read it bottom-up (Z→A, oldest-first, polished-first).
     static func sections<Item>(
         _ items: [Item],
         by grouping: SongGrouping,
+        ascending: Bool = true,
         now: Date = Date(),
         calendar: Calendar = .current,
         fields: (Item) -> SongGroupFields
@@ -61,7 +65,7 @@ enum LibrarySectioning {
             buckets[key.title, default: []].append((item, projected))
         }
 
-        return buckets.keys
+        let ascendingSections = buckets.keys
             .sorted { lhs, rhs in
                 let lhsOrder = order[lhs] ?? 0, rhsOrder = order[rhs] ?? 0
                 if lhsOrder != rhsOrder { return lhsOrder < rhsOrder }
@@ -73,6 +77,11 @@ enum LibrarySectioning {
                     .map(\.item)
                 return LibrarySection(title: title, items: ordered)
             }
+
+        guard !ascending else { return ascendingSections }
+        return ascendingSections
+            .reversed()
+            .map { LibrarySection(title: $0.title, items: $0.items.reversed()) }
     }
 
     /// Whether a song matches a search `query` — a case- and diacritic-insensitive

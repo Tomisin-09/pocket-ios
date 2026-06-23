@@ -11,6 +11,7 @@ final class LoopTypeTests: XCTestCase {
         XCTAssertEqual(LoopType.lick.rawValue, "lick")
         XCTAssertEqual(LoopType.riff.rawValue, "riff")
         XCTAssertEqual(LoopType.chords.rawValue, "chords")
+        XCTAssertEqual(LoopType.passage.rawValue, "passage")
     }
 
     func testRawValueRoundTrips() {
@@ -24,7 +25,7 @@ final class LoopTypeTests: XCTestCase {
     }
 
     func testPickerOrderIsUnsetThenDensityOrder() {
-        XCTAssertEqual(LoopType.pickerOrder, [.unset, .lick, .riff, .chords])
+        XCTAssertEqual(LoopType.pickerOrder, [.unset, .lick, .riff, .chords, .passage])
     }
 
     func testPickerOrderCoversEveryCase() {

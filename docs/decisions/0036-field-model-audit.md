@@ -88,7 +88,9 @@ All additions. Bucket 2 unless noted.
   original (distinct from `speed`, which is the *current practice playback rate*). Named to
   echo the Mastery framing ("you command this at 85%").
 - **`loopType`: closed enum, single-select** — `lick` (melodic) · `riff` (melodic + rhythm) ·
-  `chords` (rhythmic). A loop is exactly one; free text would lose the mutual exclusivity.
+  `chords` (rhythmic) · `passage` (composite — a loop spanning more than one of the above,
+  e.g. a whole verse; added pocket-050). A loop is exactly one; free text would lose the
+  mutual exclusivity.
 - **`tags: [String]`.** Bucket 3. The open descriptive axis — **owned by ADR 0034**, listed
   here only for completeness of the loop model.
 - **`techniques`: deferred.** A semi-open set (slides, hammer-on, pull-off, vibrato, bends,
