@@ -13,6 +13,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   that snapshot is fixed, only the text and kind can be edited later. Tag each entry as a
   🎯 Goal, ⚡️ Breakthrough, 🧗 Struggle, 📝 Note, or 🎬 Session. Entries group under day
   headers, newest first; swipe to delete.
+- **Song notes are front and centre** (ADR 0038). A song's free-text **notes** (tuning,
+  capo, anything to remember) now show in a **Notes** section right under the title/artist/
+  album header when you open a song's details. Tap the **pencil** to edit them right there
+  (no full-Edit detour), then **Update** to save — with a quick "Saved" confirmation.
 
 ### Changed
 - **Markers drop instantly now — no naming step** (ADR 0037). Tapping **Mark** drops
