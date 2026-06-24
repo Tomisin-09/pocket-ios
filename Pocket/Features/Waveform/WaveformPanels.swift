@@ -16,6 +16,8 @@ struct LoopsPanel: View {
     let onEdit: (Loop) -> Void
     /// Swipe-Delete — remove the loop without opening the sheet first.
     let onDelete: (Loop) -> Void
+    /// The journal control — open this loop's practice journal (ADR 0038).
+    let onJournal: (Loop) -> Void
     /// The "A" control — open this loop's automator (speed ramp) sheet.
     let onAutomator: (Loop) -> Void
 
@@ -37,6 +39,7 @@ struct LoopsPanel: View {
                                 isActive: loop.uid == activeLoopID,
                                 isPlaying: isPlaying,
                                 onActivate: { onActivate(loop) },
+                                onJournal: { onJournal(loop) },
                                 onAutomator: { onAutomator(loop) },
                                 onEdit: { onEdit(loop) },
                                 onDelete: { onDelete(loop) })
@@ -52,6 +55,7 @@ private struct LoopRow: View {
     let isActive: Bool
     let isPlaying: Bool
     let onActivate: () -> Void
+    let onJournal: () -> Void
     let onAutomator: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
@@ -97,13 +101,41 @@ private struct LoopRow: View {
             // VoiceOver can't long-press, so surface the same actions explicitly.
             .accessibilityActions {
                 Button("Edit", action: onEdit)
+                Button("Journal", action: onJournal)
                 Button("Delete", action: onDelete)
             }
 
+            JournalButton(action: onJournal)
+                .accessibilityLabel(loop.journal.isEmpty
+                                    ? "Open journal for \(loop.name)"
+                                    : "Journal for \(loop.name), \(loop.journal.count) "
+                                        + "entr\(loop.journal.count == 1 ? "y" : "ies")")
             AutomatorButton(isOn: loop.automatorEnabled, action: onAutomator)
                 .accessibilityLabel(loop.automatorEnabled
                                     ? "Automator on for \(loop.name)" : "Set up automator for \(loop.name)")
         }
+    }
+}
+
+/// The journal control on a loop row, left of the "A" (ADR 0038) — a book glyph that
+/// opens the loop's practice journal. It has **no on/off state**: unlike the automator
+/// (which is genuinely armed or not), the journal is just a door, so it always reads
+/// the same neutral way. Same 44pt target / compact badge as the automator button so
+/// the two read as a pair.
+private struct JournalButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "book.closed")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(Color.white.opacity(0.06)))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
