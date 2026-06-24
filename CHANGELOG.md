@@ -5,6 +5,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Fixed
+- **Loop Type is selectable again.** In the loop edit sheet, the **Type** picker
+  (Lick / Riff / Chords / Passage) did nothing when tapped because the sheet opens
+  part-height and the picker tried to push a full-screen options list that the
+  partial sheet swallowed. It's now an in-place dropdown that works at any height.
+
 ### Added
 - **Loop tags** (ADR 0034). Editing a loop now has a **Tags** section — add short
   descriptive tags like `solo`, `needs-work`, or `chorus`, with tappable chips suggesting
