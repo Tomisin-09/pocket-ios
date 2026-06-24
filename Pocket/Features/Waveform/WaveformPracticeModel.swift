@@ -81,6 +81,8 @@ final class WaveformPracticeModel {
     var editingMarker: Marker?
     /// The loop whose automator (speed ramp) is being set up (drives the sheet, ADR 0013).
     var editingAutomatorLoop: Loop?
+    /// The loop whose practice journal is open (drives the journal sheet, ADR 0038).
+    var journalingLoop: Loop?
     /// Drives the tap-tempo / manual BPM sheet (ADR 0024), opened from "Set BPM".
     var settingBPM = false
     /// Drives the read-first `SongDetailsSheet` (Edit → `SongEditSheet`), opened by holding the title.

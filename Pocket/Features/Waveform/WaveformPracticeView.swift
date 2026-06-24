@@ -161,6 +161,7 @@ struct WaveformPracticeView: View {
                                    activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
                                    onActivate: model.activate, onEdit: { model.editingLoop = $0 },
                                    onDelete: model.deleteLoop,
+                                   onJournal: { model.journalingLoop = $0 },
                                    onAutomator: { model.editingAutomatorLoop = $0 })
                         MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
                                      onSeek: model.seekToMarker, onEdit: { model.editingMarker = $0 },
@@ -208,6 +209,12 @@ struct WaveformPracticeView: View {
             AutomatorSheet(loop: loop, song: model.song,
                            onSet: { model.startAutomator(for: loop) },
                            onTurnOff: { model.turnOffAutomator(for: loop) })
+        }
+        .sheet(item: $model.journalingLoop) { loop in
+            LoopJournalSheet(loop: loop,
+                             onAdd: { text, kind in model.addJournalEntry(to: loop, text: text, kind: kind) },
+                             onUpdate: model.updateJournalEntry,
+                             onDelete: model.deleteJournalEntry)
         }
         .sheet(isPresented: $model.showingSongDetails) {
             SongDetailsSheet(song: model.song)

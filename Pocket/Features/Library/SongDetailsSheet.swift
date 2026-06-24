@@ -3,21 +3,34 @@ import SwiftUI
 /// A read-first **song details** view, opened by holding the title on the practice
 /// screen (workstream 5). It reads as a descriptive overview — title/artist header,
 /// the song's musical facts, collections, notes, and practice stats — rather than a
-/// form of editable fields. Editing is one tap away via **Edit**, which presents the
-/// existing `SongEditSheet`; on save the values flow back through the observed `Song`.
+/// form of editable fields. Editing the structured facts is one tap away via **Edit**,
+/// which presents the existing `SongEditSheet`; on save the values flow back through
+/// the observed `Song`. **Notes are the exception** (ADR 0038): they're editable inline
+/// here, behind a deliberate edit affordance — tap the pencil in the Notes header to
+/// start, an **Update** button commits the change (with a brief "Saved" confirmation),
+/// so quick capture doesn't need the Edit-sheet detour but still feels intentional.
 struct SongDetailsSheet: View {
     let song: Song
 
     @Environment(\.dismiss) private var dismiss
     @State private var editing = false
+    // Inline notes editing: a local draft committed on Update, so the read view only
+    // changes when you explicitly save (not keystroke-by-keystroke).
+    @State private var editingNotes = false
+    @State private var draftComment = ""
+    @FocusState private var notesFocused: Bool
+    @State private var savedPulse = false
 
     var body: some View {
         NavigationStack {
             Form {
                 headerSection
+                // Notes sit directly under the title/artist/album box — the song's
+                // free-text standing facts (tuning, capo…), the song-scope half of the
+                // notes/journal feature (ADR 0038). Always shown so they're discoverable.
+                notesSection
                 detailsSection
                 if !song.collections.isEmpty { collectionsSection }
-                if !song.comment.isEmpty { notesSection }
                 statsSection
             }
             .navigationTitle("Song details")
@@ -92,8 +105,71 @@ struct SongDetailsSheet: View {
     }
 
     private var notesSection: some View {
-        Section("Notes") {
-            Text(song.comment).foregroundStyle(PocketColor.textPrimary)
+        Section {
+            if editingNotes {
+                TextField("Tuning, capo, anything worth remembering…",
+                          text: $draftComment, axis: .vertical)
+                    .lineLimit(1...8)
+                    .focused($notesFocused)
+                    .foregroundStyle(PocketColor.textPrimary)
+                    .onAppear { notesFocused = true }   // open the keyboard on entry
+                HStack {
+                    Button("Cancel", role: .cancel) { endNotesEditing() }
+                        .foregroundStyle(PocketColor.textSecondary)
+                    Spacer()
+                    // Disabled until the draft actually differs — the button lighting
+                    // up *is* the "you've made changes" cue.
+                    Button("Update") { saveNotes() }
+                        .fontWeight(.semibold)
+                        .disabled(draftComment == song.comment)
+                }
+            } else if song.comment.isEmpty {
+                Text("No notes yet — tap the pencil to add tuning, capo, or anything "
+                    + "worth remembering.")
+                    .font(.footnote)
+                    .foregroundStyle(PocketColor.textSecondary)
+            } else {
+                Text(song.comment).foregroundStyle(PocketColor.textPrimary)
+            }
+        } header: {
+            HStack {
+                Text("Notes")
+                Spacer()
+                if savedPulse {
+                    Label("Saved", systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(PocketColor.active)
+                        .transition(.opacity)
+                } else if !editingNotes {
+                    Button { startNotesEditing() } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                    .accessibilityLabel("Edit notes")
+                }
+            }
+        }
+    }
+
+    // MARK: - Inline notes editing
+
+    private func startNotesEditing() {
+        draftComment = song.comment
+        savedPulse = false
+        withAnimation { editingNotes = true }
+    }
+
+    private func endNotesEditing() {
+        notesFocused = false
+        withAnimation { editingNotes = false }
+    }
+
+    private func saveNotes() {
+        song.comment = draftComment   // mutating the @Model persists
+        endNotesEditing()
+        withAnimation { savedPulse = true }
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            withAnimation { savedPulse = false }
         }
     }
 

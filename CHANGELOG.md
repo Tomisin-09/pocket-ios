@@ -5,6 +5,19 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Loop practice journal** (ADR 0038). Each loop now has its own **journal** — a dated
+  log opened from the book icon on the loop row (left of the **A** automator button).
+  Every entry **remembers the loop's mastery and command tempo at the moment you wrote
+  it**, so the journal stays a true record of your progress even as the loop improves;
+  that snapshot is fixed, only the text and kind can be edited later. Tag each entry as a
+  🎯 Goal, ⚡️ Breakthrough, 🧗 Struggle, 📝 Note, or 🎬 Session. Entries group under day
+  headers, newest first; swipe to delete.
+- **Song notes are front and centre** (ADR 0038). A song's free-text **notes** (tuning,
+  capo, anything to remember) now show in a **Notes** section right under the title/artist/
+  album header when you open a song's details. Tap the **pencil** to edit them right there
+  (no full-Edit detour), then **Update** to save — with a quick "Saved" confirmation.
+
 ### Changed
 - **Markers drop instantly now — no naming step** (ADR 0037). Tapping **Mark** drops
   the marker straight away with a standardised name ("Marker 3"), the same way loops

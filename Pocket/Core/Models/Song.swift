@@ -199,6 +199,18 @@ final class Loop {
     /// precedence over `colorIndex` / derived when present; `nil` means no custom colour.
     var customColorHex: String?
 
+    /// The loop's practice journal — dated, context-snapshotting entries (ADR 0038).
+    /// Cascade-owned like `Song`'s loops/markers: deleting the loop deletes its journal.
+    /// Declaration default keeps SwiftData lightweight migration additive (CoreData
+    /// 134110 rule, ADR 0012) for loops saved before journalling shipped.
+    @Relationship(deleteRule: .cascade, inverse: \JournalEntry.loop)
+    var journal: [JournalEntry] = []
+
+    /// Journal entries newest-first — the order the journal sheet lists them in.
+    var journalByRecent: [JournalEntry] {
+        journal.sorted { $0.createdAt > $1.createdAt }
+    }
+
     init(name: String, start: Double, end: Double, speed: Double, repeats: Int) {
         self.uid = UUID()
         self.name = name
@@ -240,5 +252,49 @@ final class Marker {
         self.uid = UUID()
         self.seconds = seconds
         self.label = label
+    }
+}
+
+/// A single dated entry in a loop's practice journal (ADR 0038). It **snapshots the
+/// loop's context** — mastery and command tempo — at the moment of writing, so the
+/// entry stays a truthful record of where things stood even as the loop keeps moving.
+/// The snapshot and timestamp are immutable; only `text` and `kind` are editable.
+@Model
+final class JournalEntry {
+    /// Stable business id — list diffing / undo, like `Loop`/`Marker`.
+    var uid: UUID
+    /// When the entry was written. Entries list newest-first.
+    var createdAt: Date
+    /// The user's annotation — the only free-text field, and editable after creation.
+    var text: String
+
+    /// Context snapshot — the loop's `mastery` copied at creation and never updated.
+    /// Denormalised on purpose (ADR 0038): the entry must not drift as the loop improves.
+    var masteryAtEntry: Int = 0
+    /// Context snapshot — the loop's `commandTempo` copied at creation, never updated.
+    var commandTempoAtEntry: Double = 1.0
+
+    /// Backing storage for `kind` — a plain `String`, **not** the enum itself (the
+    /// SwiftData enum-attribute migration rule; see `Loop.loopTypeRaw`). Empty/unknown
+    /// reads as `.note`. Declaration default so the column always has a value.
+    var kindRaw: String = EntryKind.default.rawValue
+
+    /// Typed view over `kindRaw`; unrecognised/empty reads as the default (`.note`).
+    var kind: EntryKind {
+        get { EntryKind(raw: kindRaw) }
+        set { kindRaw = newValue.rawValue }
+    }
+
+    /// The loop this entry belongs to (cascade-owned by `Loop.journal`).
+    var loop: Loop?
+
+    init(text: String, kind: EntryKind, masteryAtEntry: Int, commandTempoAtEntry: Double,
+         createdAt: Date = Date()) {
+        self.uid = UUID()
+        self.createdAt = createdAt
+        self.text = text
+        self.kindRaw = kind.rawValue
+        self.masteryAtEntry = masteryAtEntry
+        self.commandTempoAtEntry = commandTempoAtEntry
     }
 }
