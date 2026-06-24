@@ -118,6 +118,27 @@ final class SongTests: XCTestCase {
         XCTAssertEqual(loop.loopType, .unset)
     }
 
+    // MARK: - Last-practiced resume speed (ADR 0040)
+
+    func testNewLoopHasNoLastPracticedSpeed() {
+        // Optional, no declaration default — a fresh (or migrated) loop is nil until practised.
+        let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 0.8, repeats: 1)
+        XCTAssertNil(loop.lastPracticedSpeed)
+    }
+
+    func testResumeSpeedFallsBackToSpeedWhenNeverPractised() {
+        // nil last-practiced → resume at the loop's creation / automator-start speed.
+        let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 0.65, repeats: 1)
+        XCTAssertEqual(loop.resumeSpeed, 0.65, accuracy: 1e-9)
+    }
+
+    func testResumeSpeedUsesLastPracticedWhenSet() {
+        // Once practised, resume restores that speed — not the ramp-start `speed`.
+        let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 0.5, repeats: 1)
+        loop.lastPracticedSpeed = 0.9
+        XCTAssertEqual(loop.resumeSpeed, 0.9, accuracy: 1e-9)
+    }
+
     func testLoopTagsDefaultToEmpty() {
         // Loop tags (ADR 0034) carry a declaration default of `[]` so SwiftData lightweight
         // migration fills pre-0034 loops without a store wipe (CoreData 134110).

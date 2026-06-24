@@ -76,7 +76,19 @@ final class WaveformPracticeModel {
     /// screen entry — practice opens on the **full song**, not silently armed to a
     /// saved region (ADR 0029). A loop only arms when you tap its row, punch a new
     /// one, or run an automator.
-    var activeLoopID: UUID?
+    ///
+    /// The `didSet` is the single choke point for **last-practiced speed** (ADR 0040):
+    /// whenever the active loop changes — switch, exit chip, transport skip, screen exit —
+    /// the *outgoing* loop's current `speed` is persisted into its `lastPracticedSpeed`, so
+    /// re-arming it later resumes there. One place, so no leave path is missed; it fires on
+    /// leave, not per slider tick. A just-deleted loop is skipped (no longer in `loops`).
+    var activeLoopID: UUID? {
+        didSet {
+            guard oldValue != activeLoopID,
+                  let previous = loops.first(where: { $0.uid == oldValue }) else { return }
+            previous.lastPracticedSpeed = speed
+        }
+    }
     var editingLoop: Loop?
     var editingMarker: Marker?
     /// The loop whose automator (speed ramp) is being set up (drives the sheet, ADR 0013).

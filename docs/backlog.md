@@ -49,16 +49,15 @@ never masquerades as a rating (the `1.0` command-tempo "100%" lie is gone). Exis
 loops migrated to `nil` for free; `MasteryRollup` skips unrated loops; the edit sheet
 gained set/clear affordances (dot walk-down, command-tempo Set/Clear, focus menu).
 
-**Build now (V1) — own ADR:**
+**#3 — DONE (ADR 0040).** Each loop now remembers the speed you last practised it at
+(new `Loop.lastPracticedSpeed`, kept separate from `loop.speed` = automator ramp start to
+avoid clobbering it). Persisted on leave via a single `activeLoopID` `didSet` choke point
+(not per slider tick); arming a loop — tap or transport skip — restores its speed, falling
+back to `loop.speed` when never practised. Session still opens clean (full song, 1×),
+refining ADR 0029. The user-defined toggle (loop speed always = command tempo *vs* last
+playback) stays V2.
 
-- **#3 Loop speed = last-practiced speed.** A loop remembers the speed you last
-  practiced it at: persist `loop.speed` on **deactivation / leaving** the loop
-  (not per slider tick); activating a loop restores its speed. The song still
-  opens on the full song at 1× — a *refinement* of ADR 0029 (song speed resets,
-  loop speed persists per-loop), not a reversal. The user-defined toggle (loop
-  speed always = command tempo *vs* current playback) is V2.
-
-**Priority build (bigger) — own ADR:**
+**Build now (V1, bigger) — own ADR:**
 
 - **#6 A/B as the creation primitive.** Build the parked A/B ephemeral span, then
   a **"Save A/B as loop"** hook: set A, set B, audition, save. The most intuitive

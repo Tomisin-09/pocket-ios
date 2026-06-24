@@ -125,7 +125,11 @@ auto-named ("Marker 3", same `AutoName`), no naming step, renamed later from the
 **Undo** toast that restores it with its original identity (ADR 0019). Practice
 opens on the **full song** — no loop is armed until you pick one — and leaving the
 screen **wipes** the transient session knobs (active loop, speed, click, mode) while
-persisted song data is left untouched (ADR 0029).
+persisted song data is left untouched (ADR 0029). Individual loops, though, **remember the
+speed you last practised them at** (`Loop.lastPracticedSpeed`, ADR 0040 — refining 0029):
+arming a loop restores its speed (a loop slowed to 0.7× reopens at 0.7×), persisted when you
+leave it via a single `activeLoopID` `didSet` choke point — `nil`/never-practised falls back
+to the loop's `speed`. This is per-loop memory only; the session still opens clean.
 State + handlers live in an `@Observable` `WaveformPracticeModel`
 (ADR 0007), now bound to a **persisted `Song`** — loops/markers are SwiftData
 `@Model`s that survive relaunches (ADR 0011). The app opens to a **song library**

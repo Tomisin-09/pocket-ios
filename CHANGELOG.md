@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Loops remember the speed you practise them at** (ADR 0040). Slow a loop to 0.7× to
+  drill it, move to another loop, come back — it **reopens at 0.7×** instead of snapping
+  back to full tempo. Each loop carries its own last-practised speed, saved when you leave
+  it and restored when you arm it again (a transport skip to a loop restores its speed
+  too). The song still opens on the **full song at 1×** — only individual loops carry the
+  memory.
 - **Loop rows show your progress at a glance** (ADR 0039). A saved loop's row now
   surfaces its **mastery** (dots) and the **command tempo** you own it at (a percent
   badge) right under the name — so the loops list reads as a practice dashboard, not just

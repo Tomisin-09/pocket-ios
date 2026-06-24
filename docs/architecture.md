@@ -138,7 +138,13 @@ loops each, up *or* down — or level when start = target). The ramp is **finite
 the target) × `loopsPerStep` — then `automatorAdvance` **pauses and rewinds** the engine to
 the loop start, so it can be replayed. **Set ramp** arms the config and *starts the loop
 playing* from the top (`startAutomator`). Setting `speed` reuses the existing
-speed→engine path; grabbing the slider disables the loop's ramp. A later slice adds a
+speed→engine path; grabbing the slider disables the loop's ramp. Each loop also remembers
+the speed it was last practised at (`Loop.lastPracticedSpeed`, ADR 0040): a single `didSet`
+on `activeLoopID` persists the *outgoing* loop's `speed` on any leave/switch/exit, and arming
+a loop restores it (`Loop.resumeSpeed` = last-practised, else the loop's `speed`) — so the
+three loop tempos (`speed` = ramp start, `lastPracticedSpeed` = resume, `commandTempo` =
+fastest owned) stay distinct. This refines ADR 0029: the session opens clean, but loops carry
+per-loop speed memory. A later slice adds a
 **clean-before-fast** advance gate — an `.onConfirm` mode that holds each plateau until
 the user taps step-up, plus a single-step back-off — because Pocket plays the reference
 track but can't sense the user's own accuracy (ADR 0016). Opening a song's audio is **async and

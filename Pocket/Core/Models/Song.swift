@@ -137,9 +137,19 @@ final class Loop {
     var start: Double
     var end: Double
     /// The loop's playback speed — also the **start** of its automator ramp (ADR 0013).
+    /// Distinct from `lastPracticedSpeed` (where the loop resumes) and `commandTempo`
+    /// (the fastest tempo owned) — three different loop tempos (ADR 0040).
     var speed: Double
     var repeats: Int
     var song: Song?
+
+    /// The playback speed you last practised this loop at (× of original) — restored when
+    /// you re-arm the loop, so a loop you slowed to 0.7× reopens at 0.7× (ADR 0040). Written
+    /// when you **leave** the loop, not per slider tick. `nil` = never practised → resume
+    /// falls back to `speed` (the creation / automator-start speed). Optional with no
+    /// declaration default, so pre-0040 loops migrate to `nil` without a store wipe (CoreData
+    /// 134110 exempt). Kept separate from `speed` so practice never clobbers the ramp start.
+    var lastPracticedSpeed: Double?
 
     /// How cleanly the player owns this loop, 0–5 — or `nil` when never rated (ADR 0039).
     /// The source the song's derived `mastery` rolls up from. **Optional on purpose**: a
@@ -227,6 +237,11 @@ final class Loop {
 
     var startSeconds: TimeInterval { (song?.duration ?? 0) * start }
     var endSeconds: TimeInterval { (song?.duration ?? 0) * end }
+
+    /// The speed to resume this loop at when you arm it (ADR 0040): the speed you last
+    /// practised it at, or — when never practised (`nil`) — its `speed` (creation /
+    /// automator-start), so migrated and brand-new loops still resume sensibly.
+    var resumeSpeed: Double { lastPracticedSpeed ?? speed }
 
     /// The loop's speed-ramp config (pure value type). `speed` is the ramp start; the
     /// rest are the automator-specific fields. Setting it writes them back through.
