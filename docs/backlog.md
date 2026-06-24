@@ -27,6 +27,13 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
   suggest tags from *other* loops; verify the tags already **on this loop** are
   surfaced clearly when editing, and that the in-use list is discoverable.
 
+- **Landscape — practice screen only (ADR 0042, decided 2026-06-25).** Decision
+  recorded; **not yet built.** Selective landscape: only the waveform/practice
+  view rotates (more width = more waveform resolution + precise A/B drag), rest
+  stays portrait-locked for V1. V1 *polish* item — pick up as its own branch
+  **after** loop-tags above, once the practice screen has gone quiet. See the
+  ADR for the per-screen orientation-gate implementation note.
+
 ## Notes & journal — DONE (ADR 0038)
 
 Shipped in PR #50: a per-loop **practice journal** (dated entries snapshotting
