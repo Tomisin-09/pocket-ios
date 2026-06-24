@@ -127,29 +127,18 @@ private struct AutomatorButton: View {
     }
 }
 
-/// Shared trailing edit affordance for loop and marker rows.
-private struct EditPencil: View {
-    let action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "pencil")
-                .font(.body)
-                .foregroundStyle(PocketColor.textSecondary)
-                .frame(width: 44, height: 44)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 // MARK: - 11. Markers panel
 
 struct MarkersPanel: View {
     let markers: [Marker]
     @Binding var expanded: Bool
-    /// Tap the row — seek the playhead to the marker.
+    /// Tap the row — seek the playhead to the marker (and play from there).
     let onSeek: (Marker) -> Void
-    /// Trailing pencil — open the edit sheet (rename / delete).
+    /// Hold the row — open the edit sheet (rename / delete). Mirrors the loop row;
+    /// no pencil (ADR 0028 / 0037).
     let onEdit: (Marker) -> Void
+    /// Delete the marker — surfaced for VoiceOver, which can't long-press.
+    let onDelete: (Marker) -> Void
 
     var body: some View {
         CollapsiblePanel(title: "Markers",
@@ -164,31 +153,57 @@ struct MarkersPanel: View {
             } else {
                 VStack(spacing: 8) {
                     ForEach(markers) { marker in
-                        HStack(spacing: 10) {
-                            // Tap the row to seek the playhead to the marker.
-                            Button { onSeek(marker) } label: {
-                                HStack(spacing: 10) {
-                                    Circle().fill(PocketColor.pin).frame(width: 8, height: 8)
-                                    Text(marker.label)
-                                        .font(.subheadline)
-                                        .foregroundStyle(PocketColor.textPrimary)
-                                        .lineLimit(1)
-                                    Spacer(minLength: 0)
-                                    Text(timecode(marker.seconds))
-                                        .font(.pocketMono(.footnote))
-                                        .foregroundStyle(PocketColor.textSecondary)
-                                }
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Go to \(marker.label)")
-
-                            EditPencil { onEdit(marker) }
-                                .accessibilityLabel("Edit \(marker.label)")
-                        }
+                        MarkerRow(marker: marker,
+                                  onSeek: { onSeek(marker) },
+                                  onEdit: { onEdit(marker) },
+                                  onDelete: { onDelete(marker) })
                     }
                 }
             }
+        }
+    }
+}
+
+private struct MarkerRow: View {
+    let marker: Marker
+    let onSeek: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        // Tap the row to seek-and-play; press and hold (with a haptic) to open the
+        // edit sheet — rename and delete live there (ADR 0028 / 0037, mirroring the
+        // loop row). No pencil, no swipe: the hold is the one way in. A bare tap
+        // target rather than a Button so tap + long-press compose cleanly.
+        HStack(spacing: 10) {
+            Circle().fill(PocketColor.pin).frame(width: 8, height: 8)
+            Text(marker.label)
+                .font(.subheadline)
+                .foregroundStyle(PocketColor.textPrimary)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+            Text(timecode(marker.seconds))
+                .font(.pocketMono(.footnote))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        // A marker row carries little content (a dot + label), so without a minimum
+        // height it reads as cramped next to the taller loop rows. Pin it to the 44pt
+        // touch-target height; the frame sits inside `contentShape` so the whole row
+        // stays tappable / holdable.
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onSeek)
+        .onLongPressGesture(minimumDuration: 0.4) {
+            haptic(.medium)     // confirm the hold landed before the sheet appears
+            onEdit()
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("Go to \(marker.label)")
+        // VoiceOver can't long-press, so surface the same actions explicitly.
+        .accessibilityActions {
+            Button("Edit", action: onEdit)
+            Button("Delete", action: onDelete)
         }
     }
 }

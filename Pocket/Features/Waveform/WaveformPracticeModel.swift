@@ -79,9 +79,6 @@ final class WaveformPracticeModel {
     var activeLoopID: UUID?
     var editingLoop: Loop?
     var editingMarker: Marker?
-    /// A freshly-dropped marker awaiting a name (drives the name-only sheet). It's a
-    /// detached `@Model` — persisted only on save; cancelling drops it.
-    var namingMarker: Marker?
     /// The loop whose automator (speed ramp) is being set up (drives the sheet, ADR 0013).
     var editingAutomatorLoop: Loop?
     /// Drives the tap-tempo / manual BPM sheet (ADR 0024), opened from "Set BPM".

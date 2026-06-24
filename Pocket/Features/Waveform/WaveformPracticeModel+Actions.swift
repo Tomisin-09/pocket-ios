@@ -96,26 +96,24 @@ extension WaveformPracticeModel {
     // Snap-to-marker/loop-edge helpers (`snapTarget`, `seekSnapping`, …) live in
     // `WaveformPracticeModel+Snap.swift` (ADR 0021), split out for file length.
 
-    /// Tap a marker in the list: seek the playhead to it.
+    /// Tap a marker in the list: seek the playhead to it and start playing from there
+    /// (a marker is a "take me here and go" cue), so you hear the spot without a
+    /// separate ▶ — same play-on-seek as a freshly created loop.
     func seekToMarker(_ marker: Marker) {
         engine.seek(toSeconds: marker.seconds)
+        engine.play()
         haptic(.light)
     }
 
-    /// Mark button — start a new marker at the playhead. The name-only sheet adds it
-    /// on save; cancelling discards it (so the sheet needs no position or delete).
+    /// Mark button — drop a marker at the playhead **instantly**, auto-named
+    /// ("Marker 3", via pure `AutoName`) and persisted with no naming step; rename it
+    /// later from its row (mirrors instant loop creation — ADR 0037, amending 0019).
     func dropMarkerAtPlayhead() {
-        namingMarker = Marker(seconds: playheadFraction * duration, label: "")
-    }
-
-    /// Name-sheet Save for a new marker — persist it (empty name → "Marker").
-    func saveMarkerName(_ name: String) {
-        guard let marker = namingMarker else { return }
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        marker.label = trimmed.isEmpty ? "Marker" : trimmed
+        let label = AutoName.next(prefix: "Marker", existing: markers.map(\.label))
+        let marker = Marker(seconds: playheadFraction * duration, label: label)
         context.insert(marker)
         marker.song = song          // attach → shows in `markers`, persists
-        namingMarker = nil
+        haptic(.medium)
     }
 
     /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd closes the loop and

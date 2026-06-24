@@ -163,7 +163,8 @@ struct WaveformPracticeView: View {
                                    onDelete: model.deleteLoop,
                                    onAutomator: { model.editingAutomatorLoop = $0 })
                         MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
-                                     onSeek: model.seekToMarker, onEdit: { model.editingMarker = $0 })
+                                     onSeek: model.seekToMarker, onEdit: { model.editingMarker = $0 },
+                                     onDelete: model.deleteMarker)
                         SongInfoPanel(song: model.song, expanded: $model.songInfoExpanded) // 2
                     }
                     .padding(.horizontal, 16)
@@ -202,9 +203,6 @@ struct WaveformPracticeView: View {
         }
         .sheet(item: $model.editingMarker) { marker in
             MarkerEditSheet(marker: marker, onDelete: { model.deleteMarker(marker) })
-        }
-        .sheet(item: $model.namingMarker) { _ in
-            MarkerNameSheet(onSave: model.saveMarkerName)
         }
         .sheet(item: $model.editingAutomatorLoop) { loop in
             AutomatorSheet(loop: loop, song: model.song,
