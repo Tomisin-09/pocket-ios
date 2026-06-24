@@ -5,6 +5,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Markers drop instantly now — no naming step** (ADR 0037). Tapping **Mark** drops
+  the marker straight away with a standardised name ("Marker 3"), the same way loops
+  are created; rename it later by tapping its row. The old "name this marker" pop-up is
+  gone, so you can keep listening and signpost a song without stopping to type.
+- **Tapping a marker plays from there** (ADR 0037). Selecting a marker in the markers
+  list now seeks to it **and starts playback**, so you immediately hear the spot you
+  marked instead of having to hit play.
+- **Hold a marker row to edit it** (ADR 0037). Marker rows now match loop rows: the
+  edit pencil is gone — **tap** a marker to jump to it, **press and hold** to open its
+  settings (rename / delete).
+
 ### Fixed
 - **Loop Type is selectable again.** In the loop edit sheet, the **Type** picker
   (Lick / Riff / Chords / Passage) did nothing when tapped because the sheet opens

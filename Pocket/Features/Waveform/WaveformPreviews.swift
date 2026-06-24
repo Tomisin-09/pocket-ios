@@ -209,10 +209,6 @@ import SwiftUI
     }
 }
 
-#Preview("Marker name sheet") {
-    MarkerNameSheet(onSave: { _ in })
-}
-
 #Preview("Undo toast") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
@@ -231,7 +227,7 @@ import SwiftUI
                        activeLoopID: song.loops.first?.uid, isPlaying: false,
                        onActivate: { _ in }, onEdit: { _ in }, onDelete: { _ in }, onAutomator: { _ in })
             MarkersPanel(markers: song.markers, expanded: $markersExpanded,
-                         onSeek: { _ in }, onEdit: { _ in })
+                         onSeek: { _ in }, onEdit: { _ in }, onDelete: { _ in })
         }
         .padding()
     }
@@ -251,7 +247,7 @@ import SwiftUI
     @Previewable @State var expanded = true
     ZStack {
         PocketColor.background.ignoresSafeArea()
-        MarkersPanel(markers: [], expanded: $expanded, onSeek: { _ in }, onEdit: { _ in }).padding()
+        MarkersPanel(markers: [], expanded: $expanded, onSeek: { _ in }, onEdit: { _ in }, onDelete: { _ in }).padding()
     }
 }
 

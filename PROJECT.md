@@ -119,8 +119,9 @@ now encodes loop **identity** (deterministic palette slot, pure unit-tested
 (supersedes the colour-is-state rule of ADR 0018). The blue theme (blue bars anchored
 on `#2a6796`) sits on the near-black background (ADR 0023). New loops are created **instantly** on confirm — auto-named
 ("Loop 3", via pure `AutoName`), activated, and **looping immediately** (no separate
-play tap), no naming sheet (markers still ask for a label, since a marker *is* its
-label); deleting a loop or marker offers an
+play tap), no naming sheet — and **markers now drop the same way**: instantly,
+auto-named ("Marker 3", same `AutoName`), no naming step, renamed later from the row
+(ADR 0037, amending 0019's marker-naming exception); deleting a loop or marker offers an
 **Undo** toast that restores it with its original identity (ADR 0019). Practice
 opens on the **full song** — no loop is armed until you pick one — and leaving the
 screen **wipes** the transient session knobs (active loop, speed, click, mode) while
