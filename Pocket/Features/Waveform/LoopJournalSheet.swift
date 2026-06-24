@@ -104,8 +104,8 @@ struct LoopJournalSheet: View {
                 .foregroundStyle(PocketColor.textSecondary)
             HStack(spacing: 6) {
                 Text("Mastery")
-                MasteryDots(filled: loop.mastery)
-                Text("·  Command tempo \(Int((loop.commandTempo * 100).rounded()))%")
+                MasteryReadout(mastery: loop.mastery)
+                Text("·  Command tempo \(LoopProgressFormat.percentLabel(loop.commandTempo))")
             }
             .foregroundStyle(PocketColor.textPrimary)
         }
@@ -141,8 +141,8 @@ private struct JournalEntryRow: View {
                 .foregroundStyle(PocketColor.textPrimary)
             // The immutable context snapshot — where mastery + command tempo stood.
             HStack(spacing: 8) {
-                MasteryDots(filled: entry.masteryAtEntry)
-                Text("· \(Int((entry.commandTempoAtEntry * 100).rounded()))%")
+                MasteryReadout(mastery: entry.masteryAtEntry)
+                Text("· \(LoopProgressFormat.percentLabel(entry.commandTempoAtEntry))")
                     .font(.pocketMono(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
@@ -185,9 +185,9 @@ private struct JournalEntryEditor: View {
             }
             // Read-only: the snapshot is fixed at creation (ADR 0038).
             Section {
-                LabeledContent("Mastery") { MasteryDots(filled: entry.masteryAtEntry) }
+                LabeledContent("Mastery") { MasteryReadout(mastery: entry.masteryAtEntry) }
                 LabeledContent("Command tempo") {
-                    Text("\(Int((entry.commandTempoAtEntry * 100).rounded()))%")
+                    Text(LoopProgressFormat.percentLabel(entry.commandTempoAtEntry))
                         .font(.pocketMono(.body))
                 }
                 LabeledContent("When") {

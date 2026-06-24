@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · MusicalKey (pure)
+│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -138,7 +138,13 @@ loops each, up *or* down — or level when start = target). The ramp is **finite
 the target) × `loopsPerStep` — then `automatorAdvance` **pauses and rewinds** the engine to
 the loop start, so it can be replayed. **Set ramp** arms the config and *starts the loop
 playing* from the top (`startAutomator`). Setting `speed` reuses the existing
-speed→engine path; grabbing the slider disables the loop's ramp. A later slice adds a
+speed→engine path; grabbing the slider disables the loop's ramp. Each loop also remembers
+the speed it was last practised at (`Loop.lastPracticedSpeed`, ADR 0040): a single `didSet`
+on `activeLoopID` persists the *outgoing* loop's `speed` on any leave/switch/exit, and arming
+a loop restores it (`Loop.resumeSpeed` = last-practised, else the loop's `speed`) — so the
+three loop tempos (`speed` = ramp start, `lastPracticedSpeed` = resume, `commandTempo` =
+fastest owned) stay distinct. This refines ADR 0029: the session opens clean, but loops carry
+per-loop speed memory. A later slice adds a
 **clean-before-fast** advance gate — an `.onConfirm` mode that holds each plateau until
 the user taps step-up, plus a single-step back-off — because Pocket plays the reference
 track but can't sense the user's own accuracy (ADR 0016). Opening a song's audio is **async and
@@ -174,21 +180,26 @@ only. See `docs/decisions/0001`.
   of four buckets — *intrinsic fact*, *scalar/enum* the app reasons about, *descriptive
   tag* (`[String]`), or *named grouping* (`collections`). The song's practice **Mastery**
   is no longer stored: it is **derived** from its loops via `MasteryRollup.rollup`
-  (rounded average, `nil` ⇒ "Unrated"), kept SwiftData-free and unit-tested per the
+  (rounded average of the *rated* loops, skipping unrated `nil`s; `nil` ⇒ "Unrated" — ADR
+  0039), kept SwiftData-free and unit-tested per the
   pure-logic rule. `Loop.mastery` is the stored source; `Song.lastPracticed` feeds the
   planner (ADR 0014). The song **key** is the scalar/enum bucket: `MusicalKey` (pure, 12
   roots × major/minor + `.unknown`) is the typed vocabulary, with `MusicalKey.parse`
   folding legacy free text and flats onto cases. The SwiftData attribute stays
   `Song.key: String`; `Song.musicalKey` parses on read and writes the canonical raw value
   on save, so the typed model lands without a schema migration. The loop adds the rest of
-  the scalar/enum bucket — `Loop.focus` (`Int` 1–3 intent), `Loop.commandTempo` (`Double`,
+  the scalar/enum bucket — `Loop.focus` (`Int?` 1–3 intent), `Loop.commandTempo` (`Double?`,
   fastest owned tempo as a fraction), and `Loop.loopType` (the pure `LoopType` enum —
   Lick / Riff / Chords / Passage + `.unset`, where Passage is the composite for a loop that
   spans more than one). `loopType` stores a backing `String` (`loopTypeRaw`)
   with a computed enum over it — like `key`/`MusicalKey` — because a custom enum `@Model`
-  attribute does **not** survive lightweight migration (existing rows fault on first read);
-  declaration defaults only backfill primitive scalars (`focus`, `commandTempo`, `mastery`).
-  All four fill pre-0036 loops without a store wipe.
+  attribute does **not** survive lightweight migration (existing rows fault on first read).
+  The three **judgment** scalars (`mastery`, `focus`, `commandTempo`) are **Optional with no
+  declaration default** (ADR 0039): `nil` = never set, the honest state for a new or migrated
+  loop, so a default never reads as a real rating. Optionals are *exempt* from the
+  mandatory-attribute rule, so they migrate pre-0039 loops to `nil` for free; `loopType`'s
+  backing `String` keeps its `""` default. All fill pre-0036/0039 loops without a store wipe.
+  Display percent + the `nil → "—"` fallback live in the pure `LoopProgressFormat`.
 - **Two-axis annotation** (`[String]`, shared `Labels` canonicaliser): the descriptive-tag
   bucket is `Song.collections` (song scope, ADR 0033) and `Loop.tags` (loop scope, ADR 0034) —
   one scope-agnostic normaliser (trim → collapse whitespace → case-insensitive de-dup, first-seen

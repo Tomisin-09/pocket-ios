@@ -25,8 +25,26 @@ final class MasteryRollupTests: XCTestCase {
     }
 
     func testAllZeroLoopsRollUpToZeroNotNil() {
-        // A song with loops that are all unpractised is rated 0 ("Needs work"), distinct
-        // from a loopless song, which is nil ("Unrated").
+        // A song whose loops are all rated 0 ("Needs work") is rated 0 — distinct from a
+        // loopless or all-unrated song, which is nil ("Unrated").
         XCTAssertEqual(MasteryRollup.rollup([0, 0]), 0)
+    }
+
+    // MARK: - Unrated loops are skipped (ADR 0039)
+
+    func testUnratedLoopsAreSkipped() {
+        // `nil` = never rated; it must not be averaged as 0. Only the rated loops count.
+        XCTAssertEqual(MasteryRollup.rollup([4, nil, 2]), 3)
+        XCTAssertEqual(MasteryRollup.rollup([5, nil, nil]), 5)
+    }
+
+    func testAllUnratedLoopsRollUpToNil() {
+        // A song with loops but no *rated* loop is unrated, like a loopless song.
+        XCTAssertNil(MasteryRollup.rollup([nil, nil]))
+    }
+
+    func testZeroIsRatedButNilIsNot() {
+        // A real 0 still counts; an adjacent nil is skipped — so this averages just the 0.
+        XCTAssertEqual(MasteryRollup.rollup([0, nil]), 0)
     }
 }

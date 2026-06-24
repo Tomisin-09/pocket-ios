@@ -304,15 +304,23 @@ extension WaveformPracticeModel {
     }
 
     /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
+    /// Arming a *different* loop restores its last-practiced speed (ADR 0040); re-tapping the
+    /// already-active loop only toggles play/pause, keeping the speed you're sitting at.
     func activate(_ loop: Loop) {
-        if activeLoopID == loop.uid && engine.isPlaying {
-            engine.pause()
-        } else {
-            activeLoopID = loop.uid
-            applyActiveLoopToEngine()
-            engine.seek(toSeconds: loop.startSeconds)
-            engine.play()
+        if activeLoopID == loop.uid {
+            if engine.isPlaying {
+                engine.pause()
+            } else {
+                engine.seek(toSeconds: loop.startSeconds)
+                engine.play()
+            }
+            return
         }
+        activeLoopID = loop.uid               // didSet persists the outgoing loop's speed
+        speed = loop.resumeSpeed              // restore this loop's last-practiced speed
+        applyActiveLoopToEngine()
+        engine.seek(toSeconds: loop.startSeconds)
+        engine.play()
     }
 
     /// Exit-loop chip — stop looping and play on through the song.
@@ -351,47 +359,5 @@ extension WaveformPracticeModel {
         }
     }
 
-    /// Delete a loop, with an Undo toast (ADR 0019). Edits to an existing loop are
-    /// written straight to the @Model by its edit sheet (auto-persisting), so there's
-    /// no `updateLoop`. Undo re-creates the loop from a snapshot (same uid + automator)
-    /// and restores it as active if it was.
-    func deleteLoop(_ loop: Loop) {
-        let wasActive = activeLoopID == loop.uid
-        let (uid, name) = (loop.uid, loop.name)
-        let (start, end, lspeed, repeats) = (loop.start, loop.end, loop.speed, loop.repeats)
-        let automator = loop.automator
-        context.delete(loop)
-        if wasActive {
-            // Clean state (ADR 0029): deleting the loop you're hearing plays through
-            // the song rather than silently arming a different saved region.
-            activeLoopID = nil
-            applyActiveLoopToEngine()
-        }
-        presentUndo("Deleted \(name)") { [weak self] in
-            guard let self else { return }
-            let restored = Loop(name: name, start: start, end: end, speed: lspeed, repeats: repeats)
-            restored.uid = uid
-            restored.automator = automator
-            self.context.insert(restored)
-            restored.song = self.song
-            if wasActive {
-                self.activeLoopID = restored.uid
-                self.applyActiveLoopToEngine()
-            }
-        }
-    }
-
-    /// Delete a marker, with an Undo toast (ADR 0019). Undo re-creates it from a
-    /// snapshot (same uid).
-    func deleteMarker(_ marker: Marker) {
-        let (uid, seconds, label) = (marker.uid, marker.seconds, marker.label)
-        context.delete(marker)
-        presentUndo("Deleted \(label)") { [weak self] in
-            guard let self else { return }
-            let restored = Marker(seconds: seconds, label: label)
-            restored.uid = uid
-            self.context.insert(restored)
-            restored.song = self.song
-        }
-    }
+    // Loop / marker deletion + undo (ADR 0019) lives in `+Delete.swift`.
 }

@@ -22,10 +22,10 @@ struct LoopEditSheet: View {
     @State private var name: String
     @State private var colorChoice: LoopColorChoice
     // Structured practice fields (ADR 0036 slice 3) — edited as local copies, written
-    // back on Done so Cancel discards.
-    @State private var mastery: Int
-    @State private var focus: Int
-    @State private var commandTempo: Double
+    // back on Done so Cancel discards. Optional: `nil` = never set (ADR 0039).
+    @State private var mastery: Int?
+    @State private var focus: Int?
+    @State private var commandTempo: Double?
     @State private var loopType: LoopType
     // Loop tags (ADR 0034) — local copy, written back on Done.
     @State private var tags: [String]
@@ -158,46 +158,70 @@ struct LoopEditSheet: View {
         }
     }
 
-    /// Mastery as a 0–5 dot rating. Tap a dot to set that value; tapping the highest
-    /// filled dot clears it by one, so you can walk back down to 0 (unrated).
+    /// Mastery as a 0–5 dot rating, or unrated (`nil`, ADR 0039). Tap a dot to set that
+    /// value; tapping the lowest filled dot walks it down, and walking below 1 clears it
+    /// back to unrated — so the rating is always one you deliberately made.
     private var masteryRow: some View {
         LabeledContent("Mastery") {
             HStack(spacing: 10) {
+                if mastery == nil {
+                    Text("Unrated")
+                        .font(.subheadline)
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
                 ForEach(1...5, id: \.self) { value in
                     Circle()
-                        .fill(value <= mastery ? PocketColor.marker : PocketColor.barDefault)
+                        .fill(value <= (mastery ?? 0) ? PocketColor.marker : PocketColor.barDefault)
                         .frame(width: 18, height: 18)
-                        .onTapGesture { mastery = (mastery == value) ? value - 1 : value }
+                        .onTapGesture {
+                            // Tapping the current value walks down; below 1 → unrated (nil).
+                            mastery = (mastery == value) ? (value == 1 ? nil : value - 1) : value
+                        }
                         .accessibilityLabel("Set mastery to \(value)")
                 }
             }
         }
     }
 
-    /// Practice intent 1–3 as a segmented control. Stored as `Int` per ADR 0036 (the
-    /// planner reads the raw value); the labels live here, in the presentation layer.
+    /// Practice intent — Backburner / Active / Sharpening, or Not set (`nil`, ADR 0039).
+    /// A menu (not a segmented control): a 4th "unset" segment is too cramped on a phone,
+    /// and a menu handles `nil` cleanly while matching the `Type` menu above it. Stored as
+    /// `Int?` per ADR 0036 (the planner reads the raw value); labels live in the view.
     private var focusRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Focus").foregroundStyle(PocketColor.textSecondary)
-            Picker("Focus", selection: $focus) {
-                Text("Backburner").tag(1)
-                Text("Active").tag(2)
-                Text("Sharpening").tag(3)
-            }
-            .pickerStyle(.segmented)
+        Picker("Focus", selection: $focus) {
+            Text("Not set").tag(Int?.none)
+            Text("Backburner").tag(Int?(1))
+            Text("Active").tag(Int?(2))
+            Text("Sharpening").tag(Int?(3))
         }
+        .pickerStyle(.menu)
+        .foregroundStyle(PocketColor.textSecondary)
     }
 
-    /// Command tempo as a percentage of original (ADR 0036) — the fastest tempo you own
-    /// the loop at, distinct from the current practice `speed`.
+    /// Command tempo as a percentage of original (ADR 0036), or not yet measured (`nil`,
+    /// ADR 0039). A slider can't express "unset," so when unmeasured the row offers a
+    /// **Set** button (seeded from the loop's current practice `speed`, a tempo you're
+    /// demonstrably at); once set, the slider shows with a **Clear** control back to unset.
     private var commandTempoRow: some View {
         VStack(alignment: .leading, spacing: 8) {
-            LabeledContent("Command tempo") {
-                Text("\(Int((commandTempo * 100).rounded()))%")
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(PocketColor.textPrimary)
+            if let value = commandTempo {
+                LabeledContent("Command tempo") {
+                    HStack(spacing: 12) {
+                        Text(LoopProgressFormat.percentLabel(value))
+                            .font(.pocketMono(.body))
+                            .foregroundStyle(PocketColor.textPrimary)
+                        Button("Clear") { commandTempo = nil }
+                            .font(.caption)
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                }
+                Slider(value: Binding(get: { value }, set: { commandTempo = $0 }),
+                       in: 0.25...1.5, step: 0.05)
+            } else {
+                LabeledContent("Command tempo") {
+                    Button("Set") { commandTempo = min(max(loop.speed, 0.25), 1.5) }
+                }
             }
-            Slider(value: $commandTempo, in: 0.25...1.5, step: 0.05)
         }
     }
 
