@@ -23,38 +23,79 @@ The order below reflects a deliberate scoping call, not just priority:
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
-- **Bug: loop Type won't change.** The edit sheet's **Type** picker
-  (Lick / Riff / Chords / Passage, ADR 0036) doesn't apply a change. Shipped
-  last in 0036, so likely a binding/regression in `SongEditSheet`/loop edit.
 - **Loop tags — show existing as well.** Tag suggestion chips (ADR 0034)
   suggest tags from *other* loops; verify the tags already **on this loop** are
   surfaced clearly when editing, and that the in-use list is discoverable.
 
-## Notes & journal (next up — pre-planner V1 work)
+## Notes & journal — DONE (ADR 0038)
 
-A two-tier record on both songs and loops, user-editable from day one (AI
-summaries come later — see Release sequencing):
+Shipped in PR #50: a per-loop **practice journal** (dated entries snapshotting
+mastery + command tempo at write time, immutable; typed entry kinds) opened from
+a book icon on the loop row, plus **song notes** (free-text `Song.comment`)
+editable inline in the song details sheet. Narrowed ADR 0012's three-scope
+forecast to loop-only; markers get neither. AI summaries over the journal remain
+in the AI phase (below).
 
-- **Song notes:** a general summary **and** a timestamped journal log.
-- **Loop notes:** same shape (summary + timestamped log), with **two access
-  points** — the loop row and the automator ("A" control).
-- This is also a planner input later (session history / intent), so the data
-  model should anticipate that even though the planner is V2.
-- Foundation in ADR 0012 (journaling was scoped there); needs its own build
-  slices + likely an ADR for the notes/journal data model.
+## Loop experience (sense-check decided 2026-06-24)
+
+Outcome of a UX review of loop properties + the loop-making flow. Numbering
+matches the discussion thread.
+
+**#2 + #4 — DONE (ADR 0039).** The loop row now surfaces **mastery** (dots) and
+**command tempo** (a percent badge, the achievement) under the name, shown only when
+set — last-practiced speed is *not* shown. The three judgment fields (**mastery,
+command tempo, focus**) became Optional with an explicit "unset" state, so a default
+never masquerades as a rating (the `1.0` command-tempo "100%" lie is gone). Existing
+loops migrated to `nil` for free; `MasteryRollup` skips unrated loops; the edit sheet
+gained set/clear affordances (dot walk-down, command-tempo Set/Clear, focus menu).
+
+**Build now (V1) — own ADR:**
+
+- **#3 Loop speed = last-practiced speed.** A loop remembers the speed you last
+  practiced it at: persist `loop.speed` on **deactivation / leaving** the loop
+  (not per slider tick); activating a loop restores its speed. The song still
+  opens on the full song at 1× — a *refinement* of ADR 0029 (song speed resets,
+  loop speed persists per-loop), not a reversal. The user-defined toggle (loop
+  speed always = command tempo *vs* current playback) is V2.
+
+**Priority build (bigger) — own ADR:**
+
+- **#6 A/B as the creation primitive.** Build the parked A/B ephemeral span, then
+  a **"Save A/B as loop"** hook: set A, set B, audition, save. The most intuitive
+  creation gesture, and it also dissolves the range-editing-is-three-hops
+  problem. Unifies markers / A-B / loops into one creation story. (Supersedes the
+  bare A/B item that used to live under "Loop & marker creation.")
+
+**V2 / planner-era:**
+
+- **#5 Multi-select loops** for bulk tag / type / focus (and bulk delete). Rides
+  with the planner since it mostly acts on planner fields. *Inheritance and
+  duplicate were considered and rejected* — multi-select is the only bulk move
+  we want.
+- **#4 test-data seeding** to exercise the planner before real fill-rate exists.
+  Validates planner *logic*, not fill-rate — only real usage shows whether users
+  actually fill the fields.
+
+**Parked — deliberate, leave as-is:**
+
+- **#1 Marker→loop bridge:** not needed as an explicit action. Markers already
+  snap loop edges during creation (ADR 0021), and a marker is approximate, so an
+  "exact marker→loop" would mislead. The passive snap is the right amount.
+- **#7 Resume-to-last-loop:** leave as-is (ADR 0029 wipes the active loop on
+  exit); revisit via A/B test. Could ride on the `lastPracticed` field cheaply if
+  reconsidered.
+- **#8 "Loop 1/2/3" naming:** deferred naming (ADR 0019) stays — if a loop's
+  unclear you play it to remember, and the glanceable row (#2) lowers the cost
+  further.
 
 ## Loop & marker creation
 
-- **Markers auto-name like loops (reversal of ADR 0019).** Today loops are
-  created instantly with an auto-name (ADR 0019) while markers force a naming
-  step ("a marker *is* its label"). Decision: markers should also set with a
-  **standardised auto-name**, renameable later via loop/marker settings — the
-  naming step becomes non-obligatory. This unblocks step 2 of the creation
-  method below. Needs an ADR amending 0019.
 - **A/B ephemeral span ("not saved").** A transient A↔B selection the musician
   sets on the fly to rehearse **several consecutive saved loops together as
   one**, without persisting a new loop. Distinct from saved region loops
-  (ADR 0006); think scratch/rehearsal span. Net-new.
+  (ADR 0006); think scratch/rehearsal span. Net-new. *Note:* the A/B span is now
+  also the basis for **#6 (A/B as creation primitive)** above — build the span
+  once, serve both the rehearsal and the save-as-loop use.
 - **Loops accessible outside their song?** Open question. Today a `Loop`
   belongs to one `Song`. Cross-song access is largely what the **planner**
   delivers (pulling loops across songs into a session) and ties to cross-song

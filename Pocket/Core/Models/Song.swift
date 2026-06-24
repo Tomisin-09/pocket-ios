@@ -141,22 +141,27 @@ final class Loop {
     var repeats: Int
     var song: Song?
 
-    /// How cleanly the player owns this loop, 0–5 (ADR 0036). The source the song's
-    /// derived `mastery` rolls up from. Declaration default (not init-only) so SwiftData
-    /// lightweight migration fills pre-0036 loops without a store wipe (CoreData 134110).
-    var mastery: Int = 0
+    /// How cleanly the player owns this loop, 0–5 — or `nil` when never rated (ADR 0039).
+    /// The source the song's derived `mastery` rolls up from. **Optional on purpose**: a
+    /// non-optional `0` default reads as "can't play it at all," a claim rather than the
+    /// absence of one, and would render a fake rating on the glanceable row. Optional is
+    /// exempt from the CoreData 134110 mandatory-attribute rule, so pre-0039 loops migrate
+    /// to `nil` (= never touched) with no store wipe — which is exactly the truth.
+    var mastery: Int?
 
-    /// Deliberate practice intent, 1–3 (ADR 0036): `1` Backburner (not actively working
-    /// it) · `2` Active (in current rotation) · `3` Sharpening (pushing it now / gig prep).
-    /// Kept separate from `mastery` — a well-played loop can still be high intent and a
-    /// rough one low intent; the planner reads mastery as *need* and focus as *intent*.
-    /// Declaration default fills pre-0036 loops (CoreData 134110).
-    var focus: Int = 1
+    /// Deliberate practice intent — `1` Backburner · `2` Active · `3` Sharpening — or `nil`
+    /// when never triaged (ADR 0036 / 0039). Kept separate from `mastery` (the planner reads
+    /// mastery as *need*, focus as *intent*). Optional like `mastery`/`commandTempo` so all
+    /// three judgment fields share one "unset" concept and the planner (V2) gets a real
+    /// "never triaged" signal instead of an ambiguous `1`; migrates pre-0039 loops to `nil`.
+    var focus: Int?
 
-    /// The fastest tempo the player owns this loop at, as a fraction of original (ADR 0036)
-    /// — distinct from `speed`, the *current* practice playback rate. `1.0` = full tempo
-    /// ("you command this at 85%" → `0.85`). Declaration default fills pre-0036 loops.
-    var commandTempo: Double = 1.0
+    /// The fastest tempo the player owns this loop at, as a fraction of original — or `nil`
+    /// when never measured (ADR 0036 / 0039). Distinct from `speed`, the *current* practice
+    /// playback rate. `1.0` = full tempo ("you command this at 85%" → `0.85`). **Optional on
+    /// purpose**: a `1.0` default literally claims full-tempo mastery, so an untouched loop
+    /// would badge 100%. Migrates pre-0039 loops to `nil` (CoreData 134110 exempt).
+    var commandTempo: Double?
 
     /// Backing storage for `loopType` — a plain `String` raw value, **not** the enum
     /// itself. A custom enum attribute does not survive SwiftData lightweight migration:
@@ -268,11 +273,16 @@ final class JournalEntry {
     /// The user's annotation — the only free-text field, and editable after creation.
     var text: String
 
-    /// Context snapshot — the loop's `mastery` copied at creation and never updated.
-    /// Denormalised on purpose (ADR 0038): the entry must not drift as the loop improves.
-    var masteryAtEntry: Int = 0
-    /// Context snapshot — the loop's `commandTempo` copied at creation, never updated.
-    var commandTempoAtEntry: Double = 1.0
+    /// Context snapshot — the loop's `mastery` copied at creation and never updated; `nil`
+    /// when the loop was unrated at the time (ADR 0039). Denormalised on purpose (ADR 0038):
+    /// the entry must not drift as the loop improves. Optional so an entry written against an
+    /// unrated loop records "unrated," not a defaulted `0`. (Pre-0039 entries keep their
+    /// stored value — they were genuinely written under the old defaulted semantics.)
+    var masteryAtEntry: Int?
+    /// Context snapshot — the loop's `commandTempo` copied at creation, never updated; `nil`
+    /// when never measured at the time (ADR 0039). Optional for the same reason as
+    /// `masteryAtEntry`.
+    var commandTempoAtEntry: Double?
 
     /// Backing storage for `kind` — a plain `String`, **not** the enum itself (the
     /// SwiftData enum-attribute migration rule; see `Loop.loopTypeRaw`). Empty/unknown
@@ -288,7 +298,7 @@ final class JournalEntry {
     /// The loop this entry belongs to (cascade-owned by `Loop.journal`).
     var loop: Loop?
 
-    init(text: String, kind: EntryKind, masteryAtEntry: Int, commandTempoAtEntry: Double,
+    init(text: String, kind: EntryKind, masteryAtEntry: Int?, commandTempoAtEntry: Double?,
          createdAt: Date = Date()) {
         self.uid = UUID()
         self.createdAt = createdAt

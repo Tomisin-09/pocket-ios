@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Loop rows show your progress at a glance** (ADR 0039). A saved loop's row now
+  surfaces its **mastery** (dots) and the **command tempo** you own it at (a percent
+  badge) right under the name — so the loops list reads as a practice dashboard, not just
+  a list of names. These show **only once you've set them**; an untouched loop stays clean
+  with just its time range.
 - **Loop practice journal** (ADR 0038). Each loop now has its own **journal** — a dated
   log opened from the book icon on the loop row (left of the **A** automator button).
   Every entry **remembers the loop's mastery and command tempo at the moment you wrote
@@ -19,6 +24,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   (no full-Edit detour), then **Update** to save — with a quick "Saved" confirmation.
 
 ### Changed
+- **Mastery, command tempo and focus start "unset"** (ADR 0039). Previously a brand-new
+  loop quietly claimed **100% command tempo** and a zero mastery — ratings you never gave.
+  Now all three start blank and only show a value once you set one. In the loop edit sheet:
+  tap a **Mastery** dot down past the first to clear it back to *Unrated*; **Command tempo**
+  shows a **Set** button until you measure it (then a **Clear** to unset); **Focus** is now
+  a dropdown with a *Not set* option. A song's overall mastery is the average of its
+  **rated** loops only, so one untouched loop no longer drags the summary down.
 - **Markers drop instantly now — no naming step** (ADR 0037). Tapping **Mark** drops
   the marker straight away with a standardised name ("Marker 3"), the same way loops
   are created; rename it later by tapping its row. The old "name this marker" pop-up is

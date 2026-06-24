@@ -146,23 +146,31 @@ toolbar **filter menu** (the funnel; intersection/AND) — ADR 0033. The library
 **names the current sort category** (e.g. "↑ Title") and lets you **flip ascending/descending**
 (ADR 0035). The same `[String]` machinery (the shared
 `Labels` canonicaliser) now backs loop-level **Tags** (ADR 0034). A song's **Mastery** is no longer stored — it is **derived**
-as the rounded average of its loops' `mastery` (`MasteryRollup`, pure/unit-tested), shown as
-stars and as a library group with an **Unrated** bucket for songs with no loops; the song also
+as the rounded average of its **rated** loops' `mastery` (`MasteryRollup`, pure/unit-tested;
+unrated loops are skipped, ADR 0039), shown as
+stars and as a library group with an **Unrated** bucket for songs with no rated loops; the song also
 records `lastPracticed` for "recently practised" ordering and the planner (ADR 0036). Each loop carries a
 per-loop **automator** (the "A" control on its row): a speed-trainer ramp — start % →
 target % over N steps, a few loops each — that climbs, descends, or sits level, runs a
 **fixed number of passes and then stops** (Set ramp also starts it playing), driven by the
-engine counting loop wraps (ADR 0013). Loop rows carry no edit pencil — **press and
+engine counting loop wraps (ADR 0013). A loop row is **glanceable** (ADR 0039): under the name it shows the time range plus —
+**only when set** — the loop's **mastery** (dots) and **command tempo** (a percent badge,
+the headline achievement), so the loops list reads as a practice dashboard and an untouched
+loop never shows a fake rating. Loop rows carry no edit pencil — **press and
 hold** a row (with a haptic) to open the edit sheet for rename / range / colour /
 delete (ADR 0028); the colour row pins a loop's identity hue — Auto, a preset, or a
 custom colour wheel (low-contrast colours get an advisory hint) — or leaves it
 automatic (ADR 0031). The edit sheet's **Practice** section carries the loop's
-structured fields (ADR 0036): **Mastery** (0–5 dot rating, the source the song
-rolls up from), **Focus** (Backburner / Active / Sharpening intent, stored 1–3),
-**Type** (a closed `LoopType` — Lick / Riff / Chords / Passage, single-select; Passage is the
-composite for a loop spanning more than one), and
-**Command tempo** (the fastest tempo you own the loop at, as a % of original) —
-the structured practice signal the planner reads. A **Tags** section (ADR 0034)
+structured fields (ADR 0036), each with an explicit **unset** state (Optional, `nil` =
+never set — ADR 0039, so a default never reads as a real rating; migrates pre-0039 loops to
+`nil` for free): **Mastery** (0–5 dot rating, the source the song rolls up from; tap the
+lowest filled dot down to clear back to *Unrated*), **Focus** (Backburner / Active /
+Sharpening intent, stored 1–3, now a menu with a *Not set* option), **Type** (a closed
+`LoopType` — Lick / Riff / Chords / Passage, single-select; Passage is the composite for a
+loop spanning more than one), and **Command tempo** (the fastest tempo you own the loop at,
+as a % of original; a **Set** button until measured — seeded from the loop's practice
+speed — and a **Clear** back to unset) — the structured practice signal the planner reads.
+Percent display + the `nil → "—"` fallback live in the pure `LoopProgressFormat`. A **Tags** section (ADR 0034)
 adds the loop's open descriptive axis (`Loop.tags: [String]`) — the loop analogue of
 song collections, canonicalised on write and **suggested from tags already used on any
 loop** (cross-loop `@Query`); the cross-song filter-by-tag payoff is deferred to its first
@@ -186,5 +194,5 @@ planner's **selection** (goals → required skills from a **technique taxonomy**
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`.
+Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`.
 See `CHANGELOG.md` for the full history.

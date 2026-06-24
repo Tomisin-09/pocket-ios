@@ -80,12 +80,11 @@ private struct LoopRow: View {
                         .font(.subheadline)
                         .foregroundStyle(PocketColor.textPrimary)
                         .lineLimit(1)
-                    // Speed/repeats moved into the automator (ADR 0013) — the row
-                    // shows just the range now; the "A" control holds the ramp.
-                    Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
-                        .font(.pocketMono(.footnote))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .lineLimit(1)
+                    // Speed/repeats live in the automator (ADR 0013); the range plus the
+                    // practice state (mastery + command tempo) make the row glanceable —
+                    // each shown only when set, so an untouched loop reads as just a range
+                    // and never a fake rating (ADR 0039).
+                    LoopRowProgress(loop: loop)
                 }
                 Spacer(minLength: 0)
             }
@@ -113,6 +112,38 @@ private struct LoopRow: View {
             AutomatorButton(isOn: loop.automatorEnabled, action: onAutomator)
                 .accessibilityLabel(loop.automatorEnabled
                                     ? "Automator on for \(loop.name)" : "Set up automator for \(loop.name)")
+        }
+    }
+}
+
+/// The loop row's second line (ADR 0039): the time range, plus mastery dots and a command-
+/// tempo badge **only when those are set**. Absence is the unrated signal — an untouched loop
+/// shows just its range, so nothing fake renders. Command tempo is the headline achievement,
+/// so it reads as a small pill badge.
+private struct LoopRowProgress: View {
+    let loop: Loop
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
+                .font(.pocketMono(.footnote))
+                .foregroundStyle(PocketColor.textSecondary)
+                .lineLimit(1)
+            if loop.mastery != nil || loop.commandTempo != nil {
+                Text("·").foregroundStyle(PocketColor.textSecondary)
+                if let mastery = loop.mastery {
+                    MasteryDots(filled: mastery)
+                }
+                if let percent = LoopProgressFormat.percent(loop.commandTempo) {
+                    Text("\(percent)%")
+                        .font(.pocketMono(.caption2).weight(.semibold))
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color.white.opacity(0.10)))
+                        .accessibilityLabel("Command tempo \(percent) percent")
+                }
+            }
         }
     }
 }

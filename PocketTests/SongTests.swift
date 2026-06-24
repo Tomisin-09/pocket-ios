@@ -105,15 +105,16 @@ final class SongTests: XCTestCase {
         XCTAssertTrue(loop.automatorEnabled)
     }
 
-    // MARK: - Loop structured-field defaults (ADR 0036 slice 3)
+    // MARK: - Loop structured-field defaults (ADR 0036 slice 3 / 0039)
 
-    func testLoopStructuredFieldsHaveDeclarationDefaults() {
-        // Declaration defaults are what SwiftData lightweight migration writes into
-        // pre-0036 loops; a freshly-constructed loop exercises the same defaults.
+    func testLoopJudgmentFieldsDefaultToUnset() {
+        // The three judgment fields are Optional (ADR 0039): a fresh — or migrated — loop
+        // is `nil` (never set), not a defaulted `0` / `1` / `1.0` that would read as a real
+        // rating. `loopType` keeps its `.unset` (primitive-backed) default.
         let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 1, repeats: 1)
-        XCTAssertEqual(loop.mastery, 0)
-        XCTAssertEqual(loop.focus, 1)
-        XCTAssertEqual(loop.commandTempo, 1.0, accuracy: 1e-9)
+        XCTAssertNil(loop.mastery)
+        XCTAssertNil(loop.focus)
+        XCTAssertNil(loop.commandTempo)
         XCTAssertEqual(loop.loopType, .unset)
     }
 

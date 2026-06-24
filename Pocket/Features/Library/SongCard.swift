@@ -105,6 +105,22 @@ struct MasteryDots: View {
     }
 }
 
+/// Mastery dots in a labelled context, or an em-dash when the loop is unrated (`nil`,
+/// ADR 0039) — so a "Mastery" row never shows a misleading empty/zero rating.
+struct MasteryReadout: View {
+    let mastery: Int?
+
+    var body: some View {
+        if let mastery {
+            MasteryDots(filled: mastery)
+        } else {
+            Text("—")
+                .foregroundStyle(PocketColor.textSecondary)
+                .accessibilityLabel("Mastery unrated")
+        }
+    }
+}
+
 #Preview("Song card") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(for: Song.self,
