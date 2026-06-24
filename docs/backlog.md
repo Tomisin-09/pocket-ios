@@ -68,16 +68,19 @@ adjust → range-edit lift → Fine retirement + hold-drag wiring).
 
 **V2 / planner-era:**
 
-- **#5 Multi-select loops** for bulk tag / type / focus (and bulk delete). Rides
-  with the planner since it mostly acts on planner fields. *Inheritance and
-  duplicate were considered and rejected* — multi-select is the only bulk move
-  we want.
 - **#4 test-data seeding** to exercise the planner before real fill-rate exists.
   Validates planner *logic*, not fill-rate — only real usage shows whether users
   actually fill the fields.
 
 **Parked — deliberate, leave as-is:**
 
+- **#5 Multi-select loops:** parked until the friction is real. Useful for bulk
+  delete / cleanup and batch re-tag / type / focus, but it's a *scale* feature —
+  it only pays off with many loops, or once the planner makes bulk-focus a real
+  workflow. At a handful of loops, one-at-a-time editing doesn't hurt, so building
+  the selection-mode UI now is speculative. *Inheritance and duplicate were
+  considered and rejected* — multi-select is the only bulk move we'd want.
+  **Revisit when** one-at-a-time editing starts to hurt, or when the planner lands.
 - **#1 Marker→loop bridge:** not needed as an explicit action. Markers already
   snap loop edges during creation (ADR 0021), and a marker is approximate, so an
   "exact marker→loop" would mislead. The passive snap is the right amount.
