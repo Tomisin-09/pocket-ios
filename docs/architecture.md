@@ -36,8 +36,13 @@ helpers in `AudioMath` (unit-tested). Stages 1–2 (file import) now exist:
 `SongImporter` (the `LibraryView` file picker) stores a security-scoped bookmark, and
 the practice model resolves it to feed the engine the real file; the generated arpeggio
 (`SampleToneGenerator`) remains only as the bundled demo song. Tap-to-seek, scrub,
-and loop/marker capture are driven by the waveform **gesture engine** (pure math
-in `WaveformGesture`, ADR 0005), which also handles **pinch-to-zoom** — a **page-mode**
+A/B-span set, and edge-drag are driven by the waveform **gesture engine** (pure math
+in `WaveformGesture` + the pure `ABSpan` state machine, ADR 0005 / 0041). Loop creation
+is the **A/B span**: tap the A/B control to set A then B (or hold-drag to paint it), the
+ephemeral span loops with no confirm gate, its A / B handles drag in place, "Save as loop"
+persists it, and dragging a saved loop's edge lifts it back into A/B to re-edit — the old
+Fine mode and capture/confirm flow are retired. The gesture engine also handles
+**pinch-to-zoom** — a **page-mode**
 viewport (owned `zoomSpan` + `viewportStart`): the window holds still while the
 playhead sweeps across it, then pages forward at ~90% (`WaveformGesture.pagedStart`),
 with a Fit / 1× reset (ADR 0010). When zoomed in, the visible window is **re-downsampled
@@ -45,7 +50,7 @@ from the source file at full detail** (`WaveformExtractor.extractWindow` → the
 `AudioMath.downsample`, off the main actor, debounced on viewport settle and cached by
 window) so a deep zoom resolves real transients instead of stretching the stored
 whole-song envelope; the stored 512-bar envelope stays the zoomed-out and fallback path
-(ADR 0020). On a gesture **release** — a drawn loop edge, a Fine handle, or a tap-seek —
+(ADR 0020). On a gesture **release** — a dragged A/B edge or a tap-seek —
 the boundary **snaps to a nearby marker or saved-loop edge** if one is within an
 on-screen tolerance (pure `WaveformGesture.snap`, candidates sourced and tolerance
 scaled by zoom in `WaveformPracticeModel+Snap.swift`, light haptic on a catch);
@@ -153,8 +158,8 @@ block on large or not-yet-downloaded iCloud files), so the UI stays responsive; 
 model exposes `isLoadingAudio` and the view shows a dimming **loading overlay**
 (`AudioLoadingOverlay`) that also blocks taps on the half-ready controls until ready.
 
-The transport bar (ADR 0030) carries a **rewind · pause · forward** playback cluster
-alongside the Loop/Mark/Fine identity dots; skip targets are loops ordered by start
+The transport bar (ADR 0030 / 0041) carries a **rewind · pause · forward** playback cluster
+alongside the A/B and Marker identity dots; skip targets are loops ordered by start
 (neighbour lookup is the pure, unit-tested `TransportNav`; cross-song skip is deferred).
 An **active-loop colour strip** (the loop's identity hue via the shared `LoopColor`, the
 same slot the waveform/minimap use) makes the looping state unmistakable. A scrub starting

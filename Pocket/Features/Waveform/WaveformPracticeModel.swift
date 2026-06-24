@@ -16,7 +16,6 @@ final class WaveformPracticeModel {
 
     // UI state.
     var speed: Double = 1.0
-    var mode: WaveformPracticeView.InteractionMode = .navigate
     /// True while a finger is down on the waveform (scrub / handle drag). Drives the
     /// swipe-back guard so a scrub near the left edge can't pop the screen (ADR 0030).
     var isScrubbing = false
@@ -78,10 +77,9 @@ final class WaveformPracticeModel {
     /// one, or run an automator.
     ///
     /// The `didSet` is the single choke point for **last-practiced speed** (ADR 0040):
-    /// whenever the active loop changes — switch, exit chip, transport skip, screen exit —
-    /// the *outgoing* loop's current `speed` is persisted into its `lastPracticedSpeed`, so
-    /// re-arming it later resumes there. One place, so no leave path is missed; it fires on
-    /// leave, not per slider tick. A just-deleted loop is skipped (no longer in `loops`).
+    /// whenever the active loop changes, the *outgoing* loop's `speed` is persisted into
+    /// its `lastPracticedSpeed` (one place, on leave, not per tick), so re-arming resumes
+    /// there. A just-deleted loop is skipped (no longer in `loops`).
     var activeLoopID: UUID? {
         didSet {
             guard oldValue != activeLoopID,
@@ -116,25 +114,17 @@ final class WaveformPracticeModel {
     var loops: [Loop] { song.loopsByStart }
     var markers: [Marker] { song.markersByTime }
 
-    /// Tap mode: the start of the loop being captured (the green forming
-    /// region), awaiting its closing tap.
-    var pendingStart: Double?
-    /// The captured loop awaiting confirmation (drives the ConfirmBar). Bounds
-    /// are mutable so Fine handles drag them live; `fromFine` shows the blue
-    /// handles; a non-nil `editingLoop` means we're adjusting an existing
-    /// loop's range rather than creating one.
-    var capture: CaptureDraft?
+    /// The ephemeral **A/B span** (ADR 0041) — the live, gate-free creation region set by
+    /// playing along; `abEditingLoop` holds a *saved* loop lifted in for a range edit (Save
+    /// writes back). Transient (ADR 0029); behaviour in `+ABSpan.swift`.
+    var abSpan: ABSpan = .idle
+    var abEditingLoop: Loop?
 
-    /// The Fine handle last moved by a drag, so its release can snap *that* edge to a
-    /// nearby marker / loop boundary (ADR 0021). Cleared once the release is handled.
-    @ObservationIgnored var lastFineHandle: WaveformGesture.Handle?
-
-    /// Long-press-drag select (ADR 0005 round 5): the anchor fraction where the
-    /// hold fired. The drag extends from here; cleared on commit/cancel.
+    /// Hold-drag spatial set (ADR 0041, secondary to play-along): the anchor fraction
+    /// (the playhead) where the hold fired; the drag extends A↔B from here.
     @ObservationIgnored var dragSelectAnchor: Double?
-    /// True *while* a long-press-drag is being painted, before release. The
-    /// `capture` is live (so the green region renders) but the edit toolbar and
-    /// transport lock are held back until the drag commits — see `showConfirm`.
+    /// True *while* a hold-drag is painting the span, before release — the green wash
+    /// renders but the A/B strip + handles hold back until the drag commits.
     var isDragSelecting = false
 
     /// "Set the 1 on the waveform" (ADR 0024): the downbeat fraction being placed by
@@ -255,7 +245,8 @@ final class WaveformPracticeModel {
         activeLoopID = nil
         speed = 1.0
         if metronomeOn { metronomeOn = false }
-        mode = .navigate
+        abSpan = .idle
+        abEditingLoop = nil
     }
 
     // MARK: - Derived transport state
@@ -284,26 +275,9 @@ final class WaveformPracticeModel {
     /// reset affordance.
     var isZoomed: Bool { zoomSpan < 0.999 }
 
-    /// The Fine-mode selection to render (blue handles), if one is being defined.
-    var fineSelection: (start: Double, end: Double)? {
-        guard let capture, capture.fromFine else { return nil }
-        return (capture.start, capture.end)
-    }
-
-    /// The Tap-mode captured region to keep highlighted green while confirming.
-    var tapSelection: (start: Double, end: Double)? {
-        guard let capture, !capture.fromFine else { return nil }
-        return (capture.start, capture.end)
-    }
-
-    /// True while adjusting an existing loop's range — the reference area dims to
-    /// focus the waveform.
-    var isRangeEditing: Bool { capture?.editingLoop != nil }
-
-    /// The confirm pill (edit toolbar + transport lock) shows while a region is
-    /// captured — but *not* mid-drag-select, where the region is still being
-    /// painted and the transport should stay live until release.
-    var showConfirm: Bool { capture != nil && !isDragSelecting }
+    /// True while range-editing a saved loop via the A/B span (ADR 0041) — the reference
+    /// area dims to focus the waveform.
+    var isRangeEditing: Bool { abEditingLoop != nil }
 
     /// True while placing the downbeat on the waveform (ADR 0024) — drives the
     /// downbeat handle, its confirm toolbar, and the transport lock.

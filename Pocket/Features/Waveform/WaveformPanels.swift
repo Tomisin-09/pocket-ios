@@ -30,8 +30,8 @@ struct LoopsPanel: View {
                 EmptyPanelMessage(
                     systemImage: "repeat",
                     title: "No loops yet",
-                    message: "Use the Loop button to punch a section as it plays, "
-                        + "or Fine to drag the bounds.")
+                    message: "Tap Loop to set the start, play on, tap again to set the end "
+                        + "— it loops that section. Save it to keep, or hold-drag the waveform.")
             } else {
                 VStack(spacing: 8) {
                     ForEach(loops) { loop in

@@ -12,20 +12,6 @@ import SwiftUI
 /// `WaveformSections.swift`; shared chrome in `WaveformChrome.swift`.
 struct WaveformPracticeView: View {
 
-    /// Transport interaction modes — pills in the transport bar (brief §4.1).
-    enum InteractionMode: String {
-        case navigate = "Navigate"
-        case fine = "Fine"
-
-        /// One-line hint shown under the speed bar (when not editing a capture).
-        var blurb: String {
-            switch self {
-            case .navigate: "Tap seek · drag scrub · hold-drag to select a loop · pinch zoom"
-            case .fine: "Drag the blue handles to set the loop bounds"
-            }
-        }
-    }
-
     @State private var model: WaveformPracticeModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -59,19 +45,21 @@ struct WaveformPracticeView: View {
                                         onConfirm: model.confirmDownbeat,
                                         onCancel: model.cancelSetDownbeat)
                                 .transition(.opacity)
-                        } else if model.showConfirm {
-                            EditToolbar(isPlaying: model.engine.isPlaying,
-                                        isEditingExisting: model.capture?.editingLoop != nil,
-                                        onPlayPause: model.auditionCapture,
-                                        onConfirm: model.confirmCapture,
-                                        onCancel: model.cancelCapture)
+                        } else if model.abActive && !model.isDragSelecting {
+                            ABSpanBar(isPlaying: model.engine.isPlaying,
+                                      isSet: model.abSpan.isSet,
+                                      isEditing: model.isEditingSpan,
+                                      label: model.abSpanLabel,
+                                      onAudition: model.auditionABSpan,
+                                      onSave: model.saveABSpan,
+                                      onClear: model.clearABSpan)
                                 .transition(.opacity)
                         } else {
-                            ModeDescriptionLine(mode: model.mode)
+                            ModeDescriptionLine()
                                 .transition(.opacity)
                         }
                     }
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.abActive)
                     .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
                     WaveformView(amplitudes: model.amplitudes,                   // 5
                                  detailBars: model.detailBars,
@@ -80,15 +68,15 @@ struct WaveformPracticeView: View {
                                  loops: model.loops,
                                  markerFractions: model.markers.map { $0.seconds / model.duration },
                                  beats: model.beatGrid,
-                                 mode: model.mode,
-                                 formingStart: model.pendingStart,
-                                 fineSelection: model.fineSelection,
-                                 tapSelection: model.tapSelection,
+                                 formingStart: model.formingMarker,
+                                 tapSelection: model.greenSpan,
+                                 abSelection: model.isDragSelecting ? nil : model.abSpan.bounds,
                                  playheadLabel: timecode(model.engine.currentTime),
                                  onSeek: model.seekSnapping,
                                  onScrub: model.seekToFraction,
-                                 onMoveHandle: model.moveFineHandle,
-                                 onMoveHandleEnded: model.endMoveHandle,
+                                 onMoveABHandle: model.moveABHandle,
+                                 onMoveABHandleEnded: model.endABHandle,
+                                 onLiftLoopEdge: model.liftActiveLoopToSpan,
                                  onSelectBegan: model.beginDragSelection,
                                  onSelectChanged: model.updateDragSelection,
                                  onSelectEnded: model.endDragSelection,
@@ -116,13 +104,13 @@ struct WaveformPracticeView: View {
                               end: model.viewport.end * model.duration)
                     Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
                             markers: model.markers,
-                            fineSelection: model.fineSelection,
+                            fineSelection: model.abSpan.bounds,
                             playheadFraction: model.playheadFraction,
                             viewport: model.viewport,
                             onSeek: model.seekToFraction,
                             onSeekEnded: model.seekMinimapSnapping)
-                    // Greyed + locked while editing — controls move to the edit
-                    //    toolbar (you leave edit mode via Y/N, not the mode pills).
+                    // Greyed + locked only while placing the downbeat (ADR 0024);
+                    //    A/B creation keeps the transport live (ADR 0041).
                     TransportBar(isPlaying: model.engine.isPlaying,             // 8
                                  onPlayPause: model.engine.togglePlay,
                                  onRestart: model.transportRestart,
@@ -130,17 +118,15 @@ struct WaveformPracticeView: View {
                                  onNext: model.transportNext,
                                  hasPrevious: model.hasPreviousTarget,
                                  hasNext: model.hasNextTarget,
-                                 mode: $model.mode,
                                  currentTime: model.engine.currentTime,
                                  loop: model.activeLoop,
                                  loopColor: model.activeLoopColor,
                                  onClearLoop: model.clearActiveLoop,
                                  onDropMarker: model.dropMarkerAtPlayhead,
-                                 onPunch: model.tapPunch,
-                                 isPunchActive: model.pendingStart != nil)
-                        .opacity(model.showConfirm || model.isSettingDownbeat ? 0.35 : 1)
-                        .disabled(model.showConfirm || model.isSettingDownbeat)
-                        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.showConfirm)
+                                 onPunch: model.tapAB,
+                                 isPunchActive: model.abActive)
+                        .opacity(model.isSettingDownbeat ? 0.35 : 1)
+                        .disabled(model.isSettingDownbeat)
                         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
                 }
                 .padding(.horizontal, 16)
@@ -251,7 +237,6 @@ struct WaveformPracticeView: View {
             model.engine.setRate(newValue)
             model.refreshNowPlaying(force: true)   // rate change re-anchors the lock-screen clock
         }
-        .onChange(of: model.mode) { _, newMode in model.modeChanged(to: newMode) }
         // Per-loop automator: step the speed as the active loop wraps, and snap to the
         // ramp's current step when playback (re)starts (ADR 0013).
         .onChange(of: model.engine.loopIteration) { _, iteration in

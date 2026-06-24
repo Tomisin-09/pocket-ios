@@ -78,14 +78,18 @@ phone mid-practice keeps it playing (ADR 0025). Interaction: **tap = seek, drag 
 (a **page-mode** viewport — the window holds still and the playhead sweeps/pages across it,
 with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
 the source file** for crisp detail, debounced + cached, ADR 0020);
-playhead capture is via three transport **identity dots** (Loop · Mark · Fine — coloured
-dots, no captions; **Click** moved to the speed bar, ADR 0027 / 0030), and the transport
+loops are created through the **A/B span** — the single creation primitive (ADR 0041):
+the transport's left column is two **identity dots** (A/B · Mark; **Click** moved to the
+speed bar, ADR 0027 / 0030 / 0041). Tap **A/B** to drop A at the playhead, play along, tap
+again to close an ephemeral **A↔B span** that loops with no ✓/✗ gate; drag its labelled
+**A / B handles** to refine it in place, **Save as loop** to persist it, **✕** to clear.
+Dragging a saved loop's **edge knob** lifts it back into A/B for a range edit (**Save
+changes** writes back). **Hold-drag** the waveform is the spatial set (A pins at the
+playhead, the drag sets B; ADR 0005 round 5). The transport
 bar carries a **rewind · pause · forward** playback cluster (restart / prev-loop / next-loop;
 cross-song deferred) plus an **active-loop colour strip** with an ✕ deactivator (ADR 0030);
-a left-edge **swipe-back guard** stops a scrub from popping back to the library mid-adjust,
-while a loop's **range** is drawn directly on the waveform by a **long-press-drag** (ADR 0005
-round 5) — a still hold arms a selection that the drag paints, released into a confirmable
-draft. On **release**, a drawn edge / Fine handle / tap-seek **snaps to a nearby marker or
+a left-edge **swipe-back guard** stops a scrub from popping back to the library mid-adjust.
+On **release**, a dragged A/B edge / tap-seek **snaps to a nearby marker or
 saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, light haptic;
 the continuous scrub stays free; ADR 0021). The **minimap** snaps a released seek to a
 nearby **marker or saved-loop edge** (but not beats — the full-song strip is too compressed

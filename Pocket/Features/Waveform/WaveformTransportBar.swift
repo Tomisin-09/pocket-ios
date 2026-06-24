@@ -4,7 +4,7 @@ import SwiftUI
 // transport row. Split out of `WaveformSections.swift` to keep each file under the
 // line budget; shares the same `panelBackground` chrome.
 //
-// Layout (ADR 0030): a left column of three identity controls (Loop / Mark / Fine —
+// Layout (ADR 0030; ADR 0041): a left column of two identity controls (Loop / Marker —
 // a glyph in a circle that fills with the control's colour when active), a centre
 // cluster (header over rewind · pause · forward), and — only while a loop is active —
 // a right strip in the loop's identity colour carrying the ✕ deactivator. The header
@@ -27,7 +27,6 @@ struct TransportBar: View {
     let hasPrevious: Bool
     let hasNext: Bool
 
-    @Binding var mode: WaveformPracticeView.InteractionMode
     let currentTime: TimeInterval
     let loop: Loop?
     /// The active loop's identity colour, for the right strip. `nil` ⇒ no active loop.
@@ -36,9 +35,10 @@ struct TransportBar: View {
     let onClearLoop: () -> Void
     /// Mark control — drop a marker at the playhead.
     let onDropMarker: () -> Void
-    /// Loop control — punch the loop in / out at the playhead (a toggle).
+    /// Loop control — advance the play-along loop cycle at the playhead (set start · set
+    /// end · clear); internally the A/B span (ADR 0041).
     let onPunch: () -> Void
-    /// True between the in- and out-punch, so the Loop control reads "armed".
+    /// True while a loop span is in play, so the control reads "armed" (ADR 0041).
     let isPunchActive: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -46,7 +46,7 @@ struct TransportBar: View {
     var body: some View {
         HStack(spacing: 12) {
             controls
-            VStack(spacing: 8) {
+            VStack(spacing: 5) {
                 header
                 transportRow
             }
@@ -56,9 +56,9 @@ struct TransportBar: View {
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
-        .frame(height: 74)        // definite bar height so the colour strip reliably fills it
+        .frame(height: 64)        // definite bar height so the colour strip reliably fills it
         .padding(.horizontal, 12)
-        .padding(.vertical, 7)
+        .padding(.vertical, 5)
         .background(panelBackground)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: loop?.uid)
     }
@@ -74,11 +74,6 @@ struct TransportBar: View {
             // glyph on the waveform (the arrowtriangle variant read as elongated).
             TransportControl(icon: "triangle.fill", rotation: 180, color: PocketColor.pin,
                              label: "Marker", action: onDropMarker)
-            Spacer(minLength: 0)
-            TransportControl(icon: "arrow.left.and.right", color: PocketColor.fine,
-                             isActive: mode == .fine, label: "Fine") {
-                mode = (mode == .fine ? .navigate : .fine)
-            }
         }
     }
 
@@ -105,7 +100,7 @@ struct TransportBar: View {
                     .accessibilityLabel("Playback position \(timecode(currentTime))")
             }
         }
-        .frame(height: 32)        // reserve both states' height so the transport row holds still
+        .frame(height: 28)        // reserve both states' height so the transport row holds still
         .transition(.opacity)
     }
 
@@ -122,13 +117,12 @@ struct TransportBar: View {
 
 // MARK: - Components
 
-private let transportGlyphSize: CGFloat = 26
-private let controlDiameter: CGFloat = 23
+private let transportGlyphSize: CGFloat = 31
+private let controlDiameter: CGFloat = 27
 
 /// One identity control in the left column — a glyph in a circle. Idle: the glyph in
 /// its colour on a faint fill. Active: the circle fills with the colour, glyph flips
-/// dark (Loop while a punch is armed, Fine in precise-edit). Compact so all three
-/// stack within the bar's height.
+/// dark (Loop while a span is in play).
 private struct TransportControl: View {
     let icon: String
     var rotation: Double = 0
@@ -140,7 +134,7 @@ private struct TransportControl: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .rotationEffect(.degrees(rotation))
                 .foregroundStyle(isActive ? PocketColor.background : color)
                 .frame(width: controlDiameter, height: controlDiameter)

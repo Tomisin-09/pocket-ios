@@ -57,13 +57,14 @@ back to `loop.speed` when never practised. Session still opens clean (full song,
 refining ADR 0029. The user-defined toggle (loop speed always = command tempo *vs* last
 playback) stays V2.
 
-**Build now (V1, bigger) — own ADR:**
-
-- **#6 A/B as the creation primitive.** Build the parked A/B ephemeral span, then
-  a **"Save A/B as loop"** hook: set A, set B, audition, save. The most intuitive
-  creation gesture, and it also dissolves the range-editing-is-three-hops
-  problem. Unifies markers / A-B / loops into one creation story. (Supersedes the
-  bare A/B item that used to live under "Loop & marker creation.")
+**#6 A/B as the creation primitive — DONE (ADR 0041, branch pocket-054).** The
+ephemeral A↔B span is now the single creation primitive: tap A/B to set A then B (or
+hold-drag), the span loops with no ✓/✗ gate, its labelled A / B handles drag in place,
+**Save as loop** persists it. Dragging a saved loop's edge lifts it back into A/B for a
+range edit (**Save changes** writes back), dissolving the three-hop range edit. **Fine
+mode and the capture/confirm system were retired** — the transport left column is now
+A/B · Marker. Built in 5 slices (pure `ABSpan` state machine → play-along set → handle
+adjust → range-edit lift → Fine retirement + hold-drag wiring).
 
 **V2 / planner-era:**
 
