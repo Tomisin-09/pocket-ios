@@ -143,11 +143,16 @@ struct LoopEditSheet: View {
         Section("Practice") {
             masteryRow
             focusRow
+            // `.menu` (not the Form default navigation-link style): this sheet opens at
+            // the `.medium` detent, and a navigation-link Picker can't push its options
+            // list out of a partial-height sheet — the push is swallowed, so the value
+            // never changes. A menu dropdown is self-contained and works at any detent.
             Picker("Type", selection: $loopType) {
                 ForEach(LoopType.pickerOrder) { type in
                     Text(type.label).tag(type)
                 }
             }
+            .pickerStyle(.menu)
             .foregroundStyle(PocketColor.textSecondary)
             commandTempoRow
         }
