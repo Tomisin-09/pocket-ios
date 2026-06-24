@@ -22,21 +22,21 @@ final class PracticeAudioEngine {
 
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
-    private let timePitch = AVAudioUnitTimePitch()
+    let timePitch = AVAudioUnitTimePitch()   // read by the metronome split (rate); engine-internal
 
-    /// Metronome (ADR 0026): a click voice on this same engine — so it shares the
-    /// player's render clock and stays sample-locked to the (possibly time-stretched)
-    /// song. `metronomeBeats` is the song's grid in *source* seconds; the click follows
-    /// playback rate via `MetronomeSchedule`. `clickWatermark` is the source time of the
-    /// last beat already queued, so each beat is scheduled exactly once across the
-    /// 0.03 s refresh ticks; it resets on any discontinuity (seek / rate / loop wrap).
+    /// Metronome (ADR 0026): a click voice on this same engine, sample-locked to the
+    /// (possibly time-stretched) song. `metronomeBeats` is the grid in *source* seconds;
+    /// the click follows playback rate via `MetronomeSchedule`. `clickWatermark` is the
+    /// source time of the last beat queued, so each beat schedules exactly once across
+    /// the 0.03 s ticks; it resets on any discontinuity (seek / rate / loop wrap). These
+    /// are engine-internal but driven by the `+Metronome` split.
     private(set) var metronomeOn = false
-    private let clickVoice = ClickVoice()
-    private var metronomeBeats: [(time: TimeInterval, isDownbeat: Bool)] = []
-    private var clickWatermark: TimeInterval = -.infinity
-    private var metronomeLoopIteration = 0
+    let clickVoice = ClickVoice()
+    var metronomeBeats: [(time: TimeInterval, isDownbeat: Bool)] = []
+    var clickWatermark: TimeInterval = -.infinity
+    var metronomeLoopIteration = 0
     /// How far ahead (real seconds) clicks are scheduled; refreshed each timer tick.
-    private let metronomeHorizon: TimeInterval = 1.0
+    let metronomeHorizon: TimeInterval = 1.0
 
     private var file: AVAudioFile?
     private var sampleRate: Double = 44_100
@@ -49,8 +49,8 @@ final class PracticeAudioEngine {
     private var displayTimer: Timer?
 
     /// When set, playback loops this region (seconds) via a crossfaded `.loops`
-    /// buffer. `nil` plays straight through.
-    private var loopRegion: (start: TimeInterval, end: TimeInterval)?
+    /// buffer. `nil` plays straight through. (Read by the +Metronome split for its cutoff.)
+    var loopRegion: (start: TimeInterval, end: TimeInterval)?
     /// Loop-buffer bookkeeping for the playhead: the region's start frame, the
     /// looped length (region minus crossfade), and the player sampleTime at which
     /// the current loop buffer began (so elapsed-in-loop = now − base).
@@ -63,6 +63,11 @@ final class PracticeAudioEngine {
     init() {
         engine.attach(player)
         engine.attach(timePitch)
+        // Favour transient crispness over smoothness when slowed (practice wants the
+        // pick/hit to cut through, not smear): a low `overlap` sharpens attacks at the
+        // cost of slight warble on sustained tones. Default is 8.0 (range 3–32); 3.0 is
+        // the crispest. `pitch` stays 0 — slowdown is pitch-preserving.
+        timePitch.overlap = 3.0
         clickVoice.attach(to: engine)
     }
 
@@ -125,8 +130,9 @@ final class PracticeAudioEngine {
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
-    /// Move the play position; resumes from `seconds` if it was playing. (When a
-    /// loop is active the buffer restarts at the loop start regardless.)
+    /// Move the play position; resumes from `seconds` if it was playing. A seek inside
+    /// an active loop resumes from that point within the region (not the loop start),
+    /// so you can reposition the playhead mid-loop — ADR 0041.
     func seek(toSeconds seconds: TimeInterval) {
         let clamped = min(max(0, seconds), duration)
         seekFrame = AVAudioFramePosition(AudioMath.secondsToFrames(clamped, sampleRate: sampleRate))
@@ -182,23 +188,58 @@ final class PracticeAudioEngine {
     /// segment to the file end when not looping.
     private func primeSchedule() {
         if currentLoopSegment() != nil {
-            _ = scheduleLoopBuffer()
+            scheduleLoopBuffer(offsetFrames: loopOffsetFrames(forSeekFrame: Int(seekFrame)))
         } else if let file {
             scheduleSegment(file, fromFrame: Int(seekFrame), toFrame: Int(totalFrames))
         }
         scheduled = true
     }
 
+    /// How far into the active loop a seek lands, in source frames (clamped at 0 below
+    /// the loop start). Lets a tap inside a playing loop resume from there instead of
+    /// snapping back to the loop start (ADR 0041).
+    private func loopOffsetFrames(forSeekFrame frame: Int) -> Int {
+        guard let loopRegion else { return 0 }
+        return max(0, frame - AudioMath.secondsToFrames(loopRegion.start, sampleRate: sampleRate))
+    }
+
     /// Build the crossfaded loop buffer and schedule it on `.loops` (`.interrupts`
     /// so it cleanly replaces any currently-playing buffer). Records the playhead
-    /// anchor. Returns `false` if the buffer couldn't be built.
+    /// anchor. `offsetFrames` starts playback partway through the region (a seek
+    /// *into* an active loop, ADR 0041) by playing the buffer's tail
+    /// `[offset, end)` once, then looping the whole region — seamless because the
+    /// tail's last frame meets the buffer's frame 0 at the already-crossfaded seam.
+    /// Returns `false` if the buffer couldn't be built.
     @discardableResult
-    private func scheduleLoopBuffer() -> Bool {
-        guard let buffer = makeLoopBuffer() else { return false }
-        loopBaseSampleTime = isPlaying ? currentSampleTime() : 0
+    private func scheduleLoopBuffer(offsetFrames: Int = 0) -> Bool {
+        guard let buffer = makeLoopBuffer() else { return false }   // sets loopAnchorFrame / loopBufferFrames
+        let offset = max(0, min(offsetFrames, loopBufferFrames - 1))
+        // Rewind the base by the offset so elapsed-in-loop starts at `offset`, not 0,
+        // and the playhead maths land on the tapped point rather than the loop start.
+        loopBaseSampleTime = (isPlaying ? currentSampleTime() : 0) - AVAudioFramePosition(offset)
         loopIteration = 0
-        player.scheduleBuffer(buffer, at: nil, options: [.loops, .interrupts], completionHandler: nil)
+        if offset > 0, let tail = makeSubBuffer(of: buffer, fromFrame: offset) {
+            player.scheduleBuffer(tail, at: nil, options: [.interrupts], completionHandler: nil)  // offset→seam once
+            player.scheduleBuffer(buffer, at: nil, options: [.loops], completionHandler: nil)     // then loop region
+        } else {
+            player.scheduleBuffer(buffer, at: nil, options: [.loops, .interrupts], completionHandler: nil)
+        }
         return true
+    }
+
+    /// Copy frames `[fromFrame, end)` of `buffer` into a fresh one — the partial first
+    /// pass when seeking into an active loop. Same PCM format, so it queues seamlessly
+    /// ahead of the full looping buffer.
+    private func makeSubBuffer(of buffer: AVAudioPCMBuffer, fromFrame: Int) -> AVAudioPCMBuffer? {
+        let count = Int(buffer.frameLength) - fromFrame
+        guard count > 0,
+              let out = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: AVAudioFrameCount(count)),
+              let src = buffer.floatChannelData, let dst = out.floatChannelData else { return nil }
+        out.frameLength = AVAudioFrameCount(count)
+        for channel in 0..<Int(buffer.format.channelCount) {
+            for frame in 0..<count { dst[channel][frame] = src[channel][fromFrame + frame] }
+        }
+        return out
     }
 
     /// Read the loop region into a buffer and crossfade its seam: fold the last
@@ -324,62 +365,13 @@ extension PracticeAudioEngine {
 
     /// Turn the in-song click on/off. The song's beat grid is supplied separately via
     /// `setMetronomeBeats`; with no grid (tempo/downbeat unset) nothing schedules.
+    /// The click scheduling itself lives in the `+Metronome` split.
     func setMetronome(enabled: Bool) {
         metronomeOn = enabled
         if enabled {
             armMetronome()
         } else {
             clickVoice.stopAll()
-        }
-    }
-
-    /// Update the song's beat grid (source seconds + downbeat flags), e.g. when the BPM
-    /// or downbeat changes. Drops any stale schedule.
-    func setMetronomeBeats(_ beats: [(time: TimeInterval, isDownbeat: Bool)]) {
-        metronomeBeats = beats
-        flushMetronome()
-    }
-
-    /// Begin (or resume) the click voice for the current playback and reset the dedup
-    /// watermark so the next tick refills from the live playhead.
-    func armMetronome() {
-        guard metronomeOn, isPlaying else { return }
-        clickVoice.start()
-        clickWatermark = -.infinity
-        metronomeLoopIteration = loopIteration
-    }
-
-    /// Cancel queued clicks and reset the watermark; re-arm if still playing. Called on
-    /// any timing discontinuity (seek / rate / loop change / grid change) so a click is
-    /// never heard at a stale time.
-    func flushMetronome() {
-        clickVoice.stopAll()
-        clickWatermark = -.infinity
-        if metronomeOn, isPlaying {
-            clickVoice.start()
-            metronomeLoopIteration = loopIteration
-        }
-    }
-
-    /// Schedule the clicks now due within the lookahead horizon (one per beat, deduped
-    /// by the watermark). Follows the playback rate, so the click tracks a slowed or
-    /// sped track. During an active loop, a new pass resets the watermark so the
-    /// region's beats re-fire, and beats past the loop end are skipped (playback wraps
-    /// before reaching them).
-    func refreshMetronome() {
-        guard metronomeOn, isPlaying, !metronomeBeats.isEmpty else { return }
-        if loopIteration != metronomeLoopIteration {
-            metronomeLoopIteration = loopIteration
-            clickWatermark = -.infinity            // new loop pass ⇒ re-fire the region
-        }
-        let cutoff = loopRegion?.end ?? .infinity
-        let clicks = MetronomeSchedule.upcoming(beats: metronomeBeats,
-                                                currentSourceTime: currentTime,
-                                                rate: Double(timePitch.rate),
-                                                horizon: metronomeHorizon)
-        for click in clicks where click.time > clickWatermark && click.time < cutoff {
-            clickVoice.schedule(delay: click.delay, accented: click.isDownbeat)
-            clickWatermark = click.time
         }
     }
 }

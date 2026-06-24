@@ -78,11 +78,11 @@ import SwiftUI
                      loops: loops,
                      markerFractions: [0.27, 0.6],
                      beats: BeatGrid.beats(bpm: 76, duration: Song.sample().duration, downbeat: 0.3),
-                     mode: .navigate, formingStart: nil, fineSelection: nil,
+                     formingStart: nil,
                      tapSelection: nil,
                      playheadLabel: "0:10",
                      onSeek: { _ in },
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     onScrub: { _ in },
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
                      viewport: (0, 1), onSetZoomSpan: { _ in }).padding()
@@ -102,18 +102,18 @@ import SwiftUI
                      loops: [],
                      markerFractions: [],
                      beats: BeatGrid.beats(bpm: 96, duration: Song.sample().duration, downbeat: 0.5),
-                     mode: .navigate, formingStart: nil, fineSelection: nil,
+                     formingStart: nil,
                      tapSelection: nil,
                      playheadLabel: "0:04",
                      onSeek: { _ in },
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     onScrub: { _ in },
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
                      viewport: (0.0, 0.25), onSetZoomSpan: { _ in }).padding()
     }
 }
 
-#Preview("Waveform — Fine handles") {
+#Preview("Waveform — A/B handles") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
         WaveformView(amplitudes: Song.sample().amplitudes,
@@ -122,11 +122,11 @@ import SwiftUI
                      loop: nil,
                      loops: Song.sample().loops,
                      markerFractions: [],
-                     mode: .fine, formingStart: nil, fineSelection: (0.30, 0.62),
-                     tapSelection: nil,
+                     formingStart: nil,
+                     tapSelection: (0.30, 0.62), abSelection: (0.30, 0.62),
                      playheadLabel: "0:10",
                      onSeek: { _ in },
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     onScrub: { _ in },
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
                      viewport: (0.25, 0.65), onSetZoomSpan: { _ in }).padding()
@@ -146,11 +146,11 @@ import SwiftUI
                      loop: Song.sample().loops.first,
                      loops: Song.sample().loops,
                      markerFractions: [0.42],
-                     mode: .navigate, formingStart: nil, fineSelection: nil,
+                     formingStart: nil,
                      tapSelection: nil,
                      playheadLabel: "0:24",
                      onSeek: { _ in },
-                     onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                     onScrub: { _ in },
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
                      viewport: (0.30, 0.50), onSetZoomSpan: { _ in })
@@ -174,14 +174,13 @@ import SwiftUI
 }
 
 #Preview("Transport bar — loop active") {
-    @Previewable @State var mode = WaveformPracticeView.InteractionMode.navigate
     let song = Song.sample()
     ZStack {
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: false, onPlayPause: {},
                      onRestart: {}, onPrevious: {}, onNext: {},
                      hasPrevious: false, hasNext: true,
-                     mode: $mode, currentTime: 10,
+                     currentTime: 10,
                      loop: song.loops.first,
                      loopColor: song.loops.first.map { LoopColor.color(for: $0, among: song.loopsByStart) },
                      onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
@@ -189,23 +188,14 @@ import SwiftUI
 }
 
 #Preview("Transport bar — no loop") {
-    @Previewable @State var mode = WaveformPracticeView.InteractionMode.navigate
     ZStack {
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: true, onPlayPause: {},
                      onRestart: {}, onPrevious: {}, onNext: {},
                      hasPrevious: false, hasNext: false,
-                     mode: $mode, currentTime: 47,
+                     currentTime: 47,
                      loop: nil, loopColor: nil,
                      onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
-    }
-}
-
-#Preview("Edit toolbar") {
-    ZStack {
-        PocketColor.background.ignoresSafeArea()
-        EditToolbar(isPlaying: false, isEditingExisting: false,
-                    onPlayPause: {}, onConfirm: {}, onCancel: {}).padding()
     }
 }
 
@@ -279,11 +269,11 @@ import SwiftUI
                          loop: song.loops.first,
                          loops: song.loops,
                          markerFractions: song.markers.map { $0.seconds / song.duration },
-                         mode: .navigate, formingStart: nil, fineSelection: nil,
+                         formingStart: nil,
                          tapSelection: nil,
                          playheadLabel: "0:10",
                          onSeek: { _ in },
-                         onScrub: { _ in }, onMoveHandle: { _, _ in }, onMoveHandleEnded: {},
+                         onScrub: { _ in },
                          onSelectBegan: { _ in }, onSelectChanged: { _ in },
                          onSelectEnded: {}, onSelectCancelled: {},
                          viewport: (0, 1), onSetZoomSpan: { _ in })

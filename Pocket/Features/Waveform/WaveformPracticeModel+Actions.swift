@@ -116,154 +116,61 @@ extension WaveformPracticeModel {
         haptic(.medium)
     }
 
-    /// Tap mode = punch in/out at the playhead; 1st plays on, 2nd closes the loop and
-    /// **starts looping the punched region immediately** (no separate ▶), still as a
-    /// draft you confirm with Y / discard with N.
-    func tapPunch() {
-        if let start = pendingStart {
-            let bounds = WaveformGesture.loopBounds(start, playheadFraction)
-            pendingStart = nil
-            haptic(.medium)
-            withAnimation(.easeOut(duration: 0.28)) {
-                capture = CaptureDraft(start: bounds.start, end: bounds.end,
-                                       fromFine: false, editingLoop: nil)
-            }
-            previewCapture()                              // arm the engine loop region…
-            engine.seek(toSeconds: bounds.start * duration)
-            engine.play()                                 // …and loop it at once, so the 2nd tap plays
-        } else {
-            pendingStart = playheadFraction
-            engine.play()
-        }
-    }
+    // MARK: Hold-drag spatial A/B set (ADR 0041, secondary to play-along)
 
-    // MARK: Long-press-drag select (ADR 0005 round 5)
-
-    /// A hold fired (navigate) — anchor a new green selection at the **playhead** and
-    /// start painting it out to `fraction` (the held point). Anchoring at the playhead
-    /// (not the touch) makes the hold-drag punch in where playback is, matching Tap-mode
-    /// (`tapPunch`); the drag then sets the other end. The edit toolbar/transport lock
+    /// A hold fired — anchor a new A/B span at the **playhead** and paint it out to
+    /// `fraction` (the held point). Playhead-anchored (not the touch) so it matches the
+    /// play-along set: A pins where playback is, the drag sets B. The A/B strip + handles
     /// stay back until release (`isDragSelecting`); the medium haptic confirms the switch
-    /// from scrub to select. ADR 0005 (round 5, amended).
+    /// from scrub to paint.
     func beginDragSelection(at fraction: Double) {
-        guard capture == nil else { return }   // don't clobber a capture mid-confirm
-        let anchor = playheadFraction
+        abEditingLoop = nil                    // a spatial paint is a new span, not a loop edit
+        if activeLoopID != nil { activeLoopID = nil }
+        let anchor = playheadFraction          // A pins at the playhead; the drag sets B (ADR 0041)
         dragSelectAnchor = anchor
         isDragSelecting = true
         let bounds = WaveformGesture.selectionBounds(anchor: anchor, current: fraction)
-        capture = CaptureDraft(start: bounds.start, end: bounds.end, fromFine: false, editingLoop: nil)
+        abSpan = .set(start: bounds.start, end: bounds.end)
         haptic(.medium)
     }
 
-    /// The hold-drag moved — grow the selection from its anchor to `fraction`, exact
+    /// The hold-drag moved — grow the A/B span from its anchor to `fraction`, exact
     /// (no min-width) so the region tracks the finger; min-width is enforced on release.
     func updateDragSelection(to fraction: Double) {
-        guard let anchor = dragSelectAnchor, capture != nil else { return }
+        guard let anchor = dragSelectAnchor, isDragSelecting else { return }
         let bounds = WaveformGesture.selectionBounds(anchor: anchor, current: fraction)
-        capture = CaptureDraft(start: bounds.start, end: bounds.end, fromFine: false, editingLoop: nil)
+        abSpan = .set(start: bounds.start, end: bounds.end)
     }
 
-    /// The hold-drag released — finalise into a confirmable draft (widened to
-    /// `minLoopWidth` if tiny) and audition it immediately (like a Loop punch).
-    /// `showConfirm` flips true, raising the Y/N edit toolbar.
+    /// The hold-drag released — finalise the A/B span (widened to `minLoopWidth` if tiny,
+    /// edges snapped to nearby markers / loop boundaries, ADR 0021) and loop it at once.
+    /// The A/B strip (Save as loop · ✕) then appears — same living span as a play-along set.
     func endDragSelection() {
-        guard let draft = capture, dragSelectAnchor != nil else { return }
-        // Snap each edge to a nearby marker / saved-loop boundary (ADR 0021). The
-        // commit `haptic(.medium)` below is the catch feedback — no extra snap buzz.
-        let snappedStart = snapTarget(draft.start) ?? draft.start
-        let snappedEnd = snapTarget(draft.end) ?? draft.end
+        guard let raw = abSpan.bounds, dragSelectAnchor != nil else { return }
+        let snappedStart = snapTarget(raw.start) ?? raw.start
+        let snappedEnd = snapTarget(raw.end) ?? raw.end
         let bounds = WaveformGesture.loopBounds(snappedStart, snappedEnd)
-        capture = CaptureDraft(start: bounds.start, end: bounds.end, fromFine: false, editingLoop: nil)
+        abSpan = .set(start: bounds.start, end: bounds.end)
         dragSelectAnchor = nil
         isDragSelecting = false
         haptic(.medium)
-        previewCapture()
+        engine.setLoop(start: bounds.start * duration, end: bounds.end * duration)
         engine.seek(toSeconds: bounds.start * duration)
         engine.play()
     }
 
-    /// Abort an in-progress hold-drag (e.g. a pinch took over) — drop the draft.
+    /// Abort an in-progress hold-drag (e.g. a pinch took over) — drop the span.
     func cancelDragSelection() {
         dragSelectAnchor = nil
         isDragSelecting = false
-        capture = nil
+        abSpan = .idle
         applyActiveLoopToEngine()
-    }
-
-    /// Fine mode: drag a blue handle (bounds stay ordered + min-width apart).
-    func moveFineHandle(_ handle: WaveformGesture.Handle, _ fraction: Double) {
-        guard let current = capture else { return }
-        lastFineHandle = handle          // remember which edge to snap on release
-        let bounds = WaveformGesture.movingHandle(handle, toFraction: fraction,
-                                                  start: current.start, end: current.end)
-        capture = CaptureDraft(start: bounds.start, end: bounds.end,
-                               fromFine: true, editingLoop: current.editingLoop)
-        // Audio preview is committed on handle release (onMoveHandleEnded →
-        // endMoveHandle), not per drag-frame — dragging only moves the handles.
-    }
-
-    /// Fine handle *release* — snap the just-moved edge to a nearby marker / loop
-    /// boundary (excluding the loop being range-edited, so it doesn't catch its own
-    /// edges), then audition the new bounds (ADR 0021). The other handle stays put;
-    /// `movingHandle` keeps the min-width, so a snap can't collapse the loop.
-    func endMoveHandle() {
-        if let handle = lastFineHandle, let current = capture {
-            let edge = handle == .start ? current.start : current.end
-            if let target = snapTarget(edge, excluding: current.editingLoop) {
-                let bounds = WaveformGesture.movingHandle(handle, toFraction: target,
-                                                          start: current.start, end: current.end)
-                capture = CaptureDraft(start: bounds.start, end: bounds.end,
-                                       fromFine: true, editingLoop: current.editingLoop)
-                haptic(.light)
-            }
-        }
-        lastFineHandle = nil
-        previewCapture()
-    }
-
-    /// Enter Fine → seed selection + pill; leave → drop unsaved; any switch clears a Tap capture.
-    func modeChanged(to newMode: WaveformPracticeView.InteractionMode) {
-        if pendingStart != nil {
-            pendingStart = nil
-            engine.pause()
-        }
-        switch newMode {
-        case .fine:
-            if capture?.fromFine != true {
-                let seed = activeLoop.map { ($0.start, $0.end) } ?? defaultSelection()
-                withAnimation(.easeOut(duration: 0.28)) {
-                    capture = CaptureDraft(start: seed.0, end: seed.1, fromFine: true, editingLoop: nil)
-                }
-                previewCapture()   // arm the selection for audition / live preview
-            }
-        case .navigate:
-            if capture?.fromFine == true {
-                withAnimation(.easeOut(duration: 0.2)) { capture = nil }
-                applyActiveLoopToEngine()   // drop the live preview, restore the saved loop
-            }
-        }
-    }
-
-    /// Confirm ✓ — write back a range edit, or create a new loop instantly (auto-named
-    /// and activated, no naming step — rename later from its row; ADR 0019).
-    func confirmCapture() {
-        guard let draft = capture else { return }
-        if let loop = draft.editingLoop {
-            loop.start = draft.start          // mutating the @Model persists
-            loop.end = draft.end
-            activeLoopID = loop.uid
-            applyActiveLoopToEngine()
-        } else {
-            createLoop(start: draft.start, end: draft.end)
-        }
-        haptic(.medium)
-        finishCapture()
     }
 
     /// Create, persist, and activate a new loop with an auto name ("Loop 3"). No
     /// naming sheet — the range is visible on the waveform and it's renamed from the
     /// loop row (ADR 0019). Starts looping straight away (seek to start + play) so a
-    /// freshly punched loop plays without a separate tap on ▶.
+    /// freshly saved A/B span plays without a separate tap on ▶.
     func createLoop(start: Double, end: Double) {
         let name = AutoName.next(prefix: "Loop", existing: loops.map(\.name))
         let loop = Loop(name: name, start: start, end: end, speed: speed, repeats: 4)
@@ -275,38 +182,23 @@ extension WaveformPracticeModel {
         engine.play()
     }
 
-    /// Confirm ✗ — discard the capture outright (and leave Fine).
-    func cancelCapture() { finishCapture() }
-
-    /// Clear the capture and leave Fine for the default Scroll mode.
-    func finishCapture() {
-        withAnimation(.easeOut(duration: 0.2)) {
-            capture = nil
-            if mode == .fine { mode = .navigate }
-        }
-        applyActiveLoopToEngine()   // a discard reverts the live preview; a commit re-applies the same bounds
-    }
-
-    /// "Adjust range" from a loop's edit sheet → Fine mode seeded with its bounds.
-    /// Activates the loop so it's the one you hear while refining it (and so a
-    /// discard restores its original bounds).
+    /// "Adjust range" from a loop's edit sheet → lift the loop into the A/B span (ADR
+    /// 0041) seeded with its bounds, looping it so you hear it while you drag the A/B
+    /// handles; **Save changes** writes the new range back, ✕ discards. Activates the
+    /// loop so it's the one playing.
     func startRangeEdit(_ loop: Loop) {
         activeLoopID = loop.uid
-        capture = CaptureDraft(start: loop.start, end: loop.end, fromFine: true, editingLoop: loop)
-        previewCapture()
-        withAnimation(.easeOut(duration: 0.2)) { mode = .fine }
-    }
-
-    /// A default loop span at the playhead, clamped so it never spills off the end.
-    func defaultSelection() -> (Double, Double) {
-        let start = min(playheadFraction, 0.85)
-        return (start, min(start + 0.12, 0.98))
+        applyActiveLoopToEngine()
+        liftActiveLoopToSpan()
+        engine.seek(toSeconds: loop.startSeconds)
+        engine.play()
     }
 
     /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
     /// Arming a *different* loop restores its last-practiced speed (ADR 0040); re-tapping the
     /// already-active loop only toggles play/pause, keeping the speed you're sitting at.
     func activate(_ loop: Loop) {
+        abSpan = .idle                        // arming a saved loop drops any live A/B span
         if activeLoopID == loop.uid {
             if engine.isPlaying {
                 engine.pause()
@@ -327,27 +219,6 @@ extension WaveformPracticeModel {
     func clearActiveLoop() {
         activeLoopID = nil
         applyActiveLoopToEngine()
-    }
-
-    /// Arm the engine loop to the in-progress capture (Tap or Fine) so it can be
-    /// auditioned and — if playing — heard immediately. Reverting a discard is just
-    /// `applyActiveLoopToEngine()`.
-    func previewCapture() {
-        guard let capture else { return }
-        engine.setLoop(start: capture.start * duration, end: capture.end * duration)
-    }
-
-    /// The edit-toolbar ▶ — audition the captured region before saving. Toggles:
-    /// pause if playing, else loop the capture from its start.
-    func auditionCapture() {
-        guard let capture else { return }
-        if engine.isPlaying {
-            engine.pause()
-        } else {
-            engine.setLoop(start: capture.start * duration, end: capture.end * duration)
-            engine.seek(toSeconds: capture.start * duration)
-            engine.play()
-        }
     }
 
     /// Keep the engine's loop region in sync with the active loop (or clear it).

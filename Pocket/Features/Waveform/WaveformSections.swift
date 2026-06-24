@@ -267,15 +267,55 @@ private struct PresetPill: View {
     }
 }
 
-// MARK: - 4. Mode description line
+// MARK: - 4. Interaction hint line
 
+/// The default content under the speed bar (replaced by the A/B strip while a span is
+/// live, or the downbeat strip while placing the 1). Rather than a long, truncating hint
+/// line, this is a compact **Loop controls** affordance that opens a small popover with
+/// the full gesture cheatsheet — A/B is the one creation story now.
 struct ModeDescriptionLine: View {
-    let mode: WaveformPracticeView.InteractionMode
+    @State private var showingInfo = false
+
     var body: some View {
-        Text(mode.blurb)
-            .font(.footnote)
-            .foregroundStyle(PocketColor.textSecondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        HStack {
+            Button { showingInfo = true } label: {
+                Label("Loop controls", systemImage: "info.circle")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .popover(isPresented: $showingInfo) {
+                LoopControlsInfo().presentationCompactAdaptation(.popover)
+            }
+            Spacer()
+        }
+    }
+}
+
+/// The gesture cheatsheet shown by the **Loop controls** popover (ADR 0041).
+private struct LoopControlsInfo: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            Text("Loop controls")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PocketColor.textPrimary)
+            row("Make a loop", "Tap Loop to set the start, play on, tap to set the end")
+            row("…or draw it", "Hold and drag across the waveform")
+            row("Fine-tune", "Drag the A / B handles to move the ends")
+            row("Re-edit later", "Drag a saved loop's edge on the waveform")
+            row("Move around", "Tap or drag to seek · pinch to zoom")
+        }
+        .padding(16)
+        .frame(maxWidth: 290)
+        .preferredColorScheme(.dark)
+    }
+
+    private func row(_ key: String, _ detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(key).font(.footnote.weight(.semibold)).foregroundStyle(PocketColor.active)
+            Text(detail).font(.caption).foregroundStyle(PocketColor.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

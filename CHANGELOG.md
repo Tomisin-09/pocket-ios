@@ -5,7 +5,36 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **One way to make loops — Fine mode is gone** (ADR 0041). The transport's left column
+  is now just **Loop** and **Marker** (the separate "Fine" precise-edit mode and its ✓/✗
+  confirm bar are retired). Setting, refining, and re-editing a loop all happen through the
+  one **Loop** control now. **Hold-drag the waveform** still works as the spatial way to set
+  a loop (the start pins at the playhead, the drag sets the end). Creating a loop no longer
+  greys out the transport — it stays live so you can play along.
+- **Crisper playback when slowed down**. Tuned the time-stretch so picked/struck attacks
+  cut through better at reduced speed instead of smearing.
+
+### Fixed
+- The **playhead time label** no longer sits over the A/B handles — it's pinned low on the
+  waveform, clear of both the handles and the loop brackets.
+- **Tapping inside a playing loop now moves the playhead there** instead of restarting the
+  loop from its start. Seeking into an active loop resumes from the tapped point and keeps
+  looping seamlessly — so you can jump to a spot mid-loop without losing your place.
+
 ### Added
+- **Make loops by playing along** (ADR 0041). Making a loop now works like the A-B repeat
+  on a practice player: **tap Loop to set the start**, play along, **tap again to set the
+  end** — it loops that section straight away. The loop just **lives** while you rehearse
+  it — no more "save or discard now" prompt. **Nudge the A / B handles** right on the
+  waveform to refine the bounds while it keeps looping (they snap to nearby markers and
+  loop edges) — no separate mode to enter. When it's worth keeping, hit **Save as loop**;
+  if not, **✕** clears it and plays on through.
+- **Re-edit a saved loop's range by dragging it** (ADR 0041). An armed loop now shows
+  **grab knobs on its edges** — drag one straight on the waveform to change its bounds
+  (it lifts into A/B; **Save changes** writes the new range back, **✕** discards). The old
+  three-hop "edit sheet → Adjust range → Fine" detour is gone; "Adjust range" now drops
+  you straight onto the A/B handles too.
 - **Loops remember the speed you practise them at** (ADR 0040). Slow a loop to 0.7× to
   drill it, move to another loop, come back — it **reopens at 0.7×** instead of snapping
   back to full tempo. Each loop carries its own last-practised speed, saved when you leave

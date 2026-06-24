@@ -9,17 +9,15 @@ import UIKit
 
 // MARK: - 5. Waveform — SoundCloud-style mirrored bars + gesture engine
 
-/// The detail waveform. Renders the mirrored bars, the active loop region, the
-/// in-progress selection, and the playhead, and recognises two interaction modes
-/// (brief §4.1 / ADR 0005):
+/// The detail waveform. Renders the mirrored bars, the active loop region, the live
+/// A/B span + its handles, and the playhead (brief §4.1 / ADR 0005, 0041):
 ///
-/// - **Navigate** (default): tap → seek the playhead; drag → scrub; **hold-drag →
-///   select a loop region** (ADR 0005 round 5); pinch → zoom.
-/// - **Fine:** drag the two blue handles to set the loop bounds.
+/// - tap → seek · drag → scrub · **hold-drag → set an A/B span** · pinch → zoom.
+/// - Once a span is set, drag its **A / B handles** to refine it in place; drag a
+///   saved loop's edge to lift it back into A/B for a range edit.
 ///
-/// Marker drop and loop punch are also buttons on the transport action bar (they act
-/// at the playhead); the hold-drag is the on-waveform path to define a loop *range*.
-/// All gesture math (point → fraction, zoom
+/// Marker drop and the A/B set control are also buttons on the transport bar (they
+/// act at the playhead). All gesture math (point → fraction, zoom
 /// viewport, handle hit-testing) lives in the pure, unit-tested `WaveformGesture`;
 /// the view emits *song fractions* (0…1) so the parent never deals in points.
 /// Crisp deep-zoom (ADR 0020): a re-downsample of just the visible window plus the
@@ -52,23 +50,26 @@ struct WaveformView: View {
     /// or no downbeat anchor, so the whole grid simply doesn't render. Defaulted so
     /// the many component previews/call sites that don't care opt out for free.
     var beats: [BeatGrid.Beat] = []
-    let mode: WaveformPracticeView.InteractionMode
-    /// Loop punch in progress: the start of the loop being captured. The region from
-    /// here to the live playhead fills green as playback previews it.
+    /// A/B forming: point **A** is placed and awaiting B. The region from here to the
+    /// live playhead fills green as playback runs forward to find B (ADR 0041).
     let formingStart: Double?
-    /// Fine mode: the selection being dragged by the two blue handles.
-    let fineSelection: (start: Double, end: Double)?
-    /// A punched loop awaiting confirm — a static green highlight so it stays visible
-    /// while the edit toolbar is up.
+    /// The set A/B span's region — a static green wash so it stays visible while you
+    /// rehearse / adjust it (ADR 0041).
     let tapSelection: (start: Double, end: Double)?
+    /// The set A/B span (ADR 0041) — drawn with labelled A/B handles you drag to refine
+    /// in place (navigate mode, no mode hop); `nil` unless a span is closed.
+    var abSelection: (start: Double, end: Double)?
     /// Live playhead time, shown in a bubble pinned to the playhead.
     let playheadLabel: String
 
     let onSeek: (Double) -> Void
     let onScrub: (Double) -> Void
-    let onMoveHandle: (WaveformGesture.Handle, Double) -> Void
-    /// Fine mode: the drag finished — commit the live audio preview to the new bounds.
-    let onMoveHandleEnded: () -> Void
+    /// Drag / release of an A/B span handle (ADR 0041) — drag an A or B edge in place,
+    /// no mode hop; release passes the moved handle.
+    var onMoveABHandle: (WaveformGesture.Handle, Double) -> Void = { _, _ in }
+    var onMoveABHandleEnded: (WaveformGesture.Handle) -> Void = { _ in }
+    /// Grabbed the active loop's edge (ADR 0041) — lift it into the A/B span to range-edit.
+    var onLiftLoopEdge: () -> Void = {}
     /// Long-press-drag select (navigate mode): a hold fired — begin a selection at
     /// this fraction. The drag then extends it (`onSelectChanged`).
     let onSelectBegan: (Double) -> Void
@@ -103,8 +104,13 @@ struct WaveformView: View {
     // state across files within the module.
     @State var dragStartX: CGFloat?
     @State var didScrub = false                     // moved enough to be a scrub (not a tap)
-    @State var grabbedHandle: WaveformGesture.Handle?  // Fine mode
+    @State var grabbedHandle: WaveformGesture.Handle?  // a committed A/B-edge drag
     @State var grabbedHandleOrigin: Double?            // its value at grab-time, to revert on a pinch takeover
+    /// A loop edge touched but not yet committed to a drag (ADR 0041): a **tap** here
+    /// seeks the playhead; only movement past the scrub threshold commits to dragging the
+    /// edge (lifting a saved loop into A/B first when `lift`). Lets you tap-seek inside a
+    /// loop — even a short one whose edge grab-zones cover it — without nudging a handle.
+    @State var pendingGrab: (handle: WaveformGesture.Handle, lift: Bool)?
     @State var pinchBaseSpan: Double?               // zoom span captured at pinch start
     @State var didPinch = false                     // a pinch happened — swallow the trailing tap/scrub
     // Long-press-drag select (navigate). A still hold arms a selection; the drag
@@ -126,7 +132,8 @@ struct WaveformView: View {
                 // Live time bubble, pinned to the playhead and vertically centred,
                 // clamped so it never runs off either edge.
                 TimeBubble(text: playheadLabel)
-                    .position(x: bubbleX(width: geo.size.width), y: geo.size.height / 2)
+                    // Low in the bar region: clears the mid-height handles + the loop band below.
+                    .position(x: bubbleX(width: geo.size.width), y: geo.size.height - Self.loopBand - 12)
                     .allowsHitTesting(false)
             }
             .contentShape(Rectangle())
@@ -136,7 +143,7 @@ struct WaveformView: View {
         .frame(height: 140)
         .accessibilityElement()
         .accessibilityLabel("Waveform")
-        .accessibilityHint(mode.blurb)
+        .accessibilityHint("Tap to seek, drag to scrub, hold-drag to set a loop, pinch to zoom")
     }
 
     // MARK: Drawing
@@ -160,13 +167,15 @@ struct WaveformView: View {
         }
 
         // Active loop region — tinted the active loop's own identity colour (ADR 0023).
-        if let loop {
+        // Suppressed while a span is up (`tapSelection`), so a lifted range edit shows the
+        // single A/B wash, not a muddy double tint (ADR 0041).
+        if let loop, tapSelection == nil {
             context.fill(Path(regionRect(loop.start, loop.end)),
                          with: .color(loopColor(for: loop).opacity(0.14)))
         }
 
-        // Forming loop (Tap mode) — fills with the playing colour from the start to
-        // the playhead as playback previews the section being captured.
+        // Forming A/B span — A is placed, B pending: fill from A to the live playhead
+        // as playback runs forward to find B (ADR 0041).
         if let formingStart {
             context.fill(Path(regionRect(min(formingStart, playheadFraction),
                                          max(formingStart, playheadFraction))),
@@ -177,13 +186,6 @@ struct WaveformView: View {
         if let tapSelection {
             context.fill(Path(regionRect(tapSelection.start, tapSelection.end)),
                          with: .color(PocketColor.active.opacity(0.22)))
-        }
-
-        // Fine selection wash — behind the bars, like the other region tints. The
-        // draggable handles draw *in front* of the bars below (so they aren't occluded).
-        if let fineSelection {
-            context.fill(Path(regionRect(fineSelection.start, fineSelection.end)),
-                         with: .color(PocketColor.fine.opacity(0.18)))
         }
 
         drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX, region: region)
@@ -197,9 +199,12 @@ struct WaveformView: View {
         drawLoopLines(in: context, size: size, atX: atX)
         drawMarkerTriangles(in: context, size: size, atX: atX)
 
-        // Fine handles in front of the bars (helper in `WaveformDownbeat.swift`, ADR 0023
-        // follow-up); the wash already went down behind the bars above.
-        drawFineHandles(in: context, region: region, atX: atX)
+        // Handles in front of the bars (helpers in `WaveformDownbeat.swift`): A/B span
+        // handles, plus grabbable edges on the active loop.
+        drawABHandles(in: context, region: region, atX: atX)   // A/B span handles (ADR 0041)
+        if let loop {                                          // grabbable edges on the active loop (ADR 0041)
+            drawLoopEditHandles(in: context, region: region, atX: atX, loop: loop, color: loopColor(for: loop))
+        }
 
         // Playhead.
         var line = Path()
@@ -257,7 +262,7 @@ struct WaveformView: View {
     // Border bands (ADR 0023): annotations sit on the borders, off the bars. The
     // top band holds marker triangles; the bottom band holds lane-stacked loop
     // lines. The bars are drawn in the region between them.
-    private static let markerBand: CGFloat = 16     // top: marker triangles
+    static let markerBand: CGFloat = 16             // top: marker triangles (used by the helpers file)
     private static let loopBand: CGFloat = 24       // bottom: loop lines (maxLanes × laneHeight + pad)
     // Loop lines stack upward from the bottom edge. Capped at `maxLanes` so deep
     // nesting can't march up out of the band — anything deeper clamps into the last lane.
@@ -307,43 +312,10 @@ struct WaveformView: View {
         }
     }
 
-    /// All saved markers as purple inverted triangles along the top border, apex
-    /// pointing down at the marker position (ADR 0023 — replaces the stem+dot pin).
-    /// A near-background halo keeps the triangle crisp, and a short tick drops from
-    /// the apex into the bar region to pin the exact location.
-    private func drawMarkerTriangles(in context: GraphicsContext, size: CGSize,
-                                     atX: (Double) -> CGFloat) {
-        let halfWidth: CGFloat = 3.5
-        let triHeight: CGFloat = 6
-        let apexY = Self.markerBand - 3        // apex sits just above the bars
-        let topY = apexY - triHeight
-        for fraction in markerFractions {
-            let pinX = atX(fraction)
-            guard pinX > -halfWidth, pinX < size.width + halfWidth else { continue }  // off-screen
-            var triangle = Path()
-            triangle.move(to: CGPoint(x: pinX - halfWidth, y: topY))
-            triangle.addLine(to: CGPoint(x: pinX + halfWidth, y: topY))
-            triangle.addLine(to: CGPoint(x: pinX, y: apexY))
-            triangle.closeSubpath()
-            // Halo outline behind, then the purple fill.
-            context.stroke(triangle, with: .color(PocketColor.background.opacity(0.55)),
-                           style: StrokeStyle(lineWidth: 2.5, lineJoin: .round))
-            context.fill(triangle, with: .color(PocketColor.pin))
-            // Precision tick from the apex into the bar region.
-            var tick = Path()
-            tick.move(to: CGPoint(x: pinX, y: apexY))
-            tick.addLine(to: CGPoint(x: pinX, y: apexY + 3))
-            context.stroke(tick, with: .color(PocketColor.pin.opacity(0.6)), lineWidth: 1)
-        }
-    }
-
-    /// Vertical beat grid drawn **on top of** the bars (ADR 0022; restyled ADR 0024
-    /// follow-up). Drawing behind the bars let tall bars occlude the lines unevenly, so
-    /// some downbeats "stuck out" more than others; on top, each line is full-height and
-    /// consistent. Bar-start **downbeats** get a dark halo + brighter line (the ADR 0023
-    /// halo trick) so they read over both the bright blue bars and the dark gaps;
-    /// sub-beats stay a fainter plain line. Density-aware: sub-beats drop out under ~5 pt
-    /// apart, and the whole grid is skipped once even the downbeats would crowd.
+    /// Vertical beat grid drawn **on top of** the bars (ADR 0022; restyled ADR 0024) so
+    /// each line is full-height instead of unevenly occluded. Bar-start **downbeats** get
+    /// a dark halo + brighter line (ADR 0023 halo); sub-beats a fainter line that drops
+    /// out under ~5 pt apart, with the whole grid skipped once even downbeats would crowd.
     private func drawBeatGrid(in context: GraphicsContext, size: CGSize,
                               atX: (Double) -> CGFloat, region: BarRegion) {
         guard beats.count >= 2 else { return }
@@ -384,8 +356,7 @@ struct WaveformView: View {
             viewport: viewport)
     }
 
-    /// X for the time bubble — the playhead position, clamped so the bubble
-    /// stays fully on-screen at either edge.
+    /// X for the time bubble — the playhead position, clamped fully on-screen either edge.
     private func bubbleX(width: CGFloat) -> CGFloat {
         let half: CGFloat = 28
         return min(max(half, width * CGFloat(screenX(playheadFraction))), width - half)
