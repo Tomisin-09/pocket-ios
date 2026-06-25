@@ -46,6 +46,28 @@ final class ClickVoice {
         player.scheduleBuffer(buffer, at: playTime(after: delay), options: [], completionHandler: nil)
     }
 
+    /// The voice's sample rate — the conversion factor for absolute-time scheduling.
+    var clockSampleRate: Double { sampleRate }
+
+    /// The player's current render position in frames on its own timeline, or `nil` before
+    /// it has rendered. The anchor the standalone metronome locks its beat grid to, so
+    /// every click lands at an exact sample position and the tempo can't wander (ADR 0043).
+    func renderSampleTime() -> AVAudioFramePosition? {
+        guard let nodeTime = player.lastRenderTime,
+              let playerTime = player.playerTime(forNodeTime: nodeTime) else { return nil }
+        return playerTime.sampleTime
+    }
+
+    /// Queue a click at an **absolute** sample position on the player's timeline. Unlike
+    /// `schedule(delay:)` (which re-reads "now" each call and is right for the song-locked
+    /// click), this pins every beat to a fixed sample grid, so a song-less metronome stays
+    /// dead steady regardless of timer jitter.
+    func schedule(atSampleTime sampleTime: AVAudioFramePosition, accented: Bool) {
+        guard let buffer = accented ? accent : beat else { return }
+        player.scheduleBuffer(buffer, at: AVAudioTime(sampleTime: sampleTime, atRate: sampleRate),
+                              options: [], completionHandler: nil)
+    }
+
     /// Cancel every queued click and silence the voice (pause / seek / rate change /
     /// loop wrap / screen exit). Restart with `start()` before scheduling again.
     func stopAll() {

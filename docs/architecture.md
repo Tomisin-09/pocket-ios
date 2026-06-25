@@ -110,15 +110,25 @@ song's tempo; it's silenced on pause and screen exit (ADR 0026).
 A **standalone metronome** (ADR 0043, `Features/Metronome/`) reuses the same pieces
 without a song. `StandaloneMetronomeEngine` (`Core/Audio/`) owns its **own**
 `AVAudioEngine` + `ClickVoice` and *generates* its grid with the pure `MetronomeBeats`
-(BPM + beats-per-bar → ascending `(time, isDownbeat)` pairs), sounding it on its own
-wall-clock at rate 1.0 — the same look-ahead-schedule + watermark-dedup pattern as the
-in-song click. Two anchors keep the two clocks honest: a **session-tracker** anchor
-(`elapsed`, ephemeral, set once a sitting, *not* persisted) and a **beat-phase** anchor
-(re-set on a tempo/signature change so the new downbeat lands cleanly). The on-screen
-**beat-flash indicator** reads the same `currentBeat` the audio sounds, so visual and
-audio can't drift. Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the Italian tempo
-marking is the pure `TempoMarking` lookup. Reached for now via a **temporary** Library
-toolbar button (ADR 0043 — moves to a home screen later). Stage 4's waveform for real files is
+(BPM + beats-per-bar → ascending `(time, isDownbeat)` pairs). **Steadiness comes from the
+sample clock:** every click is scheduled at an *absolute* sample position
+(`phaseOrigin + index · framesPerBeat`) via `ClickVoice.schedule(atSampleTime:)`, so the
+tempo is locked to the audio hardware and can't wander with `Timer` jitter — the timer
+only tops up the look-ahead. The on-screen **beat-flash indicator** reads the same
+`currentBeat`, derived from the render head shifted back by the output latency so the lit
+dot lands on the *heard* click rather than leading it. Meter is the pure `TimeSignature`
+(named presets — 4/4 pop, 3/4 waltz, 6/8, 12/8 slow blues, … — each carrying its accent
+pattern); BPM is the click rate and the accent pattern picks the strong clicks. Transport
+is three-state — **stopped → playing → paused** — with a **wall-clock session tracker**
+(`elapsed`, accumulated across pause/resume, frozen while paused, zeroed on stop, *not*
+persisted) kept separate from the **sample-clock beat phase** (re-anchored on a
+tempo/signature change or a resume). Lock-screen / Control Center play-pause is wired
+through the shared `NowPlayingController`, and the `audio` background mode (ADR 0025) keeps
+the click sounding while locked. The two per-tick SwiftUI views (dots, session readout) are
+isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
+the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
+Italian tempo marking is the pure `TempoMarking` lookup. Reached for now via a **temporary**
+Library toolbar button (ADR 0043 — moves to a home screen later). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).

@@ -2,9 +2,9 @@ import SwiftUI
 import QuartzCore
 
 /// The standalone metronome screen (ADR 0043, slice 3): play/stop, a tempo control
-/// (steppers, slider, and reused tap-tempo), a time-signature control, the Italian tempo
-/// marking, a running **session tracker**, and a **beat-flash indicator** that reads the
-/// same generated grid as the audio so the two can't drift.
+/// (steppers, slider, and reused tap-tempo), a named **time-signature** picker, the
+/// Italian tempo marking, a running **session tracker**, and a **beat-flash indicator**
+/// that reads the same generated grid as the audio so the two stay in step.
 ///
 /// No persistence yet — the tempo/signature are in-memory for the sitting. Savable
 /// exercise presets (loading a preset's full configuration) arrive in slice 6.
@@ -26,12 +26,17 @@ struct MetronomeView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 28) {
-                beatIndicator
+            VStack(spacing: 24) {
+                // The two per-tick views are isolated structs so the engine's ~50 Hz
+                // `currentBeat`/`elapsed` updates re-render only them — not this body, which
+                // would otherwise rebuild the controls (and dismiss the time-signature menu)
+                // on every beat.
+                BeatIndicator(engine: engine)
                 tempoReadout
                 tempoControls
                 timeSignatureControl
                 Spacer(minLength: 0)
+                SessionTracker(engine: engine)
                 transport
             }
             .padding(24)
@@ -48,32 +53,6 @@ struct MetronomeView: View {
         }
         .preferredColorScheme(.dark)
         .onDisappear { engine.stop() }
-    }
-
-    // MARK: - Beat indicator
-
-    /// A dot per beat in the bar; the current beat lights up and the downbeat (beat 1)
-    /// reads in the metronome accent colour and a touch larger. Driven by the engine's
-    /// `currentBeat`, the same grid the audio sounds (ADR 0043).
-    private var beatIndicator: some View {
-        HStack(spacing: 12) {
-            ForEach(0..<engine.beatsPerBar, id: \.self) { index in
-                let isCurrent = engine.isPlaying && engine.currentBeat % engine.beatsPerBar == index
-                let isDownbeat = index == 0
-                Circle()
-                    .fill(dotColor(isCurrent: isCurrent, isDownbeat: isDownbeat))
-                    .frame(width: isDownbeat ? 20 : 16, height: isDownbeat ? 20 : 16)
-                    .scaleEffect(isCurrent ? 1.35 : 1.0)
-                    .animation(.easeOut(duration: 0.08), value: engine.currentBeat)
-            }
-        }
-        .frame(height: 32)
-        .accessibilityHidden(true)
-    }
-
-    private func dotColor(isCurrent: Bool, isDownbeat: Bool) -> Color {
-        if isCurrent { return isDownbeat ? PocketColor.metronome : PocketColor.textPrimary }
-        return isDownbeat ? PocketColor.metronome.opacity(0.4) : PocketColor.textSecondary.opacity(0.4)
     }
 
     // MARK: - Tempo readout
@@ -137,40 +116,62 @@ struct MetronomeView: View {
 
     // MARK: - Time signature
 
+    /// A menu of named meters with their feel ("3/4 · Waltz", "12/8 · Slow blues"), so the
+    /// signature reads musically rather than as a bare beats-per-bar number.
     private var timeSignatureControl: some View {
         HStack {
-            Text("Beats per bar")
+            Text("Time signature")
                 .font(.subheadline)
                 .foregroundStyle(PocketColor.textSecondary)
             Spacer()
-            Stepper(
-                value: Binding(
-                    get: { engine.beatsPerBar },
-                    set: { engine.setBeatsPerBar($0) }
-                ),
-                in: StandaloneMetronomeEngine.beatsPerBarRange
-            ) {
-                Text("\(engine.beatsPerBar)")
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(PocketColor.textPrimary)
+            Menu {
+                ForEach(TimeSignature.presets) { signature in
+                    Button {
+                        engine.setTimeSignature(signature)
+                        haptic(.light)
+                    } label: {
+                        if signature == engine.timeSignature {
+                            Label("\(signature.name) · \(signature.context)", systemImage: "checkmark")
+                        } else {
+                            Text("\(signature.name) · \(signature.context)")
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text(engine.timeSignature.name)
+                        .font(.pocketMono(.body))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    Text(engine.timeSignature.context)
+                        .font(.caption)
+                        .foregroundStyle(PocketColor.textSecondary)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption2)
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
             }
-            .fixedSize()
         }
     }
 
     // MARK: - Transport
 
+    /// Primary play/pause/resume button, with a secondary **stop** (end + reset to 0:00)
+    /// that appears once a session is live. Pause keeps the session; stop zeroes it.
     private var transport: some View {
-        VStack(spacing: 12) {
-            Text(timecode(engine.elapsed))
-                .font(.pocketMono(.title3))
-                .foregroundStyle(engine.isPlaying ? PocketColor.textPrimary : PocketColor.textSecondary)
-                .contentTransition(.numericText())
-                .accessibilityLabel("Session time \(timecode(engine.elapsed))")
-
+        HStack(spacing: 14) {
+            if engine.transport != .stopped {
+                Button { engine.stop(); haptic(.medium) } label: {
+                    Image(systemName: "stop.fill")
+                        .font(.title3)
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .frame(width: 56, height: 56)
+                        .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Stop and reset")
+            }
             Button { engine.toggle(); haptic(.medium) } label: {
-                Label(engine.isPlaying ? "Stop" : "Start",
-                      systemImage: engine.isPlaying ? "stop.fill" : "play.fill")
+                Label(primaryLabel, systemImage: primarySymbol)
                     .font(.headline)
                     .foregroundStyle(PocketColor.background)
                     .frame(maxWidth: .infinity)
@@ -179,6 +180,18 @@ struct MetronomeView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private var primaryLabel: String {
+        switch engine.transport {
+        case .stopped: return "Start"
+        case .playing: return "Pause"
+        case .paused: return "Resume"
+        }
+    }
+
+    private var primarySymbol: String {
+        engine.transport == .playing ? "pause.fill" : "play.fill"
     }
 
     // MARK: - Tap tempo (reuses TempoMath, ADR 0024 / 0043)
@@ -191,6 +204,60 @@ struct MetronomeView: View {
         if let bpm = TempoMath.bpm(fromTapTimes: taps) {
             engine.setBPM(Int(bpm.rounded()))
         }
+    }
+}
+
+/// A dot per click in the bar; the current click lights up and the meter's **accented**
+/// clicks read in the metronome colour and a touch larger. A standalone view so the
+/// engine's per-tick `currentBeat` updates re-render only the dots, not the whole screen
+/// (which would dismiss the time-signature menu mid-play).
+private struct BeatIndicator: View {
+    let engine: StandaloneMetronomeEngine
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(0..<engine.timeSignature.beats, id: \.self) { index in
+                let isCurrent = engine.isPlaying
+                    && engine.currentBeat % engine.timeSignature.beats == index
+                let isAccent = engine.timeSignature.isAccented(beatInBar: index)
+                Circle()
+                    .fill(dotColor(isCurrent: isCurrent, isAccent: isAccent))
+                    .frame(width: isAccent ? 18 : 14, height: isAccent ? 18 : 14)
+                    .scaleEffect(isCurrent ? 1.4 : 1.0)
+                    .animation(.easeOut(duration: 0.07), value: engine.currentBeat)
+            }
+        }
+        .frame(height: 32)
+        .accessibilityHidden(true)
+    }
+
+    private func dotColor(isCurrent: Bool, isAccent: Bool) -> Color {
+        if isCurrent { return isAccent ? PocketColor.metronome : PocketColor.textPrimary }
+        return isAccent ? PocketColor.metronome.opacity(0.4) : PocketColor.textSecondary.opacity(0.4)
+    }
+}
+
+/// The running session time — ephemeral wall-clock that keeps running through tempo
+/// changes and resets on stop (ADR 0043). A standalone view so its per-second update
+/// doesn't re-render the controls.
+private struct SessionTracker: View {
+    let engine: StandaloneMetronomeEngine
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("SESSION")
+                .font(.caption2.weight(.semibold))
+                .tracking(1.5)
+                .foregroundStyle(PocketColor.textSecondary)
+            Text(timecode(engine.elapsed))
+                .font(.pocketMono(.title))
+                .foregroundStyle(engine.transport == .stopped
+                                 ? PocketColor.textSecondary : PocketColor.textPrimary)
+                .contentTransition(.numericText())
+                .monospacedDigit()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Session time \(timecode(engine.elapsed))")
     }
 }
 

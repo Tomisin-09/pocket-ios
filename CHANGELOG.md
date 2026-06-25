@@ -8,10 +8,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ### Added
 - **A standalone metronome** (ADR 0043). Tap the **metronome button** in the Library toolbar
   for a click that stands on its own — no song needed. Set the tempo by stepper, slider, or
-  by **tapping along**, pick the beats per bar, and read the classical tempo marking
-  ("Andante", "Allegro") as you dial. A row of **flashing dots** shows the beat with the
-  downbeat emphasised (a silent visual mode if you'd rather not hear it), and a **session
-  timer** counts how long you've been practising this sitting. *(This toolbar entry point is
+  by **tapping along**, and read the classical tempo marking ("Andante", "Allegro") as you
+  dial. Pick a **named time signature** with its feel — 4/4 (pop), 3/4 (waltz), 6/8, **12/8
+  (slow blues)**, 2/4, 5/4, 7/8 — and the **flashing dots** show that meter's accent pattern
+  (a silent visual mode if you'd rather not hear it). **Pause** to take a breather and
+  **resume** where you left off, or **stop** to reset; a **session timer** tracks how long
+  you've practised this sitting. The click keeps going when the phone is **locked**, with
+  **play/pause on the lock screen and Control Center**. *(This toolbar entry point is
   temporary — the metronome moves to a home screen later.)*
 - **The practice screen rotates to landscape** (ADR 0042). Turn the phone sideways on the
   practice screen — handy when it's propped on a stand — and the waveform claims the full
