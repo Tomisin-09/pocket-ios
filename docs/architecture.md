@@ -105,7 +105,20 @@ stretched) with two synthesized buffers (accented downbeat / plain beat). The
 engine refreshes the schedule on its 0.03 s display timer, deduping by a watermark,
 and flushes-and-refills on any discontinuity (rate / seek / loop / pause). It's
 enabled only when the grid exists (BPM + the 1) and **never writes back** to the
-song's tempo; it's silenced on pause and screen exit (ADR 0026). Stage 4's waveform for real files is
+song's tempo; it's silenced on pause and screen exit (ADR 0026).
+
+A **standalone metronome** (ADR 0043, `Features/Metronome/`) reuses the same pieces
+without a song. `StandaloneMetronomeEngine` (`Core/Audio/`) owns its **own**
+`AVAudioEngine` + `ClickVoice` and *generates* its grid with the pure `MetronomeBeats`
+(BPM + beats-per-bar → ascending `(time, isDownbeat)` pairs), sounding it on its own
+wall-clock at rate 1.0 — the same look-ahead-schedule + watermark-dedup pattern as the
+in-song click. Two anchors keep the two clocks honest: a **session-tracker** anchor
+(`elapsed`, ephemeral, set once a sitting, *not* persisted) and a **beat-phase** anchor
+(re-set on a tempo/signature change so the new downbeat lands cleanly). The on-screen
+**beat-flash indicator** reads the same `currentBeat` the audio sounds, so visual and
+audio can't drift. Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the Italian tempo
+marking is the pure `TempoMarking` lookup. Reached for now via a **temporary** Library
+toolbar button (ADR 0043 — moves to a home screen later). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).

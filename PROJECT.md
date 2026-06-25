@@ -47,6 +47,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/App/` | App entry, root scene |
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
+| `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043) |
 | `Pocket/Features/Planner/` | Home screen / practice planner, routines |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |

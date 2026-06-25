@@ -21,6 +21,11 @@ struct LibraryView: View {
     @AppStorage("librarySortAscending") private var sortAscending = true
     /// Title/artist search query (ADR 0035).
     @State private var searchText = ""
+    /// Presents the standalone metronome. **Temporary** Library entry point (ADR 0043):
+    /// the tool belongs with warm-up routines on a future home screen (ADR 0026), but a
+    /// toolbar button unblocks it until app-wide navigation exists. Remove when the home
+    /// screen lands.
+    @State private var showingMetronome = false
 
     var body: some View {
         NavigationStack {
@@ -41,6 +46,10 @@ struct LibraryView: View {
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if !availableCollections.isEmpty { filterMenu }
+                    // Temporary metronome entry point (ADR 0043) — moves to the home screen later.
+                    Button { showingMetronome = true } label: { Image(systemName: "metronome") }
+                        .tint(PocketColor.metronome)
+                        .accessibilityLabel("Metronome")
                     Button { importing = true } label: { Image(systemName: "plus") }
                         .tint(PocketColor.active)
                         .accessibilityLabel("Import a song")
@@ -54,6 +63,9 @@ struct LibraryView: View {
             }
             .sheet(item: $editingSong) { song in
                 SongEditSheet(song: song)
+            }
+            .fullScreenCover(isPresented: $showingMetronome) {
+                MetronomeView()
             }
         }
         .preferredColorScheme(.dark)
