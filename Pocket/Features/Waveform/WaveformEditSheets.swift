@@ -227,15 +227,23 @@ struct LoopEditSheet: View {
 
     // MARK: - Tags (ADR 0034)
 
-    /// The loop's descriptive tags — mirrors `SongEditSheet`'s collections UI: a list with
-    /// swipe-to-remove, an add field, and tappable chips of tags already used on any loop
-    /// in the library (the convergence mechanism — many loops sharing the *same* tag).
+    /// The loop's descriptive tags. The tags already on this loop render as removable
+    /// `selected` chips (tap the ✕ to remove) in a wrapping cloud so they're all visible at
+    /// a glance; below sits an add field and a row of `suggestion` chips drawn from tags used
+    /// on any loop in the library (the convergence mechanism — many loops sharing the *same*
+    /// tag). One chip vocabulary, add and remove symmetric (ADR 0034).
     private var tagsSection: some View {
         Section("Tags") {
-            ForEach(tags, id: \.self) { tag in
-                Text(tag).foregroundStyle(PocketColor.textPrimary)
+            if !tags.isEmpty {
+                FlowLayout(spacing: 6) {
+                    ForEach(tags, id: \.self) { tag in
+                        TagChip(text: tag, style: .selected) {
+                            tags.removeAll { $0 == tag }
+                        }
+                    }
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             }
-            .onDelete { tags.remove(atOffsets: $0) }
             HStack {
                 TextField("Add a tag", text: $newTag)
                     .submitLabel(.done)
@@ -250,22 +258,14 @@ struct LoopEditSheet: View {
     }
 
     /// Tappable chips of tags already used on other loops — tap to add the canonical form.
+    /// Horizontally scrolling (not wrapped) since the library-wide set can be long.
     private var tagSuggestionChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(tagSuggestions, id: \.self) { suggestion in
-                    Button {
+                    TagChip(text: suggestion, style: .suggestion) {
                         tags = Labels.adding(suggestion, to: tags)
-                    } label: {
-                        Text(suggestion)
-                            .font(.pocketMono(.caption))
-                            .lineLimit(1)
-                            .foregroundStyle(PocketColor.textPrimary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(Capsule().fill(Color.white.opacity(0.10)))
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
