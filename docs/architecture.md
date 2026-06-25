@@ -101,7 +101,8 @@ due in the next ~1 s with **how far ahead each sounds** — `delay = (beat − n
 rate`, so the click *follows playback speed* (50% → half-BPM, locked to the slowed
 track). The audio is a `ClickVoice`: a second `AVAudioPlayerNode` on the **same
 engine** wired straight to the mixer (bypassing time-pitch, so ticks aren't
-stretched) with two synthesized buffers (accented downbeat / plain beat). The
+stretched) with three synthesized buffers (accented downbeat / plain beat / a quieter
+subdivision tick — ADR 0043 slice 5, selected per click via `ClickVoice.ClickLevel`). The
 engine refreshes the schedule on its 0.03 s display timer, deduping by a watermark,
 and flushes-and-refills on any discontinuity (rate / seek / loop / pause). It's
 enabled only when the grid exists (BPM + the 1) and **never writes back** to the
@@ -118,7 +119,11 @@ only tops up the look-ahead. The on-screen **beat-flash indicator** reads the sa
 `currentBeat`, derived from the render head shifted back by the output latency so the lit
 dot lands on the *heard* click rather than leading it. Meter is the pure `TimeSignature`
 (named presets — 4/4 pop, 3/4 waltz, 6/8, 12/8 slow blues, … — each carrying its accent
-pattern); BPM is the click rate and the accent pattern picks the strong clicks. Transport
+pattern); BPM is the click rate and the accent pattern picks the strong clicks. A
+**subdivision** (`Subdivision` — eighths / triplets / sixteenths) fills each beat with
+`ticksPerBeat` evenly-spaced ticks: the on-beat one keeps the accent/beat level, the
+in-between ones sound the quieter subdivision level (the on-screen flash stays on main
+beats only). Transport
 is three-state — **stopped → playing → paused** — with a **wall-clock session tracker**
 (`elapsed`, accumulated across pause/resume, frozen while paused, zeroed on stop, *not*
 persisted) kept separate from the **sample-clock beat phase** (re-anchored on a

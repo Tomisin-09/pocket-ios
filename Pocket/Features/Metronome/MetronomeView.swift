@@ -61,6 +61,9 @@ struct MetronomeView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     timeSignatureMenu
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    subdivisionMenu
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                         .tint(PocketColor.metronome)
@@ -176,6 +179,46 @@ struct MetronomeView: View {
             }
         }
         .accessibilityLabel("Time signature \(engine.timeSignature.name)")
+    }
+
+    /// Sub-beat division picker (ADR 0043, slice 5) — also in the header, next to the meter,
+    /// since both shape how the beat is filled. The label is a compact note glyph.
+    private var subdivisionMenu: some View {
+        Menu {
+            ForEach(Subdivision.pickerOrder) { value in
+                Button {
+                    engine.setSubdivision(value)
+                    haptic(.light)
+                } label: {
+                    if value == engine.subdivision {
+                        Label(value.label, systemImage: "checkmark")
+                    } else {
+                        Text(value.label)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Text(subdivisionGlyph(engine.subdivision))
+                    .font(.body)
+                    .foregroundStyle(engine.subdivision == .none
+                                     ? PocketColor.textSecondary : PocketColor.metronome)
+                Image(systemName: "chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+        }
+        .accessibilityLabel("Subdivision \(engine.subdivision.label)")
+    }
+
+    /// A compact note glyph for the subdivision header label.
+    private func subdivisionGlyph(_ value: Subdivision) -> String {
+        switch value {
+        case .none: return "♩"
+        case .eighths: return "♫"
+        case .triplets: return "♪3"
+        case .sixteenths: return "♬"
+        }
     }
 
     // MARK: - Transport

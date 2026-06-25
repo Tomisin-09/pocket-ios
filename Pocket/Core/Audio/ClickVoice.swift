@@ -14,10 +14,16 @@ import AVFoundation
 @MainActor
 final class ClickVoice {
 
+    /// The three click levels (ADR 0043, slice 5): the accented bar downbeat, a plain beat,
+    /// and a **quieter** subdivision tick so sub-beat clicks sit *under* the main beats
+    /// rather than competing with them.
+    enum ClickLevel { case accent, beat, subdivision }
+
     private let player = AVAudioPlayerNode()
     private let sampleRate: Double
     private var accent: AVAudioPCMBuffer?
     private var beat: AVAudioPCMBuffer?
+    private var subdivision: AVAudioPCMBuffer?
 
     init(sampleRate: Double = 44_100) {
         self.sampleRate = sampleRate
@@ -31,6 +37,16 @@ final class ClickVoice {
         engine.connect(player, to: engine.mainMixerNode, format: format)
         accent = Self.makeClick(frequency: 1_200, sampleRate: sampleRate)
         beat = Self.makeClick(frequency: 900, sampleRate: sampleRate)
+        // Lower and much quieter so subdivisions read as a soft pulse beneath the beats.
+        subdivision = Self.makeClick(frequency: 700, sampleRate: sampleRate, amplitude: 0.28)
+    }
+
+    private func buffer(for level: ClickLevel) -> AVAudioPCMBuffer? {
+        switch level {
+        case .accent: return accent
+        case .beat: return beat
+        case .subdivision: return subdivision
+        }
     }
 
     /// Begin rendering so scheduled clicks sound. Call after the host engine is running
@@ -41,8 +57,8 @@ final class ClickVoice {
     }
 
     /// Queue a click `delay` real-seconds from now, on the node's own clock.
-    func schedule(delay: TimeInterval, accented: Bool) {
-        guard let buffer = accented ? accent : beat else { return }
+    func schedule(delay: TimeInterval, level: ClickLevel) {
+        guard let buffer = buffer(for: level) else { return }
         player.scheduleBuffer(buffer, at: playTime(after: delay), options: [], completionHandler: nil)
     }
 
@@ -62,8 +78,8 @@ final class ClickVoice {
     /// `schedule(delay:)` (which re-reads "now" each call and is right for the song-locked
     /// click), this pins every beat to a fixed sample grid, so a song-less metronome stays
     /// dead steady regardless of timer jitter.
-    func schedule(atSampleTime sampleTime: AVAudioFramePosition, accented: Bool) {
-        guard let buffer = accented ? accent : beat else { return }
+    func schedule(atSampleTime sampleTime: AVAudioFramePosition, level: ClickLevel) {
+        guard let buffer = buffer(for: level) else { return }
         player.scheduleBuffer(buffer, at: AVAudioTime(sampleTime: sampleTime, atRate: sampleRate),
                               options: [], completionHandler: nil)
     }
@@ -88,9 +104,10 @@ final class ClickVoice {
     }
 
     /// A short percussive click: a sine burst with a fast exponential decay so it reads
-    /// as a tick, not a tone (~25 ms). Accent and beat differ only in pitch. Mirrors the
-    /// `SampleToneGenerator` PCM-synthesis pattern.
+    /// as a tick, not a tone (~25 ms). Levels differ by pitch and `amplitude` (the
+    /// subdivision tick is quieter). Mirrors the `SampleToneGenerator` PCM-synthesis pattern.
     private static func makeClick(frequency: Double, sampleRate: Double,
+                                  amplitude: Double = 0.6,
                                   duration: TimeInterval = 0.025) -> AVAudioPCMBuffer? {
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
             return nil
@@ -103,7 +120,7 @@ final class ClickVoice {
         for frame in 0..<Int(frameCount) {
             let time = Double(frame) / sampleRate
             let envelope = exp(-90.0 * time)            // fast decay ⇒ click, not beep
-            channel[frame] = Float(sin(2 * .pi * frequency * time) * envelope * 0.6)
+            channel[frame] = Float(sin(2 * .pi * frequency * time) * envelope * amplitude)
         }
         return buffer
     }

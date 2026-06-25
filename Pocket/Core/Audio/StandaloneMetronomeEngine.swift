@@ -42,6 +42,8 @@ final class StandaloneMetronomeEngine {
     private(set) var bpm = 90
     /// The current meter and its accent pattern.
     private(set) var timeSignature: TimeSignature = .standard
+    /// Sub-beat clicks per beat (ADR 0043, slice 5) — `.none`, eighths, triplets, sixteenths.
+    private(set) var subdivision: Subdivision = .none
 
     // Automator (ADR 0043, slice 4) — an optional ramp that climbs the BPM over the
     // sitting. Config is observable for the controls; the live ramp math is the pure
@@ -246,6 +248,14 @@ final class StandaloneMetronomeEngine {
         pushNowPlaying()
     }
 
+    /// Set the sub-beat division. Re-anchors so the finer click grid restarts cleanly on the
+    /// downbeat (and the per-tick schedule index, which counts sub-ticks, resets).
+    func setSubdivision(_ value: Subdivision) {
+        guard value != subdivision else { return }
+        subdivision = value
+        reanchorPhase()
+    }
+
     /// The Italian tempo marking for the current tempo (ADR 0043, slice 1).
     var tempoMarking: TempoMarking { TempoMarking.marking(forBPM: Double(bpm)) }
 
@@ -265,8 +275,11 @@ final class StandaloneMetronomeEngine {
 
     private var framesPerBeat: Double { 60.0 / Double(bpm) * clickVoice.clockSampleRate }
 
-    private func beatSample(_ index: Int, origin: AVAudioFramePosition) -> AVAudioFramePosition {
-        origin + AVAudioFramePosition((Double(index) * framesPerBeat).rounded())
+    /// Absolute sample position of sub-tick `index` (spaced `subInterval` frames from the
+    /// origin). With no subdivision, `subInterval == framesPerBeat` and these are the beats.
+    private func subSample(_ index: Int, subInterval: Double,
+                           origin: AVAudioFramePosition) -> AVAudioFramePosition {
+        origin + AVAudioFramePosition((Double(index) * subInterval).rounded())
     }
 
     /// One driver step (~every 20 ms while playing): advance the session clock, pin any
@@ -301,15 +314,27 @@ final class StandaloneMetronomeEngine {
             phaseOrigin = origin
         }
 
-        // Audio: schedule every beat whose sample falls within the look-ahead window and
-        // hasn't been queued yet — locked to the sample grid, so the spacing never drifts.
+        // Audio: schedule every *sub-tick* whose sample falls within the look-ahead window
+        // and hasn't been queued yet — locked to the sample grid, so the spacing never
+        // drifts. With no subdivision there's one tick per beat; otherwise the beats carry
+        // `ticksPerBeat` evenly-spaced ticks, the on-beat one accented per the meter and the
+        // in-between ones the quieter subdivision level.
+        let ticksPerBeat = max(1, subdivision.ticksPerBeat)
+        let subInterval = perBeat / Double(ticksPerBeat)
         let horizonFrames = AVAudioFramePosition(horizon * clickVoice.clockSampleRate)
-        var index = scheduledThrough + 1
-        while beatSample(index, origin: origin) <= renderSample + horizonFrames {
-            let accented = timeSignature.isAccented(beatInBar: index)
-            clickVoice.schedule(atSampleTime: beatSample(index, origin: origin), accented: accented)
-            scheduledThrough = index
-            index += 1
+        var tickIndex = scheduledThrough + 1
+        while subSample(tickIndex, subInterval: subInterval, origin: origin)
+                <= renderSample + horizonFrames {
+            let level: ClickVoice.ClickLevel
+            if tickIndex % ticksPerBeat == 0 {
+                level = timeSignature.isAccented(beatInBar: tickIndex / ticksPerBeat) ? .accent : .beat
+            } else {
+                level = .subdivision
+            }
+            clickVoice.schedule(atSampleTime: subSample(tickIndex, subInterval: subInterval,
+                                                        origin: origin), level: level)
+            scheduledThrough = tickIndex
+            tickIndex += 1
         }
 
         // Visual: the most recent beat the listener has actually heard (render head minus
