@@ -168,8 +168,8 @@ struct WaveformPracticeView: View {
                     .ignoresSafeArea()
                     .onTapGesture { drawerOpen = false }
                     .transition(.opacity)
-                PracticeReference(model: model)
-                    .frame(width: 360)
+                PracticeReference(model: model, compact: true)
+                    .frame(width: 320)
                     .frame(maxHeight: .infinity)
                     .background(PocketColor.background)
                     .overlay(alignment: .leading) {

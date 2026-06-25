@@ -137,6 +137,8 @@ struct PracticeCockpit<Header: View>: View {
 /// Dimmed + disabled while adjusting a loop's range, to focus the waveform.
 struct PracticeReference: View {
     @Bindable var model: WaveformPracticeModel
+    /// Landscape drawer: render the loop rows in their tighter form (ADR 0042).
+    var compact: Bool = false
 
     var body: some View {
         ScrollView {
@@ -146,7 +148,8 @@ struct PracticeReference: View {
                            onActivate: model.activate, onEdit: { model.editingLoop = $0 },
                            onDelete: model.deleteLoop,
                            onJournal: { model.journalingLoop = $0 },
-                           onAutomator: { model.editingAutomatorLoop = $0 })
+                           onAutomator: { model.editingAutomatorLoop = $0 },
+                           compact: compact)
                 MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
                              onSeek: model.seekToMarker, onEdit: { model.editingMarker = $0 },
                              onDelete: model.deleteMarker)
