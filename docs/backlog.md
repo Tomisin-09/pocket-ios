@@ -19,6 +19,90 @@ The order below reflects a deliberate scoping call, not just priority:
   paper-only) and a settled pricing/cadence model. Cleanly separable from the
   user-editable foundations below — build those first, gate AI behind them.
 
+## Launch readiness (pre-submission gate)
+
+From a full pre-launch audit (2026-06-25). The code itself audited clean —
+SwiftLint `--strict` 0 violations, build 0 warnings, 313 tests green, no
+force-unwraps / `as!` / `fatalError` / debt markers, accurate privacy manifest,
+minimal justified permissions. The gating work is **submission assets/config**,
+not code. Re-run the audit any time with the `/ready-to-ship` skill.
+
+**Hard blocker — must exist before a build can be submitted:**
+
+- **App icon + asset catalog.** There is no `.xcassets` anywhere and no
+  `AppIcon`; the built `.app` ships no icon/`.car`. Apple rejects any app
+  without an icon and App Store Connect won't accept the build. Add
+  `Pocket/Resources/Assets.xcassets` with an `AppIcon` set (1024px marketing
+  icon min) and wire `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon` in
+  `project.yml`. *Needs design artwork — that's the only blocker requiring a human.*
+
+**Should-fix before submission (no code dependency):**
+
+- **`ITSAppUsesNonExemptEncryption = false`** in `Info.plist` — app uses no
+  custom crypto; setting this skips the export-compliance prompt on every upload.
+- **Bump `MARKETING_VERSION` 0.0.1 → 1.0.0** in `project.yml` for a public release.
+- **Delete `Features/Planner/HomeView.swift`** — dead "Phase 0 scaffold"; the app
+  entry renders `LibraryView()`, `HomeView` is referenced only by its own preview.
+
+**Robustness (optional):**
+
+- **Audio-session errors are swallowed** (`PracticeAudioEngine` `configureSession`
+  / `startEngineIfNeeded` use `try?`). For an audio-first app a failed session =
+  silent no-sound with no user signal. Consider logging or a one-time
+  "couldn't start audio" state.
+
+**Standing dev guide — keep new features launch-ready as you build:**
+
+- **Privacy manifest is a living file.** Any new required-reason API
+  (file timestamps, system boot time / `mach_absolute_time`, disk space) or any
+  off-device data send (e.g. the AI phase's Claude proxy) must add the matching
+  `NSPrivacyAccessedAPITypes` / `NSPrivacyCollectedDataTypes` entry in
+  `PrivacyInfo.xcprivacy` *in the same PR*. Today's manifest declares only
+  UserDefaults (CA92.1); don't let it drift.
+- **Permissions stay minimal & specific.** Add an `Info.plist` usage string only
+  when a shipping feature exercises it (the parked pedal modeller's mic string is
+  correctly absent). Vague strings cause rejection.
+- **No live host in Release until the proxy exists.** The Release `POCKET_API_HOST`
+  is a placeholder and nothing calls it (zero `URLSession` in V1). Before any
+  networked feature ships, replace it and guard against the placeholder leaking
+  into a release build.
+- **The audit gate is the bar.** A feature isn't "done" if it adds a force-unwrap,
+  a silent `try?` over real user data, a TODO marker, or a new entitlement/permission
+  without justification. Run `/ready-to-ship` before calling V1 shippable.
+
+## Branding & naming — "Red Moon" (workshopping, 2026-06-25)
+
+Candidate rename of the product from "Pocket" to **Red Moon**, after *Red Moon*
+by Tom Misch — the track that turned the idea into a working prototype, and the
+song the build keeps getting tested against. The origin story is the moat; the
+name carries it.
+
+- **Brand = "Red Moon"** (spoken/marketing). Resist baking a descriptor into the
+  brand itself; let an App Store **subtitle** do the functional work (e.g. "Loop,
+  slow down, and learn any song"). Keeps the name ownable as the product grows
+  past any one feature (it's practice + library + creation + notes, not just loops).
+- **Logo:** simple red-moon disc. Colour **#C73818** (burnt vermilion) — not a
+  compromise on "red", it's the *actual* colour of a blood/harvest moon, so lean
+  into it. Keep one ownable detail that survives at icon size (soft blood-moon
+  glow, or a faint crescent shadow so it reads as a moon, not a dot). Feeds the
+  hard-blocker **App icon** item above.
+- **Name-clearance findings (web search 2026-06-25):** the iOS music/practice
+  lane is clear — no "Red Moon" practice/looper app exists. Flags, none fatal:
+  1. **"Red Moon Fitness" already on the App Store** — different category (no TM
+     issue), but Apple requires unique app *names*, so the bare string "Red Moon"
+     may be partly encumbered; expect to need a qualifier to register.
+  2. **"Red Moon Label" is an active record label** (+ a RedMoon DJ on
+     SoundCloud) — music-services overlap (TM Class 41); not a software blocker,
+     but "red moon music" SEO won't be ownable. Glance at this if filing a TM.
+  3. **"Red Moon" (Android blue-light filter)** — dormant, Android-only,
+     unrelated function; only muddies Google results.
+  4. **The song itself** dominates search — a discoverability headwind, not legal;
+     arguably on-brand.
+- **Next action (do early — resolves flag #1 definitively):** log into App Store
+  Connect and try to **reserve "Red Moon"** as the app name. If taken, that
+  decides the qualifier (e.g. "Red Moon: Practice"). Reservation is free and
+  immediate.
+
 ## Near-term (active, not parked)
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
@@ -141,6 +225,14 @@ A coherent vision, captured for V1's creation experience:
 - **Method provenance guardrail:** this flow encodes a practice author's method
   ("the author recommends…"). Per the content strategy, encode the **method**,
   never ship his words — all copy must be ours.
+- **User-guide note — mastery vs command tempo are different axes.** When we
+  write user guides/help copy, make explicit that **command tempo measures
+  speed** (the fastest fraction you own a loop at) while **mastery measures
+  cleanliness** (how well you own it). They're deliberately separate fields
+  because *for a lot of material the bottleneck isn't speed* — tone, feel,
+  expression, a single hard change can be unmastered at full tempo, and a slow
+  passage can be perfectly owned. Considered collapsing mastery into a
+  derivative of command tempo (2026-06-25) and rejected it for this reason.
 
 ## AI phase (late — gated on backend + pricing)
 
