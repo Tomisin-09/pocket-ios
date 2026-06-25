@@ -1,6 +1,6 @@
 # 0042 — Selective landscape: practice screen only
 
-- **Status:** Accepted
+- **Status:** Accepted — built (branch `pocket-056`)
 - **Date:** 2026-06-25
 
 ## Context
@@ -45,22 +45,42 @@ Rejected alternatives:
 - **Practice + library** — library gains little from width; the marginal
   consistency isn't worth doubling another screen's layouts.
 
-## Implementation notes (for the build branch, not yet done)
+## Implementation notes (as built)
 
-- Pure SwiftUI (iOS 17) has no first-class per-view orientation lock. The
-  established approach: list the allowed orientations app-wide in `Info.plist`
-  (add landscape left/right), then **restrict per-screen** by driving
-  `application(_:supportedInterfaceOrientationsFor:)` from app state (e.g. an
-  observable that the practice screen sets on appear / clears on disappear), or
-  via a small `UIViewControllerRepresentable` orientation gate. Do **not** widen
-  `Info.plist` without the per-screen restriction in place, or every screen
-  becomes rotatable.
-- The practice screen's landscape layout is its own design pass: the waveform
-  should claim the new width, and the transport row repositions — not a
-  free-reflow of the portrait layout.
+- Pure SwiftUI (iOS 17) has no first-class per-view orientation lock, so the gate
+  is a small app-delegate + app-state mechanism (`OrientationGate.swift`):
+  `Info.plist` lists portrait + landscape left/right app-wide; `AppDelegate`
+  answers `supportedInterfaceOrientationsFor` from a static mask defaulting to
+  `.portrait`; a `.landscapeEnabled()` view modifier widens the mask on appear and
+  reverts to `.portrait` on disappear, calling `requestGeometryUpdate` so a revert
+  actively rotates the device back. Only `WaveformPracticeView` applies the
+  modifier — every other screen stays portrait because the default mask is never
+  widened for them.
+- The layout branches on `verticalSizeClass == .compact` (landscape on iPhone).
+  The cockpit (a header slot, speed bar, status line, waveform, ruler, minimap,
+  transport) and the loops/markers reference list were extracted into shared
+  `PracticeCockpit` / `PracticeReference` views (`WaveformPracticeLayout.swift`)
+  so both orientations compose the same pieces. `PracticeCockpit` is generic over
+  its header and takes a `landscape` flag:
+  - **Portrait:** header = `SongStrip`; cockpit stacked over the reference list
+    (unchanged).
+  - **Landscape:** header = a compact back · title · ☰ bar (the system nav bar is
+    hidden via `.toolbar(.hidden, for: .navigationBar)`); the cockpit owns the
+    **full width**, and the reference list is a **slide-in drawer** from the right
+    edge (`drawerOpen` state, scrim + tap-to-dismiss), closed by default so the
+    waveform keeps the width. A first attempt used a fixed ~30% side rail but it
+    ate too much width and cramped the panels — the drawer replaced it.
+  - **Compact tuning (landscape):** cockpit `spacing` tightens to 8; the speed bar
+    drops its preset-pill row (`SpeedBar(compact:)`); the transport shrinks its
+    glyphs + bar height (`TransportBar(compact:)`); the waveform **flexes** to fill
+    the leftover height (`WaveformView(fillsHeight:)`) so the transport always pins
+    to the bottom instead of being pushed off-screen.
+- **Song-info panel removed.** The build took the opportunity to drop the
+  collapsible `SongInfoPanel` from the practice scroll area entirely (both
+  orientations) — its key / mastery / collections are a strict subset of the
+  song-details sheet (hold the title), so nothing became unreachable. This closes
+  the "consolidate `SongInfoPanel` vs `SongDetailsSheet`" UI-polish backlog note.
 
 ## Sequencing
 
-V1 polish item, **not** before the near-term loop-tags cleanup (backlog). Pick
-up as its own `pocket-0XX` branch once the practice screen has gone quiet — the
-decision is recorded here so the build can start whenever that happens.
+Built after the near-term loop-tags cleanup, as planned.

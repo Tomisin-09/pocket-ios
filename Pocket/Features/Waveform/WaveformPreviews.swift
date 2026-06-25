@@ -15,22 +15,6 @@ import SwiftUI
     }
 }
 
-#Preview("Song info — expanded") {
-    @Previewable @State var expanded = true
-    ZStack {
-        PocketColor.background.ignoresSafeArea()
-        SongInfoPanel(song: Song.sample(), expanded: $expanded).padding()
-    }
-}
-
-#Preview("Song info — collapsed") {
-    @Previewable @State var expanded = false
-    ZStack {
-        PocketColor.background.ignoresSafeArea()
-        SongInfoPanel(song: Song.sample(), expanded: $expanded).padding()
-    }
-}
-
 #Preview("Speed bar") {
     @Previewable @State var speed = 0.90
     ZStack {

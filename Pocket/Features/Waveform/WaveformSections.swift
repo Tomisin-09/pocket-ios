@@ -65,57 +65,6 @@ struct SongStrip: View {
     }
 }
 
-// MARK: - 2. Song info panel (collapsible, open by default)
-
-struct SongInfoPanel: View {
-    let song: Song
-    @Binding var expanded: Bool
-
-    /// Derived song mastery as stars, or "Unrated" when the song has no loops (ADR 0036).
-    private var masteryText: String { song.mastery.map(stars) ?? "Unrated" }
-
-    private var summary: String {
-        let keyText = song.musicalKey == .unknown ? nil : song.musicalKey.displayName
-        return [keyText, masteryText].compactMap { $0 }.joined(separator: " · ")
-    }
-
-    var body: some View {
-        CollapsiblePanel(title: "Song info", summary: summary, expanded: $expanded) {
-            VStack(alignment: .leading, spacing: 10) {
-                LabeledRow(label: "Key", value: song.musicalKey == .unknown ? "—" : song.musicalKey.displayName)
-                LabeledRow(label: "Mastery", value: masteryText)
-                HStack(spacing: 8) {
-                    ForEach(song.collections, id: \.self) { name in
-                        Text(name)
-                            .font(.caption)
-                            .foregroundStyle(PocketColor.textSecondary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Capsule().fill(Color.white.opacity(0.08)))
-                    }
-                }
-                .padding(.top, 2)
-            }
-        }
-    }
-}
-
-private struct LabeledRow: View {
-    let label: String
-    let value: String
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(PocketColor.textSecondary)
-            Spacer()
-            Text(value)
-                .font(.subheadline)
-                .foregroundStyle(PocketColor.textPrimary)
-        }
-    }
-}
-
 // MARK: - 3. Speed / BPM bar (always visible)
 
 struct SpeedBar: View {
@@ -134,6 +83,9 @@ struct SpeedBar: View {
     var metronomeOn: Bool = false
     var canUseMetronome: Bool = false
     var onToggleMetronome: () -> Void = {}
+    /// Compact form (landscape, ADR 0042): drops the preset-pill row to reclaim vertical
+    /// space — the slider still covers the full range, presets are a portrait convenience.
+    var compact: Bool = false
 
     private let presets: [Double] = [0.25, 0.50, 0.75]
 
@@ -196,21 +148,23 @@ struct SpeedBar: View {
                                 action: onToggleMetronome)
             }
 
-            HStack(spacing: 8) {
-                ForEach(presets, id: \.self) { value in
-                    PresetPill(label: String(format: "%.2f×", value),
-                               isSelected: abs(speed - value) < 0.001) {
-                        speed = value
+            if !compact {
+                HStack(spacing: 8) {
+                    ForEach(presets, id: \.self) { value in
+                        PresetPill(label: String(format: "%.2f×", value),
+                                   isSelected: abs(speed - value) < 0.001) {
+                            speed = value
+                        }
                     }
-                }
-                Spacer()
-                PresetPill(label: "Reset", isSelected: abs(speed - 1.0) < 0.001) {
-                    speed = 1.0
+                    Spacer()
+                    PresetPill(label: "Reset", isSelected: abs(speed - 1.0) < 0.001) {
+                        speed = 1.0
+                    }
                 }
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 8)
+        .padding(.vertical, compact ? 6 : 8)
         .background(panelBackground)
     }
 }

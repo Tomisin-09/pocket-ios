@@ -19,7 +19,6 @@ final class WaveformPracticeModel {
     /// True while a finger is down on the waveform (scrub / handle drag). Drives the
     /// swipe-back guard so a scrub near the left edge can't pop the screen (ADR 0030).
     var isScrubbing = false
-    var songInfoExpanded = false   // demoted to the scroll area
     var loopsExpanded = true
     var markersExpanded = false
 

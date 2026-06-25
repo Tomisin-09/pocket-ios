@@ -20,6 +20,8 @@ struct LoopsPanel: View {
     let onJournal: (Loop) -> Void
     /// The "A" control — open this loop's automator (speed ramp) sheet.
     let onAutomator: (Loop) -> Void
+    /// Landscape drawer (ADR 0042): tighten each row (no range, closer icons).
+    var compact: Bool = false
 
     var body: some View {
         CollapsiblePanel(title: "Loops",
@@ -42,7 +44,8 @@ struct LoopsPanel: View {
                                 onJournal: { onJournal(loop) },
                                 onAutomator: { onAutomator(loop) },
                                 onEdit: { onEdit(loop) },
-                                onDelete: { onDelete(loop) })
+                                onDelete: { onDelete(loop) },
+                                compact: compact)
                     }
                 }
             }
@@ -59,6 +62,9 @@ private struct LoopRow: View {
     let onAutomator: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
+    /// Landscape drawer: drops the row's time range and tightens the journal/automator
+    /// pair so the panel fits a narrower drawer with room to spare (ADR 0042).
+    var compact: Bool = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -84,7 +90,7 @@ private struct LoopRow: View {
                     // practice state (mastery + command tempo) make the row glanceable —
                     // each shown only when set, so an untouched loop reads as just a range
                     // and never a fake rating (ADR 0039).
-                    LoopRowProgress(loop: loop)
+                    LoopRowProgress(loop: loop, compact: compact)
                 }
                 Spacer(minLength: 0)
             }
@@ -104,14 +110,18 @@ private struct LoopRow: View {
                 Button("Delete", action: onDelete)
             }
 
-            JournalButton(action: onJournal)
-                .accessibilityLabel(loop.journal.isEmpty
-                                    ? "Open journal for \(loop.name)"
-                                    : "Journal for \(loop.name), \(loop.journal.count) "
-                                        + "entr\(loop.journal.count == 1 ? "y" : "ies")")
-            AutomatorButton(isOn: loop.automatorEnabled, action: onAutomator)
-                .accessibilityLabel(loop.automatorEnabled
-                                    ? "Automator on for \(loop.name)" : "Set up automator for \(loop.name)")
+            // Journal + automator read as a pair; in the narrow landscape drawer they sit
+            // closer together (their 44pt targets keep a usable gap) to reclaim width.
+            HStack(spacing: compact ? -6 : 10) {
+                JournalButton(action: onJournal)
+                    .accessibilityLabel(loop.journal.isEmpty
+                                        ? "Open journal for \(loop.name)"
+                                        : "Journal for \(loop.name), \(loop.journal.count) "
+                                            + "entr\(loop.journal.count == 1 ? "y" : "ies")")
+                AutomatorButton(isOn: loop.automatorEnabled, action: onAutomator)
+                    .accessibilityLabel(loop.automatorEnabled
+                                        ? "Automator on for \(loop.name)" : "Set up automator for \(loop.name)")
+            }
         }
     }
 }
@@ -122,15 +132,20 @@ private struct LoopRow: View {
 /// so it reads as a small pill badge.
 private struct LoopRowProgress: View {
     let loop: Loop
+    /// Landscape drawer: drop the time range (it's on the waveform) to keep the narrow
+    /// row uncluttered — just the mastery dots + command-tempo badge remain (ADR 0042).
+    var compact: Bool = false
 
     var body: some View {
         HStack(spacing: 6) {
-            Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
-                .font(.pocketMono(.footnote))
-                .foregroundStyle(PocketColor.textSecondary)
-                .lineLimit(1)
+            if !compact {
+                Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
+                    .font(.pocketMono(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .lineLimit(1)
+            }
             if loop.mastery != nil || loop.commandTempo != nil {
-                Text("·").foregroundStyle(PocketColor.textSecondary)
+                if !compact { Text("·").foregroundStyle(PocketColor.textSecondary) }
                 if let mastery = loop.mastery {
                     MasteryDots(filled: mastery)
                 }
@@ -138,6 +153,8 @@ private struct LoopRowProgress: View {
                     Text("\(percent)%")
                         .font(.pocketMono(.caption2).weight(.semibold))
                         .foregroundStyle(PocketColor.textPrimary)
+                        .lineLimit(1)
+                        .fixedSize()   // keep the badge on one line; the range truncates first
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Capsule().fill(Color.white.opacity(0.10)))

@@ -5,13 +5,22 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
-### Decided (not yet built)
-- **Landscape support is scoped to the practice screen only** (ADR 0042). Selective
-  landscape: the waveform/practice view will rotate (more width = sharper waveform +
-  more precise A/B drag); every other screen stays portrait-locked for V1. Decision
-  recorded now; implementation is a later V1 polish branch.
+### Added
+- **The practice screen rotates to landscape** (ADR 0042). Turn the phone sideways on the
+  practice screen — handy when it's propped on a stand — and the waveform claims the full
+  width for a sharper view and more precise A/B dragging. Your loops and markers tuck into a
+  **slide-in drawer** (the ☰ button, top-right) so they're there when you want them and out
+  of the way when you don't. Every other screen stays portrait; rotate back and the screen
+  returns to portrait on its own.
 
 ### Changed
+- **Tidier transport bar.** The playback controls are a touch smaller and, when a loop is
+  armed, the transport now shows just the **loop name** (the time range was redundant with
+  the loop row and waveform) — so the bar reads cleaner in both portrait and landscape.
+- **Song info moved out of the practice scroll area.** The collapsible "Song info" panel
+  at the bottom of the practice screen is gone — its key, mastery, and collections all live
+  in the song details sheet (hold the song title to open it), so the practice scroll now
+  stays focused on your loops and markers.
 - **Loop tags read as tags now.** In a loop's edit sheet, the tags already on the loop show
   as removable chips (tap the ✕ to drop one) in a wrapping cloud, matching the look of the
   suggestion chips below — so your own tags no longer hide as plain text rows. Suggested tags
