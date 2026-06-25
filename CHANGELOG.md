@@ -14,6 +14,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   returns to portrait on its own.
 
 ### Changed
+- **Tidier transport bar.** The playback controls are a touch smaller and, when a loop is
+  armed, the transport now shows just the **loop name** (the time range was redundant with
+  the loop row and waveform) — so the bar reads cleaner in both portrait and landscape.
 - **Song info moved out of the practice scroll area.** The collapsible "Song info" panel
   at the bottom of the practice screen is gone — its key, mastery, and collections all live
   in the song details sheet (hold the song title to open it), so the practice scroll now

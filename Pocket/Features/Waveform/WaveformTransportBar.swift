@@ -46,7 +46,7 @@ struct TransportBar: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var glyphSize: CGFloat { compact ? 25 : transportGlyphSize }
+    private var glyphSize: CGFloat { compact ? 24 : 26 }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -87,17 +87,13 @@ struct TransportBar: View {
     @ViewBuilder private var header: some View {
         Group {
             if let loop {
-                VStack(spacing: 1) {
-                    Text(loop.name)
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .lineLimit(1)
-                    Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
-                        .font(.pocketMono(.caption2))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Looping \(loop.name)")
+                // Just the loop name — the range lives in the loop row / waveform, and
+                // dropping it here keeps the header one line so the transport breathes.
+                Text(loop.name)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(PocketColor.textPrimary)
+                    .lineLimit(1)
+                    .accessibilityLabel("Looping \(loop.name)")
             } else {
                 Text(timecode(currentTime))
                     .font(.pocketMono(.body))
@@ -105,7 +101,7 @@ struct TransportBar: View {
                     .accessibilityLabel("Playback position \(timecode(currentTime))")
             }
         }
-        .frame(height: compact ? 22 : 28)  // reserve both states' height so the transport row holds still
+        .frame(height: 22)        // single-line header height, matched across both states
         .transition(.opacity)
     }
 

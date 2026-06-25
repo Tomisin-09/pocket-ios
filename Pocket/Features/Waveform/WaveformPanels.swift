@@ -138,6 +138,8 @@ private struct LoopRowProgress: View {
                     Text("\(percent)%")
                         .font(.pocketMono(.caption2).weight(.semibold))
                         .foregroundStyle(PocketColor.textPrimary)
+                        .lineLimit(1)
+                        .fixedSize()   // keep the badge on one line; the range truncates first
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Capsule().fill(Color.white.opacity(0.10)))
