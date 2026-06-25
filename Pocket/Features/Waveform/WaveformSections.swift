@@ -83,6 +83,9 @@ struct SpeedBar: View {
     var metronomeOn: Bool = false
     var canUseMetronome: Bool = false
     var onToggleMetronome: () -> Void = {}
+    /// Compact form (landscape, ADR 0042): drops the preset-pill row to reclaim vertical
+    /// space — the slider still covers the full range, presets are a portrait convenience.
+    var compact: Bool = false
 
     private let presets: [Double] = [0.25, 0.50, 0.75]
 
@@ -145,21 +148,23 @@ struct SpeedBar: View {
                                 action: onToggleMetronome)
             }
 
-            HStack(spacing: 8) {
-                ForEach(presets, id: \.self) { value in
-                    PresetPill(label: String(format: "%.2f×", value),
-                               isSelected: abs(speed - value) < 0.001) {
-                        speed = value
+            if !compact {
+                HStack(spacing: 8) {
+                    ForEach(presets, id: \.self) { value in
+                        PresetPill(label: String(format: "%.2f×", value),
+                                   isSelected: abs(speed - value) < 0.001) {
+                            speed = value
+                        }
                     }
-                }
-                Spacer()
-                PresetPill(label: "Reset", isSelected: abs(speed - 1.0) < 0.001) {
-                    speed = 1.0
+                    Spacer()
+                    PresetPill(label: "Reset", isSelected: abs(speed - 1.0) < 0.001) {
+                        speed = 1.0
+                    }
                 }
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 8)
+        .padding(.vertical, compact ? 6 : 8)
         .background(panelBackground)
     }
 }

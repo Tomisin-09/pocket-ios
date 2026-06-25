@@ -57,14 +57,24 @@ Rejected alternatives:
   modifier — every other screen stays portrait because the default mask is never
   widened for them.
 - The layout branches on `verticalSizeClass == .compact` (landscape on iPhone).
-  The cockpit (song strip, speed bar, status line, waveform, ruler, minimap,
+  The cockpit (a header slot, speed bar, status line, waveform, ruler, minimap,
   transport) and the loops/markers reference list were extracted into shared
   `PracticeCockpit` / `PracticeReference` views (`WaveformPracticeLayout.swift`)
-  so both orientations compose the same pieces:
-  - **Portrait:** cockpit stacked over the reference list (unchanged).
-  - **Landscape:** cockpit claims the width on the left; the reference list is a
-    ~30% scrollable side rail on the right (`containerRelativeFrame`). Cockpit
-    vertical spacing tightens (`spacing: 8`) since height is scarce.
+  so both orientations compose the same pieces. `PracticeCockpit` is generic over
+  its header and takes a `landscape` flag:
+  - **Portrait:** header = `SongStrip`; cockpit stacked over the reference list
+    (unchanged).
+  - **Landscape:** header = a compact back · title · ☰ bar (the system nav bar is
+    hidden via `.toolbar(.hidden, for: .navigationBar)`); the cockpit owns the
+    **full width**, and the reference list is a **slide-in drawer** from the right
+    edge (`drawerOpen` state, scrim + tap-to-dismiss), closed by default so the
+    waveform keeps the width. A first attempt used a fixed ~30% side rail but it
+    ate too much width and cramped the panels — the drawer replaced it.
+  - **Compact tuning (landscape):** cockpit `spacing` tightens to 8; the speed bar
+    drops its preset-pill row (`SpeedBar(compact:)`); the transport shrinks its
+    glyphs + bar height (`TransportBar(compact:)`); the waveform **flexes** to fill
+    the leftover height (`WaveformView(fillsHeight:)`) so the transport always pins
+    to the bottom instead of being pushed off-screen.
 - **Song-info panel removed.** The build took the opportunity to drop the
   collapsible `SongInfoPanel` from the practice scroll area entirely (both
   orientations) — its key / mastery / collections are a strict subset of the

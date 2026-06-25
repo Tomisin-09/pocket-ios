@@ -135,8 +135,9 @@ The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body
 that observes and binds to it (ADR 0007). Its cockpit and loops/markers reference
 list are extracted as `PracticeCockpit` / `PracticeReference`
-(`WaveformPracticeLayout.swift`) so the portrait (stacked) and landscape (side-rail)
-layouts compose the same pieces; the view branches on `verticalSizeClass`. Landscape
+(`WaveformPracticeLayout.swift`) so the portrait (stacked) and landscape (full-width
+cockpit + a slide-in loops/markers drawer) layouts compose the same pieces; the view
+branches on `verticalSizeClass`. Landscape
 is gated to this screen alone by `OrientationGate.swift` (an `AppDelegate` answering
 `supportedInterfaceOrientationsFor` from a mask that a `.landscapeEnabled()` modifier
 widens on appear and reverts on disappear) — ADR 0042. Each loop has a per-loop **automator**

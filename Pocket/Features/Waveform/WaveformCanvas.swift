@@ -98,6 +98,10 @@ struct WaveformView: View {
     /// component previews/call sites that don't care opt out for free.
     var onTouchBegan: () -> Void = {}
     var onTouchEnded: () -> Void = {}
+    /// When true the waveform flexes to fill the available vertical space instead of its
+    /// fixed portrait height — landscape gives it the leftover room so the transport still
+    /// pins to the bottom (ADR 0042). The canvas is geometry-driven, so it adapts for free.
+    var fillsHeight: Bool = false
 
     // Gesture bookkeeping. Not `private` — the gesture recogniser lives in a
     // `WaveformView` extension in `WaveformCanvasGestures.swift`, so it reads this
@@ -140,7 +144,7 @@ struct WaveformView: View {
             .gesture(dragGesture(width: geo.size.width))
             .simultaneousGesture(magnifyGesture)
         }
-        .frame(height: 140)
+        .frame(minHeight: fillsHeight ? 120 : 140, maxHeight: fillsHeight ? .infinity : 140)
         .accessibilityElement()
         .accessibilityLabel("Waveform")
         .accessibilityHint("Tap to seek, drag to scrub, hold-drag to set a loop, pinch to zoom")

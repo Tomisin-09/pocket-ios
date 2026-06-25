@@ -42,8 +42,8 @@ tool. Animations should feel like a musical phrase, not a form submission.
   metadata and an "open in Music" affordance instead. (See
   `docs/decisions/0001-audio-source-local-first.md`.)
 - **Orientation:** portrait everywhere except the **practice screen**, which also
-  supports landscape (ADR 0042) — sideways gives the waveform more width for precise
-  A/B dragging, with loops/markers as a side rail. All other screens stay portrait.
+  supports landscape (ADR 0042) — sideways gives the waveform the full width for precise
+  A/B dragging, with loops/markers in a slide-in drawer. All other screens stay portrait.
 - **Accessibility is not optional:** legible contrast on dark, Dynamic Type
   support, VoiceOver labels, and "Reduce Motion" alternatives for the musical
   animations.
@@ -192,11 +192,13 @@ A hairline separates the cockpit from the scroll area below.
 9. Markers panel (collapsible) — name + timecode; tap a row to edit
    (rename / delete).
 
-In **landscape** (practice screen only, ADR 0042) the cockpit (items 1, 3–8)
-claims the left of the screen and the loops/markers reference (items 8–9 above)
-becomes a scrollable side rail on the right. The song-info panel that used to sit
-at the bottom of the scroll area was removed (ADR 0042) — its key / mastery /
-collections live in the song-details sheet (hold the title).
+In **landscape** (practice screen only, ADR 0042) the cockpit takes the full width
+— a compact back · title · ☰ top bar replaces the song strip, the speed and transport
+bars slim down, and the waveform flexes to fill the height — while the loops/markers
+reference (items 8–9 above) becomes a **slide-in drawer** from the right, toggled by
+the ☰ button and closed by default. The song-info panel that used to sit at the bottom
+of the scroll area was removed (ADR 0042) — its key / mastery / collections live in the
+song-details sheet (hold the title).
 
 While a loop is being created or its range adjusted, the cockpit enters **edit
 mode**: the transport greys out and locks, and the mode line becomes the edit

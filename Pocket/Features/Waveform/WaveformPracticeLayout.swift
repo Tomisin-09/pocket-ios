@@ -4,23 +4,26 @@ import SwiftUI
 // cockpit and the loops/markers reference list — so the layout lives here as shared views
 // rather than duplicated inline in `WaveformPracticeView`.
 
-/// The fixed practice cockpit (brief items 1, 3–8): song strip, speed bar, the mode/AB
-/// status line, the waveform, ruler, minimap, and transport. `spacing` tightens the
-/// vertical rhythm in landscape, where height is scarce.
-struct PracticeCockpit: View {
+/// The fixed practice cockpit (brief items 3–8): a header slot (the song strip in portrait,
+/// a compact back/title/menu bar in landscape), speed bar, the mode/AB status line, the
+/// waveform, ruler, minimap, and transport. `landscape` tightens the rhythm, slims the
+/// speed + transport bars, and lets the waveform flex to fill the leftover height so the
+/// transport always pins to the bottom (ADR 0042).
+struct PracticeCockpit<Header: View>: View {
     @Bindable var model: WaveformPracticeModel
-    var spacing: CGFloat = 16
+    var landscape: Bool = false
+    @ViewBuilder var header: () -> Header
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(spacing: spacing) {
-            SongStrip(song: model.song,                                  // 1
-                      onHoldTitle: { model.showingSongDetails = true })
+        VStack(spacing: landscape ? 8 : 16) {
+            header()                                                    // 1
             SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
                      onSetBPM: model.setBPM, onUserAdjust: model.userAdjustedSpeed,
                      metronomeOn: model.metronomeOn,
                      canUseMetronome: model.canUseMetronome,
-                     onToggleMetronome: model.toggleMetronome)
+                     onToggleMetronome: model.toggleMetronome,
+                     compact: landscape)
             // 4. Mode instructions — replaced by the AB / downbeat bar while active.
             statusLine
             waveform                                                    // 5
@@ -91,7 +94,8 @@ struct PracticeCockpit: View {
                      onDownbeatMove: model.moveDownbeatDraft,
                      onDownbeatEnded: model.endDownbeatDrag,
                      onTouchBegan: model.beginWaveformTouch,
-                     onTouchEnded: model.endWaveformTouch)
+                     onTouchEnded: model.endWaveformTouch,
+                     fillsHeight: landscape)
             // Fit / 1× reset — only while zoomed; sits above the waveform's gestures so
             // its tap wins (ADR 0010). Pinned bottom-trailing, clear of the time bubble.
             .overlay(alignment: .bottomTrailing) {
@@ -120,7 +124,8 @@ struct PracticeCockpit: View {
                      onClearLoop: model.clearActiveLoop,
                      onDropMarker: model.dropMarkerAtPlayhead,
                      onPunch: model.tapAB,
-                     isPunchActive: model.abActive)
+                     isPunchActive: model.abActive,
+                     compact: landscape)
             .opacity(model.isSettingDownbeat ? 0.35 : 1)
             .disabled(model.isSettingDownbeat)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)

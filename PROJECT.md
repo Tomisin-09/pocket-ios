@@ -138,9 +138,10 @@ State + handlers live in an `@Observable` `WaveformPracticeModel`
 (ADR 0007), now bound to a **persisted `Song`** — loops/markers are SwiftData
 `@Model`s that survive relaunches (ADR 0011). The practice screen is the **one
 screen that rotates to landscape** (ADR 0042): the cockpit + loops/markers list are
-extracted as `PracticeCockpit` / `PracticeReference`, stacked in portrait and split
-into a waveform + ~30% side rail in landscape (gated to this screen by
-`OrientationGate`). The old bottom **song-info panel was removed** — its facts live
+extracted as `PracticeCockpit` / `PracticeReference`, stacked in portrait; in landscape
+the waveform cockpit takes the full width (compact speed/transport bars, flexing waveform)
+and the loops/markers list becomes a **slide-in drawer** (☰), gated to this screen by
+`OrientationGate`. The old bottom **song-info panel was removed** — its facts live
 in the song-details sheet (hold the title). The app opens to a **song library**
 (`LibraryView`); importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),

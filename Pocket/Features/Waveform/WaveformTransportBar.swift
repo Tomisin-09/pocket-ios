@@ -40,13 +40,18 @@ struct TransportBar: View {
     let onPunch: () -> Void
     /// True while a loop span is in play, so the control reads "armed" (ADR 0041).
     let isPunchActive: Bool
+    /// Compact form (landscape, ADR 0042): smaller glyphs + a shorter bar so the
+    /// transport always clears the bottom edge where vertical room is scarce.
+    var compact: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var glyphSize: CGFloat { compact ? 25 : transportGlyphSize }
 
     var body: some View {
         HStack(spacing: 12) {
             controls
-            VStack(spacing: 5) {
+            VStack(spacing: compact ? 2 : 5) {
                 header
                 transportRow
             }
@@ -56,9 +61,9 @@ struct TransportBar: View {
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
-        .frame(height: 64)        // definite bar height so the colour strip reliably fills it
+        .frame(height: compact ? 52 : 64)  // definite bar height so the colour strip reliably fills it
         .padding(.horizontal, 12)
-        .padding(.vertical, 5)
+        .padding(.vertical, compact ? 3 : 5)
         .background(panelBackground)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: loop?.uid)
     }
@@ -100,17 +105,18 @@ struct TransportBar: View {
                     .accessibilityLabel("Playback position \(timecode(currentTime))")
             }
         }
-        .frame(height: 28)        // reserve both states' height so the transport row holds still
+        .frame(height: compact ? 22 : 28)  // reserve both states' height so the transport row holds still
         .transition(.opacity)
     }
 
     private var transportRow: some View {
-        HStack(spacing: 40) {
-            RewindButton(onRestart: onRestart, onPrevious: onPrevious, hasPrevious: hasPrevious)
+        HStack(spacing: compact ? 32 : 40) {
+            RewindButton(onRestart: onRestart, onPrevious: onPrevious,
+                         hasPrevious: hasPrevious, size: glyphSize)
             TransportGlyph(icon: isPlaying ? "pause.fill" : "play.fill",
-                           label: isPlaying ? "Pause" : "Play", action: onPlayPause)
+                           label: isPlaying ? "Pause" : "Play", size: glyphSize, action: onPlayPause)
             TransportGlyph(icon: "forward.fill", label: "Next loop",
-                           isEnabled: hasNext, action: onNext)
+                           isEnabled: hasNext, size: glyphSize, action: onNext)
         }
     }
 }
@@ -151,12 +157,13 @@ private struct TransportGlyph: View {
     let icon: String
     let label: String
     var isEnabled: Bool = true
+    var size: CGFloat = transportGlyphSize
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: transportGlyphSize, weight: .semibold))
+                .font(.system(size: size, weight: .semibold))
                 .foregroundStyle(isEnabled ? PocketColor.textPrimary : PocketColor.textSecondary.opacity(0.35))
         }
         .buttonStyle(.plain)
@@ -173,10 +180,11 @@ private struct RewindButton: View {
     let onRestart: () -> Void
     let onPrevious: () -> Void
     let hasPrevious: Bool
+    var size: CGFloat = transportGlyphSize
 
     var body: some View {
         Image(systemName: "backward.fill")
-            .font(.system(size: transportGlyphSize, weight: .semibold))
+            .font(.system(size: size, weight: .semibold))
             .foregroundStyle(PocketColor.textPrimary)
             .contentShape(Rectangle())
             .onTapGesture(count: 2) { if hasPrevious { onPrevious() } }

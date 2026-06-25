@@ -17,6 +17,10 @@ struct WaveformPracticeView: View {
     // screen uses to switch to its side-rail layout (ADR 0042).
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dismiss) private var dismiss
+    // Landscape only: the loops/markers reference is a slide-in drawer (ADR 0042), closed by
+    // default so the waveform owns the full width; the top-bar menu button toggles it.
+    @State private var drawerOpen = false
 
     init(song: Song, context: ModelContext) {
         _model = State(initialValue: WaveformPracticeModel(song: song, context: context))
@@ -44,9 +48,14 @@ struct WaveformPracticeView: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
         .preferredColorScheme(.dark)
+        // Landscape uses its own compact top bar (back · title · menu), so hide the system
+        // nav bar there; portrait keeps it (ADR 0042).
+        .toolbar(isLandscape ? .hidden : .automatic, for: .navigationBar)
         // Practice is the one screen that rotates (ADR 0042): more width = sharper
         // waveform + more precise A/B drag. Reverts to portrait-only on exit.
         .landscapeEnabled()
+        // Don't carry an open drawer across a rotation back to portrait.
+        .onChange(of: isLandscape) { _, landscape in if !landscape { drawerOpen = false } }
         // Stop a playhead scrub near the left edge from popping back to the library
         // (ADR 0030): suppress the interactive swipe-back while a finger is on the waveform.
         .background(SwipeBackGuard(disabled: model.isScrubbing))
@@ -126,12 +135,15 @@ struct WaveformPracticeView: View {
 
     // MARK: - Layouts (ADR 0042)
 
-    /// Portrait: the cockpit stacked over the loops/markers reference list, split by a hairline.
+    /// Portrait: the cockpit (headed by the song strip) stacked over the loops/markers
+    /// reference list, split by a hairline.
     private func portraitLayout(model: WaveformPracticeModel) -> some View {
         VStack(spacing: 0) {
-            PracticeCockpit(model: model)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+            PracticeCockpit(model: model) {
+                SongStrip(song: model.song, onHoldTitle: { model.showingSongDetails = true })
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             Rectangle()
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
@@ -139,20 +151,81 @@ struct WaveformPracticeView: View {
         }
     }
 
-    /// Landscape: the waveform cockpit claims the width on the left; the loops/markers
-    /// reference list sits as a scrollable rail on the right (~30%), split by a vertical
-    /// hairline. Cockpit spacing tightens since vertical room is scarce.
+    /// Landscape: the waveform cockpit owns the full width (headed by a compact back · title ·
+    /// menu bar); the loops/markers reference slides in as a right-edge drawer, toggled by the
+    /// menu button and closed by default so the waveform keeps the width until you need it.
     private func landscapeLayout(model: WaveformPracticeModel) -> some View {
-        HStack(spacing: 0) {
-            PracticeCockpit(model: model, spacing: 8)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .frame(maxWidth: .infinity)
-            Rectangle()
-                .fill(Color.white.opacity(0.08))
-                .frame(width: 1)
-            PracticeReference(model: model)
-                .containerRelativeFrame(.horizontal) { width, _ in width * 0.3 }
+        ZStack(alignment: .topTrailing) {
+            PracticeCockpit(model: model, landscape: true) {
+                landscapeTopBar(model: model)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            if drawerOpen {
+                // Scrim — tap outside the drawer to dismiss it.
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture { drawerOpen = false }
+                    .transition(.opacity)
+                PracticeReference(model: model)
+                    .frame(width: 320)
+                    .frame(maxHeight: .infinity)
+                    .background(PocketColor.background)
+                    .overlay(alignment: .leading) {
+                        Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1)
+                    }
+                    .transition(.move(edge: .trailing))
+            }
+        }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: drawerOpen)
+    }
+
+    /// Landscape top bar: a compact back chevron, the song title/artist (hold for details,
+    /// like the portrait strip), and the menu button that toggles the loops/markers drawer.
+    private func landscapeTopBar(model: WaveformPracticeModel) -> some View {
+        HStack(spacing: 14) {
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(PocketColor.textPrimary)
+                    .frame(width: 32, height: 32)
+                    .background(Circle().fill(Color.white.opacity(0.10)))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Back to library")
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(model.song.title)
+                    .font(.headline)
+                    .foregroundStyle(PocketColor.textPrimary)
+                    .lineLimit(1)
+                Text(model.song.artist)
+                    .font(.subheadline)
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .lineLimit(1)
+            }
+            .contentShape(Rectangle())
+            .onLongPressGesture(minimumDuration: 0.4) {
+                haptic(.medium)
+                model.showingSongDetails = true
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("Hold to view song details")
+            .accessibilityAction(named: "Song details") { model.showingSongDetails = true }
+
+            Spacer(minLength: 8)
+
+            Button { drawerOpen.toggle() } label: {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(drawerOpen ? PocketColor.background : PocketColor.textPrimary)
+                    .frame(width: 32, height: 32)
+                    .background(Circle().fill(drawerOpen ? PocketColor.textPrimary : Color.white.opacity(0.10)))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Loops and markers")
+            .accessibilityValue(drawerOpen ? "Open" : "Closed")
         }
     }
 }
