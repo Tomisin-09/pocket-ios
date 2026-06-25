@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
+│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · TempoMarking · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -225,6 +225,16 @@ only. See `docs/decisions/0001`.
   planner, ADR 0014); collections already filter the library (intersection/AND, ADR 0033).
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
+- **`MetronomeExercise`** (ADR 0043): a standalone, **audio-free** `@Model` — a savable
+  metronome preset that *is* a practice exercise (name, absolute `currentTempo`/`targetTempo`
+  BPM, time signature, `accentBeats`, subdivision, the automator recipe, `tags`, `notes`).
+  Deliberately **not** related to `Song`/`Loop` (a `Loop` carries audio assumptions an
+  exercise has none of). Joins the same store as an additive migration (registered in the
+  app's `modelContainer`), following the 0011/0012/0036 discipline: a `uid: UUID`, declaration
+  defaults on every non-optional attribute (CoreData 134110), and the `Subdivision` /
+  `MetronomeIntervalUnit` enums stored through `String` backing fields with computed views
+  (the enum-attribute migration rule). The day-to-day value is `currentTempo` and the goal
+  `targetTempo` — "command tempo" stays reserved for `Loop`'s measured achievement.
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
   a re-model.
 

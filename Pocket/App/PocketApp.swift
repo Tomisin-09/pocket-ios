@@ -10,6 +10,7 @@ struct PocketApp: App {
         WindowGroup {
             LibraryView()
         }
-        .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self])
+        .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,
+                              MetronomeExercise.self])
     }
 }
