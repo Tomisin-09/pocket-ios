@@ -5,13 +5,19 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
-### Decided (not yet built)
-- **Landscape support is scoped to the practice screen only** (ADR 0042). Selective
-  landscape: the waveform/practice view will rotate (more width = sharper waveform +
-  more precise A/B drag); every other screen stays portrait-locked for V1. Decision
-  recorded now; implementation is a later V1 polish branch.
+### Added
+- **The practice screen rotates to landscape** (ADR 0042). Turn the phone sideways on the
+  practice screen — handy when it's propped on a stand — and the waveform claims the extra
+  width for a sharper view and more precise A/B dragging, with your loops and markers moving
+  to a side rail on the right. Every other screen stays portrait. Rotate back and the screen
+  returns to portrait on its own.
 
 ### Changed
+- **Song info moved out of the practice scroll area.** The collapsible "Song info" panel
+  at the bottom of the practice screen is gone — its key, mastery, and collections all live
+  in the song details sheet (hold the song title to open it), so the practice scroll now
+  stays focused on your loops and markers.
+- **One way to make loops — Fine mode is gone** (ADR 0041). The transport's left column
 - **One way to make loops — Fine mode is gone** (ADR 0041). The transport's left column
   is now just **Loop** and **Marker** (the separate "Fine" precise-edit mode and its ✓/✗
   confirm bar are retired). Setting, refining, and re-editing a loop all happen through the

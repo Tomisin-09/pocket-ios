@@ -133,7 +133,13 @@ that restores it from a snapshot with its original `uid`. ADR 0019.
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body
-that observes and binds to it (ADR 0007). Each loop has a per-loop **automator**
+that observes and binds to it (ADR 0007). Its cockpit and loops/markers reference
+list are extracted as `PracticeCockpit` / `PracticeReference`
+(`WaveformPracticeLayout.swift`) so the portrait (stacked) and landscape (side-rail)
+layouts compose the same pieces; the view branches on `verticalSizeClass`. Landscape
+is gated to this screen alone by `OrientationGate.swift` (an `AppDelegate` answering
+`supportedInterfaceOrientationsFor` from a mask that a `.landscapeEnabled()` modifier
+widens on appear and reverts on disappear) — ADR 0042. Each loop has a per-loop **automator**
 (speed trainer, ADR 0013): the engine publishes `loopIteration` (loop wraps counted
 in *source* frames, so it's stable across rate changes), the view feeds it to
 `WaveformPracticeModel.automatorAdvance`, which sets `speed` from the pure
@@ -176,7 +182,9 @@ only. See `docs/decisions/0001`.
   cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
   persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.
 - **Song metadata editing** (`Features/Library/SongEditSheet.swift`, ADR 0012): the
-  editable counterpart to the read-only `SongInfoPanel`. Reached by holding a library
+  editable counterpart to the read-only `SongDetailsSheet` (the practice screen's
+  `SongInfoPanel` was removed in ADR 0042; song facts now live only in the details sheet).
+  Reached by holding a library
   card → Edit (context menu), it edits local `@State` and writes back to the `@Model` on Done (Cancel
   discards), mirroring the loop/marker sheets. `Song` carries the scalar fields
   (`album`, `year`, `comment` joined `title`/`artist`/`key`/`bpm`/`collections`);

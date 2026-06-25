@@ -23,16 +23,14 @@ The order below reflects a deliberate scoping call, not just priority:
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
-- **Loop tags — show existing as well.** Tag suggestion chips (ADR 0034)
-  suggest tags from *other* loops; verify the tags already **on this loop** are
-  surfaced clearly when editing, and that the in-use list is discoverable.
-
-- **Landscape — practice screen only (ADR 0042, decided 2026-06-25).** Decision
-  recorded; **not yet built.** Selective landscape: only the waveform/practice
-  view rotates (more width = more waveform resolution + precise A/B drag), rest
-  stays portrait-locked for V1. V1 *polish* item — pick up as its own branch
-  **after** loop-tags above, once the practice screen has gone quiet. See the
-  ADR for the per-screen orientation-gate implementation note.
+- **Loop tags — show existing as well.** DONE (branch `pocket-055`): the tags
+  already on a loop now render as removable chips matching the suggestion-chip
+  language, in the loop edit sheet. Tags stay edit-sheet-only — no loop-row display
+  (ADR 0034 gating holds).
+- **Landscape — practice screen only.** DONE (ADR 0042, branch `pocket-056`):
+  the practice screen rotates to landscape (waveform claims the width, loops/markers
+  to a ~30% side rail); every other screen stays portrait. The bottom song-info
+  panel was removed in the same pass.
 
 ## Notes & journal — DONE (ADR 0038)
 
@@ -168,8 +166,8 @@ so the intent isn't lost:
   - Richer header treatment (artwork? larger title, tighter artist/album/year line).
   - A more bespoke descriptive layout than a stock grouped `Form` — spacing,
     grouping, and typography tuned to the app's design tokens (brief §3).
-  - Decide the relationship with the scroll-area `SongInfoPanel`, which shows an
-    overlapping subset (key · proficiency · progression · collections) — consolidate
-    or differentiate so the two don't drift.
+  - ~~Decide the relationship with the scroll-area `SongInfoPanel`~~ — RESOLVED
+    (ADR 0042): `SongInfoPanel` was removed; `SongDetailsSheet` is now the single
+    home for the song's key / mastery / collections.
   - Consider inline editing vs. the current Edit → `SongEditSheet` hop.
   - Surface tempo precision / downbeat state if useful (currently shows rounded BPM).

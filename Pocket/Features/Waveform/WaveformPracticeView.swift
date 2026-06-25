@@ -13,153 +13,26 @@ import SwiftUI
 struct WaveformPracticeView: View {
 
     @State private var model: WaveformPracticeModel
+    // Landscape on iPhone reports a compact vertical size class — the signal the practice
+    // screen uses to switch to its side-rail layout (ADR 0042).
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(song: Song, context: ModelContext) {
         _model = State(initialValue: WaveformPracticeModel(song: song, context: context))
     }
 
+    private var isLandscape: Bool { verticalSizeClass == .compact }
+
     var body: some View {
         @Bindable var model = model
         ZStack {
             PocketColor.background.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Fixed practice surface — the controls you touch constantly,
-                // pinned so they never scroll away (brief items 1, 3–8).
-                VStack(spacing: 16) {
-                    SongStrip(song: model.song,                                  // 1
-                              onHoldTitle: { model.showingSongDetails = true })
-                    SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
-                             onSetBPM: model.setBPM, onUserAdjust: model.userAdjustedSpeed,
-                             metronomeOn: model.metronomeOn,
-                             canUseMetronome: model.canUseMetronome,
-                             onToggleMetronome: model.toggleMetronome)
-                    // 4. Mode instructions — replaced by the edit toolbar (audition
-                    //    + state label + Y/N) while a loop is captured.
-                    ZStack {
-                        if model.isSettingDownbeat {
-                            DownbeatBar(isPlaying: model.engine.isPlaying,
-                                        onTogglePlay: model.engine.togglePlay,
-                                        onCapture: model.captureDownbeatAtPlayhead,
-                                        onConfirm: model.confirmDownbeat,
-                                        onCancel: model.cancelSetDownbeat)
-                                .transition(.opacity)
-                        } else if model.abActive && !model.isDragSelecting {
-                            ABSpanBar(isPlaying: model.engine.isPlaying,
-                                      isSet: model.abSpan.isSet,
-                                      isEditing: model.isEditingSpan,
-                                      label: model.abSpanLabel,
-                                      onAudition: model.auditionABSpan,
-                                      onSave: model.saveABSpan,
-                                      onClear: model.clearABSpan)
-                                .transition(.opacity)
-                        } else {
-                            ModeDescriptionLine()
-                                .transition(.opacity)
-                        }
-                    }
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.abActive)
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
-                    WaveformView(amplitudes: model.amplitudes,                   // 5
-                                 detailBars: model.detailBars,
-                                 playheadFraction: model.playheadFraction,
-                                 loop: model.activeLoop,
-                                 loops: model.loops,
-                                 markerFractions: model.markers.map { $0.seconds / model.duration },
-                                 beats: model.beatGrid,
-                                 formingStart: model.formingMarker,
-                                 tapSelection: model.greenSpan,
-                                 abSelection: model.isDragSelecting ? nil : model.abSpan.bounds,
-                                 playheadLabel: timecode(model.engine.currentTime),
-                                 onSeek: model.seekSnapping,
-                                 onScrub: model.seekToFraction,
-                                 onMoveABHandle: model.moveABHandle,
-                                 onMoveABHandleEnded: model.endABHandle,
-                                 onLiftLoopEdge: model.liftActiveLoopToSpan,
-                                 onSelectBegan: model.beginDragSelection,
-                                 onSelectChanged: model.updateDragSelection,
-                                 onSelectEnded: model.endDragSelection,
-                                 onSelectCancelled: model.cancelDragSelection,
-                                 viewport: model.viewport,
-                                 onSetZoomSpan: model.setZoomSpan,
-                                 downbeatDraft: model.downbeatDraft,
-                                 onDownbeatMove: model.moveDownbeatDraft,
-                                 onDownbeatEnded: model.endDownbeatDrag,
-                                 onTouchBegan: model.beginWaveformTouch,
-                                 onTouchEnded: model.endWaveformTouch)
-                        // Fit / 1× reset — only while zoomed; sits above the
-                        //    waveform's gestures so its tap wins (ADR 0010). Pinned
-                        //    bottom-trailing so it clears the top-pinned time bubble,
-                        //    which slides along the top edge toward the song's end.
-                        .overlay(alignment: .bottomTrailing) {
-                            if model.isZoomed {
-                                ZoomResetButton(action: model.resetZoom)
-                                    .padding(8)
-                                    .transition(.opacity)
-                            }
-                        }
-                        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isZoomed)
-                    TimeRuler(start: model.viewport.start * model.duration,      // 6
-                              end: model.viewport.end * model.duration)
-                    Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
-                            markers: model.markers,
-                            fineSelection: model.abSpan.bounds,
-                            playheadFraction: model.playheadFraction,
-                            viewport: model.viewport,
-                            onSeek: model.seekToFraction,
-                            onSeekEnded: model.seekMinimapSnapping)
-                    // Greyed + locked only while placing the downbeat (ADR 0024);
-                    //    A/B creation keeps the transport live (ADR 0041).
-                    TransportBar(isPlaying: model.engine.isPlaying,             // 8
-                                 onPlayPause: model.engine.togglePlay,
-                                 onRestart: model.transportRestart,
-                                 onPrevious: model.transportPrevious,
-                                 onNext: model.transportNext,
-                                 hasPrevious: model.hasPreviousTarget,
-                                 hasNext: model.hasNextTarget,
-                                 currentTime: model.engine.currentTime,
-                                 loop: model.activeLoop,
-                                 loopColor: model.activeLoopColor,
-                                 onClearLoop: model.clearActiveLoop,
-                                 onDropMarker: model.dropMarkerAtPlayhead,
-                                 onPunch: model.tapAB,
-                                 isPunchActive: model.abActive)
-                        .opacity(model.isSettingDownbeat ? 0.35 : 1)
-                        .disabled(model.isSettingDownbeat)
-                        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 12)
-
-                // Hairline boundary between the fixed surface and the scroll area.
-                Rectangle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(height: 1)
-
-                // Scrollable reference — loops, markers, then song info (demoted
-                // to the bottom, collapsed by default). Dimmed + disabled while
-                // adjusting a loop's range, to focus the waveform.
-                ScrollView {
-                    VStack(spacing: 16) {
-                        LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
-                                   activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
-                                   onActivate: model.activate, onEdit: { model.editingLoop = $0 },
-                                   onDelete: model.deleteLoop,
-                                   onJournal: { model.journalingLoop = $0 },
-                                   onAutomator: { model.editingAutomatorLoop = $0 })
-                        MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
-                                     onSeek: model.seekToMarker, onEdit: { model.editingMarker = $0 },
-                                     onDelete: model.deleteMarker)
-                        SongInfoPanel(song: model.song, expanded: $model.songInfoExpanded) // 2
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                }
-                .opacity(model.isRangeEditing ? 0.25 : 1)
-                .disabled(model.isRangeEditing)
-                .animation(.easeOut(duration: 0.2), value: model.isRangeEditing)
+            if isLandscape {
+                landscapeLayout(model: model)
+            } else {
+                portraitLayout(model: model)
             }
 
             // Dim + spinner while the audio opens, so a slow file read reads as
@@ -171,6 +44,9 @@ struct WaveformPracticeView: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
         .preferredColorScheme(.dark)
+        // Practice is the one screen that rotates (ADR 0042): more width = sharper
+        // waveform + more precise A/B drag. Reverts to portrait-only on exit.
+        .landscapeEnabled()
         // Stop a playhead scrub near the left edge from popping back to the library
         // (ADR 0030): suppress the interactive swipe-back while a finger is on the waveform.
         .background(SwipeBackGuard(disabled: model.isScrubbing))
@@ -245,6 +121,38 @@ struct WaveformPracticeView: View {
         .onChange(of: model.engine.isPlaying) { _, playing in
             if playing { model.automatorAdvance(toLoopIteration: model.engine.loopIteration) }
             model.refreshNowPlaying(force: true)   // play/pause flips the lock-screen control + clock
+        }
+    }
+
+    // MARK: - Layouts (ADR 0042)
+
+    /// Portrait: the cockpit stacked over the loops/markers reference list, split by a hairline.
+    private func portraitLayout(model: WaveformPracticeModel) -> some View {
+        VStack(spacing: 0) {
+            PracticeCockpit(model: model)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 1)
+            PracticeReference(model: model)
+        }
+    }
+
+    /// Landscape: the waveform cockpit claims the width on the left; the loops/markers
+    /// reference list sits as a scrollable rail on the right (~30%), split by a vertical
+    /// hairline. Cockpit spacing tightens since vertical room is scarce.
+    private func landscapeLayout(model: WaveformPracticeModel) -> some View {
+        HStack(spacing: 0) {
+            PracticeCockpit(model: model, spacing: 8)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(width: 1)
+            PracticeReference(model: model)
+                .containerRelativeFrame(.horizontal) { width, _ in width * 0.3 }
         }
     }
 }

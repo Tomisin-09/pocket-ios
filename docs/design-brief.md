@@ -41,7 +41,9 @@ tool. Animations should feel like a musical phrase, not a form submission.
   waveform or speed control for Apple Music tracks; design their cards to show
   metadata and an "open in Music" affordance instead. (See
   `docs/decisions/0001-audio-source-local-first.md`.)
-- **Orientation:** portrait only for V1.
+- **Orientation:** portrait everywhere except the **practice screen**, which also
+  supports landscape (ADR 0042) — sideways gives the waveform more width for precise
+  A/B dragging, with loops/markers as a side rail. All other screens stay portrait.
 - **Accessibility is not optional:** legible contrast on dark, Dynamic Type
   support, VoiceOver labels, and "Reduce Motion" alternatives for the musical
   animations.
@@ -130,7 +132,7 @@ vision if useful, but know that **Phase 1** is what gets built first.
 | **P1** | Library / file browser | Pick local/iCloud files. **Text-forward song cards** (title, key · BPM · loop/marker counts, collection chips, mastery dots, a mastery-tier colour accent — no artwork) in one list with a **Group by** control: Mastery · Recently Added · Title · Artist · Album · Genre. Collection filter chips above the list. ADR 0035/0036. |
 | P2 | Loops panel + Loop active panel | Active panel has speed, repeat, tempo automator, session notes. |
 | P2 | Markers panel + Pin Marker popover | Single-point annotations; purple. |
-| P2 | Song info / Repertoire panel | Collapsible, bottom of the practice screen (scrollable), collapsed by default; key, mastery (derived), collections. |
+| ~~P2~~ | ~~Song info / Repertoire panel~~ | **Removed (ADR 0042).** Key / mastery / collections now live only in the song-details sheet (hold the title); not duplicated in the practice scroll area. |
 | P3 | Home / Practice planner | The home screen *is* the planner: time selector, routine cards, session blocks. |
 
 ### 4.1 Waveform practice screen — layout
@@ -189,8 +191,12 @@ A hairline separates the cockpit from the scroll area below.
    the row (ADR 0013 / 0028).
 9. Markers panel (collapsible) — name + timecode; tap a row to edit
    (rename / delete).
-10. Song info panel (collapsible, **collapsed by default**) — demoted here from
-    the top; key, mastery (derived), collections.
+
+In **landscape** (practice screen only, ADR 0042) the cockpit (items 1, 3–8)
+claims the left of the screen and the loops/markers reference (items 8–9 above)
+becomes a scrollable side rail on the right. The song-info panel that used to sit
+at the bottom of the scroll area was removed (ADR 0042) — its key / mastery /
+collections live in the song-details sheet (hold the title).
 
 While a loop is being created or its range adjusted, the cockpit enters **edit
 mode**: the transport greys out and locks, and the mode line becomes the edit
