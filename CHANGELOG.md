@@ -21,6 +21,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   at the bottom of the practice screen is gone — its key, mastery, and collections all live
   in the song details sheet (hold the song title to open it), so the practice scroll now
   stays focused on your loops and markers.
+- **Loop tags read as tags now.** In a loop's edit sheet, the tags already on the loop show
+  as removable chips (tap the ✕ to drop one) in a wrapping cloud, matching the look of the
+  suggestion chips below — so your own tags no longer hide as plain text rows. Suggested tags
+  from elsewhere in your library stay a quiet, tap-to-add row underneath.
 - **One way to make loops — Fine mode is gone** (ADR 0041). The transport's left column
   is now just **Loop** and **Marker** (the separate "Fine" precise-edit mode and its ✓/✗
   confirm bar are retired). Setting, refining, and re-editing a loop all happen through the
