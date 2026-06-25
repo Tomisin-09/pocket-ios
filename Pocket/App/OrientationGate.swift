@@ -23,6 +23,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 /// Sets the allowed orientation mask and asks the active scene to re-evaluate it, so a
 /// revert to `.portrait` actively rotates the device back if it's currently in landscape.
 enum OrientationGate {
+    // Touches `UIApplication.shared` and the scene's geometry, all main-actor APIs (and
+    // `AppDelegate.orientationMask` is main-actor isolated too), so the call must be on the
+    // main actor — Swift 6 enforces this. The `.onAppear`/`.onDisappear` callers already are.
+    @MainActor
     static func set(_ mask: UIInterfaceOrientationMask) {
         AppDelegate.orientationMask = mask
         guard let scene = UIApplication.shared.connectedScenes
