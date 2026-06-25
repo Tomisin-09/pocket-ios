@@ -5,6 +5,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Decided (not yet built)
+- **Landscape support is scoped to the practice screen only** (ADR 0042). Selective
+  landscape: the waveform/practice view will rotate (more width = sharper waveform +
+  more precise A/B drag); every other screen stays portrait-locked for V1. Decision
+  recorded now; implementation is a later V1 polish branch.
+
 ### Changed
 - **One way to make loops — Fine mode is gone** (ADR 0041). The transport's left column
   is now just **Loop** and **Marker** (the separate "Fine" precise-edit mode and its ✓/✗
