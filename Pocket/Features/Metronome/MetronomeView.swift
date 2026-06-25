@@ -1,5 +1,8 @@
 import SwiftUI
 import QuartzCore
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// The standalone metronome screen (ADR 0043, slice 3): play/stop, a tempo control
 /// (steppers, slider, and reused tap-tempo), a named **time-signature** picker, the
@@ -26,27 +29,45 @@ struct MetronomeView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
                 // The two per-tick views are isolated structs so the engine's ~50 Hz
                 // `currentBeat`/`elapsed` updates re-render only them — not this body, which
                 // would otherwise rebuild the controls (and dismiss the time-signature menu)
                 // on every beat.
-                BeatIndicator(engine: engine)
-                tempoReadout
-                tempoControls
-                timeSignatureControl
-                Spacer(minLength: 0)
-                SessionTracker(engine: engine)
-                transport
+                ScrollView {
+                    VStack(spacing: 20) {
+                        BeatIndicator(engine: engine)
+                        tempoReadout
+                        tempoControls
+                        MetronomeAutomatorPanel(engine: engine)
+                    }
+                    .padding(24)
+                }
+                .scrollDismissesKeyboard(.interactively)
+                // Session readout + transport stay pinned below the scrollable controls.
+                VStack(spacing: 12) {
+                    SessionTracker(engine: engine)
+                    transport
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+                .padding(.top, 12)
             }
-            .padding(24)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(PocketColor.background.ignoresSafeArea())
             .navigationTitle("Metronome")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    timeSignatureMenu
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
+                        .tint(PocketColor.metronome)
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { dismissKeyboard() }
                         .tint(PocketColor.metronome)
                 }
             }
@@ -57,49 +78,59 @@ struct MetronomeView: View {
 
     // MARK: - Tempo readout
 
+    /// The BPM number + marking, flanked by the − / + steppers (moved here so the slider row
+    /// can hold the tap buttons instead of a separate full-width Tap row).
     private var tempoReadout: some View {
-        VStack(spacing: 2) {
-            Text("\(engine.bpm)")
-                .font(.pocketMono(.largeTitle))
-                .foregroundStyle(PocketColor.textPrimary)
-                .contentTransition(.numericText())
-            Text("BPM · \(engine.tempoMarking.name)")
-                .font(.caption)
-                .foregroundStyle(PocketColor.textSecondary)
+        HStack {
+            stepperButton(symbol: "minus", delta: -1)
+            Spacer()
+            VStack(spacing: 2) {
+                Text("\(engine.bpm)")
+                    .font(.pocketMono(.largeTitle))
+                    .foregroundStyle(PocketColor.textPrimary)
+                    .contentTransition(.numericText())
+                Text("BPM · \(engine.tempoMarking.name)")
+                    .font(.caption)
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            Spacer()
+            stepperButton(symbol: "plus", delta: 1)
         }
-        .accessibilityElement(children: .ignore)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("\(engine.bpm) beats per minute, \(engine.tempoMarking.name)")
     }
 
     // MARK: - Tempo controls
 
+    /// The slider flanked by a **TAP** button on each side — tap to the beat with either
+    /// thumb. The steppers live with the readout above.
     private var tempoControls: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 20) {
-                stepperButton(symbol: "minus", delta: -1)
-                Slider(
-                    value: Binding(
-                        get: { Double(engine.bpm) },
-                        set: { engine.setBPM(Int($0.rounded())) }
-                    ),
-                    in: bpmSliderRange
-                )
-                .tint(PocketColor.metronome)
-                .accessibilityLabel("Tempo")
-                stepperButton(symbol: "plus", delta: 1)
-            }
-            Button { recordTap() } label: {
-                Label("Tap tempo", systemImage: "hand.tap")
-                    .font(.subheadline)
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(RoundedRectangle(cornerRadius: 12)
-                        .fill(PocketColor.metronome.opacity(0.18)))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Tap to set tempo")
+        HStack(spacing: 12) {
+            tapButton
+            Slider(
+                value: Binding(
+                    get: { Double(engine.bpm) },
+                    set: { engine.setBPM(Int($0.rounded())) }
+                ),
+                in: bpmSliderRange
+            )
+            .tint(PocketColor.metronome)
+            .accessibilityLabel("Tempo")
+            tapButton
         }
+    }
+
+    private var tapButton: some View {
+        Button { recordTap() } label: {
+            Text("TAP")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(PocketColor.textPrimary)
+                .frame(width: 56, height: 44)
+                .background(RoundedRectangle(cornerRadius: 12)
+                    .fill(PocketColor.metronome.opacity(0.18)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Tap to set tempo")
     }
 
     private func stepperButton(symbol: String, delta: Int) -> some View {
@@ -116,41 +147,35 @@ struct MetronomeView: View {
 
     // MARK: - Time signature
 
-    /// A menu of named meters with their feel ("3/4 · Waltz", "12/8 · Slow blues"), so the
-    /// signature reads musically rather than as a bare beats-per-bar number.
-    private var timeSignatureControl: some View {
-        HStack {
-            Text("Time signature")
-                .font(.subheadline)
-                .foregroundStyle(PocketColor.textSecondary)
-            Spacer()
-            Menu {
-                ForEach(TimeSignature.presets) { signature in
-                    Button {
-                        engine.setTimeSignature(signature)
-                        haptic(.light)
-                    } label: {
-                        if signature == engine.timeSignature {
-                            Label("\(signature.name) · \(signature.context)", systemImage: "checkmark")
-                        } else {
-                            Text("\(signature.name) · \(signature.context)")
-                        }
+    /// The time signature lives in the **header** (top-left) so the main column stays short
+    /// enough that the automator's ramp graphic is visible without scrolling. The menu lists
+    /// each meter with its feel ("3/4 · Waltz", "12/8 · Slow blues"); the header label shows
+    /// just the compact signature.
+    private var timeSignatureMenu: some View {
+        Menu {
+            ForEach(TimeSignature.presets) { signature in
+                Button {
+                    engine.setTimeSignature(signature)
+                    haptic(.light)
+                } label: {
+                    if signature == engine.timeSignature {
+                        Label("\(signature.name) · \(signature.context)", systemImage: "checkmark")
+                    } else {
+                        Text("\(signature.name) · \(signature.context)")
                     }
                 }
-            } label: {
-                HStack(spacing: 6) {
-                    Text(engine.timeSignature.name)
-                        .font(.pocketMono(.body))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text(engine.timeSignature.context)
-                        .font(.caption)
-                        .foregroundStyle(PocketColor.textSecondary)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption2)
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Text(engine.timeSignature.name)
+                    .font(.pocketMono(.body))
+                    .foregroundStyle(PocketColor.textPrimary)
+                Image(systemName: "chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(PocketColor.textSecondary)
             }
         }
+        .accessibilityLabel("Time signature \(engine.timeSignature.name)")
     }
 
     // MARK: - Transport
@@ -204,6 +229,15 @@ struct MetronomeView: View {
         if let bpm = TempoMath.bpm(fromTapTimes: taps) {
             engine.setBPM(Int(bpm.rounded()))
         }
+    }
+
+    /// Dismiss the number-pad keyboard from the screen-level **Done** accessory. Resigning
+    /// first responder flips each field's focus, which commits its typed value.
+    private func dismissKeyboard() {
+        #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
+        #endif
     }
 }
 

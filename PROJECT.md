@@ -209,5 +209,5 @@ planner's **selection** (goals → required skills from a **technique taxonomy**
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `MetronomeBeats`, `TempoMarking`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`.
+Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `MetronomeBeats`, `TempoMarking`, `TimeSignature`, `MetronomeAutomator`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`.
 See `CHANGELOG.md` for the full history.

@@ -13,7 +13,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   (slow blues)**, 2/4, 5/4, 7/8 — and the **flashing dots** show that meter's accent pattern
   (a silent visual mode if you'd rather not hear it). **Pause** to take a breather and
   **resume** where you left off, or **stop** to reset; a **session timer** tracks how long
-  you've practised this sitting. The click keeps going when the phone is **locked**, with
+  you've practised this sitting. Switch on the **tempo automator** to have it climb the BPM
+  for you — set the step size, whether it steps every so many **bars** or **seconds**, and
+  the ceiling to hold at. The click keeps going when the phone is **locked**, with
   **play/pause on the lock screen and Control Center**. *(This toolbar entry point is
   temporary — the metronome moves to a home screen later.)*
 - **The practice screen rotates to landscape** (ADR 0042). Turn the phone sideways on the

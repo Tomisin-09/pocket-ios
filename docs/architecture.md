@@ -124,7 +124,12 @@ is three-state — **stopped → playing → paused** — with a **wall-clock se
 persisted) kept separate from the **sample-clock beat phase** (re-anchored on a
 tempo/signature change or a resume). Lock-screen / Control Center play-pause is wired
 through the shared `NowPlayingController`, and the `audio` background mode (ADR 0025) keeps
-the click sounding while locked. The two per-tick SwiftUI views (dots, session readout) are
+the click sounding while locked. An optional **tempo automator** (the pure
+`MetronomeAutomator`, sibling of the in-song `AutomatorConfig`) ramps the BPM up over the
+sitting: it steps a fixed amount every N **bars** or N **seconds** and holds at a ceiling.
+The engine accrues elapsed bars (integrated at the live tempo) and seconds since the ramp
+engaged, hands them to the pure ramp each tick, and applies the resolved BPM as an
+automator-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
 isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
 the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
 Italian tempo marking is the pure `TempoMarking` lookup. Reached for now via a **temporary**

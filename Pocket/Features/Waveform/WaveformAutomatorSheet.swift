@@ -38,10 +38,7 @@ struct AutomatorSheet: View {
     }
     /// The ramp's direction — drives both the staircase graphic and the BPM arrow.
     /// Equal start/target reads as **level** (flat on both sides), not ascending.
-    private var shape: RampShape {
-        if abs(target - start) < 1e-9 { return .level }
-        return target > start ? .ascending : .descending
-    }
+    private var shape: RampShape { RampShape.between(start, target) }
 
     var body: some View {
         NavigationStack {
@@ -169,49 +166,5 @@ struct AutomatorSheet: View {
         loop.automator = config
         onTurnOff()
         dismiss()
-    }
-}
-
-/// The ramp's direction, shared by the staircase graphic and the BPM-arrow label.
-private enum RampShape {
-    case ascending, level, descending
-
-    /// 0→1 bar height fraction across the staircase (left→right). Level is flat.
-    func fraction(at position: Double) -> Double {
-        switch self {
-        case .ascending: position
-        case .descending: 1 - position
-        case .level: 0.5
-        }
-    }
-
-    var arrow: String {
-        switch self {
-        case .ascending: "──►"
-        case .descending: "◄──"
-        case .level: "───"
-        }
-    }
-}
-
-/// The hero ramp: a row of bars rising, falling, or flat left→right to show the shape.
-private struct RampStairs: View {
-    let shape: RampShape
-    let steps: Int
-
-    var body: some View {
-        let barCount = min(max(steps, 2), 12)
-        HStack(alignment: .bottom, spacing: 5) {
-            ForEach(0..<barCount, id: \.self) { index in
-                let pos = Double(index) / Double(barCount - 1)   // 0→1 left→right
-                let frac = shape.fraction(at: pos)               // up / down / level
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(PocketColor.active.opacity(0.4 + 0.6 * frac))
-                    .frame(width: 13, height: 14 + 44 * frac)
-            }
-        }
-        .frame(height: 60, alignment: .bottom)
-        .animation(.easeOut(duration: 0.2), value: shape)
-        .accessibilityHidden(true)
     }
 }
