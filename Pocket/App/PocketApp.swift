@@ -8,7 +8,7 @@ struct PocketApp: App {
 
     var body: some Scene {
         WindowGroup {
-            LibraryView()
+            HomeView()
         }
         .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,
                               MetronomeExercise.self])

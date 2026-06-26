@@ -51,11 +51,19 @@ final class Song {
     /// `nil` for songs saved before this field (lightweight migration) and the bundled
     /// demo; those bucket as "Earlier". Optional with no declaration default, like `bpm`.
     var dateAdded: Date?
-    /// When this song was last practised — the "recently practised" sort key and a direct
-    /// planner input (ADR 0014/0036). `nil` until the first practice session is recorded.
-    /// Optional with no declaration default, like `bpm`/`dateAdded`, so SwiftData lightweight
-    /// migration fills pre-0036 songs with nil (additive field, no store wipe).
+    /// When this song was last practised — the "recently practised" sort key (home + library)
+    /// and a direct planner input (ADR 0014/0036). Stamped on practice-screen entry (ADR 0044).
+    /// `nil` until the first practice session is recorded. Optional with no declaration default,
+    /// like `bpm`/`dateAdded`, so SwiftData lightweight migration fills pre-0036 songs with nil
+    /// (additive field, no store wipe).
     var lastPracticed: Date?
+    /// The full-song playback speed (× of original) you last practised at — restored when you
+    /// reopen the song so it resumes at your working tempo, not always 1× (ADR 0044). The
+    /// **song-level** analogue of `Loop.lastPracticedSpeed`: it tracks the speed only while no
+    /// loop is armed (a loop's speed never leaks in — see `WaveformPracticeModel`). `nil` until
+    /// first practised → `resumeSpeed` falls back to 1×. Optional with no declaration default,
+    /// so pre-0044 songs migrate to `nil` without a store wipe (CoreData 134110 exempt).
+    var lastPracticedSpeed: Double?
 
     // Import identity (`SongRef`), flattened for storage. `bookmark == nil` marks
     // the generated demo sample (no real file behind it).
@@ -103,6 +111,10 @@ final class Song {
     /// the rounded `bpm` promoted to `Double` (so a song that only ever had an integer
     /// tempo still grids), else `nil` when the tempo is unknown (ADR 0024).
     var tempoBPM: Double? { preciseBPM ?? bpm.map(Double.init) }
+
+    /// The full-song speed to resume at on reopen (ADR 0044): the speed you last practised the
+    /// song at, or 1× when never practised (`nil`). Mirrors `Loop.resumeSpeed` at the song level.
+    var resumeSpeed: Double { lastPracticedSpeed ?? 1.0 }
 
     /// Derived practice mastery (0–5): the rounded average of this song's loops'
     /// `mastery`, or `nil` when the song has no loops (shown as "unrated"). A loop-centric

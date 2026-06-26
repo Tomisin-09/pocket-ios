@@ -45,10 +45,11 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | Path | Responsibility |
 |---|---|
 | `Pocket/App/` | App entry, root scene |
+| `Pocket/Features/Home/` | Home hub — the app root: greeting, resume card, metronome + songs entry points (ADR 0044) |
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
 | `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043) |
-| `Pocket/Features/Planner/` | Home screen / practice planner, routines |
+| `Pocket/Features/Planner/` | *(reserved for the V2 practice planner)* |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
 | `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, MetronomeExercise, Routine, Session, SongRef |
@@ -130,11 +131,14 @@ auto-named ("Marker 3", same `AutoName`), no naming step, renamed later from the
 **Undo** toast that restores it with its original identity (ADR 0019). Practice
 opens on the **full song** — no loop is armed until you pick one — and leaving the
 screen **wipes** the transient session knobs (active loop, speed, click, mode) while
-persisted song data is left untouched (ADR 0029). Individual loops, though, **remember the
-speed you last practised them at** (`Loop.lastPracticedSpeed`, ADR 0040 — refining 0029):
-arming a loop restores its speed (a loop slowed to 0.7× reopens at 0.7×), persisted when you
-leave it via a single `activeLoopID` `didSet` choke point — `nil`/never-practised falls back
-to the loop's `speed`. This is per-loop memory only; the session still opens clean.
+persisted song data is left untouched (ADR 0029). Both the **full song and individual loops remember the
+speed you last practised them at** (`Song.lastPracticedSpeed` ADR 0044 / `Loop.lastPracticedSpeed`
+ADR 0040 — refining 0029): arming a loop restores its speed (a loop slowed to 0.7× reopens at
+0.7×), persisted when you leave it via a single `activeLoopID` `didSet` choke point —
+`nil`/never-practised falls back to the loop's `speed`. The **song** resumes at its own
+last-practiced tempo on reopen via the same choke point, which holds the invariant "no loop
+armed ⇒ `speed` is the song's tempo" (bank on arm, restore on disarm) so a loop's speed never
+leaks in (ADR 0044). The session still opens clean (no loop armed), only the tempo is remembered.
 State + handlers live in an `@Observable` `WaveformPracticeModel`
 (ADR 0007), now bound to a **persisted `Song`** — loops/markers are SwiftData
 `@Model`s that survive relaunches (ADR 0011). The practice screen is the **one
@@ -143,8 +147,10 @@ extracted as `PracticeCockpit` / `PracticeReference`, stacked in portrait; in la
 the waveform cockpit takes the full width (compact speed/transport bars, flexing waveform)
 and the loops/markers list becomes a **slide-in drawer** (☰), gated to this screen by
 `OrientationGate`. The old bottom **song-info panel was removed** — its facts live
-in the song-details sheet (hold the title). The app opens to a **song library**
-(`LibraryView`); importing a DRM-free local/iCloud **audio file** takes a
+in the song-details sheet (hold the title). The app opens to a **home hub** (`HomeView`, ADR 0044) — a greeting, a "Jump back in" card
+for the most-recently-practised song, a metronome card, and a preview of your songs with
+**See all** pushing the full **song library** (`LibraryView`), now one tap from the front
+door rather than the root. Importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),
 persisting a `Song` to practice, while an empty state offers import or a bundled
 demo. **Holding a song card** → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
@@ -164,7 +170,8 @@ toolbar **filter menu** (the funnel; intersection/AND) — ADR 0033. The library
 as the rounded average of its **rated** loops' `mastery` (`MasteryRollup`, pure/unit-tested;
 unrated loops are skipped, ADR 0039), shown as
 stars and as a library group with an **Unrated** bucket for songs with no rated loops; the song also
-records `lastPracticed` for "recently practised" ordering and the planner (ADR 0036). Each loop carries a
+records `lastPracticed` — **stamped on practice-screen entry** (ADR 0044) — for "recently
+practised" ordering (home hub + library) and the planner (ADR 0036). Each loop carries a
 per-loop **automator** (the "A" control on its row): a speed-trainer ramp — start % →
 target % over N steps, a few loops each — that climbs, descends, or sits level, runs a
 **fixed number of passes and then stops** (Set ramp also starts it playing), driven by the

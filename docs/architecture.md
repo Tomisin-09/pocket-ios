@@ -4,7 +4,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ SwiftUI Features (Library · Waveform · Planner · Repertoire)
+│ SwiftUI Features (Home · Library · Waveform · Metronome · Repertoire)
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
@@ -152,8 +152,8 @@ both the library row and the save/update confirmation so what you see is what is
 (working `currentTempo` → goal `targetTempo`: bar fraction, remaining BPM, "At target"),
 surfaced by `ExerciseProgressChip` on the screen and a `TempoProgressBar` in each library row;
 the cross-session bump stays **manual** (a stepper edits the persisted `currentTempo`),
-kept distinct from the live click and the in-session automator. Reached for now via a **temporary**
-Library toolbar button (ADR 0043 — moves to a home screen later). Stage 4's waveform for real files is
+kept distinct from the live click and the in-session automator. Reached from the **Metronome
+card on the home hub** (`Features/Home/`, ADR 0044), full-screen. Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).
@@ -203,8 +203,12 @@ the speed it was last practised at (`Loop.lastPracticedSpeed`, ADR 0040): a sing
 on `activeLoopID` persists the *outgoing* loop's `speed` on any leave/switch/exit, and arming
 a loop restores it (`Loop.resumeSpeed` = last-practised, else the loop's `speed`) — so the
 three loop tempos (`speed` = ramp start, `lastPracticedSpeed` = resume, `commandTempo` =
-fastest owned) stay distinct. This refines ADR 0029: the session opens clean, but loops carry
-per-loop speed memory. A later slice adds a
+fastest owned) stay distinct. The **same `didSet`** carries the song's own resume tempo
+(`Song.lastPracticedSpeed`, ADR 0044): it holds the invariant "no loop armed ⇒ `speed` is the
+song's tempo" — banking the song speed when the first loop arms, restoring it when the last
+disarms — so the model opens the full song at its last-practiced tempo without a loop's speed
+leaking in. This refines ADR 0029: the session opens clean (no loop armed), but the song and
+its loops carry speed memory. A later slice adds a
 **clean-before-fast** advance gate — an `.onConfirm` mode that holds each plateau until
 the user taps step-up, plus a single-step back-off — because Pocket plays the reference
 track but can't sense the user's own accuracy (ADR 0016). Opening a song's audio is **async and

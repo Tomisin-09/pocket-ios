@@ -2,9 +2,10 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The app root: the song library (ADR 0011 Slice 2). A simple list of songs to
-/// open for practice, a `+` to import an audio file, and an empty state offering
-/// import or the bundled demo. Replaces the temporary launch-into-first-song.
+/// The song library (ADR 0011 Slice 2): a list of songs to open for practice, a `+` to
+/// import an audio file, and an empty state offering import or the bundled demo. Pushed from
+/// the home hub's "See all" (ADR 0044) — it relies on an ambient `NavigationStack` rather
+/// than owning one, so its toolbar and row pushes land in the home's navigation.
 struct LibraryView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Song.title) private var songs: [Song]
@@ -21,54 +22,39 @@ struct LibraryView: View {
     @AppStorage("librarySortAscending") private var sortAscending = true
     /// Title/artist search query (ADR 0035).
     @State private var searchText = ""
-    /// Presents the standalone metronome. **Temporary** Library entry point (ADR 0043):
-    /// the tool belongs with warm-up routines on a future home screen (ADR 0026), but a
-    /// toolbar button unblocks it until app-wide navigation exists. Remove when the home
-    /// screen lands.
-    @State private var showingMetronome = false
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if songs.isEmpty {
-                    LibraryEmptyState(onImport: { importing = true }, onTryDemo: addDemo)
-                } else {
-                    libraryContent
-                        .searchable(text: $searchText, prompt: "Songs and artists")
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(PocketColor.background.ignoresSafeArea())
-            .navigationTitle("Library")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if !songs.isEmpty { sortMenu }
-                }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    if !availableCollections.isEmpty { filterMenu }
-                    // Temporary metronome entry point (ADR 0043) — moves to the home screen later.
-                    Button { showingMetronome = true } label: { Image(systemName: "metronome") }
-                        .tint(PocketColor.metronome)
-                        .accessibilityLabel("Metronome")
-                    Button { importing = true } label: { Image(systemName: "plus") }
-                        .tint(PocketColor.active)
-                        .accessibilityLabel("Import a song")
-                }
-            }
-            .fileImporter(isPresented: $importing, allowedContentTypes: [.audio], onCompletion: handleImport)
-            .alert("Couldn’t import", isPresented: importErrorBinding) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(importError ?? "")
-            }
-            .sheet(item: $editingSong) { song in
-                SongEditSheet(song: song)
-            }
-            .fullScreenCover(isPresented: $showingMetronome) {
-                MetronomeView()
+        Group {
+            if songs.isEmpty {
+                LibraryEmptyState(onImport: { importing = true }, onTryDemo: addDemo)
+            } else {
+                libraryContent
+                    .searchable(text: $searchText, prompt: "Songs and artists")
             }
         }
-        .preferredColorScheme(.dark)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(PocketColor.background.ignoresSafeArea())
+        .navigationTitle("Library")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if !songs.isEmpty { sortMenu }
+            }
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                if !availableCollections.isEmpty { filterMenu }
+                Button { importing = true } label: { Image(systemName: "plus") }
+                    .tint(PocketColor.active)
+                    .accessibilityLabel("Import a song")
+            }
+        }
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.audio], onCompletion: handleImport)
+        .alert("Couldn’t import", isPresented: importErrorBinding) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(importError ?? "")
+        }
+        .sheet(item: $editingSong) { song in
+            SongEditSheet(song: song)
+        }
     }
 
     /// Distinct collection names across the library, canonicalised and sorted — the
@@ -334,14 +320,18 @@ private struct PreviewSeed {
         song.dateAdded = .now
         container.mainContext.insert(song)
     }
-    return LibraryView().modelContainer(container)
+    return NavigationStack { LibraryView() }
+        .modelContainer(container)
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Library — empty") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(for: Song.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
-    return LibraryView().modelContainer(container)
+    return NavigationStack { LibraryView() }
+        .modelContainer(container)
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Song edit sheet") {
