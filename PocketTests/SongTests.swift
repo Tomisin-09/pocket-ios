@@ -139,6 +139,21 @@ final class SongTests: XCTestCase {
         XCTAssertEqual(loop.resumeSpeed, 0.9, accuracy: 1e-9)
     }
 
+    // MARK: - Song-level resume tempo (ADR 0044)
+
+    func testSongResumeSpeedDefaultsToFullWhenNeverPractised() {
+        // Optional, no declaration default — a fresh (or migrated) song resumes at 1×.
+        let song = makeSong()
+        XCTAssertNil(song.lastPracticedSpeed)
+        XCTAssertEqual(song.resumeSpeed, 1.0, accuracy: 1e-9)
+    }
+
+    func testSongResumeSpeedUsesLastPracticedWhenSet() {
+        let song = makeSong()
+        song.lastPracticedSpeed = 0.85
+        XCTAssertEqual(song.resumeSpeed, 0.85, accuracy: 1e-9)
+    }
+
     func testLoopTagsDefaultToEmpty() {
         // Loop tags (ADR 0034) carry a declaration default of `[]` so SwiftData lightweight
         // migration fills pre-0034 loops without a store wipe (CoreData 134110).

@@ -133,7 +133,8 @@ vision if useful, but know that **Phase 1** is what gets built first.
 | P2 | Loops panel + Loop active panel | Active panel has speed, repeat, tempo automator, session notes. |
 | P2 | Markers panel + Pin Marker popover | Single-point annotations; purple. |
 | ~~P2~~ | ~~Song info / Repertoire panel~~ | **Removed (ADR 0042).** Key / mastery / collections now live only in the song-details sheet (hold the title); not duplicated in the practice scroll area. |
-| P3 | Home / Practice planner | The home screen *is* the planner: time selector, routine cards, session blocks. |
+| **P1** | **Home hub** | The app's front door (ADR 0044). Greeting · "Jump back in" resume card · Metronome card · "Your songs" preview (See all → Library) · Add a song. **Planner-free for V1** — see §4.2. |
+| V2 | Practice planner | The planner the home once pencilled in — time selector, routine cards, session blocks — slots **under the greeting** of the home hub when it ships. Deferred to V2. |
 
 ### 4.1 Waveform practice screen — layout
 
@@ -229,6 +230,32 @@ greys out until the song has a tempo + the 1. The slider
 uses an **asymmetric scale** (0.25–1.0 occupies ~54% of the track, so 1.0 sits
 slightly left of centre — slow practice deserves more precision) — still to be
 implemented; a linear slider stands in for now.
+
+### 4.2 Home hub — layout
+
+The app's front door (ADR 0044), in place of launching straight into the library.
+**Dark-first**, a single scrolling column, top → bottom:
+
+1. **Greeting** — a quiet time-of-day lead-in ("Good evening") over a fixed
+   **"Ready to practice"** headline. (V2: planner "today's routine" cards slot in
+   directly under here — the layout leaves room.)
+2. **"Jump back in"** card — the single most-recently-practised song
+   (`Song.lastPracticed`), with its **mastery** and a relative **last-practised**
+   time. **Hidden on first launch** (no history). Tap → the practice screen, which
+   resumes the song at its **last-practiced tempo** (ADR 0044). Neutral chrome.
+3. **Metronome card** — the screen's **one accent** (teal, `PocketColor.metronome`).
+   Tap → the standalone metronome (full-screen; it owns its own navigation). This is
+   the metronome's permanent home — it retires the temporary Library toolbar button
+   (ADR 0043).
+4. **"Your songs"** — a **vertical list** (not a carousel) reusing the library's
+   `SongCard`, ordered by recent practice, the resume song dropped (it already
+   headlines above), capped to a short preview. **"See all"** pushes the full
+   `LibraryView` (grouped / searchable — unchanged, just no longer the root).
+5. **"Add a song"** — opens the file importer (creation reachable from the front door).
+
+**Navigation:** the home hub is the **app root**; Library, the metronome, and the
+practice screen are reached from it. Nothing is lost — the full library is one tap
+away under "See all".
 
 ---
 

@@ -75,15 +75,25 @@ final class WaveformPracticeModel {
     /// saved region (ADR 0029). A loop only arms when you tap its row, punch a new
     /// one, or run an automator.
     ///
-    /// The `didSet` is the single choke point for **last-practiced speed** (ADR 0040):
-    /// whenever the active loop changes, the *outgoing* loop's `speed` is persisted into
-    /// its `lastPracticedSpeed` (one place, on leave, not per tick), so re-arming resumes
-    /// there. A just-deleted loop is skipped (no longer in `loops`).
+    /// The `didSet` is the single choke point for **last-practiced speed** (ADR 0040/0044):
+    /// whenever the active loop changes, the *outgoing* loop's `speed` is persisted into its
+    /// `lastPracticedSpeed` (one place, on leave, not per tick), so re-arming resumes there. A
+    /// just-deleted loop is skipped (no longer in `loops`). It also maintains the **song-level**
+    /// resume-tempo invariant "no loop armed ⇒ `speed` is the song's tempo" (ADR 0044): bank the
+    /// song's speed when the first loop arms, restore it when the last loop disarms — so a loop's
+    /// speed never leaks into `song.lastPracticedSpeed`.
     var activeLoopID: UUID? {
         didSet {
-            guard oldValue != activeLoopID,
-                  let previous = loops.first(where: { $0.uid == oldValue }) else { return }
-            previous.lastPracticedSpeed = speed
+            guard oldValue != activeLoopID else { return }
+            if let previous = loops.first(where: { $0.uid == oldValue }) {
+                previous.lastPracticedSpeed = speed
+            }
+            switch SongTempoTransition.forActiveLoopChange(wasArmed: oldValue != nil,
+                                                           nowArmed: activeLoopID != nil) {
+            case .bankSongTempo: song.lastPracticedSpeed = speed     // full song → loop: bank it
+            case .restoreSongTempo: speed = song.resumeSpeed         // loop → full song: restore it
+            case .none: break
+            }
         }
     }
     var editingLoop: Loop?
@@ -106,7 +116,10 @@ final class WaveformPracticeModel {
         self.song = song
         self.context = context
         self.amplitudes = song.amplitudes
-        // Clean state on entry (ADR 0029): no loop armed — open on the full song.
+        // Clean state on entry (ADR 0029): no loop armed — open on the full song, but at the
+        // **speed you last practised it at** (ADR 0044), not always 1×. `loadAudio` pushes this
+        // to the engine via `setRate(speed)`. Loops still open at 1× until armed.
+        self.speed = song.resumeSpeed
     }
 
     /// The song's loops/markers in a stable display order (SwiftData relationships).
@@ -207,6 +220,10 @@ final class WaveformPracticeModel {
     /// Skipped in previews (no audio session, no command center worth touching).
     func beginPlaybackSession() {
         guard !isPreview else { return }
+        // Stamp the practice session (ADR 0044): opening the song to practise marks it as the
+        // most-recently-practised — the home "Jump back in" card and the library's "recently
+        // practised" ordering both read this. SwiftData autosaves the tracked song.
+        song.lastPracticed = .now
         nowPlaying.activate(onPlay: { [weak self] in self?.engine.play() },
                             onPause: { [weak self] in self?.engine.pause() },
                             onToggle: { [weak self] in self?.engine.togglePlay() })
@@ -241,6 +258,11 @@ final class WaveformPracticeModel {
     /// explicit and survives any future model reuse. Persisted song data (BPM,
     /// downbeat, saved loops/markers) is **never** touched — only the session knobs.
     private func wipeTransientState() {
+        // Bank the full-song resume tempo before clearing (ADR 0044). With no loop armed,
+        // `speed` is the song's own tempo, so persist it; with a loop armed, the song's speed
+        // was banked when that loop armed, and `activeLoopID = nil` below restores it via the
+        // didSet (no re-bank needed). Persisted song data is otherwise untouched (ADR 0029).
+        if activeLoopID == nil { song.lastPracticedSpeed = speed }
         activeLoopID = nil
         speed = 1.0
         if metronomeOn { metronomeOn = false }

@@ -10,8 +10,8 @@ final class PocketLaunchUITests: XCTestCase {
     func testAppLaunches() throws {
         let app = XCUIApplication()
         app.launch()
-        // The app launches into the song library (LibraryView). Assert a stable
-        // element present whether or not the library has songs yet: the nav title.
-        XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 5))
+        // The app launches into the home hub (HomeView, ADR 0044). Assert a stable element
+        // present whether or not there's any practice history yet: the greeting headline.
+        XCTAssertTrue(app.staticTexts["Ready to practice"].waitForExistence(timeout: 5))
     }
 }

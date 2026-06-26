@@ -7,7 +7,8 @@ worked on in one place.
 > **Status:** Phase 1. The **waveform practice screen** is built — real audio engine,
 > seamless click-free looping, pinch-to-zoom — loops/markers now **persist** (SwiftData),
 > and you can **import audio files** into a **song library** to practice with their real
-> waveform. Planner, navigation, and backend come next. See `PROJECT.md` for the current
+> waveform. The app opens on a **home hub** (greeting · resume card · metronome · your songs).
+> The practice planner, AI, and backend come next. See `PROJECT.md` for the current
 > state.
 
 ## How it works
@@ -62,7 +63,7 @@ See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild te
 ```
 Pocket/
   App/         App entry, root scene
-  Features/    Library · Waveform · Planner · Repertoire
+  Features/    Home · Library · Waveform · Metronome · Repertoire
   Core/        Audio (engine + pure tempo math) · Models · Services
   UI/          Shared components, design tokens
   Resources/   Info.plist, PrivacyInfo.xcprivacy

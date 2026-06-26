@@ -6,8 +6,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
-- **A standalone metronome** (ADR 0043). Tap the **metronome button** in the Library toolbar
-  for a click that stands on its own — no song needed. Set the tempo by stepper, slider, or
+- **A home screen** (ADR 0044). The app now opens on a **home hub** instead of straight into
+  the library: a time-of-day greeting, a **"Jump back in"** card for the song you last
+  practised (with its mastery and when you last touched it — tap to resume right where you
+  were), a **Metronome** card, a short preview of **your songs** (with **See all** for the full
+  library, search and grouping intact), and **Add a song**. The library is now one tap away
+  rather than the front door.
+- **Songs resume at the tempo you left them at** (ADR 0044). Practise a whole song at 0.85×,
+  leave, and reopening it picks up at 0.85× instead of snapping back to full speed — the
+  song-level version of the per-loop speed memory. Loops still open at full speed until you
+  arm them, and deactivating a loop now drops you back to the **song's** working tempo.
+- **A standalone metronome** (ADR 0043). Open it from the **Metronome card on the home
+  screen** for a click that stands on its own — no song needed. Set the tempo by stepper, slider, or
   by **tapping along**, and read the classical tempo marking ("Andante", "Allegro") as you
   dial. Pick a **named time signature** with its feel — 4/4 (pop), 3/4 (waltz), 6/8, **12/8
   (slow blues)**, 2/4, 5/4, 7/8 — and the **flashing dots** show that meter's accent pattern
@@ -33,8 +43,8 @@ All notable changes to Pocket are documented here. Format loosely follows
   it and setting its **working and target tempo** so the climb has a real goal from the start —
   and **📚**
   opens the library; with an exercise loaded, **✕** leaves it (back to a clean default
-  metronome, no need to quit) and **save** updates that preset. *(This toolbar
-  entry point is temporary — the metronome moves to a home screen later.)*
+  metronome, no need to quit) and **save** updates that preset. *(Reached from the
+  **Metronome card on the home screen** — ADR 0044.)*
 - **The practice screen rotates to landscape** (ADR 0042). Turn the phone sideways on the
   practice screen — handy when it's propped on a stand — and the waveform claims the full
   width for a sharper view and more precise A/B dragging. Your loops and markers tuck into a
