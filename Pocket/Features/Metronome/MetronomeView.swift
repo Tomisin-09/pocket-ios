@@ -18,6 +18,10 @@ struct MetronomeView: View {
     /// The loaded exercise preset, if any — its name titles the screen.
     @State private var loadedExercise: MetronomeExercise?
     @State private var showingLibrary = false
+    /// Training Mode (ADR 0045): the exercise the routine sheet edits — the loaded preset, or a
+    /// transient default when training from scratch. Drives `.sheet(item:)` so the sheet only
+    /// presents once it's set (an `isPresented` + optional content races to a blank sheet).
+    @State private var trainingExercise: MetronomeExercise?
     /// Long-pressing the (possibly truncated) title pops the full name in a popover.
     @State private var showingFullTitle = false
     @Environment(\.dismiss) private var dismiss
@@ -35,10 +39,13 @@ struct MetronomeView: View {
                 // on every beat.
                 ScrollView {
                     VStack(spacing: 20) {
+                        // Training Mode entry (ADR 0045): the loaded exercise's command→reach
+                        // summary, or a plain entry when none is loaded. Both open the routine
+                        // sheet — the single surface that edits the tempos and arms the ramp.
                         if let exercise = loadedExercise {
-                            // Loaded-exercise progress (current→target + manual nudge), slice 7.
-                            // Slim chip directly under the header so it doesn't crowd the dots.
-                            ExerciseProgressChip(exercise: exercise)
+                            ExerciseProgressChip(exercise: exercise) { openTraining(exercise) }
+                        } else {
+                            trainingModeButton
                         }
                         BeatIndicator(engine: engine)
                         tempoReadout
@@ -93,9 +100,35 @@ struct MetronomeView: View {
             .sheet(isPresented: $showingLibrary) {
                 MetronomeLibrarySheet(engine: engine, loadedExercise: $loadedExercise)
             }
+            .sheet(item: $trainingExercise) { exercise in
+                TrainingModeSheet(exercise: exercise, engine: engine)
+            }
         }
         .preferredColorScheme(.dark)
         .onDisappear { engine.stop() }
+    }
+
+    // MARK: - Training Mode
+
+    /// Open the routine sheet on `exercise` (the loaded preset or a transient default) by
+    /// setting the `.sheet(item:)` binding.
+    private func openTraining(_ exercise: MetronomeExercise) {
+        trainingExercise = exercise
+    }
+
+    /// Entry when no exercise is loaded — train from defaults seeded at the current tempo.
+    private var trainingModeButton: some View {
+        Button { openTraining(MetronomeExercise(currentTempo: engine.bpm)) } label: {
+            Label("Training Mode", systemImage: "figure.run")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PocketColor.metronome)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: 12)
+                    .fill(PocketColor.metronome.opacity(0.10)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Set up a command-anchored training routine")
     }
 
     // MARK: - Tempo readout
@@ -204,61 +237,6 @@ struct MetronomeView: View {
             .accessibilityAddTraits(.isHeader)
     }
 
-    // MARK: - Meter (time signature + subdivision)
-
-    /// One nav-bar menu for both the **time signature** and the **subdivision** — they shape
-    /// the same thing (how the bar and beat are filled), so folding the subdivision into the
-    /// meter menu reclaims a whole content row. The label shows the compact signature, plus
-    /// the subdivision glyph in the accent colour when one is active ("4/4 ♫").
-    private var meterMenu: some View {
-        Menu {
-            Section("Time signature") {
-                ForEach(TimeSignature.presets) { signature in
-                    Button {
-                        engine.setTimeSignature(signature)
-                        haptic(.light)
-                    } label: {
-                        if signature == engine.timeSignature {
-                            Label("\(signature.name) · \(signature.context)", systemImage: "checkmark")
-                        } else {
-                            Text("\(signature.name) · \(signature.context)")
-                        }
-                    }
-                }
-            }
-            Section("Subdivision") {
-                ForEach(Subdivision.pickerOrder) { value in
-                    Button {
-                        engine.setSubdivision(value)
-                        haptic(.light)
-                    } label: {
-                        if value == engine.subdivision {
-                            Label(value.label, systemImage: "checkmark")
-                        } else {
-                            Text(value.label)
-                        }
-                    }
-                }
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Text(engine.timeSignature.name)
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(PocketColor.textPrimary)
-                if engine.subdivision != .none {
-                    Text(engine.subdivision.glyph)
-                        .font(.body)
-                        .foregroundStyle(PocketColor.metronome)
-                }
-                Image(systemName: "chevron.down")
-                    .font(.caption2)
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-        }
-        .accessibilityLabel("Time signature \(engine.timeSignature.name), "
-                            + "subdivision \(engine.subdivision.label)")
-    }
-
     // MARK: - Transport
 
     /// Primary play/pause/resume button, with a secondary **stop** (end + reset to 0:00)
@@ -322,57 +300,61 @@ struct MetronomeView: View {
     }
 }
 
-/// A dot per click in the bar; the current click lights up and the meter's **accented**
-/// clicks read in the metronome colour and a touch larger. A standalone view so the
-/// engine's per-tick `currentBeat` updates re-render only the dots, not the whole screen
-/// (which would dismiss the time-signature menu mid-play).
-private struct BeatIndicator: View {
-    let engine: StandaloneMetronomeEngine
+// MARK: - Meter (time signature + subdivision)
 
-    var body: some View {
-        HStack(spacing: 10) {
-            ForEach(0..<engine.timeSignature.beats, id: \.self) { index in
-                let isCurrent = engine.isPlaying
-                    && engine.currentBeat % engine.timeSignature.beats == index
-                let isAccent = engine.timeSignature.isAccented(beatInBar: index)
-                Circle()
-                    .fill(dotColor(isCurrent: isCurrent, isAccent: isAccent))
-                    .frame(width: isAccent ? 18 : 14, height: isAccent ? 18 : 14)
-                    .scaleEffect(isCurrent ? 1.4 : 1.0)
-                    .animation(.easeOut(duration: 0.07), value: engine.currentBeat)
+extension MetronomeView {
+    /// One nav-bar menu for both the **time signature** and the **subdivision** — they shape
+    /// the same thing (how the bar and beat are filled), so folding the subdivision into the
+    /// meter menu reclaims a whole content row. The label shows the compact signature, plus
+    /// the subdivision glyph in the accent colour when one is active ("4/4 ♫"). In a same-file
+    /// extension so it doesn't bloat the main view body (SwiftLint type_body_length).
+    var meterMenu: some View {
+        Menu {
+            Section("Time signature") {
+                ForEach(TimeSignature.presets) { signature in
+                    Button {
+                        engine.setTimeSignature(signature)
+                        haptic(.light)
+                    } label: {
+                        if signature == engine.timeSignature {
+                            Label("\(signature.name) · \(signature.context)", systemImage: "checkmark")
+                        } else {
+                            Text("\(signature.name) · \(signature.context)")
+                        }
+                    }
+                }
+            }
+            Section("Subdivision") {
+                ForEach(Subdivision.pickerOrder) { value in
+                    Button {
+                        engine.setSubdivision(value)
+                        haptic(.light)
+                    } label: {
+                        if value == engine.subdivision {
+                            Label(value.label, systemImage: "checkmark")
+                        } else {
+                            Text(value.label)
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Text(engine.timeSignature.name)
+                    .font(.pocketMono(.body))
+                    .foregroundStyle(PocketColor.textPrimary)
+                if engine.subdivision != .none {
+                    Text(engine.subdivision.glyph)
+                        .font(.body)
+                        .foregroundStyle(PocketColor.metronome)
+                }
+                Image(systemName: "chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(PocketColor.textSecondary)
             }
         }
-        .frame(height: 32)
-        .accessibilityHidden(true)
-    }
-
-    private func dotColor(isCurrent: Bool, isAccent: Bool) -> Color {
-        if isCurrent { return isAccent ? PocketColor.metronome : PocketColor.textPrimary }
-        return isAccent ? PocketColor.metronome.opacity(0.4) : PocketColor.textSecondary.opacity(0.4)
-    }
-}
-
-/// The running session time — ephemeral wall-clock that keeps running through tempo
-/// changes and resets on stop (ADR 0043). A standalone view so its per-second update
-/// doesn't re-render the controls.
-private struct SessionTracker: View {
-    let engine: StandaloneMetronomeEngine
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Text("SESSION")
-                .font(.caption2.weight(.semibold))
-                .tracking(1.5)
-                .foregroundStyle(PocketColor.textSecondary)
-            Text(timecode(engine.elapsed))
-                .font(.pocketMono(.title))
-                .foregroundStyle(engine.transport == .stopped
-                                 ? PocketColor.textSecondary : PocketColor.textPrimary)
-                .contentTransition(.numericText())
-                .monospacedDigit()
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Session time \(timecode(engine.elapsed))")
+        .accessibilityLabel("Time signature \(engine.timeSignature.name), "
+                            + "subdivision \(engine.subdivision.label)")
     }
 }
 

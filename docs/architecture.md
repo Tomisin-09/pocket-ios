@@ -129,12 +129,15 @@ is three-state — **stopped → playing → paused** — with a **wall-clock se
 persisted) kept separate from the **sample-clock beat phase** (re-anchored on a
 tempo/signature change or a resume). Lock-screen / Control Center play-pause is wired
 through the shared `NowPlayingController`, and the `audio` background mode (ADR 0025) keeps
-the click sounding while locked. An optional **tempo automator** (the pure
-`MetronomeAutomator`, sibling of the in-song `AutomatorConfig`) ramps the BPM up over the
-sitting: it steps a fixed amount every N **bars** or N **seconds** and holds at a ceiling.
-The engine accrues elapsed bars (integrated at the live tempo) and seconds since the ramp
-engaged, hands them to the pure ramp each tick, and applies the resolved BPM as an
-automator-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
+the click sounding while locked. An optional **tempo automator** ramps the BPM up over the
+sitting. The engine drives whichever pure ramp conforms to `TempoRamp`: the free-play
+**`MetronomeAutomator`** (sibling of the in-song `AutomatorConfig`) — step a fixed amount
+every N **bars** or N **seconds** and hold at a ceiling — or, when a promoted exercise is
+loaded, the command-anchored **`CommandRamp`** (ADR 0045): warm up from the working floor to
+**command**, **dwell** at command for the bulk of the reps, briefly summit at the target
+reach, then **back off** below command. The engine accrues elapsed bars (integrated at the
+live tempo) and seconds since the ramp engaged, hands them to `activeRamp` each tick, and
+applies the resolved BPM as an automator-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
 isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
 the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
 Italian tempo marking is the pure `TempoMarking` lookup. The slider's position↔BPM binding goes
@@ -148,11 +151,18 @@ not the live climbing `bpm`, so a finished ramp doesn't store floor == ceiling. 
 cluster acting on the loaded exercise — leave, update — and a trailing global pair — save-new,
 open library), so the `MetronomeLibrarySheet` is a **pure browser** (load on tap, swipe to
 rename / delete). `MetronomeExercise.configurationSummary` is the shared one-liner shown in
-both the library row and the save/update confirmation so what you see is what is stored. **Light progress** (slice 7) is the pure `ExerciseProgress`
-(working `currentTempo` → goal `targetTempo`: bar fraction, remaining BPM, "At target"),
-surfaced by `ExerciseProgressChip` on the screen and a `TempoProgressBar` in each library row;
-the cross-session bump stays **manual** (a stepper edits the persisted `currentTempo`),
-kept distinct from the live click and the in-session automator. Reached from the **Metronome
+both the library row and the save/update confirmation so what you see is what is stored.
+**Command-anchored progress** (ADR 0045, re-anchoring slice 7) is the pure `TempoStretch`
+(reach = command + ~6%, clamped). `ExerciseProgressChip` is the slim **command → reach**
+summary that opens **Training Mode** (`TrainingModeSheet`) — the single surface that edits the
+working / command / target tempos, shows the routine staircase (warm-up → dwell → summit →
+backoff via `CommandRamp`), carries the one-tap **promote** (ratchets command to the reach),
+and whose **Start** *configures and arms the routine in one action* (`engine.startTraining`),
+so the tempos and the ramp are no longer disconnected. There is no progress *bar* (the reach
+is always a fixed step above command, so a fraction would mislead); the real progress is the
+command number rising — its history is ADR 0045 Phase 2. The free-play linear automator panel
+stays for ad-hoc ramps; the two are mutually exclusive at runtime (the engine carries a
+command tempo for one, `nil` for the other). Reached from the **Metronome
 card on the home hub** (`Features/Home/`, ADR 0044), full-screen. Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
@@ -277,16 +287,20 @@ only. See `docs/decisions/0001`.
   planner, ADR 0014); collections already filter the library (intersection/AND, ADR 0033).
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
-- **`MetronomeExercise`** (ADR 0043): a standalone, **audio-free** `@Model` — a savable
-  metronome preset that *is* a practice exercise (name, absolute `currentTempo`/`targetTempo`
-  BPM, time signature, `accentBeats`, subdivision, the automator recipe, `tags`, `notes`).
+- **`MetronomeExercise`** (ADR 0043 / 0045): a standalone, **audio-free** `@Model` — a savable
+  metronome preset that *is* a practice exercise (name, absolute BPM tempos, time signature,
+  `accentBeats`, subdivision, the automator recipe, `tags`, `notes`).
   Deliberately **not** related to `Song`/`Loop` (a `Loop` carries audio assumptions an
   exercise has none of). Joins the same store as an additive migration (registered in the
   app's `modelContainer`), following the 0011/0012/0036 discipline: a `uid: UUID`, declaration
   defaults on every non-optional attribute (CoreData 134110), and the `Subdivision` /
   `MetronomeIntervalUnit` enums stored through `String` backing fields with computed views
-  (the enum-attribute migration rule). The day-to-day value is `currentTempo` and the goal
-  `targetTempo` — "command tempo" stays reserved for `Loop`'s measured achievement.
+  (the enum-attribute migration rule). Three tempos (ADR 0045): the warm-up **working** floor
+  (the existing `currentTempo`, aliased `workingTempo`), the measured **`commandTempo: Int?`**
+  (`nil` until promoted — an additive optional like `Loop.commandTempo`, falling back to
+  working), and the command-derived **`targetTempo`** reach. "Command tempo" now means the
+  same thing — fastest clean tempo owned — on both exercises (absolute BPM) and `Loop` (song
+  fraction).
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
   a re-model.
 
