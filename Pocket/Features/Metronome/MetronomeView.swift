@@ -9,23 +9,20 @@ import UIKit
 /// Italian tempo marking, a running **session tracker**, and a **beat-flash indicator**
 /// that reads the same generated grid as the audio so the two stay in step.
 ///
-/// No persistence yet — the tempo/signature are in-memory for the sitting. Savable
-/// exercise presets (loading a preset's full configuration) arrive in slice 6.
+/// Configurations are savable as **exercise presets** (ADR 0043, slice 6) via the presets
+/// button; loading one applies its full configuration and titles the screen with its name.
 struct MetronomeView: View {
     @State private var engine = StandaloneMetronomeEngine()
     /// Wall-clock times of recent taps for tap-tempo (`TempoMath.bpm(fromTapTimes:)`).
     @State private var taps: [TimeInterval] = []
+    /// The loaded exercise preset, if any — its name titles the screen.
+    @State private var loadedExercise: MetronomeExercise?
+    @State private var showingLibrary = false
     @Environment(\.dismiss) private var dismiss
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
     /// average against a new one.
     private let tapResetGap: TimeInterval = 2.0
-
-    /// The tempo slider's bounds as `Double`, from the engine's integer `bpmRange`.
-    private var bpmSliderRange: ClosedRange<Double> {
-        Double(StandaloneMetronomeEngine.bpmRange.lowerBound)
-            ... Double(StandaloneMetronomeEngine.bpmRange.upperBound)
-    }
 
     var body: some View {
         NavigationStack {
@@ -36,6 +33,7 @@ struct MetronomeView: View {
                 // on every beat.
                 ScrollView {
                     VStack(spacing: 20) {
+                        subdivisionRow
                         BeatIndicator(engine: engine)
                         tempoReadout
                         tempoControls
@@ -46,7 +44,16 @@ struct MetronomeView: View {
                 .scrollDismissesKeyboard(.interactively)
                 // Session readout + transport stay pinned below the scrollable controls.
                 VStack(spacing: 12) {
-                    SessionTracker(engine: engine)
+                    // Presets sits at the trailing edge of the session row so the timer
+                    // stays centred; moved here (and the meter to its own row above) to
+                    // clear the nav bar for the full screen / exercise title.
+                    ZStack {
+                        SessionTracker(engine: engine)
+                        HStack {
+                            Spacer()
+                            presetsButton
+                        }
+                    }
                     transport
                 }
                 .padding(.horizontal, 24)
@@ -55,14 +62,11 @@ struct MetronomeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(PocketColor.background.ignoresSafeArea())
-            .navigationTitle("Metronome")
+            .navigationTitle(loadedExercise?.name ?? "Metronome")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     timeSignatureMenu
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    subdivisionMenu
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
@@ -73,6 +77,9 @@ struct MetronomeView: View {
                     Button("Done") { dismissKeyboard() }
                         .tint(PocketColor.metronome)
                 }
+            }
+            .sheet(isPresented: $showingLibrary) {
+                MetronomeLibrarySheet(engine: engine, loadedExercise: $loadedExercise)
             }
         }
         .preferredColorScheme(.dark)
@@ -106,16 +113,24 @@ struct MetronomeView: View {
     // MARK: - Tempo controls
 
     /// The slider flanked by a **TAP** button on each side — tap to the beat with either
-    /// thumb. The steppers live with the readout above.
+    /// thumb. The steppers live with the readout above. The slider rides a **perceptual
+    /// (log) scale** (`TempoSliderScale`) so its midpoint is ~95 BPM and typical 60–120
+    /// tempos fill the centre, rather than the linear midpoint of ~165 making 90 BPM look slow.
     private var tempoControls: some View {
         HStack(spacing: 12) {
             tapButton
             Slider(
                 value: Binding(
-                    get: { Double(engine.bpm) },
-                    set: { engine.setBPM(Int($0.rounded())) }
+                    get: {
+                        TempoSliderScale.position(forBPM: engine.bpm,
+                                                  in: StandaloneMetronomeEngine.bpmRange)
+                    },
+                    set: {
+                        engine.setBPM(TempoSliderScale.bpm(forPosition: $0,
+                                                           in: StandaloneMetronomeEngine.bpmRange))
+                    }
                 ),
-                in: bpmSliderRange
+                in: 0...1
             )
             .tint(PocketColor.metronome)
             .accessibilityLabel("Tempo")
@@ -148,12 +163,37 @@ struct MetronomeView: View {
         .accessibilityLabel(delta > 0 ? "Increase tempo" : "Decrease tempo")
     }
 
+    // MARK: - Meter controls
+
+    /// The subdivision menu on a short left-aligned row just under the header — directly
+    /// below the time signature (which stays in the nav bar), above the beat dots. Kept off
+    /// the nav bar so it doesn't crowd the inline title.
+    private var subdivisionRow: some View {
+        HStack {
+            subdivisionMenu
+            Spacer()
+        }
+    }
+
+    /// Opens the exercise-preset library. Lives at the trailing edge of the session row
+    /// (not the nav bar) so it's reachable during play without truncating the title.
+    private var presetsButton: some View {
+        Button { showingLibrary = true } label: {
+            Image(systemName: "books.vertical")
+                .font(.title3)
+                .foregroundStyle(PocketColor.metronome)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Exercise presets")
+    }
+
     // MARK: - Time signature
 
-    /// The time signature lives in the **header** (top-left) so the main column stays short
-    /// enough that the automator's ramp graphic is visible without scrolling. The menu lists
-    /// each meter with its feel ("3/4 · Waltz", "12/8 · Slow blues"); the header label shows
-    /// just the compact signature.
+    /// The time signature lives in the **nav bar** (top-left); the subdivision sits just
+    /// below it. The menu lists each meter with its feel ("3/4 · Waltz", "12/8 · Slow
+    /// blues"); the label shows just the compact signature.
     private var timeSignatureMenu: some View {
         Menu {
             ForEach(TimeSignature.presets) { signature in
@@ -181,8 +221,8 @@ struct MetronomeView: View {
         .accessibilityLabel("Time signature \(engine.timeSignature.name)")
     }
 
-    /// Sub-beat division picker (ADR 0043, slice 5) — also in the header, next to the meter,
-    /// since both shape how the beat is filled. The label is a compact note glyph.
+    /// Sub-beat division picker (ADR 0043, slice 5) — next to the meter, since both shape
+    /// how the beat is filled. The label is a compact note glyph.
     private var subdivisionMenu: some View {
         Menu {
             ForEach(Subdivision.pickerOrder) { value in

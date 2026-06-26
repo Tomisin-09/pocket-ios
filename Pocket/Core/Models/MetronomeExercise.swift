@@ -141,4 +141,19 @@ final class MetronomeExercise {
 
     /// The time signature as a display string ("4/4", "6/8").
     var timeSignatureLabel: String { "\(beatsPerBar)/\(noteValue)" }
+
+    /// A one-line recap of the full configuration — shared by the library row and the
+    /// save/update confirmation so what you see is exactly what is stored. Reads like
+    /// "97 BPM · 4/4 · Ramp to 117 BPM (+5 BPM every 4 bars)"; the ramp clause is dropped
+    /// when the automator is off.
+    var configurationSummary: String {
+        var parts = ["\(currentTempo) BPM", timeSignatureLabel]
+        if subdivision != .none { parts.append(subdivision.label.lowercased()) }
+        if automatorEnabled {
+            let cadence = automatorIntervalUnit.interval(count: automatorIntervalCount)
+            parts.append("Ramp to \(resolvedAutomatorCeiling) BPM "
+                         + "(+\(automatorStepBPM) BPM every \(cadence))")
+        }
+        return parts.joined(separator: " · ")
+    }
 }

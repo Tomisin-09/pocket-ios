@@ -17,7 +17,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   for you — set the step size, whether it steps every so many **bars** or **seconds**, and
   the ceiling to hold at. Add **subdivisions** — eighths, triplets, or sixteenths — and a
   quieter sub-beat tick fills in under the main click. The click keeps going when the phone
-  is **locked**, with **play/pause on the lock screen and Control Center**. *(This toolbar entry point is
+  is **locked**, with **play/pause on the lock screen and Control Center**. **Save a setup as
+  an exercise** — a named preset *is* a practice drill ("Spider", "Alternating picking") — then
+  reload, rename, or delete it from the **presets library** (📚). Saving shows the exact
+  to-be-stored configuration ("97 BPM · 4/4 · Ramp to 117 BPM (+5 BPM every 4 bars)"), and
+  updating an existing preset confirms the same line first; a ramp saves from its **starting**
+  tempo, not wherever it had climbed to. The **tempo slider now reads perceptually** — its
+  midpoint sits at a typical ~95 BPM and the everyday 60–120 range fills the centre of the
+  track, so a normal tempo no longer looks slow. *(This toolbar entry point is
   temporary — the metronome moves to a home screen later.)*
 - **The practice screen rotates to landscape** (ADR 0042). Turn the phone sideways on the
   practice screen — handy when it's propped on a stand — and the waveform claims the full

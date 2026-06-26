@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · TempoMarking · LoopLanes (pure)
+│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · TempoMarking · TempoSliderScale · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -137,7 +137,17 @@ engaged, hands them to the pure ramp each tick, and applies the resolved BPM as 
 automator-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
 isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
 the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
-Italian tempo marking is the pure `TempoMarking` lookup. Reached for now via a **temporary**
+Italian tempo marking is the pure `TempoMarking` lookup. The slider's position↔BPM binding goes
+through the pure `TempoSliderScale` (`Core/Audio/`), a **logarithmic** map so the track midpoint
+is the *geometric* centre (√(30·300) ≈ 95 BPM) and the common 60–120 band fills the middle
+rather than the left fifth a linear scale would give; the steppers and tap-tempo still set
+absolute BPM. A setup is saved as a `MetronomeExercise` through the `@MainActor`
+`MetronomeExerciseBridge` (model↔engine `capture`/`apply`/`update`, plus a throwaway `preview`
+for confirmations); when the automator is armed it captures the ramp **floor** (`automatorStartBPM`),
+not the live climbing `bpm`, so a finished ramp doesn't store floor == ceiling. The
+`MetronomeLibrarySheet` lists, loads, renames and deletes presets; `MetronomeExercise.configurationSummary`
+is the shared one-liner shown in both the library row and the save/update confirmation so what
+you see is what is stored. Reached for now via a **temporary**
 Library toolbar button (ADR 0043 — moves to a home screen later). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;

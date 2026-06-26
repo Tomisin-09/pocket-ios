@@ -47,4 +47,16 @@ struct TimeSignature: Equatable, Identifiable {
 
     /// The default meter — 4/4.
     static let standard = presets[0]
+
+    /// Reconstruct a signature from a saved exercise's stored fields (ADR 0043, slice 6):
+    /// a matching preset (so the name/context come back) when one exists, else a constructed
+    /// signature carrying the stored accents and a generic name.
+    static func forStored(beats: Int, noteValue: Int, accentBeats: [Int]) -> TimeSignature {
+        if let preset = presets.first(where: { $0.beats == beats && $0.noteValue == noteValue }) {
+            return preset
+        }
+        return TimeSignature(beats: max(1, beats), noteValue: max(1, noteValue),
+                             accentBeats: accentBeats.isEmpty ? [0] : accentBeats,
+                             name: "\(beats)/\(noteValue)", context: "Custom")
+    }
 }

@@ -34,7 +34,9 @@ final class StandaloneMetronomeEngine {
 
     /// Tempo bounds — the same musical range tap-tempo clamps to
     /// (`TempoMath.minTapBPM...maxTapBPM`), so a dialled and a tapped tempo agree.
-    static let bpmRange: ClosedRange<Int> = 30...300
+    /// `nonisolated` so pure helpers (the log slider scale) and tests can read this
+    /// constant off the main actor.
+    nonisolated static let bpmRange: ClosedRange<Int> = 30...300
 
     private(set) var transport: Transport = .stopped
     /// Working tempo (absolute BPM). Mutated only through `setBPM`/`adjustBPM` so it stays

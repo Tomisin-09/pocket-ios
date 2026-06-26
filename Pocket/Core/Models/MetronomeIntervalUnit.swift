@@ -19,4 +19,13 @@ enum MetronomeIntervalUnit: String, CaseIterable, Identifiable, Codable {
         case .seconds: return "Seconds"
         }
     }
+
+    /// "N <unit>" phrasing for the configuration summary — pluralised, with seconds
+    /// abbreviated ("4 bars", "1 bar", "30 sec").
+    func interval(count: Int) -> String {
+        switch self {
+        case .bars: return count == 1 ? "1 bar" : "\(count) bars"
+        case .seconds: return "\(count) sec"
+        }
+    }
 }

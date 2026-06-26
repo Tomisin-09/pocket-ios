@@ -57,6 +57,23 @@ final class TimeSignatureTests: XCTestCase {
         XCTAssertFalse(twelveEight.isAccented(beatInBar: 5))
     }
 
+    // MARK: forStored (slice 6 round-trip)
+
+    func testForStoredReturnsTheMatchingPreset() {
+        let restored = TimeSignature.forStored(beats: 6, noteValue: 8, accentBeats: [0, 3])
+        XCTAssertEqual(restored, signature("6/8"))   // full preset (name + context) comes back
+        XCTAssertEqual(restored.context, "Jig · ballad (in 2)")
+    }
+
+    func testForStoredFallsBackToConstructedSignature() {
+        // A meter that isn't a preset reconstructs from the stored fields.
+        let restored = TimeSignature.forStored(beats: 9, noteValue: 8, accentBeats: [0, 3, 6])
+        XCTAssertEqual(restored.beats, 9)
+        XCTAssertEqual(restored.name, "9/8")
+        XCTAssertEqual(restored.accentBeats, [0, 3, 6])
+        XCTAssertEqual(restored.context, "Custom")
+    }
+
     func testRunningBeatCounterMapsThroughModulo() {
         // A free-running beat index wraps into the bar: in 4/4, index 8 is a downbeat.
         let fourFour = signature("4/4")
