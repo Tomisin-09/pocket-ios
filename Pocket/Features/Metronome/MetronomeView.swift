@@ -18,6 +18,8 @@ struct MetronomeView: View {
     /// The loaded exercise preset, if any — its name titles the screen.
     @State private var loadedExercise: MetronomeExercise?
     @State private var showingLibrary = false
+    /// Long-pressing the (possibly truncated) title pops the full name in a popover.
+    @State private var showingFullTitle = false
     @Environment(\.dismiss) private var dismiss
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
@@ -33,7 +35,11 @@ struct MetronomeView: View {
                 // on every beat.
                 ScrollView {
                     VStack(spacing: 20) {
-                        subdivisionRow
+                        if let exercise = loadedExercise {
+                            // Loaded-exercise progress (current→target + manual nudge), slice 7.
+                            // Slim chip directly under the header so it doesn't crowd the dots.
+                            ExerciseProgressChip(exercise: exercise)
+                        }
                         BeatIndicator(engine: engine)
                         tempoReadout
                         tempoControls
@@ -44,15 +50,13 @@ struct MetronomeView: View {
                 .scrollDismissesKeyboard(.interactively)
                 // Session readout + transport stay pinned below the scrollable controls.
                 VStack(spacing: 12) {
-                    // Presets sits at the trailing edge of the session row so the timer
-                    // stays centred; moved here (and the meter to its own row above) to
-                    // clear the nav bar for the full screen / exercise title.
+                    // Session timer stays centred behind the action row: loaded-exercise
+                    // actions on the leading edge, save-new + library on the trailing edge,
+                    // all kept off the nav bar so they don't truncate the title.
                     ZStack {
                         SessionTracker(engine: engine)
-                        HStack {
-                            Spacer()
-                            presetsButton
-                        }
+                        ExerciseActionBar(engine: engine, loadedExercise: $loadedExercise,
+                                          showLibrary: { showingLibrary = true })
                     }
                     transport
                 }
@@ -62,15 +66,23 @@ struct MetronomeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(PocketColor.background.ignoresSafeArea())
-            .navigationTitle(loadedExercise?.name ?? "Metronome")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // Back arrow + title + meter, so the screen reads as a feature you navigate
+                // into, not a settings sheet. The meter (time signature + subdivision) moves
+                // to the trailing edge.
                 ToolbarItem(placement: .topBarLeading) {
-                    timeSignatureMenu
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.backward")
+                    }
+                    .tint(PocketColor.metronome)
+                    .accessibilityLabel("Back")
+                }
+                ToolbarItem(placement: .principal) {
+                    titleLabel
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .tint(PocketColor.metronome)
+                    meterMenu
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -165,46 +177,66 @@ struct MetronomeView: View {
 
     // MARK: - Meter controls
 
-    /// The subdivision menu on a short left-aligned row just under the header — directly
-    /// below the time signature (which stays in the nav bar), above the beat dots. Kept off
-    /// the nav bar so it doesn't crowd the inline title.
-    private var subdivisionRow: some View {
-        HStack {
-            subdivisionMenu
-            Spacer()
-        }
+    // MARK: - Title
+
+    private var navTitle: String { loadedExercise?.name ?? "Metronome" }
+
+    /// The screen title, which truncates when an exercise name is long and the meter + back
+    /// arrow crowd the bar. Long-press to pop the full name in a small popover.
+    private var titleLabel: some View {
+        Text(navTitle)
+            .font(.headline)
+            .foregroundStyle(PocketColor.textPrimary)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .onLongPressGesture {
+                guard loadedExercise != nil else { return }
+                showingFullTitle = true
+            }
+            .popover(isPresented: $showingFullTitle) {
+                Text(navTitle)
+                    .font(.headline)
+                    .foregroundStyle(PocketColor.textPrimary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .presentationCompactAdaptation(.popover)
+            }
+            .accessibilityAddTraits(.isHeader)
     }
 
-    /// Opens the exercise-preset library. Lives at the trailing edge of the session row
-    /// (not the nav bar) so it's reachable during play without truncating the title.
-    private var presetsButton: some View {
-        Button { showingLibrary = true } label: {
-            Image(systemName: "books.vertical")
-                .font(.title3)
-                .foregroundStyle(PocketColor.metronome)
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Exercise presets")
-    }
+    // MARK: - Meter (time signature + subdivision)
 
-    // MARK: - Time signature
-
-    /// The time signature lives in the **nav bar** (top-left); the subdivision sits just
-    /// below it. The menu lists each meter with its feel ("3/4 · Waltz", "12/8 · Slow
-    /// blues"); the label shows just the compact signature.
-    private var timeSignatureMenu: some View {
+    /// One nav-bar menu for both the **time signature** and the **subdivision** — they shape
+    /// the same thing (how the bar and beat are filled), so folding the subdivision into the
+    /// meter menu reclaims a whole content row. The label shows the compact signature, plus
+    /// the subdivision glyph in the accent colour when one is active ("4/4 ♫").
+    private var meterMenu: some View {
         Menu {
-            ForEach(TimeSignature.presets) { signature in
-                Button {
-                    engine.setTimeSignature(signature)
-                    haptic(.light)
-                } label: {
-                    if signature == engine.timeSignature {
-                        Label("\(signature.name) · \(signature.context)", systemImage: "checkmark")
-                    } else {
-                        Text("\(signature.name) · \(signature.context)")
+            Section("Time signature") {
+                ForEach(TimeSignature.presets) { signature in
+                    Button {
+                        engine.setTimeSignature(signature)
+                        haptic(.light)
+                    } label: {
+                        if signature == engine.timeSignature {
+                            Label("\(signature.name) · \(signature.context)", systemImage: "checkmark")
+                        } else {
+                            Text("\(signature.name) · \(signature.context)")
+                        }
+                    }
+                }
+            }
+            Section("Subdivision") {
+                ForEach(Subdivision.pickerOrder) { value in
+                    Button {
+                        engine.setSubdivision(value)
+                        haptic(.light)
+                    } label: {
+                        if value == engine.subdivision {
+                            Label(value.label, systemImage: "checkmark")
+                        } else {
+                            Text(value.label)
+                        }
                     }
                 }
             }
@@ -213,52 +245,18 @@ struct MetronomeView: View {
                 Text(engine.timeSignature.name)
                     .font(.pocketMono(.body))
                     .foregroundStyle(PocketColor.textPrimary)
-                Image(systemName: "chevron.down")
-                    .font(.caption2)
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-        }
-        .accessibilityLabel("Time signature \(engine.timeSignature.name)")
-    }
-
-    /// Sub-beat division picker (ADR 0043, slice 5) — next to the meter, since both shape
-    /// how the beat is filled. The label is a compact note glyph.
-    private var subdivisionMenu: some View {
-        Menu {
-            ForEach(Subdivision.pickerOrder) { value in
-                Button {
-                    engine.setSubdivision(value)
-                    haptic(.light)
-                } label: {
-                    if value == engine.subdivision {
-                        Label(value.label, systemImage: "checkmark")
-                    } else {
-                        Text(value.label)
-                    }
+                if engine.subdivision != .none {
+                    Text(engine.subdivision.glyph)
+                        .font(.body)
+                        .foregroundStyle(PocketColor.metronome)
                 }
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Text(subdivisionGlyph(engine.subdivision))
-                    .font(.body)
-                    .foregroundStyle(engine.subdivision == .none
-                                     ? PocketColor.textSecondary : PocketColor.metronome)
                 Image(systemName: "chevron.down")
                     .font(.caption2)
                     .foregroundStyle(PocketColor.textSecondary)
             }
         }
-        .accessibilityLabel("Subdivision \(engine.subdivision.label)")
-    }
-
-    /// A compact note glyph for the subdivision header label.
-    private func subdivisionGlyph(_ value: Subdivision) -> String {
-        switch value {
-        case .none: return "♩"
-        case .eighths: return "♫"
-        case .triplets: return "♪3"
-        case .sixteenths: return "♬"
-        }
+        .accessibilityLabel("Time signature \(engine.timeSignature.name), "
+                            + "subdivision \(engine.subdivision.label)")
     }
 
     // MARK: - Transport

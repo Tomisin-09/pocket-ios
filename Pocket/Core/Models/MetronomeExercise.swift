@@ -134,10 +134,10 @@ final class MetronomeExercise {
     /// "Andante", "Allegro", … Pure derived from `currentTempo`.
     var tempoMarking: TempoMarking { TempoMarking.marking(forBPM: Double(currentTempo)) }
 
-    /// The "light progress" gap: BPM still to climb from `currentTempo` to `targetTempo`.
-    /// Negative (clamped to 0) when the working tempo has reached or passed the goal —
-    /// there's no remaining gap to show.
-    var tempoGap: Int { max(0, targetTempo - currentTempo) }
+    /// The "light progress" gap: BPM still to climb from `currentTempo` to `targetTempo`,
+    /// 0 once the working tempo has reached or passed the goal. Thin alias over the pure
+    /// `progress` (ADR 0043, slice 7), kept for call sites that just want the number.
+    var tempoGap: Int { progress.remaining }
 
     /// The time signature as a display string ("4/4", "6/8").
     var timeSignatureLabel: String { "\(beatsPerBar)/\(noteValue)" }

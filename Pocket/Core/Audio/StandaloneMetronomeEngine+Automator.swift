@@ -68,6 +68,21 @@ extension StandaloneMetronomeEngine {
         if enabled, transport != .stopped { engageAutomator() }
     }
 
+    /// Return to the **free-play launch defaults** — what you get on first open: 90 BPM, 4/4,
+    /// no subdivision, automator off, session stopped and zeroed. Lets you leave a loaded
+    /// exercise without quitting the screen (ADR 0043, slice 7). Run while stopped so the
+    /// config setters just write values (no re-anchor / re-engage).
+    func reset() {
+        stop()
+        setBPM(Self.defaultBPM)
+        setTimeSignature(.standard)
+        setSubdivision(.none)
+        setAutomatorEnabled(false)
+        automatorStepBPM = 5
+        automatorUnit = .bars
+        automatorIntervalCount = Self.automatorDefaultBars
+    }
+
     func setAutomatorStepBPM(_ value: Int) {
         automatorStepBPM = max(1, value)
         if automatorEnabled, transport != .stopped { engageAutomator() }

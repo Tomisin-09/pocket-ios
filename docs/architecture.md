@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · TempoMarking · TempoSliderScale · LoopLanes (pure)
+│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -144,10 +144,15 @@ rather than the left fifth a linear scale would give; the steppers and tap-tempo
 absolute BPM. A setup is saved as a `MetronomeExercise` through the `@MainActor`
 `MetronomeExerciseBridge` (model↔engine `capture`/`apply`/`update`, plus a throwaway `preview`
 for confirmations); when the automator is armed it captures the ramp **floor** (`automatorStartBPM`),
-not the live climbing `bpm`, so a finished ramp doesn't store floor == ceiling. The
-`MetronomeLibrarySheet` lists, loads, renames and deletes presets; `MetronomeExercise.configurationSummary`
-is the shared one-liner shown in both the library row and the save/update confirmation so what
-you see is what is stored. Reached for now via a **temporary**
+not the live climbing `bpm`, so a finished ramp doesn't store floor == ceiling. The save / update / leave actions live on the screen itself (`ExerciseActionBar`: a leading
+cluster acting on the loaded exercise — leave, update — and a trailing global pair — save-new,
+open library), so the `MetronomeLibrarySheet` is a **pure browser** (load on tap, swipe to
+rename / delete). `MetronomeExercise.configurationSummary` is the shared one-liner shown in
+both the library row and the save/update confirmation so what you see is what is stored. **Light progress** (slice 7) is the pure `ExerciseProgress`
+(working `currentTempo` → goal `targetTempo`: bar fraction, remaining BPM, "At target"),
+surfaced by `ExerciseProgressChip` on the screen and a `TempoProgressBar` in each library row;
+the cross-session bump stays **manual** (a stepper edits the persisted `currentTempo`),
+kept distinct from the live click and the in-session automator. Reached for now via a **temporary**
 Library toolbar button (ADR 0043 — moves to a home screen later). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;

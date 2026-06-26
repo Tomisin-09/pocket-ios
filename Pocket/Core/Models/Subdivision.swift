@@ -35,6 +35,16 @@ enum Subdivision: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    /// A compact note glyph for the screen's subdivision header label.
+    var glyph: String {
+        switch self {
+        case .none: return "♩"
+        case .eighths: return "♫"
+        case .triplets: return "♪3"
+        case .sixteenths: return "♬"
+        }
+    }
+
     /// Picker order: simplest (no subdivision) first, then increasing density.
     static var pickerOrder: [Subdivision] { [.none, .eighths, .triplets, .sixteenths] }
 }

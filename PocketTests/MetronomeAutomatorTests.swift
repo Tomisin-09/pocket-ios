@@ -93,4 +93,36 @@ final class MetronomeAutomatorTests: XCTestCase {
         XCTAssertFalse(ramp.hasReachedCeiling(elapsedBars: 4, elapsedSeconds: 0))
         XCTAssertTrue(ramp.hasReachedCeiling(elapsedBars: 32, elapsedSeconds: 0))
     }
+
+    // MARK: completion (auto-stop at the top of the climb, slice 7)
+
+    func testCompletionIntervalIsCeilingPlateauHeldOneInterval() {
+        // 80 → 120, +5 every 4 bars: 8 steps to the ceiling, finished after the 9th plateau.
+        XCTAssertEqual(automator(start: 80, step: 5, interval: 4, ceiling: 120).completionInterval, 36)
+        // Uneven: 80 → 100 step 7 = ceil(20/7)=3 steps, +1 plateau, ×4 bars.
+        XCTAssertEqual(automator(start: 80, step: 7, interval: 4, ceiling: 100).completionInterval, 16)
+    }
+
+    func testCompletionIntervalIsNilForFlatRamp() {
+        XCTAssertNil(automator(start: 100, ceiling: 100).completionInterval)
+        XCTAssertNil(automator(enabled: false).completionInterval)
+        XCTAssertNil(automator(step: 0).completionInterval)
+    }
+
+    func testIsFinishedOnlyAfterCeilingHeldFullInterval() {
+        // 80 → 120, +5 every 4 bars: ceiling reached at 32 bars, finished at 36.
+        let ramp = automator(start: 80, step: 5, interval: 4, unit: .bars, ceiling: 120)
+        XCTAssertFalse(ramp.isFinished(elapsedBars: 32, elapsedSeconds: 0))   // just reached the top
+        XCTAssertFalse(ramp.isFinished(elapsedBars: 35, elapsedSeconds: 0))
+        XCTAssertTrue(ramp.isFinished(elapsedBars: 36, elapsedSeconds: 0))    // ceiling held one interval
+    }
+
+    func testIsFinishedHonoursTheUnit() {
+        // Seconds-mode ramp ignores elapsed bars for completion.
+        let ramp = automator(start: 100, step: 10, interval: 30, unit: .seconds, ceiling: 120)
+        // 2 steps to ceiling (120), +1 plateau, ×30 s = 90 s.
+        XCTAssertEqual(ramp.completionInterval, 90)
+        XCTAssertFalse(ramp.isFinished(elapsedBars: 9999, elapsedSeconds: 89))
+        XCTAssertTrue(ramp.isFinished(elapsedBars: 0, elapsedSeconds: 90))
+    }
 }

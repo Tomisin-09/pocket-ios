@@ -38,10 +38,14 @@ final class StandaloneMetronomeEngine {
     /// constant off the main actor.
     nonisolated static let bpmRange: ClosedRange<Int> = 30...300
 
+    /// The free-play launch tempo — the default `bpm` and the automator's initial floor, and
+    /// what `reset()` returns to. Single-sourced so "default mode" can't drift.
+    nonisolated static let defaultBPM = 90
+
     private(set) var transport: Transport = .stopped
     /// Working tempo (absolute BPM). Mutated only through `setBPM`/`adjustBPM` so it stays
     /// clamped; `private(set)` keeps it observable.
-    private(set) var bpm = 90
+    private(set) var bpm = defaultBPM
     /// The current meter and its accent pattern.
     private(set) var timeSignature: TimeSignature = .standard
     /// Sub-beat clicks per beat (ADR 0043, slice 5) — `.none`, eighths, triplets, sixteenths.
@@ -61,7 +65,7 @@ final class StandaloneMetronomeEngine {
     var automatorCeiling = 110
     /// The ramp's **floor** — the tempo it started from (captured when armed). The floor is
     /// always the current metronome tempo at the moment you arm; the restart returns here.
-    private(set) var automatorStartBPM = 90
+    private(set) var automatorStartBPM = defaultBPM
 
     /// The automator's mode for the segmented control — off, or stepping by bars / by time.
     enum AutomatorMode: Hashable { case off, bars, seconds }
@@ -297,9 +301,17 @@ final class StandaloneMetronomeEngine {
             let delta = max(0, now - lastTickTime)
             automatorSecondsElapsed += delta
             automatorBarsElapsed += delta * (Double(bpm) / 60.0) / Double(max(1, timeSignature.beats))
-            let target = automatorRamp.bpm(elapsedBars: Int(automatorBarsElapsed),
+            let elapsedBars = Int(automatorBarsElapsed)
+            let target = automatorRamp.bpm(elapsedBars: elapsedBars,
                                            elapsedSeconds: automatorSecondsElapsed)
             if applyTempo(target) { pushNowPlaying() }
+            // The climb has a defined end: once the ceiling plateau has held for its interval,
+            // stop the click rather than run on at the top (ADR 0043, slice 7).
+            if automatorRamp.isFinished(elapsedBars: elapsedBars,
+                                        elapsedSeconds: automatorSecondsElapsed) {
+                stop()
+                return
+            }
         }
         lastTickTime = now
 

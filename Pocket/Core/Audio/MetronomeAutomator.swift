@@ -53,4 +53,21 @@ struct MetronomeAutomator: Equatable {
     func hasReachedCeiling(elapsedBars: Int, elapsedSeconds: TimeInterval) -> Bool {
         bpm(elapsedBars: elapsedBars, elapsedSeconds: elapsedSeconds) == ceilingBPM
     }
+
+    /// The elapsed `unit`-count at which the ramp is **finished**: the ceiling plateau has
+    /// been held for one full interval, like every other step (ADR 0043, slice 7) — so the
+    /// engine can stop the click rather than hold at the ceiling forever. `nil` for a flat /
+    /// disabled ramp (nothing to finish).
+    var completionInterval: Int? {
+        guard enabled, stepBPM > 0, intervalCount > 0, ceilingBPM != startBPM else { return nil }
+        return (stepsToCeiling + 1) * intervalCount
+    }
+
+    /// Whether the ramp has finished — the ceiling plateau's interval has elapsed. Drives the
+    /// auto-stop at the top of the climb.
+    func isFinished(elapsedBars: Int, elapsedSeconds: TimeInterval) -> Bool {
+        guard let completionInterval else { return false }
+        let elapsed: Double = unit == .bars ? Double(max(0, elapsedBars)) : max(0, elapsedSeconds)
+        return elapsed >= Double(completionInterval)
+    }
 }

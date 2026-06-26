@@ -61,10 +61,14 @@ struct RampStairs: View {
         .accessibilityHidden(true)
     }
 
-    /// Map the live step onto a bar index (the staircase caps at 12 bars, so a longer ramp
-    /// is shown proportionally).
+    /// Map the live step onto a bar index. When one bar is drawn per step (the common case),
+    /// the current step *is* the bar index — so a 5-step ramp lights bars 1…5 exactly. Only a
+    /// long ramp that overflows the 12-bar cap falls back to a proportional position.
     private func isActive(bar index: Int, of barCount: Int) -> Bool {
         guard let currentStep, steps > 0 else { return false }
+        if barCount == steps {
+            return index == min(max(currentStep, 0), barCount - 1)
+        }
         let progress = Double(min(currentStep, steps)) / Double(steps)
         return Int((progress * Double(barCount - 1)).rounded()) == index
     }

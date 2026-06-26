@@ -150,16 +150,21 @@ private struct MetronomeRampTracker: View {
                 Text("\(engine.automatorStartBPM)")
                     .font(.pocketMono(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
+                // One bar per plateau (floor + each step to the ceiling), so the bars match
+                // the "Step k/N" count and the lit bar is the current plateau exactly.
                 RampStairs(shape: RampShape.between(Double(engine.automatorStartBPM),
                                                     Double(engine.automatorCeiling)),
-                           steps: engine.automatorTotalSteps,
+                           steps: engine.automatorTotalSteps + 1,
                            tint: PocketColor.metronome,
                            currentStep: engine.automatorCurrentStep)
                 Text("\(engine.automatorCeiling)")
                     .font(.pocketMono(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
-            Text("Step \(engine.automatorCurrentStep)/\(engine.automatorTotalSteps)")
+            // 1-based plateau count: the floor is the 1st tempo you hold and the ceiling the
+            // last, so there are `totalSteps + 1` plateaus (reads "Step 1/8" at the floor, not
+            // "Step 0/7").
+            Text("Step \(engine.automatorCurrentStep + 1)/\(engine.automatorTotalSteps + 1)")
                 .font(.caption)
                 .foregroundStyle(PocketColor.metronome)
         }
