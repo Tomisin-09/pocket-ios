@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · LoopLanes (pure)
+│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -101,11 +101,59 @@ due in the next ~1 s with **how far ahead each sounds** — `delay = (beat − n
 rate`, so the click *follows playback speed* (50% → half-BPM, locked to the slowed
 track). The audio is a `ClickVoice`: a second `AVAudioPlayerNode` on the **same
 engine** wired straight to the mixer (bypassing time-pitch, so ticks aren't
-stretched) with two synthesized buffers (accented downbeat / plain beat). The
+stretched) with three synthesized buffers (accented downbeat / plain beat / a quieter
+subdivision tick — ADR 0043 slice 5, selected per click via `ClickVoice.ClickLevel`). The
 engine refreshes the schedule on its 0.03 s display timer, deduping by a watermark,
 and flushes-and-refills on any discontinuity (rate / seek / loop / pause). It's
 enabled only when the grid exists (BPM + the 1) and **never writes back** to the
-song's tempo; it's silenced on pause and screen exit (ADR 0026). Stage 4's waveform for real files is
+song's tempo; it's silenced on pause and screen exit (ADR 0026).
+
+A **standalone metronome** (ADR 0043, `Features/Metronome/`) reuses the same pieces
+without a song. `StandaloneMetronomeEngine` (`Core/Audio/`) owns its **own**
+`AVAudioEngine` + `ClickVoice` and *generates* its grid with the pure `MetronomeBeats`
+(BPM + beats-per-bar → ascending `(time, isDownbeat)` pairs). **Steadiness comes from the
+sample clock:** every click is scheduled at an *absolute* sample position
+(`phaseOrigin + index · framesPerBeat`) via `ClickVoice.schedule(atSampleTime:)`, so the
+tempo is locked to the audio hardware and can't wander with `Timer` jitter — the timer
+only tops up the look-ahead. The on-screen **beat-flash indicator** reads the same
+`currentBeat`, derived from the render head shifted back by the output latency so the lit
+dot lands on the *heard* click rather than leading it. Meter is the pure `TimeSignature`
+(named presets — 4/4 pop, 3/4 waltz, 6/8, 12/8 slow blues, … — each carrying its accent
+pattern); BPM is the click rate and the accent pattern picks the strong clicks. A
+**subdivision** (`Subdivision` — eighths / triplets / sixteenths) fills each beat with
+`ticksPerBeat` evenly-spaced ticks: the on-beat one keeps the accent/beat level, the
+in-between ones sound the quieter subdivision level (the on-screen flash stays on main
+beats only). Transport
+is three-state — **stopped → playing → paused** — with a **wall-clock session tracker**
+(`elapsed`, accumulated across pause/resume, frozen while paused, zeroed on stop, *not*
+persisted) kept separate from the **sample-clock beat phase** (re-anchored on a
+tempo/signature change or a resume). Lock-screen / Control Center play-pause is wired
+through the shared `NowPlayingController`, and the `audio` background mode (ADR 0025) keeps
+the click sounding while locked. An optional **tempo automator** (the pure
+`MetronomeAutomator`, sibling of the in-song `AutomatorConfig`) ramps the BPM up over the
+sitting: it steps a fixed amount every N **bars** or N **seconds** and holds at a ceiling.
+The engine accrues elapsed bars (integrated at the live tempo) and seconds since the ramp
+engaged, hands them to the pure ramp each tick, and applies the resolved BPM as an
+automator-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
+isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
+the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
+Italian tempo marking is the pure `TempoMarking` lookup. The slider's position↔BPM binding goes
+through the pure `TempoSliderScale` (`Core/Audio/`), a **logarithmic** map so the track midpoint
+is the *geometric* centre (√(30·300) ≈ 95 BPM) and the common 60–120 band fills the middle
+rather than the left fifth a linear scale would give; the steppers and tap-tempo still set
+absolute BPM. A setup is saved as a `MetronomeExercise` through the `@MainActor`
+`MetronomeExerciseBridge` (model↔engine `capture`/`apply`/`update`, plus a throwaway `preview`
+for confirmations); when the automator is armed it captures the ramp **floor** (`automatorStartBPM`),
+not the live climbing `bpm`, so a finished ramp doesn't store floor == ceiling. The save / update / leave actions live on the screen itself (`ExerciseActionBar`: a leading
+cluster acting on the loaded exercise — leave, update — and a trailing global pair — save-new,
+open library), so the `MetronomeLibrarySheet` is a **pure browser** (load on tap, swipe to
+rename / delete). `MetronomeExercise.configurationSummary` is the shared one-liner shown in
+both the library row and the save/update confirmation so what you see is what is stored. **Light progress** (slice 7) is the pure `ExerciseProgress`
+(working `currentTempo` → goal `targetTempo`: bar fraction, remaining BPM, "At target"),
+surfaced by `ExerciseProgressChip` on the screen and a `TempoProgressBar` in each library row;
+the cross-session bump stays **manual** (a stepper edits the persisted `currentTempo`),
+kept distinct from the live click and the in-session automator. Reached for now via a **temporary**
+Library toolbar button (ADR 0043 — moves to a home screen later). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).
@@ -225,6 +273,16 @@ only. See `docs/decisions/0001`.
   planner, ADR 0014); collections already filter the library (intersection/AND, ADR 0033).
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
+- **`MetronomeExercise`** (ADR 0043): a standalone, **audio-free** `@Model` — a savable
+  metronome preset that *is* a practice exercise (name, absolute `currentTempo`/`targetTempo`
+  BPM, time signature, `accentBeats`, subdivision, the automator recipe, `tags`, `notes`).
+  Deliberately **not** related to `Song`/`Loop` (a `Loop` carries audio assumptions an
+  exercise has none of). Joins the same store as an additive migration (registered in the
+  app's `modelContainer`), following the 0011/0012/0036 discipline: a `uid: UUID`, declaration
+  defaults on every non-optional attribute (CoreData 134110), and the `Subdivision` /
+  `MetronomeIntervalUnit` enums stored through `String` backing fields with computed views
+  (the enum-attribute migration rule). The day-to-day value is `currentTempo` and the goal
+  `targetTempo` — "command tempo" stays reserved for `Loop`'s measured achievement.
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
   a re-model.
 

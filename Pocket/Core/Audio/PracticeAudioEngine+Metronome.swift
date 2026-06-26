@@ -52,7 +52,7 @@ extension PracticeAudioEngine {
                                                 rate: Double(timePitch.rate),
                                                 horizon: metronomeHorizon)
         for click in clicks where click.time > clickWatermark && click.time < cutoff {
-            clickVoice.schedule(delay: click.delay, accented: click.isDownbeat)
+            clickVoice.schedule(delay: click.delay, level: click.isDownbeat ? .accent : .beat)
             clickWatermark = click.time
         }
     }

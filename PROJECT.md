@@ -47,10 +47,11 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/App/` | App entry, root scene |
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
+| `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043) |
 | `Pocket/Features/Planner/` | Home screen / practice planner, routines |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
-| `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, Routine, Session, SongRef |
+| `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, MetronomeExercise, Routine, Session, SongRef |
 | `Pocket/Core/Services/` | MusicKit, persistence, sync, AI client |
 | `Pocket/UI/` | Shared components, design tokens |
 
@@ -208,5 +209,5 @@ planner's **selection** (goals → required skills from a **technique taxonomy**
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`.
+Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `MetronomeBeats`, `TempoMarking`, `TempoSliderScale`, `ExerciseProgress`, `TimeSignature`, `MetronomeAutomator`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`.
 See `CHANGELOG.md` for the full history.

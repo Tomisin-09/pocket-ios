@@ -6,6 +6,35 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **A standalone metronome** (ADR 0043). Tap the **metronome button** in the Library toolbar
+  for a click that stands on its own — no song needed. Set the tempo by stepper, slider, or
+  by **tapping along**, and read the classical tempo marking ("Andante", "Allegro") as you
+  dial. Pick a **named time signature** with its feel — 4/4 (pop), 3/4 (waltz), 6/8, **12/8
+  (slow blues)**, 2/4, 5/4, 7/8 — and the **flashing dots** show that meter's accent pattern
+  (a silent visual mode if you'd rather not hear it). **Pause** to take a breather and
+  **resume** where you left off, or **stop** to reset; a **session timer** tracks how long
+  you've practised this sitting. Switch on the **tempo automator** to have it climb the BPM
+  for you — set the step size, whether it steps every so many **bars** or **seconds**, and
+  the ceiling to hold at. Add **subdivisions** — eighths, triplets, or sixteenths — and a
+  quieter sub-beat tick fills in under the main click. The click keeps going when the phone
+  is **locked**, with **play/pause on the lock screen and Control Center**. **Save a setup as
+  an exercise** — a named preset *is* a practice drill ("Spider", "Alternating picking") — then
+  reload, rename, or delete it from the **presets library** (📚). Saving shows the exact
+  to-be-stored configuration ("97 BPM · 4/4 · Ramp to 117 BPM (+5 BPM every 4 bars)"), and
+  updating an existing preset confirms the same line first; a ramp saves from its **starting**
+  tempo, not wherever it had climbed to. The **tempo slider now reads perceptually** — its
+  midpoint sits at a typical ~95 BPM and the everyday 60–120 range fills the centre of the
+  track, so a normal tempo no longer looks slow. Each saved exercise tracks **light
+  progress** — a **working tempo → target** readout with a climb bar, shown on the screen
+  when an exercise is loaded and on every row in the presets library. Tap the readout to
+  **nudge your working tempo up** as you improve; the bump is yours to make (nothing
+  rewrites it for you), and it reads **"At target"** once you reach the goal. The metronome
+  screen carries its own action row: **+** saves the current settings as a new preset — naming
+  it and setting its **working and target tempo** so the climb has a real goal from the start —
+  and **📚**
+  opens the library; with an exercise loaded, **✕** leaves it (back to a clean default
+  metronome, no need to quit) and **save** updates that preset. *(This toolbar
+  entry point is temporary — the metronome moves to a home screen later.)*
 - **The practice screen rotates to landscape** (ADR 0042). Turn the phone sideways on the
   practice screen — handy when it's propped on a stand — and the waveform claims the full
   width for a sharper view and more precise A/B dragging. Your loops and markers tuck into a
