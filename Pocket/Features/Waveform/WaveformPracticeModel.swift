@@ -88,10 +88,11 @@ final class WaveformPracticeModel {
             if let previous = loops.first(where: { $0.uid == oldValue }) {
                 previous.lastPracticedSpeed = speed
             }
-            if oldValue == nil {
-                song.lastPracticedSpeed = speed          // full song → loop: bank the song's speed
-            } else if activeLoopID == nil {
-                speed = song.resumeSpeed                  // loop → full song: restore it
+            switch SongTempoTransition.forActiveLoopChange(wasArmed: oldValue != nil,
+                                                           nowArmed: activeLoopID != nil) {
+            case .bankSongTempo: song.lastPracticedSpeed = speed     // full song → loop: bank it
+            case .restoreSongTempo: speed = song.resumeSpeed         // loop → full song: restore it
+            case .none: break
             }
         }
     }
