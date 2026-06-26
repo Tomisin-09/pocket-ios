@@ -43,6 +43,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   returns to portrait on its own.
 
 ### Changed
+- **Metronome: changing the tempo no longer switches the automator off.** With a tempo
+  ramp armed, nudging or sliding the metronome's tempo now **re-bases the ramp on the new
+  floor** (it restarts climbing from where you've set it) instead of dropping the automator
+  back to "Off" — moving the floor resets the climb, it doesn't tear it down.
 - **Tidier transport bar.** The playback controls are a touch smaller and, when a loop is
   armed, the transport now shows just the **loop name** (the time range was redundant with
   the loop row and waveform) — so the bar reads cleaner in both portrait and landscape.

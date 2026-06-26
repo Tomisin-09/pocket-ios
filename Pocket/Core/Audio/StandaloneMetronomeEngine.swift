@@ -224,13 +224,14 @@ final class StandaloneMetronomeEngine {
     // MARK: - Tempo & signature
 
     /// Set the tempo **manually** (steppers / slider / tap), clamped to `bpmRange`. A manual
-    /// tempo change **switches the automator off** — you've taken the wheel — so it never
-    /// fights you (only pause/resume preserve a running ramp).
+    /// tempo change **re-bases an armed automator on the new floor** — it stays armed and the
+    /// ramp restarts from here, rather than switching off (the floor is always the current
+    /// tempo, ADR 0043). No-op when the BPM doesn't actually change, so slider jitter landing
+    /// on the same value never resets a live ramp.
     func setBPM(_ value: Int) {
-        let wasAutomating = automatorEnabled
-        let changed = applyTempo(value)
-        if wasAutomating { setAutomatorEnabled(false) }
-        if changed || wasAutomating { pushNowPlaying() }
+        guard applyTempo(value) else { return }
+        if automatorEnabled { engageAutomator() }
+        pushNowPlaying()
     }
 
     /// Nudge the tempo by `delta` BPM (the −/+ steppers).
