@@ -29,11 +29,21 @@ final class MetronomeExercise {
     /// The exercise name ("Alternating picking", "Spider"). Empty until named.
     var name: String = ""
 
-    /// The day-to-day **working** tempo (absolute BPM) — where you practise today. The
-    /// cross-session "light progress" number, nudged up manually over time (slice 7).
+    /// The **working** tempo (absolute BPM) — the comfortable warm-up floor a session's
+    /// ramp begins from (ADR 0045; read through the `workingTempo` alias in new code). The
+    /// stored name is `currentTempo` for migration continuity: 0043 used this one number as
+    /// the conflated working/owned tempo, and renaming a SwiftData attribute is not
+    /// lightweight-additive (the CoreData 134110 store-wipe risk).
     var currentTempo: Int = 80
-    /// The **goal** tempo (absolute BPM) you climb toward. The gap to `currentTempo` is
-    /// the progress signal; also the automator's default ceiling.
+    /// The **command** tempo (absolute BPM) — the fastest the player can play this exercise
+    /// *clean and repeatable* (ADR 0045). The anchor the `targetTempo` reach derives from,
+    /// and the ratcheting cross-session achievement. **Optional on purpose**: `nil` ⇒ never
+    /// measured, so `command` falls back to the working tempo and the exercise reads like the
+    /// old light model until promoted. Mirrors `Loop.commandTempo` (same meaning, absolute
+    /// BPM not a song fraction). Optional ⇒ migrates pre-0045 rows to `nil` with no wipe.
+    var commandTempo: Int?
+    /// The **goal** tempo (absolute BPM) you reach for — `command` + a proportional stretch
+    /// once promoted (ADR 0045), recomputed on each promotion; also the automator's summit.
     var targetTempo: Int = 120
 
     // Time signature: beats per bar (the click count and downbeat grouping) and the note
@@ -95,6 +105,7 @@ final class MetronomeExercise {
 
     init(name: String = "",
          currentTempo: Int = 80,
+         commandTempo: Int? = nil,
          targetTempo: Int = 120,
          beatsPerBar: Int = 4,
          noteValue: Int = 4,
@@ -111,6 +122,7 @@ final class MetronomeExercise {
         self.uid = UUID()
         self.name = name
         self.currentTempo = currentTempo
+        self.commandTempo = commandTempo
         self.targetTempo = targetTempo
         self.beatsPerBar = beatsPerBar
         self.noteValue = noteValue
@@ -129,6 +141,35 @@ final class MetronomeExercise {
     /// The automator's resolved ceiling: its explicit `automatorCeiling` when set, else
     /// the exercise's `targetTempo` (the ADR 0043 default — a ramp climbs to the goal).
     var resolvedAutomatorCeiling: Int { automatorCeiling ?? targetTempo }
+
+    /// The warm-up **floor** — the comfortable tempo a session's ramp begins from (ADR
+    /// 0045). A clarity alias over the `currentTempo` storage (kept for migration); new
+    /// code should prefer this name.
+    var workingTempo: Int {
+        get { currentTempo }
+        set { currentTempo = newValue }
+    }
+
+    /// The **effective** command tempo: the measured `commandTempo` once promoted, else the
+    /// working tempo (ADR 0045) — an un-promoted exercise's command is taken as where it's
+    /// currently practised, so the reach still computes and the UI degrades to the old
+    /// light model gracefully.
+    var command: Int { commandTempo ?? currentTempo }
+
+    /// Whether a command tempo has been measured/promoted yet (vs falling back to working).
+    var hasMeasuredCommand: Bool { commandTempo != nil }
+
+    /// The reach derived from the current `command` (ADR 0045): proportional + clamped.
+    /// What `targetTempo` is set to on promotion; surfaced so the UI can preview the reach.
+    var derivedTarget: Int { TempoStretch.targetBPM(forCommand: command) }
+
+    /// Promote a newly-owned tempo to `command` and recompute the `target` reach above it
+    /// (ADR 0045, Phase 1 — manual "I own this"). Phase 1 overwrites `targetTempo` from the
+    /// new command; a Phase 2 milestone record and pinned-target flag are out of scope here.
+    func promoteCommand(to tempo: Int) {
+        commandTempo = tempo
+        targetTempo = TempoStretch.targetBPM(forCommand: tempo)
+    }
 
     /// The Italian tempo marking for the current working tempo (ADR 0043, slice 1) —
     /// "Andante", "Allegro", … Pure derived from `currentTempo`.

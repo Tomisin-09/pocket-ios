@@ -67,14 +67,12 @@ struct MetronomeLibrarySheet: View {
                     Text(exercise.configurationSummary)
                         .font(.caption)
                         .foregroundStyle(PocketColor.textSecondary)
-                    // Light-progress climb at a glance (slice 7) — the fuller bar of the pair.
-                    HStack(spacing: 8) {
-                        TempoProgressBar(fraction: exercise.progress.fraction)
-                        Text(exercise.progress.status)
-                            .font(.caption2)
-                            .foregroundStyle(PocketColor.textSecondary)
-                            .fixedSize()
-                    }
+                    // Command → reach at a glance (ADR 0045): the owned tempo and the step
+                    // beyond it, not a near-full progress bar (the reach is always one stretch
+                    // above command, so a fraction would mislead).
+                    Text("Command \(exercise.command) → \(exercise.derivedTarget) BPM")
+                        .font(.caption2)
+                        .foregroundStyle(PocketColor.metronome)
                 }
                 Spacer()
                 if loadedExercise?.uid == exercise.uid {

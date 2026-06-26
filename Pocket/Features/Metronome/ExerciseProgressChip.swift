@@ -1,113 +1,66 @@
 import SwiftUI
 
-/// The loaded exercise's **light progress** on the metronome screen (ADR 0043, slice 7): a
-/// slim current→target chip kept clear of the beat dots and the big tempo readout, which
-/// taps open to steppers that **manually** edit the working tempo (nudged up across sessions)
-/// and the target tempo (adjust the goal).
+/// The loaded exercise's command-anchored summary on the metronome screen (ADR 0045): a slim
+/// **command → reach** chip that is the entry point to **Training Mode**. Tapping it opens the
+/// `TrainingModeSheet`, which owns the working/command/target editing, the promote, and the
+/// **Start** that arms the routine — so the tempos and the ramp are no longer two disconnected
+/// surfaces (the chip used to edit tempos while the separate automator panel had to be armed
+/// by hand).
 ///
-/// The bump is deliberately manual. With the automator sweeping to its ceiling every run,
-/// playback can't tell you an *achieved* tempo (the live click always reaches the ceiling),
-/// so you assert the new working tempo yourself — the ADR keeps the cross-session number
-/// from being auto-rewritten.
-///
-/// Reads the exercise's `currentTempo`/`targetTempo` directly (it's an observable `@Model`),
-/// so a nudge re-renders just this chip and persists through SwiftData autosave. The working
-/// tempo here is **distinct** from the live click in the big readout — "where I practise",
-/// not "what's sounding now".
+/// There is deliberately no progress *bar*: the reach is always a fixed step above command, so
+/// a fraction would pin near-full and mislead. The real progress is the command number rising
+/// over time — its history is ADR 0045 Phase 2. Reads the observable `@Model` directly, so a
+/// promote or edit from the sheet re-renders this summary live.
 struct ExerciseProgressChip: View {
     let exercise: MetronomeExercise
-    @State private var expanded = false
+    /// Opens Training Mode (the screen owns the sheet presentation).
+    let onTap: () -> Void
 
-    private var progress: ExerciseProgress { exercise.progress }
+    private var command: Int { exercise.command }
 
     var body: some View {
-        VStack(spacing: 10) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
-            } label: {
-                header
-            }
-            .buttonStyle(.plain)
-
-            if expanded { nudgeRow }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 12).fill(PocketColor.metronome.opacity(0.10)))
-    }
-
-    private var header: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 8) {
-                Text(progress.readout)
-                    .font(.pocketMono(.subheadline))
-                    .foregroundStyle(PocketColor.textPrimary)
-                Spacer()
-                if progress.isAtTarget {
-                    Label("At target", systemImage: "checkmark.circle.fill")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(PocketColor.metronome)
-                } else {
-                    Text(progress.status)
-                        .font(.caption)
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(exercise.hasMeasuredCommand ? "COMMAND" : "SET COMMAND")
+                        .font(.caption2.weight(.semibold))
+                        .tracking(1.2)
                         .foregroundStyle(PocketColor.textSecondary)
+                    Text("\(command) BPM")
+                        .font(.pocketMono(.title3))
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .contentTransition(.numericText())
                 }
-                Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                    .font(.caption2)
-                    .foregroundStyle(PocketColor.textSecondary)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("REACH")
+                        .font(.caption2.weight(.semibold))
+                        .tracking(1.2)
+                        .foregroundStyle(PocketColor.textSecondary)
+                    Text("\(exercise.derivedTarget) BPM")
+                        .font(.pocketMono(.subheadline))
+                        .foregroundStyle(PocketColor.metronome)
+                        .contentTransition(.numericText())
+                }
+                Label("Train", systemImage: "chevron.right")
+                    .labelStyle(.iconOnly)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(PocketColor.metronome)
             }
-            TempoProgressBar(fraction: progress.fraction)
-        }
-        .contentShape(Rectangle())
-    }
-
-    private var nudgeRow: some View {
-        VStack(spacing: 10) {
-            tempoStepper(label: "Working tempo", value: exercise.currentTempo,
-                         keyPath: \.currentTempo)
-            tempoStepper(label: "Target tempo", value: exercise.targetTempo,
-                         keyPath: \.targetTempo)
-        }
-        .transition(.opacity)
-    }
-
-    private func tempoStepper(label: String, value: Int,
-                              keyPath: ReferenceWritableKeyPath<MetronomeExercise, Int>)
-        -> some View {
-        HStack {
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(PocketColor.textSecondary)
-            Spacer()
-            stepButton(symbol: "minus", label: "Lower \(label)") { adjust(keyPath, by: -1) }
-            Text("\(value)")
-                .font(.pocketMono(.body))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(minWidth: 44)
-                .contentTransition(.numericText())
-            stepButton(symbol: "plus", label: "Raise \(label)") { adjust(keyPath, by: 1) }
-        }
-    }
-
-    /// Edit a persisted tempo on the loaded exercise (working or target), clamped to the
-    /// metronome's range. Mutating the `@Model` autosaves and re-renders the bar.
-    private func adjust(_ keyPath: ReferenceWritableKeyPath<MetronomeExercise, Int>, by delta: Int) {
-        let range = StandaloneMetronomeEngine.bpmRange
-        exercise[keyPath: keyPath] = min(range.upperBound,
-                                         max(range.lowerBound, exercise[keyPath: keyPath] + delta))
-        haptic(.light)
-    }
-
-    private func stepButton(symbol: String, label: String,
-                            action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(width: 36, height: 36)
-                .background(Circle().fill(PocketColor.metronome.opacity(0.18)))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(RoundedRectangle(cornerRadius: 12).fill(PocketColor.metronome.opacity(0.10)))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(label)
+        .accessibilityLabel("Training Mode. Command \(command), reach \(exercise.derivedTarget) BPM")
+        .accessibilityHint("Opens the training routine")
     }
+}
+
+#Preview("Promoted") {
+    ExerciseProgressChip(exercise: MetronomeExercise(name: "Alternating picking",
+                                                     currentTempo: 70, commandTempo: 92),
+                         onTap: {})
+        .padding()
 }

@@ -13,7 +13,7 @@ import Foundation
 /// type is exercised across both units (AGENTS.md: the stepping math has no UI coverage, so
 /// it's pinned here). `stepBPM` is a positive magnitude; the direction is derived from the
 /// sign of `ceilingBPM − startBPM`, so a ceiling below the start gives a **slow-down** ramp.
-struct MetronomeAutomator: Equatable {
+struct MetronomeAutomator: Equatable, TempoRamp {
     /// Whether the ramp is engaged. Disabled ⇒ the BPM never leaves `startBPM`.
     var enabled: Bool
     /// Where the ramp begins (absolute BPM) — the exercise's working tempo.

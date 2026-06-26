@@ -12,7 +12,7 @@ enum MetronomeExerciseBridge {
     /// ramp's floor and a manual set clears any prior ramp), then the automator is armed from
     /// the recipe.
     static func apply(_ exercise: MetronomeExercise, to engine: StandaloneMetronomeEngine) {
-        engine.setBPM(exercise.currentTempo)
+        engine.setBPM(exercise.workingTempo)
         engine.setSubdivision(exercise.subdivision)
         engine.setTimeSignature(TimeSignature.forStored(beats: exercise.beatsPerBar,
                                                         noteValue: exercise.noteValue,
@@ -22,6 +22,10 @@ enum MetronomeExerciseBridge {
             engine.setAutomatorStepBPM(exercise.automatorStepBPM)
             engine.setAutomatorIntervalCount(exercise.automatorIntervalCount)
             engine.setAutomatorCeiling(exercise.resolvedAutomatorCeiling)
+            // A promoted exercise rides the command-anchored ramp (ADR 0045): the ceiling set
+            // above is its target reach; this anchors the dwell at command. Set last, after
+            // arming clears any stale command.
+            if exercise.hasMeasuredCommand { engine.setAutomatorCommand(exercise.command) }
         } else {
             engine.setAutomatorMode(.off)
         }
@@ -52,8 +56,10 @@ enum MetronomeExerciseBridge {
         // `bpm` — a finished ramp has climbed `bpm` to the ceiling, and capturing that would
         // store floor == ceiling. The floor is the captured `automatorStartBPM`.
         exercise.currentTempo = engine.automatorEnabled ? engine.automatorStartBPM : engine.bpm
-        // No separate target UI until slice 7: the goal is the ramp ceiling when armed, else
-        // the working tempo. Persisted so a loaded preset keeps a sensible target.
+        // Preserve a loaded exercise's command across an update; a free-play capture has none
+        // (`nil`), so the new exercise reads as un-promoted (ADR 0045).
+        exercise.commandTempo = engine.automatorCommandBPM
+        // The goal is the ramp ceiling (the target reach) when armed, else the working tempo.
         exercise.targetTempo = engine.automatorEnabled ? engine.automatorCeiling : engine.bpm
         exercise.beatsPerBar = engine.timeSignature.beats
         exercise.noteValue = engine.timeSignature.noteValue

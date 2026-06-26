@@ -35,8 +35,11 @@ struct ExerciseProgress: Equatable {
 }
 
 extension MetronomeExercise {
-    /// This exercise's working-tempo-vs-goal progress (ADR 0043, slice 7).
+    /// This exercise's command-vs-target reach (ADR 0043 slice 7; re-anchored by ADR 0045).
+    /// `current` is the effective `command` — the measured owned tempo, or the working tempo
+    /// until one is promoted — so an un-promoted exercise reads exactly as the old
+    /// working-vs-goal light model and a promoted one reads command-vs-reach.
     var progress: ExerciseProgress {
-        ExerciseProgress(current: currentTempo, target: targetTempo)
+        ExerciseProgress(current: command, target: targetTempo)
     }
 }

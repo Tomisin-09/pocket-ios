@@ -43,8 +43,7 @@ final class StandaloneMetronomeEngine {
     nonisolated static let defaultBPM = 90
 
     private(set) var transport: Transport = .stopped
-    /// Working tempo (absolute BPM). Mutated only through `setBPM`/`adjustBPM` so it stays
-    /// clamped; `private(set)` keeps it observable.
+    /// Working tempo (absolute BPM). Set only via `setBPM`/`adjustBPM` (clamped); observable.
     private(set) var bpm = defaultBPM
     /// The current meter and its accent pattern.
     private(set) var timeSignature: TimeSignature = .standard
@@ -63,6 +62,9 @@ final class StandaloneMetronomeEngine {
     var automatorIntervalCount = 4
     var automatorUnit: MetronomeIntervalUnit = .bars
     var automatorCeiling = 110
+    /// Loaded exercise's **command** tempo (ADR 0045); `nil` ⇒ free-play linear ramp. When set
+    /// the ramp is command-anchored (warm-up → dwell → summit → backoff).
+    var automatorCommandBPM: Int?
     /// The ramp's **floor** — the tempo it started from (captured when armed). The floor is
     /// always the current metronome tempo at the moment you arm; the restart returns here.
     private(set) var automatorStartBPM = defaultBPM
@@ -303,13 +305,11 @@ final class StandaloneMetronomeEngine {
             automatorSecondsElapsed += delta
             automatorBarsElapsed += delta * (Double(bpm) / 60.0) / Double(max(1, timeSignature.beats))
             let elapsedBars = Int(automatorBarsElapsed)
-            let target = automatorRamp.bpm(elapsedBars: elapsedBars,
-                                           elapsedSeconds: automatorSecondsElapsed)
+            let ramp = activeRamp
+            let target = ramp.bpm(elapsedBars: elapsedBars, elapsedSeconds: automatorSecondsElapsed)
             if applyTempo(target) { pushNowPlaying() }
-            // The climb has a defined end: once the ceiling plateau has held for its interval,
-            // stop the click rather than run on at the top (ADR 0043, slice 7).
-            if automatorRamp.isFinished(elapsedBars: elapsedBars,
-                                        elapsedSeconds: automatorSecondsElapsed) {
+            // The climb has a defined end — stop at the top rather than run on (ADR 0043/0045).
+            if ramp.isFinished(elapsedBars: elapsedBars, elapsedSeconds: automatorSecondsElapsed) {
                 stop()
                 return
             }

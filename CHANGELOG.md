@@ -6,6 +6,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Training Mode for exercises** (ADR 0045). An exercise has no "real" tempo to reach the way
+  a song loop does, so instead of a goal you guess at, it tracks your **command tempo** — the
+  fastest you can play it cleanly and repeatably — and sets the **reach** a small step above it
+  automatically. Open **Training Mode** from the metronome and one **Start** sets the whole
+  routine going (no separate "arm the automator" step): it warms up from a comfortable
+  **working** tempo, **dwells at command** for the bulk of the reps, briefly summits at the
+  reach, then **backs off below command** so you finish on clean control rather than the edge.
+  The first time you open it for an exercise, command starts at its current tempo and working
+  at a sensible floor below — and you can choose how many **warm-up steps** to climb through on
+  the way up. Your tempos move independently, and what you set is **saved when you press Start**
+  (Close discards). When the reach gets comfortable, one tap (**"I own it now"**) promotes it to
+  your new command and the reach climbs with you.
 - **A home screen** (ADR 0044). The app now opens on a **home hub** instead of straight into
   the library: a time-of-day greeting, a **"Jump back in"** card for the song you last
   practised (with its mastery and when you last touched it — tap to resume right where you
