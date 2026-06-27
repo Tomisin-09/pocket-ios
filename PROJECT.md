@@ -151,7 +151,9 @@ and the loops/markers list becomes a **slide-in drawer** (☰), gated to this sc
 in the song-details sheet (hold the title). The app opens to a **home hub** (`HomeView`, ADR 0044) — a greeting, a "Jump back in" card
 for the most-recently-practised song, a **Practice** card pushing the top-level **Practice
 space** (`PracticeView`, ADR 0046 — the exercise hub + per-exercise `ExerciseRunView` training
-run, each owning its own metronome engine), a metronome card, and a preview of your songs with
+run, each owning its own metronome engine; the `Exercise` model stores its `CommandRamp` recipe
+natively in `ramp*`/dwell/backoff fields, the `automator* → ramp*` rename done data-preservingly
+via `@Attribute(originalName:)`), a metronome card, and a preview of your songs with
 **See all** pushing the full **song library** (`LibraryView`), now one tap from the front
 door rather than the root. Importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),
