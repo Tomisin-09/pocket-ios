@@ -49,7 +49,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
 | `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043) |
-| `Pocket/Features/Practice/` | Top-level Practice space — exercise hub + training-run screen + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
+| `Pocket/Features/Practice/` | Top-level Practice space — a unit aggregation over exercises *and* measured song loops; per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`) + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
 | `Pocket/Features/Planner/` | *(reserved for the V2 practice planner — re-homed inside Practice, ADR 0046)* |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
@@ -150,12 +150,18 @@ and the loops/markers list becomes a **slide-in drawer** (☰), gated to this sc
 `OrientationGate`. The old bottom **song-info panel was removed** — its facts live
 in the song-details sheet (hold the title). The app opens to a **home hub** (`HomeView`, ADR 0044) — a greeting, a "Jump back in" card
 for the most-recently-practised song, a **Practice** card pushing the top-level **Practice
-space** (`PracticeView`, ADR 0046 — the exercise hub + per-exercise `ExerciseRunView` training
-run, each owning its own metronome engine; the run staircase lights the live plateau as it
-climbs, tempos are typable as well as nudged, and the routine takes reach / back-up steps
-beyond warm-up; the `Exercise` model stores its `CommandRamp` recipe natively in
-`ramp*`/dwell/backoff/`rampReachSteps`/`rampBackoffSteps` fields, the `automator* → ramp*`
-rename done data-preservingly via `@Attribute(originalName:)`), a metronome card, and a preview of your songs with
+space** (`PracticeView`, ADR 0046 — a **unit aggregation** over two models: exercises and any
+measured song **loop** (`commandTempo != nil`), shown side by side in "Your units". An exercise
+opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B) — both owning their own engine. The
+run staircase lights the live plateau as it climbs, tempos are typable as well as nudged, and the
+routine takes reach / back-up steps beyond warm-up; the `Exercise` model stores its `CommandRamp`
+recipe natively in `ramp*`/dwell/backoff/`rampReachSteps`/`rampBackoffSteps` fields, the
+`automator* → ramp*` rename done data-preservingly via `@Attribute(originalName:)`. A loop trains
+the **same** warm-up → dwell → reach → back-off `CommandRamp`, but in percent-of-original against
+its time-stretched audio: `LoopRunModel` owns a `PracticeAudioEngine`, loops the region, and steps
+the playback rate by elapsed seconds; the `×` reach derives from `TempoStretch.targetSpeed` and the
+staircase reuses `CommandRamp` via `LoopCommandRamp`'s `×`→percent mapping — no new stored `Loop`
+fields), a metronome card, and a preview of your songs with
 **See all** pushing the full **song library** (`LibraryView`), now one tap from the front
 door rather than the root. Importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),

@@ -16,9 +16,10 @@ import SwiftUI
 struct PracticeView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
-    // TEMP (ADR 0046 Phase B, slice 2): a bare list of measured loops so the loop run screen is
-    // reachable for device verification. Slice 3 replaces this with the real unit aggregation
-    // (exercises + loops interleaved, song context, empty-state copy).
+    // Measured song loops (ADR 0046 Phase B): a loop with a command tempo is a trainable unit, so
+    // it joins the exercises in "Your units." The `commandTempo != nil` gate keeps the list to
+    // loops you've actually measured, not every loop fragment. This is the multi-source unit
+    // aggregation the V2 planner will compose sessions from.
     @Query(filter: #Predicate<Loop> { $0.commandTempo != nil }) private var measuredLoops: [Loop]
     @State private var creating = false
 
@@ -28,9 +29,10 @@ struct PracticeView: View {
                 plannerCard
             }
             Section("Your units") {
-                if exercises.isEmpty {
-                    Text("No exercises yet. Tap + to create one — a named drill you push faster "
-                         + "over time.")
+                if exercises.isEmpty && measuredLoops.isEmpty {
+                    Text("No units yet. Tap + to create an exercise — a named drill you push "
+                         + "faster over time — or measure a song loop's command tempo to train it "
+                         + "here.")
                         .font(.footnote)
                         .foregroundStyle(PocketColor.textSecondary)
                         .listRowBackground(PocketColor.background)
@@ -39,28 +41,20 @@ struct PracticeView: View {
                         NavigationLink {
                             ExerciseRunView(exercise: exercise)
                         } label: {
-                            unitRow(exercise)
+                            exerciseRow(exercise)
                         }
                         .listRowBackground(PocketColor.background)
                     }
                     .onDelete(perform: delete)
-                }
-            }
-            // TEMP (slice 2) — see note on `measuredLoops`.
-            if !measuredLoops.isEmpty {
-                Section("Loops (preview)") {
+                    // Loops are aggregated in alongside exercises (ADR 0046 Phase B): same "things
+                    // you train" list, distinguished by their song context. No swipe-to-delete —
+                    // a loop belongs to its song, not Practice, so it's removed from the waveform
+                    // screen, not here.
                     ForEach(measuredLoops) { loop in
                         NavigationLink {
                             LoopRunView(loop: loop)
                         } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(loop.name.isEmpty ? "Untitled loop" : loop.name)
-                                    .font(.body).foregroundStyle(PocketColor.textPrimary)
-                                Text("Command \(LoopCommandRamp.percent(loop.command))% → "
-                                     + "\(LoopCommandRamp.percent(loop.derivedTargetSpeed))%")
-                                    .font(.caption).foregroundStyle(PocketColor.practice)
-                            }
-                            .padding(.vertical, 2)
+                            loopRow(loop)
                         }
                         .listRowBackground(PocketColor.background)
                     }
@@ -118,14 +112,36 @@ struct PracticeView: View {
         .accessibilityLabel("Build today's session, coming soon")
     }
 
-    // MARK: - Unit row
+    // MARK: - Unit rows
 
-    private func unitRow(_ exercise: Exercise) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(exercise.name.isEmpty ? "Untitled" : exercise.name)
+    /// An exercise unit: name + the command → reach in absolute BPM.
+    private func exerciseRow(_ exercise: Exercise) -> some View {
+        unitRow(title: exercise.name.isEmpty ? "Untitled" : exercise.name,
+                context: nil,
+                progress: "Command \(exercise.command) → \(exercise.derivedTarget) BPM")
+    }
+
+    /// A loop unit: the loop name with its **song** as context (loops live across songs, so the
+    /// song is what distinguishes them in the merged list), + the command → reach in % of original.
+    private func loopRow(_ loop: Loop) -> some View {
+        unitRow(title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+                context: loop.song?.title,
+                progress: "Command \(LoopCommandRamp.percent(loop.command))% → "
+                    + "\(LoopCommandRamp.percent(loop.derivedTargetSpeed))%")
+    }
+
+    /// Shared two/three-line unit row: title, optional context line, and the command → reach line.
+    private func unitRow(title: String, context: String?, progress: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
                 .font(.body)
                 .foregroundStyle(PocketColor.textPrimary)
-            Text("Command \(exercise.command) → \(exercise.derivedTarget) BPM")
+            if let context, !context.isEmpty {
+                Text(context)
+                    .font(.caption2)
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            Text(progress)
                 .font(.caption)
                 .foregroundStyle(PocketColor.practice)
         }
