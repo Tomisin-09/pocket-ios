@@ -21,6 +21,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   (`@Attribute(originalName:)`), so no further store reset beyond the one already noted above.
 
 ### Added
+- **"Save as exercise" from the metronome automator** (ADR 0046, Phase A). The automator's job
+  is *discovery*: ramp the tempo until your hands break down, and that tempo is your command. A
+  **Save as exercise** action on the armed automator now captures the tempo you're at and hands
+  it straight into Practice's create flow, prefilled as the new exercise's command — so a free
+  ramp session can become a tracked drill in one tap. Creation funnels through a single shared
+  path, whether you start in Practice or from here.
 - **A top-level Practice space** (ADR 0046, Phase A). Exercises are no longer buried inside the
   metronome — there's now a **Practice** card on the home screen that opens a place of its own:
   a list of **your exercises** (the drills you push faster over time) above a **"Build today's

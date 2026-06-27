@@ -5,16 +5,27 @@ import SwiftUI
 /// warm-up **working** floor and the **reach** derive from the command, so the number you type
 /// here is the command the run screen shows (no working/command mismatch). You tune working and
 /// reach when you run the drill. This is Practice's own create path so exercises no longer depend
-/// on the metronome's save UI; the automator's "Save as exercise" seam feeds the same flow.
+/// on the metronome's save UI; the automator's "Save as exercise" seam feeds the same flow by
+/// presenting this sheet with `initialCommand` set to the discovered breakdown tempo.
 struct NewExerciseSheet: View {
+    /// Pre-fills the command stepper — the discovered tempo when launched from the automator
+    /// seam, the engine default when created fresh in Practice.
+    var initialCommand: Int = StandaloneMetronomeEngine.defaultBPM
     /// Called with the trimmed name and chosen **command** tempo when the user confirms.
     let onCreate: (String, Int) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
-    @State private var command = StandaloneMetronomeEngine.defaultBPM
+    @State private var command: Int
 
     private let range = StandaloneMetronomeEngine.bpmRange
+
+    init(initialCommand: Int = StandaloneMetronomeEngine.defaultBPM,
+         onCreate: @escaping (String, Int) -> Void) {
+        self.initialCommand = initialCommand
+        self.onCreate = onCreate
+        _command = State(initialValue: initialCommand)
+    }
 
     private var trimmedName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
