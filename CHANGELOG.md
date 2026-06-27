@@ -27,6 +27,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   (no stored fields added, so the loop's migration discipline is untouched), and a pure
   `LoopCommandRamp` maps a loop's `×` tempos onto the shared `CommandRamp` staircase via
   integer percent-of-original. All unit-tested; no UI yet.
+- **Loop training run screen** (ADR 0046, Phase B, slice 2). A new `LoopRunView` — the loop
+  counterpart of the exercise run — lets you set a measured loop's warm-up **working** floor and
+  owned **command** (as % of original), preview the derived **reach** and the warm-up/reach/back-up
+  staircase, and **run** it: the loop's region plays on repeat while a `LoopRunModel` steps the
+  time-stretch rate through the command ramp (warm up → dwell → reach → back off) and stops at the
+  end. Reachable for now via a temporary "Loops (preview)" list in Practice; the real unit
+  aggregation lands in the next slice.
 
 ### Added
 - **Practice run-screen refinements** (ADR 0046, Phase A). The training run's staircase now

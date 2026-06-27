@@ -16,6 +16,10 @@ import SwiftUI
 struct PracticeView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
+    // TEMP (ADR 0046 Phase B, slice 2): a bare list of measured loops so the loop run screen is
+    // reachable for device verification. Slice 3 replaces this with the real unit aggregation
+    // (exercises + loops interleaved, song context, empty-state copy).
+    @Query(filter: #Predicate<Loop> { $0.commandTempo != nil }) private var measuredLoops: [Loop]
     @State private var creating = false
 
     var body: some View {
@@ -40,6 +44,26 @@ struct PracticeView: View {
                         .listRowBackground(PocketColor.background)
                     }
                     .onDelete(perform: delete)
+                }
+            }
+            // TEMP (slice 2) — see note on `measuredLoops`.
+            if !measuredLoops.isEmpty {
+                Section("Loops (preview)") {
+                    ForEach(measuredLoops) { loop in
+                        NavigationLink {
+                            LoopRunView(loop: loop)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(loop.name.isEmpty ? "Untitled loop" : loop.name)
+                                    .font(.body).foregroundStyle(PocketColor.textPrimary)
+                                Text("Command \(LoopCommandRamp.percent(loop.command))% → "
+                                     + "\(LoopCommandRamp.percent(loop.derivedTargetSpeed))%")
+                                    .font(.caption).foregroundStyle(PocketColor.practice)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                        .listRowBackground(PocketColor.background)
+                    }
                 }
             }
         }

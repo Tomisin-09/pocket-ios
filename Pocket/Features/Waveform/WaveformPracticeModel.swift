@@ -374,15 +374,3 @@ final class WaveformPracticeModel {
         }.value
     }
 }
-
-/// Holds a security-scoped resource open for its lifetime, releasing it on dealloc.
-/// Lets a `@MainActor` owner release access implicitly via property teardown, with
-/// no nonisolated `deinit` reaching into actor-isolated state (Swift 6).
-private final class SecurityScopedAccess {
-    private let url: URL
-    init?(_ url: URL) {
-        guard url.startAccessingSecurityScopedResource() else { return nil }
-        self.url = url
-    }
-    deinit { url.stopAccessingSecurityScopedResource() }
-}
