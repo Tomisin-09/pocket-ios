@@ -16,12 +16,12 @@ struct MetronomeView: View {
     /// Wall-clock times of recent taps for tap-tempo (`TempoMath.bpm(fromTapTimes:)`).
     @State private var taps: [TimeInterval] = []
     /// The loaded exercise preset, if any — its name titles the screen.
-    @State private var loadedExercise: MetronomeExercise?
+    @State private var loadedExercise: Exercise?
     @State private var showingLibrary = false
     /// Training Mode (ADR 0045): the exercise the routine sheet edits — the loaded preset, or a
     /// transient default when training from scratch. Drives `.sheet(item:)` so the sheet only
     /// presents once it's set (an `isPresented` + optional content races to a blank sheet).
-    @State private var trainingExercise: MetronomeExercise?
+    @State private var trainingExercise: Exercise?
     /// Long-pressing the (possibly truncated) title pops the full name in a popover.
     @State private var showingFullTitle = false
     @Environment(\.dismiss) private var dismiss
@@ -112,13 +112,13 @@ struct MetronomeView: View {
 
     /// Open the routine sheet on `exercise` (the loaded preset or a transient default) by
     /// setting the `.sheet(item:)` binding.
-    private func openTraining(_ exercise: MetronomeExercise) {
+    private func openTraining(_ exercise: Exercise) {
         trainingExercise = exercise
     }
 
     /// Entry when no exercise is loaded — train from defaults seeded at the current tempo.
     private var trainingModeButton: some View {
-        Button { openTraining(MetronomeExercise(currentTempo: engine.bpm)) } label: {
+        Button { openTraining(Exercise(currentTempo: engine.bpm)) } label: {
             Label("Training Mode", systemImage: "figure.run")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(PocketColor.metronome)

@@ -5,6 +5,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Groundwork for a top-level Practice space** (ADR 0046, Phase A). Internal first step:
+  the metronome-exercise model is renamed `MetronomeExercise → Exercise` as it stops being
+  "a saved metronome setup" and becomes a first-class practice unit. Existing saved exercises
+  are reset by this change (they were early experiments; this was a deliberate, accepted
+  trade for a clean model).
+
 ### Added
 - **Training Mode for exercises** (ADR 0045). An exercise has no "real" tempo to reach the way
   a song loop does, so instead of a goal you guess at, it tracks your **command tempo** — the

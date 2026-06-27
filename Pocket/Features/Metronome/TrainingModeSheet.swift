@@ -17,7 +17,7 @@ import SwiftUI
 /// The routine shape is fixed (warm-up → dwell at command → summit at reach → backoff below
 /// command), shown as a staircase so what Start will do is visible.
 struct TrainingModeSheet: View {
-    let exercise: MetronomeExercise
+    let exercise: Exercise
     let engine: StandaloneMetronomeEngine
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -275,7 +275,7 @@ private struct RoutineStairs: View {
 }
 
 #Preview("Training Mode") {
-    TrainingModeSheet(exercise: MetronomeExercise(name: "Alternating picking",
+    TrainingModeSheet(exercise: Exercise(name: "Alternating picking",
                                                   currentTempo: 70, commandTempo: 96),
                       engine: StandaloneMetronomeEngine())
 }
