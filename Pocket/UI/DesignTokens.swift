@@ -54,6 +54,12 @@ enum PocketColor {
     /// (pins), red (danger) — so the click reads as its own thing, not "another play
     /// control." Lives next to the BPM readout on the speed bar (ADR 0027).
     static let metronome = hex(0x35C8C8)
+    /// **Practice** — the identity hue of the top-level Practice space (ADR 0046): where
+    /// trainable units live and command-anchored runs happen. A soft indigo, kept clear of
+    /// the metronome teal (the metronome is the *tool*; Practice is the *content*) and of
+    /// every other functional hue — green (live), blue (bars), orange (markers), purple
+    /// (pins), red (danger) — so the two spaces read as distinct destinations from Home.
+    static let practice = hex(0x8B7CF6)
 
     // MARK: Selection & annotation
     /// Fine precision (selection handles + the downbeat "1" handle) — a high-key cool

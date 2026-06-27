@@ -45,14 +45,15 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | Path | Responsibility |
 |---|---|
 | `Pocket/App/` | App entry, root scene |
-| `Pocket/Features/Home/` | Home hub — the app root: greeting, resume card, metronome + songs entry points (ADR 0044) |
+| `Pocket/Features/Home/` | Home hub — the app root: greeting, resume card, Practice + metronome + songs entry points (ADR 0044) |
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
 | `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043) |
-| `Pocket/Features/Planner/` | *(reserved for the V2 practice planner)* |
+| `Pocket/Features/Practice/` | Top-level Practice space — exercise hub + training-run screen (ADR 0046) |
+| `Pocket/Features/Planner/` | *(reserved for the V2 practice planner — re-homed inside Practice, ADR 0046)* |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
-| `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, MetronomeExercise, Routine, Session, SongRef |
+| `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, Exercise, Routine, Session, SongRef |
 | `Pocket/Core/Services/` | MusicKit, persistence, sync, AI client |
 | `Pocket/UI/` | Shared components, design tokens |
 
@@ -148,7 +149,9 @@ the waveform cockpit takes the full width (compact speed/transport bars, flexing
 and the loops/markers list becomes a **slide-in drawer** (☰), gated to this screen by
 `OrientationGate`. The old bottom **song-info panel was removed** — its facts live
 in the song-details sheet (hold the title). The app opens to a **home hub** (`HomeView`, ADR 0044) — a greeting, a "Jump back in" card
-for the most-recently-practised song, a metronome card, and a preview of your songs with
+for the most-recently-practised song, a **Practice** card pushing the top-level **Practice
+space** (`PracticeView`, ADR 0046 — the exercise hub + per-exercise `ExerciseRunView` training
+run, each owning its own metronome engine), a metronome card, and a preview of your songs with
 **See all** pushing the full **song library** (`LibraryView`), now one tap from the front
 door rather than the root. Importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),

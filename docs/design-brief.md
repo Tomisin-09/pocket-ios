@@ -75,6 +75,8 @@ table is grouped by **semantic role** — the seam a future swappable theme slot
 | `active` | green | Live state — playing, the forming loop, the active region |
 | `confirm` | green | Confirm / save (the loop-capture ✓) |
 | `danger` | red | Discard / delete / destructive (the loop-capture ✗) |
+| `metronome` | teal `#35C8C8` | The metronome **tool** — its accent on the home card and metronome screen |
+| `practice` | indigo `#8B7CF6` | The **Practice** space (ADR 0046) — its home card, hub, and training-run screens |
 | `fine` | cyan `#56C6D9` | Fine-mode precision selection |
 | `marker` | amber/orange | Active-loop region fill base / selection |
 | `pin` | purple | Waveform markers (single-point) |
@@ -133,8 +135,9 @@ vision if useful, but know that **Phase 1** is what gets built first.
 | P2 | Loops panel + Loop active panel | Active panel has speed, repeat, tempo automator, session notes. |
 | P2 | Markers panel + Pin Marker popover | Single-point annotations; purple. |
 | ~~P2~~ | ~~Song info / Repertoire panel~~ | **Removed (ADR 0042).** Key / mastery / collections now live only in the song-details sheet (hold the title); not duplicated in the practice scroll area. |
-| **P1** | **Home hub** | The app's front door (ADR 0044). Greeting · "Jump back in" resume card · Metronome card · "Your songs" preview (See all → Library) · Add a song. **Planner-free for V1** — see §4.2. |
-| V2 | Practice planner | The planner the home once pencilled in — time selector, routine cards, session blocks — slots **under the greeting** of the home hub when it ships. Deferred to V2. |
+| **P1** | **Home hub** | The app's front door (ADR 0044). Greeting · "Jump back in" resume card · **Practice card** · Metronome card · "Your songs" preview (See all → Library) · Add a song. **Planner-free for V1** — see §4.2. |
+| **P1** | **Practice space** | A top-level destination (ADR 0046), indigo `practice` accent. A list of **your exercises** (command → reach) above a **"Build today's session"** planner placeholder (V2). Tap **+** to create; tap a unit → its **training run** (own engine, `engine.run(ramp:)`): set up working/command/reach + warm-up steps with a routine staircase, then a live BPM/beat/session readout while it plays. |
+| V2 | Practice planner | The "Build today's session" path **inside Practice** (ADR 0046 re-homes ADRs 0014–0016) — time selector, routine cards, session blocks, drawing from the unit list and journaling back into its weighting. Deferred to V2. |
 
 ### 4.1 Waveform practice screen — layout
 

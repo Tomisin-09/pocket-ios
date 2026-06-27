@@ -15,6 +15,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   arming the automator and running a training routine are no longer mutually exclusive.
 
 ### Added
+- **A top-level Practice space** (ADR 0046, Phase A). Exercises are no longer buried inside the
+  metronome — there's now a **Practice** card on the home screen that opens a place of its own:
+  a list of **your exercises** (the drills you push faster over time) above a **"Build today's
+  session"** entry reserved for the guided planner (coming in a later update). Tap **+** to
+  create an exercise, or tap one to open its **training run** — a screen that warms up from your
+  working tempo, dwells at command, summits at the reach, then backs off, with a live tempo and
+  beat readout while it plays. Each run owns its own engine, so it's independent of the
+  metronome. The old in-metronome Training Mode still works for now; a later slice retires it.
 - **Training Mode for exercises** (ADR 0045). An exercise has no "real" tempo to reach the way
   a song loop does, so instead of a goal you guess at, it tracks your **command tempo** — the
   fastest you can play it cleanly and repeatably — and sets the **reach** a small step above it
