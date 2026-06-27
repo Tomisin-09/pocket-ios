@@ -19,6 +19,28 @@ All notable changes to Pocket are documented here. Format loosely follows
   training-routine recipe **natively** (`ramp*` fields + dwell/backoff) rather than borrowing
   the free-play automator's fields — this field rename is data-preserving
   (`@Attribute(originalName:)`), so no further store reset beyond the one already noted above.
+- **Groundwork for command-derived loops in Practice** (ADR 0046, Phase B, slice 1). Internal,
+  no behaviour change: a measured song **loop** can now derive the same command-anchored
+  progression an exercise has — a warm-up → dwell → reach → back-off `CommandRamp` — but in
+  `×`-of-original rather than absolute BPM. `TempoStretch` gains a `×`-unit reach
+  (`targetSpeed`), `Loop` gains the `command` / reach / promote accessors mirroring `Exercise`
+  (no stored fields added, so the loop's migration discipline is untouched), and a pure
+  `LoopCommandRamp` maps a loop's `×` tempos onto the shared `CommandRamp` staircase via
+  integer percent-of-original. All unit-tested; no UI yet.
+- **Loop training run screen** (ADR 0046, Phase B, slice 2). A new `LoopRunView` — the loop
+  counterpart of the exercise run — lets you set a measured loop's warm-up **working** floor and
+  owned **command** (as % of original), preview the derived **reach** and the warm-up/reach/back-up
+  staircase, and **run** it: the loop's region plays on repeat while a `LoopRunModel` steps the
+  time-stretch rate through the command ramp (warm up → dwell → reach → back off) and stops at the
+  end. The ramp advances **by loop repetitions** — one pass through the loop is one step ("play it
+  through, then bump it up"), with a **Reps per step** control (default 1) and a longer dwell at
+  command. The live readout shows the current speed and loop count.
+- **Loops are trainable units in Practice** (ADR 0046, Phase B). Practice is now a **hub** with two
+  unit libraries: **Exercises** (your command drills) and **Loops** (any song loop you've measured —
+  i.e. given a command tempo), each opening its own list. A measured loop shows its song as context
+  and its command → reach, and tapping it opens the loop training run. Splitting them into separate
+  libraries keeps each list clean and scannable; together they're the multi-source "things you
+  train" surface the V2 planner will compose sessions from.
 
 ### Added
 - **Practice run-screen refinements** (ADR 0046, Phase A). The training run's staircase now

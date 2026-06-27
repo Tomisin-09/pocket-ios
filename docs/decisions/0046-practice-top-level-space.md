@@ -1,6 +1,6 @@
 # 0046 — Practice as a top-level space; exercises decoupled from the metronome (revises 0043 + 0045)
 
-- **Status:** Accepted (architecture); built in phases (none built yet — this records the decision before code)
+- **Status:** Accepted (architecture); built in phases — **Phase A and Phase B built**; Phase C (planner) is V2, not yet built
 - **Date:** 2026-06-27
 
 ## Context
@@ -141,9 +141,16 @@ encode method, don't ship others' material), not lifted from any third party.
   `CommandRamp` recipe); add the automator → "Save as exercise" seam;
   `engine.run(ramp:)`. Seed a first batch of presets (or shell-first; see Open
   question).
-- **Phase B — command-derived loops in Practice.** Extend working/command/target to
+- **Phase B — command-derived loops in Practice. (Built.)** Extends working/command/target to
   `Loop` (reusing the unit-generic `TempoStretch` with `×`-unit clamps, as 0045
-  anticipated) and surface trainable loops in the same Practice aggregation.
+  anticipated) and surfaces trainable loops in the same Practice aggregation. *As built:* a loop's
+  `×` tempos are mapped to integer **percent-of-original** and fed to the **reused** `CommandRamp`
+  (`unit: .seconds`, via `LoopCommandRamp`); a measured loop (`commandTempo != nil`) joins exercises
+  in `PracticeView`'s "Your units"; tapping it opens `LoopRunView`, whose `LoopRunModel` drives the
+  loop's time-stretched audio (`PracticeAudioEngine`) through the staircase. **No new stored `Loop`
+  fields** — `speed`/`commandTempo` already exist and the reach is derived — so `Loop` keeps its
+  full ADR 0011/0012 migration discipline (the §5 clean-rewrite relaxation applied to `Exercise`
+  only).
 - **Phase C (V2) — orchestration.** The planner (0014–0016) + journal, *inside*
   Practice: built sessions, weighting, reflection feeding back into weighting.
 

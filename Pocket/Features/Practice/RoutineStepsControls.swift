@@ -9,12 +9,16 @@ struct RoutineStepsControls: View {
     @Binding var warmupSteps: Int
     @Binding var reachSteps: Int
     @Binding var backoffSteps: Int
-    /// The BPM each warm-up step adds — for the warm-up caption.
+    /// The amount each warm-up step adds — for the warm-up caption.
     let warmupStepBPM: Int
-    /// The reach BPM — for the reach caption. `hasReach` gates whether the reach row shows.
+    /// The reach value — for the reach caption. `hasReach` gates whether the reach row shows.
     let reach: Int
     let hasReach: Bool
     let tint: Color
+    /// The tempo unit shown in the warm-up step caption — "BPM" for an exercise, "%" for a loop
+    /// run (whose tempos are percent-of-original, ADR 0046 Phase B). Defaults to "BPM" so the
+    /// exercise call site is unchanged.
+    var stepUnit = "BPM"
     /// Fired on every change/toggle so the host can play a haptic.
     let onChange: () -> Void
 
@@ -52,7 +56,7 @@ struct RoutineStepsControls: View {
     private var rows: some View {
         VStack(spacing: 14) {
             stepRow(label: "Warm-up steps", value: $warmupSteps,
-                    caption: warmupSteps == 0 ? "straight to command" : "+\(warmupStepBPM) BPM per step")
+                    caption: warmupSteps == 0 ? "straight to command" : "+\(warmupStepBPM) \(stepUnit) per step")
             if hasReach {
                 stepRow(label: "Reach steps", value: $reachSteps,
                         caption: reachSteps == 0 ? "jump straight to reach" : "ease up to \(reach)")

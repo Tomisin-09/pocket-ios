@@ -26,6 +26,14 @@ enum TempoStretch {
     static let bpmMinIncrease = 3.0
     static let bpmMaxIncrease = 15.0
 
+    /// `×`-unit clamps on the **loop** stretch (ADR 0046, Phase B): a loop's tempo is a
+    /// fraction of original, so the same proportional reach is clamped in `×` units —
+    /// never less than +0.02× (so the reach is real on a heavily slowed loop) and never
+    /// more than +0.10× (so it stays attainable near full tempo). The loop analogue of
+    /// `bpmMinIncrease`/`bpmMaxIncrease`, feeding the unit-generic `target(forCommand:…)`.
+    static let speedMinIncrease = 0.02
+    static let speedMaxIncrease = 0.10
+
     /// Downward warm-up proportion and clamps, mirroring the upward stretch — used to
     /// suggest a working floor below a command tempo (ADR 0045).
     static let warmupProportion = 0.15
@@ -52,6 +60,17 @@ enum TempoStretch {
         let reach = target(forCommand: Double(command), proportion: proportion,
                            minIncrease: bpmMinIncrease, maxIncrease: bpmMaxIncrease)
         return Int(reach.rounded())
+    }
+
+    /// Loop convenience (ADR 0046, Phase B): the `×`-of-original target a measured loop
+    /// climbs toward — proportional and clamped to `+0.02…+0.10×`, reusing the unit-generic
+    /// `target(forCommand:…)` unchanged (the loop analogue of `targetBPM`). Returns the
+    /// precise `×`; callers round to whatever precision they display. `command ≤ 0` is
+    /// returned unchanged.
+    static func targetSpeed(forCommand command: Double,
+                            proportion: Double = defaultProportion) -> Double {
+        target(forCommand: command, proportion: proportion,
+               minIncrease: speedMinIncrease, maxIncrease: speedMaxIncrease)
     }
 
     /// A sensible **warm-up floor** below `command` (ADR 0045): a proportional drop,

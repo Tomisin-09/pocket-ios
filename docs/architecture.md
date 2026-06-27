@@ -165,11 +165,19 @@ Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044)
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
-from the metronome at the product level. `PracticeView` is the hub: a `@Query` list of
-`Exercise`s (each a command-anchored drill, the aggregation surface song loops join in Phase B)
-above a disabled "Build today's session" placeholder for the V2 planner, with `NewExerciseSheet`
-as Practice's own create path (the metronome's old save UI is now retired). Tapping a unit pushes
-`ExerciseRunView`, which **owns its own `StandaloneMetronomeEngine`** (independent of the
+from the metronome at the product level. `PracticeView` is a **hub**: a disabled "Build today's
+session" placeholder (the V2 planner) above two **unit libraries** — `ExerciseLibraryView`
+(command-anchored click drills) and `LoopLibraryView` (measured song `Loop`s) — each a row that
+pushes its own list. The split is for clarity/accessibility; the two models stay separate
+(`Exercise` is audio-free, `Loop` is file-bound) but both are "things you train," the multi-source
+surface the planner composes from. `ExerciseLibraryView` owns exercise **create**
+(`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
+(swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
+and removed on the waveform screen, not here — and lists those with a measured command
+(`commandTempo != nil`, an **in-memory** filter, never a SwiftData optional `#Predicate`, which
+starves the main thread and froze navigation — guarded by `PracticeRunUITests`); tapping one pushes
+`LoopRunView` (Phase B, below). `ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
+(independent of the
 metronome screen's): it edits working / command (each **typable** via `EditableTempoRow`, not
 just the −/+ steppers) plus the warm-up / reach / back-up step counts (in the collapsible
 `RoutineStepsControls`) while stopped, shows the
@@ -189,7 +197,28 @@ all new columns carry declaration defaults so the store opens without a 134110 w
 (from the app root's `.task`) so Practice is never empty; seeding is gated by a versioned
 `UserDefaults` flag rather than an empty-store check, so deleted presets stay deleted, and each is
 built through the same `Exercise.commandAnchored` factory as the create flows (no special "preset"
-status). Stage 4's waveform for real files is
+status).
+
+**Loop training runs (Phase B, ADR 0046).** A measured loop trains the **same** warm-up → dwell →
+reach → back-off `CommandRamp` as an exercise, but against its time-stretched **audio** rather than
+a click — so its tempos are **percent-of-original** (`×`), not absolute BPM. `CommandRamp` and
+`TempoStretch` are **reused, not forked**: `LoopCommandRamp` maps a loop's `×` working/command/reach
+to integer percent (`0.85×` → `85`) and builds a `CommandRamp` with `unit: .seconds` (a loop has no
+metronome bars), and the `×` reach derives from `TempoStretch.targetSpeed(forCommand:)` — the
+unit-generic `target(forCommand:…)` with `×`-unit clamps (`+0.02…+0.10×`). `LoopRunView` mirrors
+`ExerciseRunView` (working/command as %, derived reach, the same `RoutineStairs` /
+`RoutineStepsControls`, promote), and **owns a `LoopRunModel`** which in turn owns a private
+`PracticeAudioEngine`: it resolves the song file (the shared `SecurityScopedAccess`, extracted from
+`WaveformPracticeModel`), loops the region (`setLoop`), and polls the engine's **`loopIteration`**
+each tick → `ramp.bpm(elapsedBars: reps)` → `setRate(percent/100)`, stopping at `ramp.isFinished`.
+The ramp advances by **loop repetitions, not seconds** — one pass through the region is one step
+(reps-per-step is user-set in the run setup, default 1; the command dwell holds several). The ramp
+reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as loop passes, and
+`loopIteration` is rate-independent so a plateau holds a fixed number of reps regardless of the
+tempo it plays at (and freezes naturally on pause). No new stored `Loop` fields are added —
+`speed` (working) and `commandTempo` (command) already exist and the reach is derived — so the
+loop keeps full ADR 0011/0012 migration discipline (the clean-rewrite relaxation was for `Exercise`
+only). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).

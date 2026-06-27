@@ -271,6 +271,31 @@ final class Loop {
             automatorEnabled = newValue.enabled
         }
     }
+
+    // Command-anchored progression (ADR 0046, Phase B) — the loop analogue of `Exercise`'s
+    // working / command / reach, but in `×`-of-original (not absolute BPM). The loop is the
+    // **trainable unit** Practice surfaces once it has a measured command; the warm-up floor is
+    // its `speed` (start ×) and the reach derives from the command via the unit-generic
+    // `TempoStretch` (`×`-unit clamps). No stored fields are added — `speed` and `commandTempo`
+    // already exist — so `Loop`'s ADR 0011/0012 migration discipline is untouched.
+
+    /// The **effective** command speed (×): the measured `commandTempo` once set, else the
+    /// loop's `speed` — so an un-measured loop's reach still computes and reads like the old
+    /// light model. Mirrors `Exercise.command`.
+    var command: Double { commandTempo ?? speed }
+
+    /// Whether a command speed has been measured yet (vs falling back to `speed`). The gate for
+    /// a loop appearing as a trainable Practice unit (ADR 0046, Phase B).
+    var hasMeasuredCommand: Bool { commandTempo != nil }
+
+    /// The reach (×) derived from the current `command` — proportional + clamped to `+0.02…+0.10×`
+    /// (pure `TempoStretch`). The loop analogue of `Exercise.derivedTarget`; surfaced so the
+    /// run screen can preview the reach above the owned command.
+    var derivedTargetSpeed: Double { TempoStretch.targetSpeed(forCommand: command) }
+
+    /// Promote a newly-owned speed to `commandTempo` (ADR 0046, Phase B). The reach is derived,
+    /// not stored, so promotion is a single write — the loop analogue of `Exercise.promoteCommand`.
+    func promoteCommand(to speed: Double) { commandTempo = speed }
 }
 
 @Model
