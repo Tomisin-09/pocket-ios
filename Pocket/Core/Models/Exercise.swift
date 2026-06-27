@@ -1,10 +1,10 @@
 import Foundation
 import SwiftData
 
-/// A savable standalone-metronome **preset that is itself a practice exercise** (ADR
-/// 0043): "Alternating picking", "Spider" — a named, persistent thing you return to,
-/// each with its own working tempo, time signature, accents, subdivision and tempo-ramp
-/// recipe. A list of these is the exercise library.
+/// A **practice exercise** (ADR 0043/0046): "Alternating picking", "Spider" — a named,
+/// persistent click-only drill you return to and push faster over time, each with its own
+/// working / command tempos, time signature, accents, subdivision, and a native command-ramp
+/// training recipe. A list of these is the Practice space's unit list.
 ///
 /// Deliberately **audio-free** and separate from `Loop`: a `Loop` is bound to an audio
 /// file/region, an exercise has no audio source, so overloading `Loop` would leak audio
@@ -68,28 +68,31 @@ final class Exercise {
         set { subdivisionRaw = newValue.rawValue }
     }
 
-    // Automator recipe — the persisted tempo ramp that makes "Spider" a full practice
-    // prescription, not just a number. Pure stepping logic arrives in slice 4
-    // (`MetronomeAutomator`); these are its stored parameters. Declaration defaults keep
-    // migration additive, like `Loop`'s automator fields.
-    var automatorEnabled: Bool = false
-    /// BPM added at each step.
-    var automatorStepBPM: Int = 5
+    // Training-routine recipe (ADR 0046) — the persisted `CommandRamp` shape this exercise
+    // prescribes, stored **natively** rather than borrowed from the free-play automator (the
+    // ADR 0045 shortcut, undone here). Declaration defaults keep migration additive (the
+    // CoreData 134110 rule); the three renamed fields carry `@Attribute(originalName:)` so the
+    // automator* → ramp* rename is a lightweight, data-preserving migration, not a drop+add.
+    /// BPM added at each warm-up step.
+    @Attribute(originalName: "automatorStepBPM") var rampStepBPM: Int = 5
     /// How many intervals between steps (e.g. every 4 *bars* or every 30 *seconds*).
-    var automatorIntervalCount: Int = 4
-    /// Backing storage for `automatorIntervalUnit` — a plain `String` (enum-attribute
-    /// migration rule). Empty/unknown reads as `.bars`.
-    var automatorIntervalUnitRaw: String = MetronomeIntervalUnit.bars.rawValue
-    /// The ramp ceiling (absolute BPM). `nil` ⇒ defaults to `targetTempo`, so a ramp
-    /// climbs toward the same goal the cross-session number tracks (ADR 0043). Optional
-    /// with no declaration default, so it migrates additively as "unset → use target".
-    var automatorCeiling: Int?
+    @Attribute(originalName: "automatorIntervalCount") var rampIntervalCount: Int = 4
+    /// Backing storage for `rampIntervalUnit` — a plain `String` (the enum-attribute migration
+    /// rule, ADR 0036). Empty/unknown reads as `.bars`.
+    @Attribute(originalName: "automatorIntervalUnitRaw")
+    var rampIntervalUnitRaw: String = MetronomeIntervalUnit.bars.rawValue
+    /// How many intervals the command plateau holds — the **dwell** (ADR 0045/0046), where the
+    /// bulk of the reps land. Stored natively now (was the fixed `4` the routine assumed).
+    var dwellIntervals: Int = 4
+    /// Whether the routine **backs off** below command after the summit, so you finish on clean
+    /// control rather than the edge (ADR 0045). Stored natively now (was a fixed `true`).
+    var includeBackoff: Bool = true
 
-    /// Whether the automator steps every N **bars** or every N **seconds** — typed view
-    /// over `automatorIntervalUnitRaw`.
-    var automatorIntervalUnit: MetronomeIntervalUnit {
-        get { MetronomeIntervalUnit(rawValue: automatorIntervalUnitRaw) ?? .bars }
-        set { automatorIntervalUnitRaw = newValue.rawValue }
+    /// Whether the routine steps every N **bars** or every N **seconds** — typed view over
+    /// `rampIntervalUnitRaw`.
+    var rampIntervalUnit: MetronomeIntervalUnit {
+        get { MetronomeIntervalUnit(rawValue: rampIntervalUnitRaw) ?? .bars }
+        set { rampIntervalUnitRaw = newValue.rawValue }
     }
 
     /// Open descriptive tags ("warmup", "picking"), routed through the shared `Labels`
@@ -111,11 +114,11 @@ final class Exercise {
          noteValue: Int = 4,
          accentBeats: [Int] = [0],
          subdivision: Subdivision = .none,
-         automatorEnabled: Bool = false,
-         automatorStepBPM: Int = 5,
-         automatorIntervalCount: Int = 4,
-         automatorIntervalUnit: MetronomeIntervalUnit = .bars,
-         automatorCeiling: Int? = nil,
+         rampStepBPM: Int = 5,
+         rampIntervalCount: Int = 4,
+         rampIntervalUnit: MetronomeIntervalUnit = .bars,
+         dwellIntervals: Int = 4,
+         includeBackoff: Bool = true,
          tags: [String] = [],
          notes: String = "",
          dateAdded: Date = .now) {
@@ -128,19 +131,15 @@ final class Exercise {
         self.noteValue = noteValue
         self.accentBeats = accentBeats
         self.subdivisionRaw = subdivision.rawValue
-        self.automatorEnabled = automatorEnabled
-        self.automatorStepBPM = automatorStepBPM
-        self.automatorIntervalCount = automatorIntervalCount
-        self.automatorIntervalUnitRaw = automatorIntervalUnit.rawValue
-        self.automatorCeiling = automatorCeiling
+        self.rampStepBPM = rampStepBPM
+        self.rampIntervalCount = rampIntervalCount
+        self.rampIntervalUnitRaw = rampIntervalUnit.rawValue
+        self.dwellIntervals = dwellIntervals
+        self.includeBackoff = includeBackoff
         self.tags = tags
         self.notes = notes
         self.dateAdded = dateAdded
     }
-
-    /// The automator's resolved ceiling: its explicit `automatorCeiling` when set, else
-    /// the exercise's `targetTempo` (the ADR 0043 default — a ramp climbs to the goal).
-    var resolvedAutomatorCeiling: Int { automatorCeiling ?? targetTempo }
 
     /// The warm-up **floor** — the comfortable tempo a session's ramp begins from (ADR
     /// 0045). A clarity alias over the `currentTempo` storage (kept for migration); new
@@ -167,13 +166,14 @@ final class Exercise {
     /// warm up from the working floor to the owned command, dwell there, summit briefly at the
     /// derived reach, then back off below command. The single pure seam Practice launches a run
     /// from — `engine.run(ramp:)` drives this `CommandRamp` directly instead of routing through
-    /// the automator setters. Built from the saved recipe (`automatorStepBPM`/interval/unit);
-    /// the dwell length and backoff tail are the standard routine shape (stored natively in a
-    /// later slice). Pure and UI-free, so the plateau math stays unit-tested per AGENTS.md.
+    /// the automator setters. Built entirely from the saved **native** recipe (`rampStepBPM` /
+    /// interval / unit / `dwellIntervals` / `includeBackoff`). Pure and UI-free, so the plateau
+    /// math stays unit-tested per AGENTS.md.
     var ramp: CommandRamp {
         CommandRamp(working: workingTempo, command: command, target: derivedTarget,
-                    stepBPM: max(1, automatorStepBPM), intervalCount: max(1, automatorIntervalCount),
-                    unit: automatorIntervalUnit, dwellIntervals: 4, includeBackoff: true)
+                    stepBPM: max(1, rampStepBPM), intervalCount: max(1, rampIntervalCount),
+                    unit: rampIntervalUnit, dwellIntervals: max(1, dwellIntervals),
+                    includeBackoff: includeBackoff)
     }
 
     /// Promote a newly-owned tempo to `command` and recompute the `target` reach above it
@@ -195,19 +195,4 @@ final class Exercise {
 
     /// The time signature as a display string ("4/4", "6/8").
     var timeSignatureLabel: String { "\(beatsPerBar)/\(noteValue)" }
-
-    /// A one-line recap of the full configuration — shared by the library row and the
-    /// save/update confirmation so what you see is exactly what is stored. Reads like
-    /// "97 BPM · 4/4 · Ramp to 117 BPM (+5 BPM every 4 bars)"; the ramp clause is dropped
-    /// when the automator is off.
-    var configurationSummary: String {
-        var parts = ["\(currentTempo) BPM", timeSignatureLabel]
-        if subdivision != .none { parts.append(subdivision.label.lowercased()) }
-        if automatorEnabled {
-            let cadence = automatorIntervalUnit.interval(count: automatorIntervalCount)
-            parts.append("Ramp to \(resolvedAutomatorCeiling) BPM "
-                         + "(+\(automatorStepBPM) BPM every \(cadence))")
-        }
-        return parts.joined(separator: " · ")
-    }
 }

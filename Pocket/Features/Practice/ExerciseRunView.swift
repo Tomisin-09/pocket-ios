@@ -194,7 +194,7 @@ struct ExerciseRunView: View {
             working = max(range.lowerBound, TempoStretch.warmupFloorBPM(forCommand: command))
         }
         steps = CommandRamp.intermediateSteps(working: working, command: command,
-                                              stepBPM: exercise.automatorStepBPM)
+                                              stepBPM: exercise.rampStepBPM)
         seeded = true
     }
 
@@ -203,11 +203,11 @@ struct ExerciseRunView: View {
     private func commitAndStart() {
         exercise.workingTempo = working
         exercise.promoteCommand(to: command)          // command + reach (targetTempo)
-        exercise.automatorStepBPM = stepBPM
-        exercise.automatorIntervalUnit = .bars
-        exercise.automatorIntervalCount = StandaloneMetronomeEngine.automatorDefaultBars
-        exercise.automatorCeiling = reach
-        exercise.automatorEnabled = true
+        exercise.rampStepBPM = stepBPM
+        exercise.rampIntervalUnit = .bars
+        exercise.rampIntervalCount = StandaloneMetronomeEngine.automatorDefaultBars
+        exercise.dwellIntervals = StandaloneMetronomeEngine.automatorDefaultDwell
+        exercise.includeBackoff = true
         try? modelContext.save()
 
         engine.run(ramp: routine)

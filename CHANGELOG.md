@@ -15,7 +15,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   arming the automator and running a training routine are no longer mutually exclusive; (3) the
   metronome's own in-screen exercise UI (save/load presets, the presets library, the
   command-anchored Training Mode) is **removed** — the metronome is now a pure free-play tool
-  and all of that lives in the **Practice** space instead.
+  and all of that lives in the **Practice** space instead; (4) the exercise model stores its
+  training-routine recipe **natively** (`ramp*` fields + dwell/backoff) rather than borrowing
+  the free-play automator's fields — this field rename is data-preserving
+  (`@Attribute(originalName:)`), so no further store reset beyond the one already noted above.
 
 ### Added
 - **A top-level Practice space** (ADR 0046, Phase A). Exercises are no longer buried inside the

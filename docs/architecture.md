@@ -167,7 +167,13 @@ as Practice's own create path (the metronome's old save UI is now retired). Tapp
 metronome screen's): it edits working / command / reach + warm-up steps while stopped, shows the
 routine staircase (the shared `RoutineStairs`), and on **Start** commits the edits and hands the engine the
 `Exercise`-shaped `CommandRamp` via `engine.run(ramp:)`, then shows a live BPM / beat / session
-readout. Its indigo `practice` accent marks it as a distinct space from the metronome's teal. Stage 4's waveform for real files is
+readout. Its indigo `practice` accent marks it as a distinct space from the metronome's teal.
+The `Exercise` model now stores the `CommandRamp` recipe **natively** (ADR 0046 §5): `rampStepBPM`
+/ `rampIntervalCount` / `rampIntervalUnit` plus `dwellIntervals` and `includeBackoff`, instead of
+borrowing the free-play automator fields the ADR 0045 shortcut reused. The `automator* → ramp*`
+rename is a **lightweight, data-preserving** migration via `@Attribute(originalName:)` (no
+drop+add), and the now-meaningless `automatorEnabled` / `automatorCeiling` columns are dropped;
+all new columns carry declaration defaults so the store opens without a 134110 wipe. Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).

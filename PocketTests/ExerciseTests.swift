@@ -18,9 +18,9 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(exercise.noteValue, 4)
         XCTAssertEqual(exercise.accentBeats, [0])
         XCTAssertEqual(exercise.subdivision, .none)
-        XCTAssertEqual(exercise.automatorIntervalUnit, .bars)
-        XCTAssertFalse(exercise.automatorEnabled)
-        XCTAssertNil(exercise.automatorCeiling)
+        XCTAssertEqual(exercise.rampIntervalUnit, .bars)
+        XCTAssertEqual(exercise.dwellIntervals, 4)
+        XCTAssertTrue(exercise.includeBackoff)
     }
 
     func testEachExerciseGetsAUniqueUID() {
@@ -45,28 +45,18 @@ final class ExerciseTests: XCTestCase {
 
     func testIntervalUnitRoundTripsThroughStringBacking() {
         let exercise = Exercise()
-        exercise.automatorIntervalUnit = .seconds
-        XCTAssertEqual(exercise.automatorIntervalUnitRaw, "seconds")
-        XCTAssertEqual(exercise.automatorIntervalUnit, .seconds)
+        exercise.rampIntervalUnit = .seconds
+        XCTAssertEqual(exercise.rampIntervalUnitRaw, "seconds")
+        XCTAssertEqual(exercise.rampIntervalUnit, .seconds)
     }
 
     func testIntervalUnitFallsBackToBarsOnUnknownRaw() {
         let exercise = Exercise()
-        exercise.automatorIntervalUnitRaw = "fortnights"
-        XCTAssertEqual(exercise.automatorIntervalUnit, .bars)
+        exercise.rampIntervalUnitRaw = "fortnights"
+        XCTAssertEqual(exercise.rampIntervalUnit, .bars)
     }
 
     // MARK: - Computed accessors
-
-    func testResolvedCeilingDefaultsToTargetTempo() {
-        let exercise = Exercise(targetTempo: 140)
-        XCTAssertEqual(exercise.resolvedAutomatorCeiling, 140)
-    }
-
-    func testResolvedCeilingUsesExplicitCeilingWhenSet() {
-        let exercise = Exercise(targetTempo: 140, automatorCeiling: 160)
-        XCTAssertEqual(exercise.resolvedAutomatorCeiling, 160)
-    }
 
     func testTempoMarkingDerivesFromCurrentTempo() {
         XCTAssertEqual(Exercise(currentTempo: 90).tempoMarking, .andante)
@@ -89,8 +79,8 @@ final class ExerciseTests: XCTestCase {
 
     func testRampMapsTheSavedRecipe() {
         let exercise = Exercise(currentTempo: 70, commandTempo: 100,
-                                automatorStepBPM: 8, automatorIntervalCount: 4,
-                                automatorIntervalUnit: .bars)
+                                rampStepBPM: 8, rampIntervalCount: 4,
+                                rampIntervalUnit: .bars, dwellIntervals: 6, includeBackoff: false)
         let ramp = exercise.ramp
         XCTAssertEqual(ramp.working, 70)
         XCTAssertEqual(ramp.command, 100)
@@ -98,7 +88,9 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(ramp.stepBPM, 8)
         XCTAssertEqual(ramp.intervalCount, 4)
         XCTAssertEqual(ramp.unit, .bars)
-        XCTAssertTrue(ramp.includeBackoff)
+        // dwell + backoff now come from native storage, not a fixed routine shape.
+        XCTAssertEqual(ramp.dwellIntervals, 6)
+        XCTAssertFalse(ramp.includeBackoff)
     }
 
     /// An un-promoted exercise (no measured command) still produces a usable ramp: command
@@ -111,12 +103,13 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(ramp.target, TempoStretch.targetBPM(forCommand: 90))
     }
 
-    /// Step and interval are clamped to at least 1 so the ramp always advances and the
+    /// Step, interval, and dwell are clamped to at least 1 so the ramp always advances and the
     /// plateau math never divides by zero.
     func testRampClampsStepAndIntervalToAtLeastOne() {
-        let exercise = Exercise(automatorStepBPM: 0, automatorIntervalCount: 0)
+        let exercise = Exercise(rampStepBPM: 0, rampIntervalCount: 0, dwellIntervals: 0)
         XCTAssertEqual(exercise.ramp.stepBPM, 1)
         XCTAssertEqual(exercise.ramp.intervalCount, 1)
+        XCTAssertEqual(exercise.ramp.dwellIntervals, 1)
     }
 
     // MARK: - Schema / persistence (additive migration)
@@ -130,7 +123,7 @@ final class ExerciseTests: XCTestCase {
 
         let spider = Exercise(name: "Spider", currentTempo: 100, targetTempo: 160,
                                        subdivision: .sixteenths,
-                                       automatorIntervalUnit: .seconds, tags: ["picking"])
+                                       rampIntervalUnit: .seconds, tags: ["picking"])
         context.insert(spider)
         try context.save()
 
@@ -138,9 +131,9 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(fetched.count, 1)
         XCTAssertEqual(fetched.first?.name, "Spider")
         XCTAssertEqual(fetched.first?.subdivision, .sixteenths)
-        XCTAssertEqual(fetched.first?.automatorIntervalUnit, .seconds)
+        XCTAssertEqual(fetched.first?.rampIntervalUnit, .seconds)
         XCTAssertEqual(fetched.first?.tags, ["picking"])
-        XCTAssertEqual(fetched.first?.resolvedAutomatorCeiling, 160)
+        XCTAssertEqual(fetched.first?.targetTempo, 160)
     }
 
     /// The new model shares a container with the existing `Song` graph without
