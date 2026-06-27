@@ -39,6 +39,13 @@ struct CommandRamp: Equatable, TempoRamp {
     var dwellIntervals: Int
     /// Whether to append the backoff tail below command.
     var includeBackoff: Bool
+    /// Intermediate plateaus on the climb from command up to the reach (summit). `0` ⇒ a single
+    /// jump straight to the reach (the original behaviour). Defaulted so existing call sites are
+    /// unaffected.
+    var reachSteps: Int = 0
+    /// Intermediate plateaus on the descent from the summit down to the backoff floor. `0` ⇒ a
+    /// single drop to the backoff tail (the original behaviour). Defaulted, as `reachSteps`.
+    var backoffSteps: Int = 0
 
     /// One held tempo and how many `intervalCount`-units it holds for.
     struct Plateau: Equatable {
@@ -66,9 +73,11 @@ struct CommandRamp: Equatable, TempoRamp {
         return max(0, Int((Double(span) / Double(stepBPM)).rounded()) - 1)
     }
 
-    /// The ordered plateaus, warm-up floor through backoff tail. Warm-up, summit and backoff
-    /// each hold one interval; the command plateau holds `dwellIntervals`. The summit is
-    /// dropped when `target ≤ command`, and the backoff when it wouldn't sit below command.
+    /// The ordered plateaus, warm-up floor through backoff tail. Warm-up, reach and backoff
+    /// plateaus each hold one interval; the command plateau holds `dwellIntervals`. The reach
+    /// climb (and the descent into the backoff) can carry `reachSteps`/`backoffSteps`
+    /// intermediate plateaus. The summit is dropped when `target ≤ command`, and the backoff
+    /// when it wouldn't sit below command.
     var plateaus: [Plateau] {
         var result: [Plateau] = []
         if stepBPM > 0, command > working {
@@ -80,15 +89,34 @@ struct CommandRamp: Equatable, TempoRamp {
         }
         result.append(Plateau(bpm: command, intervals: max(1, dwellIntervals)))
         if target > command {
+            for bpm in Self.intermediateBPMs(from: command, to: target, steps: reachSteps) {
+                result.append(Plateau(bpm: bpm, intervals: 1))
+            }
             result.append(Plateau(bpm: target, intervals: 1))
         }
         if includeBackoff {
             let backoff = TempoStretch.backoffBPM(command: command, target: target, floor: working)
             if backoff < command {
+                let summit = target > command ? target : command
+                for bpm in Self.intermediateBPMs(from: summit, to: backoff, steps: backoffSteps) {
+                    result.append(Plateau(bpm: bpm, intervals: 1))
+                }
                 result.append(Plateau(bpm: backoff, intervals: 1))
             }
         }
         return result
+    }
+
+    /// `steps` evenly-spaced BPMs strictly **between** `from` and `to` (both endpoints excluded),
+    /// ordered from `from` toward `to`. Works in both directions (ascending reach, descending
+    /// backoff). Empty when `steps ≤ 0`, there's no gap, or rounding lands every stop on an
+    /// endpoint — so the caller always appends its own `to` plateau without duplication.
+    static func intermediateBPMs(from: Int, to: Int, steps: Int) -> [Int] {
+        guard steps > 0, from != to else { return [] }
+        let span = Double(to - from)
+        return (1...steps)
+            .map { from + Int((span * Double($0) / Double(steps + 1)).rounded()) }
+            .filter { $0 != from && $0 != to }
     }
 
     /// The tempo after `elapsedBars` bars / `elapsedSeconds` seconds: the plateau the elapsed
@@ -104,6 +132,22 @@ struct CommandRamp: Equatable, TempoRamp {
             if intervalsElapsed < cumulative { return plateau.bpm }
         }
         return last.bpm
+    }
+
+    /// The index of the plateau the ramp is currently holding (the live-highlight cursor for
+    /// the staircase, ADR 0046): the same walk as `bpm(…)` but returning the position, clamped
+    /// to the last plateau once the ramp completes. `0` when there are no plateaus.
+    func currentPlateauIndex(elapsedBars: Int, elapsedSeconds: TimeInterval) -> Int {
+        let steps = plateaus
+        guard intervalCount > 0, !steps.isEmpty else { return 0 }
+        let elapsed: Double = unit == .bars ? Double(max(0, elapsedBars)) : max(0, elapsedSeconds)
+        let intervalsElapsed = Int(elapsed / Double(intervalCount))
+        var cumulative = 0
+        for (index, plateau) in steps.enumerated() {
+            cumulative += plateau.intervals
+            if intervalsElapsed < cumulative { return index }
+        }
+        return steps.count - 1
     }
 
     /// Total intervals across all plateaus — the ramp's length in interval units.

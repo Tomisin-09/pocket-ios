@@ -26,6 +26,9 @@ struct ExerciseRunView: View {
     @State private var working = 0
     @State private var command = 0
     @State private var steps = 0
+    @State private var reachSteps = 0
+    @State private var backoffSteps = 0
+    @State private var showSteps = false
     @State private var seeded = false
 
     /// The reach derived from the (local) command — proportional + clamped (ADR 0045).
@@ -42,8 +45,11 @@ struct ExerciseRunView: View {
         CommandRamp(working: working, command: command, target: reach,
                     stepBPM: stepBPM, intervalCount: StandaloneMetronomeEngine.automatorDefaultBars,
                     unit: .bars, dwellIntervals: StandaloneMetronomeEngine.automatorDefaultDwell,
-                    includeBackoff: true)
+                    includeBackoff: true, reachSteps: reachSteps, backoffSteps: backoffSteps)
     }
+
+    /// Whether there's a climb above command to put intermediate reach stops on.
+    private var hasReach: Bool { reach > command }
 
     private var isRunning: Bool { engine.transport != .stopped }
 
@@ -54,13 +60,15 @@ struct ExerciseRunView: View {
                     liveReadout
                 } else {
                     tempos
-                    stepsRow
+                    stepsSection
                 }
-                RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice)
+                RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
+                              currentIndex: isRunning ? engine.currentRampPlateau : nil)
                 if !isRunning { promoteButton }
             }
             .padding(24)
         }
+        .scrollDismissesKeyboard(.interactively)
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -93,12 +101,12 @@ struct ExerciseRunView: View {
 
     private var tempos: some View {
         VStack(spacing: 14) {
-            tempoRow(label: "Working", caption: "warm-up floor", value: working) {
-                adjustWorking(by: $0)
-            }
-            tempoRow(label: "Command", caption: "fastest you own", value: command) {
-                adjustCommand(by: $0)
-            }
+            EditableTempoRow(label: "Working", caption: "warm-up floor", value: working,
+                             tint: PocketColor.practice,
+                             onStep: { adjustWorking(by: $0) }, onType: { setWorking($0) })
+            EditableTempoRow(label: "Command", caption: "fastest you own", value: command,
+                             tint: PocketColor.practice,
+                             onStep: { adjustCommand(by: $0) }, onType: { setCommand($0) })
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Reach").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
@@ -114,14 +122,12 @@ struct ExerciseRunView: View {
         }
     }
 
-    private var stepsRow: some View {
-        tempoRow(label: "Warm-up steps", caption: stepsCaption, value: steps) {
-            adjustSteps(by: $0)
-        }
-    }
-
-    private var stepsCaption: String {
-        steps == 0 ? "straight to command" : "+\(stepBPM) BPM per step"
+    /// The step controls, tucked behind a disclosure header so the run setup reads as just the
+    /// tempos + staircase by default; expand to shape the warm-up / reach / back-up granularity.
+    private var stepsSection: some View {
+        RoutineStepsControls(expanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
+                             backoffSteps: $backoffSteps, warmupStepBPM: stepBPM, reach: reach,
+                             hasReach: hasReach, tint: PocketColor.practice) { haptic(.light) }
     }
 
     private var promoteButton: some View {
@@ -195,6 +201,8 @@ struct ExerciseRunView: View {
         }
         steps = CommandRamp.intermediateSteps(working: working, command: command,
                                               stepBPM: exercise.rampStepBPM)
+        reachSteps = max(0, exercise.rampReachSteps)
+        backoffSteps = max(0, exercise.rampBackoffSteps)
         seeded = true
     }
 
@@ -208,61 +216,32 @@ struct ExerciseRunView: View {
         exercise.rampIntervalCount = StandaloneMetronomeEngine.automatorDefaultBars
         exercise.dwellIntervals = StandaloneMetronomeEngine.automatorDefaultDwell
         exercise.includeBackoff = true
+        exercise.rampReachSteps = reachSteps
+        exercise.rampBackoffSteps = backoffSteps
         try? modelContext.save()
 
         engine.run(ramp: routine)
         haptic(.medium)
     }
 
-    private func tempoRow(label: String, caption: String, value: Int,
-                          adjust: @escaping (Int) -> Void) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label).font(.subheadline).foregroundStyle(PocketColor.textPrimary)
-                Text(caption).font(.caption2).foregroundStyle(PocketColor.textSecondary)
-            }
-            Spacer()
-            stepButton(symbol: "minus", label: "Lower \(label)") { adjust(-1) }
-            Text("\(value)")
-                .font(.pocketMono(.title3))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(minWidth: 52)
-                .contentTransition(.numericText())
-            stepButton(symbol: "plus", label: "Raise \(label)") { adjust(1) }
-        }
-    }
-
     /// Working stays in range and never above command (the floor sits below the owned tempo).
-    private func adjustWorking(by delta: Int) {
-        let range = StandaloneMetronomeEngine.bpmRange
-        working = min(command, max(range.lowerBound, working + delta))
-        haptic(.light)
-    }
+    private func adjustWorking(by delta: Int) { setWorking(working + delta) }
 
     /// Command stays in range and never below working; the reach re-derives automatically.
-    private func adjustCommand(by delta: Int) {
+    private func adjustCommand(by delta: Int) { setCommand(command + delta) }
+
+    /// Set working to an absolute (typed) value, clamped to range and never above command.
+    private func setWorking(_ value: Int) {
         let range = StandaloneMetronomeEngine.bpmRange
-        command = min(range.upperBound, max(working, command + delta))
+        working = min(command, max(range.lowerBound, value))
         haptic(.light)
     }
 
-    /// Intermediate warm-up stops, 0…6 (0 ⇒ jump straight to command).
-    private func adjustSteps(by delta: Int) {
-        steps = max(0, min(6, steps + delta))
+    /// Set command to an absolute (typed) value, clamped to range and never below working.
+    private func setCommand(_ value: Int) {
+        let range = StandaloneMetronomeEngine.bpmRange
+        command = min(range.upperBound, max(working, value))
         haptic(.light)
-    }
-
-    private func stepButton(symbol: String, label: String,
-                            action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(width: 38, height: 38)
-                .background(Circle().fill(PocketColor.practice.opacity(0.18)))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 }
 

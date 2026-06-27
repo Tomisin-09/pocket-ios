@@ -107,8 +107,8 @@ final class StandaloneMetronomeEngine {
     // session timer, which a tempo change must not disturb). Both are integrated from the
     // tick delta so they survive the per-step phase re-anchors; bars accrue at the live
     // tempo (`delta · bpm/60 / beatsPerBar`).
-    private var automatorBarsElapsed = 0.0
-    private var automatorSecondsElapsed = 0.0
+    private(set) var automatorBarsElapsed = 0.0   // `private(set)`: +Automator reads for the plateau cursor
+    private(set) var automatorSecondsElapsed = 0.0
     private var lastTickTime: CFTimeInterval = 0
 
     /// How far ahead (real seconds) clicks are queued each tick. Comfortably larger than the

@@ -59,6 +59,15 @@ extension StandaloneMetronomeEngine {
     /// whether to accrue ramp progress and drive `bpm` from a ramp.
     var isRampActive: Bool { trainingRamp != nil || automatorEnabled }
 
+    /// The plateau index a **training run** is currently holding (ADR 0046) — drives the live
+    /// highlight on the Practice staircase. `nil` when no explicit training ramp is driving
+    /// (free-play or stopped), so the staircase falls back to its un-highlighted preview.
+    var currentRampPlateau: Int? {
+        guard let trainingRamp else { return nil }
+        return trainingRamp.currentPlateauIndex(elapsedBars: Int(automatorBarsElapsed),
+                                                elapsedSeconds: automatorSecondsElapsed)
+    }
+
     /// Run a command-anchored training routine directly (ADR 0046): the Practice layer hands
     /// the engine a fully-formed `CommandRamp`, which drives the tempo from its working floor
     /// through dwell → summit → backoff, instead of arming the free-play automator. This

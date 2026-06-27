@@ -87,6 +87,13 @@ final class Exercise {
     /// Whether the routine **backs off** below command after the summit, so you finish on clean
     /// control rather than the edge (ADR 0045). Stored natively now (was a fixed `true`).
     var includeBackoff: Bool = true
+    /// Intermediate stops on the climb from command up to the reach (ADR 0046 run-UI). `0` ⇒ a
+    /// single jump to the reach. Declaration default keeps the migration additive (CoreData
+    /// 134110 rule).
+    var rampReachSteps: Int = 0
+    /// Intermediate stops on the descent from the summit down to the backoff floor (ADR 0046
+    /// run-UI). `0` ⇒ a single drop. Declaration default, as `rampReachSteps`.
+    var rampBackoffSteps: Int = 0
 
     /// Whether the routine steps every N **bars** or every N **seconds** — typed view over
     /// `rampIntervalUnitRaw`.
@@ -119,6 +126,8 @@ final class Exercise {
          rampIntervalUnit: MetronomeIntervalUnit = .bars,
          dwellIntervals: Int = 4,
          includeBackoff: Bool = true,
+         rampReachSteps: Int = 0,
+         rampBackoffSteps: Int = 0,
          tags: [String] = [],
          notes: String = "",
          dateAdded: Date = .now) {
@@ -136,6 +145,8 @@ final class Exercise {
         self.rampIntervalUnitRaw = rampIntervalUnit.rawValue
         self.dwellIntervals = dwellIntervals
         self.includeBackoff = includeBackoff
+        self.rampReachSteps = rampReachSteps
+        self.rampBackoffSteps = rampBackoffSteps
         self.tags = tags
         self.notes = notes
         self.dateAdded = dateAdded
@@ -173,7 +184,8 @@ final class Exercise {
         CommandRamp(working: workingTempo, command: command, target: derivedTarget,
                     stepBPM: max(1, rampStepBPM), intervalCount: max(1, rampIntervalCount),
                     unit: rampIntervalUnit, dwellIntervals: max(1, dwellIntervals),
-                    includeBackoff: includeBackoff)
+                    includeBackoff: includeBackoff,
+                    reachSteps: max(0, rampReachSteps), backoffSteps: max(0, rampBackoffSteps))
     }
 
     /// Promote a newly-owned tempo to `command` and recompute the `target` reach above it
