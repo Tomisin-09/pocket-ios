@@ -32,7 +32,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   owned **command** (as % of original), preview the derived **reach** and the warm-up/reach/back-up
   staircase, and **run** it: the loop's region plays on repeat while a `LoopRunModel` steps the
   time-stretch rate through the command ramp (warm up → dwell → reach → back off) and stops at the
-  end.
+  end. The ramp advances **by loop repetitions** — one pass through the loop is one step ("play it
+  through, then bump it up"), with a **Reps per step** control (default 1) and a longer dwell at
+  command. The live readout shows the current speed and loop count.
 - **Loops are trainable units in Practice** (ADR 0046, Phase B). Practice is now a **hub** with two
   unit libraries: **Exercises** (your command drills) and **Loops** (any song loop you've measured —
   i.e. given a command tempo), each opening its own list. A measured loop shows its song as context

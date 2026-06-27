@@ -28,8 +28,11 @@ struct LoopRunView: View {
     @State private var steps = 0
     @State private var reachSteps = 0
     @State private var backoffSteps = 0
+    @State private var repsPerStep = LoopCommandRamp.defaultRepsPerStep
     @State private var showSteps = false
     @State private var seeded = false
+
+    private static let repsRange = 1...8
 
     /// Playback-speed bounds as integer percent (the engine clamps 0.25×–2.0×).
     private static let percentRange =
@@ -55,7 +58,7 @@ struct LoopRunView: View {
     /// (percent units) handed to the run on Start.
     private var routine: CommandRamp {
         CommandRamp(working: working, command: command, target: reach, stepBPM: stepPercent,
-                    intervalCount: LoopCommandRamp.defaultSecondsPerPlateau, unit: .seconds,
+                    intervalCount: max(1, repsPerStep), unit: .bars,
                     dwellIntervals: LoopCommandRamp.defaultDwellIntervals, includeBackoff: true,
                     reachSteps: reachSteps, backoffSteps: backoffSteps)
     }
@@ -71,6 +74,7 @@ struct LoopRunView: View {
                     liveReadout
                 } else {
                     tempos
+                    repsRow
                     stepsSection
                 }
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
@@ -101,6 +105,10 @@ struct LoopRunView: View {
                 Text("of original tempo")
                     .font(.caption)
                     .foregroundStyle(PocketColor.textSecondary)
+                Text("loop \(model.elapsedReps + 1)")
+                    .font(.caption2)
+                    .foregroundStyle(PocketColor.practice)
+                    .contentTransition(.numericText())
             }
             if model.isLoading {
                 ProgressView().tint(PocketColor.practice)
@@ -134,6 +142,40 @@ struct LoopRunView: View {
                     .contentTransition(.numericText())
             }
         }
+    }
+
+    /// How many loop passes each step holds before the tempo bumps (ADR 0046 Phase B). `1` ⇒ each
+    /// step is one pass through the loop; the command dwell holds this many passes per its intervals.
+    private var repsRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Reps per step").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
+                Text(repsPerStep == 1 ? "one loop, then step up" : "\(repsPerStep) loops, then step up")
+                    .font(.caption2).foregroundStyle(PocketColor.textSecondary)
+            }
+            Spacer()
+            stepButton(symbol: "minus", label: "Fewer reps per step") {
+                repsPerStep = max(Self.repsRange.lowerBound, repsPerStep - 1); haptic(.light)
+            }
+            Text("\(repsPerStep)")
+                .font(.pocketMono(.title3)).foregroundStyle(PocketColor.textPrimary)
+                .frame(width: 44).contentTransition(.numericText())
+            stepButton(symbol: "plus", label: "More reps per step") {
+                repsPerStep = min(Self.repsRange.upperBound, repsPerStep + 1); haptic(.light)
+            }
+        }
+    }
+
+    private func stepButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(PocketColor.textPrimary)
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(PocketColor.practice.opacity(0.18)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private var stepsSection: some View {

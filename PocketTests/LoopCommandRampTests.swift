@@ -56,14 +56,30 @@ final class LoopCommandRampTests: XCTestCase {
 
     // MARK: - Ramp builder
 
-    func testRampMapsTemposToPercentAndSeconds() {
+    func testRampMapsTemposToPercentAndReps() {
         let ramp = LoopCommandRamp.make(working: 0.70, command: 0.85, target: 0.91,
                                         warmupSteps: 0)
         XCTAssertEqual(ramp.working, 70)
         XCTAssertEqual(ramp.command, 85)
         XCTAssertEqual(ramp.target, 91)
-        XCTAssertEqual(ramp.unit, .seconds)
-        XCTAssertEqual(ramp.intervalCount, LoopCommandRamp.defaultSecondsPerPlateau)
+        // Intervals are loop passes — the ramp reuses `.bars`, fed by the engine's loopIteration.
+        XCTAssertEqual(ramp.unit, .bars)
+        XCTAssertEqual(ramp.intervalCount, LoopCommandRamp.defaultRepsPerStep)
+    }
+
+    func testRepsPerStepSetsTheInterval() {
+        let ramp = LoopCommandRamp.make(working: 0.70, command: 0.85, target: 0.91,
+                                        warmupSteps: 0, repsPerStep: 3)
+        XCTAssertEqual(ramp.intervalCount, 3)
+    }
+
+    func testOneRepPerStepAdvancesPlateauEachPass() {
+        // Default 1 rep/step: each non-dwell plateau is one loop pass, so the warm-up floor holds
+        // for pass 0 and the next plateau begins at pass 1.
+        let ramp = LoopCommandRamp.make(working: 0.70, command: 0.85, target: 0.91,
+                                        warmupSteps: 1, includeBackoff: false)
+        XCTAssertEqual(ramp.currentPlateauIndex(elapsedBars: 0, elapsedSeconds: 0), 0)
+        XCTAssertEqual(ramp.currentPlateauIndex(elapsedBars: 1, elapsedSeconds: 0), 1)
     }
 
     func testRampStaircaseClimbsWarmupThroughDwellToReach() {
@@ -94,12 +110,12 @@ final class LoopCommandRampTests: XCTestCase {
         XCTAssertEqual(fromLoop, explicit)
     }
 
-    func testRampFinishesAfterAllPlateausElapse() {
+    func testRampFinishesAfterAllPassesElapse() {
         let ramp = LoopCommandRamp.make(working: 0.70, command: 0.85, target: 0.91,
                                         warmupSteps: 0, includeBackoff: true)
         let total = ramp.completionInterval ?? 0
         XCTAssertGreaterThan(total, 0)
-        XCTAssertFalse(ramp.isFinished(elapsedBars: 0, elapsedSeconds: Double(total) - 1))
-        XCTAssertTrue(ramp.isFinished(elapsedBars: 0, elapsedSeconds: Double(total)))
+        XCTAssertFalse(ramp.isFinished(elapsedBars: total - 1, elapsedSeconds: 0))
+        XCTAssertTrue(ramp.isFinished(elapsedBars: total, elapsedSeconds: 0))
     }
 }

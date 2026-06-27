@@ -7,15 +7,20 @@ import Foundation
 /// and fed to `CommandRamp` unchanged. `CommandRamp` is reused, not forked: the plateau math,
 /// live cursor, and completion all work on percent, and `RoutineStairs` renders it as-is.
 ///
-/// Intervals are counted in **seconds** (a loop has no metronome "bars"); the run driver steps the
-/// ramp by elapsed playback seconds and applies `bpm(elapsedSeconds:) / 100` as the time-stretch
-/// rate. Pure and UI-free so the percent rounding (the kind of tempo math that breaks silently) is
-/// unit-tested per AGENTS.md.
+/// Intervals are counted in **loop repetitions** — one pass through the region is one step, which is
+/// how a loop is actually practised ("play it through, then bump it up"). A loop has no metronome
+/// bars, so the ramp reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as
+/// *loop passes*: the run driver feeds `PracticeAudioEngine.loopIteration` as the elapsed count.
+/// That count is **rate-independent** (it counts musical repetitions, not frames), so a plateau
+/// holds a fixed number of reps regardless of the tempo it plays at. Pure and UI-free so the percent
+/// rounding (the kind of tempo math that breaks silently) is unit-tested per AGENTS.md.
 enum LoopCommandRamp {
 
-    /// Default seconds each non-dwell plateau (warm-up / reach / back-off) holds in a loop run.
-    static let defaultSecondsPerPlateau = 12
-    /// Default intervals the command plateau dwells — the consolidation hold (≈ `dwell × seconds`).
+    /// Default loop passes each non-dwell plateau (warm-up / reach / back-off) holds — one rep per
+    /// step, the natural "play it through, then step" unit (user-adjustable in the run setup).
+    static let defaultRepsPerStep = 1
+    /// Default intervals the command plateau dwells — the consolidation hold, in reps-per-step units
+    /// (so the dwell runs `dwellIntervals × repsPerStep` passes).
     static let defaultDwellIntervals = 4
 
     /// `×`-of-original → integer percent (`0.85×` → `85`). Rounded to the nearest whole percent
@@ -26,20 +31,21 @@ enum LoopCommandRamp {
     /// Build the staircase for a loop run from its `×` tempos + shaping params, in percent units.
     /// `warmupSteps` is the count of intermediate plateaus between working and command (the
     /// per-step BPM is derived, as in `ExerciseRunView`); `reachSteps`/`backoffSteps` shape the
-    /// climb to and descent from the summit.
+    /// climb to and descent from the summit; `repsPerStep` is how many loop passes each plateau
+    /// holds (the interval the run driver advances by `loopIteration`).
     static func make(working: Double, command: Double, target: Double,
                      warmupSteps: Int,
                      dwellIntervals: Int = defaultDwellIntervals,
                      reachSteps: Int = 0, backoffSteps: Int = 0,
                      includeBackoff: Bool = true,
-                     secondsPerPlateau: Int = defaultSecondsPerPlateau) -> CommandRamp {
+                     repsPerStep: Int = defaultRepsPerStep) -> CommandRamp {
         let workingPct = percent(working)
         let commandPct = percent(command)
         let targetPct = percent(target)
         let stepBPM = CommandRamp.warmupStepBPM(working: workingPct, command: commandPct,
                                                 intermediateSteps: max(0, warmupSteps))
         return CommandRamp(working: workingPct, command: commandPct, target: targetPct,
-                           stepBPM: stepBPM, intervalCount: max(1, secondsPerPlateau), unit: .seconds,
+                           stepBPM: stepBPM, intervalCount: max(1, repsPerStep), unit: .bars,
                            dwellIntervals: max(1, dwellIntervals), includeBackoff: includeBackoff,
                            reachSteps: max(0, reachSteps), backoffSteps: max(0, backoffSteps))
     }
@@ -50,10 +56,10 @@ enum LoopCommandRamp {
                      dwellIntervals: Int = defaultDwellIntervals,
                      reachSteps: Int = 0, backoffSteps: Int = 0,
                      includeBackoff: Bool = true,
-                     secondsPerPlateau: Int = defaultSecondsPerPlateau) -> CommandRamp {
+                     repsPerStep: Int = defaultRepsPerStep) -> CommandRamp {
         make(working: loop.speed, command: loop.command, target: loop.derivedTargetSpeed,
              warmupSteps: warmupSteps, dwellIntervals: dwellIntervals,
              reachSteps: reachSteps, backoffSteps: backoffSteps,
-             includeBackoff: includeBackoff, secondsPerPlateau: secondsPerPlateau)
+             includeBackoff: includeBackoff, repsPerStep: repsPerStep)
     }
 }

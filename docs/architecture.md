@@ -209,9 +209,13 @@ unit-generic `target(forCommand:…)` with `×`-unit clamps (`+0.02…+0.10×`).
 `ExerciseRunView` (working/command as %, derived reach, the same `RoutineStairs` /
 `RoutineStepsControls`, promote), and **owns a `LoopRunModel`** which in turn owns a private
 `PracticeAudioEngine`: it resolves the song file (the shared `SecurityScopedAccess`, extracted from
-`WaveformPracticeModel`), loops the region (`setLoop`), and on each timer tick reads
-`ramp.bpm(elapsedSeconds:)` → `setRate(percent/100)`, stopping at `ramp.isFinished`. The interval
-clock is wall-clock seconds accrued **only while playing**. No new stored `Loop` fields are added —
+`WaveformPracticeModel`), loops the region (`setLoop`), and polls the engine's **`loopIteration`**
+each tick → `ramp.bpm(elapsedBars: reps)` → `setRate(percent/100)`, stopping at `ramp.isFinished`.
+The ramp advances by **loop repetitions, not seconds** — one pass through the region is one step
+(reps-per-step is user-set in the run setup, default 1; the command dwell holds several). The ramp
+reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as loop passes, and
+`loopIteration` is rate-independent so a plateau holds a fixed number of reps regardless of the
+tempo it plays at (and freezes naturally on pause). No new stored `Loop` fields are added —
 `speed` (working) and `commandTempo` (command) already exist and the reach is derived — so the
 loop keeps full ADR 0011/0012 migration discipline (the clean-rewrite relaxation was for `Exercise`
 only). Stage 4's waveform for real files is

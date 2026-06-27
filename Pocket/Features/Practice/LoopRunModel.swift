@@ -23,8 +23,10 @@ final class LoopRunModel {
     private let engine = PracticeAudioEngine()
 
     private(set) var transport: Transport = .stopped
-    /// Elapsed run seconds (accumulated only while playing) — the ramp's interval clock.
-    private(set) var elapsedSeconds: TimeInterval = 0
+    /// Completed loop passes this run — the ramp's interval clock (one pass = one step). Read from
+    /// the engine's rate-independent `loopIteration`, so a plateau holds a fixed number of *reps*
+    /// regardless of the tempo it plays at.
+    private(set) var elapsedReps = 0
     /// The current playback speed as integer percent-of-original (the ramp's live plateau value).
     private(set) var currentPercent = 100
     /// Whether the song audio is still resolving/loading (imported file or demo sample).
@@ -32,7 +34,6 @@ final class LoopRunModel {
 
     private var ramp: CommandRamp?
     private var timer: Timer?
-    private var lastTick: Date?
     private var fileAccess: SecurityScopedAccess?
     private var loaded = false
 
@@ -44,10 +45,11 @@ final class LoopRunModel {
     var currentSpeed: Double { Self.rate(forPercent: currentPercent) }
 
     /// The plateau the run is currently holding — the staircase highlight cursor. `nil` when not
-    /// running (the stopped preview reads at one even weight).
+    /// running (the stopped preview reads at one even weight). Driven by loop passes (the ramp's
+    /// `.bars` interval reinterpreted as reps, ADR 0046 Phase B).
     func currentPlateau(in ramp: CommandRamp) -> Int? {
         guard isRunning else { return nil }
-        return ramp.currentPlateauIndex(elapsedBars: 0, elapsedSeconds: elapsedSeconds)
+        return ramp.currentPlateauIndex(elapsedBars: elapsedReps, elapsedSeconds: 0)
     }
 
     /// Percent (of original) → time-stretch rate, clamped to the engine's playback bounds. The
@@ -104,24 +106,23 @@ final class LoopRunModel {
     // MARK: - Transport
 
     /// Start the run: arm the ramp, seed the rate at its warm-up floor, and play the looping
-    /// region. The ramp drives the rate from here via the tick clock.
+    /// region. The ramp advances by completed loop passes, polled on the tick clock.
     func start(ramp: CommandRamp) {
         self.ramp = ramp
-        elapsedSeconds = 0
-        lastTick = nil
-        applyRate(forElapsed: 0, ramp: ramp)
+        elapsedReps = 0
+        applyRate(forReps: 0, ramp: ramp)
         engine.play()
         transport = .playing
         startTimer()
     }
 
-    /// Pause / resume the run and its interval clock together.
+    /// Pause / resume the run. The rep counter rides the engine's render position, so it freezes on
+    /// pause and resumes on play with no extra bookkeeping.
     func toggle() {
         switch transport {
         case .playing:
             engine.pause()
             transport = .paused
-            lastTick = nil          // freeze the clock; the next resume starts a fresh delta
             stopTimer()
         case .paused:
             engine.play()
@@ -136,8 +137,7 @@ final class LoopRunModel {
     func stop() {
         engine.stop()
         transport = .stopped
-        elapsedSeconds = 0
-        lastTick = nil
+        elapsedReps = 0
         ramp = nil
         stopTimer()
     }
@@ -146,17 +146,15 @@ final class LoopRunModel {
 
     private func tick() {
         guard transport == .playing, let ramp else { return }
-        let now = Date()
-        if let last = lastTick { elapsedSeconds += now.timeIntervalSince(last) }
-        lastTick = now
-        applyRate(forElapsed: elapsedSeconds, ramp: ramp)
-        if ramp.isFinished(elapsedBars: 0, elapsedSeconds: elapsedSeconds) { stop() }
+        elapsedReps = engine.loopIteration
+        applyRate(forReps: elapsedReps, ramp: ramp)
+        if ramp.isFinished(elapsedBars: elapsedReps, elapsedSeconds: 0) { stop() }
     }
 
-    /// Read the ramp's plateau at `elapsed` and push it to the engine when it changes.
-    private func applyRate(forElapsed elapsed: TimeInterval, ramp: CommandRamp) {
-        let percent = ramp.bpm(elapsedBars: 0, elapsedSeconds: elapsed)
-        guard percent != currentPercent || elapsed == 0 else { return }
+    /// Read the ramp's plateau at `reps` and push it to the engine when it changes.
+    private func applyRate(forReps reps: Int, ramp: CommandRamp) {
+        let percent = ramp.bpm(elapsedBars: reps, elapsedSeconds: 0)
+        guard percent != currentPercent || reps == 0 else { return }
         currentPercent = percent
         engine.setRate(Self.rate(forPercent: percent))
     }
