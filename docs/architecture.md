@@ -152,8 +152,11 @@ absolute BPM. The metronome is a **pure free-play tool** (ADR 0046): its in-scre
 (save/load presets, the library sheet, the command-anchored Training Mode) has been removed —
 exercises and training runs now live in the top-level **Practice** space (below). What stays is
 the free-play **tempo automator** (`MetronomeAutomatorPanel`) for ad-hoc ramps; its job is
-*discovery* — ramp until your hands break down — and a later slice adds a "Save as exercise" seam
-that hands a discovered tempo into Practice's create flow. **Command-anchored progress** (ADR
+*discovery* — ramp until your hands break down — and an armed automator offers a one-directional
+**"Save as exercise"** seam that captures the current (breakdown) tempo and presents Practice's
+`NewExerciseSheet` prefilled with it as the command. Both that seam and Practice's own create flow
+funnel through the single `Exercise.commandAnchored(name:command:)` factory, so the two entry
+points can't drift. **Command-anchored progress** (ADR
 0045) — reach = command + ~6%, clamped — is the pure `TempoStretch`, now exercised from Practice.
 Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044), full-screen.
 

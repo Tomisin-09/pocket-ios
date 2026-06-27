@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The inline tempo-automator panel on the standalone metronome screen (ADR 0043, slice 4),
@@ -5,8 +6,17 @@ import SwiftUI
 /// then tap-to-type (validated) fields for the increase, interval, and ceiling, and the
 /// **ramp staircase** as a live progress tracker. The floor is always the current metronome
 /// tempo (set it on the main controls, then arm); the live ramp runs in the engine.
+///
+/// The automator's stated job (ADR 0046) is **command-tempo discovery** — ramp until your hands
+/// break down, and that tempo *is* your command. The **"Save as exercise"** action is the
+/// one-directional seam that realises it: it captures the current (breakdown) tempo and hands it
+/// into Practice's create flow, prefilled. The automator *feeds* Practice; it never owns an
+/// exercise.
 struct MetronomeAutomatorPanel: View {
     let engine: StandaloneMetronomeEngine
+
+    @Environment(\.modelContext) private var modelContext
+    @State private var saving = false
 
     private typealias Mode = StandaloneMetronomeEngine.AutomatorMode
 
@@ -24,10 +34,37 @@ struct MetronomeAutomatorPanel: View {
             if engine.automatorMode != .off {
                 fields
                 MetronomeRampTracker(engine: engine)
+                saveAsExerciseButton
             }
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronome.opacity(0.08)))
+        .sheet(isPresented: $saving) {
+            // Captures the tempo live at the moment of the tap (the breakdown point), prefilled as
+            // the new exercise's command. Funnels through the same `commandAnchored` factory as
+            // Practice's own create flow — one creation path (ADR 0046).
+            NewExerciseSheet(initialCommand: engine.bpm) { name, command in
+                modelContext.insert(Exercise.commandAnchored(name: name, command: command))
+            }
+        }
+    }
+
+    /// The discovery → Practice seam. Phrased around the live tempo so the action reads as
+    /// "this is the tempo I broke down at — keep it as a drill", not a generic save.
+    private var saveAsExerciseButton: some View {
+        Button {
+            saving = true
+            haptic(.medium)
+        } label: {
+            Label("Save \(engine.bpm) BPM as exercise", systemImage: "bookmark.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PocketColor.metronome)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Capsule().stroke(PocketColor.metronome, lineWidth: 1.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Save \(engine.bpm) beats per minute as an exercise in Practice")
     }
 
     /// Names the feature and houses the restart control (when a ramp is armed) so it doesn't
