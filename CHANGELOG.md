@@ -12,7 +12,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   saved exercises are reset — they were early experiments, a deliberate accepted trade for a
   clean model); (2) a training routine is now handed straight to the metronome engine
   (`engine.run(ramp:)`) instead of being routed through the free-play automator's setters, so
-  arming the automator and running a training routine are no longer mutually exclusive.
+  arming the automator and running a training routine are no longer mutually exclusive; (3) the
+  metronome's own in-screen exercise UI (save/load presets, the presets library, the
+  command-anchored Training Mode) is **removed** — the metronome is now a pure free-play tool
+  and all of that lives in the **Practice** space instead.
 
 ### Added
 - **A top-level Practice space** (ADR 0046, Phase A). Exercises are no longer buried inside the
@@ -26,7 +29,7 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **Training Mode for exercises** (ADR 0045). An exercise has no "real" tempo to reach the way
   a song loop does, so instead of a goal you guess at, it tracks your **command tempo** — the
   fastest you can play it cleanly and repeatably — and sets the **reach** a small step above it
-  automatically. Open **Training Mode** from the metronome and one **Start** sets the whole
+  automatically. Open an exercise's **training run** in **Practice** and one **Start** sets the whole
   routine going (no separate "arm the automator" step): it warms up from a comfortable
   **working** tempo, **dwells at command** for the bulk of the reps, briefly summits at the
   reach, then **backs off below command** so you finish on clean control rather than the edge.
@@ -56,24 +59,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   for you — set the step size, whether it steps every so many **bars** or **seconds**, and
   the ceiling to hold at. Add **subdivisions** — eighths, triplets, or sixteenths — and a
   quieter sub-beat tick fills in under the main click. The click keeps going when the phone
-  is **locked**, with **play/pause on the lock screen and Control Center**. **Save a setup as
-  an exercise** — a named preset *is* a practice drill ("Spider", "Alternating picking") — then
-  reload, rename, or delete it from the **presets library** (📚). Saving shows the exact
-  to-be-stored configuration ("97 BPM · 4/4 · Ramp to 117 BPM (+5 BPM every 4 bars)"), and
-  updating an existing preset confirms the same line first; a ramp saves from its **starting**
-  tempo, not wherever it had climbed to. The **tempo slider now reads perceptually** — its
-  midpoint sits at a typical ~95 BPM and the everyday 60–120 range fills the centre of the
-  track, so a normal tempo no longer looks slow. Each saved exercise tracks **light
-  progress** — a **working tempo → target** readout with a climb bar, shown on the screen
-  when an exercise is loaded and on every row in the presets library. Tap the readout to
-  **nudge your working tempo up** as you improve; the bump is yours to make (nothing
-  rewrites it for you), and it reads **"At target"** once you reach the goal. The metronome
-  screen carries its own action row: **+** saves the current settings as a new preset — naming
-  it and setting its **working and target tempo** so the climb has a real goal from the start —
-  and **📚**
-  opens the library; with an exercise loaded, **✕** leaves it (back to a clean default
-  metronome, no need to quit) and **save** updates that preset. *(Reached from the
-  **Metronome card on the home screen** — ADR 0044.)*
+  is **locked**, with **play/pause on the lock screen and Control Center**. The **tempo
+  slider now reads perceptually** — its midpoint sits at a typical ~95 BPM and the everyday
+  60–120 range fills the centre of the track, so a normal tempo no longer looks slow. The
+  metronome is a **free-play tool** — exercises and command-anchored training routines live
+  in the **Practice** space (ADR 0046), not here. *(Reached from the **Metronome card on the
+  home screen** — ADR 0044.)*
 - **The practice screen rotates to landscape** (ADR 0042). Turn the phone sideways on the
   practice screen — handy when it's propped on a stand — and the waveform claims the full
   width for a sharper view and more precise A/B dragging. Your loops and markers tuck into a
