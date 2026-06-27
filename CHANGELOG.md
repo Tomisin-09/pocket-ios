@@ -19,6 +19,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   training-routine recipe **natively** (`ramp*` fields + dwell/backoff) rather than borrowing
   the free-play automator's fields — this field rename is data-preserving
   (`@Attribute(originalName:)`), so no further store reset beyond the one already noted above.
+- **Groundwork for command-derived loops in Practice** (ADR 0046, Phase B, slice 1). Internal,
+  no behaviour change: a measured song **loop** can now derive the same command-anchored
+  progression an exercise has — a warm-up → dwell → reach → back-off `CommandRamp` — but in
+  `×`-of-original rather than absolute BPM. `TempoStretch` gains a `×`-unit reach
+  (`targetSpeed`), `Loop` gains the `command` / reach / promote accessors mirroring `Exercise`
+  (no stored fields added, so the loop's migration discipline is untouched), and a pure
+  `LoopCommandRamp` maps a loop's `×` tempos onto the shared `CommandRamp` staircase via
+  integer percent-of-original. All unit-tested; no UI yet.
 
 ### Added
 - **Practice run-screen refinements** (ADR 0046, Phase A). The training run's staircase now

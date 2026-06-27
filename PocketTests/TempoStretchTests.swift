@@ -54,6 +54,35 @@ final class TempoStretchTests: XCTestCase {
         XCTAssertEqual(reach, 0.32, accuracy: 1e-9)
     }
 
+    // MARK: - Loop ×-unit convenience (ADR 0046, Phase B)
+
+    func testTargetSpeedProportionalInTheUnclampedMiddle() {
+        // 0.80× × 1.06 = 0.848; +0.048 within [0.02, 0.10].
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 0.80), 0.848, accuracy: 1e-9)
+    }
+
+    func testTargetSpeedClampsUpToMinimumIncreaseOnSlowLoops() {
+        // 0.30× × 0.06 = 0.018, below the +0.02 floor → 0.32.
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 0.30), 0.32, accuracy: 1e-9)
+    }
+
+    func testTargetSpeedClampsDownToMaximumIncreaseNearFullTempo() {
+        // 2.0× × 0.06 = 0.12, above the +0.10 ceiling → 2.10.
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 2.0), 2.10, accuracy: 1e-9)
+    }
+
+    func testTargetSpeedAlwaysExceedsCommand() {
+        for percent in stride(from: 25, through: 150, by: 1) {
+            let command = Double(percent) / 100
+            XCTAssertGreaterThan(TempoStretch.targetSpeed(forCommand: command), command,
+                                 "reach must exceed command at \(command)×")
+        }
+    }
+
+    func testTargetSpeedNonPositiveCommandReturnedUnchanged() {
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 0), 0, accuracy: 1e-9)
+    }
+
     // MARK: - Warm-up floor (first-open default working tempo)
 
     func testWarmupFloorDropsProportionallyInTheUnclampedMiddle() {
