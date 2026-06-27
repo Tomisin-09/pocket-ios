@@ -65,16 +65,14 @@ final class StandaloneMetronomeEngine {
     /// Loaded exercise's **command** tempo (ADR 0045); `nil` ⇒ free-play linear ramp. When set
     /// the ramp is command-anchored (warm-up → dwell → summit → backoff).
     var automatorCommandBPM: Int?
+    /// The explicit training routine a Practice run drives (ADR 0046): a `CommandRamp` handed
+    /// straight to the engine, overriding the free-play automator as the tempo driver so
+    /// training bypasses the automator setters (the 0045 coupling). Don't set from the UI — go
+    /// through `run(ramp:)`; cleared on `stop`. `var` for the `+Automator` split.
+    var trainingRamp: CommandRamp?
     /// The ramp's **floor** — the tempo it started from (captured when armed). The floor is
     /// always the current metronome tempo at the moment you arm; the restart returns here.
     private(set) var automatorStartBPM = defaultBPM
-
-    /// The automator's mode for the segmented control — off, or stepping by bars / by time.
-    enum AutomatorMode: Hashable { case off, bars, seconds }
-    var automatorMode: AutomatorMode {
-        guard automatorEnabled else { return .off }
-        return automatorUnit == .bars ? .bars : .seconds
-    }
 
     /// Index since the current phase anchor of the most recently *heard* beat (-1 before
     /// the first). The flash lights `currentBeat % timeSignature.beats`; the meter's accent
@@ -147,7 +145,7 @@ final class StandaloneMetronomeEngine {
         accumulatedSession = 0
         elapsed = 0
         beginPlayStretch()
-        if automatorEnabled { engageAutomator() }
+        if isRampActive { engageAutomator() }
         nowPlaying.activate(onPlay: { [weak self] in self?.resume() },
                             onPause: { [weak self] in self?.pause() },
                             onToggle: { [weak self] in self?.toggle() })
@@ -184,6 +182,7 @@ final class StandaloneMetronomeEngine {
         clickVoice.stopAll()
         engine.stop()
         nowPlaying.teardown()
+        trainingRamp = nil          // a training run ends with the session (ADR 0046)
         accumulatedSession = 0
         elapsed = 0
         currentBeat = -1
@@ -213,9 +212,9 @@ final class StandaloneMetronomeEngine {
     }
 
     /// Quick-restart the ramp: jump the tempo back to the floor and replay the climb. No-op
-    /// when the automator is off.
+    /// when no ramp is driving (free play with the automator off).
     func restartAutomator() {
-        guard automatorEnabled else { return }
+        guard isRampActive else { return }
         applyTempo(automatorStartBPM)
         automatorBarsElapsed = 0
         automatorSecondsElapsed = 0
@@ -298,9 +297,10 @@ final class StandaloneMetronomeEngine {
         let now = CACurrentMediaTime()
         elapsed = accumulatedSession + max(0, now - sessionStart)
 
-        // Automator: accrue ramp progress at the live tempo and apply the resolved BPM. Done
-        // before scheduling so a step's new phase is set up within this same tick.
-        if automatorEnabled {
+        // Ramp: accrue progress at the live tempo and apply the resolved BPM — a training
+        // routine (run(ramp:)) or the free-play automator. Done before scheduling so a step's
+        // new phase is set up within this same tick.
+        if isRampActive {
             let delta = max(0, now - lastTickTime)
             automatorSecondsElapsed += delta
             automatorBarsElapsed += delta * (Double(bpm) / 60.0) / Double(max(1, timeSignature.beats))

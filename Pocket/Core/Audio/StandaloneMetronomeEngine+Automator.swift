@@ -7,6 +7,15 @@ import Foundation
 /// this split can drive it.
 extension StandaloneMetronomeEngine {
 
+    /// The automator's mode for the segmented control — off, or stepping by bars / by time.
+    enum AutomatorMode: Hashable { case off, bars, seconds }
+
+    /// The current mode derived from the stored config — `.off` unless armed, then the unit.
+    var automatorMode: AutomatorMode {
+        guard automatorEnabled else { return .off }
+        return automatorUnit == .bars ? .bars : .seconds
+    }
+
     /// Default headroom for a freshly-armed ramp: the ceiling starts this far above the
     /// current tempo (the floor).
     static var automatorDefaultHeadroom: Int { 20 }
@@ -34,9 +43,34 @@ extension StandaloneMetronomeEngine {
                            includeBackoff: true)
     }
 
-    /// The ramp the engine's `tick()` drives — command-anchored when an exercise command is
-    /// set, else the free-play linear ramp.
-    var activeRamp: any TempoRamp { automatorCommandRamp ?? automatorLinearRamp }
+    /// The ramp the engine's `tick()` drives — an explicit training routine (`run(ramp:)`,
+    /// ADR 0046) first, else the command-anchored free-play ramp when a command is loaded,
+    /// else the free-play linear ramp. Spelled out rather than a `??` chain: mixing the
+    /// concrete `CommandRamp?` and `MetronomeAutomator` operands through nested `??` defeats
+    /// the existential type inference for `any TempoRamp`.
+    var activeRamp: any TempoRamp {
+        if let trainingRamp { return trainingRamp }
+        if let automatorCommandRamp { return automatorCommandRamp }
+        return automatorLinearRamp
+    }
+
+    /// Whether a ramp is driving the tempo — an explicit training routine (`run(ramp:)`) or
+    /// the armed free-play automator. The single gate `tick()` and `start()` use to decide
+    /// whether to accrue ramp progress and drive `bpm` from a ramp.
+    var isRampActive: Bool { trainingRamp != nil || automatorEnabled }
+
+    /// Run a command-anchored training routine directly (ADR 0046): the Practice layer hands
+    /// the engine a fully-formed `CommandRamp`, which drives the tempo from its working floor
+    /// through dwell → summit → backoff, instead of arming the free-play automator. This
+    /// replaces ADR 0045's `startTraining`, which routed through the automator setters and so
+    /// made arming and training mutually exclusive. Stops any current session, sets the floor,
+    /// and begins playing — `start()` engages the ramp (it's `isRampActive`).
+    func run(ramp: CommandRamp) {
+        if transport != .stopped { stop() }
+        trainingRamp = ramp
+        setBPM(ramp.working)
+        start()
+    }
 
     /// Total steps from floor to ceiling — for the linear staircase graphic and the controls.
     var automatorTotalSteps: Int { automatorLinearRamp.stepsToCeiling }
@@ -90,20 +124,6 @@ extension StandaloneMetronomeEngine {
     func setAutomatorCommand(_ command: Int) {
         automatorCommandBPM = clampedBPM(command)
         if automatorEnabled, transport != .stopped { engageAutomator() }
-    }
-
-    /// Configure and arm the command-anchored **training routine** in one step (ADR 0045,
-    /// Training Mode): floor = `working`, ceiling = the `target` reach, anchored at `command`,
-    /// warming up in `stepBPM` increments — warm up → dwell → summit → backoff. The single
-    /// action behind Training Mode's **Start**, so there's no separate "arm the automator"
-    /// step. Order matters: `arm` (via `setAutomatorMode`) clears any stale command and resets
-    /// the interval, so the step, ceiling and command are all set after it.
-    func startTraining(working: Int, command: Int, target: Int, stepBPM: Int) {
-        setBPM(working)
-        setAutomatorMode(.bars)
-        setAutomatorStepBPM(stepBPM)
-        setAutomatorCeiling(target)
-        setAutomatorCommand(command)
     }
 
     func setAutomatorEnabled(_ enabled: Bool) {

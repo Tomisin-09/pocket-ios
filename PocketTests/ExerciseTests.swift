@@ -85,6 +85,40 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(Exercise(beatsPerBar: 6, noteValue: 8).timeSignatureLabel, "6/8")
     }
 
+    // MARK: - Training ramp (ADR 0046 — the run(ramp:) seam)
+
+    func testRampMapsTheSavedRecipe() {
+        let exercise = Exercise(currentTempo: 70, commandTempo: 100,
+                                automatorStepBPM: 8, automatorIntervalCount: 4,
+                                automatorIntervalUnit: .bars)
+        let ramp = exercise.ramp
+        XCTAssertEqual(ramp.working, 70)
+        XCTAssertEqual(ramp.command, 100)
+        XCTAssertEqual(ramp.target, TempoStretch.targetBPM(forCommand: 100))
+        XCTAssertEqual(ramp.stepBPM, 8)
+        XCTAssertEqual(ramp.intervalCount, 4)
+        XCTAssertEqual(ramp.unit, .bars)
+        XCTAssertTrue(ramp.includeBackoff)
+    }
+
+    /// An un-promoted exercise (no measured command) still produces a usable ramp: command
+    /// falls back to the working tempo, so the routine reads as a flat hold-and-stretch.
+    func testRampFallsBackToWorkingWhenUnpromoted() {
+        let exercise = Exercise(currentTempo: 90)   // commandTempo nil
+        let ramp = exercise.ramp
+        XCTAssertEqual(ramp.working, 90)
+        XCTAssertEqual(ramp.command, 90)
+        XCTAssertEqual(ramp.target, TempoStretch.targetBPM(forCommand: 90))
+    }
+
+    /// Step and interval are clamped to at least 1 so the ramp always advances and the
+    /// plateau math never divides by zero.
+    func testRampClampsStepAndIntervalToAtLeastOne() {
+        let exercise = Exercise(automatorStepBPM: 0, automatorIntervalCount: 0)
+        XCTAssertEqual(exercise.ramp.stepBPM, 1)
+        XCTAssertEqual(exercise.ramp.intervalCount, 1)
+    }
+
     // MARK: - Schema / persistence (additive migration)
 
     func testExercisePersistsAndFetchesInItsOwnStore() throws {
