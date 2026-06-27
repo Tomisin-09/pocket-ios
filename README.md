@@ -63,7 +63,7 @@ See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild te
 ```
 Pocket/
   App/         App entry, root scene
-  Features/    Home · Library · Waveform · Metronome · Repertoire
+  Features/    Home · Library · Waveform · Metronome · Practice · Repertoire
   Core/        Audio (engine + pure tempo math) · Models · Services
   UI/          Shared components, design tokens
   Resources/   Info.plist, PrivacyInfo.xcprivacy

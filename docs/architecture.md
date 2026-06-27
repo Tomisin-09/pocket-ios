@@ -167,7 +167,20 @@ longer disconnected. There is no progress *bar* (the reach
 is always a fixed step above command, so a fraction would mislead); the real progress is the
 command number rising — its history is ADR 0045 Phase 2. The free-play linear automator panel
 stays for ad-hoc ramps. Reached from the **Metronome
-card on the home hub** (`Features/Home/`, ADR 0044), full-screen. Stage 4's waveform for real files is
+card on the home hub** (`Features/Home/`, ADR 0044), full-screen.
+
+The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
+the home hub's Practice card — the first-class home for trainable units, decoupling exercises
+from the metronome at the product level. `PracticeView` is the hub: a `@Query` list of
+`Exercise`s (each a command-anchored drill, the aggregation surface song loops join in Phase B)
+above a disabled "Build today's session" placeholder for the V2 planner, with `NewExerciseSheet`
+as Practice's own create path (so exercises no longer depend on the metronome's save UI, which a
+later slice retires). Tapping a unit pushes `ExerciseRunView`, which **owns its own
+`StandaloneMetronomeEngine`** (independent of the metronome screen's): it edits working / command
+/ reach + warm-up steps while stopped, shows the routine staircase (the shared `RoutineStairs`,
+extracted from `TrainingModeSheet`), and on **Start** commits the edits and hands the engine the
+`Exercise`-shaped `CommandRamp` via `engine.run(ramp:)`, then shows a live BPM / beat / session
+readout. Its indigo `practice` accent marks it as a distinct space from the metronome's teal. Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).

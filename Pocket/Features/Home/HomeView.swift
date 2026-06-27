@@ -30,6 +30,7 @@ struct HomeView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    practiceCard
                     metronomeCard
                     if !songs.isEmpty { yourSongs }
                     addSongButton
@@ -66,6 +67,40 @@ struct HomeView: View {
                 .foregroundStyle(PocketColor.textPrimary)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Practice card
+
+    /// The top-level **Practice** space (ADR 0046) — where trainable units live and
+    /// command-anchored runs happen. A push (it's a *place* with its own list and run screens),
+    /// in its own indigo accent (`PocketColor.practice`) so it reads as distinct from the
+    /// metronome tool below it.
+    private var practiceCard: some View {
+        NavigationLink { PracticeView() } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "figure.run")
+                    .font(.title2)
+                    .foregroundStyle(PocketColor.practice)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(PocketColor.practice.opacity(0.15)))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Practice")
+                        .font(.headline)
+                        .foregroundStyle(PocketColor.textPrimary)
+                    Text("Your exercises & training runs")
+                        .font(.subheadline)
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practice.opacity(0.10)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Practice, your exercises and training runs")
     }
 
     // MARK: - Metronome card
