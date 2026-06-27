@@ -107,6 +107,13 @@ name carries it.
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
+- **Practice — exercise creation entry point (design experiment).** The create sheet now asks
+  for **command tempo** explicitly (working floor + reach derive from it), which fixes the
+  earlier mismatch where the entered "working" number resurfaced as "command" on the run screen
+  (ADR 0046, branch `pocket-067`). Open question worth A/B-ing: is command the best single number
+  to anchor an exercise on, or would starting from the **working** tempo (where you actually
+  practise today) or the **target/reach** (the goal) read more naturally to a musician? Try the
+  variants and pick the one that needs the least explanation.
 - **Loop tags — show existing as well.** DONE (branch `pocket-055`): the tags
   already on a loop now render as removable chips matching the suggestion-chip
   language, in the loop edit sheet. Tags stay edit-sheet-only — no loop-row display

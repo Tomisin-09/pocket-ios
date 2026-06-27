@@ -1,17 +1,18 @@
 import SwiftUI
 
-/// Create a new exercise from within **Practice** (ADR 0046, Phase A): a name and the
-/// **working tempo** you practise it at today. Command and reach are left unmeasured — you set
-/// them when you first run the drill and **promote** the fastest tempo you own. This is
-/// Practice's own create path so exercises no longer depend on the metronome's save UI (which
-/// Slice 4 retires); the automator's "Save as exercise" discovery seam feeds the same flow.
+/// Create a new exercise from within **Practice** (ADR 0046, Phase A): a name and your
+/// **command tempo** — the fastest you can play it cleanly and repeatably right now. The
+/// warm-up **working** floor and the **reach** derive from the command, so the number you type
+/// here is the command the run screen shows (no working/command mismatch). You tune working and
+/// reach when you run the drill. This is Practice's own create path so exercises no longer depend
+/// on the metronome's save UI; the automator's "Save as exercise" seam feeds the same flow.
 struct NewExerciseSheet: View {
-    /// Called with the trimmed name and chosen working tempo when the user confirms.
+    /// Called with the trimmed name and chosen **command** tempo when the user confirms.
     let onCreate: (String, Int) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
-    @State private var working = StandaloneMetronomeEngine.defaultBPM
+    @State private var command = StandaloneMetronomeEngine.defaultBPM
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
@@ -26,13 +27,13 @@ struct NewExerciseSheet: View {
                     TextField("e.g. Spider", text: $name)
                 }
                 Section {
-                    Stepper("Working tempo · \(working) BPM", value: $working,
+                    Stepper("Command tempo · \(command) BPM", value: $command,
                             in: range.lowerBound...range.upperBound)
                 } header: {
-                    Text("Where you start")
+                    Text("Your command tempo")
                 } footer: {
-                    Text("The comfortable warm-up tempo. You'll set the fastest you own — and "
-                         + "reach for more — when you run it.")
+                    Text("The fastest you can play it cleanly and repeatably right now. The "
+                         + "warm-up floor and the reach derive from it — tune them when you run it.")
                 }
             }
             .navigationTitle("New exercise")
@@ -44,7 +45,7 @@ struct NewExerciseSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
-                        onCreate(trimmedName, working)
+                        onCreate(trimmedName, command)
                         dismiss()
                     }
                     .disabled(trimmedName.isEmpty)
