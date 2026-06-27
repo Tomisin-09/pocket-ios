@@ -4,9 +4,9 @@ import SwiftUI
 /// **Training Mode** (ADR 0045): the explicit home for an exercise's command-anchored
 /// routine. Edits the three tempos — warm-up **working** floor, owned **command**, derived
 /// **reach** (target) — plus how many intermediate warm-up steps to climb through, and
-/// **Start** configures, *saves* and arms the routine in one action (`engine.startTraining`),
-/// so there's no separate "arm the automator" step that left the tempos and the ramp
-/// disconnected. A one-tap **promote** ratchets command up to the reach.
+/// **Start** *saves* the routine and hands it to the engine in one action (`engine.run(ramp:)`,
+/// ADR 0046), so there's no separate "arm the automator" step that left the tempos and the
+/// ramp disconnected. A one-tap **promote** ratchets command up to the reach.
 ///
 /// Edits are held in **local state**, not written to the model until **Start** — so the
 /// three tempos move independently while editing (lowering working never drags command with
@@ -37,8 +37,9 @@ struct TrainingModeSheet: View {
         CommandRamp.warmupStepBPM(working: working, command: command, intermediateSteps: steps)
     }
 
-    /// The routine the current edits describe — for the staircase preview and to mirror what
-    /// `engine.startTraining` will arm (same step / interval / dwell / backoff).
+    /// The routine the current edits describe — the staircase preview and the exact
+    /// `CommandRamp` handed to `engine.run(ramp:)` on Start (same step / interval / dwell /
+    /// backoff).
     private var routine: CommandRamp {
         CommandRamp(working: working, command: command, target: reach,
                     stepBPM: stepBPM, intervalCount: StandaloneMetronomeEngine.automatorDefaultBars,
@@ -101,9 +102,7 @@ struct TrainingModeSheet: View {
         exercise.automatorEnabled = true
         try? modelContext.save()
 
-        if engine.transport != .stopped { engine.stop() }
-        engine.startTraining(working: working, command: command, target: reach, stepBPM: stepBPM)
-        engine.start()
+        engine.run(ramp: routine)
         haptic(.medium)
         dismiss()
     }

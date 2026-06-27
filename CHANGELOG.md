@@ -6,11 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
-- **Groundwork for a top-level Practice space** (ADR 0046, Phase A). Internal first step:
-  the metronome-exercise model is renamed `MetronomeExercise → Exercise` as it stops being
-  "a saved metronome setup" and becomes a first-class practice unit. Existing saved exercises
-  are reset by this change (they were early experiments; this was a deliberate, accepted
-  trade for a clean model).
+- **Groundwork for a top-level Practice space** (ADR 0046, Phase A). Internal, no behaviour
+  change: (1) the metronome-exercise model is renamed `MetronomeExercise → Exercise` as it
+  stops being "a saved metronome setup" and becomes a first-class practice unit (existing
+  saved exercises are reset — they were early experiments, a deliberate accepted trade for a
+  clean model); (2) a training routine is now handed straight to the metronome engine
+  (`engine.run(ramp:)`) instead of being routed through the free-play automator's setters, so
+  arming the automator and running a training routine are no longer mutually exclusive.
 
 ### Added
 - **Training Mode for exercises** (ADR 0045). An exercise has no "real" tempo to reach the way

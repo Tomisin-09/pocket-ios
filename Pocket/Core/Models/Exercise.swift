@@ -163,6 +163,19 @@ final class Exercise {
     /// What `targetTempo` is set to on promotion; surfaced so the UI can preview the reach.
     var derivedTarget: Int { TempoStretch.targetBPM(forCommand: command) }
 
+    /// The command-anchored **training routine** this exercise prescribes (ADR 0045/0046):
+    /// warm up from the working floor to the owned command, dwell there, summit briefly at the
+    /// derived reach, then back off below command. The single pure seam Practice launches a run
+    /// from — `engine.run(ramp:)` drives this `CommandRamp` directly instead of routing through
+    /// the automator setters. Built from the saved recipe (`automatorStepBPM`/interval/unit);
+    /// the dwell length and backoff tail are the standard routine shape (stored natively in a
+    /// later slice). Pure and UI-free, so the plateau math stays unit-tested per AGENTS.md.
+    var ramp: CommandRamp {
+        CommandRamp(working: workingTempo, command: command, target: derivedTarget,
+                    stepBPM: max(1, automatorStepBPM), intervalCount: max(1, automatorIntervalCount),
+                    unit: automatorIntervalUnit, dwellIntervals: 4, includeBackoff: true)
+    }
+
     /// Promote a newly-owned tempo to `command` and recompute the `target` reach above it
     /// (ADR 0045, Phase 1 — manual "I own this"). Phase 1 overwrites `targetTempo` from the
     /// new command; a Phase 2 milestone record and pinned-target flag are out of scope here.

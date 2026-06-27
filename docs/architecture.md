@@ -132,37 +132,41 @@ through the shared `NowPlayingController`, and the `audio` background mode (ADR 
 the click sounding while locked. An optional **tempo automator** ramps the BPM up over the
 sitting. The engine drives whichever pure ramp conforms to `TempoRamp`: the free-play
 **`MetronomeAutomator`** (sibling of the in-song `AutomatorConfig`) — step a fixed amount
-every N **bars** or N **seconds** and hold at a ceiling — or, when a promoted exercise is
-loaded, the command-anchored **`CommandRamp`** (ADR 0045): warm up from the working floor to
-**command**, **dwell** at command for the bulk of the reps, briefly summit at the target
-reach, then **back off** below command. The engine accrues elapsed bars (integrated at the
-live tempo) and seconds since the ramp engaged, hands them to `activeRamp` each tick, and
-applies the resolved BPM as an automator-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
+every N **bars** or N **seconds** and hold at a ceiling — or the command-anchored
+**`CommandRamp`** (ADR 0045): warm up from the working floor to **command**, **dwell** at
+command for the bulk of the reps, briefly summit at the target reach, then **back off** below
+command. A `CommandRamp` reaches the engine two ways: a free-play ramp where an exercise
+command is loaded into the automator, or — for a Practice training run (ADR 0046) — handed
+straight to `engine.run(ramp:)`, which sets `trainingRamp` and drives it directly instead of
+routing through the automator setters (so arming and training are no longer mutually
+exclusive). The engine accrues elapsed bars (integrated at the live tempo) and seconds since
+the ramp engaged, hands them to `activeRamp` (`trainingRamp` first) each tick, and applies the
+resolved BPM as a ramp-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
 isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
 the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
 Italian tempo marking is the pure `TempoMarking` lookup. The slider's position↔BPM binding goes
 through the pure `TempoSliderScale` (`Core/Audio/`), a **logarithmic** map so the track midpoint
 is the *geometric* centre (√(30·300) ≈ 95 BPM) and the common 60–120 band fills the middle
 rather than the left fifth a linear scale would give; the steppers and tap-tempo still set
-absolute BPM. A setup is saved as a `MetronomeExercise` through the `@MainActor`
-`MetronomeExerciseBridge` (model↔engine `capture`/`apply`/`update`, plus a throwaway `preview`
+absolute BPM. A setup is saved as an `Exercise` through the `@MainActor`
+`ExerciseBridge` (model↔engine `capture`/`apply`/`update`, plus a throwaway `preview`
 for confirmations); when the automator is armed it captures the ramp **floor** (`automatorStartBPM`),
 not the live climbing `bpm`, so a finished ramp doesn't store floor == ceiling. The save / update / leave actions live on the screen itself (`ExerciseActionBar`: a leading
 cluster acting on the loaded exercise — leave, update — and a trailing global pair — save-new,
 open library), so the `MetronomeLibrarySheet` is a **pure browser** (load on tap, swipe to
-rename / delete). `MetronomeExercise.configurationSummary` is the shared one-liner shown in
+rename / delete). `Exercise.configurationSummary` is the shared one-liner shown in
 both the library row and the save/update confirmation so what you see is what is stored.
 **Command-anchored progress** (ADR 0045, re-anchoring slice 7) is the pure `TempoStretch`
 (reach = command + ~6%, clamped). `ExerciseProgressChip` is the slim **command → reach**
 summary that opens **Training Mode** (`TrainingModeSheet`) — the single surface that edits the
 working / command / target tempos, shows the routine staircase (warm-up → dwell → summit →
 backoff via `CommandRamp`), carries the one-tap **promote** (ratchets command to the reach),
-and whose **Start** *configures and arms the routine in one action* (`engine.startTraining`),
-so the tempos and the ramp are no longer disconnected. There is no progress *bar* (the reach
+and whose **Start** *saves the routine and hands it to `engine.run(ramp:)` in one action* (ADR
+0046), building the `CommandRamp` from local edit state so the tempos and the ramp are no
+longer disconnected. There is no progress *bar* (the reach
 is always a fixed step above command, so a fraction would mislead); the real progress is the
 command number rising — its history is ADR 0045 Phase 2. The free-play linear automator panel
-stays for ad-hoc ramps; the two are mutually exclusive at runtime (the engine carries a
-command tempo for one, `nil` for the other). Reached from the **Metronome
+stays for ad-hoc ramps. Reached from the **Metronome
 card on the home hub** (`Features/Home/`, ADR 0044), full-screen. Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
