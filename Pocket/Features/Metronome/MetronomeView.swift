@@ -6,24 +6,18 @@ import UIKit
 
 /// The standalone metronome screen (ADR 0043, slice 3): play/stop, a tempo control
 /// (steppers, slider, and reused tap-tempo), a named **time-signature** picker, the
-/// Italian tempo marking, a running **session tracker**, and a **beat-flash indicator**
-/// that reads the same generated grid as the audio so the two stay in step.
+/// Italian tempo marking, a running **session tracker**, a **beat-flash indicator** that
+/// reads the same generated grid as the audio so the two stay in step, and the free-play
+/// **tempo automator** for ad-hoc ramps.
 ///
-/// Configurations are savable as **exercise presets** (ADR 0043, slice 6) via the presets
-/// button; loading one applies its full configuration and titles the screen with its name.
+/// A pure **free-play tool** (ADR 0046): exercises and command-anchored training routines now
+/// live in the top-level **Practice** space, not here. The automator's role is *discovery* —
+/// ramp until your hands break down — and a later slice adds a "Save as exercise" seam that
+/// hands a discovered tempo into Practice's create flow.
 struct MetronomeView: View {
     @State private var engine = StandaloneMetronomeEngine()
     /// Wall-clock times of recent taps for tap-tempo (`TempoMath.bpm(fromTapTimes:)`).
     @State private var taps: [TimeInterval] = []
-    /// The loaded exercise preset, if any — its name titles the screen.
-    @State private var loadedExercise: Exercise?
-    @State private var showingLibrary = false
-    /// Training Mode (ADR 0045): the exercise the routine sheet edits — the loaded preset, or a
-    /// transient default when training from scratch. Drives `.sheet(item:)` so the sheet only
-    /// presents once it's set (an `isPresented` + optional content races to a blank sheet).
-    @State private var trainingExercise: Exercise?
-    /// Long-pressing the (possibly truncated) title pops the full name in a popover.
-    @State private var showingFullTitle = false
     @Environment(\.dismiss) private var dismiss
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
@@ -39,14 +33,6 @@ struct MetronomeView: View {
                 // on every beat.
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Training Mode entry (ADR 0045): the loaded exercise's command→reach
-                        // summary, or a plain entry when none is loaded. Both open the routine
-                        // sheet — the single surface that edits the tempos and arms the ramp.
-                        if let exercise = loadedExercise {
-                            ExerciseProgressChip(exercise: exercise) { openTraining(exercise) }
-                        } else {
-                            trainingModeButton
-                        }
                         BeatIndicator(engine: engine)
                         tempoReadout
                         tempoControls
@@ -57,14 +43,7 @@ struct MetronomeView: View {
                 .scrollDismissesKeyboard(.interactively)
                 // Session readout + transport stay pinned below the scrollable controls.
                 VStack(spacing: 12) {
-                    // Session timer stays centred behind the action row: loaded-exercise
-                    // actions on the leading edge, save-new + library on the trailing edge,
-                    // all kept off the nav bar so they don't truncate the title.
-                    ZStack {
-                        SessionTracker(engine: engine)
-                        ExerciseActionBar(engine: engine, loadedExercise: $loadedExercise,
-                                          showLibrary: { showingLibrary = true })
-                    }
+                    SessionTracker(engine: engine)
                     transport
                 }
                 .padding(.horizontal, 24)
@@ -86,7 +65,10 @@ struct MetronomeView: View {
                     .accessibilityLabel("Back")
                 }
                 ToolbarItem(placement: .principal) {
-                    titleLabel
+                    Text("Metronome")
+                        .font(.headline)
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .accessibilityAddTraits(.isHeader)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     meterMenu
@@ -97,38 +79,9 @@ struct MetronomeView: View {
                         .tint(PocketColor.metronome)
                 }
             }
-            .sheet(isPresented: $showingLibrary) {
-                MetronomeLibrarySheet(engine: engine, loadedExercise: $loadedExercise)
-            }
-            .sheet(item: $trainingExercise) { exercise in
-                TrainingModeSheet(exercise: exercise, engine: engine)
-            }
         }
         .preferredColorScheme(.dark)
         .onDisappear { engine.stop() }
-    }
-
-    // MARK: - Training Mode
-
-    /// Open the routine sheet on `exercise` (the loaded preset or a transient default) by
-    /// setting the `.sheet(item:)` binding.
-    private func openTraining(_ exercise: Exercise) {
-        trainingExercise = exercise
-    }
-
-    /// Entry when no exercise is loaded — train from defaults seeded at the current tempo.
-    private var trainingModeButton: some View {
-        Button { openTraining(Exercise(currentTempo: engine.bpm)) } label: {
-            Label("Training Mode", systemImage: "figure.run")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(PocketColor.metronome)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(RoundedRectangle(cornerRadius: 12)
-                    .fill(PocketColor.metronome.opacity(0.10)))
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Set up a command-anchored training routine")
     }
 
     // MARK: - Tempo readout
@@ -206,35 +159,6 @@ struct MetronomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(delta > 0 ? "Increase tempo" : "Decrease tempo")
-    }
-
-    // MARK: - Meter controls
-
-    // MARK: - Title
-
-    private var navTitle: String { loadedExercise?.name ?? "Metronome" }
-
-    /// The screen title, which truncates when an exercise name is long and the meter + back
-    /// arrow crowd the bar. Long-press to pop the full name in a small popover.
-    private var titleLabel: some View {
-        Text(navTitle)
-            .font(.headline)
-            .foregroundStyle(PocketColor.textPrimary)
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .onLongPressGesture {
-                guard loadedExercise != nil else { return }
-                showingFullTitle = true
-            }
-            .popover(isPresented: $showingFullTitle) {
-                Text(navTitle)
-                    .font(.headline)
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .presentationCompactAdaptation(.popover)
-            }
-            .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: - Transport
