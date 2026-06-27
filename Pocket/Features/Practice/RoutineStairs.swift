@@ -11,6 +11,17 @@ import SwiftUI
 struct RoutineStairs: View {
     let plateaus: [CommandRamp.Plateau]
     let tint: Color
+    /// The plateau the run is currently on — lit while a training run plays. `nil` in the
+    /// stopped setup preview, where every bar reads at one even weight (the dwell is conveyed by
+    /// its width, not a permanent highlight).
+    var currentIndex: Int?
+
+    /// How bright a given bar reads: the live plateau is lit, its neighbours dim while running;
+    /// in the stopped preview every bar sits at one even weight.
+    private func fill(forIndex index: Int) -> Double {
+        guard let currentIndex else { return 0.55 }
+        return index == currentIndex ? 0.95 : 0.25
+    }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -22,13 +33,14 @@ struct RoutineStairs: View {
                 let spacing: CGFloat = 4
                 let usableWidth = geo.size.width - spacing * CGFloat(plateaus.count - 1)
                 HStack(alignment: .bottom, spacing: spacing) {
-                    ForEach(Array(plateaus.enumerated()), id: \.offset) { _, plateau in
+                    ForEach(Array(plateaus.enumerated()), id: \.offset) { index, plateau in
                         let heightFraction = 0.3 + 0.7 * Double(plateau.bpm - low) / Double(span)
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(tint.opacity(plateau.intervals > 1 ? 0.9 : 0.55))
+                            .fill(tint.opacity(fill(forIndex: index)))
                             .frame(width: usableWidth * CGFloat(plateau.intervals)
                                    / CGFloat(totalIntervals),
                                    height: geo.size.height * heightFraction)
+                            .animation(.easeInOut(duration: 0.25), value: currentIndex)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)

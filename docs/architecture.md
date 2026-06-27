@@ -134,8 +134,11 @@ sitting. The engine drives whichever pure ramp conforms to `TempoRamp`: the free
 **`MetronomeAutomator`** (sibling of the in-song `AutomatorConfig`) — step a fixed amount
 every N **bars** or N **seconds** and hold at a ceiling — or the command-anchored
 **`CommandRamp`** (ADR 0045): warm up from the working floor to **command**, **dwell** at
-command for the bulk of the reps, briefly summit at the target reach, then **back off** below
-command. A `CommandRamp` reaches the engine two ways: a free-play ramp where an exercise
+command for the bulk of the reps, summit at the target reach, then **back off** below
+command. The climb to the reach and the descent into the back-off can each carry
+`reachSteps` / `backoffSteps` intermediate plateaus (ADR 0046 run-UI; `0` ⇒ the original
+single jump), placed by the pure `intermediateBPMs(from:to:steps:)` helper. A `CommandRamp`
+reaches the engine two ways: a free-play ramp where an exercise
 command is loaded into the automator, or — for a Practice training run (ADR 0046) — handed
 straight to `engine.run(ramp:)`, which sets `trainingRamp` and drives it directly instead of
 routing through the automator setters (so arming and training are no longer mutually
@@ -167,13 +170,18 @@ from the metronome at the product level. `PracticeView` is the hub: a `@Query` l
 above a disabled "Build today's session" placeholder for the V2 planner, with `NewExerciseSheet`
 as Practice's own create path (the metronome's old save UI is now retired). Tapping a unit pushes
 `ExerciseRunView`, which **owns its own `StandaloneMetronomeEngine`** (independent of the
-metronome screen's): it edits working / command / reach + warm-up steps while stopped, shows the
+metronome screen's): it edits working / command (each **typable** via `EditableTempoRow`, not
+just the −/+ steppers) plus the warm-up / reach / back-up step counts (in the collapsible
+`RoutineStepsControls`) while stopped, shows the
 routine staircase (the shared `RoutineStairs`), and on **Start** commits the edits and hands the engine the
 `Exercise`-shaped `CommandRamp` via `engine.run(ramp:)`, then shows a live BPM / beat / session
-readout. Its indigo `practice` accent marks it as a distinct space from the metronome's teal.
+readout. While a run plays, `RoutineStairs` **lights the live plateau** — fed by the engine's
+`currentRampPlateau` (the pure `CommandRamp.currentPlateauIndex(…)` over the accrued elapsed) —
+instead of the old permanent dwell highlight. Its indigo `practice` accent marks it as a distinct space from the metronome's teal.
 The `Exercise` model now stores the `CommandRamp` recipe **natively** (ADR 0046 §5): `rampStepBPM`
-/ `rampIntervalCount` / `rampIntervalUnit` plus `dwellIntervals` and `includeBackoff`, instead of
-borrowing the free-play automator fields the ADR 0045 shortcut reused. The `automator* → ramp*`
+/ `rampIntervalCount` / `rampIntervalUnit` plus `dwellIntervals`, `includeBackoff`, and the
+`rampReachSteps` / `rampBackoffSteps` counts (additive `Int` fields, declaration-defaulted to `0`),
+instead of borrowing the free-play automator fields the ADR 0045 shortcut reused. The `automator* → ramp*`
 rename is a **lightweight, data-preserving** migration via `@Attribute(originalName:)` (no
 drop+add), and the now-meaningless `automatorEnabled` / `automatorCeiling` columns are dropped;
 all new columns carry declaration defaults so the store opens without a 134110 wipe. Six

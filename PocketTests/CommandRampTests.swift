@@ -107,4 +107,53 @@ final class CommandRampTests: XCTestCase {
     func testIntermediateStepsZeroWhenNoClimb() {
         XCTAssertEqual(CommandRamp.intermediateSteps(working: 100, command: 100, stepBPM: 5), 0)
     }
+
+    // MARK: - Reach / back-up intermediate steps (ADR 0046 run-UI)
+
+    func testReachStepsAddIntermediateClimbToTheSummit() {
+        // command 100 → reach 112, 1 reach step ⇒ one stop midway (106) before the summit.
+        var cmd = ramp(command: 100, target: 112, backoff: false)
+        cmd.reachSteps = 1
+        let above = cmd.plateaus.filter { $0.bpm > 100 }.map(\.bpm)
+        XCTAssertEqual(above, [106, 112])
+    }
+
+    func testBackoffStepsAddIntermediateDescent() throws {
+        // working 70, command 100, summit 130 ⇒ backoff floor 70 (100−30); 2 back-up steps ⇒
+        // two stops (110, 90) on the way down before the floor.
+        var cmd = ramp(working: 70, command: 100, target: 130)
+        cmd.backoffSteps = 2
+        let bpms = cmd.plateaus.map(\.bpm)
+        let summit = try XCTUnwrap(bpms.firstIndex(of: 130))
+        XCTAssertEqual(Array(bpms[(summit + 1)...]), [110, 90, 70])
+    }
+
+    func testZeroReachAndBackoffStepsMatchTheOriginalShape() {
+        // Defaults (0/0) must reproduce the pre-feature staircase exactly.
+        let plateaus = ramp().plateaus
+        XCTAssertEqual(plateaus.map(\.bpm), [80, 85, 90, 95, 100, 106, 94])
+    }
+
+    func testIntermediateBPMsAreEvenlySpacedAndExcludeEndpoints() {
+        XCTAssertEqual(CommandRamp.intermediateBPMs(from: 100, to: 120, steps: 3), [105, 110, 115])
+        XCTAssertEqual(CommandRamp.intermediateBPMs(from: 120, to: 100, steps: 3), [115, 110, 105])
+        XCTAssertEqual(CommandRamp.intermediateBPMs(from: 100, to: 100, steps: 3), [])
+        XCTAssertEqual(CommandRamp.intermediateBPMs(from: 100, to: 120, steps: 0), [])
+    }
+
+    // MARK: - Live plateau cursor (staircase highlight)
+
+    func testCurrentPlateauIndexTracksTheElapsedWalk() {
+        let cmd = ramp()   // plateaus: warm-up 0-3, dwell 4-7, summit 8, backoff 9 (per interval)
+        XCTAssertEqual(cmd.currentPlateauIndex(elapsedBars: 0, elapsedSeconds: 0), 0)   // working
+        XCTAssertEqual(cmd.currentPlateauIndex(elapsedBars: 12, elapsedSeconds: 0), 3)  // last warm-up
+        XCTAssertEqual(cmd.currentPlateauIndex(elapsedBars: 16, elapsedSeconds: 0), 4)  // dwell
+        XCTAssertEqual(cmd.currentPlateauIndex(elapsedBars: 32, elapsedSeconds: 0), 5)  // summit
+        XCTAssertEqual(cmd.currentPlateauIndex(elapsedBars: 36, elapsedSeconds: 0), 6)  // backoff
+    }
+
+    func testCurrentPlateauIndexClampsToTheLastPlateau() {
+        XCTAssertEqual(ramp().currentPlateauIndex(elapsedBars: 9999, elapsedSeconds: 0),
+                       ramp().plateaus.count - 1)
+    }
 }

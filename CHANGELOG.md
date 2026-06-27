@@ -21,6 +21,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   (`@Attribute(originalName:)`), so no further store reset beyond the one already noted above.
 
 ### Added
+- **Practice run-screen refinements** (ADR 0046, Phase A). The training run's staircase now
+  **lights the step you're on** as the routine climbs, and the dwell-at-command bar is no longer
+  permanently highlighted (its length already shows it holds longer). The routine is more
+  shapeable: alongside **warm-up steps** you can now add **reach steps** (ease up to the reach
+  instead of jumping) and **back-up steps** (ease back down through the back-off instead of
+  dropping) — all three tucked behind a collapsible **Steps** section so setup stays uncluttered.
+  And every tempo can be **typed** — tap the number for keyboard entry — not just nudged with the
+  −/+ buttons.
 - **Starter exercises in Practice** (ADR 0046, Phase A). Practice no longer opens empty: six
   curated, in-house technique drills are seeded on first launch — **Spider Walk**, **Alternate
   Picking**, **Chord Changes**, **Scale Runs**, **String Skipping**, and **Legato** — each with a

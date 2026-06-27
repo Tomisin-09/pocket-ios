@@ -93,6 +93,19 @@ final class ExerciseTests: XCTestCase {
         XCTAssertFalse(ramp.includeBackoff)
     }
 
+    func testRampCarriesReachAndBackoffSteps() {
+        let exercise = Exercise(currentTempo: 70, commandTempo: 100,
+                                rampReachSteps: 2, rampBackoffSteps: 3)
+        XCTAssertEqual(exercise.ramp.reachSteps, 2)
+        XCTAssertEqual(exercise.ramp.backoffSteps, 3)
+    }
+
+    func testRampDefaultsToNoReachOrBackoffSteps() {
+        let ramp = Exercise(currentTempo: 70, commandTempo: 100).ramp
+        XCTAssertEqual(ramp.reachSteps, 0)
+        XCTAssertEqual(ramp.backoffSteps, 0)
+    }
+
     /// An un-promoted exercise (no measured command) still produces a usable ramp: command
     /// falls back to the working tempo, so the routine reads as a flat hold-and-stretch.
     func testRampFallsBackToWorkingWhenUnpromoted() {
