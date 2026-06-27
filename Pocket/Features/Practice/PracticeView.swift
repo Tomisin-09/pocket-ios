@@ -16,11 +16,20 @@ import SwiftUI
 struct PracticeView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
-    // Measured song loops (ADR 0046 Phase B): a loop with a command tempo is a trainable unit, so
-    // it joins the exercises in "Your units." The `commandTempo != nil` gate keeps the list to
-    // loops you've actually measured, not every loop fragment. This is the multi-source unit
-    // aggregation the V2 planner will compose sessions from.
-    @Query(filter: #Predicate<Loop> { $0.commandTempo != nil }) private var measuredLoops: [Loop]
+    // All loops; the *measured* ones (a command tempo set) are the trainable units, filtered in
+    // memory below. We deliberately do NOT use `@Query(filter: #Predicate { $0.commandTempo != nil })`:
+    // a SwiftData optional `!= nil` predicate churns the context and starves the main thread, which
+    // froze navigation into the run screens (exercises included) — caught by the Practice run UI
+    // test. An in-memory filter is correct and cheap at this scale.
+    @Query private var allLoops: [Loop]
+
+    /// Measured song loops (ADR 0046 Phase B): a loop with a command tempo is a trainable unit, so
+    /// it joins the exercises in "Your units." This is the multi-source unit aggregation the V2
+    /// planner will compose sessions from.
+    private var measuredLoops: [Loop] {
+        allLoops.filter { $0.commandTempo != nil }
+            .sorted { ($0.song?.title ?? "", $0.name) < ($1.song?.title ?? "", $1.name) }
+    }
     @State private var creating = false
 
     var body: some View {
