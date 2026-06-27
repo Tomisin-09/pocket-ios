@@ -176,7 +176,12 @@ The `Exercise` model now stores the `CommandRamp` recipe **natively** (ADR 0046 
 borrowing the free-play automator fields the ADR 0045 shortcut reused. The `automator* → ramp*`
 rename is a **lightweight, data-preserving** migration via `@Attribute(originalName:)` (no
 drop+add), and the now-meaningless `automatorEnabled` / `automatorCeiling` columns are dropped;
-all new columns carry declaration defaults so the store opens without a 134110 wipe. Stage 4's waveform for real files is
+all new columns carry declaration defaults so the store opens without a 134110 wipe. Six
+**curated in-house starter exercises** (`PracticePresets`) are seeded **once** on first launch
+(from the app root's `.task`) so Practice is never empty; seeding is gated by a versioned
+`UserDefaults` flag rather than an empty-store check, so deleted presets stay deleted, and each is
+built through the same `Exercise.commandAnchored` factory as the create flows (no special "preset"
+status). Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).
