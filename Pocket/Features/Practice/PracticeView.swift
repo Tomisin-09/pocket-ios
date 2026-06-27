@@ -110,9 +110,15 @@ struct PracticeView: View {
 
     // MARK: - Actions
 
-    private func create(name: String, working: Int) {
+    /// Create an exercise anchored on the entered **command** tempo (ADR 0046): the warm-up
+    /// working floor and the reach derive from it (pure `TempoStretch`), so the number typed in
+    /// the sheet is the command shown on the run screen — no working/command mismatch.
+    private func create(name: String, command: Int) {
         guard !name.isEmpty else { return }
-        context.insert(Exercise(name: name, currentTempo: working))
+        let working = max(StandaloneMetronomeEngine.bpmRange.lowerBound,
+                          TempoStretch.warmupFloorBPM(forCommand: command))
+        context.insert(Exercise(name: name, currentTempo: working, commandTempo: command,
+                                targetTempo: TempoStretch.targetBPM(forCommand: command)))
         haptic(.medium)
     }
 
