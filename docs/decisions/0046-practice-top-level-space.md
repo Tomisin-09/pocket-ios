@@ -186,8 +186,14 @@ encode method, don't ship others' material), not lifted from any third party.
   `CommandRamp`, working/command/reach, promotion) are **retained**.
 - Re-homes ADRs 0014 / 0015 / 0016 as the orchestration layer *inside* Practice.
 
-## Open question
+## Open question — resolved
 
-**Presets in V1, or shell-first and seed later?** Phase A can ship the Practice
-shell with only user-created exercises and add curated presets in a follow-up, or
-seed presets from day one. Deferred to the Phase A build decision.
+**Presets in V1, or shell-first and seed later?** **Resolved: presets in V1.** Phase A
+seeds six curated, in-house technique drills (Spider Walk, Alternate Picking, Chord
+Changes, Scale Runs, String Skipping, Legato) on first launch, so Practice is never an
+empty room. The seeding is **one-time and non-restoring**: a versioned `UserDefaults`
+flag (`practicePresetsSeeded.v1`), not an "is the store empty?" check, gates it — so a
+user who deletes presets keeps them gone. Seeded rows are ordinary `Exercise` records
+(editable, deletable), built through the same `Exercise.commandAnchored` factory as the
+interactive create flows, so they carry no special "preset" status. A future curated
+batch can seed under a new versioned key without disturbing this one.

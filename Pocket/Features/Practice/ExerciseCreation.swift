@@ -9,12 +9,23 @@ extension Exercise {
     ///
     /// Returns an **un-inserted** model — the caller inserts into its own `modelContext` — so this
     /// stays a pure factory and the same call works from any screen.
-    static func commandAnchored(name: String, command: Int) -> Exercise {
+    ///
+    /// `subdivision` / `tags` / `notes` default to the bare values the two interactive entry points
+    /// (Practice's create sheet, the automator seam) use; the **preset seeder** passes them to give
+    /// each curated drill its feel and how-to note while still deriving working/reach identically.
+    static func commandAnchored(name: String,
+                                command: Int,
+                                subdivision: Subdivision = .none,
+                                tags: [String] = [],
+                                notes: String = "") -> Exercise {
         let working = max(StandaloneMetronomeEngine.bpmRange.lowerBound,
                           TempoStretch.warmupFloorBPM(forCommand: command))
         return Exercise(name: name,
                         currentTempo: working,
                         commandTempo: command,
-                        targetTempo: TempoStretch.targetBPM(forCommand: command))
+                        targetTempo: TempoStretch.targetBPM(forCommand: command),
+                        subdivision: subdivision,
+                        tags: tags,
+                        notes: notes)
     }
 }

@@ -51,6 +51,10 @@ struct HomeView: View {
             .fullScreenCover(isPresented: $showingMetronome) {
                 MetronomeView()
             }
+            // Seed the curated Practice presets once, ever (ADR 0046). The app root is the right
+            // place — they exist before the user opens Practice — and the seeder's own
+            // `UserDefaults` guard makes this idempotent across launches.
+            .task { PracticePresets.seedIfNeeded(into: context) }
         }
         .preferredColorScheme(.dark)
     }

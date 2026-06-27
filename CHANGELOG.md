@@ -21,6 +21,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   (`@Attribute(originalName:)`), so no further store reset beyond the one already noted above.
 
 ### Added
+- **Starter exercises in Practice** (ADR 0046, Phase A). Practice no longer opens empty: six
+  curated, in-house technique drills are seeded on first launch — **Spider Walk**, **Alternate
+  Picking**, **Chord Changes**, **Scale Runs**, **String Skipping**, and **Legato** — each with a
+  sensible starting tempo, a feel (subdivision), and a one-line how-to. They're ordinary exercises:
+  edit them, run them, or delete the ones you don't want — and deleted ones stay gone (they're
+  seeded once, not restored).
 - **"Save as exercise" from the metronome automator** (ADR 0046, Phase A). The automator's job
   is *discovery*: ramp the tempo until your hands break down, and that tempo is your command. A
   **Save as exercise** action on the armed automator now captures the tempo you're at and hands
