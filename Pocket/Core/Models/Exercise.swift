@@ -22,7 +22,7 @@ import SwiftData
 /// the term "command tempo" stays reserved for `Loop`'s measured achievement and must
 /// not be conflated (ADR 0043).
 @Model
-final class MetronomeExercise {
+final class Exercise {
     /// Stable business id — list diffing / selection / undo, like `Loop`/`Marker`.
     var uid: UUID
 

@@ -1,17 +1,17 @@
 import Foundation
 
-/// Maps between a saved `MetronomeExercise` and the live `StandaloneMetronomeEngine` (ADR
+/// Maps between a saved `Exercise` and the live `StandaloneMetronomeEngine` (ADR
 /// 0043, slice 6). Kept in the feature layer (free functions) so the audio engine stays
 /// free of the SwiftData model and vice-versa. `@MainActor` — it drives the main-actor
 /// engine and SwiftData model from the UI.
 @MainActor
-enum MetronomeExerciseBridge {
+enum ExerciseBridge {
 
     /// Apply a saved exercise's full configuration to the engine — tempo, time signature,
     /// subdivision, and the automator recipe. Order matters: the tempo is set first (it's the
     /// ramp's floor and a manual set clears any prior ramp), then the automator is armed from
     /// the recipe.
-    static func apply(_ exercise: MetronomeExercise, to engine: StandaloneMetronomeEngine) {
+    static func apply(_ exercise: Exercise, to engine: StandaloneMetronomeEngine) {
         engine.setBPM(exercise.workingTempo)
         engine.setSubdivision(exercise.subdivision)
         engine.setTimeSignature(TimeSignature.forStored(beats: exercise.beatsPerBar,
@@ -32,26 +32,26 @@ enum MetronomeExerciseBridge {
     }
 
     /// A new exercise capturing the engine's current configuration under `name`.
-    static func capture(named name: String, from engine: StandaloneMetronomeEngine) -> MetronomeExercise {
-        let exercise = MetronomeExercise(name: name)
+    static func capture(named name: String, from engine: StandaloneMetronomeEngine) -> Exercise {
+        let exercise = Exercise(name: name)
         write(engine, into: exercise)
         return exercise
     }
 
     /// Overwrite an existing exercise's configuration with the engine's current state (the
     /// "update this preset" path), leaving its name, tags, notes, and date untouched.
-    static func update(_ exercise: MetronomeExercise, from engine: StandaloneMetronomeEngine) {
+    static func update(_ exercise: Exercise, from engine: StandaloneMetronomeEngine) {
         write(engine, into: exercise)
     }
 
     /// A throwaway, un-inserted exercise mirroring the engine's current state — for showing
     /// the to-be-saved configuration (via `configurationSummary`) in the update confirmation,
     /// so what's previewed is exactly what `update`/`capture` will write (floor included).
-    static func preview(from engine: StandaloneMetronomeEngine) -> MetronomeExercise {
+    static func preview(from engine: StandaloneMetronomeEngine) -> Exercise {
         capture(named: "", from: engine)
     }
 
-    private static func write(_ engine: StandaloneMetronomeEngine, into exercise: MetronomeExercise) {
+    private static func write(_ engine: StandaloneMetronomeEngine, into exercise: Exercise) {
         // When a ramp is armed, save its **floor** (the tempo it started from), not the live
         // `bpm` — a finished ramp has climbed `bpm` to the ceiling, and capturing that would
         // store floor == ceiling. The floor is the captured `automatorStartBPM`.

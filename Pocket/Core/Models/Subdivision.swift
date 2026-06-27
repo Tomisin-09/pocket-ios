@@ -3,7 +3,7 @@ import Foundation
 /// How many clicks sound *per beat* on the standalone metronome (ADR 0043). A closed,
 /// single-select set: a beat is subdivided exactly one way at a time. `.none` is the
 /// plain one-click-per-beat default; the others add evenly-spaced sub-beat ticks (the
-/// quieter third `ClickVoice` level, added in slice 5). Stored on `MetronomeExercise`
+/// quieter third `ClickVoice` level, added in slice 5). Stored on `Exercise`
 /// through a `String` backing field, never as a raw enum attribute (the SwiftData
 /// enum-attribute migration rule — see `Loop.loopTypeRaw`).
 enum Subdivision: String, CaseIterable, Identifiable, Codable {

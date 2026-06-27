@@ -11,6 +11,6 @@ struct PocketApp: App {
             HomeView()
         }
         .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,
-                              MetronomeExercise.self])
+                              Exercise.self])
     }
 }

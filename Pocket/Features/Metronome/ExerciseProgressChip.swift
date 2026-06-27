@@ -12,7 +12,7 @@ import SwiftUI
 /// over time — its history is ADR 0045 Phase 2. Reads the observable `@Model` directly, so a
 /// promote or edit from the sheet re-renders this summary live.
 struct ExerciseProgressChip: View {
-    let exercise: MetronomeExercise
+    let exercise: Exercise
     /// Opens Training Mode (the screen owns the sheet presentation).
     let onTap: () -> Void
 
@@ -59,7 +59,7 @@ struct ExerciseProgressChip: View {
 }
 
 #Preview("Promoted") {
-    ExerciseProgressChip(exercise: MetronomeExercise(name: "Alternating picking",
+    ExerciseProgressChip(exercise: Exercise(name: "Alternating picking",
                                                      currentTempo: 70, commandTempo: 92),
                          onTap: {})
         .padding()

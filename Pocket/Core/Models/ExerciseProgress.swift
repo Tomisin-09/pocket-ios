@@ -34,7 +34,7 @@ struct ExerciseProgress: Equatable {
     var status: String { isAtTarget ? "At target" : "\(remaining) BPM to go" }
 }
 
-extension MetronomeExercise {
+extension Exercise {
     /// This exercise's command-vs-target reach (ADR 0043 slice 7; re-anchored by ADR 0045).
     /// `current` is the effective `command` — the measured owned tempo, or the working tempo
     /// until one is promoted — so an un-promoted exercise reads exactly as the old

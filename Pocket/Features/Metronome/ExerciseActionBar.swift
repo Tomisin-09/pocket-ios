@@ -14,7 +14,7 @@ import SwiftUI
 /// new/library pair.
 struct ExerciseActionBar: View {
     let engine: StandaloneMetronomeEngine
-    @Binding var loadedExercise: MetronomeExercise?
+    @Binding var loadedExercise: Exercise?
     /// Opens the presets library (state lives on the screen, which owns the sheet).
     let showLibrary: () -> Void
 
@@ -99,14 +99,14 @@ struct ExerciseActionBar: View {
     }
 
     private func startUpdate() {
-        pendingSummary = MetronomeExerciseBridge.preview(from: engine).configurationSummary
+        pendingSummary = ExerciseBridge.preview(from: engine).configurationSummary
         confirmingUpdate = true
         haptic(.light)
     }
 
     private func saveNew(name: String, working: Int, target: Int) {
         guard !name.isEmpty else { return }
-        let exercise = MetronomeExerciseBridge.capture(named: name, from: engine)
+        let exercise = ExerciseBridge.capture(named: name, from: engine)
         exercise.currentTempo = working
         exercise.targetTempo = target
         // Keep an armed ramp climbing toward the chosen goal (ADR 0043 — ceiling tracks target).
@@ -118,7 +118,7 @@ struct ExerciseActionBar: View {
 
     private func commitUpdate() {
         guard let loaded = loadedExercise else { return }
-        MetronomeExerciseBridge.update(loaded, from: engine)
+        ExerciseBridge.update(loaded, from: engine)
         haptic(.medium)
     }
 

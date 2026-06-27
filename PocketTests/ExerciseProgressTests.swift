@@ -53,7 +53,7 @@ final class ExerciseProgressTests: XCTestCase {
     // MARK: model bridge
 
     func testExerciseExposesItsProgress() {
-        let exercise = MetronomeExercise(currentTempo: 100, targetTempo: 130)
+        let exercise = Exercise(currentTempo: 100, targetTempo: 130)
         XCTAssertEqual(exercise.progress, ExerciseProgress(current: 100, target: 130))
         XCTAssertEqual(exercise.tempoGap, 30)   // tempoGap still delegates to progress.remaining
     }

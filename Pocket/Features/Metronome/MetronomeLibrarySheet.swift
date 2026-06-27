@@ -10,13 +10,13 @@ struct MetronomeLibrarySheet: View {
     let engine: StandaloneMetronomeEngine
     /// The exercise currently loaded on the screen — set when one is tapped, cleared if it's
     /// deleted, so the screen title can show its name.
-    @Binding var loadedExercise: MetronomeExercise?
+    @Binding var loadedExercise: Exercise?
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \MetronomeExercise.name) private var exercises: [MetronomeExercise]
+    @Query(sort: \Exercise.name) private var exercises: [Exercise]
 
-    @State private var renaming: MetronomeExercise?
+    @State private var renaming: Exercise?
     @State private var renameText = ""
 
     var body: some View {
@@ -52,9 +52,9 @@ struct MetronomeLibrarySheet: View {
         .preferredColorScheme(.dark)
     }
 
-    private func row(_ exercise: MetronomeExercise) -> some View {
+    private func row(_ exercise: Exercise) -> some View {
         Button {
-            MetronomeExerciseBridge.apply(exercise, to: engine)
+            ExerciseBridge.apply(exercise, to: engine)
             loadedExercise = exercise
             haptic(.medium)
             dismiss()
@@ -104,7 +104,7 @@ struct MetronomeLibrarySheet: View {
         renaming = nil
     }
 
-    private func delete(_ exercise: MetronomeExercise) {
+    private func delete(_ exercise: Exercise) {
         if loadedExercise?.uid == exercise.uid { loadedExercise = nil }
         context.delete(exercise)
     }
