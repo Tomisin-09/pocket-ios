@@ -49,7 +49,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
 | `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043) |
-| `Pocket/Features/Practice/` | Top-level Practice space — a unit aggregation over exercises *and* measured song loops; per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`) + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
+| `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`) + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
 | `Pocket/Features/Planner/` | *(reserved for the V2 practice planner — re-homed inside Practice, ADR 0046)* |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
@@ -150,9 +150,10 @@ and the loops/markers list becomes a **slide-in drawer** (☰), gated to this sc
 `OrientationGate`. The old bottom **song-info panel was removed** — its facts live
 in the song-details sheet (hold the title). The app opens to a **home hub** (`HomeView`, ADR 0044) — a greeting, a "Jump back in" card
 for the most-recently-practised song, a **Practice** card pushing the top-level **Practice
-space** (`PracticeView`, ADR 0046 — a **unit aggregation** over two models: exercises and any
-measured song **loop** (`commandTempo != nil`), shown side by side in "Your units". An exercise
-opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B) — both owning their own engine. The
+space** (`PracticeView`, ADR 0046 — a **hub** over two unit libraries: `ExerciseLibraryView`
+(command drills) and `LoopLibraryView` (any measured song **loop**, `commandTempo != nil`), each a
+row pushing its own list. An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
+— both owning their own engine. The
 run staircase lights the live plateau as it climbs, tempos are typable as well as nudged, and the
 routine takes reach / back-up steps beyond warm-up; the `Exercise` model stores its `CommandRamp`
 recipe natively in `ramp*`/dwell/backoff/`rampReachSteps`/`rampBackoffSteps` fields, the

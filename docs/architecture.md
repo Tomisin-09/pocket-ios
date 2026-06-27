@@ -165,14 +165,19 @@ Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044)
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
-from the metronome at the product level. `PracticeView` is the hub: a **unit aggregation** over two
-models — `Exercise`s (command-anchored click drills) **and** measured song `Loop`s
-(`commandTempo != nil`, queried with a `#Predicate`), shown side by side in "Your units" — above a
-disabled "Build today's session" placeholder for the V2 planner, with `NewExerciseSheet` as
-Practice's own create path (the metronome's old save UI is now retired). Tapping an exercise pushes
-`ExerciseRunView`; tapping a loop pushes `LoopRunView` (Phase B, below). Exercises are
-swipe-deletable; loops are not (a loop belongs to its song, removed from the waveform screen).
-`ExerciseRunView` **owns its own `StandaloneMetronomeEngine`** (independent of the
+from the metronome at the product level. `PracticeView` is a **hub**: a disabled "Build today's
+session" placeholder (the V2 planner) above two **unit libraries** — `ExerciseLibraryView`
+(command-anchored click drills) and `LoopLibraryView` (measured song `Loop`s) — each a row that
+pushes its own list. The split is for clarity/accessibility; the two models stay separate
+(`Exercise` is audio-free, `Loop` is file-bound) but both are "things you train," the multi-source
+surface the planner composes from. `ExerciseLibraryView` owns exercise **create**
+(`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
+(swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
+and removed on the waveform screen, not here — and lists those with a measured command
+(`commandTempo != nil`, an **in-memory** filter, never a SwiftData optional `#Predicate`, which
+starves the main thread and froze navigation — guarded by `PracticeRunUITests`); tapping one pushes
+`LoopRunView` (Phase B, below). `ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
+(independent of the
 metronome screen's): it edits working / command (each **typable** via `EditableTempoRow`, not
 just the −/+ steppers) plus the warm-up / reach / back-up step counts (in the collapsible
 `RoutineStepsControls`) while stopped, shows the

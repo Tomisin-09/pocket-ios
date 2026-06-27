@@ -33,11 +33,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   staircase, and **run** it: the loop's region plays on repeat while a `LoopRunModel` steps the
   time-stretch rate through the command ramp (warm up → dwell → reach → back off) and stops at the
   end.
-- **Loops are trainable units in Practice** (ADR 0046, Phase B, slice 3). The Practice "Your units"
-  list now aggregates **both** kinds of unit: your exercises *and* any song loop you've measured (a
-  loop with a command tempo), each shown with its song as context and its command → reach. Tapping
-  a loop opens the loop training run. This is the multi-source "things you train" surface the V2
-  planner will compose sessions from — one place, two altitudes.
+- **Loops are trainable units in Practice** (ADR 0046, Phase B). Practice is now a **hub** with two
+  unit libraries: **Exercises** (your command drills) and **Loops** (any song loop you've measured —
+  i.e. given a command tempo), each opening its own list. A measured loop shows its song as context
+  and its command → reach, and tapping it opens the loop training run. Splitting them into separate
+  libraries keeps each list clean and scannable; together they're the multi-source "things you
+  train" surface the V2 planner will compose sessions from.
 
 ### Added
 - **Practice run-screen refinements** (ADR 0046, Phase A). The training run's staircase now

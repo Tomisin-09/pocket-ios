@@ -19,6 +19,11 @@ final class PracticeRunUITests: XCTestCase {
         XCTAssertTrue(practiceCard.waitForExistence(timeout: 5), "Practice card missing")
         practiceCard.tap()
 
+        // Practice is a hub (ADR 0046): open the Exercises library first.
+        let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
+        XCTAssertTrue(exercisesRow.waitForExistence(timeout: 5), "Exercises library row missing")
+        exercisesRow.tap()
+
         // A seeded preset (Phase A seeds six on first launch); tap its row, not the bare text.
         let spiderCell = app.cells.containing(.staticText, identifier: "Spider Walk").firstMatch
         XCTAssertTrue(spiderCell.waitForExistence(timeout: 5), "no seeded exercise to tap")
