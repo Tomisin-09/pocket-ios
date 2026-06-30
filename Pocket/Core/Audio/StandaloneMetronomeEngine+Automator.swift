@@ -54,10 +54,78 @@ extension StandaloneMetronomeEngine {
         return automatorLinearRamp
     }
 
-    /// Whether a ramp is driving the tempo — an explicit training routine (`run(ramp:)`) or
-    /// the armed free-play automator. The single gate `tick()` and `start()` use to decide
-    /// whether to accrue ramp progress and drive `bpm` from a ramp.
-    var isRampActive: Bool { trainingRamp != nil || automatorEnabled }
+    /// Whether a ramp is driving the tempo — an explicit training routine (`run(ramp:)`) or a
+    /// free-play automator that's been **started** (ADR 0048; arming alone no longer climbs).
+    /// The single gate `tick()` and `start()` use to decide whether to accrue ramp progress and
+    /// drive `bpm` from a ramp.
+    var isRampActive: Bool { trainingRamp != nil || automatorRunning }
+
+    /// Begin the free-play climb — the explicit **Start** (ADR 0048). Arming (the segmented
+    /// control) only configured the ramp; this runs it. Plays the metronome if it's stopped,
+    /// captures the floor at the current tempo, and counts in one bar before the climb engages
+    /// (so you can settle in). No-op unless armed.
+    func startAutomatorRun() {
+        guard automatorEnabled else { return }
+        if transport == .stopped { start() }
+        engageAutomator()                       // floor = current tempo, progress zeroed
+        countInStartBeat = currentBeat
+        countInTarget = max(1, timeSignature.beats)
+        automatorCountingIn = true
+        automatorRunning = true
+        pushNowPlaying()
+    }
+
+    /// Halt the climb — the explicit **Stop**. Leaves the metronome playing at the tempo it
+    /// reached and the ramp still armed, so Start replays from the floor. The session is intact.
+    func stopAutomatorRun() {
+        automatorRunning = false
+        automatorCountingIn = false
+        pushNowPlaying()
+    }
+
+    /// Advance the pre-climb **count-in** (ADR 0048). Returns `true` while still counting in —
+    /// the tick holds the floor — and `false` once the climb should drive (or when there's no
+    /// count-in). On the count-in's final beat it engages the climb cleanly from here.
+    func advanceCountIn() -> Bool {
+        guard automatorCountingIn else { return false }
+        if currentBeat - countInStartBeat >= countInTarget {
+            automatorCountingIn = false
+            engageAutomator()                   // start the climb from the downbeat we reached
+            return false
+        }
+        return true
+    }
+
+    /// The count-in number to show before the climb (ADR 0048), or `nil` when not counting in —
+    /// the meter's beats counted down to the downbeat where the climb engages.
+    var automatorCountdown: Int? {
+        guard automatorRunning, automatorCountingIn else { return nil }
+        return max(1, countInTarget - max(0, currentBeat - countInStartBeat))
+    }
+
+    /// End a finished climb. A Practice **training run** ends the whole session (ADR 0046); a
+    /// **free-play** automator instead just stops *running* and holds at the ceiling, so the
+    /// click keeps going at the tempo you reached.
+    func finishRamp() {
+        if trainingRamp != nil {
+            stop()
+        } else {
+            automatorRunning = false
+            automatorCountingIn = false
+            pushNowPlaying()
+        }
+    }
+
+    /// **Infinite** mode (ADR 0048): no chosen target — the ramp simply climbs to the system
+    /// ceiling. Derived from the ceiling so there's no separate flag to keep in sync.
+    var automatorNoLimit: Bool { automatorCeiling >= Self.bpmRange.upperBound }
+
+    /// Toggle infinite mode: on ⇒ ceiling at the system max; off ⇒ back to a sensible target
+    /// (the floor plus the default headroom), so turning it off lands on a usable number.
+    func setAutomatorNoLimit(_ noLimit: Bool) {
+        setAutomatorCeiling(noLimit ? Self.bpmRange.upperBound
+                                    : clampedBPM(automatorStartBPM + Self.automatorDefaultHeadroom))
+    }
 
     /// The plateau index a **training run** is currently holding (ADR 0046) — drives the live
     /// highlight on the Practice staircase. `nil` when no explicit training ramp is driving
@@ -139,6 +207,7 @@ extension StandaloneMetronomeEngine {
         guard enabled != automatorEnabled else { return }
         automatorEnabled = enabled
         if enabled, transport != .stopped { engageAutomator() }
+        if !enabled { stopAutomatorRun() }      // disarming ends any run (ADR 0048)
     }
 
     /// Return to the **free-play launch defaults** — what you get on first open: 90 BPM, 4/4,

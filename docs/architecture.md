@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
+│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -144,7 +144,10 @@ straight to `engine.run(ramp:)`, which sets `trainingRamp` and drives it directl
 routing through the automator setters (so arming and training are no longer mutually
 exclusive). The engine accrues elapsed bars (integrated at the live tempo) and seconds since
 the ramp engaged, hands them to `activeRamp` (`trainingRamp` first) each tick, and applies the
-resolved BPM as a ramp-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
+resolved BPM **phase-continuously** (ADR 0047): unlike a manual change — which hard re-anchors
+to a fresh accented beat 0 — a ramp step keeps the tick counter and re-origins the grid (pure
+`MetronomeGrid.reanchoredOrigin`) so the heard click splices seamlessly at the new spacing and
+the downbeat stays a downbeat, instead of lurching mid-bar on every step. The two per-tick SwiftUI views (dots, session readout) are
 isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
 the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
 Italian tempo marking is the pure `TempoMarking` lookup. The slider's position↔BPM binding goes
@@ -154,9 +157,17 @@ rather than the left fifth a linear scale would give; the steppers and tap-tempo
 absolute BPM. The metronome is a **pure free-play tool** (ADR 0046): its in-screen exercise UI
 (save/load presets, the library sheet, the command-anchored Training Mode) has been removed —
 exercises and training runs now live in the top-level **Practice** space (below). What stays is
-the free-play **tempo automator** (`MetronomeAutomatorPanel`) for ad-hoc ramps; its job is
-*discovery* — ramp until your hands break down — and an armed automator offers a one-directional
-**"Save as exercise"** seam that captures the current (breakdown) tempo and presents Practice's
+the free-play **tempo automator** (`MetronomeAutomatorPanel`) for ad-hoc ramps. **Arming is
+separated from running** (ADR 0048): the segmented Off / By Bars / By Time control only
+*configures* the ramp and previews its staircase (`automatorEnabled`); an explicit **Start**
+(`startAutomatorRun`) begins the climb after a one-bar beat-synced **count-in**, and **Stop**
+halts it leaving the click at the tempo reached (`automatorRunning` is what `isRampActive` keys
+the free-play ramp on). A **No limit** toggle drops the target and ramps to the system ceiling
+(infinite mode, *derived* from `ceiling == bpmRange.upperBound`), and a finished free-play ramp
+holds at its ceiling rather than stopping the session (`finishRamp`; a Practice training run
+still ends the session). Its job is *discovery* — ramp until your hands break down — and an
+armed automator offers a one-directional **"Save as exercise"** seam (a compact bookmark) that
+captures the current (breakdown) tempo and presents Practice's
 `NewExerciseSheet` prefilled with it as the command. Both that seam and Practice's own create flow
 funnel through the single `Exercise.commandAnchored(name:command:)` factory, so the two entry
 points can't drift. **Command-anchored progress** (ADR

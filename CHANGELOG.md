@@ -5,7 +5,29 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Metronome automator: explicit Start/Stop, count-in, and an infinite mode** (ADR 0048).
+  The tempo automator no longer climbs the moment you arm it — arming (Off / By Bars / By Time)
+  just configures the ramp and previews its staircase; a dedicated **Start** runs it and **Stop**
+  halts it (leaving the metronome playing at the tempo you reached). Start **counts you in** one
+  bar before the climb engages. A new **No limit** toggle drops the target and ramps to the
+  system maximum (300 BPM) for open-ended speed training. A finished ramp now holds at its
+  ceiling instead of stopping the metronome. The "Save as exercise" action became a compact
+  bookmark icon.
+
+### Fixed
+- **Metronome automator no longer lurches on a tempo step** (ADR 0047). Every ramp step used
+  to hard re-anchor the click grid to a fresh accented beat 0 mid-bar — audible as a jerky
+  transition, worst on the *first* step and inconsistent thereafter. Ramp steps now re-anchor
+  **phase-continuously**: the click you're hearing keeps its place, the downbeat stays a
+  downbeat, and the new tempo's spacing splices in seamlessly at the next beat. Manual tempo
+  changes are unaffected (they still snap to a clean downbeat).
+
 ### Changed
+- **Metronome screen drops the session timer.** The standalone metronome no longer shows the
+  large "SESSION" wall-clock readout — it took a lot of space for little payoff. The timer
+  still appears on the Practice exercise-run screen (where elapsed time matters), and the
+  lock-screen/Control Center elapsed time is unaffected.
 - **Groundwork for a top-level Practice space** (ADR 0046, Phase A). Internal, no behaviour
   change: (1) the metronome-exercise model is renamed `MetronomeExercise → Exercise` as it
   stops being "a saved metronome setup" and becomes a first-class practice unit (existing
