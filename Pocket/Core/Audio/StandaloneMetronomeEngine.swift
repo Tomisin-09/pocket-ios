@@ -70,9 +70,18 @@ final class StandaloneMetronomeEngine {
     /// training bypasses the automator setters (the 0045 coupling). Don't set from the UI — go
     /// through `run(ramp:)`; cleared on `stop`. `var` for the `+Automator` split.
     var trainingRamp: CommandRamp?
-    /// The ramp's **floor** — the tempo it started from (captured when armed). The floor is
-    /// always the current metronome tempo at the moment you arm; the restart returns here.
+    /// The ramp's **floor** — the tempo it started from (captured on Start). The floor is
+    /// always the current metronome tempo at the moment you start the run.
     private(set) var automatorStartBPM = defaultBPM
+
+    // Explicit free-play **run** state (ADR 0048). Arming (the segmented control) only
+    // *configures* the ramp and shows its staircase; the climb begins on an explicit Start —
+    // optionally after a short beat-synced **count-in** — and `automatorRunning` is the gate the
+    // tick uses to actually drive the tempo. Written by the `+Automator` split, so internal.
+    var automatorRunning = false
+    var automatorCountingIn = false
+    var countInStartBeat = -1
+    var countInTarget = 0
 
     /// Index since the current phase anchor of the most recently *heard* beat (-1 before
     /// the first). The flash lights `currentBeat % timeSignature.beats`; the meter's accent
@@ -85,10 +94,13 @@ final class StandaloneMetronomeEngine {
     /// Convenience for the views: the click is actively sounding.
     var isPlaying: Bool { transport == .playing }
 
-    private let engine = AVAudioEngine()
+    // The AVAudioEngine / now-playing / timer plumbing is driven from the `+Driver` split, so
+    // these handles are internal (not private), like the automator state the `+Automator` split
+    // writes. `clickVoice` stays private — only the core beat math touches it.
+    let engine = AVAudioEngine()
     private let clickVoice = ClickVoice()
-    private let nowPlaying = NowPlayingController()
-    private var timer: Timer?
+    let nowPlaying = NowPlayingController()
+    var timer: Timer?
 
     /// Active-practice time banked before the current play stretch (grows on each pause).
     private var accumulatedSession: TimeInterval = 0
@@ -183,6 +195,8 @@ final class StandaloneMetronomeEngine {
         engine.stop()
         nowPlaying.teardown()
         trainingRamp = nil          // a training run ends with the session (ADR 0046)
+        automatorRunning = false    // …and so does a free-play climb (ADR 0048)
+        automatorCountingIn = false
         accumulatedSession = 0
         elapsed = 0
         currentBeat = -1
@@ -211,17 +225,6 @@ final class StandaloneMetronomeEngine {
         lastTickTime = CACurrentMediaTime()
     }
 
-    /// Quick-restart the ramp: jump the tempo back to the floor and replay the climb. No-op
-    /// when no ramp is driving (free play with the automator off).
-    func restartAutomator() {
-        guard isRampActive else { return }
-        applyTempo(automatorStartBPM)
-        automatorBarsElapsed = 0
-        automatorSecondsElapsed = 0
-        lastTickTime = CACurrentMediaTime()
-        pushNowPlaying()
-    }
-
     // MARK: - Tempo & signature
 
     /// Set the tempo **manually** (steppers / slider / tap), clamped to `bpmRange`. A manual
@@ -238,14 +241,40 @@ final class StandaloneMetronomeEngine {
     /// Nudge the tempo by `delta` BPM (the −/+ steppers).
     func adjustBPM(by delta: Int) { setBPM(bpm + delta) }
 
-    /// Apply a tempo and re-anchor the beat phase, clamped — the shared mechanism for both a
-    /// manual change and an automator step. Returns whether the tempo actually changed.
+    /// Apply a tempo and re-anchor the beat phase, clamped — the shared mechanism for a
+    /// **manual** change (steppers / slider / tap) and a ramp restart. Returns whether the
+    /// tempo actually changed. The hard re-anchor (`reanchorPhase`) is right here: a manual
+    /// change should snap to a fresh, clean downbeat now.
     @discardableResult
     private func applyTempo(_ value: Int) -> Bool {
         let clamped = min(Self.bpmRange.upperBound, max(Self.bpmRange.lowerBound, value))
         guard clamped != bpm else { return false }
         bpm = clamped
         reanchorPhase()
+        return true
+    }
+
+    /// Apply an **automator step** phase-continuously (ADR 0047). Unlike `applyTempo`, this
+    /// never flushes the queued clicks or resets to a fresh accented beat 0 — that hard
+    /// re-anchor is what made each step lurch (worst on the first step, where the wall-clock
+    /// bar accrual leads the sample grid by the scheduling lead). Instead it keeps the tick
+    /// counter and re-origins the grid so the heard click splices seamlessly at the new
+    /// spacing and the downbeat stays a downbeat. Falls back to `applyTempo` before the grid
+    /// exists (the first tick, where the tempo hasn't moved off the floor anyway).
+    @discardableResult
+    private func applyAutomatorTempo(_ value: Int) -> Bool {
+        let clamped = min(Self.bpmRange.upperBound, max(Self.bpmRange.lowerBound, value))
+        guard clamped != bpm else { return false }
+        guard transport == .playing, let origin = phaseOrigin, scheduledThrough >= 0 else {
+            return applyTempo(value)
+        }
+        let ticksPerBeat = Double(max(1, subdivision.ticksPerBeat))
+        let oldSubInterval = framesPerBeat / ticksPerBeat   // spacing at the current (old) tempo
+        bpm = clamped
+        let newSubInterval = framesPerBeat / ticksPerBeat   // spacing at the new tempo
+        phaseOrigin = MetronomeGrid.reanchoredOrigin(
+            origin: origin, scheduledThrough: scheduledThrough,
+            oldSubInterval: oldSubInterval, newSubInterval: newSubInterval)
         return true
     }
 
@@ -293,24 +322,26 @@ final class StandaloneMetronomeEngine {
     /// One driver step (~every 20 ms while playing): advance the session clock, pin any
     /// beats now inside the look-ahead window to absolute sample positions, and flip the
     /// flash to the most recent *heard* beat.
-    private func tick() {
+    func tick() {
         let now = CACurrentMediaTime()
         elapsed = accumulatedSession + max(0, now - sessionStart)
 
         // Ramp: accrue progress at the live tempo and apply the resolved BPM — a training
         // routine (run(ramp:)) or the free-play automator. Done before scheduling so a step's
-        // new phase is set up within this same tick.
-        if isRampActive {
+        // new phase is set up within this same tick. While the free-play run is **counting in**
+        // (ADR 0048) the climb is held at the floor — `advanceCountIn()` reports that and engages
+        // the climb on the count-in's final downbeat.
+        if isRampActive, !advanceCountIn() {
             let delta = max(0, now - lastTickTime)
             automatorSecondsElapsed += delta
             automatorBarsElapsed += delta * (Double(bpm) / 60.0) / Double(max(1, timeSignature.beats))
             let elapsedBars = Int(automatorBarsElapsed)
             let ramp = activeRamp
             let target = ramp.bpm(elapsedBars: elapsedBars, elapsedSeconds: automatorSecondsElapsed)
-            if applyTempo(target) { pushNowPlaying() }
-            // The climb has a defined end — stop at the top rather than run on (ADR 0043/0045).
+            if applyAutomatorTempo(target) { pushNowPlaying() }
+            // The climb has a defined end — finish at the top rather than run on (ADR 0043/0045).
             if ramp.isFinished(elapsedBars: elapsedBars, elapsedSeconds: automatorSecondsElapsed) {
-                stop()
+                finishRamp()
                 return
             }
         }
@@ -359,42 +390,5 @@ final class StandaloneMetronomeEngine {
             let reached = max(0, Int(floor(heard / perBeat + 1e-9)))
             if reached != currentBeat { currentBeat = reached }
         }
-    }
-
-    /// Push the metronome's state to the lock screen / Control Center. Title is the tool,
-    /// the secondary line is the live tempo + meter, and the rate freezes the clock when
-    /// paused.
-    private func pushNowPlaying() {
-        guard transport != .stopped else { return }
-        nowPlaying.update(NowPlayingState(
-            title: "Metronome",
-            artist: "\(bpm) BPM · \(timeSignature.name)",
-            duration: 0,
-            elapsedTime: elapsed,
-            isPlaying: transport == .playing,
-            speed: 1))
-    }
-
-    private func startTimer() {
-        stopTimer()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.tick() }
-        }
-    }
-
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-
-    private func startEngineIfNeeded() {
-        guard !engine.isRunning else { return }
-        try? engine.start()
-    }
-
-    private func configureSession() {
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback)
-        try? session.setActive(true)
     }
 }

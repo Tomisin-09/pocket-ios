@@ -48,7 +48,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Features/Home/` | Home hub — the app root: greeting, resume card, Practice + metronome + songs entry points (ADR 0044) |
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
-| `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043) |
+| `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043; automator phase-continuous stepping + explicit run/count-in/infinite, ADRs 0047/0048) |
 | `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`) + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
 | `Pocket/Features/Planner/` | *(reserved for the V2 practice planner — re-homed inside Practice, ADR 0046)* |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
@@ -230,5 +230,5 @@ planner's **selection** (goals → required skills from a **technique taxonomy**
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `MetronomeBeats`, `TempoMarking`, `TempoSliderScale`, `ExerciseProgress`, `TimeSignature`, `MetronomeAutomator`, `TempoStretch`, `CommandRamp`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`.
+Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `MetronomeBeats`, `MetronomeGrid`, `TempoMarking`, `TempoSliderScale`, `ExerciseProgress`, `TimeSignature`, `MetronomeAutomator`, `TempoStretch`, `CommandRamp`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`.
 See `CHANGELOG.md` for the full history.

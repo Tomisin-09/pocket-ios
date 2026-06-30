@@ -32,7 +32,8 @@ struct BeatIndicator: View {
 
 /// The running session time — ephemeral wall-clock that keeps running through tempo
 /// changes and resets on stop (ADR 0043). A standalone view so its per-second update
-/// doesn't re-render the controls.
+/// doesn't re-render the controls. Used on the Practice **exercise run** screen; the
+/// standalone metronome screen dropped it (too much space for too little payoff).
 struct SessionTracker: View {
     let engine: StandaloneMetronomeEngine
 

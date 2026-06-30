@@ -6,7 +6,7 @@ import UIKit
 
 /// The standalone metronome screen (ADR 0043, slice 3): play/stop, a tempo control
 /// (steppers, slider, and reused tap-tempo), a named **time-signature** picker, the
-/// Italian tempo marking, a running **session tracker**, a **beat-flash indicator** that
+/// Italian tempo marking, a **beat-flash indicator** that
 /// reads the same generated grid as the audio so the two stay in step, and the free-play
 /// **tempo automator** for ad-hoc ramps.
 ///
@@ -27,10 +27,9 @@ struct MetronomeView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // The two per-tick views are isolated structs so the engine's ~50 Hz
-                // `currentBeat`/`elapsed` updates re-render only them — not this body, which
-                // would otherwise rebuild the controls (and dismiss the time-signature menu)
-                // on every beat.
+                // `BeatIndicator` is an isolated struct so the engine's ~50 Hz `currentBeat`
+                // updates re-render only it — not this body, which would otherwise rebuild the
+                // controls (and dismiss the time-signature menu) on every beat.
                 ScrollView {
                     VStack(spacing: 20) {
                         BeatIndicator(engine: engine)
@@ -41,14 +40,11 @@ struct MetronomeView: View {
                     .padding(24)
                 }
                 .scrollDismissesKeyboard(.interactively)
-                // Session readout + transport stay pinned below the scrollable controls.
-                VStack(spacing: 12) {
-                    SessionTracker(engine: engine)
-                    transport
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 24)
-                .padding(.top, 12)
+                // Transport stays pinned below the scrollable controls.
+                transport
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
+                    .padding(.top, 12)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(PocketColor.background.ignoresSafeArea())
