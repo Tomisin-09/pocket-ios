@@ -11,6 +11,7 @@ import UIKit
 /// rapid feedback like tap-tempo. Keeping the generator alive and re-`prepare()`ing
 /// after each impact keeps the engine warm so the next buzz is near-instant.
 @MainActor func haptic(_ style: HapticStyle) {
+    guard AppSettings.hapticsEnabled else { return }   // Settings V1 (ADR 0050)
     HapticEngine.shared.fire(style)
 }
 

@@ -14,6 +14,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   unchanged. Zoom in and the full transient detail is still there.
 
 ### Added
+- **Settings** (ADR 0050). A gear in the Home toolbar opens a settings screen, grouped into
+  **Feel**, **Practice**, and **About**. V1 carries **Haptics** (the light taps that confirm
+  gestures), **Count-in** with a configurable **length** (1–2 bars), and **Keep screen awake**
+  (stops the phone locking while you play along) — all on by default — plus the app version.
 - **Metronome automator: explicit Start/Stop, count-in, and an infinite mode** (ADR 0048).
   The tempo automator no longer climbs the moment you arm it — arming (Off / By Bars / By Time)
   just configures the ramp and previews its staircase; a dedicated **Start** runs it and **Stop**

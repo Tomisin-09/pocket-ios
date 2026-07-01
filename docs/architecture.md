@@ -372,6 +372,13 @@ only. See `docs/decisions/0001`.
   fraction).
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
   a re-model.
+- **User preferences** (`App/AppSettings.swift`, ADR 0050): `UserDefaults`-backed toggles, not
+  SwiftData. `AppSettings` is a thin wrapper so both SwiftUI (`@AppStorage(AppSettings.Key.…)`,
+  as in `SettingsView`) and plain engine/helper code (`AppSettings.countInEnabled` in the
+  metronome, `AppSettings.hapticsEnabled` in `haptic(_:)`) read the same key without a shared
+  object. The pure `resolvedBool(storedValue:default:)` keeps a never-set key at its **default
+  (on)** rather than `UserDefaults.bool`'s `false` — unit-tested. UserDefaults is already in the
+  privacy manifest (CA92.1), so no new required-reason API and no migration.
 
 ## Backend
 

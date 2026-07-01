@@ -54,6 +54,7 @@ struct WaveformPracticeView: View {
         // Practice is the one screen that rotates (ADR 0042): more width = sharper
         // waveform + more precise A/B drag. Reverts to portrait-only on exit.
         .landscapeEnabled()
+        .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         // Don't carry an open drawer across a rotation back to portrait.
         .onChange(of: isLandscape) { _, landscape in if !landscape { drawerOpen = false } }
         // Stop a playhead scrub near the left edge from popping back to the library

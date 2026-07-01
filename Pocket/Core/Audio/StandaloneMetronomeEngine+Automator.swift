@@ -69,8 +69,10 @@ extension StandaloneMetronomeEngine {
         if transport == .stopped { start() }
         engageAutomator()                       // floor = current tempo, progress zeroed
         countInStartBeat = currentBeat
-        countInTarget = max(1, timeSignature.beats)
-        automatorCountingIn = true
+        // Count-in length is configurable in whole bars (Settings V1, ADR 0050).
+        countInTarget = max(1, timeSignature.beats * AppSettings.countInBars)
+        // Count-in is opt-out — off ⇒ engage the climb immediately.
+        automatorCountingIn = AppSettings.countInEnabled
         automatorRunning = true
         pushNowPlaying()
     }

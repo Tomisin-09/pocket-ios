@@ -77,6 +77,7 @@ struct MetronomeView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onDisappear { engine.stop() }
     }
 
