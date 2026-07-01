@@ -31,6 +31,13 @@ struct LoopRunView: View {
     @State private var repsPerStep = LoopCommandRamp.defaultRepsPerStep
     @State private var showSteps = false
     @State private var seeded = false
+    /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
+    /// button shows only while the edits differ (ADR 0057). Only the two tempos persist to a Loop
+    /// today (steps/reps aren't stored — see `commitAndStart`), so the snapshot tracks just those.
+    @State private var baseline: LoopSetupState?
+
+    private var current: LoopSetupState { LoopSetupState(working: working, command: command) }
+    private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
     private static let repsRange = 1...8
 
@@ -80,8 +87,10 @@ struct LoopRunView: View {
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
                               currentIndex: model.currentPlateau(in: routine))
                 if !isRunning { promoteButton }
+                if !isRunning, isDirty { saveChangesButton }
             }
             .padding(24)
+            .animation(.easeInOut(duration: 0.2), value: isDirty)
         }
         .scrollDismissesKeyboard(.interactively)
         .background(PocketColor.background.ignoresSafeArea())
@@ -205,6 +214,23 @@ struct LoopRunView: View {
         .accessibilityLabel("Promote: I own \(reach) percent now")
     }
 
+    /// Persist the tuning without starting a run (ADR 0057) — shown only while the setup differs
+    /// from what's stored. A subtle filled capsule, distinct from the outlined Promote and the
+    /// filled Start pill. Leaving still discards *unsaved* edits.
+    private var saveChangesButton: some View {
+        Button(action: saveChanges) {
+            Label("Save changes", systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PocketColor.practice)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(PocketColor.practice.opacity(0.15)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Save changes to this loop")
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
     // MARK: - Transport
 
     private var transport: some View {
@@ -255,14 +281,27 @@ struct LoopRunView: View {
             working = max(Self.percentRange.lowerBound, command - 15)
         }
         seeded = true
+        baseline = current
     }
 
-    /// Persist the edits to the loop and start the run in one tap — the only place the run screen
-    /// writes to the model (leaving without starting discards).
-    private func commitAndStart() {
+    /// Write the current tempos to the loop — shared by Save Changes and Start so the two write
+    /// paths never diverge (ADR 0057). Re-baselines so the Save Changes button hides.
+    private func persist() {
         loop.speed = Double(working) / 100
         loop.promoteCommand(to: Double(command) / 100)
         try? modelContext.save()
+        baseline = current
+    }
+
+    /// Save the tuning without starting a run (ADR 0057). Leaving still discards *unsaved* edits.
+    private func saveChanges() {
+        persist()
+        haptic(.medium)
+    }
+
+    /// Persist the edits to the loop and start the run in one tap.
+    private func commitAndStart() {
+        persist()
         model.start(ramp: routine)
         haptic(.medium)
     }
@@ -285,6 +324,14 @@ struct LoopRunView: View {
     private func clampPercent(_ value: Int) -> Int {
         min(Self.percentRange.upperBound, max(Self.percentRange.lowerBound, value))
     }
+}
+
+/// Snapshot of the loop run-setup fields that persist (working + command %) — compared against the
+/// live values to decide whether the Save Changes button shows (ADR 0057). Steps/reps aren't stored
+/// on a Loop, so they're intentionally out of scope here.
+private struct LoopSetupState: Equatable {
+    var working: Int
+    var command: Int
 }
 
 private extension View {

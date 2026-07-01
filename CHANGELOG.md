@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Save run-setup edits without starting a run** (ADR 0057). Tuning an exercise or loop's ramp on
+  the run screen (working / command / reach / steps / signature) now shows a **Save Changes** button
+  when the setup differs from what's stored — persist your tuning and come back to it later, without
+  having to start a training run. Leaving without saving still discards unsaved edits, as before.
 - **Undo after editing a loop.** Saving changes in the loop editor (name, mastery, focus, command
   tempo, type, tags, colour) now shows a **"Saved changes · Undo"** snackbar — the same one deletes
   use — that reverts the whole edit in one tap. A Done that changed nothing shows nothing.
