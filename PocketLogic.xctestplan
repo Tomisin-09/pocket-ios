@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "664DAF6D-9B67-41F5-8FAF-C5C99694176D",
+      "name" : "Logic",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Pocket.xcodeproj",
+      "identifier" : "7D169845C7D92117E36B994A",
+      "name" : "Pocket"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Pocket.xcodeproj",
+        "identifier" : "A835E4A168196F4AB43F0648",
+        "name" : "PocketTests"
+      }
+    }
+  ],
+  "version" : 1
+}

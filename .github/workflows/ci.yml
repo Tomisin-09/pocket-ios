@@ -48,6 +48,7 @@ jobs:
           echo "Using simulator UDID: $UDID"
           xcodebuild test \
             -scheme Pocket \
+            -testPlan PocketAll \
             -destination "id=$UDID" \
             -resultBundlePath TestResults \
             CODE_SIGNING_ALLOWED=NO \
