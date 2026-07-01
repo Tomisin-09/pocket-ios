@@ -158,7 +158,11 @@ space** (`PracticeView`, ADR 0046 — a **hub** over two unit libraries: `Exerci
 row pushing its own list. An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
 — both owning their own engine. The
 run staircase lights the live plateau as it climbs, tempos are typable as well as nudged, and the
-routine takes reach / back-up steps beyond warm-up; the `Exercise` model stores its `CommandRamp`
+routine takes reach / back-up steps beyond warm-up. A new exercise picks a **time signature**
+(`NewExerciseSheet`, default 4/4) — also editable on an existing exercise from the run-setup nav
+bar — that drives the run click's accents + **count-in** length; a training run **counts you in**
+before the climb (honoring the Settings toggle/length, ADR 0052). The running readout is just the
+live BPM + beat dots (the session timer was dropped). the `Exercise` model stores its `CommandRamp`
 recipe natively in `ramp*`/dwell/backoff/`rampReachSteps`/`rampBackoffSteps` fields, the
 `automator* → ramp*` rename done data-preservingly via `@Attribute(originalName:)`. A loop trains
 the **same** warm-up → dwell → reach → back-off `CommandRamp`, but in percent-of-original against

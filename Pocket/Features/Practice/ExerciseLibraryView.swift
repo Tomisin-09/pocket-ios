@@ -54,10 +54,13 @@ struct ExerciseLibraryView: View {
 
     /// Create an exercise anchored on the entered **command** tempo (ADR 0046): the warm-up working
     /// floor and the reach derive from it (pure `TempoStretch`), so the number typed in the sheet is
-    /// the command shown on the run screen — no working/command mismatch.
-    private func create(name: String, command: Int) {
+    /// the command shown on the run screen — no working/command mismatch. The chosen meter is stored
+    /// so the run metronome accents + count-in match it (ADR 0052).
+    private func create(name: String, command: Int, signature: TimeSignature) {
         guard !name.isEmpty else { return }
-        context.insert(Exercise.commandAnchored(name: name, command: command))
+        context.insert(Exercise.commandAnchored(name: name, command: command,
+                                                beatsPerBar: signature.beats,
+                                                noteValue: signature.noteValue))
         haptic(.medium)
     }
 

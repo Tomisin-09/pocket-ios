@@ -6,6 +6,8 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Exercise run screen drops the session timer.** The running readout is now just the live BPM
+  and the beat dots — the wall-clock session time was more clutter than payoff.
 - **Waveform reads fuller and less aggressive** (ADR 0049). The envelope now draws through a
   gentle dynamic-range compression curve (quiet/mid passages lift toward a fuller skyline),
   thin bars are grouped into fewer, wider, smoother ones instead of a jittery 1px comb, and the
@@ -14,6 +16,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   unchanged. Zoom in and the full transient detail is still there.
 
 ### Added
+- **Exercise time signature + count-in on training runs** (ADR 0052). The New Exercise sheet now
+  has a **time-signature picker** (4/4, 3/4, 6/8, …), and you can change an **existing** exercise's
+  meter from the run-setup nav bar. The run metronome plays a drill in its chosen meter — the click's
+  accents and the **count-in** length both follow it. Practice training runs now **count you in**
+  before the climb starts (honoring the Settings toggle and 1–2 bar length), the same as the
+  metronome's free-play automator.
 - **Per-song time signature + a gridlines toggle** (ADR 0051). Set a song's time signature
   (4/4, 3/4, 6/8, …) in the "Set tempo" sheet, so the beat grid's bar lines land in the right
   place instead of always assuming 4/4. A **Grid** toggle on the practice screen's "Loop controls"
