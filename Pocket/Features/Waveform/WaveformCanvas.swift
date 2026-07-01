@@ -192,11 +192,12 @@ struct WaveformView: View {
                          with: .color(PocketColor.active.opacity(0.22)))
         }
 
-        drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX, region: region)
-
-        // Beat grid ON TOP of the bars (ADR 0022; restyled ADR 0024 follow-up) so each
-        // line reads consistently instead of being unevenly occluded by tall bars.
+        // Beat grid BEHIND the bars (ADR 0022; ADR 0049 follow-up). On top (ADR 0024) it cut
+        // visibly across the now fuller, calmer waveform; behind, the opaque bars occlude it in
+        // the played section so it reads only through the gaps.
         drawBeatGrid(in: context, size: size, atX: atX, region: region)
+
+        drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX, region: region)
 
         // Annotations on the borders (ADR 0023): per-loop coloured lines along the
         // bottom (lane-stacked), purple inverted triangles along the top.
@@ -229,25 +230,43 @@ struct WaveformView: View {
     /// range it covers, then mapped through the viewport.
     private func drawBars(in context: GraphicsContext, size: CGSize,
                           barSet: WaveformDetailBars, playheadX: CGFloat, region: BarRegion) {
-        let count = barSet.bars.count
-        guard count > 0 else { return }
+        let sourceCount = barSet.bars.count
+        guard sourceCount > 0 else { return }
         let span = max(0.0001, viewport.end - viewport.start)
-        // On-screen distance between bars: each covers (covered span)/count of the
+        // On-screen distance between source bars: each covers (covered span)/count of the
         // song, and the viewport's span maps to the full width.
-        let pitch = size.width * CGFloat(barSet.end - barSet.start) / (CGFloat(count) * CGFloat(span))
-        let barWidth = max(1, pitch - 1)   // 1px inter-bar spacing
-        for (index, amp) in barSet.bars.enumerated() {
+        let sourcePitch = size.width * CGFloat(barSet.end - barSet.start) / (CGFloat(sourceCount) * CGFloat(span))
+        // Group thin bars into fewer, wider ones toward a target width — widens *and* smooths
+        // the 1px comb (ADR 0049). No-op once bars are already wide enough (zoomed in), so deep
+        // zoom keeps full detail.
+        let group = WaveformBars.groupSize(sourcePitch: Double(sourcePitch), targetPitch: Self.targetBarPitch)
+        let bars = WaveformBars.bucketedMean(barSet.bars, group: group)
+        let count = bars.count
+        let pitch = sourcePitch * CGFloat(group)
+        let barWidth = max(1.5, pitch - Self.barGap)
+        for (index, amp) in bars.enumerated() {
             let songFraction = WaveformGesture.barCentreFraction(
                 index: index, count: count, coveredStart: barSet.start, coveredEnd: barSet.end)
             let barX = CGFloat(screenX(songFraction)) * size.width
             guard barX > -barWidth, barX < size.width else { continue }   // off-screen
             let color = barX <= playheadX ? PocketColor.waveformBarPlayed : PocketColor.waveformBar
-            let topHeight = CGFloat(amp) * region.scale
-            context.fill(Path(CGRect(x: barX, y: region.axis - topHeight, width: barWidth, height: topHeight)),
+            // Compress the normalised amplitude for a fuller, calmer skyline — display only,
+            // the snap/marker math reads raw peaks elsewhere (ADR 0049).
+            let topHeight = CGFloat(WaveformAmplitude.display(amp)) * region.scale
+            let cap = barWidth / 2   // fully rounded ends soften the hard spiky tops (ADR 0049)
+            // Main bar — rounded top, square at the axis so the baseline stays crisp.
+            let topRect = CGRect(x: barX, y: region.axis - topHeight, width: barWidth, height: topHeight)
+            context.fill(Path(roundedRect: topRect,
+                              cornerRadii: RectangleCornerRadii(topLeading: cap, topTrailing: cap),
+                              style: .continuous),
                          with: .color(color))
-            // Reflection at ~60% — brief §4.1.
-            context.fill(Path(CGRect(x: barX, y: region.axis, width: barWidth, height: topHeight * 0.6)),
-                         with: .color(color.opacity(0.6)))
+            // Reflection — a softened mirror (brief §4.1), rounded at its bottom.
+            let reflectionRect = CGRect(x: barX, y: region.axis,
+                                        width: barWidth, height: topHeight * Self.reflectionRatio)
+            context.fill(Path(roundedRect: reflectionRect,
+                              cornerRadii: RectangleCornerRadii(bottomLeading: cap, bottomTrailing: cap),
+                              style: .continuous),
+                         with: .color(color.opacity(Self.reflectionOpacity)))
         }
     }
 
@@ -262,6 +281,13 @@ struct WaveformView: View {
         var axis: CGFloat { top + scale }
         var midY: CGFloat { (top + bottom) / 2 }
     }
+
+    // Bar drawing (ADR 0049). Thin ~1px bars read as a jittery comb; group source bars toward
+    // this on-screen width for a calmer, chunkier skyline (with `barGap` between them).
+    private static let targetBarPitch: Double = 4    // px: bar + gap the grouping aims for
+    private static let barGap: CGFloat = 1.5         // px between drawn bars
+    private static let reflectionRatio: CGFloat = 0.6   // mirror height as a fraction of the bar
+    private static let reflectionOpacity: CGFloat = 0.3 // softened from 0.6 — a quieter mirror
 
     // Border bands (ADR 0023): annotations sit on the borders, off the bars. The
     // top band holds marker triangles; the bottom band holds lane-stacked loop
@@ -331,9 +357,11 @@ struct WaveformView: View {
             guard beat.isDownbeat || showSubBeats else { continue }
             let lineX = atX(beat.fraction)
             guard lineX > -1, lineX < size.width + 1 else { continue }   // off-screen
+            // Stop at the baseline (`axis`) rather than the region bottom, so no grid draws
+            // through the softened reflection below it (ADR 0049 follow-up).
             var line = Path()
             line.move(to: CGPoint(x: lineX, y: region.top))
-            line.addLine(to: CGPoint(x: lineX, y: region.bottom))
+            line.addLine(to: CGPoint(x: lineX, y: region.axis))
             if beat.isDownbeat {
                 // A *soft* halo (not the full ADR 0023 strength) gives the line even
                 // contrast over bright bars and dark gaps without making it pop, then a

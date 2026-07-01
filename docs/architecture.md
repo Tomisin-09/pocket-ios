@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
+│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
@@ -50,7 +50,10 @@ from the source file at full detail** (`WaveformExtractor.extractWindow` → the
 `AudioMath.downsample`, off the main actor, debounced on viewport settle and cached by
 window) so a deep zoom resolves real transients instead of stretching the stored
 whole-song envelope; the stored 512-bar envelope stays the zoomed-out and fallback path
-(ADR 0020). On a gesture **release** — a dragged A/B edge or a tap-seek —
+(ADR 0020). At draw time each bar's normalised height passes through the pure
+`WaveformAmplitude` gamma curve — display-only dynamic-range compression for a fuller,
+calmer skyline; the snap/marker math still reads the raw peaks (ADR 0049). On a gesture
+**release** — a dragged A/B edge or a tap-seek —
 the boundary **snaps to a nearby marker or saved-loop edge** if one is within an
 on-screen tolerance (pure `WaveformGesture.snap`, candidates sourced and tolerance
 scaled by zoom in `WaveformPracticeModel+Snap.swift`, light haptic on a catch);

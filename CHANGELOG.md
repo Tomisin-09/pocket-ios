@@ -5,6 +5,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Waveform reads fuller and less aggressive** (ADR 0049). The envelope now draws through a
+  gentle dynamic-range compression curve (quiet/mid passages lift toward a fuller skyline),
+  thin bars are grouped into fewer, wider, smoother ones instead of a jittery 1px comb, and the
+  bars gained rounded tops over a quieter mirror. This shapes only how the waveform is *drawn* —
+  loop edges and markers still snap to the exact underlying peaks, so editing precision is
+  unchanged. Zoom in and the full transient detail is still there.
+
 ### Added
 - **Metronome automator: explicit Start/Stop, count-in, and an infinite mode** (ADR 0048).
   The tempo automator no longer climbs the moment you arm it — arming (Off / By Bars / By Time)
