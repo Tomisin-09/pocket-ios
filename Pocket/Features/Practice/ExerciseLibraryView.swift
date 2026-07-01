@@ -6,11 +6,31 @@ import SwiftUI
 /// Owns exercise **creation** (the `+` → `NewExerciseSheet`) and **deletion** (swipe), since
 /// exercises live here and nowhere else. Tapping one opens its `ExerciseRunView`.
 ///
-/// Relies on an ambient `NavigationStack` (Practice → Home's stack), like the hub.
+/// Relies on an ambient `NavigationStack` (Practice → Home's stack), like the hub. Sort key +
+/// direction and the search query narrow the list in memory (ADR 0056) via the pure
+/// `PracticeLibrarySort`, so `@Query` stays unsorted and deletion indexes the *displayed* list.
 struct ExerciseLibraryView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \Exercise.name) private var exercises: [Exercise]
+    @Query private var exercises: [Exercise]
     @State private var creating = false
+    /// Sort key + direction, persisted across launches (ADR 0056).
+    @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
+    @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
+    @State private var searchText = ""
+
+    /// The exercises narrowed by search and ordered by the current sort — the list the user sees,
+    /// and the one deletion offsets must index into.
+    private var visibleExercises: [Exercise] {
+        let matched = exercises
+            .filter { PracticeLibrarySort.exerciseMatches(fields(for: $0), query: searchText) }
+        return PracticeLibrarySort.sortedExercises(matched, by: sortKey,
+                                                   ascending: sortAscending, fields: fields(for:))
+    }
+
+    private func fields(for exercise: Exercise) -> ExerciseSortFields {
+        ExerciseSortFields(name: exercise.name, command: exercise.command,
+                           dateAdded: exercise.dateAdded)
+    }
 
     var body: some View {
         List {
@@ -20,8 +40,13 @@ struct ExerciseLibraryView: View {
                     .font(.footnote)
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
+            } else if visibleExercises.isEmpty {
+                Text("No exercises match “\(searchText)”.")
+                    .font(.footnote)
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .listRowBackground(PocketColor.background)
             } else {
-                ForEach(exercises) { exercise in
+                ForEach(visibleExercises) { exercise in
                     NavigationLink {
                         ExerciseRunView(exercise: exercise)
                     } label: {
@@ -38,7 +63,11 @@ struct ExerciseLibraryView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle("Exercises")
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Exercises")
         .toolbar {
+            if !exercises.isEmpty {
+                ToolbarItem(placement: .topBarLeading) { sortMenu }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { creating = true; haptic(.light) } label: {
                     Image(systemName: "plus")
@@ -50,6 +79,29 @@ struct ExerciseLibraryView: View {
         .sheet(isPresented: $creating) {
             NewExerciseSheet(onCreate: create)
         }
+    }
+
+    /// The sort control — a menu whose label spells out the active key with a direction arrow
+    /// (ADR 0056, mirroring the song library and the loop library).
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort by", selection: $sortKey) {
+                ForEach(ExerciseSortKey.allCases) { key in
+                    Text(key.label).tag(key)
+                }
+            }
+            Picker("Order", selection: $sortAscending) {
+                Label("Ascending", systemImage: "arrow.up").tag(true)
+                Label("Descending", systemImage: "arrow.down").tag(false)
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
+                Text(sortKey.label)
+            }
+            .tint(PocketColor.practice)
+        }
+        .accessibilityLabel("Sort by \(sortKey.label), \(sortAscending ? "ascending" : "descending")")
     }
 
     /// Create an exercise anchored on the entered **command** tempo (ADR 0046): the warm-up working
@@ -65,7 +117,8 @@ struct ExerciseLibraryView: View {
     }
 
     private func delete(at offsets: IndexSet) {
-        for index in offsets { context.delete(exercises[index]) }
+        let shown = visibleExercises
+        for index in offsets { context.delete(shown[index]) }
         haptic(.medium)
     }
 }

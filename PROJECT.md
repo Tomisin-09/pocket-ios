@@ -155,7 +155,9 @@ in the song-details sheet (hold the title). The app opens to a **home hub** (`Ho
 for the most-recently-practised song, a **Practice** card pushing the top-level **Practice
 space** (`PracticeView`, ADR 0046 — a **hub** over two unit libraries: `ExerciseLibraryView`
 (command drills) and `LoopLibraryView` (any measured song **loop**, `commandTempo != nil`), each a
-row pushing its own list. An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
+row pushing its own list — each with a **sort menu + search** (`PracticeLibrarySort`, ADR 0056:
+loops by Song · Name · Command · Mastery, exercises by Name · Command · Recently added; choice
+persisted per library). An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
 — both owning their own engine. The
 run staircase lights the live plateau as it climbs, tempos are typable as well as nudged, and the
 routine takes reach / back-up steps beyond warm-up. A new exercise picks a **time signature**

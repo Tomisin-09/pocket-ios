@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
+│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -193,7 +193,11 @@ surface the planner composes from. `ExerciseLibraryView` owns exercise **create*
 and removed on the waveform screen, not here — and lists those with a measured command
 (`commandTempo != nil`, an **in-memory** filter, never a SwiftData optional `#Predicate`, which
 starves the main thread and froze navigation — guarded by `PracticeRunUITests`); tapping one pushes
-`LoopRunView` (Phase B, below). `ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
+`LoopRunView` (Phase B, below). Both libraries carry a **sort menu + search** (ADR 0056): the pure
+`PracticeLibrarySort` orders each list by the persisted key/direction (loops by Song · Name ·
+Command · Mastery; exercises by Name · Command · Recently added) and filters by query, layered
+in-memory over the loop `commandTempo` gate — mirroring the song library's `LibrarySectioning`
+idiom, with the choice remembered per library via `@AppStorage`. `ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
 (independent of the
 metronome screen's): it edits working / command (each **typable** via `EditableTempoRow`, not
 just the −/+ steppers) plus the warm-up / reach / back-up step counts (in the collapsible
