@@ -226,8 +226,12 @@ tempo at creation** — copied, not referenced, so it stays a truthful record as
 improves; the snapshot and timestamp are immutable, only `text` and a typed **kind**
 (🎯 Goal / ⚡️ Breakthrough / 🧗 Struggle / 📝 Note / 🎬 Session — an `EntryKind`,
 primitive-backed like `LoopType`) are editable. Entries group under day headers
-(`JournalGrouping`, pure), newest first. This **narrows ADR 0012's three-scope journal**
-to loop-only; songs get free-text **notes** rather than a journal, and markers get neither.
+(`JournalGrouping`, pure), newest first. The entry's owner is **polymorphic** (ADR 0058):
+`JournalEntry` relates to a `Loop` **or** an `Exercise` (exactly one), so exercises get a
+journal too — an exercise entry snapshots its command in **absolute BPM** (`commandBpmAtEntry`)
+and has no mastery, kept a distinct field from the loop's song-fraction `commandTempoAtEntry`
+so a BPM is never stored as a fraction. Use the `forLoop`/`forExercise` factories. Songs get
+free-text **notes** rather than a journal, and markers get neither.
 Those song notes (`Song.comment`) live in a **Notes** section directly under the
 title/artist/album header in the **song details sheet** — **editable inline behind a
 pencil affordance**: tap it to edit, an **Update** button (disabled until the draft

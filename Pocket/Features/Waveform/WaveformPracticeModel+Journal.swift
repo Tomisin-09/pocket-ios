@@ -14,9 +14,9 @@ extension WaveformPracticeModel {
     func addJournalEntry(to loop: Loop, text: String, kind: EntryKind) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
-        let entry = JournalEntry(text: trimmed, kind: kind,
-                                 masteryAtEntry: loop.mastery,
-                                 commandTempoAtEntry: loop.commandTempo)
+        let entry = JournalEntry.forLoop(text: trimmed, kind: kind,
+                                         masteryAtEntry: loop.mastery,
+                                         commandTempoAtEntry: loop.commandTempo)
         context.insert(entry)
         entry.loop = loop          // attach → shows in `loop.journal`, persists
         haptic(.light)
