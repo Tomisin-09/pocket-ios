@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Minimap shows the song's shape** (ADR 0055). The full-song overview strip now draws a
+  compressed **silhouette** of the waveform (through the same fuller/calmer curve as the main
+  waveform) instead of a flat gray bar — so quiet intros read thin and loud sections bulge, and
+  you can orient by the song's shape at a glance. Loops, markers, and the playhead are unchanged.
 - **Smoother playhead** (ADR 0054). The waveform playhead now glides instead of stepping — it's
   driven by the display's own refresh (a `CADisplayLink`) rather than a fixed ~33 Hz timer that
   ran below the screen's refresh rate and beat against it. Purely a visual/timing fix: snapping,

@@ -148,6 +148,7 @@ import SwiftUI
         PocketColor.background.ignoresSafeArea()
         Minimap(song: Song.sample(),
                 activeLoop: Song.sample().loops.first,
+                samples: (0..<160).map { abs(sin(Double($0) * 0.18)) * 0.55 + 0.15 },
                 markers: Song.sample().markers,
                 fineSelection: nil,
                 playheadFraction: 0.35,

@@ -30,6 +30,7 @@ struct PracticeCockpit<Header: View>: View {
             TimeRuler(start: model.viewport.start * model.duration,      // 6
                       end: model.viewport.end * model.duration)
             Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
+                    samples: model.amplitudes,
                     markers: model.markers,
                     fineSelection: model.abSpan.bounds,
                     playheadFraction: model.playheadFraction,

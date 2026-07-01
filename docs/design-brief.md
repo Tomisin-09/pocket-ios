@@ -162,7 +162,9 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
    within the fixed frame, so the waveform never changes height. ADR 0023
    (supersedes the colour-is-state rule of ADR 0018).
 5. Time ruler — labels the **visible window** (follows the zoom)
-6. Minimap (full song, compressed) — the active loop region (amber fill), **all saved
+6. Minimap (full song, compressed) — a **compressed whole-song silhouette** (the envelope
+   through the same display gamma as the detail waveform, ADR 0055) so the strip maps the
+   song's shape instead of a flat bar, with the active loop region (amber fill), **all saved
    loops** as thin underlines along the bottom (compressed, ≤2 lanes), fine selection
    (cyan), marker dots (purple), playhead, and the **viewport box** (the zoomed slice)
    when the detail waveform is zoomed. (Minimap not yet updated to per-loop colours /
