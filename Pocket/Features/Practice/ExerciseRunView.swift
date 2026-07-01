@@ -73,6 +73,7 @@ struct ExerciseRunView: View {
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) { transport }
+        .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
         .onDisappear { engine.stop() }
     }

@@ -33,7 +33,8 @@ extension WaveformPracticeModel {
     /// downbeat lands — "the 1") is set only when provided, so a BPM-only commit leaves
     /// any existing phase anchor untouched (ADR 0022/0026). Both are optional so the
     /// sheet can commit either independently; a fully-empty commit is a no-op.
-    func commitTempo(bpm: Double?, downbeat: TimeInterval?) {
+    func commitTempo(bpm: Double?, downbeat: TimeInterval?,
+                     beatsPerBar: Int? = nil, noteValue: Int? = nil) {
         if let bpm {
             song.preciseBPM = bpm
             song.bpm = Int(bpm.rounded())
@@ -41,8 +42,11 @@ extension WaveformPracticeModel {
         if let downbeat {
             song.downbeatSeconds = downbeat
         }
+        // Time signature (ADR 0051) — groups the beat grid into bars; default 4/4.
+        if let beatsPerBar { song.beatsPerBar = max(1, beatsPerBar) }
+        if let noteValue { song.noteValue = max(1, noteValue) }
         settingBPM = false
-        if bpm != nil || downbeat != nil { haptic(.medium) }
+        if bpm != nil || downbeat != nil || beatsPerBar != nil { haptic(.medium) }
         if metronomeOn { pushMetronomeGrid() }   // grid changed — keep the click in sync (ADR 0026)
     }
 

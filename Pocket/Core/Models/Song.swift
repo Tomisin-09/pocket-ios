@@ -41,6 +41,16 @@ final class Song {
     /// snapped to (we don't guess the phase). Optional, like `bpm`/`year`, so SwiftData
     /// lightweight migration fills pre-0022 songs with nil — no declaration default needed.
     var downbeatSeconds: TimeInterval?
+    /// Time signature (ADR 0051): `beatsPerBar` groups the beat grid into bars — every
+    /// `beatsPerBar`-th beat from the downbeat is a bar line — and `noteValue` is the
+    /// denominator (4, 8, …), carried so the signature round-trips and reads right. Both
+    /// **declaration-default 4/4** so SwiftData lightweight migration fills pre-0051 songs
+    /// additively (the CoreData 134110 mandatory-attribute rule), like the exercise's meter.
+    var beatsPerBar: Int = 4
+    var noteValue: Int = 4
+    /// Whether the beat grid is drawn on this song's waveform (ADR 0051) — a **per-song**
+    /// view preference, on by default. Only takes effect once a grid exists (tempo + downbeat).
+    var showsGridlines: Bool = true
     var collections: [String]
     /// A free-form note about the song (the edit sheet's "Notes" field).
     var comment: String = ""

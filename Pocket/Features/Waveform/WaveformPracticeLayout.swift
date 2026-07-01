@@ -59,7 +59,9 @@ struct PracticeCockpit<Header: View>: View {
                           onClear: model.clearABSpan)
                     .transition(.opacity)
             } else {
-                ModeDescriptionLine()
+                ModeDescriptionLine(gridAvailable: model.gridAvailable,
+                                    gridOn: model.song.showsGridlines,
+                                    onToggleGrid: model.toggleGridlines)
                     .transition(.opacity)
             }
         }
@@ -75,6 +77,7 @@ struct PracticeCockpit<Header: View>: View {
                      loops: model.loops,
                      markerFractions: model.markers.map { $0.seconds / model.duration },
                      beats: model.beatGrid,
+                     showsGrid: model.song.showsGridlines,
                      formingStart: model.formingMarker,
                      tapSelection: model.greenSpan,
                      abSelection: model.isDragSelecting ? nil : model.abSpan.bounds,

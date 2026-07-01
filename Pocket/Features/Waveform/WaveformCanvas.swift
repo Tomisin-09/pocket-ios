@@ -50,6 +50,9 @@ struct WaveformView: View {
     /// or no downbeat anchor, so the whole grid simply doesn't render. Defaulted so
     /// the many component previews/call sites that don't care opt out for free.
     var beats: [BeatGrid.Beat] = []
+    /// Whether the beat grid is *drawn* (ADR 0051). `beats` still feed snap candidates when
+    /// off, so gating happens at draw time — not by emptying `beats`.
+    var showsGrid = true
     /// A/B forming: point **A** is placed and awaiting B. The region from here to the
     /// live playhead fills green as playback runs forward to find B (ADR 0041).
     let formingStart: Double?
@@ -342,35 +345,24 @@ struct WaveformView: View {
         }
     }
 
-    /// Vertical beat grid drawn **on top of** the bars (ADR 0022; restyled ADR 0024) so
-    /// each line is full-height instead of unevenly occluded. Bar-start **downbeats** get
-    /// a dark halo + brighter line (ADR 0023 halo); sub-beats a fainter line that drops
-    /// out under ~5 pt apart, with the whole grid skipped once even downbeats would crowd.
+    /// Vertical beat grid drawn **behind** the bars (ADR 0022; restyled ADR 0024/0051) so
+    /// the lines read through the gaps without cutting across the waveform. Only bar-start
+    /// **downbeats** are drawn — sub-beat gridlines were dropped (ADR 0051) as they made
+    /// zooming feel busy — and the whole grid is skipped once even downbeats would crowd.
     private func drawBeatGrid(in context: GraphicsContext, size: CGSize,
                               atX: (Double) -> CGFloat, region: BarRegion) {
-        guard beats.count >= 2 else { return }
+        guard showsGrid, beats.count >= 2 else { return }
         let span = max(0.0001, viewport.end - viewport.start)
         let beatPx = size.width * abs(beats[1].fraction - beats[0].fraction) / span
         guard beatPx >= 1 else { return }          // even downbeats would crowd — no grid
-        let showSubBeats = beatPx >= 5
-        for beat in beats {
-            guard beat.isDownbeat || showSubBeats else { continue }
+        for beat in beats where beat.isDownbeat {
             let lineX = atX(beat.fraction)
             guard lineX > -1, lineX < size.width + 1 else { continue }   // off-screen
-            // Stop at the baseline (`axis`) rather than the region bottom, so no grid draws
-            // through the softened reflection below it (ADR 0049 follow-up).
+            // Stop at the baseline (`axis`) so no grid draws through the reflection (ADR 0049).
             var line = Path()
             line.move(to: CGPoint(x: lineX, y: region.top))
             line.addLine(to: CGPoint(x: lineX, y: region.axis))
-            if beat.isDownbeat {
-                // A *soft* halo (not the full ADR 0023 strength) gives the line even
-                // contrast over bright bars and dark gaps without making it pop, then a
-                // low-opacity line keeps it noticeable-but-quiet.
-                context.stroke(line, with: .color(PocketColor.background.opacity(0.09)), lineWidth: 1.5)
-                context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.07)), lineWidth: 1)
-            } else {
-                context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.04)), lineWidth: 0.75)
-            }
+            context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.11)), lineWidth: 1)
         }
     }
 

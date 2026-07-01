@@ -88,6 +88,7 @@ struct LoopRunView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) { transport }
+        .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
         .task { await model.loadIfNeeded() }
         .onDisappear { model.stop() }

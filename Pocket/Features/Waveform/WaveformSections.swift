@@ -228,6 +228,11 @@ private struct PresetPill: View {
 /// line, this is a compact **Loop controls** affordance that opens a small popover with
 /// the full gesture cheatsheet — A/B is the one creation story now.
 struct ModeDescriptionLine: View {
+    /// Gridlines toggle (ADR 0051) — shown on the right only once a grid exists (tempo +
+    /// the 1 set). `gridOn` is the per-song `showsGridlines`.
+    var gridAvailable = false
+    var gridOn = true
+    var onToggleGrid: () -> Void = {}
     @State private var showingInfo = false
 
     var body: some View {
@@ -242,6 +247,16 @@ struct ModeDescriptionLine: View {
                 LoopControlsInfo().presentationCompactAdaptation(.popover)
             }
             Spacer()
+            if gridAvailable {
+                Button(action: onToggleGrid) {
+                    Label("Grid", systemImage: "grid")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(gridOn ? PocketColor.textPrimary : PocketColor.textSecondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(gridOn ? "Hide gridlines" : "Show gridlines")
+                .transition(.opacity)
+            }
         }
     }
 }

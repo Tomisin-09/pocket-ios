@@ -51,6 +51,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043; automator phase-continuous stepping + explicit run/count-in/infinite, ADRs 0047/0048) |
 | `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`) + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
 | `Pocket/Features/Planner/` | *(reserved for the V2 practice planner — re-homed inside Practice, ADR 0046)* |
+| `Pocket/Features/Settings/` | Settings screen (pushed from the Home gear) — Haptics + Count-in toggles (`SettingsView`, ADR 0050) |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
 | `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, Exercise, Routine, Session, SongRef |
@@ -97,9 +98,11 @@ saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, li
 the continuous scrub stays free; ADR 0021). The **minimap** snaps a released seek to a
 nearby **marker or saved-loop edge** (but not beats — the full-song strip is too compressed
 for the grid to land cleanly), so a tap or drag near a marker dot or loop boundary catches it. When a song has a **BPM and a downbeat anchor**, a
-faint **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on
+a **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on
 zoom) and its beats join the snap candidates, so edges/seeks catch the pulse too — pure,
-unit-tested `BeatGrid`, assumes 4/4 (ADR 0022). The **"Set BPM"** affordance opens a tempo
+unit-tested `BeatGrid`, grouped by the song's **time signature** (`beatsPerBar`, ADR 0051;
+default 4/4). A per-song **Grid** toggle on the "Loop controls" row shows/hides it, appearing
+only once a grid exists. The **"Set BPM"** affordance opens a tempo
 editor (`BPMSheet`): **tap-tempo** (each tap captures song-time, so in-loop / slowed tapping
 still reads the true tempo — pure `TempoMath.bpm(fromTapTimes:)`) or **manual** entry, plus
 **the 1** placed by dragging a waveform handle that **snaps to the loudest transient**

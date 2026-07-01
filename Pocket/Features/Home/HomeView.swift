@@ -41,6 +41,17 @@ struct HomeView: View {
             .background(PocketColor.background.ignoresSafeArea())
             .navigationTitle("Pocket")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                    .accessibilityLabel("Settings")
+                }
+            }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.audio],
                           onCompletion: handleImport)
             .alert("Couldn’t import", isPresented: importErrorBinding) {

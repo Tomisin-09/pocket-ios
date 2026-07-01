@@ -54,6 +54,7 @@ struct WaveformPracticeView: View {
         // Practice is the one screen that rotates (ADR 0042): more width = sharper
         // waveform + more precise A/B drag. Reverts to portrait-only on exit.
         .landscapeEnabled()
+        .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         // Don't carry an open drawer across a rotation back to portrait.
         .onChange(of: isLandscape) { _, landscape in if !landscape { drawerOpen = false } }
         // Stop a playhead scrub near the left edge from popping back to the library
@@ -93,7 +94,12 @@ struct WaveformPracticeView: View {
         .sheet(isPresented: $model.settingBPM) {
             BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,
                      currentDownbeat: model.song.downbeatSeconds,
-                     onCommit: model.commitTempo,
+                     currentBeatsPerBar: model.song.beatsPerBar,
+                     currentNoteValue: model.song.noteValue,
+                     onCommit: { bpm, downbeat, beats, note in
+                         model.commitTempo(bpm: bpm, downbeat: downbeat,
+                                           beatsPerBar: beats, noteValue: note)
+                     },
                      onSetOnWaveform: { bpm in
                          model.commitTempo(bpm: bpm, downbeat: nil)
                          model.beginSetDownbeat(resumeSheet: true)

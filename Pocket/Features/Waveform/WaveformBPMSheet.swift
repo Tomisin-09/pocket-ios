@@ -22,8 +22,12 @@ struct BPMSheet: View {
     /// The song's current downbeat ("the 1"), so reopening the sheet — e.g. after
     /// placing it on the waveform — shows the value that's set rather than "Not set".
     let currentDownbeat: TimeInterval?
-    /// `(bpm, downbeatSeconds)` — either may be `nil`; the model sets only what's given.
-    let onCommit: (Double?, TimeInterval?) -> Void
+    /// The song's current time signature (ADR 0051), to prefill the meter picker. Default 4/4.
+    let currentBeatsPerBar: Int
+    let currentNoteValue: Int
+    /// `(bpm, downbeatSeconds, beatsPerBar, noteValue)` — bpm/downbeat may be `nil` (set only
+    /// what's given); the time signature always carries a value (the picker's selection).
+    let onCommit: (Double?, TimeInterval?, Int, Int) -> Void
     /// "Set the 1 on the waveform" — commits the current BPM (if any) and hands off to
     /// the on-waveform downbeat handle. The sheet dismisses first.
     let onSetOnWaveform: (Double?) -> Void
@@ -55,19 +59,26 @@ struct BPMSheet: View {
     @State private var isEstimating = false
     /// True when the estimate found no confident tempo (flat/ambient material).
     @State private var estimateFailed = false
+    /// The chosen meter (ADR 0051) — seeded from the song, committed on Done.
+    @State private var timeSignature: TimeSignature
 
     init(engine: PracticeAudioEngine, currentBPM: Double?, currentDownbeat: TimeInterval?,
-         onCommit: @escaping (Double?, TimeInterval?) -> Void,
+         currentBeatsPerBar: Int = 4, currentNoteValue: Int = 4,
+         onCommit: @escaping (Double?, TimeInterval?, Int, Int) -> Void,
          onSetOnWaveform: @escaping (Double?) -> Void,
          onEstimate: @escaping () async -> (bpm: Double, downbeat: TimeInterval?)?) {
         self.engine = engine
         self.currentBPM = currentBPM
         self.currentDownbeat = currentDownbeat
+        self.currentBeatsPerBar = currentBeatsPerBar
+        self.currentNoteValue = currentNoteValue
         self.onCommit = onCommit
         self.onSetOnWaveform = onSetOnWaveform
         self.onEstimate = onEstimate
         _manualText = State(initialValue: currentBPM.map { String(Int($0.rounded())) } ?? "")
         _downbeat = State(initialValue: currentDownbeat)
+        _timeSignature = State(initialValue: TimeSignature.forStored(
+            beats: currentBeatsPerBar, noteValue: currentNoteValue, accentBeats: []))
     }
 
     /// Whether the value currently in Manual mode is the unedited estimate, so the
@@ -89,7 +100,11 @@ struct BPMSheet: View {
         }
     }
 
-    private var canCommit: Bool { resolvedBPM != nil || downbeat != nil }
+    private var timeSignatureChanged: Bool {
+        timeSignature.beats != currentBeatsPerBar || timeSignature.noteValue != currentNoteValue
+    }
+
+    private var canCommit: Bool { resolvedBPM != nil || downbeat != nil || timeSignatureChanged }
 
     var body: some View {
         NavigationStack {
@@ -105,6 +120,8 @@ struct BPMSheet: View {
                 estimateSection
 
                 downbeatSection
+
+                timeSignatureSection
             }
             .navigationTitle("Set tempo")
             .navigationBarTitleDisplayMode(.inline)
@@ -114,7 +131,7 @@ struct BPMSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        onCommit(resolvedBPM, downbeat)
+                        onCommit(resolvedBPM, downbeat, timeSignature.beats, timeSignature.noteValue)
                         dismiss()
                     }
                     .disabled(!canCommit)
@@ -267,6 +284,23 @@ struct BPMSheet: View {
         } footer: {
             Text("The 1 is where a bar starts — it anchors the beat grid's phase. Mark it "
                  + "at the playhead, or drag it onto a snare/kick peak on the waveform.")
+        }
+    }
+
+    // MARK: Time signature (ADR 0051)
+
+    private var timeSignatureSection: some View {
+        Section {
+            Picker("Time signature", selection: $timeSignature) {
+                ForEach(TimeSignature.presets) { signature in
+                    Text(signature.name).tag(signature)
+                }
+            }
+        } header: {
+            Text("Time signature")
+        } footer: {
+            Text("Groups the beat grid into bars, so the downbeats read as bar lines. "
+                 + "\(timeSignature.name) · \(timeSignature.context).")
         }
     }
 

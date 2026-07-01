@@ -177,10 +177,23 @@ final class WaveformPracticeModel {
     /// Empty unless the song has **both** a tempo (`bpm`) and a **downbeat anchor**
     /// (`downbeatSeconds`) — BPM fixes the interval, the anchor fixes the phase, and we
     /// don't guess the phase. Drawn faintly on the waveform and fed into the snap
-    /// candidates (`snapCandidates`). Assumes 4/4: every 4th beat is a downbeat.
+    /// candidates (`snapCandidates`). Bar lines follow the song's time signature
+    /// (`beatsPerBar`, ADR 0051; default 4/4).
     var beatGrid: [BeatGrid.Beat] {
         guard let bpm = song.tempoBPM, let downbeat = song.downbeatSeconds, duration > 0 else { return [] }
-        return BeatGrid.beats(bpm: bpm, duration: duration, downbeat: downbeat)
+        return BeatGrid.beats(bpm: bpm, duration: duration, downbeat: downbeat,
+                              beatsPerBar: song.beatsPerBar)
+    }
+
+    /// A grid exists to show/hide only once tempo + downbeat are set — gates the gridlines
+    /// toggle's visibility (ADR 0051), the same condition that makes `beatGrid` non-empty.
+    var gridAvailable: Bool { !beatGrid.isEmpty }
+
+    /// Toggle this song's gridlines (ADR 0051). Mutating the `@Model` persists the per-song
+    /// preference; the grid still feeds snap candidates when hidden.
+    func toggleGridlines() {
+        song.showsGridlines.toggle()
+        haptic(.light)
     }
 
     // MARK: - Metronome (ADR 0026)
