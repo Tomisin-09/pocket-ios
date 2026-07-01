@@ -231,7 +231,7 @@ import SwiftUI
     let song = Song.sample()
     LoopEditSheet(loop: song.loops[0],
                   autoColor: LoopColor.derivedColor(for: song.loops[0], among: song.loopsByStart),
-                  onDelete: {}, onAdjustRange: {})
+                  onDelete: {}, onAdjustRange: {}, onSaved: { _ in })
 }
 
 #Preview("Automator sheet") {

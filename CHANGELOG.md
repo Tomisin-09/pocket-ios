@@ -6,6 +6,9 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Undo after editing a loop.** Saving changes in the loop editor (name, mastery, focus, command
+  tempo, type, tags, colour) now shows a **"Saved changes · Undo"** snackbar — the same one deletes
+  use — that reverts the whole edit in one tap. A Done that changed nothing shows nothing.
 - **Field explainers (ⓘ) on the coined practice terms.** The fields a musician can't infer from
   the label now carry a tappable **ⓘ** with a one-line definition: **Mastery**, **Command tempo**,
   **Focus**, and loop **Type** in the loop editor; **Command tempo** on the exercise-create sheet

@@ -14,6 +14,9 @@ struct LoopEditSheet: View {
     let onDelete: () -> Void
     /// Enter Fine mode on the waveform to adjust this loop's bounds.
     let onAdjustRange: () -> Void
+    /// Called after Done writes edits that actually changed something, with a closure that
+    /// reverts them — the parent shows an Undo toast (ADR 0019 undo, extended to saves).
+    let onSaved: (@escaping () -> Void) -> Void
 
     @Environment(\.dismiss) private var dismiss
     // All loops across the library, to suggest tags already used elsewhere (ADR 0034) —
@@ -32,11 +35,13 @@ struct LoopEditSheet: View {
     @State private var newTag = ""
 
     init(loop: Loop, autoColor: Color,
-         onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void) {
+         onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void,
+         onSaved: @escaping (@escaping () -> Void) -> Void) {
         self.loop = loop
         self.autoColor = autoColor
         self.onDelete = onDelete
         self.onAdjustRange = onAdjustRange
+        self.onSaved = onSaved
         _name = State(initialValue: loop.name)
         _colorChoice = State(initialValue: Self.choice(for: loop))
         _mastery = State(initialValue: loop.mastery)
@@ -122,6 +127,7 @@ struct LoopEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        let before = LoopEditSnapshot(loop)
                         loop.name = name              // mutating the @Model persists
                         loop.mastery = mastery
                         loop.focus = focus
@@ -129,6 +135,11 @@ struct LoopEditSheet: View {
                         loop.loopType = loopType
                         loop.tags = tags
                         applyColorChoice()
+                        // Offer an Undo only when the write actually changed something —
+                        // a no-op Done shouldn't flash a toast.
+                        if LoopEditSnapshot(loop) != before {
+                            onSaved { before.restore(to: loop) }
+                        }
                         dismiss()
                     }
                 }
@@ -368,6 +379,6 @@ struct MarkerEditSheet: View {
     loop.loopType = .riff
     loop.tags = ["solo", "needs-work"]
     return LoopEditSheet(loop: loop, autoColor: PocketColor.marker,
-                         onDelete: {}, onAdjustRange: {})
+                         onDelete: {}, onAdjustRange: {}, onSaved: { _ in })
         .preferredColorScheme(.dark)
 }
