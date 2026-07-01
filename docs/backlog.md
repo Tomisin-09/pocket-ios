@@ -187,6 +187,29 @@ adjust → range-edit lift → Fine retirement + hold-drag wiring).
   unclear you play it to remember, and the glanceable row (#2) lowers the cost
   further.
 
+## Practice run-setup — persist loop ramp shape (parked, after Cluster 4)
+
+Follow-up recorded in **ADR 0057**. The loop run-setup screen exposes four
+ramp-shape controls — warm-up intermediate steps, reach steps, back-off steps,
+reps per step — that **don't persist**: only `speed` (working) and `commandTempo`
+(command) round-trip today, so **Save Changes** never appears for the four, and
+they reseed to defaults each visit. Exercises already persist the full shape
+(`rampStepBPM` / `rampIntervalCount` / `rampReachSteps` / `rampBackoffSteps`).
+
+**Plan — add four *dedicated* `Loop` fields, decoupled from the legacy automator.**
+Do **not** reuse the ADR-0013 automator fields (`automatorStepCount`,
+`automatorLoopsPerStep`): they're the waveform-screen ramp with different
+semantics ("steps to target" vs "intermediate stops between working and command"),
+and coupling the two ramp systems to save four fields is a bug magnet. Add
+`rampWarmupSteps` / `rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep` with
+**declaration defaults** (CoreData 134110 rule → additive lightweight migration,
+no store wipe). Then: `LoopSetupState` gains the four (so `isDirty` fires for
+them), `seedIfNeeded` reads them off the loop, and the shared `persist()` writes
+them back. Tests: persist round-trips all four; `isDirty` triggers per field.
+**Gate:** it's a live schema change — must be device-verified against a store that
+predates the fields (the SwiftData migration-crash lesson), not just in-memory
+tests. Scheduled **after** the remaining Cluster 4 items land.
+
 ## Loop & marker creation
 
 - **A/B ephemeral span ("not saved").** A transient A↔B selection the musician
