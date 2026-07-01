@@ -35,13 +35,13 @@ import SwiftUI
 
 #Preview("BPM sheet — tap-tempo (ADR 0024)") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: nil, currentDownbeat: nil,
-             onCommit: { _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
+             onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
         .preferredColorScheme(.dark)
 }
 
 #Preview("BPM sheet — prefilled") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: 128, currentDownbeat: 1.5,
-             onCommit: { _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
+             onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
         .preferredColorScheme(.dark)
 }
 

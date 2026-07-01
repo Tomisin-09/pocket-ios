@@ -44,6 +44,12 @@ final class BeatGridTests: XCTestCase {
         XCTAssertEqual(beats.map(\.isDownbeat), [true, false, false, false, true])
     }
 
+    func testTimeSignatureGroupsBarLines() {
+        // Per-song meter (ADR 0051): 3/4 ⇒ a bar line every third beat, not every fourth.
+        let beats = BeatGrid.beats(bpm: 60, duration: 6, downbeat: 0, beatsPerBar: 3)
+        XCTAssertEqual(beats.map(\.isDownbeat), [true, false, false, true, false, false, true])
+    }
+
     func testPhaseAnchorShiftsTheWholeGrid() {
         // Anchor at 0.5 s ⇒ beats at 0.5, 1.5, 2.5, 3.5 s (no beat before 0.5).
         let beats = BeatGrid.beats(bpm: 60, duration: 4, downbeat: 0.5)

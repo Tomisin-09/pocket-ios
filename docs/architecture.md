@@ -354,6 +354,11 @@ only. See `docs/decisions/0001`.
   multiply. Both are declaration-default `[String]` arrays (migration-safe, CloudKit-clean — no
   `@Model` promotion). The cross-song *filter by tag* payoff is gated on its first consumer (the
   planner, ADR 0014); collections already filter the library (intersection/AND, ADR 0033).
+- **Song time signature** (`Song.beatsPerBar`/`noteValue`, ADR 0051): declaration-default
+  4/4 additive fields (CoreData 134110 rule). `beatGrid` passes `beatsPerBar` to
+  `BeatGrid.beats`, so downbeats are real bar lines; set in the BPM sheet. `Song.showsGridlines`
+  (default on) is a per-song view flag gating the grid *draw* only (snap candidates still read
+  `beats`).
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
 - **`MetronomeExercise`** (ADR 0043 / 0045): a standalone, **audio-free** `@Model` — a savable

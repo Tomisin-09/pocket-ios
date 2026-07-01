@@ -98,9 +98,11 @@ saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, li
 the continuous scrub stays free; ADR 0021). The **minimap** snaps a released seek to a
 nearby **marker or saved-loop edge** (but not beats — the full-song strip is too compressed
 for the grid to land cleanly), so a tap or drag near a marker dot or loop boundary catches it. When a song has a **BPM and a downbeat anchor**, a
-faint **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on
+a **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on
 zoom) and its beats join the snap candidates, so edges/seeks catch the pulse too — pure,
-unit-tested `BeatGrid`, assumes 4/4 (ADR 0022). The **"Set BPM"** affordance opens a tempo
+unit-tested `BeatGrid`, grouped by the song's **time signature** (`beatsPerBar`, ADR 0051;
+default 4/4). A per-song **Grid** toggle on the "Loop controls" row shows/hides it, appearing
+only once a grid exists. The **"Set BPM"** affordance opens a tempo
 editor (`BPMSheet`): **tap-tempo** (each tap captures song-time, so in-loop / slowed tapping
 still reads the true tempo — pure `TempoMath.bpm(fromTapTimes:)`) or **manual** entry, plus
 **the 1** placed by dragging a waveform handle that **snaps to the loudest transient**

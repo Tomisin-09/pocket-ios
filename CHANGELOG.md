@@ -14,6 +14,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   unchanged. Zoom in and the full transient detail is still there.
 
 ### Added
+- **Per-song time signature + a gridlines toggle** (ADR 0051). Set a song's time signature
+  (4/4, 3/4, 6/8, …) in the "Set tempo" sheet, so the beat grid's bar lines land in the right
+  place instead of always assuming 4/4. A **Grid** toggle on the practice screen's "Loop controls"
+  row shows/hides the grid per song — it appears only once a grid exists (tempo + the 1 set). The
+  grid marks each **bar line** (kept subtle, behind the waveform); per-beat gridlines were dropped
+  as they made zooming feel busy.
 - **Settings** (ADR 0050). A gear in the Home toolbar opens a settings screen, grouped into
   **Feel**, **Practice**, and **About**. V1 carries **Haptics** (the light taps that confirm
   gestures), **Count-in** with a configurable **length** (1–2 bars), and **Keep screen awake**

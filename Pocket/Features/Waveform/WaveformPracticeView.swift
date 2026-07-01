@@ -94,7 +94,12 @@ struct WaveformPracticeView: View {
         .sheet(isPresented: $model.settingBPM) {
             BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,
                      currentDownbeat: model.song.downbeatSeconds,
-                     onCommit: model.commitTempo,
+                     currentBeatsPerBar: model.song.beatsPerBar,
+                     currentNoteValue: model.song.noteValue,
+                     onCommit: { bpm, downbeat, beats, note in
+                         model.commitTempo(bpm: bpm, downbeat: downbeat,
+                                           beatsPerBar: beats, noteValue: note)
+                     },
                      onSetOnWaveform: { bpm in
                          model.commitTempo(bpm: bpm, downbeat: nil)
                          model.beginSetDownbeat(resumeSheet: true)
