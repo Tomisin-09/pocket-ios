@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Smoother playhead** (ADR 0054). The waveform playhead now glides instead of stepping — it's
+  driven by the display's own refresh (a `CADisplayLink`) rather than a fixed ~33 Hz timer that
+  ran below the screen's refresh rate and beat against it. Purely a visual/timing fix: snapping,
+  loops, and markers are untouched.
 - **Faster test loop: split test plans** (ADR 0053). The suite now runs through two
   `.xctestplan`s — a fast, coverage-free **`PocketLogic`** plan (the ~498 unit tests) as the
   default for local pre-push (~123s → ~59s), and a full **`PocketAll`** plan (adds the UI tests

@@ -46,7 +46,12 @@ final class PracticeAudioEngine {
     /// Invalidates the in-flight straight-through segment's completion across
     /// stop/seek/loop changes so a stale "reached end" can't reset state.
     private var generation = 0
-    private var displayTimer: Timer?
+    /// Advances the playhead once per display frame (ADR 0054) — vsync-aligned, so
+    /// it glides instead of stepping at the metronome timer's sub-refresh cadence.
+    private var playheadTicker: DisplayLinkTicker?
+    /// Metronome click-scheduling refresh. Kept on a plain `Timer` (audio scheduling
+    /// doesn't need display rate; its horizon covers this interval).
+    private var metronomeTimer: Timer?
 
     /// When set, playback loops this region (seconds) via a crossfaded `.loops`
     /// buffer. `nil` plays straight through. (Read by the +Metronome split for its cutoff.)
@@ -345,17 +350,24 @@ final class PracticeAudioEngine {
 
     private func startTimer() {
         stopTimer()
-        displayTimer = Timer.scheduledTimer(withTimeInterval: 0.03, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.updateCurrentTime()
-                self?.refreshMetronome()
+        // Playhead: one update per display frame (assumeIsolated is safe — the link
+        // runs on the main run loop, i.e. the main thread / main actor).
+        if playheadTicker == nil {
+            playheadTicker = DisplayLinkTicker { [weak self] in
+                MainActor.assumeIsolated { self?.updateCurrentTime() }
             }
+        }
+        playheadTicker?.start()
+        // Metronome: unchanged 0.03 s cadence, now decoupled from the playhead.
+        metronomeTimer = Timer.scheduledTimer(withTimeInterval: 0.03, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refreshMetronome() }
         }
     }
 
     private func stopTimer() {
-        displayTimer?.invalidate()
-        displayTimer = nil
+        playheadTicker?.stop()
+        metronomeTimer?.invalidate()
+        metronomeTimer = nil
     }
 }
 
