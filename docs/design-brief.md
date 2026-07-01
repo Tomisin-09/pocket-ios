@@ -119,6 +119,10 @@ from comfortable to target speed).
   header: `G minor · ★★★☆☆ · Groove / lead phrasing`.
 - Mode/selection controls are **pills**.
 - Numbers that respond to input (BPM, speed) update **live**.
+- **Coined-term fields carry a tappable ⓘ** (`FieldInfoLabel`) with a one-line definition in a
+  popover — Mastery, Command tempo, Focus, loop Type, derived song Mastery. The test is whether a
+  musician can infer the meaning from the label alone: standard vocabulary (Key, Genre, BPM) gets
+  none, because an ⓘ there is noise. Copy is centralised in `PracticeFieldInfo`.
 
 ---
 

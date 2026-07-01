@@ -49,10 +49,8 @@ struct NewExerciseSheet: View {
                     Stepper("Command tempo · \(command) BPM", value: $command,
                             in: range.lowerBound...range.upperBound)
                 } header: {
-                    Text("Your command tempo")
-                } footer: {
-                    Text("The fastest you can play it cleanly and repeatably right now. The "
-                         + "warm-up floor and the reach derive from it — tune them when you run it.")
+                    FieldInfoLabel(title: "Your command tempo",
+                                   info: PracticeFieldInfo.exerciseCommandTempo)
                 }
                 Section {
                     Picker("Time signature", selection: $signature) {

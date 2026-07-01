@@ -72,7 +72,8 @@ struct WaveformPracticeView: View {
             LoopEditSheet(loop: loop,
                           autoColor: LoopColor.derivedColor(for: loop, among: model.loops),
                           onDelete: { model.deleteLoop(loop) },
-                          onAdjustRange: { model.startRangeEdit(loop) })
+                          onAdjustRange: { model.startRangeEdit(loop) },
+                          onSaved: { restore in model.presentUndo("Saved changes", undo: restore) })
         }
         .sheet(item: $model.editingMarker) { marker in
             MarkerEditSheet(marker: marker, onDelete: { model.deleteMarker(marker) })

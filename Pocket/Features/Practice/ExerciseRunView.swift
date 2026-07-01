@@ -31,6 +31,18 @@ struct ExerciseRunView: View {
     @State private var showSteps = false
     @State private var signature: TimeSignature = .standard
     @State private var seeded = false
+    /// The setup as it was last persisted — captured on seed and after each Save, so the Save
+    /// Changes button shows only while the current edits differ from what's stored (ADR 0057).
+    @State private var baseline: ExerciseSetupState?
+
+    /// The persistable setup as it stands now — what Start / Save would write.
+    private var current: ExerciseSetupState {
+        ExerciseSetupState(working: working, command: command, steps: steps,
+                           reachSteps: reachSteps, backoffSteps: backoffSteps, signature: signature)
+    }
+
+    /// True when the setup has unsaved edits — drives the Save Changes button.
+    private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
     /// The reach derived from the (local) command — proportional + clamped (ADR 0045).
     private var reach: Int { TempoStretch.targetBPM(forCommand: command) }
@@ -66,8 +78,10 @@ struct ExerciseRunView: View {
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
                 if !isRunning { promoteButton }
+                if !isRunning, isDirty { saveChangesButton }
             }
             .padding(24)
+            .animation(.easeInOut(duration: 0.2), value: isDirty)
         }
         .scrollDismissesKeyboard(.interactively)
         .background(PocketColor.background.ignoresSafeArea())
@@ -185,6 +199,23 @@ struct ExerciseRunView: View {
         .accessibilityLabel("Promote: I own \(reach) beats per minute now")
     }
 
+    /// Persist the tuning without starting a run (ADR 0057) — shown only while the setup differs
+    /// from what's stored. A subtle filled capsule, distinct from the outlined Promote above it
+    /// and the filled Start pill below. Leaving still discards *unsaved* edits.
+    private var saveChangesButton: some View {
+        Button(action: saveChanges) {
+            Label("Save changes", systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PocketColor.practice)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(PocketColor.practice.opacity(0.15)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Save changes to this exercise")
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
     // MARK: - Transport
 
     /// Stopped → **Start training** (commit + `run(ramp:)`). Running → pause / resume with a
@@ -244,11 +275,12 @@ struct ExerciseRunView: View {
                                             noteValue: exercise.noteValue,
                                             accentBeats: exercise.accentBeats)
         seeded = true
+        baseline = current
     }
 
-    /// Persist the edits and hand the routine to this screen's own engine in one tap — the only
-    /// place the run screen writes to the model (leaving without starting discards).
-    private func commitAndStart() {
+    /// Write the current setup to the model — shared by Save Changes and Start so the two write
+    /// paths never diverge (ADR 0057). Re-baselines so the Save Changes button hides.
+    private func persist() {
         exercise.workingTempo = working
         exercise.promoteCommand(to: command)          // command + reach (targetTempo)
         exercise.rampStepBPM = stepBPM
@@ -261,7 +293,18 @@ struct ExerciseRunView: View {
         exercise.beatsPerBar = signature.beats
         exercise.noteValue = signature.noteValue
         try? modelContext.save()
+        baseline = current
+    }
 
+    /// Save the tuning without starting a run (ADR 0057). Leaving still discards *unsaved* edits.
+    private func saveChanges() {
+        persist()
+        haptic(.medium)
+    }
+
+    /// Persist the edits and hand the routine to this screen's own engine in one tap.
+    private func commitAndStart() {
+        persist()
         // Feed the exercise's meter to the run engine so the click's accents and the count-in
         // length honor it (ADR 0052), then hand over the routine.
         engine.setTimeSignature(signature)
@@ -288,6 +331,17 @@ struct ExerciseRunView: View {
         command = min(range.upperBound, max(working, value))
         haptic(.light)
     }
+}
+
+/// Snapshot of the run-setup fields Start / Save persist — compared against the live values to
+/// decide whether the Save Changes button shows (ADR 0057). Pure UI state, not a domain type.
+private struct ExerciseSetupState: Equatable {
+    var working: Int
+    var command: Int
+    var steps: Int
+    var reachSteps: Int
+    var backoffSteps: Int
+    var signature: TimeSignature
 }
 
 private extension View {

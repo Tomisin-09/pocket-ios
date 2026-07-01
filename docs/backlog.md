@@ -187,6 +187,29 @@ adjust → range-edit lift → Fine retirement + hold-drag wiring).
   unclear you play it to remember, and the glanceable row (#2) lowers the cost
   further.
 
+## Practice run-setup — persist loop ramp shape (parked, after Cluster 4)
+
+Follow-up recorded in **ADR 0057**. The loop run-setup screen exposes four
+ramp-shape controls — warm-up intermediate steps, reach steps, back-off steps,
+reps per step — that **don't persist**: only `speed` (working) and `commandTempo`
+(command) round-trip today, so **Save Changes** never appears for the four, and
+they reseed to defaults each visit. Exercises already persist the full shape
+(`rampStepBPM` / `rampIntervalCount` / `rampReachSteps` / `rampBackoffSteps`).
+
+**Plan — add four *dedicated* `Loop` fields, decoupled from the legacy automator.**
+Do **not** reuse the ADR-0013 automator fields (`automatorStepCount`,
+`automatorLoopsPerStep`): they're the waveform-screen ramp with different
+semantics ("steps to target" vs "intermediate stops between working and command"),
+and coupling the two ramp systems to save four fields is a bug magnet. Add
+`rampWarmupSteps` / `rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep` with
+**declaration defaults** (CoreData 134110 rule → additive lightweight migration,
+no store wipe). Then: `LoopSetupState` gains the four (so `isDirty` fires for
+them), `seedIfNeeded` reads them off the loop, and the shared `persist()` writes
+them back. Tests: persist round-trips all four; `isDirty` triggers per field.
+**Gate:** it's a live schema change — must be device-verified against a store that
+predates the fields (the SwiftData migration-crash lesson), not just in-memory
+tests. Scheduled **after** the remaining Cluster 4 items land.
+
 ## Loop & marker creation
 
 - **A/B ephemeral span ("not saved").** A transient A↔B selection the musician
@@ -255,6 +278,42 @@ so the intent isn't lost:
   refresh? Candidate: ~24h (or weekly) on a free tier, daily/hourly behind
   pay — find the sustainable balance without burning backend cost. Decide
   alongside the backend build (ADR 0002).
+
+## Haptics — configurable section (parked, build at finishing-touches)
+
+Decided 2026-07-01. Two motion-tracking haptics are worth adding, but only as an
+opt-in that stays out of the way by default. **Build these when putting the
+finishing touches on the app**, not now — an empty Settings section with dead
+toggles is exactly the scaffolding the launch-readiness gate warns against, so
+the Settings UI and the mechanism ship together.
+
+**Settings — dedicated "Haptics" section.** Today there's a single `Haptics`
+toggle in the *Feel* section of `SettingsView`, governing gesture-confirmation
+taps (`AppSettings.hapticsEnabled`, default **on**) — leave that as the master
+switch. Promote it into its own **Haptics section** that gains the two toggles
+below, each a new `AppSettings.Key` following the existing `resolvedBool`
+default-resolution idiom. Both **default off** (opt-in), and both are gated by
+the master `hapticsEnabled` switch.
+
+1. **Playback-tracking haptic** — pulses on **bar-line (downbeat) crossings** as
+   the song plays. Follows the real playhead, so it scales automatically with
+   playback speed (slowing to 50% doubles the interval — a feature). **Gate it
+   exactly like the gridlines toggle (ADR 0051): needs tempo + the "1" set** — a
+   bar is meaningless without a downbeat anchor. Single medium-impact per bar for
+   V1; no strength gradations. Silent during count-in (position-while-playing
+   only) unless device testing says otherwise. *Not* a granularity picker
+   (bars/beats/off) — bars-only is the opinionated default.
+   - **Open sub-decision, revisit at build time:** a distinct heavier tap on the
+     **loop wrap** ("I've heard this N times" by feel). Real value for looped
+     practice; ship bars-only first and add as a fast follow if it feels missing.
+2. **Scrubbing/drag haptic** — detents felt while **dragging the playhead** as it
+   crosses bars/beats/markers (the tactile "notch" of scrubbing past a
+   structural point). Distinct from the playback pulse; this one fires only
+   during an active scrub gesture. Snap points already exist
+   (`WaveformPracticeModel+Snap`), so reuse that geometry.
+
+`Haptics.swift` (`Pocket/Features/Waveform/`) is the existing helper both would
+route through.
 
 ## UI / polish
 

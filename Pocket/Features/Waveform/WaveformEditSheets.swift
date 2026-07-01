@@ -14,6 +14,9 @@ struct LoopEditSheet: View {
     let onDelete: () -> Void
     /// Enter Fine mode on the waveform to adjust this loop's bounds.
     let onAdjustRange: () -> Void
+    /// Called after Done writes edits that actually changed something, with a closure that
+    /// reverts them — the parent shows an Undo toast (ADR 0019 undo, extended to saves).
+    let onSaved: (@escaping () -> Void) -> Void
 
     @Environment(\.dismiss) private var dismiss
     // All loops across the library, to suggest tags already used elsewhere (ADR 0034) —
@@ -32,11 +35,13 @@ struct LoopEditSheet: View {
     @State private var newTag = ""
 
     init(loop: Loop, autoColor: Color,
-         onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void) {
+         onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void,
+         onSaved: @escaping (@escaping () -> Void) -> Void) {
         self.loop = loop
         self.autoColor = autoColor
         self.onDelete = onDelete
         self.onAdjustRange = onAdjustRange
+        self.onSaved = onSaved
         _name = State(initialValue: loop.name)
         _colorChoice = State(initialValue: Self.choice(for: loop))
         _mastery = State(initialValue: loop.mastery)
@@ -122,6 +127,7 @@ struct LoopEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        let before = LoopEditSnapshot(loop)
                         loop.name = name              // mutating the @Model persists
                         loop.mastery = mastery
                         loop.focus = focus
@@ -129,6 +135,11 @@ struct LoopEditSheet: View {
                         loop.loopType = loopType
                         loop.tags = tags
                         applyColorChoice()
+                        // Offer an Undo only when the write actually changed something —
+                        // a no-op Done shouldn't flash a toast.
+                        if LoopEditSnapshot(loop) != before {
+                            onSaved { before.restore(to: loop) }
+                        }
                         dismiss()
                     }
                 }
@@ -143,18 +154,28 @@ struct LoopEditSheet: View {
         Section("Practice") {
             masteryRow
             focusRow
-            // `.menu` (not the Form default navigation-link style): this sheet opens at
-            // the `.medium` detent, and a navigation-link Picker can't push its options
-            // list out of a partial-height sheet — the push is swallowed, so the value
-            // never changes. A menu dropdown is self-contained and works at any detent.
+            typeRow
+            commandTempoRow
+        }
+    }
+
+    /// Loop type. `.menu` (not the Form default navigation-link style): this sheet opens at the
+    /// `.medium` detent, and a navigation-link Picker can't push its options list out of a
+    /// partial-height sheet — the push is swallowed, so the value never changes. A menu dropdown
+    /// is self-contained and works at any detent. Wrapped in `LabeledContent` so the ⓘ sits in the
+    /// (independently tappable) label slot while the menu owns the trailing value.
+    private var typeRow: some View {
+        LabeledContent {
             Picker("Type", selection: $loopType) {
                 ForEach(LoopType.pickerOrder) { type in
                     Text(type.label).tag(type)
                 }
             }
+            .labelsHidden()
             .pickerStyle(.menu)
             .foregroundStyle(PocketColor.textSecondary)
-            commandTempoRow
+        } label: {
+            FieldInfoLabel(title: "Type", info: PracticeFieldInfo.loopType)
         }
     }
 
@@ -162,7 +183,7 @@ struct LoopEditSheet: View {
     /// value; tapping the lowest filled dot walks it down, and walking below 1 clears it
     /// back to unrated — so the rating is always one you deliberately made.
     private var masteryRow: some View {
-        LabeledContent("Mastery") {
+        LabeledContent {
             HStack(spacing: 10) {
                 if mastery == nil {
                     Text("Unrated")
@@ -180,22 +201,30 @@ struct LoopEditSheet: View {
                         .accessibilityLabel("Set mastery to \(value)")
                 }
             }
+        } label: {
+            FieldInfoLabel(title: "Mastery", info: PracticeFieldInfo.mastery)
         }
     }
 
     /// Practice intent — Backburner / Active / Sharpening, or Not set (`nil`, ADR 0039).
     /// A menu (not a segmented control): a 4th "unset" segment is too cramped on a phone,
     /// and a menu handles `nil` cleanly while matching the `Type` menu above it. Stored as
-    /// `Int?` per ADR 0036 (the planner reads the raw value); labels live in the view.
+    /// `Int?` per ADR 0036 (the planner reads the raw value); labels live in the view. Wrapped in
+    /// `LabeledContent` so the ⓘ stays independently tappable (a menu Picker's row swallows taps).
     private var focusRow: some View {
-        Picker("Focus", selection: $focus) {
-            Text("Not set").tag(Int?.none)
-            Text("Backburner").tag(Int?(1))
-            Text("Active").tag(Int?(2))
-            Text("Sharpening").tag(Int?(3))
+        LabeledContent {
+            Picker("Focus", selection: $focus) {
+                Text("Not set").tag(Int?.none)
+                Text("Backburner").tag(Int?(1))
+                Text("Active").tag(Int?(2))
+                Text("Sharpening").tag(Int?(3))
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .foregroundStyle(PocketColor.textSecondary)
+        } label: {
+            FieldInfoLabel(title: "Focus", info: PracticeFieldInfo.focus)
         }
-        .pickerStyle(.menu)
-        .foregroundStyle(PocketColor.textSecondary)
     }
 
     /// Command tempo as a percentage of original (ADR 0036), or not yet measured (`nil`,
@@ -205,7 +234,7 @@ struct LoopEditSheet: View {
     private var commandTempoRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let value = commandTempo {
-                LabeledContent("Command tempo") {
+                LabeledContent {
                     HStack(spacing: 12) {
                         Text(LoopProgressFormat.percentLabel(value))
                             .font(.pocketMono(.body))
@@ -214,12 +243,16 @@ struct LoopEditSheet: View {
                             .font(.caption)
                             .foregroundStyle(PocketColor.textSecondary)
                     }
+                } label: {
+                    FieldInfoLabel(title: "Command tempo", info: PracticeFieldInfo.commandTempo)
                 }
                 Slider(value: Binding(get: { value }, set: { commandTempo = $0 }),
                        in: 0.25...1.5, step: 0.05)
             } else {
-                LabeledContent("Command tempo") {
+                LabeledContent {
                     Button("Set") { commandTempo = min(max(loop.speed, 0.25), 1.5) }
+                } label: {
+                    FieldInfoLabel(title: "Command tempo", info: PracticeFieldInfo.commandTempo)
                 }
             }
         }
@@ -346,6 +379,6 @@ struct MarkerEditSheet: View {
     loop.loopType = .riff
     loop.tags = ["solo", "needs-work"]
     return LoopEditSheet(loop: loop, autoColor: PocketColor.marker,
-                         onDelete: {}, onAdjustRange: {})
+                         onDelete: {}, onAdjustRange: {}, onSaved: { _ in })
         .preferredColorScheme(.dark)
 }

@@ -6,6 +6,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Save run-setup edits without starting a run** (ADR 0057). Tuning an exercise or loop's ramp on
+  the run screen (working / command / reach / steps / signature) now shows a **Save Changes** button
+  when the setup differs from what's stored — persist your tuning and come back to it later, without
+  having to start a training run. Leaving without saving still discards unsaved edits, as before.
+- **Undo after editing a loop.** Saving changes in the loop editor (name, mastery, focus, command
+  tempo, type, tags, colour) now shows a **"Saved changes · Undo"** snackbar — the same one deletes
+  use — that reverts the whole edit in one tap. A Done that changed nothing shows nothing.
+- **Field explainers (ⓘ) on the coined practice terms.** The fields a musician can't infer from
+  the label now carry a tappable **ⓘ** with a one-line definition: **Mastery**, **Command tempo**,
+  **Focus**, and loop **Type** in the loop editor; **Command tempo** on the exercise-create sheet
+  (replacing its inline footer); and the derived **Mastery** on the song details sheet (explaining
+  it's averaged from the song's loops). Standard vocabulary (Key, Genre, BPM) is left plain.
 - **Sort + search in the Practice libraries** (ADR 0056). The **Loops** and **Exercises** lists now
   carry a sort menu (its label spells out the active key with a direction arrow) and a search field,
   matching the song library. Loops sort by **Song · Name · Command tempo · Mastery** (unrated last);
