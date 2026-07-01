@@ -32,11 +32,15 @@ struct LoopRunView: View {
     @State private var showSteps = false
     @State private var seeded = false
     /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
-    /// button shows only while the edits differ (ADR 0057). Only the two tempos persist to a Loop
-    /// today (steps/reps aren't stored — see `commitAndStart`), so the snapshot tracks just those.
+    /// button shows only while the edits differ (ADR 0057). All six persisted fields — the two
+    /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
+    /// of them arms Save Changes.
     @State private var baseline: LoopSetupState?
 
-    private var current: LoopSetupState { LoopSetupState(working: working, command: command) }
+    private var current: LoopSetupState {
+        LoopSetupState(working: working, command: command, warmupSteps: steps,
+                       reachSteps: reachSteps, backoffSteps: backoffSteps, repsPerStep: repsPerStep)
+    }
     private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
     private static let repsRange = 1...8
@@ -265,8 +269,11 @@ struct LoopRunView: View {
         .padding(.top, 8)
         .background(PocketColor.background.opacity(0.95))
     }
+}
 
-    // MARK: - Actions
+// MARK: - Actions
+
+private extension LoopRunView {
 
     /// Seed the editor once. With a measured command, load the saved speeds as-is; without one,
     /// default command to the loop's start speed and working to a floor below it (so the two start
@@ -280,6 +287,12 @@ struct LoopRunView: View {
             command = clampPercent(LoopCommandRamp.percent(loop.speed))
             working = max(Self.percentRange.lowerBound, command - 15)
         }
+        // Restore the saved ramp shape (ADR 0057 follow-up); migrated/new loops read the
+        // declaration defaults (no intermediate stops, single drop, one rep per step).
+        steps = loop.rampWarmupSteps
+        reachSteps = loop.rampReachSteps
+        backoffSteps = loop.rampBackoffSteps
+        repsPerStep = max(Self.repsRange.lowerBound, loop.rampRepsPerStep)
         seeded = true
         baseline = current
     }
@@ -289,6 +302,10 @@ struct LoopRunView: View {
     private func persist() {
         loop.speed = Double(working) / 100
         loop.promoteCommand(to: Double(command) / 100)
+        loop.rampWarmupSteps = steps
+        loop.rampReachSteps = reachSteps
+        loop.rampBackoffSteps = backoffSteps
+        loop.rampRepsPerStep = repsPerStep
         try? modelContext.save()
         baseline = current
     }
@@ -326,12 +343,17 @@ struct LoopRunView: View {
     }
 }
 
-/// Snapshot of the loop run-setup fields that persist (working + command %) — compared against the
-/// live values to decide whether the Save Changes button shows (ADR 0057). Steps/reps aren't stored
-/// on a Loop, so they're intentionally out of scope here.
-private struct LoopSetupState: Equatable {
+/// Snapshot of the loop run-setup fields that persist — the two tempos (working + command %) plus
+/// the four ramp-shape controls (ADR 0057 follow-up) — compared against the live values to decide
+/// whether the Save Changes button shows (ADR 0057). Every persisted field is tracked, so editing
+/// the ramp shape alone still arms Save Changes.
+struct LoopSetupState: Equatable {
     var working: Int
     var command: Int
+    var warmupSteps: Int
+    var reachSteps: Int
+    var backoffSteps: Int
+    var repsPerStep: Int
 }
 
 private extension View {

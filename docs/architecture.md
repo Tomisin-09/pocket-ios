@@ -236,10 +236,13 @@ The ramp advances by **loop repetitions, not seconds** — one pass through the 
 (reps-per-step is user-set in the run setup, default 1; the command dwell holds several). The ramp
 reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as loop passes, and
 `loopIteration` is rate-independent so a plateau holds a fixed number of reps regardless of the
-tempo it plays at (and freezes naturally on pause). No new stored `Loop` fields are added —
-`speed` (working) and `commandTempo` (command) already exist and the reach is derived — so the
-loop keeps full ADR 0011/0012 migration discipline (the clean-rewrite relaxation was for `Exercise`
-only). Stage 4's waveform for real files is
+tempo it plays at (and freezes naturally on pause). The tempos ride existing fields —
+`speed` (working) and `commandTempo` (command), reach derived — while the **ramp shape** persists in
+four dedicated, declaration-defaulted `Int` fields added in the ADR 0057 follow-up
+(`rampWarmupSteps` / `rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep`), kept **separate**
+from the ADR-0013 automator (`automatorStepCount`/`automatorLoopsPerStep`, the waveform "steps to
+target" ramp) since the two ramp systems carry different semantics. All are additive with
+declaration defaults, so the loop keeps full ADR 0011/0012 migration discipline. Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).

@@ -228,6 +228,20 @@ final class Loop {
     var automatorStepCount: Int = 6
     var automatorLoopsPerStep: Int = 2
 
+    // Run-setup ramp shape (ADR 0057 follow-up): the four staircase controls the Practice
+    // loop run-setup exposes — warm-up intermediate stops, reach steps, back-off steps, reps
+    // per step. **Deliberately separate** from the ADR-0013 automator above: that's the
+    // waveform-screen ramp ("steps to target"), these are the command-anchored run ramp
+    // ("intermediate stops between working and command"), with different semantics — coupling
+    // the two to save four fields is a bug magnet. Declaration defaults so SwiftData lightweight
+    // migration fills loops saved before this without a store wipe (CoreData 134110 rule, ADR
+    // 0012), same discipline as the automator fields. `rampRepsPerStep` defaults to
+    // `LoopCommandRamp.defaultRepsPerStep` (1); the rest to `0` (no intermediate stops / drop).
+    var rampWarmupSteps: Int = 0
+    var rampReachSteps: Int = 0
+    var rampBackoffSteps: Int = 0
+    var rampRepsPerStep: Int = 1
+
     /// Manual identity-colour override: an index into `PocketColor.loopPalette`, or
     /// `nil` to derive the colour from start-order (ADR 0023 / 0031). Optional, so
     /// SwiftData lightweight migration leaves loops saved before this as `nil` (auto).

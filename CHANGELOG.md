@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Loop run-setup ramp shape now persists** (ADR 0057 follow-up). The four staircase controls on
+  a loop's run screen — warm-up steps, reach steps, back-off steps, and reps per step — now save
+  with the loop instead of reseeding to defaults each visit. **Save Changes** appears when any of
+  them differ from what's stored, and they round-trip on return. Backed by four dedicated `Loop`
+  fields kept separate from the ADR-0013 waveform automator (different ramp semantics).
 - **Save run-setup edits without starting a run** (ADR 0057). Tuning an exercise or loop's ramp on
   the run screen (working / command / reach / steps / signature) now shows a **Save Changes** button
   when the setup differs from what's stored — persist your tuning and come back to it later, without
