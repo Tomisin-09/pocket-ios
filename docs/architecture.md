@@ -106,8 +106,11 @@ track). The audio is a `ClickVoice`: a second `AVAudioPlayerNode` on the **same
 engine** wired straight to the mixer (bypassing time-pitch, so ticks aren't
 stretched) with three synthesized buffers (accented downbeat / plain beat / a quieter
 subdivision tick — ADR 0043 slice 5, selected per click via `ClickVoice.ClickLevel`). The
-engine refreshes the schedule on its 0.03 s display timer, deduping by a watermark,
-and flushes-and-refills on any discontinuity (rate / seek / loop / pause). It's
+engine refreshes the schedule on a 0.03 s **metronome timer**, deduping by a watermark,
+and flushes-and-refills on any discontinuity (rate / seek / loop / pause). The **visual
+playhead** is on its own clock: a `CADisplayLink` (`DisplayLinkTicker`) samples the audio
+render position once per display frame (vsync-aligned, 60/120 Hz) so it glides rather than
+stepping at the timer's sub-refresh cadence (ADR 0054). It's
 enabled only when the grid exists (BPM + the 1) and **never writes back** to the
 song's tempo; it's silenced on pause and screen exit (ADR 0026).
 
