@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Faster test loop: split test plans** (ADR 0053). The suite now runs through two
+  `.xctestplan`s — a fast, coverage-free **`PocketLogic`** plan (the ~498 unit tests) as the
+  default for local pre-push (~123s → ~59s), and a full **`PocketAll`** plan (adds the UI tests
+  + coverage) that CI runs with `-testPlan PocketAll`. No test code changed. (Parallel execution
+  was benchmarked and dropped — the unit tests are too short for clone overhead to pay off, and it
+  broke the UI runner.) Developer-facing only.
 - **Exercise run screen drops the session timer.** The running readout is now just the live BPM
   and the beat dots — the wall-clock session time was more clutter than payoff.
 - **Waveform reads fuller and less aggressive** (ADR 0049). The envelope now draws through a
