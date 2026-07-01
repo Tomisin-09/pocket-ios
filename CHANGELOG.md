@@ -5,6 +5,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Sort + search in the Practice libraries** (ADR 0056). The **Loops** and **Exercises** lists now
+  carry a sort menu (its label spells out the active key with a direction arrow) and a search field,
+  matching the song library. Loops sort by **Song · Name · Command tempo · Mastery** (unrated last);
+  exercises by **Name · Command tempo · Recently added**. Each library remembers its choice across
+  launches.
+
 ### Changed
 - **Minimap shows the song's shape** (ADR 0055). The full-song overview strip now draws a
   compressed **silhouette** of the waveform (through the same fuller/calmer curve as the main
