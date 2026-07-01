@@ -22,6 +22,12 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 
+	<!-- App uses no non-exempt encryption (no custom crypto; only Apple's standard
+	     OS / HTTPS). Declaring this skips the export-compliance prompt on every
+	     TestFlight / App Store upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
 	<!-- Apple Music library access is browse/metadata only in V1. This string is
 	     surfaced verbatim in the system permission prompt; vague strings cause
 	     App Store rejection. -->
