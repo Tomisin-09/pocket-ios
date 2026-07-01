@@ -11,6 +11,10 @@ import SwiftUI
 struct Minimap: View {
     let song: Song
     let activeLoop: Loop?
+    /// The whole-song envelope (0…1), drawn as a compressed silhouette so the strip
+    /// reads as a *map* of the song's shape, not a featureless bar. Empty while the
+    /// waveform is still extracting → falls back to a flat track.
+    let samples: [Double]
     let markers: [Marker]
     /// Fine-mode selection mirrored from the detail waveform (blue).
     let fineSelection: (start: Double, end: Double)?
@@ -94,12 +98,36 @@ struct Minimap: View {
         }
     }
 
+    /// The compressed whole-song silhouette that replaces the old flat base track: a
+    /// mirrored envelope through the same display gamma the detail waveform uses
+    /// (`WaveformAmplitude`, ADR 0049), so the strip reads as a fuller, calmer *map* of
+    /// the song's shape. Falls back to a flat pill until the envelope is extracted.
+    private func drawTrack(in context: GraphicsContext, size: CGSize) {
+        guard samples.count > 1 else {
+            let base = CGRect(x: 0, y: size.height * 0.35, width: size.width, height: size.height * 0.3)
+            context.fill(Path(roundedRect: base, cornerRadius: 2), with: .color(PocketColor.barPlayed))
+            return
+        }
+        let midY = size.height / 2
+        let maxHalf = size.height * 0.44          // leaves a hair of padding top/bottom
+        let lastIndex = Double(samples.count - 1)
+        func point(_ index: Int, mirrored: Bool) -> CGPoint {
+            let xPos = size.width * CGFloat(Double(index) / lastIndex)
+            let height = CGFloat(WaveformAmplitude.display(samples[index])) * maxHalf
+            return CGPoint(x: xPos, y: mirrored ? midY + height : midY - height)
+        }
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: midY))
+        for index in samples.indices { path.addLine(to: point(index, mirrored: false)) }        // top contour
+        for index in samples.indices.reversed() { path.addLine(to: point(index, mirrored: true)) } // bottom mirror
+        path.closeSubpath()
+        context.fill(path, with: .color(PocketColor.barPlayed))
+    }
+
     private var canvas: some View {
         Canvas { context, size in
-            // Base track.
-            let base = CGRect(x: 0, y: size.height * 0.35, width: size.width, height: size.height * 0.3)
-            context.fill(Path(roundedRect: base, cornerRadius: 2),
-                         with: .color(PocketColor.barPlayed))
+            // Whole-song silhouette (was a flat base track).
+            drawTrack(in: context, size: size)
 
             // Active loop region wash + every saved loop's identity-coloured underline.
             // Kept in an instance method (like `WaveformCanvas.drawLoopLines`) so the
