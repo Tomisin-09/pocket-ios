@@ -132,7 +132,16 @@ editable inline in the song details sheet. Narrowed ADR 0012's three-scope
 forecast to loop-only; markers get neither. AI summaries over the journal remain
 in the AI phase (below).
 
-## Journal authoring → Practice screen (decided 2026-07-01, next after ramp persistence)
+## Journal authoring → Practice screen (ownership shape settled — ADR 0058)
+
+**Ownership decided (ADR 0058, 2026-07-01):** one polymorphic `JournalEntry`
+(owner = loop **XOR** exercise), reusing the existing list/undo/kind/sheet
+machinery; exercises get a new honest `commandBpmAtEntry: Int?` snapshot (no
+mastery, absolute BPM) rather than overloading the loop's song-fraction `Double`.
+Additive schema (new optional `exercise` relationship + `commandBpmAtEntry`) —
+device-verify the migration before merge. **Loops-first is an acceptable partial
+ship** if the exercise side slips. Build not yet started.
+
 
 Relocate journal **authoring** to the Practice run screens; make the waveform
 journal **read-only** (history view only). Rationale: ADR 0046 makes Practice
