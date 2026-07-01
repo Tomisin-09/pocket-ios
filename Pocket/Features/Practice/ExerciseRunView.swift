@@ -29,6 +29,7 @@ struct ExerciseRunView: View {
     @State private var reachSteps = 0
     @State private var backoffSteps = 0
     @State private var showSteps = false
+    @State private var signature: TimeSignature = .standard
     @State private var seeded = false
 
     /// The reach derived from the (local) command — proportional + clamped (ADR 0045).
@@ -72,6 +73,11 @@ struct ExerciseRunView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !isRunning {
+                ToolbarItem(placement: .topBarTrailing) { signaturePicker }
+            }
+        }
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
@@ -82,23 +88,53 @@ struct ExerciseRunView: View {
 
     private var liveReadout: some View {
         VStack(spacing: 18) {
-            VStack(spacing: 2) {
-                Text("\(engine.bpm)")
-                    .font(.pocketMono(.largeTitle))
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .contentTransition(.numericText())
-                Text("BPM · \(engine.tempoMarking.name)")
-                    .font(.caption)
-                    .foregroundStyle(PocketColor.textSecondary)
+            if let countdown = engine.automatorCountdown {
+                // Count-in before the climb engages (ADR 0052) — the beat dots keep flashing below.
+                VStack(spacing: 2) {
+                    Text("\(countdown)")
+                        .font(.pocketMono(.largeTitle))
+                        .foregroundStyle(PocketColor.practice)
+                        .contentTransition(.numericText())
+                    Text("Counting in")
+                        .font(.caption)
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+            } else {
+                VStack(spacing: 2) {
+                    Text("\(engine.bpm)")
+                        .font(.pocketMono(.largeTitle))
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .contentTransition(.numericText())
+                    Text("BPM · \(engine.tempoMarking.name)")
+                        .font(.caption)
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
             }
             BeatIndicator(engine: engine)
-            SessionTracker(engine: engine)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
     }
 
     // MARK: - Setup (stopped)
+
+    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact menu in the nav bar,
+    /// shown only while stopped. Drives the run click's accents + count-in length; committed on Start
+    /// alongside the tempos, so leaving without starting discards it.
+    private var signaturePicker: some View {
+        Menu {
+            Picker("Time signature", selection: $signature) {
+                ForEach(TimeSignature.presets) { preset in
+                    Text("\(preset.name) · \(preset.context)").tag(preset)
+                }
+            }
+        } label: {
+            Text(signature.name)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PocketColor.practice)
+        }
+        .accessibilityLabel("Time signature: \(signature.name)")
+    }
 
     private var tempos: some View {
         VStack(spacing: 14) {
@@ -204,6 +240,9 @@ struct ExerciseRunView: View {
                                               stepBPM: exercise.rampStepBPM)
         reachSteps = max(0, exercise.rampReachSteps)
         backoffSteps = max(0, exercise.rampBackoffSteps)
+        signature = TimeSignature.forStored(beats: exercise.beatsPerBar,
+                                            noteValue: exercise.noteValue,
+                                            accentBeats: exercise.accentBeats)
         seeded = true
     }
 
@@ -219,8 +258,13 @@ struct ExerciseRunView: View {
         exercise.includeBackoff = true
         exercise.rampReachSteps = reachSteps
         exercise.rampBackoffSteps = backoffSteps
+        exercise.beatsPerBar = signature.beats
+        exercise.noteValue = signature.noteValue
         try? modelContext.save()
 
+        // Feed the exercise's meter to the run engine so the click's accents and the count-in
+        // length honor it (ADR 0052), then hand over the routine.
+        engine.setTimeSignature(signature)
         engine.run(ramp: routine)
         haptic(.medium)
     }

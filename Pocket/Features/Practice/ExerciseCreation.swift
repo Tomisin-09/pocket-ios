@@ -15,6 +15,8 @@ extension Exercise {
     /// each curated drill its feel and how-to note while still deriving working/reach identically.
     static func commandAnchored(name: String,
                                 command: Int,
+                                beatsPerBar: Int = 4,
+                                noteValue: Int = 4,
                                 subdivision: Subdivision = .none,
                                 tags: [String] = [],
                                 notes: String = "") -> Exercise {
@@ -24,6 +26,8 @@ extension Exercise {
                         currentTempo: working,
                         commandTempo: command,
                         targetTempo: TempoStretch.targetBPM(forCommand: command),
+                        beatsPerBar: beatsPerBar,
+                        noteValue: noteValue,
                         subdivision: subdivision,
                         tags: tags,
                         notes: notes)

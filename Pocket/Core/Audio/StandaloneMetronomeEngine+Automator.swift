@@ -98,10 +98,12 @@ extension StandaloneMetronomeEngine {
         return true
     }
 
-    /// The count-in number to show before the climb (ADR 0048), or `nil` when not counting in —
-    /// the meter's beats counted down to the downbeat where the climb engages.
+    /// The count-in number to show before the climb (ADR 0048; training runs too, ADR 0052), or
+    /// `nil` when not counting in — the meter's beats counted down to the downbeat where the climb
+    /// engages. Gated on `automatorCountingIn` alone (set only during a live count-in), so it serves
+    /// both the free-play automator and a Practice training run.
     var automatorCountdown: Int? {
-        guard automatorRunning, automatorCountingIn else { return nil }
+        guard automatorCountingIn else { return nil }
         return max(1, countInTarget - max(0, currentBeat - countInStartBeat))
     }
 
@@ -144,11 +146,19 @@ extension StandaloneMetronomeEngine {
     /// replaces ADR 0045's `startTraining`, which routed through the automator setters and so
     /// made arming and training mutually exclusive. Stops any current session, sets the floor,
     /// and begins playing — `start()` engages the ramp (it's `isRampActive`).
+    ///
+    /// Like the free-play Start (`startAutomatorRun`), a training run **counts in** before the
+    /// climb engages, honoring the meter and the configurable length (Settings V1, ADR 0050/0052).
+    /// The count-in holds at the working floor; `advanceCountIn()` in `tick()` engages the climb on
+    /// its final downbeat. Count-in off ⇒ the climb drives immediately.
     func run(ramp: CommandRamp) {
         if transport != .stopped { stop() }
         trainingRamp = ramp
         setBPM(ramp.working)
         start()
+        countInStartBeat = currentBeat
+        countInTarget = max(1, timeSignature.beats * AppSettings.countInBars)
+        automatorCountingIn = AppSettings.countInEnabled
     }
 
     /// Total steps from floor to ceiling — for the linear staircase graphic and the controls.

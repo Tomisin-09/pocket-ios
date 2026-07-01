@@ -29,28 +29,3 @@ struct BeatIndicator: View {
         return isAccent ? PocketColor.metronome.opacity(0.4) : PocketColor.textSecondary.opacity(0.4)
     }
 }
-
-/// The running session time — ephemeral wall-clock that keeps running through tempo
-/// changes and resets on stop (ADR 0043). A standalone view so its per-second update
-/// doesn't re-render the controls. Used on the Practice **exercise run** screen; the
-/// standalone metronome screen dropped it (too much space for too little payoff).
-struct SessionTracker: View {
-    let engine: StandaloneMetronomeEngine
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Text("SESSION")
-                .font(.caption2.weight(.semibold))
-                .tracking(1.5)
-                .foregroundStyle(PocketColor.textSecondary)
-            Text(timecode(engine.elapsed))
-                .font(.pocketMono(.title))
-                .foregroundStyle(engine.transport == .stopped
-                                 ? PocketColor.textSecondary : PocketColor.textPrimary)
-                .contentTransition(.numericText())
-                .monospacedDigit()
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Session time \(timecode(engine.elapsed))")
-    }
-}

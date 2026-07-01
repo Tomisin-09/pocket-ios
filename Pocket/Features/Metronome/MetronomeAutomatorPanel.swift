@@ -44,8 +44,11 @@ struct MetronomeAutomatorPanel: View {
             // Captures the tempo live at the moment of the tap (the breakdown point), prefilled as
             // the new exercise's command. Funnels through the same `commandAnchored` factory as
             // Practice's own create flow — one creation path (ADR 0046).
-            NewExerciseSheet(initialCommand: engine.bpm) { name, command in
-                modelContext.insert(Exercise.commandAnchored(name: name, command: command))
+            NewExerciseSheet(initialCommand: engine.bpm,
+                             initialSignature: engine.timeSignature) { name, command, signature in
+                modelContext.insert(Exercise.commandAnchored(name: name, command: command,
+                                                             beatsPerBar: signature.beats,
+                                                             noteValue: signature.noteValue))
             }
         }
     }
