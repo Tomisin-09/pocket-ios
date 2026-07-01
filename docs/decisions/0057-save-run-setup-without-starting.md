@@ -31,11 +31,24 @@ current setup differs from what's stored, and persists the tuning **without** st
   after each Save. `isDirty = baseline != current` gates the button. This mirrors the
   `LoopEditSnapshot` pattern (ADR 0019 undo-on-save).
 - **Scope matches the model.** Exercises persist the full ramp shape (working, command, step BPM,
-  reach/back-off steps, signature), so the exercise snapshot tracks all of them. A **Loop** stores
-  only `speed` (working) and `commandTempo` (command) — its steps/reps are not persisted by Start
-  *either* — so the loop snapshot tracks just those two. Changing loop steps/reps therefore shows
-  no Save button, because there is nothing to save; persisting loop ramp shape would need new
-  `Loop` fields + a migration and is deferred.
+  reach/back-off steps, signature), so the exercise snapshot tracks all of them. A **Loop**
+  originally stored only `speed` (working) and `commandTempo` (command); its steps/reps were not
+  persisted by Start *either*, so the loop snapshot tracked just those two and changing loop
+  steps/reps showed no Save button. **Resolved in the follow-up below** — the loop now persists its
+  full ramp shape too.
+
+## Follow-up (2026-07-01) — loop ramp shape now persists
+
+Closed the deferred item. `Loop` gains four **dedicated** ramp-shape fields —
+`rampWarmupSteps` / `rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep` — with declaration
+defaults (additive SwiftData lightweight migration, CoreData 134110 rule; no store wipe). They are
+**deliberately decoupled** from the ADR-0013 automator fields (`automatorStepCount`,
+`automatorLoopsPerStep`): that's the waveform-screen ramp ("steps to target"), these are the
+command-anchored run ramp ("intermediate stops between working and command") — different semantics,
+so coupling them to save four fields would be a bug magnet. `LoopSetupState` now carries all six
+persisted fields (so `isDirty` fires for the ramp too), `seedIfNeeded` restores them off the loop,
+and the shared `persist()` writes them back. `LoopSetupState` was promoted from `private` to
+file-internal to unit-test the dirty-detection equality (mirroring `LoopEditSnapshot`).
 
 Visually the button is a subtle filled practice-tinted capsule, distinct from the outlined
 **Promote** above it and the filled **Start training** pill below, and it fades in/out on the dirty
@@ -47,8 +60,11 @@ transition.
   cheap-exploration intent; an explicit action is clearer about what sticks.
 - **"Discard changes?" prompt when leaving dirty.** Rejected for now — heavier than needed; the
   explicit Save already gives control. Left as a future add if losing edits bites.
-- **Persist loop steps/reps too (symmetry with exercises).** Deferred — needs new `Loop` ramp-shape
-  fields and a migration; out of scope for this slice, which persists exactly what Start already does.
+- **Persist loop steps/reps too (symmetry with exercises).** Was deferred for this slice; **done in
+  the 2026-07-01 follow-up above** via four dedicated `Loop` fields.
+- **Reuse the ADR-0013 automator fields for loop ramp shape.** Rejected in the follow-up — the
+  automator is the waveform-screen "steps to target" ramp with different semantics than the
+  command-anchored run ramp; coupling the two systems to save four fields is a bug magnet.
 
 ## Consequences
 
@@ -56,4 +72,5 @@ transition.
 - One shared `persist()` per screen removes the risk of Save and Start writing different things.
 - ADR 0046's discard-on-leave is now *scoped to unsaved edits* — documented here so the change from
   "leaving always discards" to "leaving discards the unsaved" isn't re-litigated.
-- A follow-up is recorded: persist loop ramp shape (steps/reps) so loop Save covers them too.
+- Loop ramp shape (warm-up/reach/back-off steps + reps per step) now persists via four dedicated
+  `Loop` fields, so loop Save covers them too (follow-up above, 2026-07-01).

@@ -132,6 +132,28 @@ editable inline in the song details sheet. Narrowed ADR 0012's three-scope
 forecast to loop-only; markers get neither. AI summaries over the journal remain
 in the AI phase (below).
 
+## Journal authoring → Practice screen (decided 2026-07-01, next after ramp persistence)
+
+Relocate journal **authoring** to the Practice run screens; make the waveform
+journal **read-only** (history view only). Rationale: ADR 0046 makes Practice
+*the* run surface — the moment right after a run, where you just felt the
+difficulty, is the truthful place to write a note; the waveform screen is
+edit/create. A "+" / add-note affordance lives in the run screen's top-right
+(where the empty nav slot is today).
+
+- **No data migration / no erasing entries.** This is a UI relocation, not a
+  schema change — existing `JournalEntry` rows stay. (Corrects the 2026-07-01
+  sense-check premise: the journal never captured automator settings — only
+  `masteryAtEntry` + `commandTempoAtEntry`, snapshot unchanged.)
+- **Snapshot stays** mastery + command tempo at write time, now read off the
+  loop from the run screen instead of the waveform model.
+- **Extend to exercises (net-new).** Exercises have *no* journal today —
+  `JournalEntry` only relates to `Loop`. Add an `Exercise` journal from scratch:
+  new model relationship (`JournalEntry.exercise` or a shared owner), authored
+  from `ExerciseRunView`, with its own snapshot (command BPM / mastery-equivalent
+  at write time). New ADR — decide the ownership shape (one polymorphic entry vs
+  two) before building. Loops-first is acceptable if exercises slip.
+
 ## Loop experience (sense-check decided 2026-06-24)
 
 Outcome of a UX review of loop properties + the loop-making flow. Numbering
@@ -187,7 +209,13 @@ adjust → range-edit lift → Fine retirement + hold-drag wiring).
   unclear you play it to remember, and the glanceable row (#2) lowers the cost
   further.
 
-## Practice run-setup — persist loop ramp shape (parked, after Cluster 4)
+## Practice run-setup — persist loop ramp shape — DONE (2026-07-01, ADR 0057 follow-up)
+
+Shipped on `pocket-083`: four dedicated `Loop` fields (`rampWarmupSteps` /
+`rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep`, declaration defaults,
+additive migration), decoupled from the ADR-0013 automator. `LoopSetupState` now
+tracks all six persisted fields (ramp edits arm Save Changes), `seedIfNeeded`
+restores them, shared `persist()` writes them. Original spec below, for record.
 
 Follow-up recorded in **ADR 0057**. The loop run-setup screen exposes four
 ramp-shape controls — warm-up intermediate steps, reach steps, back-off steps,
