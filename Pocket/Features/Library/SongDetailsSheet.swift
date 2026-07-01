@@ -83,7 +83,7 @@ struct SongDetailsSheet: View {
             DetailLabeledContent(label: "Tempo") {
                 Text(tempoText).font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
             }
-            DetailLabeledContent(label: "Mastery") {
+            DetailLabeledContent(label: "Mastery", info: PracticeFieldInfo.songMastery) {
                 if let mastery = song.mastery {
                     Text(stars(mastery)).foregroundStyle(PocketColor.marker)
                 } else {
@@ -213,13 +213,21 @@ struct SongDetailsSheet: View {
 /// Mirrors the edit sheet's row rhythm so details and edit feel like one place.
 private struct DetailLabeledContent<Value: View>: View {
     let label: String
+    /// Optional explainer — when set, the label gains a tappable ⓘ (used on the derived Mastery
+    /// row, where "why can't I set this?" is the common confusion).
+    var info: String?
     @ViewBuilder let value: () -> Value
 
     var body: some View {
         LabeledContent {
             value()
         } label: {
-            Text(label).foregroundStyle(PocketColor.textSecondary)
+            if let info {
+                FieldInfoLabel(title: label, info: info)
+                    .foregroundStyle(PocketColor.textSecondary)
+            } else {
+                Text(label).foregroundStyle(PocketColor.textSecondary)
+            }
         }
     }
 }

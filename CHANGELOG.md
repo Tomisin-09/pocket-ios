@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Field explainers (ⓘ) on the coined practice terms.** The fields a musician can't infer from
+  the label now carry a tappable **ⓘ** with a one-line definition: **Mastery**, **Command tempo**,
+  **Focus**, and loop **Type** in the loop editor; **Command tempo** on the exercise-create sheet
+  (replacing its inline footer); and the derived **Mastery** on the song details sheet (explaining
+  it's averaged from the song's loops). Standard vocabulary (Key, Genre, BPM) is left plain.
 - **Sort + search in the Practice libraries** (ADR 0056). The **Loops** and **Exercises** lists now
   carry a sort menu (its label spells out the active key with a direction arrow) and a search field,
   matching the song library. Loops sort by **Song · Name · Command tempo · Mastery** (unrated last);

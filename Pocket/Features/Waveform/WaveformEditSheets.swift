@@ -143,18 +143,28 @@ struct LoopEditSheet: View {
         Section("Practice") {
             masteryRow
             focusRow
-            // `.menu` (not the Form default navigation-link style): this sheet opens at
-            // the `.medium` detent, and a navigation-link Picker can't push its options
-            // list out of a partial-height sheet — the push is swallowed, so the value
-            // never changes. A menu dropdown is self-contained and works at any detent.
+            typeRow
+            commandTempoRow
+        }
+    }
+
+    /// Loop type. `.menu` (not the Form default navigation-link style): this sheet opens at the
+    /// `.medium` detent, and a navigation-link Picker can't push its options list out of a
+    /// partial-height sheet — the push is swallowed, so the value never changes. A menu dropdown
+    /// is self-contained and works at any detent. Wrapped in `LabeledContent` so the ⓘ sits in the
+    /// (independently tappable) label slot while the menu owns the trailing value.
+    private var typeRow: some View {
+        LabeledContent {
             Picker("Type", selection: $loopType) {
                 ForEach(LoopType.pickerOrder) { type in
                     Text(type.label).tag(type)
                 }
             }
+            .labelsHidden()
             .pickerStyle(.menu)
             .foregroundStyle(PocketColor.textSecondary)
-            commandTempoRow
+        } label: {
+            FieldInfoLabel(title: "Type", info: PracticeFieldInfo.loopType)
         }
     }
 
@@ -162,7 +172,7 @@ struct LoopEditSheet: View {
     /// value; tapping the lowest filled dot walks it down, and walking below 1 clears it
     /// back to unrated — so the rating is always one you deliberately made.
     private var masteryRow: some View {
-        LabeledContent("Mastery") {
+        LabeledContent {
             HStack(spacing: 10) {
                 if mastery == nil {
                     Text("Unrated")
@@ -180,22 +190,30 @@ struct LoopEditSheet: View {
                         .accessibilityLabel("Set mastery to \(value)")
                 }
             }
+        } label: {
+            FieldInfoLabel(title: "Mastery", info: PracticeFieldInfo.mastery)
         }
     }
 
     /// Practice intent — Backburner / Active / Sharpening, or Not set (`nil`, ADR 0039).
     /// A menu (not a segmented control): a 4th "unset" segment is too cramped on a phone,
     /// and a menu handles `nil` cleanly while matching the `Type` menu above it. Stored as
-    /// `Int?` per ADR 0036 (the planner reads the raw value); labels live in the view.
+    /// `Int?` per ADR 0036 (the planner reads the raw value); labels live in the view. Wrapped in
+    /// `LabeledContent` so the ⓘ stays independently tappable (a menu Picker's row swallows taps).
     private var focusRow: some View {
-        Picker("Focus", selection: $focus) {
-            Text("Not set").tag(Int?.none)
-            Text("Backburner").tag(Int?(1))
-            Text("Active").tag(Int?(2))
-            Text("Sharpening").tag(Int?(3))
+        LabeledContent {
+            Picker("Focus", selection: $focus) {
+                Text("Not set").tag(Int?.none)
+                Text("Backburner").tag(Int?(1))
+                Text("Active").tag(Int?(2))
+                Text("Sharpening").tag(Int?(3))
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .foregroundStyle(PocketColor.textSecondary)
+        } label: {
+            FieldInfoLabel(title: "Focus", info: PracticeFieldInfo.focus)
         }
-        .pickerStyle(.menu)
-        .foregroundStyle(PocketColor.textSecondary)
     }
 
     /// Command tempo as a percentage of original (ADR 0036), or not yet measured (`nil`,
@@ -205,7 +223,7 @@ struct LoopEditSheet: View {
     private var commandTempoRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let value = commandTempo {
-                LabeledContent("Command tempo") {
+                LabeledContent {
                     HStack(spacing: 12) {
                         Text(LoopProgressFormat.percentLabel(value))
                             .font(.pocketMono(.body))
@@ -214,12 +232,16 @@ struct LoopEditSheet: View {
                             .font(.caption)
                             .foregroundStyle(PocketColor.textSecondary)
                     }
+                } label: {
+                    FieldInfoLabel(title: "Command tempo", info: PracticeFieldInfo.commandTempo)
                 }
                 Slider(value: Binding(get: { value }, set: { commandTempo = $0 }),
                        in: 0.25...1.5, step: 0.05)
             } else {
-                LabeledContent("Command tempo") {
+                LabeledContent {
                     Button("Set") { commandTempo = min(max(loop.speed, 0.25), 1.5) }
+                } label: {
+                    FieldInfoLabel(title: "Command tempo", info: PracticeFieldInfo.commandTempo)
                 }
             }
         }
