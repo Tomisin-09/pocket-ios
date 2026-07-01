@@ -256,6 +256,42 @@ so the intent isn't lost:
   pay — find the sustainable balance without burning backend cost. Decide
   alongside the backend build (ADR 0002).
 
+## Haptics — configurable section (parked, build at finishing-touches)
+
+Decided 2026-07-01. Two motion-tracking haptics are worth adding, but only as an
+opt-in that stays out of the way by default. **Build these when putting the
+finishing touches on the app**, not now — an empty Settings section with dead
+toggles is exactly the scaffolding the launch-readiness gate warns against, so
+the Settings UI and the mechanism ship together.
+
+**Settings — dedicated "Haptics" section.** Today there's a single `Haptics`
+toggle in the *Feel* section of `SettingsView`, governing gesture-confirmation
+taps (`AppSettings.hapticsEnabled`, default **on**) — leave that as the master
+switch. Promote it into its own **Haptics section** that gains the two toggles
+below, each a new `AppSettings.Key` following the existing `resolvedBool`
+default-resolution idiom. Both **default off** (opt-in), and both are gated by
+the master `hapticsEnabled` switch.
+
+1. **Playback-tracking haptic** — pulses on **bar-line (downbeat) crossings** as
+   the song plays. Follows the real playhead, so it scales automatically with
+   playback speed (slowing to 50% doubles the interval — a feature). **Gate it
+   exactly like the gridlines toggle (ADR 0051): needs tempo + the "1" set** — a
+   bar is meaningless without a downbeat anchor. Single medium-impact per bar for
+   V1; no strength gradations. Silent during count-in (position-while-playing
+   only) unless device testing says otherwise. *Not* a granularity picker
+   (bars/beats/off) — bars-only is the opinionated default.
+   - **Open sub-decision, revisit at build time:** a distinct heavier tap on the
+     **loop wrap** ("I've heard this N times" by feel). Real value for looped
+     practice; ship bars-only first and add as a fast follow if it feels missing.
+2. **Scrubbing/drag haptic** — detents felt while **dragging the playhead** as it
+   crosses bars/beats/markers (the tactile "notch" of scrubbing past a
+   structural point). Distinct from the playback pulse; this one fires only
+   during an active scrub gesture. Snap points already exist
+   (`WaveformPracticeModel+Snap`), so reuse that geometry.
+
+`Haptics.swift` (`Pocket/Features/Waveform/`) is the existing helper both would
+route through.
+
 ## UI / polish
 
 - **Fine-tune the song details sheet.** `SongDetailsSheet` (opened by holding the
