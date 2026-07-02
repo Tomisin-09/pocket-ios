@@ -127,20 +127,15 @@ extension Font {
     }
 
     /// Default (Large content-size) point sizes per text style — the anchor for
-    /// `relativeTo:` Dynamic Type scaling.
+    /// `relativeTo:` Dynamic Type scaling. Table lookup (not a `switch`) to keep the
+    /// helper's cyclomatic complexity within SwiftLint's `--strict` limit.
+    private static let uiSizes: [Font.TextStyle: CGFloat] = [
+        .largeTitle: 34, .title: 28, .title2: 22, .title3: 20,
+        .headline: 17, .body: 17, .callout: 16, .subheadline: 15,
+        .footnote: 13, .caption: 12, .caption2: 11
+    ]
+
     private static func uiSize(_ style: Font.TextStyle) -> CGFloat {
-        switch style {
-        case .largeTitle: return 34
-        case .title: return 28
-        case .title2: return 22
-        case .title3: return 20
-        case .headline, .body: return 17
-        case .callout: return 16
-        case .subheadline: return 15
-        case .footnote: return 13
-        case .caption: return 12
-        case .caption2: return 11
-        @unknown default: return 17
-        }
+        uiSizes[style] ?? 17
     }
 }
