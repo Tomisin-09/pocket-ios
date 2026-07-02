@@ -5,6 +5,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **"Your progress" on the home screen** (ADR 0060). A glanceable card shows four derived measures —
+  **Loops**, **Exercises**, **Mastered** (loops at full mastery), and **Notes** (journal entries) —
+  computed from what's already there (no new data). Hidden until you have at least one loop or
+  exercise, so first launch stays clean.
+
 ### Changed
 - **A loop's auto-target now climbs toward the song's real tempo, then unlocks overspeed** (ADR
   0059). 100% (the original tempo) is treated as the ultimate goal: while you're below it, the

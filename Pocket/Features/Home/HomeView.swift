@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Song.title) private var songs: [Song]
+    @Query private var exercises: [Exercise]
     @State private var importing = false
     @State private var importError: String?
     @State private var showingMetronome = false
@@ -22,6 +23,7 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     greeting
+                    if !stats.isEmpty { PracticeStatsCard(summary: stats) }
                     if let song = resumeSong {
                         NavigationLink {
                             WaveformPracticeView(song: song, context: context)
@@ -195,6 +197,17 @@ struct HomeView: View {
     }
 
     // MARK: - Derived
+
+    /// The derived home-hub measures (ADR 0060): loops / exercises / mastered / notes, rolled up
+    /// from the queried songs' loops and the exercises. Purely read-through — no stored stats.
+    private var stats: PracticeStats.Summary {
+        let loops = songs.flatMap(\.loops)
+        let totalNotes = loops.reduce(0) { $0 + $1.journal.count }
+            + exercises.reduce(0) { $0 + $1.journal.count }
+        return PracticeStats.summarize(loopMasteryValues: loops.map(\.mastery),
+                                       exerciseCount: exercises.count,
+                                       totalNotes: totalNotes)
+    }
 
     /// The single most-recently-practised song — the "Jump back in" subject — or `nil` on a
     /// fresh library where nothing has been practised yet (the card hides).

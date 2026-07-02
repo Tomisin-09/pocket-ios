@@ -151,7 +151,9 @@ extracted as `PracticeCockpit` / `PracticeReference`, stacked in portrait; in la
 the waveform cockpit takes the full width (compact speed/transport bars, flexing waveform)
 and the loops/markers list becomes a **slide-in drawer** (☰), gated to this screen by
 `OrientationGate`. The old bottom **song-info panel was removed** — its facts live
-in the song-details sheet (hold the title). The app opens to a **home hub** (`HomeView`, ADR 0044) — a greeting, a "Jump back in" card
+in the song-details sheet (hold the title). The app opens to a **home hub** (`HomeView`, ADR 0044) — a greeting, a **"Your progress"** card
+(`PracticeStatsCard`, ADR 0060 — four **derived** measures: loops, exercises, loops at full mastery,
+and journal notes, via pure `PracticeStats`; hidden on an empty library), a "Jump back in" card
 for the most-recently-practised song, a **Practice** card pushing the top-level **Practice
 space** (`PracticeView`, ADR 0046 — a **hub** over two unit libraries: `ExerciseLibraryView`
 (command drills) and `LoopLibraryView` (any measured song **loop**, `commandTempo != nil`), each a
@@ -248,5 +250,5 @@ planner's **selection** (goals → required skills from a **technique taxonomy**
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `MetronomeBeats`, `MetronomeGrid`, `TempoMarking`, `TempoSliderScale`, `ExerciseProgress`, `TimeSignature`, `MetronomeAutomator`, `TempoStretch`, `CommandRamp`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`.
+Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `MetronomeBeats`, `MetronomeGrid`, `TempoMarking`, `TempoSliderScale`, `ExerciseProgress`, `TimeSignature`, `MetronomeAutomator`, `TempoStretch`, `CommandRamp`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`, `PracticeStats`.
 See `CHANGELOG.md` for the full history.
