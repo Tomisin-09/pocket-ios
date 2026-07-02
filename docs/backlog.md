@@ -140,7 +140,13 @@ machinery; exercises get a new honest `commandBpmAtEntry: Int?` snapshot (no
 mastery, absolute BPM) rather than overloading the loop's song-fraction `Double`.
 Additive schema (new optional `exercise` relationship + `commandBpmAtEntry`) —
 device-verify the migration before merge. **Loops-first is an acceptable partial
-ship** if the exercise side slips. Build not yet started.
+ship** if the exercise side slips.
+
+**Built (2026-07-02).** Model layer + full UI: `JournalOwner`/`JournalWriter`
+shared write path, `JournalSheet(owner:readOnly:)` generalised from the loop-only
+sheet, book button on both run screens, waveform journal made read-only, old
+waveform write helpers retired. 531 tests green. **Remaining: on-device migration
+verification before merge.**
 
 
 Relocate journal **authoring** to the Practice run screens; make the waveform

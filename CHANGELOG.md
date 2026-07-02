@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Practice journal now writes from the run screen, and exercises have a journal too** (ADR 0058).
+  Journal notes are authored where you practise: a **book** button in the top-right of the loop and
+  exercise **run screens** opens the journal to add, edit, and delete entries. Exercises get their
+  own journal for the first time — an exercise entry snapshots its **command tempo in BPM** (a loop
+  entry keeps snapshotting mastery + command-tempo %). The waveform screen's loop journal is now
+  **read-only** — a history view of past notes, with a nudge to write new ones from Practice. No
+  existing notes are affected.
 - **Loop run-setup ramp shape now persists** (ADR 0057 follow-up). The four staircase controls on
   a loop's run screen — warm-up steps, reach steps, back-off steps, and reps per step — now save
   with the loop instead of reseeding to defaults each visit. **Save Changes** appears when any of

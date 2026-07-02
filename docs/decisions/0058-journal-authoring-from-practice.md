@@ -59,6 +59,19 @@ Migration is **additive**: a new optional `exercise` relationship and a new opti
 SwiftData relationships still get **device-verified** before merge (in-memory tests miss migration
 crashes).
 
+## Implementation (2026-07-02)
+
+Built as one slice on top of the model layer. A `JournalOwner` enum (`.loop` / `.exercise`) adapts
+the two owners, and a shared `JournalWriter` is the single owner-aware write path — it snapshots a
+loop's mastery + song-fraction command tempo, or an exercise's absolute command BPM, through the
+matching factory. `LoopJournalSheet` was generalised into `JournalSheet(owner:readOnly:)`: rows are
+**self-describing** (keyed off `entry.exercise`) so each renders in the right units, and a
+`readOnly` flag drops the composer/edit/delete for the waveform screen. Both `LoopRunView` and
+`ExerciseRunView` gained a nav-bar **book** button opening the sheet in authoring mode; the waveform
+screen opens it read-only. The old `WaveformPracticeModel+Journal` write helpers were retired.
+`JournalWriter` is unit-tested (snapshot honesty per owner, trimming, update/delete). The additive
+migration still needs on-device verification before merge.
+
 ## Alternatives considered
 
 - **Two entry types (`JournalEntry` + `ExerciseJournalEntry`).** Rejected. Each stays trivially
