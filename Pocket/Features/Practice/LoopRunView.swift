@@ -94,6 +94,10 @@ struct LoopRunView: View {
                               currentIndex: model.currentPlateau(in: routine))
                 if !isRunning { promoteButton }
                 if !isRunning, isDirty { saveChangesButton }
+                if !isRunning {
+                    JournalPreviewSection(owner: .loop(loop)) { showingJournal = true }
+                        .padding(.top, 4)
+                }
             }
             .padding(24)
             .animation(.easeInOut(duration: 0.2), value: isDirty)
@@ -102,7 +106,6 @@ struct LoopRunView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .topBarTrailing) { journalButton } }
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
@@ -120,15 +123,6 @@ struct LoopRunView: View {
                              try? modelContext.save(); haptic(.light)
                          })
         }
-    }
-
-    /// The journal affordance in the nav bar — opens the authoring sheet (ADR 0058).
-    private var journalButton: some View {
-        Button { showingJournal = true } label: {
-            Image(systemName: "book")
-        }
-        .tint(PocketColor.practice)
-        .accessibilityLabel("Practice journal")
     }
 
     /// Write a new entry, snapshotting the loop's current mastery + command tempo (ADR 0058).

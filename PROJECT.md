@@ -220,10 +220,12 @@ adds the loop's open descriptive axis (`Loop.tags: [String]`) — the loop analo
 song collections, canonicalised on write and **suggested from tags already used on any
 loop** (cross-loop `@Query`); the cross-song filter-by-tag payoff is deferred to its first
 consumer (the planner). Each loop also has a **practice journal** (ADR 0038): a dated log of
-`JournalEntry` `@Model`s. **Authoring lives on the Practice run screens** (ADR 0058) — a **book**
-button in the top-right of `LoopRunView` / `ExerciseRunView` opens the shared `JournalSheet` to
-add / edit / delete entries, snapshotting the unit's context at that moment (the truthful place to
-write is right after a run). Every entry **snapshots the owner's achievement at creation** —
+`JournalEntry` `@Model`s. **Authoring lives on the Practice run screens** (ADR 0058) — an inline
+**Journal** section in `LoopRunView` / `ExerciseRunView` (a `JournalPreviewSection`: New-entry CTA
++ the latest 3 entries + See-all) opens the shared `JournalSheet` to add / edit / delete entries,
+snapshotting the unit's context at that moment (the truthful place to write is right after a run).
+The inline preview replaced an earlier nav-bar book button, which crowded the exercise
+time-signature control. Every entry **snapshots the owner's achievement at creation** —
 copied, not referenced, so it stays truthful as the unit improves; the snapshot and timestamp are
 immutable, only `text` and a typed **kind** (🎯 Goal / ⚡️ Breakthrough / 🧗 Struggle / 📝 Note /
 🎬 Session — an `EntryKind`, primitive-backed like `LoopType`) are editable. Entries group under

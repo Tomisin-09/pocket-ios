@@ -67,8 +67,10 @@ loop's mastery + song-fraction command tempo, or an exercise's absolute command 
 matching factory. `LoopJournalSheet` was generalised into `JournalSheet(owner:readOnly:)`: rows are
 **self-describing** (keyed off `entry.exercise`) so each renders in the right units, and a
 `readOnly` flag drops the composer/edit/delete for the waveform screen. Both `LoopRunView` and
-`ExerciseRunView` gained a nav-bar **book** button opening the sheet in authoring mode; the waveform
-screen opens it read-only. The old `WaveformPracticeModel+Journal` write helpers were retired.
+`ExerciseRunView` surface an inline **Journal** section (`JournalPreviewSection`: a New-entry CTA,
+the latest 3 entries, and See-all) that opens the sheet in authoring mode; the waveform screen opens
+it read-only. (An earlier nav-bar book button was replaced by the inline preview because it crowded
+the exercise time-signature control and hid the journal.) The old `WaveformPracticeModel+Journal` write helpers were retired.
 `JournalWriter` is unit-tested (snapshot honesty per owner, trimming, update/delete). The additive
 migration still needs on-device verification before merge.
 

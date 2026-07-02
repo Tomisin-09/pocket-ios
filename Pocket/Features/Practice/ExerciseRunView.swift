@@ -81,6 +81,10 @@ struct ExerciseRunView: View {
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
                 if !isRunning { promoteButton }
                 if !isRunning, isDirty { saveChangesButton }
+                if !isRunning {
+                    JournalPreviewSection(owner: .exercise(exercise)) { showingJournal = true }
+                        .padding(.top, 4)
+                }
             }
             .padding(24)
             .animation(.easeInOut(duration: 0.2), value: isDirty)
@@ -90,7 +94,6 @@ struct ExerciseRunView: View {
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { journalButton }
             if !isRunning {
                 ToolbarItem(placement: .topBarTrailing) { signaturePicker }
             }
@@ -111,15 +114,6 @@ struct ExerciseRunView: View {
                              try? modelContext.save(); haptic(.light)
                          })
         }
-    }
-
-    /// The journal affordance in the nav bar — opens the authoring sheet (ADR 0058).
-    private var journalButton: some View {
-        Button { showingJournal = true } label: {
-            Image(systemName: "book")
-        }
-        .tint(PocketColor.practice)
-        .accessibilityLabel("Practice journal")
     }
 
     /// Write a new entry, snapshotting the exercise's current command tempo in BPM (ADR 0058).
