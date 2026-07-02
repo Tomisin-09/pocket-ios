@@ -79,11 +79,11 @@ private struct LoopRow: View {
                     .fill(isActive ? PocketColor.active : Color.clear)
                     .frame(width: 3, height: 38)
                 Image(systemName: isActive && isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.title2)
+                    .font(.futura(.title2))
                     .foregroundStyle(isActive ? PocketColor.active : PocketColor.textSecondary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(loop.name)
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textPrimary)
                         .lineLimit(1)
                     // Speed/repeats live in the automator (ADR 0013); the range plus the
@@ -176,7 +176,7 @@ private struct JournalButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: "book.closed")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
                 .frame(width: 30, height: 30)
                 .background(Circle().fill(Color.white.opacity(0.06)))
@@ -196,7 +196,7 @@ private struct AutomatorButton: View {
     var body: some View {
         Button(action: action) {
             Text("A")
-                .font(.subheadline.weight(.bold))
+                .font(.futura(.subheadline, weight: .bold))
                 .foregroundStyle(isOn ? PocketColor.active : PocketColor.textSecondary)
                 .frame(width: 30, height: 30)
                 .background(Circle().fill(isOn ? PocketColor.active.opacity(0.18) : Color.white.opacity(0.06)))
@@ -258,7 +258,7 @@ private struct MarkerRow: View {
         HStack(spacing: 10) {
             Circle().fill(PocketColor.pin).frame(width: 8, height: 8)
             Text(marker.label)
-                .font(.subheadline)
+                .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textPrimary)
                 .lineLimit(1)
             Spacer(minLength: 0)

@@ -10,7 +10,7 @@ struct PracticeStatsCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Your progress")
-                .font(.title3.weight(.semibold))
+                .font(.futura(.title3, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
             HStack(spacing: 10) {
                 tile(summary.loops, "Loops")
@@ -27,11 +27,11 @@ struct PracticeStatsCard: View {
                       tint: Color = PocketColor.textPrimary) -> some View {
         VStack(spacing: 4) {
             Text("\(value)")
-                .font(.title2.weight(.semibold).monospacedDigit())
+                .font(.pocketMono(.title2).weight(.semibold))
                 .foregroundStyle(tint)
                 .contentTransition(.numericText())
             Text(label)
-                .font(.caption)
+                .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

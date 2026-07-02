@@ -136,7 +136,7 @@ struct ExerciseRunView: View {
                         .foregroundStyle(PocketColor.practice)
                         .contentTransition(.numericText())
                     Text("Counting in")
-                        .font(.caption)
+                        .font(.futura(.caption))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             } else {
@@ -146,7 +146,7 @@ struct ExerciseRunView: View {
                         .foregroundStyle(PocketColor.textPrimary)
                         .contentTransition(.numericText())
                     Text("BPM · \(engine.tempoMarking.name)")
-                        .font(.caption)
+                        .font(.futura(.caption))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             }
@@ -170,7 +170,7 @@ struct ExerciseRunView: View {
             }
         } label: {
             Text(signature.name)
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
         }
         .accessibilityLabel("Time signature: \(signature.name)")
@@ -186,9 +186,9 @@ struct ExerciseRunView: View {
                              onStep: { adjustCommand(by: $0) }, onType: { setCommand($0) })
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Reach").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
+                    Text("Reach").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
                     Text("auto · +\(reach - command) BPM")
-                        .font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                        .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
                 }
                 Spacer()
                 Text("\(reach) BPM")
@@ -215,7 +215,7 @@ struct ExerciseRunView: View {
             haptic(.medium)
         } label: {
             Label("I own \(reach) now — promote", systemImage: "arrow.up.circle.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -231,7 +231,7 @@ struct ExerciseRunView: View {
     private var saveChangesButton: some View {
         Button(action: saveChanges) {
             Label("Save changes", systemImage: "checkmark.circle.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -251,7 +251,7 @@ struct ExerciseRunView: View {
             if isRunning {
                 Button { engine.stop(); haptic(.medium) } label: {
                     Image(systemName: "stop.fill")
-                        .font(.title3)
+                        .font(.futura(.title3))
                         .foregroundStyle(PocketColor.textPrimary)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))

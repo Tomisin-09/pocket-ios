@@ -25,7 +25,7 @@ struct ABSpanBar: View {
             if isSet {
                 Button(action: onAudition) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.futura(size: 14, weight: .semibold))
                         .foregroundStyle(PocketColor.active)
                         .frame(width: 38, height: 30)
                         .background(Capsule().fill(PocketColor.active.opacity(0.15)))
@@ -35,7 +35,7 @@ struct ABSpanBar: View {
             }
 
             Text(label)
-                .font(.footnote.weight(.medium))
+                .font(.futura(.footnote, weight: .medium))
                 .foregroundStyle(PocketColor.textSecondary)
                 .lineLimit(1)
 
@@ -44,7 +44,7 @@ struct ABSpanBar: View {
             if isSet {
                 Button(action: onSave) {
                     Text(isEditing ? "Save changes" : "Save as loop")
-                        .font(.footnote.weight(.semibold))
+                        .font(.futura(.footnote, weight: .semibold))
                         .foregroundStyle(PocketColor.confirm)
                         .padding(.horizontal, 12)
                         .frame(height: 30)
@@ -57,7 +57,7 @@ struct ABSpanBar: View {
 
             Button(action: onClear) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .heavy))
+                    .font(.futura(size: 14, weight: .heavy))
                     .foregroundStyle(PocketColor.danger)
                     .frame(width: 30, height: 30)
                     .background(Circle().fill(PocketColor.danger.opacity(0.15)))
@@ -84,10 +84,10 @@ struct DownbeatBar: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: "1.circle")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.futura(size: 14, weight: .semibold))
                     .foregroundStyle(PocketColor.fine)
                 Text("Play and tap the 1 — or drag the handle")
-                    .font(.footnote.weight(.medium))
+                    .font(.futura(.footnote, weight: .medium))
                     .foregroundStyle(PocketColor.textSecondary)
             }
 
@@ -98,7 +98,7 @@ struct DownbeatBar: View {
 
                 Button(action: onCapture) {
                     Label("Tap the 1", systemImage: "hand.tap.fill")
-                        .font(.footnote.weight(.semibold))
+                        .font(.futura(.footnote, weight: .semibold))
                         .foregroundStyle(PocketColor.fine)
                         .padding(.horizontal, 12)
                         .frame(height: 30)
@@ -129,7 +129,7 @@ struct DownbeatBar: View {
     private func iconButton(_ systemName: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 14, weight: .heavy))
+                .font(.futura(size: 14, weight: .heavy))
                 .foregroundStyle(tint)
                 .frame(width: 30, height: 30)
                 .background(Circle().fill(tint.opacity(0.15)))

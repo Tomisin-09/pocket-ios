@@ -90,7 +90,7 @@ struct TransportBar: View {
                 // Just the loop name — the range lives in the loop row / waveform, and
                 // dropping it here keeps the header one line so the transport breathes.
                 Text(loop.name)
-                    .font(.body.weight(.medium))
+                    .font(.futura(.body, weight: .medium))
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(1)
                     .accessibilityLabel("Looping \(loop.name)")
@@ -136,7 +136,7 @@ private struct TransportControl: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.futura(size: 15, weight: .semibold))
                 .rotationEffect(.degrees(rotation))
                 .foregroundStyle(isActive ? PocketColor.background : color)
                 .frame(width: controlDiameter, height: controlDiameter)
@@ -159,7 +159,7 @@ private struct TransportGlyph: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: size, weight: .semibold))
+                .font(.futura(size: size, weight: .semibold))
                 .foregroundStyle(isEnabled ? PocketColor.textPrimary : PocketColor.textSecondary.opacity(0.35))
         }
         .buttonStyle(.plain)
@@ -180,7 +180,7 @@ private struct RewindButton: View {
 
     var body: some View {
         Image(systemName: "backward.fill")
-            .font(.system(size: size, weight: .semibold))
+            .font(.futura(size: size, weight: .semibold))
             .foregroundStyle(PocketColor.textPrimary)
             .contentShape(Rectangle())
             .onTapGesture(count: 2) { if hasPrevious { onPrevious() } }
@@ -206,7 +206,7 @@ private struct LoopColorStrip: View {
                 .frame(maxHeight: .infinity)
                 .overlay(
                     Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
+                        .font(.futura(.title2))
                         .foregroundStyle(PocketColor.background)
                 )
         }

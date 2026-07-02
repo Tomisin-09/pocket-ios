@@ -11,13 +11,13 @@ struct EmptyPanelMessage: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: systemImage)
-                .font(.title2)
+                .font(.futura(.title2))
                 .foregroundStyle(PocketColor.textSecondary)
             Text(title)
-                .font(.subheadline.weight(.medium))
+                .font(.futura(.subheadline, weight: .medium))
                 .foregroundStyle(PocketColor.textPrimary)
             Text(message)
-                .font(.footnote)
+                .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textSecondary)
                 .multilineTextAlignment(.center)
         }

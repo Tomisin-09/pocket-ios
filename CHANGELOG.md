@@ -6,6 +6,15 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **The app has a name, an icon, and a face: "Red Moon"** (ADR 0061). The home-screen name is now
+  **Red Moon**, with a new **app icon** — the crescent moon and its Southern-Cross stars on the
+  dark canvas. **Settings → About** shows the full brand mark (moon + "Red Moon" wordmark), whose
+  **"d" hides an open half-note**. Internally the app is still Pocket (bundle id unchanged).
+
+### Changed
+- **App type is now Futura** (ADR 0061), echoing the wordmark — all prose/UI text moves from the
+  system sans to Futura via a single `Font.futura` token. Tempo/time **numerals stay monospace**
+  (unchanged) so live readouts don't jitter.
 - **"Your progress" on the home screen** (ADR 0060). A glanceable card shows four derived measures —
   **Loops**, **Exercises**, **Mastered** (loops at full mastery), and **Notes** (journal entries) —
   computed from what's already there (no new data). Hidden until you have at least one loop or

@@ -187,7 +187,7 @@ struct LoopEditSheet: View {
             HStack(spacing: 10) {
                 if mastery == nil {
                     Text("Unrated")
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 ForEach(1...5, id: \.self) { value in
@@ -240,7 +240,7 @@ struct LoopEditSheet: View {
                             .font(.pocketMono(.body))
                             .foregroundStyle(PocketColor.textPrimary)
                         Button("Clear") { commandTempo = nil }
-                            .font(.caption)
+                            .font(.futura(.caption))
                             .foregroundStyle(PocketColor.textSecondary)
                     }
                 } label: {

@@ -21,8 +21,8 @@ struct EditableTempoRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(label).font(.subheadline).foregroundStyle(PocketColor.textPrimary)
-                Text(caption).font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                Text(label).font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
+                Text(caption).font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
             stepButton(symbol: "minus", label: "Lower \(label)") { onStep(-1) }
@@ -67,7 +67,7 @@ struct EditableTempoRow: View {
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.body.weight(.semibold))
+                .font(.futura(.body, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 38, height: 38)
                 .background(Circle().fill(tint.opacity(0.18)))

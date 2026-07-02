@@ -5,7 +5,7 @@ extension View {
     /// (`LoopRunView` / `ExerciseRunView`) — a filled, full-width practice-tinted pill.
     var pocketRunButton: some View {
         self
-            .font(.headline)
+            .font(.futura(.headline))
             .foregroundStyle(PocketColor.background)
             .frame(maxWidth: .infinity)
             .frame(height: 56)

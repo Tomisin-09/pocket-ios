@@ -40,6 +40,18 @@ struct SettingsView: View {
                 LabeledContent("Version", value: Self.appVersion)
             } header: {
                 Text("About")
+            } footer: {
+                // Brand mark. The RedMoonLogo asset carries light+dark artwork; the
+                // whole app renders on the near-black canvas regardless of system
+                // appearance, so pin it to the dark variant so it always blends.
+                Image("RedMoonLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 160)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .environment(\.colorScheme, .dark)
+                    .padding(.top, 16)
+                    .accessibilityLabel("Red Moon")
             }
         }
         .scrollContentBackground(.hidden)

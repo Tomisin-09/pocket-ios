@@ -94,9 +94,53 @@ enum PocketColor {
     ]
 }
 
-/// Typography: monospace for all time values and BPM; system sans for the rest.
+/// Typography (ADR 0061): **Futura** for all prose/UI text (it echoes the "Red Moon"
+/// wordmark), **monospace** for time values and BPM (kept for numeric alignment).
+/// Everything routes through these two tokens — do not call `.font(.headline)` etc.
+/// directly, so the family is swappable from one place.
 extension Font {
+    /// Monospace numerals — tempo, BPM, timecodes. Alignment matters, so this stays
+    /// system monospaced (Futura has no monospaced face).
     static func pocketMono(_ style: Font.TextStyle) -> Font {
         .system(style, design: .monospaced)
+    }
+
+    /// Brand text font (Futura), scaled to a Dynamic Type text style. `weight` picks the
+    /// face: Futura ships **Medium** (base) and **Bold** — semibold/bold/heavy/black map
+    /// to Futura-Bold, everything else to Futura-Medium. `.headline` defaults to Bold to
+    /// preserve its emphasis. Falls back to the system font if Futura is unavailable.
+    static func futura(_ style: Font.TextStyle, weight: Font.Weight? = nil) -> Font {
+        let bold: Bool
+        if let weight { bold = Self.isBold(weight) } else { bold = (style == .headline) }
+        return .custom(bold ? "Futura-Bold" : "Futura-Medium",
+                       size: Self.uiSize(style), relativeTo: style)
+    }
+
+    /// Fixed-size Futura, for the handful of `.system(size:)` call sites that need an
+    /// exact point size rather than a text style.
+    static func futura(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .custom(Self.isBold(weight) ? "Futura-Bold" : "Futura-Medium", size: size)
+    }
+
+    private static func isBold(_ weight: Font.Weight) -> Bool {
+        [.semibold, .bold, .heavy, .black].contains(weight)
+    }
+
+    /// Default (Large content-size) point sizes per text style — the anchor for
+    /// `relativeTo:` Dynamic Type scaling.
+    private static func uiSize(_ style: Font.TextStyle) -> CGFloat {
+        switch style {
+        case .largeTitle: return 34
+        case .title: return 28
+        case .title2: return 22
+        case .title3: return 20
+        case .headline, .body: return 17
+        case .callout: return 16
+        case .subheadline: return 15
+        case .footnote: return 13
+        case .caption: return 12
+        case .caption2: return 11
+        @unknown default: return 17
+        }
     }
 }

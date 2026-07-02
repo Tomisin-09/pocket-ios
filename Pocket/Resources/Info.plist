@@ -15,6 +15,11 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
+	<!-- Home-screen / user-facing name. The product brand is "Red Moon"; the
+	     internal target, bundle id and scheme stay "Pocket" so signing/CI are
+	     untouched (only this display string changed in pocket-086). -->
+	<key>CFBundleDisplayName</key>
+	<string>Red Moon</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
