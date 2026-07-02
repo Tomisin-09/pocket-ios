@@ -31,6 +31,8 @@ struct LoopRunView: View {
     @State private var repsPerStep = LoopCommandRamp.defaultRepsPerStep
     @State private var showSteps = false
     @State private var seeded = false
+    /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
+    @State private var showingJournal = false
     /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
     /// button shows only while the edits differ (ADR 0057). All six persisted fields — the two
     /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
@@ -92,6 +94,10 @@ struct LoopRunView: View {
                               currentIndex: model.currentPlateau(in: routine))
                 if !isRunning { promoteButton }
                 if !isRunning, isDirty { saveChangesButton }
+                if !isRunning {
+                    JournalPreviewSection(owner: .loop(loop)) { showingJournal = true }
+                        .padding(.top, 4)
+                }
             }
             .padding(24)
             .animation(.easeInOut(duration: 0.2), value: isDirty)
@@ -105,6 +111,26 @@ struct LoopRunView: View {
         .onAppear(perform: seedIfNeeded)
         .task { await model.loadIfNeeded() }
         .onDisappear { model.stop() }
+        .sheet(isPresented: $showingJournal) {
+            JournalSheet(owner: .loop(loop),
+                         onAdd: addJournalEntry,
+                         onUpdate: { entry, text, kind in
+                             JournalWriter.update(entry, text: text, kind: kind)
+                             try? modelContext.save()
+                         },
+                         onDelete: { entry in
+                             JournalWriter.delete(entry, from: modelContext)
+                             try? modelContext.save(); haptic(.light)
+                         })
+        }
+    }
+
+    /// Write a new entry, snapshotting the loop's current mastery + command tempo (ADR 0058).
+    private func addJournalEntry(_ text: String, _ kind: EntryKind) {
+        if JournalWriter.add(to: .loop(loop), text: text, kind: kind, into: modelContext) {
+            try? modelContext.save()
+            haptic(.light)
+        }
     }
 
     // MARK: - Live readout (running)
@@ -354,18 +380,6 @@ struct LoopSetupState: Equatable {
     var reachSteps: Int
     var backoffSteps: Int
     var repsPerStep: Int
-}
-
-private extension View {
-    /// The shared big-pill look for the run screen's primary transport buttons.
-    var pocketRunButton: some View {
-        self
-            .font(.headline)
-            .foregroundStyle(PocketColor.background)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.practice))
-    }
 }
 
 #Preview("Loop run") {

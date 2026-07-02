@@ -84,10 +84,9 @@ struct WaveformPracticeView: View {
                            onTurnOff: { model.turnOffAutomator(for: loop) })
         }
         .sheet(item: $model.journalingLoop) { loop in
-            LoopJournalSheet(loop: loop,
-                             onAdd: { text, kind in model.addJournalEntry(to: loop, text: text, kind: kind) },
-                             onUpdate: model.updateJournalEntry,
-                             onDelete: model.deleteJournalEntry)
+            // Read-only here — authoring moved to the Practice run screen (ADR 0058). The
+            // waveform screen just reflects past notes.
+            JournalSheet(owner: .loop(loop), readOnly: true)
         }
         .sheet(isPresented: $model.showingSongDetails) {
             SongDetailsSheet(song: model.song)

@@ -107,6 +107,14 @@ name carries it.
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
+- **Manual target override (loops, and likely exercises).** Let a player set their own reach
+  instead of the auto-derived one (ADR 0059 makes the derived reach a milestone capped at song
+  tempo, then overspeed). User asked for this but flagged it as **not immediate**. Design Qs: is it
+  a per-loop stored override that suppresses the derivation, or a one-off nudge on the run screen?
+  How does a manual target interact with the 100% milestone cap and promote? Keep the derived value
+  as the default; manual is opt-in. Probably a stored `Loop` field (additive) + an editable control
+  on the run screen next to the reach readout.
+
 - **Practice — exercise creation entry point (design experiment).** The create sheet now asks
   for **command tempo** explicitly (working floor + reach derive from it), which fixes the
   earlier mismatch where the entered "working" number resurfaced as "command" on the run screen
@@ -132,7 +140,22 @@ editable inline in the song details sheet. Narrowed ADR 0012's three-scope
 forecast to loop-only; markers get neither. AI summaries over the journal remain
 in the AI phase (below).
 
-## Journal authoring → Practice screen (decided 2026-07-01, next after ramp persistence)
+## Journal authoring → Practice screen (ownership shape settled — ADR 0058)
+
+**Ownership decided (ADR 0058, 2026-07-01):** one polymorphic `JournalEntry`
+(owner = loop **XOR** exercise), reusing the existing list/undo/kind/sheet
+machinery; exercises get a new honest `commandBpmAtEntry: Int?` snapshot (no
+mastery, absolute BPM) rather than overloading the loop's song-fraction `Double`.
+Additive schema (new optional `exercise` relationship + `commandBpmAtEntry`) —
+device-verify the migration before merge. **Loops-first is an acceptable partial
+ship** if the exercise side slips.
+
+**Built (2026-07-02).** Model layer + full UI: `JournalOwner`/`JournalWriter`
+shared write path, `JournalSheet(owner:readOnly:)` generalised from the loop-only
+sheet, book button on both run screens, waveform journal made read-only, old
+waveform write helpers retired. 531 tests green. **Remaining: on-device migration
+verification before merge.**
+
 
 Relocate journal **authoring** to the Practice run screens; make the waveform
 journal **read-only** (history view only). Rationale: ADR 0046 makes Practice

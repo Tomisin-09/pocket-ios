@@ -113,6 +113,18 @@ final class Exercise {
     /// When the exercise was created — the default library sort key.
     var dateAdded: Date = Date.now
 
+    /// The exercise's practice journal — dated, context-snapshotting entries (ADR 0038/0058),
+    /// mirroring `Loop.journal`. Cascade-owned: deleting the exercise deletes its entries.
+    /// Declaration default keeps SwiftData lightweight migration additive (CoreData 134110
+    /// rule, ADR 0012) for exercises saved before journalling reached them.
+    @Relationship(deleteRule: .cascade, inverse: \JournalEntry.exercise)
+    var journal: [JournalEntry] = []
+
+    /// Journal entries newest-first — the order the journal lists them in (mirrors `Loop`).
+    var journalByRecent: [JournalEntry] {
+        journal.sorted { $0.createdAt > $1.createdAt }
+    }
+
     init(name: String = "",
          currentTempo: Int = 80,
          commandTempo: Int? = nil,

@@ -31,6 +31,8 @@ struct ExerciseRunView: View {
     @State private var showSteps = false
     @State private var signature: TimeSignature = .standard
     @State private var seeded = false
+    /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
+    @State private var showingJournal = false
     /// The setup as it was last persisted — captured on seed and after each Save, so the Save
     /// Changes button shows only while the current edits differ from what's stored (ADR 0057).
     @State private var baseline: ExerciseSetupState?
@@ -79,6 +81,10 @@ struct ExerciseRunView: View {
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
                 if !isRunning { promoteButton }
                 if !isRunning, isDirty { saveChangesButton }
+                if !isRunning {
+                    JournalPreviewSection(owner: .exercise(exercise)) { showingJournal = true }
+                        .padding(.top, 4)
+                }
             }
             .padding(24)
             .animation(.easeInOut(duration: 0.2), value: isDirty)
@@ -96,6 +102,26 @@ struct ExerciseRunView: View {
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
         .onDisappear { engine.stop() }
+        .sheet(isPresented: $showingJournal) {
+            JournalSheet(owner: .exercise(exercise),
+                         onAdd: addJournalEntry,
+                         onUpdate: { entry, text, kind in
+                             JournalWriter.update(entry, text: text, kind: kind)
+                             try? modelContext.save()
+                         },
+                         onDelete: { entry in
+                             JournalWriter.delete(entry, from: modelContext)
+                             try? modelContext.save(); haptic(.light)
+                         })
+        }
+    }
+
+    /// Write a new entry, snapshotting the exercise's current command tempo in BPM (ADR 0058).
+    private func addJournalEntry(_ text: String, _ kind: EntryKind) {
+        if JournalWriter.add(to: .exercise(exercise), text: text, kind: kind, into: modelContext) {
+            try? modelContext.save()
+            haptic(.light)
+        }
     }
 
     // MARK: - Live readout (running)
@@ -251,8 +277,11 @@ struct ExerciseRunView: View {
         .padding(.top, 8)
         .background(PocketColor.background.opacity(0.95))
     }
+}
 
-    // MARK: - Actions
+// MARK: - Actions
+
+private extension ExerciseRunView {
 
     /// Seed the editor once. With a measured command, load the saved tempos as-is; without one
     /// (first open), default command to the exercise's current tempo and working to a sensible
@@ -342,18 +371,6 @@ private struct ExerciseSetupState: Equatable {
     var reachSteps: Int
     var backoffSteps: Int
     var signature: TimeSignature
-}
-
-private extension View {
-    /// The shared big-pill look for the run screen's primary transport buttons.
-    var pocketRunButton: some View {
-        self
-            .font(.headline)
-            .foregroundStyle(PocketColor.background)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.practice))
-    }
 }
 
 #Preview("Exercise run") {

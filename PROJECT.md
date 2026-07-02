@@ -219,15 +219,24 @@ Percent display + the `nil → "—"` fallback live in the pure `LoopProgressFor
 adds the loop's open descriptive axis (`Loop.tags: [String]`) — the loop analogue of
 song collections, canonicalised on write and **suggested from tags already used on any
 loop** (cross-loop `@Query`); the cross-song filter-by-tag payoff is deferred to its first
-consumer (the planner). Each loop also has a **practice journal** (ADR 0038):
-a book icon on the row (left of the "A") opens a dated log of `JournalEntry` `@Model`s
-(cascade-owned by the loop). Every entry **snapshots the loop's mastery and command
-tempo at creation** — copied, not referenced, so it stays a truthful record as the loop
-improves; the snapshot and timestamp are immutable, only `text` and a typed **kind**
-(🎯 Goal / ⚡️ Breakthrough / 🧗 Struggle / 📝 Note / 🎬 Session — an `EntryKind`,
-primitive-backed like `LoopType`) are editable. Entries group under day headers
-(`JournalGrouping`, pure), newest first. This **narrows ADR 0012's three-scope journal**
-to loop-only; songs get free-text **notes** rather than a journal, and markers get neither.
+consumer (the planner). Each loop also has a **practice journal** (ADR 0038): a dated log of
+`JournalEntry` `@Model`s. **Authoring lives on the Practice run screens** (ADR 0058) — an inline
+**Journal** section in `LoopRunView` / `ExerciseRunView` (a `JournalPreviewSection`: New-entry CTA
++ the latest 3 entries + See-all) opens the shared `JournalSheet` to add / edit / delete entries,
+snapshotting the unit's context at that moment (the truthful place to write is right after a run).
+The inline preview replaced an earlier nav-bar book button, which crowded the exercise
+time-signature control. Every entry **snapshots the owner's achievement at creation** —
+copied, not referenced, so it stays truthful as the unit improves; the snapshot and timestamp are
+immutable, only `text` and a typed **kind** (🎯 Goal / ⚡️ Breakthrough / 🧗 Struggle / 📝 Note /
+🎬 Session — an `EntryKind`, primitive-backed like `LoopType`) are editable. Entries group under
+day headers (`JournalGrouping`, pure), newest first. The waveform screen's loop journal (book icon
+on the loop row) is now **read-only** — a history view only. The entry's owner is **polymorphic**
+(ADR 0058): `JournalEntry` relates to a `Loop` **or** an `Exercise` (exactly one) via
+`JournalOwner`, so exercises get a journal too — an exercise entry snapshots its command in
+**absolute BPM** (`commandBpmAtEntry`) and has no mastery, kept a distinct field from the loop's
+song-fraction `commandTempoAtEntry` so a BPM is never stored as a fraction; the shared
+`JournalWriter` builds each via the `forLoop`/`forExercise` factories. Songs get free-text
+**notes** rather than a journal, and markers get neither.
 Those song notes (`Song.comment`) live in a **Notes** section directly under the
 title/artist/album header in the **song details sheet** — **editable inline behind a
 pencil affordance**: tap it to edit, an **Update** button (disabled until the draft

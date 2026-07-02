@@ -5,7 +5,22 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **A loop's auto-target now climbs toward the song's real tempo, then unlocks overspeed** (ADR
+  0059). 100% (the original tempo) is treated as the ultimate goal: while you're below it, the
+  auto-target is a milestone that stops at 100% instead of overshooting (so command 96% now reaches
+  **100%**, not 102%). Once you own full tempo (command 100%), the ceiling lifts and the target
+  climbs past into overspeed (**100% → 106%**). Loops already at full tempo are unchanged.
+
 ### Added
+- **Practice journal now writes from the run screen, and exercises have a journal too** (ADR 0058).
+  Journal notes are authored where you practise: the loop and exercise **run screens** carry an
+  inline **Journal** section — a **New entry** button plus your latest few entries, with **See all**
+  opening the full journal to add, edit, and delete (an entry / New entry / See all all open it).
+  Exercises get their own journal for the first time — an exercise entry snapshots its **command
+  tempo in BPM** (a loop entry keeps snapshotting mastery + command-tempo %). The waveform screen's
+  loop journal is now **read-only** — a history view of past notes, with a nudge to write new ones
+  from Practice. No existing notes are affected.
 - **Loop run-setup ramp shape now persists** (ADR 0057 follow-up). The four staircase controls on
   a loop's run screen — warm-up steps, reach steps, back-off steps, and reps per step — now save
   with the loop instead of reseeding to defaults each visit. **Save Changes** appears when any of
