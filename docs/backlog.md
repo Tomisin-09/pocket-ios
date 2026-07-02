@@ -38,11 +38,13 @@ not code. Re-run the audit any time with the `/ready-to-ship` skill.
 
 **Should-fix before submission (no code dependency):**
 
-- **`ITSAppUsesNonExemptEncryption = false`** in `Info.plist` — app uses no
-  custom crypto; setting this skips the export-compliance prompt on every upload.
-- **Bump `MARKETING_VERSION` 0.0.1 → 1.0.0** in `project.yml` for a public release.
-- **Delete `Features/Planner/HomeView.swift`** — dead "Phase 0 scaffold"; the app
-  entry renders `LibraryView()`, `HomeView` is referenced only by its own preview.
+- ~~**`ITSAppUsesNonExemptEncryption = false`** in `Info.plist`~~ — **DONE**
+  (branch `pocket-073`): added, skips the export-compliance prompt on every upload.
+- ~~**Bump `MARKETING_VERSION` 0.0.1 → 1.0.0**~~ — **DONE** (branch `pocket-073`):
+  bumped in `project.yml` for a public release.
+- ~~**Delete `Features/Planner/HomeView.swift`**~~ — **N/A (already gone).** Stale audit
+  note: there is no `Features/Planner/` directory, and the app entry now renders the real
+  `HomeView()` home hub (ADR 0044), not `LibraryView()`. Nothing to delete.
 
 **Robustness (optional):**
 
