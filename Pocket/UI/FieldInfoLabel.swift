@@ -22,14 +22,14 @@ struct FieldInfoLabel: View {
                 showingInfo = true
             } label: {
                 Image(systemName: "info.circle")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("About \(title)")
             .popover(isPresented: $showingInfo) {
                 Text(info)
-                    .font(.callout)
+                    .font(.futura(.callout))
                     .foregroundStyle(PocketColor.textPrimary)
                     .multilineTextAlignment(.leading)
                     // Force the text to report its full height for the fixed width, so the popover

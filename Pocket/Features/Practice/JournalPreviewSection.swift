@@ -24,7 +24,7 @@ struct JournalPreviewSection: View {
             header
             if recent.isEmpty {
                 Text("No entries yet — jot a note after a run, and it remembers where you were.")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -37,12 +37,12 @@ struct JournalPreviewSection: View {
     private var header: some View {
         HStack {
             Text("Journal")
-                .font(.headline)
+                .font(.futura(.headline))
                 .foregroundStyle(PocketColor.textPrimary)
             Spacer()
             Button(action: onOpen) {
                 Label("New entry", systemImage: "plus")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.futura(.subheadline, weight: .semibold))
                     .foregroundStyle(PocketColor.practice)
             }
             .buttonStyle(.plain)
@@ -71,9 +71,9 @@ struct JournalPreviewSection: View {
         Button(action: onOpen) {
             HStack(spacing: 4) {
                 Text("See all \(total) entries")
-                Image(systemName: "chevron.right").font(.caption2)
+                Image(systemName: "chevron.right").font(.futura(.caption2))
             }
-            .font(.subheadline)
+            .font(.futura(.subheadline))
             .foregroundStyle(PocketColor.practice)
             .frame(maxWidth: .infinity, alignment: .center)
         }
@@ -91,10 +91,10 @@ private struct JournalPreviewRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Text(entry.kind.emoji)
-                .font(.subheadline)
+                .font(.futura(.subheadline))
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.text)
-                    .font(.subheadline)
+                    .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(1)
                 Text(entry.createdAt.formatted(date: .abbreviated, time: .shortened))

@@ -18,17 +18,17 @@ struct CollapsiblePanel<Content: View>: View {
             } label: {
                 HStack {
                     Text(title)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.futura(.subheadline, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
                     Spacer()
                     if !expanded {
                         Text(summary)
-                            .font(.footnote)
+                            .font(.futura(.footnote))
                             .foregroundStyle(PocketColor.textSecondary)
                             .lineLimit(1)
                     }
                     Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
+                        .font(.futura(.footnote, weight: .semibold))
                         .foregroundStyle(PocketColor.textSecondary)
                         .rotationEffect(.degrees(expanded ? 90 : 0))
                 }
@@ -61,7 +61,7 @@ struct AudioLoadingOverlay: View {
                     .controlSize(.large)
                     .tint(PocketColor.active)
                 Text("Loading song…")
-                    .font(.subheadline.weight(.medium))
+                    .font(.futura(.subheadline, weight: .medium))
                     .foregroundStyle(PocketColor.textPrimary)
             }
             .padding(28)
@@ -82,7 +82,7 @@ struct ZoomResetButton: View {
     var body: some View {
         Button(action: action) {
             Label("Fit", systemImage: "arrow.left.and.right")
-                .font(.caption2.weight(.semibold))
+                .font(.futura(.caption2, weight: .semibold))
                 .labelStyle(.titleAndIcon)
                 .foregroundStyle(PocketColor.textPrimary)
                 .padding(.horizontal, 10)
@@ -109,13 +109,13 @@ struct UndoToastView: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(message)
-                .font(.footnote)
+                .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textPrimary)
                 .lineLimit(1)
             Spacer(minLength: 8)
             Button(action: onUndo) {
                 Text("Undo")
-                    .font(.footnote.weight(.semibold))
+                    .font(.futura(.footnote, weight: .semibold))
                     .foregroundStyle(PocketColor.active)
             }
             .buttonStyle(.plain)

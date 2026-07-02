@@ -37,12 +37,12 @@ struct ExerciseLibraryView: View {
             if exercises.isEmpty {
                 Text("No exercises yet. Tap + to create one — a named drill you push faster "
                      + "over time.")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else if visibleExercises.isEmpty {
                 Text("No exercises match “\(searchText)”.")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else {

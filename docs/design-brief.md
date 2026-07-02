@@ -97,13 +97,24 @@ blends into the chrome or the active wash.
 No gradients **except** the tempo-automator progress bar (to signal progression
 from comfortable to target speed).
 
+**Brand hue is separate from the functional palette.** The **"Red Moon"** brand mark
+(app icon + Settings/About logo, ADR 0061) is drawn in a muted slate-teal **`#799BA9`**
+on the near-black canvas. This is a **brand/marketing** colour, deliberately *not* in
+the `PocketColor` table above — hue there carries functional meaning, and the brand
+teal has no functional role. Do not reach for `#799BA9` in product UI; use the tokens.
+
 ### 3.2 Typography
 
 - **Monospace** for *all* time values and BPM (e.g. `1:51`, `0.90×`, `76 BPM`) —
   use the `pocketMono` font helper. This keeps numbers from jittering as they
   change.
-- **System sans** (`-apple-system` / `.system`) for everything else.
-- Respect **Dynamic Type** — don't hard-code point sizes where a text style fits.
+- **Futura** for *all* prose/UI text — use the `Font.futura(_:weight:)` helper (ADR
+  0061). It echoes the "Red Moon" wordmark. Futura ships **Medium** (base) and
+  **Bold**; the helper maps semibold/bold/heavy → Futura-Bold and `.headline` → Bold to
+  keep emphasis. Do **not** call `.font(.headline)` / `.system(...)` directly — route
+  everything through `futura`/`pocketMono` so the family stays swappable from one place.
+- Respect **Dynamic Type** — `futura` is built with `relativeTo:` so styles still scale;
+  don't hard-code point sizes where a text style fits.
 
 ### 3.3 Motion
 

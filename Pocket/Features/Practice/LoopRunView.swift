@@ -143,10 +143,10 @@ struct LoopRunView: View {
                     .foregroundStyle(PocketColor.textPrimary)
                     .contentTransition(.numericText())
                 Text("of original tempo")
-                    .font(.caption)
+                    .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                 Text("loop \(model.elapsedReps + 1)")
-                    .font(.caption2)
+                    .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.practice)
                     .contentTransition(.numericText())
             }
@@ -171,9 +171,9 @@ struct LoopRunView: View {
                              onStep: { adjustCommand(by: $0) }, onType: { setCommand($0) })
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Reach").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
+                    Text("Reach").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
                     Text("auto · +\(reach - command)%")
-                        .font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                        .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
                 }
                 Spacer()
                 Text("\(reach)%")
@@ -189,9 +189,9 @@ struct LoopRunView: View {
     private var repsRow: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Reps per step").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
+                Text("Reps per step").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
                 Text(repsPerStep == 1 ? "one loop, then step up" : "\(repsPerStep) loops, then step up")
-                    .font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                    .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
             stepButton(symbol: "minus", label: "Fewer reps per step") {
@@ -209,7 +209,7 @@ struct LoopRunView: View {
     private func stepButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.body.weight(.semibold))
+                .font(.futura(.body, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 38, height: 38)
                 .background(Circle().fill(PocketColor.practice.opacity(0.18)))
@@ -234,7 +234,7 @@ struct LoopRunView: View {
             haptic(.medium)
         } label: {
             Label("I own \(reach)% now — promote", systemImage: "arrow.up.circle.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -250,7 +250,7 @@ struct LoopRunView: View {
     private var saveChangesButton: some View {
         Button(action: saveChanges) {
             Label("Save changes", systemImage: "checkmark.circle.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -268,7 +268,7 @@ struct LoopRunView: View {
             if isRunning {
                 Button { model.stop(); haptic(.medium) } label: {
                     Image(systemName: "stop.fill")
-                        .font(.title3)
+                        .font(.futura(.title3))
                         .foregroundStyle(PocketColor.textPrimary)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))

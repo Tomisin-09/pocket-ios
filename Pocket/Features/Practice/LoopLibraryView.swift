@@ -41,12 +41,12 @@ struct LoopLibraryView: View {
             if !hasMeasuredLoops {
                 Text("No measured loops yet. Open a song, set a loop's command tempo on the "
                      + "waveform, and it'll show up here to train.")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else if visibleLoops.isEmpty {
                 Text("No loops match “\(searchText)”.")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else {

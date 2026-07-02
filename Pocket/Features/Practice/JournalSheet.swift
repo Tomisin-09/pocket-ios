@@ -38,7 +38,7 @@ struct JournalSheet: View {
                 if !readOnly { composer }
                 if owner.isEmpty {
                     Section { Text(emptyMessage)
-                        .font(.footnote)
+                        .font(.futura(.footnote))
                         .foregroundStyle(PocketColor.textSecondary) }
                 } else {
                     ForEach(sections, id: \.day) { section in
@@ -143,7 +143,7 @@ struct JournalSheet: View {
             }
             .foregroundStyle(PocketColor.textPrimary)
         }
-        .font(.footnote)
+        .font(.futura(.footnote))
         .padding(.top, 2)
     }
 
@@ -179,7 +179,7 @@ private struct JournalEntryRow: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Text(entry.text)
-                .font(.subheadline)
+                .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textPrimary)
             snapshot
         }
@@ -282,7 +282,7 @@ private struct KindChip: View {
 
     var body: some View {
         Text("\(kind.emoji)  \(kind.label)")
-            .font(.caption.weight(.semibold))
+            .font(.futura(.caption, weight: .semibold))
             .foregroundStyle(tint)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)

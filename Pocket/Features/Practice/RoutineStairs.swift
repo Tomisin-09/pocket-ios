@@ -47,11 +47,11 @@ struct RoutineStairs: View {
             }
             .frame(height: 96)
             HStack {
-                Text("warm-up").font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                Text("warm-up").font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
                 Spacer()
-                Text("dwell at command").font(.caption2.weight(.semibold)).foregroundStyle(tint)
+                Text("dwell at command").font(.futura(.caption2, weight: .semibold)).foregroundStyle(tint)
                 Spacer()
-                Text("reach · back off").font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                Text("reach · back off").font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
         }
     }

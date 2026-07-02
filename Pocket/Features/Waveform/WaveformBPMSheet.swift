@@ -172,7 +172,7 @@ struct BPMSheet: View {
                         .foregroundStyle(PocketColor.textSecondary)
                         .disabled(taps.isEmpty)
                 }
-                .font(.subheadline)
+                .font(.futura(.subheadline))
             }
             .padding(.vertical, 4)
         } footer: {
@@ -190,7 +190,7 @@ struct BPMSheet: View {
                     .keyboardType(.decimalPad)
                     .font(.pocketMono(.body))
                 Text("BPM")
-                    .font(.caption)
+                    .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
         }
@@ -212,12 +212,12 @@ struct BPMSheet: View {
             if showingEstimate, let estimate = lastEstimate {
                 Label("Estimated \(Int(estimate.rounded())) BPM — confirm or adjust",
                       systemImage: "info.circle")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             } else if estimateFailed {
                 Label("Couldn't detect a clear tempo — tap or type it instead",
                       systemImage: "exclamationmark.triangle")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             }
         } footer: {
@@ -276,7 +276,7 @@ struct BPMSheet: View {
             } else {
                 Label("Not set — the tempo shows, but no beat grid is drawn",
                       systemImage: "exclamationmark.triangle")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             }
         } header: {
@@ -311,7 +311,7 @@ struct BPMSheet: View {
                 .foregroundStyle(PocketColor.textPrimary)
                 .contentTransition(.numericText())
             Text("BPM")
-                .font(.caption2)
+                .font(.futura(.caption2))
                 .foregroundStyle(PocketColor.textSecondary)
         }
         .frame(maxWidth: .infinity)

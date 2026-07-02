@@ -52,21 +52,21 @@ struct PracticeView: View {
     private var plannerCard: some View {
         HStack(spacing: 14) {
             Image(systemName: "sparkles")
-                .font(.title2)
+                .font(.futura(.title2))
                 .foregroundStyle(PocketColor.practice)
                 .frame(width: 44, height: 44)
                 .background(Circle().fill(PocketColor.practice.opacity(0.15)))
             VStack(alignment: .leading, spacing: 2) {
                 Text("Build today's session")
-                    .font(.headline)
+                    .font(.futura(.headline))
                     .foregroundStyle(PocketColor.textPrimary)
                 Text("Guided routine from your units")
-                    .font(.subheadline)
+                    .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Spacer(minLength: 8)
             Text("SOON")
-                .font(.caption2.weight(.bold))
+                .font(.futura(.caption2, weight: .bold))
                 .tracking(1)
                 .foregroundStyle(PocketColor.textSecondary)
                 .padding(.horizontal, 8)
@@ -90,15 +90,15 @@ struct PracticeView: View {
         } label: {
             HStack(spacing: 14) {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(.futura(.title3))
                     .foregroundStyle(PocketColor.practice)
                     .frame(width: 32)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.body)
+                        .font(.futura(.body))
                         .foregroundStyle(PocketColor.textPrimary)
                     Text(subtitle)
-                        .font(.caption)
+                        .font(.futura(.caption))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 Spacer(minLength: 8)

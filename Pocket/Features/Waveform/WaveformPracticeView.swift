@@ -193,7 +193,7 @@ struct WaveformPracticeView: View {
         HStack(spacing: 14) {
             Button { dismiss() } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.futura(size: 16, weight: .semibold))
                     .foregroundStyle(PocketColor.textPrimary)
                     .frame(width: 32, height: 32)
                     .background(Circle().fill(Color.white.opacity(0.10)))
@@ -203,11 +203,11 @@ struct WaveformPracticeView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(model.song.title)
-                    .font(.headline)
+                    .font(.futura(.headline))
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(1)
                 Text(model.song.artist)
-                    .font(.subheadline)
+                    .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
                     .lineLimit(1)
             }
@@ -224,7 +224,7 @@ struct WaveformPracticeView: View {
 
             Button { drawerOpen.toggle() } label: {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.futura(size: 17, weight: .semibold))
                     .foregroundStyle(drawerOpen ? PocketColor.background : PocketColor.textPrimary)
                     .frame(width: 32, height: 32)
                     .background(Circle().fill(drawerOpen ? PocketColor.textPrimary : Color.white.opacity(0.10)))

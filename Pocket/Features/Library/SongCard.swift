@@ -16,13 +16,13 @@ struct SongCard: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(song.title)
-                    .font(.headline)
+                    .font(.futura(.headline))
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(1)
 
                 if !song.artist.isEmpty {
                     Text(song.artist)
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                         .lineLimit(1)
                 }

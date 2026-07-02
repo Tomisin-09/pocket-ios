@@ -81,7 +81,7 @@ private struct Swatch: View {
                 .overlay {
                     if let badge {
                         Text(badge)
-                            .font(.caption.weight(.bold))
+                            .font(.futura(.caption, weight: .bold))
                             .foregroundStyle(PocketColor.background)
                     }
                 }

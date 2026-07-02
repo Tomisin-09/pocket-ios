@@ -13,15 +13,15 @@ struct PracticeUnitRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.body)
+                .font(.futura(.body))
                 .foregroundStyle(PocketColor.textPrimary)
             if let context, !context.isEmpty {
                 Text(context)
-                    .font(.caption2)
+                    .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Text(progress)
-                .font(.caption)
+                .font(.futura(.caption))
                 .foregroundStyle(PocketColor.practice)
         }
         .padding(.vertical, 2)

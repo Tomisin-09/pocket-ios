@@ -94,9 +94,48 @@ enum PocketColor {
     ]
 }
 
-/// Typography: monospace for all time values and BPM; system sans for the rest.
+/// Typography (ADR 0061): **Futura** for all prose/UI text (it echoes the "Red Moon"
+/// wordmark), **monospace** for time values and BPM (kept for numeric alignment).
+/// Everything routes through these two tokens — do not call `.font(.headline)` etc.
+/// directly, so the family is swappable from one place.
 extension Font {
+    /// Monospace numerals — tempo, BPM, timecodes. Alignment matters, so this stays
+    /// system monospaced (Futura has no monospaced face).
     static func pocketMono(_ style: Font.TextStyle) -> Font {
         .system(style, design: .monospaced)
+    }
+
+    /// Brand text font (Futura), scaled to a Dynamic Type text style. `weight` picks the
+    /// face: Futura ships **Medium** (base) and **Bold** — semibold/bold/heavy/black map
+    /// to Futura-Bold, everything else to Futura-Medium. `.headline` defaults to Bold to
+    /// preserve its emphasis. Falls back to the system font if Futura is unavailable.
+    static func futura(_ style: Font.TextStyle, weight: Font.Weight? = nil) -> Font {
+        let bold: Bool
+        if let weight { bold = Self.isBold(weight) } else { bold = (style == .headline) }
+        return .custom(bold ? "Futura-Bold" : "Futura-Medium",
+                       size: Self.uiSize(style), relativeTo: style)
+    }
+
+    /// Fixed-size Futura, for the handful of `.system(size:)` call sites that need an
+    /// exact point size rather than a text style.
+    static func futura(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .custom(Self.isBold(weight) ? "Futura-Bold" : "Futura-Medium", size: size)
+    }
+
+    private static func isBold(_ weight: Font.Weight) -> Bool {
+        [.semibold, .bold, .heavy, .black].contains(weight)
+    }
+
+    /// Default (Large content-size) point sizes per text style — the anchor for
+    /// `relativeTo:` Dynamic Type scaling. Table lookup (not a `switch`) to keep the
+    /// helper's cyclomatic complexity within SwiftLint's `--strict` limit.
+    private static let uiSizes: [Font.TextStyle: CGFloat] = [
+        .largeTitle: 34, .title: 28, .title2: 22, .title3: 20,
+        .headline: 17, .body: 17, .callout: 16, .subheadline: 15,
+        .footnote: 13, .caption: 12, .caption2: 11
+    ]
+
+    private static func uiSize(_ style: Font.TextStyle) -> CGFloat {
+        uiSizes[style] ?? 17
     }
 }

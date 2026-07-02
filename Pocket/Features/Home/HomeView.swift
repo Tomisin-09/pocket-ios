@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Song.title) private var songs: [Song]
+    @Query private var exercises: [Exercise]
     @State private var importing = false
     @State private var importError: String?
     @State private var showingMetronome = false
@@ -22,6 +23,7 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     greeting
+                    if !stats.isEmpty { PracticeStatsCard(summary: stats) }
                     if let song = resumeSong {
                         NavigationLink {
                             WaveformPracticeView(song: song, context: context)
@@ -75,10 +77,10 @@ struct HomeView: View {
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(HomeFeed.TimeOfDay.at(hour: Calendar.current.component(.hour, from: .now)).greeting)
-                .font(.subheadline)
+                .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
             Text("Ready to practice")
-                .font(.largeTitle.weight(.semibold))
+                .font(.futura(.largeTitle, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
         }
         .accessibilityElement(children: .combine)
@@ -94,21 +96,21 @@ struct HomeView: View {
         NavigationLink { PracticeView() } label: {
             HStack(spacing: 14) {
                 Image(systemName: "figure.run")
-                    .font(.title2)
+                    .font(.futura(.title2))
                     .foregroundStyle(PocketColor.practice)
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(PocketColor.practice.opacity(0.15)))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Practice")
-                        .font(.headline)
+                        .font(.futura(.headline))
                         .foregroundStyle(PocketColor.textPrimary)
                     Text("Your exercises & training runs")
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
+                    .font(.futura(.footnote, weight: .semibold))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .padding(16)
@@ -126,21 +128,21 @@ struct HomeView: View {
         Button { showingMetronome = true } label: {
             HStack(spacing: 14) {
                 Image(systemName: "metronome.fill")
-                    .font(.title2)
+                    .font(.futura(.title2))
                     .foregroundStyle(PocketColor.metronome)
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Metronome")
-                        .font(.headline)
+                        .font(.futura(.headline))
                         .foregroundStyle(PocketColor.textPrimary)
                     Text("Standalone click & tempo trainer")
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
+                    .font(.futura(.footnote, weight: .semibold))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .padding(16)
@@ -156,12 +158,12 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Your songs")
-                    .font(.title3.weight(.semibold))
+                    .font(.futura(.title3, weight: .semibold))
                     .foregroundStyle(PocketColor.textPrimary)
                 Spacer()
                 NavigationLink { LibraryView() } label: {
                     Text("See all")
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.active)
                 }
             }
@@ -184,7 +186,7 @@ struct HomeView: View {
     private var addSongButton: some View {
         Button { importing = true } label: {
             Label("Add a song", systemImage: "plus.circle.fill")
-                .font(.headline)
+                .font(.futura(.headline))
                 .foregroundStyle(PocketColor.active)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
@@ -195,6 +197,17 @@ struct HomeView: View {
     }
 
     // MARK: - Derived
+
+    /// The derived home-hub measures (ADR 0060): loops / exercises / mastered / notes, rolled up
+    /// from the queried songs' loops and the exercises. Purely read-through — no stored stats.
+    private var stats: PracticeStats.Summary {
+        let loops = songs.flatMap(\.loops)
+        let totalNotes = loops.reduce(0) { $0 + $1.journal.count }
+            + exercises.reduce(0) { $0 + $1.journal.count }
+        return PracticeStats.summarize(loopMasteryValues: loops.map(\.mastery),
+                                       exerciseCount: exercises.count,
+                                       totalNotes: totalNotes)
+    }
 
     /// The single most-recently-practised song — the "Jump back in" subject — or `nil` on a
     /// fresh library where nothing has been practised yet (the card hides).
@@ -237,24 +250,24 @@ private struct JumpBackInCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("JUMP BACK IN")
-                .font(.caption2.weight(.semibold))
+                .font(.futura(.caption2, weight: .semibold))
                 .tracking(1.5)
                 .foregroundStyle(PocketColor.textSecondary)
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(song.title)
-                        .font(.title3.weight(.semibold))
+                        .font(.futura(.title3, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
                         .lineLimit(1)
                     if !song.artist.isEmpty {
                         Text(song.artist)
-                            .font(.subheadline)
+                            .font(.futura(.subheadline))
                             .foregroundStyle(PocketColor.textSecondary)
                             .lineLimit(1)
                     }
                     if let practiced = song.lastPracticed {
                         Text("Last practised \(Self.relative(practiced))")
-                            .font(.footnote)
+                            .font(.futura(.footnote))
                             .foregroundStyle(PocketColor.textSecondary)
                     }
                 }

@@ -63,7 +63,7 @@ struct MetronomeAutomatorPanel: View {
         } label: {
             Label(engine.automatorRunning ? "Stop" : "Start",
                   systemImage: engine.automatorRunning ? "stop.fill" : "play.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 11)
@@ -79,7 +79,7 @@ struct MetronomeAutomatorPanel: View {
         Toggle(isOn: Binding(get: { engine.automatorNoLimit },
                              set: { engine.setAutomatorNoLimit($0) })) {
             Text("No limit")
-                .font(.subheadline)
+                .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
         }
         .tint(PocketColor.metronome)
@@ -94,7 +94,7 @@ struct MetronomeAutomatorPanel: View {
                     .font(.pocketMono(.largeTitle))
                     .foregroundStyle(PocketColor.metronome)
                 Text("Counting in")
-                    .font(.caption)
+                    .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .frame(maxWidth: .infinity)
@@ -104,7 +104,7 @@ struct MetronomeAutomatorPanel: View {
                     .font(.pocketMono(.title))
                     .foregroundStyle(PocketColor.metronome)
                 Text("climbing to \(StandaloneMetronomeEngine.bpmRange.upperBound) BPM max")
-                    .font(.caption)
+                    .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .frame(maxWidth: .infinity)
@@ -122,7 +122,7 @@ struct MetronomeAutomatorPanel: View {
             haptic(.medium)
         } label: {
             Image(systemName: "bookmark.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.metronome)
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
@@ -136,7 +136,7 @@ struct MetronomeAutomatorPanel: View {
     private var header: some View {
         HStack {
             Text("AUTOMATOR")
-                .font(.caption2.weight(.semibold))
+                .font(.futura(.caption2, weight: .semibold))
                 .tracking(1.5)
                 .foregroundStyle(PocketColor.textSecondary)
             Spacer()
@@ -175,12 +175,12 @@ struct MetronomeAutomatorPanel: View {
                        suffix: String, onChange: @escaping (Int) -> Void) -> some View {
         HStack(spacing: 8) {
             Text(label)
-                .font(.subheadline)
+                .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
             Spacer()
             AutomatorNumberField(value: value, range: range, step: step, onChange: onChange)
             Text(suffix)
-                .font(.caption)
+                .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
                 .frame(width: 34, alignment: .leading)
         }
@@ -219,7 +219,7 @@ struct AutomatorNumberField: View {
     private func nudge(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button { action(); haptic(.light) } label: {
             Image(systemName: symbol)
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 32, height: 32)
                 .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
@@ -263,7 +263,7 @@ private struct MetronomeRampTracker: View {
             // last, so there are `totalSteps + 1` plateaus (reads "Step 1/8" at the floor, not
             // "Step 0/7").
             Text("Step \(engine.automatorCurrentStep + 1)/\(engine.automatorTotalSteps + 1)")
-                .font(.caption)
+                .font(.futura(.caption))
                 .foregroundStyle(PocketColor.metronome)
         }
         .frame(maxWidth: .infinity)

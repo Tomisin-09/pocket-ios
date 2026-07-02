@@ -59,16 +59,16 @@ struct SongDetailsSheet: View {
         Section {
             VStack(alignment: .leading, spacing: 4) {
                 Text(song.title)
-                    .font(.title3.weight(.semibold))
+                    .font(.futura(.title3, weight: .semibold))
                     .foregroundStyle(PocketColor.textPrimary)
                 if !song.artist.isEmpty {
                     Text(song.artist)
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 if !albumLine.isEmpty {
                     Text(albumLine)
-                        .font(.footnote)
+                        .font(.futura(.footnote))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             }
@@ -126,7 +126,7 @@ struct SongDetailsSheet: View {
             } else if song.comment.isEmpty {
                 Text("No notes yet — tap the pencil to add tuning, capo, or anything "
                     + "worth remembering.")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             } else {
                 Text(song.comment).foregroundStyle(PocketColor.textPrimary)
@@ -137,7 +137,7 @@ struct SongDetailsSheet: View {
                 Spacer()
                 if savedPulse {
                     Label("Saved", systemImage: "checkmark.circle.fill")
-                        .font(.caption)
+                        .font(.futura(.caption))
                         .foregroundStyle(PocketColor.active)
                         .transition(.opacity)
                 } else if !editingNotes {

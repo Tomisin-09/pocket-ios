@@ -62,7 +62,7 @@ struct MetronomeView: View {
                 }
                 ToolbarItem(placement: .principal) {
                     Text("Metronome")
-                        .font(.headline)
+                        .font(.futura(.headline))
                         .foregroundStyle(PocketColor.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                 }
@@ -95,7 +95,7 @@ struct MetronomeView: View {
                     .foregroundStyle(PocketColor.textPrimary)
                     .contentTransition(.numericText())
                 Text("BPM · \(engine.tempoMarking.name)")
-                    .font(.caption)
+                    .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
@@ -136,7 +136,7 @@ struct MetronomeView: View {
     private var tapButton: some View {
         Button { recordTap() } label: {
             Text("TAP")
-                .font(.caption.weight(.bold))
+                .font(.futura(.caption, weight: .bold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 56, height: 44)
                 .background(RoundedRectangle(cornerRadius: 12)
@@ -149,7 +149,7 @@ struct MetronomeView: View {
     private func stepperButton(symbol: String, delta: Int) -> some View {
         Button { engine.adjustBPM(by: delta); haptic(.light) } label: {
             Image(systemName: symbol)
-                .font(.title3.weight(.semibold))
+                .font(.futura(.title3, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 44, height: 44)
                 .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
@@ -167,7 +167,7 @@ struct MetronomeView: View {
             if engine.transport != .stopped {
                 Button { engine.stop(); haptic(.medium) } label: {
                     Image(systemName: "stop.fill")
-                        .font(.title3)
+                        .font(.futura(.title3))
                         .foregroundStyle(PocketColor.textPrimary)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))
@@ -177,7 +177,7 @@ struct MetronomeView: View {
             }
             Button { engine.toggle(); haptic(.medium) } label: {
                 Label(primaryLabel, systemImage: primarySymbol)
-                    .font(.headline)
+                    .font(.futura(.headline))
                     .foregroundStyle(PocketColor.background)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
@@ -266,11 +266,11 @@ extension MetronomeView {
                     .foregroundStyle(PocketColor.textPrimary)
                 if engine.subdivision != .none {
                     Text(engine.subdivision.glyph)
-                        .font(.body)
+                        .font(.futura(.body))
                         .foregroundStyle(PocketColor.metronome)
                 }
                 Image(systemName: "chevron.down")
-                    .font(.caption2)
+                    .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.textSecondary)
             }
         }
