@@ -107,6 +107,14 @@ name carries it.
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
+- **Manual target override (loops, and likely exercises).** Let a player set their own reach
+  instead of the auto-derived one (ADR 0059 makes the derived reach a milestone capped at song
+  tempo, then overspeed). User asked for this but flagged it as **not immediate**. Design Qs: is it
+  a per-loop stored override that suppresses the derivation, or a one-off nudge on the run screen?
+  How does a manual target interact with the 100% milestone cap and promote? Keep the derived value
+  as the default; manual is opt-in. Probably a stored `Loop` field (additive) + an editable control
+  on the run screen next to the reach readout.
+
 - **Practice — exercise creation entry point (design experiment).** The create sheet now asks
   for **command tempo** explicitly (working floor + reach derive from it), which fixes the
   earlier mismatch where the entered "working" number resurfaced as "command" on the run screen

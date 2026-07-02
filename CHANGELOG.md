@@ -5,6 +5,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **A loop's auto-target now climbs toward the song's real tempo, then unlocks overspeed** (ADR
+  0059). 100% (the original tempo) is treated as the ultimate goal: while you're below it, the
+  auto-target is a milestone that stops at 100% instead of overshooting (so command 96% now reaches
+  **100%**, not 102%). Once you own full tempo (command 100%), the ceiling lifts and the target
+  climbs past into overspeed (**100% → 106%**). Loops already at full tempo are unchanged.
+
 ### Added
 - **Practice journal now writes from the run screen, and exercises have a journal too** (ADR 0058).
   Journal notes are authored where you practise: a **book** button in the top-right of the loop and
