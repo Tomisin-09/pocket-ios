@@ -38,12 +38,12 @@ struct RoutineStepsControls: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Steps").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
-                    Text(summary).font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                    Text("Steps").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
+                    Text(summary).font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.futura(.subheadline, weight: .semibold))
                     .foregroundStyle(PocketColor.textSecondary)
                     .rotationEffect(.degrees(expanded ? 90 : 0))
             }
@@ -77,8 +77,8 @@ struct RoutineStepsControls: View {
     private func stepRow(label: String, value: Binding<Int>, caption: String) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(label).font(.subheadline).foregroundStyle(PocketColor.textPrimary)
-                Text(caption).font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                Text(label).font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
+                Text(caption).font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
             stepButton(symbol: "minus", label: "Fewer \(label)") { adjust(value, by: -1) }
@@ -101,7 +101,7 @@ struct RoutineStepsControls: View {
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.body.weight(.semibold))
+                .font(.futura(.body, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 38, height: 38)
                 .background(Circle().fill(tint.opacity(0.18)))

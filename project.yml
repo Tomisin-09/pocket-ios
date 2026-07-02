@@ -36,6 +36,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: click.decooperations.pocket
         INFOPLIST_FILE: Pocket/Resources/Info.plist
         CODE_SIGN_STYLE: Manual
+        # App icon lives in Pocket/Resources/Assets.xcassets (AppIcon set).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       # Backend base URL is injected per-config in Phase 4 (when the proxy
       # exists). Note: '//' in an Xcode build setting is treated as a comment,
       # so the URL is supplied via an .xcconfig using the `$()//` escape, not
@@ -79,7 +81,10 @@ schemes:
       targets:
         Pocket: all
     test:
-      targets:
-        - PocketTests
-        - PocketUITests
-      gatherCoverageData: true
+      # Two test plans (see docs/decisions/0053). The default is the fast
+      # logic-only plan (unit tests, no coverage) run on local pre-push; CI
+      # selects the full plan (adds UI tests + coverage) with `-testPlan PocketAll`.
+      testPlans:
+        - path: PocketLogic.xctestplan
+          defaultPlan: true
+        - path: PocketAll.xctestplan

@@ -83,6 +83,33 @@ final class TempoStretchTests: XCTestCase {
         XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 0), 0, accuracy: 1e-9)
     }
 
+    // MARK: - 100% milestone cap then overspeed (ADR 0059)
+
+    func testTargetSpeedCapsAtFullTempoBelowIt() {
+        // 0.96× × 1.06 = 1.0176 would overshoot the song; capped to the 1.0 milestone.
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 0.96), 1.0, accuracy: 1e-9)
+    }
+
+    func testTargetSpeedStaysAMilestoneJustUnderFullTempo() {
+        // 0.99× reach (1.049) is capped to full tempo, not past it.
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 0.99), 1.0, accuracy: 1e-9)
+    }
+
+    func testTargetSpeedUnlocksOverspeedAtFullTempo() {
+        // At command == 100% the ceiling lifts: 1.0 + 0.06 = 1.06 (overspeed).
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 1.0), 1.06, accuracy: 1e-9)
+    }
+
+    func testTargetSpeedProportionalOnceIntoOverspeed() {
+        // Already past full tempo: proportional reach, uncapped. 1.20 + clamp(0.072) = 1.272.
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 1.20), 1.272, accuracy: 1e-9)
+    }
+
+    func testTargetSpeedBelowFullTempoUnaffectedWhenReachStaysUnderIt() {
+        // 0.80× reach (0.848) is comfortably under 1.0 — the cap doesn't touch it.
+        XCTAssertEqual(TempoStretch.targetSpeed(forCommand: 0.80), 0.848, accuracy: 1e-9)
+    }
+
     // MARK: - Warm-up floor (first-open default working tempo)
 
     func testWarmupFloorDropsProportionallyInTheUnclampedMiddle() {

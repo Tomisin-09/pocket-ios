@@ -5,7 +5,123 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **The app has a name, an icon, and a face: "Red Moon"** (ADR 0061). The home-screen name is now
+  **Red Moon**, with a new **app icon** — the crescent moon and its Southern-Cross stars on the
+  dark canvas. **Settings → About** shows the full brand mark (moon + "Red Moon" wordmark), whose
+  **"d" hides an open half-note**. Internally the app is still Pocket (bundle id unchanged).
+
 ### Changed
+- **App type is now Futura** (ADR 0061), echoing the wordmark — all prose/UI text moves from the
+  system sans to Futura via a single `Font.futura` token. Tempo/time **numerals stay monospace**
+  (unchanged) so live readouts don't jitter.
+- **"Your progress" on the home screen** (ADR 0060). A glanceable card shows four derived measures —
+  **Loops**, **Exercises**, **Mastered** (loops at full mastery), and **Notes** (journal entries) —
+  computed from what's already there (no new data). Hidden until you have at least one loop or
+  exercise, so first launch stays clean.
+
+### Changed
+- **A loop's auto-target now climbs toward the song's real tempo, then unlocks overspeed** (ADR
+  0059). 100% (the original tempo) is treated as the ultimate goal: while you're below it, the
+  auto-target is a milestone that stops at 100% instead of overshooting (so command 96% now reaches
+  **100%**, not 102%). Once you own full tempo (command 100%), the ceiling lifts and the target
+  climbs past into overspeed (**100% → 106%**). Loops already at full tempo are unchanged.
+
+### Added
+- **Practice journal now writes from the run screen, and exercises have a journal too** (ADR 0058).
+  Journal notes are authored where you practise: the loop and exercise **run screens** carry an
+  inline **Journal** section — a **New entry** button plus your latest few entries, with **See all**
+  opening the full journal to add, edit, and delete (an entry / New entry / See all all open it).
+  Exercises get their own journal for the first time — an exercise entry snapshots its **command
+  tempo in BPM** (a loop entry keeps snapshotting mastery + command-tempo %). The waveform screen's
+  loop journal is now **read-only** — a history view of past notes, with a nudge to write new ones
+  from Practice. No existing notes are affected.
+- **Loop run-setup ramp shape now persists** (ADR 0057 follow-up). The four staircase controls on
+  a loop's run screen — warm-up steps, reach steps, back-off steps, and reps per step — now save
+  with the loop instead of reseeding to defaults each visit. **Save Changes** appears when any of
+  them differ from what's stored, and they round-trip on return. Backed by four dedicated `Loop`
+  fields kept separate from the ADR-0013 waveform automator (different ramp semantics).
+- **Save run-setup edits without starting a run** (ADR 0057). Tuning an exercise or loop's ramp on
+  the run screen (working / command / reach / steps / signature) now shows a **Save Changes** button
+  when the setup differs from what's stored — persist your tuning and come back to it later, without
+  having to start a training run. Leaving without saving still discards unsaved edits, as before.
+- **Undo after editing a loop.** Saving changes in the loop editor (name, mastery, focus, command
+  tempo, type, tags, colour) now shows a **"Saved changes · Undo"** snackbar — the same one deletes
+  use — that reverts the whole edit in one tap. A Done that changed nothing shows nothing.
+- **Field explainers (ⓘ) on the coined practice terms.** The fields a musician can't infer from
+  the label now carry a tappable **ⓘ** with a one-line definition: **Mastery**, **Command tempo**,
+  **Focus**, and loop **Type** in the loop editor; **Command tempo** on the exercise-create sheet
+  (replacing its inline footer); and the derived **Mastery** on the song details sheet (explaining
+  it's averaged from the song's loops). Standard vocabulary (Key, Genre, BPM) is left plain.
+- **Sort + search in the Practice libraries** (ADR 0056). The **Loops** and **Exercises** lists now
+  carry a sort menu (its label spells out the active key with a direction arrow) and a search field,
+  matching the song library. Loops sort by **Song · Name · Command tempo · Mastery** (unrated last);
+  exercises by **Name · Command tempo · Recently added**. Each library remembers its choice across
+  launches.
+
+### Changed
+- **Minimap shows the song's shape** (ADR 0055). The full-song overview strip now draws a
+  compressed **silhouette** of the waveform (through the same fuller/calmer curve as the main
+  waveform) instead of a flat gray bar — so quiet intros read thin and loud sections bulge, and
+  you can orient by the song's shape at a glance. Loops, markers, and the playhead are unchanged.
+- **Smoother playhead** (ADR 0054). The waveform playhead now glides instead of stepping — it's
+  driven by the display's own refresh (a `CADisplayLink`) rather than a fixed ~33 Hz timer that
+  ran below the screen's refresh rate and beat against it. Purely a visual/timing fix: snapping,
+  loops, and markers are untouched.
+- **Faster test loop: split test plans** (ADR 0053). The suite now runs through two
+  `.xctestplan`s — a fast, coverage-free **`PocketLogic`** plan (the ~498 unit tests) as the
+  default for local pre-push (~123s → ~59s), and a full **`PocketAll`** plan (adds the UI tests
+  + coverage) that CI runs with `-testPlan PocketAll`. No test code changed. (Parallel execution
+  was benchmarked and dropped — the unit tests are too short for clone overhead to pay off, and it
+  broke the UI runner.) Developer-facing only.
+- **Exercise run screen drops the session timer.** The running readout is now just the live BPM
+  and the beat dots — the wall-clock session time was more clutter than payoff.
+- **Waveform reads fuller and less aggressive** (ADR 0049). The envelope now draws through a
+  gentle dynamic-range compression curve (quiet/mid passages lift toward a fuller skyline),
+  thin bars are grouped into fewer, wider, smoother ones instead of a jittery 1px comb, and the
+  bars gained rounded tops over a quieter mirror. This shapes only how the waveform is *drawn* —
+  loop edges and markers still snap to the exact underlying peaks, so editing precision is
+  unchanged. Zoom in and the full transient detail is still there.
+
+### Added
+- **Exercise time signature + count-in on training runs** (ADR 0052). The New Exercise sheet now
+  has a **time-signature picker** (4/4, 3/4, 6/8, …), and you can change an **existing** exercise's
+  meter from the run-setup nav bar. The run metronome plays a drill in its chosen meter — the click's
+  accents and the **count-in** length both follow it. Practice training runs now **count you in**
+  before the climb starts (honoring the Settings toggle and 1–2 bar length), the same as the
+  metronome's free-play automator.
+- **Per-song time signature + a gridlines toggle** (ADR 0051). Set a song's time signature
+  (4/4, 3/4, 6/8, …) in the "Set tempo" sheet, so the beat grid's bar lines land in the right
+  place instead of always assuming 4/4. A **Grid** toggle on the practice screen's "Loop controls"
+  row shows/hides the grid per song — it appears only once a grid exists (tempo + the 1 set). The
+  grid marks each **bar line** (kept subtle, behind the waveform); per-beat gridlines were dropped
+  as they made zooming feel busy.
+- **Settings** (ADR 0050). A gear in the Home toolbar opens a settings screen, grouped into
+  **Feel**, **Practice**, and **About**. V1 carries **Haptics** (the light taps that confirm
+  gestures), **Count-in** with a configurable **length** (1–2 bars), and **Keep screen awake**
+  (stops the phone locking while you play along) — all on by default — plus the app version.
+- **Metronome automator: explicit Start/Stop, count-in, and an infinite mode** (ADR 0048).
+  The tempo automator no longer climbs the moment you arm it — arming (Off / By Bars / By Time)
+  just configures the ramp and previews its staircase; a dedicated **Start** runs it and **Stop**
+  halts it (leaving the metronome playing at the tempo you reached). Start **counts you in** one
+  bar before the climb engages. A new **No limit** toggle drops the target and ramps to the
+  system maximum (300 BPM) for open-ended speed training. A finished ramp now holds at its
+  ceiling instead of stopping the metronome. The "Save as exercise" action became a compact
+  bookmark icon.
+
+### Fixed
+- **Metronome automator no longer lurches on a tempo step** (ADR 0047). Every ramp step used
+  to hard re-anchor the click grid to a fresh accented beat 0 mid-bar — audible as a jerky
+  transition, worst on the *first* step and inconsistent thereafter. Ramp steps now re-anchor
+  **phase-continuously**: the click you're hearing keeps its place, the downbeat stays a
+  downbeat, and the new tempo's spacing splices in seamlessly at the next beat. Manual tempo
+  changes are unaffected (they still snap to a clean downbeat).
+
+### Changed
+- **Metronome screen drops the session timer.** The standalone metronome no longer shows the
+  large "SESSION" wall-clock readout — it took a lot of space for little payoff. The timer
+  still appears on the Practice exercise-run screen (where elapsed time matters), and the
+  lock-screen/Control Center elapsed time is unaffected.
 - **Groundwork for a top-level Practice space** (ADR 0046, Phase A). Internal, no behaviour
   change: (1) the metronome-exercise model is renamed `MetronomeExercise → Exercise` as it
   stops being "a saved metronome setup" and becomes a first-class practice unit (existing

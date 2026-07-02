@@ -10,7 +10,7 @@ import Foundation
 /// level), so 6/8 reads ONE-two-three-FOUR-five-six. `noteValue` is the denominator,
 /// carried for the label and for future subdivision work (slice 5). Pure and
 /// Foundation-only so the accent arithmetic is unit-tested (AGENTS.md).
-struct TimeSignature: Equatable, Identifiable {
+struct TimeSignature: Equatable, Identifiable, Hashable {
     /// Clicks per bar (the numerator for simple meters; the subdivision count for
     /// compound meters felt in groups).
     let beats: Int

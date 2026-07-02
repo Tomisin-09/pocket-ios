@@ -75,6 +75,24 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(Exercise(beatsPerBar: 6, noteValue: 8).timeSignatureLabel, "6/8")
     }
 
+    // MARK: - Creation factory (ADR 0046/0052)
+
+    func testCommandAnchoredCarriesTheChosenMeter() {
+        // The create sheet's time-signature picker must reach the stored model (ADR 0052),
+        // so the run metronome's accents + count-in length honor it.
+        let exercise = Exercise.commandAnchored(name: "Waltz drill", command: 100,
+                                                beatsPerBar: 3, noteValue: 4)
+        XCTAssertEqual(exercise.beatsPerBar, 3)
+        XCTAssertEqual(exercise.noteValue, 4)
+        XCTAssertEqual(exercise.timeSignatureLabel, "3/4")
+    }
+
+    func testCommandAnchoredDefaultsToFourFour() {
+        let exercise = Exercise.commandAnchored(name: "Plain", command: 90)
+        XCTAssertEqual(exercise.beatsPerBar, 4)
+        XCTAssertEqual(exercise.noteValue, 4)
+    }
+
     // MARK: - Training ramp (ADR 0046 — the run(ramp:) seam)
 
     func testRampMapsTheSavedRecipe() {

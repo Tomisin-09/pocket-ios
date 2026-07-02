@@ -34,6 +34,14 @@ enum TempoStretch {
     static let speedMinIncrease = 0.02
     static let speedMaxIncrease = 0.10
 
+    /// The fraction of original tempo that **is** the song's real speed — a loop's ultimate
+    /// target (100%, ADR 0059). While the player hasn't yet owned full tempo, the auto-reach is a
+    /// *milestone* on the way to it, capped here so it never overshoots the song before they've
+    /// reached it; once command reaches 100%, overspeed unlocks and the reach climbs past. Purely
+    /// a loop concept (exercises are absolute BPM with no such ceiling), so it lives only in
+    /// `targetSpeed`, not the unit-generic `target(forCommand:…)`.
+    static let songTempoSpeed = 1.0
+
     /// Downward warm-up proportion and clamps, mirroring the upward stretch — used to
     /// suggest a working floor below a command tempo (ADR 0045).
     static let warmupProportion = 0.15
@@ -62,15 +70,21 @@ enum TempoStretch {
         return Int(reach.rounded())
     }
 
-    /// Loop convenience (ADR 0046, Phase B): the `×`-of-original target a measured loop
-    /// climbs toward — proportional and clamped to `+0.02…+0.10×`, reusing the unit-generic
-    /// `target(forCommand:…)` unchanged (the loop analogue of `targetBPM`). Returns the
-    /// precise `×`; callers round to whatever precision they display. `command ≤ 0` is
-    /// returned unchanged.
+    /// Loop convenience (ADR 0046/0059, Phase B): the `×`-of-original target a measured loop
+    /// climbs toward — proportional and clamped to `+0.02…+0.10×`, then **capped at 100% (the
+    /// song's real tempo) until the player owns full tempo** so the reach reads as a milestone on
+    /// the way there rather than overshooting the record. Once `command` reaches 100%, that ceiling
+    /// lifts and the reach climbs past into overspeed (ADR 0059). Returns the precise `×`; callers
+    /// round to whatever precision they display. `command ≤ 0` is returned unchanged.
     static func targetSpeed(forCommand command: Double,
                             proportion: Double = defaultProportion) -> Double {
-        target(forCommand: command, proportion: proportion,
-               minIncrease: speedMinIncrease, maxIncrease: speedMaxIncrease)
+        let reach = target(forCommand: command, proportion: proportion,
+                           minIncrease: speedMinIncrease, maxIncrease: speedMaxIncrease)
+        // Below full tempo, the ultimate target *is* the song (100%): keep the reach a milestone
+        // toward it, never past it. At/above 100% the player has broken the barrier — overspeed
+        // unlocks, so the proportional reach is returned uncapped.
+        guard command < songTempoSpeed else { return reach }
+        return min(reach, songTempoSpeed)
     }
 
     /// A sensible **warm-up floor** below `command` (ADR 0045): a proportional drop,

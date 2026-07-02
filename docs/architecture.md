@@ -8,8 +8,8 @@
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
-│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · BeatGrid · MetronomeBeats · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
+│              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · ExerciseProgress · LoopLanes (pure)
+│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -50,7 +50,10 @@ from the source file at full detail** (`WaveformExtractor.extractWindow` → the
 `AudioMath.downsample`, off the main actor, debounced on viewport settle and cached by
 window) so a deep zoom resolves real transients instead of stretching the stored
 whole-song envelope; the stored 512-bar envelope stays the zoomed-out and fallback path
-(ADR 0020). On a gesture **release** — a dragged A/B edge or a tap-seek —
+(ADR 0020). At draw time each bar's normalised height passes through the pure
+`WaveformAmplitude` gamma curve — display-only dynamic-range compression for a fuller,
+calmer skyline; the snap/marker math still reads the raw peaks (ADR 0049). On a gesture
+**release** — a dragged A/B edge or a tap-seek —
 the boundary **snaps to a nearby marker or saved-loop edge** if one is within an
 on-screen tolerance (pure `WaveformGesture.snap`, candidates sourced and tolerance
 scaled by zoom in `WaveformPracticeModel+Snap.swift`, light haptic on a catch);
@@ -103,8 +106,11 @@ track). The audio is a `ClickVoice`: a second `AVAudioPlayerNode` on the **same
 engine** wired straight to the mixer (bypassing time-pitch, so ticks aren't
 stretched) with three synthesized buffers (accented downbeat / plain beat / a quieter
 subdivision tick — ADR 0043 slice 5, selected per click via `ClickVoice.ClickLevel`). The
-engine refreshes the schedule on its 0.03 s display timer, deduping by a watermark,
-and flushes-and-refills on any discontinuity (rate / seek / loop / pause). It's
+engine refreshes the schedule on a 0.03 s **metronome timer**, deduping by a watermark,
+and flushes-and-refills on any discontinuity (rate / seek / loop / pause). The **visual
+playhead** is on its own clock: a `CADisplayLink` (`DisplayLinkTicker`) samples the audio
+render position once per display frame (vsync-aligned, 60/120 Hz) so it glides rather than
+stepping at the timer's sub-refresh cadence (ADR 0054). It's
 enabled only when the grid exists (BPM + the 1) and **never writes back** to the
 song's tempo; it's silenced on pause and screen exit (ADR 0026).
 
@@ -144,7 +150,10 @@ straight to `engine.run(ramp:)`, which sets `trainingRamp` and drives it directl
 routing through the automator setters (so arming and training are no longer mutually
 exclusive). The engine accrues elapsed bars (integrated at the live tempo) and seconds since
 the ramp engaged, hands them to `activeRamp` (`trainingRamp` first) each tick, and applies the
-resolved BPM as a ramp-driven tempo change (re-anchoring like a manual one). The two per-tick SwiftUI views (dots, session readout) are
+resolved BPM **phase-continuously** (ADR 0047): unlike a manual change — which hard re-anchors
+to a fresh accented beat 0 — a ramp step keeps the tick counter and re-origins the grid (pure
+`MetronomeGrid.reanchoredOrigin`) so the heard click splices seamlessly at the new spacing and
+the downbeat stays a downbeat, instead of lurching mid-bar on every step. The two per-tick SwiftUI views (dots, session readout) are
 isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
 the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
 Italian tempo marking is the pure `TempoMarking` lookup. The slider's position↔BPM binding goes
@@ -154,9 +163,17 @@ rather than the left fifth a linear scale would give; the steppers and tap-tempo
 absolute BPM. The metronome is a **pure free-play tool** (ADR 0046): its in-screen exercise UI
 (save/load presets, the library sheet, the command-anchored Training Mode) has been removed —
 exercises and training runs now live in the top-level **Practice** space (below). What stays is
-the free-play **tempo automator** (`MetronomeAutomatorPanel`) for ad-hoc ramps; its job is
-*discovery* — ramp until your hands break down — and an armed automator offers a one-directional
-**"Save as exercise"** seam that captures the current (breakdown) tempo and presents Practice's
+the free-play **tempo automator** (`MetronomeAutomatorPanel`) for ad-hoc ramps. **Arming is
+separated from running** (ADR 0048): the segmented Off / By Bars / By Time control only
+*configures* the ramp and previews its staircase (`automatorEnabled`); an explicit **Start**
+(`startAutomatorRun`) begins the climb after a one-bar beat-synced **count-in**, and **Stop**
+halts it leaving the click at the tempo reached (`automatorRunning` is what `isRampActive` keys
+the free-play ramp on). A **No limit** toggle drops the target and ramps to the system ceiling
+(infinite mode, *derived* from `ceiling == bpmRange.upperBound`), and a finished free-play ramp
+holds at its ceiling rather than stopping the session (`finishRamp`; a Practice training run
+still ends the session). Its job is *discovery* — ramp until your hands break down — and an
+armed automator offers a one-directional **"Save as exercise"** seam (a compact bookmark) that
+captures the current (breakdown) tempo and presents Practice's
 `NewExerciseSheet` prefilled with it as the command. Both that seam and Practice's own create flow
 funnel through the single `Exercise.commandAnchored(name:command:)` factory, so the two entry
 points can't drift. **Command-anchored progress** (ADR
@@ -176,7 +193,11 @@ surface the planner composes from. `ExerciseLibraryView` owns exercise **create*
 and removed on the waveform screen, not here — and lists those with a measured command
 (`commandTempo != nil`, an **in-memory** filter, never a SwiftData optional `#Predicate`, which
 starves the main thread and froze navigation — guarded by `PracticeRunUITests`); tapping one pushes
-`LoopRunView` (Phase B, below). `ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
+`LoopRunView` (Phase B, below). Both libraries carry a **sort menu + search** (ADR 0056): the pure
+`PracticeLibrarySort` orders each list by the persisted key/direction (loops by Song · Name ·
+Command · Mastery; exercises by Name · Command · Recently added) and filters by query, layered
+in-memory over the loop `commandTempo` gate — mirroring the song library's `LibrarySectioning`
+idiom, with the choice remembered per library via `@AppStorage`. `ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
 (independent of the
 metronome screen's): it edits working / command (each **typable** via `EditableTempoRow`, not
 just the −/+ steppers) plus the warm-up / reach / back-up step counts (in the collapsible
@@ -215,10 +236,13 @@ The ramp advances by **loop repetitions, not seconds** — one pass through the 
 (reps-per-step is user-set in the run setup, default 1; the command dwell holds several). The ramp
 reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as loop passes, and
 `loopIteration` is rate-independent so a plateau holds a fixed number of reps regardless of the
-tempo it plays at (and freezes naturally on pause). No new stored `Loop` fields are added —
-`speed` (working) and `commandTempo` (command) already exist and the reach is derived — so the
-loop keeps full ADR 0011/0012 migration discipline (the clean-rewrite relaxation was for `Exercise`
-only). Stage 4's waveform for real files is
+tempo it plays at (and freezes naturally on pause). The tempos ride existing fields —
+`speed` (working) and `commandTempo` (command), reach derived — while the **ramp shape** persists in
+four dedicated, declaration-defaulted `Int` fields added in the ADR 0057 follow-up
+(`rampWarmupSteps` / `rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep`), kept **separate**
+from the ADR-0013 automator (`automatorStepCount`/`automatorLoopsPerStep`, the waveform "steps to
+target" ramp) since the two ramp systems carry different semantics. All are additive with
+declaration defaults, so the loop keeps full ADR 0011/0012 migration discipline. Stage 4's waveform for real files is
 extracted up front by `WaveformExtractor` (chunked AVFoundation read →
 `AudioMath.mixToMono`/`downsample`, the reduction unit-tested) and stored on the `Song`;
 the demo's waveform is still downsampled from its generated buffer (ADR 0011, Slice 2).
@@ -340,6 +364,11 @@ only. See `docs/decisions/0001`.
   multiply. Both are declaration-default `[String]` arrays (migration-safe, CloudKit-clean — no
   `@Model` promotion). The cross-song *filter by tag* payoff is gated on its first consumer (the
   planner, ADR 0014); collections already filter the library (intersection/AND, ADR 0033).
+- **Song time signature** (`Song.beatsPerBar`/`noteValue`, ADR 0051): declaration-default
+  4/4 additive fields (CoreData 134110 rule). `beatGrid` passes `beatsPerBar` to
+  `BeatGrid.beats`, so downbeats are real bar lines; set in the BPM sheet. `Song.showsGridlines`
+  (default on) is a per-song view flag gating the grid *draw* only (snap candidates still read
+  `beats`).
 - `SongRef` is the song's identity (stored on `Song`), so practice data survives the
   underlying file being moved or re-granted.
 - **`MetronomeExercise`** (ADR 0043 / 0045): a standalone, **audio-free** `@Model` — a savable
@@ -358,6 +387,13 @@ only. See `docs/decisions/0001`.
   fraction).
 - CloudKit-backed sync (Phase 4) is a configuration step on the same `@Model` graph, not
   a re-model.
+- **User preferences** (`App/AppSettings.swift`, ADR 0050): `UserDefaults`-backed toggles, not
+  SwiftData. `AppSettings` is a thin wrapper so both SwiftUI (`@AppStorage(AppSettings.Key.…)`,
+  as in `SettingsView`) and plain engine/helper code (`AppSettings.countInEnabled` in the
+  metronome, `AppSettings.hapticsEnabled` in `haptic(_:)`) read the same key without a shared
+  object. The pure `resolvedBool(storedValue:default:)` keeps a never-set key at its **default
+  (on)** rather than `UserDefaults.bool`'s `false` — unit-tested. UserDefaults is already in the
+  privacy manifest (CA92.1), so no new required-reason API and no migration.
 
 ## Backend
 

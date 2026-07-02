@@ -33,8 +33,9 @@ struct MetronomeAutomatorPanel: View {
 
             if engine.automatorMode != .off {
                 fields
-                MetronomeRampTracker(engine: engine)
-                saveAsExerciseButton
+                noLimitToggle
+                progress
+                startStopButton
             }
         }
         .padding(12)
@@ -43,47 +44,104 @@ struct MetronomeAutomatorPanel: View {
             // Captures the tempo live at the moment of the tap (the breakdown point), prefilled as
             // the new exercise's command. Funnels through the same `commandAnchored` factory as
             // Practice's own create flow — one creation path (ADR 0046).
-            NewExerciseSheet(initialCommand: engine.bpm) { name, command in
-                modelContext.insert(Exercise.commandAnchored(name: name, command: command))
+            NewExerciseSheet(initialCommand: engine.bpm,
+                             initialSignature: engine.timeSignature) { name, command, signature in
+                modelContext.insert(Exercise.commandAnchored(name: name, command: command,
+                                                             beatsPerBar: signature.beats,
+                                                             noteValue: signature.noteValue))
             }
         }
     }
 
-    /// The discovery → Practice seam. Phrased around the live tempo so the action reads as
-    /// "this is the tempo I broke down at — keep it as a drill", not a generic save.
+    /// The explicit **Start / Stop** for the climb (ADR 0048) — arming the segmented control
+    /// only configures the ramp; this runs it. Mirrors the main transport so the automator has
+    /// its own run gesture rather than climbing silently the moment you arm it.
+    private var startStopButton: some View {
+        Button {
+            if engine.automatorRunning { engine.stopAutomatorRun() } else { engine.startAutomatorRun() }
+            haptic(.medium)
+        } label: {
+            Label(engine.automatorRunning ? "Stop" : "Start",
+                  systemImage: engine.automatorRunning ? "stop.fill" : "play.fill")
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(Capsule().fill(PocketColor.metronome))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(engine.automatorRunning ? "Stop ramp" : "Start ramp")
+    }
+
+    /// **Infinite** mode (ADR 0048): drop the target and let the ramp climb to the system max.
+    /// Hides the "Up to" field when on (there's nothing to choose).
+    private var noLimitToggle: some View {
+        Toggle(isOn: Binding(get: { engine.automatorNoLimit },
+                             set: { engine.setAutomatorNoLimit($0) })) {
+            Text("No limit")
+                .font(.futura(.subheadline))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        .tint(PocketColor.metronome)
+    }
+
+    /// What sits above the Start button: the live **count-in** number while settling in, a
+    /// "climbing to max" readout in infinite mode, or the ramp staircase otherwise.
+    @ViewBuilder private var progress: some View {
+        if let countdown = engine.automatorCountdown {
+            VStack(spacing: 4) {
+                Text("\(countdown)")
+                    .font(.pocketMono(.largeTitle))
+                    .foregroundStyle(PocketColor.metronome)
+                Text("Counting in")
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+        } else if engine.automatorNoLimit {
+            VStack(spacing: 4) {
+                Text("\(engine.bpm)")
+                    .font(.pocketMono(.title))
+                    .foregroundStyle(PocketColor.metronome)
+                Text("climbing to \(StandaloneMetronomeEngine.bpmRange.upperBound) BPM max")
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+        } else {
+            MetronomeRampTracker(engine: engine)
+        }
+    }
+
+    /// The discovery → Practice seam, as a compact **bookmark** button in the header (the
+    /// user's note: the old full-width capsule became a rounded icon). Captures the live tempo
+    /// at the tap — "this is the tempo I broke down at — keep it as a drill".
     private var saveAsExerciseButton: some View {
         Button {
             saving = true
             haptic(.medium)
         } label: {
-            Label("Save \(engine.bpm) BPM as exercise", systemImage: "bookmark.fill")
-                .font(.subheadline.weight(.semibold))
+            Image(systemName: "bookmark.fill")
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.metronome)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(Capsule().stroke(PocketColor.metronome, lineWidth: 1.5))
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Save \(engine.bpm) beats per minute as an exercise in Practice")
     }
 
-    /// Names the feature and houses the restart control (when a ramp is armed) so it doesn't
-    /// crowd the staircase.
+    /// Names the feature and houses the compact "save as exercise" bookmark (when armed) so it
+    /// doesn't crowd the controls.
     private var header: some View {
         HStack {
             Text("AUTOMATOR")
-                .font(.caption2.weight(.semibold))
+                .font(.futura(.caption2, weight: .semibold))
                 .tracking(1.5)
                 .foregroundStyle(PocketColor.textSecondary)
             Spacer()
             if engine.automatorMode != .off {
-                Button { engine.restartAutomator(); haptic(.light) } label: {
-                    Label("Restart", systemImage: "arrow.counterclockwise")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(PocketColor.metronome)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Restart ramp")
+                saveAsExerciseButton
             }
         }
     }
@@ -100,9 +158,12 @@ struct MetronomeAutomatorPanel: View {
                   suffix: engine.automatorMode == .bars ? "bars" : "secs") {
                 engine.setAutomatorIntervalCount($0)
             }
-            field("Up to", value: engine.automatorCeiling,
-                  range: StandaloneMetronomeEngine.bpmRange, step: 5, suffix: "BPM") {
-                engine.setAutomatorCeiling($0)
+            // Hidden in infinite mode — there's no target to choose, the ramp climbs to the max.
+            if !engine.automatorNoLimit {
+                field("Up to", value: engine.automatorCeiling,
+                      range: StandaloneMetronomeEngine.bpmRange, step: 5, suffix: "BPM") {
+                    engine.setAutomatorCeiling($0)
+                }
             }
         }
     }
@@ -114,12 +175,12 @@ struct MetronomeAutomatorPanel: View {
                        suffix: String, onChange: @escaping (Int) -> Void) -> some View {
         HStack(spacing: 8) {
             Text(label)
-                .font(.subheadline)
+                .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
             Spacer()
             AutomatorNumberField(value: value, range: range, step: step, onChange: onChange)
             Text(suffix)
-                .font(.caption)
+                .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
                 .frame(width: 34, alignment: .leading)
         }
@@ -158,7 +219,7 @@ struct AutomatorNumberField: View {
     private func nudge(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button { action(); haptic(.light) } label: {
             Image(systemName: symbol)
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 32, height: 32)
                 .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
@@ -202,7 +263,7 @@ private struct MetronomeRampTracker: View {
             // last, so there are `totalSteps + 1` plateaus (reads "Step 1/8" at the floor, not
             // "Step 0/7").
             Text("Step \(engine.automatorCurrentStep + 1)/\(engine.automatorTotalSteps + 1)")
-                .font(.caption)
+                .font(.futura(.caption))
                 .foregroundStyle(PocketColor.metronome)
         }
         .frame(maxWidth: .infinity)

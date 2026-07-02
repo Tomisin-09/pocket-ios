@@ -45,4 +45,61 @@ final class MetronomeEngineAutomatorTests: XCTestCase {
         XCTAssertEqual(engine.automatorStartBPM, 100)
         XCTAssertEqual(engine.automatorMode, .bars)
     }
+
+    // MARK: arm vs run (ADR 0048)
+
+    func testArmingDoesNotStartTheClimb() {
+        let engine = StandaloneMetronomeEngine()
+        engine.setAutomatorMode(.bars)
+        // Arming only configures — the climb must wait for an explicit Start (the bug fix).
+        XCTAssertTrue(engine.automatorEnabled, "armed")
+        XCTAssertFalse(engine.automatorRunning, "not running until Start")
+        XCTAssertNil(engine.automatorCountdown, "no count-in until running")
+    }
+
+    func testStartRunIsNoOpWhenNotArmed() {
+        let engine = StandaloneMetronomeEngine()
+        engine.startAutomatorRun()   // guarded by `automatorEnabled`, so no audio is touched
+        XCTAssertFalse(engine.automatorRunning)
+    }
+
+    func testStopRunHaltsButLeavesItArmed() {
+        let engine = StandaloneMetronomeEngine()
+        engine.setAutomatorMode(.bars)
+        engine.automatorRunning = true   // simulate a live run without starting audio
+
+        engine.stopAutomatorRun()
+
+        XCTAssertFalse(engine.automatorRunning, "stopped")
+        XCTAssertTrue(engine.automatorEnabled, "still armed — Start replays from the floor")
+    }
+
+    func testDisarmingEndsAnyRun() {
+        let engine = StandaloneMetronomeEngine()
+        engine.setAutomatorMode(.bars)
+        engine.automatorRunning = true
+
+        engine.setAutomatorMode(.off)
+
+        XCTAssertFalse(engine.automatorEnabled)
+        XCTAssertFalse(engine.automatorRunning, "disarming halts the climb")
+    }
+
+    // MARK: infinite mode (ADR 0048)
+
+    func testNoLimitClimbsToTheSystemCeiling() {
+        let engine = StandaloneMetronomeEngine()
+        engine.setBPM(90)
+        engine.setAutomatorMode(.bars)   // default ceiling = floor + headroom = 110
+
+        engine.setAutomatorNoLimit(true)
+        XCTAssertTrue(engine.automatorNoLimit)
+        XCTAssertEqual(engine.automatorCeiling, StandaloneMetronomeEngine.bpmRange.upperBound)
+
+        engine.setAutomatorNoLimit(false)
+        XCTAssertFalse(engine.automatorNoLimit)
+        XCTAssertEqual(engine.automatorCeiling,
+                       90 + StandaloneMetronomeEngine.automatorDefaultHeadroom,
+                       "turning it off lands back on a usable target")
+    }
 }

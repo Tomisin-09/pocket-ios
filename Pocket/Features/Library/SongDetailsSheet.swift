@@ -59,16 +59,16 @@ struct SongDetailsSheet: View {
         Section {
             VStack(alignment: .leading, spacing: 4) {
                 Text(song.title)
-                    .font(.title3.weight(.semibold))
+                    .font(.futura(.title3, weight: .semibold))
                     .foregroundStyle(PocketColor.textPrimary)
                 if !song.artist.isEmpty {
                     Text(song.artist)
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 if !albumLine.isEmpty {
                     Text(albumLine)
-                        .font(.footnote)
+                        .font(.futura(.footnote))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             }
@@ -83,7 +83,7 @@ struct SongDetailsSheet: View {
             DetailLabeledContent(label: "Tempo") {
                 Text(tempoText).font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
             }
-            DetailLabeledContent(label: "Mastery") {
+            DetailLabeledContent(label: "Mastery", info: PracticeFieldInfo.songMastery) {
                 if let mastery = song.mastery {
                     Text(stars(mastery)).foregroundStyle(PocketColor.marker)
                 } else {
@@ -126,7 +126,7 @@ struct SongDetailsSheet: View {
             } else if song.comment.isEmpty {
                 Text("No notes yet — tap the pencil to add tuning, capo, or anything "
                     + "worth remembering.")
-                    .font(.footnote)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             } else {
                 Text(song.comment).foregroundStyle(PocketColor.textPrimary)
@@ -137,7 +137,7 @@ struct SongDetailsSheet: View {
                 Spacer()
                 if savedPulse {
                     Label("Saved", systemImage: "checkmark.circle.fill")
-                        .font(.caption)
+                        .font(.futura(.caption))
                         .foregroundStyle(PocketColor.active)
                         .transition(.opacity)
                 } else if !editingNotes {
@@ -213,13 +213,21 @@ struct SongDetailsSheet: View {
 /// Mirrors the edit sheet's row rhythm so details and edit feel like one place.
 private struct DetailLabeledContent<Value: View>: View {
     let label: String
+    /// Optional explainer — when set, the label gains a tappable ⓘ (used on the derived Mastery
+    /// row, where "why can't I set this?" is the common confusion).
+    var info: String?
     @ViewBuilder let value: () -> Value
 
     var body: some View {
         LabeledContent {
             value()
         } label: {
-            Text(label).foregroundStyle(PocketColor.textSecondary)
+            if let info {
+                FieldInfoLabel(title: label, info: info)
+                    .foregroundStyle(PocketColor.textSecondary)
+            } else {
+                Text(label).foregroundStyle(PocketColor.textSecondary)
+            }
         }
     }
 }

@@ -29,11 +29,11 @@ struct SongStrip: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title)
-                    .font(.headline)
+                    .font(.futura(.headline))
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(1)
                 Text(song.artist)
-                    .font(.subheadline)
+                    .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
                     .lineLimit(1)
             }
@@ -53,7 +53,7 @@ struct SongStrip: View {
                 // to roll up; an unrated song just shows its length.
                 if let mastery = song.mastery {
                     Text(stars(mastery))
-                        .font(.subheadline)
+                        .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.marker)
                         .accessibilityLabel("Mastery \(mastery) of 5")
                 }
@@ -115,7 +115,7 @@ struct SpeedBar: View {
                             .font(.pocketMono(.headline))
                             .foregroundStyle(PocketColor.textPrimary)
                         Text("BPM")
-                            .font(.caption2)
+                            .font(.futura(.caption2))
                             .foregroundStyle(PocketColor.textSecondary)
                     }
                     .contentShape(Rectangle())
@@ -180,7 +180,7 @@ private struct MetronomeToggle: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: "metronome")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.futura(size: 15, weight: .semibold))
                 .foregroundStyle(foreground)
                 .frame(width: 30, height: 30)
                 .background(Circle().fill(isOn ? PocketColor.metronome : Color.white.opacity(0.08)))
@@ -228,13 +228,18 @@ private struct PresetPill: View {
 /// line, this is a compact **Loop controls** affordance that opens a small popover with
 /// the full gesture cheatsheet — A/B is the one creation story now.
 struct ModeDescriptionLine: View {
+    /// Gridlines toggle (ADR 0051) — shown on the right only once a grid exists (tempo +
+    /// the 1 set). `gridOn` is the per-song `showsGridlines`.
+    var gridAvailable = false
+    var gridOn = true
+    var onToggleGrid: () -> Void = {}
     @State private var showingInfo = false
 
     var body: some View {
         HStack {
             Button { showingInfo = true } label: {
                 Label("Loop controls", systemImage: "info.circle")
-                    .font(.footnote.weight(.medium))
+                    .font(.futura(.footnote, weight: .medium))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .buttonStyle(.plain)
@@ -242,6 +247,16 @@ struct ModeDescriptionLine: View {
                 LoopControlsInfo().presentationCompactAdaptation(.popover)
             }
             Spacer()
+            if gridAvailable {
+                Button(action: onToggleGrid) {
+                    Label("Grid", systemImage: "grid")
+                        .font(.futura(.footnote, weight: .medium))
+                        .foregroundStyle(gridOn ? PocketColor.textPrimary : PocketColor.textSecondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(gridOn ? "Hide gridlines" : "Show gridlines")
+                .transition(.opacity)
+            }
         }
     }
 }
@@ -251,7 +266,7 @@ private struct LoopControlsInfo: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 11) {
             Text("Loop controls")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
             row("Make a loop", "Tap Loop to set the start, play on, tap to set the end")
             row("…or draw it", "Hold and drag across the waveform")
@@ -266,8 +281,8 @@ private struct LoopControlsInfo: View {
 
     private func row(_ key: String, _ detail: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(key).font(.footnote.weight(.semibold)).foregroundStyle(PocketColor.active)
-            Text(detail).font(.caption).foregroundStyle(PocketColor.textSecondary)
+            Text(key).font(.futura(.footnote, weight: .semibold)).foregroundStyle(PocketColor.active)
+            Text(detail).font(.futura(.caption)).foregroundStyle(PocketColor.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

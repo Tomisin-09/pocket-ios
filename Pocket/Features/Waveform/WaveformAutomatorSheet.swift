@@ -79,10 +79,10 @@ struct AutomatorSheet: View {
         VStack(spacing: 8) {
             RampStairs(shape: shape, steps: steps)
             Text("\(percent(start))  →  \(percent(target))")
-                .font(.title2.weight(.semibold).monospacedDigit())
+                .font(.pocketMono(.title2).weight(.semibold))
                 .foregroundStyle(PocketColor.textPrimary)
             Text("\(steps) step\(steps == 1 ? "" : "s")  ·  \(stepLabel)")
-                .font(.footnote)
+                .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textSecondary)
         }
         .frame(maxWidth: .infinity)
@@ -93,13 +93,13 @@ struct AutomatorSheet: View {
     private var bottomBar: some View {
         VStack(spacing: 10) {
             Button(action: setRamp) {
-                Text("Set ramp").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 15)
+                Text("Set ramp").font(.futura(.headline)).frame(maxWidth: .infinity).padding(.vertical, 15)
             }
             .background(PocketColor.active, in: .rect(cornerRadius: 14))
             .foregroundStyle(.black)
             if wasEnabled {
                 Button(action: turnOff) {
-                    Text("Turn off ramp").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 15)
+                    Text("Turn off ramp").font(.futura(.headline)).frame(maxWidth: .infinity).padding(.vertical, 15)
                 }
                 .background(PocketColor.danger, in: .rect(cornerRadius: 14))
                 .foregroundStyle(.white)
@@ -126,10 +126,10 @@ struct AutomatorSheet: View {
                                      @ViewBuilder stepper: () -> S) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label.uppercased())
-                .font(.caption2.weight(.semibold))
+                .font(.futura(.caption2, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
             HStack {
-                Text(valueText).font(.title3.monospacedDigit()).foregroundStyle(PocketColor.textPrimary)
+                Text(valueText).font(.pocketMono(.title3)).foregroundStyle(PocketColor.textPrimary)
                 Spacer()
                 stepper()
             }

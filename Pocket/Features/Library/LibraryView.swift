@@ -225,13 +225,13 @@ private struct NoMatchesState: View {
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "line.3.horizontal.decrease.circle")
-                .font(.system(size: 40))
+                .font(.futura(size: 40))
                 .foregroundStyle(PocketColor.textSecondary)
             Text("No songs in this collection")
-                .font(.headline)
+                .font(.futura(.headline))
                 .foregroundStyle(PocketColor.textPrimary)
             Button("Clear filter", action: onClear)
-                .font(.subheadline)
+                .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.active)
         }
         .padding(40)
@@ -248,19 +248,19 @@ private struct LibraryEmptyState: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "music.note.list")
-                .font(.system(size: 44))
+                .font(.futura(size: 44))
                 .foregroundStyle(PocketColor.textSecondary)
             Text("No songs yet")
-                .font(.title3.weight(.semibold))
+                .font(.futura(.title3, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
             Text("Import an audio file to practice with its real waveform.")
-                .font(.footnote)
+                .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textSecondary)
                 .multilineTextAlignment(.center)
             VStack(spacing: 10) {
                 Button(action: onImport) {
                     Label("Import a song", systemImage: "square.and.arrow.down")
-                        .font(.headline)
+                        .font(.futura(.headline))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                 }
@@ -268,7 +268,7 @@ private struct LibraryEmptyState: View {
                 .foregroundStyle(PocketColor.active)
 
                 Button("Try the demo", action: onTryDemo)
-                    .font(.subheadline)
+                    .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .padding(.top, 4)

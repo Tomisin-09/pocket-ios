@@ -11,20 +11,28 @@ struct NewExerciseSheet: View {
     /// Pre-fills the command stepper — the discovered tempo when launched from the automator
     /// seam, the engine default when created fresh in Practice.
     var initialCommand: Int = StandaloneMetronomeEngine.defaultBPM
-    /// Called with the trimmed name and chosen **command** tempo when the user confirms.
-    let onCreate: (String, Int) -> Void
+    /// Pre-fills the meter picker — the metronome's current signature when launched from the
+    /// automator seam, 4/4 when created fresh in Practice.
+    var initialSignature: TimeSignature = .standard
+    /// Called with the trimmed name, chosen **command** tempo, and **time signature** when the
+    /// user confirms. The meter drives the run metronome's accents + count-in length (ADR 0052).
+    let onCreate: (String, Int, TimeSignature) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
     @State private var command: Int
+    @State private var signature: TimeSignature
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
     init(initialCommand: Int = StandaloneMetronomeEngine.defaultBPM,
-         onCreate: @escaping (String, Int) -> Void) {
+         initialSignature: TimeSignature = .standard,
+         onCreate: @escaping (String, Int, TimeSignature) -> Void) {
         self.initialCommand = initialCommand
+        self.initialSignature = initialSignature
         self.onCreate = onCreate
         _command = State(initialValue: initialCommand)
+        _signature = State(initialValue: initialSignature)
     }
 
     private var trimmedName: String {
@@ -41,10 +49,19 @@ struct NewExerciseSheet: View {
                     Stepper("Command tempo · \(command) BPM", value: $command,
                             in: range.lowerBound...range.upperBound)
                 } header: {
-                    Text("Your command tempo")
+                    FieldInfoLabel(title: "Your command tempo",
+                                   info: PracticeFieldInfo.exerciseCommandTempo)
+                }
+                Section {
+                    Picker("Time signature", selection: $signature) {
+                        ForEach(TimeSignature.presets) { preset in
+                            Text("\(preset.name) · \(preset.context)").tag(preset)
+                        }
+                    }
+                } header: {
+                    Text("Time signature")
                 } footer: {
-                    Text("The fastest you can play it cleanly and repeatably right now. The "
-                         + "warm-up floor and the reach derive from it — tune them when you run it.")
+                    Text("Sets the run's accents and count-in length. Defaults to 4/4.")
                 }
             }
             .navigationTitle("New exercise")
@@ -56,7 +73,7 @@ struct NewExerciseSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
-                        onCreate(trimmedName, command)
+                        onCreate(trimmedName, command, signature)
                         dismiss()
                     }
                     .disabled(trimmedName.isEmpty)
@@ -68,5 +85,5 @@ struct NewExerciseSheet: View {
 }
 
 #Preview("New exercise") {
-    NewExerciseSheet { _, _ in }
+    NewExerciseSheet { _, _, _ in }
 }

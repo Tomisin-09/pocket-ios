@@ -54,6 +54,7 @@ struct WaveformPracticeView: View {
         // Practice is the one screen that rotates (ADR 0042): more width = sharper
         // waveform + more precise A/B drag. Reverts to portrait-only on exit.
         .landscapeEnabled()
+        .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         // Don't carry an open drawer across a rotation back to portrait.
         .onChange(of: isLandscape) { _, landscape in if !landscape { drawerOpen = false } }
         // Stop a playhead scrub near the left edge from popping back to the library
@@ -71,7 +72,8 @@ struct WaveformPracticeView: View {
             LoopEditSheet(loop: loop,
                           autoColor: LoopColor.derivedColor(for: loop, among: model.loops),
                           onDelete: { model.deleteLoop(loop) },
-                          onAdjustRange: { model.startRangeEdit(loop) })
+                          onAdjustRange: { model.startRangeEdit(loop) },
+                          onSaved: { restore in model.presentUndo("Saved changes", undo: restore) })
         }
         .sheet(item: $model.editingMarker) { marker in
             MarkerEditSheet(marker: marker, onDelete: { model.deleteMarker(marker) })
@@ -82,10 +84,9 @@ struct WaveformPracticeView: View {
                            onTurnOff: { model.turnOffAutomator(for: loop) })
         }
         .sheet(item: $model.journalingLoop) { loop in
-            LoopJournalSheet(loop: loop,
-                             onAdd: { text, kind in model.addJournalEntry(to: loop, text: text, kind: kind) },
-                             onUpdate: model.updateJournalEntry,
-                             onDelete: model.deleteJournalEntry)
+            // Read-only here — authoring moved to the Practice run screen (ADR 0058). The
+            // waveform screen just reflects past notes.
+            JournalSheet(owner: .loop(loop), readOnly: true)
         }
         .sheet(isPresented: $model.showingSongDetails) {
             SongDetailsSheet(song: model.song)
@@ -93,7 +94,12 @@ struct WaveformPracticeView: View {
         .sheet(isPresented: $model.settingBPM) {
             BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,
                      currentDownbeat: model.song.downbeatSeconds,
-                     onCommit: model.commitTempo,
+                     currentBeatsPerBar: model.song.beatsPerBar,
+                     currentNoteValue: model.song.noteValue,
+                     onCommit: { bpm, downbeat, beats, note in
+                         model.commitTempo(bpm: bpm, downbeat: downbeat,
+                                           beatsPerBar: beats, noteValue: note)
+                     },
                      onSetOnWaveform: { bpm in
                          model.commitTempo(bpm: bpm, downbeat: nil)
                          model.beginSetDownbeat(resumeSheet: true)
@@ -187,7 +193,7 @@ struct WaveformPracticeView: View {
         HStack(spacing: 14) {
             Button { dismiss() } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.futura(size: 16, weight: .semibold))
                     .foregroundStyle(PocketColor.textPrimary)
                     .frame(width: 32, height: 32)
                     .background(Circle().fill(Color.white.opacity(0.10)))
@@ -197,11 +203,11 @@ struct WaveformPracticeView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(model.song.title)
-                    .font(.headline)
+                    .font(.futura(.headline))
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(1)
                 Text(model.song.artist)
-                    .font(.subheadline)
+                    .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
                     .lineLimit(1)
             }
@@ -218,7 +224,7 @@ struct WaveformPracticeView: View {
 
             Button { drawerOpen.toggle() } label: {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.futura(size: 17, weight: .semibold))
                     .foregroundStyle(drawerOpen ? PocketColor.background : PocketColor.textPrimary)
                     .frame(width: 32, height: 32)
                     .background(Circle().fill(drawerOpen ? PocketColor.textPrimary : Color.white.opacity(0.10)))

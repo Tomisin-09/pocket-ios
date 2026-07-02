@@ -35,13 +35,13 @@ import SwiftUI
 
 #Preview("BPM sheet — tap-tempo (ADR 0024)") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: nil, currentDownbeat: nil,
-             onCommit: { _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
+             onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
         .preferredColorScheme(.dark)
 }
 
 #Preview("BPM sheet — prefilled") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: 128, currentDownbeat: 1.5,
-             onCommit: { _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
+             onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
         .preferredColorScheme(.dark)
 }
 
@@ -148,6 +148,7 @@ import SwiftUI
         PocketColor.background.ignoresSafeArea()
         Minimap(song: Song.sample(),
                 activeLoop: Song.sample().loops.first,
+                samples: (0..<160).map { abs(sin(Double($0) * 0.18)) * 0.55 + 0.15 },
                 markers: Song.sample().markers,
                 fineSelection: nil,
                 playheadFraction: 0.35,
@@ -230,7 +231,7 @@ import SwiftUI
     let song = Song.sample()
     LoopEditSheet(loop: song.loops[0],
                   autoColor: LoopColor.derivedColor(for: song.loops[0], among: song.loopsByStart),
-                  onDelete: {}, onAdjustRange: {})
+                  onDelete: {}, onAdjustRange: {}, onSaved: { _ in })
 }
 
 #Preview("Automator sheet") {

@@ -41,6 +41,16 @@ final class Song {
     /// snapped to (we don't guess the phase). Optional, like `bpm`/`year`, so SwiftData
     /// lightweight migration fills pre-0022 songs with nil — no declaration default needed.
     var downbeatSeconds: TimeInterval?
+    /// Time signature (ADR 0051): `beatsPerBar` groups the beat grid into bars — every
+    /// `beatsPerBar`-th beat from the downbeat is a bar line — and `noteValue` is the
+    /// denominator (4, 8, …), carried so the signature round-trips and reads right. Both
+    /// **declaration-default 4/4** so SwiftData lightweight migration fills pre-0051 songs
+    /// additively (the CoreData 134110 mandatory-attribute rule), like the exercise's meter.
+    var beatsPerBar: Int = 4
+    var noteValue: Int = 4
+    /// Whether the beat grid is drawn on this song's waveform (ADR 0051) — a **per-song**
+    /// view preference, on by default. Only takes effect once a grid exists (tempo + downbeat).
+    var showsGridlines: Bool = true
     var collections: [String]
     /// A free-form note about the song (the edit sheet's "Notes" field).
     var comment: String = ""
@@ -218,6 +228,20 @@ final class Loop {
     var automatorStepCount: Int = 6
     var automatorLoopsPerStep: Int = 2
 
+    // Run-setup ramp shape (ADR 0057 follow-up): the four staircase controls the Practice
+    // loop run-setup exposes — warm-up intermediate stops, reach steps, back-off steps, reps
+    // per step. **Deliberately separate** from the ADR-0013 automator above: that's the
+    // waveform-screen ramp ("steps to target"), these are the command-anchored run ramp
+    // ("intermediate stops between working and command"), with different semantics — coupling
+    // the two to save four fields is a bug magnet. Declaration defaults so SwiftData lightweight
+    // migration fills loops saved before this without a store wipe (CoreData 134110 rule, ADR
+    // 0012), same discipline as the automator fields. `rampRepsPerStep` defaults to
+    // `LoopCommandRamp.defaultRepsPerStep` (1); the rest to `0` (no intermediate stops / drop).
+    var rampWarmupSteps: Int = 0
+    var rampReachSteps: Int = 0
+    var rampBackoffSteps: Int = 0
+    var rampRepsPerStep: Int = 1
+
     /// Manual identity-colour override: an index into `PocketColor.loopPalette`, or
     /// `nil` to derive the colour from start-order (ADR 0023 / 0031). Optional, so
     /// SwiftData lightweight migration leaves loops saved before this as `nil` (auto).
@@ -309,54 +333,5 @@ final class Marker {
         self.uid = UUID()
         self.seconds = seconds
         self.label = label
-    }
-}
-
-/// A single dated entry in a loop's practice journal (ADR 0038). It **snapshots the
-/// loop's context** — mastery and command tempo — at the moment of writing, so the
-/// entry stays a truthful record of where things stood even as the loop keeps moving.
-/// The snapshot and timestamp are immutable; only `text` and `kind` are editable.
-@Model
-final class JournalEntry {
-    /// Stable business id — list diffing / undo, like `Loop`/`Marker`.
-    var uid: UUID
-    /// When the entry was written. Entries list newest-first.
-    var createdAt: Date
-    /// The user's annotation — the only free-text field, and editable after creation.
-    var text: String
-
-    /// Context snapshot — the loop's `mastery` copied at creation and never updated; `nil`
-    /// when the loop was unrated at the time (ADR 0039). Denormalised on purpose (ADR 0038):
-    /// the entry must not drift as the loop improves. Optional so an entry written against an
-    /// unrated loop records "unrated," not a defaulted `0`. (Pre-0039 entries keep their
-    /// stored value — they were genuinely written under the old defaulted semantics.)
-    var masteryAtEntry: Int?
-    /// Context snapshot — the loop's `commandTempo` copied at creation, never updated; `nil`
-    /// when never measured at the time (ADR 0039). Optional for the same reason as
-    /// `masteryAtEntry`.
-    var commandTempoAtEntry: Double?
-
-    /// Backing storage for `kind` — a plain `String`, **not** the enum itself (the
-    /// SwiftData enum-attribute migration rule; see `Loop.loopTypeRaw`). Empty/unknown
-    /// reads as `.note`. Declaration default so the column always has a value.
-    var kindRaw: String = EntryKind.default.rawValue
-
-    /// Typed view over `kindRaw`; unrecognised/empty reads as the default (`.note`).
-    var kind: EntryKind {
-        get { EntryKind(raw: kindRaw) }
-        set { kindRaw = newValue.rawValue }
-    }
-
-    /// The loop this entry belongs to (cascade-owned by `Loop.journal`).
-    var loop: Loop?
-
-    init(text: String, kind: EntryKind, masteryAtEntry: Int?, commandTempoAtEntry: Double?,
-         createdAt: Date = Date()) {
-        self.uid = UUID()
-        self.createdAt = createdAt
-        self.text = text
-        self.kindRaw = kind.rawValue
-        self.masteryAtEntry = masteryAtEntry
-        self.commandTempoAtEntry = commandTempoAtEntry
     }
 }

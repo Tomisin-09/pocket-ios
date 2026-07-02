@@ -109,6 +109,14 @@ name carries it.
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
+- **Manual target override (loops, and likely exercises).** Let a player set their own reach
+  instead of the auto-derived one (ADR 0059 makes the derived reach a milestone capped at song
+  tempo, then overspeed). User asked for this but flagged it as **not immediate**. Design Qs: is it
+  a per-loop stored override that suppresses the derivation, or a one-off nudge on the run screen?
+  How does a manual target interact with the 100% milestone cap and promote? Keep the derived value
+  as the default; manual is opt-in. Probably a stored `Loop` field (additive) + an editable control
+  on the run screen next to the reach readout.
+
 - **Practice — exercise creation entry point (design experiment).** The create sheet now asks
   for **command tempo** explicitly (working floor + reach derive from it), which fixes the
   earlier mismatch where the entered "working" number resurfaced as "command" on the run screen
@@ -133,6 +141,43 @@ a book icon on the loop row, plus **song notes** (free-text `Song.comment`)
 editable inline in the song details sheet. Narrowed ADR 0012's three-scope
 forecast to loop-only; markers get neither. AI summaries over the journal remain
 in the AI phase (below).
+
+## Journal authoring → Practice screen (ownership shape settled — ADR 0058)
+
+**Ownership decided (ADR 0058, 2026-07-01):** one polymorphic `JournalEntry`
+(owner = loop **XOR** exercise), reusing the existing list/undo/kind/sheet
+machinery; exercises get a new honest `commandBpmAtEntry: Int?` snapshot (no
+mastery, absolute BPM) rather than overloading the loop's song-fraction `Double`.
+Additive schema (new optional `exercise` relationship + `commandBpmAtEntry`) —
+device-verify the migration before merge. **Loops-first is an acceptable partial
+ship** if the exercise side slips.
+
+**Built (2026-07-02).** Model layer + full UI: `JournalOwner`/`JournalWriter`
+shared write path, `JournalSheet(owner:readOnly:)` generalised from the loop-only
+sheet, book button on both run screens, waveform journal made read-only, old
+waveform write helpers retired. 531 tests green. **Remaining: on-device migration
+verification before merge.**
+
+
+Relocate journal **authoring** to the Practice run screens; make the waveform
+journal **read-only** (history view only). Rationale: ADR 0046 makes Practice
+*the* run surface — the moment right after a run, where you just felt the
+difficulty, is the truthful place to write a note; the waveform screen is
+edit/create. A "+" / add-note affordance lives in the run screen's top-right
+(where the empty nav slot is today).
+
+- **No data migration / no erasing entries.** This is a UI relocation, not a
+  schema change — existing `JournalEntry` rows stay. (Corrects the 2026-07-01
+  sense-check premise: the journal never captured automator settings — only
+  `masteryAtEntry` + `commandTempoAtEntry`, snapshot unchanged.)
+- **Snapshot stays** mastery + command tempo at write time, now read off the
+  loop from the run screen instead of the waveform model.
+- **Extend to exercises (net-new).** Exercises have *no* journal today —
+  `JournalEntry` only relates to `Loop`. Add an `Exercise` journal from scratch:
+  new model relationship (`JournalEntry.exercise` or a shared owner), authored
+  from `ExerciseRunView`, with its own snapshot (command BPM / mastery-equivalent
+  at write time). New ADR — decide the ownership shape (one polymorphic entry vs
+  two) before building. Loops-first is acceptable if exercises slip.
 
 ## Loop experience (sense-check decided 2026-06-24)
 
@@ -188,6 +233,35 @@ adjust → range-edit lift → Fine retirement + hold-drag wiring).
 - **#8 "Loop 1/2/3" naming:** deferred naming (ADR 0019) stays — if a loop's
   unclear you play it to remember, and the glanceable row (#2) lowers the cost
   further.
+
+## Practice run-setup — persist loop ramp shape — DONE (2026-07-01, ADR 0057 follow-up)
+
+Shipped on `pocket-083`: four dedicated `Loop` fields (`rampWarmupSteps` /
+`rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep`, declaration defaults,
+additive migration), decoupled from the ADR-0013 automator. `LoopSetupState` now
+tracks all six persisted fields (ramp edits arm Save Changes), `seedIfNeeded`
+restores them, shared `persist()` writes them. Original spec below, for record.
+
+Follow-up recorded in **ADR 0057**. The loop run-setup screen exposes four
+ramp-shape controls — warm-up intermediate steps, reach steps, back-off steps,
+reps per step — that **don't persist**: only `speed` (working) and `commandTempo`
+(command) round-trip today, so **Save Changes** never appears for the four, and
+they reseed to defaults each visit. Exercises already persist the full shape
+(`rampStepBPM` / `rampIntervalCount` / `rampReachSteps` / `rampBackoffSteps`).
+
+**Plan — add four *dedicated* `Loop` fields, decoupled from the legacy automator.**
+Do **not** reuse the ADR-0013 automator fields (`automatorStepCount`,
+`automatorLoopsPerStep`): they're the waveform-screen ramp with different
+semantics ("steps to target" vs "intermediate stops between working and command"),
+and coupling the two ramp systems to save four fields is a bug magnet. Add
+`rampWarmupSteps` / `rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep` with
+**declaration defaults** (CoreData 134110 rule → additive lightweight migration,
+no store wipe). Then: `LoopSetupState` gains the four (so `isDirty` fires for
+them), `seedIfNeeded` reads them off the loop, and the shared `persist()` writes
+them back. Tests: persist round-trips all four; `isDirty` triggers per field.
+**Gate:** it's a live schema change — must be device-verified against a store that
+predates the fields (the SwiftData migration-crash lesson), not just in-memory
+tests. Scheduled **after** the remaining Cluster 4 items land.
 
 ## Loop & marker creation
 
@@ -257,6 +331,42 @@ so the intent isn't lost:
   refresh? Candidate: ~24h (or weekly) on a free tier, daily/hourly behind
   pay — find the sustainable balance without burning backend cost. Decide
   alongside the backend build (ADR 0002).
+
+## Haptics — configurable section (parked, build at finishing-touches)
+
+Decided 2026-07-01. Two motion-tracking haptics are worth adding, but only as an
+opt-in that stays out of the way by default. **Build these when putting the
+finishing touches on the app**, not now — an empty Settings section with dead
+toggles is exactly the scaffolding the launch-readiness gate warns against, so
+the Settings UI and the mechanism ship together.
+
+**Settings — dedicated "Haptics" section.** Today there's a single `Haptics`
+toggle in the *Feel* section of `SettingsView`, governing gesture-confirmation
+taps (`AppSettings.hapticsEnabled`, default **on**) — leave that as the master
+switch. Promote it into its own **Haptics section** that gains the two toggles
+below, each a new `AppSettings.Key` following the existing `resolvedBool`
+default-resolution idiom. Both **default off** (opt-in), and both are gated by
+the master `hapticsEnabled` switch.
+
+1. **Playback-tracking haptic** — pulses on **bar-line (downbeat) crossings** as
+   the song plays. Follows the real playhead, so it scales automatically with
+   playback speed (slowing to 50% doubles the interval — a feature). **Gate it
+   exactly like the gridlines toggle (ADR 0051): needs tempo + the "1" set** — a
+   bar is meaningless without a downbeat anchor. Single medium-impact per bar for
+   V1; no strength gradations. Silent during count-in (position-while-playing
+   only) unless device testing says otherwise. *Not* a granularity picker
+   (bars/beats/off) — bars-only is the opinionated default.
+   - **Open sub-decision, revisit at build time:** a distinct heavier tap on the
+     **loop wrap** ("I've heard this N times" by feel). Real value for looped
+     practice; ship bars-only first and add as a fast follow if it feels missing.
+2. **Scrubbing/drag haptic** — detents felt while **dragging the playhead** as it
+   crosses bars/beats/markers (the tactile "notch" of scrubbing past a
+   structural point). Distinct from the playback pulse; this one fires only
+   during an active scrub gesture. Snap points already exist
+   (`WaveformPracticeModel+Snap`), so reuse that geometry.
+
+`Haptics.swift` (`Pocket/Features/Waveform/`) is the existing helper both would
+route through.
 
 ## UI / polish
 

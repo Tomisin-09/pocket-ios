@@ -29,7 +29,22 @@ struct ExerciseRunView: View {
     @State private var reachSteps = 0
     @State private var backoffSteps = 0
     @State private var showSteps = false
+    @State private var signature: TimeSignature = .standard
     @State private var seeded = false
+    /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
+    @State private var showingJournal = false
+    /// The setup as it was last persisted — captured on seed and after each Save, so the Save
+    /// Changes button shows only while the current edits differ from what's stored (ADR 0057).
+    @State private var baseline: ExerciseSetupState?
+
+    /// The persistable setup as it stands now — what Start / Save would write.
+    private var current: ExerciseSetupState {
+        ExerciseSetupState(working: working, command: command, steps: steps,
+                           reachSteps: reachSteps, backoffSteps: backoffSteps, signature: signature)
+    }
+
+    /// True when the setup has unsaved edits — drives the Save Changes button.
+    private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
     /// The reach derived from the (local) command — proportional + clamped (ADR 0045).
     private var reach: Int { TempoStretch.targetBPM(forCommand: command) }
@@ -65,39 +80,101 @@ struct ExerciseRunView: View {
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
                 if !isRunning { promoteButton }
+                if !isRunning, isDirty { saveChangesButton }
+                if !isRunning {
+                    JournalPreviewSection(owner: .exercise(exercise)) { showingJournal = true }
+                        .padding(.top, 4)
+                }
             }
             .padding(24)
+            .animation(.easeInOut(duration: 0.2), value: isDirty)
         }
         .scrollDismissesKeyboard(.interactively)
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !isRunning {
+                ToolbarItem(placement: .topBarTrailing) { signaturePicker }
+            }
+        }
         .safeAreaInset(edge: .bottom) { transport }
+        .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
         .onDisappear { engine.stop() }
+        .sheet(isPresented: $showingJournal) {
+            JournalSheet(owner: .exercise(exercise),
+                         onAdd: addJournalEntry,
+                         onUpdate: { entry, text, kind in
+                             JournalWriter.update(entry, text: text, kind: kind)
+                             try? modelContext.save()
+                         },
+                         onDelete: { entry in
+                             JournalWriter.delete(entry, from: modelContext)
+                             try? modelContext.save(); haptic(.light)
+                         })
+        }
+    }
+
+    /// Write a new entry, snapshotting the exercise's current command tempo in BPM (ADR 0058).
+    private func addJournalEntry(_ text: String, _ kind: EntryKind) {
+        if JournalWriter.add(to: .exercise(exercise), text: text, kind: kind, into: modelContext) {
+            try? modelContext.save()
+            haptic(.light)
+        }
     }
 
     // MARK: - Live readout (running)
 
     private var liveReadout: some View {
         VStack(spacing: 18) {
-            VStack(spacing: 2) {
-                Text("\(engine.bpm)")
-                    .font(.pocketMono(.largeTitle))
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .contentTransition(.numericText())
-                Text("BPM · \(engine.tempoMarking.name)")
-                    .font(.caption)
-                    .foregroundStyle(PocketColor.textSecondary)
+            if let countdown = engine.automatorCountdown {
+                // Count-in before the climb engages (ADR 0052) — the beat dots keep flashing below.
+                VStack(spacing: 2) {
+                    Text("\(countdown)")
+                        .font(.pocketMono(.largeTitle))
+                        .foregroundStyle(PocketColor.practice)
+                        .contentTransition(.numericText())
+                    Text("Counting in")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+            } else {
+                VStack(spacing: 2) {
+                    Text("\(engine.bpm)")
+                        .font(.pocketMono(.largeTitle))
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .contentTransition(.numericText())
+                    Text("BPM · \(engine.tempoMarking.name)")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
             }
             BeatIndicator(engine: engine)
-            SessionTracker(engine: engine)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
     }
 
     // MARK: - Setup (stopped)
+
+    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact menu in the nav bar,
+    /// shown only while stopped. Drives the run click's accents + count-in length; committed on Start
+    /// alongside the tempos, so leaving without starting discards it.
+    private var signaturePicker: some View {
+        Menu {
+            Picker("Time signature", selection: $signature) {
+                ForEach(TimeSignature.presets) { preset in
+                    Text("\(preset.name) · \(preset.context)").tag(preset)
+                }
+            }
+        } label: {
+            Text(signature.name)
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.practice)
+        }
+        .accessibilityLabel("Time signature: \(signature.name)")
+    }
 
     private var tempos: some View {
         VStack(spacing: 14) {
@@ -109,9 +186,9 @@ struct ExerciseRunView: View {
                              onStep: { adjustCommand(by: $0) }, onType: { setCommand($0) })
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Reach").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
+                    Text("Reach").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
                     Text("auto · +\(reach - command) BPM")
-                        .font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                        .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
                 }
                 Spacer()
                 Text("\(reach) BPM")
@@ -138,7 +215,7 @@ struct ExerciseRunView: View {
             haptic(.medium)
         } label: {
             Label("I own \(reach) now — promote", systemImage: "arrow.up.circle.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -146,6 +223,23 @@ struct ExerciseRunView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Promote: I own \(reach) beats per minute now")
+    }
+
+    /// Persist the tuning without starting a run (ADR 0057) — shown only while the setup differs
+    /// from what's stored. A subtle filled capsule, distinct from the outlined Promote above it
+    /// and the filled Start pill below. Leaving still discards *unsaved* edits.
+    private var saveChangesButton: some View {
+        Button(action: saveChanges) {
+            Label("Save changes", systemImage: "checkmark.circle.fill")
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.practice)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(PocketColor.practice.opacity(0.15)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Save changes to this exercise")
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     // MARK: - Transport
@@ -157,7 +251,7 @@ struct ExerciseRunView: View {
             if isRunning {
                 Button { engine.stop(); haptic(.medium) } label: {
                     Image(systemName: "stop.fill")
-                        .font(.title3)
+                        .font(.futura(.title3))
                         .foregroundStyle(PocketColor.textPrimary)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))
@@ -183,8 +277,11 @@ struct ExerciseRunView: View {
         .padding(.top, 8)
         .background(PocketColor.background.opacity(0.95))
     }
+}
 
-    // MARK: - Actions
+// MARK: - Actions
+
+private extension ExerciseRunView {
 
     /// Seed the editor once. With a measured command, load the saved tempos as-is; without one
     /// (first open), default command to the exercise's current tempo and working to a sensible
@@ -203,12 +300,16 @@ struct ExerciseRunView: View {
                                               stepBPM: exercise.rampStepBPM)
         reachSteps = max(0, exercise.rampReachSteps)
         backoffSteps = max(0, exercise.rampBackoffSteps)
+        signature = TimeSignature.forStored(beats: exercise.beatsPerBar,
+                                            noteValue: exercise.noteValue,
+                                            accentBeats: exercise.accentBeats)
         seeded = true
+        baseline = current
     }
 
-    /// Persist the edits and hand the routine to this screen's own engine in one tap — the only
-    /// place the run screen writes to the model (leaving without starting discards).
-    private func commitAndStart() {
+    /// Write the current setup to the model — shared by Save Changes and Start so the two write
+    /// paths never diverge (ADR 0057). Re-baselines so the Save Changes button hides.
+    private func persist() {
         exercise.workingTempo = working
         exercise.promoteCommand(to: command)          // command + reach (targetTempo)
         exercise.rampStepBPM = stepBPM
@@ -218,8 +319,24 @@ struct ExerciseRunView: View {
         exercise.includeBackoff = true
         exercise.rampReachSteps = reachSteps
         exercise.rampBackoffSteps = backoffSteps
+        exercise.beatsPerBar = signature.beats
+        exercise.noteValue = signature.noteValue
         try? modelContext.save()
+        baseline = current
+    }
 
+    /// Save the tuning without starting a run (ADR 0057). Leaving still discards *unsaved* edits.
+    private func saveChanges() {
+        persist()
+        haptic(.medium)
+    }
+
+    /// Persist the edits and hand the routine to this screen's own engine in one tap.
+    private func commitAndStart() {
+        persist()
+        // Feed the exercise's meter to the run engine so the click's accents and the count-in
+        // length honor it (ADR 0052), then hand over the routine.
+        engine.setTimeSignature(signature)
         engine.run(ramp: routine)
         haptic(.medium)
     }
@@ -245,16 +362,15 @@ struct ExerciseRunView: View {
     }
 }
 
-private extension View {
-    /// The shared big-pill look for the run screen's primary transport buttons.
-    var pocketRunButton: some View {
-        self
-            .font(.headline)
-            .foregroundStyle(PocketColor.background)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.practice))
-    }
+/// Snapshot of the run-setup fields Start / Save persist — compared against the live values to
+/// decide whether the Save Changes button shows (ADR 0057). Pure UI state, not a domain type.
+private struct ExerciseSetupState: Equatable {
+    var working: Int
+    var command: Int
+    var steps: Int
+    var reachSteps: Int
+    var backoffSteps: Int
+    var signature: TimeSignature
 }
 
 #Preview("Exercise run") {

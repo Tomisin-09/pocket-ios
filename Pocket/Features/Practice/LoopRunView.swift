@@ -31,6 +31,19 @@ struct LoopRunView: View {
     @State private var repsPerStep = LoopCommandRamp.defaultRepsPerStep
     @State private var showSteps = false
     @State private var seeded = false
+    /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
+    @State private var showingJournal = false
+    /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
+    /// button shows only while the edits differ (ADR 0057). All six persisted fields — the two
+    /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
+    /// of them arms Save Changes.
+    @State private var baseline: LoopSetupState?
+
+    private var current: LoopSetupState {
+        LoopSetupState(working: working, command: command, warmupSteps: steps,
+                       reachSteps: reachSteps, backoffSteps: backoffSteps, repsPerStep: repsPerStep)
+    }
+    private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
     private static let repsRange = 1...8
 
@@ -80,17 +93,44 @@ struct LoopRunView: View {
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
                               currentIndex: model.currentPlateau(in: routine))
                 if !isRunning { promoteButton }
+                if !isRunning, isDirty { saveChangesButton }
+                if !isRunning {
+                    JournalPreviewSection(owner: .loop(loop)) { showingJournal = true }
+                        .padding(.top, 4)
+                }
             }
             .padding(24)
+            .animation(.easeInOut(duration: 0.2), value: isDirty)
         }
         .scrollDismissesKeyboard(.interactively)
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) { transport }
+        .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
         .task { await model.loadIfNeeded() }
         .onDisappear { model.stop() }
+        .sheet(isPresented: $showingJournal) {
+            JournalSheet(owner: .loop(loop),
+                         onAdd: addJournalEntry,
+                         onUpdate: { entry, text, kind in
+                             JournalWriter.update(entry, text: text, kind: kind)
+                             try? modelContext.save()
+                         },
+                         onDelete: { entry in
+                             JournalWriter.delete(entry, from: modelContext)
+                             try? modelContext.save(); haptic(.light)
+                         })
+        }
+    }
+
+    /// Write a new entry, snapshotting the loop's current mastery + command tempo (ADR 0058).
+    private func addJournalEntry(_ text: String, _ kind: EntryKind) {
+        if JournalWriter.add(to: .loop(loop), text: text, kind: kind, into: modelContext) {
+            try? modelContext.save()
+            haptic(.light)
+        }
     }
 
     // MARK: - Live readout (running)
@@ -103,10 +143,10 @@ struct LoopRunView: View {
                     .foregroundStyle(PocketColor.textPrimary)
                     .contentTransition(.numericText())
                 Text("of original tempo")
-                    .font(.caption)
+                    .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                 Text("loop \(model.elapsedReps + 1)")
-                    .font(.caption2)
+                    .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.practice)
                     .contentTransition(.numericText())
             }
@@ -131,9 +171,9 @@ struct LoopRunView: View {
                              onStep: { adjustCommand(by: $0) }, onType: { setCommand($0) })
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Reach").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
+                    Text("Reach").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
                     Text("auto · +\(reach - command)%")
-                        .font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                        .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
                 }
                 Spacer()
                 Text("\(reach)%")
@@ -149,9 +189,9 @@ struct LoopRunView: View {
     private var repsRow: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Reps per step").font(.subheadline).foregroundStyle(PocketColor.textPrimary)
+                Text("Reps per step").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
                 Text(repsPerStep == 1 ? "one loop, then step up" : "\(repsPerStep) loops, then step up")
-                    .font(.caption2).foregroundStyle(PocketColor.textSecondary)
+                    .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
             stepButton(symbol: "minus", label: "Fewer reps per step") {
@@ -169,7 +209,7 @@ struct LoopRunView: View {
     private func stepButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.body.weight(.semibold))
+                .font(.futura(.body, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 38, height: 38)
                 .background(Circle().fill(PocketColor.practice.opacity(0.18)))
@@ -194,7 +234,7 @@ struct LoopRunView: View {
             haptic(.medium)
         } label: {
             Label("I own \(reach)% now — promote", systemImage: "arrow.up.circle.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -204,6 +244,23 @@ struct LoopRunView: View {
         .accessibilityLabel("Promote: I own \(reach) percent now")
     }
 
+    /// Persist the tuning without starting a run (ADR 0057) — shown only while the setup differs
+    /// from what's stored. A subtle filled capsule, distinct from the outlined Promote and the
+    /// filled Start pill. Leaving still discards *unsaved* edits.
+    private var saveChangesButton: some View {
+        Button(action: saveChanges) {
+            Label("Save changes", systemImage: "checkmark.circle.fill")
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.practice)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(PocketColor.practice.opacity(0.15)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Save changes to this loop")
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
     // MARK: - Transport
 
     private var transport: some View {
@@ -211,7 +268,7 @@ struct LoopRunView: View {
             if isRunning {
                 Button { model.stop(); haptic(.medium) } label: {
                     Image(systemName: "stop.fill")
-                        .font(.title3)
+                        .font(.futura(.title3))
                         .foregroundStyle(PocketColor.textPrimary)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))
@@ -238,8 +295,11 @@ struct LoopRunView: View {
         .padding(.top, 8)
         .background(PocketColor.background.opacity(0.95))
     }
+}
 
-    // MARK: - Actions
+// MARK: - Actions
+
+private extension LoopRunView {
 
     /// Seed the editor once. With a measured command, load the saved speeds as-is; without one,
     /// default command to the loop's start speed and working to a floor below it (so the two start
@@ -253,15 +313,38 @@ struct LoopRunView: View {
             command = clampPercent(LoopCommandRamp.percent(loop.speed))
             working = max(Self.percentRange.lowerBound, command - 15)
         }
+        // Restore the saved ramp shape (ADR 0057 follow-up); migrated/new loops read the
+        // declaration defaults (no intermediate stops, single drop, one rep per step).
+        steps = loop.rampWarmupSteps
+        reachSteps = loop.rampReachSteps
+        backoffSteps = loop.rampBackoffSteps
+        repsPerStep = max(Self.repsRange.lowerBound, loop.rampRepsPerStep)
         seeded = true
+        baseline = current
     }
 
-    /// Persist the edits to the loop and start the run in one tap — the only place the run screen
-    /// writes to the model (leaving without starting discards).
-    private func commitAndStart() {
+    /// Write the current tempos to the loop — shared by Save Changes and Start so the two write
+    /// paths never diverge (ADR 0057). Re-baselines so the Save Changes button hides.
+    private func persist() {
         loop.speed = Double(working) / 100
         loop.promoteCommand(to: Double(command) / 100)
+        loop.rampWarmupSteps = steps
+        loop.rampReachSteps = reachSteps
+        loop.rampBackoffSteps = backoffSteps
+        loop.rampRepsPerStep = repsPerStep
         try? modelContext.save()
+        baseline = current
+    }
+
+    /// Save the tuning without starting a run (ADR 0057). Leaving still discards *unsaved* edits.
+    private func saveChanges() {
+        persist()
+        haptic(.medium)
+    }
+
+    /// Persist the edits to the loop and start the run in one tap.
+    private func commitAndStart() {
+        persist()
         model.start(ramp: routine)
         haptic(.medium)
     }
@@ -286,16 +369,17 @@ struct LoopRunView: View {
     }
 }
 
-private extension View {
-    /// The shared big-pill look for the run screen's primary transport buttons.
-    var pocketRunButton: some View {
-        self
-            .font(.headline)
-            .foregroundStyle(PocketColor.background)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.practice))
-    }
+/// Snapshot of the loop run-setup fields that persist — the two tempos (working + command %) plus
+/// the four ramp-shape controls (ADR 0057 follow-up) — compared against the live values to decide
+/// whether the Save Changes button shows (ADR 0057). Every persisted field is tracked, so editing
+/// the ramp shape alone still arms Save Changes.
+struct LoopSetupState: Equatable {
+    var working: Int
+    var command: Int
+    var warmupSteps: Int
+    var reachSteps: Int
+    var backoffSteps: Int
+    var repsPerStep: Int
 }
 
 #Preview("Loop run") {

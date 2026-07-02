@@ -58,6 +58,11 @@ Management → Developer App → Trust.
 See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild test`
 → update docs. CI enforces the same on every PR.
 
+`xcodebuild test -scheme Pocket` runs the default **`PocketLogic`** test plan —
+the ~498 unit tests, no coverage — for a fast local loop (~59s vs ~123s for the
+full suite). CI runs the full **`PocketAll`** plan (`-testPlan PocketAll`, adds
+the UI tests + coverage). See `docs/decisions/0053`.
+
 ## Project layout
 
 ```
@@ -75,6 +80,6 @@ docs/          architecture.md, decisions/ (ADRs), practice-techniques.md, resea
 
 ## CI/CD
 
-- **On PR:** SwiftLint + build + test (`.github/workflows/ci.yml`).
+- **On PR:** SwiftLint + build + test — full `PocketAll` plan (`.github/workflows/ci.yml`).
 - **On merge to `main`:** TestFlight via Fastlane (`.github/workflows/testflight.yml`).
 - Backend prod is AWS (Lambda + API Gateway); dev runs locally / off-AWS.
