@@ -108,6 +108,13 @@ enum PocketColor {
     /// clear of the metronome teal (the metronome is the *tool*; Practice is the
     /// *content*) and of every other functional hue.
     static let practice = Color("Practice")
+    /// Mastery indicator accent — the dots/stars showing how well a loop or song is
+    /// owned (Home's "Mastered" stat, the mastery dots on song cards and the loop
+    /// mastery picker, mastery stars). Reuses the brand teal (`metronome`) rather than
+    /// its own hue — "mastered" reads as an on-brand positive state, not an arbitrary
+    /// UI-kit colour. Previously the ADR 0023 amber `marker` swatch; moved off amber so
+    /// the brand blue/teal is what reads as "progress" everywhere it shows up.
+    static let mastery = metronome
 
     /// Card/circle **wash** fills for the Metronome and Practice feature cards (Home).
     /// Fully resolved per appearance — *not* `metronome`/`practice` at a shared opacity —
@@ -147,7 +154,10 @@ enum PocketColor {
     /// the warm palette = loop identity, red = danger), so contrast comes from
     /// luminance, not hue.
     static let fine = Color("Fine")
-    /// Active-loop region fill base / selection accent. System dynamic colour.
+    /// Reserved amber accent (ADR 0023). Not currently drawn anywhere — the active-loop
+    /// region fill it originally named moved to `active` (green) and the mastery accent
+    /// that had organically become its main user moved to `mastery` (brand teal) — kept
+    /// defined as the "next" free functional hue rather than deleted outright.
     static let marker = Color.orange
     /// Waveform markers (purple inverted triangles). System dynamic colour.
     static let pin = Color.purple

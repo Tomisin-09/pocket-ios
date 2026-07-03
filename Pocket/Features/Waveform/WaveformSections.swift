@@ -54,7 +54,7 @@ struct SongStrip: View {
                 if let mastery = song.mastery {
                     Text(stars(mastery))
                         .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.marker)
+                        .foregroundStyle(PocketColor.mastery)
                         .accessibilityLabel("Mastery \(mastery) of 5")
                 }
                 Text(timecode(song.duration))
@@ -132,7 +132,7 @@ struct SpeedBar: View {
                     Button(action: onSetBPM) {
                         Text("Set BPM")
                             .font(.pocketMono(.footnote))
-                            .foregroundStyle(PocketColor.marker)
+                            .foregroundStyle(PocketColor.metronome)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(Capsule().fill(PocketColor.surfaceStandard))

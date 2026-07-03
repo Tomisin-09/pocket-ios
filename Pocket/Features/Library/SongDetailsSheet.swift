@@ -85,7 +85,7 @@ struct SongDetailsSheet: View {
             }
             DetailLabeledContent(label: "Mastery", info: PracticeFieldInfo.songMastery) {
                 if let mastery = song.mastery {
-                    Text(stars(mastery)).foregroundStyle(PocketColor.marker)
+                    Text(stars(mastery)).foregroundStyle(PocketColor.mastery)
                 } else {
                     Text("Unrated").foregroundStyle(PocketColor.textSecondary)
                 }

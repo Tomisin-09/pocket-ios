@@ -89,7 +89,7 @@ struct SongCard: View {
     }
 }
 
-/// Mastery as up to five small dots (0–5), amber when filled.
+/// Mastery as up to five small dots (0–5), the brand teal when filled.
 struct MasteryDots: View {
     let filled: Int
 
@@ -97,7 +97,7 @@ struct MasteryDots: View {
         HStack(spacing: 3) {
             ForEach(0..<5, id: \.self) { index in
                 Circle()
-                    .fill(index < filled ? PocketColor.marker : PocketColor.barDefault)
+                    .fill(index < filled ? PocketColor.mastery : PocketColor.barDefault)
                     .frame(width: 6, height: 6)
             }
         }

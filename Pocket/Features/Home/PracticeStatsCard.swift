@@ -15,7 +15,7 @@ struct PracticeStatsCard: View {
             HStack(spacing: 10) {
                 tile(summary.loops, "Loops")
                 tile(summary.exercises, "Exercises")
-                tile(summary.fullMasteryCount, "Mastered", tint: PocketColor.marker)
+                tile(summary.fullMasteryCount, "Mastered", tint: PocketColor.mastery)
                 tile(summary.notes, "Notes")
             }
         }

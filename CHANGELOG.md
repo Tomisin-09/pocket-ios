@@ -38,6 +38,9 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **The Settings → About brand mark now blends into the background** (ADR 0063) — its solid
   card-coloured background is keyed out to transparent, so the artwork sits directly on the app
   background with no seam, in either appearance.
+- **Mastery dots and stars are now the brand teal instead of amber** (Home's "Mastered" stat, the
+  "Jump back in" card, song cards, and the loop mastery picker), plus the waveform's "Set BPM"
+  label — both now read as on-brand rather than a leftover UI-kit amber.
 - **The app now supports Light Mode** (ADR 0062), following the system Light/Dark setting — every
   screen was previously forced dark regardless of device setting. Every colour token got a proper
   light+dark pair verified against real WCAG contrast (not just the same hex reused), and four new
