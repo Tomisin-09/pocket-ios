@@ -59,8 +59,10 @@ not code. Re-run the audit any time with the `/ready-to-ship` skill.
   (file timestamps, system boot time / `mach_absolute_time`, disk space) or any
   off-device data send (e.g. the AI phase's Claude proxy) must add the matching
   `NSPrivacyAccessedAPITypes` / `NSPrivacyCollectedDataTypes` entry in
-  `PrivacyInfo.xcprivacy` *in the same PR*. Today's manifest declares only
-  UserDefaults (CA92.1); don't let it drift.
+  `PrivacyInfo.xcprivacy` *in the same PR*. Today's manifest declares
+  UserDefaults (CA92.1) and System Boot Time (35F9.1 — the metronome's
+  `CACurrentMediaTime()` session/tick timing, added pocket-089); don't let it
+  drift further.
 - **Permissions stay minimal & specific.** Add an `Info.plist` usage string only
   when a shipping feature exercises it (the parked pedal modeller's mic string is
   correctly absent). Vague strings cause rejection.

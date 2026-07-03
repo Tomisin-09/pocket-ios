@@ -5,6 +5,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Compliance
+- **Privacy manifest now declares the System Boot Time required-reason API** (35F9.1). The
+  metronome engine reads `CACurrentMediaTime()` for session/tick timing; the manifest previously
+  declared only UserDefaults, which would have drawn an ITMS-91053 "missing API declaration"
+  warning on upload. Also excluded the local `build-device/` output from SwiftLint so a
+  `--strict` run no longer flags generated asset-catalog sources.
+
 ### Changed
 - **Minimap waveform now matches the detail waveform's style** (ADR 0055 follow-up). The
   full-song overview strip draws smoothed, rounded-cap bars (grouped the same way the

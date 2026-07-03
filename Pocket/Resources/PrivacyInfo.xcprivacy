@@ -22,6 +22,17 @@
 				<string>CA92.1</string>
 			</array>
 		</dict>
+		<!-- The metronome engine reads CACurrentMediaTime() (backed by
+		     mach_absolute_time) to measure elapsed session/tick time between
+		     in-app events — never wall-clock or across launches. Reason 35F9.1. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>35F9.1</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

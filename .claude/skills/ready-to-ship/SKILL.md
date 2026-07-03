@@ -75,7 +75,10 @@ Grep, then **read each hit in context** before flagging:
   `systemUptime`/`mach_absolute_time`/`CACurrentMediaTime` (boot-time category),
   `modificationDate`/`creationDate` (file-timestamp), disk-space APIs,
   UserDefaults/`@AppStorage`. Note: tap-tempo uses **song-time seconds**, not
-  wall-clock, so it needs no boot-time declaration — verify this still holds.
+  wall-clock — but the **metronome engine** (`StandaloneMetronomeEngine`,
+  `MetronomeView`) does read `CACurrentMediaTime()` for session/tick timing,
+  which **is** a System Boot Time required-reason API; the manifest declares it
+  (35F9.1) as of pocket-089. If that usage is ever removed, drop the declaration.
   Any off-device data send (AI phase) needs `NSPrivacyCollectedDataTypes`.
 - **Permissions** (`Info.plist`): every usage string must map to a shipping
   feature; flag any that don't. Confirm there's no mic string while the pedal
