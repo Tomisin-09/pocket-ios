@@ -120,7 +120,7 @@ struct DownbeatBar: View {
                 .background(
                     Capsule()
                         .fill(PocketColor.background.opacity(0.9))
-                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                        .overlay(Capsule().strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
                 )
             }
         }

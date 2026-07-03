@@ -95,8 +95,8 @@ struct TagChip: View {
 
     private var fill: Color {
         switch style {
-        case .selected: Color.white.opacity(0.18)
-        case .suggestion: Color.white.opacity(0.08)
+        case .selected: PocketColor.surfaceEmphasis
+        case .suggestion: PocketColor.surfaceStandard
         }
     }
 }

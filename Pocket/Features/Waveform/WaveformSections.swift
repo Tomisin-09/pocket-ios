@@ -54,7 +54,7 @@ struct SongStrip: View {
                 if let mastery = song.mastery {
                     Text(stars(mastery))
                         .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.marker)
+                        .foregroundStyle(PocketColor.mastery)
                         .accessibilityLabel("Mastery \(mastery) of 5")
                 }
                 Text(timecode(song.duration))
@@ -103,7 +103,7 @@ struct SpeedBar: View {
                 // single-axis iteration; a linear slider stands in for now.
                 Slider(value: $speed, in: 0.25...2.0,
                        onEditingChanged: { editing in if editing { onUserAdjust() } })
-                    .tint(PocketColor.active)
+                    .tint(PocketColor.metronome)
                     .accessibilityLabel("Playback speed")
 
                 if let displayedBPM {
@@ -132,10 +132,10 @@ struct SpeedBar: View {
                     Button(action: onSetBPM) {
                         Text("Set BPM")
                             .font(.pocketMono(.footnote))
-                            .foregroundStyle(PocketColor.marker)
+                            .foregroundStyle(PocketColor.metronome)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(Capsule().fill(Color.white.opacity(0.10)))
+                            .background(Capsule().fill(PocketColor.surfaceStandard))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Set tempo")
@@ -183,7 +183,7 @@ private struct MetronomeToggle: View {
                 .font(.futura(size: 15, weight: .semibold))
                 .foregroundStyle(foreground)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(isOn ? PocketColor.metronome : Color.white.opacity(0.08)))
+                .background(Circle().fill(isOn ? PocketColor.metronome : PocketColor.surfaceStandard))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -214,7 +214,7 @@ private struct PresetPill: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(
-                    Capsule().fill(isSelected ? PocketColor.active : Color.white.opacity(0.10))
+                    Capsule().fill(isSelected ? PocketColor.active : PocketColor.surfaceStandard)
                 )
         }
         .buttonStyle(.plain)
@@ -276,7 +276,6 @@ private struct LoopControlsInfo: View {
         }
         .padding(16)
         .frame(maxWidth: 290)
-        .preferredColorScheme(.dark)
     }
 
     private func row(_ key: String, _ detail: String) -> some View {

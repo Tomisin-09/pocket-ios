@@ -1,5 +1,24 @@
 import Foundation
 
+/// Appearance override for the app's colour scheme (ADR 0062 follow-up). `.system`
+/// (the default) follows the device setting, as ADR 0062 originally shipped; `.light`/
+/// `.dark` pin the app regardless of the device, both to aid testing across appearances
+/// on one device and as a standing user preference. `RawRepresentable` with a `String`
+/// raw value so it works directly with `@AppStorage`.
+enum AppearancePreference: String, CaseIterable {
+    case system
+    case light
+    case dark
+
+    var label: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+}
+
 /// Persisted user preferences (Settings V1, ADR 0050). A thin `UserDefaults` wrapper so both
 /// SwiftUI (`@AppStorage` on the same key) and plain engine code (the metronome, the haptic
 /// helper) can read a setting without sharing an object. Keys default to **on** when never set —
@@ -14,6 +33,7 @@ enum AppSettings {
         static let countInEnabled = "countInEnabled"
         static let countInBars = "countInBars"
         static let keepScreenAwake = "keepScreenAwake"
+        static let appearance = "appearance"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -35,6 +55,19 @@ enum AppSettings {
     /// Keep the screen awake on the practice/metronome surfaces. Default on — you play
     /// along hands-free, so the screen auto-locking mid-session is the wrong default.
     static var keepScreenAwake: Bool { bool(Key.keepScreenAwake) }
+
+    /// Appearance override. Default `.system` — the app follows the device setting until
+    /// the user opts into a pinned light/dark appearance.
+    static var appearance: AppearancePreference {
+        resolvedAppearance(storedValue: UserDefaults.standard.string(forKey: Key.appearance))
+    }
+
+    /// Pure default-resolution: a missing or unrecognised stored value falls back to
+    /// `.system` rather than crashing on a bad raw value.
+    static func resolvedAppearance(storedValue: String?) -> AppearancePreference {
+        guard let storedValue else { return .system }
+        return AppearancePreference(rawValue: storedValue) ?? .system
+    }
 
     private static func bool(_ key: String, default fallback: Bool = true,
                              store: UserDefaults = .standard) -> Bool {

@@ -212,7 +212,7 @@ struct LoopRunView: View {
                 .font(.futura(.body, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 38, height: 38)
-                .background(Circle().fill(PocketColor.practice.opacity(0.18)))
+                .background(Circle().fill(PocketColor.practiceCircleWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -254,7 +254,7 @@ struct LoopRunView: View {
                 .foregroundStyle(PocketColor.practice)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Capsule().fill(PocketColor.practice.opacity(0.15)))
+                .background(Capsule().fill(PocketColor.practiceCircleWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Save changes to this loop")

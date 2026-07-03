@@ -9,6 +9,6 @@ extension View {
             .foregroundStyle(PocketColor.background)
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.practice))
+            .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.practiceCTA))
     }
 }

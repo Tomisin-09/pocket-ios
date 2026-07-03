@@ -47,7 +47,6 @@ struct WaveformPracticeView: View {
             }
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
-        .preferredColorScheme(.dark)
         // Landscape uses its own compact top bar (back · title · menu), so hide the system
         // nav bar there; portrait keeps it (ADR 0042).
         .toolbar(isLandscape ? .hidden : .automatic, for: .navigationBar)
@@ -151,7 +150,7 @@ struct WaveformPracticeView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(PocketColor.surfaceSubtle)
                 .frame(height: 1)
             PracticeReference(model: model)
         }
@@ -166,7 +165,8 @@ struct WaveformPracticeView: View {
                 landscapeTopBar(model: model)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.top, 20)
+            .padding(.bottom, 8)
 
             if drawerOpen {
                 // Scrim — tap outside the drawer to dismiss it.
@@ -179,7 +179,7 @@ struct WaveformPracticeView: View {
                     .frame(maxHeight: .infinity)
                     .background(PocketColor.background)
                     .overlay(alignment: .leading) {
-                        Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1)
+                        Rectangle().fill(PocketColor.surfaceSubtle).frame(width: 1)
                     }
                     .transition(.move(edge: .trailing))
             }
@@ -196,7 +196,7 @@ struct WaveformPracticeView: View {
                     .font(.futura(size: 16, weight: .semibold))
                     .foregroundStyle(PocketColor.textPrimary)
                     .frame(width: 32, height: 32)
-                    .background(Circle().fill(Color.white.opacity(0.10)))
+                    .background(Circle().fill(PocketColor.surfaceStandard))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Back to library")
@@ -227,7 +227,7 @@ struct WaveformPracticeView: View {
                     .font(.futura(size: 17, weight: .semibold))
                     .foregroundStyle(drawerOpen ? PocketColor.background : PocketColor.textPrimary)
                     .frame(width: 32, height: 32)
-                    .background(Circle().fill(drawerOpen ? PocketColor.textPrimary : Color.white.opacity(0.10)))
+                    .background(Circle().fill(drawerOpen ? PocketColor.textPrimary : PocketColor.surfaceStandard))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Loops and markers")

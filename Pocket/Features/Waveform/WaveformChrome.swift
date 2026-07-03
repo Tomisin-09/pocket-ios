@@ -43,10 +43,10 @@ struct CollapsiblePanel<Content: View>: View {
     }
 }
 
-/// Standard panel surface — a hair lighter than the near-black background.
+/// Standard panel surface — a hair off the background, in either appearance.
 var panelBackground: some View {
     RoundedRectangle(cornerRadius: 12, style: .continuous)
-        .fill(Color.white.opacity(0.04))
+        .fill(PocketColor.surfaceStandard)
 }
 
 /// Shown over the practice surface while a song's audio opens (brief §5 — every
@@ -90,7 +90,7 @@ struct ZoomResetButton: View {
                 .background(
                     Capsule()
                         .fill(PocketColor.background.opacity(0.85))
-                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                        .overlay(Capsule().strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
                 )
         }
         .buttonStyle(.plain)
@@ -126,7 +126,7 @@ struct UndoToastView: View {
         .background(
             Capsule()
                 .fill(PocketColor.background.opacity(0.92))
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                .overlay(Capsule().strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
                 .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
         )
         .accessibilityElement(children: .combine)

@@ -70,7 +70,7 @@ struct SongCard: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(Capsule().fill(Color.white.opacity(0.08)))
+                    .background(Capsule().fill(PocketColor.surfaceStandard))
             }
         }
         .lineLimit(1)
@@ -89,7 +89,7 @@ struct SongCard: View {
     }
 }
 
-/// Mastery as up to five small dots (0–5), amber when filled.
+/// Mastery as up to five small dots (0–5), the brand teal when filled.
 struct MasteryDots: View {
     let filled: Int
 
@@ -97,7 +97,7 @@ struct MasteryDots: View {
         HStack(spacing: 3) {
             ForEach(0..<5, id: \.self) { index in
                 Circle()
-                    .fill(index < filled ? PocketColor.marker : PocketColor.barDefault)
+                    .fill(index < filled ? PocketColor.mastery : PocketColor.barDefault)
                     .frame(width: 6, height: 6)
             }
         }

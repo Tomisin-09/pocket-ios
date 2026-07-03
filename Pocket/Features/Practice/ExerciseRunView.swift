@@ -235,7 +235,7 @@ struct ExerciseRunView: View {
                 .foregroundStyle(PocketColor.practice)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Capsule().fill(PocketColor.practice.opacity(0.15)))
+                .background(Capsule().fill(PocketColor.practiceCircleWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Save changes to this exercise")

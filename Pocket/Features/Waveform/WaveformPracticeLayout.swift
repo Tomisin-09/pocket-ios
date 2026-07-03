@@ -87,7 +87,6 @@ struct PracticeCockpit<Header: View>: View {
                      onScrub: model.seekToFraction,
                      onMoveABHandle: model.moveABHandle,
                      onMoveABHandleEnded: model.endABHandle,
-                     onLiftLoopEdge: model.liftActiveLoopToSpan,
                      onSelectBegan: model.beginDragSelection,
                      onSelectChanged: model.updateDragSelection,
                      onSelectEnded: model.endDragSelection,

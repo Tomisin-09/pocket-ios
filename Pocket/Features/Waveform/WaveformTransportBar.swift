@@ -140,7 +140,7 @@ private struct TransportControl: View {
                 .rotationEffect(.degrees(rotation))
                 .foregroundStyle(isActive ? PocketColor.background : color)
                 .frame(width: controlDiameter, height: controlDiameter)
-                .background(Circle().fill(isActive ? color : Color.white.opacity(0.10)))
+                .background(Circle().fill(isActive ? color : PocketColor.surfaceStandard))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)

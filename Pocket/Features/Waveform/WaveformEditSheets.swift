@@ -192,7 +192,7 @@ struct LoopEditSheet: View {
                 }
                 ForEach(1...5, id: \.self) { value in
                     Circle()
-                        .fill(value <= (mastery ?? 0) ? PocketColor.marker : PocketColor.barDefault)
+                        .fill(value <= (mastery ?? 0) ? PocketColor.mastery : PocketColor.barDefault)
                         .frame(width: 18, height: 18)
                         .onTapGesture {
                             // Tapping the current value walks down; below 1 → unrated (nil).

@@ -39,7 +39,7 @@ struct MetronomeAutomatorPanel: View {
             }
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronome.opacity(0.08)))
+        .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronomeCardWash))
         .sheet(isPresented: $saving) {
             // Captures the tempo live at the moment of the tap (the breakdown point), prefilled as
             // the new exercise's command. Funnels through the same `commandAnchored` factory as
@@ -125,7 +125,7 @@ struct MetronomeAutomatorPanel: View {
                 .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.metronome)
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
+                .background(Circle().fill(PocketColor.metronomeCircleWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Save \(engine.bpm) beats per minute as an exercise in Practice")
@@ -222,7 +222,7 @@ struct AutomatorNumberField: View {
                 .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 32, height: 32)
-                .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
+                .background(Circle().fill(PocketColor.metronomeCircleWash))
         }
         .buttonStyle(.plain)
     }

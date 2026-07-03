@@ -65,7 +65,9 @@ struct Minimap: View {
     /// The active-loop region wash plus every saved loop's identity-coloured underline
     /// (ADR 0023). Colour encodes loop **identity** (matching the detail waveform); state
     /// is carried by weight + opacity — the active loop heavier (2 pt, full) and drawn
-    /// last, the rest dimmed (1.5 pt, 0.55). Overlaps stack into at most two lanes;
+    /// last, the rest dimmed (1.5 pt, 0.8 — kept high because blending toward the dark
+    /// appearance's near-black canvas darkens far more than the same blend toward light's
+    /// cream, see `WaveformView.drawLoopLines`). Overlaps stack into at most two lanes;
     /// deeper nesting clamps into the last lane.
     private func drawLoops(in context: GraphicsContext, size: CGSize) {
         // Active loop region — washed in its own identity colour, the prominent one.
@@ -88,7 +90,7 @@ struct Minimap: View {
             var line = Path()
             line.move(to: CGPoint(x: size.width * loop.start, y: lineY))
             line.addLine(to: CGPoint(x: size.width * loop.end, y: lineY))
-            context.stroke(line, with: .color(loopColor(for: loop).opacity(isActive ? 1.0 : 0.55)),
+            context.stroke(line, with: .color(loopColor(for: loop).opacity(isActive ? 1.0 : 0.8)),
                            lineWidth: isActive ? 2 : 1.5)
         }
         let activeUID = activeLoop?.uid

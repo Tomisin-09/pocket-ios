@@ -157,7 +157,7 @@ private struct LoopRowProgress: View {
                         .fixedSize()   // keep the badge on one line; the range truncates first
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Capsule().fill(Color.white.opacity(0.10)))
+                        .background(Capsule().fill(PocketColor.surfaceStandard))
                         .accessibilityLabel("Command tempo \(percent) percent")
                 }
             }
@@ -179,7 +179,7 @@ private struct JournalButton: View {
                 .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(Color.white.opacity(0.06)))
+                .background(Circle().fill(PocketColor.surfaceStandard))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -199,7 +199,7 @@ private struct AutomatorButton: View {
                 .font(.futura(.subheadline, weight: .bold))
                 .foregroundStyle(isOn ? PocketColor.active : PocketColor.textSecondary)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(isOn ? PocketColor.active.opacity(0.18) : Color.white.opacity(0.06)))
+                .background(Circle().fill(isOn ? PocketColor.active.opacity(0.18) : PocketColor.surfaceStandard))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }

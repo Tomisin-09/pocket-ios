@@ -12,12 +12,50 @@ All notable changes to Pocket are documented here. Format loosely follows
   waveforms read as one consistent instrument.
 
 ### Added
+- **Settings → Appearance** lets you pin Light or Dark regardless of the device setting, or leave
+  it on System (the default, unchanged behaviour) (ADR 0063).
+- **The Home header now shows the "Red Moon" wordmark graphic** (with its hidden half-note) instead
+  of plain title text, in both appearances.
+
+### Changed
+- **Dark Mode is noticeably more vibrant** (ADR 0063). The Metronome/Practice card and circle
+  tints on Home, and the "Add a song" green, were still reading as near-invisible on the near-black
+  background — the same light/dark blending asymmetry ADR 0062 fixed for Light Mode, just
+  undiscovered in the other direction. They're now independently baked per appearance instead of a
+  shared low-opacity blend, along with the waveform's beat-grid lines and inactive loop-identity
+  lines (waveform + minimap). The Metronome teal and Practice plum accents themselves also moved
+  from ~20% to ~50% saturation in both appearances — they read as too dusty for how much visual
+  weight they carry (feature cards, the tempo slider, every waveform bar). The tempo/speed slider
+  and waveform bars now track the same retuned teal.
+- **Loop identity colours are brighter and no longer brand-tuned** (ADR 0063) — a loop's colour
+  exists only to tell loops apart, so the six-colour palette moved to plain, maximally-distinct
+  hues (red/orange/gold/magenta/violet/blue) instead of the brand's muted register, fixing two
+  light-mode swatches that had collapsed into a near-identical muddy brown/olive.
+- **A saved loop's edge can no longer be dragged directly on the waveform** (ADR 0063) — resizing a
+  loop now only happens via its edit sheet's explicit **"Adjust range on waveform"**, removing an
+  accidental second path to the same action. The active loop's boundary is now marked with a bold
+  static line across the waveform instead of a grabbable knob.
+- **The Settings → About brand mark now blends into the background** (ADR 0063) — its solid
+  card-coloured background is keyed out to transparent, so the artwork sits directly on the app
+  background with no seam, in either appearance.
+- **Mastery dots and stars are now the brand teal instead of amber** (Home's "Mastered" stat, the
+  "Jump back in" card, song cards, and the loop mastery picker), plus the waveform's "Set BPM"
+  label — both now read as on-brand rather than a leftover UI-kit amber.
+- **The app now supports Light Mode** (ADR 0062), following the system Light/Dark setting — every
+  screen was previously forced dark regardless of device setting. Every colour token got a proper
+  light+dark pair verified against real WCAG contrast (not just the same hex reused), and four new
+  "surface" tokens (`surfaceSubtle`/`Standard`/`Emphasis`/`Border`) replace 11 ad-hoc translucent
+  fills that had no shared token at all.
 - **The app has a name, an icon, and a face: "Red Moon"** (ADR 0061). The home-screen name is now
   **Red Moon**, with a new **app icon** — the crescent moon and its Southern-Cross stars on the
   dark canvas. **Settings → About** shows the full brand mark (moon + "Red Moon" wordmark), whose
   **"d" hides an open half-note**. Internally the app is still Pocket (bundle id unchanged).
 
 ### Changed
+- **Metronome and Practice's identity colours are retuned to match the brand** (ADR 0062).
+  Metronome retires its old bright cyan for the "Red Moon" brand teal; Practice moves from a
+  generic indigo to a dusty plum — both now sit in the same muted register as the logo instead of
+  reading as unrelated UI-kit colours.
 - **App type is now Futura** (ADR 0061), echoing the wordmark — all prose/UI text moves from the
   system sans to Futura via a single `Font.futura` token. Tempo/time **numerals stay monospace**
   (unchanged) so live readouts don't jitter.

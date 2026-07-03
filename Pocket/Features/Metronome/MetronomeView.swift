@@ -76,7 +76,6 @@ struct MetronomeView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onDisappear { engine.stop() }
     }
@@ -140,7 +139,7 @@ struct MetronomeView: View {
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 56, height: 44)
                 .background(RoundedRectangle(cornerRadius: 12)
-                    .fill(PocketColor.metronome.opacity(0.18)))
+                    .fill(PocketColor.metronomeCardWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Tap to set tempo")
@@ -152,7 +151,7 @@ struct MetronomeView: View {
                 .font(.futura(.title3, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 44, height: 44)
-                .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
+                .background(Circle().fill(PocketColor.metronomeCircleWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(delta > 0 ? "Increase tempo" : "Decrease tempo")
@@ -181,7 +180,7 @@ struct MetronomeView: View {
                     .foregroundStyle(PocketColor.background)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronome))
+                    .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronomeCTA))
             }
             .buttonStyle(.plain)
         }

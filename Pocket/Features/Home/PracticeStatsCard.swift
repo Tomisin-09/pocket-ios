@@ -15,7 +15,7 @@ struct PracticeStatsCard: View {
             HStack(spacing: 10) {
                 tile(summary.loops, "Loops")
                 tile(summary.exercises, "Exercises")
-                tile(summary.fullMasteryCount, "Mastered", tint: PocketColor.marker)
+                tile(summary.fullMasteryCount, "Mastered", tint: PocketColor.mastery)
                 tile(summary.notes, "Notes")
             }
         }
@@ -38,7 +38,7 @@ struct PracticeStatsCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 12).fill(PocketColor.surfaceStandard))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(value) \(label)")
     }

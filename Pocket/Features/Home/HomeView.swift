@@ -41,9 +41,19 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(PocketColor.background.ignoresSafeArea())
-            .navigationTitle("Pocket")
+            .navigationTitle("Red Moon")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // The wordmark graphic (with its hidden half-note "d", ADR 0061) replaces the
+                // plain title text; `navigationTitle` above still backs VoiceOver/back-button
+                // labels. Light/dark artwork adapts on its own (ADR 0062).
+                ToolbarItem(placement: .principal) {
+                    Image("RedMoonWordmark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 22)
+                        .accessibilityLabel("Red Moon")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         SettingsView()
@@ -69,7 +79,6 @@ struct HomeView: View {
             // `UserDefaults` guard makes this idempotent across launches.
             .task { PracticePresets.seedIfNeeded(into: context) }
         }
-        .preferredColorScheme(.dark)
     }
 
     // MARK: - Greeting
@@ -99,7 +108,7 @@ struct HomeView: View {
                     .font(.futura(.title2))
                     .foregroundStyle(PocketColor.practice)
                     .frame(width: 44, height: 44)
-                    .background(Circle().fill(PocketColor.practice.opacity(0.15)))
+                    .background(Circle().fill(PocketColor.practiceCircleWash))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Practice")
                         .font(.futura(.headline))
@@ -114,7 +123,7 @@ struct HomeView: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practice.opacity(0.10)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCardWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Practice, your exercises and training runs")
@@ -131,7 +140,7 @@ struct HomeView: View {
                     .font(.futura(.title2))
                     .foregroundStyle(PocketColor.metronome)
                     .frame(width: 44, height: 44)
-                    .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
+                    .background(Circle().fill(PocketColor.metronomeCircleWash))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Metronome")
                         .font(.futura(.headline))
@@ -146,7 +155,7 @@ struct HomeView: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.metronome.opacity(0.10)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.metronomeCardWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Metronome, standalone click and tempo trainer")
@@ -190,7 +199,7 @@ struct HomeView: View {
                 .foregroundStyle(PocketColor.active)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.active.opacity(0.14)))
+                .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.confirmWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add a song")
@@ -277,7 +286,7 @@ private struct JumpBackInCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.surfaceStandard))
     }
 
     /// "2 days ago" — a relative, human description of the last practice time.
