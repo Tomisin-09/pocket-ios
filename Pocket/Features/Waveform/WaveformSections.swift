@@ -103,7 +103,7 @@ struct SpeedBar: View {
                 // single-axis iteration; a linear slider stands in for now.
                 Slider(value: $speed, in: 0.25...2.0,
                        onEditingChanged: { editing in if editing { onUserAdjust() } })
-                    .tint(PocketColor.active)
+                    .tint(PocketColor.metronome)
                     .accessibilityLabel("Playback speed")
 
                 if let displayedBPM {

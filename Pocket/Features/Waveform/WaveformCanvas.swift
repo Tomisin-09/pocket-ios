@@ -13,8 +13,9 @@ import UIKit
 /// A/B span + its handles, and the playhead (brief §4.1 / ADR 0005, 0041):
 ///
 /// - tap → seek · drag → scrub · **hold-drag → set an A/B span** · pinch → zoom.
-/// - Once a span is set, drag its **A / B handles** to refine it in place; drag a
-///   saved loop's edge to lift it back into A/B for a range edit.
+/// - Once a span is set, drag its **A / B handles** to refine it in place. A saved
+///   loop's edge is *not* directly draggable here — that only happens via the loop's
+///   edit sheet's explicit "Adjust range on waveform", so a stray touch can't resize it.
 ///
 /// Marker drop and the A/B set control are also buttons on the transport bar (they
 /// act at the playhead). All gesture math (point → fraction, zoom
@@ -71,8 +72,6 @@ struct WaveformView: View {
     /// no mode hop; release passes the moved handle.
     var onMoveABHandle: (WaveformGesture.Handle, Double) -> Void = { _, _ in }
     var onMoveABHandleEnded: (WaveformGesture.Handle) -> Void = { _ in }
-    /// Grabbed the active loop's edge (ADR 0041) — lift it into the A/B span to range-edit.
-    var onLiftLoopEdge: () -> Void = {}
     /// Long-press-drag select (navigate mode): a hold fired — begin a selection at
     /// this fraction. The drag then extends it (`onSelectChanged`).
     let onSelectBegan: (Double) -> Void
@@ -113,11 +112,10 @@ struct WaveformView: View {
     @State var didScrub = false                     // moved enough to be a scrub (not a tap)
     @State var grabbedHandle: WaveformGesture.Handle?  // a committed A/B-edge drag
     @State var grabbedHandleOrigin: Double?            // its value at grab-time, to revert on a pinch takeover
-    /// A loop edge touched but not yet committed to a drag (ADR 0041): a **tap** here
-    /// seeks the playhead; only movement past the scrub threshold commits to dragging the
-    /// edge (lifting a saved loop into A/B first when `lift`). Lets you tap-seek inside a
-    /// loop — even a short one whose edge grab-zones cover it — without nudging a handle.
-    @State var pendingGrab: (handle: WaveformGesture.Handle, lift: Bool)?
+    /// An A/B span edge touched but not yet committed to a drag (ADR 0041): a **tap**
+    /// here seeks the playhead; only movement past the scrub threshold commits to
+    /// dragging the edge. Lets you tap-seek inside a span without nudging a handle.
+    @State var pendingGrab: WaveformGesture.Handle?
     @State var pinchBaseSpan: Double?               // zoom span captured at pinch start
     @State var didPinch = false                     // a pinch happened — swallow the trailing tap/scrub
     // Long-press-drag select (navigate). A still hold arms a selection; the drag
@@ -202,17 +200,24 @@ struct WaveformView: View {
 
         drawBars(in: context, size: size, barSet: barSet, playheadX: playheadX, region: region)
 
+        // Bold boundary lines at the active loop's edges, cut right across the bars
+        // (ADR 0041 follow-up) — a static echo of the visual emphasis the old grabbable
+        // edge knobs gave, so the loop's range still reads clearly on the waveform
+        // itself even though the edges aren't draggable here (only via the edit sheet's
+        // "Adjust range on waveform"). Suppressed alongside the wash while a span is up.
+        if let loop, tapSelection == nil {
+            drawLoopBoundaryLines(in: context, region: region, atX: atX, loop: loop)
+        }
+
         // Annotations on the borders (ADR 0023): per-loop coloured lines along the
         // bottom (lane-stacked), purple inverted triangles along the top.
         drawLoopLines(in: context, size: size, atX: atX)
         drawMarkerTriangles(in: context, size: size, atX: atX)
 
-        // Handles in front of the bars (helpers in `WaveformDownbeat.swift`): A/B span
-        // handles, plus grabbable edges on the active loop.
-        drawABHandles(in: context, region: region, atX: atX)   // A/B span handles (ADR 0041)
-        if let loop {                                          // grabbable edges on the active loop (ADR 0041)
-            drawLoopEditHandles(in: context, region: region, atX: atX, loop: loop, color: loopColor(for: loop))
-        }
+        // A/B span handles in front of the bars (helper in `WaveformDownbeat.swift`). The
+        // active loop's edges are *not* drawn as handles — they're no longer directly
+        // draggable, so a knob there would promise an interaction that doesn't exist.
+        drawABHandles(in: context, region: region, atX: atX)
 
         // Playhead.
         var line = Path()
@@ -273,6 +278,22 @@ struct WaveformView: View {
         }
     }
 
+    /// A bold vertical line at each of the active loop's edges, spanning the full bar
+    /// region — see the call site's ADR 0041 follow-up note. In the loop's identity
+    /// colour with a background halo, like the A/B handles' bar but without their
+    /// pill/label knob, so it reads as a boundary marker rather than a grab target.
+    private func drawLoopBoundaryLines(in context: GraphicsContext, region: BarRegion,
+                                       atX: (Double) -> CGFloat, loop: Loop) {
+        let color = loopColor(for: loop)
+        for edgeX in [atX(loop.start), atX(loop.end)] {
+            var line = Path()
+            line.move(to: CGPoint(x: edgeX, y: region.top))
+            line.addLine(to: CGPoint(x: edgeX, y: region.bottom))
+            context.stroke(line, with: .color(PocketColor.background.opacity(0.6)), lineWidth: 3)
+            context.stroke(line, with: .color(color), lineWidth: 1.5)
+        }
+    }
+
     /// The vertical band the bars occupy, between the marker (top) and loop (bottom)
     /// border bands. `axis`/`scale` place the mirror so a full bar plus its 60%
     /// reflection exactly fills the region (ADR 0023).
@@ -296,54 +317,13 @@ struct WaveformView: View {
     // top band holds marker triangles; the bottom band holds lane-stacked loop
     // lines. The bars are drawn in the region between them.
     static let markerBand: CGFloat = 16             // top: marker triangles (used by the helpers file)
-    private static let loopBand: CGFloat = 24       // bottom: loop lines (maxLanes × laneHeight + pad)
-    // Loop lines stack upward from the bottom edge. Capped at `maxLanes` so deep
-    // nesting can't march up out of the band — anything deeper clamps into the last lane.
-    private static let maxLanes = 3
-    private static let laneHeight: CGFloat = 7
-    private static let bracketPadding: CGFloat = 3
+    static let loopBand: CGFloat = 24               // bottom: loop lines (maxLanes × laneHeight + pad;
+                                                     // used by the helpers file too)
 
     /// The identity colour for a loop (ADR 0023) — shared via `LoopColor` so the
-    /// waveform, minimap, and transport strip all resolve the same hue.
-    private func loopColor(for loop: Loop) -> Color { LoopColor.color(for: loop, among: loops) }
-
-    /// All saved loops as lane-stacked horizontal lines along the bottom border.
-    /// Colour encodes loop **identity** (ADR 0023, superseding ADR 0018's
-    /// colour-is-state rule); overlap is shown by lane. State is carried by weight
-    /// and opacity instead — the active loop is heavier (2.5 pt, full opacity), the
-    /// rest dimmed (1.5 pt, 0.55). A near-background halo lifts each line off the
-    /// background. The active loop is drawn last so it stays on top.
-    private func drawLoopLines(in context: GraphicsContext, size: CGSize,
-                               atX: (Double) -> CGFloat) {
-        guard !loops.isEmpty else { return }
-        let packing = LoopLanes.pack(loops.map {
-            LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
-        })
-
-        func line(_ loop: Loop, isActive: Bool) {
-            let startX = atX(loop.start)
-            let endX = atX(loop.end)
-            guard endX > 0, startX < size.width else { return }       // off-screen
-            let lane = min(packing.lane(for: loop.uid), Self.maxLanes - 1)
-            let baseY = size.height - Self.bracketPadding - CGFloat(lane) * Self.laneHeight
-
-            var path = Path()
-            path.move(to: CGPoint(x: max(0, startX), y: baseY))
-            path.addLine(to: CGPoint(x: min(size.width, endX), y: baseY))
-            let width: CGFloat = isActive ? 2.5 : 1.5
-            // Contrast halo behind, then the loop's identity colour. Round caps.
-            context.stroke(path, with: .color(PocketColor.background.opacity(0.55)),
-                           style: StrokeStyle(lineWidth: width + 1.5, lineCap: .round))
-            context.stroke(path, with: .color(loopColor(for: loop).opacity(isActive ? 1.0 : 0.55)),
-                           style: StrokeStyle(lineWidth: width, lineCap: .round))
-        }
-
-        let activeUID = loop?.uid
-        for loop in loops where loop.uid != activeUID { line(loop, isActive: false) }
-        if let active = loop, loops.contains(where: { $0.uid == active.uid }) {
-            line(active, isActive: true)
-        }
-    }
+    /// waveform, minimap, and transport strip all resolve the same hue. Not `private` —
+    /// `drawLoopLines` (file-length budget) lives in `WaveformDownbeat.swift`.
+    func loopColor(for loop: Loop) -> Color { LoopColor.color(for: loop, among: loops) }
 
     /// Vertical beat grid drawn **behind** the bars (ADR 0022; restyled ADR 0024/0051) so
     /// the lines read through the gaps without cutting across the waveform. Only bar-start
@@ -362,7 +342,7 @@ struct WaveformView: View {
             var line = Path()
             line.move(to: CGPoint(x: lineX, y: region.top))
             line.addLine(to: CGPoint(x: lineX, y: region.axis))
-            context.stroke(line, with: .color(PocketColor.textPrimary.opacity(0.11)), lineWidth: 1)
+            context.stroke(line, with: .color(PocketColor.gridLine), lineWidth: 1)
         }
     }
 

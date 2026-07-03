@@ -25,20 +25,57 @@ extension WaveformView {
                      at: CGPoint(x: handleX, y: region.midY))
     }
 
-    /// Grabbable edge handles on the **active loop** (ADR 0041): a knob in the loop's
-    /// identity colour at each edge, signalling you can drag it to range-edit (the drag
-    /// lifts it into the A/B span). Shown only when the loop is the sole live selection —
-    /// no A/B span, forming region, or downbeat placement competing for the edges.
-    func drawLoopEditHandles(in context: GraphicsContext, region: BarRegion,
-                             atX: (Double) -> CGFloat, loop: Loop, color: Color) {
-        guard abSelection == nil, tapSelection == nil,
-              formingStart == nil, downbeatDraft == nil else { return }
-        for edgeX in [atX(loop.start), atX(loop.end)] {
-            let knob = CGRect(x: edgeX - 5, y: region.midY - 8, width: 10, height: 16)
-            context.fill(Path(roundedRect: knob, cornerRadius: 3),
-                         with: .color(PocketColor.background.opacity(0.5)))   // contrast halo
-            context.fill(Path(roundedRect: knob.insetBy(dx: 1, dy: 1), cornerRadius: 2.5),
-                         with: .color(color))
+    // Loop lines stack upward from the bottom edge of the loop band. Capped at
+    // `maxLanes` so deep nesting can't march up out of the band — anything deeper
+    // clamps into the last lane.
+    private static let maxLanes = 3
+    private static let laneHeight: CGFloat = 7
+    private static let bracketPadding: CGFloat = 3
+
+    /// All saved loops as lane-stacked horizontal lines along the bottom border.
+    /// Colour encodes loop **identity** (ADR 0023, superseding ADR 0018's
+    /// colour-is-state rule); overlap is shown by lane. State is carried by weight
+    /// and opacity instead — the active loop is heavier (2.5 pt, full opacity), the
+    /// rest dimmed (1.5 pt, 0.8). A near-background halo lifts each line off the
+    /// background.
+    ///
+    /// The dimmed opacity is deliberately high (not the ~0.5 you'd reach for): alpha
+    /// blending toward a near-black canvas darkens far more aggressively than the same
+    /// blend toward the light appearance's cream canvas (blending toward black multiplies
+    /// luminance down; toward a light colour it doesn't), so a "medium" opacity that reads
+    /// as a soft tint in light mode reads as a muddy near-black smear in dark mode (ADR
+    /// 0062 follow-up — the same asymmetry that motivated the baked wash tokens, here
+    /// applied to a live `Canvas` opacity instead of a colour set). The active loop is
+    /// drawn last so it stays on top.
+    func drawLoopLines(in context: GraphicsContext, size: CGSize,
+                       atX: (Double) -> CGFloat) {
+        guard !loops.isEmpty else { return }
+        let packing = LoopLanes.pack(loops.map {
+            LoopLanes.Interval(id: $0.uid, start: $0.start, end: $0.end)
+        })
+
+        func line(_ loop: Loop, isActive: Bool) {
+            let startX = atX(loop.start)
+            let endX = atX(loop.end)
+            guard endX > 0, startX < size.width else { return }       // off-screen
+            let lane = min(packing.lane(for: loop.uid), Self.maxLanes - 1)
+            let baseY = size.height - Self.bracketPadding - CGFloat(lane) * Self.laneHeight
+
+            var path = Path()
+            path.move(to: CGPoint(x: max(0, startX), y: baseY))
+            path.addLine(to: CGPoint(x: min(size.width, endX), y: baseY))
+            let width: CGFloat = isActive ? 2.5 : 1.5
+            // Contrast halo behind, then the loop's identity colour. Round caps.
+            context.stroke(path, with: .color(PocketColor.background.opacity(0.55)),
+                           style: StrokeStyle(lineWidth: width + 1.5, lineCap: .round))
+            context.stroke(path, with: .color(loopColor(for: loop).opacity(isActive ? 1.0 : 0.8)),
+                           style: StrokeStyle(lineWidth: width, lineCap: .round))
+        }
+
+        let activeUID = loop?.uid
+        for loop in loops where loop.uid != activeUID { line(loop, isActive: false) }
+        if let active = loop, loops.contains(where: { $0.uid == active.uid }) {
+            line(active, isActive: true)
         }
     }
 

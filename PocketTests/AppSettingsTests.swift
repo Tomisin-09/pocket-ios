@@ -35,4 +35,19 @@ final class AppSettingsTests: XCTestCase {
     func testNonIntStoredValueFallsBackToDefault() {
         XCTAssertEqual(AppSettings.resolvedInt(storedValue: "two", default: 1), 1)
     }
+
+    // MARK: appearance override (ADR 0062 follow-up)
+
+    func testUnsetAppearanceTakesSystem() {
+        XCTAssertEqual(AppSettings.resolvedAppearance(storedValue: nil), .system)
+    }
+
+    func testSetAppearanceReadsItsStoredValue() {
+        XCTAssertEqual(AppSettings.resolvedAppearance(storedValue: "light"), .light)
+        XCTAssertEqual(AppSettings.resolvedAppearance(storedValue: "dark"), .dark)
+    }
+
+    func testUnrecognisedAppearanceFallsBackToSystem() {
+        XCTAssertEqual(AppSettings.resolvedAppearance(storedValue: "sepia"), .system)
+    }
 }

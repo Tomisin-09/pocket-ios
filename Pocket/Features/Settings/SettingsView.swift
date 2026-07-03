@@ -10,9 +10,23 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.countInEnabled) private var countInEnabled = true
     @AppStorage(AppSettings.Key.countInBars) private var countInBars = AppSettings.countInBarsRange.lowerBound
     @AppStorage(AppSettings.Key.keepScreenAwake) private var keepScreenAwake = true
+    @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
 
     var body: some View {
         Form {
+            Section {
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(AppearancePreference.allCases, id: \.self) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+            } header: {
+                Text("Appearance")
+            } footer: {
+                Text("System follows your device's Light/Dark setting.")
+            }
+
             Section {
                 Toggle("Haptics", isOn: $hapticsEnabled)
             } header: {
@@ -41,10 +55,13 @@ struct SettingsView: View {
             } header: {
                 Text("About")
             } footer: {
-                // Brand mark. The RedMoonLogo asset carries both light (cream) and dark
-                // (near-black) card artwork (ADR 0061); now that the app follows the
-                // system appearance (ADR 0062) it resolves on its own — no colour-scheme
-                // pin needed, so it always matches the card the rest of the screen is on.
+                // Brand mark. The RedMoonLogo asset carries both light (cream-outlined) and
+                // dark (near-black-outlined) artwork (ADR 0061) with the surrounding card
+                // background keyed out to transparent (ADR 0062 follow-up) — it sits
+                // directly on `PocketColor.background` with no seam, in either appearance,
+                // rather than floating a slightly-mismatched solid-colour rectangle on top.
+                // The app follows the system appearance (ADR 0062), so no colour-scheme pin
+                // is needed here.
                 Image("RedMoonLogo")
                     .resizable()
                     .scaledToFit()

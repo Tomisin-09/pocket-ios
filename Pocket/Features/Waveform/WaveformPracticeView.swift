@@ -165,7 +165,8 @@ struct WaveformPracticeView: View {
                 landscapeTopBar(model: model)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.top, 20)
+            .padding(.bottom, 8)
 
             if drawerOpen {
                 // Scrim — tap outside the drawer to dismiss it.

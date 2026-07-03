@@ -63,19 +63,27 @@ new token and note it so it can be added to the code in the same change.
 
 Colour carries meaning and is consistent everywhere:
 
-Blue identity (the song's bars) with **green** as the live state. Hue carries meaning:
-blue = the song, green = live/go, and the per-loop identity hues are kept out of both
-families. The table is grouped by **semantic role** — the seam a future swappable
-theme slots into.
+Teal identity (the song's bars, matching the metronome accent) with **green** as the
+live state. Hue carries meaning: teal = the song/metronome, green = live/go, and the
+per-loop identity hues are kept out of both families. The table is grouped by
+**semantic role** — the seam a future swappable theme slots into (see ADR 0063's
+consequences: the roles are theme-ready, the values are still hand-tuned per token,
+not derived from a base hue, so a second theme today means re-tuning all of them by
+hand).
 
-**Light + dark appearance (ADR 0062).** The app follows the system Light/Dark setting;
-every token below resolves from an Asset Catalog colour set with separate light and
-dark values — not one hex reused. Colours tuned to glow on near-black measurably fail
-contrast on the cream surface (and vice versa), so each pair was chosen and verified
-against real WCAG ratios, not assumed. `textSecondary`/`barDefault`/`barPlayed` are
-baked as flat contrast-matched pairs (a shared opacity would land at very different
-contrast once the base flips); most other tokens are `ink` (an adaptive near-black/
-white base) composed with `.opacity()`, so they stay correct over any backdrop.
+**Light + dark appearance (ADR 0062), pinnable in Settings (ADR 0063).** The app
+follows the system Light/Dark setting by default; **Settings → Appearance** can pin
+Light or Dark instead. Every token below resolves from an Asset Catalog colour set
+with separate light and dark values — not one hex reused. Colours tuned to glow on
+near-black measurably fail contrast on the cream surface (and vice versa), so each
+pair was chosen and verified against real WCAG ratios, not assumed.
+`textSecondary`/`barDefault`/`barPlayed` are baked as flat contrast-matched pairs (a
+shared opacity would land at very different contrast once the base flips); most other
+tokens are `ink` (an adaptive near-black/white base) composed with `.opacity()`, so
+they stay correct over any backdrop. The wash/CTA/gridline tokens below are also
+baked flat rather than a shared opacity, for the same reason but in the *other*
+direction — a low-opacity blend that reads as a soft tint on cream reads as
+near-invisible on near-black (ADR 0063).
 
 | Token | Dark | Light | Meaning |
 |---|---|---|---|
@@ -87,38 +95,50 @@ white base) composed with `.opacity()`, so they stay correct over any backdrop.
 | `surfaceStandard` | ink @ 9% | ink @ 9% | Cards, pills, capsules, toggle "off" states |
 | `surfaceEmphasis` | ink @ 18% | ink @ 18% | Selected/highlighted chip or row |
 | `surfaceBorder` | ink @ 15% | ink @ 15% | Capsule/badge stroke outlines |
-| `waveformBar` | `#2A6796` @ 85% | `#22689E` @ 85% | Detail-waveform bar, ahead of the playhead (the song) |
-| `waveformBarPlayed` | `#2A6796` @ 40% | `#22689E` @ 40% | Detail-waveform bar, behind the playhead (recedes) |
+| `waveformBar` | `#60A8C7` @ 85% | `#2B6982` @ 85% | Detail-waveform bar, ahead of the playhead (the song) — matches `metronome` (ADR 0063) |
+| `waveformBarPlayed` | `#60A8C7` @ 40% | `#2B6982` @ 40% | Detail-waveform bar, behind the playhead (recedes) |
+| `gridLine` | `#202020` | `#968F88` | Beat-grid downbeat lines — baked flat, not `ink.opacity()` (ADR 0062/0063) |
 | `active` / `confirm` | green | green | Live state / confirm-save (system dynamic colour) |
 | `danger` | red | red | Discard / delete / destructive (system dynamic colour) |
-| `metronome` | brand teal `#799BA9` | `#486B79` | The metronome **tool** — its accent on the home card and metronome screen (ADR 0062) |
-| `practice` | dusty plum `#8D7EA6` | `#705D8F` | The **Practice** space (ADR 0046) — retuned to the brand's muted register in ADR 0062 |
+| `metronome` | teal `#60A8C7` | `#2B6982` | The metronome **tool** — accent on the home card, metronome screen, tempo slider, waveform bars. Boosted from ~20% to ~50% saturation in ADR 0063 |
+| `metronomeCTA` | `#799BA9` | `#18698B` | Metronome's primary-button fill — deliberately different from `metronome` (a solid CTA fill needs its own contrast recipe, ADR 0062 follow-up) |
+| `metronomeCardWash` / `metronomeCircleWash` | `#153A44` / `#1D4E5C` | `#ACCBD3` / `#C2D2D5` | Home card/icon-circle tint — baked flat per appearance (ADR 0063) |
+| `practice` | plum `#9272CA` | `#603B9B` | The **Practice** space (ADR 0046) — brand-muted register in ADR 0062, boosted to ~45% saturation in ADR 0063 |
+| `practiceCTA` | `#8D7EA6` | `#593399` | Practice's primary-button fill, same rationale as `metronomeCTA` |
+| `practiceCardWash` / `practiceCircleWash` | `#2C203E` / `#3E2C56` | `#C2A7CF` / `#D0BAD2` | Home/Practice-hub card/icon-circle tint — baked flat per appearance (ADR 0063) |
+| `confirmWash` | `#13421E` | `#B4DAAF` | "Add a song" tint — baked flat, same rationale (ADR 0063) |
 | `fine` | `#EAF2FF` (high-key) | `#1F3651` (low-key) | Fine-mode precision selection — same cool hue, inverted key |
 | `marker` | orange | orange | Active-loop region fill base / selection (system dynamic colour) |
 | `pin` | purple | purple | Waveform markers, single-point (system dynamic colour) |
-| `loopPalette` | amber/gold/coral/magenta/violet/teal | deepened twins, same hues | Per-loop **identity** colour (ADR 0023); light twins added ADR 0062 |
+| `loopPalette` | red/orange/gold/magenta/violet/blue | deepened twins, same hues | Per-loop **identity** colour (ADR 0023); plain non-brand hues since ADR 0063 — a loop's job is to be distinguishable, not brand-consistent |
 | `barDefault` | `#5C5C5C` | `#88817A` | Neutral "off" fill — empty mastery dots, minimap base track |
 | `barPlayed` | `#313131` | `#C1B6AD` | Neutral track (minimap) |
 
-The detail waveform is tinted the **blue anchor** so the song reads as themed chrome,
-stays distinct from the neutral (white) **beat grid** behind it (ADR 0022), and lets
-the **green** live state and the **per-loop coloured** annotations pop against it. The
-capture overlays (forming/punch wash) use `active` (green) and remain bounded by the
-playhead. Per-loop colour encodes loop **identity**, with overlap shown by row
-position and loop *state* carried by line weight/opacity (ADR 0023, superseding ADR
-0018's colour-is-state rule). The `loopPalette` deliberately avoids the functional
-hues — blue (bars/fine), purple (markers), and green (live state) — so a loop never
-blends into the chrome or the active wash.
+The detail waveform is tinted the **teal anchor** (matching `metronome`, ADR 0062/0063
+follow-up) so the song reads as themed chrome, stays distinct from the neutral **beat
+grid** behind it (ADR 0022), and lets the **green** live state and the **per-loop
+coloured** annotations pop against it. The capture overlays (forming/punch wash) use
+`active` (green) and remain bounded by the playhead. Per-loop colour encodes loop
+**identity**, with overlap shown by row position and loop *state* carried by line
+weight/opacity (ADR 0023, superseding ADR 0018's colour-is-state rule). The
+`loopPalette` deliberately avoids the functional hues — the teal bars, purple
+(markers), and green (live state) — so a loop never blends into the chrome or the
+active wash. A saved loop's range can only be edited via its edit sheet's explicit
+**"Adjust range on waveform"** — a loop's edge is not directly draggable on the
+waveform itself (ADR 0063); the active loop's boundary is marked with a bold static
+line instead of a grabbable knob.
 
 No gradients **except** the tempo-automator progress bar (to signal progression
 from comfortable to target speed).
 
 **The brand mark stays distinct from product chrome.** The "Red Moon" brand mark (app
-icon + Settings/About logo, ADR 0061) uses the same muted slate-teal that `metronome`'s
-dark value now carries (ADR 0062) — that's a deliberate, singular exception (the
-metronome *is* the brand's "pulse"). Don't otherwise reach for `#799BA9`/`#486B79`
-directly in views; go through `PocketColor.metronome`, and use the other tokens for
-everything else.
+icon + Settings/About logo, ADR 0061; background keyed transparent in ADR 0063) keeps
+its original, dustier slate-teal artwork — it was *not* re-saturated alongside
+`metronome` in ADR 0063, so the interactive accent and the static mark are now the
+same hue family but no longer a pixel match (a deliberate tradeoff: the mark stays
+quiet, the UI accent carries its own visual weight). Don't reach for a literal hex
+directly in views; go through `PocketColor.metronome`/`.practice`, and use the other
+tokens for everything else.
 
 ### 3.2 Typography
 
@@ -167,8 +187,8 @@ vision if useful, but know that **Phase 1** is what gets built first.
 | P2 | Loops panel + Loop active panel | Active panel has speed, repeat, tempo automator, session notes. |
 | P2 | Markers panel + Pin Marker popover | Single-point annotations; purple. |
 | ~~P2~~ | ~~Song info / Repertoire panel~~ | **Removed (ADR 0042).** Key / mastery / collections now live only in the song-details sheet (hold the title); not duplicated in the practice scroll area. |
-| **P1** | **Home hub** | The app's front door (ADR 0044). Greeting · "Jump back in" resume card · **Practice card** · Metronome card · "Your songs" preview (See all → Library) · Add a song. **Planner-free for V1** — see §4.2. |
-| **P1** | **Practice space** | A top-level destination (ADR 0046), indigo `practice` accent. A list of **your exercises** (command → reach) above a **"Build today's session"** planner placeholder (V2). Tap **+** to create; tap a unit → its **training run** (own engine, `engine.run(ramp:)`): set up working/command/reach + warm-up steps with a routine staircase, then a live BPM/beat/session readout while it plays. |
+| **P1** | **Home hub** | The app's front door (ADR 0044). Header shows the "Red Moon" wordmark graphic (ADR 0063) in place of plain title text. Greeting · "Jump back in" resume card · **Practice card** · Metronome card · "Your songs" preview (See all → Library) · Add a song. **Planner-free for V1** — see §4.2. |
+| **P1** | **Practice space** | A top-level destination (ADR 0046), plum `practice` accent. A list of **your exercises** (command → reach) above a **"Build today's session"** planner placeholder (V2). Tap **+** to create; tap a unit → its **training run** (own engine, `engine.run(ramp:)`): set up working/command/reach + warm-up steps with a routine staircase, then a live BPM/beat/session readout while it plays. |
 | V2 | Practice planner | The "Build today's session" path **inside Practice** (ADR 0046 re-homes ADRs 0014–0016) — time selector, routine cards, session blocks, drawing from the unit list and journaling back into its weighting. Deferred to V2. |
 
 ### 4.1 Waveform practice screen — layout

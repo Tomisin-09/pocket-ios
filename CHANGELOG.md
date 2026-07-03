@@ -12,6 +12,32 @@ All notable changes to Pocket are documented here. Format loosely follows
   waveforms read as one consistent instrument.
 
 ### Added
+- **Settings → Appearance** lets you pin Light or Dark regardless of the device setting, or leave
+  it on System (the default, unchanged behaviour) (ADR 0063).
+- **The Home header now shows the "Red Moon" wordmark graphic** (with its hidden half-note) instead
+  of plain title text, in both appearances.
+
+### Changed
+- **Dark Mode is noticeably more vibrant** (ADR 0063). The Metronome/Practice card and circle
+  tints on Home, and the "Add a song" green, were still reading as near-invisible on the near-black
+  background — the same light/dark blending asymmetry ADR 0062 fixed for Light Mode, just
+  undiscovered in the other direction. They're now independently baked per appearance instead of a
+  shared low-opacity blend, along with the waveform's beat-grid lines and inactive loop-identity
+  lines (waveform + minimap). The Metronome teal and Practice plum accents themselves also moved
+  from ~20% to ~50% saturation in both appearances — they read as too dusty for how much visual
+  weight they carry (feature cards, the tempo slider, every waveform bar). The tempo/speed slider
+  and waveform bars now track the same retuned teal.
+- **Loop identity colours are brighter and no longer brand-tuned** (ADR 0063) — a loop's colour
+  exists only to tell loops apart, so the six-colour palette moved to plain, maximally-distinct
+  hues (red/orange/gold/magenta/violet/blue) instead of the brand's muted register, fixing two
+  light-mode swatches that had collapsed into a near-identical muddy brown/olive.
+- **A saved loop's edge can no longer be dragged directly on the waveform** (ADR 0063) — resizing a
+  loop now only happens via its edit sheet's explicit **"Adjust range on waveform"**, removing an
+  accidental second path to the same action. The active loop's boundary is now marked with a bold
+  static line across the waveform instead of a grabbable knob.
+- **The Settings → About brand mark now blends into the background** (ADR 0063) — its solid
+  card-coloured background is keyed out to transparent, so the artwork sits directly on the app
+  background with no seam, in either appearance.
 - **The app now supports Light Mode** (ADR 0062), following the system Light/Dark setting — every
   screen was previously forced dark regardless of device setting. Every colour token got a proper
   light+dark pair verified against real WCAG contrast (not just the same hex reused), and four new

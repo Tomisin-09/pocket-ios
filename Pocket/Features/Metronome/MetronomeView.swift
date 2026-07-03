@@ -180,7 +180,7 @@ struct MetronomeView: View {
                     .foregroundStyle(PocketColor.background)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronome))
+                    .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronomeCTA))
             }
             .buttonStyle(.plain)
         }

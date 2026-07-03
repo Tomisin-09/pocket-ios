@@ -41,9 +41,19 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(PocketColor.background.ignoresSafeArea())
-            .navigationTitle("Pocket")
+            .navigationTitle("Red Moon")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // The wordmark graphic (with its hidden half-note "d", ADR 0061) replaces the
+                // plain title text; `navigationTitle` above still backs VoiceOver/back-button
+                // labels. Light/dark artwork adapts on its own (ADR 0062).
+                ToolbarItem(placement: .principal) {
+                    Image("RedMoonWordmark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 22)
+                        .accessibilityLabel("Red Moon")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         SettingsView()
@@ -189,7 +199,7 @@ struct HomeView: View {
                 .foregroundStyle(PocketColor.active)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.active.opacity(0.14)))
+                .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.confirmWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add a song")

@@ -61,13 +61,13 @@ extension WaveformView {
             onTouchBegan()   // arm the swipe-back guard for this touch (ADR 0030)
             // Touching an edge only *pends* a grab — a tap seeks, a drag moves the edge
             // (committed in `applyDrag` past the scrub threshold), so the playhead can be
-            // moved inside a loop without nudging a handle (ADR 0041).
+            // moved inside a loop without nudging a handle (ADR 0041). A *saved* loop's
+            // edge is deliberately not grabbable here — editing an existing loop's range
+            // only happens via its edit sheet's explicit "Adjust range on waveform", so a
+            // stray touch near a loop boundary can't silently resize it.
             if let handle = pickABHandle(at: fraction) {          // an A/B span edge
-                pendingGrab = (handle, false)
+                pendingGrab = handle
                 grabbedHandleOrigin = abSelection.map { handle == .start ? $0.start : $0.end }
-            } else if let handle = pickLoopEdge(at: fraction) {   // the active loop's edge → lift into A/B
-                pendingGrab = (handle, true)
-                grabbedHandleOrigin = loop.map { handle == .start ? $0.start : $0.end }
             } else if canBeginSelection {                         // start the hold-to-set timer
                 startHold()
             }
@@ -82,17 +82,16 @@ extension WaveformView {
     }
 
     /// The body of a continuing drag: move a grabbed A/B edge (committing a pended grab
-    /// once the finger crosses the threshold — lifting a saved loop first), else scrub the
-    /// playhead past the threshold (a still finger arms a hold-to-set).
+    /// once the finger crosses the threshold), else scrub the playhead past the threshold
+    /// (a still finger arms a hold-to-set).
     private func applyDrag(fraction: Double, moved: CGFloat) {
         if let pending = pendingGrab {
             guard didScrub || moved > scrubThreshold else { return }   // still a tap — don't move the edge
             if grabbedHandle == nil {                   // first real movement — commit the grab
-                if pending.lift { onLiftLoopEdge() }    // a saved-loop edge: lift it into A/B now
-                grabbedHandle = pending.handle
+                grabbedHandle = pending
                 didScrub = true
             }
-            onMoveABHandle(pending.handle, fraction)
+            onMoveABHandle(pending, fraction)
         } else if didScrub || moved > scrubThreshold {  // a real drag scrubs the playhead
             didScrub = true
             cancelHold()                                // moved → it's a scrub, not a hold
@@ -164,16 +163,6 @@ extension WaveformView {
         return WaveformGesture.nearestHandle(toFraction: fraction,
                                              start: abSelection.start, end: abSelection.end,
                                              tolerance: tolerance)
-    }
-
-    /// Which edge of the **active loop** a navigate touch grabs to lift it into A/B for a
-    /// direct range edit (ADR 0041), or `nil` when no loop is active, a span/capture is
-    /// already live, or the touch is away from both edges. Tolerance scales with zoom.
-    private func pickLoopEdge(at fraction: Double) -> WaveformGesture.Handle? {
-        guard abSelection == nil, tapSelection == nil, formingStart == nil, let loop else { return nil }
-        let tolerance = handleTolerance * (viewport.end - viewport.start)
-        return WaveformGesture.nearestHandle(toFraction: fraction,
-                                             start: loop.start, end: loop.end, tolerance: tolerance)
     }
 
     /// Start the still-hold timer; firing arms a selection at the held fraction.
