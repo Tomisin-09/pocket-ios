@@ -13,6 +13,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   `--strict` run no longer flags generated asset-catalog sources.
 
 ### Changed
+- **Refined the Red Moon brand lockup** (Settings brand mark). Rebalanced the composition so the
+  wordmark and star cluster hang under the moon's optical centre of gravity instead of drifting
+  toward it — the "Red Moon" wordmark moved left ~20px and the stars ~10px. Removed the baked-in
+  off-colour matte rings around the stars, and locked the brand teal to `#7b9ca9` across the stars
+  and wordmark in both appearances. The moon illustration and the wordmark's letterforms (including
+  the hidden half-note "d") are unchanged. Sourced from the existing raster art; a vector master is
+  a future follow-up.
 - **Minimap waveform now matches the detail waveform's style** (ADR 0055 follow-up). The
   full-song overview strip draws smoothed, rounded-cap bars (grouped the same way the
   zoomed-out detail waveform is) instead of a spiky point-to-point silhouette, so the two
