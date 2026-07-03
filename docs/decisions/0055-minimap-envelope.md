@@ -38,3 +38,13 @@ centred in the 28 pt strip.
   change is Canvas rendering, verified visually on device.
 - The per-loop-colour / triangle-glyph minimap upgrade deferred by ADR 0023 is still
   open and independent of this.
+
+## Update (2026-07-03) — bars, not a silhouette polygon
+
+The mirrored silhouette above was a single point-to-point filled path — spiky and
+visually inconsistent with the detail waveform's grouped, rounded-cap bars (ADR
+0049), so the two strips read as two different instruments. `drawTrack` now groups
+the envelope with the same `WaveformBars.groupSize`/`bucketedMean` the detail
+waveform uses (targeting the same ~4pt on-screen bar pitch) and fills each group as
+a fully-rounded pill mirrored around the strip's centreline, instead of one
+continuous polygon. Same data, same gamma — only the geometry changed.

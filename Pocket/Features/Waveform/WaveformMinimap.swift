@@ -98,10 +98,11 @@ struct Minimap: View {
         }
     }
 
-    /// The compressed whole-song silhouette that replaces the old flat base track: a
-    /// mirrored envelope through the same display gamma the detail waveform uses
-    /// (`WaveformAmplitude`, ADR 0049), so the strip reads as a fuller, calmer *map* of
-    /// the song's shape. Falls back to a flat pill until the envelope is extracted.
+    /// The compressed whole-song silhouette that replaces the old flat base track: mirrored
+    /// **rounded bars** through the same display gamma and grouping the detail waveform uses
+    /// (`WaveformAmplitude`/`WaveformBars`, ADR 0049), so the strip reads as one instrument
+    /// with the zoomed-in view rather than a spiky point-to-point polygon (ADR 0055 follow-up).
+    /// Falls back to a flat pill until the envelope is extracted.
     private func drawTrack(in context: GraphicsContext, size: CGSize) {
         guard samples.count > 1 else {
             let base = CGRect(x: 0, y: size.height * 0.35, width: size.width, height: size.height * 0.3)
@@ -110,19 +111,28 @@ struct Minimap: View {
         }
         let midY = size.height / 2
         let maxHalf = size.height * 0.44          // leaves a hair of padding top/bottom
-        let lastIndex = Double(samples.count - 1)
-        func point(_ index: Int, mirrored: Bool) -> CGPoint {
-            let xPos = size.width * CGFloat(Double(index) / lastIndex)
-            let height = CGFloat(WaveformAmplitude.display(samples[index])) * maxHalf
-            return CGPoint(x: xPos, y: mirrored ? midY + height : midY - height)
+        // Group the ~512-bar whole-song envelope toward the same on-screen pitch the detail
+        // waveform targets, so the comb smooths into calm, chunky bars instead of a jagged line.
+        let sourcePitch = size.width / CGFloat(samples.count)
+        let group = WaveformBars.groupSize(sourcePitch: Double(sourcePitch), targetPitch: Self.targetBarPitch)
+        let bars = WaveformBars.bucketedMean(samples, group: group)
+        let pitch = sourcePitch * CGFloat(group)
+        let barWidth = max(1.5, pitch - Self.barGap)
+        let cap = barWidth / 2   // fully rounded ends — matches the detail waveform's bar caps
+        for (index, amp) in bars.enumerated() {
+            let barX = CGFloat(index) * pitch
+            guard barX > -barWidth, barX < size.width else { continue }   // off-screen
+            let half = CGFloat(WaveformAmplitude.display(amp)) * maxHalf
+            let rect = CGRect(x: barX, y: midY - half, width: barWidth, height: half * 2)
+            context.fill(Path(roundedRect: rect, cornerRadius: cap, style: .continuous),
+                         with: .color(PocketColor.barPlayed))
         }
-        var path = Path()
-        path.move(to: CGPoint(x: 0, y: midY))
-        for index in samples.indices { path.addLine(to: point(index, mirrored: false)) }        // top contour
-        for index in samples.indices.reversed() { path.addLine(to: point(index, mirrored: true)) } // bottom mirror
-        path.closeSubpath()
-        context.fill(path, with: .color(PocketColor.barPlayed))
     }
+
+    // Bar drawing (ADR 0049/0055): same target pitch + gap as the detail waveform so the two
+    // strips read as one consistent style at a glance.
+    private static let targetBarPitch: Double = 4
+    private static let barGap: CGFloat = 1.5
 
     private var canvas: some View {
         Canvas { context, size in
