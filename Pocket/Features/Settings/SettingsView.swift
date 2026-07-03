@@ -41,15 +41,15 @@ struct SettingsView: View {
             } header: {
                 Text("About")
             } footer: {
-                // Brand mark. The RedMoonLogo asset carries light+dark artwork; the
-                // whole app renders on the near-black canvas regardless of system
-                // appearance, so pin it to the dark variant so it always blends.
+                // Brand mark. The RedMoonLogo asset carries both light (cream) and dark
+                // (near-black) card artwork (ADR 0061); now that the app follows the
+                // system appearance (ADR 0062) it resolves on its own — no colour-scheme
+                // pin needed, so it always matches the card the rest of the screen is on.
                 Image("RedMoonLogo")
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: 160)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .environment(\.colorScheme, .dark)
                     .padding(.top, 16)
                     .accessibilityLabel("Red Moon")
             }

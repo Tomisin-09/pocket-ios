@@ -32,10 +32,13 @@ tool. Animations should feel like a musical phrase, not a form submission.
   system navigation/sheets, Dynamic Type, safe areas, 44pt minimum touch
   targets, standard gestures. Avoid web-isms (hover states, custom scrollbars,
   CSS-only effects) that don't map to SwiftUI.
-- **Dark-first.** The practice screen is used in low light (evening practice, on
-  a stand). Background is **near-black `#0F0F0F`**, not pure black — the blue
-  accents and per-loop colours read best against black. Design dark first; a light
-  theme is not a V1 requirement. (ADR 0023.)
+- **Dark-first, light-supported.** The practice screen is used in low light
+  (evening practice, on a stand), so **design dark first** — background is
+  near-black `#040404`, not pure black; the blue accents and per-loop colours
+  read best against black (ADR 0023). The app also supports a **light**
+  appearance (`#F0E3D8` cream, ADR 0062), following the system setting — every
+  new colour needs a light *and* dark value verified for contrast, not just a
+  dark one.
 - **Audio reality:** the waveform/speed/loop engine runs on **DRM-free local &
   iCloud files** only. Apple Music is **browse/metadata only** — do not design a
   waveform or speed control for Apple Music tracks; design their cards to show
@@ -60,29 +63,42 @@ new token and note it so it can be added to the code in the same change.
 
 Colour carries meaning and is consistent everywhere:
 
-Blue identity (the song's bars, anchored on `#2a6796`) with **green** as the live
-state, on a near-black background (ADR 0023). Hue carries meaning: blue = the song,
-green = live/go, and the per-loop identity hues are kept out of both families. The
-table is grouped by **semantic role** — the seam a future swappable theme slots into.
+Blue identity (the song's bars) with **green** as the live state. Hue carries meaning:
+blue = the song, green = live/go, and the per-loop identity hues are kept out of both
+families. The table is grouped by **semantic role** — the seam a future swappable
+theme slots into.
 
-| Token | Value | Meaning |
-|---|---|---|
-| `background` | `#0F0F0F` | App background (near-black) |
-| `waveformBar` | `#2a6796` @ 85% | Detail-waveform bar, ahead of the playhead (the song) |
-| `waveformBarPlayed` | `#2a6796` @ 40% | Detail-waveform bar, behind the playhead (recedes) |
-| `textPrimary` | white | Primary text |
-| `textSecondary` | white @ 60% | Secondary/labels |
-| `active` | green | Live state — playing, the forming loop, the active region |
-| `confirm` | green | Confirm / save (the loop-capture ✓) |
-| `danger` | red | Discard / delete / destructive (the loop-capture ✗) |
-| `metronome` | teal `#35C8C8` | The metronome **tool** — its accent on the home card and metronome screen |
-| `practice` | indigo `#8B7CF6` | The **Practice** space (ADR 0046) — its home card, hub, and training-run screens |
-| `fine` | cyan `#56C6D9` | Fine-mode precision selection |
-| `marker` | amber/orange | Active-loop region fill base / selection |
-| `pin` | purple | Waveform markers (single-point) |
-| `loopPalette` | amber, gold, coral, magenta, violet, teal | Per-loop **identity** colour (ADR 0023) |
-| `barDefault` | white @ 35% | Neutral "off" fill — empty mastery dots, minimap base track |
-| `barPlayed` | white @ 18% | Neutral track (minimap) |
+**Light + dark appearance (ADR 0062).** The app follows the system Light/Dark setting;
+every token below resolves from an Asset Catalog colour set with separate light and
+dark values — not one hex reused. Colours tuned to glow on near-black measurably fail
+contrast on the cream surface (and vice versa), so each pair was chosen and verified
+against real WCAG ratios, not assumed. `textSecondary`/`barDefault`/`barPlayed` are
+baked as flat contrast-matched pairs (a shared opacity would land at very different
+contrast once the base flips); most other tokens are `ink` (an adaptive near-black/
+white base) composed with `.opacity()`, so they stay correct over any backdrop.
+
+| Token | Dark | Light | Meaning |
+|---|---|---|---|
+| `background` | `#040404` | `#F0E3D8` | App surface |
+| `ink` | white | `#1A1A1A` | Adaptive foreground base for `textPrimary` + surface fills |
+| `textPrimary` | white | `#1A1A1A` | Primary text (= `ink`) |
+| `textSecondary` | `#9B9B9B` | `#494644` | Secondary/labels |
+| `surfaceSubtle` | ink @ 5% | ink @ 5% | Hairline dividers, thin strokes |
+| `surfaceStandard` | ink @ 9% | ink @ 9% | Cards, pills, capsules, toggle "off" states |
+| `surfaceEmphasis` | ink @ 18% | ink @ 18% | Selected/highlighted chip or row |
+| `surfaceBorder` | ink @ 15% | ink @ 15% | Capsule/badge stroke outlines |
+| `waveformBar` | `#2A6796` @ 85% | `#22689E` @ 85% | Detail-waveform bar, ahead of the playhead (the song) |
+| `waveformBarPlayed` | `#2A6796` @ 40% | `#22689E` @ 40% | Detail-waveform bar, behind the playhead (recedes) |
+| `active` / `confirm` | green | green | Live state / confirm-save (system dynamic colour) |
+| `danger` | red | red | Discard / delete / destructive (system dynamic colour) |
+| `metronome` | brand teal `#799BA9` | `#486B79` | The metronome **tool** — its accent on the home card and metronome screen (ADR 0062) |
+| `practice` | dusty plum `#8D7EA6` | `#705D8F` | The **Practice** space (ADR 0046) — retuned to the brand's muted register in ADR 0062 |
+| `fine` | `#EAF2FF` (high-key) | `#1F3651` (low-key) | Fine-mode precision selection — same cool hue, inverted key |
+| `marker` | orange | orange | Active-loop region fill base / selection (system dynamic colour) |
+| `pin` | purple | purple | Waveform markers, single-point (system dynamic colour) |
+| `loopPalette` | amber/gold/coral/magenta/violet/teal | deepened twins, same hues | Per-loop **identity** colour (ADR 0023); light twins added ADR 0062 |
+| `barDefault` | `#5C5C5C` | `#88817A` | Neutral "off" fill — empty mastery dots, minimap base track |
+| `barPlayed` | `#313131` | `#C1B6AD` | Neutral track (minimap) |
 
 The detail waveform is tinted the **blue anchor** so the song reads as themed chrome,
 stays distinct from the neutral (white) **beat grid** behind it (ADR 0022), and lets
@@ -97,11 +113,12 @@ blends into the chrome or the active wash.
 No gradients **except** the tempo-automator progress bar (to signal progression
 from comfortable to target speed).
 
-**Brand hue is separate from the functional palette.** The **"Red Moon"** brand mark
-(app icon + Settings/About logo, ADR 0061) is drawn in a muted slate-teal **`#799BA9`**
-on the near-black canvas. This is a **brand/marketing** colour, deliberately *not* in
-the `PocketColor` table above — hue there carries functional meaning, and the brand
-teal has no functional role. Do not reach for `#799BA9` in product UI; use the tokens.
+**The brand mark stays distinct from product chrome.** The "Red Moon" brand mark (app
+icon + Settings/About logo, ADR 0061) uses the same muted slate-teal that `metronome`'s
+dark value now carries (ADR 0062) — that's a deliberate, singular exception (the
+metronome *is* the brand's "pulse"). Don't otherwise reach for `#799BA9`/`#486B79`
+directly in views; go through `PocketColor.metronome`, and use the other tokens for
+everything else.
 
 ### 3.2 Typography
 

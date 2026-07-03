@@ -38,7 +38,7 @@ struct PracticeStatsCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 12).fill(PocketColor.surfaceStandard))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(value) \(label)")
     }

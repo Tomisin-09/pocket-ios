@@ -55,7 +55,7 @@ struct PracticeView: View {
                 .font(.futura(.title2))
                 .foregroundStyle(PocketColor.practice)
                 .frame(width: 44, height: 44)
-                .background(Circle().fill(PocketColor.practice.opacity(0.15)))
+                .background(Circle().fill(PocketColor.practiceCircleWash))
             VStack(alignment: .leading, spacing: 2) {
                 Text("Build today's session")
                     .font(.futura(.headline))

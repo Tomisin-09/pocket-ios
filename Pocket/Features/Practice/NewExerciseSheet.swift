@@ -80,7 +80,6 @@ struct NewExerciseSheet: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
     }
 }
 

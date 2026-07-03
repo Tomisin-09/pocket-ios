@@ -118,7 +118,7 @@ struct SongEditSheet: View {
                             .foregroundStyle(PocketColor.textPrimary)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 4)
-                            .background(Capsule().fill(Color.white.opacity(0.10)))
+                            .background(Capsule().fill(PocketColor.surfaceStandard))
                     }
                     .buttonStyle(.plain)
                 }

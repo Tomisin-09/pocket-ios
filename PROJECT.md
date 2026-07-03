@@ -57,7 +57,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
 | `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, Exercise, Routine, Session, SongRef |
 | `Pocket/Core/Services/` | MusicKit, persistence, sync, AI client |
-| `Pocket/UI/` | Shared components, design tokens |
+| `Pocket/UI/` | Shared components, design tokens (`PocketColor` — light + dark appearance, ADR 0062) |
 
 ## Environments
 

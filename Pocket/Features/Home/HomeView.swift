@@ -69,7 +69,6 @@ struct HomeView: View {
             // `UserDefaults` guard makes this idempotent across launches.
             .task { PracticePresets.seedIfNeeded(into: context) }
         }
-        .preferredColorScheme(.dark)
     }
 
     // MARK: - Greeting
@@ -99,7 +98,7 @@ struct HomeView: View {
                     .font(.futura(.title2))
                     .foregroundStyle(PocketColor.practice)
                     .frame(width: 44, height: 44)
-                    .background(Circle().fill(PocketColor.practice.opacity(0.15)))
+                    .background(Circle().fill(PocketColor.practiceCircleWash))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Practice")
                         .font(.futura(.headline))
@@ -114,7 +113,7 @@ struct HomeView: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practice.opacity(0.10)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCardWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Practice, your exercises and training runs")
@@ -131,7 +130,7 @@ struct HomeView: View {
                     .font(.futura(.title2))
                     .foregroundStyle(PocketColor.metronome)
                     .frame(width: 44, height: 44)
-                    .background(Circle().fill(PocketColor.metronome.opacity(0.15)))
+                    .background(Circle().fill(PocketColor.metronomeCircleWash))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Metronome")
                         .font(.futura(.headline))
@@ -146,7 +145,7 @@ struct HomeView: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.metronome.opacity(0.10)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.metronomeCardWash))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Metronome, standalone click and tempo trainer")
@@ -277,7 +276,7 @@ private struct JumpBackInCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.surfaceStandard))
     }
 
     /// "2 days ago" — a relative, human description of the last practice time.

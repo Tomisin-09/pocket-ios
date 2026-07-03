@@ -99,7 +99,7 @@ struct TimeBubble: View {
             .padding(.vertical, 3)
             .background(
                 Capsule().fill(PocketColor.background.opacity(0.85))
-                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                    .overlay(Capsule().strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
             )
     }
 }

@@ -70,7 +70,7 @@ struct SongCard: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(Capsule().fill(Color.white.opacity(0.08)))
+                    .background(Capsule().fill(PocketColor.surfaceStandard))
             }
         }
         .lineLimit(1)

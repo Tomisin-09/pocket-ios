@@ -12,12 +12,21 @@ All notable changes to Pocket are documented here. Format loosely follows
   waveforms read as one consistent instrument.
 
 ### Added
+- **The app now supports Light Mode** (ADR 0062), following the system Light/Dark setting — every
+  screen was previously forced dark regardless of device setting. Every colour token got a proper
+  light+dark pair verified against real WCAG contrast (not just the same hex reused), and four new
+  "surface" tokens (`surfaceSubtle`/`Standard`/`Emphasis`/`Border`) replace 11 ad-hoc translucent
+  fills that had no shared token at all.
 - **The app has a name, an icon, and a face: "Red Moon"** (ADR 0061). The home-screen name is now
   **Red Moon**, with a new **app icon** — the crescent moon and its Southern-Cross stars on the
   dark canvas. **Settings → About** shows the full brand mark (moon + "Red Moon" wordmark), whose
   **"d" hides an open half-note**. Internally the app is still Pocket (bundle id unchanged).
 
 ### Changed
+- **Metronome and Practice's identity colours are retuned to match the brand** (ADR 0062).
+  Metronome retires its old bright cyan for the "Red Moon" brand teal; Practice moves from a
+  generic indigo to a dusty plum — both now sit in the same muted register as the logo instead of
+  reading as unrelated UI-kit colours.
 - **App type is now Futura** (ADR 0061), echoing the wordmark — all prose/UI text moves from the
   system sans to Futura via a single `Font.futura` token. Tempo/time **numerals stay monospace**
   (unchanged) so live readouts don't jitter.

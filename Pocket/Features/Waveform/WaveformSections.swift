@@ -135,7 +135,7 @@ struct SpeedBar: View {
                             .foregroundStyle(PocketColor.marker)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(Capsule().fill(Color.white.opacity(0.10)))
+                            .background(Capsule().fill(PocketColor.surfaceStandard))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Set tempo")
@@ -183,7 +183,7 @@ private struct MetronomeToggle: View {
                 .font(.futura(size: 15, weight: .semibold))
                 .foregroundStyle(foreground)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(isOn ? PocketColor.metronome : Color.white.opacity(0.08)))
+                .background(Circle().fill(isOn ? PocketColor.metronome : PocketColor.surfaceStandard))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -214,7 +214,7 @@ private struct PresetPill: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(
-                    Capsule().fill(isSelected ? PocketColor.active : Color.white.opacity(0.10))
+                    Capsule().fill(isSelected ? PocketColor.active : PocketColor.surfaceStandard)
                 )
         }
         .buttonStyle(.plain)
@@ -276,7 +276,6 @@ private struct LoopControlsInfo: View {
         }
         .padding(16)
         .frame(maxWidth: 290)
-        .preferredColorScheme(.dark)
     }
 
     private func row(_ key: String, _ detail: String) -> some View {
