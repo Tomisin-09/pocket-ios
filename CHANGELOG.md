@@ -5,6 +5,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Minimap waveform now matches the detail waveform's style** (ADR 0055 follow-up). The
+  full-song overview strip draws smoothed, rounded-cap bars (grouped the same way the
+  zoomed-out detail waveform is) instead of a spiky point-to-point silhouette, so the two
+  waveforms read as one consistent instrument.
+
 ### Added
 - **The app has a name, an icon, and a face: "Red Moon"** (ADR 0061). The home-screen name is now
   **Red Moon**, with a new **app icon** — the crescent moon and its Southern-Cross stars on the
