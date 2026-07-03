@@ -10,6 +10,7 @@ opt_in_rules:
 
 excluded:
   - .build
+  - build-device        # local device-build output (gitignored); holds generated sources
   - DerivedData
   - Pocket.xcodeproj
   - fastlane
