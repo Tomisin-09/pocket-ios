@@ -84,8 +84,9 @@ phone mid-practice keeps it playing (ADR 0025). Interaction: **tap = seek, drag 
 with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
 the source file** for crisp detail, debounced + cached, ADR 0020);
 loops are created through the **A/B span** — the single creation primitive (ADR 0041):
-the transport's left column is two **identity dots** (A/B · Mark; **Click** moved to the
-speed bar, ADR 0027 / 0030 / 0041). Tap **A/B** to drop A at the playhead, play along, tap
+the transport is flanked by two big **circular identity buttons** — **Marker** on the far left,
+**Loop (A/B)** on the far right (V1 feedback #1; **Click** moved to the speed bar, ADR 0027 / 0030 /
+0041). The Loop button lights while a span forms and cross-fades to the active-loop colour strip. Tap **A/B** to drop A at the playhead, play along, tap
 again to close an ephemeral **A↔B span** that loops with no ✓/✗ gate; drag its labelled
 **A / B handles** to refine it in place, **Save as loop** to persist it, **✕** to clear.
 Dragging a saved loop's **edge knob** lifts it back into A/B for a range edit (**Save

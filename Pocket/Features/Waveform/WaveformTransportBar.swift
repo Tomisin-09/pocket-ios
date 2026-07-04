@@ -4,13 +4,16 @@ import SwiftUI
 // transport row. Split out of `WaveformSections.swift` to keep each file under the
 // line budget; shares the same `panelBackground` chrome.
 //
-// Layout (ADR 0030; ADR 0041): a left column of two identity controls (Loop / Marker —
-// a glyph in a circle that fills with the control's colour when active), a centre
-// cluster (header over rewind · pause · forward), and — only while a loop is active —
-// a right strip in the loop's identity colour carrying the ✕ deactivator. The header
-// reserves a fixed height and reads the loop's name + range when active, else the live
-// playhead time, at a matched font size so the two states cross-fade smoothly and the
-// transport row never shifts; the colour strip slides in/out as a loop is (de)activated.
+// Layout (ADR 0030; ADR 0041; V1 feedback #1): two states.
+// • **Idle** (no active loop): two large **circular** identity controls flank the centre transport —
+//   **Marker on the far left**, **Loop on the far right** — a glyph in a circle. The Loop button
+//   lights while an A/B span is forming.
+// • **Active** (a saved loop is running): the bar reverts to its **compact** form — a small stacked
+//   Loop / Marker column on the left and the loop's identity-colour ✕ strip on the right — because
+//   the running loop now reads on the Loops panel below, so the bar steps back out of the way
+//   (feedback #1 round 2).
+// The centre cluster is the header over rewind · pause · forward; the header reserves a fixed height
+// and reads the loop's name when active, else the live playhead time, so the row never shifts.
 
 // MARK: - 8. Transport bar
 
@@ -47,38 +50,65 @@ struct TransportBar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var glyphSize: CGFloat { compact ? 24 : 26 }
+    /// The big flanking identity circles (idle only) — sized to "take up space" (feedback #1),
+    /// trimmed a little in the shorter landscape bar so they still clear the edges.
+    private var identityDiameter: CGFloat { compact ? 42 : 52 }
+    /// Whether a saved loop is active — the transport reverts to its compact form (feedback #1
+    /// round 2): the big idle buttons are for browsing/creating; once a loop is running the Loops
+    /// panel below carries it, so the bar goes back to the small stacked column + ✕ strip.
+    private var loopActive: Bool { loopColor != nil }
 
     var body: some View {
         HStack(spacing: 12) {
-            controls
+            leftControls
             VStack(spacing: compact ? 2 : 5) {
                 header
                 transportRow
             }
             .frame(maxWidth: .infinity)
+            // Right slot: the ✕ colour strip once a saved loop is active, else the big idle Loop
+            // button (lit while an A/B span is forming). Mutually exclusive — they share the slot.
             if let loopColor {
                 LoopColorStrip(color: loopColor, onDeactivate: onClearLoop)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
+            } else {
+                TransportControl(icon: "repeat", color: PocketColor.active,
+                                 isActive: isPunchActive, label: "Loop",
+                                 diameter: identityDiameter, action: onPunch)
+                    .transition(.opacity)
             }
         }
         .frame(height: compact ? 52 : 64)  // definite bar height so the colour strip reliably fills it
         .padding(.horizontal, 12)
         .padding(.vertical, compact ? 3 : 5)
         .background(panelBackground)
+        // `loop?.uid` is nil when idle and changes on activate/deactivate *and* loop-switch, so the
+        // idle⇄compact morph and a colour/name change between loops both animate.
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: loop?.uid)
     }
 
-    // MARK: Left — identity controls (glyph in a circle)
+    // MARK: Left — identity controls
 
-    private var controls: some View {
-        VStack(spacing: 0) {
-            TransportControl(icon: "repeat", color: PocketColor.active,
-                             isActive: isPunchActive, label: "Loop", action: onPunch)
-            Spacer(minLength: 0)
-            // Equilateral triangle, rotated to point down — matches the inverted marker
-            // glyph on the waveform (the arrowtriangle variant read as elongated).
+    /// Idle: a big circular **Marker** on the far left (its Loop twin lives on the far right).
+    /// Active: revert to the compact stacked **Loop / Marker** column, so the running loop reads on
+    /// the Loops panel below and the bar stays out of the way (feedback #1 round 2).
+    @ViewBuilder private var leftControls: some View {
+        if loopActive {
+            VStack(spacing: 0) {
+                TransportControl(icon: "repeat", color: PocketColor.active, isActive: isPunchActive,
+                                 label: "Loop", diameter: compactControlDiameter,
+                                 glyphSize: compactControlGlyph, action: onPunch)
+                Spacer(minLength: 0)
+                TransportControl(icon: "triangle.fill", rotation: 180, color: PocketColor.pin,
+                                 label: "Marker", diameter: compactControlDiameter,
+                                 glyphSize: compactControlGlyph, action: onDropMarker)
+            }
+            .transition(.opacity)
+        } else {
+            // Equilateral triangle rotated to point down, matching the waveform's marker glyph.
             TransportControl(icon: "triangle.fill", rotation: 180, color: PocketColor.pin,
-                             label: "Marker", action: onDropMarker)
+                             label: "Marker", diameter: identityDiameter, action: onDropMarker)
+                .transition(.opacity)
         }
     }
 
@@ -120,26 +150,31 @@ struct TransportBar: View {
 // MARK: - Components
 
 private let transportGlyphSize: CGFloat = 31
-private let controlDiameter: CGFloat = 27
+/// The compact stacked column shown once a loop is active — the original small identity dots.
+private let compactControlDiameter: CGFloat = 27
+private let compactControlGlyph: CGFloat = 15
 
-/// One identity control in the left column — a glyph in a circle. Idle: the glyph in
-/// its colour on a faint fill. Active: the circle fills with the colour, glyph flips
-/// dark (Loop while a span is in play).
+/// An identity control — a glyph in a circle. Idle it's a big flanking button; active it's a small
+/// stacked dot. Idle fill: the glyph in its colour on a faint fill. Active fill (Loop while an A/B
+/// span is in play): the circle fills with the colour, glyph flips dark. `glyphSize` defaults to a
+/// slightly-trimmed fraction of the diameter (feedback #1: keep the big circles, ease the glyph).
 private struct TransportControl: View {
     let icon: String
     var rotation: Double = 0
     let color: Color
     var isActive: Bool = false
     let label: String
+    var diameter: CGFloat = 52
+    var glyphSize: CGFloat?
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.futura(size: 15, weight: .semibold))
+                .font(.futura(size: glyphSize ?? diameter * 0.36, weight: .semibold))
                 .rotationEffect(.degrees(rotation))
                 .foregroundStyle(isActive ? PocketColor.background : color)
-                .frame(width: controlDiameter, height: controlDiameter)
+                .frame(width: diameter, height: diameter)
                 .background(Circle().fill(isActive ? color : PocketColor.surfaceStandard))
         }
         .buttonStyle(.plain)
@@ -202,7 +237,7 @@ private struct LoopColorStrip: View {
         Button(action: onDeactivate) {
             RoundedRectangle(cornerRadius: 12)
                 .fill(color)
-                .frame(width: 46)
+                .frame(width: 52)   // matches the Loop circle it replaces, so the swap holds width
                 .frame(maxHeight: .infinity)
                 .overlay(
                     Image(systemName: "xmark.circle.fill")

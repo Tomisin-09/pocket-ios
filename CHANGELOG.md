@@ -32,6 +32,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   of plain title text, in both appearances.
 
 ### Changed
+- **The waveform transport's Loop and Marker controls are now big circular buttons** flanking the
+  transport while idle — **Marker on the far left, Loop on the far right** (V1 feedback #1) — instead
+  of a small stacked pair in a left column. The idle Loop button lights up while an A/B span is
+  forming. **Once a loop is active the bar reverts to its compact form** (the small stacked
+  Loop/Marker column + the loop's ✕ colour strip), so the running loop reads on the Loops panel below
+  and the bar steps out of the way. A follow-up to make the idle sides user-swappable from Settings
+  is parked in `docs/backlog.md`.
 - **Dark Mode is noticeably more vibrant** (ADR 0063). The Metronome/Practice card and circle
   tints on Home, and the "Add a song" green, were still reading as near-invisible on the near-black
   background — the same light/dark blending asymmetry ADR 0062 fixed for Light Mode, just
