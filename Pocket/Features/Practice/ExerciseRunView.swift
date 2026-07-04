@@ -164,7 +164,7 @@ struct ExerciseRunView: View {
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             }
-            BeatIndicator(engine: engine)
+            BeatIndicator(engine: engine, tint: PocketColor.practice)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)

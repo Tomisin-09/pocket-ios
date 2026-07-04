@@ -18,6 +18,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   behind one disclosure header below the exercise title — collapsed by default, showing a one-line
   tempo summary (e.g. `42→50 · reach 53 BPM`) — so the run screen opens on the summary + routine
   staircase and expands to edit, mirroring how the nested Steps panel already behaves.
+- **Practice count-in dots now read in the practice colour** (V1 feedback). The `BeatIndicator`
+  is tint-aware: the exercise run screen's count-in beat dots use `PocketColor.practice` (purple)
+  instead of the metronome's teal, so the metronome UI no longer leaks into the Practice space. The
+  metronome screen keeps its teal via the default.
 - **Routine staircase now signposts the command tempo** (V1 feedback). A `<bpm> BPM` label sits just
   above the wide **dwell** bar (found as the longest-held plateau), so the anchor tempo is legible
   straight off the chart. Clamped into a reserved top strip so it never clips on a no-reach routine
