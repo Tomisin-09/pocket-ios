@@ -18,9 +18,15 @@ struct StepperButton: View {
     let symbol: String
     /// VoiceOver label, e.g. "Raise command tempo".
     let label: String
-    /// Wash colour for the circular background (matches the owning control's tint).
+    /// Tint for the circular background — filled at `tint.opacity(0.18)` unless `fill` overrides.
     let tint: Color
+    /// Explicit background fill, when a control has its own tuned wash token (e.g. the metronome's
+    /// `metronomeCircleWash`). `nil` ⇒ `tint.opacity(0.18)`, the Practice run-setup default.
+    var fill: Color?
     var diameter: CGFloat = 38
+    /// The −/+ glyph font — defaults to the Practice run-setup size; larger controls (the metronome
+    /// tempo steppers) pass a bigger one so the glyph fills the wider circle.
+    var glyphFont: Font = .futura(.body, weight: .semibold)
     /// One step. **Pure**: clamp + mutate state only — no haptic (this view handles feedback).
     let step: () -> Void
 
@@ -38,10 +44,10 @@ struct StepperButton: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(.futura(.body, weight: .semibold))
+            .font(glyphFont)
             .foregroundStyle(PocketColor.textPrimary)
             .frame(width: diameter, height: diameter)
-            .background(Circle().fill(tint.opacity(0.18)))
+            .background(Circle().fill(fill ?? tint.opacity(0.18)))
             .contentShape(Circle())
             .opacity(isPressed ? 0.55 : 1)
             .scaleEffect(isPressed ? 0.92 : 1)

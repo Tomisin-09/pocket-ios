@@ -33,8 +33,8 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **The −/+ step buttons now auto-repeat when held, and accelerate** (V1 feedback #3). Holding a
   tempo, reach/step, or reps stepper bumps the value repeatedly — slowly at first, then faster the
   longer you hold — so a big change no longer means dozens of taps. A single tap still nudges by one.
-  Applies everywhere the circular −/+ buttons appear (the loop & exercise run setups and the new
-  shared `StepperButton`).
+  Applies everywhere the circular −/+ buttons appear — the **metronome tempo** steppers, plus the
+  loop & exercise run setups (via the new shared `StepperButton`).
 - **A new exercise's command tempo is now typable** (V1 feedback #3). The New Exercise sheet uses
   the same −/+ + tap-to-type control as the run screen, so you can enter a value directly instead of
   stepping to it.
