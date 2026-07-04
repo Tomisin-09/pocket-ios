@@ -384,3 +384,16 @@ route through.
     home for the song's key / mastery / collections.
   - Consider inline editing vs. the current Edit → `SongEditSheet` hop.
   - Surface tempo precision / downbeat state if useful (currently shows rounded BPM).
+
+## Transport bar — deferred pieces of V1 feedback #1 (parked 2026-07-04)
+
+Branch `pocket-093` enlarged the Loop/Marker controls into big circular buttons flanking the
+transport while **idle** — **Marker far-left, Loop far-right** — and, on device review, **reverts to
+the original compact bar once a loop is active** (small stacked Loop/Marker column + ✕ strip), since
+the running loop already reads on the existing Loops panel below. So the mock's "dedicated
+active-loop Loops panel" is **resolved by reuse** — no new panel needed. One follow-up remains:
+
+- **Home-settings toggle to swap Loop/Marker sides.** The user wants the left/right placement of the
+  idle Loop and Marker controls to be user-configurable from the **Home settings** (Settings screen),
+  not hardcoded. Add a persisted preference (e.g. `AppStorage`) and thread it into `TransportBar` so
+  the two flanking controls swap sides. Default stays Marker-left / Loop-right.
