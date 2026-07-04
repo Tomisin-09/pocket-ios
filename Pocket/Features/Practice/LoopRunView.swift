@@ -194,28 +194,18 @@ struct LoopRunView: View {
                     .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
-            stepButton(symbol: "minus", label: "Fewer reps per step") {
-                repsPerStep = max(Self.repsRange.lowerBound, repsPerStep - 1); haptic(.light)
+            StepperButton(symbol: "minus", label: "Fewer reps per step",
+                          tint: PocketColor.practice) {
+                repsPerStep = max(Self.repsRange.lowerBound, repsPerStep - 1)
             }
             Text("\(repsPerStep)")
                 .font(.pocketMono(.title3)).foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 44).contentTransition(.numericText())
-            stepButton(symbol: "plus", label: "More reps per step") {
-                repsPerStep = min(Self.repsRange.upperBound, repsPerStep + 1); haptic(.light)
+            StepperButton(symbol: "plus", label: "More reps per step",
+                          tint: PocketColor.practice) {
+                repsPerStep = min(Self.repsRange.upperBound, repsPerStep + 1)
             }
         }
-    }
-
-    private func stepButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.futura(.body, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(width: 38, height: 38)
-                .background(Circle().fill(PocketColor.practiceCircleWash))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 
     private var stepsSection: some View {
@@ -349,8 +339,13 @@ private extension LoopRunView {
         haptic(.medium)
     }
 
-    private func adjustWorking(by delta: Int) { setWorking(working + delta) }
-    private func adjustCommand(by delta: Int) { setCommand(command + delta) }
+    // Pure clamps — `StepperButton` owns the ±/hold-repeat haptics, so these must not fire their own.
+    private func adjustWorking(by delta: Int) {
+        working = min(command, max(Self.percentRange.lowerBound, working + delta))
+    }
+    private func adjustCommand(by delta: Int) {
+        command = min(Self.percentRange.upperBound, max(working, command + delta))
+    }
 
     /// Working stays in range and never above command (the floor sits below the owned speed).
     private func setWorking(_ value: Int) {

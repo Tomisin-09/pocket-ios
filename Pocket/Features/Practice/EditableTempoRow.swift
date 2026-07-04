@@ -1,10 +1,11 @@
 import SwiftUI
 
 /// A tempo control on the Practice run setup (ADR 0046 run-UI): the −/+ steppers flanking a
-/// **typable** BPM readout. The steppers keep the quick ±1 nudge; tapping the number focuses it
-/// for keyboard entry, so a big jump no longer means holding the button. The typed value is
-/// committed and clamped when focus leaves — via the keyboard's **Done** or an interactive
-/// scroll-to-dismiss — and the field always snaps back to the clamped value.
+/// **typable** BPM readout. The steppers give a quick ±1 nudge and **auto-repeat when held**
+/// (`StepperButton`); tapping the number focuses it for keyboard entry, so a big jump can also be
+/// typed directly. The typed value is committed and clamped when focus leaves — via the keyboard's
+/// **Done** or an interactive scroll-to-dismiss — and the field always snaps back to the clamped
+/// value. `onStep` must be a pure clamp: `StepperButton` owns the hold-repeat haptics.
 struct EditableTempoRow: View {
     let label: String
     let caption: String
@@ -25,7 +26,7 @@ struct EditableTempoRow: View {
                 Text(caption).font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
-            stepButton(symbol: "minus", label: "Lower \(label)") { onStep(-1) }
+            StepperButton(symbol: "minus", label: "Lower \(label)", tint: tint) { onStep(-1) }
             TextField("", text: $draft)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
@@ -37,7 +38,7 @@ struct EditableTempoRow: View {
                 .focused($typing)
                 .accessibilityLabel("\(label) tempo")
                 .accessibilityValue("\(value)")
-            stepButton(symbol: "plus", label: "Raise \(label)") { onStep(1) }
+            StepperButton(symbol: "plus", label: "Raise \(label)", tint: tint) { onStep(1) }
         }
         .onAppear { draft = "\(value)" }
         // Keep the field in sync when the value moves from elsewhere (a stepper on the *other*
@@ -61,18 +62,5 @@ struct EditableTempoRow: View {
     private func commit() {
         if let typed = Int(draft) { onType(typed) }
         draft = "\(value)"
-    }
-
-    private func stepButton(symbol: String, label: String,
-                            action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.futura(.body, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(width: 38, height: 38)
-                .background(Circle().fill(tint.opacity(0.18)))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 }

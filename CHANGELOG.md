@@ -30,6 +30,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   it on System (the default, unchanged behaviour) (ADR 0063).
 - **The Home header now shows the "Red Moon" wordmark graphic** (with its hidden half-note) instead
   of plain title text, in both appearances.
+- **The −/+ step buttons now auto-repeat when held, and accelerate** (V1 feedback #3). Holding a
+  tempo, reach/step, or reps stepper bumps the value repeatedly — slowly at first, then faster the
+  longer you hold — so a big change no longer means dozens of taps. A single tap still nudges by one.
+  Applies everywhere the circular −/+ buttons appear — the **metronome tempo** steppers, plus the
+  loop & exercise run setups (via the new shared `StepperButton`).
+- **A new exercise's command tempo is now typable** (V1 feedback #3). The New Exercise sheet uses
+  the same −/+ + tap-to-type control as the run screen, so you can enter a value directly instead of
+  stepping to it.
 
 ### Fixed
 - **The journal's "Add entry" button now fires on the first tap** while the composer's text field is
@@ -38,6 +46,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   `.borderless` hit-target.
 
 ### Changed
+- **A hand-created exercise now defaults its command tempo to 50 BPM** (V1 feedback #3), down from
+  90 — a more conservative "fastest you can play it cleanly" starting point. Exercises created from
+  the metronome automator still prefill with the discovered breakdown tempo.
 - **Dark Mode is noticeably more vibrant** (ADR 0063). The Metronome/Practice card and circle
   tints on Home, and the "Add a song" green, were still reading as near-invisible on the near-black
   background — the same light/dark blending asymmetry ADR 0062 fixed for Light Mode, just

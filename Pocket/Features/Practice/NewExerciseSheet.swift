@@ -10,7 +10,7 @@ import SwiftUI
 struct NewExerciseSheet: View {
     /// Pre-fills the command stepper — the discovered tempo when launched from the automator
     /// seam, the engine default when created fresh in Practice.
-    var initialCommand: Int = StandaloneMetronomeEngine.defaultBPM
+    var initialCommand: Int = StandaloneMetronomeEngine.defaultCommandBPM
     /// Pre-fills the meter picker — the metronome's current signature when launched from the
     /// automator seam, 4/4 when created fresh in Practice.
     var initialSignature: TimeSignature = .standard
@@ -25,7 +25,7 @@ struct NewExerciseSheet: View {
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
-    init(initialCommand: Int = StandaloneMetronomeEngine.defaultBPM,
+    init(initialCommand: Int = StandaloneMetronomeEngine.defaultCommandBPM,
          initialSignature: TimeSignature = .standard,
          onCreate: @escaping (String, Int, TimeSignature) -> Void) {
         self.initialCommand = initialCommand
@@ -39,6 +39,10 @@ struct NewExerciseSheet: View {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private func clampCommand(_ value: Int) -> Int {
+        min(range.upperBound, max(range.lowerBound, value))
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -46,8 +50,10 @@ struct NewExerciseSheet: View {
                     TextField("e.g. Spider", text: $name)
                 }
                 Section {
-                    Stepper("Command tempo · \(command) BPM", value: $command,
-                            in: range.lowerBound...range.upperBound)
+                    EditableTempoRow(label: "Command tempo", caption: "fastest you own · BPM",
+                                     value: command, tint: PocketColor.practice,
+                                     onStep: { command = clampCommand(command + $0) },
+                                     onType: { command = clampCommand($0) })
                 } header: {
                     FieldInfoLabel(title: "Your command tempo",
                                    info: PracticeFieldInfo.exerciseCommandTempo)
