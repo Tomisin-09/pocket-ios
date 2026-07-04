@@ -116,6 +116,10 @@ struct JournalSheet: View {
                 draftText = ""
                 draftKind = .default
             }
+            // `.borderless` makes this an independent hit-target inside the Form row: without it
+            // the default row-wide button swallows the first tap to dismiss the composer's focused
+            // TextField instead of firing, so "Add entry" read as a dead/static button (feedback #4).
+            .buttonStyle(.borderless)
             .disabled(draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         } header: {
             Text("New entry")

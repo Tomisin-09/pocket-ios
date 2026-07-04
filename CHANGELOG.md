@@ -31,6 +31,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **The Home header now shows the "Red Moon" wordmark graphic** (with its hidden half-note) instead
   of plain title text, in both appearances.
 
+### Fixed
+- **The journal's "Add entry" button now fires on the first tap** while the composer's text field is
+  focused. As a default Form-row button it was swallowing the first tap to dismiss the keyboard
+  instead of committing the entry, so it read as a dead/static button; it's now an independent
+  `.borderless` hit-target.
+
 ### Changed
 - **Dark Mode is noticeably more vibrant** (ADR 0063). The Metronome/Practice card and circle
   tints on Home, and the "Add a song" green, were still reading as near-invisible on the near-black
