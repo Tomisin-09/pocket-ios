@@ -33,6 +33,8 @@ struct ExerciseRunView: View {
     @State private var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State private var showingJournal = false
+    /// The exercise detail/reference sheet (V1 feedback #2) — an ⓘ in the nav bar opens it.
+    @State private var showingDetail = false
     /// The setup as it was last persisted — captured on seed and after each Save, so the Save
     /// Changes button shows only while the current edits differ from what's stored (ADR 0057).
     @State private var baseline: ExerciseSetupState?
@@ -97,6 +99,13 @@ struct ExerciseRunView: View {
             if !isRunning {
                 ToolbarItem(placement: .topBarTrailing) { signaturePicker }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showingDetail = true; haptic(.light) } label: {
+                    Image(systemName: "info.circle")
+                }
+                .tint(PocketColor.practice)
+                .accessibilityLabel("Exercise details")
+            }
         }
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
@@ -113,6 +122,9 @@ struct ExerciseRunView: View {
                              JournalWriter.delete(entry, from: modelContext)
                              try? modelContext.save(); haptic(.light)
                          })
+        }
+        .sheet(isPresented: $showingDetail) {
+            ExerciseDetailSheet(exercise: exercise)
         }
     }
 
@@ -341,24 +353,21 @@ private extension ExerciseRunView {
         haptic(.medium)
     }
 
+    // Steps are pure (`StepperButton` owns the ±/hold-repeat haptics); the typed setters keep their
+    // own single haptic. Both clamp through the shared helpers below.
+    private func adjustWorking(by delta: Int) { working = clampWorking(working + delta) }
+    private func adjustCommand(by delta: Int) { command = clampCommand(command + delta) }
+    private func setWorking(_ value: Int) { working = clampWorking(value); haptic(.light) }
+    private func setCommand(_ value: Int) { command = clampCommand(value); haptic(.light) }
+
     /// Working stays in range and never above command (the floor sits below the owned tempo).
-    private func adjustWorking(by delta: Int) { setWorking(working + delta) }
-
-    /// Command stays in range and never below working; the reach re-derives automatically.
-    private func adjustCommand(by delta: Int) { setCommand(command + delta) }
-
-    /// Set working to an absolute (typed) value, clamped to range and never above command.
-    private func setWorking(_ value: Int) {
-        let range = StandaloneMetronomeEngine.bpmRange
-        working = min(command, max(range.lowerBound, value))
-        haptic(.light)
+    private func clampWorking(_ value: Int) -> Int {
+        min(command, max(StandaloneMetronomeEngine.bpmRange.lowerBound, value))
     }
 
-    /// Set command to an absolute (typed) value, clamped to range and never below working.
-    private func setCommand(_ value: Int) {
-        let range = StandaloneMetronomeEngine.bpmRange
-        command = min(range.upperBound, max(working, value))
-        haptic(.light)
+    /// Command stays in range and never below working; the reach re-derives automatically.
+    private func clampCommand(_ value: Int) -> Int {
+        min(StandaloneMetronomeEngine.bpmRange.upperBound, max(working, value))
     }
 }
 

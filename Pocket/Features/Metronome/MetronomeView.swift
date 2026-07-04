@@ -86,7 +86,7 @@ struct MetronomeView: View {
     /// can hold the tap buttons instead of a separate full-width Tap row).
     private var tempoReadout: some View {
         HStack {
-            stepperButton(symbol: "minus", delta: -1)
+            tempoStepper(symbol: "minus", label: "Decrease tempo", delta: -1)
             Spacer()
             VStack(spacing: 2) {
                 Text("\(engine.bpm)")
@@ -98,7 +98,7 @@ struct MetronomeView: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
-            stepperButton(symbol: "plus", delta: 1)
+            tempoStepper(symbol: "plus", label: "Increase tempo", delta: 1)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(engine.bpm) beats per minute, \(engine.tempoMarking.name)")
@@ -145,16 +145,15 @@ struct MetronomeView: View {
         .accessibilityLabel("Tap to set tempo")
     }
 
-    private func stepperButton(symbol: String, delta: Int) -> some View {
-        Button { engine.adjustBPM(by: delta); haptic(.light) } label: {
-            Image(systemName: symbol)
-                .font(.futura(.title3, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(PocketColor.metronomeCircleWash))
+    /// The tempo −/+ steppers: a single tap nudges ±1 BPM; holding auto-repeats and accelerates
+    /// (shared `StepperButton`, V1 feedback #3 follow-up). `adjustBPM` clamps to `bpmRange`, so the
+    /// step closure stays pure and `StepperButton` owns the hold-repeat haptics.
+    private func tempoStepper(symbol: String, label: String, delta: Int) -> some View {
+        StepperButton(symbol: symbol, label: label, tint: PocketColor.metronome,
+                      fill: PocketColor.metronomeCircleWash, diameter: 44,
+                      glyphFont: .futura(.title3, weight: .semibold)) {
+            engine.adjustBPM(by: delta)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(delta > 0 ? "Increase tempo" : "Decrease tempo")
     }
 
     // MARK: - Transport

@@ -49,7 +49,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
 | `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043; automator phase-continuous stepping + explicit run/count-in/infinite, ADRs 0047/0048) |
-| `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`) + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
+| `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`), an exercise **detail/reference sheet** (`ExerciseDetailSheet` — editable description + read-only tempo/meter/routine, ⓘ from the run screen) + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
 | `Pocket/Features/Planner/` | *(reserved for the V2 practice planner — re-homed inside Practice, ADR 0046)* |
 | `Pocket/Features/Settings/` | Settings screen (pushed from the Home gear) — Appearance override (System/Light/Dark, ADR 0063) + Haptics + Count-in toggles (`SettingsView`, ADR 0050); About footer shows the Red Moon brand mark (ADR 0061), background now transparent (ADR 0063) |
 | `Pocket/Resources/Assets.xcassets/` | Asset catalog (ADR 0061): `AppIcon` (crescent + stars on dark), `RedMoonLogo` (moon + wordmark, light/dark, transparent background since ADR 0063), `RedMoonWordmark` (compact nav-bar crop) |
@@ -84,8 +84,9 @@ phone mid-practice keeps it playing (ADR 0025). Interaction: **tap = seek, drag 
 with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
 the source file** for crisp detail, debounced + cached, ADR 0020);
 loops are created through the **A/B span** — the single creation primitive (ADR 0041):
-the transport's left column is two **identity dots** (A/B · Mark; **Click** moved to the
-speed bar, ADR 0027 / 0030 / 0041). Tap **A/B** to drop A at the playhead, play along, tap
+the transport is flanked by two big **circular identity buttons** — **Marker** on the far left,
+**Loop (A/B)** on the far right (V1 feedback #1; **Click** moved to the speed bar, ADR 0027 / 0030 /
+0041). The Loop button lights while a span forms and cross-fades to the active-loop colour strip. Tap **A/B** to drop A at the playhead, play along, tap
 again to close an ephemeral **A↔B span** that loops with no ✓/✗ gate; drag its labelled
 **A / B handles** to refine it in place, **Save as loop** to persist it, **✕** to clear.
 Dragging a saved loop's **edge knob** lifts it back into A/B for a range edit (**Save

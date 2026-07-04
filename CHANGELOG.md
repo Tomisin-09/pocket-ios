@@ -26,12 +26,41 @@ All notable changes to Pocket are documented here. Format loosely follows
   waveforms read as one consistent instrument.
 
 ### Added
+- **Exercises now have a detail sheet** (V1 feedback #2). An ⓘ in the exercise run screen's nav bar
+  opens a reference sheet: an editable **description** (a note-to-self about the drill — the first
+  UI for the exercise's notes field), its tempo anchors (working / command / reach), meter and
+  subdivision, a read-only preview of the training-routine staircase, and a placeholder for the
+  **animated fretboard guide** planned for a future release.
 - **Settings → Appearance** lets you pin Light or Dark regardless of the device setting, or leave
   it on System (the default, unchanged behaviour) (ADR 0063).
 - **The Home header now shows the "Red Moon" wordmark graphic** (with its hidden half-note) instead
   of plain title text, in both appearances.
+- **The −/+ step buttons now auto-repeat when held, and accelerate** (V1 feedback #3). Holding a
+  tempo, reach/step, or reps stepper bumps the value repeatedly — slowly at first, then faster the
+  longer you hold — so a big change no longer means dozens of taps. A single tap still nudges by one.
+  Applies everywhere the circular −/+ buttons appear — the **metronome tempo** steppers, plus the
+  loop & exercise run setups (via the new shared `StepperButton`).
+- **A new exercise's command tempo is now typable** (V1 feedback #3). The New Exercise sheet uses
+  the same −/+ + tap-to-type control as the run screen, so you can enter a value directly instead of
+  stepping to it.
+
+### Fixed
+- **The journal's "Add entry" button now fires on the first tap** while the composer's text field is
+  focused. As a default Form-row button it was swallowing the first tap to dismiss the keyboard
+  instead of committing the entry, so it read as a dead/static button; it's now an independent
+  `.borderless` hit-target.
 
 ### Changed
+- **A hand-created exercise now defaults its command tempo to 50 BPM** (V1 feedback #3), down from
+  90 — a more conservative "fastest you can play it cleanly" starting point. Exercises created from
+  the metronome automator still prefill with the discovered breakdown tempo.
+- **The waveform transport's Loop and Marker controls are now big circular buttons** flanking the
+  transport while idle — **Marker on the far left, Loop on the far right** (V1 feedback #1) — instead
+  of a small stacked pair in a left column. The idle Loop button lights up while an A/B span is
+  forming. **Once a loop is active the bar reverts to its compact form** (the small stacked
+  Loop/Marker column + the loop's ✕ colour strip), so the running loop reads on the Loops panel below
+  and the bar steps out of the way. A follow-up to make the idle sides user-swappable from Settings
+  is parked in `docs/backlog.md`.
 - **Dark Mode is noticeably more vibrant** (ADR 0063). The Metronome/Practice card and circle
   tints on Home, and the "Add a song" green, were still reading as near-invisible on the near-black
   background — the same light/dark blending asymmetry ADR 0062 fixed for Light Mode, just

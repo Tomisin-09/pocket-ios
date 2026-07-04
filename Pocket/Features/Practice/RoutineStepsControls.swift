@@ -19,7 +19,8 @@ struct RoutineStepsControls: View {
     /// run (whose tempos are percent-of-original, ADR 0046 Phase B). Defaults to "BPM" so the
     /// exercise call site is unchanged.
     var stepUnit = "BPM"
-    /// Fired on every change/toggle so the host can play a haptic.
+    /// Fired on the disclosure toggle so the host can play a haptic. The ± step buttons feed their
+    /// own hold-repeat haptics via `StepperButton`, so they no longer route through here.
     let onChange: () -> Void
 
     private static let range = 0...6
@@ -81,32 +82,20 @@ struct RoutineStepsControls: View {
                 Text(caption).font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
-            stepButton(symbol: "minus", label: "Fewer \(label)") { adjust(value, by: -1) }
+            StepperButton(symbol: "minus", label: "Fewer \(label)", tint: tint) { adjust(value, by: -1) }
             Text("\(value.wrappedValue)")
                 .font(.pocketMono(.title3))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 56)
                 .contentTransition(.numericText())
-            stepButton(symbol: "plus", label: "More \(label)") { adjust(value, by: 1) }
+            StepperButton(symbol: "plus", label: "More \(label)", tint: tint) { adjust(value, by: 1) }
         }
     }
 
+    /// Pure clamp — `StepperButton` owns the ±/hold-repeat haptics, so this must not call `onChange`
+    /// (the disclosure toggle still does). The bindings drive the host's dirty tracking directly.
     private func adjust(_ value: Binding<Int>, by delta: Int) {
         value.wrappedValue = min(Self.range.upperBound,
                                  max(Self.range.lowerBound, value.wrappedValue + delta))
-        onChange()
-    }
-
-    private func stepButton(symbol: String, label: String,
-                            action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.futura(.body, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(width: 38, height: 38)
-                .background(Circle().fill(tint.opacity(0.18)))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 }
