@@ -353,31 +353,21 @@ private extension ExerciseRunView {
         haptic(.medium)
     }
 
+    // Steps are pure (`StepperButton` owns the ±/hold-repeat haptics); the typed setters keep their
+    // own single haptic. Both clamp through the shared helpers below.
+    private func adjustWorking(by delta: Int) { working = clampWorking(working + delta) }
+    private func adjustCommand(by delta: Int) { command = clampCommand(command + delta) }
+    private func setWorking(_ value: Int) { working = clampWorking(value); haptic(.light) }
+    private func setCommand(_ value: Int) { command = clampCommand(value); haptic(.light) }
+
     /// Working stays in range and never above command (the floor sits below the owned tempo).
-    /// Pure — `StepperButton` owns the ±/hold-repeat haptics, so this must not fire its own.
-    private func adjustWorking(by delta: Int) {
-        let range = StandaloneMetronomeEngine.bpmRange
-        working = min(command, max(range.lowerBound, working + delta))
+    private func clampWorking(_ value: Int) -> Int {
+        min(command, max(StandaloneMetronomeEngine.bpmRange.lowerBound, value))
     }
 
-    /// Command stays in range and never below working; the reach re-derives automatically. Pure.
-    private func adjustCommand(by delta: Int) {
-        let range = StandaloneMetronomeEngine.bpmRange
-        command = min(range.upperBound, max(working, command + delta))
-    }
-
-    /// Set working to an absolute (typed) value, clamped to range and never above command.
-    private func setWorking(_ value: Int) {
-        let range = StandaloneMetronomeEngine.bpmRange
-        working = min(command, max(range.lowerBound, value))
-        haptic(.light)
-    }
-
-    /// Set command to an absolute (typed) value, clamped to range and never below working.
-    private func setCommand(_ value: Int) {
-        let range = StandaloneMetronomeEngine.bpmRange
-        command = min(range.upperBound, max(working, value))
-        haptic(.light)
+    /// Command stays in range and never below working; the reach re-derives automatically.
+    private func clampCommand(_ value: Int) -> Int {
+        min(StandaloneMetronomeEngine.bpmRange.upperBound, max(working, value))
     }
 }
 
