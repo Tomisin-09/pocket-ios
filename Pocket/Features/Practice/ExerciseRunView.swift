@@ -342,10 +342,17 @@ private extension ExerciseRunView {
     }
 
     /// Working stays in range and never above command (the floor sits below the owned tempo).
-    private func adjustWorking(by delta: Int) { setWorking(working + delta) }
+    /// Pure — `StepperButton` owns the ±/hold-repeat haptics, so this must not fire its own.
+    private func adjustWorking(by delta: Int) {
+        let range = StandaloneMetronomeEngine.bpmRange
+        working = min(command, max(range.lowerBound, working + delta))
+    }
 
-    /// Command stays in range and never below working; the reach re-derives automatically.
-    private func adjustCommand(by delta: Int) { setCommand(command + delta) }
+    /// Command stays in range and never below working; the reach re-derives automatically. Pure.
+    private func adjustCommand(by delta: Int) {
+        let range = StandaloneMetronomeEngine.bpmRange
+        command = min(range.upperBound, max(working, command + delta))
+    }
 
     /// Set working to an absolute (typed) value, clamped to range and never above command.
     private func setWorking(_ value: Int) {

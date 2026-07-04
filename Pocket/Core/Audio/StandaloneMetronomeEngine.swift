@@ -42,6 +42,12 @@ final class StandaloneMetronomeEngine {
     /// what `reset()` returns to. Single-sourced so "default mode" can't drift.
     nonisolated static let defaultBPM = 90
 
+    /// The command-tempo prefill when creating an exercise fresh in Practice (V1 feedback #3) — a
+    /// deliberately conservative "fastest you can play it cleanly" starting point, distinct from the
+    /// free-play `defaultBPM`. The automator "Save as exercise" seam overrides it with the
+    /// discovered breakdown tempo, so this only seeds a hand-created drill.
+    nonisolated static let defaultCommandBPM = 50
+
     private(set) var transport: Transport = .stopped
     /// Working tempo (absolute BPM). Set only via `setBPM`/`adjustBPM` (clamped); observable.
     private(set) var bpm = defaultBPM
