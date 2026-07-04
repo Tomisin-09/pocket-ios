@@ -33,6 +33,8 @@ struct ExerciseRunView: View {
     @State private var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State private var showingJournal = false
+    /// The exercise detail/reference sheet (V1 feedback #2) — an ⓘ in the nav bar opens it.
+    @State private var showingDetail = false
     /// The setup as it was last persisted — captured on seed and after each Save, so the Save
     /// Changes button shows only while the current edits differ from what's stored (ADR 0057).
     @State private var baseline: ExerciseSetupState?
@@ -97,6 +99,13 @@ struct ExerciseRunView: View {
             if !isRunning {
                 ToolbarItem(placement: .topBarTrailing) { signaturePicker }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showingDetail = true; haptic(.light) } label: {
+                    Image(systemName: "info.circle")
+                }
+                .tint(PocketColor.practice)
+                .accessibilityLabel("Exercise details")
+            }
         }
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
@@ -113,6 +122,9 @@ struct ExerciseRunView: View {
                              JournalWriter.delete(entry, from: modelContext)
                              try? modelContext.save(); haptic(.light)
                          })
+        }
+        .sheet(isPresented: $showingDetail) {
+            ExerciseDetailSheet(exercise: exercise)
         }
     }
 

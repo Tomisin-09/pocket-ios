@@ -26,6 +26,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   waveforms read as one consistent instrument.
 
 ### Added
+- **Exercises now have a detail sheet** (V1 feedback #2). An ⓘ in the exercise run screen's nav bar
+  opens a reference sheet: an editable **description** (a note-to-self about the drill — the first
+  UI for the exercise's notes field), its tempo anchors (working / command / reach), meter and
+  subdivision, a read-only preview of the training-routine staircase, and a placeholder for the
+  **animated fretboard guide** planned for a future release.
 - **Settings → Appearance** lets you pin Light or Dark regardless of the device setting, or leave
   it on System (the default, unchanged behaviour) (ADR 0063).
 - **The Home header now shows the "Red Moon" wordmark graphic** (with its hidden half-note) instead
