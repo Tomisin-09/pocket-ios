@@ -13,6 +13,19 @@ All notable changes to Pocket are documented here. Format loosely follows
   `--strict` run no longer flags generated asset-catalog sources.
 
 ### Changed
+- **Exercise run setup now groups its tempos + steps under a collapsible "Practice Settings"
+  panel** (V1 feedback). The Working / Command / Reach tempos and the Steps granularity are tucked
+  behind one disclosure header below the exercise title — collapsed by default, showing a one-line
+  tempo summary (e.g. `42→50 · reach 53 BPM`) — so the run screen opens on the summary + routine
+  staircase and expands to edit, mirroring how the nested Steps panel already behaves.
+- **Practice count-in dots now read in the practice colour** (V1 feedback). The `BeatIndicator`
+  is tint-aware: the exercise run screen's count-in beat dots use `PocketColor.practice` (purple)
+  instead of the metronome's teal, so the metronome UI no longer leaks into the Practice space. The
+  metronome screen keeps its teal via the default.
+- **Routine staircase now signposts the command tempo** (V1 feedback). A `<bpm> BPM` label sits just
+  above the wide **dwell** bar (found as the longest-held plateau), so the anchor tempo is legible
+  straight off the chart. Clamped into a reserved top strip so it never clips on a no-reach routine
+  where the command bar is the tallest.
 - **Refined the Red Moon brand lockup** (Settings brand mark). Rebalanced the composition so the
   wordmark and star cluster hang under the moon's optical centre of gravity instead of drifting
   toward it — the "Red Moon" wordmark moved left ~20px and the stars ~10px. Removed the baked-in

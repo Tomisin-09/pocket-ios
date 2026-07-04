@@ -49,7 +49,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
 | `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043; automator phase-continuous stepping + explicit run/count-in/infinite, ADRs 0047/0048) |
-| `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`), an exercise **detail/reference sheet** (`ExerciseDetailSheet` — editable description + read-only tempo/meter/routine, ⓘ from the run screen) + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
+| `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`), an exercise **detail/reference sheet** (`ExerciseDetailSheet` — editable description + read-only tempo/meter/routine, ⓘ from the run screen); a collapsible **Practice Settings** panel (`PracticeSettingsPanel`) grouping the run-setup tempos + Steps + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
 | `Pocket/Features/Planner/` | *(reserved for the V2 practice planner — re-homed inside Practice, ADR 0046)* |
 | `Pocket/Features/Settings/` | Settings screen (pushed from the Home gear) — Appearance override (System/Light/Dark, ADR 0063) + Haptics + Count-in toggles (`SettingsView`, ADR 0050); About footer shows the Red Moon brand mark (ADR 0061), background now transparent (ADR 0063) |
 | `Pocket/Resources/Assets.xcassets/` | Asset catalog (ADR 0061): `AppIcon` (crescent + stars on dark), `RedMoonLogo` (moon + wordmark, light/dark, transparent background since ADR 0063), `RedMoonWordmark` (compact nav-bar crop) |
@@ -162,7 +162,10 @@ space** (`PracticeView`, ADR 0046 — a **hub** over two unit libraries: `Exerci
 row pushing its own list — each with a **sort menu + search** (`PracticeLibrarySort`, ADR 0056:
 loops by Song · Name · Command · Mastery, exercises by Name · Command · Recently added; choice
 persisted per library). An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
-— both owning their own engine. The
+— both owning their own engine. On the
+exercise run setup the tempos (working/command/reach) and the Steps granularity sit inside a
+collapsible **Practice Settings** panel (`PracticeSettingsPanel`) below the title — collapsed by
+default to a one-line tempo summary, mirroring the nested Steps disclosure. The
 run staircase lights the live plateau as it climbs, tempos are typable as well as nudged, and the
 routine takes reach / back-up steps beyond warm-up. A new exercise picks a **time signature**
 (`NewExerciseSheet`, default 4/4) — also editable on an existing exercise from the run-setup nav

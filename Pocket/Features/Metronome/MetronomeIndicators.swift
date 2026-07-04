@@ -6,6 +6,9 @@ import SwiftUI
 /// not the whole screen (which would dismiss the time-signature menu mid-play).
 struct BeatIndicator: View {
     let engine: StandaloneMetronomeEngine
+    /// The accent-dot colour — defaults to the metronome tint, overridden to `PocketColor.practice`
+    /// on the Practice run screens so the count-in dots read in that space's colour, not teal.
+    var tint: Color = PocketColor.metronome
 
     var body: some View {
         HStack(spacing: 10) {
@@ -25,7 +28,7 @@ struct BeatIndicator: View {
     }
 
     private func dotColor(isCurrent: Bool, isAccent: Bool) -> Color {
-        if isCurrent { return isAccent ? PocketColor.metronome : PocketColor.textPrimary }
-        return isAccent ? PocketColor.metronome.opacity(0.4) : PocketColor.textSecondary.opacity(0.4)
+        if isCurrent { return isAccent ? tint : PocketColor.textPrimary }
+        return isAccent ? tint.opacity(0.4) : PocketColor.textSecondary.opacity(0.4)
     }
 }

@@ -29,6 +29,9 @@ struct ExerciseRunView: View {
     @State private var reachSteps = 0
     @State private var backoffSteps = 0
     @State private var showSteps = false
+    /// The top-level "Practice Settings" disclosure (V1 feedback) — collapsed by default so the
+    /// run screen opens on the summary + staircase; expands to reveal the tempos and Steps.
+    @State private var showSettings = false
     @State private var signature: TimeSignature = .standard
     @State private var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
@@ -76,8 +79,7 @@ struct ExerciseRunView: View {
                 if isRunning {
                     liveReadout
                 } else {
-                    tempos
-                    stepsSection
+                    practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
@@ -162,7 +164,7 @@ struct ExerciseRunView: View {
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             }
-            BeatIndicator(engine: engine)
+            BeatIndicator(engine: engine, tint: PocketColor.practice)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
@@ -188,35 +190,18 @@ struct ExerciseRunView: View {
         .accessibilityLabel("Time signature: \(signature.name)")
     }
 
-    private var tempos: some View {
-        VStack(spacing: 14) {
-            EditableTempoRow(label: "Working", caption: "warm-up floor", value: working,
-                             tint: PocketColor.practice,
-                             onStep: { adjustWorking(by: $0) }, onType: { setWorking($0) })
-            EditableTempoRow(label: "Command", caption: "fastest you own", value: command,
-                             tint: PocketColor.practice,
-                             onStep: { adjustCommand(by: $0) }, onType: { setCommand($0) })
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Reach").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
-                    Text("auto · +\(reach - command) BPM")
-                        .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
-                }
-                Spacer()
-                Text("\(reach) BPM")
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(PocketColor.practice)
-                    .contentTransition(.numericText())
-            }
-        }
-    }
-
-    /// The step controls, tucked behind a disclosure header so the run setup reads as just the
-    /// tempos + staircase by default; expand to shape the warm-up / reach / back-up granularity.
-    private var stepsSection: some View {
-        RoutineStepsControls(expanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
-                             backoffSteps: $backoffSteps, warmupStepBPM: stepBPM, reach: reach,
-                             hasReach: hasReach, tint: PocketColor.practice) { haptic(.light) }
+    /// The collapsible **Practice Settings** panel (V1 feedback): the three tempos + the nested
+    /// Steps granularity behind one disclosure header, so the setup reads as just the title,
+    /// a summary, and the staircase by default. The tempo edits still live in this view's state.
+    private var practiceSettings: some View {
+        PracticeSettingsPanel(
+            expanded: $showSettings,
+            working: working, command: command, reach: reach,
+            onStepWorking: { adjustWorking(by: $0) }, onTypeWorking: { setWorking($0) },
+            onStepCommand: { adjustCommand(by: $0) }, onTypeCommand: { setCommand($0) },
+            stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
+            backoffSteps: $backoffSteps, warmupStepBPM: stepBPM,
+            hasReach: hasReach, tint: PocketColor.practice, onToggle: { haptic(.light) })
     }
 
     private var promoteButton: some View {
