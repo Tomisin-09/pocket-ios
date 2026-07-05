@@ -24,6 +24,20 @@ The order below reflects a deliberate scoping call, not just priority:
 The V2 direction was set in a scoping session; the thinking lives in dedicated
 docs so this stays a pointer list:
 
+- **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
+  play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer
+  switched in `ExerciseRunView`) *over* today's metronome/ramp engine — strumming
+  arrow-lane, animated fretboard, chord/progression stepper — mapped from the
+  taxonomy's `Default mode` column. Build order strumming → fretboard (shared with
+  tab→fretboard Phase R + preset guides) → chords; vibrato/bends/palm-muting
+  deliberately get no template.
+- **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
+  container (distinct from the intra-exercise ramp staircase): `Routine` +
+  `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit
+  `order`), a player orchestrating the existing per-unit engines, pure budget/rest
+  logic. Container + manual authoring + player first; the planner (ADRs
+  0014/0015/0016) becomes just another producer of a `Routine`, deferred to its own
+  ADR. Unblocks ADR 0014's open output type.
 - **Social layer boundaries — ADR 0064 (Accepted).** Local-first forever;
   exercises (never loops/audio) are the shareable unit; derived-stats-only
   leaderboards; Sign in with Apple; CloudKit personal sync vs AWS social rails
