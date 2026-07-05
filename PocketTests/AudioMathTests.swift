@@ -195,6 +195,37 @@ final class AudioMathTests: XCTestCase {
         XCTAssertEqual(AudioMath.loopedPlayhead(elapsed: 5, loopStart: 1.25, loopLength: 0), 1.25, accuracy: 1e-9)
     }
 
+    // MARK: playheadInsideLoop (ADR 0067 — offset-preserving re-arm)
+
+    func testPlayheadInsideLoopWithinBounds() {
+        XCTAssertTrue(AudioMath.playheadInsideLoop(3, start: 2, end: 5))
+    }
+
+    func testPlayheadInsideLoopAtStartIsInside() {
+        // Half-open [start, end): the start frame belongs to the loop.
+        XCTAssertTrue(AudioMath.playheadInsideLoop(2, start: 2, end: 5))
+    }
+
+    func testPlayheadInsideLoopAtEndIsOutside() {
+        // Half-open [start, end): the end is the wrap point, not inside.
+        XCTAssertFalse(AudioMath.playheadInsideLoop(5, start: 2, end: 5))
+    }
+
+    func testPlayheadInsideLoopBeforeStartIsOutside() {
+        // Shrinking the start past a trailing playhead → outside → restart.
+        XCTAssertFalse(AudioMath.playheadInsideLoop(1.5, start: 2, end: 5))
+    }
+
+    func testPlayheadInsideLoopPastEndIsOutside() {
+        // Shrinking the end under the playhead → outside → restart.
+        XCTAssertFalse(AudioMath.playheadInsideLoop(6, start: 2, end: 5))
+    }
+
+    func testPlayheadInsideLoopDegenerateRegionContainsNothing() {
+        XCTAssertFalse(AudioMath.playheadInsideLoop(2, start: 2, end: 2))
+        XCTAssertFalse(AudioMath.playheadInsideLoop(2, start: 3, end: 2))
+    }
+
     // MARK: crossfadeGains
 
     func testCrossfadeGainsStartIsAllTail() {

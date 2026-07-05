@@ -150,7 +150,7 @@ struct PracticeReference: View {
                            activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
                            onActivate: model.activate, onEdit: { model.editingLoop = $0 },
                            onDelete: model.deleteLoop,
-                           onJournal: { model.journalingLoop = $0 },
+                           onAdjustRange: { model.startRangeEdit($0) },
                            onAutomator: { model.editingAutomatorLoop = $0 },
                            compact: compact)
                 MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11

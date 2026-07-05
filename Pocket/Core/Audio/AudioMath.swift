@@ -192,4 +192,14 @@ enum AudioMath {
         let pos = elapsed.truncatingRemainder(dividingBy: loopLength)
         return loopStart + (pos < 0 ? pos + loopLength : pos)
     }
+
+    /// Whether `playhead` (seconds) still falls inside the half-open loop region
+    /// `[start, end)`. Drives the offset-preserving re-arm when a loop's bounds change
+    /// while it plays (ADR 0067): inside → keep playing from here; outside → restart from
+    /// the start. A degenerate region (`end <= start`) contains nothing.
+    static func playheadInsideLoop(_ playhead: TimeInterval,
+                                   start: TimeInterval, end: TimeInterval) -> Bool {
+        guard end > start else { return false }
+        return playhead >= start && playhead < end
+    }
 }

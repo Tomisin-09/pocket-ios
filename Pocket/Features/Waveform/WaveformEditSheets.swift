@@ -33,6 +33,8 @@ struct LoopEditSheet: View {
     // Loop tags (ADR 0034) — local copy, written back on Done.
     @State private var tags: [String]
     @State private var newTag = ""
+    // The loop's journal now lives here in settings (read-only), off the waveform row (ADR 0067).
+    @State private var showingJournal = false
 
     init(loop: Loop, autoColor: Color,
          onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void,
@@ -101,6 +103,7 @@ struct LoopEditSheet: View {
                     }
                 }
                 practiceSection
+                journalSection
                 tagsSection
                 Section {
                     LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
@@ -146,6 +149,40 @@ struct LoopEditSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .sheet(isPresented: $showingJournal) {
+            // Read-only — authoring stays on the Practice run screen (ADR 0058).
+            JournalSheet(owner: .loop(loop), readOnly: true)
+        }
+    }
+}
+
+// Field-building sections split into an extension to keep the primary declaration under the
+// type-body length limit — same file, so the `private` stored props above stay reachable.
+extension LoopEditSheet {
+
+    // MARK: - Journal (ADR 0067)
+
+    /// The loop's practice journal, read-only. Authoring lives on the Practice run screen
+    /// (ADR 0058); this is the "peek" surface, moved off the waveform loop row into the loop's
+    /// settings so the row's second control can become fine-adjust. The count reads as the
+    /// unrated-style absence signal (ADR 0039): "None" until there's something to see.
+    private var journalSection: some View {
+        Section("Journal") {
+            Button {
+                showingJournal = true
+            } label: {
+                LabeledContent {
+                    Text(loop.journal.isEmpty ? "None" : "\(loop.journal.count)")
+                        .foregroundStyle(PocketColor.textSecondary)
+                } label: {
+                    Label("View entries", systemImage: "book.closed")
+                }
+            }
+            .accessibilityLabel(loop.journal.isEmpty
+                                ? "View journal, no entries"
+                                : "View journal, \(loop.journal.count) "
+                                    + "entr\(loop.journal.count == 1 ? "y" : "ies")")
+        }
     }
 
     // MARK: - Practice fields (ADR 0036)
@@ -317,55 +354,6 @@ struct LoopEditSheet: View {
     private func addTag() {
         tags = Labels.adding(newTag, to: tags)
         newTag = ""
-    }
-}
-
-struct MarkerEditSheet: View {
-    let marker: Marker
-    let onDelete: () -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var label: String
-
-    init(marker: Marker, onDelete: @escaping () -> Void) {
-        self.marker = marker
-        self.onDelete = onDelete
-        _label = State(initialValue: marker.label)
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Name") {
-                    ClearableTextField("Marker name", text: $label)
-                }
-                Section("Position") {
-                    LabeledContent("At") {
-                        Text(timecode(marker.seconds)).font(.pocketMono(.body))
-                    }
-                }
-                Section {
-                    Button("Delete marker", role: .destructive) {
-                        onDelete()
-                        dismiss()
-                    }
-                }
-            }
-            .navigationTitle("Edit marker")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        marker.label = label
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium])
     }
 }
 

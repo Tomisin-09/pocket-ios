@@ -16,8 +16,10 @@ struct LoopsPanel: View {
     let onEdit: (Loop) -> Void
     /// Swipe-Delete — remove the loop without opening the sheet first.
     let onDelete: (Loop) -> Void
-    /// The journal control — open this loop's practice journal (ADR 0038).
-    let onJournal: (Loop) -> Void
+    /// The fine-adjust control — lift this loop into the A/B span for a direct range edit
+    /// on the waveform (ADR 0067). Replaces the old journal book, which moved into the loop
+    /// edit sheet; the journal is authored from Practice (ADR 0058).
+    let onAdjustRange: (Loop) -> Void
     /// The "A" control — open this loop's automator (speed ramp) sheet.
     let onAutomator: (Loop) -> Void
     /// Landscape drawer (ADR 0042): tighten each row (no range, closer icons).
@@ -41,7 +43,7 @@ struct LoopsPanel: View {
                                 isActive: loop.uid == activeLoopID,
                                 isPlaying: isPlaying,
                                 onActivate: { onActivate(loop) },
-                                onJournal: { onJournal(loop) },
+                                onAdjustRange: { onAdjustRange(loop) },
                                 onAutomator: { onAutomator(loop) },
                                 onEdit: { onEdit(loop) },
                                 onDelete: { onDelete(loop) },
@@ -58,11 +60,11 @@ private struct LoopRow: View {
     let isActive: Bool
     let isPlaying: Bool
     let onActivate: () -> Void
-    let onJournal: () -> Void
+    let onAdjustRange: () -> Void
     let onAutomator: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
-    /// Landscape drawer: drops the row's time range and tightens the journal/automator
+    /// Landscape drawer: drops the row's time range and tightens the adjust/automator
     /// pair so the panel fits a narrower drawer with room to spare (ADR 0042).
     var compact: Bool = false
 
@@ -106,18 +108,15 @@ private struct LoopRow: View {
             // VoiceOver can't long-press, so surface the same actions explicitly.
             .accessibilityActions {
                 Button("Edit", action: onEdit)
-                Button("Journal", action: onJournal)
+                Button("Adjust range", action: onAdjustRange)
                 Button("Delete", action: onDelete)
             }
 
-            // Journal + automator read as a pair; in the narrow landscape drawer they sit
+            // Adjust + automator read as a pair; in the narrow landscape drawer they sit
             // closer together (their 44pt targets keep a usable gap) to reclaim width.
             HStack(spacing: compact ? -6 : 10) {
-                JournalButton(action: onJournal)
-                    .accessibilityLabel(loop.journal.isEmpty
-                                        ? "Open journal for \(loop.name)"
-                                        : "Journal for \(loop.name), \(loop.journal.count) "
-                                            + "entr\(loop.journal.count == 1 ? "y" : "ies")")
+                AdjustRangeButton(action: onAdjustRange)
+                    .accessibilityLabel("Adjust range for \(loop.name)")
                 AutomatorButton(isOn: loop.automatorEnabled, action: onAutomator)
                     .accessibilityLabel(loop.automatorEnabled
                                         ? "Automator on for \(loop.name)" : "Set up automator for \(loop.name)")
@@ -165,17 +164,17 @@ private struct LoopRowProgress: View {
     }
 }
 
-/// The journal control on a loop row, left of the "A" (ADR 0038) — a book glyph that
-/// opens the loop's practice journal. It has **no on/off state**: unlike the automator
-/// (which is genuinely armed or not), the journal is just a door, so it always reads
-/// the same neutral way. Same 44pt target / compact badge as the automator button so
-/// the two read as a pair.
-private struct JournalButton: View {
+/// The fine-adjust control on a loop row, left of the "A" (ADR 0067) — lifts the loop into
+/// the A/B span so its bounds can be dragged on the waveform, the same handle mechanics as
+/// the edit sheet's "Adjust range." It has **no on/off state** (unlike the automator, which is
+/// genuinely armed): it's just a door, so it always reads the same neutral way. Same 44pt
+/// target / compact badge as the automator button so the two read as a pair.
+private struct AdjustRangeButton: View {
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "book.closed")
+            Image(systemName: "slider.horizontal.below.rectangle")
                 .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
                 .frame(width: 30, height: 30)
