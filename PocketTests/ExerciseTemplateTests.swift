@@ -16,20 +16,47 @@ final class ExerciseTemplateTests: XCTestCase {
         XCTAssertEqual(ExerciseTemplate(storage: "scales"), .scales)
     }
 
-    func testOnlyStrummingHasABespokeRendererToday() {
-        // Strumming is the one bespoke surface; every other template falls to the metronome underlay.
+    func testTemplateRenderersMapToTheirSurfaces() {
+        // Strumming has its arrow lane; the fretboard family shares the one animated board (build 2);
+        // everything else still falls to the metronome underlay until its own renderer ships.
         XCTAssertEqual(ExerciseTemplate.strumming.renderer, .strumming)
-        for template in ExerciseTemplate.allCases where template != .strumming {
+
+        let fretboardFamily: Set<ExerciseTemplate> = [.scales, .picking, .legato, .fingerstyle, .warmup]
+        for template in fretboardFamily {
+            XCTAssertEqual(template.renderer, .fretboard, "\(template) should render on the fretboard")
+        }
+
+        for template in ExerciseTemplate.allCases
+        where template != .strumming && !fretboardFamily.contains(template) {
             XCTAssertEqual(template.renderer, .metronome, "\(template) should render on the metronome")
         }
     }
 
-    func testOnlyStrummingHasABespokeEditorAndDefaultPattern() {
-        XCTAssertTrue(ExerciseTemplate.strumming.hasBespokeEditor)
+    func testBespokeEditorAndDefaultsAreTemplateSpecific() {
+        // Editors are template-specific even though several share the fretboard renderer: Strumming
+        // edits a StrumPattern (folk); the warm-up families declare a FretboardRun (generated
+        // chromatic warm-up); Scales still uses the custom grid (spider-walk custom drill) until its
+        // scale-library editor ships; metronome-underlay templates have no editor.
+        XCTAssertEqual(ExerciseTemplate.strumming.bespokeEditor, .strumming)
         XCTAssertEqual(ExerciseTemplate.strumming.defaultStrumPattern, .folk)
-        for template in ExerciseTemplate.allCases where template != .strumming {
-            XCTAssertFalse(template.hasBespokeEditor, "\(template) should have no bespoke editor")
+        XCTAssertNil(ExerciseTemplate.strumming.defaultFretboardContent)
+
+        let runFamily: Set<ExerciseTemplate> = [.warmup, .picking, .legato, .fingerstyle]
+        for template in runFamily {
+            XCTAssertEqual(template.bespokeEditor, .run, "\(template) declares a run")
+            XCTAssertEqual(template.defaultFretboardContent, .run(.chromaticWarmup))
             XCTAssertNil(template.defaultStrumPattern, "\(template) should ship no strum pattern")
+        }
+
+        XCTAssertEqual(ExerciseTemplate.scales.bespokeEditor, .fretboardGrid)
+        XCTAssertEqual(ExerciseTemplate.scales.defaultFretboardContent, .custom(.spiderWalk))
+
+        let editing = runFamily.union([.strumming, .scales])
+        for template in ExerciseTemplate.allCases where !editing.contains(template) {
+            XCTAssertNil(template.bespokeEditor, "\(template) should have no bespoke editor")
+            XCTAssertFalse(template.hasBespokeEditor)
+            XCTAssertNil(template.defaultStrumPattern)
+            XCTAssertNil(template.defaultFretboardContent)
         }
     }
 

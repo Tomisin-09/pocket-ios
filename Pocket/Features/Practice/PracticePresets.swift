@@ -24,6 +24,7 @@ enum PracticePresets {
         var template: ExerciseTemplate = .basic
         var beatsPerBar: Int = 4
         var strum: StrumPattern?
+        var fretboard: FretboardContent?
     }
 
     /// The shipped set — small enough not to crowd an empty space, broad enough to cover the core
@@ -73,6 +74,18 @@ enum PracticePresets {
              strum: .folk)
     ]
 
+    /// The **fretboard** batch (ADR 0065 build 2) — seeded under a *third* key so a user who already
+    /// has the v1/v2 sets gains it on the next launch without disturbing them. Ships a real generated
+    /// run so the animated board renderer *and* the generative authoring are exercised by content.
+    static let fretboardSpecs: [Spec] = [
+        Spec(name: "Chromatic Warm-up", command: 80, subdivision: .eighths,
+             tags: ["warmup", "synchronization"],
+             notes: "One finger per fret — 1-2-3-4 up every string from the low E to the high e and "
+                  + "back. Watch the note walk the board and land both hands exactly on the click.",
+             template: .warmup,
+             fretboard: .run(.chromaticWarmup))
+    ]
+
     /// Build the preset exercises (un-inserted) for a given batch, each through the shared
     /// `commandAnchored` factory so the working floor + reach derive identically to a user-created
     /// drill (the single creation path, ADR 0046). Applies any content-template payload (T9).
@@ -85,6 +98,7 @@ enum PracticePresets {
                 subdivision: spec.subdivision, template: spec.template,
                 tags: spec.tags, notes: spec.notes)
             if let strum = spec.strum { exercise.setStrumPattern(strum) }
+            if let fretboard = spec.fretboard { exercise.setFretboardContent(fretboard) }
             return exercise
         }
     }
@@ -93,13 +107,15 @@ enum PracticePresets {
     /// curated batch seeds under its own key without disturbing (or re-seeding) an earlier one.
     static let seededDefaultsKey = "practicePresetsSeeded.v1"
     static let seededTemplateDefaultsKey = "practicePresetsSeeded.v2"
+    static let seededFretboardDefaultsKey = "practicePresetsSeeded.v3"
 
-    /// Seed the curated presets **once each, ever**: the v1 technique drills, then the v2 content-
-    /// template batch, each guarded by its own key so a deleted preset never returns and an
-    /// existing user picks up the v2 batch additively. Safe to call on every launch.
+    /// Seed the curated presets **once each, ever**: the v1 technique drills, the v2 strumming batch,
+    /// then the v3 fretboard batch, each guarded by its own key so a deleted preset never returns and
+    /// an existing user picks up each newer batch additively. Safe to call on every launch.
     static func seedIfNeeded(into context: ModelContext, defaults: UserDefaults = .standard) {
         seedBatch(specs, key: seededDefaultsKey, into: context, defaults: defaults)
         seedBatch(templateSpecs, key: seededTemplateDefaultsKey, into: context, defaults: defaults)
+        seedBatch(fretboardSpecs, key: seededFretboardDefaultsKey, into: context, defaults: defaults)
     }
 
     /// Seed one batch once, guarded by its `key`. No-op after its first successful run.

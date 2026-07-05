@@ -118,8 +118,8 @@ struct ExerciseLibraryView: View {
     /// entered **command** tempo (the warm-up working floor and the reach derive from it via pure
     /// `TempoStretch`, so the typed number is the command shown on the run screen), carrying the
     /// chosen **template** (which groups the library and picks the run surface) and meter (so the run
-    /// metronome accents + count-in match, ADR 0052). A strumming template's authored pattern is
-    /// encoded onto the payload.
+    /// metronome accents + count-in match, ADR 0052). A strumming or fretboard template's authored
+    /// payload (pattern / drill) is encoded onto the exercise.
     private func create(_ plan: NewExercisePlan) {
         guard !plan.name.isEmpty else { return }
         let exercise = Exercise.commandAnchored(name: plan.name, command: plan.command,
@@ -127,6 +127,7 @@ struct ExerciseLibraryView: View {
                                                 noteValue: plan.signature.noteValue,
                                                 template: plan.template)
         if let strum = plan.strum { exercise.setStrumPattern(strum) }
+        if let fretboard = plan.fretboard { exercise.setFretboardContent(fretboard) }
         context.insert(exercise)
         haptic(.medium)
     }

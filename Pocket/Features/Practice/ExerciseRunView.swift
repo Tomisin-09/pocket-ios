@@ -164,15 +164,17 @@ struct ExerciseRunView: View {
         .accessibilityElement(children: .contain)
     }
 
-    /// The content-template renderer switch (ADR 0065 T5): pick the surface by `kind`, with a
-    /// missing/undecodable payload or an unrecognised kind falling back to the metronome beat
-    /// dots — the universal underlay (T1) and the forward-compatible default. During the
-    /// count-in the beat dots always show; the strum lane engages once the drill is running.
+    /// The content-template renderer switch (ADR 0065 T5): pick the surface by `kind`; a missing/
+    /// undecodable payload or unrecognised kind falls back to the metronome beat dots — the universal
+    /// underlay (T1). The count-in always shows dots; a bespoke surface engages once running.
     @ViewBuilder
     private var templateSurface: some View {
         if exercise.kind == .strumming, let pattern = exercise.strumPattern,
            engine.automatorCountdown == nil {
             StrummingLaneView(engine: engine, pattern: pattern, tint: PocketColor.practice)
+        } else if exercise.kind == .fretboard, let drill = exercise.fretboardDrill,
+                  engine.automatorCountdown == nil {
+            FretboardView(engine: engine, drill: drill, tint: PocketColor.practice)
         } else {
             BeatIndicator(engine: engine, tint: PocketColor.practice)
         }
@@ -180,9 +182,8 @@ struct ExerciseRunView: View {
 
     // MARK: - Setup (stopped)
 
-    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact menu in the nav bar,
-    /// shown only while stopped. Drives the run click's accents + count-in length; committed on Start
-    /// alongside the tempos, so leaving without starting discards it.
+    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact nav-bar menu shown only
+    /// while stopped. Drives the click's accents + count-in; committed on Start, so leaving discards it.
     private var signaturePicker: some View {
         Menu {
             Picker("Time signature", selection: $signature) {

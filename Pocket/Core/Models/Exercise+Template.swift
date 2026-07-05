@@ -23,4 +23,27 @@ extension Exercise {
     func setStrumPattern(_ pattern: StrumPattern) {
         templatePayload = try? JSONEncoder().encode(pattern)
     }
+
+    /// The decoded **fretboard content** — a generated run or a custom drill (ADR 0065 build 2) —
+    /// or `nil` when this isn't a fretboard-template exercise, the payload is absent, or it can't be
+    /// decoded. Back-compat: a pre-generative blob was written as a bare `FretboardDrill`, so a blob
+    /// that isn't a `FretboardContent` is best-effort decoded as one and wrapped in `.custom`.
+    var fretboardContent: FretboardContent? {
+        guard kind == .fretboard, let data = templatePayload else { return nil }
+        if let content = try? JSONDecoder().decode(FretboardContent.self, from: data) { return content }
+        if let drill = try? JSONDecoder().decode(FretboardDrill.self, from: data) { return .custom(drill) }
+        return nil
+    }
+
+    /// The rendered **fretboard drill** — the run screen's single read (T5): a generated run
+    /// expanded, a custom drill as authored. `nil` sends the run to the metronome renderer, which is
+    /// exactly what a fretboard-family exercise carrying no payload should do.
+    var fretboardDrill: FretboardDrill? { fretboardContent?.drill }
+
+    /// Encode fretboard content onto the payload. Like `setStrumPattern`, it leaves the immutable
+    /// template alone (ADR 0068, revised) and only updates what the board renders; an encode failure
+    /// leaves no payload rather than a stale one (run falls back to the metronome underlay).
+    func setFretboardContent(_ content: FretboardContent) {
+        templatePayload = try? JSONEncoder().encode(content)
+    }
 }

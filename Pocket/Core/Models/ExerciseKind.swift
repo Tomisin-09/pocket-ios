@@ -12,6 +12,11 @@ enum ExerciseKind: String, CaseIterable, Identifiable, Codable {
     case metronome
     /// An animated down / up / rest arrow lane, the current slot lit — driven by `StrumPattern`.
     case strumming
+    /// An animated fretboard, the current note lit as it walks the board — driven by
+    /// `FretboardDrill`. The shared surface for spider walks, scales, picking and legato runs
+    /// (ADR 0065 build 2). Falls back to `.metronome` when a fretboard-template exercise carries no
+    /// drill payload yet (T5).
+    case fretboard
 
     var id: String { rawValue }
 }

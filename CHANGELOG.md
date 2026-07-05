@@ -32,6 +32,27 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **Strumming exercises show their arrow pattern on entry (ADR 0065).** The run screen's setup
   (before you press Start) now previews the down/up/rest lane, so you see the pattern up front
   — the same lane that lights up in time once the drill is running.
+- **Fretboard renderer — the shared surface for scales, picking, legato & warm-ups (ADR 0065
+  build 2).** Exercises in the fretboard family now run over an **animated fretboard**: the
+  drill's notes are plotted on a string × fret grid and the current note lights up as it walks
+  the board in time with the click. One renderer serves five templates (Scales, Picking, Legato,
+  Fingerstyle, Warm-up); which note is active at a given moment is pure, unit-tested timing math
+  (`FretboardDrill`), and a fretboard-template drill with no notes yet still runs on the beat
+  dots.
+- **Author a fretboard warm-up by its *shape*, not note-by-note (ADR 0065 build 2).** Warm-up,
+  Picking, Legato and Fingerstyle now use a **generative editor**: instead of placing every
+  note, you declare a **finger pattern** (finger numbers like `1-3-2-4`) anchored to a movable
+  **base fret**, choose the **string span** it travels (e.g. low E → high e, or low E → A) and
+  whether it goes **up and back** — and the run builds itself across the neck. A **live preview**
+  walks the run above the controls so you see it before saving, and the subdivision is tucked
+  into an "Advanced" row (default eighths). Creating one of these starts from a real chromatic
+  warm-up; the detail sheet edits the same shape later — same immutable-template contract as
+  strumming. **Scales** keeps a tap-to-place note grid as a custom fallback until its
+  scale-library editor lands.
+- **A seeded "Chromatic Warm-up" starter (ADR 0065).** A new curated preset ships a generated
+  1-2-3-4-up-every-string-and-back warm-up, seeded under a third one-time key
+  (`practicePresetsSeeded.v3`) so existing users gain it on the next launch without disturbing
+  their earlier starters.
 
 ### Changed
 - **The waveform practice screen is a workshop, not a journal (ADR 0067).** The
