@@ -34,13 +34,10 @@ extension StandaloneMetronomeEngine {
     }
 
     func startEngineIfNeeded() {
-        guard !engine.isRunning else { return }
-        try? engine.start()
+        AudioPlumbing.startIfNeeded(engine, label: "metronome")
     }
 
     func configureSession() {
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback)
-        try? session.setActive(true)
+        AudioPlumbing.configurePlaybackSession(label: "metronome")
     }
 }

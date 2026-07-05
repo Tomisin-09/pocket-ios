@@ -45,8 +45,16 @@ struct WaveformPracticeView: View {
                 AudioLoadingOverlay()
                     .transition(.opacity)
             }
+
+            // Honest failure state: the bookmark no longer resolves or the file
+            // won't read — say so instead of presenting a dead transport.
+            if model.audioLoadFailed {
+                AudioUnavailableNotice()
+                    .transition(.opacity)
+            }
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.audioLoadFailed)
         // Landscape uses its own compact top bar (back · title · menu), so hide the system
         // nav bar there; portrait keeps it (ADR 0042).
         .toolbar(isLandscape ? .hidden : .automatic, for: .navigationBar)

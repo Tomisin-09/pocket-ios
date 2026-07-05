@@ -48,10 +48,13 @@ not code. Re-run the audit any time with the `/ready-to-ship` skill.
 
 **Robustness (optional):**
 
-- **Audio-session errors are swallowed** (`PracticeAudioEngine` `configureSession`
-  / `startEngineIfNeeded` use `try?`). For an audio-first app a failed session =
-  silent no-sound with no user signal. Consider logging or a one-time
-  "couldn't start audio" state.
+- ~~**Audio-session errors are swallowed**~~ — **DONE** (branch `pocket-097`, pre-V2
+  audit): session/engine-start plumbing deduplicated into `AudioPlumbing`, which logs
+  failures via `os.Logger`; bookmark-resolution / file-read failures now surface a
+  "Couldn't load this song's audio" notice on both practice surfaces (and disable the
+  loop run's Start), and a resolved-but-stale bookmark is re-minted and persisted on
+  the spot. Remaining (deliberately not built): a user-visible state for a failed
+  *audio session* itself — rare, and needs a design pass to avoid a scare banner.
 
 **Standing dev guide — keep new features launch-ready as you build:**
 
