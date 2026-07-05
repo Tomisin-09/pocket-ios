@@ -24,7 +24,7 @@ The order below reflects a deliberate scoping call, not just priority:
 The V2 direction was set in a scoping session; the thinking lives in dedicated
 docs so this stays a pointer list:
 
-- **Social layer boundaries — ADR 0064 (Proposed).** Local-first forever;
+- **Social layer boundaries — ADR 0064 (Accepted).** Local-first forever;
   exercises (never loops/audio) are the shareable unit; derived-stats-only
   leaderboards; Sign in with Apple; CloudKit personal sync vs AWS social rails
   kept separate; loop compensation explicitly closed until a rights framework

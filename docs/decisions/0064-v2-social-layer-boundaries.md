@@ -1,6 +1,6 @@
 # 0064 — V2 social layer: boundaries and privacy-by-design constraints
 
-- **Status:** Proposed (direction set 2026-07-05; awaiting sign-off before any build)
+- **Status:** Accepted (2026-07-05)
 - **Date:** 2026-07-05
 
 ## Context
