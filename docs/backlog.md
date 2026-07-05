@@ -424,6 +424,22 @@ route through.
 
 ## UI / polish
 
+- **Swappable themes (design-system extension, roadmap).** `DesignTokens.swift`
+  was built for this from day one — every colour is a semantic role, and the file
+  calls out the seam explicitly ("each role becomes a `Theme` property; the current
+  values become the 'teal' theme"). Light/dark already ship (ADR 0062/0063); a
+  user-selectable **`Theme`** (beyond appearance) is the natural next step. Shape
+  when built: a `Theme` protocol/struct whose properties are the current
+  `PocketColor` roles, `PocketColor` reading from the active theme, and a Settings
+  picker persisted like `AppearancePreference`. Prerequisite already enforced: every
+  view (and every ADR-0065 exercise template, rule **T10**) must draw from semantic
+  tokens, never literal hex, so themes reskin the whole app — templates included —
+  for free. The template-gallery preview demonstrates the payoff (Red Moon / Light /
+  Blood Moon, one control reskins all five templates live). Candidate themes to
+  explore: the shipped Red Moon dark/light, and a **Blood Moon** register built on
+  the brand vermilion `#C73818` (branding note above). Not scheduled; captured so the
+  token discipline that keeps the door open is treated as load-bearing, not optional.
+
 - **Fine-tune the song details sheet.** `SongDetailsSheet` (opened by holding the
   song title on the practice screen) currently stands up the read-first overview on
   a plain SwiftUI `Form`. It works, but the presentation is a first pass. Candidate

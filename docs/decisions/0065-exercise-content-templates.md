@@ -111,6 +111,21 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
   `practicePresetsSeeded.v2` key so the upgrade seeds cleanly without disturbing
   existing users' edited/deleted v1 presets.
 
+- **T10 — Renderers draw from semantic `PocketColor` tokens only; never literal
+  hex.** Every colour in a template view resolves through a semantic role
+  (`practice` = content, `metronome` = clock, the loop/accent tokens = note
+  state, the surface/ink tokens for chrome) — the same discipline
+  `DesignTokens.swift` already enforces app-wide ("do not hard-code hex values").
+  This is what makes a template **theme-agnostic**: it inherits light/dark (ADR
+  0062/0063) and any future **swappable `Theme`** (the seam `DesignTokens.swift`
+  anticipates — "each role becomes a `Theme` property; the current values become
+  the 'teal' theme") for free. A renderer that bakes in a literal colour silently
+  opts out of theming and is a review-blocker. Two down-to-earth rules that follow:
+  a strum down/up-stroke, a lit fret, a current-chord highlight all read via
+  *roles* that already differ per appearance; and a template must clear contrast
+  on **every** theme's ground, not just near-black (the ADR 0063 wash-token lesson
+  — a low-opacity accent that reads on dark can vanish on cream).
+
 ## Build order
 
 1. **`strumming`** — self-contained, the visual is already designed (the
@@ -132,6 +147,10 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
 - The `fretboard` renderer becomes a shared asset across three features
   (exercise templates, tab→fretboard, first-party preset guides) — build it as a
   reusable, pure-model-driven view, not an exercise-only one.
+- Because every template obeys T10, **swappable themes and templates are the same
+  bet** — each new template reskins under any theme automatically, and shipping
+  themes never has to revisit the templates (see the backlog "swappable themes"
+  note and the template-gallery preview, which reskins all five from one control).
 - Exercise **creation** grows a per-kind payload editor (a strum-pattern editor,
   a fretboard-sequence editor). Deferred and sliced per template; the run-side
   renderer can land and be exercised by seeded presets before an authoring UI
