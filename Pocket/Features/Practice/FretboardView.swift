@@ -9,11 +9,31 @@ import SwiftUI
 /// separators via the grid-line role, the nut and labels via the ink roles, plotted notes a dimmed
 /// ink, and the active note in the content `tint` — so the board reskins under light/dark and any
 /// future theme.
+/// How each fretboard note is captioned (ADR 0065 build 2). A viewing preference the player toggles —
+/// note names, scale-degree intervals, or nothing — persisted globally so the creation preview and
+/// the live practice board agree. Intervals need a tonal centre (`FretboardDrill.rootPitchClass`); a
+/// rootless drill (a spider walk) shows nothing in interval mode.
+enum FretLabelMode: String, CaseIterable, Identifiable {
+    case none, note, interval
+    var id: String { rawValue }
+
+    /// The control's short label for each mode.
+    var pickerLabel: String {
+        switch self {
+        case .none: return "Off"
+        case .note: return "Note"
+        case .interval: return "Interval"
+        }
+    }
+}
+
 struct FretboardGrid: View {
     let drill: FretboardDrill
     /// The note lit now, or `nil` for a static (nothing-lit) read.
     var activeIndex: Int?
     var tint: Color = PocketColor.practice
+    /// How to caption each note (note name / interval / nothing).
+    var labelMode: FretLabelMode = .none
 
     private var stringCount: Int { max(1, drill.stringCount) }
     private var span: Int { max(1, drill.displayFretSpan) }
@@ -84,21 +104,96 @@ struct FretboardGrid: View {
             .position(x: 0, y: height / 2)
     }
 
-    /// Every note the drill uses, plotted faintly; the active one lit and enlarged in the tint.
+    /// Every note the drill uses, plotted faintly; the active one lit and enlarged. Root notes (a
+    /// scale/arpeggio's tonic, when the drill names one) carry the amber `marker` accent so the tonic
+    /// is identifiable at rest, in the preview, and as the run walks over it.
     private func notes(width: CGFloat, height: CGFloat) -> some View {
         let active = activeIndex.flatMap { drill.note(at: $0) }
         return ForEach(Array(drill.notes.enumerated()), id: \.offset) { index, note in
             if let note {
                 let isActive = index == activeIndex
+                let isRoot = isRoot(note)
+                let diameter = dotDiameter(isActive: isActive, isRoot: isRoot)
                 Circle()
-                    .fill(isActive ? tint : PocketColor.textPrimary.opacity(0.22))
-                    .frame(width: isActive ? 18 : 12, height: isActive ? 18 : 12)
+                    .fill(fill(isActive: isActive, isRoot: isRoot))
+                    .frame(width: diameter, height: diameter)
+                    .overlay(rootRing(isRoot: isRoot, isActive: isActive))
+                    .overlay(noteLabel(note, isActive: isActive, isRoot: isRoot))
                     .position(x: noteX(note.fret, in: width), y: rowY(note.string, in: height))
                     .animation(.easeOut(duration: 0.07), value: isActive)
             }
         }
         // Keep the enlarged active dot on top even where notes share a cell.
         .zIndex(active == nil ? 0 : 1)
+    }
+
+    /// Dot size — enlarged when captions are on so a "♭7" fits, and enlarged again when lit.
+    private func dotDiameter(isActive: Bool, isRoot: Bool) -> CGFloat {
+        let hasLabel = labelMode != .none
+        if isActive { return hasLabel ? 21 : 18 }
+        return hasLabel ? 18 : (isRoot ? 13 : 12)
+    }
+
+    /// The dot fill. A root reads as a **hollow amber ring** at rest (board-coloured centre so the
+    /// amber `rootRing` stroke shows) and a **solid amber** dot when it lights; a non-root lights in
+    /// the tint and rests as a faint ink dot. Captioned idle dots fill a touch stronger so the text
+    /// sits on a legible chip.
+    private func fill(isActive: Bool, isRoot: Bool) -> Color {
+        if isRoot { return isActive ? PocketColor.marker : PocketColor.background }
+        if isActive { return tint }
+        return PocketColor.textPrimary.opacity(labelMode == .none ? 0.22 : 0.32)
+    }
+
+    /// The note's caption (note name or interval), coloured to read on its dot. Absent in `.none`
+    /// mode and for interval mode on a rootless drill.
+    @ViewBuilder
+    private func noteLabel(_ note: FretNote, isActive: Bool, isRoot: Bool) -> some View {
+        if let text = label(for: note) {
+            Text(text)
+                .font(.system(size: 9, weight: .bold))
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+                .foregroundStyle(labelColor(isActive: isActive, isRoot: isRoot))
+        }
+    }
+
+    /// Text colour: dark ink on a lit (bright-filled) dot, amber on an idle root ring, faint-dot ink
+    /// otherwise.
+    private func labelColor(isActive: Bool, isRoot: Bool) -> Color {
+        if isActive { return PocketColor.background }
+        if isRoot { return PocketColor.marker }
+        return PocketColor.textPrimary
+    }
+
+    /// The caption string for a note in the current mode, or `nil` when nothing should show.
+    private func label(for note: FretNote) -> String? {
+        let pitchClass = GuitarScale.pitchClass(string: note.string, fret: note.fret)
+        switch labelMode {
+        case .none: return nil
+        case .note: return GuitarScale.noteName(forPitchClass: pitchClass)
+        case .interval:
+            guard let root = drill.rootPitchClass else { return nil }
+            return Self.intervalNames[(((pitchClass - root) % 12) + 12) % 12]
+        }
+    }
+
+    /// Scale-degree names for the twelve semitones above the root (sharp-side spelling, matching the
+    /// app's sharp fretboard): R, ♭2, 2, ♭3, 3, 4, ♭5, 5, ♭6, 6, ♭7, 7.
+    private static let intervalNames =
+        ["R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"]
+
+    /// A thin halo around a root so it separates from neighbours even where notes share a cell.
+    @ViewBuilder
+    private func rootRing(isRoot: Bool, isActive: Bool) -> some View {
+        if isRoot {
+            Circle().strokeBorder(PocketColor.marker, lineWidth: isActive ? 2 : 1.5)
+        }
+    }
+
+    /// Whether a note sounds the drill's root pitch class (only when the drill names one).
+    private func isRoot(_ note: FretNote) -> Bool {
+        guard let root = drill.rootPitchClass else { return false }
+        return GuitarScale.pitchClass(string: note.string, fret: note.fret) == root
     }
 
     private var fretNumbers: some View {
@@ -141,7 +236,8 @@ struct FretboardGrid: View {
             let name = Self.stringName(note.string, of: stringCount)
             let position = note.fret == 0 ? "open" : "fret \(note.fret)"
             let how = note.technique.map { ", \($0.label)" } ?? ""
-            return "\(name) \(position)\(how)"
+            let root = isRoot(note) ? ", root" : ""
+            return "\(name) \(position)\(root)\(how)"
         }.joined(separator: "; ")
     }
 }
@@ -155,16 +251,28 @@ struct FretboardView: View {
     let engine: StandaloneMetronomeEngine
     let drill: FretboardDrill
     var tint: Color = PocketColor.practice
+    var labelMode: FretLabelMode = .none
 
     /// Wall-clock moment `engine.currentBeat` last advanced — the anchor the sub-beat fraction is
     /// measured from.
     @State private var beatOnset = Date.now
     /// The beat index that onset belongs to, so a re-render mid-beat keeps the same anchor.
     @State private var anchoredBeat = -1
+    /// The walking-highlight preference — **off by default** as a photosensitivity precaution, and
+    /// forced off under the system Reduce Motion setting. Off shows a static, fully-plotted board.
+    @AppStorage("fretboardAnimates") private var animates = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { context in
-            FretboardGrid(drill: drill, activeIndex: activeNote(at: context.date), tint: tint)
+        Group {
+            if animates && !reduceMotion {
+                TimelineView(.animation) { context in
+                    FretboardGrid(drill: drill, activeIndex: activeNote(at: context.date),
+                                  tint: tint, labelMode: labelMode)
+                }
+            } else {
+                FretboardGrid(drill: drill, activeIndex: nil, tint: tint, labelMode: labelMode)
+            }
         }
         .onChange(of: engine.currentBeat) { _, newValue in
             anchoredBeat = newValue
@@ -190,12 +298,24 @@ struct FretboardView: View {
 /// a continuous beat position straight from wall-clock time; nothing to start or stop.
 struct FretboardDrillPreview: View {
     let drill: FretboardDrill
-    var bpm: Int = 96
+    /// A gentle **preview tempo** — slower than any real practice pace so the shape is easy to follow
+    /// at a glance. The live practice board is engine-driven and plays at the actual exercise tempo.
+    var bpm: Int = 60
     var tint: Color = PocketColor.practice
+    var labelMode: FretLabelMode = .none
+    /// Off by default (photosensitivity precaution) and forced off under Reduce Motion; off shows a
+    /// static, fully-plotted board.
+    @AppStorage("fretboardAnimates") private var animates = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { context in
-            FretboardGrid(drill: drill, activeIndex: activeIndex(at: context.date), tint: tint)
+        if animates && !reduceMotion {
+            TimelineView(.animation) { context in
+                FretboardGrid(drill: drill, activeIndex: activeIndex(at: context.date),
+                              tint: tint, labelMode: labelMode)
+            }
+        } else {
+            FretboardGrid(drill: drill, activeIndex: nil, tint: tint, labelMode: labelMode)
         }
     }
 

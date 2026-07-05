@@ -108,15 +108,16 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// for templates that only expose the basic tempo + meter settings. **Template-specific**, not
     /// merely renderer-derived: several templates share the one fretboard *renderer* yet author
     /// differently. Strumming edits a `StrumPattern`; the warm-up-style families (Warm-up, Picking,
-    /// Legato, Fingerstyle) declare a `FretboardRun` shape (finger pattern × span); Scales still uses
-    /// the custom tap-to-place grid until its scale-library editor ships (ADR 0065 build 2, Slice 2).
-    /// The host sheet switches on this.
-    enum BespokeEditor { case strumming, run, fretboardGrid }
+    /// Legato, Fingerstyle) declare a `FretboardRun` shape (finger pattern × span); Scales picks a
+    /// preprogrammed `ScaleRun` from the scale library (ADR 0065 build 2, Slice 2). `.fretboardGrid`
+    /// is the tap-to-place custom drill — retained as the general escape hatch, no template selects it
+    /// by default today. The host sheet switches on this.
+    enum BespokeEditor { case strumming, run, scale, fretboardGrid }
     var bespokeEditor: BespokeEditor? {
         switch self {
         case .strumming: return .strumming
         case .warmup, .picking, .legato, .fingerstyle: return .run
-        case .scales: return .fretboardGrid
+        case .scales: return .scale
         case .basic, .chords, .rhythm, .earTraining, .theory: return nil
         }
     }
@@ -131,12 +132,13 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     var defaultStrumPattern: StrumPattern? { bespokeEditor == .strumming ? .folk : nil }
 
     /// The starter **fretboard content** a freshly-created fretboard-family exercise begins with — a
-    /// generated chromatic warm-up for the run families (a real drill, immediately editable as a
-    /// shape), or a spider-walk custom canvas for Scales' grid editor. `nil` for non-fretboard
-    /// templates. Encoded at creation via `setFretboardContent`.
+    /// generated chromatic warm-up for the run families, an A-minor-pentatonic run for Scales, or a
+    /// spider-walk canvas for the custom grid. `nil` for non-fretboard templates. Encoded at creation
+    /// via `setFretboardContent`.
     var defaultFretboardContent: FretboardContent? {
         switch bespokeEditor {
         case .run: return .run(.chromaticWarmup)
+        case .scale: return .scale(.aMinorPentatonic)
         case .fretboardGrid: return .custom(.spiderWalk)
         case .strumming, .none: return nil
         }

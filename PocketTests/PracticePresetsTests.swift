@@ -36,6 +36,7 @@ final class PracticePresetsTests: XCTestCase {
         let all = PracticePresets.makeExercises()
             + PracticePresets.makeExercises(PracticePresets.templateSpecs)
             + PracticePresets.makeExercises(PracticePresets.fretboardSpecs)
+            + PracticePresets.makeExercises(PracticePresets.scaleSpecs)
         for exercise in all {
             XCTAssertNotEqual(exercise.template, .basic,
                               "\(exercise.name) should ship with a specific (non-basic) template")
@@ -67,6 +68,18 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertTrue(fretboard?.hasMeasuredCommand ?? false)
     }
 
+    // MARK: - Scale library batch (ADR 0065 build 2, Slice 2)
+
+    func testScaleSpecsShipAScaleRunExercise() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.scaleSpecs)
+        XCTAssertEqual(exercises.count, 1)
+        let scale = try? XCTUnwrap(exercises.first)
+        XCTAssertEqual(scale?.kind, .fretboard)
+        XCTAssertEqual(scale?.fretboardContent, .scale(.aMinorPentatonic))
+        XCTAssertEqual(scale?.fretboardDrill, ScaleRun.aMinorPentatonic.expanded())
+        XCTAssertTrue(scale?.hasMeasuredCommand ?? false)
+    }
+
     // MARK: - Seed-once guard
 
     func testSeedIfNeededInsertsBothBatchesOnceThenIsIdempotent() throws {
@@ -76,7 +89,7 @@ final class PracticePresetsTests: XCTestCase {
         let defaults = try freshDefaults()
 
         let total = PracticePresets.specs.count + PracticePresets.templateSpecs.count
-            + PracticePresets.fretboardSpecs.count
+            + PracticePresets.fretboardSpecs.count + PracticePresets.scaleSpecs.count
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
 
@@ -99,8 +112,9 @@ final class PracticePresetsTests: XCTestCase {
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         let fetched = try context.fetch(FetchDescriptor<Exercise>())
         XCTAssertEqual(fetched.count,
-                       PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count)
-        // Both newer batches arrive (fetch order isn't insertion order, so check the set).
+                       PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count
+                       + PracticePresets.scaleSpecs.count)
+        // All newer batches arrive (fetch order isn't insertion order, so check the set).
         XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard])
     }
 

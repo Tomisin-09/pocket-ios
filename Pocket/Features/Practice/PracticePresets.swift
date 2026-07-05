@@ -86,6 +86,18 @@ enum PracticePresets {
              fretboard: .run(.chromaticWarmup))
     ]
 
+    /// The **scale library** batch (ADR 0065 build 2, Slice 2) — seeded under a *fourth* key so a user
+    /// who already has the v1–v3 sets gains it on the next launch. Ships a real preprogrammed scale run
+    /// so the scale-library editor and renderer are exercised by content.
+    static let scaleSpecs: [Spec] = [
+        Spec(name: "A Minor Pentatonic", command: 80, subdivision: .eighths,
+             tags: ["scales", "lead"],
+             notes: "The box-1 minor pentatonic from the low E's 5th fret, two octaves up and back. "
+                  + "Pick and fret hands land together on every click.",
+             template: .scales,
+             fretboard: .scale(.aMinorPentatonic))
+    ]
+
     /// Build the preset exercises (un-inserted) for a given batch, each through the shared
     /// `commandAnchored` factory so the working floor + reach derive identically to a user-created
     /// drill (the single creation path, ADR 0046). Applies any content-template payload (T9).
@@ -108,14 +120,17 @@ enum PracticePresets {
     static let seededDefaultsKey = "practicePresetsSeeded.v1"
     static let seededTemplateDefaultsKey = "practicePresetsSeeded.v2"
     static let seededFretboardDefaultsKey = "practicePresetsSeeded.v3"
+    static let seededScaleDefaultsKey = "practicePresetsSeeded.v4"
 
     /// Seed the curated presets **once each, ever**: the v1 technique drills, the v2 strumming batch,
-    /// then the v3 fretboard batch, each guarded by its own key so a deleted preset never returns and
-    /// an existing user picks up each newer batch additively. Safe to call on every launch.
+    /// the v3 fretboard warm-up, then the v4 scale-library batch, each guarded by its own key so a
+    /// deleted preset never returns and an existing user picks up each newer batch additively. Safe to
+    /// call on every launch.
     static func seedIfNeeded(into context: ModelContext, defaults: UserDefaults = .standard) {
         seedBatch(specs, key: seededDefaultsKey, into: context, defaults: defaults)
         seedBatch(templateSpecs, key: seededTemplateDefaultsKey, into: context, defaults: defaults)
         seedBatch(fretboardSpecs, key: seededFretboardDefaultsKey, into: context, defaults: defaults)
+        seedBatch(scaleSpecs, key: seededScaleDefaultsKey, into: context, defaults: defaults)
     }
 
     /// Seed one batch once, guarded by its `key`. No-op after its first successful run.

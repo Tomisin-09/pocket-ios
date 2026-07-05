@@ -17,6 +17,9 @@ struct FretboardRunEditor: View {
     /// Whether the demoted subdivision control is revealed — eighths suits nearly every run, so it
     /// starts collapsed (the feedback that the subdivision picker was confusing up front).
     @State private var showsAdvanced = false
+    /// The global note-caption preference, so this preview matches the scale editor and practice board.
+    @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
+    private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
 
     private static let maxBaseFret = 15
     private static let stringOrder = [5, 4, 3, 2, 1, 0]   // low E → high e, as the neck reads
@@ -25,7 +28,7 @@ struct FretboardRunEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            FretboardDrillPreview(drill: run.expanded(), tint: tint)
+            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode)
             patternField
             baseFretField
             spanField

@@ -77,15 +77,21 @@ struct FretboardDrill: Codable, Equatable {
     /// How many strings the board draws (6 for standard guitar). Stored so a future 7-string or bass
     /// drill round-trips; clamped to at least 1.
     var stringCount: Int
+    /// The **root pitch class** (0 = C … 11 = B) when the drill has a tonal centre — a scale or
+    /// arpeggio run sets it so the renderer can light the root notes; a spider walk or picking
+    /// pattern leaves it `nil` (no root to mark). Optional so legacy blobs decode unchanged.
+    var rootPitchClass: Int?
 
     init(notesPerBeat: Int,
          notes: [FretNote?],
          stringCount: Int = 6,
+         rootPitchClass: Int? = nil,
          version: Int = FretboardDrill.currentVersion) {
         self.version = version
         self.notesPerBeat = max(1, notesPerBeat)
         self.notes = notes
         self.stringCount = max(1, stringCount)
+        self.rootPitchClass = rootPitchClass.map { (($0 % 12) + 12) % 12 }
     }
 }
 
@@ -157,7 +163,7 @@ extension FretboardDrill {
         var updated = notes
         updated[index] = note
         return FretboardDrill(notesPerBeat: notesPerBeat, notes: updated,
-                              stringCount: stringCount, version: version)
+                              stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
     }
 
     /// The drill re-gridded to a new resolution over `beatsPerBar` — `beatsPerBar * notesPerBeat`
@@ -179,7 +185,7 @@ extension FretboardDrill {
             if notes.indices.contains(oldIndex) { resizedNotes[newIndex] = notes[oldIndex] }
         }
         return FretboardDrill(notesPerBeat: perBeat, notes: resizedNotes,
-                              stringCount: stringCount, version: version)
+                              stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
     }
 }
 

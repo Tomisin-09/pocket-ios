@@ -35,8 +35,8 @@ final class ExerciseTemplateTests: XCTestCase {
     func testBespokeEditorAndDefaultsAreTemplateSpecific() {
         // Editors are template-specific even though several share the fretboard renderer: Strumming
         // edits a StrumPattern (folk); the warm-up families declare a FretboardRun (generated
-        // chromatic warm-up); Scales still uses the custom grid (spider-walk custom drill) until its
-        // scale-library editor ships; metronome-underlay templates have no editor.
+        // chromatic warm-up); Scales picks a ScaleRun from the library (A minor pentatonic default);
+        // metronome-underlay templates have no editor.
         XCTAssertEqual(ExerciseTemplate.strumming.bespokeEditor, .strumming)
         XCTAssertEqual(ExerciseTemplate.strumming.defaultStrumPattern, .folk)
         XCTAssertNil(ExerciseTemplate.strumming.defaultFretboardContent)
@@ -48,8 +48,8 @@ final class ExerciseTemplateTests: XCTestCase {
             XCTAssertNil(template.defaultStrumPattern, "\(template) should ship no strum pattern")
         }
 
-        XCTAssertEqual(ExerciseTemplate.scales.bespokeEditor, .fretboardGrid)
-        XCTAssertEqual(ExerciseTemplate.scales.defaultFretboardContent, .custom(.spiderWalk))
+        XCTAssertEqual(ExerciseTemplate.scales.bespokeEditor, .scale)
+        XCTAssertEqual(ExerciseTemplate.scales.defaultFretboardContent, .scale(.aMinorPentatonic))
 
         let editing = runFamily.union([.strumming, .scales])
         for template in ExerciseTemplate.allCases where !editing.contains(template) {

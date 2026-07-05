@@ -86,7 +86,10 @@ private struct ConfigureExerciseForm: View {
     /// template default. Not meter-bound: a run defines its own phrase length, so the meter change
     /// doesn't re-grid it.
     @State private var run: FretboardRun
-    /// The authored **custom drill** for the Scales grid editor — seeded from the template default and
+    /// The authored **scale run** for the Scales template — seeded from the template default. Not
+    /// meter-bound: a scale run defines its own phrase length.
+    @State private var scale: ScaleRun
+    /// The authored **custom drill** for the tap-to-place grid — seeded from the template default and
     /// re-gridded on a meter change so its slots fill the bar.
     @State private var customDrill: FretboardDrill
 
@@ -105,6 +108,7 @@ private struct ConfigureExerciseForm: View {
         _strum = State(initialValue: strumSeed.resized(slotsPerBeat: strumSeed.slotsPerBeat,
                                                        beatsPerBar: bars))
         _run = State(initialValue: template.defaultFretboardContent?.runValue ?? .chromaticWarmup)
+        _scale = State(initialValue: template.defaultFretboardContent?.scaleValue ?? .aMinorPentatonic)
         let drillSeed = template.defaultFretboardContent?.customValue ?? .spiderWalk
         _customDrill = State(initialValue: drillSeed.resized(notesPerBeat: drillSeed.notesPerBeat,
                                                              beatsPerBar: bars))
@@ -126,6 +130,7 @@ private struct ConfigureExerciseForm: View {
             switch template.bespokeEditor {
             case .strumming?: strumSection
             case .run?: runSection
+            case .scale?: scaleSection
             case .fretboardGrid?: fretboardSection
             case nil: EmptyView()
             }
@@ -207,6 +212,18 @@ private struct ConfigureExerciseForm: View {
         }
     }
 
+    private var scaleSection: some View {
+        Section {
+            ScaleRunEditor(run: $scale)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("Scale run")
+        } footer: {
+            Text("Pick a scale and its root — the box walks the neck over the click. You can change "
+                 + "it later too.")
+        }
+    }
+
     private var fretboardSection: some View {
         Section {
             FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill)
@@ -239,6 +256,7 @@ private struct ConfigureExerciseForm: View {
     private var fretboardContent: FretboardContent? {
         switch template.bespokeEditor {
         case .run: return .run(run)
+        case .scale: return .scale(scale)
         case .fretboardGrid: return .custom(customDrill)
         case .strumming, .none: return nil
         }

@@ -161,11 +161,30 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
      grid coexist on one blob; `Exercise.fretboardContent` best-effort decodes a legacy
      bare-`FretboardDrill` blob into `.custom` for back-compat. **Editors are now
      template-specific, not merely renderer-derived** (`bespokeEditor`: `.strumming` /
-     `.run` / `.fretboardGrid` / nil): Warm-up/Picking/Legato/Fingerstyle declare a run and
-     seed a real chromatic warm-up at creation (`defaultFretboardContent`); **Scales keeps
-     the tap-to-place grid as the custom escape hatch** until its scale-library editor
-     (Slice 2 — preprogrammed scale runs by root + shape + octaves, so a player never
-     hand-configures a scale).
+     `.run` / `.scale` / `.fretboardGrid` / nil): Warm-up/Picking/Legato/Fingerstyle declare
+     a run and seed a real chromatic warm-up at creation (`defaultFretboardContent`).
+
+   - **Scale library (Slice 2, landed) — generated, not hand-drawn.** Scales are *picked*, not
+     placed: a `GuitarScale` is just an **interval formula** (e.g. major `0 2 4 5 7 9 11`), and a
+     `ScaleRun` recipe (scale + root + **position** + **octaves** + up-and-back + subdivision,
+     `FretboardContent.scale`) **generates** the notes onto the neck — so every scale is correct
+     by construction and a new scale costs one line. The generator is a **four-fret hand box**: it
+     starts on the position's tonic and climbs scale tones, moving to the next string whenever the
+     next tone would leave the box the current string opened on. Notes-per-string therefore *vary*
+     the way a real CAGED shape does (the A-major E-shape is 2·3·3·3·2·2, not a flat count) — the fix
+     for boxes with a fixed per-string count "falling apart" past the first octave (the blues, which
+     is a pentatonic-plus-tritone, and the diatonic scales). **Positions** (1…`positionCount`, one per
+     scale tone — 5 for a pentatonic, 7 diatonic) climb the neck by anchoring on successive scale
+     tones; **octaves** (capped at 2) trim the run root-to-root. `ScaleRunEditor` is menus + a
+     position stepper + an octave toggle over a live preview. Correctness is guaranteed by a test
+     asserting every generated run (all scales × positions × octaves) is in-scale, strictly
+     ascending, and spans exactly the requested octaves (count `= octaves × scaleSize + 1`) — the
+     net that makes generation safe (T8: common-practice vocabulary, in-house). First set:
+     minor/major pentatonic, major, natural minor, blues; a seeded "A Minor Pentatonic" ships (v4).
+     **Arpeggios** (maj/min/maj7/min7/dominant) are the next drop-in — just more interval sets on
+     the same generator — and a **CAGED + triads** category is a noted future. The tap-to-place grid
+     (`.fretboardGrid`) is **retained as the general custom escape hatch**, though no template
+     selects it by default now.
 
    - **Grid narrowing.** The fretboard drills this serves are *even runs* (one note
      per subdivision), so `FretboardDrill` narrows T4's `{string, fret, beat}` event

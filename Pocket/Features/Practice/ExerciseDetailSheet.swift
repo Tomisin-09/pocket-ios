@@ -21,11 +21,12 @@ struct ExerciseDetailSheet: View {
     /// the stored payload (a strumming exercise always has one), falling back to a bar-matched
     /// downstrokes canvas defensively. Only surfaced/committed for a strumming template.
     @State private var strum: StrumPattern
-    /// The exercise's fretboard content, split into the two authoring states (ADR 0065 build 2): a
-    /// generated `run` (warm-up families) and a custom `drill` (Scales grid). Both seeded from the
-    /// stored payload with defensive fallbacks; only the one this template uses is surfaced and
-    /// committed.
+    /// The exercise's fretboard content, split into the authoring states (ADR 0065 build 2): a
+    /// generated `run` (warm-up families), a `scale` run (Scales), and a custom `drill` (grid). Each
+    /// seeded from the stored payload with defensive fallbacks; only the one this template uses is
+    /// surfaced and committed.
     @State private var run: FretboardRun
+    @State private var scale: ScaleRun
     @State private var customDrill: FretboardDrill
 
     init(exercise: Exercise) {
@@ -35,6 +36,7 @@ struct ExerciseDetailSheet: View {
                        ?? .downstrokes(beatsPerBar: exercise.beatsPerBar))
         let content = exercise.fretboardContent
         _run = State(initialValue: content?.runValue ?? .chromaticWarmup)
+        _scale = State(initialValue: content?.scaleValue ?? .aMinorPentatonic)
         _customDrill = State(initialValue: content?.customValue ?? .spiderWalk)
     }
 
@@ -49,6 +51,7 @@ struct ExerciseDetailSheet: View {
                 switch exercise.template.bespokeEditor {
                 case .strumming?: strummingSection
                 case .run?: runSection
+                case .scale?: scaleSection
                 case .fretboardGrid?: fretboardSection
                 case nil: EmptyView()
                 }
@@ -185,8 +188,22 @@ struct ExerciseDetailSheet: View {
         }
     }
 
-    /// The Scales family's authoring surface — the tap-to-place `FretboardDrillEditor` over the
-    /// exercise's custom drill. Same immutability contract: the template stays fretboard.
+    /// The Scales template's authoring surface — the `ScaleRunEditor` scale-library picker. Same
+    /// immutability contract: the template stays fretboard; you pick the scale and root.
+    private var scaleSection: some View {
+        Section {
+            ScaleRunEditor(run: $scale)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — scale")
+        } footer: {
+            Text("Pick a scale and its root; the box walks the neck over the click while you run "
+                 + "the drill.")
+        }
+    }
+
+    /// The custom-drill authoring surface — the tap-to-place `FretboardDrillEditor`. Same
+    /// immutability contract: the template stays fretboard.
     private var fretboardSection: some View {
         Section {
             FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill)
@@ -232,6 +249,7 @@ struct ExerciseDetailSheet: View {
         let content: FretboardContent
         switch editor {
         case .run: content = .run(run)
+        case .scale: content = .scale(scale)
         case .fretboardGrid: content = .custom(customDrill)
         case .strumming: return
         }

@@ -47,8 +47,27 @@ All notable changes to Pocket are documented here. Format loosely follows
   walks the run above the controls so you see it before saving, and the subdivision is tucked
   into an "Advanced" row (default eighths). Creating one of these starts from a real chromatic
   warm-up; the detail sheet edits the same shape later — same immutable-template contract as
-  strumming. **Scales** keeps a tap-to-place note grid as a custom fallback until its
-  scale-library editor lands.
+  strumming.
+- **Scales are a library you pick from, not notes you place (ADR 0065 build 2, Slice 2).** The
+  **Scales** template has a scale-library editor: choose a **scale** (minor & major pentatonic,
+  major, natural minor, blues), a **root note**, a **position** up the neck, and **1 or 2
+  octaves**, and the run generates itself onto the fretboard and walks over the click — with a
+  live preview and an up-and-back toggle. The generator lays each run into a four-fret **hand box**,
+  so notes-per-string *vary* the way a real CAGED shape does (the A-major E-shape is 2·3·3·3·2·2) —
+  which is what keeps the blues and diatonic boxes holding together past the first octave. Every
+  scale is now generated from the **five real CAGED boxes** (`CAGEDShape`): a position places its box
+  in the chosen key and filters it to the scale's degrees, so all five positions are the shapes the
+  method teaches — not a formula that only held at the E position. Minor-family scales reuse the boxes
+  via their relative major; the blues note threads in as a chromatic passing tone. The **root notes
+  are highlighted** — an amber ring on the fretboard that fills as the run walks over the tonic — in
+  both the creation preview and the live practice session. **Note captions** can be toggled (Off /
+  Note name / Interval) from a **Display** menu above the board, alongside an **Animate** toggle; both
+  are global preferences that also drive the live practice board. The walking highlight is **off by
+  default** as a photosensitivity precaution and is forced off under the system Reduce Motion setting —
+  when off, the board renders static (all notes plotted, roots and labels shown). The **fretboard
+  drill now previews on the practice run screen's setup state** (not just strum patterns) at a gentle
+  60 bpm, and the **dark-mode grid** was lightened so the strings and frets are visible. A seeded
+  **"A Minor Pentatonic"** starter ships under a fourth one-time key (`practicePresetsSeeded.v4`).
 - **A seeded "Chromatic Warm-up" starter (ADR 0065).** A new curated preset ships a generated
   1-2-3-4-up-every-string-and-back warm-up, seeded under a third one-time key
   (`practicePresetsSeeded.v3`) so existing users gain it on the next launch without disturbing
