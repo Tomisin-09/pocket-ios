@@ -52,7 +52,8 @@ final class WaveformPracticeModel {
 
     /// The resolved source file (imported file or demo sample) crisp deep-zoom reads
     /// windowed slices from. Held for the model's lifetime alongside `fileAccess`.
-    private(set) var sourceURL: URL?
+    /// Internal (not `private(set)`) so the `+Audio` load split can set it.
+    var sourceURL: URL?
 
     /// Debounced windowed-read task and a small insertion-ordered window cache so
     /// paging back and forth reuses prior reads instead of hitting the file again.
@@ -62,13 +63,21 @@ final class WaveformPracticeModel {
 
     /// True while the song's audio is being opened/prepared, so the view can show a
     /// loading overlay instead of an apparently-frozen surface (the file open and the
-    /// demo-sample render both run off the main actor).
-    private(set) var isLoadingAudio = false
+    /// demo-sample render both run off the main actor). Internal so the `+Audio`
+    /// load split (its only writer) can set it.
+    var isLoadingAudio = false
+
+    /// True when the song's audio could not be opened — the bookmark no longer
+    /// resolves (file moved/deleted, access revoked) or the file failed to read.
+    /// The view shows an honest "couldn't load" notice instead of a silently dead
+    /// transport (audit 2026-07-05). Set by the `+Audio` load split.
+    var audioLoadFailed = false
 
     /// Holds the imported file's security scope open while it plays (the engine reads
     /// lazily); released automatically when this model — and so this property — is
-    /// deallocated. `nil` for the generated demo sample.
-    private var fileAccess: SecurityScopedAccess?
+    /// deallocated. `nil` for the generated demo sample. Internal so the `+Audio`
+    /// load split can set it.
+    var fileAccess: SecurityScopedAccess?
 
     /// The active loop, tracked by its stable `Loop.uid`. Starts `nil` on every
     /// screen entry — practice opens on the **full song**, not silently armed to a
@@ -328,62 +337,4 @@ final class WaveformPracticeModel {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
 
-    /// Hand the song's audio to the engine: the resolved real file for an imported
-    /// song, or the generated dev sample for the demo (`bookmark == nil`). Skipped
-    /// in previews.
-    func loadAudio() async {
-        guard !isPreview, engine.duration == 0 else { return }
-        isLoadingAudio = true
-        defer { isLoadingAudio = false }
-        if let bookmark = song.ref.bookmark {
-            await loadImportedFile(bookmark: bookmark)
-        } else {
-            await loadDemoSample()
-        }
-        engine.setRate(speed)
-    }
-
-    /// Resolve the security-scoped bookmark and load the real file. Access is held
-    /// open (`fileAccess`) for the engine's lazy reads, released on deinit. The
-    /// engine opens the file off the main actor; `amplitudes` already holds the
-    /// waveform extracted at import (set in `init`).
-    private func loadImportedFile(bookmark: Data) async {
-        var isStale = false
-        guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
-              let access = SecurityScopedAccess(url) else { return }
-        fileAccess = access
-        sourceURL = url
-        await refreshWaveformIfOutdated(url: url)
-        try? await engine.load(url: url)
-    }
-
-    /// Re-extract the stored waveform when it predates the current reduction (ADR
-    /// 0017). A bucket count other than `WaveformExtractor.defaultBuckets` means the
-    /// song was imported under the old peak-based envelope, so we re-reduce from the
-    /// file and persist — self-healing without a separate schema-version field. The
-    /// decode runs off the main actor; a failure leaves the old waveform in place.
-    private func refreshWaveformIfOutdated(url: URL) async {
-        guard song.amplitudes.count != WaveformExtractor.defaultBuckets else { return }
-        guard let extracted = try? await Task.detached(priority: .utility, operation: {
-            try WaveformExtractor.extract(from: url)
-        }).value else { return }
-        song.amplitudes = extracted.amplitudes
-        amplitudes = extracted.amplitudes
-        try? context.save()
-    }
-
-    /// Generate the dev arpeggio off the main actor and hand it to the engine (the
-    /// demo sample). The render writes a WAV, so it's kept off the main thread too.
-    private func loadDemoSample() async {
-        guard let sample = try? await Self.makeDemoSample(duration: song.duration) else { return }
-        amplitudes = sample.amplitudes
-        sourceURL = sample.url
-        try? await engine.load(url: sample.url)
-    }
-
-    private static func makeDemoSample(duration: TimeInterval) async throws -> SampleToneGenerator.Sample {
-        try await Task.detached(priority: .userInitiated) {
-            try SampleToneGenerator.makeSample(duration: duration)
-        }.value
-    }
 }

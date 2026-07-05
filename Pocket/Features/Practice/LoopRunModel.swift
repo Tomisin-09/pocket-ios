@@ -31,6 +31,10 @@ final class LoopRunModel {
     private(set) var currentPercent = 100
     /// Whether the song audio is still resolving/loading (imported file or demo sample).
     private(set) var isLoading = false
+    /// True when the audio could not be opened — the bookmark no longer resolves (file
+    /// moved/deleted, access revoked) or the file failed to read. The run screen says so
+    /// and disables Start instead of offering a silent dead run (audit 2026-07-05).
+    private(set) var loadFailed = false
 
     private var ramp: CommandRamp?
     private var timer: Timer?
@@ -80,15 +84,49 @@ final class LoopRunModel {
     private func loadImportedFile(bookmark: Data) async {
         var isStale = false
         guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
-              let access = SecurityScopedAccess(url) else { return }
+              let access = SecurityScopedAccess(url) else {
+            AudioPlumbing.log.error("Loop run: song bookmark failed to resolve — audio unavailable")
+            loadFailed = true
+            return
+        }
         fileAccess = access
-        try? await engine.load(url: url)
+        if isStale { refreshStaleBookmark(url: url) }
+        do {
+            try await engine.load(url: url)
+        } catch {
+            AudioPlumbing.log.error("Loop run: song audio failed to load: \(error.localizedDescription)")
+            loadFailed = true
+        }
+    }
+
+    /// A resolved-but-**stale** bookmark still opens today but may stop resolving after
+    /// the next file move / iCloud eviction — re-mint it from the live URL while we can.
+    /// Safe by design: `SongRef` equality excludes the bookmark, so the song's
+    /// loops/markers are untouched. A failed refresh keeps the old (still-working)
+    /// bookmark and just logs.
+    private func refreshStaleBookmark(url: URL) {
+        guard let song = loop.song else { return }
+        do {
+            song.bookmark = try url.bookmarkData()
+            try song.modelContext?.save()
+        } catch {
+            AudioPlumbing.log.error("Loop run: stale bookmark refresh failed: \(error.localizedDescription)")
+        }
     }
 
     private func loadDemoSample() async {
         let duration = loop.song?.duration ?? 0
-        guard let sample = try? await Self.makeDemoSample(duration: duration) else { return }
-        try? await engine.load(url: sample.url)
+        guard let sample = try? await Self.makeDemoSample(duration: duration) else {
+            AudioPlumbing.log.error("Loop run: demo sample render failed — audio unavailable")
+            loadFailed = true
+            return
+        }
+        do {
+            try await engine.load(url: sample.url)
+        } catch {
+            AudioPlumbing.log.error("Loop run: demo sample failed to load: \(error.localizedDescription)")
+            loadFailed = true
+        }
     }
 
     private static func makeDemoSample(duration: TimeInterval) async throws -> SampleToneGenerator.Sample {

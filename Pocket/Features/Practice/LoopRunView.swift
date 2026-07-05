@@ -272,12 +272,20 @@ struct LoopRunView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Button(action: commitAndStart) {
-                    Label("Start training", systemImage: "play.fill").pocketRunButton
+                VStack(spacing: 8) {
+                    if model.loadFailed {
+                        Text("Couldn't load this song's audio — the file may have moved or been deleted.")
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.textSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    Button(action: commitAndStart) {
+                        Label("Start training", systemImage: "play.fill").pocketRunButton
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(model.isLoading || model.loadFailed)
+                    .accessibilityLabel("Start training routine")
                 }
-                .buttonStyle(.plain)
-                .disabled(model.isLoading)
-                .accessibilityLabel("Start training routine")
             }
         }
         .padding(.horizontal, 24)

@@ -338,14 +338,11 @@ final class PracticeAudioEngine {
     }
 
     private func startEngineIfNeeded() {
-        guard !engine.isRunning else { return }
-        try? engine.start()
+        AudioPlumbing.startIfNeeded(engine, label: "practice")
     }
 
     private func configureSession() {
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback)
-        try? session.setActive(true)
+        AudioPlumbing.configurePlaybackSession(label: "practice")
     }
 
     private func startTimer() {

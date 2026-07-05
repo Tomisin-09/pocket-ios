@@ -63,14 +63,6 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(Exercise(currentTempo: 140).tempoMarking, .allegro)
     }
 
-    func testTempoGapIsRemainingClimb() {
-        XCTAssertEqual(Exercise(currentTempo: 100, targetTempo: 130).tempoGap, 30)
-    }
-
-    func testTempoGapClampsToZeroAtOrPastTarget() {
-        XCTAssertEqual(Exercise(currentTempo: 130, targetTempo: 120).tempoGap, 0)
-    }
-
     func testTimeSignatureLabel() {
         XCTAssertEqual(Exercise(beatsPerBar: 6, noteValue: 8).timeSignatureLabel, "6/8")
     }

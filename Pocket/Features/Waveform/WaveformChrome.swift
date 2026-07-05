@@ -73,6 +73,30 @@ struct AudioLoadingOverlay: View {
     }
 }
 
+/// Shown when the song's audio could not be opened (bookmark no longer resolves,
+/// file unreadable) — an honest notice instead of a silently dead transport
+/// (audit 2026-07-05). Non-blocking: loops/markers stay browsable underneath.
+struct AudioUnavailableNotice: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.futura(.title3))
+                .foregroundStyle(PocketColor.textSecondary)
+            Text("Couldn't load this song's audio")
+                .font(.futura(.subheadline, weight: .medium))
+                .foregroundStyle(PocketColor.textPrimary)
+            Text("The file may have moved or been deleted. Re-import it to practice again.")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(20)
+        .background(panelBackground)
+        .padding(.horizontal, 32)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 /// "Fit" pill shown in the waveform's top-trailing corner while zoomed in — the
 /// explicit reset back to the whole song (1× zoom). Double-tap is reserved for
 /// seek, so reset is its own control (ADR 0010 page-mode).

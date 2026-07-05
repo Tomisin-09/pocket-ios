@@ -5,6 +5,25 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Fixed
+- **Audio failures now surface instead of dying silently** (pre-V2 audit). The two audio
+  engines' session/start plumbing is deduplicated into a shared `AudioPlumbing` helper that
+  **logs** setup failures (was `try?`-swallowed — the backlog's "silent no-sound" robustness
+  item). On the practice screen and the loop run screen, a song whose security-scoped
+  bookmark no longer resolves (file moved/deleted) or whose file won't read now shows an
+  honest **"Couldn't load this song's audio"** notice — the loop run also disables Start —
+  instead of a silently dead transport.
+- **Stale bookmarks now self-heal** (pre-V2 audit). When an imported song's bookmark
+  resolves but reports stale (file moved, iCloud eviction), both practice surfaces re-mint
+  it from the live URL and persist — safe by design, since `SongRef` identity excludes the
+  bookmark bytes — so the song doesn't quietly drift toward "won't open at all".
+
+### Removed
+- **Dead ADR-0043 relics** (pre-V2 audit): `TempoProgressBar` (the metronome-era hairline
+  progress track — zero references) and `ExerciseProgress` + `Exercise.progress` (the
+  "light progress" readout model, unused by any app code since the ADR 0046 run-screen
+  rework dropped the progress chip) plus its test file. Pure-logic doc lists updated.
+
 ### Compliance
 - **Privacy manifest now declares the System Boot Time required-reason API** (35F9.1). The
   metronome engine reads `CACurrentMediaTime()` for session/tick timing; the manifest previously
