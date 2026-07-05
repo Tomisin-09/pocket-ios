@@ -236,8 +236,10 @@ time-signature control. Every entry **snapshots the owner's achievement at creat
 copied, not referenced, so it stays truthful as the unit improves; the snapshot and timestamp are
 immutable, only `text` and a typed **kind** (🎯 Goal / ⚡️ Breakthrough / 🧗 Struggle / 📝 Note /
 🎬 Session — an `EntryKind`, primitive-backed like `LoopType`) are editable. Entries group under
-day headers (`JournalGrouping`, pure), newest first. The waveform screen's loop journal (book icon
-on the loop row) is now **read-only** — a history view only. The entry's owner is **polymorphic**
+day headers (`JournalGrouping`, pure), newest first. The waveform screen's read-only loop-journal
+peek now lives in the loop's **settings sheet** (a "View entries" row, ADR 0067), not on the loop
+row — the row's second control became a one-tap **fine-adjust** button instead. It's a history view
+only. The entry's owner is **polymorphic**
 (ADR 0058): `JournalEntry` relates to a `Loop` **or** an `Exercise` (exactly one) via
 `JournalOwner`, so exercises get a journal too — an exercise entry snapshots its command in
 **absolute BPM** (`commandBpmAtEntry`) and has no mastery, kept a distinct field from the loop's

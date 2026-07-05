@@ -119,7 +119,9 @@ extension WaveformPracticeModel {
             haptic(.light)
         }
         if case .set(let newStart, let newEnd) = abSpan {
-            engine.setLoop(start: newStart * duration, end: newEnd * duration)
+            // Keep playing from where the playhead is when it still lands inside the resized
+            // region (ADR 0067) — dragging an edge shouldn't restart the loop mid-audition.
+            engine.setLoop(start: newStart * duration, end: newEnd * duration, keepingPlayhead: true)
         }
     }
 

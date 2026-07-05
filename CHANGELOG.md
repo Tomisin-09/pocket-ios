@@ -5,6 +5,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **The waveform practice screen is a workshop, not a journal (ADR 0067).** The
+  read-only journal peek moved off every loop row into the loop's settings sheet as a
+  **"View entries"** row (journal *authoring* already lives on the Practice run screen,
+  ADR 0058). The freed loop-row control is now a **fine-adjust** button
+  (`slider.horizontal.below.rectangle`) that lifts the loop into range-edit in one tap —
+  the same deliberate flow as the edit sheet's "Adjust range on waveform."
+- **Resizing a loop no longer restarts it from the top (ADR 0067).** Dragging an A/B edge
+  and releasing keeps playing from where the playhead is when it still falls inside the
+  resized region (it plays out to the new end, then loops); it only restarts from the start
+  when the playhead now sits outside the region.
+
 ### Fixed
 - **Audio failures now surface instead of dying silently** (pre-V2 audit). The two audio
   engines' session/start plumbing is deduplicated into a shared `AudioPlumbing` helper that

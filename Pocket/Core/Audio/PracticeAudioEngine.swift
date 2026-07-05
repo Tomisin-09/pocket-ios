@@ -161,10 +161,17 @@ final class PracticeAudioEngine {
     /// Loop a region (seconds). When playing, the crossfaded loop buffer is rebuilt
     /// and swapped in immediately (`.interrupts`) so the change is heard at once
     /// with no overlap; when paused it takes effect on the next `play`.
-    func setLoop(start: TimeInterval, end: TimeInterval) {
+    /// When `keepingPlayhead` is true and the live playhead still falls inside the new region,
+    /// playback continues from there (plays out to the new end, then loops) instead of restarting
+    /// from the start (ADR 0067) — a loop-edge resize shouldn't yank the audition to the top.
+    func setLoop(start: TimeInterval, end: TimeInterval, keepingPlayhead: Bool = false) {
         loopRegion = (start: start, end: end)
         flushMetronome()
         guard isPlaying else { return }
+        if keepingPlayhead, AudioMath.playheadInsideLoop(currentTime, start: start, end: end) {
+            seek(toSeconds: currentTime)    // resume within the new region from here (no restart)
+            return
+        }
         generation += 1                 // kill any pending straight-through completion
         if scheduleLoopBuffer() { scheduled = true }
     }
