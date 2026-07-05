@@ -18,18 +18,23 @@ struct ExerciseLibraryView: View {
     @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
     @State private var searchText = ""
 
-    /// The exercises narrowed by search and ordered by the current sort — the list the user sees,
-    /// and the one deletion offsets must index into.
-    private var visibleExercises: [Exercise] {
+    /// The exercises narrowed by search, then grouped into **template sections** (ADR 0068), each
+    /// ordered by the current sort — the sectioned list the user sees, and what deletion indexes
+    /// into (per section).
+    private var sections: [LibrarySection<Exercise>] {
         let matched = exercises
             .filter { PracticeLibrarySort.exerciseMatches(fields(for: $0), query: searchText) }
-        return PracticeLibrarySort.sortedExercises(matched, by: sortKey,
-                                                   ascending: sortAscending, fields: fields(for:))
+        return PracticeLibrarySort.exerciseSections(matched, sortedBy: sortKey,
+                                                    ascending: sortAscending, fields: fields(for:))
     }
+
+    /// Whether any exercise matches the current search — drives the empty vs no-match states.
+    private var hasMatches: Bool { sections.contains { !$0.items.isEmpty } }
 
     private func fields(for exercise: Exercise) -> ExerciseSortFields {
         ExerciseSortFields(name: exercise.name, command: exercise.command,
-                           dateAdded: exercise.dateAdded)
+                           dateAdded: exercise.dateAdded,
+                           templateName: exercise.template.displayName)
     }
 
     var body: some View {
@@ -40,23 +45,28 @@ struct ExerciseLibraryView: View {
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
-            } else if visibleExercises.isEmpty {
+            } else if !hasMatches {
                 Text("No exercises match “\(searchText)”.")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else {
-                ForEach(visibleExercises) { exercise in
-                    NavigationLink {
-                        ExerciseRunView(exercise: exercise)
-                    } label: {
-                        PracticeUnitRow(title: exercise.name.isEmpty ? "Untitled" : exercise.name,
-                                        progress: "Command \(exercise.command) → "
-                                            + "\(exercise.derivedTarget) BPM")
+                ForEach(sections, id: \.title) { section in
+                    Section(section.title) {
+                        ForEach(section.items) { exercise in
+                            NavigationLink {
+                                ExerciseRunView(exercise: exercise)
+                            } label: {
+                                PracticeUnitRow(
+                                    title: exercise.name.isEmpty ? "Untitled" : exercise.name,
+                                    progress: "Command \(exercise.command) → "
+                                        + "\(exercise.derivedTarget) BPM")
+                            }
+                            .listRowBackground(PocketColor.background)
+                        }
+                        .onDelete { delete($0, in: section.items) }
                     }
-                    .listRowBackground(PocketColor.background)
                 }
-                .onDelete(perform: delete)
             }
         }
         .scrollContentBackground(.hidden)
@@ -104,21 +114,27 @@ struct ExerciseLibraryView: View {
         .accessibilityLabel("Sort by \(sortKey.label), \(sortAscending ? "ascending" : "descending")")
     }
 
-    /// Create an exercise anchored on the entered **command** tempo (ADR 0046): the warm-up working
-    /// floor and the reach derive from it (pure `TempoStretch`), so the number typed in the sheet is
-    /// the command shown on the run screen — no working/command mismatch. The chosen meter is stored
-    /// so the run metronome accents + count-in match it (ADR 0052).
-    private func create(name: String, command: Int, signature: TimeSignature) {
-        guard !name.isEmpty else { return }
-        context.insert(Exercise.commandAnchored(name: name, command: command,
-                                                beatsPerBar: signature.beats,
-                                                noteValue: signature.noteValue))
+    /// Create an exercise from a confirmed `NewExercisePlan` (ADR 0046 / 0068): anchored on the
+    /// entered **command** tempo (the warm-up working floor and the reach derive from it via pure
+    /// `TempoStretch`, so the typed number is the command shown on the run screen), carrying the
+    /// chosen **template** (which groups the library and picks the run surface) and meter (so the run
+    /// metronome accents + count-in match, ADR 0052). A strumming template's authored pattern is
+    /// encoded onto the payload.
+    private func create(_ plan: NewExercisePlan) {
+        guard !plan.name.isEmpty else { return }
+        let exercise = Exercise.commandAnchored(name: plan.name, command: plan.command,
+                                                beatsPerBar: plan.signature.beats,
+                                                noteValue: plan.signature.noteValue,
+                                                template: plan.template)
+        if let strum = plan.strum { exercise.setStrumPattern(strum) }
+        context.insert(exercise)
         haptic(.medium)
     }
 
-    private func delete(at offsets: IndexSet) {
-        let shown = visibleExercises
-        for index in offsets { context.delete(shown[index]) }
+    /// Delete indexes into the *displayed* section's items — the offsets `onDelete` reports are
+    /// section-relative, so the section's own array is the one to index (ADR 0056 pattern).
+    private func delete(_ offsets: IndexSet, in items: [Exercise]) {
+        for index in offsets { context.delete(items[index]) }
         haptic(.medium)
     }
 }
@@ -128,8 +144,10 @@ struct ExerciseLibraryView: View {
     let container = try! ModelContainer(for: Exercise.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
     container.mainContext.insert(Exercise(name: "Alternating picking",
-                                          currentTempo: 70, commandTempo: 96))
-    container.mainContext.insert(Exercise(name: "Spider", currentTempo: 60))
+                                          currentTempo: 70, commandTempo: 96, template: .picking))
+    container.mainContext.insert(Exercise(name: "Spider", currentTempo: 60, template: .warmup))
+    container.mainContext.insert(Exercise(name: "Down Up Down", currentTempo: 80,
+                                          template: .strumming))
     return NavigationStack { ExerciseLibraryView() }
         .modelContainer(container)
         .preferredColorScheme(.dark)

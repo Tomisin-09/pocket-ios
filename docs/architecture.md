@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey (pure)
+│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern (pure, ADR 0065)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤

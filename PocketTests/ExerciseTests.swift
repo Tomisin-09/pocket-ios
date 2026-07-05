@@ -56,6 +56,55 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(exercise.rampIntervalUnit, .bars)
     }
 
+    // MARK: - Template + derived renderer + payload (ADR 0068 revised / 0065)
+
+    func testTemplateDefaultsToBasicAndKindToMetronome() {
+        XCTAssertEqual(Exercise().template, .basic)
+        XCTAssertEqual(Exercise().kind, .metronome)
+        XCTAssertNil(Exercise().templatePayload)
+    }
+
+    func testTemplateRoundTripsThroughStringBacking() {
+        let exercise = Exercise()
+        exercise.template = .strumming
+        XCTAssertEqual(exercise.templateRaw, "strumming")
+        XCTAssertEqual(exercise.template, .strumming)
+    }
+
+    func testTemplateFallsBackToBasicOnUnknownRaw() {
+        // Forward compatibility: an older build opening a newer template runs it as a plain drill.
+        let exercise = Exercise()
+        exercise.templateRaw = "hologram"
+        XCTAssertEqual(exercise.template, .basic)
+        XCTAssertEqual(exercise.kind, .metronome)
+    }
+
+    func testKindIsDerivedFromTemplate() {
+        // Only Strumming has its own renderer today; every other template falls to the metronome.
+        XCTAssertEqual(Exercise(template: .strumming).kind, .strumming)
+        XCTAssertEqual(Exercise(template: .scales).kind, .metronome)
+        XCTAssertEqual(Exercise(template: .basic).kind, .metronome)
+    }
+
+    func testSetStrumPatternEncodesPayloadAndReadsBack() {
+        let exercise = Exercise(template: .strumming)
+        exercise.setStrumPattern(.folk)
+        XCTAssertNotNil(exercise.templatePayload)
+        XCTAssertEqual(exercise.strumPattern, .folk)
+    }
+
+    func testStrumPatternIsNilForNonStrummingTemplate() {
+        // Even with a payload present, a non-strumming template decodes to nil (the renderer gate).
+        let exercise = Exercise(template: .scales)
+        exercise.setStrumPattern(.folk)   // writes the blob, but the template isn't strumming
+        XCTAssertNil(exercise.strumPattern)
+    }
+
+    func testStrumPatternIsNilWithoutPayload() {
+        // A strumming template with no encoded payload yet reads nil (falls back to the underlay).
+        XCTAssertNil(Exercise(template: .strumming).strumPattern)
+    }
+
     // MARK: - Computed accessors
 
     func testTempoMarkingDerivesFromCurrentTempo() {
@@ -145,8 +194,9 @@ final class ExerciseTests: XCTestCase {
         let context = ModelContext(container)
 
         let spider = Exercise(name: "Spider", currentTempo: 100, targetTempo: 160,
-                                       subdivision: .sixteenths,
+                                       subdivision: .sixteenths, template: .strumming,
                                        rampIntervalUnit: .seconds, tags: ["picking"])
+        spider.setStrumPattern(.folk)
         context.insert(spider)
         try context.save()
 
@@ -157,6 +207,9 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(fetched.first?.rampIntervalUnit, .seconds)
         XCTAssertEqual(fetched.first?.tags, ["picking"])
         XCTAssertEqual(fetched.first?.targetTempo, 160)
+        // The content template (kind + Codable payload blob) round-trips through the store.
+        XCTAssertEqual(fetched.first?.kind, .strumming)
+        XCTAssertEqual(fetched.first?.strumPattern, .folk)
     }
 
     /// The new model shares a container with the existing `Song` graph without

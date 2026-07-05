@@ -5,6 +5,34 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Exercise content templates — foundation + strumming (ADR 0065).** An exercise renders a
+  "what to play" surface over the shared metronome clock, driven by an optional versioned
+  `Codable` **`templatePayload`**. The first surface, **strumming**, animates a down/up/rest
+  arrow lane with the current slot lit as the click runs; templates with no bespoke surface fall
+  back to the beat dots. Which slot is active at a given moment is pure, unit-tested timing math
+  (`StrumPattern`); the lane is a thin skin over it.
+- **Exercises are created from a template, and the library groups by it (ADR 0068).** Creating
+  an exercise now **starts with a template** — Strumming, Scales, Chords, Picking, Legato, … —
+  a first-class choice that decides how you build and run the drill and which section it lands
+  in. Strumming has its own arrow-pattern editor; the other techniques run as a plain tempo
+  drill for now, each a real, section-distinct slot for a future editor. The **template is set
+  at creation and can't be changed** after (delete + recreate to change type), so a drill's
+  type never drifts. The Exercises library groups into **template sections**, alphabetical; the
+  seeded starters ship pre-assigned. (Existing exercises land in the **Basic** section.)
+- **Author a strumming pattern in the create flow and the detail sheet (ADR 0065).** Choosing
+  the **Strumming** template shows its tap-to-cycle editor right in creation (each slot steps
+  down → up → rest, with a quarters / eighths / sixteenths resolution control), seeded with the
+  folk pattern; the ⓘ detail sheet edits the same pattern later. A strumming drill always has a
+  pattern — there's no "remove," because the template is fixed.
+- **A seeded "Strumming — D DU UDU" starter (ADR 0065).** A new curated preset ships the
+  folk strum pattern, seeded under a second one-time key (`practicePresetsSeeded.v2`) so
+  existing users gain it on the next launch without disturbing (or re-seeding) their v1
+  starters.
+- **Strumming exercises show their arrow pattern on entry (ADR 0065).** The run screen's setup
+  (before you press Start) now previews the down/up/rest lane, so you see the pattern up front
+  — the same lane that lights up in time once the drill is running.
+
 ### Changed
 - **The waveform practice screen is a workshop, not a journal (ADR 0067).** The
   read-only journal peek moved off every loop row into the loop's settings sheet as a
@@ -18,6 +46,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   when the playhead now sits outside the region.
 
 ### Fixed
+- **Switching a strum pattern's resolution no longer wipes it (ADR 0065).** Toggling the
+  strum editor between quarters / eighths / sixteenths re-grids the pattern **by beat position**
+  instead of by raw slot index — so refining keeps each stroke on its beat (not crammed into the
+  first half of the bar), coarsening keeps the on-beat strokes (not a truncated tail), and
+  visiting a coarser resolution and returning no longer deletes the pattern's second half.
 - **Audio failures now surface instead of dying silently** (pre-V2 audit). The two audio
   engines' session/start plumbing is deduplicated into a shared `AudioPlumbing` helper that
   **logs** setup failures (was `try?`-swallowed — the backlog's "silent no-sound" robustness

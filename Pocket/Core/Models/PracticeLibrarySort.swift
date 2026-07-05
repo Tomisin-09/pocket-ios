@@ -65,6 +65,9 @@ struct ExerciseSortFields {
     /// The effective command BPM — `Exercise.command`.
     let command: Int
     let dateAdded: Date
+    /// The exercise template's display name (ADR 0068, revised) — the library **section** key
+    /// (Strumming, Scales, Basic, …). Defaulted so sort-only call sites keep compiling.
+    var templateName: String = ExerciseTemplate.basic.displayName
 }
 
 /// Pure ordering + search for the two Practice unit libraries (ADR 0056). Generic over the item
@@ -126,6 +129,28 @@ enum PracticeLibrarySort {
             .map { (item: $0, fields: fields($0)) }
             .sorted { exercisePrecedes($0.fields, $1.fields, key: key) }
         return (ascending ? ordered : ordered.reversed()).map(\.item)
+    }
+
+    /// Group exercises into **template sections** (ADR 0068, revised), each section's items ordered
+    /// by the chosen sort `key`/`ascending`. Sections are ordered alphabetically by the template's
+    /// display name. Every exercise resolves to exactly one template (`.basic` is a real section,
+    /// not a leftover bucket), so there is no empty/"Uncategorized" case to special-case. Pure — the
+    /// bucket boundaries and ordering are the logic that breaks silently, so they're unit-tested
+    /// (mirrors `LibrarySectioning`).
+    static func exerciseSections<Item>(_ items: [Item], sortedBy key: ExerciseSortKey,
+                                       ascending: Bool,
+                                       fields: (Item) -> ExerciseSortFields) -> [LibrarySection<Item>] {
+        var buckets: [String: [Item]] = [:]
+        for item in items {
+            buckets[fields(item).templateName, default: []].append(item)
+        }
+        return buckets.keys
+            .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
+            .map { title in
+                let ordered = sortedExercises(buckets[title] ?? [], by: key,
+                                              ascending: ascending, fields: fields)
+                return LibrarySection(title: title, items: ordered)
+            }
     }
 
     /// Whether an exercise matches a search `query` — a case- and diacritic-insensitive substring

@@ -62,8 +62,9 @@ final class PracticeLibrarySortTests: XCTestCase {
     // MARK: - Exercises
 
     private func exercise(_ name: String, command: Int = 100,
-                          dateAdded: Date = Date(timeIntervalSince1970: 0)) -> ExerciseSortFields {
-        ExerciseSortFields(name: name, command: command, dateAdded: dateAdded)
+                          dateAdded: Date = Date(timeIntervalSince1970: 0),
+                          template: String = ExerciseTemplate.basic.displayName) -> ExerciseSortFields {
+        ExerciseSortFields(name: name, command: command, dateAdded: dateAdded, templateName: template)
     }
 
     private func sortedExercises(_ items: [ExerciseSortFields], by key: ExerciseSortKey,
@@ -100,5 +101,38 @@ final class PracticeLibrarySortTests: XCTestCase {
         XCTAssertTrue(PracticeLibrarySort.exerciseMatches(exercise("Alternating picking"), query: "pick"))
         XCTAssertFalse(PracticeLibrarySort.exerciseMatches(exercise("Alternating picking"), query: "legato"))
         XCTAssertTrue(PracticeLibrarySort.exerciseMatches(exercise("Spider"), query: ""))
+    }
+
+    // MARK: - Template sections (ADR 0068, revised)
+
+    private func sections(_ items: [ExerciseSortFields], by key: ExerciseSortKey = .name,
+                          ascending: Bool = true) -> [(title: String, names: [String])] {
+        PracticeLibrarySort.exerciseSections(items, sortedBy: key, ascending: ascending) { $0 }
+            .map { ($0.title, $0.items.map(\.name)) }
+    }
+
+    func testSectionsGroupByTemplateAlphabeticallyWithItemsSortedWithin() {
+        let drills = [exercise("Down Up", template: "Strumming"),
+                      exercise("Major", template: "Scales"),
+                      exercise("All Down", template: "Strumming")]
+        let result = sections(drills, by: .name)
+        XCTAssertEqual(result.map(\.title), ["Scales", "Strumming"])
+        XCTAssertEqual(result[0].names, ["Major"])
+        XCTAssertEqual(result[1].names, ["All Down", "Down Up"])   // name-sorted within
+    }
+
+    func testBasicTemplateIsAnOrdinaryAlphabeticalSection() {
+        // "Basic" is a real template section (no "Uncategorized" leftover bucket), ordered
+        // alphabetically with the rest — Basic < Chords < Warm-up.
+        let drills = [exercise("Loose"), exercise("Chorded", template: "Chords"),
+                      exercise("Warm", template: "Warm-up")]
+        XCTAssertEqual(sections(drills).map(\.title), ["Basic", "Chords", "Warm-up"])
+    }
+
+    func testSectionsHonorTheChosenSortKeyWithinSection() {
+        let drills = [exercise("Slow", command: 60, template: "Scales"),
+                      exercise("Fast", command: 140, template: "Scales")]
+        let result = sections(drills, by: .commandTempo)
+        XCTAssertEqual(result[0].names, ["Slow", "Fast"])   // ascending command within the section
     }
 }

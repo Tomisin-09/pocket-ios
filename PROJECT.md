@@ -49,13 +49,13 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Features/Library/` | Song library, file import, song metadata editing |
 | `Pocket/Features/Waveform/` | Timeline, markers, loop creation (the practice screen) |
 | `Pocket/Features/Metronome/` | Standalone metronome screen (ADR 0043; automator phase-continuous stepping + explicit run/count-in/infinite, ADRs 0047/0048) |
-| `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`), an exercise **detail/reference sheet** (`ExerciseDetailSheet` — editable description + read-only tempo/meter/routine, ⓘ from the run screen); a collapsible **Practice Settings** panel (`PracticeSettingsPanel`) grouping the run-setup tempos + Steps + six curated starter exercises seeded once on first launch (`PracticePresets`, ADR 0046) |
+| `Pocket/Features/Practice/` | Top-level Practice hub → two unit libraries (`ExerciseLibraryView`, `LoopLibraryView`); template-first exercise **creation** (`ExerciseTemplatePicker` → `NewExerciseSheet` configure step, ADR 0068); per-unit training-run screens (`ExerciseRunView` / `LoopRunView` + `LoopRunModel`), an exercise **detail/reference sheet** (`ExerciseDetailSheet` — read-only **template** + editable description + read-only tempo/meter/routine, and a "How to play" section hosting the **strumming pattern editor** `StrumPatternEditor` for strumming-template exercises, ADR 0065; ⓘ from the run screen); the content-template renderer (`StrumLane` + live `StrummingLaneView`); the library grouped into **template sections** (`PracticeLibrarySort.exerciseSections`, ADR 0068); a collapsible **Practice Settings** panel (`PracticeSettingsPanel`) grouping the run-setup tempos + Steps + curated starter exercises seeded once on first launch in two one-time batches — six v1 technique drills + a v2 strumming preset (`PracticePresets`, ADR 0046/0065) |
 | `Pocket/Features/Planner/` | *(reserved for the V2 practice planner — re-homed inside Practice, ADR 0046)* |
 | `Pocket/Features/Settings/` | Settings screen (pushed from the Home gear) — Appearance override (System/Light/Dark, ADR 0063) + Haptics + Count-in toggles (`SettingsView`, ADR 0050); About footer shows the Red Moon brand mark (ADR 0061), background now transparent (ADR 0063) |
 | `Pocket/Resources/Assets.xcassets/` | Asset catalog (ADR 0061): `AppIcon` (crescent + stars on dark), `RedMoonLogo` (moon + wordmark, light/dark, transparent background since ADR 0063), `RedMoonWordmark` (compact nav-bar crop) |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
-| `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, Exercise, Routine, Session, SongRef |
+| `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, Exercise (+ closed `ExerciseTemplate` axis chosen at creation & immutable, deriving the `ExerciseKind` renderer + `StrumPattern` payload, ADR 0068/0065), Routine, Session, SongRef |
 | `Pocket/Core/Services/` | MusicKit, persistence, sync, AI client |
 | `Pocket/UI/` | Shared components, design tokens (`PocketColor` — light + dark appearance, ADR 0062; appearance override + vibrancy retune, ADR 0063) |
 
@@ -171,7 +171,10 @@ routine takes reach / back-up steps beyond warm-up. A new exercise picks a **tim
 (`NewExerciseSheet`, default 4/4) — also editable on an existing exercise from the run-setup nav
 bar — that drives the run click's accents + **count-in** length; a training run **counts you in**
 before the climb (honoring the Settings toggle/length, ADR 0052). The running readout is just the
-live BPM + beat dots (the session timer was dropped). the `Exercise` model stores its `CommandRamp`
+live BPM + beat dots — or, for an exercise with a **content template** (ADR 0065), the template's
+own surface in place of the dots: `kind` selects the renderer (`.metronome` default → beat dots;
+`.strumming` → `StrummingLaneView`, a down/up/rest arrow lane driven by the pure `StrumPattern`
+timing math), with an absent/undecodable payload falling back to the dots. The `Exercise` model stores its `CommandRamp`
 recipe natively in `ramp*`/dwell/backoff/`rampReachSteps`/`rampBackoffSteps` fields, the
 `automator* → ramp*` rename done data-preservingly via `@Attribute(originalName:)`. A loop trains
 the **same** warm-up → dwell → reach → back-off `CommandRamp`, but in percent-of-original against

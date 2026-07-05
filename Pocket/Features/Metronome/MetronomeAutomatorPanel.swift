@@ -45,10 +45,12 @@ struct MetronomeAutomatorPanel: View {
             // the new exercise's command. Funnels through the same `commandAnchored` factory as
             // Practice's own create flow — one creation path (ADR 0046).
             NewExerciseSheet(initialCommand: engine.bpm,
-                             initialSignature: engine.timeSignature) { name, command, signature in
-                modelContext.insert(Exercise.commandAnchored(name: name, command: command,
-                                                             beatsPerBar: signature.beats,
-                                                             noteValue: signature.noteValue))
+                             initialSignature: engine.timeSignature,
+                             fixedTemplate: .basic) { plan in
+                modelContext.insert(Exercise.commandAnchored(
+                    name: plan.name, command: plan.command,
+                    beatsPerBar: plan.signature.beats, noteValue: plan.signature.noteValue,
+                    template: plan.template))
             }
         }
     }
