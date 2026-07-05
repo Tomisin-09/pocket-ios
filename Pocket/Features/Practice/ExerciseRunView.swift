@@ -1,22 +1,15 @@
 import SwiftData
 import SwiftUI
 
-/// A **training run** on one exercise (ADR 0046, Phase A): the screen you reach by tapping a
-/// unit in Practice. Unlike the old in-metronome Training Mode sheet, this **owns its own
-/// `StandaloneMetronomeEngine`** — Practice runs are independent of the metronome's free-play
-/// engine, so starting a drill here never disturbs (or is disturbed by) the metronome screen.
+/// A **training run** on one exercise (ADR 0046, Phase A): the screen reached by tapping a unit in
+/// Practice. It **owns its own `StandaloneMetronomeEngine`**, so a drill here never disturbs (or is
+/// disturbed by) the metronome screen. Two modes: **set up** (stopped) edits the three tempos —
+/// working floor, command, derived reach — plus warm-up steps, with the routine drawn as a
+/// staircase and a one-tap promote; **running** shows the live BPM and the beat/template surface.
 ///
-/// Two modes on one screen:
-/// - **Set up** (stopped): edit the three tempos — warm-up **working** floor, owned
-///   **command**, derived **reach** — and how many warm-up steps to climb through, with the
-///   routine drawn as a staircase. A one-tap **promote** ratchets command up to the reach.
-/// - **Running**: the live BPM (climbing as the ramp steps), the beat indicator, and the
-///   session timer, with pause / resume / stop.
-///
-/// **Start** commits the edits to the model and hands the engine a `CommandRamp` directly
-/// (`engine.run(ramp:)`, ADR 0046) — no separate "arm the automator" step. Edits are held in
-/// local state until Start, so the three tempos move independently while editing and leaving
-/// the screen without starting discards them.
+/// **Start** commits the edits and hands the engine a `CommandRamp` directly (`engine.run(ramp:)`)
+/// — no separate "arm" step. Edits are held in local state until Start, so leaving without starting
+/// discards them.
 struct ExerciseRunView: View {
     let exercise: Exercise
     @State private var engine = StandaloneMetronomeEngine()
@@ -79,6 +72,7 @@ struct ExerciseRunView: View {
                 if isRunning {
                     liveReadout
                 } else {
+                    if let pattern = exercise.strumPattern { strumPreview(pattern) }
                     practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
@@ -164,10 +158,24 @@ struct ExerciseRunView: View {
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             }
-            BeatIndicator(engine: engine, tint: PocketColor.practice)
+            templateSurface
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
+    }
+
+    /// The content-template renderer switch (ADR 0065 T5): pick the surface by `kind`, with a
+    /// missing/undecodable payload or an unrecognised kind falling back to the metronome beat
+    /// dots — the universal underlay (T1) and the forward-compatible default. During the
+    /// count-in the beat dots always show; the strum lane engages once the drill is running.
+    @ViewBuilder
+    private var templateSurface: some View {
+        if exercise.kind == .strumming, let pattern = exercise.strumPattern,
+           engine.automatorCountdown == nil {
+            StrummingLaneView(engine: engine, pattern: pattern, tint: PocketColor.practice)
+        } else {
+            BeatIndicator(engine: engine, tint: PocketColor.practice)
+        }
     }
 
     // MARK: - Setup (stopped)
@@ -188,6 +196,21 @@ struct ExerciseRunView: View {
                 .foregroundStyle(PocketColor.practice)
         }
         .accessibilityLabel("Time signature: \(signature.name)")
+    }
+
+    /// A static preview of the strum pattern shown on entry (stopped), so you see the down/up
+    /// arrow directions before starting — the same `StrumLane` the running readout lights, here
+    /// with nothing lit (ADR 0065).
+    private func strumPreview(_ pattern: StrumPattern) -> some View {
+        VStack(spacing: 8) {
+            Text("Strum pattern")
+                .font(.futura(.caption, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            StrumLane(pattern: pattern, tint: PocketColor.practice)
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.surfaceSubtle))
     }
 
     /// The collapsible **Practice Settings** panel (V1 feedback): the three tempos + the nested

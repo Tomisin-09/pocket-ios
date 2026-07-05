@@ -10,14 +10,16 @@ extension Exercise {
     /// Returns an **un-inserted** model — the caller inserts into its own `modelContext` — so this
     /// stays a pure factory and the same call works from any screen.
     ///
-    /// `subdivision` / `tags` / `notes` default to the bare values the two interactive entry points
-    /// (Practice's create sheet, the automator seam) use; the **preset seeder** passes them to give
-    /// each curated drill its feel and how-to note while still deriving working/reach identically.
+    /// `subdivision` / `template` / `tags` / `notes` default to the bare values the two interactive
+    /// entry points (Practice's create sheet, the automator seam) use; the **preset seeder** passes
+    /// them to give each curated drill its template, feel, and how-to note while still deriving
+    /// working/reach identically.
     static func commandAnchored(name: String,
                                 command: Int,
                                 beatsPerBar: Int = 4,
                                 noteValue: Int = 4,
                                 subdivision: Subdivision = .none,
+                                template: ExerciseTemplate = .basic,
                                 tags: [String] = [],
                                 notes: String = "") -> Exercise {
         let working = max(StandaloneMetronomeEngine.bpmRange.lowerBound,
@@ -29,6 +31,7 @@ extension Exercise {
                         beatsPerBar: beatsPerBar,
                         noteValue: noteValue,
                         subdivision: subdivision,
+                        template: template,
                         tags: tags,
                         notes: notes)
     }

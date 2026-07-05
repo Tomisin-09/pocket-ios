@@ -68,6 +68,34 @@ final class Exercise {
         set { subdivisionRaw = newValue.rawValue }
     }
 
+    /// Backing storage for `template` — the **exercise template** this drill was created from
+    /// (ADR 0068, revised). A plain `String`, **not** the enum (the SwiftData enum-attribute
+    /// migration rule, ADR 0036). **Declaration default of `.basic`** so every existing exercise
+    /// migrates additively into the flexible "Basic" template and is otherwise untouched (the
+    /// CoreData 134110 rule); unknown/empty reads as `.basic` (forward compatibility). Chosen once
+    /// at creation and never reassigned in the UI — the template is immutable (only its own
+    /// settings are editable), so there is no `template` *setter* exposure beyond creation.
+    var templateRaw: String = ExerciseTemplate.basic.rawValue
+
+    /// The exercise template — the single user-facing classification axis (Strumming, Scales, …),
+    /// typed view over `templateRaw`. Fixes the renderer, the authoring UI, and the library
+    /// section. Orthogonal to the tempo ramp: the template never changes the tempo model.
+    var template: ExerciseTemplate {
+        get { ExerciseTemplate(storage: templateRaw) }
+        set { templateRaw = newValue.rawValue }
+    }
+
+    /// The runtime **renderer** (ADR 0065) — *derived* from the template, never stored separately.
+    /// The run screen switches its content surface on this; the strum payload accessor gates on it.
+    var kind: ExerciseKind { template.renderer }
+
+    /// The template's content as a versioned `Codable` blob (ADR 0065 T4) — a strum pattern,
+    /// a fretboard sequence, … — opaque to SwiftData because it is **never** relationally
+    /// queried. **Optional ⇒ additive migration**; `nil` (or an undecodable/unknown payload)
+    /// falls back to the metronome renderer (T5). Read/written through the typed per-kind
+    /// accessors in `Exercise+Template.swift`, never decoded ad hoc at call sites.
+    var templatePayload: Data?
+
     // Training-routine recipe (ADR 0046) — the persisted `CommandRamp` shape this exercise
     // prescribes, stored **natively** rather than borrowed from the free-play automator (the
     // ADR 0045 shortcut, undone here). Declaration defaults keep migration additive (the
@@ -133,6 +161,8 @@ final class Exercise {
          noteValue: Int = 4,
          accentBeats: [Int] = [0],
          subdivision: Subdivision = .none,
+         template: ExerciseTemplate = .basic,
+         templatePayload: Data? = nil,
          rampStepBPM: Int = 5,
          rampIntervalCount: Int = 4,
          rampIntervalUnit: MetronomeIntervalUnit = .bars,
@@ -152,6 +182,8 @@ final class Exercise {
         self.noteValue = noteValue
         self.accentBeats = accentBeats
         self.subdivisionRaw = subdivision.rawValue
+        self.templateRaw = template.rawValue
+        self.templatePayload = templatePayload
         self.rampStepBPM = rampStepBPM
         self.rampIntervalCount = rampIntervalCount
         self.rampIntervalUnitRaw = rampIntervalUnit.rawValue
