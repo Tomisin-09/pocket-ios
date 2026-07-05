@@ -19,6 +19,55 @@ The order below reflects a deliberate scoping call, not just priority:
   paper-only) and a settled pricing/cadence model. Cleanly separable from the
   user-editable foundations below — build those first, gate AI behind them.
 
+## V2 vision (logged 2026-07-05)
+
+The V2 direction was set in a scoping session; the thinking lives in dedicated
+docs so this stays a pointer list:
+
+- **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
+  play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer
+  switched in `ExerciseRunView`) *over* today's metronome/ramp engine — strumming
+  arrow-lane, animated fretboard, chord/progression stepper — mapped from the
+  taxonomy's `Default mode` column. Build order strumming → fretboard (shared with
+  tab→fretboard Phase R + preset guides) → chords; vibrato/bends/palm-muting
+  deliberately get no template.
+- **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
+  container (distinct from the intra-exercise ramp staircase): `Routine` +
+  `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit
+  `order`), a player orchestrating the existing per-unit engines, pure budget/rest
+  logic. Container + manual authoring + player first; the planner (ADRs
+  0014/0015/0016) becomes just another producer of a `Routine`, deferred to its own
+  ADR. Unblocks ADR 0014's open output type.
+- **Social layer boundaries — ADR 0064 (Accepted).** Local-first forever;
+  exercises (never loops/audio) are the shareable unit; derived-stats-only
+  leaderboards; Sign in with Apple; CloudKit personal sync vs AWS social rails
+  kept separate; loop compensation explicitly closed until a rights framework
+  reopens it. Backend sizing + data-classification strategy:
+  `docs/research/v2-backend-and-data-strategy.md` (S0 recap slice is buildable
+  now, with no backend).
+- **Song splitting / stems:** `docs/research/feasibility-song-splitting-and-stems.md`
+  — loop-region audio export is a cheap V2 win; on-device stem separation is a
+  gated spike (server-side rejected on privacy/rights); pitch-shift is nearly
+  free when wanted.
+- **Tab → fretboard animation:** `docs/research/feasibility-tab-to-fretboard.md`
+  — build the animated-fretboard *renderer* over an internal notation model
+  first (it powers preset guides and shares its clock/substrate with the
+  strumming-pattern animation), ASCII-tab import second, Guitar Pro/MusicXML
+  later (licensing-gated), OCR never-planned.
+- **Strumming-pattern animation + preset expansion (near-term, buildable now):**
+  an animated D/DU pattern lane accompanied by the metronome, plus presets from
+  the exercise-inventory sheet (warm-ups/spider, hammer-on/pull-off/slide
+  ladders, scale + arpeggio runs, open/barre/triad progression changes,
+  strumming rhythms). Per the content strategy: encode the *methods*, all copy
+  and exercises authored in-house.
+- **Backing tracks:** a content-production decision before a code one —
+  outsource vs self-record (start tiny: 3–5 first-party tracks, common keys /
+  I–IV–V / 12-bar, recorded as owned work product). Technically trivial:
+  bundled or downloadable DRM-free files ride the existing engine unchanged;
+  needs only a "first-party content" bucket distinct from user imports.
+- **Desktop bulk metadata/artwork editing:** door held open by ADR 0064 §7
+  (keep metadata logic pure/portable); otherwise deliberately unplanned.
+
 ## Launch readiness (pre-submission gate)
 
 From a full pre-launch audit (2026-06-25). The code itself audited clean —
@@ -374,6 +423,22 @@ the master `hapticsEnabled` switch.
 route through.
 
 ## UI / polish
+
+- **Swappable themes (design-system extension, roadmap).** `DesignTokens.swift`
+  was built for this from day one — every colour is a semantic role, and the file
+  calls out the seam explicitly ("each role becomes a `Theme` property; the current
+  values become the 'teal' theme"). Light/dark already ship (ADR 0062/0063); a
+  user-selectable **`Theme`** (beyond appearance) is the natural next step. Shape
+  when built: a `Theme` protocol/struct whose properties are the current
+  `PocketColor` roles, `PocketColor` reading from the active theme, and a Settings
+  picker persisted like `AppearancePreference`. Prerequisite already enforced: every
+  view (and every ADR-0065 exercise template, rule **T10**) must draw from semantic
+  tokens, never literal hex, so themes reskin the whole app — templates included —
+  for free. The template-gallery preview demonstrates the payoff (Red Moon / Light /
+  Blood Moon, one control reskins all five templates live). Candidate themes to
+  explore: the shipped Red Moon dark/light, and a **Blood Moon** register built on
+  the brand vermilion `#C73818` (branding note above). Not scheduled; captured so the
+  token discipline that keeps the door open is treated as load-bearing, not optional.
 
 - **Fine-tune the song details sheet.** `SongDetailsSheet` (opened by holding the
   song title on the practice screen) currently stands up the read-first overview on
