@@ -19,6 +19,41 @@ The order below reflects a deliberate scoping call, not just priority:
   paper-only) and a settled pricing/cadence model. Cleanly separable from the
   user-editable foundations below — build those first, gate AI behind them.
 
+## V2 vision (logged 2026-07-05)
+
+The V2 direction was set in a scoping session; the thinking lives in dedicated
+docs so this stays a pointer list:
+
+- **Social layer boundaries — ADR 0064 (Proposed).** Local-first forever;
+  exercises (never loops/audio) are the shareable unit; derived-stats-only
+  leaderboards; Sign in with Apple; CloudKit personal sync vs AWS social rails
+  kept separate; loop compensation explicitly closed until a rights framework
+  reopens it. Backend sizing + data-classification strategy:
+  `docs/research/v2-backend-and-data-strategy.md` (S0 recap slice is buildable
+  now, with no backend).
+- **Song splitting / stems:** `docs/research/feasibility-song-splitting-and-stems.md`
+  — loop-region audio export is a cheap V2 win; on-device stem separation is a
+  gated spike (server-side rejected on privacy/rights); pitch-shift is nearly
+  free when wanted.
+- **Tab → fretboard animation:** `docs/research/feasibility-tab-to-fretboard.md`
+  — build the animated-fretboard *renderer* over an internal notation model
+  first (it powers preset guides and shares its clock/substrate with the
+  strumming-pattern animation), ASCII-tab import second, Guitar Pro/MusicXML
+  later (licensing-gated), OCR never-planned.
+- **Strumming-pattern animation + preset expansion (near-term, buildable now):**
+  an animated D/DU pattern lane accompanied by the metronome, plus presets from
+  the exercise-inventory sheet (warm-ups/spider, hammer-on/pull-off/slide
+  ladders, scale + arpeggio runs, open/barre/triad progression changes,
+  strumming rhythms). Per the content strategy: encode the *methods*, all copy
+  and exercises authored in-house.
+- **Backing tracks:** a content-production decision before a code one —
+  outsource vs self-record (start tiny: 3–5 first-party tracks, common keys /
+  I–IV–V / 12-bar, recorded as owned work product). Technically trivial:
+  bundled or downloadable DRM-free files ride the existing engine unchanged;
+  needs only a "first-party content" bucket distinct from user imports.
+- **Desktop bulk metadata/artwork editing:** door held open by ADR 0064 §7
+  (keep metadata logic pure/portable); otherwise deliberately unplanned.
+
 ## Launch readiness (pre-submission gate)
 
 From a full pre-launch audit (2026-06-25). The code itself audited clean —
