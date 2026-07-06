@@ -37,6 +37,7 @@ final class PracticePresetsTests: XCTestCase {
             + PracticePresets.makeExercises(PracticePresets.templateSpecs)
             + PracticePresets.makeExercises(PracticePresets.fretboardSpecs)
             + PracticePresets.makeExercises(PracticePresets.scaleSpecs)
+            + PracticePresets.makeExercises(PracticePresets.arpeggioSpecs)
         for exercise in all {
             XCTAssertNotEqual(exercise.template, .basic,
                               "\(exercise.name) should ship with a specific (non-basic) template")
@@ -80,6 +81,19 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertTrue(scale?.hasMeasuredCommand ?? false)
     }
 
+    // MARK: - Arpeggio library batch (ADR 0065 build 2, Slice 3)
+
+    func testArpeggioSpecsShipAnArpeggioRunExercise() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.arpeggioSpecs)
+        XCTAssertEqual(exercises.count, 1)
+        let arpeggio = try? XCTUnwrap(exercises.first)
+        XCTAssertEqual(arpeggio?.template, .arpeggios)
+        XCTAssertEqual(arpeggio?.kind, .fretboard)
+        XCTAssertEqual(arpeggio?.fretboardContent, .arpeggio(.aMinorSeventh))
+        XCTAssertEqual(arpeggio?.fretboardDrill, ArpeggioRun.aMinorSeventh.expanded())
+        XCTAssertTrue(arpeggio?.hasMeasuredCommand ?? false)
+    }
+
     // MARK: - Seed-once guard
 
     func testSeedIfNeededInsertsBothBatchesOnceThenIsIdempotent() throws {
@@ -90,6 +104,7 @@ final class PracticePresetsTests: XCTestCase {
 
         let total = PracticePresets.specs.count + PracticePresets.templateSpecs.count
             + PracticePresets.fretboardSpecs.count + PracticePresets.scaleSpecs.count
+            + PracticePresets.arpeggioSpecs.count
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
 
@@ -113,7 +128,7 @@ final class PracticePresetsTests: XCTestCase {
         let fetched = try context.fetch(FetchDescriptor<Exercise>())
         XCTAssertEqual(fetched.count,
                        PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count
-                       + PracticePresets.scaleSpecs.count)
+                       + PracticePresets.scaleSpecs.count + PracticePresets.arpeggioSpecs.count)
         // All newer batches arrive (fetch order isn't insertion order, so check the set).
         XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard])
     }

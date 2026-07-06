@@ -68,6 +68,18 @@ All notable changes to Pocket are documented here. Format loosely follows
   drill now previews on the practice run screen's setup state** (not just strum patterns) at a gentle
   60 bpm, and the **dark-mode grid** was lightened so the strings and frets are visible. A seeded
   **"A Minor Pentatonic"** starter ships under a fourth one-time key (`practicePresetsSeeded.v4`).
+- **Arpeggios are their own template (ADR 0065 build 2, Slice 3).** A new **Arpeggios** category
+  generates major, minor, maj7, min7 and dominant-7 arpeggios from the *same* five CAGED boxes as
+  scales — a position's box filtered to the chord tones — with the same root highlighting, note
+  captions, animation toggle and up-and-back. A seeded **"A Minor 7 Arpeggio"** ships under a fifth
+  one-time key (`practicePresetsSeeded.v5`).
+- **Animate-exercises toggle in Settings.** A single walking-highlight preference (off by default;
+  forced off under Reduce Motion) is surfaced in Settings → Motion, alongside the in-editor control. It
+  now governs **every animated exercise template** — the fretboard board and the **strum lane** both
+  read it, so with it off the strumming lane no longer walks either and shows the pattern statically.
+- **Groundwork for exercise audio.** An `ExerciseAudioEngine` seam (silent by default, injected via
+  the environment) and a "Sound soon" preview affordance are in place so a real sound-preview /
+  accompaniment backend can slot in later without call-site changes. No audio ships yet.
 - **A seeded "Chromatic Warm-up" starter (ADR 0065).** A new curated preset ships a generated
   1-2-3-4-up-every-string-and-back warm-up, seeded under a third one-time key
   (`practicePresetsSeeded.v3`) so existing users gain it on the next launch without disturbing

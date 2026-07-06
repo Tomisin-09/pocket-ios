@@ -78,10 +78,20 @@ struct StrummingLaneView: View {
     @State private var beatOnset = Date.now
     /// The beat index that onset belongs to, so a re-render mid-beat keeps the same anchor.
     @State private var anchoredBeat = -1
+    /// The walking-highlight preference — **off by default** as a photosensitivity precaution, and
+    /// forced off under the system Reduce Motion setting. Off shows a static, fully-plotted lane.
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { context in
-            StrumLane(pattern: pattern, activeIndex: activeSlot(at: context.date), tint: tint)
+        Group {
+            if animates && !reduceMotion {
+                TimelineView(.animation) { context in
+                    StrumLane(pattern: pattern, activeIndex: activeSlot(at: context.date), tint: tint)
+                }
+            } else {
+                StrumLane(pattern: pattern, activeIndex: nil, tint: tint)
+            }
         }
         .onChange(of: engine.currentBeat) { _, newValue in
             anchoredBeat = newValue

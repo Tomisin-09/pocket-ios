@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.countInBars) private var countInBars = AppSettings.countInBarsRange.lowerBound
     @AppStorage(AppSettings.Key.keepScreenAwake) private var keepScreenAwake = true
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var exerciseAnimates = false
 
     var body: some View {
         Form {
@@ -48,6 +49,17 @@ struct SettingsView: View {
             } footer: {
                 Text("A count-in before a tempo climb begins, so you can settle in. Keeping the "
                      + "screen awake stops it locking while you play along hands-free.")
+            }
+
+            Section {
+                Toggle("Animate exercises", isOn: $exerciseAnimates)
+            } header: {
+                Text("Motion")
+            } footer: {
+                Text("A moving highlight walks the exercise in time — the notes on the fretboard, the "
+                     + "strokes on the strum lane. Off by default, and always off when your device has "
+                     + "Reduce Motion on — some people find blinking motion uncomfortable. With it off, "
+                     + "the exercise is shown statically.")
             }
 
             Section {

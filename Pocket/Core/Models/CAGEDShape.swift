@@ -57,3 +57,62 @@ enum CAGEDShape: Int, CaseIterable, Identifiable {
         }
     }
 }
+
+// MARK: - Shared placement + filtering (pure — used by scales and arpeggios)
+
+extension CAGEDShape {
+    /// Open-string MIDI notes by our string index (5 = low E … 0 = high e).
+    static let openMidi = [64, 59, 55, 50, 45, 40]
+
+    /// The MIDI pitch of a note in standard tuning.
+    static func midi(_ note: FretNote) -> Int { openMidi[note.string] + note.fret }
+
+    /// The interval (semitones above `root`, 0…11) sounding at a note.
+    static func degree(of note: FretNote, root: Int) -> Int {
+        (((GuitarScale.pitchClass(string: note.string, fret: note.fret) - root) % 12) + 12) % 12
+    }
+
+    /// Place the `position` box for a run whose tonic is `root`, borrowing the CAGED boxes of the
+    /// relative major `relativeMajorSemitones` above it, and keep the notes whose interval above the
+    /// tonic is in `degrees` — a scale, a pentatonic, or an arpeggio, all the same box filtered
+    /// differently. Ascending, with G–B-boundary unisons de-duped (thinner string kept) so a run
+    /// never repeats a pitch.
+    static func filteredBox(position: Int, root: Int,
+                            relativeMajorSemitones: Int, degrees: Set<Int>) -> [FretNote] {
+        let majorRoot = (((root + relativeMajorSemitones) % 12) + 12) % 12
+        let delta = (((majorRoot - referenceRoot) % 12) + 12) % 12
+        let placed = CAGEDShape(clampedPosition: position).referenceNotes
+            .map { FretNote(string: $0.string, fret: $0.fret + delta) }
+        let inScale = dropToPlayableRegion(placed)
+            .filter { degrees.contains(degree(of: $0, root: root)) }
+            .sorted { lhs, rhs in
+                midi(lhs) != midi(rhs) ? midi(lhs) < midi(rhs) : lhs.string < rhs.string
+            }
+        return dedupingUnisons(inScale)
+    }
+
+    /// Keep the run to `octaves` octaves: the whole box for two, its lower octave for one.
+    static func trimmed(_ notes: [FretNote], toOctaves octaves: Int) -> [FretNote] {
+        guard octaves < 2, let low = notes.first.map(midi) else { return notes }
+        return notes.filter { midi($0) <= low + 12 }
+    }
+
+    /// Slide a transposed box down whole octaves until its lowest note sits within the first twelve
+    /// frets, so a shape stays on the neck and near the nut whatever the key.
+    private static func dropToPlayableRegion(_ notes: [FretNote]) -> [FretNote] {
+        guard let low = notes.map(\.fret).min(), low > 11 else { return notes }
+        let drop = (low / 12) * 12
+        return notes.map { FretNote(string: $0.string, fret: $0.fret - drop) }
+    }
+
+    /// Drop repeated pitches (a box can voice the same note on neighbouring strings, e.g. across the
+    /// G–B boundary); keep the one on the thinner string so a linear run keeps climbing. Assumes the
+    /// notes are already ordered by pitch then string.
+    private static func dedupingUnisons(_ notes: [FretNote]) -> [FretNote] {
+        var result: [FretNote] = []
+        for note in notes where midi(note) != result.last.map(midi) {
+            result.append(note)
+        }
+        return result
+    }
+}

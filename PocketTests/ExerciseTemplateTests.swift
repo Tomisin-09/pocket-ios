@@ -21,7 +21,8 @@ final class ExerciseTemplateTests: XCTestCase {
         // everything else still falls to the metronome underlay until its own renderer ships.
         XCTAssertEqual(ExerciseTemplate.strumming.renderer, .strumming)
 
-        let fretboardFamily: Set<ExerciseTemplate> = [.scales, .picking, .legato, .fingerstyle, .warmup]
+        let fretboardFamily: Set<ExerciseTemplate> =
+            [.scales, .arpeggios, .picking, .legato, .fingerstyle, .warmup]
         for template in fretboardFamily {
             XCTAssertEqual(template.renderer, .fretboard, "\(template) should render on the fretboard")
         }
@@ -51,7 +52,10 @@ final class ExerciseTemplateTests: XCTestCase {
         XCTAssertEqual(ExerciseTemplate.scales.bespokeEditor, .scale)
         XCTAssertEqual(ExerciseTemplate.scales.defaultFretboardContent, .scale(.aMinorPentatonic))
 
-        let editing = runFamily.union([.strumming, .scales])
+        XCTAssertEqual(ExerciseTemplate.arpeggios.bespokeEditor, .arpeggio)
+        XCTAssertEqual(ExerciseTemplate.arpeggios.defaultFretboardContent, .arpeggio(.aMinorSeventh))
+
+        let editing = runFamily.union([.strumming, .scales, .arpeggios])
         for template in ExerciseTemplate.allCases where !editing.contains(template) {
             XCTAssertNil(template.bespokeEditor, "\(template) should have no bespoke editor")
             XCTAssertFalse(template.hasBespokeEditor)

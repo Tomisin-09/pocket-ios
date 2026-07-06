@@ -260,7 +260,7 @@ struct FretboardView: View {
     @State private var anchoredBeat = -1
     /// The walking-highlight preference — **off by default** as a photosensitivity precaution, and
     /// forced off under the system Reduce Motion setting. Off shows a static, fully-plotted board.
-    @AppStorage("fretboardAnimates") private var animates = false
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -305,7 +305,7 @@ struct FretboardDrillPreview: View {
     var labelMode: FretLabelMode = .none
     /// Off by default (photosensitivity precaution) and forced off under Reduce Motion; off shows a
     /// static, fully-plotted board.
-    @AppStorage("fretboardAnimates") private var animates = false
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {

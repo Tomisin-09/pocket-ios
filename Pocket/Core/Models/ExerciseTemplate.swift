@@ -24,6 +24,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// A down / up / rest arrow lane over the click, authored from a `StrumPattern` (ADR 0065).
     case strumming
     case scales
+    case arpeggios
     case chords
     case picking
     case legato
@@ -45,6 +46,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .basic: return "Basic"
         case .strumming: return "Strumming"
         case .scales: return "Scales"
+        case .arpeggios: return "Arpeggios"
         case .chords: return "Chords"
         case .picking: return "Picking"
         case .legato: return "Legato"
@@ -62,6 +64,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .basic: return "A plain tempo drill on the click."
         case .strumming: return "Down / up / rest arrow lane over the click."
         case .scales: return "Run scales in time — push the tempo clean."
+        case .arpeggios: return "Run chord tones across the neck, in position."
         case .chords: return "Change chords cleanly on the beat."
         case .picking: return "Alternate-picking accuracy and speed."
         case .legato: return "Hammer-ons and pull-offs, even and smooth."
@@ -79,6 +82,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .basic: return "metronome"
         case .strumming: return "guitars"
         case .scales: return "stairs"
+        case .arpeggios: return "point.topleft.down.to.point.bottomright.curvepath"
         case .chords: return "square.grid.3x3"
         case .picking: return "arrow.up.and.down"
         case .legato: return "wave.3.forward"
@@ -99,7 +103,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     var renderer: ExerciseKind {
         switch self {
         case .strumming: return .strumming
-        case .scales, .picking, .legato, .fingerstyle, .warmup: return .fretboard
+        case .scales, .arpeggios, .picking, .legato, .fingerstyle, .warmup: return .fretboard
         case .basic, .chords, .rhythm, .earTraining, .theory: return .metronome
         }
     }
@@ -112,12 +116,13 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// preprogrammed `ScaleRun` from the scale library (ADR 0065 build 2, Slice 2). `.fretboardGrid`
     /// is the tap-to-place custom drill — retained as the general escape hatch, no template selects it
     /// by default today. The host sheet switches on this.
-    enum BespokeEditor { case strumming, run, scale, fretboardGrid }
+    enum BespokeEditor { case strumming, run, scale, arpeggio, fretboardGrid }
     var bespokeEditor: BespokeEditor? {
         switch self {
         case .strumming: return .strumming
         case .warmup, .picking, .legato, .fingerstyle: return .run
         case .scales: return .scale
+        case .arpeggios: return .arpeggio
         case .basic, .chords, .rhythm, .earTraining, .theory: return nil
         }
     }
@@ -139,6 +144,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         switch bespokeEditor {
         case .run: return .run(.chromaticWarmup)
         case .scale: return .scale(.aMinorPentatonic)
+        case .arpeggio: return .arpeggio(.aMinorSeventh)
         case .fretboardGrid: return .custom(.spiderWalk)
         case .strumming, .none: return nil
         }
@@ -147,7 +153,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// The templates offered in the create picker, in menu order: the flexible **Basic** catch-all
     /// first (the default, no-fuss drill), then the bespoke Strumming, then the other techniques.
     static let creatable: [ExerciseTemplate] = [
-        .basic, .strumming, .scales, .chords, .picking,
+        .basic, .strumming, .scales, .arpeggios, .chords, .picking,
         .legato, .fingerstyle, .rhythm, .warmup, .earTraining, .theory
     ]
 }

@@ -115,15 +115,18 @@ extension FretboardRun {
 enum FretboardContent: Equatable {
     case run(FretboardRun)
     case scale(ScaleRun)
+    case arpeggio(ArpeggioRun)
     case custom(FretboardDrill)
 }
 
 extension FretboardContent {
-    /// The drill the board renders — a generated run or scale expanded, a custom drill as authored.
+    /// The drill the board renders — a generated run, scale or arpeggio expanded, a custom drill as
+    /// authored.
     var drill: FretboardDrill {
         switch self {
         case .run(let run): return run.expanded()
         case .scale(let scaleRun): return scaleRun.expanded()
+        case .arpeggio(let arpeggioRun): return arpeggioRun.expanded()
         case .custom(let drill): return drill
         }
     }
@@ -134,19 +137,25 @@ extension FretboardContent {
     /// The scale run, when this is a `.scale`.
     var scaleValue: ScaleRun? { if case .scale(let scaleRun) = self { return scaleRun }; return nil }
 
+    /// The arpeggio run, when this is an `.arpeggio`.
+    var arpeggioValue: ArpeggioRun? {
+        if case .arpeggio(let arpeggioRun) = self { return arpeggioRun }; return nil
+    }
+
     /// The custom drill, when this is a `.custom`.
     var customValue: FretboardDrill? { if case .custom(let drill) = self { return drill }; return nil }
 }
 
 extension FretboardContent: Codable {
-    private enum CodingKeys: String, CodingKey { case kind, run, scale, drill }
-    private enum Kind: String, Codable { case run, scale, custom }
+    private enum CodingKeys: String, CodingKey { case kind, run, scale, arpeggio, drill }
+    private enum Kind: String, Codable { case run, scale, arpeggio, custom }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         switch try container.decode(Kind.self, forKey: .kind) {
         case .run: self = .run(try container.decode(FretboardRun.self, forKey: .run))
         case .scale: self = .scale(try container.decode(ScaleRun.self, forKey: .scale))
+        case .arpeggio: self = .arpeggio(try container.decode(ArpeggioRun.self, forKey: .arpeggio))
         case .custom: self = .custom(try container.decode(FretboardDrill.self, forKey: .drill))
         }
     }
@@ -160,6 +169,9 @@ extension FretboardContent: Codable {
         case .scale(let scaleRun):
             try container.encode(Kind.scale, forKey: .kind)
             try container.encode(scaleRun, forKey: .scale)
+        case .arpeggio(let arpeggioRun):
+            try container.encode(Kind.arpeggio, forKey: .kind)
+            try container.encode(arpeggioRun, forKey: .arpeggio)
         case .custom(let drill):
             try container.encode(Kind.custom, forKey: .kind)
             try container.encode(drill, forKey: .drill)

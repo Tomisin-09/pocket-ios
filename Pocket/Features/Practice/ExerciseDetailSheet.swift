@@ -27,6 +27,7 @@ struct ExerciseDetailSheet: View {
     /// surfaced and committed.
     @State private var run: FretboardRun
     @State private var scale: ScaleRun
+    @State private var arpeggio: ArpeggioRun
     @State private var customDrill: FretboardDrill
 
     init(exercise: Exercise) {
@@ -37,6 +38,7 @@ struct ExerciseDetailSheet: View {
         let content = exercise.fretboardContent
         _run = State(initialValue: content?.runValue ?? .chromaticWarmup)
         _scale = State(initialValue: content?.scaleValue ?? .aMinorPentatonic)
+        _arpeggio = State(initialValue: content?.arpeggioValue ?? .aMinorSeventh)
         _customDrill = State(initialValue: content?.customValue ?? .spiderWalk)
     }
 
@@ -52,6 +54,7 @@ struct ExerciseDetailSheet: View {
                 case .strumming?: strummingSection
                 case .run?: runSection
                 case .scale?: scaleSection
+                case .arpeggio?: arpeggioSection
                 case .fretboardGrid?: fretboardSection
                 case nil: EmptyView()
                 }
@@ -202,6 +205,20 @@ struct ExerciseDetailSheet: View {
         }
     }
 
+    /// The Arpeggios template's authoring surface — the `ArpeggioRunEditor` chord-tone picker. Same
+    /// immutability contract: the template stays fretboard; you pick the quality and root.
+    private var arpeggioSection: some View {
+        Section {
+            ArpeggioRunEditor(run: $arpeggio)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — arpeggio")
+        } footer: {
+            Text("Pick a quality and its root; the chord-tone box walks the neck over the click "
+                 + "while you run the drill.")
+        }
+    }
+
     /// The custom-drill authoring surface — the tap-to-place `FretboardDrillEditor`. Same
     /// immutability contract: the template stays fretboard.
     private var fretboardSection: some View {
@@ -250,6 +267,7 @@ struct ExerciseDetailSheet: View {
         switch editor {
         case .run: content = .run(run)
         case .scale: content = .scale(scale)
+        case .arpeggio: content = .arpeggio(arpeggio)
         case .fretboardGrid: content = .custom(customDrill)
         case .strumming: return
         }

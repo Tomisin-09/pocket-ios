@@ -64,75 +64,26 @@ extension ScaleRun {
 // MARK: - Generation (pure — CAGED box, placed then filtered; verified in tests)
 
 extension ScaleRun {
-    /// Open-string MIDI notes by our string index (5 = low E … 0 = high e).
-    private static let openMidi = [64, 59, 55, 50, 45, 40]
-
-    /// The MIDI pitch of a note in standard tuning.
-    private static func midi(_ note: FretNote) -> Int { openMidi[note.string] + note.fret }
-
-    /// The chosen CAGED box, placed in this run's key and filtered to the scale's degrees — the full
-    /// position box, ascending. The box is authored for the **relative major** and the scale's own
-    /// degrees are kept, so a minor pentatonic reuses the same geometry a major scale does. The blues
-    /// note (♭5), which no diatonic box contains, is threaded in as a chromatic passing tone.
+    /// The chosen CAGED box, placed in this run's key and filtered to the scale's degrees (the shared
+    /// `CAGEDShape` generator). The blues note (♭5), which no diatonic box contains, is threaded in as
+    /// a chromatic passing tone.
     var boxNotes: [FretNote] {
-        let root = rootPitchClass
-        let majorRoot = (((root + scale.relativeMajorSemitones) % 12) + 12) % 12
-        let delta = (((majorRoot - CAGEDShape.referenceRoot) % 12) + 12) % 12
-        let degrees = scale.degrees
-
-        var placed = CAGEDShape(clampedPosition: position).referenceNotes
-            .map { FretNote(string: $0.string, fret: $0.fret + delta) }
-        placed = Self.dropToPlayableRegion(placed)
-
-        let inScale = placed
-            .filter { degrees.contains(Self.degree(of: $0, root: root)) }
-            .sorted { lhs, rhs in
-                Self.midi(lhs) != Self.midi(rhs)
-                    ? Self.midi(lhs) < Self.midi(rhs)
-                    : lhs.string < rhs.string
-            }
-        var notes = Self.dedupingUnisons(inScale)
-        if scale == .blues { notes = Self.insertingBlueNote(into: notes, root: root) }
+        var notes = CAGEDShape.filteredBox(position: position, root: rootPitchClass,
+                                           relativeMajorSemitones: scale.relativeMajorSemitones,
+                                           degrees: scale.degrees)
+        if scale == .blues { notes = Self.insertingBlueNote(into: notes, root: rootPitchClass) }
         return notes
-    }
-
-    /// Drop repeated pitches (a box can voice the same note on neighbouring strings, e.g. across the
-    /// G–B boundary); keep the one on the thinner string so a linear run keeps climbing. Assumes the
-    /// notes are already ordered by pitch then string.
-    private static func dedupingUnisons(_ notes: [FretNote]) -> [FretNote] {
-        var result: [FretNote] = []
-        for note in notes where midi(note) != result.last.map(midi) {
-            result.append(note)
-        }
-        return result
     }
 
     /// The ascending run: the full box for two octaves, or its lower octave for one. Correct by
     /// construction — every note belongs to the scale, and the run climbs strictly.
-    var ascendingNotes: [FretNote] {
-        let notes = boxNotes
-        guard octaves < 2, let low = notes.first.map(Self.midi) else { return notes }
-        return notes.filter { Self.midi($0) <= low + 12 }
-    }
-
-    /// The scale degree (semitones from the root) sounding at a note.
-    private static func degree(of note: FretNote, root: Int) -> Int {
-        (((GuitarScale.pitchClass(string: note.string, fret: note.fret) - root) % 12) + 12) % 12
-    }
-
-    /// Slide a transposed box down whole octaves until its lowest note sits within the first twelve
-    /// frets, so a shape stays on the neck and near the nut whatever the key.
-    private static func dropToPlayableRegion(_ notes: [FretNote]) -> [FretNote] {
-        guard let low = notes.map(\.fret).min(), low > 11 else { return notes }
-        let drop = (low / 12) * 12
-        return notes.map { FretNote(string: $0.string, fret: $0.fret - drop) }
-    }
+    var ascendingNotes: [FretNote] { CAGEDShape.trimmed(boxNotes, toOctaves: octaves) }
 
     /// Thread the blue note (♭5) in as a chromatic passing tone one fret above each p4, so a blues
     /// box reads as its minor pentatonic with the tritone added where players actually sound it.
     private static func insertingBlueNote(into notes: [FretNote], root: Int) -> [FretNote] {
         notes.flatMap { note -> [FretNote] in
-            degree(of: note, root: root) == 5   // a perfect fourth
+            CAGEDShape.degree(of: note, root: root) == 5   // a perfect fourth
                 ? [note, FretNote(string: note.string, fret: note.fret + 1)]
                 : [note]
         }

@@ -1,23 +1,23 @@
 import SwiftUI
 
-/// The **scale library editor** (ADR 0065 build 2, Slice 2). Scales are *picked*, not placed: choose
-/// a **scale**, a **root note**, a **position** up the neck, and how many **octaves**, and a
-/// notes-per-string generator lays the box out and walks it. A live preview shows the run before it's
+/// The **arpeggio library editor** (ADR 0065 build 2, Slice 3) — the arpeggio sibling of
+/// `ScaleRunEditor`. Arpeggios are *picked*, not placed: choose a **quality** (major, minor, maj7,
+/// min7, dominant 7), a **root**, a **position** (one of the five CAGED boxes), and **octaves**, and
+/// the generator lays the chord-tone box out and walks it. A live preview shows the run before it's
 /// saved; "up and back" and the subdivision (Advanced, default eighths) round it out.
 ///
-/// A thin skin over `ScaleRun` — each control rebuilds the bound recipe (whose init clamps the
+/// A thin skin over `ArpeggioRun` — each control rebuilds the bound recipe (whose init clamps the
 /// position/octaves), and the preview reads `run.expanded()`; no timing logic here (T5). **T10** —
 /// every colour is a semantic `PocketColor` role.
-struct ScaleRunEditor: View {
-    @Binding var run: ScaleRun
+struct ArpeggioRunEditor: View {
+    @Binding var run: ArpeggioRun
     var tint: Color = PocketColor.practice
 
     @State private var showsAdvanced = false
-    /// Note captions are a global viewing preference (ADR 0065) so the board reads the same here and
-    /// in the live practice run.
+    /// Note captions + animation are global viewing preferences shared with the scale editor and the
+    /// live practice board.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
-    /// The walking-highlight preference — **off by default** (photosensitivity precaution).
     @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
 
     /// Root notes in menu order, starting at A (pitch classes, A = 9 … G# = 8).
@@ -27,10 +27,10 @@ struct ScaleRunEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            labelModeControl
+            displayOptionsControl
             FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode)
             titleField
-            menuRow(label: "Scale", picker: AnyView(scalePicker))
+            menuRow(label: "Arpeggio", picker: AnyView(qualityPicker))
             menuRow(label: "Root", picker: AnyView(rootPicker))
             positionRow
             octavesRow
@@ -43,9 +43,7 @@ struct ScaleRunEditor: View {
 
     // MARK: - Display options (labels + animation, global preferences)
 
-    /// A compact menu, top-right of the board, holding the two viewing preferences: how notes are
-    /// captioned (name / interval / off) and whether the highlight animates (off by default).
-    private var labelModeControl: some View {
+    private var displayOptionsControl: some View {
         HStack {
             SoundPreviewButton(drill: run.expanded(), tint: tint)
             Spacer()
@@ -76,8 +74,7 @@ struct ScaleRunEditor: View {
             Text(run.title)
                 .font(.futura(.headline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
-            Text("Position \(run.position) of \(run.scale.positionCount) · anchored at fret "
-                 + "\(run.anchorFret)")
+            Text("Position \(run.position) of \(run.positionCount) · anchored at fret \(run.anchorFret)")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
@@ -93,14 +90,14 @@ struct ScaleRunEditor: View {
         }
     }
 
-    private var scalePicker: some View {
-        Picker("Scale", selection: scaleBinding) {
-            ForEach(GuitarScale.allCases) { scale in Text(scale.displayName).tag(scale) }
+    private var qualityPicker: some View {
+        Picker("Arpeggio", selection: qualityBinding) {
+            ForEach(ArpeggioQuality.allCases) { quality in Text(quality.displayName).tag(quality) }
         }
         .pickerStyle(.menu)
         .labelsHidden()
         .tint(tint)
-        .accessibilityLabel("Scale, \(run.scale.displayName)")
+        .accessibilityLabel("Arpeggio quality, \(run.quality.displayName)")
     }
 
     private var rootPicker: some View {
@@ -123,9 +120,9 @@ struct ScaleRunEditor: View {
             Spacer()
             stepper(value: "\(run.position)",
                     canGoDown: run.position > 1,
-                    canGoUp: run.position < run.scale.positionCount,
-                    stepDown: { setPosition(run.position - 1) },
-                    stepUp: { setPosition(run.position + 1) })
+                    canGoUp: run.position < run.positionCount,
+                    stepDown: { run = rebuilt(position: run.position - 1) },
+                    stepUp: { run = rebuilt(position: run.position + 1) })
         }
     }
 
@@ -154,7 +151,7 @@ struct ScaleRunEditor: View {
             }
             .pickerStyle(.segmented)
             .padding(.top, 6)
-            .accessibilityLabel("Scale subdivision")
+            .accessibilityLabel("Arpeggio subdivision")
         } label: {
             HStack {
                 Text("Advanced").font(.futura(.subheadline, weight: .semibold))
@@ -195,23 +192,19 @@ struct ScaleRunEditor: View {
 
     // MARK: - Edits (rebuild the recipe; its init clamps)
 
-    private func setPosition(_ value: Int) {
-        run = rebuilt(position: value)
-    }
-
-    private func rebuilt(scale: GuitarScale? = nil, rootPitchClass: Int? = nil,
+    private func rebuilt(quality: ArpeggioQuality? = nil, rootPitchClass: Int? = nil,
                          position: Int? = nil, octaves: Int? = nil,
-                         roundTrip: Bool? = nil, notesPerBeat: Int? = nil) -> ScaleRun {
-        ScaleRun(scale: scale ?? run.scale,
-                 rootPitchClass: rootPitchClass ?? run.rootPitchClass,
-                 position: position ?? run.position,
-                 octaves: octaves ?? run.octaves,
-                 roundTrip: roundTrip ?? run.roundTrip,
-                 notesPerBeat: notesPerBeat ?? run.notesPerBeat)
+                         roundTrip: Bool? = nil, notesPerBeat: Int? = nil) -> ArpeggioRun {
+        ArpeggioRun(quality: quality ?? run.quality,
+                    rootPitchClass: rootPitchClass ?? run.rootPitchClass,
+                    position: position ?? run.position,
+                    octaves: octaves ?? run.octaves,
+                    roundTrip: roundTrip ?? run.roundTrip,
+                    notesPerBeat: notesPerBeat ?? run.notesPerBeat)
     }
 
-    private var scaleBinding: Binding<GuitarScale> {
-        Binding(get: { run.scale }, set: { run = rebuilt(scale: $0); haptic(.light) })
+    private var qualityBinding: Binding<ArpeggioQuality> {
+        Binding(get: { run.quality }, set: { run = rebuilt(quality: $0); haptic(.light) })
     }
 
     private var rootBinding: Binding<Int> {
@@ -231,11 +224,11 @@ struct ScaleRunEditor: View {
     }
 }
 
-#Preview("Scale run editor") {
+#Preview("Arpeggio run editor") {
     struct Harness: View {
-        @State private var run = ScaleRun.aMinorPentatonic
+        @State private var run = ArpeggioRun.aMinorSeventh
         var body: some View {
-            ScaleRunEditor(run: $run)
+            ArpeggioRunEditor(run: $run)
                 .padding()
                 .background(PocketColor.background)
         }

@@ -89,6 +89,9 @@ private struct ConfigureExerciseForm: View {
     /// The authored **scale run** for the Scales template — seeded from the template default. Not
     /// meter-bound: a scale run defines its own phrase length.
     @State private var scale: ScaleRun
+    /// The authored **arpeggio run** for the Arpeggios template — seeded from the template default.
+    /// Not meter-bound: an arpeggio run defines its own phrase length.
+    @State private var arpeggio: ArpeggioRun
     /// The authored **custom drill** for the tap-to-place grid — seeded from the template default and
     /// re-gridded on a meter change so its slots fill the bar.
     @State private var customDrill: FretboardDrill
@@ -109,6 +112,7 @@ private struct ConfigureExerciseForm: View {
                                                        beatsPerBar: bars))
         _run = State(initialValue: template.defaultFretboardContent?.runValue ?? .chromaticWarmup)
         _scale = State(initialValue: template.defaultFretboardContent?.scaleValue ?? .aMinorPentatonic)
+        _arpeggio = State(initialValue: template.defaultFretboardContent?.arpeggioValue ?? .aMinorSeventh)
         let drillSeed = template.defaultFretboardContent?.customValue ?? .spiderWalk
         _customDrill = State(initialValue: drillSeed.resized(notesPerBeat: drillSeed.notesPerBeat,
                                                              beatsPerBar: bars))
@@ -131,6 +135,7 @@ private struct ConfigureExerciseForm: View {
             case .strumming?: strumSection
             case .run?: runSection
             case .scale?: scaleSection
+            case .arpeggio?: arpeggioSection
             case .fretboardGrid?: fretboardSection
             case nil: EmptyView()
             }
@@ -224,6 +229,18 @@ private struct ConfigureExerciseForm: View {
         }
     }
 
+    private var arpeggioSection: some View {
+        Section {
+            ArpeggioRunEditor(run: $arpeggio)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("Arpeggio run")
+        } footer: {
+            Text("Pick a quality and its root — the chord-tone box walks the neck over the click. "
+                 + "You can change it later too.")
+        }
+    }
+
     private var fretboardSection: some View {
         Section {
             FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill)
@@ -240,6 +257,7 @@ private struct ConfigureExerciseForm: View {
         switch template {
         case .strumming: return "e.g. Folk strum"
         case .scales: return "e.g. A minor pentatonic"
+        case .arpeggios: return "e.g. A minor 7 arpeggio"
         case .chords: return "e.g. G–C–D changes"
         default: return "e.g. Spider"
         }
@@ -257,6 +275,7 @@ private struct ConfigureExerciseForm: View {
         switch template.bespokeEditor {
         case .run: return .run(run)
         case .scale: return .scale(scale)
+        case .arpeggio: return .arpeggio(arpeggio)
         case .fretboardGrid: return .custom(customDrill)
         case .strumming, .none: return nil
         }

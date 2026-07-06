@@ -55,7 +55,7 @@ Local files carry a security-scoped bookmark for resolution; the bookmark is
 | `Pocket/Resources/Assets.xcassets/` | Asset catalog (ADR 0061): `AppIcon` (crescent + stars on dark), `RedMoonLogo` (moon + wordmark, light/dark, transparent background since ADR 0063), `RedMoonWordmark` (compact nav-bar crop) |
 | `Pocket/Features/Repertoire/` | Song cards, song info |
 | `Pocket/Core/Audio/` | AVFoundation engine, tempo math (pure logic) |
-| `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, Exercise (+ closed `ExerciseTemplate` axis chosen at creation & immutable, deriving the `ExerciseKind` renderer + `StrumPattern` / `FretboardContent` (`FretboardRun` finger-pattern | `ScaleRun` generated from `GuitarScale` interval formulas (four-fret hand box, positions + octaves) | custom `FretboardDrill`) payloads, ADR 0068/0065), Routine, Session, SongRef |
+| `Pocket/Core/Models/` | Song, Loop, Marker, JournalEntry, Exercise (+ closed `ExerciseTemplate` axis chosen at creation & immutable, deriving the `ExerciseKind` renderer + `StrumPattern` / `FretboardContent` (`FretboardRun` finger-pattern | `ScaleRun`/`ArpeggioRun` generated from `GuitarScale`/`ArpeggioQuality` interval formulas via the five shared `CAGEDShape` boxes (positions + octaves) | custom `FretboardDrill`) payloads, ADR 0068/0065), Routine, Session, SongRef |
 | `Pocket/Core/Services/` | MusicKit, persistence, sync, AI client |
 | `Pocket/UI/` | Shared components, design tokens (`PocketColor` — light + dark appearance, ADR 0062; appearance override + vibrancy retune, ADR 0063) |
 

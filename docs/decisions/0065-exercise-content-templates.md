@@ -181,10 +181,24 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
      ascending, and spans exactly the requested octaves (count `= octaves × scaleSize + 1`) — the
      net that makes generation safe (T8: common-practice vocabulary, in-house). First set:
      minor/major pentatonic, major, natural minor, blues; a seeded "A Minor Pentatonic" ships (v4).
-     **Arpeggios** (maj/min/maj7/min7/dominant) are the next drop-in — just more interval sets on
-     the same generator — and a **CAGED + triads** category is a noted future. The tap-to-place grid
-     (`.fretboardGrid`) is **retained as the general custom escape hatch**, though no template
-     selects it by default now.
+     The tap-to-place grid (`.fretboardGrid`) is **retained as the general custom escape hatch**,
+     though no template selects it by default now.
+
+   - **Arpeggio library (Slice 3, landed) — its own category, same boxes.** Arpeggios are a *separate*
+     template (`.arpeggios`) so the option lists stay short, but they generate from the identical five
+     `CAGEDShape` boxes: `ArpeggioQuality` (major, minor, maj7, min7, dominant 7) is an interval
+     formula plus the *relative major* whose box it borrows, chosen so every chord tone is diatonic to
+     that major (major/maj7 → 0; minor/min7 → +3; dominant 7 → +5, its V7 parent), and `ArpeggioRun`
+     places the box and filters it to the chord tones — the box+filter generator (`CAGEDShape`) is now
+     shared by scales and arpeggios. `FretboardContent.arpeggio`, an `ArpeggioRunEditor`, and a seeded
+     "A Minor 7 Arpeggio" (v5). A **CAGED + triads** category remains a noted future.
+
+   - **Exercise-audio seam (scaffold).** `ExerciseAudioEngine` (a `Sendable` protocol), an
+     `AccompanimentSettings`/`AccompanimentStyle` shape, and a SwiftUI `\.exerciseAudio` environment
+     value default to a `SilentExerciseAudio` no-op; a `SoundPreviewButton` reads `isAvailable` and
+     reads "Sound soon" until a real backend is injected at the app root. The audio itself is deferred;
+     only the boundary, settings shape and injection point are factored in now, so it slots in with no
+     call-site churn.
 
    - **Grid narrowing.** The fretboard drills this serves are *even runs* (one note
      per subdivision), so `FretboardDrill` narrows T4's `{string, fret, beat}` event
