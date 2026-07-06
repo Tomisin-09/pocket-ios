@@ -6,6 +6,16 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Fretboard polish: inlay markers, CAGED-shape labels, and a one-shot preview (ADR 0065).** The
+  fretboard board now draws the standard **position-marker dots** (single at 3·5·7·9…, double at
+  12/24) that fall within the visible window, the same orientation cue as the wood inlays on a real
+  neck. The Scales and Arpeggios editors now caption the position as **"E shape · 1 of 5 · fret 5"**
+  instead of a bare "Position 1" — the CAGED letter is what a player actually recognises the shape as,
+  and it resolves the earlier mismatch between our fixed E-shape-first numbering and the classic
+  minor-pentatonic box order. A new **Watch** button plays a single walk-through of the shape on tap,
+  independent of the global animate preference (and not gated by Reduce Motion, since a deliberate
+  one-shot pass is a different thing from sustained flashing) — restoring "watch it before you save"
+  for anyone with animation off by default.
 - **Chords template — change chords cleanly on the beat (ADR 0065).** A new **Chords** category:
   author a **progression** of chord voicings, each held for a number of beats, and the run screen
   shows the current chord's diagram large with the next chord previewed, swapping on the beat as the

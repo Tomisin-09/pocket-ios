@@ -218,6 +218,22 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
      (`isTriad == pitchClasses.count == 3`), so the earlier **CAGED + triads** category is retired into
      Chords rather than built as a parallel axis.
 
+   - **Fretboard polish (Slice 5, landed) — inlay dots, CAGED-shape labels, a one-shot preview.**
+     `FretboardGrid` draws the standard position-marker dots (single at 3·5·7·9·15·17·19·21, double at
+     12/24) for whichever fall inside the visible fret window — a pure orientation cue, no new model
+     state. `CAGEDShape.shapeLetter` (E/D/C/A/G) is surfaced on `ScaleRun`/`ArpeggioRun` and read in
+     their editors' caption ("E shape · 1 of 5 · fret 5") instead of a bare "Position 1" — this is the
+     fix for the numbering mismatch noted earlier (our fixed E-shape-first index vs. the classic
+     minor-pentatonic box order a player already knows). A **`FretboardPlayOnceButton`** sets a
+     `playOnceToken: Date?` that `FretboardDrillPreview` measures one cycle from (via `.task(id:)`,
+     duration = `drill.lengthInBeats` at the preview tempo) independent of the `exerciseAnimates`
+     toggle — and, deliberately, **not gated by Reduce Motion either**: a single pass the player just
+     asked for is a different thing from sustained flashing, so "watch it before you save" survives the
+     animate-off default. Wired into the Scales and Arpeggios editors (the two that already carry the
+     Display-menu control row); the generative-run editor (warm-up/picking/legato/fingerstyle) and the
+     custom-grid editor have no Display row of any kind yet, so they were left as a **noted gap**
+     instead of open-coding one in passing.
+
    - **Exercise-audio seam (scaffold).** `ExerciseAudioEngine` (a `Sendable` protocol), an
      `AccompanimentSettings`/`AccompanimentStyle` shape, and a SwiftUI `\.exerciseAudio` environment
      value default to a `SilentExerciseAudio` no-op; a `SoundPreviewButton` reads `isAvailable` and

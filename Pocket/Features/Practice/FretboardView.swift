@@ -65,7 +65,8 @@ struct FretboardGrid: View {
         .frame(width: 16)
     }
 
-    /// The board itself: string lines, fret separators + nut, and the plotted / active note dots.
+    /// The board itself: string lines, fret separators + nut, inlay markers, and the plotted / active
+    /// note dots.
     private var board: some View {
         GeometryReader { geo in
             let width = geo.size.width, height = geo.size.height
@@ -73,9 +74,35 @@ struct FretboardGrid: View {
                 stringLines(width: width, height: height)
                 fretSeparators(width: width, height: height)
                 nut(height: height)
+                inlayDots(width: width, height: height)
                 notes(width: width, height: height)
             }
         }
+    }
+
+    /// The standard guitar position markers (single dot at 3·5·7·9·15·17·19·21, double at 12·24) that
+    /// fall within the visible fret window — a faint orientation cue, same as the wood inlays on a
+    /// real neck, so "which position is this" reads at a glance without counting fret lines.
+    private static let singleInlayFrets: Set<Int> = [3, 5, 7, 9, 15, 17, 19, 21]
+    private static let doubleInlayFrets: Set<Int> = [12, 24]
+
+    private func inlayDots(width: CGFloat, height: CGFloat) -> some View {
+        let visible = lowestFret..<(lowestFret + span)
+        return ForEach(Array(visible), id: \.self) { fret in
+            if Self.doubleInlayFrets.contains(fret) {
+                inlayDot(diameter: 6, at: CGPoint(x: noteX(fret, in: width), y: height * 0.3))
+                inlayDot(diameter: 6, at: CGPoint(x: noteX(fret, in: width), y: height * 0.7))
+            } else if Self.singleInlayFrets.contains(fret) {
+                inlayDot(diameter: 6, at: CGPoint(x: noteX(fret, in: width), y: height / 2))
+            }
+        }
+    }
+
+    private func inlayDot(diameter: CGFloat, at point: CGPoint) -> some View {
+        Circle()
+            .fill(PocketColor.gridLine)
+            .frame(width: diameter, height: diameter)
+            .position(point)
     }
 
     private func stringLines(width: CGFloat, height: CGFloat) -> some View {
@@ -303,26 +330,49 @@ struct FretboardDrillPreview: View {
     var bpm: Int = 60
     var tint: Color = PocketColor.practice
     var labelMode: FretLabelMode = .none
+    /// Set (to a fresh `Date()`) by a `FretboardPlayOnceButton` to request a single walk-through,
+    /// independent of the global animate preference — a deliberate, user-requested pass rather than
+    /// sustained motion, so it plays even under Reduce Motion (ADR 0065). `nil` requests nothing.
+    var playOnceToken: Date?
     /// Off by default (photosensitivity precaution) and forced off under Reduce Motion; off shows a
-    /// static, fully-plotted board.
+    /// static, fully-plotted board unless a one-shot play is in progress.
     @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isPlayingOnce = false
+    @State private var playOnceOrigin: Date?
+
+    private var isAnimating: Bool { (animates && !reduceMotion) || isPlayingOnce }
 
     var body: some View {
-        if animates && !reduceMotion {
-            TimelineView(.animation) { context in
-                FretboardGrid(drill: drill, activeIndex: activeIndex(at: context.date),
-                              tint: tint, labelMode: labelMode)
+        Group {
+            if isAnimating {
+                TimelineView(.animation) { context in
+                    FretboardGrid(drill: drill, activeIndex: activeIndex(at: context.date),
+                                  tint: tint, labelMode: labelMode)
+                }
+            } else {
+                FretboardGrid(drill: drill, activeIndex: nil, tint: tint, labelMode: labelMode)
             }
-        } else {
-            FretboardGrid(drill: drill, activeIndex: nil, tint: tint, labelMode: labelMode)
+        }
+        .task(id: playOnceToken) {
+            guard let playOnceToken else { return }
+            playOnceOrigin = playOnceToken
+            isPlayingOnce = true
+            let seconds = drill.lengthInBeats * 60.0 / Double(max(1, bpm))
+            try? await Task.sleep(for: .seconds(max(0.1, seconds)))
+            isPlayingOnce = false
         }
     }
 
-    /// The active note at `now`, from a free-running clock: beats elapsed = seconds × bpm/60. Empty
-    /// drills return `nil` (nothing lit), handled by `activeNoteIndex`.
+    /// The active note at `now`. During a one-shot play it's measured from the play's own origin (so
+    /// it always starts the shape from note 0); otherwise it free-runs from wall-clock time (beats
+    /// elapsed = seconds × bpm/60). Empty drills return `nil` (nothing lit).
     private func activeIndex(at now: Date) -> Int? {
         guard drill.noteCount > 0 else { return nil }
+        if isPlayingOnce, let playOnceOrigin {
+            let beats = now.timeIntervalSince(playOnceOrigin) * Double(max(1, bpm)) / 60.0
+            return drill.activeNoteIndex(atBeat: beats)
+        }
         let beats = now.timeIntervalSinceReferenceDate * Double(max(1, bpm)) / 60.0
         return drill.activeNoteIndex(atBeat: beats)
     }

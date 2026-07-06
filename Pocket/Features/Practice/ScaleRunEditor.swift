@@ -19,6 +19,9 @@ struct ScaleRunEditor: View {
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
     /// The walking-highlight preference — **off by default** (photosensitivity precaution).
     @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    /// A one-shot "watch it" request (ADR 0065), independent of `animates` — set by
+    /// `FretboardPlayOnceButton`, read by the preview below.
+    @State private var playOnceToken: Date?
 
     /// Root notes in menu order, starting at A (pitch classes, A = 9 … G# = 8).
     private static let noteOrder = [9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8]
@@ -28,7 +31,8 @@ struct ScaleRunEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             labelModeControl
-            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode)
+            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
+                                  playOnceToken: playOnceToken)
             titleField
             menuRow(label: "Scale", picker: AnyView(scalePicker))
             menuRow(label: "Root", picker: AnyView(rootPicker))
@@ -47,6 +51,7 @@ struct ScaleRunEditor: View {
     /// captioned (name / interval / off) and whether the highlight animates (off by default).
     private var labelModeControl: some View {
         HStack {
+            FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
             SoundPreviewButton(drill: run.expanded(), tint: tint)
             Spacer()
             Menu {
@@ -76,7 +81,7 @@ struct ScaleRunEditor: View {
             Text(run.title)
                 .font(.futura(.headline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
-            Text("Position \(run.position) of \(run.scale.positionCount) · anchored at fret "
+            Text("\(run.shapeLetter) shape · \(run.position) of \(run.scale.positionCount) · fret "
                  + "\(run.anchorFret)")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)

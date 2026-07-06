@@ -73,6 +73,14 @@ final class ArpeggioRunTests: XCTestCase {
         XCTAssertEqual(ArpeggioRun(quality: .major, rootPitchClass: -3).rootPitchClass, 9)
     }
 
+    func testShapeLetterMatchesCAGEDOrderEDCAG() {
+        let expected = ["E", "D", "C", "A", "G"]
+        for position in 1...5 {
+            let run = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9, position: position)
+            XCTAssertEqual(run.shapeLetter, expected[position - 1], "position \(position)")
+        }
+    }
+
     func testTitleReadsRootThenQuality() {
         XCTAssertEqual(ArpeggioRun.aMinorSeventh.title, "A Minor 7")
         XCTAssertEqual(ArpeggioRun(quality: .dominantSeventh, rootPitchClass: 4).title, "E Dominant 7")

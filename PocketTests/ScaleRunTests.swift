@@ -122,6 +122,16 @@ final class ScaleRunTests: XCTestCase {
         }
     }
 
+    // MARK: - CAGED shape letters (ADR 0065 fretboard polish)
+
+    func testShapeLetterMatchesCAGEDOrderEDCAG() {
+        let expected = ["E", "D", "C", "A", "G"]
+        for position in 1...5 {
+            let run = ScaleRun(scale: .major, rootPitchClass: 9, position: position)
+            XCTAssertEqual(run.shapeLetter, expected[position - 1], "position \(position)")
+        }
+    }
+
     // MARK: - Clamping
 
     func testPositionOctaveAndRootClampIntoRange() {
