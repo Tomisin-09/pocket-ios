@@ -29,6 +29,9 @@ struct ExerciseDetailSheet: View {
     @State private var scale: ScaleRun
     @State private var arpeggio: ArpeggioRun
     @State private var customDrill: FretboardDrill
+    /// The exercise's chord progression (Chords template), seeded from the stored payload with a
+    /// defensive fallback; only surfaced and committed for a chords template.
+    @State private var chords: ChordProgression
 
     init(exercise: Exercise) {
         self.exercise = exercise
@@ -40,6 +43,7 @@ struct ExerciseDetailSheet: View {
         _scale = State(initialValue: content?.scaleValue ?? .aMinorPentatonic)
         _arpeggio = State(initialValue: content?.arpeggioValue ?? .aMinorSeventh)
         _customDrill = State(initialValue: content?.customValue ?? .spiderWalk)
+        _chords = State(initialValue: exercise.chordProgression ?? .gMajorPop)
     }
 
     var body: some View {
@@ -55,6 +59,7 @@ struct ExerciseDetailSheet: View {
                 case .run?: runSection
                 case .scale?: scaleSection
                 case .arpeggio?: arpeggioSection
+                case .chords?: chordsSection
                 case .fretboardGrid?: fretboardSection
                 case nil: EmptyView()
                 }
@@ -65,7 +70,9 @@ struct ExerciseDetailSheet: View {
             .tint(PocketColor.practice)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { commitNotes(); commitStrum(); commitFretboard(); dismiss() }
+                    Button("Done") {
+                        commitNotes(); commitStrum(); commitFretboard(); commitChords(); dismiss()
+                    }
                 }
             }
         }
@@ -219,6 +226,20 @@ struct ExerciseDetailSheet: View {
         }
     }
 
+    /// The Chords template's authoring surface — the `ChordProgressionEditor`. Same immutability
+    /// contract: the template stays chords; you edit the progression, not the type.
+    private var chordsSection: some View {
+        Section {
+            ChordProgressionEditor(progression: $chords)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — chords")
+        } footer: {
+            Text("The chords change on the beat over the click while you run the drill. The "
+                 + "progression loops.")
+        }
+    }
+
     /// The custom-drill authoring surface — the tap-to-place `FretboardDrillEditor`. Same
     /// immutability contract: the template stays fretboard.
     private var fretboardSection: some View {
@@ -269,10 +290,20 @@ struct ExerciseDetailSheet: View {
         case .scale: content = .scale(scale)
         case .arpeggio: content = .arpeggio(arpeggio)
         case .fretboardGrid: content = .custom(customDrill)
-        case .strumming: return
+        case .strumming, .chords: return
         }
         guard content != exercise.fretboardContent else { return }
         exercise.setFretboardContent(content)
+        try? modelContext.save()
+    }
+
+    /// Persist an edited chord progression on Done, only for a chords template and only when it
+    /// differs from what's stored (ADR 0065). Never touches the immutable template.
+    private func commitChords() {
+        guard exercise.template.bespokeEditor == .chords, chords != exercise.chordProgression else {
+            return
+        }
+        exercise.setChordProgression(chords)
         try? modelContext.save()
     }
 }

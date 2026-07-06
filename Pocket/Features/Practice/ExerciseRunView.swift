@@ -78,6 +78,9 @@ struct ExerciseRunView: View {
                 } else {
                     if let pattern = exercise.strumPattern { StrumPatternPreview(pattern: pattern) }
                     if let drill = exercise.fretboardDrill { FretboardExercisePreview(drill: drill) }
+                    if let progression = exercise.chordProgression {
+                        ChordProgressionPreview(progression: progression)
+                    }
                     practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
@@ -180,6 +183,9 @@ struct ExerciseRunView: View {
         } else if exercise.kind == .fretboard, let drill = exercise.fretboardDrill,
                   engine.automatorCountdown == nil {
             FretboardView(engine: engine, drill: drill, tint: PocketColor.practice, labelMode: labelMode)
+        } else if exercise.kind == .chords, let progression = exercise.chordProgression,
+                  engine.automatorCountdown == nil {
+            ChordChangeView(engine: engine, progression: progression, tint: PocketColor.practice)
         } else {
             BeatIndicator(engine: engine, tint: PocketColor.practice)
         }

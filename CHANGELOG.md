@@ -6,6 +6,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Chords template — change chords cleanly on the beat (ADR 0065).** A new **Chords** category:
+  author a **progression** of chord voicings, each held for a number of beats, and the run screen
+  shows the current chord's diagram large with the next chord previewed, swapping on the beat as the
+  click runs. Built on a shared **`ChordVoicing`** model — one geometry drawn by a standard vertical
+  chord diagram — with an in-house library of open shapes, sevenths, two barre forms, and triads. A
+  **triad is just a three-note voicing**, so the earlier "CAGED + triads" idea folds in here rather
+  than as its own category. Each diagram shows a **Roman-numeral badge** (I, V, vi, IV …) read against
+  a **key** you set on the progression (or inferred from the first chord), major or minor. Which chord
+  is active at any moment is pure, unit-tested timing math (`ChordProgression`); the view is a thin
+  skin over it, and the progression is **anchored to the first musical downbeat** so the count-in
+  never eats the first chord's bar. Ships a seeded **"Pop Changes — G · D · Em · C"** starter
+  (one-time key `practicePresetsSeeded.v6`).
 - **Exercise content templates — foundation + strumming (ADR 0065).** An exercise renders a
   "what to play" surface over the shared metronome clock, driven by an optional versioned
   `Codable` **`templatePayload`**. The first surface, **strumming**, animates a down/up/rest

@@ -13,6 +13,8 @@ struct NewExercisePlan {
     /// The authored fretboard content — a generated run or a custom drill — for a fretboard-family
     /// template; `nil` for every other template.
     let fretboard: FretboardContent?
+    /// The authored chord progression for a Chords template; `nil` for every other template.
+    let chords: ChordProgression?
 }
 
 /// Create a new exercise from within **Practice** (ADR 0046 / 0068 revised). Two steps: **pick a
@@ -95,6 +97,9 @@ private struct ConfigureExerciseForm: View {
     /// The authored **custom drill** for the tap-to-place grid — seeded from the template default and
     /// re-gridded on a meter change so its slots fill the bar.
     @State private var customDrill: FretboardDrill
+    /// The authored **chord progression** for the Chords template — seeded from the template default.
+    /// Not meter-bound: each change carries its own beat hold.
+    @State private var chords: ChordProgression
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
@@ -116,6 +121,7 @@ private struct ConfigureExerciseForm: View {
         let drillSeed = template.defaultFretboardContent?.customValue ?? .spiderWalk
         _customDrill = State(initialValue: drillSeed.resized(notesPerBeat: drillSeed.notesPerBeat,
                                                              beatsPerBar: bars))
+        _chords = State(initialValue: template.defaultChordProgression ?? .gMajorPop)
     }
 
     private var trimmedName: String {
@@ -136,6 +142,7 @@ private struct ConfigureExerciseForm: View {
             case .run?: runSection
             case .scale?: scaleSection
             case .arpeggio?: arpeggioSection
+            case .chords?: chordsSection
             case .fretboardGrid?: fretboardSection
             case nil: EmptyView()
             }
@@ -241,6 +248,18 @@ private struct ConfigureExerciseForm: View {
         }
     }
 
+    private var chordsSection: some View {
+        Section {
+            ChordProgressionEditor(progression: $chords)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("Chord progression")
+        } footer: {
+            Text("Build the progression and how long each chord is held — it changes on the beat "
+                 + "over the click. You can edit it later too.")
+        }
+    }
+
     private var fretboardSection: some View {
         Section {
             FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill)
@@ -266,7 +285,8 @@ private struct ConfigureExerciseForm: View {
     private var plan: NewExercisePlan {
         NewExercisePlan(name: trimmedName, command: command, signature: signature, template: template,
                         strum: template.bespokeEditor == .strumming ? strum : nil,
-                        fretboard: fretboardContent)
+                        fretboard: fretboardContent,
+                        chords: template.bespokeEditor == .chords ? chords : nil)
     }
 
     /// The fretboard payload the plan carries — a generated run, a custom drill, or `nil` for a
@@ -277,7 +297,7 @@ private struct ConfigureExerciseForm: View {
         case .scale: return .scale(scale)
         case .arpeggio: return .arpeggio(arpeggio)
         case .fretboardGrid: return .custom(customDrill)
-        case .strumming, .none: return nil
+        case .strumming, .chords, .none: return nil
         }
     }
 }

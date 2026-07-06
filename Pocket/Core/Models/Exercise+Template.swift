@@ -46,4 +46,17 @@ extension Exercise {
     func setFretboardContent(_ content: FretboardContent) {
         templatePayload = try? JSONEncoder().encode(content)
     }
+
+    /// The decoded **chord progression**, or `nil` when this isn't a chords-template exercise, the
+    /// payload is absent, or it can't be decoded. A `nil` sends the run to the metronome renderer (T5).
+    var chordProgression: ChordProgression? {
+        guard kind == .chords, let data = templatePayload else { return nil }
+        return try? JSONDecoder().decode(ChordProgression.self, from: data)
+    }
+
+    /// Encode a chord progression onto the payload — leaves the immutable template alone (ADR 0068,
+    /// revised); an encode failure leaves no payload rather than a stale one.
+    func setChordProgression(_ progression: ChordProgression) {
+        templatePayload = try? JSONEncoder().encode(progression)
+    }
 }
