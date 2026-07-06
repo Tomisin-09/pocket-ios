@@ -38,6 +38,7 @@ final class PracticePresetsTests: XCTestCase {
             + PracticePresets.makeExercises(PracticePresets.fretboardSpecs)
             + PracticePresets.makeExercises(PracticePresets.scaleSpecs)
             + PracticePresets.makeExercises(PracticePresets.arpeggioSpecs)
+            + PracticePresets.makeExercises(PracticePresets.chordSpecs)
         for exercise in all {
             XCTAssertNotEqual(exercise.template, .basic,
                               "\(exercise.name) should ship with a specific (non-basic) template")
@@ -94,6 +95,18 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertTrue(arpeggio?.hasMeasuredCommand ?? false)
     }
 
+    // MARK: - Chords batch (ADR 0065, Chords template)
+
+    func testChordSpecsShipAChordProgressionExercise() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.chordSpecs)
+        XCTAssertEqual(exercises.count, 1)
+        let chords = try? XCTUnwrap(exercises.first)
+        XCTAssertEqual(chords?.template, .chords)
+        XCTAssertEqual(chords?.kind, .chords)
+        XCTAssertEqual(chords?.chordProgression, .gMajorPop)
+        XCTAssertTrue(chords?.hasMeasuredCommand ?? false)
+    }
+
     // MARK: - Seed-once guard
 
     func testSeedIfNeededInsertsBothBatchesOnceThenIsIdempotent() throws {
@@ -104,7 +117,7 @@ final class PracticePresetsTests: XCTestCase {
 
         let total = PracticePresets.specs.count + PracticePresets.templateSpecs.count
             + PracticePresets.fretboardSpecs.count + PracticePresets.scaleSpecs.count
-            + PracticePresets.arpeggioSpecs.count
+            + PracticePresets.arpeggioSpecs.count + PracticePresets.chordSpecs.count
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
 
@@ -128,9 +141,10 @@ final class PracticePresetsTests: XCTestCase {
         let fetched = try context.fetch(FetchDescriptor<Exercise>())
         XCTAssertEqual(fetched.count,
                        PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count
-                       + PracticePresets.scaleSpecs.count + PracticePresets.arpeggioSpecs.count)
+                       + PracticePresets.scaleSpecs.count + PracticePresets.arpeggioSpecs.count
+                       + PracticePresets.chordSpecs.count)
         // All newer batches arrive (fetch order isn't insertion order, so check the set).
-        XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard])
+        XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard, .chords])
     }
 
     func testDeletedPresetsDoNotReturnOnNextSeed() throws {

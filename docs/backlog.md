@@ -30,7 +30,14 @@ docs so this stays a pointer list:
   arrow-lane, animated fretboard, chord/progression stepper — mapped from the
   taxonomy's `Default mode` column. Build order strumming → fretboard (shared with
   tab→fretboard Phase R + preset guides) → chords; vibrato/bends/palm-muting
-  deliberately get no template.
+  deliberately get no template. **Done & merged:** strumming; fretboard renderer +
+  runs; scales & arpeggios on a shared CAGED box engine; exercise-audio seam;
+  global animate toggle (PR #96). **Next:** Chords template (may absorb triads).
+- **CAGED + triads as a category — PARKED (2026-07-06).** Was floated as its own
+  fretboard category. Parked in favour of folding triads into the upcoming **Chords**
+  template: a triad is just a 3-note chord voicing, and the CAGED box engine already
+  generates arbitrary note sets on the neck — so "show the shape/inversion" belongs
+  with chords, not as a parallel category. Revisit only if Chords can't host it.
 - **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
   container (distinct from the intra-exercise ramp staircase): `Routine` +
   `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit

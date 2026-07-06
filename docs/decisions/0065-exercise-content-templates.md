@@ -191,7 +191,32 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
      that major (major/maj7 → 0; minor/min7 → +3; dominant 7 → +5, its V7 parent), and `ArpeggioRun`
      places the box and filters it to the chord tones — the box+filter generator (`CAGEDShape`) is now
      shared by scales and arpeggios. `FretboardContent.arpeggio`, an `ArpeggioRunEditor`, and a seeded
-     "A Minor 7 Arpeggio" (v5). A **CAGED + triads** category remains a noted future.
+     "A Minor 7 Arpeggio" (v5).
+
+   - **Chords (Slice 4, landed) — its own renderer, and triads fold in.** Chords are their own
+     category (`.chords` → a new `.chords` renderer). The unit is a shared **`ChordVoicing`** — a
+     per-string fret geometry (`nil` muted, `0` open, `n` fretted), pure and SwiftUI-free — drawn by a
+     standard **vertical** `ChordDiagramView`. This is a **deliberate divergence** from the original
+     plan below (§2's "a chord diagram rides on the fretboard board"): a chord *diagram* is oriented
+     and read differently from the horizontal walking board, and changing chords is a slow per-bar
+     event, not a walking highlight — so it earns its own surface rather than reusing `FretboardView`.
+     The payload is a **`ChordProgression`** (an ordered list of `ChordChange`s, each a voicing held for
+     a number of beats) with the same pure `activeIndex(atBeat:)` wrap/count-in math as `StrumPattern`.
+     `ChordChangeView` shows the current chord large with the next previewed, swapping on the beat; it
+     is **not** gated by the animate preference because a per-bar change is content, not flashing
+     decoration. It **anchors the progression to the first musical downbeat** (the beat the surface
+     first mounts, once `automatorCountdown` clears) rather than the engine's absolute `currentBeat`,
+     because `currentBeat` counts *through* the count-in — otherwise a 4-beat count-in would eat the
+     first chord's bar. (Strumming/fretboard hide this by luck, their cycle == one bar == the count-in;
+     a multi-bar progression doesn't align, so it must anchor explicitly.) Each diagram carries a
+     **Roman-numeral badge** from a pure `RomanNumeral` table against a `keyRoot`/`keyIsMinor` on the
+     progression (player-set or inferred from the first chord); chord case comes from the voicing's own
+     quality. Finger numbers are **not** drawn on diagrams (noise at that scale). An in-house
+     `ChordVoicing.library` (open shapes, sevenths, two barre forms, two triads), a
+     `ChordProgressionEditor` (a thin skin over the pure append/replace/re-beat/remove helpers + a key
+     picker), and a seeded "Pop Changes — G · D · Em · C" (v6). **A triad is just a three-note voicing**
+     (`isTriad == pitchClasses.count == 3`), so the earlier **CAGED + triads** category is retired into
+     Chords rather than built as a parallel axis.
 
    - **Exercise-audio seam (scaffold).** `ExerciseAudioEngine` (a `Sendable` protocol), an
      `AccompanimentSettings`/`AccompanimentStyle` shape, and a SwiftUI `\.exerciseAudio` environment
@@ -209,7 +234,10 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
      arrive as a decode-time upgrade with no store migration (T4). The display fret
      window is *derived* from the notes (min fretted → span, min width 4), so the
      payload stays lean.
-3. **`chords`** — a chord diagram is a fretboard subset, so it rides on (2).
+3. **`chords`** — *(landed, Slice 4)* originally planned to ride on (2) as a fretboard subset;
+   built instead as its own `.chords` renderer with a vertical `ChordDiagramView` over a shared
+   `ChordVoicing`, because a chord diagram reads differently from the walking board (see the Chords
+   slice note above). Triads fold in as three-note voicings.
 4. **`flashcard`** — a different interaction (no metronome); deferred until an
    off-guitar practice surface is wanted.
 

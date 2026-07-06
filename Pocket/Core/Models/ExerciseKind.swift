@@ -17,6 +17,10 @@ enum ExerciseKind: String, CaseIterable, Identifiable, Codable {
     /// (ADR 0065 build 2). Falls back to `.metronome` when a fretboard-template exercise carries no
     /// drill payload yet (T5).
     case fretboard
+    /// A chord-changing surface: the current chord's diagram, large, with the next chord previewed,
+    /// swapping on the beat — driven by `ChordProgression`. Falls back to `.metronome` when a chords
+    /// exercise carries no progression payload yet (T5).
+    case chords
 
     var id: String { rawValue }
 }

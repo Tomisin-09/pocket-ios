@@ -104,7 +104,8 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .strumming: return .strumming
         case .scales, .arpeggios, .picking, .legato, .fingerstyle, .warmup: return .fretboard
-        case .basic, .chords, .rhythm, .earTraining, .theory: return .metronome
+        case .chords: return .chords
+        case .basic, .rhythm, .earTraining, .theory: return .metronome
         }
     }
 
@@ -115,15 +116,17 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// Legato, Fingerstyle) declare a `FretboardRun` shape (finger pattern × span); Scales picks a
     /// preprogrammed `ScaleRun` from the scale library (ADR 0065 build 2, Slice 2). `.fretboardGrid`
     /// is the tap-to-place custom drill — retained as the general escape hatch, no template selects it
-    /// by default today. The host sheet switches on this.
-    enum BespokeEditor { case strumming, run, scale, arpeggio, fretboardGrid }
+    /// by default today. Chords authors a `ChordProgression` from the voicing library. The host sheet
+    /// switches on this.
+    enum BespokeEditor { case strumming, run, scale, arpeggio, chords, fretboardGrid }
     var bespokeEditor: BespokeEditor? {
         switch self {
         case .strumming: return .strumming
         case .warmup, .picking, .legato, .fingerstyle: return .run
         case .scales: return .scale
         case .arpeggios: return .arpeggio
-        case .basic, .chords, .rhythm, .earTraining, .theory: return nil
+        case .chords: return .chords
+        case .basic, .rhythm, .earTraining, .theory: return nil
         }
     }
 
@@ -146,8 +149,15 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scale: return .scale(.aMinorPentatonic)
         case .arpeggio: return .arpeggio(.aMinorSeventh)
         case .fretboardGrid: return .custom(.spiderWalk)
-        case .strumming, .none: return nil
+        case .strumming, .chords, .none: return nil
         }
+    }
+
+    /// The starter **chord progression** a freshly-created Chords exercise begins with — the I–V–vi–IV
+    /// pop turnaround so its surface is never empty. `nil` for non-chords templates. Encoded at
+    /// creation via `setChordProgression`.
+    var defaultChordProgression: ChordProgression? {
+        bespokeEditor == .chords ? .gMajorPop : nil
     }
 
     /// The templates offered in the create picker, in menu order: the flexible **Basic** catch-all

@@ -20,6 +20,7 @@ final class ExerciseTemplateTests: XCTestCase {
         // Strumming has its arrow lane; the fretboard family shares the one animated board (build 2);
         // everything else still falls to the metronome underlay until its own renderer ships.
         XCTAssertEqual(ExerciseTemplate.strumming.renderer, .strumming)
+        XCTAssertEqual(ExerciseTemplate.chords.renderer, .chords)
 
         let fretboardFamily: Set<ExerciseTemplate> =
             [.scales, .arpeggios, .picking, .legato, .fingerstyle, .warmup]
@@ -27,8 +28,8 @@ final class ExerciseTemplateTests: XCTestCase {
             XCTAssertEqual(template.renderer, .fretboard, "\(template) should render on the fretboard")
         }
 
-        for template in ExerciseTemplate.allCases
-        where template != .strumming && !fretboardFamily.contains(template) {
+        let bespoke: Set<ExerciseTemplate> = fretboardFamily.union([.strumming, .chords])
+        for template in ExerciseTemplate.allCases where !bespoke.contains(template) {
             XCTAssertEqual(template.renderer, .metronome, "\(template) should render on the metronome")
         }
     }
@@ -55,12 +56,17 @@ final class ExerciseTemplateTests: XCTestCase {
         XCTAssertEqual(ExerciseTemplate.arpeggios.bespokeEditor, .arpeggio)
         XCTAssertEqual(ExerciseTemplate.arpeggios.defaultFretboardContent, .arpeggio(.aMinorSeventh))
 
-        let editing = runFamily.union([.strumming, .scales, .arpeggios])
+        XCTAssertEqual(ExerciseTemplate.chords.bespokeEditor, .chords)
+        XCTAssertEqual(ExerciseTemplate.chords.defaultChordProgression, .gMajorPop)
+        XCTAssertNil(ExerciseTemplate.chords.defaultFretboardContent, "chords isn't fretboard content")
+
+        let editing = runFamily.union([.strumming, .scales, .arpeggios, .chords])
         for template in ExerciseTemplate.allCases where !editing.contains(template) {
             XCTAssertNil(template.bespokeEditor, "\(template) should have no bespoke editor")
             XCTAssertFalse(template.hasBespokeEditor)
             XCTAssertNil(template.defaultStrumPattern)
             XCTAssertNil(template.defaultFretboardContent)
+            XCTAssertNil(template.defaultChordProgression)
         }
     }
 

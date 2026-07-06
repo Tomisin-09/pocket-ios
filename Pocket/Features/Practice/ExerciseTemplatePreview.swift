@@ -30,6 +30,29 @@ struct FretboardExercisePreview: View {
     }
 }
 
+/// A static chord-progression card: the sequence of chord diagrams the drill changes through, so you
+/// read the whole progression before you press Start. The first chord shows active; the rest preview.
+struct ChordProgressionPreview: View {
+    let progression: ChordProgression
+
+    var body: some View {
+        templatePreviewCard("Chord progression") {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 14) {
+                    ForEach(Array(progression.changes.enumerated()), id: \.offset) { index, change in
+                        ChordDiagramView(voicing: change.voicing, isActive: index == 0,
+                                         tint: PocketColor.practice,
+                                         degreeLabel: progression.numeral(for: change.voicing))
+                            .frame(width: 78)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .frame(height: 120)
+        }
+    }
+}
+
 /// A titled, rounded card the two previews share.
 @ViewBuilder
 private func templatePreviewCard<Content: View>(_ title: String,
