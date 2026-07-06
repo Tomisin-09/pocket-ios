@@ -30,8 +30,11 @@ struct StrumLane: View {
     private func slotCell(_ slot: StrumSlot, isActive: Bool) -> some View {
         Group {
             if slot.isStroke {
+                // An accented stroke draws heavier and a touch larger — the ">" emphasis mark,
+                // read through weight/scale rather than a second glyph (T10: the model names the
+                // role, the view draws it).
                 Image(systemName: slot.symbolName)
-                    .font(.futura(.title3, weight: .semibold))
+                    .font(.futura(.title3, weight: slot.accented ? .heavy : .semibold))
             } else {
                 // A rest: a small dot the hand passes through without sounding.
                 Image(systemName: slot.symbolName)
@@ -39,7 +42,7 @@ struct StrumLane: View {
             }
         }
         .foregroundStyle(color(for: slot, isActive: isActive))
-        .scaleEffect(isActive ? 1.35 : 1.0)
+        .scaleEffect((isActive ? 1.35 : 1.0) * (slot.accented ? 1.15 : 1.0))
         .frame(maxWidth: .infinity)
         .animation(.easeOut(duration: 0.07), value: isActive)
     }

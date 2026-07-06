@@ -20,6 +20,12 @@ struct FretboardRunEditor: View {
     /// The global note-caption preference, so this preview matches the scale editor and practice board.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
+    /// The walking-highlight preference — **off by default** (photosensitivity precaution). Shared
+    /// with the Scale/Arpeggio editors and the live practice run (ADR 0065 T10).
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    /// A one-shot "watch it" request (ADR 0065), independent of `animates` — set by
+    /// `FretboardPlayOnceButton`, read by the preview below.
+    @State private var playOnceToken: Date?
 
     private static let maxBaseFret = 15
     private static let stringOrder = [5, 4, 3, 2, 1, 0]   // low E → high e, as the neck reads
@@ -28,7 +34,9 @@ struct FretboardRunEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode)
+            displayOptionsControl
+            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
+                                  playOnceToken: playOnceToken)
             patternField
             baseFretField
             spanField
@@ -40,6 +48,37 @@ struct FretboardRunEditor: View {
                  + "itself. Watch it walk above before you save.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
+        }
+    }
+
+    // MARK: - Display options (labels + animation, global preferences)
+
+    /// A compact menu, top of the board, holding the two viewing preferences: how notes are
+    /// captioned (name / interval / off) and whether the highlight animates (off by default) —
+    /// the same row the Scale/Arpeggio editors carry (ADR 0065; this editor and the custom-grid
+    /// editor were the noted gap).
+    private var displayOptionsControl: some View {
+        HStack {
+            FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
+            SoundPreviewButton(drill: run.expanded(), tint: tint)
+            Spacer()
+            Menu {
+                Picker("Labels", selection: $storedLabelMode) {
+                    ForEach(FretLabelMode.allCases) { mode in
+                        Text(mode.pickerLabel).tag(mode.rawValue)
+                    }
+                }
+                Toggle("Animate", isOn: $animates)
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "slider.horizontal.3")
+                    Text("Display")
+                }
+                .font(.futura(.caption, weight: .semibold))
+                .foregroundStyle(tint)
+            }
+            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel), "
+                                + "animation \(animates ? "on" : "off")")
         }
     }
 

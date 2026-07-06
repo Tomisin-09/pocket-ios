@@ -122,6 +122,18 @@ enum PracticePresets {
              chords: .gMajorPop)
     ]
 
+    /// The **strumming accents/mutes** batch (ADR 0065, strumming slice 2) — seeded under a *seventh*
+    /// key. Ships a real pattern using the muted-chuck and accent vocabulary so the upgraded editor
+    /// and lane are exercised by content, not just the plain folk pattern from v2.
+    static let syncopatedMuteSpecs: [Spec] = [
+        Spec(name: "Strumming — Syncopated Mute", command: 78, subdivision: .eighths,
+             tags: ["rhythm", "strumming"],
+             notes: "Down, rest, down, muted chuck, rest, accented up, down, up. Keep the chuck short "
+                  + "and percussive, and dig in on the accent — everything else stays even.",
+             template: .strumming,
+             strum: .syncopatedMute)
+    ]
+
     /// Build the preset exercises (un-inserted) for a given batch, each through the shared
     /// `commandAnchored` factory so the working floor + reach derive identically to a user-created
     /// drill (the single creation path, ADR 0046). Applies any content-template payload (T9).
@@ -148,11 +160,13 @@ enum PracticePresets {
     static let seededScaleDefaultsKey = "practicePresetsSeeded.v4"
     static let seededArpeggioDefaultsKey = "practicePresetsSeeded.v5"
     static let seededChordDefaultsKey = "practicePresetsSeeded.v6"
+    static let seededSyncopatedMuteDefaultsKey = "practicePresetsSeeded.v7"
 
     /// Seed the curated presets **once each, ever**: the v1 technique drills, the v2 strumming batch,
-    /// the v3 fretboard warm-up, the v4 scale-library batch, the v5 arpeggio batch, then the v6 chords
-    /// batch, each guarded by its own key so a deleted preset never returns and an existing user picks
-    /// up each newer batch additively. Safe to call on every launch.
+    /// the v3 fretboard warm-up, the v4 scale-library batch, the v5 arpeggio batch, the v6 chords
+    /// batch, then the v7 accent/mute strumming batch, each guarded by its own key so a deleted
+    /// preset never returns and an existing user picks up each newer batch additively. Safe to call
+    /// on every launch.
     static func seedIfNeeded(into context: ModelContext, defaults: UserDefaults = .standard) {
         seedBatch(specs, key: seededDefaultsKey, into: context, defaults: defaults)
         seedBatch(templateSpecs, key: seededTemplateDefaultsKey, into: context, defaults: defaults)
@@ -160,6 +174,7 @@ enum PracticePresets {
         seedBatch(scaleSpecs, key: seededScaleDefaultsKey, into: context, defaults: defaults)
         seedBatch(arpeggioSpecs, key: seededArpeggioDefaultsKey, into: context, defaults: defaults)
         seedBatch(chordSpecs, key: seededChordDefaultsKey, into: context, defaults: defaults)
+        seedBatch(syncopatedMuteSpecs, key: seededSyncopatedMuteDefaultsKey, into: context, defaults: defaults)
     }
 
     /// Seed one batch once, guarded by its `key`. No-op after its first successful run.

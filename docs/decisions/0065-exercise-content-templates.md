@@ -234,6 +234,33 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
      custom-grid editor have no Display row of any kind yet, so they were left as a **noted gap**
      instead of open-coding one in passing.
 
+   - **The noted gap closed.** `FretboardRunEditor` (warm-up/picking/legato/fingerstyle) gains the same
+     `displayOptionsControl` row as Scales/Arpeggios — `FretboardPlayOnceButton` + `SoundPreviewButton`
+     + the Labels/Animate menu — unchanged otherwise. `FretboardDrillEditor` (the tap-to-place custom
+     grid) gains the row too, plus a `FretboardDrillPreview` above its placement board: the board itself
+     already shows *where* a hand-placed note sits, but had no way to show *when* it sounds relative to
+     the others, so "watch it before you save" reaches the one editor that never had it. Deliberately
+     not layered onto the interactive board's own cells (note captions there would fight the
+     selection/placement affordances already living in that space).
+
+   - **Strumming accents and mutes (Slice, landed).** The strumming template's `StrumSlot` grows from a
+     bare down/up/rest enum into a **direction + accent** pair: `StrumDirection` adds a fourth case,
+     `.mute` (a percussive, muted "chuck"), and `StrumSlot.accented` is an independent modifier — an
+     accent marks *emphasis*, not a new direction, so it composes with down/up/mute the way a ">" mark
+     floats over a stroke in real notation. Two gestures follow from that split: the editor's existing
+     tap-to-cycle now steps **down → up → mute → rest**, and a **long-press** flips the accent on
+     whichever direction is showing (composed via `LongPressGesture(...).exclusively(before:
+     TapGesture())` rather than a `Button` + simultaneous gesture, which would double-fire). Landing on
+     `.rest` always clears the accent (nothing to emphasize on silence) — enforced in `StrumSlot.init`
+     so every construction path stays consistent. Both the live lane and the editor depict an accent by
+     weight/scale (`.heavy`, 1.15×) rather than a second glyph — the direction vocabulary stays the one
+     source of symbols (T10), the view decides how to draw emphasis. `StrumPattern.currentVersion` bumps
+     to **2**; `StrumSlot`'s custom `init(from:)` tries the current `{direction, accented}` object first
+     and falls back to a bare direction string, so a pre-existing v1 blob (which could only ever contain
+     `"down"`/`"up"`/`"rest"`) decodes straight through with **no store migration** — the decode-time
+     upgrade T4 anticipated. Ships a seeded **"Strumming — Syncopated Mute"** preset exercising both
+     (`practicePresetsSeeded.v7`).
+
    - **Exercise-audio seam (scaffold).** `ExerciseAudioEngine` (a `Sendable` protocol), an
      `AccompanimentSettings`/`AccompanimentStyle` shape, and a SwiftUI `\.exerciseAudio` environment
      value default to a `SilentExerciseAudio` no-op; a `SoundPreviewButton` reads `isAvailable` and
