@@ -20,6 +20,19 @@ enum CAGEDShape: Int, CaseIterable, Identifiable {
 
     var id: Int { rawValue }
 
+    /// The CAGED reference letter for this box — what a player actually recognises the shape as. Shown
+    /// in the editors instead of a bare "Position N" so the numbering reads the way guitarists already
+    /// think about it (a fixed E-shape=1…G-shape=5 index, not the classic minor-pentatonic box order).
+    var shapeLetter: String {
+        switch self {
+        case .position1: return "E"
+        case .position2: return "D"
+        case .position3: return "C"
+        case .position4: return "A"
+        case .position5: return "G"
+        }
+    }
+
     /// The reference key the boxes are authored in — A major (pitch class 9).
     static let referenceRoot = 9
 

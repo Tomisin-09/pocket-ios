@@ -59,6 +59,10 @@ extension ScaleRun {
 
     /// The lowest fret the current position's box occupies — shown as "Anchored at fret N".
     var anchorFret: Int { boxNotes.map(\.fret).min() ?? 1 }
+
+    /// The CAGED reference letter for the current position (E/D/C/A/G) — how a player actually
+    /// recognises the shape, shown instead of a bare position number.
+    var shapeLetter: String { CAGEDShape(clampedPosition: position).shapeLetter }
 }
 
 // MARK: - Generation (pure — CAGED box, placed then filtered; verified in tests)

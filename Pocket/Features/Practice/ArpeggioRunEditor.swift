@@ -19,6 +19,9 @@ struct ArpeggioRunEditor: View {
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
     @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    /// A one-shot "watch it" request (ADR 0065), independent of `animates` — set by
+    /// `FretboardPlayOnceButton`, read by the preview below.
+    @State private var playOnceToken: Date?
 
     /// Root notes in menu order, starting at A (pitch classes, A = 9 … G# = 8).
     private static let noteOrder = [9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8]
@@ -28,7 +31,8 @@ struct ArpeggioRunEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             displayOptionsControl
-            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode)
+            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
+                                  playOnceToken: playOnceToken)
             titleField
             menuRow(label: "Arpeggio", picker: AnyView(qualityPicker))
             menuRow(label: "Root", picker: AnyView(rootPicker))
@@ -45,6 +49,7 @@ struct ArpeggioRunEditor: View {
 
     private var displayOptionsControl: some View {
         HStack {
+            FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
             SoundPreviewButton(drill: run.expanded(), tint: tint)
             Spacer()
             Menu {
@@ -74,7 +79,8 @@ struct ArpeggioRunEditor: View {
             Text(run.title)
                 .font(.futura(.headline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
-            Text("Position \(run.position) of \(run.positionCount) · anchored at fret \(run.anchorFret)")
+            Text("\(run.shapeLetter) shape · \(run.position) of \(run.positionCount) · fret "
+                 + "\(run.anchorFret)")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
