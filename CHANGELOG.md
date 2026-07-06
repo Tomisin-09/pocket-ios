@@ -6,6 +6,20 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Strumming accents and mutes (ADR 0065).** A strum slot now carries an independent **accent**
+  flag alongside its direction, and a new **mute** direction ("x" — a percussive chuck) joins
+  down/up/rest. The editor's tap-to-cycle gesture now steps **down → up → mute → rest**, and a
+  **long-press** flips the accent on whichever direction is showing (a no-op on a rest); both the
+  live practice lane and the editor draw an accented stroke heavier and a touch larger. The payload
+  bumps to **schema v2** — a decode-time upgrade reads an older bare-direction blob straight through,
+  so no store migration is needed. Ships a seeded **"Strumming — Syncopated Mute"** starter
+  demonstrating both (one-time key `practicePresetsSeeded.v7`).
+- **Display-menu row added to the remaining fretboard editors.** The generative run editor
+  (Warm-up/Picking/Legato/Fingerstyle) and the custom-grid editor now carry the same **Display**
+  menu (note-caption mode + animate toggle) and **Watch**/sound-preview controls as the Scales and
+  Arpeggios editors — a gap the fretboard-polish slice deliberately left open. The custom-grid
+  editor also gains a live `FretboardDrillPreview` above its placement board, so a hand-placed drill
+  can be watched for timing before it's saved, not just generated runs.
 - **Fretboard polish: inlay markers, CAGED-shape labels, and a one-shot preview (ADR 0065).** The
   fretboard board now draws the standard **position-marker dots** (single at 3·5·7·9…, double at
   12/24) that fall within the visible window, the same orientation cue as the wood inlays on a real

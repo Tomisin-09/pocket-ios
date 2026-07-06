@@ -108,17 +108,26 @@ final class StrumPatternTests: XCTestCase {
         XCTAssertEqual(pattern.slotsPerBeat, 1)
     }
 
+    func testSyncopatedMutePatternUsesAccentAndMute() {
+        let pattern = StrumPattern.syncopatedMute
+        XCTAssertEqual(pattern.slots,
+                       [.down, .rest, .down, .mute, .rest, StrumSlot(.up, accented: true), .down, .up])
+        XCTAssertEqual(pattern.slotsPerBeat, 2)
+    }
+
     func testStrumSlotStrokeClassification() {
         XCTAssertTrue(StrumSlot.down.isStroke)
         XCTAssertTrue(StrumSlot.up.isStroke)
+        XCTAssertTrue(StrumSlot.mute.isStroke)
         XCTAssertFalse(StrumSlot.rest.isStroke)
     }
 
     // MARK: - Editing (pure ops the authoring editor skins)
 
-    func testStrumSlotCyclesDownUpRest() {
+    func testStrumSlotCyclesDownUpMuteRest() {
         XCTAssertEqual(StrumSlot.down.next, .up)
-        XCTAssertEqual(StrumSlot.up.next, .rest)
+        XCTAssertEqual(StrumSlot.up.next, .mute)
+        XCTAssertEqual(StrumSlot.mute.next, .rest)
         XCTAssertEqual(StrumSlot.rest.next, .down)
     }
 
@@ -133,6 +142,59 @@ final class StrumPatternTests: XCTestCase {
         let pattern = StrumPattern.downstrokes(beatsPerBar: 4)
         XCTAssertEqual(pattern.cyclingSlot(at: 99), pattern)
         XCTAssertEqual(pattern.cyclingSlot(at: -1), pattern)
+    }
+
+    func testCyclingSlotPreservesAccentUntilItLandsOnRest() {
+        // An accented downstroke cycles to an accented up, then an accented mute — the accent
+        // rides along direction changes — and is cleared only once it lands on rest.
+        let accentedDown = StrumSlot(.down, accented: true)
+        let accentedUp = accentedDown.next
+        XCTAssertEqual(accentedUp, StrumSlot(.up, accented: true))
+        let accentedMute = accentedUp.next
+        XCTAssertEqual(accentedMute, StrumSlot(.mute, accented: true))
+        let rest = accentedMute.next
+        XCTAssertEqual(rest, .rest)
+        XCTAssertFalse(rest.accented)
+    }
+
+    // MARK: - Accent (independent modifier — the long-press gesture)
+
+    func testInitClampsAccentedToFalseOnRest() {
+        XCTAssertFalse(StrumSlot(.rest, accented: true).accented)
+    }
+
+    func testTogglingAccentFlipsANonRestSlot() {
+        XCTAssertTrue(StrumSlot.down.togglingAccent.accented)
+        XCTAssertFalse(StrumSlot.down.togglingAccent.togglingAccent.accented)
+        XCTAssertTrue(StrumSlot.mute.togglingAccent.accented)
+    }
+
+    func testTogglingAccentIsANoOpOnRest() {
+        XCTAssertEqual(StrumSlot.rest.togglingAccent, .rest)
+    }
+
+    func testPatternTogglingAccentAtIndex() {
+        let pattern = StrumPattern.downstrokes(beatsPerBar: 4)   // [D, D, D, D]
+        let accented = pattern.togglingAccent(at: 2)
+        XCTAssertEqual(accented.slots, [.down, .down, StrumSlot(.down, accented: true), .down])
+        // Toggling again flips it back off.
+        XCTAssertEqual(accented.togglingAccent(at: 2).slots, pattern.slots)
+    }
+
+    func testPatternTogglingAccentIsANoOpOnARestSlot() {
+        let pattern = StrumPattern.folk   // slot 1 is a rest
+        XCTAssertEqual(pattern.togglingAccent(at: 1), pattern)
+    }
+
+    func testPatternTogglingAccentOutOfRangeIsUnchanged() {
+        let pattern = StrumPattern.downstrokes(beatsPerBar: 4)
+        XCTAssertEqual(pattern.togglingAccent(at: 99), pattern)
+        XCTAssertEqual(pattern.togglingAccent(at: -1), pattern)
+    }
+
+    func testAccentedLabelReadsForAccessibility() {
+        XCTAssertEqual(StrumSlot.down.label, "Down")
+        XCTAssertEqual(StrumSlot(.down, accented: true).label, "Down, accented")
     }
 
     func testResizedToFinerResolutionKeepsStrokesOnTheirBeats() {
@@ -182,8 +244,37 @@ final class StrumPatternTests: XCTestCase {
         XCTAssertEqual(decoded, original)
     }
 
+    func testPatternWithMuteAndAccentRoundTripsThroughCodable() throws {
+        let original = StrumPattern.syncopatedMute
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(StrumPattern.self, from: data)
+        XCTAssertEqual(decoded, original)
+    }
+
     func testNewPatternCarriesCurrentVersion() {
         XCTAssertEqual(StrumPattern.folk.version, StrumPattern.currentVersion)
+    }
+
+    /// The decode-time upgrade (T4): a **version-1** payload encoded slots as bare direction
+    /// strings (`["down","rest","down","up"]`), not `{direction, accented}` objects. A pre-mute/
+    /// accent blob must still open — this is what makes the schema change additive with no store
+    /// migration, per the version bump's doc comment.
+    func testDecodesAVersionOnePayloadWithBareDirectionStrings() throws {
+        let json = """
+        {"version":1,"slotsPerBeat":2,"slots":["down","rest","down","up"]}
+        """
+        let decoded = try JSONDecoder().decode(StrumPattern.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.version, 1)
+        XCTAssertEqual(decoded.slotsPerBeat, 2)
+        XCTAssertEqual(decoded.slots, [.down, .rest, .down, .up])
+        XCTAssertTrue(decoded.slots.allSatisfy { !$0.accented })
+    }
+
+    func testVersionOnePayloadRejectsAnUnrecognizedDirectionString() {
+        let json = """
+        {"version":1,"slotsPerBeat":2,"slots":["down","sideways"]}
+        """
+        XCTAssertThrowsError(try JSONDecoder().decode(StrumPattern.self, from: Data(json.utf8)))
     }
 
     /// A blob written by a newer build (higher version) still decodes best-effort — the

@@ -11,6 +11,10 @@ import SwiftUI
 /// A thin skin over `FretboardDrill`'s pure ops (`replacingNote`, `resized`) — the view maps taps to
 /// those and draws the result, holding no timing logic of its own (T5). **T10** — every colour is a
 /// semantic `PocketColor` role, so the editor reskins under light/dark and any future theme.
+///
+/// A `FretboardDrillPreview` sits above the placement board — the board shows *where* notes are
+/// placed, the preview shows *when* they'd sound, so "watch it before you save" works for a
+/// hand-placed drill too, not just the generative editors.
 struct FretboardDrillEditor: View {
     /// Beats per bar (the exercise's meter) — fixes how many slots each subdivision produces.
     let beatsPerBar: Int
@@ -22,6 +26,16 @@ struct FretboardDrillEditor: View {
     /// The lowest fret the board window shows; `0` includes the open string. Scrolled by the position
     /// control so notes anywhere on the neck can be authored.
     @State private var lowestVisibleFret = 1
+    /// The global note-caption preference — shown on the preview strip above (not on the placement
+    /// board below, which stays focused on *where*, not *what*). Shared with every other fretboard
+    /// editor and the live practice run (ADR 0065 T10).
+    @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
+    private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
+    /// The walking-highlight preference — **off by default** (photosensitivity precaution).
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    /// A one-shot "watch it" request (ADR 0065), independent of `animates` — set by
+    /// `FretboardPlayOnceButton`, read by the preview below.
+    @State private var playOnceToken: Date?
 
     /// The subdivisions the segmented control offers, mapped to notes-per-beat.
     private static let resolutions: [(perBeat: Int, label: String)] =
@@ -31,6 +45,9 @@ struct FretboardDrillEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            displayOptionsControl
+            FretboardDrillPreview(drill: drill, tint: tint, labelMode: labelMode,
+                                  playOnceToken: playOnceToken)
             resolutionPicker
             slotStrip
             board
@@ -38,6 +55,36 @@ struct FretboardDrillEditor: View {
             Text("Pick a slot, then tap a fret to place a note. Tap a placed note to clear it.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
+        }
+    }
+
+    // MARK: - Display options (labels + animation, global preferences)
+
+    /// A compact menu, top of the editor, holding the two viewing preferences plus a watch/sound
+    /// preview of the hand-placed drill — the row every other fretboard-family editor carries (ADR
+    /// 0065; this editor was the other half of the noted gap alongside `FretboardRunEditor`).
+    private var displayOptionsControl: some View {
+        HStack {
+            FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
+            SoundPreviewButton(drill: drill, tint: tint)
+            Spacer()
+            Menu {
+                Picker("Labels", selection: $storedLabelMode) {
+                    ForEach(FretLabelMode.allCases) { mode in
+                        Text(mode.pickerLabel).tag(mode.rawValue)
+                    }
+                }
+                Toggle("Animate", isOn: $animates)
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "slider.horizontal.3")
+                    Text("Display")
+                }
+                .font(.futura(.caption, weight: .semibold))
+                .foregroundStyle(tint)
+            }
+            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel), "
+                                + "animation \(animates ? "on" : "off")")
         }
     }
 

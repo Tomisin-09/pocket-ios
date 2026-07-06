@@ -1,15 +1,15 @@
 import Foundation
 
-/// One slot's articulation in a strumming pattern (ADR 0065). A slot is a single, evenly-
-/// spaced position on the bar's grid; a strum drill is a short ordered list of these.
-/// Generic common-practice vocabulary, authored in-house (T8) — never anyone's protected
-/// expression.
-enum StrumSlot: String, CaseIterable, Identifiable, Codable {
+/// A slot's **direction** in a strumming pattern (ADR 0065, extended for accents/mutes). Generic
+/// common-practice vocabulary, authored in-house (T8) — never anyone's protected expression.
+enum StrumDirection: String, CaseIterable, Identifiable, Codable {
     /// A downstroke (toward the floor).
     case down
     /// An upstroke (toward the ceiling). Two-letter musical term — the persisted rawValue
     /// stays "up" rather than a padded synonym.
     case up // swiftlint:disable:this identifier_name
+    /// A percussive, muted hit ("chuck") — the hand slaps the strings without ringing a chord.
+    case mute
     /// A silent slot — the hand keeps time but no strings sound (the "ghost" in D-DU-UDU).
     case rest
 
@@ -18,13 +18,14 @@ enum StrumSlot: String, CaseIterable, Identifiable, Codable {
     /// Whether a string is actually struck here (vs a rest the strumming hand passes through).
     var isStroke: Bool { self != .rest }
 
-    /// SF Symbol name the lane renderer draws. Direction alone distinguishes down from up;
+    /// SF Symbol name the lane renderer draws. Direction alone distinguishes down/up/mute;
     /// the rest is a faint dot. Kept on the model so the glyph vocabulary has one source, not
     /// baked into the view (the colour/theme discipline is T10; this is just which symbol).
     var symbolName: String {
         switch self {
         case .down: return "arrow.down"
         case .up: return "arrow.up"
+        case .mute: return "xmark"
         case .rest: return "circle.fill"
         }
     }
@@ -34,23 +35,93 @@ enum StrumSlot: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .down: return "Down"
         case .up: return "Up"
+        case .mute: return "Mute"
         case .rest: return "Rest"
         }
     }
 
-    /// The next articulation when a slot is tapped in the editor: **down → up → rest → down**.
+    /// The next direction when a slot is tapped in the editor: **down → up → mute → rest → down**.
     /// Pure, so the editor stays a thin skin that just calls it (T5).
-    var next: StrumSlot {
+    var next: StrumDirection {
         switch self {
         case .down: return .up
-        case .up: return .rest
+        case .up: return .mute
+        case .mute: return .rest
         case .rest: return .down
         }
     }
 }
 
+/// One slot's articulation in a strumming pattern: a **direction** plus whether it's **accented**
+/// (played louder — the ">" mark over a stroke in standard notation). Accent is an independent
+/// modifier, not a new direction, so it composes with down/up/mute — the tap-to-cycle gesture
+/// steps through direction, and a separate long-press toggles the accent on whichever direction
+/// is currently showing (ADR 0065 strumming accents/mutes slice).
+struct StrumSlot: Codable, Equatable {
+    var direction: StrumDirection
+    /// Never `true` on a `.rest` — there's no stroke to emphasize. Clamped in `init`, not just at
+    /// construction time, so every path that produces a slot (cycling, decoding) stays consistent.
+    var accented: Bool
+
+    init(_ direction: StrumDirection, accented: Bool = false) {
+        self.direction = direction
+        self.accented = direction == .rest ? false : accented
+    }
+
+    static let down = StrumSlot(.down)
+    static let up = StrumSlot(.up) // swiftlint:disable:this identifier_name
+    static let mute = StrumSlot(.mute)
+    static let rest = StrumSlot(.rest)
+
+    /// Whether a string is actually struck here (vs a rest the strumming hand passes through).
+    var isStroke: Bool { direction.isStroke }
+
+    /// SF Symbol name the lane renderer draws — forwarded from `direction`; accent is depicted by
+    /// the view (weight/scale), not a different glyph, so the direction vocabulary stays the one
+    /// source of symbols (T10 discipline: the model names the role, the view draws it).
+    var symbolName: String { direction.symbolName }
+
+    /// Spoken/label description for accessibility.
+    var label: String { accented ? "\(direction.label), accented" : direction.label }
+
+    /// The slot with its direction advanced (down → up → mute → rest → down), accent preserved —
+    /// landing on `.rest` clears it (the `init` clamp). The tap-to-cycle gesture.
+    var next: StrumSlot { StrumSlot(direction.next, accented: accented) }
+
+    /// The slot with its accent flipped — a no-op on a `.rest` (nothing to emphasize). The
+    /// long-press gesture, independent of the direction cycle.
+    var togglingAccent: StrumSlot {
+        guard direction != .rest else { return self }
+        return StrumSlot(direction, accented: !accented)
+    }
+
+    private enum CodingKeys: String, CodingKey { case direction, accented }
+
+    /// Decodes either shape: the current `{direction, accented}` object, or a **version-1** bare
+    /// direction string (`"down"`/`"up"`/`"rest"`) from a pattern encoded before this slice —
+    /// the decode-time upgrade T4 anticipates, so older payloads keep opening with no store
+    /// migration. A pre-mute payload never contained `"mute"`, so the fallback only ever needs to
+    /// resolve the original three raw values.
+    init(from decoder: Decoder) throws {
+        if let keyed = try? decoder.container(keyedBy: CodingKeys.self),
+           let direction = try? keyed.decode(StrumDirection.self, forKey: .direction) {
+            self.direction = direction
+            self.accented = (try? keyed.decode(Bool.self, forKey: .accented)) ?? false
+            return
+        }
+        let container = try decoder.singleValueContainer()
+        let raw = try container.decode(String.self)
+        guard let direction = StrumDirection(rawValue: raw) else {
+            throw DecodingError.dataCorruptedError(
+                in: container, debugDescription: "Unrecognized strum slot value: \(raw)")
+        }
+        self.direction = direction
+        self.accented = false
+    }
+}
+
 /// A **strumming template's** content (ADR 0065 T4): a small, self-contained *recipe* of
-/// down/up/rest slots laid over the bar, carrying its own `version` so the schema can evolve
+/// down/up/mute/rest slots laid over the bar, carrying its own `version` so the schema can evolve
 /// with a decode-time upgrade and **no store migration** — it is persisted as an opaque
 /// `Exercise.templatePayload: Data?` blob, never a child `@Model`, because the payload is
 /// never relationally queried.
@@ -61,8 +132,10 @@ enum StrumSlot: String, CaseIterable, Identifiable, Codable {
 /// SwiftUI-free and unit-tested (T5); the lane view is only a skin over it.
 struct StrumPattern: Codable, Equatable {
     /// The schema version this build writes. Bump when the encoded shape changes, and add a
-    /// decode-time upgrade rather than a store migration (T4).
-    static let currentVersion = 1
+    /// decode-time upgrade rather than a store migration (T4). **v2** adds mute as a third
+    /// direction and an `accented` flag per slot (`StrumSlot.init(from:)` upgrades a bare v1
+    /// direction string in place, so no store migration is needed here either).
+    static let currentVersion = 2
 
     /// The version the blob was encoded at — for a future decode-time upgrade. A blob from a
     /// *newer* build than this one still decodes best-effort; if it can't, `Exercise`'s
@@ -123,12 +196,22 @@ extension StrumPattern {
 // MARK: - Editing (pure — the authoring editor is a thin skin over these, T5)
 
 extension StrumPattern {
-    /// The pattern with the slot at `index` cycled to its next articulation (down → up → rest).
-    /// Out-of-range indices return the pattern unchanged.
+    /// The pattern with the slot at `index` cycled to its next direction (down → up → mute →
+    /// rest), accent preserved. Out-of-range indices return the pattern unchanged. The tap
+    /// gesture; `togglingAccent(at:)` is the separate long-press one.
     func cyclingSlot(at index: Int) -> StrumPattern {
         guard slots.indices.contains(index) else { return self }
         var updated = slots
         updated[index] = updated[index].next
+        return StrumPattern(slotsPerBeat: slotsPerBeat, slots: updated, version: version)
+    }
+
+    /// The pattern with the slot at `index`'s accent flipped, direction unchanged. A no-op on a
+    /// rest or an out-of-range index — there's nothing to emphasize on silence.
+    func togglingAccent(at index: Int) -> StrumPattern {
+        guard slots.indices.contains(index) else { return self }
+        var updated = slots
+        updated[index] = updated[index].togglingAccent
         return StrumPattern(slotsPerBeat: slotsPerBeat, slots: updated, version: version)
     }
 
@@ -173,4 +256,11 @@ extension StrumPattern {
     static let folk = StrumPattern(
         slotsPerBeat: 2,
         slots: [.down, .rest, .down, .up, .rest, .up, .down, .up])
+
+    /// A syncopated pop/funk pattern demonstrating the accent + mute vocabulary — eighth notes with
+    /// a muted "chuck" on the "and" of beat 2 and an accented upstroke on the "and" of beat 3.
+    /// Common-practice vocabulary (T8).
+    static let syncopatedMute = StrumPattern(
+        slotsPerBeat: 2,
+        slots: [.down, .rest, .down, .mute, .rest, StrumSlot(.up, accented: true), .down, .up])
 }

@@ -1,10 +1,12 @@
 import SwiftUI
 
 /// The **strumming template's authoring editor** (ADR 0065 — the per-kind payload editor the ADR
-/// defers and slices). A tap-to-cycle grid: each slot advances **down → up → rest** on tap, and a
-/// segmented control re-grids the pattern between quarters / eighths / sixteenths over the bar. It
-/// is a thin skin over `StrumPattern`'s pure edit ops (`cyclingSlot`, `resized`) — the view maps
-/// taps to those and draws the result, holding no timing logic of its own (T5).
+/// defers and slices). A tap-to-cycle grid: each slot advances **down → up → mute → rest** on tap,
+/// and a **long-press** flips the accent on whichever direction is currently showing (a no-op on a
+/// rest — nothing to emphasize). A segmented control re-grids the pattern between quarters / eighths
+/// / sixteenths over the bar. It is a thin skin over `StrumPattern`'s pure edit ops (`cyclingSlot`,
+/// `togglingAccent`, `resized`) — the view maps gestures to those and draws the result, holding no
+/// timing logic of its own (T5).
 ///
 /// The lane **wraps by beat** (`FlowLayout`): each beat is a group of cells and the groups flow to
 /// new rows, so a denser resolution grows the editor vertically instead of scrolling sideways.
@@ -26,7 +28,7 @@ struct StrumPatternEditor: View {
         VStack(alignment: .leading, spacing: 14) {
             resolutionPicker
             lane
-            Text("Tap a slot to cycle it: down → up → rest.")
+            Text("Tap a slot to cycle it: down → up → mute → rest. Long-press to accent.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
@@ -80,29 +82,45 @@ struct StrumPatternEditor: View {
         }
     }
 
+    /// A tap cycles the direction; a long-press flips the accent — composed via `exclusively(before:)`
+    /// so a long-press's release doesn't *also* fire the tap action (the standard SwiftUI idiom for
+    /// two gestures on one view; a plain `Button` here would double-fire since its own tap recognizer
+    /// competes with a simultaneous long-press).
     private func slotButton(index: Int, slot: StrumSlot) -> some View {
-        Button {
-            pattern = pattern.cyclingSlot(at: index)
-            haptic(.light)
-        } label: {
-            ZStack {
-                RoundedRectangle(cornerRadius: 7)
-                    .fill(PocketColor.surfaceSubtle)
-                    .frame(width: 34, height: 44)
-                slotGlyph(slot)
-            }
+        ZStack {
+            RoundedRectangle(cornerRadius: 7)
+                .fill(PocketColor.surfaceSubtle)
+                .frame(width: 34, height: 44)
+            slotGlyph(slot)
         }
-        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .gesture(
+            LongPressGesture(minimumDuration: 0.45)
+                .onEnded { _ in toggleAccent(at: index, slot: slot) }
+                .exclusively(before: TapGesture().onEnded { cycleSlot(at: index) }))
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel("Slot \(index + 1): \(slot.label)")
-        .accessibilityHint("Tap to change")
+        .accessibilityHint(slot.direction == .rest ? "Tap to change" : "Tap to change; long-press to accent")
+    }
+
+    private func cycleSlot(at index: Int) {
+        pattern = pattern.cyclingSlot(at: index)
+        haptic(.light)
+    }
+
+    private func toggleAccent(at index: Int, slot: StrumSlot) {
+        guard slot.direction != .rest else { return }
+        pattern = pattern.togglingAccent(at: index)
+        haptic(.medium)
     }
 
     @ViewBuilder
     private func slotGlyph(_ slot: StrumSlot) -> some View {
         if slot.isStroke {
             Image(systemName: slot.symbolName)
-                .font(.futura(.title3, weight: .semibold))
+                .font(.futura(.title3, weight: slot.accented ? .heavy : .semibold))
                 .foregroundStyle(tint)
+                .scaleEffect(slot.accented ? 1.15 : 1.0)
         } else {
             Image(systemName: slot.symbolName)
                 .font(.system(size: 6))
