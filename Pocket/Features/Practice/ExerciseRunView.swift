@@ -81,6 +81,7 @@ struct ExerciseRunView: View {
                     if let progression = exercise.chordProgression {
                         ChordProgressionPreview(progression: progression)
                     }
+                    if let sheet = exercise.strumChordSheet { StrumChordsPreview(sheet: sheet) }
                     practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
@@ -166,29 +167,10 @@ struct ExerciseRunView: View {
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             }
-            templateSurface
+            ExerciseTemplateSurface(engine: engine, exercise: exercise, labelMode: labelMode)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
-    }
-
-    /// The content-template renderer switch (ADR 0065 T5): pick the surface by `kind`; a missing/
-    /// undecodable payload or unrecognised kind falls back to the metronome beat dots — the universal
-    /// underlay (T1). The count-in always shows dots; a bespoke surface engages once running.
-    @ViewBuilder
-    private var templateSurface: some View {
-        if exercise.kind == .strumming, let pattern = exercise.strumPattern,
-           engine.automatorCountdown == nil {
-            StrummingLaneView(engine: engine, pattern: pattern, tint: PocketColor.practice)
-        } else if exercise.kind == .fretboard, let drill = exercise.fretboardDrill,
-                  engine.automatorCountdown == nil {
-            FretboardView(engine: engine, drill: drill, tint: PocketColor.practice, labelMode: labelMode)
-        } else if exercise.kind == .chords, let progression = exercise.chordProgression,
-                  engine.automatorCountdown == nil {
-            ChordChangeView(engine: engine, progression: progression, tint: PocketColor.practice)
-        } else {
-            BeatIndicator(engine: engine, tint: PocketColor.practice)
-        }
     }
 
     // MARK: - Setup (stopped)

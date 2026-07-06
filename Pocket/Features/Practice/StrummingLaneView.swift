@@ -26,13 +26,17 @@ struct StrumLane: View {
         .frame(height: 52)
     }
 
+    /// A slot's glyph, with a reserved row above it for the literal `>` accent mark (opacity-toggled,
+    /// not conditionally inserted, so every cell reserves the same height and the row never reflows).
+    /// Weight/scale alone read as too subtle on-device to notice an accented stroke at a glance, so
+    /// the mark now carries the signal explicitly; weight/scale stay as secondary reinforcement.
     @ViewBuilder
     private func slotCell(_ slot: StrumSlot, isActive: Bool) -> some View {
-        Group {
+        VStack(spacing: 0) {
+            Text(">")
+                .font(.futura(.caption2, weight: .heavy))
+                .opacity(slot.accented ? 1 : 0)
             if slot.isStroke {
-                // An accented stroke draws heavier and a touch larger — the ">" emphasis mark,
-                // read through weight/scale rather than a second glyph (T10: the model names the
-                // role, the view draws it).
                 Image(systemName: slot.symbolName)
                     .font(.futura(.title3, weight: slot.accented ? .heavy : .semibold))
             } else {

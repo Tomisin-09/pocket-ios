@@ -14,13 +14,13 @@ struct ArpeggioRunEditor: View {
     var tint: Color = PocketColor.practice
 
     @State private var showsAdvanced = false
-    /// Note captions + animation are global viewing preferences shared with the scale editor and the
-    /// live practice board.
+    /// Note captions are a global viewing preference shared with the scale editor and the live
+    /// practice board.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
-    /// A one-shot "watch it" request (ADR 0065), independent of `animates` — set by
-    /// `FretboardPlayOnceButton`, read by the preview below.
+    /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
+    /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
+    /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
     @State private var playOnceToken: Date?
 
     /// Root notes in menu order, starting at A (pitch classes, A = 9 … G# = 8).
@@ -45,7 +45,7 @@ struct ArpeggioRunEditor: View {
         }
     }
 
-    // MARK: - Display options (labels + animation, global preferences)
+    // MARK: - Display options (labels, global preference)
 
     private var displayOptionsControl: some View {
         HStack {
@@ -58,7 +58,6 @@ struct ArpeggioRunEditor: View {
                         Text(mode.pickerLabel).tag(mode.rawValue)
                     }
                 }
-                Toggle("Animate", isOn: $animates)
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "slider.horizontal.3")
@@ -67,8 +66,7 @@ struct ArpeggioRunEditor: View {
                 .font(.futura(.caption, weight: .semibold))
                 .foregroundStyle(tint)
             }
-            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel), "
-                                + "animation \(animates ? "on" : "off")")
+            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel)")
         }
     }
 

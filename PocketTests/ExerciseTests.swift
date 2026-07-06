@@ -85,6 +85,7 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(Exercise(template: .strumming).kind, .strumming)
         XCTAssertEqual(Exercise(template: .scales).kind, .fretboard)
         XCTAssertEqual(Exercise(template: .basic).kind, .metronome)
+        XCTAssertEqual(Exercise(template: .strumChords).kind, .strumChords)
     }
 
     func testSetStrumPatternEncodesPayloadAndReadsBack() {
@@ -104,6 +105,25 @@ final class ExerciseTests: XCTestCase {
     func testStrumPatternIsNilWithoutPayload() {
         // A strumming template with no encoded payload yet reads nil (falls back to the underlay).
         XCTAssertNil(Exercise(template: .strumming).strumPattern)
+    }
+
+    func testSetStrumChordSheetEncodesPayloadAndReadsBack() {
+        let exercise = Exercise(template: .strumChords)
+        exercise.setStrumChordSheet(.popGroove)
+        XCTAssertNotNil(exercise.templatePayload)
+        XCTAssertEqual(exercise.strumChordSheet, .popGroove)
+    }
+
+    func testStrumChordSheetIsNilForNonStrumChordsTemplate() {
+        // Even with a payload present, a non-strum-chords template decodes to nil (the renderer gate).
+        let exercise = Exercise(template: .chords)
+        exercise.setStrumChordSheet(.popGroove)
+        XCTAssertNil(exercise.strumChordSheet)
+    }
+
+    func testStrumChordSheetIsNilWithoutPayload() {
+        // A strum-chords template with no encoded payload yet reads nil (falls back to the underlay).
+        XCTAssertNil(Exercise(template: .strumChords).strumChordSheet)
     }
 
     // MARK: - Computed accessors

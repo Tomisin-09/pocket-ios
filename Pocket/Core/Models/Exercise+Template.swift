@@ -59,4 +59,18 @@ extension Exercise {
     func setChordProgression(_ progression: ChordProgression) {
         templatePayload = try? JSONEncoder().encode(progression)
     }
+
+    /// The decoded **strum-chord sheet**, or `nil` when this isn't a strum-chords-template exercise,
+    /// the payload is absent, or it can't be decoded. A `nil` sends the run to the metronome renderer
+    /// (T5).
+    var strumChordSheet: StrumChordSheet? {
+        guard kind == .strumChords, let data = templatePayload else { return nil }
+        return try? JSONDecoder().decode(StrumChordSheet.self, from: data)
+    }
+
+    /// Encode a strum-chord sheet onto the payload — leaves the immutable template alone (ADR 0068,
+    /// revised); an encode failure leaves no payload rather than a stale one.
+    func setStrumChordSheet(_ sheet: StrumChordSheet) {
+        templatePayload = try? JSONEncoder().encode(sheet)
+    }
 }

@@ -40,6 +40,7 @@ final class PracticePresetsTests: XCTestCase {
             + PracticePresets.makeExercises(PracticePresets.arpeggioSpecs)
             + PracticePresets.makeExercises(PracticePresets.chordSpecs)
             + PracticePresets.makeExercises(PracticePresets.syncopatedMuteSpecs)
+            + PracticePresets.makeExercises(PracticePresets.strumChordsSpecs)
         for exercise in all {
             XCTAssertNotEqual(exercise.template, .basic,
                               "\(exercise.name) should ship with a specific (non-basic) template")
@@ -119,6 +120,18 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertTrue(strumming?.hasMeasuredCommand ?? false)
     }
 
+    // MARK: - Strum & chords batch (ADR 0065, strum↔chord composition)
+
+    func testStrumChordsSpecsShipAStrumChordSheetExercise() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.strumChordsSpecs)
+        XCTAssertEqual(exercises.count, 1)
+        let strumChords = try? XCTUnwrap(exercises.first)
+        XCTAssertEqual(strumChords?.template, .strumChords)
+        XCTAssertEqual(strumChords?.kind, .strumChords)
+        XCTAssertEqual(strumChords?.strumChordSheet, .popGroove)
+        XCTAssertTrue(strumChords?.hasMeasuredCommand ?? false)
+    }
+
     // MARK: - Seed-once guard
 
     func testSeedIfNeededInsertsBothBatchesOnceThenIsIdempotent() throws {
@@ -130,7 +143,7 @@ final class PracticePresetsTests: XCTestCase {
         let total = PracticePresets.specs.count + PracticePresets.templateSpecs.count
             + PracticePresets.fretboardSpecs.count + PracticePresets.scaleSpecs.count
             + PracticePresets.arpeggioSpecs.count + PracticePresets.chordSpecs.count
-            + PracticePresets.syncopatedMuteSpecs.count
+            + PracticePresets.syncopatedMuteSpecs.count + PracticePresets.strumChordsSpecs.count
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
 
@@ -155,9 +168,10 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertEqual(fetched.count,
                        PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count
                        + PracticePresets.scaleSpecs.count + PracticePresets.arpeggioSpecs.count
-                       + PracticePresets.chordSpecs.count + PracticePresets.syncopatedMuteSpecs.count)
+                       + PracticePresets.chordSpecs.count + PracticePresets.syncopatedMuteSpecs.count
+                       + PracticePresets.strumChordsSpecs.count)
         // All newer batches arrive (fetch order isn't insertion order, so check the set).
-        XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard, .chords])
+        XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard, .chords, .strumChords])
     }
 
     func testDeletedPresetsDoNotReturnOnNextSeed() throws {

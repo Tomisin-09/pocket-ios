@@ -68,7 +68,11 @@ extension StandaloneMetronomeEngine {
         guard automatorEnabled else { return }
         if transport == .stopped { start() }
         engageAutomator()                       // floor = current tempo, progress zeroed
-        countInStartBeat = currentBeat
+        // The count-in's first beat is the **next** beat to be heard, not the current one:
+        // `currentBeat` is the pre-start -1 here (or the beat already sounding mid-play), so + 1 is
+        // the first count-in beat. Without this the count-in ended a beat early, engaging on the
+        // last beat of the bar instead of the downbeat (ADR 0052).
+        countInStartBeat = currentBeat + 1
         // Count-in length is configurable in whole bars (Settings V1, ADR 0050).
         countInTarget = max(1, timeSignature.beats * AppSettings.countInBars)
         // Count-in is opt-out — off ⇒ engage the climb immediately.
@@ -90,7 +94,8 @@ extension StandaloneMetronomeEngine {
     /// count-in). On the count-in's final beat it engages the climb cleanly from here.
     func advanceCountIn() -> Bool {
         guard automatorCountingIn else { return false }
-        if currentBeat - countInStartBeat >= countInTarget {
+        if Self.countInHasElapsed(atBeat: currentBeat, startBeat: countInStartBeat,
+                                  target: countInTarget) {
             automatorCountingIn = false
             engageAutomator()                   // start the climb from the downbeat we reached
             return false
@@ -104,7 +109,27 @@ extension StandaloneMetronomeEngine {
     /// both the free-play automator and a Practice training run.
     var automatorCountdown: Int? {
         guard automatorCountingIn else { return nil }
-        return max(1, countInTarget - max(0, currentBeat - countInStartBeat))
+        return Self.countInCountdown(atBeat: currentBeat, startBeat: countInStartBeat,
+                                     target: countInTarget)
+    }
+
+    // MARK: - Count-in boundary (pure — the "which beat does the first note land on" math, ADR 0052)
+
+    /// The countdown number shown at `currentBeat`, counting down to the **engage downbeat** and
+    /// never below 1. `startBeat` is the count-in's *first* heard beat, so a whole-bar `target`
+    /// (`timeSignature.beats * countInBars`) counts a full bar and elapses exactly `target` beats
+    /// later — landing the engage beat on a bar downbeat. Pure so this boundary is unit-tested: with
+    /// `startBeat` captured one beat late (the pre-start `-1`) it silently engaged on the *last* beat
+    /// of the bar instead of the downbeat, so the first note fell a beat early in every meter.
+    static func countInCountdown(atBeat currentBeat: Int, startBeat: Int, target: Int) -> Int {
+        max(1, target - max(0, currentBeat - startBeat))
+    }
+
+    /// Whether the count-in has fully elapsed at `currentBeat` — the climb/exercise should engage.
+    /// The engage beat is `startBeat + target`; with `startBeat` the count-in's first beat and
+    /// `target` a whole bar, that lands on a downbeat.
+    static func countInHasElapsed(atBeat currentBeat: Int, startBeat: Int, target: Int) -> Bool {
+        currentBeat - startBeat >= max(1, target)
     }
 
     /// End a finished climb. A Practice **training run** ends the whole session (ADR 0046); a
@@ -156,7 +181,9 @@ extension StandaloneMetronomeEngine {
         trainingRamp = ramp
         setBPM(ramp.working)
         start()
-        countInStartBeat = currentBeat
+        // First count-in beat is the next one heard (`start()` left `currentBeat` at the pre-start
+        // -1), so + 1 makes a whole-bar count-in engage on the downbeat, not a beat early (ADR 0052).
+        countInStartBeat = currentBeat + 1
         countInTarget = max(1, timeSignature.beats * AppSettings.countInBars)
         automatorCountingIn = AppSettings.countInEnabled
     }

@@ -26,6 +26,7 @@ enum PracticePresets {
         var strum: StrumPattern?
         var fretboard: FretboardContent?
         var chords: ChordProgression?
+        var strumChords: StrumChordSheet?
     }
 
     /// The shipped set — small enough not to crowd an empty space, broad enough to cover the core
@@ -134,6 +135,18 @@ enum PracticePresets {
              strum: .syncopatedMute)
     ]
 
+    /// The **strum & chords** batch (ADR 0065, strum↔chord composition) — seeded under an *eighth*
+    /// key. Ships the folk groove under the pop turnaround so the composed renderer and its editor are
+    /// exercised by content: one groove cycle per chord, by construction, since both hold one bar.
+    static let strumChordsSpecs: [Spec] = [
+        Spec(name: "Groove — Pop Changes", command: 76, subdivision: .eighths,
+             tags: ["rhythm", "strumming", "chords"],
+             notes: "The folk D-DU-UDU groove under the G-D-Em-C turnaround — one full pattern cycle "
+                  + "per chord. Keep the strumming hand swinging steady through every change.",
+             template: .strumChords,
+             strumChords: .popGroove)
+    ]
+
     /// Build the preset exercises (un-inserted) for a given batch, each through the shared
     /// `commandAnchored` factory so the working floor + reach derive identically to a user-created
     /// drill (the single creation path, ADR 0046). Applies any content-template payload (T9).
@@ -148,6 +161,7 @@ enum PracticePresets {
             if let strum = spec.strum { exercise.setStrumPattern(strum) }
             if let fretboard = spec.fretboard { exercise.setFretboardContent(fretboard) }
             if let chords = spec.chords { exercise.setChordProgression(chords) }
+            if let strumChords = spec.strumChords { exercise.setStrumChordSheet(strumChords) }
             return exercise
         }
     }
@@ -161,12 +175,13 @@ enum PracticePresets {
     static let seededArpeggioDefaultsKey = "practicePresetsSeeded.v5"
     static let seededChordDefaultsKey = "practicePresetsSeeded.v6"
     static let seededSyncopatedMuteDefaultsKey = "practicePresetsSeeded.v7"
+    static let seededStrumChordsDefaultsKey = "practicePresetsSeeded.v8"
 
     /// Seed the curated presets **once each, ever**: the v1 technique drills, the v2 strumming batch,
     /// the v3 fretboard warm-up, the v4 scale-library batch, the v5 arpeggio batch, the v6 chords
-    /// batch, then the v7 accent/mute strumming batch, each guarded by its own key so a deleted
-    /// preset never returns and an existing user picks up each newer batch additively. Safe to call
-    /// on every launch.
+    /// batch, the v7 accent/mute strumming batch, then the v8 strum & chords batch, each guarded by
+    /// its own key so a deleted preset never returns and an existing user picks up each newer batch
+    /// additively. Safe to call on every launch.
     static func seedIfNeeded(into context: ModelContext, defaults: UserDefaults = .standard) {
         seedBatch(specs, key: seededDefaultsKey, into: context, defaults: defaults)
         seedBatch(templateSpecs, key: seededTemplateDefaultsKey, into: context, defaults: defaults)
@@ -175,6 +190,7 @@ enum PracticePresets {
         seedBatch(arpeggioSpecs, key: seededArpeggioDefaultsKey, into: context, defaults: defaults)
         seedBatch(chordSpecs, key: seededChordDefaultsKey, into: context, defaults: defaults)
         seedBatch(syncopatedMuteSpecs, key: seededSyncopatedMuteDefaultsKey, into: context, defaults: defaults)
+        seedBatch(strumChordsSpecs, key: seededStrumChordsDefaultsKey, into: context, defaults: defaults)
     }
 
     /// Seed one batch once, guarded by its `key`. No-op after its first successful run.

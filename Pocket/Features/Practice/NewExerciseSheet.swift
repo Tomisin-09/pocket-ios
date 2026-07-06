@@ -15,6 +15,8 @@ struct NewExercisePlan {
     let fretboard: FretboardContent?
     /// The authored chord progression for a Chords template; `nil` for every other template.
     let chords: ChordProgression?
+    /// The authored strum-chord sheet for a Strum & Chords template; `nil` for every other template.
+    let strumChords: StrumChordSheet?
 }
 
 /// Create a new exercise from within **Practice** (ADR 0046 / 0068 revised). Two steps: **pick a
@@ -100,6 +102,10 @@ private struct ConfigureExerciseForm: View {
     /// The authored **chord progression** for the Chords template — seeded from the template default.
     /// Not meter-bound: each change carries its own beat hold.
     @State private var chords: ChordProgression
+    /// The authored **strum-chord sheet** for the Strum & Chords template — seeded from the template
+    /// default. Its strum pattern is re-gridded on a meter change like `strum` above; its progression
+    /// is not meter-bound, same as `chords`.
+    @State private var strumChords: StrumChordSheet
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
@@ -122,6 +128,11 @@ private struct ConfigureExerciseForm: View {
         _customDrill = State(initialValue: drillSeed.resized(notesPerBeat: drillSeed.notesPerBeat,
                                                              beatsPerBar: bars))
         _chords = State(initialValue: template.defaultChordProgression ?? .gMajorPop)
+        let sheetSeed = template.defaultStrumChordSheet ?? .popGroove
+        _strumChords = State(initialValue: StrumChordSheet(
+            strumPattern: sheetSeed.strumPattern.resized(
+                slotsPerBeat: sheetSeed.strumPattern.slotsPerBeat, beatsPerBar: bars),
+            chordProgression: sheetSeed.chordProgression))
     }
 
     private var trimmedName: String {
@@ -143,6 +154,7 @@ private struct ConfigureExerciseForm: View {
             case .scale?: scaleSection
             case .arpeggio?: arpeggioSection
             case .chords?: chordsSection
+            case .strumChords?: strumChordsSection
             case .fretboardGrid?: fretboardSection
             case nil: EmptyView()
             }
@@ -175,6 +187,8 @@ private struct ConfigureExerciseForm: View {
             strum = strum.resized(slotsPerBeat: strum.slotsPerBeat, beatsPerBar: meter.beats)
             customDrill = customDrill.resized(notesPerBeat: customDrill.notesPerBeat,
                                               beatsPerBar: meter.beats)
+            strumChords.strumPattern = strumChords.strumPattern.resized(
+                slotsPerBeat: strumChords.strumPattern.slotsPerBeat, beatsPerBar: meter.beats)
         }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -260,6 +274,23 @@ private struct ConfigureExerciseForm: View {
         }
     }
 
+    private var strumChordsSection: some View {
+        Section {
+            StrumPatternEditor(beatsPerBar: signature.beats,
+                              pattern: $strumChords.strumPattern)
+                .listRowBackground(Color.clear)
+            Divider()
+            ChordProgressionEditor(progression: $strumChords.chordProgression)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("Strum & chords")
+        } footer: {
+            Text("The strum lane plays its own repeating groove while the chords change under it — "
+                 + "they aren't locked together, so pick a groove length that divides evenly into "
+                 + "each chord's hold if you want them to land together. You can edit both later too.")
+        }
+    }
+
     private var fretboardSection: some View {
         Section {
             FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill)
@@ -278,6 +309,7 @@ private struct ConfigureExerciseForm: View {
         case .scales: return "e.g. A minor pentatonic"
         case .arpeggios: return "e.g. A minor 7 arpeggio"
         case .chords: return "e.g. G–C–D changes"
+        case .strumChords: return "e.g. Verse groove"
         default: return "e.g. Spider"
         }
     }
@@ -286,7 +318,8 @@ private struct ConfigureExerciseForm: View {
         NewExercisePlan(name: trimmedName, command: command, signature: signature, template: template,
                         strum: template.bespokeEditor == .strumming ? strum : nil,
                         fretboard: fretboardContent,
-                        chords: template.bespokeEditor == .chords ? chords : nil)
+                        chords: template.bespokeEditor == .chords ? chords : nil,
+                        strumChords: template.bespokeEditor == .strumChords ? strumChords : nil)
     }
 
     /// The fretboard payload the plan carries — a generated run, a custom drill, or `nil` for a
@@ -297,7 +330,7 @@ private struct ConfigureExerciseForm: View {
         case .scale: return .scale(scale)
         case .arpeggio: return .arpeggio(arpeggio)
         case .fretboardGrid: return .custom(customDrill)
-        case .strumming, .chords, .none: return nil
+        case .strumming, .chords, .strumChords, .none: return nil
         }
     }
 }

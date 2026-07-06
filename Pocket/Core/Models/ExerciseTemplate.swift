@@ -26,6 +26,8 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     case scales
     case arpeggios
     case chords
+    /// A strum groove played over a chord progression, sharing one beat clock (ADR 0065).
+    case strumChords
     case picking
     case legato
     case fingerstyle
@@ -48,6 +50,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scales: return "Scales"
         case .arpeggios: return "Arpeggios"
         case .chords: return "Chords"
+        case .strumChords: return "Strum & Chords"
         case .picking: return "Picking"
         case .legato: return "Legato"
         case .fingerstyle: return "Fingerstyle"
@@ -66,6 +69,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scales: return "Run scales in time — push the tempo clean."
         case .arpeggios: return "Run chord tones across the neck, in position."
         case .chords: return "Change chords cleanly on the beat."
+        case .strumChords: return "Strum a groove while the chords change under it."
         case .picking: return "Alternate-picking accuracy and speed."
         case .legato: return "Hammer-ons and pull-offs, even and smooth."
         case .fingerstyle: return "Fingerpicking patterns and independence."
@@ -84,6 +88,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scales: return "stairs"
         case .arpeggios: return "point.topleft.down.to.point.bottomright.curvepath"
         case .chords: return "square.grid.3x3"
+        case .strumChords: return "square.stack"
         case .picking: return "arrow.up.and.down"
         case .legato: return "wave.3.forward"
         case .fingerstyle: return "hand.point.up.braille"
@@ -105,6 +110,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .strumming: return .strumming
         case .scales, .arpeggios, .picking, .legato, .fingerstyle, .warmup: return .fretboard
         case .chords: return .chords
+        case .strumChords: return .strumChords
         case .basic, .rhythm, .earTraining, .theory: return .metronome
         }
     }
@@ -116,9 +122,10 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// Legato, Fingerstyle) declare a `FretboardRun` shape (finger pattern × span); Scales picks a
     /// preprogrammed `ScaleRun` from the scale library (ADR 0065 build 2, Slice 2). `.fretboardGrid`
     /// is the tap-to-place custom drill — retained as the general escape hatch, no template selects it
-    /// by default today. Chords authors a `ChordProgression` from the voicing library. The host sheet
-    /// switches on this.
-    enum BespokeEditor { case strumming, run, scale, arpeggio, chords, fretboardGrid }
+    /// by default today. Chords authors a `ChordProgression` from the voicing library. Strum & Chords
+    /// authors a `StrumChordSheet` — both a `StrumPattern` and a `ChordProgression` together. The host
+    /// sheet switches on this.
+    enum BespokeEditor { case strumming, run, scale, arpeggio, chords, strumChords, fretboardGrid }
     var bespokeEditor: BespokeEditor? {
         switch self {
         case .strumming: return .strumming
@@ -126,6 +133,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scales: return .scale
         case .arpeggios: return .arpeggio
         case .chords: return .chords
+        case .strumChords: return .strumChords
         case .basic, .rhythm, .earTraining, .theory: return nil
         }
     }
@@ -149,7 +157,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scale: return .scale(.aMinorPentatonic)
         case .arpeggio: return .arpeggio(.aMinorSeventh)
         case .fretboardGrid: return .custom(.spiderWalk)
-        case .strumming, .chords, .none: return nil
+        case .strumming, .chords, .strumChords, .none: return nil
         }
     }
 
@@ -160,10 +168,17 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         bespokeEditor == .chords ? .gMajorPop : nil
     }
 
+    /// The starter **strum-chord sheet** a freshly-created Strum & Chords exercise begins with — the
+    /// folk groove under the pop turnaround (`.popGroove`) so both surfaces are never empty. `nil` for
+    /// every other template. Encoded at creation via `setStrumChordSheet`.
+    var defaultStrumChordSheet: StrumChordSheet? {
+        bespokeEditor == .strumChords ? .popGroove : nil
+    }
+
     /// The templates offered in the create picker, in menu order: the flexible **Basic** catch-all
     /// first (the default, no-fuss drill), then the bespoke Strumming, then the other techniques.
     static let creatable: [ExerciseTemplate] = [
-        .basic, .strumming, .scales, .arpeggios, .chords, .picking,
+        .basic, .strumming, .scales, .arpeggios, .chords, .strumChords, .picking,
         .legato, .fingerstyle, .rhythm, .warmup, .earTraining, .theory
     ]
 }
