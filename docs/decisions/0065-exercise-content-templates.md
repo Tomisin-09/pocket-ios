@@ -243,6 +243,53 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
      not layered onto the interactive board's own cells (note captions there would fight the
      selection/placement affordances already living in that space).
 
+   - **Watch supersedes the per-editor Animate toggle.** Every fretboard-family Display menu (Scales,
+     Arpeggios, the run editor, the custom-grid editor) carried an **Animate** toggle bound to the same
+     `exerciseAnimates` `@AppStorage` key surfaced in Settings → Motion — a duplicate control point once
+     `FretboardPlayOnceButton`/Watch existed, since Watch already answers "let me see it move once"
+     without touching the persistent, off-by-default-for-photosensitivity preference. The toggle is
+     removed from all four Display menus; the preference itself, and every surface that reads it
+     (`FretboardView`, `FretboardDrillPreview`, `StrummingLaneView`, the strum half of
+     `StrumChordsView`), is unchanged — Settings remains the one place to turn on continuous animation.
+
+   - **Fretboard walks now always start on the lowest note, and the board no longer pops in (fix).**
+     Two related problems on the live run board, both playback-phase (the generated *data* was always
+     correct — `CAGEDShape`'s filter-then-sort puts the lowest-pitched surviving tone at index 0):
+     - *Wrong start note.* `FretboardView` measured the walk straight off the engine's absolute
+       `currentBeat`. A strum pattern is always re-gridded to exactly one bar so it happens to align
+       with a one-bar count-in, but a scale/arpeggio run's length is explicitly **not** meter-bound
+       (its own phrase length), so it rarely divides evenly into the count-in and the walk could enter
+       mid-shape (sometimes on the high e). Fixed by pinning the origin to the beat the count-in
+       *clears* (the first musical downbeat), so note 0 always lands there.
+     - *Board pop-in.* The board was **replaced by the count-in beat dots** and then remounted when
+       the music started, so the walk and the entire board arrived together as an abrupt pop. A first
+       attempt only cross-faded that remount (`Group` → `ZStack` + `.transition(.opacity)`), which the
+       user confirmed still read as a pop — because the real problem is the board *leaving and
+       returning at all*, not the fade. The fix instead keeps the fretboard surface **present through
+       the whole count-in** (`ExerciseTemplateSurface` no longer gates the fretboard branch on the
+       count-in being over), sitting fully plotted but static; only the walk begins, one bar in. This
+       is why the walk anchor moved from `onAppear` (which would now fire during the count-in) to an
+       `onChange(automatorCountdown)` that fires the instant it clears — the view is mounted early but
+       stays static until then. The strum/chord surfaces still remount after the count-in and keep the
+       `ZStack` cross-fade; giving them the same always-present treatment is a follow-up (each needs
+       the same count-in-clearing walk anchor). Extracting the renderer switch into its own
+       `ExerciseTemplateSurface` (`ExerciseTemplatePreview.swift`) also relieved `ExerciseRunView.swift`'s
+       file-length budget.
+     - *Preview.* `FretboardDrillPreview`'s free-running (non-Watch) branch had the wrong-note bug too,
+       against `Date.timeIntervalSinceReferenceDate` — same fix, anchored to the view's own `onAppear`;
+       split into its own file (`FretboardView.swift` was over the 400-line budget).
+     - *Root cause — the count-in was itself off by one (the deeper fix, ADR 0052).* Even anchored to
+       "the beat the count-in clears," the walk still started a beat early, because *that beat wasn't
+       the downbeat*. `run(ramp:)`/`startAutomatorRun()` captured `countInStartBeat = currentBeat`,
+       but `start()` leaves `currentBeat` at the pre-first-beat `-1`, so a whole-bar count-in
+       (`beats * countInBars`) elapsed one beat short — in 4/4 it counted `3·2·1` and engaged on the
+       last beat of the bar, not the downbeat (and the same off-by-one in every meter, so 3/4 was
+       broken too). Fixed by capturing the count-in's *first heard* beat (`currentBeat + 1`), and the
+       boundary math is now a pure `countInCountdown`/`countInHasElapsed` pair with a unit test
+       asserting the engage beat is `0 mod beats` for meters 2–7 — the "which beat does the first note
+       land on" logic that silently mis-aligned everything downstream. With the count-in landing on the
+       downbeat, the fretboard anchor above (and the chord/strum anchors) all resolve correctly.
+
    - **Strumming accents and mutes (Slice, landed).** The strumming template's `StrumSlot` grows from a
      bare down/up/rest enum into a **direction + accent** pair: `StrumDirection` adds a fourth case,
      `.mute` (a percussive, muted "chuck"), and `StrumSlot.accented` is an independent modifier — an
@@ -252,14 +299,36 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
      whichever direction is showing (composed via `LongPressGesture(...).exclusively(before:
      TapGesture())` rather than a `Button` + simultaneous gesture, which would double-fire). Landing on
      `.rest` always clears the accent (nothing to emphasize on silence) — enforced in `StrumSlot.init`
-     so every construction path stays consistent. Both the live lane and the editor depict an accent by
-     weight/scale (`.heavy`, 1.15×) rather than a second glyph — the direction vocabulary stays the one
-     source of symbols (T10), the view decides how to draw emphasis. `StrumPattern.currentVersion` bumps
+     so every construction path stays consistent. Both the live lane and the editor originally depicted
+     an accent by weight/scale alone (`.heavy`, 1.15×); **on-device testing showed the haptic fired but
+     the visual change didn't read at a glance**, so both now also draw the literal `>` mark above the
+     stroke (opacity-toggled in a reserved row, so accenting never reflows the grid) — weight/scale
+     stay as secondary reinforcement, not the only signal. `StrumPattern.currentVersion` bumps
      to **2**; `StrumSlot`'s custom `init(from:)` tries the current `{direction, accented}` object first
      and falls back to a bare direction string, so a pre-existing v1 blob (which could only ever contain
      `"down"`/`"up"`/`"rest"`) decodes straight through with **no store migration** — the decode-time
      upgrade T4 anticipated. Ships a seeded **"Strumming — Syncopated Mute"** preset exercising both
      (`practicePresetsSeeded.v7`).
+
+   - **Strum & Chords — composing two existing templates, not a third timing model (Slice, landed).**
+     A new `.strumChords` template/renderer plays a `StrumPattern` groove over a `ChordProgression`,
+     both stored in one new `StrumChordSheet` wrapper (its own `version`, so the wrapper's own shape
+     can evolve independently of the two payloads nested inside it). The live `StrumChordsView` stacks
+     `ChordChangeView`'s chord layout over `StrummingLaneView`'s strum lane, and — the one new idea —
+     both read off **a single shared beat origin**, captured once via the same "first post-count-in
+     downbeat" `onAppear` anchor `ChordChangeView` already used, so a chord's hold and the strum
+     pattern's wrap both measure from the same zero rather than the engine's absolute `currentBeat`
+     (which counts through the count-in). Past that shared anchor the two surfaces stay **independent**:
+     each wraps on its own `lengthInBeats`, and a chord change never resets the strum pattern's cycle.
+     A coupling that *did* reset it was considered and rejected — it would need impure, stateful
+     bookkeeping (tracking the beat of the last chord change) that neither sibling pure-timing model
+     needs today, breaking the "pure timing math, thin-skin view" discipline (T5) for an effect the
+     shipped seed gets for free: the **"Groove — Pop Changes"** preset pairs the folk D-DU-UDU pattern
+     (one 4/4 bar) with the G·D·Em·C turnaround (one bar per chord), so the groove completes exactly
+     once per chord *by construction* — a sheet whose lengths don't divide evenly simply drifts, which
+     is an honest reflection of what the two models actually do, not a bug. The create sheet and the
+     exercise detail sheet both author a sheet with the existing `StrumPatternEditor` and
+     `ChordProgressionEditor` stacked in one section — no new editor UI, only new wiring.
 
    - **Exercise-audio seam (scaffold).** `ExerciseAudioEngine` (a `Sendable` protocol), an
      `AccompanimentSettings`/`AccompanimentStyle` shape, and a SwiftUI `\.exerciseAudio` environment

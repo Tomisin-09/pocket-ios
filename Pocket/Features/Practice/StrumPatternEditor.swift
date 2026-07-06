@@ -114,20 +114,35 @@ struct StrumPatternEditor: View {
         haptic(.medium)
     }
 
+    /// A slot's glyph, with a reserved row above it for the accent mark (`>`, opacity-toggled rather
+    /// than conditionally inserted) — every slot reserves the same vertical space whether or not it's
+    /// accented, so cycling/accenting never reflows the grid (only weight/scale changed before, which
+    /// on-device testing showed reads as too subtle to notice a long-press actually landed).
     @ViewBuilder
     private func slotGlyph(_ slot: StrumSlot) -> some View {
-        if slot.isStroke {
-            Image(systemName: slot.symbolName)
-                .font(.futura(.title3, weight: slot.accented ? .heavy : .semibold))
-                .foregroundStyle(tint)
-                .scaleEffect(slot.accented ? 1.15 : 1.0)
-        } else {
-            Image(systemName: slot.symbolName)
-                .font(.system(size: 6))
-                .foregroundStyle(PocketColor.textSecondary.opacity(0.5))
+        VStack(spacing: 0) {
+            accentMark(slot)
+            if slot.isStroke {
+                Image(systemName: slot.symbolName)
+                    .font(.futura(.title3, weight: slot.accented ? .heavy : .semibold))
+                    .foregroundStyle(tint)
+                    .scaleEffect(slot.accented ? 1.15 : 1.0)
+            } else {
+                Image(systemName: slot.symbolName)
+                    .font(.system(size: 6))
+                    .foregroundStyle(PocketColor.textSecondary.opacity(0.5))
+            }
         }
     }
 
+    /// The literal accent mark real notation uses — a small bold `>` above the stroke — rather than
+    /// depending on weight/scale alone to signal it.
+    private func accentMark(_ slot: StrumSlot) -> some View {
+        Text(">")
+            .font(.futura(.caption2, weight: .heavy))
+            .foregroundStyle(tint)
+            .opacity(slot.accented ? 1 : 0)
+    }
 }
 
 #Preview("Strum editor") {

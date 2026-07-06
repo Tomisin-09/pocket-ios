@@ -129,6 +129,7 @@ struct ExerciseLibraryView: View {
         if let strum = plan.strum { exercise.setStrumPattern(strum) }
         if let fretboard = plan.fretboard { exercise.setFretboardContent(fretboard) }
         if let chords = plan.chords { exercise.setChordProgression(chords) }
+        if let strumChords = plan.strumChords { exercise.setStrumChordSheet(strumChords) }
         context.insert(exercise)
         haptic(.medium)
     }

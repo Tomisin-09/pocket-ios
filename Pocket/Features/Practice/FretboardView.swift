@@ -272,14 +272,27 @@ struct FretboardGrid: View {
 /// The **live** fretboard over the shared metronome clock (ADR 0065 T3/T5): a thin skin over
 /// `FretboardGrid` that reconstructs a continuous beat position from the engine's per-beat
 /// `currentBeat` and asks the pure `FretboardDrill` which note is active — the identical clock
-/// interpolation the strum lane uses. Before beat 0 (the count-in) and while paused nothing lights,
-/// which is what the pure math returns.
+/// interpolation the strum lane uses.
+///
+/// **Shown throughout the count-in (static), with the walk anchored to the count-in *clearing*.**
+/// The board sits fully plotted but with nothing lit during the count-in, so it doesn't vanish for
+/// the count and pop back when the music starts — only the walk begins, one bar in. A run's note
+/// count isn't meter-bound (unlike a strum pattern, always re-gridded to exactly one bar), so its
+/// cycle rarely divides evenly into the count-in — measuring from the engine's raw absolute beat
+/// would start the walk mid-shape (sometimes on the high e instead of the low E root). Capturing
+/// `currentBeat` the instant `automatorCountdown` clears — the first musical downbeat, mirroring
+/// `ChordChangeView`'s origin — and measuring from there guarantees note 0 (always the lowest-pitched
+/// note in the generated box, `CAGEDShape`) lands exactly on that downbeat. While paused, or before
+/// the origin is anchored, nothing lights.
 struct FretboardView: View {
     let engine: StandaloneMetronomeEngine
     let drill: FretboardDrill
     var tint: Color = PocketColor.practice
     var labelMode: FretLabelMode = .none
 
+    /// The engine beat the walk measures from — the first beat after the count-in clears. `nil`
+    /// through the count-in, which is what keeps the board static until the music actually starts.
+    @State private var originBeat: Int?
     /// Wall-clock moment `engine.currentBeat` last advanced — the anchor the sub-beat fraction is
     /// measured from.
     @State private var beatOnset = Date.now
@@ -305,76 +318,39 @@ struct FretboardView: View {
             anchoredBeat = newValue
             beatOnset = .now
         }
+        .onChange(of: engine.automatorCountdown) { _, countdown in
+            // The count-in just cleared → this beat is the first musical downbeat; pin note 0 to it.
+            if countdown == nil { anchorToDownbeat() }
+        }
+        .onAppear {
+            // Mounted with no count-in pending (count-in disabled, or resuming an already-counted-in
+            // run) → anchor now. Otherwise wait for the count-in to clear, above.
+            if engine.automatorCountdown == nil { anchorToDownbeat() }
+        }
     }
 
-    /// The continuous beat position at `now`, then the drill's active note for it. Returns `nil`
-    /// before beat 0 and for an empty drill — both handled by `activeNoteIndex`.
+    /// Pin the walk's origin to the current beat. Called the instant the count-in clears (or on
+    /// appear when there is none), so note 0 lands on the first musical downbeat; the board stays
+    /// static (nothing lit) through the count-in before it, since `activeNote` returns `nil` until
+    /// this runs.
+    private func anchorToDownbeat() {
+        guard originBeat == nil else { return }
+        let beat = max(0, engine.currentBeat)   // guard the pre-first-beat -1 in the no-count-in path
+        originBeat = beat
+        anchoredBeat = beat
+        beatOnset = .now
+    }
+
+    /// The continuous beat position at `now` relative to the anchored origin, then the drill's
+    /// active note for it. `nil` before the origin is anchored — `activeNoteIndex` handles the rest.
     private func activeNote(at now: Date) -> Int? {
+        guard let originBeat else { return nil }
         let secondsPerBeat = 60.0 / Double(max(1, engine.bpm))
         let fraction = engine.isPlaying
             ? min(1, max(0, now.timeIntervalSince(beatOnset) / secondsPerBeat))
             : 0
-        let beatPosition = Double(anchoredBeat) + fraction
+        let beatPosition = Double(anchoredBeat - originBeat) + fraction
         return drill.activeNoteIndex(atBeat: beatPosition)
-    }
-}
-
-/// A **self-driving preview** of a drill (ADR 0065 build 2, generative authoring): walks the board on
-/// its own internal clock at a fixed `bpm`, with no metronome engine — so an authoring editor can show
-/// "watch it before you save" the moment the shape changes. A thin skin over `FretboardGrid`, reading
-/// a continuous beat position straight from wall-clock time; nothing to start or stop.
-struct FretboardDrillPreview: View {
-    let drill: FretboardDrill
-    /// A gentle **preview tempo** — slower than any real practice pace so the shape is easy to follow
-    /// at a glance. The live practice board is engine-driven and plays at the actual exercise tempo.
-    var bpm: Int = 60
-    var tint: Color = PocketColor.practice
-    var labelMode: FretLabelMode = .none
-    /// Set (to a fresh `Date()`) by a `FretboardPlayOnceButton` to request a single walk-through,
-    /// independent of the global animate preference — a deliberate, user-requested pass rather than
-    /// sustained motion, so it plays even under Reduce Motion (ADR 0065). `nil` requests nothing.
-    var playOnceToken: Date?
-    /// Off by default (photosensitivity precaution) and forced off under Reduce Motion; off shows a
-    /// static, fully-plotted board unless a one-shot play is in progress.
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isPlayingOnce = false
-    @State private var playOnceOrigin: Date?
-
-    private var isAnimating: Bool { (animates && !reduceMotion) || isPlayingOnce }
-
-    var body: some View {
-        Group {
-            if isAnimating {
-                TimelineView(.animation) { context in
-                    FretboardGrid(drill: drill, activeIndex: activeIndex(at: context.date),
-                                  tint: tint, labelMode: labelMode)
-                }
-            } else {
-                FretboardGrid(drill: drill, activeIndex: nil, tint: tint, labelMode: labelMode)
-            }
-        }
-        .task(id: playOnceToken) {
-            guard let playOnceToken else { return }
-            playOnceOrigin = playOnceToken
-            isPlayingOnce = true
-            let seconds = drill.lengthInBeats * 60.0 / Double(max(1, bpm))
-            try? await Task.sleep(for: .seconds(max(0.1, seconds)))
-            isPlayingOnce = false
-        }
-    }
-
-    /// The active note at `now`. During a one-shot play it's measured from the play's own origin (so
-    /// it always starts the shape from note 0); otherwise it free-runs from wall-clock time (beats
-    /// elapsed = seconds × bpm/60). Empty drills return `nil` (nothing lit).
-    private func activeIndex(at now: Date) -> Int? {
-        guard drill.noteCount > 0 else { return nil }
-        if isPlayingOnce, let playOnceOrigin {
-            let beats = now.timeIntervalSince(playOnceOrigin) * Double(max(1, bpm)) / 60.0
-            return drill.activeNoteIndex(atBeat: beats)
-        }
-        let beats = now.timeIntervalSinceReferenceDate * Double(max(1, bpm)) / 60.0
-        return drill.activeNoteIndex(atBeat: beats)
     }
 }
 

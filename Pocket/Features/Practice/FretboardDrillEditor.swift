@@ -31,10 +31,9 @@ struct FretboardDrillEditor: View {
     /// editor and the live practice run (ADR 0065 T10).
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
-    /// The walking-highlight preference — **off by default** (photosensitivity precaution).
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
-    /// A one-shot "watch it" request (ADR 0065), independent of `animates` — set by
-    /// `FretboardPlayOnceButton`, read by the preview below.
+    /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
+    /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
+    /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
     @State private var playOnceToken: Date?
 
     /// The subdivisions the segmented control offers, mapped to notes-per-beat.
@@ -58,11 +57,12 @@ struct FretboardDrillEditor: View {
         }
     }
 
-    // MARK: - Display options (labels + animation, global preferences)
+    // MARK: - Display options (labels, global preference)
 
-    /// A compact menu, top of the editor, holding the two viewing preferences plus a watch/sound
-    /// preview of the hand-placed drill — the row every other fretboard-family editor carries (ADR
-    /// 0065; this editor was the other half of the noted gap alongside `FretboardRunEditor`).
+    /// A compact menu, top of the editor, holding how notes are captioned plus a watch/sound preview
+    /// of the hand-placed drill — the row every other fretboard-family editor carries (ADR 0065).
+    /// The walking-highlight preference itself lives only in Settings now, since Watch already
+    /// covers "see it move once" here.
     private var displayOptionsControl: some View {
         HStack {
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
@@ -74,7 +74,6 @@ struct FretboardDrillEditor: View {
                         Text(mode.pickerLabel).tag(mode.rawValue)
                     }
                 }
-                Toggle("Animate", isOn: $animates)
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "slider.horizontal.3")
@@ -83,8 +82,7 @@ struct FretboardDrillEditor: View {
                 .font(.futura(.caption, weight: .semibold))
                 .foregroundStyle(tint)
             }
-            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel), "
-                                + "animation \(animates ? "on" : "off")")
+            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel)")
         }
     }
 

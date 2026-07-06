@@ -21,6 +21,7 @@ final class ExerciseTemplateTests: XCTestCase {
         // everything else still falls to the metronome underlay until its own renderer ships.
         XCTAssertEqual(ExerciseTemplate.strumming.renderer, .strumming)
         XCTAssertEqual(ExerciseTemplate.chords.renderer, .chords)
+        XCTAssertEqual(ExerciseTemplate.strumChords.renderer, .strumChords)
 
         let fretboardFamily: Set<ExerciseTemplate> =
             [.scales, .arpeggios, .picking, .legato, .fingerstyle, .warmup]
@@ -28,7 +29,7 @@ final class ExerciseTemplateTests: XCTestCase {
             XCTAssertEqual(template.renderer, .fretboard, "\(template) should render on the fretboard")
         }
 
-        let bespoke: Set<ExerciseTemplate> = fretboardFamily.union([.strumming, .chords])
+        let bespoke: Set<ExerciseTemplate> = fretboardFamily.union([.strumming, .chords, .strumChords])
         for template in ExerciseTemplate.allCases where !bespoke.contains(template) {
             XCTAssertEqual(template.renderer, .metronome, "\(template) should render on the metronome")
         }
@@ -60,13 +61,20 @@ final class ExerciseTemplateTests: XCTestCase {
         XCTAssertEqual(ExerciseTemplate.chords.defaultChordProgression, .gMajorPop)
         XCTAssertNil(ExerciseTemplate.chords.defaultFretboardContent, "chords isn't fretboard content")
 
-        let editing = runFamily.union([.strumming, .scales, .arpeggios, .chords])
+        XCTAssertEqual(ExerciseTemplate.strumChords.bespokeEditor, .strumChords)
+        XCTAssertEqual(ExerciseTemplate.strumChords.defaultStrumChordSheet, .popGroove)
+        XCTAssertNil(ExerciseTemplate.strumChords.defaultStrumPattern, "sheet isn't a bare strum pattern")
+        XCTAssertNil(ExerciseTemplate.strumChords.defaultChordProgression, "sheet isn't a bare progression")
+        XCTAssertNil(ExerciseTemplate.strumChords.defaultFretboardContent)
+
+        let editing = runFamily.union([.strumming, .scales, .arpeggios, .chords, .strumChords])
         for template in ExerciseTemplate.allCases where !editing.contains(template) {
             XCTAssertNil(template.bespokeEditor, "\(template) should have no bespoke editor")
             XCTAssertFalse(template.hasBespokeEditor)
             XCTAssertNil(template.defaultStrumPattern)
             XCTAssertNil(template.defaultFretboardContent)
             XCTAssertNil(template.defaultChordProgression)
+            XCTAssertNil(template.defaultStrumChordSheet)
         }
     }
 

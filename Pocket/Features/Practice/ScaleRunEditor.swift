@@ -17,10 +17,9 @@ struct ScaleRunEditor: View {
     /// in the live practice run.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
-    /// The walking-highlight preference — **off by default** (photosensitivity precaution).
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
-    /// A one-shot "watch it" request (ADR 0065), independent of `animates` — set by
-    /// `FretboardPlayOnceButton`, read by the preview below.
+    /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
+    /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
+    /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
     @State private var playOnceToken: Date?
 
     /// Root notes in menu order, starting at A (pitch classes, A = 9 … G# = 8).
@@ -45,10 +44,11 @@ struct ScaleRunEditor: View {
         }
     }
 
-    // MARK: - Display options (labels + animation, global preferences)
+    // MARK: - Display options (labels, global preference)
 
-    /// A compact menu, top-right of the board, holding the two viewing preferences: how notes are
-    /// captioned (name / interval / off) and whether the highlight animates (off by default).
+    /// A compact menu, top-right of the board, holding how notes are captioned (name / interval /
+    /// off) plus Watch/sound-preview — the walking-highlight preference itself lives only in
+    /// Settings now, since Watch already covers "see it move once" here.
     private var labelModeControl: some View {
         HStack {
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
@@ -60,7 +60,6 @@ struct ScaleRunEditor: View {
                         Text(mode.pickerLabel).tag(mode.rawValue)
                     }
                 }
-                Toggle("Animate", isOn: $animates)
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "slider.horizontal.3")
@@ -69,8 +68,7 @@ struct ScaleRunEditor: View {
                 .font(.futura(.caption, weight: .semibold))
                 .foregroundStyle(tint)
             }
-            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel), "
-                                + "animation \(animates ? "on" : "off")")
+            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel)")
         }
     }
 

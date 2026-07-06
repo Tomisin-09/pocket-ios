@@ -21,6 +21,10 @@ enum ExerciseKind: String, CaseIterable, Identifiable, Codable {
     /// swapping on the beat — driven by `ChordProgression`. Falls back to `.metronome` when a chords
     /// exercise carries no progression payload yet (T5).
     case chords
+    /// The strumming lane and the chord-changing surface together, sharing one beat clock — driven
+    /// by `StrumChordSheet`. Falls back to `.metronome` when a strum-chords exercise carries no sheet
+    /// payload yet (T5).
+    case strumChords
 
     var id: String { rawValue }
 }

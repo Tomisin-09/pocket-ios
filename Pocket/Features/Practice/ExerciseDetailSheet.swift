@@ -32,6 +32,9 @@ struct ExerciseDetailSheet: View {
     /// The exercise's chord progression (Chords template), seeded from the stored payload with a
     /// defensive fallback; only surfaced and committed for a chords template.
     @State private var chords: ChordProgression
+    /// The exercise's strum-chord sheet (Strum & Chords template), seeded from the stored payload with
+    /// a defensive fallback; only surfaced and committed for a strum-chords template.
+    @State private var strumChords: StrumChordSheet
 
     init(exercise: Exercise) {
         self.exercise = exercise
@@ -44,6 +47,7 @@ struct ExerciseDetailSheet: View {
         _arpeggio = State(initialValue: content?.arpeggioValue ?? .aMinorSeventh)
         _customDrill = State(initialValue: content?.customValue ?? .spiderWalk)
         _chords = State(initialValue: exercise.chordProgression ?? .gMajorPop)
+        _strumChords = State(initialValue: exercise.strumChordSheet ?? .popGroove)
     }
 
     var body: some View {
@@ -60,6 +64,7 @@ struct ExerciseDetailSheet: View {
                 case .scale?: scaleSection
                 case .arpeggio?: arpeggioSection
                 case .chords?: chordsSection
+                case .strumChords?: strumChordsSection
                 case .fretboardGrid?: fretboardSection
                 case nil: EmptyView()
                 }
@@ -71,7 +76,8 @@ struct ExerciseDetailSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        commitNotes(); commitStrum(); commitFretboard(); commitChords(); dismiss()
+                        commitNotes(); commitStrum(); commitFretboard(); commitChords()
+                        commitStrumChords(); dismiss()
                     }
                 }
             }
@@ -167,93 +173,6 @@ struct ExerciseDetailSheet: View {
         }
     }
 
-    // MARK: - How to play (per-template content editor, ADR 0065)
-
-    /// The strumming template's authoring surface — the tap-to-edit `StrumPatternEditor` over the
-    /// exercise's always-present pattern. No "remove" control: the template is immutable, so a
-    /// strumming drill stays a strumming drill; you edit the pattern, you don't strip it.
-    private var strummingSection: some View {
-        Section {
-            StrumPatternEditor(beatsPerBar: exercise.beatsPerBar, pattern: $strum)
-                .listRowBackground(Color.clear)
-        } header: {
-            Text("How to play — strumming")
-        } footer: {
-            Text("The arrow lane plays over the click while you run the drill. Slots loop every "
-                 + "\(exercise.beatsPerBar) beats.")
-        }
-    }
-
-    /// The warm-up family's authoring surface — the generative `FretboardRunEditor`. Same
-    /// immutability contract: the template stays fretboard; you edit the run's shape.
-    private var runSection: some View {
-        Section {
-            FretboardRunEditor(run: $run)
-                .listRowBackground(Color.clear)
-        } header: {
-            Text("How to play — run")
-        } footer: {
-            Text("Declare the run's shape and it walks the board over the click while you run the "
-                 + "drill.")
-        }
-    }
-
-    /// The Scales template's authoring surface — the `ScaleRunEditor` scale-library picker. Same
-    /// immutability contract: the template stays fretboard; you pick the scale and root.
-    private var scaleSection: some View {
-        Section {
-            ScaleRunEditor(run: $scale)
-                .listRowBackground(Color.clear)
-        } header: {
-            Text("How to play — scale")
-        } footer: {
-            Text("Pick a scale and its root; the box walks the neck over the click while you run "
-                 + "the drill.")
-        }
-    }
-
-    /// The Arpeggios template's authoring surface — the `ArpeggioRunEditor` chord-tone picker. Same
-    /// immutability contract: the template stays fretboard; you pick the quality and root.
-    private var arpeggioSection: some View {
-        Section {
-            ArpeggioRunEditor(run: $arpeggio)
-                .listRowBackground(Color.clear)
-        } header: {
-            Text("How to play — arpeggio")
-        } footer: {
-            Text("Pick a quality and its root; the chord-tone box walks the neck over the click "
-                 + "while you run the drill.")
-        }
-    }
-
-    /// The Chords template's authoring surface — the `ChordProgressionEditor`. Same immutability
-    /// contract: the template stays chords; you edit the progression, not the type.
-    private var chordsSection: some View {
-        Section {
-            ChordProgressionEditor(progression: $chords)
-                .listRowBackground(Color.clear)
-        } header: {
-            Text("How to play — chords")
-        } footer: {
-            Text("The chords change on the beat over the click while you run the drill. The "
-                 + "progression loops.")
-        }
-    }
-
-    /// The custom-drill authoring surface — the tap-to-place `FretboardDrillEditor`. Same
-    /// immutability contract: the template stays fretboard.
-    private var fretboardSection: some View {
-        Section {
-            FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill)
-                .listRowBackground(Color.clear)
-        } header: {
-            Text("How to play — fretboard")
-        } footer: {
-            Text("The notes walk the board over the click while you run the drill. Slots loop every "
-                 + "\(exercise.beatsPerBar) beats.")
-        }
-    }
-
     // MARK: - Helpers
 
     private func bpmText(_ bpm: Int) -> some View {
@@ -290,7 +209,7 @@ struct ExerciseDetailSheet: View {
         case .scale: content = .scale(scale)
         case .arpeggio: content = .arpeggio(arpeggio)
         case .fretboardGrid: content = .custom(customDrill)
-        case .strumming, .chords: return
+        case .strumming, .chords, .strumChords: return
         }
         guard content != exercise.fretboardContent else { return }
         exercise.setFretboardContent(content)
@@ -305,6 +224,124 @@ struct ExerciseDetailSheet: View {
         }
         exercise.setChordProgression(chords)
         try? modelContext.save()
+    }
+
+    /// Persist an edited strum-chord sheet on Done, only for a strum-chords template and only when it
+    /// differs from what's stored (ADR 0065). Never touches the immutable template.
+    private func commitStrumChords() {
+        guard exercise.template.bespokeEditor == .strumChords,
+              strumChords != exercise.strumChordSheet else { return }
+        exercise.setStrumChordSheet(strumChords)
+        try? modelContext.save()
+    }
+}
+
+// MARK: - How to play (per-template content editor, ADR 0065)
+
+private extension ExerciseDetailSheet {
+
+    /// The strumming template's authoring surface — the tap-to-edit `StrumPatternEditor` over the
+    /// exercise's always-present pattern. No "remove" control: the template is immutable, so a
+    /// strumming drill stays a strumming drill; you edit the pattern, you don't strip it.
+    var strummingSection: some View {
+        Section {
+            StrumPatternEditor(beatsPerBar: exercise.beatsPerBar, pattern: $strum)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — strumming")
+        } footer: {
+            Text("The arrow lane plays over the click while you run the drill. Slots loop every "
+                 + "\(exercise.beatsPerBar) beats.")
+        }
+    }
+
+    /// The warm-up family's authoring surface — the generative `FretboardRunEditor`. Same
+    /// immutability contract: the template stays fretboard; you edit the run's shape.
+    var runSection: some View {
+        Section {
+            FretboardRunEditor(run: $run)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — run")
+        } footer: {
+            Text("Declare the run's shape and it walks the board over the click while you run the "
+                 + "drill.")
+        }
+    }
+
+    /// The Scales template's authoring surface — the `ScaleRunEditor` scale-library picker. Same
+    /// immutability contract: the template stays fretboard; you pick the scale and root.
+    var scaleSection: some View {
+        Section {
+            ScaleRunEditor(run: $scale)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — scale")
+        } footer: {
+            Text("Pick a scale and its root; the box walks the neck over the click while you run "
+                 + "the drill.")
+        }
+    }
+
+    /// The Arpeggios template's authoring surface — the `ArpeggioRunEditor` chord-tone picker. Same
+    /// immutability contract: the template stays fretboard; you pick the quality and root.
+    var arpeggioSection: some View {
+        Section {
+            ArpeggioRunEditor(run: $arpeggio)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — arpeggio")
+        } footer: {
+            Text("Pick a quality and its root; the chord-tone box walks the neck over the click "
+                 + "while you run the drill.")
+        }
+    }
+
+    /// The Chords template's authoring surface — the `ChordProgressionEditor`. Same immutability
+    /// contract: the template stays chords; you edit the progression, not the type.
+    var chordsSection: some View {
+        Section {
+            ChordProgressionEditor(progression: $chords)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — chords")
+        } footer: {
+            Text("The chords change on the beat over the click while you run the drill. The "
+                 + "progression loops.")
+        }
+    }
+
+    /// The Strum & Chords template's authoring surface — the `StrumPatternEditor` and
+    /// `ChordProgressionEditor` stacked, editing the two halves of the exercise's `StrumChordSheet`.
+    /// Same immutability contract: the template stays strum-chords.
+    var strumChordsSection: some View {
+        Section {
+            StrumPatternEditor(beatsPerBar: exercise.beatsPerBar,
+                              pattern: $strumChords.strumPattern)
+                .listRowBackground(Color.clear)
+            Divider()
+            ChordProgressionEditor(progression: $strumChords.chordProgression)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — strum & chords")
+        } footer: {
+            Text("The strum lane loops on its own while the chords change over the click — the two "
+                 + "aren't locked together.")
+        }
+    }
+
+    /// The custom-drill authoring surface — the tap-to-place `FretboardDrillEditor`. Same
+    /// immutability contract: the template stays fretboard.
+    var fretboardSection: some View {
+        Section {
+            FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("How to play — fretboard")
+        } footer: {
+            Text("The notes walk the board over the click while you run the drill. Slots loop every "
+                 + "\(exercise.beatsPerBar) beats.")
+        }
     }
 }
 

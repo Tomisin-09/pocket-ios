@@ -102,4 +102,44 @@ final class MetronomeEngineAutomatorTests: XCTestCase {
                        90 + StandaloneMetronomeEngine.automatorDefaultHeadroom,
                        "turning it off lands back on a usable target")
     }
+
+    // MARK: - Count-in boundary (ADR 0052) — the first note must land on the bar downbeat
+
+    /// A 4/4, one-bar count-in shows **4·3·2·1** over beats 0–3 and engages on beat 4 — a bar
+    /// downbeat (4 % 4 == 0), not the last beat of the bar. This is the fix for the first note
+    /// landing a beat early: `startBeat` is the count-in's first heard beat (0), not the pre-start
+    /// -1, so a 4-beat count-in elapses exactly at beat 4.
+    func testFourFourCountInCountsAFullBarAndEngagesOnTheDownbeat() {
+        let engine = StandaloneMetronomeEngine.self
+        let start = 0, target = 4
+        XCTAssertEqual(engine.countInCountdown(atBeat: 0, startBeat: start, target: target), 4)
+        XCTAssertEqual(engine.countInCountdown(atBeat: 1, startBeat: start, target: target), 3)
+        XCTAssertEqual(engine.countInCountdown(atBeat: 2, startBeat: start, target: target), 2)
+        XCTAssertEqual(engine.countInCountdown(atBeat: 3, startBeat: start, target: target), 1)
+        XCTAssertFalse(engine.countInHasElapsed(atBeat: 3, startBeat: start, target: target),
+                       "still counting in on the last beat of the bar")
+        XCTAssertTrue(engine.countInHasElapsed(atBeat: 4, startBeat: start, target: target),
+                      "engages on the next downbeat")
+        XCTAssertEqual(4 % 4, 0, "engage beat is a bar downbeat")
+    }
+
+    /// The engage beat lands on a bar downbeat in **every** meter (the bug was off-by-one in all of
+    /// them, not just 4/4): a whole-bar count-in from beat 0 elapses at beat `beats`, which is 0 mod
+    /// `beats`.
+    func testCountInEngagesOnADownbeatInEveryMeter() {
+        for beats in [2, 3, 4, 5, 6, 7] {
+            let engageBeat = beats   // startBeat(0) + one-bar target(beats)
+            XCTAssertFalse(StandaloneMetronomeEngine.countInHasElapsed(
+                atBeat: engageBeat - 1, startBeat: 0, target: beats), "\(beats)/4: not yet")
+            XCTAssertTrue(StandaloneMetronomeEngine.countInHasElapsed(
+                atBeat: engageBeat, startBeat: 0, target: beats), "\(beats)/4: engages")
+            XCTAssertEqual(engageBeat % beats, 0, "\(beats)/4 must engage on a downbeat")
+        }
+    }
+
+    /// The countdown never shows 0 or a negative, and reads the full target before the first beat.
+    func testCountInCountdownFloorsAtOneAndClampsBeforeTheStart() {
+        XCTAssertEqual(StandaloneMetronomeEngine.countInCountdown(atBeat: 9, startBeat: 0, target: 4), 1)
+        XCTAssertEqual(StandaloneMetronomeEngine.countInCountdown(atBeat: -1, startBeat: 0, target: 4), 4)
+    }
 }

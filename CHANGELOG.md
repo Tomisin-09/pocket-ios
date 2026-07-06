@@ -5,21 +5,67 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Fixed
+- **Count-in now counts a full bar and the exercise starts on the downbeat.** The count-in was
+  off by one beat in every meter: it captured its start beat as the pre-start `-1` (the beat before
+  the first click), so a one-bar count-in in 4/4 showed only **3·2·1** and engaged on the *last* beat
+  of the bar rather than the downbeat — the first note (and the climb) landed a beat early, out of
+  step with the click's own downbeat accent. It now anchors to the first *heard* beat, so 4/4 counts
+  **4·3·2·1** and the exercise begins on the next downbeat; the engage beat is now a bar downbeat in
+  every meter (3/4, 6/8, …), locked in by a unit test on the pure boundary math. This is the deeper
+  cause behind the fretboard walk starting on the wrong beat, and it corrects the free-play automator
+  count-in too.
+- **Scales and arpeggios now always start their walk on the low E, and the board no longer pops in
+  after the count-in.** Two related fixes on the live practice fretboard:
+  - *Right note.* The generated box always put the lowest-pitched note first in the data (`CAGEDShape`
+    sorts ascending) — the bug was in playback. `FretboardView` read the engine's raw absolute beat,
+    and a run's length rarely divides evenly into the count-in (unlike a strum pattern, always
+    re-gridded to exactly one bar), so the walk could enter mid-shape (sometimes on the high e). It
+    now pins its origin to the beat the **count-in clears** (the first musical downbeat), so note 0
+    always lands there.
+  - *No pop-in.* The board used to be **replaced by the count-in beat dots** and then reappear when
+    the music started, so the walk and the whole board arrived at once as an abrupt pop. The fretboard
+    surface is now shown **throughout the count-in**, sitting fully plotted but static; only the walk
+    begins, one bar in, on that first downbeat. (The strum and chord surfaces still swap in after the
+    count-in, now cross-dissolving from the dots via a `ZStack`; giving them the same always-present
+    treatment is a follow-up.)
+  - The creation-time preview (`FretboardDrillPreview`) had the wrong-note issue too in its
+    free-running (non-Watch) animation, phased off raw wall-clock time — it now anchors to its own
+    appearance instead, and moved to its own file in the split.
+
 ### Added
+- **Watch replaces the per-editor Animate toggle.** Every fretboard-family editor (Scales,
+  Arpeggios, the generative run editor, the custom-grid editor) had a duplicate **Animate** toggle
+  inside its Display menu, alongside the **Watch** one-shot preview button that already covers "see
+  it move once" without flipping a global, off-by-default-for-photosensitivity preference. Since
+  Watch makes the toggle redundant in every place it appeared, it's gone from all four Display
+  menus; the underlying preference is unchanged and still reachable from Settings → Motion →
+  "Animate exercises" for anyone who wants the board to walk continuously while editing.
+- **Strum & Chords template — a strum groove over a chord progression (ADR 0065).** A new
+  **Strum & Chords** template composes an existing `StrumPattern` groove with a `ChordProgression`,
+  wrapped in a new `StrumChordSheet` payload. The live surface stacks the chord-changing view over
+  the strumming lane, both reading off **one shared beat origin** (the first post-count-in downbeat)
+  but wrapping on their own independent cycle lengths — there is no reset that restarts the groove on
+  a chord change, so a groove whose length divides evenly into each chord's hold (the shipped
+  **"Groove — Pop Changes"** starter: the folk D-DU-UDU pattern under the G·D·Em·C turnaround) simply
+  reads as locked, by construction. The create sheet and the exercise detail sheet both offer the
+  `StrumPatternEditor` and `ChordProgressionEditor` stacked as one authoring section.
 - **Strumming accents and mutes (ADR 0065).** A strum slot now carries an independent **accent**
   flag alongside its direction, and a new **mute** direction ("x" — a percussive chuck) joins
   down/up/rest. The editor's tap-to-cycle gesture now steps **down → up → mute → rest**, and a
   **long-press** flips the accent on whichever direction is showing (a no-op on a rest); both the
-  live practice lane and the editor draw an accented stroke heavier and a touch larger. The payload
-  bumps to **schema v2** — a decode-time upgrade reads an older bare-direction blob straight through,
-  so no store migration is needed. Ships a seeded **"Strumming — Syncopated Mute"** starter
-  demonstrating both (one-time key `practicePresetsSeeded.v7`).
+  live practice lane and the editor draw an accented stroke heavier and a touch larger, and — after
+  on-device testing showed the haptic landed but the weight/scale change alone didn't read at a
+  glance — a literal **`>` mark** above the stroke. The payload bumps to **schema v2** — a
+  decode-time upgrade reads an older bare-direction blob straight through, so no store migration is
+  needed. Ships a seeded **"Strumming — Syncopated Mute"** starter demonstrating both (one-time key
+  `practicePresetsSeeded.v7`).
 - **Display-menu row added to the remaining fretboard editors.** The generative run editor
   (Warm-up/Picking/Legato/Fingerstyle) and the custom-grid editor now carry the same **Display**
-  menu (note-caption mode + animate toggle) and **Watch**/sound-preview controls as the Scales and
-  Arpeggios editors — a gap the fretboard-polish slice deliberately left open. The custom-grid
-  editor also gains a live `FretboardDrillPreview` above its placement board, so a hand-placed drill
-  can be watched for timing before it's saved, not just generated runs.
+  menu (note-caption mode) and **Watch**/sound-preview controls as the Scales and Arpeggios editors
+  — a gap the fretboard-polish slice deliberately left open. The custom-grid editor also gains a
+  live `FretboardDrillPreview` above its placement board, so a hand-placed drill can be watched for
+  timing before it's saved, not just generated runs.
 - **Fretboard polish: inlay markers, CAGED-shape labels, and a one-shot preview (ADR 0065).** The
   fretboard board now draws the standard **position-marker dots** (single at 3·5·7·9…, double at
   12/24) that fall within the visible window, the same orientation cue as the wood inlays on a real
