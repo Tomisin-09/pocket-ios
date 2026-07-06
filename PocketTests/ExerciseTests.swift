@@ -80,9 +80,10 @@ final class ExerciseTests: XCTestCase {
     }
 
     func testKindIsDerivedFromTemplate() {
-        // Only Strumming has its own renderer today; every other template falls to the metronome.
+        // Strumming has its lane; the fretboard family shares the board (build 2); the rest fall to
+        // the metronome underlay.
         XCTAssertEqual(Exercise(template: .strumming).kind, .strumming)
-        XCTAssertEqual(Exercise(template: .scales).kind, .metronome)
+        XCTAssertEqual(Exercise(template: .scales).kind, .fretboard)
         XCTAssertEqual(Exercise(template: .basic).kind, .metronome)
     }
 

@@ -14,6 +14,10 @@ struct ExerciseRunView: View {
     let exercise: Exercise
     @State private var engine = StandaloneMetronomeEngine()
     @Environment(\.modelContext) private var modelContext
+    /// The global note-caption preference (set from the exercise editors) — read so the live board
+    /// captions notes the same way the creation preview did.
+    @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
+    private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
 
     // Local edit state — seeded from the exercise on appear, committed only on Start.
     @State private var working = 0
@@ -72,7 +76,8 @@ struct ExerciseRunView: View {
                 if isRunning {
                     liveReadout
                 } else {
-                    if let pattern = exercise.strumPattern { strumPreview(pattern) }
+                    if let pattern = exercise.strumPattern { StrumPatternPreview(pattern: pattern) }
+                    if let drill = exercise.fretboardDrill { FretboardExercisePreview(drill: drill) }
                     practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
@@ -164,15 +169,17 @@ struct ExerciseRunView: View {
         .accessibilityElement(children: .contain)
     }
 
-    /// The content-template renderer switch (ADR 0065 T5): pick the surface by `kind`, with a
-    /// missing/undecodable payload or an unrecognised kind falling back to the metronome beat
-    /// dots — the universal underlay (T1) and the forward-compatible default. During the
-    /// count-in the beat dots always show; the strum lane engages once the drill is running.
+    /// The content-template renderer switch (ADR 0065 T5): pick the surface by `kind`; a missing/
+    /// undecodable payload or unrecognised kind falls back to the metronome beat dots — the universal
+    /// underlay (T1). The count-in always shows dots; a bespoke surface engages once running.
     @ViewBuilder
     private var templateSurface: some View {
         if exercise.kind == .strumming, let pattern = exercise.strumPattern,
            engine.automatorCountdown == nil {
             StrummingLaneView(engine: engine, pattern: pattern, tint: PocketColor.practice)
+        } else if exercise.kind == .fretboard, let drill = exercise.fretboardDrill,
+                  engine.automatorCountdown == nil {
+            FretboardView(engine: engine, drill: drill, tint: PocketColor.practice, labelMode: labelMode)
         } else {
             BeatIndicator(engine: engine, tint: PocketColor.practice)
         }
@@ -180,9 +187,8 @@ struct ExerciseRunView: View {
 
     // MARK: - Setup (stopped)
 
-    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact menu in the nav bar,
-    /// shown only while stopped. Drives the run click's accents + count-in length; committed on Start
-    /// alongside the tempos, so leaving without starting discards it.
+    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact nav-bar menu shown only
+    /// while stopped. Drives the click's accents + count-in; committed on Start, so leaving discards it.
     private var signaturePicker: some View {
         Menu {
             Picker("Time signature", selection: $signature) {
@@ -196,21 +202,6 @@ struct ExerciseRunView: View {
                 .foregroundStyle(PocketColor.practice)
         }
         .accessibilityLabel("Time signature: \(signature.name)")
-    }
-
-    /// A static preview of the strum pattern shown on entry (stopped), so you see the down/up
-    /// arrow directions before starting — the same `StrumLane` the running readout lights, here
-    /// with nothing lit (ADR 0065).
-    private func strumPreview(_ pattern: StrumPattern) -> some View {
-        VStack(spacing: 8) {
-            Text("Strum pattern")
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(PocketColor.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            StrumLane(pattern: pattern, tint: PocketColor.practice)
-        }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.surfaceSubtle))
     }
 
     /// The collapsible **Practice Settings** panel (V1 feedback): the three tempos + the nested

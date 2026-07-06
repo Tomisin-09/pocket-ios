@@ -24,6 +24,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// A down / up / rest arrow lane over the click, authored from a `StrumPattern` (ADR 0065).
     case strumming
     case scales
+    case arpeggios
     case chords
     case picking
     case legato
@@ -45,6 +46,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .basic: return "Basic"
         case .strumming: return "Strumming"
         case .scales: return "Scales"
+        case .arpeggios: return "Arpeggios"
         case .chords: return "Chords"
         case .picking: return "Picking"
         case .legato: return "Legato"
@@ -62,6 +64,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .basic: return "A plain tempo drill on the click."
         case .strumming: return "Down / up / rest arrow lane over the click."
         case .scales: return "Run scales in time — push the tempo clean."
+        case .arpeggios: return "Run chord tones across the neck, in position."
         case .chords: return "Change chords cleanly on the beat."
         case .picking: return "Alternate-picking accuracy and speed."
         case .legato: return "Hammer-ons and pull-offs, even and smooth."
@@ -79,6 +82,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .basic: return "metronome"
         case .strumming: return "guitars"
         case .scales: return "stairs"
+        case .arpeggios: return "point.topleft.down.to.point.bottomright.curvepath"
         case .chords: return "square.grid.3x3"
         case .picking: return "arrow.up.and.down"
         case .legato: return "wave.3.forward"
@@ -90,24 +94,66 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    /// The runtime **renderer** this template plays on (ADR 0065). Only Strumming has a bespoke
-    /// surface today; every other template falls to the shared metronome underlay until its own
-    /// renderer ships — so the run screen keeps working for every template from day one.
-    var renderer: ExerciseKind { self == .strumming ? .strumming : .metronome }
+    /// The runtime **renderer** this template plays on (ADR 0065). Strumming has its bespoke arrow
+    /// lane; the fretboard family (Scales, Picking, Legato, Fingerstyle, Warm-up) shares the one
+    /// animated fretboard surface (build 2 — "build once, reuse many"); everything else still falls
+    /// to the shared metronome underlay until its own renderer ships. A fretboard-family exercise
+    /// with no drill payload yet still runs on the metronome (the accessor returns nil, T5), so the
+    /// run screen keeps working for every template from day one.
+    var renderer: ExerciseKind {
+        switch self {
+        case .strumming: return .strumming
+        case .scales, .arpeggios, .picking, .legato, .fingerstyle, .warmup: return .fretboard
+        case .basic, .chords, .rhythm, .earTraining, .theory: return .metronome
+        }
+    }
 
-    /// Whether the create / detail sheet shows a bespoke authoring editor for this template (vs
-    /// only the basic tempo + meter settings). Only Strumming today; grows as renderers land.
-    var hasBespokeEditor: Bool { self == .strumming }
+    /// Which bespoke authoring editor the create / detail sheet shows for this template — or `nil`
+    /// for templates that only expose the basic tempo + meter settings. **Template-specific**, not
+    /// merely renderer-derived: several templates share the one fretboard *renderer* yet author
+    /// differently. Strumming edits a `StrumPattern`; the warm-up-style families (Warm-up, Picking,
+    /// Legato, Fingerstyle) declare a `FretboardRun` shape (finger pattern × span); Scales picks a
+    /// preprogrammed `ScaleRun` from the scale library (ADR 0065 build 2, Slice 2). `.fretboardGrid`
+    /// is the tap-to-place custom drill — retained as the general escape hatch, no template selects it
+    /// by default today. The host sheet switches on this.
+    enum BespokeEditor { case strumming, run, scale, arpeggio, fretboardGrid }
+    var bespokeEditor: BespokeEditor? {
+        switch self {
+        case .strumming: return .strumming
+        case .warmup, .picking, .legato, .fingerstyle: return .run
+        case .scales: return .scale
+        case .arpeggios: return .arpeggio
+        case .basic, .chords, .rhythm, .earTraining, .theory: return nil
+        }
+    }
 
-    /// The starter content payload a freshly-created exercise of this template begins with — a
-    /// folk strum pattern for Strumming (so it's never an empty lane), `nil` for payload-free
-    /// templates. Encoded onto the model at creation via `setStrumPattern`.
-    var defaultStrumPattern: StrumPattern? { self == .strumming ? .folk : nil }
+    /// Whether the create / detail sheet shows *any* bespoke authoring editor (vs only the basic
+    /// tempo + meter settings) — true for Strumming and the fretboard family; grows as renderers land.
+    var hasBespokeEditor: Bool { bespokeEditor != nil }
+
+    /// The starter **strum** pattern a freshly-created exercise begins with — a folk pattern for
+    /// Strumming (so its lane is never empty), `nil` otherwise. Encoded at creation via
+    /// `setStrumPattern`.
+    var defaultStrumPattern: StrumPattern? { bespokeEditor == .strumming ? .folk : nil }
+
+    /// The starter **fretboard content** a freshly-created fretboard-family exercise begins with — a
+    /// generated chromatic warm-up for the run families, an A-minor-pentatonic run for Scales, or a
+    /// spider-walk canvas for the custom grid. `nil` for non-fretboard templates. Encoded at creation
+    /// via `setFretboardContent`.
+    var defaultFretboardContent: FretboardContent? {
+        switch bespokeEditor {
+        case .run: return .run(.chromaticWarmup)
+        case .scale: return .scale(.aMinorPentatonic)
+        case .arpeggio: return .arpeggio(.aMinorSeventh)
+        case .fretboardGrid: return .custom(.spiderWalk)
+        case .strumming, .none: return nil
+        }
+    }
 
     /// The templates offered in the create picker, in menu order: the flexible **Basic** catch-all
     /// first (the default, no-fuss drill), then the bespoke Strumming, then the other techniques.
     static let creatable: [ExerciseTemplate] = [
-        .basic, .strumming, .scales, .chords, .picking,
+        .basic, .strumming, .scales, .arpeggios, .chords, .picking,
         .legato, .fingerstyle, .rhythm, .warmup, .earTraining, .theory
     ]
 }

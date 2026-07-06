@@ -10,6 +10,9 @@ struct NewExercisePlan {
     let template: ExerciseTemplate
     /// The authored strum pattern for a strumming template; `nil` for every other template.
     let strum: StrumPattern?
+    /// The authored fretboard content — a generated run or a custom drill — for a fretboard-family
+    /// template; `nil` for every other template.
+    let fretboard: FretboardContent?
 }
 
 /// Create a new exercise from within **Practice** (ADR 0046 / 0068 revised). Two steps: **pick a
@@ -79,6 +82,19 @@ private struct ConfigureExerciseForm: View {
     /// The authored strum pattern for a strumming template — seeded from the template default and
     /// re-gridded when the meter changes so the lane always matches the bar.
     @State private var strum: StrumPattern
+    /// The authored **generated run** for a warm-up-style fretboard template — seeded from the
+    /// template default. Not meter-bound: a run defines its own phrase length, so the meter change
+    /// doesn't re-grid it.
+    @State private var run: FretboardRun
+    /// The authored **scale run** for the Scales template — seeded from the template default. Not
+    /// meter-bound: a scale run defines its own phrase length.
+    @State private var scale: ScaleRun
+    /// The authored **arpeggio run** for the Arpeggios template — seeded from the template default.
+    /// Not meter-bound: an arpeggio run defines its own phrase length.
+    @State private var arpeggio: ArpeggioRun
+    /// The authored **custom drill** for the tap-to-place grid — seeded from the template default and
+    /// re-gridded on a meter change so its slots fill the bar.
+    @State private var customDrill: FretboardDrill
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
@@ -90,9 +106,16 @@ private struct ConfigureExerciseForm: View {
         self.create = create
         _command = State(initialValue: initialCommand)
         _signature = State(initialValue: initialSignature)
-        let seed = template.defaultStrumPattern ?? .downstrokes(beatsPerBar: initialSignature.beats)
-        _strum = State(initialValue: seed.resized(slotsPerBeat: seed.slotsPerBeat,
-                                                  beatsPerBar: initialSignature.beats))
+        let bars = initialSignature.beats
+        let strumSeed = template.defaultStrumPattern ?? .downstrokes(beatsPerBar: bars)
+        _strum = State(initialValue: strumSeed.resized(slotsPerBeat: strumSeed.slotsPerBeat,
+                                                       beatsPerBar: bars))
+        _run = State(initialValue: template.defaultFretboardContent?.runValue ?? .chromaticWarmup)
+        _scale = State(initialValue: template.defaultFretboardContent?.scaleValue ?? .aMinorPentatonic)
+        _arpeggio = State(initialValue: template.defaultFretboardContent?.arpeggioValue ?? .aMinorSeventh)
+        let drillSeed = template.defaultFretboardContent?.customValue ?? .spiderWalk
+        _customDrill = State(initialValue: drillSeed.resized(notesPerBeat: drillSeed.notesPerBeat,
+                                                             beatsPerBar: bars))
     }
 
     private var trimmedName: String {
@@ -108,7 +131,14 @@ private struct ConfigureExerciseForm: View {
             Section("Name") {
                 TextField(namePlaceholder, text: $name)
             }
-            if template.hasBespokeEditor { strumSection }
+            switch template.bespokeEditor {
+            case .strumming?: strumSection
+            case .run?: runSection
+            case .scale?: scaleSection
+            case .arpeggio?: arpeggioSection
+            case .fretboardGrid?: fretboardSection
+            case nil: EmptyView()
+            }
             Section {
                 EditableTempoRow(label: "Command tempo", caption: "fastest you own · BPM",
                                  value: command, tint: PocketColor.practice,
@@ -136,6 +166,8 @@ private struct ConfigureExerciseForm: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: signature) { _, meter in
             strum = strum.resized(slotsPerBeat: strum.slotsPerBeat, beatsPerBar: meter.beats)
+            customDrill = customDrill.resized(notesPerBeat: customDrill.notesPerBeat,
+                                              beatsPerBar: meter.beats)
         }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -173,18 +205,80 @@ private struct ConfigureExerciseForm: View {
         }
     }
 
+    private var runSection: some View {
+        Section {
+            FretboardRunEditor(run: $run)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("Fretboard run")
+        } footer: {
+            Text("Declare the run's shape — finger pattern, where it sits, how far it travels — and "
+                 + "it walks the board over the click. You can edit it later too.")
+        }
+    }
+
+    private var scaleSection: some View {
+        Section {
+            ScaleRunEditor(run: $scale)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("Scale run")
+        } footer: {
+            Text("Pick a scale and its root — the box walks the neck over the click. You can change "
+                 + "it later too.")
+        }
+    }
+
+    private var arpeggioSection: some View {
+        Section {
+            ArpeggioRunEditor(run: $arpeggio)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("Arpeggio run")
+        } footer: {
+            Text("Pick a quality and its root — the chord-tone box walks the neck over the click. "
+                 + "You can change it later too.")
+        }
+    }
+
+    private var fretboardSection: some View {
+        Section {
+            FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill)
+                .listRowBackground(Color.clear)
+        } header: {
+            Text("Fretboard drill")
+        } footer: {
+            Text("Build the note sequence on the board — it walks the fretboard over the click when "
+                 + "you run the drill. You can edit it later too.")
+        }
+    }
+
     private var namePlaceholder: String {
         switch template {
         case .strumming: return "e.g. Folk strum"
         case .scales: return "e.g. A minor pentatonic"
+        case .arpeggios: return "e.g. A minor 7 arpeggio"
         case .chords: return "e.g. G–C–D changes"
         default: return "e.g. Spider"
         }
     }
 
     private var plan: NewExercisePlan {
-        NewExercisePlan(name: trimmedName, command: command, signature: signature,
-                        template: template, strum: template.hasBespokeEditor ? strum : nil)
+        NewExercisePlan(name: trimmedName, command: command, signature: signature, template: template,
+                        strum: template.bespokeEditor == .strumming ? strum : nil,
+                        fretboard: fretboardContent)
+    }
+
+    /// The fretboard payload the plan carries — a generated run, a custom drill, or `nil` for a
+    /// non-fretboard template — matching which editor this template showed.
+    private var fretboardContent: FretboardContent? {
+        switch template.bespokeEditor {
+        case .run: return .run(run)
+        case .scale: return .scale(scale)
+        case .arpeggio: return .arpeggio(arpeggio)
+        case .fretboardGrid: return .custom(customDrill)
+        case .strumming, .none: return nil
+        }
     }
 }
 

@@ -131,10 +131,84 @@ instead of — the existing metronome/ramp engine. Nine rules govern it.
 1. **`strumming`** — self-contained, the visual is already designed (the
    down/up arrow lane), and it validates the whole template mechanism (kind +
    payload + renderer switch + pure slot-timing) on the simplest case.
-2. **`fretboard`** — the largest family, and the **same renderer** as the
-   tab→fretboard feature (`docs/research/feasibility-tab-to-fretboard.md`, Phase
-   R) and the future preset guides. Build the animated fretboard once, reuse it
-   three ways.
+2. **`fretboard`** *(implemented 2026-07-05)* — the largest family, and the **same
+   renderer** as the tab→fretboard feature
+   (`docs/research/feasibility-tab-to-fretboard.md`, Phase R) and the future preset
+   guides. Build the animated fretboard once, reuse it three ways. Landed as
+   `FretboardDrill` (pure timing math) + `FretboardGrid`/`FretboardView` (the skin),
+   with `.scales`/`.picking`/`.legato`/`.fingerstyle`/`.warmup` templates all pointing
+   `renderer` at `.fretboard`, and a seeded "Chromatic Warm-up" preset (v3 batch). The **authoring editor** followed in the same body of work
+   (`FretboardDrillEditor`): the "steps lane + tap-to-place" model — a subdivision
+   segmented control (¼/⅛/triplet/1⁄16, re-gridding via `resized`), a slot strip, an
+   interactive board that writes the selected slot via `replacingNote`, and a
+   fret-position window so drills can sit anywhere on the neck. With an editor in hand,
+   a fretboard-family template now seeds a `defaultFretboardDrill` (spider-walk canvas)
+   at creation — the inverse of the renderer-only slice, where a payload-free family
+   template deliberately fell back to the metronome. The host sheets pick the editor via
+   `ExerciseTemplate.bespokeEditor`.
+
+   - **Authoring by generation, not placement.** The tap-to-place grid above makes the
+     player do the teacher's job — hand-place every note — and device testing found it
+     fiddly with a confusing up-front subdivision control. The pivot: **you declare the
+     *shape* and the app generates the notes.** A `FretboardRun` recipe is a *movable*
+     finger pattern — finger numbers (`1-3-2-4`) anchored to a **base fret**, travelling a
+     **string span**, optionally **up and back** — expanded (pure) into the same
+     `FretboardDrill` the renderer plays; change the span and the whole run re-generates,
+     nothing is dragged. `FretboardRunEditor` skins it, with a **live `FretboardDrillPreview`**
+     (self-driving clock, no engine) so the run is visible before it's saved, and the
+     subdivision demoted to an "Advanced" disclosure (default eighths). The payload is a
+     discriminated `FretboardContent` (`.run` | `.custom`) so the generative editor and the
+     grid coexist on one blob; `Exercise.fretboardContent` best-effort decodes a legacy
+     bare-`FretboardDrill` blob into `.custom` for back-compat. **Editors are now
+     template-specific, not merely renderer-derived** (`bespokeEditor`: `.strumming` /
+     `.run` / `.scale` / `.fretboardGrid` / nil): Warm-up/Picking/Legato/Fingerstyle declare
+     a run and seed a real chromatic warm-up at creation (`defaultFretboardContent`).
+
+   - **Scale library (Slice 2, landed) — generated, not hand-drawn.** Scales are *picked*, not
+     placed: a `GuitarScale` is just an **interval formula** (e.g. major `0 2 4 5 7 9 11`), and a
+     `ScaleRun` recipe (scale + root + **position** + **octaves** + up-and-back + subdivision,
+     `FretboardContent.scale`) **generates** the notes onto the neck — so every scale is correct
+     by construction and a new scale costs one line. The generator is a **four-fret hand box**: it
+     starts on the position's tonic and climbs scale tones, moving to the next string whenever the
+     next tone would leave the box the current string opened on. Notes-per-string therefore *vary*
+     the way a real CAGED shape does (the A-major E-shape is 2·3·3·3·2·2, not a flat count) — the fix
+     for boxes with a fixed per-string count "falling apart" past the first octave (the blues, which
+     is a pentatonic-plus-tritone, and the diatonic scales). **Positions** (1…`positionCount`, one per
+     scale tone — 5 for a pentatonic, 7 diatonic) climb the neck by anchoring on successive scale
+     tones; **octaves** (capped at 2) trim the run root-to-root. `ScaleRunEditor` is menus + a
+     position stepper + an octave toggle over a live preview. Correctness is guaranteed by a test
+     asserting every generated run (all scales × positions × octaves) is in-scale, strictly
+     ascending, and spans exactly the requested octaves (count `= octaves × scaleSize + 1`) — the
+     net that makes generation safe (T8: common-practice vocabulary, in-house). First set:
+     minor/major pentatonic, major, natural minor, blues; a seeded "A Minor Pentatonic" ships (v4).
+     The tap-to-place grid (`.fretboardGrid`) is **retained as the general custom escape hatch**,
+     though no template selects it by default now.
+
+   - **Arpeggio library (Slice 3, landed) — its own category, same boxes.** Arpeggios are a *separate*
+     template (`.arpeggios`) so the option lists stay short, but they generate from the identical five
+     `CAGEDShape` boxes: `ArpeggioQuality` (major, minor, maj7, min7, dominant 7) is an interval
+     formula plus the *relative major* whose box it borrows, chosen so every chord tone is diatonic to
+     that major (major/maj7 → 0; minor/min7 → +3; dominant 7 → +5, its V7 parent), and `ArpeggioRun`
+     places the box and filters it to the chord tones — the box+filter generator (`CAGEDShape`) is now
+     shared by scales and arpeggios. `FretboardContent.arpeggio`, an `ArpeggioRunEditor`, and a seeded
+     "A Minor 7 Arpeggio" (v5). A **CAGED + triads** category remains a noted future.
+
+   - **Exercise-audio seam (scaffold).** `ExerciseAudioEngine` (a `Sendable` protocol), an
+     `AccompanimentSettings`/`AccompanimentStyle` shape, and a SwiftUI `\.exerciseAudio` environment
+     value default to a `SilentExerciseAudio` no-op; a `SoundPreviewButton` reads `isAvailable` and
+     reads "Sound soon" until a real backend is injected at the app root. The audio itself is deferred;
+     only the boundary, settings shape and injection point are factored in now, so it slots in with no
+     call-site churn.
+
+   - **Grid narrowing.** The fretboard drills this serves are *even runs* (one note
+     per subdivision), so `FretboardDrill` narrows T4's `{string, fret, beat}` event
+     list to an evenly-gridded `[FretNote?]` with `notesPerBeat` (`beat = index /
+     notesPerBeat`), `nil` = rest — reusing the exact wrap/active-index math proven for
+     `StrumPattern` rather than a second timing model. Arbitrary-beat events are
+     deferred until a drill needs an uneven rhythm; the in-band `version` lets that
+     arrive as a decode-time upgrade with no store migration (T4). The display fret
+     window is *derived* from the notes (min fretted → span, min width 4), so the
+     payload stays lean.
 3. **`chords`** — a chord diagram is a fretboard subset, so it rides on (2).
 4. **`flashcard`** — a different interaction (no metronome); deferred until an
    off-guitar practice surface is wanted.

@@ -33,7 +33,11 @@ final class PracticePresetsTests: XCTestCase {
     }
 
     func testEveryPresetShipsWithACuratedTemplate() {
-        let all = PracticePresets.makeExercises() + PracticePresets.makeExercises(PracticePresets.templateSpecs)
+        let all = PracticePresets.makeExercises()
+            + PracticePresets.makeExercises(PracticePresets.templateSpecs)
+            + PracticePresets.makeExercises(PracticePresets.fretboardSpecs)
+            + PracticePresets.makeExercises(PracticePresets.scaleSpecs)
+            + PracticePresets.makeExercises(PracticePresets.arpeggioSpecs)
         for exercise in all {
             XCTAssertNotEqual(exercise.template, .basic,
                               "\(exercise.name) should ship with a specific (non-basic) template")
@@ -52,6 +56,44 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertTrue(strumming?.hasMeasuredCommand ?? false)
     }
 
+    // MARK: - Fretboard batch (ADR 0065 build 2)
+
+    func testFretboardSpecsShipAGeneratedRunExercise() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.fretboardSpecs)
+        XCTAssertEqual(exercises.count, 1)
+        let fretboard = try? XCTUnwrap(exercises.first)
+        XCTAssertEqual(fretboard?.kind, .fretboard)
+        // Ships the generated chromatic warm-up recipe, and the run screen sees its expanded drill.
+        XCTAssertEqual(fretboard?.fretboardContent, .run(.chromaticWarmup))
+        XCTAssertEqual(fretboard?.fretboardDrill, FretboardRun.chromaticWarmup.expanded())
+        XCTAssertTrue(fretboard?.hasMeasuredCommand ?? false)
+    }
+
+    // MARK: - Scale library batch (ADR 0065 build 2, Slice 2)
+
+    func testScaleSpecsShipAScaleRunExercise() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.scaleSpecs)
+        XCTAssertEqual(exercises.count, 1)
+        let scale = try? XCTUnwrap(exercises.first)
+        XCTAssertEqual(scale?.kind, .fretboard)
+        XCTAssertEqual(scale?.fretboardContent, .scale(.aMinorPentatonic))
+        XCTAssertEqual(scale?.fretboardDrill, ScaleRun.aMinorPentatonic.expanded())
+        XCTAssertTrue(scale?.hasMeasuredCommand ?? false)
+    }
+
+    // MARK: - Arpeggio library batch (ADR 0065 build 2, Slice 3)
+
+    func testArpeggioSpecsShipAnArpeggioRunExercise() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.arpeggioSpecs)
+        XCTAssertEqual(exercises.count, 1)
+        let arpeggio = try? XCTUnwrap(exercises.first)
+        XCTAssertEqual(arpeggio?.template, .arpeggios)
+        XCTAssertEqual(arpeggio?.kind, .fretboard)
+        XCTAssertEqual(arpeggio?.fretboardContent, .arpeggio(.aMinorSeventh))
+        XCTAssertEqual(arpeggio?.fretboardDrill, ArpeggioRun.aMinorSeventh.expanded())
+        XCTAssertTrue(arpeggio?.hasMeasuredCommand ?? false)
+    }
+
     // MARK: - Seed-once guard
 
     func testSeedIfNeededInsertsBothBatchesOnceThenIsIdempotent() throws {
@@ -61,6 +103,8 @@ final class PracticePresetsTests: XCTestCase {
         let defaults = try freshDefaults()
 
         let total = PracticePresets.specs.count + PracticePresets.templateSpecs.count
+            + PracticePresets.fretboardSpecs.count + PracticePresets.scaleSpecs.count
+            + PracticePresets.arpeggioSpecs.count
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
 
@@ -69,9 +113,9 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
     }
 
-    /// An existing user who already has the v1 set (its flag set) still gains the v2 template
-    /// batch on the next launch — the additive-upgrade guarantee (T9).
-    func testTemplateBatchSeedsForAnExistingV1User() throws {
+    /// An existing user who already has the v1 set (its flag set) still gains the later template
+    /// batches (v2 strumming, v3 fretboard) on the next launch — the additive-upgrade guarantee (T9).
+    func testLaterBatchesSeedForAnExistingV1User() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: Exercise.self, configurations: config)
         let context = ModelContext(container)
@@ -82,8 +126,11 @@ final class PracticePresetsTests: XCTestCase {
 
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         let fetched = try context.fetch(FetchDescriptor<Exercise>())
-        XCTAssertEqual(fetched.count, PracticePresets.templateSpecs.count)
-        XCTAssertEqual(fetched.first?.kind, .strumming)
+        XCTAssertEqual(fetched.count,
+                       PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count
+                       + PracticePresets.scaleSpecs.count + PracticePresets.arpeggioSpecs.count)
+        // All newer batches arrive (fetch order isn't insertion order, so check the set).
+        XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard])
     }
 
     func testDeletedPresetsDoNotReturnOnNextSeed() throws {

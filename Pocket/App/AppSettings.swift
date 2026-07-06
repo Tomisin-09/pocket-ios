@@ -34,6 +34,7 @@ enum AppSettings {
         static let countInBars = "countInBars"
         static let keepScreenAwake = "keepScreenAwake"
         static let appearance = "appearance"
+        static let exerciseAnimates = "exerciseAnimates"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -55,6 +56,11 @@ enum AppSettings {
     /// Keep the screen awake on the practice/metronome surfaces. Default on — you play
     /// along hands-free, so the screen auto-locking mid-session is the wrong default.
     static var keepScreenAwake: Bool { bool(Key.keepScreenAwake) }
+
+    /// Whether an exercise's walking highlight animates — the fretboard board and the strum lane
+    /// both read this. Default **off** as a photosensitivity precaution; the views also force it off
+    /// under the system Reduce Motion setting.
+    static var exerciseAnimates: Bool { bool(Key.exerciseAnimates, default: false) }
 
     /// Appearance override. Default `.system` — the app follows the device setting until
     /// the user opts into a pinned light/dark appearance.
