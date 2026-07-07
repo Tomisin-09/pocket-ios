@@ -13,8 +13,10 @@ struct RoutineLibraryView: View {
     @Environment(\.modelContext) private var context
     @Query private var routines: [Routine]
 
-    /// The just-created routine to navigate into — set when `+` is tapped, drives the push.
-    @State private var newRoutine: Routine?
+    /// Drives the push into a fresh-routine editor. The new routine isn't created here — the
+    /// editor builds it in its own sandbox and only persists it on Save, so an abandoned
+    /// "New routine" never lands in the library.
+    @State private var creatingNew = false
 
     /// Newest first — the same default sort key as the other libraries (`dateAdded`).
     private var ordered: [Routine] {
@@ -31,9 +33,7 @@ struct RoutineLibraryView: View {
                     .listRowBackground(PocketColor.background)
             } else {
                 ForEach(ordered) { routine in
-                    NavigationLink {
-                        RoutineDetailView(routine: routine)
-                    } label: {
+                    NavigationLink(value: routine) {
                         row(for: routine)
                     }
                     .listRowBackground(PocketColor.background)
@@ -47,12 +47,17 @@ struct RoutineLibraryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { create() } label: { Image(systemName: "plus") }
+                Button { creatingNew = true; haptic(.light) } label: { Image(systemName: "plus") }
                     .tint(PocketColor.practice)
                     .accessibilityLabel("New routine")
             }
         }
-        .navigationDestination(item: $newRoutine) { RoutineDetailView(routine: $0) }
+        .navigationDestination(for: Routine.self) { routine in
+            RoutineDetailView(container: context.container, existing: routine)
+        }
+        .navigationDestination(isPresented: $creatingNew) {
+            RoutineDetailView(container: context.container, existing: nil)
+        }
     }
 
     /// A routine row — name (or a placeholder) and a one-line summary of its blocks.
@@ -77,15 +82,6 @@ struct RoutineLibraryView: View {
         var parts = ["\(units) unit\(units == 1 ? "" : "s")"]
         if rests > 0 { parts.append("\(rests) rest\(rests == 1 ? "" : "s")") }
         return parts.joined(separator: " · ")
-    }
-
-    /// Create an empty routine and navigate straight into the editor to name and fill it —
-    /// authoring is multi-step, so we open the workspace rather than a one-shot name sheet.
-    private func create() {
-        let routine = Routine()
-        context.insert(routine)
-        newRoutine = routine
-        haptic(.medium)
     }
 
     private func delete(_ offsets: IndexSet) {

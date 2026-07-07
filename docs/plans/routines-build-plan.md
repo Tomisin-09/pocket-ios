@@ -170,10 +170,21 @@ Session-level transport over the existing per-unit engines (R6). The new thing i
   natural length; the time-budget (ADR 0014) becomes a *planning-time* concern for the
   future planner, not a runtime clock. (Alternative: explicit per-block time-box.
   Prefer natural completion; note the fork.)
-- **Song handoff is the hard part** and is **deferred**: a Song block reuses the full
-  waveform practice screen as its player, so the transport must hand off to and return
-  from a full screen, not only the compact run screens. Exercise+loop routines run
-  entirely in compact screens → ship those first, add Song handoff after.
+- **Song block player — audio-only, no waveform (decided 2026-07-07).** Earlier this was
+  flagged as "the hard part" because a Song block was assumed to reuse the full
+  `WaveformPracticeView`. **We are not reproducing the waveform.** A Song block instead
+  gets a **minimal, branded audio play-along**: pick tempo, play/pause, **−10 s / +10 s**,
+  and nothing else — "just play along." It still runs on the existing local-file audio
+  engine (`PracticeAudioEngine`), so tempo change = time-stretch and therefore **works
+  only on DRM-free local/iCloud files** (ADR 0001) — Apple-Music-sourced songs can't be
+  time-stretched, the same wall as everywhere else. This removes the full-screen handoff
+  problem: every block (exercise, loop, song) now runs in a compact screen, so Song items
+  no longer have to be deferred *for handoff reasons* — they're gated only on building this
+  small player. Capture it in the slice-3 player ADR alongside the auto-advance decision.
+- **No performance feedback (ADR 0070, Accepted).** The player never grades the take —
+  no scoring, no pitch/timing detection, no pass/fail. Block completion is the material's
+  natural length, never "play it right to advance." The player is the judge; the app just
+  reflects the session back. Build the player with **zero** evaluation surface.
 
 ---
 

@@ -1,14 +1,19 @@
 import SwiftUI
 
-/// One block in the routine editor (ADR 0066, slice 2): a kind badge plus the referenced
-/// unit's title and progress line, or a plain "Rest" / "Unit removed" for a rest or an
-/// orphaned block. Read-only display; the editor owns reorder/delete/kind changes.
+/// One block in the routine editor (ADR 0066, slice 2): a type icon plus the referenced
+/// unit's title and progress line — or a plain "Rest" / "Unit removed" for a rest or an
+/// orphaned block. Read-only display; the editor owns reorder/delete.
+///
+/// Blocks carry no user-editable *kind* (Focus/Warm-up/Play) in the manual editor — every
+/// unit block is focused work and rests are authored separately, so there's no
+/// category-picker to juggle across two entity types (that collided with the exercise
+/// template names, e.g. a "Warm-up" template vs a warm-up block).
 struct RoutineItemRow: View {
     let item: RoutineItem
 
     var body: some View {
         HStack(spacing: 12) {
-            kindBadge
+            icon
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.futura(.body))
@@ -17,28 +22,36 @@ struct RoutineItemRow: View {
                 if let subtitle {
                     Text(subtitle)
                         .font(.futura(.caption))
-                        .foregroundStyle(item.isOrphaned ? PocketColor.textSecondary
-                                                          : PocketColor.practice)
+                        .foregroundStyle(item.isOrphaned || item.kind == .rest
+                                         ? PocketColor.textSecondary : PocketColor.practice)
                 }
             }
             Spacer(minLength: 4)
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.kind.displayName). \(title). \(subtitle ?? "")")
+        .accessibilityLabel("\(title). \(subtitle ?? "")")
     }
 
-    /// A small pill naming the block kind — the routine's structural rhythm at a glance.
-    private var kindBadge: some View {
-        Text(item.kind.displayName.uppercased())
-            .font(.futura(.caption2, weight: .bold))
-            .tracking(0.5)
-            .foregroundStyle(item.kind == .rest ? PocketColor.textSecondary
-                                                : PocketColor.practice)
-            .frame(width: 62)
-            .padding(.vertical, 5)
-            .background(Capsule().fill(item.kind == .rest ? PocketColor.barPlayed
-                                                          : PocketColor.practiceCircleWash))
+    /// A small type glyph — the exercise's template icon, a loop/rest symbol — washed in the
+    /// practice tint (a rest is muted). Keeps the routine's rhythm scannable at a glance.
+    private var icon: some View {
+        Image(systemName: symbolName)
+            .font(.futura(.body))
+            .foregroundStyle(item.kind == .rest || item.isOrphaned
+                             ? PocketColor.textSecondary : PocketColor.practice)
+            .frame(width: 34, height: 34)
+            .background(Circle().fill(item.kind == .rest || item.isOrphaned
+                                      ? PocketColor.barPlayed : PocketColor.practiceCircleWash))
+    }
+
+    private var symbolName: String {
+        if item.kind == .rest { return "pause.fill" }
+        if item.isOrphaned { return "questionmark" }
+        if let exercise = item.exercise { return exercise.template.iconName }
+        if item.loop != nil { return "repeat" }
+        if item.song != nil { return "music.note" }
+        return "questionmark"
     }
 
     /// The block's headline: the unit's name, "Rest", or an orphaned marker.
