@@ -1,72 +1,50 @@
 import SwiftData
 import SwiftUI
 
-/// The **add-unit picker** for the routine editor (ADR 0066, slice 2): a sheet listing the
-/// units you can drop into a routine, grouped into categories so a long library stays
-/// scannable — **Exercises by template** (Warm-up, Scales, Arpeggios, …, the same taxonomy
-/// as the Exercises library) then **Loops by song**. Exercises come first (the
+/// The **add-unit picker** for the routine editor (ADR 0066, slice 2), structured like the
+/// Apple Music **Library** root: a short list of **buckets** you drill into — **Exercises**,
+/// **Loops** (and **Songs** once the player runs them, slice 3) — over a **Recently Added**
+/// shortcut so the newest unit is one tap away without drilling. Exercises come first (the
 /// exercises-first direction — technique mode, audio-free, works with an empty library).
 ///
-/// Songs are intentionally absent until the player can run them (slice 3); a routine is
-/// exercise/loop-only for now. Pure picker: it reports the chosen unit through a callback and
-/// dismisses; the editor owns creating the `RoutineItem` and ordering it.
+/// Picking a unit fires the matching callback; the editor both creates the `RoutineItem` and
+/// closes this sheet (by flipping its presentation flag), so a pick from any depth dismisses.
 struct AddRoutineUnitSheet: View {
-    @Environment(\.dismiss) private var dismiss
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
     @Query(sort: \Loop.name) private var loops: [Loop]
+    @Environment(\.dismiss) private var dismiss
 
     let onPickExercise: (Exercise) -> Void
     let onPickLoop: (Loop) -> Void
 
-    /// Exercises grouped by their template, in the canonical template order (`allCases`), so the
-    /// sections read the same as the Exercises library. Only non-empty groups are shown.
-    private var exerciseGroups: [(title: String, items: [Exercise])] {
-        ExerciseTemplate.allCases.compactMap { template in
-            let matches = exercises.filter { $0.template == template }
-            return matches.isEmpty ? nil : (template.displayName, matches)
-        }
-    }
-
-    /// Trainable loops (a measured command tempo — the same gate as the loop library) grouped by
-    /// their song title, alphabetically; loose loops fall under "Other".
-    private var loopGroups: [(title: String, items: [Loop])] {
-        let trainable = loops.filter { $0.commandTempo != nil }
-        let grouped = Dictionary(grouping: trainable) { loop -> String in
-            let title = loop.song?.title ?? ""
-            return title.isEmpty ? "Other" : title
-        }
-        return grouped.keys.sorted().map { ($0, grouped[$0] ?? []) }
-    }
+    /// Only loops with a measured command tempo are trainable in a routine (the same gate as the
+    /// loop library — an unmeasured loop has no ramp for the player to run).
+    private var trainableLoops: [Loop] { loops.filter { $0.commandTempo != nil } }
 
     var body: some View {
         NavigationStack {
             List {
-                if exercises.isEmpty && loopGroups.isEmpty {
-                    emptyHint("Nothing to add yet — create an exercise, or measure a loop's "
-                              + "command tempo, then build a routine from it.")
-                }
-                ForEach(exerciseGroups, id: \.title) { group in
-                    Section(group.title) {
-                        ForEach(group.items) { exercise in
-                            pickButton(title: exercise.name.isEmpty ? "Untitled" : exercise.name,
-                                       context: nil,
-                                       progress: "Command \(exercise.command) → "
-                                        + "\(exercise.derivedTarget) BPM") {
-                                onPickExercise(exercise)
-                            }
-                        }
+                Section {
+                    NavigationLink {
+                        UnitPickList(title: "Exercises", rows: exerciseRows)
+                    } label: {
+                        bucketRow(title: "Exercises", subtitle: "Click-only command drills",
+                                  icon: "metronome", count: exercises.count)
                     }
+                    .listRowBackground(PocketColor.background)
+
+                    NavigationLink {
+                        UnitPickList(title: "Loops", rows: loopRows)
+                    } label: {
+                        bucketRow(title: "Loops", subtitle: "Measured song loops",
+                                  icon: "repeat", count: trainableLoops.count)
+                    }
+                    .listRowBackground(PocketColor.background)
                 }
-                ForEach(loopGroups, id: \.title) { group in
-                    Section("Loops · \(group.title)") {
-                        ForEach(group.items) { loop in
-                            pickButton(title: loop.name.isEmpty ? "Untitled loop" : loop.name,
-                                       context: loop.song?.title,
-                                       progress: "Command "
-                                        + "\(Int((loop.command * 100).rounded()))%") {
-                                onPickLoop(loop)
-                            }
-                        }
+
+                if !recentlyAdded.isEmpty {
+                    Section("Recently Added") {
+                        ForEach(recentlyAdded) { pickButton(for: $0) }
                     }
                 }
             }
@@ -84,22 +62,121 @@ struct AddRoutineUnitSheet: View {
         .presentationDetents([.large])
     }
 
-    private func pickButton(title: String, context: String?, progress: String,
-                            action: @escaping () -> Void) -> some View {
-        Button {
-            action()
-            haptic(.medium)
-            dismiss()
-        } label: {
-            PracticeUnitRow(title: title, context: context, progress: progress)
+    // MARK: - Rows
+
+    /// A bucket row — icon, name, one-line description, and a count — mirroring the Practice hub
+    /// and the Apple Music Library buckets.
+    private func bucketRow(title: String, subtitle: String, icon: String, count: Int) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.futura(.title3))
+                .foregroundStyle(PocketColor.practice)
+                .frame(width: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.futura(.body))
+                    .foregroundStyle(PocketColor.textPrimary)
+                Text(subtitle)
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            Spacer(minLength: 8)
+            Text("\(count)")
+                .font(.pocketMono(.body))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        .padding(.vertical, 2)
+        .accessibilityLabel("\(title), \(count)")
+    }
+
+    private func pickButton(for row: PickRow) -> some View {
+        Button { row.pick() } label: {
+            PracticeUnitRow(title: row.title, context: row.context, progress: row.progress)
         }
         .listRowBackground(PocketColor.background)
     }
 
-    private func emptyHint(_ text: String) -> some View {
-        Text(text)
-            .font(.futura(.footnote))
-            .foregroundStyle(PocketColor.textSecondary)
-            .listRowBackground(PocketColor.background)
+    // MARK: - Row data
+
+    private var exerciseRows: [PickRow] {
+        exercises.map { exercise in
+            PickRow(id: exercise.uid, title: exercise.name.isEmpty ? "Untitled" : exercise.name,
+                    context: nil,
+                    progress: "Command \(exercise.command) → \(exercise.derivedTarget) BPM",
+                    pick: { onPickExercise(exercise) })
+        }
     }
+
+    private var loopRows: [PickRow] {
+        trainableLoops.map { loop in
+            PickRow(id: loop.uid, title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+                    context: loop.song?.title,
+                    progress: "Command \(Int((loop.command * 100).rounded()))%",
+                    pick: { onPickLoop(loop) })
+        }
+    }
+
+    /// The newest units across both types, one tap away. Exercises carry a real `dateAdded`;
+    /// loops have none, so their parent song's added date stands in (a loop's recency ≈ its
+    /// song's) — good enough for a shortcut, and undated units simply sink.
+    private var recentlyAdded: [PickRow] {
+        let dated: [(date: Date, row: PickRow)] =
+            exercises.map { ($0.dateAdded, exerciseRow($0)) }
+            + trainableLoops.map { ($0.song?.dateAdded ?? .distantPast, loopRow($0)) }
+        return dated.sorted { $0.date > $1.date }.prefix(6).map(\.row)
+    }
+
+    private func exerciseRow(_ exercise: Exercise) -> PickRow {
+        PickRow(id: exercise.uid, title: exercise.name.isEmpty ? "Untitled" : exercise.name,
+                context: nil,
+                progress: "Command \(exercise.command) → \(exercise.derivedTarget) BPM",
+                pick: { onPickExercise(exercise) })
+    }
+
+    private func loopRow(_ loop: Loop) -> PickRow {
+        PickRow(id: loop.uid, title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+                context: loop.song?.title,
+                progress: "Command \(Int((loop.command * 100).rounded()))%",
+                pick: { onPickLoop(loop) })
+    }
+}
+
+/// A flat, tappable list of pickable units — the drill-in destination for a bucket. Kept
+/// dumb (a rendered array of `PickRow`) so the sheet owns all querying.
+private struct UnitPickList: View {
+    let title: String
+    let rows: [PickRow]
+
+    var body: some View {
+        List {
+            if rows.isEmpty {
+                Text("Nothing here yet.")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .listRowBackground(PocketColor.background)
+            } else {
+                ForEach(rows) { row in
+                    Button { row.pick() } label: {
+                        PracticeUnitRow(title: row.title, context: row.context,
+                                        progress: row.progress)
+                    }
+                    .listRowBackground(PocketColor.background)
+                }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(PocketColor.background.ignoresSafeArea())
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// A single pickable unit projected for display — the row's text plus the action that adds it
+/// to the routine. Decouples the list UI from `Exercise`/`Loop` so both flow through one row.
+private struct PickRow: Identifiable {
+    let id: UUID
+    let title: String
+    let context: String?
+    let progress: String
+    let pick: () -> Void
 }

@@ -110,7 +110,10 @@ struct RoutineDetailView: View {
             }
         }
         .sheet(isPresented: $addingUnit) {
-            AddRoutineUnitSheet(onPickExercise: addExercise, onPickLoop: addLoop)
+            // Closing the sheet from the parent (not from inside the picker) means a pick from
+            // any drill-in depth dismisses cleanly — a child's own dismiss would only pop.
+            AddRoutineUnitSheet(onPickExercise: { addExercise($0); addingUnit = false },
+                                onPickLoop: { addLoop($0); addingUnit = false })
         }
     }
 
