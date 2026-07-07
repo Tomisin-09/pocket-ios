@@ -34,6 +34,14 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Practice routines — manual authoring (ADR 0066, slice 2).** A **Routines** entry in the
+  Practice hub opens a routines library where you build a session by hand: create a routine,
+  name it, and add **exercise** and **loop** blocks (Exercises first, the exercises-first
+  direction), insert rests between them, drag to reorder, and change a block's kind
+  (Focus / Warm-up / Play). Deleting a routine leaves its referenced units untouched; a unit
+  deleted elsewhere shows as a skipped "Unit removed" block rather than breaking the routine.
+  Song blocks are intentionally deferred until the player can hand off to the waveform screen
+  (slice 3). Authoring only — the auto-advancing player is the next slice.
 - **Practice routines — the session container (ADR 0066, slice 1).** New `Routine` and
   `RoutineItem` SwiftData models: a routine is an ordered list of typed blocks
   (`focused` / `warmup` / `play` / `rest`), each non-rest block **referencing** exactly one

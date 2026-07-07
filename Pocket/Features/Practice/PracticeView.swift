@@ -18,6 +18,7 @@ import SwiftUI
 struct PracticeView: View {
     @Query private var exercises: [Exercise]
     @Query private var allLoops: [Loop]
+    @Query private var routines: [Routine]
 
     /// Count of trainable loops — those with a measured command tempo (in-memory filter, not a
     /// SwiftData optional `#Predicate`, which starves the main thread; see `PracticeRunUITests`).
@@ -27,6 +28,10 @@ struct PracticeView: View {
         List {
             Section {
                 plannerCard
+                libraryRow(title: "Routines", subtitle: "Hand-built practice sessions",
+                           icon: "list.bullet.rectangle.portrait", count: routines.count) {
+                    RoutineLibraryView()
+                }
             }
             Section("Your units") {
                 libraryRow(title: "Exercises", subtitle: "Click-only command drills",
@@ -116,7 +121,7 @@ struct PracticeView: View {
 
 #Preview("Practice hub") {
     // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Exercise.self, Song.self,
+    let container = try! ModelContainer(for: Exercise.self, Song.self, Routine.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
     container.mainContext.insert(Exercise(name: "Alternating picking",
                                           currentTempo: 70, commandTempo: 96))

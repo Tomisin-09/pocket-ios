@@ -45,4 +45,19 @@ enum RoutineItemKind: String, CaseIterable, Identifiable, Codable {
     /// only `focused` does. Warm-up and play are surfaced but unbudgeted; a rest is a
     /// break, not work.
     var isBudgeted: Bool { self == .focused }
+
+    /// Short human label for the block badge in the routine editor/player. UI text only —
+    /// still Foundation-free, so the pure layer stays importable everywhere.
+    var displayName: String {
+        switch self {
+        case .focused: return "Focus"
+        case .warmup: return "Warm-up"
+        case .play: return "Play"
+        case .rest: return "Rest"
+        }
+    }
+
+    /// The kinds a *unit* block (exercise/loop/song) can take — everything that carries a
+    /// unit. Drives the kind picker in the editor; `rest` is authored separately.
+    static var unitKinds: [RoutineItemKind] { allCases.filter(\.carriesUnit) }
 }
