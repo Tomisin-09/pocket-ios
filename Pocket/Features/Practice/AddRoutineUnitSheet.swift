@@ -2,10 +2,12 @@ import SwiftData
 import SwiftUI
 
 /// The **add-unit picker** for the routine editor (ADR 0066, slice 2), structured like the
-/// Apple Music **Library** root: a short list of **buckets** you drill into — **Exercises**,
-/// **Loops** (and **Songs** once the player runs them, slice 3) — over a **Recently Added**
-/// shortcut so the newest unit is one tap away without drilling. Exercises come first (the
-/// exercises-first direction — technique mode, audio-free, works with an empty library).
+/// Apple Music **Library** — two levels deep, exactly like Library → Artists → an artist's
+/// tracks. The root lists **buckets** (**Exercises**, **Loops**; **Songs** once the player runs
+/// them, slice 3) over a **Recently Added** shortcut. Drilling a bucket lands not on a flat list
+/// but on its **sub-buckets** — Exercises group by their **template** (Strumming, Scales …),
+/// Loops group by their **song** — and one more tap opens that group's units. Exercises come
+/// first (the exercises-first direction — technique mode, audio-free, works with an empty library).
 ///
 /// Picking a unit fires the matching callback; the editor both creates the `RoutineItem` and
 /// closes this sheet (by flipping its presentation flag), so a pick from any depth dismisses.
@@ -26,17 +28,17 @@ struct AddRoutineUnitSheet: View {
             List {
                 Section {
                     NavigationLink {
-                        UnitPickList(title: "Exercises", rows: exerciseRows)
+                        GroupPickList(title: "Exercises", groups: exerciseGroups)
                     } label: {
-                        bucketRow(title: "Exercises", subtitle: "Click-only command drills",
+                        bucketRow(title: "Exercises", subtitle: "By template",
                                   icon: "metronome", count: exercises.count)
                     }
                     .listRowBackground(PocketColor.background)
 
                     NavigationLink {
-                        UnitPickList(title: "Loops", rows: loopRows)
+                        GroupPickList(title: "Loops", groups: loopGroups)
                     } label: {
-                        bucketRow(title: "Loops", subtitle: "Measured song loops",
+                        bucketRow(title: "Loops", subtitle: "By song",
                                   icon: "repeat", count: trainableLoops.count)
                     }
                     .listRowBackground(PocketColor.background)
@@ -96,23 +98,31 @@ struct AddRoutineUnitSheet: View {
         .listRowBackground(PocketColor.background)
     }
 
-    // MARK: - Row data
+    // MARK: - Grouped data
 
-    private var exerciseRows: [PickRow] {
-        exercises.map { exercise in
-            PickRow(id: exercise.uid, title: exercise.name.isEmpty ? "Untitled" : exercise.name,
-                    context: nil,
-                    progress: "Command \(exercise.command) → \(exercise.derivedTarget) BPM",
-                    pick: { onPickExercise(exercise) })
+    /// Exercises bucketed by their (immutable) **template**, in the create-menu order (`creatable`),
+    /// dropping templates with no exercises. Each group drills into its own unit list.
+    private var exerciseGroups: [PickGroup] {
+        let byTemplate = Dictionary(grouping: exercises, by: \.template)
+        return ExerciseTemplate.creatable.compactMap { template in
+            guard let members = byTemplate[template], !members.isEmpty else { return nil }
+            return PickGroup(id: template.rawValue, title: template.displayName,
+                             icon: template.iconName, rows: members.map(exerciseRow))
         }
     }
 
-    private var loopRows: [PickRow] {
-        trainableLoops.map { loop in
-            PickRow(id: loop.uid, title: loop.name.isEmpty ? "Untitled loop" : loop.name,
-                    context: loop.song?.title,
-                    progress: "Command \(Int((loop.command * 100).rounded()))%",
-                    pick: { onPickLoop(loop) })
+    /// Trainable loops bucketed by their **song**, songs A→Z, loops with no song collected under
+    /// "No song" last. Each group drills into its own unit list.
+    private var loopGroups: [PickGroup] {
+        let bySong = Dictionary(grouping: trainableLoops) { $0.song?.title ?? "" }
+        return bySong.keys.sorted { lhs, rhs in
+            if lhs.isEmpty != rhs.isEmpty { return !lhs.isEmpty }  // "No song" sinks to the bottom
+            return lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
+        }.map { key in
+            let members = bySong[key] ?? []
+            return PickGroup(id: key.isEmpty ? "\u{0}nosong" : key,
+                             title: key.isEmpty ? "No song" : key,
+                             icon: "music.note", rows: members.map(loopRow))
         }
     }
 
@@ -141,8 +151,53 @@ struct AddRoutineUnitSheet: View {
     }
 }
 
-/// A flat, tappable list of pickable units — the drill-in destination for a bucket. Kept
-/// dumb (a rendered array of `PickRow`) so the sheet owns all querying.
+/// A list of **sub-buckets** — the middle level of the picker (Exercises→templates,
+/// Loops→songs). Each row is a group that drills into its `UnitPickList`. Kept dumb (a rendered
+/// array of `PickGroup`) so the sheet owns all querying.
+private struct GroupPickList: View {
+    let title: String
+    let groups: [PickGroup]
+
+    var body: some View {
+        List {
+            if groups.isEmpty {
+                Text("Nothing here yet.")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .listRowBackground(PocketColor.background)
+            } else {
+                ForEach(groups) { group in
+                    NavigationLink {
+                        UnitPickList(title: group.title, rows: group.rows)
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: group.icon)
+                                .font(.futura(.body))
+                                .foregroundStyle(PocketColor.practice)
+                                .frame(width: 28)
+                            Text(group.title)
+                                .font(.futura(.body))
+                                .foregroundStyle(PocketColor.textPrimary)
+                            Spacer(minLength: 8)
+                            Text("\(group.rows.count)")
+                                .font(.pocketMono(.body))
+                                .foregroundStyle(PocketColor.textSecondary)
+                        }
+                        .accessibilityLabel("\(group.title), \(group.rows.count)")
+                    }
+                    .listRowBackground(PocketColor.background)
+                }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(PocketColor.background.ignoresSafeArea())
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// A flat, tappable list of pickable units — the leaf destination for a sub-bucket. Kept dumb
+/// (a rendered array of `PickRow`) so the sheet owns all querying.
 private struct UnitPickList: View {
     let title: String
     let rows: [PickRow]
@@ -169,6 +224,15 @@ private struct UnitPickList: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
     }
+}
+
+/// A sub-bucket projected for display — a named, counted group of units that drills into its own
+/// `UnitPickList`. Decouples the middle-level UI from `ExerciseTemplate`/`Song`.
+private struct PickGroup: Identifiable {
+    let id: String
+    let title: String
+    let icon: String
+    let rows: [PickRow]
 }
 
 /// A single pickable unit projected for display — the row's text plus the action that adds it

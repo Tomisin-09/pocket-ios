@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun/ScaleRun/ArpeggioRun/GuitarScale/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ExerciseAudioEngine (silent-default audio seam)
+│   Models   — Song, Loop, Marker, Routine/RoutineItem · RoutineBudget · RoutineSessionCursor (pure player stepping, ADR 0071), Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun/ScaleRun/ArpeggioRun/GuitarScale/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ExerciseAudioEngine (silent-default audio seam)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -192,9 +192,15 @@ surface the planner composes from. That composition now has a home: **`Routine` 
 `warmup` / `play` / `rest`), each non-rest block referencing exactly one `Exercise`/`Loop`/`Song`
 via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orphans the block
 rather than deleting the routine). Its pacing rules (only focused work budgeted; block caps;
-proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. The container is the
-substrate; a player (per-unit engines + transitions) and the planner (a producer of the same model)
-are later slices. `ExerciseLibraryView` owns exercise **create**
+proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. Authoring is a
+sandboxed editor (`RoutineDetailView`, child `ModelContext` committed only on Save), and the
+**player** (ADR 0071) is a session conductor — `RoutineSessionPlayer` (`@Observable`) over a pure
+`RoutineSessionCursor` — that drives each block on its *existing* per-unit engine
+(`StandaloneMetronomeEngine` / `LoopRunModel`) and **auto-advances on natural completion** (one
+command-ramp pass; a fixed countdown for a rest), fired by additive `onRampFinished` / `onFinished`
+engine callbacks. It has **zero evaluation surface** (ADR 0070) — completion is the material's
+length, not a graded take. The planner (a producer of the same model) and the audio-only song-block
+play-along are later slices. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
 (swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command

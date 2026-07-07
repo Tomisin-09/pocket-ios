@@ -1,10 +1,10 @@
 import SwiftData
 import SwiftUI
 
-/// The **Routines** library inside Practice (ADR 0066, slice 2): the list of hand-built
-/// practice sessions, pushed from the Practice hub. Owns routine **creation** (`+` → a new
-/// empty routine you drop straight into the editor) and **deletion** (swipe). Tapping one
-/// opens its editor; the auto-advancing player is slice 3, so there is no "Start" yet.
+/// The **Routines** library inside Practice (ADR 0066): the list of hand-built practice sessions,
+/// pushed from the Practice hub. Owns routine **creation** (`+` → a new empty routine you drop
+/// straight into the editor), **playing** (the ▶ on each row runs the auto-advancing player, slice
+/// 3), **editing** (tapping the row body), and **deletion** (swipe).
 ///
 /// Relies on the ambient `NavigationStack` (Practice → Home's stack), like the exercise and
 /// loop libraries. Sorted newest-first in memory so `@Query` stays unsorted and deletion
@@ -17,6 +17,10 @@ struct RoutineLibraryView: View {
     /// editor builds it in its own sandbox and only persists it on Save, so an abandoned
     /// "New routine" never lands in the library.
     @State private var creatingNew = false
+    /// The routine being edited (row-body tap) — pushed as a detail; `nil` when none.
+    @State private var editing: Routine?
+    /// The routine being played (▶) — presented full-screen over the library; `nil` when none.
+    @State private var playing: Routine?
 
     /// Newest first — the same default sort key as the other libraries (`dateAdded`).
     private var ordered: [Routine] {
@@ -33,10 +37,8 @@ struct RoutineLibraryView: View {
                     .listRowBackground(PocketColor.background)
             } else {
                 ForEach(ordered) { routine in
-                    NavigationLink(value: routine) {
-                        row(for: routine)
-                    }
-                    .listRowBackground(PocketColor.background)
+                    row(for: routine)
+                        .listRowBackground(PocketColor.background)
                 }
                 .onDelete(perform: delete)
             }
@@ -52,23 +54,47 @@ struct RoutineLibraryView: View {
                     .accessibilityLabel("New routine")
             }
         }
-        .navigationDestination(for: Routine.self) { routine in
+        .navigationDestination(item: $editing) { routine in
             RoutineDetailView(container: context.container, existing: routine)
         }
         .navigationDestination(isPresented: $creatingNew) {
             RoutineDetailView(container: context.container, existing: nil)
         }
+        .fullScreenCover(item: $playing) { routine in
+            RoutinePlayerView(routine: routine)
+        }
     }
 
-    /// A routine row — name (or a placeholder) and a one-line summary of its blocks.
+    /// A routine row — a ▶ that plays the session, then a tappable name + one-line block summary
+    /// that opens the editor. Two independent plain buttons so the two actions never collide.
     private func row(for routine: Routine) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(routine.name.isEmpty ? "Untitled routine" : routine.name)
-                .font(.futura(.body))
-                .foregroundStyle(PocketColor.textPrimary)
-            Text(summary(for: routine))
-                .font(.futura(.caption))
-                .foregroundStyle(PocketColor.practice)
+        HStack(spacing: 14) {
+            Button { playing = routine; haptic(.light) } label: {
+                Image(systemName: "play.circle.fill")
+                    .font(.futura(.title2))
+                    .foregroundStyle(PocketColor.practice)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Play \(routine.name.isEmpty ? "routine" : routine.name)")
+
+            Button { editing = routine; haptic(.light) } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(routine.name.isEmpty ? "Untitled routine" : routine.name)
+                            .font(.futura(.body))
+                            .foregroundStyle(PocketColor.textPrimary)
+                        Text(summary(for: routine))
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.practice)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 2)
     }

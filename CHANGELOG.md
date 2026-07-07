@@ -34,6 +34,20 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Practice routines — the auto-advancing player (ADR 0066 slice 3 / ADR 0071).** A ▶ on each
+  routine row runs the session full-screen: it plays each block on its own engine and
+  **auto-advances** to the next on the block's *own* natural completion — one full command-ramp pass
+  for an exercise or loop, a short fixed countdown for a rest — so a hand-built routine needs no
+  per-block minutes. Transport is deliberately minimal: **Pause/Resume · Skip · End**, a "2 of 5"
+  progress readout, and the live block surface (the drill's board / BPM, or the loop's speed).
+  Deliberately **judgement-free (ADR 0070)**: no scoring, no accuracy, no pass/fail — completion is
+  the material's length, and the aim is *controlled discomfort, not clean reps* (the ramp pushes at
+  and past your command tempo). Orphaned blocks (a deleted unit) are skipped; song blocks — an
+  audio-only branded play-along on DRM-free files — are the following slice.
+- **Deeper add-unit picker — two levels, like Apple Music.** The routine editor's picker now drills
+  a level further: **Exercises** group by their **template** (Strumming, Scales, …) and **Loops**
+  group by their **song**, each sub-bucket opening its own unit list — Library → Artists → tracks.
+  Recently Added is unchanged.
 - **Practice routines — manual authoring (ADR 0066, slice 2).** A **Routines** entry in the
   Practice hub opens a routines library where you build a session by hand: create a routine,
   name it, add **exercise** and **loop** blocks, insert rests between them, and drag to

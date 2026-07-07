@@ -150,7 +150,18 @@ Song visibility in the picker before slice 3.
 
 ---
 
-## 6. Slice 3 — the player (auto-advance)
+## 6. Slice 3 — the player (auto-advance)  ← BUILT (ADR 0071)
+
+**Status: done** (exercise + loop + rest blocks). `RoutineSessionPlayer` (`@Observable`
+conductor) + pure `RoutineSessionCursor` (unit-tested) drive `RoutinePlayerView`, presented
+from the ▶ on each Routines row. Blocks auto-advance on natural completion via new additive
+engine callbacks (`StandaloneMetronomeEngine.onRampFinished`, `LoopRunModel.onFinished`); rest
+= fixed 20 s countdown. Zero evaluation surface (ADR 0070). New `Loop.ramp` mirrors
+`Exercise.ramp` so the player runs a loop's saved recipe with no setup UI. **Still pending:**
+the audio-only **song-block** play-along (tempo + play/pause + −10 s/+10 s, DRM-free files) —
+song blocks are filtered out of the player and un-authorable until then.
+
+
 
 Session-level transport over the existing per-unit engines (R6). The new thing is the
 **transition**, not playback.

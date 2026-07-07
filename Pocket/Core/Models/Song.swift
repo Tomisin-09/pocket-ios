@@ -334,6 +334,18 @@ final class Loop {
     /// Promote a newly-owned speed to `commandTempo` (ADR 0046, Phase B). The reach is derived,
     /// not stored, so promotion is a single write — the loop analogue of `Exercise.promoteCommand`.
     func promoteCommand(to speed: Double) { commandTempo = speed }
+
+    /// The command-anchored **training ramp** this loop prescribes (ADR 0046 Phase B) — warm up
+    /// from `speed`, dwell at the owned command, summit at the derived reach, back off — in percent
+    /// units, intervals counted in loop passes. Built from the saved ramp-shape fields so the
+    /// routine **player** (ADR 0066, slice 3) can run a loop block's stored recipe with no setup UI,
+    /// exactly as `Exercise.ramp` does for a drill. `LoopRunView` still builds its own from live edit
+    /// state; this is the saved-recipe seam. Pure and UI-free.
+    var ramp: CommandRamp {
+        LoopCommandRamp.make(loop: self, warmupSteps: rampWarmupSteps,
+                             reachSteps: rampReachSteps, backoffSteps: rampBackoffSteps,
+                             repsPerStep: max(1, rampRepsPerStep))
+    }
 }
 
 @Model
