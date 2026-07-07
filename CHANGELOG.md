@@ -34,6 +34,19 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Practice routines — the session container (ADR 0066, slice 1).** New `Routine` and
+  `RoutineItem` SwiftData models: a routine is an ordered list of typed blocks
+  (`focused` / `warmup` / `play` / `rest`), each non-rest block **referencing** exactly one
+  practice unit — an `Exercise`, `Loop`, or `Song` — via typed optional relationships (the
+  ADR 0058 polymorphic pattern). Order is explicit (`RoutineItem.order`), and deleting a
+  referenced unit **nullifies** the block's link rather than deleting the routine (the block
+  becomes orphaned and a future player will skip it). A pure, SwiftData-free `RoutineBudget`
+  layer holds the pacing rules distilled from the planner science (ADR 0014): only `focused`
+  work is budgeted, focused blocks cap at 20 min and split beyond it, and rests are proposed
+  between adjacent focused blocks. This is the model substrate only — authoring UI and the
+  player are later slices. Additive schema (new models + nullify inverses on
+  `Exercise`/`Loop`/`Song`); 26 unit tests cover the pure rules and the model, incl. the
+  nullify delete rule. *Migration still to be device-verified before merge.*
 - **Watch replaces the per-editor Animate toggle.** Every fretboard-family editor (Scales,
   Arpeggios, the generative run editor, the custom-grid editor) had a duplicate **Animate** toggle
   inside its Display menu, alongside the **Watch** one-shot preview button that already covers "see

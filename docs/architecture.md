@@ -187,7 +187,14 @@ session" placeholder (the V2 planner) above two **unit libraries** — `Exercise
 (command-anchored click drills) and `LoopLibraryView` (measured song `Loop`s) — each a row that
 pushes its own list. The split is for clarity/accessibility; the two models stay separate
 (`Exercise` is audio-free, `Loop` is file-bound) but both are "things you train," the multi-source
-surface the planner composes from. `ExerciseLibraryView` owns exercise **create**
+surface the planner composes from. That composition now has a home: **`Routine` + `RoutineItem`**
+(ADR 0066) is the multi-unit *session* container — an ordered list of typed blocks (`focused` /
+`warmup` / `play` / `rest`), each non-rest block referencing exactly one `Exercise`/`Loop`/`Song`
+via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orphans the block
+rather than deleting the routine). Its pacing rules (only focused work budgeted; block caps;
+proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. The container is the
+substrate; a player (per-unit engines + transitions) and the planner (a producer of the same model)
+are later slices. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
 (swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command

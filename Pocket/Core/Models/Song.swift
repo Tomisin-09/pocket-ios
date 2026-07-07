@@ -84,6 +84,13 @@ final class Song {
     @Relationship(deleteRule: .cascade, inverse: \Loop.song) var loops: [Loop] = []
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
 
+    /// Routine blocks that **reference** this song for a repertoire run-through (ADR 0066
+    /// R4/R5). Inverse of `RoutineItem.song`, **nullify** delete rule: deleting the song
+    /// clears those blocks' link (the routine survives; the block is skipped) — it does
+    /// not delete the routines. Additive optional relationship (CoreData 134110 rule).
+    @Relationship(deleteRule: .nullify, inverse: \RoutineItem.song)
+    var routineItems: [RoutineItem] = []
+
     init(title: String, artist: String = "", album: String = "", genre: String = "",
          year: Int? = nil,
          key: String = "", bpm: Int? = nil, preciseBPM: Double? = nil,
@@ -261,6 +268,13 @@ final class Loop {
     var journalByRecent: [JournalEntry] {
         journal.sorted { $0.createdAt > $1.createdAt }
     }
+
+    /// Routine blocks that **reference** this loop (ADR 0066 R4/R5). Inverse of
+    /// `RoutineItem.loop`, **nullify** delete rule: deleting the loop clears those blocks'
+    /// link (the routine survives; the block is skipped) — it does not delete the routines.
+    /// Additive optional relationship (CoreData 134110 rule).
+    @Relationship(deleteRule: .nullify, inverse: \RoutineItem.loop)
+    var routineItems: [RoutineItem] = []
 
     init(name: String, start: Double, end: Double, speed: Double, repeats: Int) {
         self.uid = UUID()
