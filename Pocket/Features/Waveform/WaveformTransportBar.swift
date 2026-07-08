@@ -48,6 +48,11 @@ struct TransportBar: View {
     var compact: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Which side the big idle Loop button sits on (the Marker takes the other). Default off ⇒
+    /// Marker-left / Loop-right, the shipped arrangement; on ⇒ swapped, a user preference set in
+    /// Settings. Applies to the **idle** flanking controls only — while a loop is active the compact
+    /// column + colour strip keep their sides (the strip must stay where the loop identity reads).
+    @AppStorage(AppSettings.Key.transportLoopOnLeft) private var loopOnLeft = false
 
     private var glyphSize: CGFloat { compact ? 24 : 26 }
     /// The big flanking identity circles (idle only) — sized to "take up space" (feedback #1),
@@ -66,17 +71,7 @@ struct TransportBar: View {
                 transportRow
             }
             .frame(maxWidth: .infinity)
-            // Right slot: the ✕ colour strip once a saved loop is active, else the big idle Loop
-            // button (lit while an A/B span is forming). Mutually exclusive — they share the slot.
-            if let loopColor {
-                LoopColorStrip(color: loopColor, onDeactivate: onClearLoop)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
-            } else {
-                TransportControl(icon: "repeat", color: PocketColor.active,
-                                 isActive: isPunchActive, label: "Loop",
-                                 diameter: identityDiameter, action: onPunch)
-                    .transition(.opacity)
-            }
+            rightControls
         }
         .frame(height: compact ? 52 : 64)  // definite bar height so the colour strip reliably fills it
         .padding(.horizontal, 12)
@@ -87,11 +82,12 @@ struct TransportBar: View {
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: loop?.uid)
     }
 
-    // MARK: Left — identity controls
+    // MARK: Flanking identity controls
 
-    /// Idle: a big circular **Marker** on the far left (its Loop twin lives on the far right).
-    /// Active: revert to the compact stacked **Loop / Marker** column, so the running loop reads on
-    /// the Loops panel below and the bar stays out of the way (feedback #1 round 2).
+    /// Idle: a big circular identity button on each side — **Marker** and **Loop**, their sides set
+    /// by `loopOnLeft` (default Marker-left / Loop-right). Active: the left reverts to the compact
+    /// stacked **Loop / Marker** column, so the running loop reads on the Loops panel below and the
+    /// bar stays out of the way (feedback #1 round 2); the swap preference applies to idle only.
     @ViewBuilder private var leftControls: some View {
         if loopActive {
             VStack(spacing: 0) {
@@ -104,12 +100,40 @@ struct TransportBar: View {
                                  glyphSize: compactControlGlyph, action: onDropMarker)
             }
             .transition(.opacity)
+        } else if loopOnLeft {
+            idleLoopButton
         } else {
-            // Equilateral triangle rotated to point down, matching the waveform's marker glyph.
-            TransportControl(icon: "triangle.fill", rotation: 180, color: PocketColor.pin,
-                             label: "Marker", diameter: identityDiameter, action: onDropMarker)
-                .transition(.opacity)
+            idleMarkerButton
         }
+    }
+
+    /// Right slot: the ✕ colour strip once a saved loop is active — it stays on the right so the loop
+    /// identity reads there regardless of the swap — else the big idle control on this side (Loop by
+    /// default, Marker when swapped). Mutually exclusive; they share the slot.
+    @ViewBuilder private var rightControls: some View {
+        if let loopColor {
+            LoopColorStrip(color: loopColor, onDeactivate: onClearLoop)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+        } else if loopOnLeft {
+            idleMarkerButton
+        } else {
+            idleLoopButton
+        }
+    }
+
+    /// The big idle **Marker** identity circle — an equilateral triangle rotated to point down,
+    /// matching the waveform's marker glyph.
+    private var idleMarkerButton: some View {
+        TransportControl(icon: "triangle.fill", rotation: 180, color: PocketColor.pin,
+                         label: "Marker", diameter: identityDiameter, action: onDropMarker)
+            .transition(.opacity)
+    }
+
+    /// The big idle **Loop** identity circle, lit while an A/B span is forming (ADR 0041).
+    private var idleLoopButton: some View {
+        TransportControl(icon: "repeat", color: PocketColor.active, isActive: isPunchActive,
+                         label: "Loop", diameter: identityDiameter, action: onPunch)
+            .transition(.opacity)
     }
 
     // MARK: Centre — header + transport

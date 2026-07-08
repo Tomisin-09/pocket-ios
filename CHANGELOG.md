@@ -42,6 +42,11 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Swap the transport's Loop/Marker sides (Settings → Transport).** The big idle Loop and Marker
+  buttons flanking the practice transport bar can now be swapped left-to-right from a new **Transport**
+  section in Settings. Default is unchanged — Marker on the left, Loop on the right; the toggle only
+  moves the idle controls (while a loop is active the compact column and its colour strip keep their
+  places). Persisted like the other Settings preferences.
 - **Starter routines (ADR 0066 / 0071).** The Routines library ships three curated, in-house starter
   routines — **Morning Warm-up**, **Picking Builder**, **Rhythm & Changes** — seeded once on first
   launch (after the starter exercises they string together) so a new Practice space isn't empty. Each

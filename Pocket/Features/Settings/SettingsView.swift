@@ -16,6 +16,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.routineReflection) private var routineReflection = true
     @AppStorage(AppSettings.Key.routineRestSeconds) private var routineRestSeconds = 20
     @AppStorage(AppSettings.Key.routineSongLoop) private var routineSongLoop = true
+    @AppStorage(AppSettings.Key.transportLoopOnLeft) private var transportLoopOnLeft = false
 
     var body: some View {
         Form {
@@ -71,6 +72,16 @@ struct SettingsView: View {
                      + "sets the breather between blocks. A song block loops as an open jam and moves "
                      + "on only when you skip; turn Loop song blocks off to play it through once and "
                      + "auto-advance.")
+            }
+
+            Section {
+                Toggle("Loop control on left", isOn: $transportLoopOnLeft)
+            } header: {
+                Text("Transport")
+            } footer: {
+                Text("On the practice screen, big Loop and Marker buttons flank the transport bar "
+                     + "while idle. By default Marker sits on the left and Loop on the right — turn "
+                     + "this on to swap them.")
             }
 
             Section {
