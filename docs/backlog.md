@@ -30,15 +30,22 @@ docs so this stays a pointer list:
   goal-driven session generator: two pure functions — `deriveCandidates` (front-half,
   0015) → `buildSession` (back-half, 0014) — that produce a `Routine` (ADR 0066) run by
   the shipped player. Fully designed 2026-07-08; **cold-start build plan:
-  `docs/plans/planner-build-plan.md`** (branch `pocket-109-practice-planner`, Slice 1
-  next). Decisions locked: self-rated `Exercise.mastery` / `lastPracticed` feeding a
-  `dueScore` (no grading — ADR 0070); broad `ExerciseTemplate → [SkillID]` skill
-  resolution (no new per-exercise tagging); two candidate paths (technique → exercise,
-  repertoire → loop/song via `Goal.targetSong`); soft prereq staging (reconciles ADR
-  0016 with 0071); in-house goal templates; loop skill-tagging as a phase-2 slice;
-  **AI suggester deferred** — the planner ships fully local-first, no backend. The
-  substrate (routine model + player + presets, PR #102) has shipped, so this is now
-  the active V2 build.
+  `docs/plans/planner-build-plan.md`**. Decisions locked: self-rated `Exercise.mastery`
+  / `lastPracticed` feeding a `dueScore` (no grading — ADR 0070); broad
+  `ExerciseTemplate → [SkillID]` skill resolution (no new per-exercise tagging); two
+  candidate paths (technique → exercise, repertoire → loop/song via `Goal.targetSong`);
+  soft prereq staging (reconciles ADR 0016 with 0071); in-house goal templates; loop
+  skill-tagging as a phase-2 slice; **AI suggester deferred** — the planner ships fully
+  local-first, no backend. The substrate (routine model + player + presets, PR #102)
+  has shipped.
+  - **Slice 1 — back-half + mastery parity: DONE (branch `pocket-112-practice-planner`,
+    ADR 0072).** `Exercise` gained self-rated `mastery` + `lastPracticed`; pure
+    `DueScore` + `SessionBuilder.buildSession` + warm-up LRU (Foundation-only,
+    unit-tested); impure `PracticePlanner` projects/materialises a `Routine`; "Quick
+    session" ✨ button in the Routines library is the first surface (dueness-only).
+  - **Next — Slice 2:** front-half (`deriveCandidates` + `Goal` model + `SkillID`
+    taxonomy table + `ExerciseTemplate → [SkillID]` family map). Slice 3 = planner UI;
+    Slice 4 = loop skill-tags; Slice 5 (AI) out of scope.
 
 - **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
   play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer

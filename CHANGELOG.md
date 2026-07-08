@@ -42,6 +42,21 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Quick session — the practice planner's first surface (ADR 0072, V2 planner Slice 1).** A new
+  ✨ button in the Routines library generates a ready-to-run session from your exercise library and
+  opens it as a **provisional** routine you review before it's kept — nothing lands in the library
+  until you explicitly **Save** it (with a chance to rename; the default is dated and unique, e.g.
+  "8 Jul Quick Session", "… 2" for repeats the same day) or **Start** it. Back out and it's discarded.
+  It ranks drills by **dueness** — how long since you practised each,
+  softened by how well you've *rated* you own it (you set the rating; the app never scores your
+  playing, ADR 0070) — leads with a least-recently-used warm-up, keeps focused blocks short with
+  rests between them, and finishes on the most-due drill (the practice-science session shape, ADR
+  0014). No goals yet — that's the next slice; this already turns "I have 15 minutes" into a real
+  routine. Exercises gain a self-rated **mastery** dot rating and a **last-practised** readout on the
+  detail sheet, mirroring loops. The selection ranking and session layout are pure, unit-tested logic.
+- **Routine detail screens now have a bottom "Start" button.** Every routine's overview (hand-built
+  or generated) carries a pinned Start button that launches the player, so previewing the blocks and
+  starting the session are one screen apart — no more launching blind from the library row.
 - **Swap the transport's Loop/Marker sides (Settings → Transport).** The big idle Loop and Marker
   buttons flanking the practice transport bar can now be swapped left-to-right from a new **Transport**
   section in Settings. Default is unchanged — Marker on the left, Loop on the right; the toggle only

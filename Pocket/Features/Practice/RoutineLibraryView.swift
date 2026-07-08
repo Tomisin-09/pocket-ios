@@ -12,6 +12,9 @@ import SwiftUI
 struct RoutineLibraryView: View {
     @Environment(\.modelContext) private var context
     @Query private var routines: [Routine]
+    /// Every exercise in the library — the raw material the planner's Quick session draws from
+    /// (V2 planner Slice 1). Ranked by dueness, warm-up LRU-picked; no goals yet.
+    @Query private var exercises: [Exercise]
 
     /// Drives the push into a fresh-routine editor. The new routine isn't created here — the
     /// editor builds it in its own sandbox and only persists it on Save, so an abandoned
@@ -21,6 +24,9 @@ struct RoutineLibraryView: View {
     @State private var editing: Routine?
     /// The routine being played (▶) — presented full-screen over the library; `nil` when none.
     @State private var playing: Routine?
+    /// A freshly-generated Quick session awaiting review — pushed as a **provisional** detail
+    /// (nothing persists until the user Saves or Starts it, V2 planner Slice 1); `nil` when none.
+    @State private var quickDraft: QuickSessionDraft?
 
     /// Newest first — the same default sort key as the other libraries (`dateAdded`).
     private var ordered: [Routine] {
@@ -48,6 +54,14 @@ struct RoutineLibraryView: View {
         .navigationTitle("Routines")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: generateQuickSession) {
+                    Image(systemName: "wand.and.stars")
+                }
+                .tint(PocketColor.practice)
+                .disabled(!exercises.contains { $0.template != .warmup })
+                .accessibilityLabel("Generate a quick session")
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { creatingNew = true; haptic(.light) } label: { Image(systemName: "plus") }
                     .tint(PocketColor.practice)
@@ -59,6 +73,10 @@ struct RoutineLibraryView: View {
         }
         .navigationDestination(isPresented: $creatingNew) {
             RoutineDetailView(container: context.container, existing: nil)
+        }
+        .navigationDestination(item: $quickDraft) { draft in
+            RoutineDetailView(container: context.container,
+                              quickSession: draft.blocks, defaultName: draft.name)
         }
         .fullScreenCover(item: $playing) { routine in
             RoutinePlayerView(routine: routine)
@@ -110,10 +128,35 @@ struct RoutineLibraryView: View {
         return parts.joined(separator: " · ")
     }
 
+    /// Generate a Quick session (default short budget, ADR 0014 R8) from the exercise library and
+    /// push it for **review** — the V2 planner's first surface (Slice 1). Nothing is persisted here:
+    /// the blocks are pure, and the provisional detail screen only commits them to the library on an
+    /// explicit Save or Start. The default name is dated and de-duplicated against the library.
+    private func generateQuickSession() {
+        let blocks = PracticePlanner.planQuickSession(minutes: SessionLength.default.minutes,
+                                                      exercises: exercises)
+        guard blocks.contains(where: { $0.unit != nil }) else { return }
+        let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now)
+        quickDraft = QuickSessionDraft(blocks: blocks, name: name)
+        haptic(.light)
+    }
+
     private func delete(_ offsets: IndexSet) {
         for index in offsets { context.delete(ordered[index]) }
         haptic(.medium)
     }
+}
+
+/// A freshly-generated Quick session pending review — the pure `[SessionBlock]` plus its dated
+/// default name. Identity is a per-generation `id` (blocks aren't `Hashable`), which is all
+/// `navigationDestination(item:)` needs to push the provisional detail once.
+struct QuickSessionDraft: Identifiable, Hashable {
+    let id = UUID()
+    let blocks: [SessionBlock]
+    let name: String
+
+    static func == (lhs: QuickSessionDraft, rhs: QuickSessionDraft) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 #Preview("Routines — with sessions") {
