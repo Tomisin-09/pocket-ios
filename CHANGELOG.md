@@ -42,6 +42,17 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Goals feed the planner (V2 planner Slice 2, ADR 0073).** The planner's front-half now turns
+  what you *want to get better at* into what to practise. A **goal** carries a set of skills (from a
+  curated technique taxonomy) and an optional target song; the planner expands your active goals into
+  a ranked pool of your own exercises, loops and songs, then lays them out into a session — the same
+  ready-to-run routine the Quick session produces. Coarse, honest matching: a "sweep picking" goal
+  surfaces all your Picking drills (no per-exercise tagging in V2). A goal weighted harder pulls its
+  skills up; a skill whose prerequisites you haven't rated yet is *gently* down-weighted (it still
+  appears, just later — the app never refuses to schedule what you asked for); marking a goal met
+  drops it from the next session. Four in-house goal templates ("Play a specific song", "Build
+  speed", "Improvise in a style", "General progress") seed sensible skill sets. All selection logic
+  is pure, unit-tested (the ADR 0015 property list). The goal-editor UI arrives in the next slice.
 - **Quick session — the practice planner's first surface (ADR 0072, V2 planner Slice 1).** A new
   ✨ button in the Routines library generates a ready-to-run session from your exercise library and
   opens it as a **provisional** routine you review before it's kept — nothing lands in the library

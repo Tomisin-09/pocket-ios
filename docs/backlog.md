@@ -43,9 +43,17 @@ docs so this stays a pointer list:
     `DueScore` + `SessionBuilder.buildSession` + warm-up LRU (Foundation-only,
     unit-tested); impure `PracticePlanner` projects/materialises a `Routine`; "Quick
     session" ✨ button in the Routines library is the first surface (dueness-only).
-  - **Next — Slice 2:** front-half (`deriveCandidates` + `Goal` model + `SkillID`
-    taxonomy table + `ExerciseTemplate → [SkillID]` family map). Slice 3 = planner UI;
-    Slice 4 = loop skill-tags; Slice 5 (AI) out of scope.
+  - **Slice 2 — front-half: goals + candidate derivation: DONE (branch
+    `pocket-112-practice-planner`, ADR 0073).** `TechniqueTaxonomy` + `SkillFamilyMap`
+    (pure tables), `Goal` `@Model`, pure `CandidateDeriver.deriveCandidates` (Path A
+    technique→exercise via the family map, Path B repertoire→target-song loops+run,
+    soft direct-prereq down-weight), `GoalTemplateLibrary` (4 curated templates), and
+    `PracticePlanner.planGoalSession`/library projector + loop/song materialisation
+    (songs keyed by a deterministic `PlannerID`). Front-half composes with the back-half
+    end-to-end; unit-tested (ADR 0015 property list). No UI yet.
+  - **Next — Slice 3:** the planner **UI** (Home = planner): time selector, goal editor
+    (template picker → weight → skill trim → optional target song → mark-met), generated
+    routine card → Start. Slice 4 = loop skill-tags; Slice 5 (AI) out of scope.
 
 - **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
   play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer
