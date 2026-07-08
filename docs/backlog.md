@@ -81,6 +81,22 @@ docs so this stays a pointer list:
       schema. Authoring: sectioned add-unit picker (Exercises / Loops / Songs) with
       exercises as a primary source. No new model ADR needed — lives inside 0066 R4;
       `RoutinePresets` is its own slice after the player works.
+  - **`RoutinePresets` — BUILT but PARKED (2026-07-08), blocked on a run-screen freeze.**
+    Three curated in-house starter routines (Morning Warm-up, Picking Builder,
+    Rhythm & Changes) built + unit-tested on branch **`pocket-108-routine-presets`**
+    (commit 97c3cbe, off `pocket-107`); pure builder + 6 tests pass, build/lint clean.
+    **Held back from the routines PR** because seeding them **reintroduces the exact
+    main-thread freeze** that `PocketUITests/PracticeRunUITests.testTappingExerciseOpensRunScreen`
+    guards: with `Routine`/`RoutineItem` rows in the store that reference an exercise,
+    opening **that exercise's run screen** hangs (the "Start training" button never
+    appears within 20 s). **Isolated & proven:** disabling the `RoutinePresets` seeding
+    (fresh store, exercises only) makes the test pass on the same machine; enabling it
+    (routines present) fails it deterministically — independent of machine load. Lead to
+    chase: the optional-`#Predicate` / relationship-fault main-thread starvation
+    `PracticeView`'s comment warns about (see memory `swiftdata-optional-predicate-freeze`)
+    — likely something faults `Exercise.routineItems` → the routine graph when the run
+    screen opens. Fix that, re-verify the UI test with routines present, then land
+    `pocket-108`.
 - **Social layer boundaries — ADR 0064 (Accepted).** Local-first forever;
   exercises (never loops/audio) are the shareable unit; derived-stats-only
   leaderboards; Sign in with Apple; CloudKit personal sync vs AWS social rails
