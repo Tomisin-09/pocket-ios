@@ -31,7 +31,12 @@ struct LoopRunView: View {
     @State private var reachSteps = 0
     @State private var backoffSteps = 0
     @State private var repsPerStep = LoopCommandRamp.defaultRepsPerStep
+    /// The top-level "Practice Settings" disclosure — collapsed by default so the run screen opens on
+    /// the summary + staircase (parity with the exercise run); expands to reveal tempos/reps/Steps.
+    @State private var showSettings = false
     @State private var showSteps = false
+    /// Whether the routine count-in overlay is showing (routine mode only) — gates the run start.
+    @State private var showCountIn = false
     @State private var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State private var showingJournal = false
@@ -89,15 +94,13 @@ struct LoopRunView: View {
                 if isRunning {
                     liveReadout
                 } else {
-                    tempos
-                    repsRow
-                    stepsSection
+                    practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
                               currentIndex: model.currentPlateau(in: routine))
                 if !isRunning { promoteButton }
                 if !isRunning, isDirty { saveChangesButton }
-                if !isRunning {
+                if !isRunning, routineContext == nil {
                     JournalPreviewSection(owner: .loop(loop)) { showingJournal = true }
                         .padding(.top, 4)
                 }
@@ -111,9 +114,10 @@ struct LoopRunView: View {
         .navigationBarTitleDisplayMode(.inline)
         .routineSessionChrome(routineContext)
         .safeAreaInset(edge: .bottom) { transport }
+        .overlay { if showCountIn { RoutineCountInOverlay(onComplete: countInFinished) } }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
-        .task { await model.loadIfNeeded() }
+        .task { await model.loadIfNeeded(); maybeAutoStart() }
         .onDisappear { model.stop() }
         .sheet(isPresented: $showingJournal) {
             JournalSheet(owner: .loop(loop),
@@ -165,59 +169,18 @@ struct LoopRunView: View {
 
     // MARK: - Setup (stopped)
 
-    private var tempos: some View {
-        VStack(spacing: 14) {
-            EditableTempoRow(label: "Working", caption: "warm-up floor (% of original)",
-                             value: working, tint: PocketColor.practice,
-                             onStep: { adjustWorking(by: $0) }, onType: { setWorking($0) })
-            EditableTempoRow(label: "Command", caption: "fastest you own (% of original)",
-                             value: command, tint: PocketColor.practice,
-                             onStep: { adjustCommand(by: $0) }, onType: { setCommand($0) })
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Reach").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
-                    Text("auto · +\(reach - command)%")
-                        .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
-                }
-                Spacer()
-                Text("\(reach)%")
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(PocketColor.practice)
-                    .contentTransition(.numericText())
-            }
-        }
-    }
-
-    /// How many loop passes each step holds before the tempo bumps (ADR 0046 Phase B). `1` ⇒ each
-    /// step is one pass through the loop; the command dwell holds this many passes per its intervals.
-    private var repsRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Reps per step").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
-                Text(repsPerStep == 1 ? "one loop, then step up" : "\(repsPerStep) loops, then step up")
-                    .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
-            }
-            Spacer()
-            StepperButton(symbol: "minus", label: "Fewer reps per step",
-                          tint: PocketColor.practice) {
-                repsPerStep = max(Self.repsRange.lowerBound, repsPerStep - 1)
-            }
-            Text("\(repsPerStep)")
-                .font(.pocketMono(.title3)).foregroundStyle(PocketColor.textPrimary)
-                .frame(width: 44).contentTransition(.numericText())
-            StepperButton(symbol: "plus", label: "More reps per step",
-                          tint: PocketColor.practice) {
-                repsPerStep = min(Self.repsRange.upperBound, repsPerStep + 1)
-            }
-        }
-    }
-
-    private var stepsSection: some View {
-        RoutineStepsControls(expanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
-                             backoffSteps: $backoffSteps, warmupStepBPM: stepPercent, reach: reach,
-                             hasReach: hasReach, tint: PocketColor.practice, stepUnit: "%") {
-            haptic(.light)
-        }
+    /// The collapsible Practice Settings panel — tempos + reps + Steps behind one disclosure, so the
+    /// loop run opens on the summary + staircase (parity with the exercise run, ADR 0071).
+    private var practiceSettings: some View {
+        LoopSettingsPanel(
+            expanded: $showSettings,
+            working: working, command: command, reach: reach,
+            onStepWorking: { adjustWorking(by: $0) }, onTypeWorking: { setWorking($0) },
+            onStepCommand: { adjustCommand(by: $0) }, onTypeCommand: { setCommand($0) },
+            repsPerStep: $repsPerStep, repsRange: Self.repsRange,
+            stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
+            backoffSteps: $backoffSteps, warmupStepBPM: stepPercent,
+            hasReach: hasReach, tint: PocketColor.practice, onToggle: { haptic(.light) })
     }
 
     private var promoteButton: some View {
@@ -283,7 +246,7 @@ struct LoopRunView: View {
                             .foregroundStyle(PocketColor.textSecondary)
                             .multilineTextAlignment(.center)
                     }
-                    Button(action: commitAndStart) {
+                    Button(action: startTapped) {
                         Label("Start training", systemImage: "play.fill").pocketRunButton
                     }
                     .buttonStyle(.plain)
@@ -345,6 +308,25 @@ private extension LoopRunView {
     private func saveChanges() {
         persist()
         haptic(.medium)
+    }
+
+    /// Start tapped: in a routine, run the count-in first (ADR 0071); standalone, start immediately.
+    private func startTapped() {
+        if routineContext != nil { showCountIn = true; haptic(.light) } else { commitAndStart() }
+    }
+
+    /// Auto-start on arrival when the context asks for it (Settings-gated; never the first block) and
+    /// the audio is ready — routes through the same count-in as a tapped Start.
+    private func maybeAutoStart() {
+        if routineContext?.autoStart == true, !isRunning, !model.isLoading, !model.loadFailed {
+            showCountIn = true
+        }
+    }
+
+    /// The count-in reached zero — drop the overlay and begin the run.
+    private func countInFinished() {
+        showCountIn = false
+        commitAndStart()
     }
 
     /// Persist the edits to the loop and start the run in one tap.

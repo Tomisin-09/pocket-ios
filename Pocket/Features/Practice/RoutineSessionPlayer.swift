@@ -60,8 +60,21 @@ final class RoutineSessionPlayer {
 
     /// The block the player is on, or `nil` once the session is complete.
     var current: RoutineStage? { cursor.isComplete ? nil : stages[cursor.index] }
+    var currentIndex: Int { cursor.index }
+    var stageCount: Int { stages.count }
     var progressLabel: String { cursor.progressLabel }
     var isFinished: Bool { state == .finished }
+
+    /// Index of the first *unit* block (exercise/loop) — the one that always waits for a deliberate
+    /// Start; `nil` if the routine has no unit blocks. Rests never auto-run a unit, so they don't
+    /// count as "the first block" for auto-start.
+    private let firstUnitIndex: Int?
+
+    /// Whether the block at `index` should begin on its own — the auto-start setting is on *and* it's
+    /// not the first unit block. The player asks this when building each block's context.
+    func shouldAutoStart(at index: Int) -> Bool {
+        AppSettings.routineAutoStart && index != firstUnitIndex
+    }
 
     init(routine: Routine) {
         routineName = routine.name.isEmpty ? "Routine" : routine.name
@@ -71,6 +84,7 @@ final class RoutineSessionPlayer {
         let mapped = playable.map(Self.stage(for:))
         stages = mapped
         cursor = RoutineSessionCursor(total: mapped.count)
+        firstUnitIndex = mapped.firstIndex { $0.kind != .rest }
     }
 
     private static func stage(for item: RoutineItem) -> RoutineStage {

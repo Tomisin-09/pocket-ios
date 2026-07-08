@@ -13,7 +13,11 @@ import SwiftUI
 /// is, and nothing about *how well*. The player is the judge.
 struct RoutinePlayerView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var player: RoutineSessionPlayer
+    /// The just-finished unit block awaiting an end-of-block reflection (ADR 0071), or `nil`. Set
+    /// when a block completes with the reflection setting on; dismissing the sheet advances.
+    @State private var reflectingStage: RoutineStage?
 
     init(routine: Routine) {
         _player = State(initialValue: RoutineSessionPlayer(routine: routine))
@@ -35,15 +39,56 @@ struct RoutinePlayerView: View {
         }
         .onAppear(perform: player.start)
         .onDisappear(perform: player.end)
+        .sheet(item: $reflectingStage, onDismiss: player.advance) { stage in
+            reflectionSheet(for: stage)
+        }
     }
 
-    /// The `RoutineRunContext` handed to each run screen — progress, skip, the natural-completion
-    /// hook, and exit. Rebuilt each render; all closures target the stable player, so it's safe for a
-    /// run screen to wire `onFinished` to its engine once.
+    /// A block finished on its own. With the reflection setting on, pause on a journal sheet for that
+    /// unit (a rest has nothing to reflect on); otherwise advance straight away. Skip bypasses this.
+    private func finishedBlock() {
+        if AppSettings.routineReflection, let stage = player.current, stage.kind != .rest {
+            reflectingStage = stage
+        } else {
+            player.advance()
+        }
+    }
+
+    @ViewBuilder
+    private func reflectionSheet(for stage: RoutineStage) -> some View {
+        if let owner = owner(for: stage) {
+            JournalSheet(owner: owner,
+                         onAdd: { text, kind in
+                             _ = JournalWriter.add(to: owner, text: text, kind: kind,
+                                                   into: modelContext)
+                             try? modelContext.save(); haptic(.light)
+                         },
+                         onUpdate: { entry, text, kind in
+                             JournalWriter.update(entry, text: text, kind: kind)
+                             try? modelContext.save()
+                         },
+                         onDelete: { entry in
+                             JournalWriter.delete(entry, from: modelContext)
+                             try? modelContext.save(); haptic(.light)
+                         })
+        }
+    }
+
+    private func owner(for stage: RoutineStage) -> JournalOwner? {
+        if let exercise = stage.exercise { return .exercise(exercise) }
+        if let loop = stage.loop { return .loop(loop) }
+        return nil
+    }
+
+    /// The `RoutineRunContext` handed to each run screen — the progress strip's position, whether
+    /// this block auto-starts, skip, the natural-completion hook, and exit. Rebuilt each render; all
+    /// closures target the stable player, so it's safe for a run screen to wire `onFinished` once.
     private var context: RoutineRunContext {
-        RoutineRunContext(progressLabel: player.progressLabel,
+        RoutineRunContext(stageIndex: player.currentIndex,
+                          stageCount: player.stageCount,
+                          autoStart: player.shouldAutoStart(at: player.currentIndex),
                           onSkip: { player.advance(); haptic(.light) },
-                          onFinished: { player.advance() },
+                          onFinished: { finishedBlock() },
                           onExit: { dismiss() })
     }
 
@@ -88,7 +133,7 @@ struct RoutinePlayerView: View {
     // MARK: - Finished
 
     private var finishedView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Image(systemName: player.stages.isEmpty ? "questionmark.circle" : "checkmark.circle.fill")
                 .font(.system(size: 48))
                 .foregroundStyle(PocketColor.practice)
@@ -101,13 +146,42 @@ struct RoutinePlayerView: View {
                 .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textSecondary)
                 .multilineTextAlignment(.center)
+            if !practicedTitles.isEmpty { recap }
             Button { dismiss() } label: {
                 Label("Done", systemImage: "checkmark").pocketRunButton
             }
             .buttonStyle(.plain)
-            .padding(.top, 8)
+            .padding(.top, 4)
         }
         .padding(.horizontal, 24)
+    }
+
+    /// A judgement-free recap — just *what* you worked through this session, no scores (ADR 0070).
+    private var recap: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("You practised")
+                .font(.futura(.caption, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+                .textCase(.uppercase)
+            ForEach(Array(practicedTitles.enumerated()), id: \.offset) { _, title in
+                HStack(spacing: 8) {
+                    Image(systemName: "circle.fill")
+                        .font(.system(size: 5))
+                        .foregroundStyle(PocketColor.practice)
+                    Text(title)
+                        .font(.futura(.subheadline))
+                        .foregroundStyle(PocketColor.textPrimary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 12).fill(PocketColor.practiceCircleWash))
+    }
+
+    /// The unit blocks (exercises/loops) in this routine, in order — the recap list; rests omitted.
+    private var practicedTitles: [String] {
+        player.stages.filter { $0.kind != .rest }.map(\.title)
     }
 }
 

@@ -35,6 +35,8 @@ enum AppSettings {
         static let keepScreenAwake = "keepScreenAwake"
         static let appearance = "appearance"
         static let exerciseAnimates = "exerciseAnimates"
+        static let routineAutoStart = "routineAutoStart"
+        static let routineReflection = "routineReflection"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -61,6 +63,15 @@ enum AppSettings {
     /// both read this. Default **off** as a photosensitivity precaution; the views also force it off
     /// under the system Reduce Motion setting.
     static var exerciseAnimates: Bool { bool(Key.exerciseAnimates, default: false) }
+
+    /// In a routine, auto-start each block on arrival (ADR 0071) — the **first** block always waits
+    /// for a deliberate Start; this only governs the *subsequent* ones. Default on; off ⇒ every block
+    /// is started by hand.
+    static var routineAutoStart: Bool { bool(Key.routineAutoStart) }
+
+    /// In a routine, offer a short **reflection** prompt when a block finishes, before advancing
+    /// (ADR 0071). Default on; off ⇒ blocks advance with no reflection.
+    static var routineReflection: Bool { bool(Key.routineReflection) }
 
     /// Appearance override. Default `.system` — the app follows the device setting until
     /// the user opts into a pinned light/dark appearance.

@@ -2,19 +2,14 @@ import SwiftData
 import SwiftUI
 
 /// A **training run** on one exercise (ADR 0046, Phase A): the screen reached by tapping a unit in
-/// Practice. It **owns its own `StandaloneMetronomeEngine`**, so a drill here never disturbs (or is
-/// disturbed by) the metronome screen. Two modes: **set up** (stopped) edits the three tempos —
-/// working floor, command, derived reach — plus warm-up steps, with the routine drawn as a
-/// staircase and a one-tap promote; **running** shows the live BPM and the beat/template surface.
-///
-/// **Start** commits the edits and hands the engine a `CommandRamp` directly (`engine.run(ramp:)`)
-/// — no separate "arm" step. Edits are held in local state until Start, so leaving without starting
-/// discards them.
+/// Practice. It **owns its own `StandaloneMetronomeEngine`**, so a drill here never disturbs the
+/// metronome screen. Two modes: **set up** (stopped) edits the three tempos — working floor, command,
+/// derived reach — plus warm-up steps, drawn as a staircase with a one-tap promote; **running** shows
+/// the live BPM and the beat/template surface. **Start** commits the edits and hands the engine a
+/// `CommandRamp` (`engine.run(ramp:)`); edits are held in local state until then, so leaving discards.
 struct ExerciseRunView: View {
     let exercise: Exercise
-    /// Present only when this run is a block inside a routine session (ADR 0071): adds session
-    /// progress, a Skip control, and the natural-completion hook the player auto-advances on. `nil`
-    /// for a standalone run, which is then completely unchanged.
+    /// Routine-session chrome (progress, Skip, auto-advance) when a block in a routine; `nil` standalone.
     var routineContext: RoutineRunContext?
     @State private var engine = StandaloneMetronomeEngine()
     @Environment(\.modelContext) private var modelContext
@@ -30,11 +25,12 @@ struct ExerciseRunView: View {
     @State private var reachSteps = 0
     @State private var backoffSteps = 0
     @State private var showSteps = false
-    /// The top-level "Practice Settings" disclosure (V1 feedback) — collapsed by default so the
-    /// run screen opens on the summary + staircase; expands to reveal the tempos and Steps.
+    /// The top-level "Practice Settings" disclosure — collapsed by default (V1 feedback).
     @State private var showSettings = false
     @State private var signature: TimeSignature = .standard
     @State private var seeded = false
+    /// Whether the routine count-in overlay is showing (routine mode only) — gates the run start.
+    @State private var showCountIn = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State private var showingJournal = false
     /// The exercise detail/reference sheet (V1 feedback #2) — an ⓘ in the nav bar opens it.
@@ -92,7 +88,7 @@ struct ExerciseRunView: View {
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
                 if !isRunning { promoteButton }
                 if !isRunning, isDirty { saveChangesButton }
-                if !isRunning {
+                if !isRunning, routineContext == nil {
                     JournalPreviewSection(owner: .exercise(exercise)) { showingJournal = true }
                         .padding(.top, 4)
                 }
@@ -118,8 +114,9 @@ struct ExerciseRunView: View {
         }
         .routineSessionChrome(routineContext)
         .safeAreaInset(edge: .bottom) { transport }
+        .overlay { if showCountIn { RoutineCountInOverlay(onComplete: countInFinished) } }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
-        .onAppear(perform: seedIfNeeded)
+        .onAppear { seedIfNeeded(); maybeAutoStart() }
         .onDisappear { engine.stop() }
         .sheet(isPresented: $showingJournal) {
             JournalSheet(owner: .exercise(exercise),
@@ -269,7 +266,7 @@ struct ExerciseRunView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Button(action: commitAndStart) {
+                Button(action: startTapped) {
                     Label("Start training", systemImage: "play.fill").pocketRunButton
                 }
                 .buttonStyle(.plain)
@@ -337,6 +334,22 @@ private extension ExerciseRunView {
     private func saveChanges() {
         persist()
         haptic(.medium)
+    }
+
+    /// Start tapped: in a routine, run the count-in first (ADR 0071); standalone, start immediately.
+    private func startTapped() {
+        if routineContext != nil { showCountIn = true; haptic(.light) } else { commitAndStart() }
+    }
+
+    /// Auto-start on arrival when the context asks (Settings-gated; never the first block).
+    private func maybeAutoStart() {
+        if routineContext?.autoStart == true, !isRunning { showCountIn = true }
+    }
+
+    /// The count-in reached zero — drop the overlay and begin the run.
+    private func countInFinished() {
+        showCountIn = false
+        commitAndStart()
     }
 
     /// Persist the edits and hand the routine to this screen's own engine in one tap.

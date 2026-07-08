@@ -12,6 +12,8 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.keepScreenAwake) private var keepScreenAwake = true
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
     @AppStorage(AppSettings.Key.exerciseAnimates) private var exerciseAnimates = false
+    @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
+    @AppStorage(AppSettings.Key.routineReflection) private var routineReflection = true
 
     var body: some View {
         Form {
@@ -49,6 +51,17 @@ struct SettingsView: View {
             } footer: {
                 Text("A count-in before a tempo climb begins, so you can settle in. Keeping the "
                      + "screen awake stops it locking while you play along hands-free.")
+            }
+
+            Section {
+                Toggle("Auto-start blocks", isOn: $routineAutoStart)
+                Toggle("Reflect after each block", isOn: $routineReflection)
+            } header: {
+                Text("Routines")
+            } footer: {
+                Text("In a routine, each block after the first starts on its own (the first always "
+                     + "waits for you). When a block finishes, a short reflection prompt lets you jot "
+                     + "a note before moving on — skip it any time, or turn it off here.")
             }
 
             Section {

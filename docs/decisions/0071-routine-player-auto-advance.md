@@ -1,7 +1,30 @@
 # 0071 — Routine player: auto-advance on natural completion
 
-- **Status:** Accepted (2026-07-07)
+- **Status:** Accepted (2026-07-07; player/editor refinements 2026-07-08)
 - **Date:** 2026-07-07
+
+## Player & editor refinements (2026-07-08)
+
+A round of device feedback added the following, all consistent with the decisions below:
+
+- **Auto-start (Settings-gated).** Every block *after the first unit block* starts on its own; the
+  first always waits for a deliberate Start. Governed by `AppSettings.routineAutoStart` (default on).
+- **Count-in.** A brief `3·2·1` visual + haptic overlay (`RoutineCountInOverlay`) precedes **any**
+  block start — auto or manual — so a block never begins mid-stride. Uniform across exercises and
+  loops (no audio of its own; a drill's own musical count-in, if enabled, still follows).
+- **Progress strip.** A slim per-block strip (`RoutineProgressStrip`) below the nav bar with
+  **Start/Finish** endcaps and the current block highlighted, replacing the cramped "N of M" that sat
+  beside the close button.
+- **End-of-block reflection (Settings-gated) + session recap.** On a block's natural finish, an
+  optional journal sheet lets the player reflect before advancing (`AppSettings.routineReflection`,
+  default on; Skip bypasses it). The routine's in-setup journal is hidden in routine mode — reflection
+  moved to the end. The session closes on a **judgement-free recap** (what was practised, no scores —
+  ADR 0070).
+- **Edit-gated editor.** `RoutineDetailView` opens **read-only**; the name field, Add/Insert, and
+  delete/reorder controls appear only after tapping **Edit** (Save commits the sandbox, Cancel
+  rebuilds it from the store). A brand-new routine opens directly in edit mode.
+- **Loop settings collapse.** `LoopSettingsPanel` gives a loop run the same collapsible **Practice
+  Settings** disclosure an exercise has (tempos/reps/steps), so it opens on the summary + staircase.
 
 ## Context
 

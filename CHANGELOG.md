@@ -34,6 +34,22 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Routine player & editor polish (ADR 0071 follow-up).** A batch of player/editor refinements:
+  - **Auto-start** — in a routine, each block after the first begins on its own; a brief **3·2·1
+    count-in** (visual + haptic) precedes any block start so you're never caught mid-stride. Both are
+    governed by new **Settings → Routines** toggles ("Auto-start blocks", default on).
+  - **Session progress strip** — a slim per-block bar under the nav bar with **Start / Finish**
+    markers and the current block highlighted, replacing the cramped "N of M" that sat by the close
+    button.
+  - **End-of-block reflection** — when a block finishes, an optional journal prompt lets you jot a
+    note before moving on (skippable; "Reflect after each block" setting, default on), and the
+    session ends on a **judgement-free recap** of what you practised (no scores, ADR 0070).
+  - **Editing is gated behind Edit** — opening a routine is read-only; the name field, Add/Insert and
+    delete/reorder controls appear only after tapping **Edit**, with Save committing and Cancel
+    discarding.
+  - **Loop runs now collapse their settings** — a loop's tempos/reps/steps sit behind the same
+    collapsible **Practice Settings** disclosure an exercise uses, so the run opens on the summary +
+    staircase.
 - **Practice routines — the auto-advancing player (ADR 0066 slice 3 / ADR 0071).** A ▶ on each
   routine row runs the session full-screen, and each block is the **real run screen** —
   the same fretboard/strum/chord preview, Practice Settings, ramp staircase, promote and journal you
