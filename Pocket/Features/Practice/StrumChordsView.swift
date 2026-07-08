@@ -1,11 +1,12 @@
 import SwiftUI
 
 /// The **live strum-and-chords surface** (ADR 0065): the chord-changing view stacked over the
-/// strumming lane, both driven off **one shared beat origin** — the beat this surface first mounts,
-/// which is the first musical downbeat since the run screen only mounts it once `automatorCountdown`
-/// clears (the exact anchor `ChordChangeView` captures, reused here so a chord's hold and the strum
-/// pattern's wrap both measure from the same zero rather than the engine's absolute `currentBeat`,
-/// which counts through the count-in).
+/// strumming lane, both driven off **one shared beat origin** — pinned the instant `automatorCountdown`
+/// clears, i.e. the first musical downbeat (the exact anchor `ChordChangeView` captures, reused here
+/// so a chord's hold and the strum pattern's wrap both measure from the same zero rather than the
+/// engine's absolute `currentBeat`, which counts through the count-in). The surface is shown
+/// *throughout* the count-in, sitting static until that origin is anchored, so it doesn't disappear
+/// during the count and pop back in when the music starts.
 ///
 /// The two surfaces stay **independent** past that shared anchor: the chord progression advances on
 /// its own `lengthInBeats`, the strum pattern wraps on its own — there is no reset that restarts the
@@ -48,8 +49,25 @@ struct StrumChordsView: View {
             anchoredBeat = newValue
             beatOnset = .now
         }
-        .onAppear { if originBeat == nil { originBeat = max(0, engine.currentBeat) } }
+        .onChange(of: engine.automatorCountdown) { _, countdown in
+            // The count-in just cleared → this beat is the first musical downbeat; anchor both surfaces.
+            if countdown == nil { anchorToDownbeat() }
+        }
+        .onAppear {
+            // No count-in (or already cleared before this appeared) → anchor now; else wait, above.
+            if engine.automatorCountdown == nil { anchorToDownbeat() }
+        }
         .accessibilityElement(children: .contain)
+    }
+
+    /// Pin the shared origin to the beat the count-in clears (or on appear when there is none), so the
+    /// chord hold and strum wrap both measure from the first musical downbeat. Idempotent.
+    private func anchorToDownbeat() {
+        guard originBeat == nil else { return }
+        let beat = max(0, engine.currentBeat)
+        originBeat = beat
+        anchoredBeat = beat
+        beatOnset = .now
     }
 
     // MARK: - Chord surface (borrows `ChordChangeView`'s layout, sharing this view's origin)

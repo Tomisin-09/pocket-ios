@@ -26,9 +26,17 @@ All notable changes to Pocket are documented here. Format loosely follows
   - *No pop-in.* The board used to be **replaced by the count-in beat dots** and then reappear when
     the music started, so the walk and the whole board arrived at once as an abrupt pop. The fretboard
     surface is now shown **throughout the count-in**, sitting fully plotted but static; only the walk
-    begins, one bar in, on that first downbeat. (The strum and chord surfaces still swap in after the
-    count-in, now cross-dissolving from the dots via a `ZStack`; giving them the same always-present
-    treatment is a follow-up.)
+    begins, one bar in, on that first downbeat.
+- **Strum, chord and Strum & Chords surfaces no longer pop in after the count-in either.** The
+  follow-up to the fretboard fix above: the three remaining template surfaces were still *replaced by
+  the beat dots* during the count-in and cross-dissolved in when it cleared. They now get the fretboard's
+  treatment — shown **throughout the count-in**, fully plotted but static (the strum lane un-lit, chord 1
+  on "Get ready"), engaging only on the first musical downbeat. Each now anchors its pattern/progression
+  to the beat the **count-in clears** rather than to when it appears (the engine's `currentBeat` counts
+  *through* the count-in, so `StrummingLaneView` gained the same `originBeat` anchor `ChordChangeView` /
+  `StrumChordsView` already used). With nothing swapping mid-count, the `ZStack`/cross-dissolve in
+  `ExerciseTemplateSurface` is retired for a plain conditional. Every exercise template now behaves
+  identically across the count-in.
   - The creation-time preview (`FretboardDrillPreview`) had the wrong-note issue too in its
     free-running (non-Watch) animation, phased off raw wall-clock time — it now anchors to its own
     appearance instead, and moved to its own file in the split.
