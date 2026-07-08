@@ -205,8 +205,10 @@ on natural completion** (one command-ramp pass), fired by additive `onRampFinish
 block** is the audio-only `SongPlayAlongView` — a fixed play-along speed (no ramp, ADR 0070), play/pause
 and −10s/+10s, local/iCloud files only (ADR 0001); it loops until skipped by default, or plays through
 once and advances per the `routineSongLoop` setting. It has **zero evaluation surface** (ADR 0070) —
-completion is the material's length, not a graded take. The planner (a producer of the same model) and
-`RoutinePresets` seeding are later slices. `ExerciseLibraryView` owns exercise **create**
+completion is the material's length, not a graded take. `RoutinePresets` seeds three curated in-house
+starter routines once on first launch (after `PracticePresets`, resolving blocks against the seeded
+exercises **by name**; exercise-only, since loops/songs need user audio at cold start). The planner (a
+producer of the same model) is the remaining later slice. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
 (swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command

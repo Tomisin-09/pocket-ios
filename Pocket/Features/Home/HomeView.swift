@@ -76,8 +76,12 @@ struct HomeView: View {
             }
             // Seed the curated Practice presets once, ever (ADR 0046). The app root is the right
             // place — they exist before the user opens Practice — and the seeder's own
-            // `UserDefaults` guard makes this idempotent across launches.
-            .task { PracticePresets.seedIfNeeded(into: context) }
+            // `UserDefaults` guard makes this idempotent across launches. Routines seed **after**
+            // exercises (ADR 0071) so their by-name blocks resolve against the just-seeded drills.
+            .task {
+                PracticePresets.seedIfNeeded(into: context)
+                RoutinePresets.seedIfNeeded(into: context)
+            }
         }
     }
 

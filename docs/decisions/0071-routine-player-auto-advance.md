@@ -160,4 +160,11 @@ additions are session chrome.
   `onReachedEnd`) — additive, nil for standalone runs, so the run screens are unaffected.
 - No model or schema change (the routine model already existed, ADR 0066); no
   migration.
-- `RoutinePresets` seeding remains the one follow-on slice.
+- **`RoutinePresets` seeder (built 2026-07-08).** Three curated in-house starter
+  routines (Morning Warm-up, Picking Builder, Rhythm & Changes) seed once on first
+  launch, **after** `PracticePresets` so their blocks resolve against the just-seeded
+  exercises **by name**. Exercise-only by construction — loops/songs need user audio,
+  which doesn't exist at cold start (the exercises-first / shareable-axis direction,
+  ADR 0064). A missing exercise is skipped and a rests-only routine isn't seeded;
+  one-time `UserDefaults` flag makes deletion stick (mirrors `PracticePresets`). The
+  planner (a producer of the same model) is the remaining follow-on.

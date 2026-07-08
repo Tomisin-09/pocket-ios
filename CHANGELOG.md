@@ -34,6 +34,11 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Starter routines (ADR 0066 / 0071).** The Routines library ships three curated, in-house starter
+  routines — **Morning Warm-up**, **Picking Builder**, **Rhythm & Changes** — seeded once on first
+  launch (after the starter exercises they string together) so a new Practice space isn't empty. Each
+  is an ordinary routine afterwards: fully editable, fully deletable, and a deleted preset stays
+  deleted.
 - **Song blocks in routines — audio-only play-along (ADR 0066 / 0071).** A routine can now include a
   **song** you play along to, not just exercises and loops. The picker gains a **Songs** bucket
   (local/iCloud files only — Apple Music can't be time-stretched, ADR 0001), and in the player a song
