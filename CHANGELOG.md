@@ -38,9 +38,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   - **Auto-start** — in a routine, each block after the first begins on its own; a brief **3·2·1
     count-in** (visual + haptic) precedes any block start so you're never caught mid-stride. Both are
     governed by new **Settings → Routines** toggles ("Auto-start blocks", default on).
-  - **Session progress strip** — a slim per-block bar under the nav bar with **Start / Finish**
-    markers and the current block highlighted, replacing the cramped "N of M" that sat by the close
-    button.
+  - **Session progress strip + navigator** — a slim per-block bar under the nav bar with **Start /
+    Finish** markers and the current block highlighted, flanked by **‹ previous / next ›** chevrons
+    (the one place session navigation lives), replacing the cramped "N of M" by the close button.
+  - **Numbered blocks** in the routine detail/editor list, so the sequence is clear at a glance.
+  - **"Up next"** preview on the rest screen, and a configurable **rest length** (Settings →
+    Routines, 5–60s).
   - **End-of-block reflection** — when a block finishes, an optional journal prompt lets you jot a
     note before moving on (skippable; "Reflect after each block" setting, default on), and the
     session ends on a **judgement-free recap** of what you practised (no scores, ADR 0070).

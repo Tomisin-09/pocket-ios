@@ -272,7 +272,6 @@ struct ExerciseRunView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Start training routine")
             }
-            if let routineContext { RoutineSkipButton(context: routineContext) }
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 16)

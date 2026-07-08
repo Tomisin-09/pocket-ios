@@ -75,8 +75,8 @@ struct RoutineDetailView: View {
                         .foregroundStyle(PocketColor.textSecondary)
                         .listRowBackground(PocketColor.background)
                 } else {
-                    ForEach(routine.orderedItems) { item in
-                        RoutineItemRow(item: item)
+                    ForEach(Array(routine.orderedItems.enumerated()), id: \.element.uid) { pair in
+                        RoutineItemRow(item: pair.element, number: pair.offset + 1)
                             .listRowBackground(PocketColor.background)
                     }
                     .onMove(perform: move)

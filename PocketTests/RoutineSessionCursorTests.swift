@@ -56,4 +56,23 @@ final class RoutineSessionCursorTests: XCTestCase {
         cursor.advance()
         XCTAssertTrue(cursor.isComplete)
     }
+
+    func testRetreatStepsBackAndClampsAtZero() {
+        var cursor = RoutineSessionCursor(total: 3)
+        cursor.advance(); cursor.advance()
+        XCTAssertEqual(cursor.index, 2)
+        cursor.retreat()
+        XCTAssertEqual(cursor.index, 1)
+        cursor.retreat(); cursor.retreat()   // second is a no-op at the first block
+        XCTAssertEqual(cursor.index, 0)
+    }
+
+    func testRetreatFromCompleteReturnsToLastBlock() {
+        var cursor = RoutineSessionCursor(total: 2)
+        cursor.advance(); cursor.advance()
+        XCTAssertTrue(cursor.isComplete)
+        cursor.retreat()
+        XCTAssertFalse(cursor.isComplete)
+        XCTAssertEqual(cursor.index, 1)
+    }
 }

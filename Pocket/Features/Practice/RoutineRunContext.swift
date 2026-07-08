@@ -16,6 +16,10 @@ struct RoutineRunContext {
     /// Whether this block should begin on its own when it appears (Settings-gated; always false for
     /// the first block, which waits for a deliberate Start).
     let autoStart: Bool
+    /// Whether there's a previous block to step back to (disables the ‹ control at the first block).
+    let canGoBack: Bool
+    /// Step back to the previous block (user-initiated).
+    let onBack: () -> Void
     /// Jump to the next block now (user-initiated).
     let onSkip: () -> Void
     /// This block finished on its own (the ramp's last plateau) — advance automatically.
@@ -42,42 +46,67 @@ extension View {
         }
         .safeAreaInset(edge: .top) {
             if let context {
-                RoutineProgressStrip(index: context.stageIndex, count: context.stageCount)
+                RoutineProgressStrip(index: context.stageIndex, count: context.stageCount,
+                                     canGoBack: context.canGoBack,
+                                     onBack: context.onBack, onNext: context.onSkip)
             }
         }
     }
 }
 
-/// A slim per-block **progress strip** for the routine player — one segment per block (past filled,
-/// current bright, upcoming faint) with **Start** / **Finish** endcaps, so you always see where in
-/// the session you are without a cramped "N of M" tucked beside the close button (ADR 0071).
+/// A slim per-block **progress strip + session navigator** for the routine player — one segment per
+/// block (past filled, current bright, upcoming faint) with **Start** / **Finish** endcaps, flanked
+/// by ‹ **previous** and **next** › chevrons. It replaces the cramped "N of M" beside the close
+/// button and is the one place session navigation lives, leaving each block's transport for the drill
+/// itself (ADR 0071).
 struct RoutineProgressStrip: View {
     let index: Int
     let count: Int
+    let canGoBack: Bool
+    let onBack: () -> Void
+    let onNext: () -> Void
 
     var body: some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 4) {
-                ForEach(0..<max(count, 1), id: \.self) { position in
-                    Capsule()
-                        .fill(color(for: position))
-                        .frame(height: 4)
+        HStack(spacing: 10) {
+            navButton(symbol: "chevron.left", label: "Previous block",
+                      enabled: canGoBack, action: onBack)
+            VStack(spacing: 4) {
+                HStack(spacing: 4) {
+                    ForEach(0..<max(count, 1), id: \.self) { position in
+                        Capsule().fill(color(for: position)).frame(height: 4)
+                    }
                 }
+                HStack {
+                    Text("Start")
+                    Spacer()
+                    Text("Finish")
+                }
+                .font(.futura(.caption2))
+                .foregroundStyle(PocketColor.textSecondary)
             }
-            HStack {
-                Text("Start")
-                Spacer()
-                Text("Finish")
-            }
-            .font(.futura(.caption2))
-            .foregroundStyle(PocketColor.textSecondary)
+            navButton(symbol: "chevron.right", label: "Skip to next block",
+                      enabled: true, action: onNext)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.top, 6)
         .padding(.bottom, 8)
         .background(PocketColor.background.opacity(0.95))
-        .accessibilityElement()
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("Block \(min(index + 1, count)) of \(count)")
+    }
+
+    private func navButton(symbol: String, label: String,
+                           enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.futura(.body, weight: .semibold))
+                .foregroundStyle(enabled ? PocketColor.practice
+                                         : PocketColor.textSecondary.opacity(0.35))
+                .frame(width: 36, height: 36)
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(label)
     }
 
     /// Past blocks read as a dim wash, the current one bright, the rest barely there.
@@ -119,24 +148,5 @@ struct RoutineCountInOverlay: View {
             try? await Task.sleep(for: .seconds(0.8))
         }
         onComplete()
-    }
-}
-
-/// The **Skip** control a run screen shows in its transport while playing inside a routine — advances
-/// to the next block. An outlined circle, distinct from the filled Start/Pause pill and the washed
-/// Stop, so "skip the session forward" never reads as "stop this drill".
-struct RoutineSkipButton: View {
-    let context: RoutineRunContext
-
-    var body: some View {
-        Button { context.onSkip() } label: {
-            Image(systemName: "forward.fill")
-                .font(.futura(.title3))
-                .foregroundStyle(PocketColor.practice)
-                .frame(width: 56, height: 56)
-                .background(Circle().stroke(PocketColor.practice, lineWidth: 1.5))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Skip to next block")
     }
 }

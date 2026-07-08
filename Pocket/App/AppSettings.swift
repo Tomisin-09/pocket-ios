@@ -37,10 +37,14 @@ enum AppSettings {
         static let exerciseAnimates = "exerciseAnimates"
         static let routineAutoStart = "routineAutoStart"
         static let routineReflection = "routineReflection"
+        static let routineRestSeconds = "routineRestSeconds"
     }
 
     /// Count-in length is offered as whole bars in this range.
     static let countInBarsRange = 1...2
+
+    /// The between-blocks rest countdown is offered in this range of seconds.
+    static let routineRestSecondsRange = 5...60
 
     /// Gesture-confirmation haptics on/off. Default on.
     static var hapticsEnabled: Bool { bool(Key.hapticsEnabled) }
@@ -72,6 +76,15 @@ enum AppSettings {
     /// In a routine, offer a short **reflection** prompt when a block finishes, before advancing
     /// (ADR 0071). Default on; off ⇒ blocks advance with no reflection.
     static var routineReflection: Bool { bool(Key.routineReflection) }
+
+    /// How long the between-blocks rest countdown lasts, seconds (clamped to
+    /// `routineRestSecondsRange`). Default 20.
+    static var routineRestSeconds: Int {
+        let resolved = resolvedInt(
+            storedValue: UserDefaults.standard.object(forKey: Key.routineRestSeconds), default: 20)
+        return min(routineRestSecondsRange.upperBound,
+                   max(routineRestSecondsRange.lowerBound, resolved))
+    }
 
     /// Appearance override. Default `.system` — the app follows the device setting until
     /// the user opts into a pinned light/dark appearance.

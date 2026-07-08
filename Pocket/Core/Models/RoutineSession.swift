@@ -44,4 +44,9 @@ struct RoutineSessionCursor: Equatable {
     mutating func advance() {
         if index < total { index += 1 }
     }
+
+    /// Step back to the previous block. A no-op at the first block, so the cursor never goes negative.
+    mutating func retreat() {
+        if index > 0 { index -= 1 }
+    }
 }

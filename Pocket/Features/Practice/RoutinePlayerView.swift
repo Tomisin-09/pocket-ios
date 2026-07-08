@@ -87,6 +87,8 @@ struct RoutinePlayerView: View {
         RoutineRunContext(stageIndex: player.currentIndex,
                           stageCount: player.stageCount,
                           autoStart: player.shouldAutoStart(at: player.currentIndex),
+                          canGoBack: player.canGoBack,
+                          onBack: { player.back(); haptic(.light) },
                           onSkip: { player.advance(); haptic(.light) },
                           onFinished: { finishedBlock() },
                           onExit: { dismiss() })
@@ -121,9 +123,21 @@ struct RoutinePlayerView: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .multilineTextAlignment(.center)
             }
+            if let next = player.upNext {
+                VStack(spacing: 4) {
+                    Text("Up next")
+                        .font(.futura(.caption, weight: .semibold))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .textCase(.uppercase)
+                    Text(next.title)
+                        .font(.futura(.headline))
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 20).padding(.vertical, 14)
+                .background(RoundedRectangle(cornerRadius: 12).fill(PocketColor.practiceCircleWash))
+            }
             Spacer()
-            RoutineSkipButton(context: context)
-                .padding(.bottom, 24)
         }
         .padding(24)
         .navigationTitle("Rest")

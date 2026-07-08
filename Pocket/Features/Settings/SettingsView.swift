@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.exerciseAnimates) private var exerciseAnimates = false
     @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
     @AppStorage(AppSettings.Key.routineReflection) private var routineReflection = true
+    @AppStorage(AppSettings.Key.routineRestSeconds) private var routineRestSeconds = 20
 
     var body: some View {
         Form {
@@ -56,12 +57,16 @@ struct SettingsView: View {
             Section {
                 Toggle("Auto-start blocks", isOn: $routineAutoStart)
                 Toggle("Reflect after each block", isOn: $routineReflection)
+                Stepper(value: $routineRestSeconds, in: AppSettings.routineRestSecondsRange, step: 5) {
+                    LabeledContent("Rest length", value: "\(routineRestSeconds)s")
+                }
             } header: {
                 Text("Routines")
             } footer: {
                 Text("In a routine, each block after the first starts on its own (the first always "
                      + "waits for you). When a block finishes, a short reflection prompt lets you jot "
-                     + "a note before moving on — skip it any time, or turn it off here.")
+                     + "a note before moving on — skip it any time, or turn it off here. Rest length "
+                     + "sets the breather between blocks.")
             }
 
             Section {

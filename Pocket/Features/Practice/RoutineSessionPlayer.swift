@@ -49,10 +49,9 @@ final class RoutineSessionPlayer {
     private(set) var cursor: RoutineSessionCursor
     private(set) var state: State = .running
 
-    /// The fixed session breather between blocks, seconds — a short runtime pause, deliberately
-    /// *not* the ADR 0014 planning-time rest minutes (a planner concern; at runtime each block runs
-    /// its natural length, so the routine needs no per-block clock).
-    static let restSeconds = 20
+    /// The between-blocks breather, seconds — user-set (`AppSettings.routineRestSeconds`), a short
+    /// runtime pause deliberately *not* the ADR 0014 planning-time rest minutes (a planner concern;
+    /// at runtime each block runs its natural length, so the routine needs no per-block clock).
     private(set) var restRemaining = 0
     private var restTimer: Timer?
     /// Guards `start()` against a re-fired `onAppear`, so a rest countdown is never double-started.
@@ -64,6 +63,16 @@ final class RoutineSessionPlayer {
     var stageCount: Int { stages.count }
     var progressLabel: String { cursor.progressLabel }
     var isFinished: Bool { state == .finished }
+
+    /// The block after the current one — drives the rest screen's "up next" preview; `nil` if the
+    /// current block is the last.
+    var upNext: RoutineStage? {
+        let next = cursor.index + 1
+        return next < stages.count ? stages[next] : nil
+    }
+
+    /// Whether there's a previous block to step back to.
+    var canGoBack: Bool { cursor.index > 0 && !isFinished }
 
     /// Index of the first *unit* block (exercise/loop) — the one that always waits for a deliberate
     /// Start; `nil` if the routine has no unit blocks. Rests never auto-run a unit, so they don't
@@ -122,6 +131,15 @@ final class RoutineSessionPlayer {
         beginCurrentStage()
     }
 
+    /// Step back to the previous block (user-initiated). No-op at the first block; it re-lands on a
+    /// fresh, stopped run screen, so nothing auto-restarts under you.
+    func back() {
+        guard cursor.index > 0 else { return }
+        stopRestTimer()
+        cursor.retreat()
+        beginCurrentStage()
+    }
+
     private func beginCurrentStage() {
         guard let stage = current else { state = .finished; return }
         if stage.kind == .rest { beginRest() } else { state = .running }
@@ -131,7 +149,7 @@ final class RoutineSessionPlayer {
 
     private func beginRest() {
         state = .resting
-        restRemaining = Self.restSeconds
+        restRemaining = AppSettings.routineRestSeconds
         restTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tickRest() }
         }

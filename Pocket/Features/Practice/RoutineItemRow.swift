@@ -10,9 +10,18 @@ import SwiftUI
 /// template names, e.g. a "Warm-up" template vs a warm-up block).
 struct RoutineItemRow: View {
     let item: RoutineItem
+    /// 1-based position in the routine, shown as a leading number so the sequence is clear at a
+    /// glance (ADR 0071). `nil` hides it (e.g. contexts that don't want numbering).
+    var number: Int?
 
     var body: some View {
         HStack(spacing: 12) {
+            if let number {
+                Text("\(number)")
+                    .font(.pocketMono(.subheadline))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .frame(minWidth: 18, alignment: .trailing)
+            }
             icon
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
