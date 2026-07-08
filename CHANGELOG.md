@@ -35,9 +35,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ### Added
 - **Routine player & editor polish (ADR 0071 follow-up).** A batch of player/editor refinements:
-  - **Auto-start** — in a routine, each block after the first begins on its own; a brief **3·2·1
-    count-in** (visual + haptic) precedes any block start so you're never caught mid-stride. Both are
-    governed by new **Settings → Routines** toggles ("Auto-start blocks", default on).
+  - **Auto-start** — in a routine, each block after the first begins on its own; loop blocks get a
+    brief **3·2·1 count-in** (visual + haptic) before they start. Exercise blocks skip the visual
+    count-in and rely on the metronome's own audible count-in, so you hear a single lead-in rather
+    than a doubled one. Auto-start is governed by a new **Settings → Routines** toggle ("Auto-start
+    blocks", default on).
   - **Session progress strip + navigator** — a slim per-block bar under the nav bar with **Start /
     Finish** markers and the current block highlighted, flanked by **‹ previous / next ›** chevrons
     (the one place session navigation lives), replacing the cramped "N of M" by the close button.

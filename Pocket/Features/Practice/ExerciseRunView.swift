@@ -29,8 +29,6 @@ struct ExerciseRunView: View {
     @State private var showSettings = false
     @State private var signature: TimeSignature = .standard
     @State private var seeded = false
-    /// Whether the routine count-in overlay is showing (routine mode only) — gates the run start.
-    @State private var showCountIn = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State private var showingJournal = false
     /// The exercise detail/reference sheet (V1 feedback #2) — an ⓘ in the nav bar opens it.
@@ -114,7 +112,6 @@ struct ExerciseRunView: View {
         }
         .routineSessionChrome(routineContext)
         .safeAreaInset(edge: .bottom) { transport }
-        .overlay { if showCountIn { RoutineCountInOverlay(onComplete: countInFinished) } }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear { seedIfNeeded(); maybeAutoStart() }
         .onDisappear { engine.stop() }
@@ -266,7 +263,7 @@ struct ExerciseRunView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Button(action: startTapped) {
+                Button(action: commitAndStart) {
                     Label("Start training", systemImage: "play.fill").pocketRunButton
                 }
                 .buttonStyle(.plain)
@@ -335,20 +332,12 @@ private extension ExerciseRunView {
         haptic(.medium)
     }
 
-    /// Start tapped: in a routine, run the count-in first (ADR 0071); standalone, start immediately.
-    private func startTapped() {
-        if routineContext != nil { showCountIn = true; haptic(.light) } else { commitAndStart() }
-    }
-
-    /// Auto-start on arrival when the context asks (Settings-gated; never the first block).
+    /// Auto-start on arrival in a routine when the context asks (Settings-gated; never the first
+    /// block). An exercise needs no separate visual count-in — `commitAndStart` runs the engine's own
+    /// audible metronome count-in (per the Count-in setting), so a routine block gets the same lead-in
+    /// as a standalone run instead of a doubled one.
     private func maybeAutoStart() {
-        if routineContext?.autoStart == true, !isRunning { showCountIn = true }
-    }
-
-    /// The count-in reached zero — drop the overlay and begin the run.
-    private func countInFinished() {
-        showCountIn = false
-        commitAndStart()
+        if routineContext?.autoStart == true, !isRunning { commitAndStart() }
     }
 
     /// Persist the edits and hand the routine to this screen's own engine in one tap.
