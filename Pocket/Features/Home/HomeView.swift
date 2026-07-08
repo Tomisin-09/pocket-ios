@@ -78,8 +78,12 @@ struct HomeView: View {
             // place — they exist before the user opens Practice — and the seeder's own
             // `UserDefaults` guard makes this idempotent across launches. Routines seed **after**
             // exercises (ADR 0071) so their by-name blocks resolve against the just-seeded drills.
+            // Yield between the two so the exercise library can paint before routine seeding's
+            // fetch+insert+save runs — chaining both synchronously delays first render on a cold
+            // install (the run-screen "freeze" that once looked like a regression was this latency).
             .task {
                 PracticePresets.seedIfNeeded(into: context)
+                await Task.yield()
                 RoutinePresets.seedIfNeeded(into: context)
             }
         }
