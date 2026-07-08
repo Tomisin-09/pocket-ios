@@ -16,13 +16,16 @@ struct PlannerExercise: Equatable {
 }
 
 /// A projected loop bound to a song (Path B). `songUID` is the owning song's derived planner id
-/// (`Song.plannerUID`), so a repertoire goal can gather a target song's loops.
+/// (`Song.plannerUID`), so a repertoire goal can gather a target song's loops. `templates` are the
+/// skill buckets recognised from the loop's tags (Slice 4, Decision 8) — empty for an untagged loop,
+/// so it stays Path-B-only; a recognised tag lets a technique goal's Path A surface it too.
 struct PlannerLoop: Equatable {
     var uid: UUID
     var songUID: UUID?
     var mastery: Int?
     var lastPracticed: Date?
     var estimatedMinutes: Int
+    var templates: [ExerciseTemplate] = []
 }
 
 /// A projected song run (Path B). Keyed by the derived `Song.plannerUID` — Song has no stored `uid`

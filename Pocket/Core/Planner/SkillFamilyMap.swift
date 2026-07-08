@@ -40,4 +40,29 @@ enum SkillFamilyMap {
     static func template(_ template: ExerciseTemplate, serves skillID: String) -> Bool {
         skillsByTemplate[template]?.contains(skillID) ?? false
     }
+
+    // MARK: - Loop skill tags (V2 planner Slice 4, Decision 8)
+
+    /// The `ExerciseTemplate` **skill buckets** offered as suggested `Loop.tags` — every template
+    /// that carries technique skills (so `.basic` / `.warmup` are excluded, exactly as above), in the
+    /// canonical `ExerciseTemplate.allCases` display order. A user tags a loop with one of these
+    /// (by its `displayName`) so a technique goal's Path A can also surface that loop — untagged
+    /// loops are unaffected (they still resolve only via Path B). Same ~10 coarse buckets as the
+    /// exercise family map, so the vocabulary never overwhelms.
+    static let taggableTemplates: [ExerciseTemplate] =
+        ExerciseTemplate.allCases.filter { skillsByTemplate[$0] != nil }
+
+    /// The suggested tag **strings** — the display names of `taggableTemplates`, the canonical forms
+    /// the recogniser round-trips.
+    static let suggestedLoopTags: [String] = taggableTemplates.map(\.displayName)
+
+    /// Recognise a free-form loop tag as one of the skill buckets, or `nil` when it isn't one.
+    /// Case-insensitive match against a taggable template's `displayName` (the form the tag editor
+    /// suggests), so "Picking" / "picking" both resolve to `.picking` but arbitrary tags
+    /// ("chorus", "needs-work") stay unrecognised and don't route a loop into Path A.
+    static func recognizedTemplate(for tag: String) -> ExerciseTemplate? {
+        let folded = tag.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !folded.isEmpty else { return nil }
+        return taggableTemplates.first { $0.displayName.lowercased() == folded }
+    }
 }

@@ -321,10 +321,36 @@ extension LoopEditSheet {
                 Button("Add", action: addTag)
                     .disabled(Labels.canonical(newTag) == nil)
             }
+            if !skillTagSuggestions.isEmpty {
+                skillTagChips
+            }
             if !tagSuggestions.isEmpty {
                 tagSuggestionChips
             }
         }
+    }
+
+    /// The **skill-bucket** suggestions (V2 planner Slice 4): tagging a loop with one of these
+    /// canonical names lets the planner's technique goals surface it (Path A). Always present (not
+    /// drawn from other loops) so the practice signal is discoverable; excludes buckets already on
+    /// this loop, prefixed with a ✨ so it reads apart from descriptive tags.
+    private var skillTagChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(skillTagSuggestions, id: \.self) { suggestion in
+                    TagChip(text: "✨ \(suggestion)", style: .suggestion) {
+                        tags = Labels.adding(suggestion, to: tags)
+                    }
+                }
+            }
+        }
+        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+    }
+
+    /// The recognised skill-bucket tags not already applied to this loop, in canonical order.
+    private var skillTagSuggestions: [String] {
+        let applied = Set(tags.map { $0.lowercased() })
+        return SkillFamilyMap.suggestedLoopTags.filter { !applied.contains($0.lowercased()) }
     }
 
     /// Tappable chips of tags already used on other loops — tap to add the canonical form.

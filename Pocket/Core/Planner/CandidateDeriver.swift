@@ -7,9 +7,10 @@ import Foundation
 ///
 /// Per active goal → each of its skills, routed by the taxonomy `default mode` (Decision 5):
 ///  - **Path A** (the four technique modes): resolve to library **exercises** via the coarse
-///    `SkillFamilyMap` (Decision 4), weighted by the goal (S5) and **soft-down-weighted** when the
-///    skill's direct prerequisites are unrated / low-mastery (Decision 6 — a soft stage, never a
-///    hard gate: the advanced thing still appears, just later in the U-shape).
+///    `SkillFamilyMap` (Decision 4), plus any **loops** the user tagged with a matching skill bucket
+///    (Slice 4, Decision 8), weighted by the goal (S5) and **soft-down-weighted** when the skill's
+///    direct prerequisites are unrated / low-mastery (Decision 6 — a soft stage, never a hard gate:
+///    the advanced thing still appears, just later in the U-shape).
 ///  - **Path B** (`repertoire` mode): resolve to the goal's **target song** — its loops plus the
 ///    song run itself (Decision 5). Song-routed, not skill-matched.
 ///
@@ -55,13 +56,15 @@ enum CandidateDeriver {
         return Array(strongest.values)
     }
 
-    /// **Path A** — a technique skill resolves to every library exercise whose template can serve
-    /// it (`SkillFamilyMap`), each carrying the goal weight softened by prerequisite readiness.
+    /// **Path A** — a technique skill resolves to every library **exercise** whose template can serve
+    /// it (`SkillFamilyMap`), plus any **loop** the user has tagged with a skill bucket that serves it
+    /// (Slice 4, Decision 8 — untagged loops carry no template and stay Path-B only). Each candidate
+    /// carries the goal weight softened by prerequisite readiness.
     private static func techniqueCandidates(goal: PlannerGoal,
                                             info: SkillInfo,
                                             library: PlannerLibrary) -> [PlannerCandidate] {
         let priority = goal.weight * prereqReadiness(for: info, library: library)
-        return library.exercises
+        let exercises = library.exercises
             .filter { SkillFamilyMap.template($0.template, serves: info.id) }
             .map { exercise in
                 PlannerCandidate(unit: PlannerUnitRef(exercise.uid, .exercise),
@@ -71,6 +74,17 @@ enum CandidateDeriver {
                                  estimatedMinutes: exercise.estimatedMinutes,
                                  skillID: info.id)
             }
+        let loops = library.loops
+            .filter { loop in loop.templates.contains { SkillFamilyMap.template($0, serves: info.id) } }
+            .map { loop in
+                PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
+                                 priority: priority,
+                                 mastery: loop.mastery,
+                                 lastPracticed: loop.lastPracticed,
+                                 estimatedMinutes: loop.estimatedMinutes,
+                                 skillID: info.id)
+            }
+        return exercises + loops
     }
 
     /// **Path B** — a repertoire skill resolves to the goal's target song: its loops, then the song

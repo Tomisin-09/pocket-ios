@@ -141,4 +141,52 @@ final class CandidateDeriverTests: XCTestCase {
             goals: [goal(skills: ["rep.learn-song"], song: nil)], library: library)
         XCTAssertTrue(candidates.isEmpty)
     }
+
+    // MARK: - Path A loop tags (Slice 4, Decision 8)
+
+    private func taggedLoop(_ templates: [ExerciseTemplate], mastery: Int? = nil) -> PlannerLoop {
+        PlannerLoop(uid: UUID(), songUID: UUID(), mastery: mastery,
+                    lastPracticed: nil, estimatedMinutes: 4, templates: templates)
+    }
+
+    func testTaggedLoopSurfacesViaTechniqueGoal() {
+        // A loop tagged Picking is reachable by a picking goal (Path A), as a loop candidate — no
+        // target song / repertoire goal involved.
+        let loop = taggedLoop([.picking])
+        let library = PlannerLibrary(loops: [loop])
+        let candidates = CandidateDeriver.deriveCandidates(
+            goals: [goal(weight: 2.0, skills: ["pick.alternate"])], library: library)
+        XCTAssertEqual(candidates.count, 1)
+        XCTAssertEqual(candidates[0].unit.kind, .loop)
+        XCTAssertEqual(candidates[0].unit.uid, loop.uid)
+        XCTAssertEqual(candidates[0].priority, 2.0, accuracy: 0.0001, "goal weight, no prereq penalty")
+    }
+
+    func testUntaggedLoopDoesNotSurfaceViaTechniqueGoal() {
+        // Same loop with no recognised template stays out of Path A (it's Path-B only).
+        let loop = taggedLoop([])
+        let library = PlannerLibrary(loops: [loop])
+        let candidates = CandidateDeriver.deriveCandidates(
+            goals: [goal(skills: ["pick.alternate"])], library: library)
+        XCTAssertTrue(candidates.isEmpty, "an untagged loop needs a target-song (Path B) to appear")
+    }
+
+    func testTaggedLoopMatchesOnlyServingSkill() {
+        // A Picking-tagged loop must not answer a scales goal.
+        let loop = taggedLoop([.picking])
+        let library = PlannerLibrary(loops: [loop])
+        let candidates = CandidateDeriver.deriveCandidates(
+            goals: [goal(skills: ["scale.pentatonic"])], library: library)
+        XCTAssertTrue(candidates.isEmpty)
+    }
+
+    func testTaggedLoopAndExerciseBothSurfaceForOneSkill() {
+        let exercise = pickingExercise()
+        let loop = taggedLoop([.picking])
+        let library = PlannerLibrary(exercises: [exercise], loops: [loop])
+        let candidates = CandidateDeriver.deriveCandidates(
+            goals: [goal(skills: ["pick.alternate"])], library: library)
+        XCTAssertEqual(Set(candidates.map(\.unit.kind)), [.exercise, .loop])
+        XCTAssertEqual(candidates.count, 2)
+    }
 }

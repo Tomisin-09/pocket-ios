@@ -63,7 +63,8 @@ enum PracticePlanner {
                                        estimatedMinutes: estimatedMinutes(for: $0)) },
             loops: loops.map { PlannerLoop(uid: $0.uid, songUID: $0.song.map { PlannerID.uid(from: $0.sourceID) },
                                            mastery: $0.mastery, lastPracticed: nil,
-                                           estimatedMinutes: estimatedMinutes(for: $0)) },
+                                           estimatedMinutes: estimatedMinutes(for: $0),
+                                           templates: recognizedTemplates(for: $0)) },
             songs: songs.map { PlannerSong(uid: PlannerID.uid(from: $0.sourceID),
                                            lastPracticed: $0.lastPracticed,
                                            estimatedMinutes: estimatedMinutes(for: $0)) })
@@ -83,6 +84,20 @@ enum PracticePlanner {
     /// estimate is a later refinement; the back-half splits any over-long block regardless (R2).
     static func estimatedMinutes(for exercise: Exercise) -> Int {
         RoutineBudget.defaultFocusedMinutes
+    }
+
+    /// The distinct skill buckets recognised from a loop's tags (Slice 4, Decision 8), order-stable —
+    /// the Path-A match key. Empty for an untagged loop (Path-B only). Dedupes while preserving the
+    /// tag order the recogniser first sees each bucket.
+    static func recognizedTemplates(for loop: Loop) -> [ExerciseTemplate] {
+        var seen: Set<ExerciseTemplate> = []
+        var result: [ExerciseTemplate] = []
+        for tag in loop.tags {
+            guard let template = SkillFamilyMap.recognizedTemplate(for: tag), seen.insert(template).inserted
+            else { continue }
+            result.append(template)
+        }
+        return result
     }
 
     /// A loop's rough minutes — its region length × its repeat count (Path B), floored at 1.

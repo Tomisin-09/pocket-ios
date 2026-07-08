@@ -42,6 +42,12 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Loops can now feed technique goals (V2 planner Slice 4, ADR 0074).** Tag a loop with a skill
+  bucket — the loop tag editor offers ✨ **Picking / Legato / Scales / …** suggestions — and the
+  planner's technique goals will schedule that loop alongside your exercises, not just when you're
+  learning its song. It reuses the existing loop tags (no new setup), it's entirely opt-in (untagged
+  loops behave exactly as before, surfacing only via a "learn this song" goal), and it stays coarse:
+  a "Picking" loop answers any picking goal. All matching is pure and unit-tested.
 - **Build today's session — the practice planner is live (V2 planner Slice 3, ADRs 0014–0016/0015).**
   Practice's "Build today's session" entry is no longer a placeholder: it opens a planner where you
   pick how long you have (**Quick 15 / Focused 30 / Full 60**, default short), keep a short list of

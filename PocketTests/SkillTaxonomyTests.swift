@@ -61,6 +61,40 @@ final class SkillTaxonomyTests: XCTestCase {
         XCTAssertNil(SkillFamilyMap.skillsByTemplate[.warmup])
     }
 
+    // MARK: - Loop skill tags (Slice 4, Decision 8)
+
+    func testTaggableTemplatesAreExactlyTheSkillCarryingOnes() {
+        // The taggable buckets are precisely the family-map keys (skill-carrying templates), so
+        // Basic/Warm-up are never offered as loop skill tags.
+        XCTAssertEqual(Set(SkillFamilyMap.taggableTemplates),
+                       Set(SkillFamilyMap.skillsByTemplate.keys))
+        XCTAssertFalse(SkillFamilyMap.taggableTemplates.contains(.basic))
+        XCTAssertFalse(SkillFamilyMap.taggableTemplates.contains(.warmup))
+    }
+
+    func testEverySuggestedTagRecognisesBackToItsTemplate() {
+        // Round-trip: each suggested tag string resolves to a taggable template.
+        for template in SkillFamilyMap.taggableTemplates {
+            XCTAssertEqual(SkillFamilyMap.recognizedTemplate(for: template.displayName), template)
+        }
+        XCTAssertEqual(SkillFamilyMap.suggestedLoopTags.count, SkillFamilyMap.taggableTemplates.count)
+    }
+
+    func testRecognitionIsCaseAndWhitespaceInsensitive() {
+        XCTAssertEqual(SkillFamilyMap.recognizedTemplate(for: "picking"), .picking)
+        XCTAssertEqual(SkillFamilyMap.recognizedTemplate(for: "  Picking  "), .picking)
+        XCTAssertEqual(SkillFamilyMap.recognizedTemplate(for: "EAR TRAINING"), .earTraining)
+    }
+
+    func testArbitraryTagsAreNotRecognised() {
+        XCTAssertNil(SkillFamilyMap.recognizedTemplate(for: "chorus"))
+        XCTAssertNil(SkillFamilyMap.recognizedTemplate(for: "needs-work"))
+        XCTAssertNil(SkillFamilyMap.recognizedTemplate(for: ""))
+        // Structural templates aren't taggable, so their names don't recognise either.
+        XCTAssertNil(SkillFamilyMap.recognizedTemplate(for: "Warm-up"))
+        XCTAssertNil(SkillFamilyMap.recognizedTemplate(for: "Basic"))
+    }
+
     // MARK: - Goal templates
 
     func testGoalTemplateSkillsAreAllRealSkills() {

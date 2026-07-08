@@ -218,9 +218,12 @@ Foundation only (no SwiftData/SwiftUI), so they're unit-tested and reusable by a
 `weight`, `skillIDs` indexing the pure `TechniqueTaxonomy` table, optional `targetSong`) is expanded
 by `CandidateDeriver.deriveCandidates` into that ranked `[PlannerCandidate]` — Path A resolves a
 technique skill to library exercises via the coarse `SkillFamilyMap` (`ExerciseTemplate → [SkillID]`,
-no per-exercise tagging), Path B resolves a `repertoire` skill to the goal's target song (its loops +
-the song run), with a **soft** down-weight when a skill's direct prerequisites are unrated (never a
-hard gate — ADR 0016 ↔ 0071 at the selection level). The dueScore multiply stays in `SessionBuilder`,
+no per-exercise tagging) **plus any loop the user tagged with a matching skill bucket** (ADR 0074,
+V2 Slice 4 — `SkillFamilyMap.recognizedTemplate(for:)` reads a `Loop.tag` back to a coarse template,
+projected onto `PlannerLoop.templates`; untagged loops stay Path-B only, no schema change), Path B
+resolves a `repertoire` skill to the goal's target song (its loops + the song run), with a **soft**
+down-weight when a skill's direct prerequisites are unrated (never a hard gate — ADR 0016 ↔ 0071 at
+the selection level). The dueScore multiply stays in `SessionBuilder`,
 so goal-priority and dueness/mastery compose once. `GoalTemplateLibrary` seeds four curated goals.
 The impure `PracticePlanner` (`@MainActor`) projects `Exercise`/`Loop`/`Song` into candidates
 (`planQuickSession`/`planGoalSession`) and materialises the blocks into a persisted `Routine`

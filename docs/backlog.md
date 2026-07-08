@@ -58,8 +58,14 @@ docs so this stays a pointer list:
     name → priority (`GoalPriority` Low/Normal/High ↔ `weight`, pure + unit-tested) →
     skill-trim → optional target song → met toggle / delete. `RoutineDetailView`'s
     provisional init broadened to resolve loop/song blocks.
-  - **Next — Slice 4:** loop skill-tags (optional enrichment, reuses `Loop.tags`, own ADR).
-    Slice 5 (AI decomposition) remains out of scope.
+  - **Slice 4 — loop skill-tags: DONE (branch `pocket-112-practice-planner`, ADR 0074).**
+    A `Loop.tag` matching a coarse `ExerciseTemplate` bucket (recognised by
+    `SkillFamilyMap.recognizedTemplate(for:)`, offered as ✨ suggestions in the loop tag
+    editor) lets a technique goal's Path A surface that loop alongside exercises;
+    projected onto `PlannerLoop.templates`. Opt-in — untagged loops stay Path-B only;
+    reuses ADR 0034 tags (no schema change); pure + unit-tested.
+  - **Next — Slice 5 (AI decomposition): OUT OF SCOPE** — noted only. Planner ships
+    fully local-first; slices 1–4 complete the V2 planner.
 
 - **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
   play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer
