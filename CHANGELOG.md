@@ -35,11 +35,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ### Added
 - **Practice routines — the auto-advancing player (ADR 0066 slice 3 / ADR 0071).** A ▶ on each
-  routine row runs the session full-screen: it plays each block on its own engine and
-  **auto-advances** to the next on the block's *own* natural completion — one full command-ramp pass
-  for an exercise or loop, a short fixed countdown for a rest — so a hand-built routine needs no
-  per-block minutes. Transport is deliberately minimal: **Pause/Resume · Skip · End**, a "2 of 5"
-  progress readout, and the live block surface (the drill's board / BPM, or the loop's speed).
+  routine row runs the session full-screen, and each block is the **real run screen** —
+  the same fretboard/strum/chord preview, Practice Settings, ramp staircase, promote and journal you
+  get running an exercise or loop on its own, now with session **progress** ("2 of 5") and a **Skip**
+  control. When a block finishes its command-ramp naturally the session **auto-advances** to the
+  next; rests are a short fixed countdown — so a hand-built routine needs no per-block minutes.
   Deliberately **judgement-free (ADR 0070)**: no scoring, no accuracy, no pass/fail — completion is
   the material's length, and the aim is *controlled discomfort, not clean reps* (the ramp pushes at
   and past your command tempo). Orphaned blocks (a deleted unit) are skipped; song blocks — an

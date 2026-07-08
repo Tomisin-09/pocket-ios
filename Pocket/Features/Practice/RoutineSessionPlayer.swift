@@ -1,6 +1,5 @@
 import Foundation
 import SwiftData
-import SwiftUI
 
 /// One playable block resolved for the player (ADR 0066, slice 3) — its display title plus the live
 /// unit to run. The associated-value payload keeps the "exactly one unit" invariant honest without
@@ -23,52 +22,46 @@ struct RoutineStage: Identifiable {
     var loop: Loop? { if case .loop(let value) = payload { return value }; return nil }
 }
 
-/// The **session conductor** for a routine run (ADR 0066, slice 3): a transport *over* the existing
-/// per-unit engines, not a new one. It walks the routine's playable blocks in order and — the one
-/// genuinely new thing — **auto-advances** between them on each block's *own natural completion*,
-/// never a wall clock. An exercise/loop block ends when its saved `CommandRamp` finishes its last
-/// plateau (the engines fire `onRampFinished` / `onFinished`); a rest ends when a short fixed
-/// countdown elapses. This is deliberate: the aim is **controlled discomfort, not clean reps** — the
-/// ramp already encodes the climb to and past the command tempo, so one pass *is* the block.
+/// The **session conductor** for a routine run (ADR 0066, slice 3 / ADR 0071): a thin transport that
+/// walks the routine's playable blocks in order and **auto-advances** between them. Deliberately it
+/// owns **no playback engine** — each exercise/loop block is run by the *real* `ExerciseRunView` /
+/// `LoopRunView`, so the session keeps every training aid (previews, staircase, promote, journal)
+/// rather than a stripped-down surface. A run screen signals its natural completion back through
+/// `RoutineRunContext.onFinished`, which lands here as `advance()`. The conductor's only own playback
+/// concern is the between-blocks **rest** countdown; a rest carries no unit, so there is no run
+/// screen to delegate to.
 ///
-/// **No evaluation surface (ADR 0070).** The conductor never grades a take: completion is the
-/// material's length, never "play it right to advance." It only reflects the session back.
+/// **No evaluation surface (ADR 0070).** Completion is the material's own length (a full ramp pass,
+/// or the rest countdown), never "play it right to advance."
 ///
-/// One drill runs at a time, so it reuses a single `StandaloneMetronomeEngine` across exercise
-/// blocks and rebuilds a `LoopRunModel` per loop block (each is bound to one loop at init). Song
-/// blocks are reserved for the audio-only play-along (a following slice) and are filtered out until
-/// then, alongside orphaned blocks (ADR 0066 R5).
+/// Song blocks are reserved for the audio-only play-along (a following slice) and are filtered out
+/// until then, alongside orphaned blocks (ADR 0066 R5).
 @MainActor
 @Observable
 final class RoutineSessionPlayer {
 
-    /// Where the transport is. `resting` is its own phase (a countdown, no engine); `finished` shows
-    /// the session summary. A rest is short enough that it offers no pause — only Skip.
-    enum State: Equatable { case playing, paused, resting, finished }
+    /// Where the session is. A unit block is `running` (a run screen is on-stage); a rest is its own
+    /// `resting` countdown phase; `finished` shows the summary.
+    enum State: Equatable { case running, resting, finished }
 
     let routineName: String
     private(set) var stages: [RoutineStage]
     private(set) var cursor: RoutineSessionCursor
-    private(set) var state: State = .playing
-
-    /// Reused across exercise blocks — one drill sounds at a time.
-    let metronome = StandaloneMetronomeEngine()
-    /// The audio model for the *current* loop block, rebuilt per loop (bound to one loop at init).
-    private(set) var loopModel: LoopRunModel?
+    private(set) var state: State = .running
 
     /// The fixed session breather between blocks, seconds — a short runtime pause, deliberately
-    /// *not* the ADR 0014 planning-time rest minutes (those are a planner concern; at runtime each
-    /// block already runs its natural length, so the routine needs no per-block clock).
+    /// *not* the ADR 0014 planning-time rest minutes (a planner concern; at runtime each block runs
+    /// its natural length, so the routine needs no per-block clock).
     static let restSeconds = 20
     private(set) var restRemaining = 0
     private var restTimer: Timer?
+    /// Guards `start()` against a re-fired `onAppear`, so a rest countdown is never double-started.
+    private var started = false
 
     /// The block the player is on, or `nil` once the session is complete.
     var current: RoutineStage? { cursor.isComplete ? nil : stages[cursor.index] }
     var progressLabel: String { cursor.progressLabel }
     var isFinished: Bool { state == .finished }
-    /// Pause is offered only during an exercise/loop block, not a rest (too short to bother).
-    var canPause: Bool { state == .playing || state == .paused }
 
     init(routine: Routine) {
         routineName = routine.name.isEmpty ? "Routine" : routine.name
@@ -94,67 +87,35 @@ final class RoutineSessionPlayer {
 
     // MARK: - Lifecycle
 
-    /// Begin the session on the first block. Call once, from the player's `onAppear`.
-    func start() { beginCurrentStage() }
+    /// Begin the session on the first block. Called from the player's `onAppear`; guarded so a
+    /// re-fired appear can't restart it.
+    func start() {
+        guard !started else { return }
+        started = true
+        beginCurrentStage()
+    }
 
-    /// Tear everything down — the player's `onDisappear` and the End button. Idempotent.
+    /// Tear down and end — the player's `onDisappear` and the exit control. Idempotent.
     func end() {
-        tearDownCurrent()
+        stopRestTimer()
         state = .finished
     }
 
-    private func beginCurrentStage() {
-        guard let stage = current else { finish(); return }
-        switch stage.payload {
-        case .exercise(let exercise): beginExercise(exercise)
-        case .loop(let loop): beginLoop(loop)
-        case .rest: beginRest()
-        }
-    }
-
-    /// Advance to the next block — the shared path for a natural completion *and* a user Skip. Tears
-    /// the current block down first (which detaches its completion callback, so this never re-enters).
+    /// Advance to the next block — the shared path for a natural completion *and* a user Skip.
     func advance() {
-        tearDownCurrent()
+        stopRestTimer()
         cursor.advance()
         beginCurrentStage()
     }
 
-    private func finish() {
-        tearDownCurrent()
-        state = .finished
+    private func beginCurrentStage() {
+        guard let stage = current else { state = .finished; return }
+        if stage.kind == .rest { beginRest() } else { state = .running }
     }
 
-    // MARK: - Per-block start
-
-    private func beginExercise(_ exercise: Exercise) {
-        tearDownLoop()
-        state = .playing
-        metronome.onRampFinished = { [weak self] in self?.advance() }
-        metronome.setTimeSignature(TimeSignature.forStored(beats: exercise.beatsPerBar,
-                                                           noteValue: exercise.noteValue,
-                                                           accentBeats: exercise.accentBeats))
-        metronome.run(ramp: exercise.ramp)
-    }
-
-    private func beginLoop(_ loop: Loop) {
-        metronome.stop()
-        let model = LoopRunModel(loop: loop)
-        model.onFinished = { [weak self] in self?.advance() }
-        loopModel = model
-        state = .playing
-        Task { [weak self] in
-            await model.loadIfNeeded()
-            // Guard against a Skip/End during the async load: only start if this is still the live
-            // model and the player is still meant to be playing it.
-            guard let self, self.loopModel === model, self.state == .playing else { return }
-            model.start(ramp: loop.ramp)
-        }
-    }
+    // MARK: - Rest (the only phase the conductor plays itself)
 
     private func beginRest() {
-        metronome.stop()
-        tearDownLoop()
         state = .resting
         restRemaining = Self.restSeconds
         restTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -165,40 +126,6 @@ final class RoutineSessionPlayer {
     private func tickRest() {
         restRemaining -= 1
         if restRemaining <= 0 { advance() }
-    }
-
-    // MARK: - Pause / resume
-
-    /// Pause or resume the current exercise/loop block. No-op during a rest (there's no pause there)
-    /// or once finished.
-    func togglePause() {
-        switch state {
-        case .playing:
-            if let loopModel { loopModel.toggle() } else { metronome.toggle() }
-            state = .paused
-        case .paused:
-            if let loopModel { loopModel.toggle() } else { metronome.toggle() }
-            state = .playing
-        case .resting, .finished:
-            break
-        }
-    }
-
-    // MARK: - Teardown
-
-    /// Stop whatever is running and detach its completion callback, so a teardown from Skip/End/
-    /// advance never fires an auto-advance (only a *natural* finish inside the engine does).
-    private func tearDownCurrent() {
-        stopRestTimer()
-        metronome.onRampFinished = nil
-        metronome.stop()
-        tearDownLoop()
-    }
-
-    private func tearDownLoop() {
-        loopModel?.onFinished = nil
-        loopModel?.stop()
-        loopModel = nil
     }
 
     private func stopRestTimer() {

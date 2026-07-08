@@ -19,6 +19,8 @@ import SwiftUI
 /// live in local state until Start, so leaving without starting discards them.
 struct LoopRunView: View {
     let loop: Loop
+    /// Routine-session chrome (progress, Skip, auto-advance) when a block in a routine; `nil` standalone.
+    var routineContext: RoutineRunContext?
     @State private var model: LoopRunModel
     @Environment(\.modelContext) private var modelContext
 
@@ -51,8 +53,9 @@ struct LoopRunView: View {
     private static let percentRange =
         Int(TempoMath.minSpeed * 100)...Int(TempoMath.maxSpeed * 100)
 
-    init(loop: Loop) {
+    init(loop: Loop, routineContext: RoutineRunContext? = nil) {
         self.loop = loop
+        self.routineContext = routineContext
         _model = State(initialValue: LoopRunModel(loop: loop))
     }
 
@@ -106,6 +109,7 @@ struct LoopRunView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .routineSessionChrome(routineContext)
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
@@ -287,6 +291,7 @@ struct LoopRunView: View {
                     .accessibilityLabel("Start training routine")
                 }
             }
+            if let routineContext { RoutineSkipButton(context: routineContext) }
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 16)
@@ -317,6 +322,8 @@ private extension LoopRunView {
         reachSteps = loop.rampReachSteps
         backoffSteps = loop.rampBackoffSteps
         repsPerStep = max(Self.repsRange.lowerBound, loop.rampRepsPerStep)
+        // In a routine, a naturally-finished ramp auto-advances the session (never a manual stop).
+        model.onFinished = routineContext?.onFinished
         seeded = true
         baseline = current
     }

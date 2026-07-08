@@ -12,6 +12,10 @@ import SwiftUI
 /// discards them.
 struct ExerciseRunView: View {
     let exercise: Exercise
+    /// Present only when this run is a block inside a routine session (ADR 0071): adds session
+    /// progress, a Skip control, and the natural-completion hook the player auto-advances on. `nil`
+    /// for a standalone run, which is then completely unchanged.
+    var routineContext: RoutineRunContext?
     @State private var engine = StandaloneMetronomeEngine()
     @Environment(\.modelContext) private var modelContext
     /// The global note-caption preference (set from the exercise editors) — read so the live board
@@ -112,6 +116,7 @@ struct ExerciseRunView: View {
                 .accessibilityLabel("Exercise details")
             }
         }
+        .routineSessionChrome(routineContext)
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
@@ -270,6 +275,7 @@ struct ExerciseRunView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Start training routine")
             }
+            if let routineContext { RoutineSkipButton(context: routineContext) }
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 16)
@@ -302,6 +308,9 @@ private extension ExerciseRunView {
         signature = TimeSignature.forStored(beats: exercise.beatsPerBar,
                                             noteValue: exercise.noteValue,
                                             accentBeats: exercise.accentBeats)
+        // In a routine, a naturally-finished ramp auto-advances the session (ADR 0071). Fires only
+        // on the ramp's own completion, never on a manual stop.
+        engine.onRampFinished = routineContext?.onFinished
         seeded = true
         baseline = current
     }

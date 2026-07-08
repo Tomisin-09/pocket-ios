@@ -194,12 +194,15 @@ via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orp
 rather than deleting the routine). Its pacing rules (only focused work budgeted; block caps;
 proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. Authoring is a
 sandboxed editor (`RoutineDetailView`, child `ModelContext` committed only on Save), and the
-**player** (ADR 0071) is a session conductor — `RoutineSessionPlayer` (`@Observable`) over a pure
-`RoutineSessionCursor` — that drives each block on its *existing* per-unit engine
-(`StandaloneMetronomeEngine` / `LoopRunModel`) and **auto-advances on natural completion** (one
-command-ramp pass; a fixed countdown for a rest), fired by additive `onRampFinished` / `onFinished`
-engine callbacks. It has **zero evaluation surface** (ADR 0070) — completion is the material's
-length, not a graded take. The planner (a producer of the same model) and the audio-only song-block
+**player** (ADR 0071) is a *thin* session conductor — `RoutineSessionPlayer` (`@Observable`, owns no
+engine) over a pure `RoutineSessionCursor` — that **embeds the real `ExerciseRunView` / `LoopRunView`
+per block** (so every training aid — previews, staircase, promote, journal — is kept, not
+re-implemented), injecting a `RoutineRunContext` (progress · Skip · exit · natural-completion hook).
+Each run screen keeps its own per-unit engine (`StandaloneMetronomeEngine` / `LoopRunModel`) and
+**auto-advances the session on natural completion** (one command-ramp pass), fired by additive
+`onRampFinished` / `onFinished` engine callbacks; the conductor itself plays only the fixed rest
+countdown. It has **zero evaluation surface** (ADR 0070) — completion is the material's length, not a
+graded take. The planner (a producer of the same model) and the audio-only song-block
 play-along are later slices. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
 (swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made

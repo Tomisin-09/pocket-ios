@@ -67,19 +67,37 @@ dissolves; song blocks are gated only on building this small player and are
 
 ## Architecture
 
+**The player reuses the real run screens — it does not re-implement them.** An
+early cut gave each block a bespoke compact surface (just a BPM/percent readout).
+That was rejected on review: it dropped the training **aids** — the fretboard /
+strum / chord **preview**, the Practice Settings summary, the **ramp staircase**,
+promote, and journal — and would have drifted from the standalone run screen over
+time. Instead each exercise/loop block *is* the actual `ExerciseRunView` /
+`LoopRunView`, so the aids are kept by construction. The only routine-specific
+additions are session chrome.
+
 - **`RoutineSessionCursor`** (pure, Foundation-only) — position / advancement math
   over the count of playable blocks; unit-tested (`RoutineSessionCursorTests`), per
   the "pure logic stays pure / stepping must be tested" rule (AGENTS.md).
-- **`RoutineSessionPlayer`** (`@MainActor @Observable`) — the conductor: resolves
-  the routine's playable blocks (dropping orphaned units, R5, and song blocks for
-  now), reuses one metronome engine across exercise blocks, rebuilds a
-  `LoopRunModel` per loop block, and drives `start → advance → finish` plus
-  pause/skip/end.
-- **`RoutinePlayerView`** — the full-screen face (progress header, live block
-  surface, minimal transport), presented as a `fullScreenCover` from the ▶ on each
+- **`RoutineSessionPlayer`** (`@MainActor @Observable`) — a *thin* conductor that
+  owns **no playback engine**. It resolves the routine's playable blocks (dropping
+  orphaned units, R5, and song blocks for now), tracks the cursor, runs the
+  between-blocks **rest** countdown (the only playback it does itself), and exposes
+  `start / advance / end`. Each unit block's engine is owned by its run screen.
+- **`RoutineRunContext`** — the seam injected into a run screen: `progressLabel`,
+  `onSkip`, `onFinished` (the natural-completion hook), `onExit`. `ExerciseRunView`
+  / `LoopRunView` take it as an optional (`nil` standalone → screen unchanged); when
+  present they wire their engine's `onRampFinished` / `onFinished` to it, add a
+  `RoutineSkipButton` to their transport, and show a leading close + progress
+  (`routineSessionChrome`). A block is **started manually** (the existing "Start
+  training"), which preserves the setup/promote/journal moment; "auto-advance" means
+  the automatic *transition* to the next block on completion, not auto-start.
+- **`RoutinePlayerView`** — a thin `NavigationStack` host that swaps the run screen
+  per block (`.id(stage.id)` so each starts fresh), shows the rest countdown and the
+  finished summary, and is presented as a `fullScreenCover` from the ▶ on each
   Routines library row.
 - **`Loop.ramp`** — new saved-recipe computed property mirroring `Exercise.ramp`,
-  so the player can run a loop block's stored ramp with no setup UI.
+  so a loop block runs its stored ramp with no extra setup.
 
 ## Alternatives considered
 
@@ -88,10 +106,12 @@ dissolves; song blocks are gated only on building this small player and are
   planner wants wall-clock sessions.
 - **Clean-rep gate** — rejected; it requires evaluation (ADR 0070 forbids it) and
   contradicts the controlled-discomfort aim.
-- **Embedding the full `ExerciseRunView` / `LoopRunView`** per block — rejected; the
-  player is a transport, not an editor. It drives the engines directly and shows a
-  compact readout, so mid-session tempo tweaking isn't offered (the routine plays
-  the saved ramps).
+- **A bespoke compact per-block surface** (player drives the engines directly, shows
+  only a BPM/percent readout) — **rejected on review.** It dropped the training aids
+  (previews, staircase, promote, journal) and would drift from the standalone run
+  screen. The player instead **embeds the real run screens** (see Architecture); the
+  cost is that it also carries their setup/promote/journal affordances, which is
+  acceptable — that per-block moment is useful, and Skip lets you move on.
 
 ## Consequences
 
