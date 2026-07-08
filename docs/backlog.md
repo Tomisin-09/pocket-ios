@@ -81,25 +81,18 @@ docs so this stays a pointer list:
       schema. Authoring: sectioned add-unit picker (Exercises / Loops / Songs) with
       exercises as a primary source. No new model ADR needed — lives inside 0066 R4;
       `RoutinePresets` is its own slice after the player works.
-  - **`RoutinePresets` — BUILT but PARKED (2026-07-08); needs re-verification on a healthy
-    machine.** Three curated in-house starter routines (Morning Warm-up, Picking Builder,
-    Rhythm & Changes) built + unit-tested on branch **`pocket-108-routine-presets`**
-    (commit 97c3cbe, off `pocket-107`); pure builder + 6 tests pass, build/lint clean.
-    **Held back from the routines PR** because seeding them made
-    `PocketUITests/PracticeRunUITests.testTappingExerciseOpensRunScreen` (a 20 s
-    run-screen-appearance timeout guard) fail. **NOT a confirmed code freeze** — an initial
-    "proven by isolation" read was **confounded** by a cold sim erase + a badly degraded dev
-    machine (9-day uptime, swap exhausted, load 40–70). Controlled follow-up: the test
-    **passes** with routines present on a warm sim (run `be7w41712`, 51 s); the only failing
-    routines-run had also erased the sim (cold boot). No mechanism found — **no `#Predicate`
-    anywhere**, nothing in the run-screen/library path reads `routineItems`, and CPU stack
-    samples of the running app show only normal SwiftUI work (no loop/block). Most likely a
-    timing-flaky UI test tipped over the 20 s edge by the marginal launch-time seeding work
-    on a thrashing machine. **Next:** reboot the Mac (cure the swap/uptime molasses), re-run
-    the UI test 3–5× on `pocket-108`; if green, un-park and land. If it still fails cleanly on
-    a healthy machine, THEN there's a real bug to chase (start by sampling the hung process
-    during an actual failure — the passing-run samples showed nothing). PR #102 itself
-    doesn't auto-seed routines, so its CI run is unaffected.
+  - **`RoutinePresets` — SHIPPED (2026-07-08), folded into the routines PR #102.** Three
+    curated in-house starter routines (Morning Warm-up, Picking Builder, Rhythm & Changes)
+    seeded once on first launch. The earlier "parked — reintroduces a run-screen freeze" read
+    was a **misdiagnosis, twice over**: after a machine reboot the flake reproduced at a
+    *different* assertion than claimed — the 5 s wait for a seeded **exercise** cell, never the
+    20 s run-screen freeze guard (which fired 0/12 runs). Isolated to seeding latency: `HomeView`
+    ran `PracticePresets` then `RoutinePresets` seeding back-to-back on the main actor before
+    first paint, so the routine seeder's fetch+insert+save delayed the exercise library
+    rendering past the test's tight 5 s window. Fixed by yielding between the two seeders (order
+    preserved for by-name resolution) + widening the test timeout 5 s→20 s. Now 5/5 green,
+    matching the no-presets control. Lesson: check *which* assertion a UI test fails before
+    trusting a stored freeze diagnosis.
 - **Social layer boundaries — ADR 0064 (Accepted).** Local-first forever;
   exercises (never loops/audio) are the shareable unit; derived-stats-only
   leaderboards; Sign in with Apple; CloudKit personal sync vs AWS social rails
