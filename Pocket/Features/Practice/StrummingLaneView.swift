@@ -73,13 +73,22 @@ struct StrumLane: View {
 /// `currentBeat` and asks the pure `StrumPattern` which slot is active. The engine only publishes
 /// integer beats, so the lane interpolates *within* a beat — it anchors the wall-clock moment
 /// `currentBeat` last advanced, then a `TimelineView(.animation)` walks the fraction elapsed at the
-/// live tempo. Before beat 0 (the count-in) and while paused nothing lights, which is what the pure
-/// math returns.
+/// live tempo. While paused nothing lights, which is what the pure math returns.
+///
+/// **Shown throughout the count-in (static), with the pattern anchored to the count-in *clearing*.**
+/// The engine's `currentBeat` counts *through* the count-in (it doesn't reset at the first musical
+/// beat), so the lane measures from `originBeat` — pinned the instant `automatorCountdown` clears
+/// (the first musical downbeat), mirroring `ChordChangeView`/`StrumChordsView` — rather than the
+/// absolute beat. Before that origin is anchored the position is negative and nothing lights, so the
+/// lane sits static (fully plotted) during the count instead of disappearing and popping back.
 struct StrummingLaneView: View {
     let engine: StandaloneMetronomeEngine
     let pattern: StrumPattern
     var tint: Color = PocketColor.practice
 
+    /// The engine beat the pattern measures from — the first beat after the count-in clears. `nil`
+    /// until anchored, so nothing lights during the count-in.
+    @State private var originBeat: Int?
     /// Wall-clock moment `engine.currentBeat` last advanced — the anchor the sub-beat fraction is
     /// measured from.
     @State private var beatOnset = Date.now
@@ -104,18 +113,39 @@ struct StrummingLaneView: View {
             anchoredBeat = newValue
             beatOnset = .now
         }
+        .onChange(of: engine.automatorCountdown) { _, countdown in
+            // The count-in just cleared → this beat is the first musical downbeat; pin the pattern to it.
+            if countdown == nil { anchorToDownbeat() }
+        }
+        .onAppear {
+            // No count-in (or already cleared before this appeared) → anchor now; else wait, above.
+            if engine.automatorCountdown == nil { anchorToDownbeat() }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Strumming pattern: \(accessibilitySummary)")
     }
 
-    /// The continuous beat position at `now`, then the pattern's active slot for it. Returns `nil`
-    /// before beat 0 and for an empty pattern — both handled by `activeSlotIndex`.
+    /// Pin the pattern's origin to the current beat — called the instant the count-in clears (or on
+    /// appear when there is none), so slot 0 lands on the first musical downbeat; the lane stays
+    /// static until then. Idempotent (guards a second call on the same run).
+    private func anchorToDownbeat() {
+        guard originBeat == nil else { return }
+        let beat = max(0, engine.currentBeat)   // guard the pre-first-beat -1 in the no-count-in path
+        originBeat = beat
+        anchoredBeat = beat
+        beatOnset = .now
+    }
+
+    /// The continuous beat position at `now` relative to the anchored origin, then the pattern's
+    /// active slot for it. `nil` before the origin is anchored, before beat 0, and for an empty
+    /// pattern — all handled by `originBeat` / `activeSlotIndex`.
     private func activeSlot(at now: Date) -> Int? {
+        guard let origin = originBeat else { return nil }
         let secondsPerBeat = 60.0 / Double(max(1, engine.bpm))
         let fraction = engine.isPlaying
             ? min(1, max(0, now.timeIntervalSince(beatOnset) / secondsPerBeat))
             : 0
-        let beatPosition = Double(anchoredBeat) + fraction
+        let beatPosition = Double(anchoredBeat - origin) + fraction
         return pattern.activeSlotIndex(atBeat: beatPosition)
     }
 

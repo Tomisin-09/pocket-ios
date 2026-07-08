@@ -85,46 +85,32 @@ struct StrumChordsPreview: View {
 /// missing/undecodable payload or unrecognised kind falls back to the metronome beat dots — the
 /// universal underlay (T1).
 ///
-/// The **fretboard** surface is shown *throughout*, count-in included — it sits static (fully
-/// plotted, nothing lit) until the first post-count-in downbeat, then walks (`FretboardView` anchors
-/// its own walk to the count-in clearing). This is the fix for the board **disappearing during the
-/// count and popping back** when the music starts: now it's simply present the whole time, and only
-/// the walk begins — one bar in, on the first real beat.
-///
-/// The strum and chord surfaces still engage once the count-in clears, cross-dissolving from the beat
-/// dots: swapping a different concrete view type is a hard cut in a plain container (leaving/entering
-/// views share one layout slot with no overlap), so they live in a `ZStack` where `.transition`
-/// makes them briefly coexist and fade. (Extending the always-present treatment to those is a
-/// follow-up — they'd each need the same count-in-clearing walk anchor.)
+/// **Every surface is shown *throughout* the count-in** — it sits static (fully plotted, nothing lit)
+/// until the first post-count-in downbeat, then engages. Each surface anchors its own walk/change to
+/// the count-in *clearing* rather than to when it appears (`FretboardView`, `StrummingLaneView`,
+/// `ChordChangeView`, `StrumChordsView` all do this), so there is no swap mid-count: the surface never
+/// disappears during the count and pops back when the music starts. Because nothing swaps, the branch
+/// is a plain conditional — no `ZStack`/`.transition` cross-dissolve needed (the previous strum/chord
+/// treatment, now retired since they're present from the start like the board).
 struct ExerciseTemplateSurface: View {
     let engine: StandaloneMetronomeEngine
     let exercise: Exercise
     var labelMode: FretLabelMode = .none
 
-    /// True once the count-in has cleared — the boolean the strum/chord fade animates on.
-    private var running: Bool { engine.automatorCountdown == nil }
-
+    @ViewBuilder
     var body: some View {
-        ZStack {
-            if exercise.kind == .fretboard, let drill = exercise.fretboardDrill {
-                // Not gated on the count-in: the board is present (static) through it and walks after.
-                FretboardView(engine: engine, drill: drill, tint: PocketColor.practice,
-                             labelMode: labelMode)
-            } else if exercise.kind == .strumming, let pattern = exercise.strumPattern, running {
-                StrummingLaneView(engine: engine, pattern: pattern, tint: PocketColor.practice)
-                    .transition(.opacity)
-            } else if exercise.kind == .chords, let progression = exercise.chordProgression, running {
-                ChordChangeView(engine: engine, progression: progression, tint: PocketColor.practice)
-                    .transition(.opacity)
-            } else if exercise.kind == .strumChords, let sheet = exercise.strumChordSheet, running {
-                StrumChordsView(engine: engine, sheet: sheet, tint: PocketColor.practice)
-                    .transition(.opacity)
-            } else {
-                BeatIndicator(engine: engine, tint: PocketColor.practice)
-                    .transition(.opacity)
-            }
+        if exercise.kind == .fretboard, let drill = exercise.fretboardDrill {
+            FretboardView(engine: engine, drill: drill, tint: PocketColor.practice,
+                         labelMode: labelMode)
+        } else if exercise.kind == .strumming, let pattern = exercise.strumPattern {
+            StrummingLaneView(engine: engine, pattern: pattern, tint: PocketColor.practice)
+        } else if exercise.kind == .chords, let progression = exercise.chordProgression {
+            ChordChangeView(engine: engine, progression: progression, tint: PocketColor.practice)
+        } else if exercise.kind == .strumChords, let sheet = exercise.strumChordSheet {
+            StrumChordsView(engine: engine, sheet: sheet, tint: PocketColor.practice)
+        } else {
+            BeatIndicator(engine: engine, tint: PocketColor.practice)
         }
-        .animation(.easeInOut(duration: 0.3), value: running)
     }
 }
 
