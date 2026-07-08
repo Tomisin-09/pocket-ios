@@ -39,6 +39,7 @@ enum AppSettings {
         static let routineReflection = "routineReflection"
         static let routineRestSeconds = "routineRestSeconds"
         static let routineSongLoop = "routineSongLoop"
+        static let transportLoopOnLeft = "transportLoopOnLeft"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -91,6 +92,11 @@ enum AppSettings {
         return min(routineRestSecondsRange.upperBound,
                    max(routineRestSecondsRange.lowerBound, resolved))
     }
+
+    /// Which side the big idle **Loop** button sits on in the practice transport bar; the Marker
+    /// takes the other side. Default **off** ⇒ Marker-left / Loop-right (the shipped arrangement);
+    /// on ⇒ swapped. Applies to the idle flanking controls only.
+    static var transportLoopOnLeft: Bool { bool(Key.transportLoopOnLeft, default: false) }
 
     /// Appearance override. Default `.system` — the app follows the device setting until
     /// the user opts into a pinned light/dark appearance.
