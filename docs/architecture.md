@@ -195,15 +195,18 @@ rather than deleting the routine). Its pacing rules (only focused work budgeted;
 proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. Authoring is a
 sandboxed editor (`RoutineDetailView`, child `ModelContext` committed only on Save), and the
 **player** (ADR 0071) is a *thin* session conductor — `RoutineSessionPlayer` (`@Observable`, owns no
-engine) over a pure `RoutineSessionCursor` — that **embeds the real `ExerciseRunView` / `LoopRunView`
-per block** (so every training aid — previews, staircase, promote, journal — is kept, not
-re-implemented), injecting a `RoutineRunContext` (progress · Skip · exit · natural-completion hook).
-Each run screen keeps its own per-unit engine (`StandaloneMetronomeEngine` / `LoopRunModel`) and
-**auto-advances the session on natural completion** (one command-ramp pass), fired by additive
-`onRampFinished` / `onFinished` engine callbacks; the conductor itself plays only the fixed rest
-countdown. It has **zero evaluation surface** (ADR 0070) — completion is the material's length, not a
-graded take. The planner (a producer of the same model) and the audio-only song-block
-play-along are later slices. `ExerciseLibraryView` owns exercise **create**
+engine) over a pure `RoutineSessionCursor` — that **embeds the real `ExerciseRunView` / `LoopRunView` /
+`SongPlayAlongView` per block** (so every training aid — previews, staircase, promote, journal — is
+kept, not re-implemented), injecting a `RoutineRunContext` (progress · Skip · exit · natural-completion
+hook). Each run screen keeps its own per-unit engine (`StandaloneMetronomeEngine` / `LoopRunModel` /
+`SongPlayAlongModel`, the last two on a private `PracticeAudioEngine`) and **auto-advances the session
+on natural completion** (one command-ramp pass), fired by additive `onRampFinished` / `onFinished` /
+`onReachedEnd` engine callbacks; the conductor itself plays only the fixed rest countdown. A **song
+block** is the audio-only `SongPlayAlongView` — a fixed play-along speed (no ramp, ADR 0070), play/pause
+and −10s/+10s, local/iCloud files only (ADR 0001); it loops until skipped by default, or plays through
+once and advances per the `routineSongLoop` setting. It has **zero evaluation surface** (ADR 0070) —
+completion is the material's length, not a graded take. The planner (a producer of the same model) and
+`RoutinePresets` seeding are later slices. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
 (swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command

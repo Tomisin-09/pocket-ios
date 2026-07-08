@@ -89,6 +89,9 @@ struct RoutineItemRow: View {
         if let loop = item.loop {
             return loop.song?.title
         }
+        if let song = item.song {
+            return song.artist.isEmpty ? "Play-along" : song.artist
+        }
         return nil
     }
 }

@@ -45,9 +45,11 @@ struct RoutinePlayerView: View {
     }
 
     /// A block finished on its own. With the reflection setting on, pause on a journal sheet for that
-    /// unit (a rest has nothing to reflect on); otherwise advance straight away. Skip bypasses this.
+    /// unit; otherwise advance straight away. Skip bypasses this. Only units with a journal (exercise/
+    /// loop) reflect — a song has no journal, so it advances without an empty prompt (and in the
+    /// default loop mode a song never finishes on its own anyway; a Skip moves it on).
     private func finishedBlock() {
-        if AppSettings.routineReflection, let stage = player.current, stage.kind != .rest {
+        if AppSettings.routineReflection, let stage = player.current, owner(for: stage) != nil {
             reflectingStage = stage
         } else {
             player.advance()
@@ -103,6 +105,8 @@ struct RoutinePlayerView: View {
             ExerciseRunView(exercise: exercise, routineContext: context).id(stage.id)
         case .loop(let loop):
             LoopRunView(loop: loop, routineContext: context).id(stage.id)
+        case .song(let song):
+            SongPlayAlongView(song: song, routineContext: context).id(stage.id)
         case .rest:
             EmptyView()   // rests never reach here — the conductor is in `.resting`
         }

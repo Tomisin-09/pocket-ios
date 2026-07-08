@@ -9,17 +9,19 @@ struct RoutineStage: Identifiable {
     let title: String
     let payload: Payload
 
-    enum Payload { case exercise(Exercise), loop(Loop), rest }
+    enum Payload { case exercise(Exercise), loop(Loop), song(Song), rest }
 
     var kind: RoutineStageKind {
         switch payload {
         case .exercise: return .exercise
         case .loop: return .loop
+        case .song: return .song
         case .rest: return .rest
         }
     }
     var exercise: Exercise? { if case .exercise(let value) = payload { return value }; return nil }
     var loop: Loop? { if case .loop(let value) = payload { return value }; return nil }
+    var song: Song? { if case .song(let value) = payload { return value }; return nil }
 }
 
 /// The **session conductor** for a routine run (ADR 0066, slice 3 / ADR 0071): a thin transport that
@@ -34,8 +36,8 @@ struct RoutineStage: Identifiable {
 /// **No evaluation surface (ADR 0070).** Completion is the material's own length (a full ramp pass,
 /// or the rest countdown), never "play it right to advance."
 ///
-/// Song blocks are reserved for the audio-only play-along (a following slice) and are filtered out
-/// until then, alongside orphaned blocks (ADR 0066 R5).
+/// Song blocks run the audio-only `SongPlayAlongView` (ADR 0071). Only orphaned blocks (ADR 0066 R5)
+/// and Apple-Music-backed songs (browse/metadata only, not playable — ADR 0001) are filtered out.
 @MainActor
 @Observable
 final class RoutineSessionPlayer {
@@ -88,12 +90,20 @@ final class RoutineSessionPlayer {
     init(routine: Routine) {
         routineName = routine.name.isEmpty ? "Routine" : routine.name
         // Play order, minus blocks the player can't run: orphaned units (deleted → nullified, R5)
-        // and song blocks (their audio-only play-along is a following slice).
-        let playable = routine.orderedItems.filter { !$0.isOrphaned && $0.song == nil }
+        // and Apple-Music songs (not a playable audio source, ADR 0001).
+        let playable = routine.orderedItems.filter { !$0.isOrphaned && Self.isPlayable($0) }
         let mapped = playable.map(Self.stage(for:))
         stages = mapped
         cursor = RoutineSessionCursor(total: mapped.count)
         firstUnitIndex = mapped.firstIndex { $0.kind != .rest }
+    }
+
+    /// Whether the player can actually run this block's unit. Exercises and loops always can; a song
+    /// block is playable only when its audio is a local/iCloud file (Apple Music is browse-only, so
+    /// its blocks are dropped rather than shown as silent dead ends).
+    private static func isPlayable(_ item: RoutineItem) -> Bool {
+        guard let song = item.song else { return true }
+        return song.ref.source != .appleMusic
     }
 
     private static func stage(for item: RoutineItem) -> RoutineStage {
@@ -104,6 +114,10 @@ final class RoutineSessionPlayer {
         if let loop = item.loop {
             return RoutineStage(id: item.uid, title: loop.name.isEmpty ? "Loop" : loop.name,
                                 payload: .loop(loop))
+        }
+        if let song = item.song {
+            return RoutineStage(id: item.uid, title: song.title.isEmpty ? "Song" : song.title,
+                                payload: .song(song))
         }
         return RoutineStage(id: item.uid, title: "Rest", payload: .rest)
     }

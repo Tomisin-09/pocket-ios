@@ -69,7 +69,7 @@ struct RoutineDetailView: View {
             Section("Blocks") {
                 if routine.items.isEmpty {
                     Text(isEditing
-                         ? "Empty routine. Add exercises or loops, and rests between them."
+                         ? "Empty routine. Add exercises, loops or songs, and rests between them."
                          : "Empty routine. Tap Edit to add blocks.")
                         .font(.futura(.footnote))
                         .foregroundStyle(PocketColor.textSecondary)
@@ -90,7 +90,7 @@ struct RoutineDetailView: View {
                         addingUnit = true
                         haptic(.light)
                     } label: {
-                        Label("Add exercise or loop", systemImage: "plus.circle.fill")
+                        Label("Add exercise, loop or song", systemImage: "plus.circle.fill")
                             .font(.futura(.body))
                             .foregroundStyle(PocketColor.practice)
                     }
@@ -118,7 +118,8 @@ struct RoutineDetailView: View {
             // Closing the sheet from the parent (not from inside the picker) means a pick from
             // any drill-in depth dismisses cleanly — a child's own dismiss would only pop.
             AddRoutineUnitSheet(onPickExercise: { addExercise($0); addingUnit = false },
-                                onPickLoop: { addLoop($0); addingUnit = false })
+                                onPickLoop: { addLoop($0); addingUnit = false },
+                                onPickSong: { addSong($0); addingUnit = false })
         }
     }
 
@@ -186,6 +187,11 @@ struct RoutineDetailView: View {
 
     private func addLoop(_ picked: Loop) {
         guard let local = editContext.model(for: picked.persistentModelID) as? Loop else { return }
+        insert(.item(local, order: nextOrder))
+    }
+
+    private func addSong(_ picked: Song) {
+        guard let local = editContext.model(for: picked.persistentModelID) as? Song else { return }
         insert(.item(local, order: nextOrder))
     }
 

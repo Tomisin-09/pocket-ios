@@ -77,16 +77,27 @@ pass/fail. Completion is the material's length, never "play it right to advance.
 The player is the judge (ADR 0070). The player screen shows *what* is playing and
 *how far along* the session is, and nothing about *how well*.
 
-### 3. Song blocks deferred to a following slice
+### 3. Song blocks — audio-only play-along (built 2026-07-08)
 
-A song block is an **audio-only, branded play-along** — pick tempo, play/pause,
-−10 s / +10 s, nothing else ("just play along"). It runs on `PracticeAudioEngine`,
-so tempo change is time-stretch and therefore **works only on DRM-free local /
-iCloud files** (ADR 0001) — Apple-Music-sourced songs can't be time-stretched, the
-same wall as everywhere else. **The DRM-free constraint is accepted.** Because every
-block now runs in a compact screen, the earlier "full-waveform handoff" problem
-dissolves; song blocks are gated only on building this small player and are
-**filtered out of the player until then** (they are not authorable yet either).
+A song block is an **audio-only, branded play-along** — a fixed play-along speed you
+set, play/pause, −10 s / +10 s, nothing else ("just play along"). It runs on
+`PracticeAudioEngine`, so tempo change is time-stretch and therefore **works only on
+DRM-free local / iCloud files** (ADR 0001) — Apple-Music-sourced songs can't be
+time-stretched, the same wall as everywhere else. **The DRM-free constraint is
+accepted**; Apple-Music song blocks are filtered out of both the picker and the player
+(not silent dead ends). Two deliberate calls (user, 2026-07-08):
+
+- **No ramp — one fixed tempo.** Unlike an exercise/loop block, a song is an open jam,
+  not a staircase. You set a single play-along speed (percent of original, adjustable
+  live); there is no warm-up → reach progression.
+- **Loops by default; advances only on Skip.** A song block loops as an open jam and
+  moves on only when you skip it — an "open" completion, not a natural end. This is
+  **configurable** (`AppSettings.routineSongLoop`, Settings → Routines, default on);
+  turn it off and a song plays through **once** and then auto-advances like any other
+  block (firing the end-of-block reflection). Whole-song looping is done by **replaying
+  on the natural end**, not the engine's crossfaded loop buffer — that buffer holds the
+  whole region in memory (fine for a short loop, hundreds of MB for a full song); a
+  brief seam at the song boundary is natural for a jam loop.
 
 ## Architecture
 
@@ -104,7 +115,7 @@ additions are session chrome.
   the "pure logic stays pure / stepping must be tested" rule (AGENTS.md).
 - **`RoutineSessionPlayer`** (`@MainActor @Observable`) — a *thin* conductor that
   owns **no playback engine**. It resolves the routine's playable blocks (dropping
-  orphaned units, R5, and song blocks for now), tracks the cursor, runs the
+  orphaned units, R5, and Apple-Music songs), tracks the cursor, runs the
   between-blocks **rest** countdown (the only playback it does itself), and exposes
   `start / advance / end`. Each unit block's engine is owned by its run screen.
 - **`RoutineRunContext`** — the seam injected into a run screen: `progressLabel`,
@@ -119,6 +130,13 @@ additions are session chrome.
   per block (`.id(stage.id)` so each starts fresh), shows the rest countdown and the
   finished summary, and is presented as a `fullScreenCover` from the ▶ on each
   Routines library row.
+- **`SongPlayAlongView` / `SongPlayAlongModel`** — the audio-only song-block screen
+  (built 2026-07-08). The model owns its own `PracticeAudioEngine` (like `LoopRunModel`)
+  and drives a fixed play-along speed, seek, and the loop-or-advance behaviour off
+  `PracticeAudioEngine.onReachedEnd` (a new additive callback fired only on a natural
+  straight-through end). The view takes the same optional `RoutineRunContext`, so it
+  gets the progress strip / Skip / count-in; songs have no journal, so a song block
+  never shows the reflection prompt.
 - **`Loop.ramp`** — new saved-recipe computed property mirroring `Exercise.ramp`,
   so a loop block runs its stored ramp with no extra setup.
 
@@ -138,8 +156,8 @@ additions are session chrome.
 
 ## Consequences
 
-- Adds two engine callback seams (`onRampFinished` / `onFinished`) — additive, nil
-  for standalone runs, so `ExerciseRunView` / `LoopRunView` are unaffected.
+- Adds three engine callback seams (`onRampFinished` / `onFinished` /
+  `onReachedEnd`) — additive, nil for standalone runs, so the run screens are unaffected.
 - No model or schema change (the routine model already existed, ADR 0066); no
   migration.
-- Song-block play-along and `RoutinePresets` seeding remain follow-on slices.
+- `RoutinePresets` seeding remains the one follow-on slice.

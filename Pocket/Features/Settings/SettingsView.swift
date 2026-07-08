@@ -15,6 +15,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
     @AppStorage(AppSettings.Key.routineReflection) private var routineReflection = true
     @AppStorage(AppSettings.Key.routineRestSeconds) private var routineRestSeconds = 20
+    @AppStorage(AppSettings.Key.routineSongLoop) private var routineSongLoop = true
 
     var body: some View {
         Form {
@@ -60,13 +61,16 @@ struct SettingsView: View {
                 Stepper(value: $routineRestSeconds, in: AppSettings.routineRestSecondsRange, step: 5) {
                     LabeledContent("Rest length", value: "\(routineRestSeconds)s")
                 }
+                Toggle("Loop song blocks", isOn: $routineSongLoop)
             } header: {
                 Text("Routines")
             } footer: {
                 Text("In a routine, each block after the first starts on its own (the first always "
                      + "waits for you). When a block finishes, a short reflection prompt lets you jot "
                      + "a note before moving on — skip it any time, or turn it off here. Rest length "
-                     + "sets the breather between blocks.")
+                     + "sets the breather between blocks. A song block loops as an open jam and moves "
+                     + "on only when you skip; turn Loop song blocks off to play it through once and "
+                     + "auto-advance.")
             }
 
             Section {

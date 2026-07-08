@@ -34,6 +34,14 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Song blocks in routines — audio-only play-along (ADR 0066 / 0071).** A routine can now include a
+  **song** you play along to, not just exercises and loops. The picker gains a **Songs** bucket
+  (local/iCloud files only — Apple Music can't be time-stretched, ADR 0001), and in the player a song
+  block runs a minimal **play-along**: a fixed play-along speed you set (adjustable live, **no ramp** —
+  a song is an open jam), play/pause, and −10s/+10s seeks over a live position bar. By default a song
+  **loops** and the routine moves on only when you **skip** it; a new **Settings → Routines** toggle
+  ("Loop song blocks", default on) lets you instead play it through once and auto-advance. The
+  play-along is judgement-free (no scoring, ADR 0070).
 - **Routine player & editor polish (ADR 0071 follow-up).** A batch of player/editor refinements:
   - **Auto-start** — in a routine, each block after the first begins on its own; loop blocks get a
     brief **3·2·1 count-in** (visual + haptic) before they start. Exercise blocks skip the visual

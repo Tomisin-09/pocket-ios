@@ -3,25 +3,33 @@ import SwiftUI
 
 /// The **add-unit picker** for the routine editor (ADR 0066, slice 2), structured like the
 /// Apple Music **Library** — two levels deep, exactly like Library → Artists → an artist's
-/// tracks. The root lists **buckets** (**Exercises**, **Loops**; **Songs** once the player runs
-/// them, slice 3) over a **Recently Added** shortcut. Drilling a bucket lands not on a flat list
-/// but on its **sub-buckets** — Exercises group by their **template** (Strumming, Scales …),
-/// Loops group by their **song** — and one more tap opens that group's units. Exercises come
-/// first (the exercises-first direction — technique mode, audio-free, works with an empty library).
+/// tracks. The root lists **buckets** (**Exercises**, **Loops**, **Songs**) over a **Recently
+/// Added** shortcut. Drilling Exercises/Loops lands not on a flat list but on their **sub-buckets**
+/// — Exercises group by their **template** (Strumming, Scales …), Loops group by their **song** —
+/// and one more tap opens that group's units; **Songs** is a flat list (a song is the top entity).
+/// Exercises come first (the exercises-first direction — technique mode, audio-free, works with an
+/// empty library).
 ///
 /// Picking a unit fires the matching callback; the editor both creates the `RoutineItem` and
 /// closes this sheet (by flipping its presentation flag), so a pick from any depth dismisses.
 struct AddRoutineUnitSheet: View {
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
     @Query(sort: \Loop.name) private var loops: [Loop]
+    @Query(sort: \Song.title) private var songs: [Song]
     @Environment(\.dismiss) private var dismiss
 
     let onPickExercise: (Exercise) -> Void
     let onPickLoop: (Loop) -> Void
+    let onPickSong: (Song) -> Void
 
     /// Only loops with a measured command tempo are trainable in a routine (the same gate as the
     /// loop library — an unmeasured loop has no ramp for the player to run).
     private var trainableLoops: [Loop] { loops.filter { $0.commandTempo != nil } }
+
+    /// Only songs whose audio the play-along can actually run — local/iCloud files (and the demo);
+    /// Apple Music catalog items are browse/metadata only and can't be time-stretched (ADR 0001), so
+    /// they'd be dead blocks and are excluded.
+    private var playableSongs: [Song] { songs.filter { $0.ref.source != .appleMusic } }
 
     var body: some View {
         NavigationStack {
@@ -40,6 +48,14 @@ struct AddRoutineUnitSheet: View {
                     } label: {
                         bucketRow(title: "Loops", subtitle: "By song",
                                   icon: "repeat", count: trainableLoops.count)
+                    }
+                    .listRowBackground(PocketColor.background)
+
+                    NavigationLink {
+                        UnitPickList(title: "Songs", rows: playableSongs.map(songRow))
+                    } label: {
+                        bucketRow(title: "Songs", subtitle: "Play along",
+                                  icon: "music.note", count: playableSongs.count)
                     }
                     .listRowBackground(PocketColor.background)
                 }
@@ -133,21 +149,31 @@ struct AddRoutineUnitSheet: View {
         let dated: [(date: Date, row: PickRow)] =
             exercises.map { ($0.dateAdded, exerciseRow($0)) }
             + trainableLoops.map { ($0.song?.dateAdded ?? .distantPast, loopRow($0)) }
+            + playableSongs.map { ($0.dateAdded ?? .distantPast, songRow($0)) }
         return dated.sorted { $0.date > $1.date }.prefix(6).map(\.row)
     }
 
     private func exerciseRow(_ exercise: Exercise) -> PickRow {
-        PickRow(id: exercise.uid, title: exercise.name.isEmpty ? "Untitled" : exercise.name,
+        PickRow(id: exercise.uid.uuidString, title: exercise.name.isEmpty ? "Untitled" : exercise.name,
                 context: nil,
                 progress: "Command \(exercise.command) → \(exercise.derivedTarget) BPM",
                 pick: { onPickExercise(exercise) })
     }
 
     private func loopRow(_ loop: Loop) -> PickRow {
-        PickRow(id: loop.uid, title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+        PickRow(id: loop.uid.uuidString, title: loop.name.isEmpty ? "Untitled loop" : loop.name,
                 context: loop.song?.title,
                 progress: "Command \(Int((loop.command * 100).rounded()))%",
                 pick: { onPickLoop(loop) })
+    }
+
+    private func songRow(_ song: Song) -> PickRow {
+        // A `Song` has no business `uid`; its import `sourceID` (a UUID string for local files) is a
+        // stable per-row identity.
+        PickRow(id: song.sourceID,
+                title: song.title.isEmpty ? "Untitled song" : song.title,
+                context: song.artist.isEmpty ? nil : song.artist,
+                progress: "Play-along", pick: { onPickSong(song) })
     }
 }
 
@@ -238,7 +264,7 @@ private struct PickGroup: Identifiable {
 /// A single pickable unit projected for display — the row's text plus the action that adds it
 /// to the routine. Decouples the list UI from `Exercise`/`Loop` so both flow through one row.
 private struct PickRow: Identifiable {
-    let id: UUID
+    let id: String
     let title: String
     let context: String?
     let progress: String
