@@ -138,6 +138,10 @@ extension StandaloneMetronomeEngine {
     func finishRamp() {
         if trainingRamp != nil {
             stop()
+            // Natural end of a training climb — let an observing session player advance. Placed
+            // after `stop()` (which clears the ramp) and never in `stop()` itself, so a manual
+            // stop stays silent; only a ramp that ran its course fires this.
+            onRampFinished?()
         } else {
             automatorRunning = false
             automatorCountingIn = false

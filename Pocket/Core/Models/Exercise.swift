@@ -153,6 +153,14 @@ final class Exercise {
         journal.sorted { $0.createdAt > $1.createdAt }
     }
 
+    /// Routine blocks that **reference** this exercise (ADR 0066 R4/R5). Inverse of
+    /// `RoutineItem.exercise`, with a **nullify** delete rule: deleting the exercise
+    /// clears those blocks' link (the routine survives; the block becomes orphaned and
+    /// the player skips it) — it does **not** delete the routines. Additive optional
+    /// relationship (CoreData 134110 rule) for exercises saved before routines shipped.
+    @Relationship(deleteRule: .nullify, inverse: \RoutineItem.exercise)
+    var routineItems: [RoutineItem] = []
+
     init(name: String = "",
          currentTempo: Int = 80,
          commandTempo: Int? = nil,

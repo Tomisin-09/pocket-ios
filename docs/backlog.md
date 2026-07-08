@@ -30,21 +30,69 @@ docs so this stays a pointer list:
   arrow-lane, animated fretboard, chord/progression stepper — mapped from the
   taxonomy's `Default mode` column. Build order strumming → fretboard (shared with
   tab→fretboard Phase R + preset guides) → chords; vibrato/bends/palm-muting
-  deliberately get no template. **Done & merged:** strumming; fretboard renderer +
-  runs; scales & arpeggios on a shared CAGED box engine; exercise-audio seam;
-  global animate toggle (PR #96). **Next:** Chords template (may absorb triads).
-- **CAGED + triads as a category — PARKED (2026-07-06).** Was floated as its own
-  fretboard category. Parked in favour of folding triads into the upcoming **Chords**
-  template: a triad is just a 3-note chord voicing, and the CAGED box engine already
-  generates arbitrary note sets on the neck — so "show the shape/inversion" belongs
-  with chords, not as a parallel category. Revisit only if Chords can't host it.
+  deliberately get no template. **COMPLETE & merged (PRs #95–#101):** strumming
+  (incl. accents/mutes); fretboard renderer + runs + polish; scales & arpeggios on
+  a shared CAGED box engine; **chords** (progression drill on a shared
+  `ChordVoicing`, absorbed triads); **Strum & Chords** composition; exercise-audio
+  seam; global animate toggle. `ExerciseKind`/`ExerciseTemplate` carry all six
+  kinds. No template work outstanding.
+- **CAGED + triads as a category — RESOLVED (folded into Chords, shipped).** Was
+  floated as its own fretboard category, then parked in favour of folding triads into
+  the **Chords** template — which has now shipped (PR #97) on a shared `ChordVoicing`.
+  A triad is a 3-note chord voicing and the CAGED box engine generates arbitrary note
+  sets, so the shape/inversion lives with chords as planned. No separate category.
 - **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
   container (distinct from the intra-exercise ramp staircase): `Routine` +
   `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit
   `order`), a player orchestrating the existing per-unit engines, pure budget/rest
   logic. Container + manual authoring + player first; the planner (ADRs
   0014/0015/0016) becomes just another producer of a `Routine`, deferred to its own
-  ADR. Unblocks ADR 0014's open output type.
+  ADR. Unblocks ADR 0014's open output type. **In progress:** branch
+  `pocket-107-routine-model` (slice 1 = model + pure ordering/budget helpers + tests).
+  **Cold-start build plan: `docs/plans/routines-build-plan.md`** (pick-up-cold; all
+  slices, conventions, gotchas). Two decisions locked 2026-07-07: (i) routines live in
+  the **Practice space** next to Exercises (Home cards later); (ii) the player
+  **auto-advances** — aim is *controlled discomfort, not clean reps* (command tempo is
+  a "just outside comfort" reference; pushing past it, where it won't be clean, is the
+  point). This diverges from ADR 0016's clean-before-fast at the *session* level →
+  capture as its own ADR when the player (slice 3) is built.
+  - **Exercises-first direction (decided 2026-07-07).** Lean into exercises as
+    first-class routine units, incl. **exercise-only routines** — the model already
+    allows it (R4 makes Exercise/Loop/Song equal citizens; zero model change). The
+    reasoning, to build with:
+    - Exercises and loops are different practice *modes* — **technique** (audio-free,
+      click/template-driven, portable) vs **repertoire** (a loop bound to one
+      recording). Exercises are exactly the skill-building axis the planner's
+      front-half already assumes (ADR 0015: goals → **skills** → exercises).
+    - **Exercise routines are the shareable ones** (ADR 0064 §2: exercise is the
+      shareable unit, loop never) — the teacher-persona win lives here.
+    - **Cold-start unlock:** exercise routines work day one with an *empty library*
+      (no imported song/loops needed) — the onboarding wedge loops can't provide.
+    - **Presets = content:** now the ADR 0065 template axis is complete, an exercise
+      carries *what to play*. Ship a `RoutinePresets` seeder mirroring
+      `PracticePresets` (curated in-house ordered exercise sequences — "10-Min
+      Warm-Up", "Alt-Picking Builder", "Chord-Change Bootcamp"; same one-time-flag,
+      deletion-sticks pattern; encode the method, author all copy in-house).
+    - **Build-order consequence:** ship **exercise + loop** routines first, **defer
+      Song items.** Exercise/loop items run in the compact run screens; only a Song
+      item needs the hard full-waveform-screen handoff (slice 3). Exercises-first
+      therefore *shrinks* the risky slice. Keep the model **freeform** (any mix) — no
+      rigid "routine type" enum; curate exercise-heavy routines via presets, not
+      schema. Authoring: sectioned add-unit picker (Exercises / Loops / Songs) with
+      exercises as a primary source. No new model ADR needed — lives inside 0066 R4;
+      `RoutinePresets` is its own slice after the player works.
+  - **`RoutinePresets` — SHIPPED (2026-07-08), folded into the routines PR #102.** Three
+    curated in-house starter routines (Morning Warm-up, Picking Builder, Rhythm & Changes)
+    seeded once on first launch. The earlier "parked — reintroduces a run-screen freeze" read
+    was a **misdiagnosis, twice over**: after a machine reboot the flake reproduced at a
+    *different* assertion than claimed — the 5 s wait for a seeded **exercise** cell, never the
+    20 s run-screen freeze guard (which fired 0/12 runs). Isolated to seeding latency: `HomeView`
+    ran `PracticePresets` then `RoutinePresets` seeding back-to-back on the main actor before
+    first paint, so the routine seeder's fetch+insert+save delayed the exercise library
+    rendering past the test's tight 5 s window. Fixed by yielding between the two seeders (order
+    preserved for by-name resolution) + widening the test timeout 5 s→20 s. Now 5/5 green,
+    matching the no-presets control. Lesson: check *which* assertion a UI test fails before
+    trusting a stored freeze diagnosis.
 - **Social layer boundaries — ADR 0064 (Accepted).** Local-first forever;
   exercises (never loops/audio) are the shareable unit; derived-stats-only
   leaderboards; Sign in with Apple; CloudKit personal sync vs AWS social rails
@@ -56,6 +104,16 @@ docs so this stays a pointer list:
   — loop-region audio export is a cheap V2 win; on-device stem separation is a
   gated spike (server-side rejected on privacy/rights); pitch-shift is nearly
   free when wanted.
+- **Practice-take recording — ADR 0069 (Proposed).** Mic-only "audio journal":
+  record your playing, relisten, review; sits beside notes/journal. Feasibility in
+  `docs/research/feasibility-practice-recording.md`. Deliberately mic-only (no
+  mix-in of app playback — that bakes copyrighted audio into a user file, the ADR
+  0001/0064 wall). Isolation over a loop is **free on headphones** (coupling is
+  acoustic, not digital) and **messaged, not fought, on speakers** via output-route
+  detection — no AEC/DSP. Costs: a specific `NSMicrophoneUsageDescription` +
+  privacy-manifest review, a `.playAndRecord` session config kept separate from the
+  shared `.playback` plumbing, and a new app-owned `Recording` model (AAC files in
+  the container). Buildable now; small-to-medium.
 - **Tab → fretboard animation:** `docs/research/feasibility-tab-to-fretboard.md`
   — build the animated-fretboard *renderer* over an internal notation model
   first (it powers preset guides and shares its clock/substrate with the
@@ -83,14 +141,15 @@ force-unwraps / `as!` / `fatalError` / debt markers, accurate privacy manifest,
 minimal justified permissions. The gating work is **submission assets/config**,
 not code. Re-run the audit any time with the `/ready-to-ship` skill.
 
-**Hard blocker — must exist before a build can be submitted:**
+**Hard blocker — RESOLVED (ADR 0061, 2026-07-02):**
 
-- **App icon + asset catalog.** There is no `.xcassets` anywhere and no
-  `AppIcon`; the built `.app` ships no icon/`.car`. Apple rejects any app
-  without an icon and App Store Connect won't accept the build. Add
-  `Pocket/Resources/Assets.xcassets` with an `AppIcon` set (1024px marketing
-  icon min) and wire `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon` in
-  `project.yml`. *Needs design artwork — that's the only blocker requiring a human.*
+- ~~**App icon + asset catalog.**~~ **DONE.** `Pocket/Resources/Assets.xcassets`
+  now exists with an `AppIcon` set — a single 1024×1024 universal iOS icon
+  (`icon-1024.png`, no alpha, the crescent + Southern-Cross mark), wired via
+  `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon` in `project.yml`. The catalog also
+  holds the `RedMoonLogo`/`RedMoonWordmark` in-app marks and the semantic colour
+  sets. The stale audit note (2026-06-25, "no `.xcassets` anywhere") predates the
+  icon integration. No open code blocker remains for submission.
 
 **Should-fix before submission (no code dependency):**
 

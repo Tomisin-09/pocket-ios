@@ -1,0 +1,181 @@
+import Foundation
+import SwiftData
+
+/// One playable block resolved for the player (ADR 0066, slice 3) — its display title plus the live
+/// unit to run. The associated-value payload keeps the "exactly one unit" invariant honest without
+/// optionals the player would have to force-unwrap.
+struct RoutineStage: Identifiable {
+    let id: UUID
+    let title: String
+    let payload: Payload
+
+    enum Payload { case exercise(Exercise), loop(Loop), song(Song), rest }
+
+    var kind: RoutineStageKind {
+        switch payload {
+        case .exercise: return .exercise
+        case .loop: return .loop
+        case .song: return .song
+        case .rest: return .rest
+        }
+    }
+    var exercise: Exercise? { if case .exercise(let value) = payload { return value }; return nil }
+    var loop: Loop? { if case .loop(let value) = payload { return value }; return nil }
+    var song: Song? { if case .song(let value) = payload { return value }; return nil }
+}
+
+/// The **session conductor** for a routine run (ADR 0066, slice 3 / ADR 0071): a thin transport that
+/// walks the routine's playable blocks in order and **auto-advances** between them. Deliberately it
+/// owns **no playback engine** — each exercise/loop block is run by the *real* `ExerciseRunView` /
+/// `LoopRunView`, so the session keeps every training aid (previews, staircase, promote, journal)
+/// rather than a stripped-down surface. A run screen signals its natural completion back through
+/// `RoutineRunContext.onFinished`, which lands here as `advance()`. The conductor's only own playback
+/// concern is the between-blocks **rest** countdown; a rest carries no unit, so there is no run
+/// screen to delegate to.
+///
+/// **No evaluation surface (ADR 0070).** Completion is the material's own length (a full ramp pass,
+/// or the rest countdown), never "play it right to advance."
+///
+/// Song blocks run the audio-only `SongPlayAlongView` (ADR 0071). Only orphaned blocks (ADR 0066 R5)
+/// and Apple-Music-backed songs (browse/metadata only, not playable — ADR 0001) are filtered out.
+@MainActor
+@Observable
+final class RoutineSessionPlayer {
+
+    /// Where the session is. A unit block is `running` (a run screen is on-stage); a rest is its own
+    /// `resting` countdown phase; `finished` shows the summary.
+    enum State: Equatable { case running, resting, finished }
+
+    let routineName: String
+    private(set) var stages: [RoutineStage]
+    private(set) var cursor: RoutineSessionCursor
+    private(set) var state: State = .running
+
+    /// The between-blocks breather, seconds — user-set (`AppSettings.routineRestSeconds`), a short
+    /// runtime pause deliberately *not* the ADR 0014 planning-time rest minutes (a planner concern;
+    /// at runtime each block runs its natural length, so the routine needs no per-block clock).
+    private(set) var restRemaining = 0
+    private var restTimer: Timer?
+    /// Guards `start()` against a re-fired `onAppear`, so a rest countdown is never double-started.
+    private var started = false
+
+    /// The block the player is on, or `nil` once the session is complete.
+    var current: RoutineStage? { cursor.isComplete ? nil : stages[cursor.index] }
+    var currentIndex: Int { cursor.index }
+    var stageCount: Int { stages.count }
+    var progressLabel: String { cursor.progressLabel }
+    var isFinished: Bool { state == .finished }
+
+    /// The block after the current one — drives the rest screen's "up next" preview; `nil` if the
+    /// current block is the last.
+    var upNext: RoutineStage? {
+        let next = cursor.index + 1
+        return next < stages.count ? stages[next] : nil
+    }
+
+    /// Whether there's a previous block to step back to.
+    var canGoBack: Bool { cursor.index > 0 && !isFinished }
+
+    /// Index of the first *unit* block (exercise/loop) — the one that always waits for a deliberate
+    /// Start; `nil` if the routine has no unit blocks. Rests never auto-run a unit, so they don't
+    /// count as "the first block" for auto-start.
+    private let firstUnitIndex: Int?
+
+    /// Whether the block at `index` should begin on its own — the auto-start setting is on *and* it's
+    /// not the first unit block. The player asks this when building each block's context.
+    func shouldAutoStart(at index: Int) -> Bool {
+        AppSettings.routineAutoStart && index != firstUnitIndex
+    }
+
+    init(routine: Routine) {
+        routineName = routine.name.isEmpty ? "Routine" : routine.name
+        // Play order, minus blocks the player can't run: orphaned units (deleted → nullified, R5)
+        // and Apple-Music songs (not a playable audio source, ADR 0001).
+        let playable = routine.orderedItems.filter { !$0.isOrphaned && Self.isPlayable($0) }
+        let mapped = playable.map(Self.stage(for:))
+        stages = mapped
+        cursor = RoutineSessionCursor(total: mapped.count)
+        firstUnitIndex = mapped.firstIndex { $0.kind != .rest }
+    }
+
+    /// Whether the player can actually run this block's unit. Exercises and loops always can; a song
+    /// block is playable only when its audio is a local/iCloud file (Apple Music is browse-only, so
+    /// its blocks are dropped rather than shown as silent dead ends).
+    private static func isPlayable(_ item: RoutineItem) -> Bool {
+        guard let song = item.song else { return true }
+        return song.ref.source != .appleMusic
+    }
+
+    private static func stage(for item: RoutineItem) -> RoutineStage {
+        if let exercise = item.exercise {
+            let title = exercise.name.isEmpty ? "Exercise" : exercise.name
+            return RoutineStage(id: item.uid, title: title, payload: .exercise(exercise))
+        }
+        if let loop = item.loop {
+            return RoutineStage(id: item.uid, title: loop.name.isEmpty ? "Loop" : loop.name,
+                                payload: .loop(loop))
+        }
+        if let song = item.song {
+            return RoutineStage(id: item.uid, title: song.title.isEmpty ? "Song" : song.title,
+                                payload: .song(song))
+        }
+        return RoutineStage(id: item.uid, title: "Rest", payload: .rest)
+    }
+
+    // MARK: - Lifecycle
+
+    /// Begin the session on the first block. Called from the player's `onAppear`; guarded so a
+    /// re-fired appear can't restart it.
+    func start() {
+        guard !started else { return }
+        started = true
+        beginCurrentStage()
+    }
+
+    /// Tear down and end — the player's `onDisappear` and the exit control. Idempotent.
+    func end() {
+        stopRestTimer()
+        state = .finished
+    }
+
+    /// Advance to the next block — the shared path for a natural completion *and* a user Skip.
+    func advance() {
+        stopRestTimer()
+        cursor.advance()
+        beginCurrentStage()
+    }
+
+    /// Step back to the previous block (user-initiated). No-op at the first block; it re-lands on a
+    /// fresh, stopped run screen, so nothing auto-restarts under you.
+    func back() {
+        guard cursor.index > 0 else { return }
+        stopRestTimer()
+        cursor.retreat()
+        beginCurrentStage()
+    }
+
+    private func beginCurrentStage() {
+        guard let stage = current else { state = .finished; return }
+        if stage.kind == .rest { beginRest() } else { state = .running }
+    }
+
+    // MARK: - Rest (the only phase the conductor plays itself)
+
+    private func beginRest() {
+        state = .resting
+        restRemaining = AppSettings.routineRestSeconds
+        restTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.tickRest() }
+        }
+    }
+
+    private func tickRest() {
+        restRemaining -= 1
+        if restRemaining <= 0 { advance() }
+    }
+
+    private func stopRestTimer() {
+        restTimer?.invalidate()
+        restTimer = nil
+    }
+}

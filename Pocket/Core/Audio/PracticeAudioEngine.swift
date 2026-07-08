@@ -1,13 +1,11 @@
 import AVFoundation
 import Observation
 
-/// Minimal practice playback engine: AVAudioEngine → player → time-pitch
-/// (pitch-preserving speed) → mixer. AVFoundation lives here in Core/Audio; the
-/// pure math stays in `AudioMath`. See docs/architecture.md, ADRs 0001, 0006 & 0008.
-///
-/// play / pause / seek / rate, plus continuous **seamless region looping**: an
-/// active loop plays a pre-rendered, crossfaded buffer on `.loops`, so the wrap is
-/// gapless *and* click-free. Publishes `currentTime`.
+/// Minimal practice playback engine: AVAudioEngine → player → time-pitch (pitch-preserving speed) →
+/// mixer. AVFoundation lives here in Core/Audio; the pure math stays in `AudioMath` (docs/architecture,
+/// ADRs 0001, 0006 & 0008). play / pause / seek / rate, plus continuous **seamless region looping** —
+/// an active loop plays a pre-rendered, crossfaded buffer on `.loops`, so the wrap is gapless and
+/// click-free. Publishes `currentTime`.
 @MainActor
 @Observable
 final class PracticeAudioEngine {
@@ -20,16 +18,19 @@ final class PracticeAudioEngine {
     /// (re)starts; stays 0 when not looping.
     private(set) var loopIteration = 0
 
+    /// Fired once when straight-through playback reaches the file's natural end — never on a manual
+    /// stop/seek, never while looping. The song-block play-along (ADR 0071) hangs auto-advance off it.
+    var onReachedEnd: (() -> Void)?
+
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
     let timePitch = AVAudioUnitTimePitch()   // read by the metronome split (rate); engine-internal
 
-    /// Metronome (ADR 0026): a click voice on this same engine, sample-locked to the
-    /// (possibly time-stretched) song. `metronomeBeats` is the grid in *source* seconds;
-    /// the click follows playback rate via `MetronomeSchedule`. `clickWatermark` is the
-    /// source time of the last beat queued, so each beat schedules exactly once across
-    /// the 0.03 s ticks; it resets on any discontinuity (seek / rate / loop wrap). These
-    /// are engine-internal but driven by the `+Metronome` split.
+    /// Metronome (ADR 0026): a click voice on this same engine, sample-locked to the (possibly
+    /// time-stretched) song. `metronomeBeats` is the grid in *source* seconds; the click follows
+    /// playback rate via `MetronomeSchedule`. `clickWatermark` is the source time of the last beat
+    /// queued, so each beat schedules once across the 0.03 s ticks; it resets on any discontinuity
+    /// (seek / rate / loop wrap). Engine-internal but driven by the `+Metronome` split.
     private(set) var metronomeOn = false
     let clickVoice = ClickVoice()
     var metronomeBeats: [(time: TimeInterval, isDownbeat: Bool)] = []
@@ -53,12 +54,11 @@ final class PracticeAudioEngine {
     /// doesn't need display rate; its horizon covers this interval).
     private var metronomeTimer: Timer?
 
-    /// When set, playback loops this region (seconds) via a crossfaded `.loops`
-    /// buffer. `nil` plays straight through. (Read by the +Metronome split for its cutoff.)
+    /// When set, playback loops this region (seconds) via a crossfaded `.loops` buffer; `nil` plays
+    /// straight through. (Read by the +Metronome split for its cutoff.)
     var loopRegion: (start: TimeInterval, end: TimeInterval)?
-    /// Loop-buffer bookkeeping for the playhead: the region's start frame, the
-    /// looped length (region minus crossfade), and the player sampleTime at which
-    /// the current loop buffer began (so elapsed-in-loop = now − base).
+    /// Loop-buffer bookkeeping for the playhead: the region's start frame, the looped length (region
+    /// minus crossfade), and the player sampleTime at which the current loop buffer began.
     private var loopAnchorFrame = 0
     private var loopBufferFrames = 0
     private var loopBaseSampleTime: AVAudioFramePosition = 0
@@ -313,6 +313,8 @@ final class PracticeAudioEngine {
         currentTime = 0
         generation += 1
         stopTimer()
+        // Natural end of the file (not a manual stop/seek) — let an observing play-along advance.
+        onReachedEnd?()
     }
 
     /// The player's current render position (source frames since it started).
@@ -378,10 +380,8 @@ final class PracticeAudioEngine {
 // MARK: - Metronome (ADR 0026)
 
 extension PracticeAudioEngine {
-
     /// Turn the in-song click on/off. The song's beat grid is supplied separately via
-    /// `setMetronomeBeats`; with no grid (tempo/downbeat unset) nothing schedules.
-    /// The click scheduling itself lives in the `+Metronome` split.
+    /// `setMetronomeBeats` (no grid ⇒ nothing schedules); click scheduling lives in the `+Metronome` split.
     func setMetronome(enabled: Bool) {
         metronomeOn = enabled
         if enabled {
@@ -392,8 +392,8 @@ extension PracticeAudioEngine {
     }
 }
 
-/// Carries a non-`Sendable` value across an actor boundary when the caller
-/// guarantees single-threaded use (here: open off-main, then main-actor only).
+/// Carries a non-`Sendable` value across an actor boundary when the caller guarantees single-threaded
+/// use (here: open off-main, then main-actor only).
 private struct UncheckedSendableBox<Value>: @unchecked Sendable {
     let value: Value
     init(_ value: Value) { self.value = value }

@@ -41,6 +41,11 @@ final class LoopRunModel {
     private var fileAccess: SecurityScopedAccess?
     private var loaded = false
 
+    /// Fired once when the ramp reaches its natural end (the last plateau's final pass), and only
+    /// then — a *manual* `stop()` never invokes it. The routine player (ADR 0066, slice 3) hangs
+    /// its auto-advance off this. `nil` for a standalone `LoopRunView`. Not persisted.
+    var onFinished: (() -> Void)?
+
     init(loop: Loop) { self.loop = loop }
 
     var isRunning: Bool { transport != .stopped }
@@ -186,7 +191,12 @@ final class LoopRunModel {
         guard transport == .playing, let ramp else { return }
         elapsedReps = engine.loopIteration
         applyRate(forReps: elapsedReps, ramp: ramp)
-        if ramp.isFinished(elapsedBars: elapsedReps, elapsedSeconds: 0) { stop() }
+        if ramp.isFinished(elapsedBars: elapsedReps, elapsedSeconds: 0) {
+            stop()
+            // Natural end of the ramp — let an observing session player advance. After `stop()`
+            // (which clears the ramp) and never in `stop()` itself, so a manual stop stays silent.
+            onFinished?()
+        }
     }
 
     /// Read the ramp's plateau at `reps` and push it to the engine when it changes.

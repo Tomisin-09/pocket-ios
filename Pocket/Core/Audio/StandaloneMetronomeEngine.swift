@@ -17,13 +17,12 @@ import QuartzCore
 ///
 /// Three transport states, two clocks. **Stopped → playing → paused**: pausing freezes the
 /// session and silences the click but keeps it resumable; stopping zeroes everything. A
-/// **wall-clock** session timer (`elapsed`, accumulated across pause/resume) is the
-/// ephemeral tracker and a tempo change never resets it; the **sample-clock** `phaseOrigin`
-/// drives the beat grid and *is* re-anchored on a tempo/signature change (or a resume) so
-/// the next downbeat lands cleanly. Lock-screen / Control Center play-pause is wired through
-/// the shared `NowPlayingController`, and the `audio` background mode (ADR 0025) keeps the
-/// click sounding while the phone is locked. The beat math is the unit-tested
-/// `MetronomeBeats` / `TimeSignature`.
+/// **wall-clock** session timer (`elapsed`, accumulated across pause/resume) is the ephemeral
+/// tracker and a tempo change never resets it; the **sample-clock** `phaseOrigin` drives the beat
+/// grid and *is* re-anchored on a tempo/signature change (or a resume) so the next downbeat lands
+/// cleanly. Lock-screen / Control Center play-pause is wired through the shared
+/// `NowPlayingController`, and the `audio` background mode (ADR 0025) keeps the click sounding while
+/// locked. The beat math is the unit-tested `MetronomeBeats` / `TimeSignature`.
 @MainActor
 @Observable
 final class StandaloneMetronomeEngine {
@@ -38,8 +37,7 @@ final class StandaloneMetronomeEngine {
     /// constant off the main actor.
     nonisolated static let bpmRange: ClosedRange<Int> = 30...300
 
-    /// The free-play launch tempo — the default `bpm` and the automator's initial floor, and
-    /// what `reset()` returns to. Single-sourced so "default mode" can't drift.
+    /// The free-play launch tempo — the default `bpm`, the automator's floor, and `reset()`'s target.
     nonisolated static let defaultBPM = 90
 
     /// The command-tempo prefill when creating an exercise fresh in Practice (V1 feedback #3) — a
@@ -80,6 +78,10 @@ final class StandaloneMetronomeEngine {
     /// always the current metronome tempo at the moment you start the run.
     private(set) var automatorStartBPM = defaultBPM
 
+    /// Fired when a **training** ramp reaches its natural end (`finishRamp`), never on a manual
+    /// `stop()` — the routine player (ADR 0066) hangs auto-advance off it.
+    var onRampFinished: (() -> Void)?
+
     // Explicit free-play **run** state (ADR 0048). Arming (the segmented control) only
     // *configures* the ramp and shows its staircase; the climb begins on an explicit Start —
     // optionally after a short beat-synced **count-in** — and `automatorRunning` is the gate the
@@ -100,9 +102,8 @@ final class StandaloneMetronomeEngine {
     /// Convenience for the views: the click is actively sounding.
     var isPlaying: Bool { transport == .playing }
 
-    // The AVAudioEngine / now-playing / timer plumbing is driven from the `+Driver` split, so
-    // these handles are internal (not private), like the automator state the `+Automator` split
-    // writes. `clickVoice` stays private — only the core beat math touches it.
+    // The AVAudioEngine / now-playing / timer plumbing is driven from the `+Driver` split, so these
+    // handles are internal (not private), like the automator state. `clickVoice` stays private.
     let engine = AVAudioEngine()
     private let clickVoice = ClickVoice()
     let nowPlaying = NowPlayingController()
@@ -112,13 +113,12 @@ final class StandaloneMetronomeEngine {
     private var accumulatedSession: TimeInterval = 0
     /// Wall-clock anchor for the *current* play stretch; `elapsed = accumulated + (now − this)`.
     private var sessionStart: CFTimeInterval = 0
-    /// Sample-clock anchor for the beat grid (the sample at which beat 0 sounds), or `nil`
-    /// until the node has rendered and it can be placed. Re-set on tempo/signature/resume.
+    /// Sample-clock anchor for the beat grid (sample at which beat 0 sounds), `nil` until the node
+    /// has rendered. Re-set on tempo/signature/resume.
     private var phaseOrigin: AVAudioFramePosition?
     /// Index of the last beat handed to `ClickVoice`, so each schedules exactly once.
     private var scheduledThrough = -1
-    /// Output latency (frames) between a rendered sample and the speaker — the flash is
-    /// shifted back by this so it tracks the heard click, not the rendered one.
+    /// Output latency (frames) speaker vs render — the flash is shifted back by this to track it.
     private var latencyFrames: AVAudioFramePosition = 0
 
     // Automator ramp progress, measured *since the ramp engaged* (independent of the

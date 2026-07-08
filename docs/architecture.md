@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine, Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun/ScaleRun/ArpeggioRun/GuitarScale/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ExerciseAudioEngine (silent-default audio seam)
+│   Models   — Song, Loop, Marker, Routine/RoutineItem · RoutineBudget · RoutineSessionCursor (pure player stepping, ADR 0071), Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun/ScaleRun/ArpeggioRun/GuitarScale/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ExerciseAudioEngine (silent-default audio seam)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -187,7 +187,28 @@ session" placeholder (the V2 planner) above two **unit libraries** — `Exercise
 (command-anchored click drills) and `LoopLibraryView` (measured song `Loop`s) — each a row that
 pushes its own list. The split is for clarity/accessibility; the two models stay separate
 (`Exercise` is audio-free, `Loop` is file-bound) but both are "things you train," the multi-source
-surface the planner composes from. `ExerciseLibraryView` owns exercise **create**
+surface the planner composes from. That composition now has a home: **`Routine` + `RoutineItem`**
+(ADR 0066) is the multi-unit *session* container — an ordered list of typed blocks (`focused` /
+`warmup` / `play` / `rest`), each non-rest block referencing exactly one `Exercise`/`Loop`/`Song`
+via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orphans the block
+rather than deleting the routine). Its pacing rules (only focused work budgeted; block caps;
+proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. Authoring is a
+sandboxed editor (`RoutineDetailView`, child `ModelContext` committed only on Save), and the
+**player** (ADR 0071) is a *thin* session conductor — `RoutineSessionPlayer` (`@Observable`, owns no
+engine) over a pure `RoutineSessionCursor` — that **embeds the real `ExerciseRunView` / `LoopRunView` /
+`SongPlayAlongView` per block** (so every training aid — previews, staircase, promote, journal — is
+kept, not re-implemented), injecting a `RoutineRunContext` (progress · Skip · exit · natural-completion
+hook). Each run screen keeps its own per-unit engine (`StandaloneMetronomeEngine` / `LoopRunModel` /
+`SongPlayAlongModel`, the last two on a private `PracticeAudioEngine`) and **auto-advances the session
+on natural completion** (one command-ramp pass), fired by additive `onRampFinished` / `onFinished` /
+`onReachedEnd` engine callbacks; the conductor itself plays only the fixed rest countdown. A **song
+block** is the audio-only `SongPlayAlongView` — a fixed play-along speed (no ramp, ADR 0070), play/pause
+and −10s/+10s, local/iCloud files only (ADR 0001); it loops until skipped by default, or plays through
+once and advances per the `routineSongLoop` setting. It has **zero evaluation surface** (ADR 0070) —
+completion is the material's length, not a graded take. `RoutinePresets` seeds three curated in-house
+starter routines once on first launch (after `PracticePresets`, resolving blocks against the seeded
+exercises **by name**; exercise-only, since loops/songs need user audio at cold start). The planner (a
+producer of the same model) is the remaining later slice. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
 (swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command

@@ -28,8 +28,10 @@ final class PracticeRunUITests: XCTestCase {
         // into template sections (ADR 0068), so target a drill in the first alphabetical section
         // ("Chords" → "Chord Changes") — it's at the top of the list, on-screen without scrolling,
         // and its row (not a section header) is the tappable NavigationLink.
+        // Generous timeout to match the run-screen wait below: on a cold install the library only
+        // paints once first-launch seeding (exercises + routine presets) has run, which is variable.
         let drillCell = app.cells.containing(.staticText, identifier: "Chord Changes").firstMatch
-        XCTAssertTrue(drillCell.waitForExistence(timeout: 5), "no seeded exercise to tap")
+        XCTAssertTrue(drillCell.waitForExistence(timeout: 20), "no seeded exercise to tap")
         drillCell.tap()
 
         // Generous timeout: a cold simulator seeds + spins up the run engine on first navigation.

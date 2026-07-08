@@ -34,6 +34,78 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Starter routines (ADR 0066 / 0071).** The Routines library ships three curated, in-house starter
+  routines — **Morning Warm-up**, **Picking Builder**, **Rhythm & Changes** — seeded once on first
+  launch (after the starter exercises they string together) so a new Practice space isn't empty. Each
+  is an ordinary routine afterwards: fully editable, fully deletable, and a deleted preset stays
+  deleted.
+- **Song blocks in routines — audio-only play-along (ADR 0066 / 0071).** A routine can now include a
+  **song** you play along to, not just exercises and loops. The picker gains a **Songs** bucket
+  (local/iCloud files only — Apple Music can't be time-stretched, ADR 0001), and in the player a song
+  block runs a minimal **play-along**: a fixed play-along speed you set (adjustable live, **no ramp** —
+  a song is an open jam), play/pause, and −10s/+10s seeks over a live position bar. By default a song
+  **loops** and the routine moves on only when you **skip** it; a new **Settings → Routines** toggle
+  ("Loop song blocks", default on) lets you instead play it through once and auto-advance. The
+  play-along is judgement-free (no scoring, ADR 0070).
+- **Routine player & editor polish (ADR 0071 follow-up).** A batch of player/editor refinements:
+  - **Auto-start** — in a routine, each block after the first begins on its own; loop blocks get a
+    brief **3·2·1 count-in** (visual + haptic) before they start. Exercise blocks skip the visual
+    count-in and rely on the metronome's own audible count-in, so you hear a single lead-in rather
+    than a doubled one. Auto-start is governed by a new **Settings → Routines** toggle ("Auto-start
+    blocks", default on).
+  - **Session progress strip + navigator** — a slim per-block bar under the nav bar with **Start /
+    Finish** markers and the current block highlighted, flanked by **‹ previous / next ›** chevrons
+    (the one place session navigation lives), replacing the cramped "N of M" by the close button.
+  - **Numbered blocks** in the routine detail/editor list, so the sequence is clear at a glance.
+  - **"Up next"** preview on the rest screen, and a configurable **rest length** (Settings →
+    Routines, 5–60s).
+  - **End-of-block reflection** — when a block finishes, an optional journal prompt lets you jot a
+    note before moving on (skippable; "Reflect after each block" setting, default on), and the
+    session ends on a **judgement-free recap** of what you practised (no scores, ADR 0070).
+  - **Editing is gated behind Edit** — opening a routine is read-only; the name field, Add/Insert and
+    delete/reorder controls appear only after tapping **Edit**, with Save committing and Cancel
+    discarding.
+  - **Loop runs now collapse their settings** — a loop's tempos/reps/steps sit behind the same
+    collapsible **Practice Settings** disclosure an exercise uses, so the run opens on the summary +
+    staircase.
+- **Practice routines — the auto-advancing player (ADR 0066 slice 3 / ADR 0071).** A ▶ on each
+  routine row runs the session full-screen, and each block is the **real run screen** —
+  the same fretboard/strum/chord preview, Practice Settings, ramp staircase, promote and journal you
+  get running an exercise or loop on its own, now with session **progress** ("2 of 5") and a **Skip**
+  control. When a block finishes its command-ramp naturally the session **auto-advances** to the
+  next; rests are a short fixed countdown — so a hand-built routine needs no per-block minutes.
+  Deliberately **judgement-free (ADR 0070)**: no scoring, no accuracy, no pass/fail — completion is
+  the material's length, and the aim is *controlled discomfort, not clean reps* (the ramp pushes at
+  and past your command tempo). Orphaned blocks (a deleted unit) are skipped; song blocks — an
+  audio-only branded play-along on DRM-free files — are the following slice.
+- **Deeper add-unit picker — two levels, like Apple Music.** The routine editor's picker now drills
+  a level further: **Exercises** group by their **template** (Strumming, Scales, …) and **Loops**
+  group by their **song**, each sub-bucket opening its own unit list — Library → Artists → tracks.
+  Recently Added is unchanged.
+- **Practice routines — manual authoring (ADR 0066, slice 2).** A **Routines** entry in the
+  Practice hub opens a routines library where you build a session by hand: create a routine,
+  name it, add **exercise** and **loop** blocks, insert rests between them, and drag to
+  reorder. The add-unit picker is structured like the Apple Music **Library** root —
+  **buckets** you drill into (Exercises, Loops) over a **Recently Added** shortcut, with
+  exercises first (the exercises-first direction). Editing is **sandboxed with an explicit Save**: changes only
+  persist when you tap Save; Cancel or leaving discards them, so a half-built or abandoned
+  routine never lands. Deleting a routine leaves its referenced units untouched; a unit
+  deleted elsewhere shows as a skipped "Unit removed" block rather than breaking the routine.
+  Song blocks are intentionally deferred until the player can run them (slice 3). Authoring
+  only — the auto-advancing player is the next slice.
+- **Practice routines — the session container (ADR 0066, slice 1).** New `Routine` and
+  `RoutineItem` SwiftData models: a routine is an ordered list of typed blocks
+  (`focused` / `warmup` / `play` / `rest`), each non-rest block **referencing** exactly one
+  practice unit — an `Exercise`, `Loop`, or `Song` — via typed optional relationships (the
+  ADR 0058 polymorphic pattern). Order is explicit (`RoutineItem.order`), and deleting a
+  referenced unit **nullifies** the block's link rather than deleting the routine (the block
+  becomes orphaned and a future player will skip it). A pure, SwiftData-free `RoutineBudget`
+  layer holds the pacing rules distilled from the planner science (ADR 0014): only `focused`
+  work is budgeted, focused blocks cap at 20 min and split beyond it, and rests are proposed
+  between adjacent focused blocks. This is the model substrate only — authoring UI and the
+  player are later slices. Additive schema (new models + nullify inverses on
+  `Exercise`/`Loop`/`Song`); 26 unit tests cover the pure rules and the model, incl. the
+  nullify delete rule. *Migration still to be device-verified before merge.*
 - **Watch replaces the per-editor Animate toggle.** Every fretboard-family editor (Scales,
   Arpeggios, the generative run editor, the custom-grid editor) had a duplicate **Animate** toggle
   inside its Display menu, alongside the **Watch** one-shot preview button that already covers "see
