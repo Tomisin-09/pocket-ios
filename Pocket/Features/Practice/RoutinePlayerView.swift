@@ -172,6 +172,7 @@ struct RoutinePlayerView: View {
             .padding(.top, 4)
         }
         .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// A judgement-free recap — just *what* you worked through this session, no scores (ADR 0070).
