@@ -10,9 +10,11 @@ The order below reflects a deliberate scoping call, not just priority:
 
 - **V1 (first release):** practice screen + library + a richer **creation
   experience** + **notes/journal**. **No planner.**
-- **Planner → V2.** Routine generation and goal-driven selection (ADRs
-  0014 / 0015 / 0016) are designed but deferred to the second version. Don't
-  treat the planner as "next" — notes/journal comes first.
+- **Planner → V2, now in progress (2026-07-08).** Routine generation and
+  goal-driven selection (ADRs 0014 / 0015 / 0016) are the active V2 workstream now
+  that V1 (notes/journal) and the routine substrate (ADR 0066, PR #102) have shipped.
+  Fully designed with a cold-start build plan — see **Practice planner** under
+  "V2 vision" below.
 - **AI layer → late phase.** Every AI feature (note summaries, suggested
   automator settings, etc.) is built only once the rest of the app is solid
   and the foundations are in place: the Claude proxy backend (ADR 0002, still
@@ -23,6 +25,20 @@ The order below reflects a deliberate scoping call, not just priority:
 
 The V2 direction was set in a scoping session; the thinking lives in dedicated
 docs so this stays a pointer list:
+
+- **Practice planner — ADRs 0014 / 0015 / 0016 (Accepted; IN PROGRESS).** The
+  goal-driven session generator: two pure functions — `deriveCandidates` (front-half,
+  0015) → `buildSession` (back-half, 0014) — that produce a `Routine` (ADR 0066) run by
+  the shipped player. Fully designed 2026-07-08; **cold-start build plan:
+  `docs/plans/planner-build-plan.md`** (branch `pocket-109-practice-planner`, Slice 1
+  next). Decisions locked: self-rated `Exercise.mastery` / `lastPracticed` feeding a
+  `dueScore` (no grading — ADR 0070); broad `ExerciseTemplate → [SkillID]` skill
+  resolution (no new per-exercise tagging); two candidate paths (technique → exercise,
+  repertoire → loop/song via `Goal.targetSong`); soft prereq staging (reconciles ADR
+  0016 with 0071); in-house goal templates; loop skill-tagging as a phase-2 slice;
+  **AI suggester deferred** — the planner ships fully local-first, no backend. The
+  substrate (routine model + player + presets, PR #102) has shipped, so this is now
+  the active V2 build.
 
 - **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
   play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer
