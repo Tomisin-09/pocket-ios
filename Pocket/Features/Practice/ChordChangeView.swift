@@ -12,10 +12,11 @@ import SwiftUI
 ///
 /// **Count-in is decoupled from the progression.** The engine's `currentBeat` counts *through* the
 /// count-in (it doesn't reset at the first musical beat), so measuring the progression from the
-/// absolute beat would let a 4-beat count-in eat the first chord's bar. Instead we anchor to the beat
-/// the surface first appears — which is the first musical downbeat, since the run screen only mounts
-/// this view once `automatorCountdown` clears — and count the progression from there, so chord 1
-/// always gets its full hold starting on beat 1.
+/// absolute beat would let a 4-beat count-in eat the first chord's bar. Instead we anchor `originBeat`
+/// the instant `automatorCountdown` clears — the first musical downbeat — and count the progression
+/// from there, so chord 1 always gets its full hold starting on beat 1. The surface is shown
+/// *throughout* the count-in (chord 1 static, "Get ready"); before the origin is anchored nothing
+/// reads as running, so it never disappears during the count and pops back in.
 struct ChordChangeView: View {
     let engine: StandaloneMetronomeEngine
     let progression: ChordProgression
@@ -56,7 +57,21 @@ struct ChordChangeView: View {
         }
         .frame(maxWidth: .infinity)
         .animation(.easeInOut(duration: 0.15), value: index)
-        .onAppear { if originBeat == nil { originBeat = max(0, engine.currentBeat) } }
+        .onChange(of: engine.automatorCountdown) { _, countdown in
+            // The count-in just cleared → this beat is the first musical downbeat; anchor the progression.
+            if countdown == nil { anchorToDownbeat() }
+        }
+        .onAppear {
+            // No count-in (or already cleared before this appeared) → anchor now; else wait, above.
+            if engine.automatorCountdown == nil { anchorToDownbeat() }
+        }
+    }
+
+    /// Pin the progression's origin to the beat the count-in clears (or on appear when there is none),
+    /// so chord 1 gets its full hold starting on the first musical downbeat. Idempotent.
+    private func anchorToDownbeat() {
+        guard originBeat == nil else { return }
+        originBeat = max(0, engine.currentBeat)
     }
 }
 
