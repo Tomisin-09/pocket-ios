@@ -42,6 +42,16 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Build today's session — the practice planner is live (V2 planner Slice 3, ADRs 0014–0016/0015).**
+  Practice's "Build today's session" entry is no longer a placeholder: it opens a planner where you
+  pick how long you have (**Quick 15 / Focused 30 / Full 60**, default short), keep a short list of
+  **goals**, and tap **Generate** to get a ready-to-run session. A **goal editor** starts from one of
+  four curated templates ("Play a specific song", "Build speed", "Improvise in a style", "General
+  progress"), then lets you name it, set its priority (**Low / Normal / High**), trim its skills, and
+  — for a "learn a song" goal — pick the target song; editing adds a **met** toggle and delete. The
+  generated session opens as the same **provisional** routine you review before it's kept (Save to
+  name-and-keep, or Start to run it now; back out and it's discarded). With no active goals, Generate
+  falls back to a due-based Quick session so it always produces something.
 - **Goals feed the planner (V2 planner Slice 2, ADR 0073).** The planner's front-half now turns
   what you *want to get better at* into what to practise. A **goal** carries a set of skills (from a
   curated technique taxonomy) and an optional target song; the planner expands your active goals into
@@ -52,7 +62,7 @@ All notable changes to Pocket are documented here. Format loosely follows
   appears, just later — the app never refuses to schedule what you asked for); marking a goal met
   drops it from the next session. Four in-house goal templates ("Play a specific song", "Build
   speed", "Improvise in a style", "General progress") seed sensible skill sets. All selection logic
-  is pure, unit-tested (the ADR 0015 property list). The goal-editor UI arrives in the next slice.
+  is pure, unit-tested (the ADR 0015 property list). The goal-editor UI ships in Slice 3 (above).
 - **Quick session — the practice planner's first surface (ADR 0072, V2 planner Slice 1).** A new
   ✨ button in the Routines library generates a ready-to-run session from your exercise library and
   opens it as a **provisional** routine you review before it's kept — nothing lands in the library

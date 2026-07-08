@@ -76,7 +76,7 @@ struct RoutineLibraryView: View {
         }
         .navigationDestination(item: $quickDraft) { draft in
             RoutineDetailView(container: context.container,
-                              quickSession: draft.blocks, defaultName: draft.name)
+                              generatedSession: draft.blocks, defaultName: draft.name)
         }
         .fullScreenCover(item: $playing) { routine in
             RoutinePlayerView(routine: routine)

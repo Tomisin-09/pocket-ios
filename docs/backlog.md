@@ -51,9 +51,15 @@ docs so this stays a pointer list:
     `PracticePlanner.planGoalSession`/library projector + loop/song materialisation
     (songs keyed by a deterministic `PlannerID`). Front-half composes with the back-half
     end-to-end; unit-tested (ADR 0015 property list). No UI yet.
-  - **Next — Slice 3:** the planner **UI** (Home = planner): time selector, goal editor
-    (template picker → weight → skill trim → optional target song → mark-met), generated
-    routine card → Start. Slice 4 = loop skill-tags; Slice 5 (AI) out of scope.
+  - **Slice 3 — planner UI: DONE (branch `pocket-112-practice-planner`, ADR 0015/0073).**
+    `PlannerView` (the live "Build today's session" entry in Practice): duration selector
+    (`SessionLength`), goals list, **Generate** → provisional `Routine` review → shipped
+    player, with a no-goals Quick-session fallback. `GoalEditorView`: template picker →
+    name → priority (`GoalPriority` Low/Normal/High ↔ `weight`, pure + unit-tested) →
+    skill-trim → optional target song → met toggle / delete. `RoutineDetailView`'s
+    provisional init broadened to resolve loop/song blocks.
+  - **Next — Slice 4:** loop skill-tags (optional enrichment, reuses `Loop.tags`, own ADR).
+    Slice 5 (AI decomposition) remains out of scope.
 
 - **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
   play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer

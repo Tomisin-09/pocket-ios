@@ -182,8 +182,8 @@ Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044)
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
-from the metronome at the product level. `PracticeView` is a **hub**: a disabled "Build today's
-session" placeholder (the V2 planner) above two **unit libraries** — `ExerciseLibraryView`
+from the metronome at the product level. `PracticeView` is a **hub**: the live "Build today's
+session" planner entry (V2 planner Slice 3 — pushes `PlannerView`) above two **unit libraries** — `ExerciseLibraryView`
 (command-anchored click drills) and `LoopLibraryView` (measured song `Loop`s) — each a row that
 pushes its own list. The split is for clarity/accessibility; the two models stay separate
 (`Exercise` is audio-free, `Loop` is file-bound) but both are "things you train," the multi-source
@@ -225,8 +225,11 @@ so goal-priority and dueness/mastery compose once. `GoalTemplateLibrary` seeds f
 The impure `PracticePlanner` (`@MainActor`) projects `Exercise`/`Loop`/`Song` into candidates
 (`planQuickSession`/`planGoalSession`) and materialises the blocks into a persisted `Routine`
 (exercises by `uid`, loops by `uid`, songs by a deterministic `PlannerID` since `Song` has no stored
-`uid`); the Routines library's "Quick session" ✨ button is the first surface (goal-editor UI is
-Slice 3). `Exercise` gained self-rated
+`uid`). The **UI** (ADR 0015/0073, V2 Slice 3) is `Features/Practice/PlannerView` — a duration
+selector (`SessionLength`), a list of `Goal`s, and **Generate** → a provisional `Routine` reviewed in
+`RoutineDetailView` before Start (no active goals ⇒ the Quick-session fallback) — and `GoalEditorView`
+(template picker → name → priority → skill-trim → optional target song → met/delete), with the pure
+`GoalPriority` mapping Low/Normal/High ↔ the stored `weight`. `Exercise` gained self-rated
 **`mastery: Int?`** + **`lastPracticed: Date?`** (mirroring `Loop`/`Song`; the app never grades
 playing — ADR 0070/0072), stamped on run and rated on the detail sheet. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**

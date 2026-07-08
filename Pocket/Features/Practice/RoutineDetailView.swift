@@ -61,17 +61,21 @@ struct RoutineDetailView: View {
         }
     }
 
-    /// Build a **provisional Quick session** for review (V2 planner Slice 1): materialise the pure
-    /// generated blocks into a private sandbox (autosave off) so nothing persists until the user
+    /// Build a **provisional generated session** for review (V2 planner Slices 1 & 3): materialise the
+    /// pure generated blocks into a private sandbox (autosave off) so nothing persists until the user
     /// Saves or Starts. Opens read-only on the block list with the dated default name; backing out
-    /// without committing discards the sandbox (nothing lands in the library).
-    init(container: ModelContainer, quickSession blocks: [SessionBlock], defaultName: String) {
+    /// without committing discards the sandbox (nothing lands in the library). Fetches exercises,
+    /// loops and songs so both a goal-less Quick session (Slice 1, exercise-only) and a goal session
+    /// (Slice 3, which can surface loop/song candidates via Path B) resolve their blocks.
+    init(container: ModelContainer, generatedSession blocks: [SessionBlock], defaultName: String) {
         self.container = container
         let context = ModelContext(container)
         context.autosaveEnabled = false
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        let routine = PracticePlanner.materialise(blocks, name: defaultName,
-                                                  exercises: exercises, into: context)
+        let loops = (try? context.fetch(FetchDescriptor<Loop>())) ?? []
+        let songs = (try? context.fetch(FetchDescriptor<Song>())) ?? []
+        let routine = PracticePlanner.materialise(blocks, name: defaultName, exercises: exercises,
+                                                  loops: loops, songs: songs, into: context)
         _editContext = State(initialValue: context)
         _routine = State(initialValue: routine)
         _existsInStore = State(initialValue: false)
