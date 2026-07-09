@@ -80,10 +80,11 @@ enum PracticePlanner {
                          estimatedMinutes: estimatedMinutes(for: exercise))
     }
 
-    /// A rough per-exercise time estimate — one default focused block. A ramp-staircase-derived
-    /// estimate is a later refinement; the back-half splits any over-long block regardless (R2).
+    /// A per-exercise time estimate from its **ramp staircase** (R3): how long the warm-up→dwell→
+    /// summit→backoff plateaus actually take at their own tempos and meter, not a flat default. The
+    /// back-half still splits any over-long block against the focused cap (R2).
     static func estimatedMinutes(for exercise: Exercise) -> Int {
-        RoutineBudget.defaultFocusedMinutes
+        SessionEstimate.minutes(forRamp: exercise.ramp, beatsPerBar: exercise.beatsPerBar)
     }
 
     /// The distinct skill buckets recognised from a loop's tags (Slice 4, Decision 8), order-stable —
@@ -109,6 +110,27 @@ enum PracticePlanner {
     /// A song run's rough minutes — its full duration (Path B), floored at 1.
     static func estimatedMinutes(for song: Song) -> Int {
         max(1, Int((song.duration / 60).rounded()))
+    }
+
+    /// Total estimated minutes for a whole **routine** (R3) — the sum over its runnable, unit-bearing
+    /// blocks of the per-unit estimate × the block's `reps`. Orphaned blocks (deleted unit) and rests
+    /// (breaks, not budgeted work — ADR 0014 R1) contribute nothing. Drives the planner review
+    /// screen's soft length readout.
+    static func estimatedMinutes(forRoutine routine: Routine) -> Int {
+        routine.orderedItems.reduce(0) { total, item in
+            guard !item.isOrphaned else { return total }
+            let perRun: Int
+            if let exercise = item.exercise {
+                perRun = estimatedMinutes(for: exercise)
+            } else if let loop = item.loop {
+                perRun = estimatedMinutes(for: loop)
+            } else if let song = item.song {
+                perRun = estimatedMinutes(for: song)
+            } else {
+                return total // a rest carries no unit
+            }
+            return total + SessionEstimate.minutes(perRun: perRun, reps: item.effectiveReps)
+        }
     }
 
     /// Materialise a planned `[SessionBlock]` into a persisted `Routine` of ordered `RoutineItem`s

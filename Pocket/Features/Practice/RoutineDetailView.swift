@@ -22,11 +22,13 @@ struct RoutineDetailView: View {
     /// Private editing scope over the shared store — never autosaves, so nothing persists until
     /// `saveEdits()` calls `save()` on it explicitly.
     @State private var editContext: ModelContext
-    /// The routine under edit, resolved into (or created in) `editContext`.
-    @State private var routine: Routine
+    /// The routine under edit, resolved into (or created in) `editContext`. Internal (not private) so
+    /// the length-readout extension (`RoutineDetailView+Length`) can read it.
+    @State var routine: Routine
     /// Whether this routine has been committed to the store yet — drives Cancel (discard vs dismiss)
-    /// and the empty-new drop on Save. Flips true after the first Save of a new routine.
-    @State private var existsInStore: Bool
+    /// and the empty-new drop on Save. Flips true after the first Save of a new routine. Internal for
+    /// the length-readout extension.
+    @State var existsInStore: Bool
     /// Read-only by default; every mutating control is revealed only in edit mode. A brand-new
     /// routine opens directly in edit mode (there's nothing to view yet).
     @State private var isEditing: Bool
@@ -36,11 +38,17 @@ struct RoutineDetailView: View {
     /// when not playing.
     @State private var playingRoutine: Routine?
 
+    /// The session length the user asked the planner for, in minutes — set only on a provisional
+    /// generated session so the review screen can show its estimate against a soft budget (R3).
+    /// `nil` for a normal routine (no target to compare against). Internal for the length extension.
+    let targetMinutes: Int?
+
     /// Build the sandbox. An existing routine is faulted into the child context by its id (opens
     /// read-only); a nil `existing` means a fresh routine created only in the sandbox, opened in edit
     /// mode and persisted iff you Save.
     init(container: ModelContainer, existing: Routine?) {
         self.container = container
+        self.targetMinutes = nil
         let context = ModelContext(container)
         context.autosaveEnabled = false
         _editContext = State(initialValue: context)
@@ -63,8 +71,10 @@ struct RoutineDetailView: View {
     /// without committing discards the sandbox (nothing lands in the library). Fetches exercises,
     /// loops and songs so both a goal-less Quick session (Slice 1, exercise-only) and a goal session
     /// (Slice 3, which can surface loop/song candidates via Path B) resolve their blocks.
-    init(container: ModelContainer, generatedSession blocks: [SessionBlock], defaultName: String) {
+    init(container: ModelContainer, generatedSession blocks: [SessionBlock], defaultName: String,
+         targetMinutes: Int? = nil) {
         self.container = container
+        self.targetMinutes = targetMinutes
         let context = ModelContext(container)
         context.autosaveEnabled = false
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
@@ -83,8 +93,9 @@ struct RoutineDetailView: View {
     private var nextOrder: Int { (routine.items.map(\.order).max() ?? -1) + 1 }
 
     /// Whether the routine has at least one runnable block — a unit block whose unit still resolves.
-    /// Gates the Start button (an empty or all-orphaned routine has nothing to play).
-    private var hasPlayableBlock: Bool {
+    /// Gates the Start button (an empty or all-orphaned routine has nothing to play). Internal for
+    /// the length-readout extension.
+    var hasPlayableBlock: Bool {
         routine.items.contains { $0.kind.carriesUnit && $0.hasResolvableUnit }
     }
 
@@ -127,6 +138,8 @@ struct RoutineDetailView: View {
                     .onDelete(perform: delete)
                 }
             }
+
+            lengthSection
 
             if isEditing {
                 Section {

@@ -47,6 +47,13 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **A generated session now shows how long it'll actually take, against your chosen length (planner
+  review R3).** The review screen carries an **Estimated length** readout with a soft over/under-budget
+  hint (e.g. "About right for your 30 min" / "A touch over…") — never a gate, just guidance. The
+  estimate is now derived from each exercise's real **ramp staircase** (warm-up → dwell → summit →
+  backoff, timed at each plateau's own tempo and meter) instead of a flat 12-minute default, so it
+  reflects what a session actually costs; loops (region × repeats) and songs (duration) already did.
+  Blocks also gained an additive **`reps`** field (defaults to 1) the estimate accounts for.
 - **A goal can now target any skill, not just the ones its template seeded (planner review R2).** The
   goal editor gained an **Add skills** button that opens a searchable, family-grouped picker over the
   whole technique catalog (Picking hand · Fretting & legato · Fretboard knowledge · Scales & improv ·
