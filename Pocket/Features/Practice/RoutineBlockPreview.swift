@@ -24,7 +24,14 @@ enum RoutineBlockPreviewTarget: Identifiable, Hashable {
 struct ExerciseBlockPreview: View {
     let exercise: Exercise
     @State private var preview = CommandTempoPreviewPlayer()
+    @State private var strumPreview = StrumPatternPreviewPlayer()
     @State private var showingDetail = false
+
+    /// The strum pattern to audition, if this is a strumming or strum-&-chords drill (R5). Other
+    /// templates have no strum rhythm, so they fall back to the plain command-tempo click.
+    private var strumPattern: StrumPattern? {
+        exercise.strumPattern ?? exercise.strumChordSheet?.strumPattern
+    }
 
     var body: some View {
         ScrollView {
@@ -40,9 +47,17 @@ struct ExerciseBlockPreview: View {
                                     reach: "\(exercise.derivedTarget)", unit: "BPM")
                 RoutineStairs(plateaus: exercise.ramp.plateaus, tint: PocketColor.practice)
                     .frame(height: 120)
-                PreviewAudioButton(isPlaying: preview.isPlaying,
-                                   idleTitle: "Hear command tempo") {
-                    preview.toggle(bpm: exercise.command, signature: signature)
+                if let strumPattern {
+                    PreviewAudioButton(isPlaying: strumPreview.isPlaying,
+                                       idleTitle: "Hear the strum") {
+                        strumPreview.toggle(pattern: strumPattern, signature: signature,
+                                            bpm: exercise.command)
+                    }
+                } else {
+                    PreviewAudioButton(isPlaying: preview.isPlaying,
+                                       idleTitle: "Hear command tempo") {
+                        preview.toggle(bpm: exercise.command, signature: signature)
+                    }
                 }
             }
             .padding(24)
@@ -50,7 +65,7 @@ struct ExerciseBlockPreview: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
-        .onDisappear { preview.stop() }
+        .onDisappear { preview.stop(); strumPreview.stop() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingDetail = true; haptic(.light) } label: {

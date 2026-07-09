@@ -288,4 +288,28 @@ final class StrumPatternTests: XCTestCase {
         XCTAssertEqual(decoded.version, StrumPattern.currentVersion + 1)
         XCTAssertEqual(decoded.slots, [.down, .up, .down, .up])
     }
+
+    // MARK: - Click intensities (R5 strum-audio reference)
+
+    func testClickIntensitiesMapEachArticulation() {
+        let pattern = StrumPattern(slotsPerBeat: 2, slots: [
+            .down,                              // a normal stroke
+            .rest,                              // silent
+            StrumSlot(.down, accented: true),   // accent
+            .mute,                              // muted "chuck"
+            StrumSlot(.up, accented: true),     // accent wins over the up direction
+            .up                                 // a normal stroke
+        ])
+        XCTAssertEqual(pattern.clickIntensities,
+                       [.stroke, nil, .accent, .mute, .accent, .stroke])
+    }
+
+    func testClickIntensitiesRestIsAlwaysSilent() {
+        // A rest can't carry an accent (the slot initialiser drops it), so it stays silent.
+        XCTAssertEqual(StrumPattern(slotsPerBeat: 1, slots: [.rest]).clickIntensities, [nil])
+    }
+
+    func testClickIntensitiesAreOnePerSlot() {
+        XCTAssertEqual(StrumPattern.folk.clickIntensities.count, StrumPattern.folk.slotCount)
+    }
 }

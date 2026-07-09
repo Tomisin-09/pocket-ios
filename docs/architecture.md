@@ -121,7 +121,10 @@ without a song. `StandaloneMetronomeEngine` (`Core/Audio/`) owns its **own**
 sample clock:** every click is scheduled at an *absolute* sample position
 (`phaseOrigin + index · framesPerBeat`) via `ClickVoice.schedule(atSampleTime:)`, so the
 tempo is locked to the audio hardware and can't wander with `Timer` jitter — the timer
-only tops up the look-ahead. The on-screen **beat-flash indicator** reads the same
+only tops up the look-ahead. The same scheduler doubles as a **strum-rhythm preview**
+(`StandaloneMetronomeEngine+Strum`, ADR 0071 R5): armed with a `StrumSchedule` (built from the pure
+`StrumPattern.clickIntensities`), each sub-tick's click level comes from the pattern's slots (rests
+silent) instead of the meter — a rhythm reference, no pitch — driven by a thin `StrumPatternPreviewPlayer`. The on-screen **beat-flash indicator** reads the same
 `currentBeat`, derived from the render head shifted back by the output latency so the lit
 dot lands on the *heard* click rather than leading it. Meter is the pure `TimeSignature`
 (named presets — 4/4 pop, 3/4 waltz, 6/8, 12/8 slow blues, … — each carrying its accent
