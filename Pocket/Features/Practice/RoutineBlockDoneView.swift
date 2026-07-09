@@ -19,18 +19,30 @@ struct RoutineBlockDoneView: View {
     /// Whether this is the last block — the primary reads **Finish** (→ end-of-routine summary)
     /// instead of **Continue** (→ next block / rest).
     let isLast: Bool
+    /// The next **unit** coming up (rests skipped), shown so you know what you're continuing into
+    /// (ADR 0071 R4b). `nil` when nothing playable remains.
+    let upNext: UpNext?
     /// Commit the optional mastery (unchanged ⇒ pass through) and the optional note, then advance.
     let onContinue: (_ mastery: Int?, _ note: String) -> Void
+
+    /// A plain descriptor of the upcoming unit — kept value-only so this view stays SwiftData-free
+    /// (the host builds it from the next stage).
+    struct UpNext: Equatable {
+        let title: String
+        let detail: String?
+        let symbol: String
+    }
 
     @State private var mastery: Int?
     @State private var note = ""
     @FocusState private var noteFocused: Bool
 
-    init(title: String, initialMastery: Int?, isLast: Bool,
+    init(title: String, initialMastery: Int?, isLast: Bool, upNext: UpNext?,
          onContinue: @escaping (_ mastery: Int?, _ note: String) -> Void) {
         self.title = title
         self.initialMastery = initialMastery
         self.isLast = isLast
+        self.upNext = upNext
         self.onContinue = onContinue
         _mastery = State(initialValue: initialMastery)
     }
@@ -41,6 +53,7 @@ struct RoutineBlockDoneView: View {
                 completionBeat
                 masteryTap
                 noteField
+                if let upNext { upNextCard(upNext) }
             }
             .padding(.horizontal, 24)
             .padding(.top, 48)
@@ -71,7 +84,7 @@ struct RoutineBlockDoneView: View {
 
     private var masteryTap: some View {
         VStack(spacing: 10) {
-            Text("How cleanly did that feel?")
+            Text("How clean did that feel?")
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
             HStack(spacing: 12) {
@@ -109,6 +122,37 @@ struct RoutineBlockDoneView: View {
         }
     }
 
+    private func upNextCard(_ next: UpNext) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Up next")
+                .font(.futura(.caption, weight: .semibold))
+                .textCase(.uppercase)
+                .foregroundStyle(PocketColor.textSecondary)
+            HStack(spacing: 12) {
+                Image(systemName: next.symbol)
+                    .font(.futura(.body))
+                    .foregroundStyle(PocketColor.practice)
+                    .frame(width: 34, height: 34)
+                    .background(Circle().fill(PocketColor.practiceCircleWash))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(next.title)
+                        .font(.futura(.body))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    if let detail = next.detail {
+                        Text(detail)
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.practice)
+                    }
+                }
+                Spacer(minLength: 4)
+            }
+            .padding(12)
+            .background(PocketColor.surfaceSubtle, in: RoundedRectangle(cornerRadius: 12))
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Up next: \(next.title). \(next.detail ?? "")")
+    }
+
     private var continueBar: some View {
         Button {
             onContinue(mastery, note)
@@ -125,5 +169,8 @@ struct RoutineBlockDoneView: View {
 
 #Preview("Block done") {
     RoutineBlockDoneView(title: "Alternate picking · 8ths",
-                         initialMastery: 2, isLast: false) { _, _ in }
+                         initialMastery: 2, isLast: false,
+                         upNext: .init(title: "A Minor Pentatonic",
+                                       detail: "Command 92 → 98 BPM",
+                                       symbol: "point.topleft.down.curvedto.point.bottomright.up")) { _, _ in }
 }

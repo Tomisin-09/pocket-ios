@@ -14,10 +14,17 @@ All notable changes to Pocket are documented here. Format loosely follows
   default off) restores the old auto-advance; a deliberate Skip always bypasses the gate, and
   songs/rests (no journal) advance without an empty screen. Replaces the previous *Reflect after each
   block* setting.
-- **Inspect and tune a routine's exercise blocks in place.** Tapping an exercise block in a routine
-  (read-only mode) opens its detail sheet — preview the drill, **nudge its command tempo**, and
-  **hear a short metronome preview** of that tempo without opening the run screen. The command edit
-  commits through the same setter the run screen uses, so the two surfaces never diverge.
+- **Preview every routine block before you start.** Tapping an **exercise or loop** block in a routine
+  (read-only mode) opens a read-only preview so you know exactly what you'll play and how: an exercise
+  shows its content (fretboard / strum / chords) + tempo anchors + the training staircase and a short
+  **command-tempo metronome preview**; a loop shows its source + speed + staircase and plays a few
+  seconds of the **loop's actual audio**. Deeper tuning (nudging the command tempo) stays behind the
+  exercise preview's **Details** button, committed through the same setter the run screen uses.
+- **The Done screen shows what's up next.** After a block, the Done screen now previews the next
+  exercise/loop (skipping past rests) so you know what you're continuing into.
+- **Routines play straight through.** Because every block is previewable up front, tapping **Start** now
+  runs straight into the first exercise (after the count-in) instead of waiting on a per-block preview.
+  Turning *Auto-start blocks* off still makes every block wait for a manual start.
 
 ### Fixed
 - **The screen no longer sleeps during a routine session's rest or completion screens.** The

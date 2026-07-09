@@ -76,15 +76,20 @@ final class RoutineSessionPlayer {
     /// Whether there's a previous block to step back to.
     var canGoBack: Bool { cursor.index > 0 && !isFinished }
 
-    /// Index of the first *unit* block (exercise/loop) — the one that always waits for a deliberate
-    /// Start; `nil` if the routine has no unit blocks. Rests never auto-run a unit, so they don't
-    /// count as "the first block" for auto-start.
-    private let firstUnitIndex: Int?
-
-    /// Whether the block at `index` should begin on its own — the auto-start setting is on *and* it's
-    /// not the first unit block. The player asks this when building each block's context.
+    /// Whether the block at `index` should begin on its own when it appears — purely the auto-start
+    /// setting (ADR 0071 R4b). The first block used to always wait for a deliberate Start; that gate
+    /// is dropped now that every block is previewable up front from the routine detail, so tapping
+    /// **Start** runs straight into block one (with auto-start off, every block still waits).
     func shouldAutoStart(at index: Int) -> Bool {
-        AppSettings.routineAutoStart && index != firstUnitIndex
+        AppSettings.routineAutoStart
+    }
+
+    /// The next **unit** block (exercise/loop/song) after `index`, skipping rests — drives the Done
+    /// screen's "Up next" (ADR 0071 R4b). `nil` when only rests (or nothing) remain. Pure, so the
+    /// skip-rest selection is unit-testable.
+    func nextUnitStage(after index: Int) -> RoutineStage? {
+        guard index + 1 < stages.count else { return nil }
+        return stages[(index + 1)...].first { $0.kind != .rest }
     }
 
     init(routine: Routine) {
@@ -95,7 +100,6 @@ final class RoutineSessionPlayer {
         let mapped = playable.map(Self.stage(for:))
         stages = mapped
         cursor = RoutineSessionCursor(total: mapped.count)
-        firstUnitIndex = mapped.firstIndex { $0.kind != .rest }
     }
 
     /// Whether the player can actually run this block's unit. Exercises and loops always can; a song

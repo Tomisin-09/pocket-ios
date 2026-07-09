@@ -159,6 +159,18 @@ final class LoopRunModel {
         startTimer()
     }
 
+    /// Audition the looping region at a **fixed** rate for a pre-start preview (ADR 0071 R4b) — no
+    /// ramp, no rep clock, so you *hear* the loop before running it. Reuses the loaded region; the
+    /// caller (a `LoopAudioPreviewPlayer`) auto-stops it after a few seconds. No-op unless stopped and
+    /// the audio actually loaded, so a failed load never plays silence.
+    func startAudition(percent: Int) {
+        guard transport == .stopped, loaded, !loadFailed else { return }
+        currentPercent = percent
+        engine.setRate(Self.rate(forPercent: percent))
+        engine.play()
+        transport = .playing
+    }
+
     /// Pause / resume the run. The rep counter rides the engine's render position, so it freezes on
     /// pause and resumes on play with no extra bookkeeping.
     func toggle() {
