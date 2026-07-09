@@ -11,8 +11,8 @@ import Foundation
 @MainActor
 @Observable
 final class LoopAudioPreviewPlayer {
-    /// How long an audition plays before stopping itself, seconds — inside the ADR 0071 R4b window.
-    static let previewSeconds = 6
+    /// How long an audition plays before stopping itself, seconds — the top of the ADR 0071 window.
+    static let previewSeconds = 10
 
     private let model: LoopRunModel
     private let commandPercent: Int

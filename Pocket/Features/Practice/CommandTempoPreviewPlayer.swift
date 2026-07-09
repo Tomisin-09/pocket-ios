@@ -9,8 +9,8 @@ import Foundation
 @MainActor
 @Observable
 final class CommandTempoPreviewPlayer {
-    /// How long a preview plays before stopping itself, seconds — inside the ADR 0071 R4 5–10s window.
-    static let previewSeconds = 6
+    /// How long a preview plays before stopping itself, seconds — the top of the ADR 0071 5–10s window.
+    static let previewSeconds = 10
 
     private let engine = StandaloneMetronomeEngine()
     private var stopTask: Task<Void, Never>?
