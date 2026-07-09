@@ -347,9 +347,12 @@ private extension ExerciseRunView {
         // (V2 planner Slice 1). Persist() already saved; this rides the next context save.
         exercise.markPracticed()
         try? modelContext.save()
-        // Feed the exercise's meter to the run engine so the click's accents and the count-in
-        // length honor it (ADR 0052), then hand over the routine.
+        // Feed the exercise's meter to the run engine (accents + count-in length, ADR 0052). For a
+        // strumming / Strum & Chords drill, arm the click to follow the strum pattern (rests silent —
+        // ADR 0071 R5) so the audio matches the lane; others clear back to a plain click. Set before
+        // `run(ramp:)` so the tick grid is consistent from beat one.
         engine.setTimeSignature(signature)
+        engine.setStrumPattern(exercise.strumPattern ?? exercise.strumChordSheet?.strumPattern)
         engine.run(ramp: routine)
         haptic(.medium)
     }

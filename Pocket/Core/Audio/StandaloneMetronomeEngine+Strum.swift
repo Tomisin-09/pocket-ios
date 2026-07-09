@@ -23,11 +23,13 @@ extension StandaloneMetronomeEngine {
         strumSchedule = StrumSchedule(levels: levels, ticksPerBeat: max(1, pattern.slotsPerBeat))
     }
 
-    /// The click level for a sub-tick, or `nil` to schedule nothing. In a strum preview it reads the
-    /// pattern's slot (wrapping the bar); otherwise it's the meter default — the on-beat tick accented
-    /// per the time signature, the in-between sub-ticks the quieter subdivision.
+    /// The click level for a sub-tick, or `nil` to schedule nothing. When a strum pattern is armed it
+    /// reads the pattern's slot (wrapping the bar); otherwise it's the meter default — the on-beat tick
+    /// accented per the time signature, the in-between sub-ticks the quieter subdivision. A **count-in**
+    /// always uses the meter default (a steady pulse to count in on), so the pattern only sounds once
+    /// the drill itself begins (ADR 0071 R5 · ADR 0052).
     func scheduledLevel(forTick tickIndex: Int, ticksPerBeat: Int) -> ClickVoice.ClickLevel? {
-        if let schedule = strumSchedule, !schedule.levels.isEmpty {
+        if let schedule = strumSchedule, !schedule.levels.isEmpty, !automatorCountingIn {
             let count = schedule.levels.count
             return schedule.levels[((tickIndex % count) + count) % count]
         }
