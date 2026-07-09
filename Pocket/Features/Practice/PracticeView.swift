@@ -64,10 +64,10 @@ struct PracticeView: View {
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(PocketColor.practiceCircleWash))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Build today's session")
+                    Text("Today's session")
                         .font(.futura(.headline))
                         .foregroundStyle(PocketColor.textPrimary)
-                    Text("Guided routine from your units")
+                    Text("A session shaped by your goals")
                         .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
@@ -78,8 +78,8 @@ struct PracticeView: View {
             }
         }
         .listRowBackground(PocketColor.background)
-        .accessibilityLabel("Build today's session")
-        .accessibilityHint("Guided routine from your units")
+        .accessibilityLabel("Today's session")
+        .accessibilityHint("A session shaped by your goals")
     }
 
     // MARK: - Library rows

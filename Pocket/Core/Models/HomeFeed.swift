@@ -45,6 +45,24 @@ enum HomeFeed {
             .0
     }
 
+    /// The most-recently-practised items, newest first, capped at `limit` — the home hub's
+    /// "recent routines" rail. Never-practised items (`practicedAt == nil`) are dropped entirely
+    /// (the rail shows only things actually run), and ties break by `id` for a stable order. Generic
+    /// over the item so it tests with plain values.
+    static func recentlyPracticed<Item, Key: Comparable>(_ items: [Item],
+                                                         limit: Int,
+                                                         practicedAt: (Item) -> Date?,
+                                                         id: (Item) -> Key) -> [Item] {
+        guard limit > 0 else { return [] }
+        return items
+            .compactMap { item in practicedAt(item).map { (item, $0) } }
+            .sorted { lhs, rhs in
+                lhs.1 == rhs.1 ? id(lhs.0) < id(rhs.0) : lhs.1 > rhs.1
+            }
+            .prefix(limit)
+            .map(\.0)
+    }
+
     /// Items ordered for the home "Your songs" list: most-recently-practised first, then the
     /// never-practised ones, each group broken by a `title` key for a stable, predictable order
     /// (case-insensitive). Total and deterministic so the list doesn't reshuffle between renders.

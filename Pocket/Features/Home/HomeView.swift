@@ -10,20 +10,23 @@ import SwiftUI
 struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Song.title) private var songs: [Song]
-    @Query private var exercises: [Exercise]
+    @Query private var routines: [Routine]
     @State private var importing = false
     @State private var importError: String?
     @State private var showingMetronome = false
+    /// A recent routine tapped for a **replay** (exact re-run, ADR 0066) — distinct from the
+    /// goal-adaptive "today's session" CTA, which regenerates. Presents the player full-screen.
+    @State private var playingRoutine: Routine?
 
-    /// How many songs the "Your songs" preview lists before deferring to "See all".
-    private let previewLimit = 4
+    /// How many routines the "recent routines" rail shows.
+    private let recentRoutineLimit = 3
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     greeting
-                    if !stats.isEmpty { PracticeStatsCard(summary: stats) }
+                    startTodaySessionCard
                     if let song = resumeSong {
                         NavigationLink {
                             WaveformPracticeView(song: song, context: context)
@@ -32,10 +35,10 @@ struct HomeView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    practiceCard
+                    songLibraryCard
                     metronomeCard
-                    if !songs.isEmpty { yourSongs }
-                    addSongButton
+                    practiceCard
+                    if !recentRoutines.isEmpty { recentRoutinesRail }
                 }
                 .padding(20)
             }
@@ -47,6 +50,15 @@ struct HomeView: View {
                 // The wordmark graphic (with its hidden half-note "d", ADR 0061) replaces the
                 // plain title text; `navigationTitle` above still backs VoiceOver/back-button
                 // labels. Light/dark artwork adapts on its own (ADR 0062).
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                    .accessibilityLabel("Settings")
+                }
                 ToolbarItem(placement: .principal) {
                     Image("RedMoonWordmark")
                         .resizable()
@@ -55,13 +67,16 @@ struct HomeView: View {
                         .accessibilityLabel("Red Moon")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        SettingsView()
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .foregroundStyle(PocketColor.textSecondary)
+                    // Solid green disc with a bold dark plus — mirrors the app's
+                    // dark-content-on-filled-colour convention (e.g. the plum CTA).
+                    Button { importing = true } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(PocketColor.background)
+                            .frame(width: 34, height: 34)
+                            .background(Circle().fill(PocketColor.active))
                     }
-                    .accessibilityLabel("Settings")
+                    .accessibilityLabel("Add a song")
                 }
             }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.audio],
@@ -73,6 +88,9 @@ struct HomeView: View {
             }
             .fullScreenCover(isPresented: $showingMetronome) {
                 MetronomeView()
+            }
+            .fullScreenCover(item: $playingRoutine) { routine in
+                RoutinePlayerView(routine: routine)
             }
             // Seed the curated Practice presets once, ever (ADR 0046). The app root is the right
             // place — they exist before the user opens Practice — and the seeder's own
@@ -96,11 +114,45 @@ struct HomeView: View {
             Text(HomeFeed.TimeOfDay.at(hour: Calendar.current.component(.hour, from: .now)).greeting)
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
-            Text("Ready to practice")
+            Text("Ready to practice?")
                 .font(.futura(.largeTitle, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Start today's session (primary CTA)
+
+    /// The **primary** home action (planner, ADR 0046/0015): a filled plum CTA that pushes
+    /// `PlannerView`, where goals (set once) drive a freshly-generated, goal-adaptive session each
+    /// run. Distinct from the "recent routines" rail below, which *replays* a past routine exactly.
+    /// Sits in the slot the dropped "Your progress" strip vacated.
+    private var startTodaySessionCard: some View {
+        NavigationLink { PlannerView() } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "sparkles")
+                    .font(.futura(.title2))
+                    .foregroundStyle(PocketColor.background)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Start today's session")
+                        .font(.futura(.headline))
+                        .foregroundStyle(PocketColor.background)
+                    Text("A fresh session from your goals and history")
+                        .font(.futura(.subheadline))
+                        .foregroundStyle(PocketColor.background.opacity(0.85))
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.futura(.footnote, weight: .semibold))
+                    .foregroundStyle(PocketColor.background.opacity(0.85))
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCTA))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Start today's session")
+        .accessibilityHint("A fresh session generated from your goals and practice history")
     }
 
     // MARK: - Practice card
@@ -169,62 +221,71 @@ struct HomeView: View {
         .accessibilityLabel("Metronome, standalone click and tempo trainer")
     }
 
-    // MARK: - Your songs
+    // MARK: - Song library strip
 
-    private var yourSongs: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Your songs")
-                    .font(.futura(.title3, weight: .semibold))
-                    .foregroundStyle(PocketColor.textPrimary)
-                Spacer()
-                NavigationLink { LibraryView() } label: {
-                    Text("See all")
+    /// The songs place, folded into a single nav strip (matching the Metronome/Practice pattern) in
+    /// its own **blue** identity (ADR 0023 song-surface hue, baked `library` tokens — no opacity
+    /// blend, ADR 0062). Replaces the old inline "Your songs" preview list; adding a song now lives in
+    /// the toolbar's green button. Together with the teal Metronome and plum Practice strips this
+    /// forms the blue · teal · plum home triad (songs / tool / content).
+    private var songLibraryCard: some View {
+        NavigationLink { LibraryView() } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "music.note.list")
+                    .font(.futura(.title2))
+                    .foregroundStyle(PocketColor.library)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(PocketColor.libraryCircleWash))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Song library")
+                        .font(.futura(.headline))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    Text(librarySubtitle)
                         .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.active)
+                        .foregroundStyle(PocketColor.textSecondary)
                 }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.futura(.footnote, weight: .semibold))
+                    .foregroundStyle(PocketColor.textSecondary)
             }
-            VStack(spacing: 0) {
-                ForEach(Array(previewSongs.enumerated()), id: \.element.persistentModelID) { index, song in
-                    if index > 0 { Divider().overlay(PocketColor.barPlayed) }
-                    NavigationLink {
-                        WaveformPracticeView(song: song, context: context)
-                    } label: {
-                        SongCard(song: song)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    // MARK: - Add a song
-
-    private var addSongButton: some View {
-        Button { importing = true } label: {
-            Label("Add a song", systemImage: "plus.circle.fill")
-                .font(.futura(.headline))
-                .foregroundStyle(PocketColor.active)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.confirmWash))
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.libraryCardWash))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Add a song")
+        .accessibilityLabel("Song library, \(librarySubtitle)")
+    }
+
+    /// Count-aware subtitle: nudges an empty library toward the toolbar's add button.
+    private var librarySubtitle: String {
+        songs.isEmpty ? "Add a song to get started"
+                      : "\(songs.count) song\(songs.count == 1 ? "" : "s")"
+    }
+
+    // MARK: - Recent routines rail
+
+    /// The last few routines you actually **practised** (newest first), each a one-tap *exact replay*
+    /// — the counterpart to the adaptive "Start today's session" CTA above. Reads `Routine.lastPracticed`
+    /// (stamped on run); never-run routines don't appear.
+    private var recentRoutinesRail: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Recent routines")
+                .font(.futura(.title3, weight: .semibold))
+                .foregroundStyle(PocketColor.textPrimary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(recentRoutines) { routine in
+                        Button { playingRoutine = routine; haptic(.light) } label: {
+                            RecentRoutineCard(routine: routine)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Derived
-
-    /// The derived home-hub measures (ADR 0060): loops / exercises / mastered / notes, rolled up
-    /// from the queried songs' loops and the exercises. Purely read-through — no stored stats.
-    private var stats: PracticeStats.Summary {
-        let loops = songs.flatMap(\.loops)
-        let totalNotes = loops.reduce(0) { $0 + $1.journal.count }
-            + exercises.reduce(0) { $0 + $1.journal.count }
-        return PracticeStats.summarize(loopMasteryValues: loops.map(\.mastery),
-                                       exerciseCount: exercises.count,
-                                       totalNotes: totalNotes)
-    }
 
     /// The single most-recently-practised song — the "Jump back in" subject — or `nil` on a
     /// fresh library where nothing has been practised yet (the card hides).
@@ -232,12 +293,10 @@ struct HomeView: View {
         HomeFeed.mostRecentlyPracticed(songs, practicedAt: \.lastPracticed)
     }
 
-    /// The "Your songs" preview: every song ordered by recent practice, with the resume song
-    /// dropped (it already headlines the card above), capped at `previewLimit`.
-    private var previewSongs: [Song] {
-        let resumeID = resumeSong?.persistentModelID
-        let ordered = HomeFeed.orderedForHome(songs, practicedAt: \.lastPracticed, title: \.title)
-        return Array(ordered.filter { $0.persistentModelID != resumeID }.prefix(previewLimit))
+    /// The recent-routines rail contents: routines actually practised, newest first, capped.
+    private var recentRoutines: [Routine] {
+        HomeFeed.recentlyPracticed(routines, limit: recentRoutineLimit,
+                                   practicedAt: \.lastPracticed, id: \.uid)
     }
 
     private var importErrorBinding: Binding<Bool> {
@@ -255,53 +314,6 @@ struct HomeView: View {
         case .failure(let error):
             importError = error.localizedDescription
         }
-    }
-}
-
-/// The "Jump back in" card: the song you last practised, with its mastery and when you last
-/// touched it. Resumes the song (at its last-practiced tempo, ADR 0044) on tap. Neutral
-/// chrome — the metronome card owns the screen's one accent colour.
-private struct JumpBackInCard: View {
-    let song: Song
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("JUMP BACK IN")
-                .font(.futura(.caption2, weight: .semibold))
-                .tracking(1.5)
-                .foregroundStyle(PocketColor.textSecondary)
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(song.title)
-                        .font(.futura(.title3, weight: .semibold))
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .lineLimit(1)
-                    if !song.artist.isEmpty {
-                        Text(song.artist)
-                            .font(.futura(.subheadline))
-                            .foregroundStyle(PocketColor.textSecondary)
-                            .lineLimit(1)
-                    }
-                    if let practiced = song.lastPracticed {
-                        Text("Last practised \(Self.relative(practiced))")
-                            .font(.futura(.footnote))
-                            .foregroundStyle(PocketColor.textSecondary)
-                    }
-                }
-                Spacer(minLength: 8)
-                MasteryReadout(mastery: song.mastery)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.surfaceStandard))
-    }
-
-    /// "2 days ago" — a relative, human description of the last practice time.
-    private static func relative(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: .now)
     }
 }
 
@@ -324,8 +336,9 @@ private struct HomePreviewSeed {
 
 #Preview("Home — with history") {
     // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Song.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
+    let container = try! ModelContainer(
+        for: Song.self, Routine.self, RoutineItem.self, Exercise.self, Loop.self,
+        configurations: .init(isStoredInMemoryOnly: true))
     let now = Date()
     for seed in HomePreviewSeed.library {
         let song = Song.sample()
@@ -335,12 +348,24 @@ private struct HomePreviewSeed {
         song.lastPracticed = seed.practicedOffset.map { now.addingTimeInterval($0) }
         container.mainContext.insert(song)
     }
+    let drill = Exercise(name: "Alternating picking", currentTempo: 70, commandTempo: 96)
+    container.mainContext.insert(drill)
+    for (name, offset) in [("Morning warm-up", -3600.0), ("Speed builder", -86400.0 * 3)] {
+        let routine = Routine(name: name)
+        routine.items = [RoutineItem.item(drill, kind: .warmup, order: 0),
+                         RoutineItem.rest(order: 1),
+                         RoutineItem.item(drill, order: 2)]
+        routine.lastPracticed = now.addingTimeInterval(offset)
+        container.mainContext.insert(routine)
+    }
+    try? container.mainContext.save()
     return HomeView().modelContainer(container)
 }
 
 #Preview("Home — first launch") {
     // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Song.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
+    let container = try! ModelContainer(
+        for: Song.self, Routine.self, RoutineItem.self, Exercise.self, Loop.self,
+        configurations: .init(isStoredInMemoryOnly: true))
     return HomeView().modelContainer(container)
 }

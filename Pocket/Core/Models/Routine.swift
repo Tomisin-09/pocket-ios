@@ -26,6 +26,12 @@ final class Routine {
     /// When the routine was created — the default library sort key.
     var dateAdded: Date = Date.now
 
+    /// When this routine was last *practised* — set on each run (ADR 0066 follow-on), distinct from
+    /// `dateAdded` (creation) and from the ephemeral `RoutineSession` cursor (mid-run position, not
+    /// history). Drives the home hub's "recent routines" rail. `nil` until run once. Additive optional
+    /// (CoreData 134110 rule): a declaration default keeps SwiftData lightweight migration clean.
+    var lastPracticed: Date?
+
     /// The ordered blocks. **Cascade-owned**: deleting the routine deletes its items (but
     /// never the units those items *reference* — that link nullifies, see `RoutineItem`).
     /// Declaration default keeps SwiftData lightweight migration additive (CoreData 134110).

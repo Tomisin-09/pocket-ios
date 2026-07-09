@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Fixed
+- **The screen no longer sleeps during a routine session's rest or completion screens.** The
+  keep-awake modifier (ADR 0050) was on every block run screen (exercise/loop/song) but not on the
+  routine player's between-blocks **rest** countdown or its end-of-session summary. Leaving a block
+  re-enables the idle timer, so a long enough rest — or lingering on the finished screen — could let
+  the phone lock mid-session. Both phases now hold the screen awake like the run screens do.
 - **Count-in now counts a full bar and the exercise starts on the downbeat.** The count-in was
   off by one beat in every meter: it captured its start beat as the pre-start `-1` (the beat before
   the first click), so a one-bar count-in in 4/4 showed only **3·2·1** and engaged on the *last* beat
@@ -42,6 +47,20 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **The home hub was reworked around today's session (planner review R1).** The front door now leads
+  with **Start today's session** — a filled primary button that generates a fresh, goal-adaptive
+  session (set your goals once; every run adapts). Below it: **Jump back in** (your last song,
+  unchanged), a new **Song library** nav strip in its own blue identity (matching the Metronome and
+  Practice strips for a blue · teal · plum triad), the Metronome and Practice strips, and a new
+  **Recent routines** rail — the last three routines you actually *practised*, each a one-tap exact
+  replay. Settings moved to the top-left; adding a song is now a solid green **+** disc in the top-right. The old
+  "Your progress" stats strip and the inline song-preview list were dropped. Practice's planner entry
+  was also reframed from "Build today's session" to **"Today's session"** so the verb no longer clashes
+  with a Quick session.
+- **Generated sessions can be named right on the review screen (planner review R1b).** A just-built
+  session (goal-driven or Quick) now shows an editable **Name** field inline on its review screen — no
+  longer hidden behind the Save button — so the routine you'll keep going back to is easy to name
+  before you Save or Start it.
 - **Loops can now feed technique goals (V2 planner Slice 4, ADR 0074).** Tag a loop with a skill
   bucket — the loop tag editor offers ✨ **Picking / Legato / Scales / …** suggestions — and the
   planner's technique goals will schedule that loop alongside your exercises, not just when you're

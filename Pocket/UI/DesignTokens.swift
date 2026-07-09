@@ -131,6 +131,16 @@ enum PocketColor {
     static let practiceCardWash = Color("PracticeCardWash")
     static let practiceCircleWash = Color("PracticeCircleWash")
 
+    /// **Library** — the identity hue of the songs place (the home hub's "Song library" nav strip),
+    /// the ADR 0023 song-surface blue, so it sits clear of the metronome teal and Practice plum for a
+    /// blue · teal · plum home triad. Baked flat per appearance like the washes above — *not* a shared
+    /// opacity on `library` (ADR 0062 lesson: a low-opacity blend reads washed-grey on cream and near-
+    /// invisible on near-black). The song rows' left bars stay mastery-tier accents; blue is free to
+    /// mean "the songs place".
+    static let library = Color("Library")
+    static let libraryCardWash = Color("LibraryCardWash")
+    static let libraryCircleWash = Color("LibraryCircleWash")
+
     /// Full-opacity **CTA fill** for the Metronome/Practice primary transport buttons
     /// (Start/Pause/Resume; the run screens' big pill). Same asymmetry as the washes
     /// above, one level up: `metronome`/`practice`'s light value is deepened for

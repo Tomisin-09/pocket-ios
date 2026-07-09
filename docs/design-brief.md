@@ -106,6 +106,8 @@ near-invisible on near-black (ADR 0063).
 | `practice` | plum `#9272CA` | `#603B9B` | The **Practice** space (ADR 0046) — brand-muted register in ADR 0062, boosted to ~45% saturation in ADR 0063 |
 | `practiceCTA` | `#8D7EA6` | `#593399` | Practice's primary-button fill, same rationale as `metronomeCTA` |
 | `practiceCardWash` / `practiceCircleWash` | `#2C203E` / `#3E2C56` | `#C2A7CF` / `#D0BAD2` | Home/Practice-hub card/icon-circle tint — baked flat per appearance (ADR 0063) |
+| `library` | blue `#60A5FA` | `#1D4ED8` | The **songs place** — accent on the home "Song library" strip (ADR 0023 song hue), completing the blue · teal · plum home triad |
+| `libraryCardWash` / `libraryCircleWash` | `#1C2C52` / `#283A62` | `#B4C6EC` / `#C7D6F2` | Song-library strip card/icon-circle tint — baked flat per appearance (planner review R1) |
 | `confirmWash` | `#13421E` | `#B4DAAF` | "Add a song" tint — baked flat, same rationale (ADR 0063) |
 | `fine` | `#EAF2FF` (high-key) | `#1F3651` (low-key) | Fine-mode precision selection — same cool hue, inverted key |
 | `mastery` | teal `#60A8C7` | `#2B6982` | Mastery dots/stars (Home, Library, waveform loop picker) — reuses `metronome`, moved off the amber `marker` swatch so "mastered" reads as an on-brand positive state |

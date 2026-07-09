@@ -51,6 +51,43 @@ final class HomeFeedTests: XCTestCase {
         XCTAssertNil(HomeFeed.mostRecentlyPracticed(items, practicedAt: \.practiced))
     }
 
+    // MARK: - Recently practised (routines rail)
+
+    func testRecentlyPracticedNewestFirstCappedAtLimit() {
+        let now = Date()
+        let items = [
+            Item(name: "a", practiced: now.addingTimeInterval(-3000)),
+            Item(name: "b", practiced: now.addingTimeInterval(-1000)),
+            Item(name: "c", practiced: now),
+            Item(name: "d", practiced: now.addingTimeInterval(-2000))
+        ]
+        let recent = HomeFeed.recentlyPracticed(items, limit: 3, practicedAt: \.practiced, id: \.name)
+        XCTAssertEqual(recent.map(\.name), ["c", "b", "d"])
+    }
+
+    func testRecentlyPracticedDropsNeverPractised() {
+        let now = Date()
+        let items = [
+            Item(name: "run", practiced: now),
+            Item(name: "never", practiced: nil)
+        ]
+        let recent = HomeFeed.recentlyPracticed(items, limit: 3, practicedAt: \.practiced, id: \.name)
+        XCTAssertEqual(recent.map(\.name), ["run"])
+    }
+
+    func testRecentlyPracticedStableForEqualDates() {
+        let when = Date()
+        let items = [Item(name: "Beta", practiced: when), Item(name: "alpha", practiced: when)]
+        // Equal dates break by id (name) ascending, so the rail order is deterministic.
+        let recent = HomeFeed.recentlyPracticed(items, limit: 3, practicedAt: \.practiced, id: \.name)
+        XCTAssertEqual(recent.map(\.name), ["Beta", "alpha"])
+    }
+
+    func testRecentlyPracticedZeroLimitIsEmpty() {
+        let items = [Item(name: "a", practiced: Date())]
+        XCTAssertTrue(HomeFeed.recentlyPracticed(items, limit: 0, practicedAt: \.practiced, id: \.name).isEmpty)
+    }
+
     // MARK: - Ordering
 
     func testOrderedPutsRecentFirstThenUnpractisedByTitle() {
