@@ -26,6 +26,8 @@ struct GoalEditorView: View {
     @State private var keptSkillIDs: Set<String> = []
     @State private var targetSong: Song?
     @State private var isMet = false
+    /// Whether the full-catalog skill picker is showing (R2 — add skills beyond the template's seed).
+    @State private var showingSkillPicker = false
 
     /// Whether any kept skill routes via the target song (Path B) — drives the song picker's presence.
     private var needsTargetSong: Bool {
@@ -134,6 +136,15 @@ struct GoalEditorView: View {
 
             if needsTargetSong { targetSongSection }
 
+            metAndDeleteSection
+        }
+        .sheet(isPresented: $showingSkillPicker) {
+            SkillPickerSheet(offeredSkillIDs: $offeredSkillIDs, keptSkillIDs: $keptSkillIDs)
+        }
+    }
+
+    private var metAndDeleteSection: some View {
+        Group {
             if existing != nil {
                 Section {
                     Toggle("Mark as met", isOn: $isMet)
@@ -171,12 +182,18 @@ struct GoalEditorView: View {
                 .buttonStyle(.plain)
                 .listRowBackground(PocketColor.background)
             }
+            Button { showingSkillPicker = true } label: {
+                Label("Add skills", systemImage: "plus.circle")
+                    .font(.futura(.body))
+                    .foregroundStyle(PocketColor.practice)
+            }
+            .listRowBackground(PocketColor.background)
         } header: {
             Text("Skills")
         } footer: {
             Text(keptSkillIDs.isEmpty
                  ? "Keep at least one skill for this goal to schedule anything."
-                 : "Tap to include or drop a skill from this goal.")
+                 : "Tap to include or drop a skill, or add more from the full catalog.")
                 .font(.futura(.caption))
         }
     }

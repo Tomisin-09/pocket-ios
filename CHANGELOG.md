@@ -47,6 +47,13 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **A goal can now target any skill, not just the ones its template seeded (planner review R2).** The
+  goal editor gained an **Add skills** button that opens a searchable, family-grouped picker over the
+  whole technique catalog (Picking hand · Fretting & legato · Fretboard knowledge · Scales & improv ·
+  Rhythm & timing · Ear & musicianship · Repertoire & creativity). Search matches skill names (case-
+  and accent-insensitive); there's no free-text — you can only pick real catalog skills, since an
+  unknown skill would schedule nothing. Adding a skill drops it into the goal's trimmable list (and
+  reveals the target-song picker if it's a repertoire skill).
 - **The home hub was reworked around today's session (planner review R1).** The front door now leads
   with **Start today's session** — a filled primary button that generates a fresh, goal-adaptive
   session (set your goals once; every run adapts). Below it: **Jump back in** (your last song,

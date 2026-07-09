@@ -120,4 +120,58 @@ final class SkillTaxonomyTests: XCTestCase {
             XCTAssertFalse(template.requiresTargetSong, "\(template.id) should not require a song")
         }
     }
+
+    // MARK: - Skill catalog search (R2)
+
+    func testEverySkillMapsToADisplayFamily() {
+        // The picker groups the whole catalog — an unfamilied skill would silently vanish from it.
+        for skill in TechniqueTaxonomy.all {
+            XCTAssertNotNil(SkillCatalog.family(of: skill.id), "\(skill.id) has no display family")
+        }
+    }
+
+    func testFamilyDerivationByPrefix() {
+        XCTAssertEqual(SkillCatalog.family(of: "pick.sweep"), .picking)
+        XCTAssertEqual(SkillCatalog.family(of: "improv.vocabulary"), .scales)
+        XCTAssertEqual(SkillCatalog.family(of: "create.songwriting"), .repertoire)
+        XCTAssertNil(SkillCatalog.family(of: "nope.not-real"))
+    }
+
+    func testGroupedCoversEverySkillWithoutDuplicates() {
+        let grouped = SkillCatalog.grouped()
+        let flattened = grouped.flatMap { $0.skills.map(\.id) }
+        XCTAssertEqual(Set(flattened), allSkillIDs, "grouping must cover every skill exactly once")
+        XCTAssertEqual(flattened.count, allSkillIDs.count, "a skill appears in two families")
+    }
+
+    func testGroupedFamiliesFollowAllCasesOrder() {
+        let order = SkillCatalog.grouped().map(\.family)
+        XCTAssertEqual(order, SkillFamily.allCases.filter { family in order.contains(family) })
+    }
+
+    func testEmptyQueryReturnsWholeCatalog() {
+        XCTAssertEqual(SkillCatalog.search("   ").flatMap { $0.skills }.count, TechniqueTaxonomy.all.count)
+        XCTAssertEqual(SkillCatalog.search("").flatMap { $0.skills }.count, TechniqueTaxonomy.all.count)
+    }
+
+    func testSearchIsCaseInsensitiveAndMatchesNames() {
+        let hits = SkillCatalog.search("SWEEP").flatMap { $0.skills.map(\.id) }
+        XCTAssertEqual(hits, ["pick.sweep"])
+    }
+
+    func testSearchNarrowsToMatchingFamiliesOnly() {
+        // "scale" hits only the scale rows, so only the Scales family survives.
+        let groups = SkillCatalog.search("scale")
+        XCTAssertEqual(groups.map(\.family), [.scales])
+        XCTAssertTrue(groups.first?.skills.allSatisfy { $0.id.hasPrefix("scale.") } ?? false)
+    }
+
+    func testSearchNeverMatchesRawID() {
+        // "pick." is an id prefix, not a word in any name — searching it finds nothing.
+        XCTAssertTrue(SkillCatalog.search("pick.").isEmpty)
+    }
+
+    func testSearchWithNoMatchIsEmpty() {
+        XCTAssertTrue(SkillCatalog.search("zzzznotaskill").isEmpty)
+    }
 }
