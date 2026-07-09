@@ -93,9 +93,38 @@ struct RoutinePlayerView: View {
     private func doneView(for stage: RoutineStage) -> some View {
         RoutineBlockDoneView(title: stage.title,
                              initialMastery: mastery(for: stage),
-                             isLast: player.upNext == nil) { mastery, note in
+                             isLast: player.upNext == nil,
+                             upNext: upNextDescriptor()) { mastery, note in
             commitDone(stage, mastery: mastery, note: note)
         }
+    }
+
+    /// Build the "Up next" descriptor from the next **unit** stage (rests skipped), or `nil` when only
+    /// rests / nothing remain. Keeps `RoutineBlockDoneView` SwiftData-free.
+    private func upNextDescriptor() -> RoutineBlockDoneView.UpNext? {
+        guard let next = player.nextUnitStage(after: player.currentIndex) else { return nil }
+        return RoutineBlockDoneView.UpNext(title: next.title,
+                                           detail: detailLine(for: next),
+                                           symbol: symbol(for: next))
+    }
+
+    /// The upcoming unit's supporting line — its command→reach (exercise), song (loop), or artist
+    /// (song). Mirrors `RoutineItemRow`.
+    private func detailLine(for stage: RoutineStage) -> String? {
+        if let exercise = stage.exercise {
+            return "Command \(exercise.command) → \(exercise.derivedTarget) BPM"
+        }
+        if let loop = stage.loop { return loop.song?.title }
+        if let song = stage.song { return song.artist.isEmpty ? "Play-along" : song.artist }
+        return nil
+    }
+
+    /// The upcoming unit's type glyph — the exercise's template icon, else a loop/song symbol.
+    private func symbol(for stage: RoutineStage) -> String {
+        if let exercise = stage.exercise { return exercise.template.iconName }
+        if stage.loop != nil { return "repeat" }
+        if stage.song != nil { return "music.note" }
+        return "questionmark"
     }
 
     private func owner(for stage: RoutineStage) -> JournalOwner? {
