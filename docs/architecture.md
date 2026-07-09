@@ -201,9 +201,13 @@ engine) over a pure `RoutineSessionCursor` — that **embeds the real `ExerciseR
 `SongPlayAlongView` per block** (so every training aid — previews, staircase, promote, journal — is
 kept, not re-implemented), injecting a `RoutineRunContext` (progress · Skip · exit · natural-completion
 hook). Each run screen keeps its own per-unit engine (`StandaloneMetronomeEngine` / `LoopRunModel` /
-`SongPlayAlongModel`, the last two on a private `PracticeAudioEngine`) and **auto-advances the session
-on natural completion** (one command-ramp pass), fired by additive `onRampFinished` / `onFinished` /
-`onReachedEnd` engine callbacks; the conductor itself plays only the fixed rest countdown. A **song
+`SongPlayAlongModel`, the last two on a private `PracticeAudioEngine`) and signals **natural completion**
+(one command-ramp pass) through additive `onRampFinished` / `onFinished` / `onReachedEnd` engine
+callbacks; the conductor itself plays only the fixed rest countdown. On completion a unit lands on a
+**Done screen** (`RoutineBlockDoneView` — completion beat + optional mastery tap + optional inline note,
+committed together on Continue/Finish) — **manual advance the default** (ADR 0071 R4); the
+`routineAutoAdvance` setting (default off) advances straight through instead, and a Skip always bypasses
+the gate. A **song
 block** is the audio-only `SongPlayAlongView` — a fixed play-along speed (no ramp, ADR 0070), play/pause
 and −10s/+10s, local/iCloud files only (ADR 0001); it loops until skipped by default, or plays through
 once and advances per the `routineSongLoop` setting. It has **zero evaluation surface** (ADR 0070) —

@@ -5,6 +5,20 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **A routine block now finishes on a Done screen — manual advance by default.** When a block
+  completes on its own it no longer jumps straight to the next one; it lands on a single Done screen
+  with the completion beat, an *optional* mastery tap (pre-filled from the drill), an *optional*
+  inline note, and one **Continue / Finish** that commits both in a single action. This collapses the
+  old separate two-step reflection sheet. A new **Advance automatically** setting (Settings → Routines,
+  default off) restores the old auto-advance; a deliberate Skip always bypasses the gate, and
+  songs/rests (no journal) advance without an empty screen. Replaces the previous *Reflect after each
+  block* setting.
+- **Inspect and tune a routine's exercise blocks in place.** Tapping an exercise block in a routine
+  (read-only mode) opens its detail sheet — preview the drill, **nudge its command tempo**, and
+  **hear a short metronome preview** of that tempo without opening the run screen. The command edit
+  commits through the same setter the run screen uses, so the two surfaces never diverge.
+
 ### Fixed
 - **The screen no longer sleeps during a routine session's rest or completion screens.** The
   keep-awake modifier (ADR 0050) was on every block run screen (exercise/loop/song) but not on the

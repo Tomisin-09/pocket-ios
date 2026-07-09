@@ -7,7 +7,8 @@ import SwiftUI
 /// (fretboard/strum/chord preview, Practice Settings, the ramp staircase, promote, journal) is kept,
 /// not re-implemented. The session logic lives in `RoutineSessionPlayer`; this view swaps the run
 /// screen per block (`.id(stage.id)` so each starts fresh), runs the between-blocks rest countdown,
-/// and shows the finished summary. Blocks **auto-advance** on natural completion; a rest counts down.
+/// and shows the finished summary. On natural completion a block lands on a **Done screen** (manual
+/// advance, the default — ADR 0071 R4) unless auto-advance is on; a rest counts down.
 ///
 /// Deliberately **judgement-free (ADR 0070)**: it shows what's playing and how far along the session
 /// is, and nothing about *how well*. The player is the judge.
@@ -18,9 +19,9 @@ struct RoutinePlayerView: View {
     /// home hub's "recent routines" rail reads it). The player itself is a pure conductor over stages.
     private let routine: Routine
     @State private var player: RoutineSessionPlayer
-    /// The just-finished unit block awaiting an end-of-block reflection (ADR 0071), or `nil`. Set
-    /// when a block completes with the reflection setting on; dismissing the sheet advances.
-    @State private var reflectingStage: RoutineStage?
+    /// The just-finished unit block sitting on its **Done screen** (ADR 0071 R4), or `nil`. Set when a
+    /// block completes with manual advance (the default); Continue/Finish commits and advances.
+    @State private var doneStage: RoutineStage?
 
     init(routine: Routine) {
         self.routine = routine
@@ -30,7 +31,9 @@ struct RoutinePlayerView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if player.isFinished {
+                if let stage = doneStage {
+                    doneView(for: stage)
+                } else if player.isFinished {
                     finishedView
                 } else if player.state == .resting {
                     restView
@@ -43,9 +46,6 @@ struct RoutinePlayerView: View {
         }
         .onAppear { player.start(); markPracticed() }
         .onDisappear(perform: player.end)
-        .sheet(item: $reflectingStage, onDismiss: player.advance) { stage in
-            reflectionSheet(for: stage)
-        }
     }
 
     /// Stamp the routine as practised *now* — for the home hub's "recent routines" rail. Only when
@@ -58,41 +58,55 @@ struct RoutinePlayerView: View {
         try? modelContext.save()
     }
 
-    /// A block finished on its own. With the reflection setting on, pause on a journal sheet for that
-    /// unit; otherwise advance straight away. Skip bypasses this. Only units with a journal (exercise/
-    /// loop) reflect — a song has no journal, so it advances without an empty prompt (and in the
-    /// default loop mode a song never finishes on its own anyway; a Skip moves it on).
+    /// A block finished on its own. With manual advance (the default) it lands on the **Done screen**
+    /// for that unit; with auto-advance on it moves straight on. Skip bypasses this. Only units with a
+    /// journal (exercise/loop) show Done — a song has no journal/mastery, so it advances without an
+    /// empty gate (and in the default loop mode a song never finishes on its own anyway; a Skip moves
+    /// it on).
     private func finishedBlock() {
-        if AppSettings.routineReflection, let stage = player.current, owner(for: stage) != nil {
-            reflectingStage = stage
+        if !AppSettings.routineAutoAdvance, let stage = player.current, owner(for: stage) != nil {
+            doneStage = stage
         } else {
             player.advance()
         }
     }
 
-    @ViewBuilder
-    private func reflectionSheet(for stage: RoutineStage) -> some View {
+    /// Commit the Done screen's optional mastery self-rating and inline note in **one** action (the P3
+    /// lesson — no competing "Add entry" button), then advance. Mastery writes to the unit; the note
+    /// writes a `JournalWriter` entry (which snapshots the unit's context). Either may be a no-op — an
+    /// unchanged rating and an empty note both commit nothing.
+    private func commitDone(_ stage: RoutineStage, mastery: Int?, note: String) {
         if let owner = owner(for: stage) {
-            JournalSheet(owner: owner,
-                         onAdd: { text, kind in
-                             _ = JournalWriter.add(to: owner, text: text, kind: kind,
-                                                   into: modelContext)
-                             try? modelContext.save(); haptic(.light)
-                         },
-                         onUpdate: { entry, text, kind in
-                             JournalWriter.update(entry, text: text, kind: kind)
-                             try? modelContext.save()
-                         },
-                         onDelete: { entry in
-                             JournalWriter.delete(entry, from: modelContext)
-                             try? modelContext.save(); haptic(.light)
-                         })
+            switch owner {
+            case .exercise(let exercise): exercise.mastery = mastery
+            case .loop(let loop): loop.mastery = mastery
+            }
+            _ = JournalWriter.add(to: owner, text: note, kind: .note, into: modelContext)
+            try? modelContext.save()
+        }
+        doneStage = nil
+        haptic(.light)
+        player.advance()
+    }
+
+    @ViewBuilder
+    private func doneView(for stage: RoutineStage) -> some View {
+        RoutineBlockDoneView(title: stage.title,
+                             initialMastery: mastery(for: stage),
+                             isLast: player.upNext == nil) { mastery, note in
+            commitDone(stage, mastery: mastery, note: note)
         }
     }
 
     private func owner(for stage: RoutineStage) -> JournalOwner? {
         if let exercise = stage.exercise { return .exercise(exercise) }
         if let loop = stage.loop { return .loop(loop) }
+        return nil
+    }
+
+    private func mastery(for stage: RoutineStage) -> Int? {
+        if let exercise = stage.exercise { return exercise.mastery }
+        if let loop = stage.loop { return loop.mastery }
         return nil
     }
 
