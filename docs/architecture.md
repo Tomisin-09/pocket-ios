@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine/RoutineItem, Goal (planner input, ADR 0073) · RoutineBudget · RoutineSessionCursor (pure player stepping, ADR 0071) · Planner: PlannerCandidate/SessionBlock/DueScore/SessionBuilder (back-half) + TechniqueTaxonomy/SkillFamilyMap/CandidateDeriver/GoalTemplate/PlannerLibrary/PlannerID (front-half, pure) + PracticePlanner (impure projector/materialiser, ADR 0072/0073), Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun/ScaleRun/ArpeggioRun/GuitarScale/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ExerciseAudioEngine (silent-default audio seam)
+│   Models   — Song, Loop, Marker, Routine/RoutineItem, Goal (planner input, ADR 0073) · RoutineBudget · RoutineSessionCursor (pure player stepping, ADR 0071) · Planner: PlannerCandidate/SessionBlock/DueScore/SessionBuilder (back-half) + TechniqueTaxonomy/SkillCatalog/SkillFamilyMap/CandidateDeriver/GoalTemplate/PlannerLibrary/PlannerID (front-half, pure) + PracticePlanner (impure projector/materialiser, ADR 0072/0073), Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun/ScaleRun/ArpeggioRun/GuitarScale/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ExerciseAudioEngine (silent-default audio seam)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -234,7 +234,10 @@ The impure `PracticePlanner` (`@MainActor`) projects `Exercise`/`Loop`/`Song` in
 selector (`SessionLength`), a list of `Goal`s, and **Generate** → a provisional `Routine` reviewed in
 `RoutineDetailView` before Start (no active goals ⇒ the Quick-session fallback) — and `GoalEditorView`
 (template picker → name → priority → skill-trim → optional target song → met/delete), with the pure
-`GoalPriority` mapping Low/Normal/High ↔ the stored `weight`. `Exercise` gained self-rated
+`GoalPriority` mapping Low/Normal/High ↔ the stored `weight`. Its **Add skills** button (R2) opens
+`SkillPickerSheet`, a `.searchable` family-grouped picker over the whole catalog backed by the pure
+`SkillCatalog` (family-by-prefix grouping + name search) — so a goal isn't limited to its template's
+seeded skills, with no free-text (search only narrows the fixed `TechniqueTaxonomy`). `Exercise` gained self-rated
 **`mastery: Int?`** + **`lastPracticed: Date?`** (mirroring `Loop`/`Song`; the app never grades
 playing — ADR 0070/0072), stamped on run and rated on the detail sheet. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
