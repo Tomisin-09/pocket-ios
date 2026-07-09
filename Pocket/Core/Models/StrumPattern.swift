@@ -191,7 +191,26 @@ extension StrumPattern {
         let wrapped = ((index % slotCount) + slotCount) % slotCount
         return slots[wrapped]
     }
+
+    /// The per-slot **click intensities** for an audible rhythm reference (ADR 0071 R5) — one entry
+    /// per slot, `nil` = silent (a rest). A stroke sounds; an accent is louder; a mute is a duller
+    /// "chuck". Pure and audio-free (no `ClickVoice`/AVFoundation) so the slot→sound mapping is
+    /// unit-tested; the metronome engine maps these to its own click levels.
+    var clickIntensities: [StrumClickLevel?] {
+        slots.map { slot in
+            switch slot.direction {
+            case .rest: return nil
+            case .mute: return slot.accented ? .accent : .mute
+            case .down, .up: return slot.accented ? .accent : .stroke
+            }
+        }
+    }
 }
+
+/// A slot's audible weight in a strum-rhythm reference (ADR 0071 R5) — pure, so it maps to whatever
+/// click voice the engine uses without dragging audio into the model. `accent` is the emphasised
+/// stroke, `stroke` a normal down/up, `mute` the damped "chuck".
+enum StrumClickLevel: Equatable { case accent, stroke, mute }
 
 // MARK: - Editing (pure — the authoring editor is a thin skin over these, T5)
 

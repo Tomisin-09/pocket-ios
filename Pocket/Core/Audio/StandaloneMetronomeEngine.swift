@@ -108,6 +108,9 @@ final class StandaloneMetronomeEngine {
     private let clickVoice = ClickVoice()
     let nowPlaying = NowPlayingController()
     var timer: Timer?
+    /// When set (a strum-pattern audio preview, ADR 0071 R5), the click follows this pattern's slots
+    /// instead of the meter — cleared on `stop`. Built in the `+Strum` split.
+    var strumSchedule: StrumSchedule?
 
     /// Active-practice time banked before the current play stretch (grows on each pause).
     private var accumulatedSession: TimeInterval = 0
@@ -201,6 +204,7 @@ final class StandaloneMetronomeEngine {
         engine.stop()
         nowPlaying.teardown()
         trainingRamp = nil          // a training run ends with the session (ADR 0046)
+        strumSchedule = nil         // …and so does a strum-pattern preview (ADR 0071 R5)
         automatorRunning = false    // …and so does a free-play climb (ADR 0048)
         automatorCountingIn = false
         accumulatedSession = 0
@@ -366,25 +370,19 @@ final class StandaloneMetronomeEngine {
             phaseOrigin = origin
         }
 
-        // Audio: schedule every *sub-tick* whose sample falls within the look-ahead window
-        // and hasn't been queued yet — locked to the sample grid, so the spacing never
-        // drifts. With no subdivision there's one tick per beat; otherwise the beats carry
-        // `ticksPerBeat` evenly-spaced ticks, the on-beat one accented per the meter and the
-        // in-between ones the quieter subdivision level.
-        let ticksPerBeat = max(1, subdivision.ticksPerBeat)
+        // Audio: schedule every *sub-tick* whose sample falls within the look-ahead window, locked to
+        // the sample grid so the spacing never drifts. `scheduledLevel` picks the click — meter accents
+        // by default, or the strum pattern's slots in a preview (a `nil` slot is a silent rest).
+        let ticksPerBeat = strumSchedule?.ticksPerBeat ?? max(1, subdivision.ticksPerBeat)
         let subInterval = perBeat / Double(ticksPerBeat)
         let horizonFrames = AVAudioFramePosition(horizon * clickVoice.clockSampleRate)
         var tickIndex = scheduledThrough + 1
         while subSample(tickIndex, subInterval: subInterval, origin: origin)
                 <= renderSample + horizonFrames {
-            let level: ClickVoice.ClickLevel
-            if tickIndex % ticksPerBeat == 0 {
-                level = timeSignature.isAccented(beatInBar: tickIndex / ticksPerBeat) ? .accent : .beat
-            } else {
-                level = .subdivision
+            if let level = scheduledLevel(forTick: tickIndex, ticksPerBeat: ticksPerBeat) {
+                clickVoice.schedule(atSampleTime: subSample(tickIndex, subInterval: subInterval,
+                                                            origin: origin), level: level)
             }
-            clickVoice.schedule(atSampleTime: subSample(tickIndex, subInterval: subInterval,
-                                                        origin: origin), level: level)
             scheduledThrough = tickIndex
             tickIndex += 1
         }

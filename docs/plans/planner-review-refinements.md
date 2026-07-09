@@ -150,8 +150,17 @@ Answers "how do we enforce 15/30/60, and can users repeat units?"
     "next"); a deliberate **Skip** bypasses the Done gate (natural completion only);
     **auto-advance ON** bypasses the screen.
 
-### R5 — Strumming / chord audio references
-During a chord/strumming exercise **preview**. Constraints: Apple Music audio can't be
+### R5 — Strumming / chord audio references — SHIPPED (pocket-118, phase 1)
+Phase 1 (synthesized rhythm) built: a **Hear the strum** button on strumming / Strum & Chords block
+previews plays the pattern's down/up/accent/mute rhythm via the metronome engine's new pattern mode
+(`StandaloneMetronomeEngine+Strum` armed by the pure `StrumPattern.clickIntensities`; thin
+`StrumPatternPreviewPlayer`). Rhythm not tone (metronome has no pitch). **Extended to the actual run** (feedback): a strumming /
+Strum & Chords drill's metronome follows the pattern during the run too (count-in stays a steady pulse),
+gated by a **"Strumming click follows the pattern"** Practice setting (default on). **Phase 2 (recorded
+chord tones) DROPPED** 2026-07-09 — the pattern metronome is effective enough; no rights-heavy audio. Decisions locked 2026-07-09: rhythm-clicks-now, engine-pattern-mode (not a
+separate player), Strumming + Strum & Chords only.
+
+Original scope: During a chord/strumming exercise **preview**. Constraints: Apple Music audio can't be
 tapped (DRM, ADR 0001); no grading (ADR 0070); assets must be DRM-free / original
 (content-strategy rule). Start with a **synthesized strum pattern** via the metronome
 engine (accented down/up pattern — pattern reference, not tone); add recorded original
