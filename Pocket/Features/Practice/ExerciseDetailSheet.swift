@@ -39,11 +39,16 @@ struct ExerciseDetailSheet: View {
     /// The exercise's strum-chord sheet (Strum & Chords template), seeded from the stored payload with
     /// a defensive fallback; only surfaced and committed for a strum-chords template.
     @State private var strumChords: StrumChordSheet
+    /// The edited **command** tempo (ADR 0071 R4) — nudged in `ExerciseTempoSection` and committed on
+    /// Done via the canonical `promoteCommand` setter (the same mutation the run screen uses, so no
+    /// second write path diverges, ADR 0057). Only editable for a measured command.
+    @State private var command: Int
 
     init(exercise: Exercise) {
         self.exercise = exercise
         _notes = State(initialValue: exercise.notes)
         _mastery = State(initialValue: exercise.mastery)
+        _command = State(initialValue: exercise.command)
         _strum = State(initialValue: exercise.strumPattern
                        ?? .downstrokes(beatsPerBar: exercise.beatsPerBar))
         let content = exercise.fretboardContent
@@ -61,7 +66,7 @@ struct ExerciseDetailSheet: View {
                 templateSection
                 descriptionSection
                 ExerciseProgressSection(mastery: $mastery, lastPracticed: exercise.lastPracticed)
-                temposSection
+                ExerciseTempoSection(exercise: exercise, command: $command)
                 feelSection
                 routineSection
                 switch exercise.template.bespokeEditor {
@@ -82,8 +87,8 @@ struct ExerciseDetailSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        commitNotes(); commitMastery(); commitStrum(); commitFretboard()
-                        commitChords(); commitStrumChords(); dismiss()
+                        commitNotes(); commitMastery(); commitCommand(); commitStrum()
+                        commitFretboard(); commitChords(); commitStrumChords(); dismiss()
                     }
                 }
             }
@@ -133,26 +138,6 @@ struct ExerciseDetailSheet: View {
         }
     }
 
-    // MARK: - Tempo anchors (read-only)
-
-    private var temposSection: some View {
-        Section {
-            LabeledContent("Working") { bpmText(exercise.workingTempo) }
-            LabeledContent("Command") {
-                Text(exercise.hasMeasuredCommand ? "\(exercise.command) BPM" : "not yet measured")
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(exercise.hasMeasuredCommand
-                                     ? PocketColor.textPrimary : PocketColor.textSecondary)
-            }
-            LabeledContent("Reach") { bpmText(exercise.derivedTarget) }
-        } header: {
-            Text("Tempo")
-        } footer: {
-            Text("Command is the fastest you own it clean; working is the warm-up floor and reach is "
-                 + "the goal above command. Tune these on the run screen.")
-        }
-    }
-
     // MARK: - Meter & subdivision (read-only)
 
     private var feelSection: some View {
@@ -181,16 +166,21 @@ struct ExerciseDetailSheet: View {
 
     // MARK: - Helpers
 
-    private func bpmText(_ bpm: Int) -> some View {
-        Text("\(bpm) BPM").font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
-    }
-
     /// Persist an edited description, trimmed. A no-op when unchanged, so opening and closing the
     /// sheet without touching the field never writes to the store.
     private func commitNotes() {
         let trimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed != exercise.notes else { return }
         exercise.notes = trimmed
+        try? modelContext.save()
+    }
+
+    /// Persist an edited command tempo on Done via the canonical `promoteCommand` setter — the *same*
+    /// mutation the run screen uses (so the two surfaces never diverge, ADR 0057), which also
+    /// recomputes the reach. Only for a measured command and only when it actually changed.
+    private func commitCommand() {
+        guard exercise.hasMeasuredCommand, command != exercise.command else { return }
+        exercise.promoteCommand(to: command)
         try? modelContext.save()
     }
 

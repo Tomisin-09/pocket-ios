@@ -105,12 +105,20 @@ Answers "how do we enforce 15/30/60, and can users repeat units?"
 - **Soft target, not a hard cap:** pack toward the preset budget, show a **live "~28
   min" estimate** as it builds; never hard-cut mid-exercise.
 
-### R4 — Routine block preview + audio preview + manual advance
-- **Tap a block → preview + edit tempo** (`RoutineDetailView`). Make blocks inspectable.
-- **5–10s metronome audio preview** of the command-tempo ramp (start→target) for click
-  exercises. Cheap — the metronome engine is native.
-- **Manual advance by default, with an on/off setting.** Pre-exercise **preview** before
-  each block; scope the preview toggle to **live-routine context only** (per note).
+### R4 — Routine block preview + audio preview + manual advance — SHIPPED (pocket-116, A+B)
+- **Tap a block → preview + edit tempo** (`RoutineDetailView`). Make blocks inspectable. — SHIPPED:
+  tapping an exercise block (read-only) opens `ExerciseDetailSheet`, whose `ExerciseTempoSection`
+  makes the **command** nudgeable (committed via the run screen's `promoteCommand` setter — no
+  divergent write path, ADR 0057).
+- **5–10s metronome audio preview** — SHIPPED as a steady command-tempo click (`CommandTempoPreviewPlayer`,
+  own engine, ~6s auto-stop) in `ExerciseTempoSection`. Chose a steady command click over a
+  time-boxed ramp: predictable length, and a 6s slice of the real ramp wouldn't reach the target
+  anyway (the full working→command→reach climb stays on the run screen).
+- **Manual advance by default, with an on/off setting.** — SHIPPED: a finished block lands on a Done
+  screen unless `routineAutoAdvance` is on; a Skip always bypasses. **Pre-exercise preview (item 15)
+  was folded into the existing manual-start behavior and dropped as a distinct surface** (decision
+  2026-07-09): with auto-start off (the default) a block already sits on its run screen previewing
+  the drill + staircase/content before Start — that *is* the live-routine-scoped pre-exercise preview.
 - **Post-exercise completion flow (NEW).** Today `RoutineSessionPlayer` **auto-advances**
   (`RoutineSessionPlayer.swift:28`, via `RoutineRunContext.onFinished`); only the
   whole-routine end shows a summary (`.finished`). With manual advance, a naturally-

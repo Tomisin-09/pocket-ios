@@ -37,6 +37,10 @@ struct RoutineDetailView: View {
     /// The routine to run, resolved into the main context — drives the full-screen player. `nil`
     /// when not playing.
     @State private var playingRoutine: Routine?
+    /// The exercise block being inspected (ADR 0071 R4) — tapping an exercise block in read-only mode
+    /// opens its detail sheet (preview + edit command tempo + audio audition). Resolved into the app
+    /// context, so its edits write to the real store, not this view's editing sandbox. `nil` when none.
+    @State private var inspectingExercise: Exercise?
 
     /// The session length the user asked the planner for, in minutes — set only on a provisional
     /// generated session so the review screen can show its estimate against a soft budget (R3).
@@ -131,7 +135,7 @@ struct RoutineDetailView: View {
                         .listRowBackground(PocketColor.background)
                 } else {
                     ForEach(Array(routine.orderedItems.enumerated()), id: \.element.uid) { pair in
-                        RoutineItemRow(item: pair.element, number: pair.offset + 1)
+                        blockRow(pair.element, number: pair.offset + 1)
                             .listRowBackground(PocketColor.background)
                     }
                     .onMove(perform: move)
@@ -180,6 +184,7 @@ struct RoutineDetailView: View {
                                 onPickSong: { addSong($0); addingUnit = false })
         }
         .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
+        .sheet(item: $inspectingExercise) { ExerciseDetailSheet(exercise: $0) }
     }
 
     /// The bottom **Start** button that launches the player — the primary action once a routine is
@@ -339,6 +344,39 @@ struct RoutineDetailView: View {
         for index in offsets { editContext.delete(ordered[index]) }
         for (index, item) in routine.orderedItems.enumerated() { item.order = index }
         haptic(.medium)
+    }
+}
+
+// MARK: - Block inspection (ADR 0071 R4)
+
+extension RoutineDetailView {
+    /// One block row. In read-only mode an **exercise** block is tappable — it opens the detail sheet
+    /// to preview and tune it (ADR 0071 R4), signalled by a trailing chevron; other blocks and edit
+    /// mode (which owns drag/delete) render the plain row.
+    @ViewBuilder
+    func blockRow(_ item: RoutineItem, number: Int) -> some View {
+        let inspectable = !isEditing && item.exercise != nil && !item.isOrphaned
+        HStack(spacing: 8) {
+            RoutineItemRow(item: item, number: number)
+            if inspectable {
+                Image(systemName: "chevron.right")
+                    .font(.futura(.caption, weight: .semibold))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { if inspectable { inspect(item) } }
+    }
+
+    /// Open an exercise block's detail sheet, resolving the exercise into the **app** context so its
+    /// tempo/mastery edits land in the real store rather than this view's editing sandbox.
+    fileprivate func inspect(_ item: RoutineItem) {
+        guard let exercise = item.exercise,
+              let appExercise = appContext.model(for: exercise.persistentModelID) as? Exercise else {
+            return
+        }
+        inspectingExercise = appExercise
+        haptic(.light)
     }
 }
 

@@ -36,7 +36,7 @@ enum AppSettings {
         static let appearance = "appearance"
         static let exerciseAnimates = "exerciseAnimates"
         static let routineAutoStart = "routineAutoStart"
-        static let routineReflection = "routineReflection"
+        static let routineAutoAdvance = "routineAutoAdvance"
         static let routineRestSeconds = "routineRestSeconds"
         static let routineSongLoop = "routineSongLoop"
         static let transportLoopOnLeft = "transportLoopOnLeft"
@@ -75,13 +75,15 @@ enum AppSettings {
     /// is started by hand.
     static var routineAutoStart: Bool { bool(Key.routineAutoStart) }
 
-    /// In a routine, offer a short **reflection** prompt when a block finishes, before advancing
-    /// (ADR 0071). Default on; off ⇒ blocks advance with no reflection.
-    static var routineReflection: Bool { bool(Key.routineReflection) }
+    /// In a routine, whether a finished block **auto-advances** to the next one (ADR 0071 R4).
+    /// Default **off** ⇒ a naturally-finished unit lands on a Done screen (optional mastery tap +
+    /// inline note) that you dismiss with Continue/Finish — manual advance. On ⇒ it advances on its
+    /// own, no Done gate (a deliberate Skip always bypasses the gate regardless).
+    static var routineAutoAdvance: Bool { bool(Key.routineAutoAdvance, default: false) }
 
     /// In a routine, whether a **song block loops** and advances only when you Skip (ADR 0071) — a
     /// song is an open jam, so this is on by default. Off ⇒ a song plays through once and then
-    /// auto-advances like an exercise/loop (which also fires its end-of-block reflection).
+    /// auto-advances (a song carries no journal, so it never shows the Done gate).
     static var routineSongLoop: Bool { bool(Key.routineSongLoop) }
 
     /// How long the between-blocks rest countdown lasts, seconds (clamped to

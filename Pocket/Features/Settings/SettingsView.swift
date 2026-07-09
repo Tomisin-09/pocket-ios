@@ -13,7 +13,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
     @AppStorage(AppSettings.Key.exerciseAnimates) private var exerciseAnimates = false
     @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
-    @AppStorage(AppSettings.Key.routineReflection) private var routineReflection = true
+    @AppStorage(AppSettings.Key.routineAutoAdvance) private var routineAutoAdvance = false
     @AppStorage(AppSettings.Key.routineRestSeconds) private var routineRestSeconds = 20
     @AppStorage(AppSettings.Key.routineSongLoop) private var routineSongLoop = true
     @AppStorage(AppSettings.Key.transportLoopOnLeft) private var transportLoopOnLeft = false
@@ -58,7 +58,7 @@ struct SettingsView: View {
 
             Section {
                 Toggle("Auto-start blocks", isOn: $routineAutoStart)
-                Toggle("Reflect after each block", isOn: $routineReflection)
+                Toggle("Advance automatically", isOn: $routineAutoAdvance)
                 Stepper(value: $routineRestSeconds, in: AppSettings.routineRestSecondsRange, step: 5) {
                     LabeledContent("Rest length", value: "\(routineRestSeconds)s")
                 }
@@ -67,11 +67,11 @@ struct SettingsView: View {
                 Text("Routines")
             } footer: {
                 Text("In a routine, each block after the first starts on its own (the first always "
-                     + "waits for you). When a block finishes, a short reflection prompt lets you jot "
-                     + "a note before moving on — skip it any time, or turn it off here. Rest length "
-                     + "sets the breather between blocks. A song block loops as an open jam and moves "
-                     + "on only when you skip; turn Loop song blocks off to play it through once and "
-                     + "auto-advance.")
+                     + "waits for you). When a block finishes, a Done screen lets you rate how it "
+                     + "felt and jot a note before moving on — turn Advance automatically on to skip "
+                     + "straight to the next block instead. Rest length sets the breather between "
+                     + "blocks. A song block loops as an open jam and moves on only when you skip; "
+                     + "turn Loop song blocks off to play it through once and auto-advance.")
             }
 
             Section {
