@@ -154,8 +154,10 @@ Answers "how do we enforce 15/30/60, and can users repeat units?"
 Phase 1 (synthesized rhythm) built: a **Hear the strum** button on strumming / Strum & Chords block
 previews plays the pattern's down/up/accent/mute rhythm via the metronome engine's new pattern mode
 (`StandaloneMetronomeEngine+Strum` armed by the pure `StrumPattern.clickIntensities`; thin
-`StrumPatternPreviewPlayer`). Rhythm not tone (metronome has no pitch); pure-chord tones + recorded
-clips = deferred phase 2. Decisions locked 2026-07-09: rhythm-clicks-now, engine-pattern-mode (not a
+`StrumPatternPreviewPlayer`). Rhythm not tone (metronome has no pitch). **Extended to the actual run** (feedback): a strumming /
+Strum & Chords drill's metronome follows the pattern during the run too (count-in stays a steady pulse),
+gated by a **"Strumming click follows the pattern"** Practice setting (default on). **Phase 2 (recorded
+chord tones) DROPPED** 2026-07-09 — the pattern metronome is effective enough; no rights-heavy audio. Decisions locked 2026-07-09: rhythm-clicks-now, engine-pattern-mode (not a
 separate player), Strumming + Strum & Chords only.
 
 Original scope: During a chord/strumming exercise **preview**. Constraints: Apple Music audio can't be

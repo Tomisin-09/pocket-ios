@@ -347,14 +347,19 @@ private extension ExerciseRunView {
         // (V2 planner Slice 1). Persist() already saved; this rides the next context save.
         exercise.markPracticed()
         try? modelContext.save()
-        // Feed the exercise's meter to the run engine (accents + count-in length, ADR 0052). For a
-        // strumming / Strum & Chords drill, arm the click to follow the strum pattern (rests silent —
-        // ADR 0071 R5) so the audio matches the lane; others clear back to a plain click. Set before
-        // `run(ramp:)` so the tick grid is consistent from beat one.
+        // Meter → accents + count-in length (ADR 0052); a rhythm drill's click follows the strum
+        // pattern (ADR 0071 R5) unless Settings opts out. Both set before `run(ramp:)` so the grid holds.
         engine.setTimeSignature(signature)
-        engine.setStrumPattern(exercise.strumPattern ?? exercise.strumChordSheet?.strumPattern)
+        engine.setStrumPattern(runStrumPattern)
         engine.run(ramp: routine)
         haptic(.medium)
+    }
+
+    /// The strum pattern the run should sound — a rhythm drill's pattern, unless the user turned off
+    /// "Strumming click follows the pattern" (Settings); `nil` ⇒ a standard metronome click.
+    private var runStrumPattern: StrumPattern? {
+        guard AppSettings.strumClickFollowsPattern else { return nil }
+        return exercise.strumPattern ?? exercise.strumChordSheet?.strumPattern
     }
 
     // Steps are pure (`StepperButton` owns the ±/hold-repeat haptics); the typed setters keep their

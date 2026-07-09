@@ -10,7 +10,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   both in the block preview's **Hear the strum** button and **during the actual run** — follows the
   pattern's down / up / accent / mute rhythm (rests stay silent) instead of a plain click, so the audio
   matches the animated lane. The count-in stays a steady pulse so you can still count in. It's a rhythm
-  reference, not the chord tone (the metronome click has no pitch).
+  reference, not the chord tone (the metronome click has no pitch). A **Strumming click follows the
+  pattern** setting (Settings → Practice, default on) switches the run back to a plain steady
+  metronome you strum the rhythm against; the preview's Hear the strum button always plays the pattern.
 - **A routine block now finishes on a Done screen — manual advance by default.** When a block
   completes on its own it no longer jumps straight to the next one; it lands on a single Done screen
   with the completion beat, an *optional* mastery tap (pre-filled from the drill), an *optional*

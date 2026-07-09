@@ -35,6 +35,7 @@ enum AppSettings {
         static let keepScreenAwake = "keepScreenAwake"
         static let appearance = "appearance"
         static let exerciseAnimates = "exerciseAnimates"
+        static let strumClickFollowsPattern = "strumClickFollowsPattern"
         static let routineAutoStart = "routineAutoStart"
         static let routineAutoAdvance = "routineAutoAdvance"
         static let routineRestSeconds = "routineRestSeconds"
@@ -69,6 +70,12 @@ enum AppSettings {
     /// both read this. Default **off** as a photosensitivity precaution; the views also force it off
     /// under the system Reduce Motion setting.
     static var exerciseAnimates: Bool { bool(Key.exerciseAnimates, default: false) }
+
+    /// For a strumming / Strum & Chords drill, whether the run's metronome **follows the strum
+    /// pattern** (down/up/accent/mute, rests silent — ADR 0071 R5) rather than a plain steady click.
+    /// Default on; off ⇒ a standard metronome, so you produce the rhythm against a neutral pulse. The
+    /// preview's "Hear the strum" button always plays the pattern regardless.
+    static var strumClickFollowsPattern: Bool { bool(Key.strumClickFollowsPattern, default: true) }
 
     /// In a routine, auto-start each block on arrival (ADR 0071) — the **first** block always waits
     /// for a deliberate Start; this only governs the *subsequent* ones. Default on; off ⇒ every block

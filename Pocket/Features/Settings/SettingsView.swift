@@ -12,6 +12,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.keepScreenAwake) private var keepScreenAwake = true
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
     @AppStorage(AppSettings.Key.exerciseAnimates) private var exerciseAnimates = false
+    @AppStorage(AppSettings.Key.strumClickFollowsPattern) private var strumClickFollowsPattern = true
     @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
     @AppStorage(AppSettings.Key.routineAutoAdvance) private var routineAutoAdvance = false
     @AppStorage(AppSettings.Key.routineRestSeconds) private var routineRestSeconds = 20
@@ -49,11 +50,14 @@ struct SettingsView: View {
                     }
                 }
                 Toggle("Keep screen awake", isOn: $keepScreenAwake)
+                Toggle("Strumming click follows the pattern", isOn: $strumClickFollowsPattern)
             } header: {
                 Text("Practice")
             } footer: {
                 Text("A count-in before a tempo climb begins, so you can settle in. Keeping the "
-                     + "screen awake stops it locking while you play along hands-free.")
+                     + "screen awake stops it locking while you play along hands-free. For a strumming "
+                     + "drill, the metronome can play the pattern's rhythm (down/up/accent) or, turned "
+                     + "off, a plain click you strum the rhythm against.")
             }
 
             Section {
