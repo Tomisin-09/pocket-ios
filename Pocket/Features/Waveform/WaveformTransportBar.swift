@@ -54,10 +54,10 @@ struct TransportBar: View {
     /// column + colour strip keep their sides (the strip must stay where the loop identity reads).
     @AppStorage(AppSettings.Key.transportLoopOnLeft) private var loopOnLeft = false
 
-    private var glyphSize: CGFloat { compact ? 24 : 26 }
+    private var glyphSize: CGFloat { compact ? 24 : 25 }
     /// The big flanking identity circles (idle only) — sized to "take up space" (feedback #1),
     /// trimmed a little in the shorter landscape bar so they still clear the edges.
-    private var identityDiameter: CGFloat { compact ? 42 : 52 }
+    private var identityDiameter: CGFloat { compact ? 42 : 46 }
     /// Whether a saved loop is active — the transport reverts to its compact form (feedback #1
     /// round 2): the big idle buttons are for browsing/creating; once a loop is running the Loops
     /// panel below carries it, so the bar goes back to the small stacked column + ✕ strip.
@@ -73,9 +73,9 @@ struct TransportBar: View {
             .frame(maxWidth: .infinity)
             rightControls
         }
-        .frame(height: compact ? 52 : 64)  // definite bar height so the colour strip reliably fills it
+        .frame(height: compact ? 52 : 56)  // definite bar height so the colour strip reliably fills it
         .padding(.horizontal, 12)
-        .padding(.vertical, compact ? 3 : 5)
+        .padding(.vertical, compact ? 3 : 4)
         .background(panelBackground)
         // `loop?.uid` is nil when idle and changes on activate/deactivate *and* loop-switch, so the
         // idle⇄compact morph and a colour/name change between loops both animate.
@@ -173,7 +173,7 @@ struct TransportBar: View {
 
 // MARK: - Components
 
-private let transportGlyphSize: CGFloat = 31
+private let transportGlyphSize: CGFloat = 28
 /// The compact stacked column shown once a loop is active — the original small identity dots.
 private let compactControlDiameter: CGFloat = 27
 private let compactControlGlyph: CGFloat = 15

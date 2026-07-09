@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **A tighter practice screen — more room for the waveform.** The song header is now a compact
+  title / artist stack with the mastery stars beside it, and the empty navigation band above it is gone
+  (a compact back button now sits inline with the title), so the whole cockpit rises toward the top of
+  the screen; the song length (which duplicated the ruler/minimap) is dropped from the header, and the
+  transport bar is a touch shorter. A new **Show minimap** setting (Settings → Transport, default on)
+  hides the full-song overview strip under the waveform to give the waveform and loops even more room.
 - **Strumming exercises now sound their pattern.** A strumming or Strum & Chords drill's metronome —
   both in the block preview's **Hear the strum** button and **during the actual run** — follows the
   pattern's down / up / accent / mute rhythm (rests stay silent) instead of a plain click, so the audio

@@ -41,6 +41,7 @@ enum AppSettings {
         static let routineRestSeconds = "routineRestSeconds"
         static let routineSongLoop = "routineSongLoop"
         static let transportLoopOnLeft = "transportLoopOnLeft"
+        static let waveformMinimapVisible = "waveformMinimapVisible"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -106,6 +107,11 @@ enum AppSettings {
     /// takes the other side. Default **off** ⇒ Marker-left / Loop-right (the shipped arrangement);
     /// on ⇒ swapped. Applies to the idle flanking controls only.
     static var transportLoopOnLeft: Bool { bool(Key.transportLoopOnLeft, default: false) }
+
+    /// Whether the full-song **minimap** strip shows under the detail waveform on the practice
+    /// screen (P1c). Default **on** — it's the whole-song overview + scrub; off ⇒ hidden to give
+    /// the waveform + loops a little more vertical room.
+    static var waveformMinimapVisible: Bool { bool(Key.waveformMinimapVisible, default: true) }
 
     /// Appearance override. Default `.system` — the app follows the device setting until
     /// the user opts into a pinned light/dark appearance.

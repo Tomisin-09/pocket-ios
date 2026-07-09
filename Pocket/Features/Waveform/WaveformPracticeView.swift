@@ -55,9 +55,12 @@ struct WaveformPracticeView: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.audioLoadFailed)
-        // Landscape uses its own compact top bar (back · title · menu), so hide the system
-        // nav bar there; portrait keeps it (ADR 0042).
-        .toolbar(isLandscape ? .hidden : .automatic, for: .navigationBar)
+        // Both orientations draw their own compact back button (portrait: inline with the
+        // song strip; landscape: the back · title · menu bar), so the system nav bar is
+        // hidden throughout — in portrait it otherwise reserved a tall empty band above the
+        // song strip (no title set → wasted space). Hiding it lets the header rise to just
+        // under the status bar (P1a; ADR 0042).
+        .toolbar(.hidden, for: .navigationBar)
         // Practice is the one screen that rotates (ADR 0042): more width = sharper
         // waveform + more precise A/B drag. Reverts to portrait-only on exit.
         .landscapeEnabled()
@@ -148,10 +151,17 @@ struct WaveformPracticeView: View {
     private func portraitLayout(model: WaveformPracticeModel) -> some View {
         VStack(spacing: 0) {
             PracticeCockpit(model: model) {
-                SongStrip(song: model.song, onHoldTitle: { model.showingSongDetails = true })
+                // Compact back button inline to the left of the song strip — the system nav
+                // bar is hidden (it reserved a tall empty band above the header), so this
+                // lets the title sit just under the status bar.
+                HStack(alignment: .top, spacing: 12) {
+                    backButton
+                    SongStrip(song: model.song, onHoldTitle: { model.showingSongDetails = true })
+                }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.top, 4)
+            .padding(.bottom, 12)
             Rectangle()
                 .fill(PocketColor.surfaceSubtle)
                 .frame(height: 1)
@@ -190,19 +200,25 @@ struct WaveformPracticeView: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: drawerOpen)
     }
 
+    /// The compact circular back chevron used by both orientations now that the system nav
+    /// bar is hidden (portrait draws it inline with the song strip, landscape in its top bar).
+    private var backButton: some View {
+        Button { dismiss() } label: {
+            Image(systemName: "chevron.left")
+                .font(.futura(size: 16, weight: .semibold))
+                .foregroundStyle(PocketColor.textPrimary)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(PocketColor.surfaceStandard))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Back to library")
+    }
+
     /// Landscape top bar: a compact back chevron, the song title/artist (hold for details,
     /// like the portrait strip), and the menu button that toggles the loops/markers drawer.
     private func landscapeTopBar(model: WaveformPracticeModel) -> some View {
         HStack(spacing: 14) {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.futura(size: 16, weight: .semibold))
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .frame(width: 32, height: 32)
-                    .background(Circle().fill(PocketColor.surfaceStandard))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Back to library")
+            backButton
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(model.song.title)

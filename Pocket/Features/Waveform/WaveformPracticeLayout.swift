@@ -14,6 +14,8 @@ struct PracticeCockpit<Header: View>: View {
     var landscape: Bool = false
     @ViewBuilder var header: () -> Header
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// P1c — hide the full-song minimap strip when the user turns it off in Settings (default on).
+    @AppStorage(AppSettings.Key.waveformMinimapVisible) private var minimapVisible = true
 
     var body: some View {
         VStack(spacing: landscape ? 8 : 16) {
@@ -29,14 +31,16 @@ struct PracticeCockpit<Header: View>: View {
             waveform                                                    // 5
             TimeRuler(start: model.viewport.start * model.duration,      // 6
                       end: model.viewport.end * model.duration)
-            Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
-                    samples: model.amplitudes,
-                    markers: model.markers,
-                    fineSelection: model.abSpan.bounds,
-                    playheadFraction: model.playheadFraction,
-                    viewport: model.viewport,
-                    onSeek: model.seekToFraction,
-                    onSeekEnded: model.seekMinimapSnapping)
+            if minimapVisible {
+                Minimap(song: model.song, activeLoop: model.activeLoop, // 7
+                        samples: model.amplitudes,
+                        markers: model.markers,
+                        fineSelection: model.abSpan.bounds,
+                        playheadFraction: model.playheadFraction,
+                        viewport: model.viewport,
+                        onSeek: model.seekToFraction,
+                        onSeekEnded: model.seekMinimapSnapping)
+            }
             transport                                                   // 8
         }
     }
