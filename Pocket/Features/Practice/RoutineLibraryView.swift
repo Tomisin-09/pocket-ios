@@ -76,7 +76,8 @@ struct RoutineLibraryView: View {
         }
         .navigationDestination(item: $quickDraft) { draft in
             RoutineDetailView(container: context.container,
-                              generatedSession: draft.blocks, defaultName: draft.name)
+                              generatedSession: draft.blocks, defaultName: draft.name,
+                              targetMinutes: draft.targetMinutes)
         }
         .fullScreenCover(item: $playing) { routine in
             RoutinePlayerView(routine: routine)
@@ -137,7 +138,8 @@ struct RoutineLibraryView: View {
                                                       exercises: exercises)
         guard blocks.contains(where: { $0.unit != nil }) else { return }
         let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now)
-        quickDraft = QuickSessionDraft(blocks: blocks, name: name)
+        quickDraft = QuickSessionDraft(blocks: blocks, name: name,
+                                       targetMinutes: SessionLength.default.minutes)
         haptic(.light)
     }
 
@@ -154,6 +156,8 @@ struct QuickSessionDraft: Identifiable, Hashable {
     let id = UUID()
     let blocks: [SessionBlock]
     let name: String
+    /// The length the user asked for, in minutes — lets the review screen show a soft budget (R3).
+    var targetMinutes: Int?
 
     static func == (lhs: QuickSessionDraft, rhs: QuickSessionDraft) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }

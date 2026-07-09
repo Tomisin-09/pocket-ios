@@ -80,6 +80,14 @@ final class RoutineItem {
         set { kindRaw = newValue.rawValue }
     }
 
+    /// How many times the player runs this block back-to-back before advancing (R3). Additive with
+    /// a `1` default so SwiftData lightweight migration is safe (CoreData 134110). Only meaningful
+    /// on a unit-bearing block — a `rest` carries no run to repeat. Read via `effectiveReps`.
+    var reps: Int = 1
+
+    /// `reps` clamped to at least one run — the count the player and the session estimate use.
+    var effectiveReps: Int { max(1, reps) }
+
     /// Back-reference to the owning routine (inverse of `Routine.items`, cascade-owned).
     var routine: Routine?
 

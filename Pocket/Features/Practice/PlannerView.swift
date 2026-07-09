@@ -54,7 +54,8 @@ struct PlannerView: View {
         }
         .navigationDestination(item: $draft) { draft in
             RoutineDetailView(container: context.container,
-                              generatedSession: draft.blocks, defaultName: draft.name)
+                              generatedSession: draft.blocks, defaultName: draft.name,
+                              targetMinutes: draft.targetMinutes)
         }
         .alert("Nothing to schedule yet", isPresented: $showingEmptyNotice) {
             Button("OK", role: .cancel) { }
@@ -192,7 +193,7 @@ struct PlannerView: View {
             return
         }
         let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now)
-        draft = QuickSessionDraft(blocks: blocks, name: name)
+        draft = QuickSessionDraft(blocks: blocks, name: name, targetMinutes: length.minutes)
         haptic(.light)
     }
 }
