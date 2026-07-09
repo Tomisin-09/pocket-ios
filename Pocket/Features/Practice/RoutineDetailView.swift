@@ -13,6 +13,9 @@ import SwiftUI
 /// and only lands in the library if you Save.
 struct RoutineDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    /// The app's (main) context — used to resolve the routine for the player, so the run screens
+    /// write to the real store, not this view's private editing sandbox.
+    @Environment(\.modelContext) private var appContext
 
     /// The shared store — kept so Cancel can rebuild a clean sandbox that drops in-flight edits.
     private let container: ModelContainer
@@ -29,6 +32,13 @@ struct RoutineDetailView: View {
     @State private var isEditing: Bool
 
     @State private var addingUnit = false
+    /// The routine to run, resolved into the main context — drives the full-screen player. `nil`
+    /// when not playing.
+    @State private var playingRoutine: Routine?
+    /// Drives the "name this session" rename alert shown when saving a provisional Quick session.
+    @State private var namingSave = false
+    /// The editable name in that alert — seeded from the dated default, committed on confirm.
+    @State private var draftName = ""
 
     /// Build the sandbox. An existing routine is faulted into the child context by its id (opens
     /// read-only); a nil `existing` means a fresh routine created only in the sandbox, opened in edit
@@ -51,9 +61,36 @@ struct RoutineDetailView: View {
         }
     }
 
+    /// Build a **provisional generated session** for review (V2 planner Slices 1 & 3): materialise the
+    /// pure generated blocks into a private sandbox (autosave off) so nothing persists until the user
+    /// Saves or Starts. Opens read-only on the block list with the dated default name; backing out
+    /// without committing discards the sandbox (nothing lands in the library). Fetches exercises,
+    /// loops and songs so both a goal-less Quick session (Slice 1, exercise-only) and a goal session
+    /// (Slice 3, which can surface loop/song candidates via Path B) resolve their blocks.
+    init(container: ModelContainer, generatedSession blocks: [SessionBlock], defaultName: String) {
+        self.container = container
+        let context = ModelContext(container)
+        context.autosaveEnabled = false
+        let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
+        let loops = (try? context.fetch(FetchDescriptor<Loop>())) ?? []
+        let songs = (try? context.fetch(FetchDescriptor<Song>())) ?? []
+        let routine = PracticePlanner.materialise(blocks, name: defaultName, exercises: exercises,
+                                                  loops: loops, songs: songs, into: context)
+        _editContext = State(initialValue: context)
+        _routine = State(initialValue: routine)
+        _existsInStore = State(initialValue: false)
+        _isEditing = State(initialValue: false)
+    }
+
     /// The next explicit order value — one past the current maximum, so appends land last
     /// regardless of prior deletions (never trust the item count, which drifts from `order`).
     private var nextOrder: Int { (routine.items.map(\.order).max() ?? -1) + 1 }
+
+    /// Whether the routine has at least one runnable block — a unit block whose unit still resolves.
+    /// Gates the Start button (an empty or all-orphaned routine has nothing to play).
+    private var hasPlayableBlock: Bool {
+        routine.items.contains { $0.kind.carriesUnit && $0.hasResolvableUnit }
+    }
 
     var body: some View {
         List {
@@ -114,6 +151,7 @@ struct RoutineDetailView: View {
         .navigationBarBackButtonHidden(isEditing)
         .environment(\.editMode, .constant(isEditing ? .active : .inactive))
         .toolbar { toolbarContent }
+        .safeAreaInset(edge: .bottom) { startBar }
         .sheet(isPresented: $addingUnit) {
             // Closing the sheet from the parent (not from inside the picker) means a pick from
             // any drill-in depth dismisses cleanly — a child's own dismiss would only pop.
@@ -121,6 +159,74 @@ struct RoutineDetailView: View {
                                 onPickLoop: { addLoop($0); addingUnit = false },
                                 onPickSong: { addSong($0); addingUnit = false })
         }
+        .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
+        .alert("Name this session", isPresented: $namingSave) {
+            TextField("Session name", text: $draftName)
+            Button("Save") { commitProvisional(named: draftName) }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Give it a name, or keep the suggested one.")
+        }
+    }
+
+    /// The bottom **Start** button that launches the player — the primary action once a routine is
+    /// built (ADR 0066/0071). Shown only in read-only mode (editing has Save/Cancel instead) and only
+    /// when there's something runnable. Pinned to the bottom via `safeAreaInset` so it floats over the
+    /// block list; every routine detail screen carries it.
+    @ViewBuilder
+    private var startBar: some View {
+        if !isEditing && hasPlayableBlock {
+            Button(action: startPlaying) {
+                Label("Start", systemImage: "play.fill")
+                    .font(.futura(.body, weight: .bold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(PocketColor.practice, in: Capsule())
+                    .foregroundStyle(PocketColor.background)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 8)
+            .accessibilityLabel("Start routine")
+        }
+    }
+
+    /// Start the session in the player. A **provisional** generated session is committed first
+    /// (Start is a deliberate keep, and running must write real practice history), then resolved into
+    /// the main context so its run screens write to the real store — not this view's editing sandbox.
+    private func startPlaying() {
+        if !existsInStore { commitProvisional(named: routine.name) }
+        playingRoutine = appContext.model(for: routine.persistentModelID) as? Routine
+        haptic(.medium)
+    }
+
+    /// Open the rename alert, seeded with the current (dated default) name — the "chance to name it"
+    /// before a provisional session is saved.
+    private func beginNaming() {
+        draftName = routine.name
+        namingSave = true
+        haptic(.light)
+    }
+
+    /// Commit a provisional Quick session to the library under `name` (or the current default if the
+    /// field was blanked), de-duplicated against the existing routines, and flip it into a normal
+    /// stored routine. Idempotent — a no-op once already stored.
+    private func commitProvisional(named name: String) {
+        guard !existsInStore else { return }
+        let requested = name.trimmingCharacters(in: .whitespaces)
+        routine.name = uniqueName(requested.isEmpty ? routine.name : requested)
+        try? editContext.save()
+        existsInStore = true
+        isEditing = false
+        haptic(.medium)
+    }
+
+    /// `base` de-duplicated against every *other* routine's name in the store — so an auto-default (or
+    /// a colliding custom name) becomes "base 2", "base 3", …
+    private func uniqueName(_ base: String) -> String {
+        let others = ((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])
+            .filter { $0.persistentModelID != routine.persistentModelID }
+            .map(\.name)
+        return QuickSessionNaming.uniqued(base, existing: others)
     }
 
     @ToolbarContentBuilder
@@ -132,6 +238,14 @@ struct RoutineDetailView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") { saveEdits() }
+                    .font(.futura(.body, weight: .bold))
+                    .tint(PocketColor.practice)
+            }
+        } else if !existsInStore {
+            // A provisional generated session: the primary action is an explicit Save (with a chance
+            // to rename), not Edit — nothing is in the library until the user commits it.
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Save") { beginNaming() }
                     .font(.futura(.body, weight: .bold))
                     .tint(PocketColor.practice)
             }

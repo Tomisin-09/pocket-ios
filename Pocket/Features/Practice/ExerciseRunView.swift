@@ -343,6 +343,10 @@ private extension ExerciseRunView {
     /// Persist the edits and hand the routine to this screen's own engine in one tap.
     private func commitAndStart() {
         persist()
+        // Stamp the exercise as practised now, so the planner's dueness / warm-up LRU advance
+        // (V2 planner Slice 1). Persist() already saved; this rides the next context save.
+        exercise.markPracticed()
+        try? modelContext.save()
         // Feed the exercise's meter to the run engine so the click's accents and the count-in
         // length honor it (ADR 0052), then hand over the routine.
         engine.setTimeSignature(signature)

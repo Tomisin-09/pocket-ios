@@ -17,6 +17,10 @@ struct ExerciseDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var notes: String
+    /// The exercise's self-rated mastery (0–5, `nil` = unrated), held locally and committed on
+    /// Done — the planner's dueScore *need* signal (V2 planner Slice 1, ADR 0070: self-set, never
+    /// measured). Mirrors the loop editor's mastery dots.
+    @State private var mastery: Int?
     /// The exercise's strumming pattern, held locally and committed on Done (ADR 0065). Seeded from
     /// the stored payload (a strumming exercise always has one), falling back to a bar-matched
     /// downstrokes canvas defensively. Only surfaced/committed for a strumming template.
@@ -39,6 +43,7 @@ struct ExerciseDetailSheet: View {
     init(exercise: Exercise) {
         self.exercise = exercise
         _notes = State(initialValue: exercise.notes)
+        _mastery = State(initialValue: exercise.mastery)
         _strum = State(initialValue: exercise.strumPattern
                        ?? .downstrokes(beatsPerBar: exercise.beatsPerBar))
         let content = exercise.fretboardContent
@@ -55,6 +60,7 @@ struct ExerciseDetailSheet: View {
             Form {
                 templateSection
                 descriptionSection
+                ExerciseProgressSection(mastery: $mastery, lastPracticed: exercise.lastPracticed)
                 temposSection
                 feelSection
                 routineSection
@@ -76,8 +82,8 @@ struct ExerciseDetailSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        commitNotes(); commitStrum(); commitFretboard(); commitChords()
-                        commitStrumChords(); dismiss()
+                        commitNotes(); commitMastery(); commitStrum(); commitFretboard()
+                        commitChords(); commitStrumChords(); dismiss()
                     }
                 }
             }
@@ -185,6 +191,14 @@ struct ExerciseDetailSheet: View {
         let trimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed != exercise.notes else { return }
         exercise.notes = trimmed
+        try? modelContext.save()
+    }
+
+    /// Persist an edited mastery rating on Done, only when it differs from what's stored — a
+    /// deliberate self-assessment (ADR 0070), never computed from playing.
+    private func commitMastery() {
+        guard mastery != exercise.mastery else { return }
+        exercise.mastery = mastery
         try? modelContext.save()
     }
 

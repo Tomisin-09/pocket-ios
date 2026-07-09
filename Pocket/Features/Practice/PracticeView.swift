@@ -50,37 +50,36 @@ struct PracticeView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // MARK: - Planner placeholder (V2)
+    // MARK: - Planner (V2 planner, Slice 3)
 
-    /// The orchestration entry — disabled until Phase C. Present now so Practice reads as the
-    /// two-altitude space the ADR describes (guided "build a session" above the focused libraries).
+    /// The orchestration entry (ADR 0046 / 0015): pushes the planner, where you pick a duration, keep
+    /// goals, and generate a session from your units. The guided "build a session" altitude above the
+    /// focused libraries.
     private var plannerCard: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "sparkles")
-                .font(.futura(.title2))
-                .foregroundStyle(PocketColor.practice)
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(PocketColor.practiceCircleWash))
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Build today's session")
-                    .font(.futura(.headline))
-                    .foregroundStyle(PocketColor.textPrimary)
-                Text("Guided routine from your units")
-                    .font(.futura(.subheadline))
+        NavigationLink { PlannerView() } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "sparkles")
+                    .font(.futura(.title2))
+                    .foregroundStyle(PocketColor.practice)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(PocketColor.practiceCircleWash))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Build today's session")
+                        .font(.futura(.headline))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    Text("Guided routine from your units")
+                        .font(.futura(.subheadline))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.futura(.footnote, weight: .semibold))
                     .foregroundStyle(PocketColor.textSecondary)
             }
-            Spacer(minLength: 8)
-            Text("SOON")
-                .font(.futura(.caption2, weight: .bold))
-                .tracking(1)
-                .foregroundStyle(PocketColor.textSecondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(PocketColor.barPlayed))
         }
         .listRowBackground(PocketColor.background)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Build today's session, coming soon")
+        .accessibilityLabel("Build today's session")
+        .accessibilityHint("Guided routine from your units")
     }
 
     // MARK: - Library rows

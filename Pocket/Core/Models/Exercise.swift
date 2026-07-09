@@ -138,6 +138,24 @@ final class Exercise {
     /// Optional free-text notes about the exercise.
     var notes: String = ""
 
+    /// How cleanly the player owns this exercise, 0–5 — or `nil` when never rated. The
+    /// **self-rating** the V2 planner's dueScore reads as *need* (ADR 0070 no-grading wall:
+    /// the app never measures how well you played; you set this). Mirrors `Loop.mastery`
+    /// (ADR 0039) exactly — **optional on purpose** so an untouched exercise reads "never
+    /// rated" rather than a fake `0` ("can't play it at all"). Optional is exempt from the
+    /// CoreData 134110 mandatory-attribute rule, so pre-planner exercises migrate to `nil`
+    /// with no store wipe. Never auto-decayed — time-driven resurfacing is `lastPracticed`'s
+    /// job, not this number's (the planner never silently lowers a rating the player set).
+    var mastery: Int?
+
+    /// When this exercise was last practised (a run started) — or `nil` when never run.
+    /// Feeds the planner on **two** axes from one field: *dueness* on the focused axis (an
+    /// exercise resurfaces as time passes since it was practised) and least-recently-used
+    /// *rotation* on the warm-up axis. Mirrors `Song.lastPracticed`. Optional with no
+    /// declaration default so pre-planner exercises migrate to `nil` (CoreData 134110 exempt)
+    /// — which is exactly the truth: never practised.
+    var lastPracticed: Date?
+
     /// When the exercise was created — the default library sort key.
     var dateAdded: Date = Date.now
 
@@ -180,6 +198,8 @@ final class Exercise {
          rampBackoffSteps: Int = 0,
          tags: [String] = [],
          notes: String = "",
+         mastery: Int? = nil,
+         lastPracticed: Date? = nil,
          dateAdded: Date = .now) {
         self.uid = UUID()
         self.name = name
@@ -201,8 +221,15 @@ final class Exercise {
         self.rampBackoffSteps = rampBackoffSteps
         self.tags = tags
         self.notes = notes
+        self.mastery = mastery
+        self.lastPracticed = lastPracticed
         self.dateAdded = dateAdded
     }
+
+    /// Mark this exercise practised **now** — stamps `lastPracticed` so the planner's dueness
+    /// (focused axis) and LRU rotation (warm-up axis) both advance. Called from the run path
+    /// when a run actually starts; deliberately does *not* touch `mastery` (self-rated only).
+    func markPracticed(_ date: Date = .now) { lastPracticed = date }
 
     /// The warm-up **floor** — the comfortable tempo a session's ramp begins from (ADR
     /// 0045). A clarity alias over the `currentTempo` storage (kept for migration); new

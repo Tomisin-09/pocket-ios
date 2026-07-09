@@ -9,7 +9,7 @@
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
 │              TempoMath · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · LoopLanes (pure)
-│   Models   — Song, Loop, Marker, Routine/RoutineItem · RoutineBudget · RoutineSessionCursor (pure player stepping, ADR 0071), Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun/ScaleRun/ArpeggioRun/GuitarScale/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ExerciseAudioEngine (silent-default audio seam)
+│   Models   — Song, Loop, Marker, Routine/RoutineItem, Goal (planner input, ADR 0073) · RoutineBudget · RoutineSessionCursor (pure player stepping, ADR 0071) · Planner: PlannerCandidate/SessionBlock/DueScore/SessionBuilder (back-half) + TechniqueTaxonomy/SkillFamilyMap/CandidateDeriver/GoalTemplate/PlannerLibrary/PlannerID (front-half, pure) + PracticePlanner (impure projector/materialiser, ADR 0072/0073), Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · MasteryRollup · LoopProgressFormat · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun/ScaleRun/ArpeggioRun/GuitarScale/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ExerciseAudioEngine (silent-default audio seam)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 ├─────────────────────────────────────────────────────────┤
@@ -182,8 +182,8 @@ Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044)
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
-from the metronome at the product level. `PracticeView` is a **hub**: a disabled "Build today's
-session" placeholder (the V2 planner) above two **unit libraries** — `ExerciseLibraryView`
+from the metronome at the product level. `PracticeView` is a **hub**: the live "Build today's
+session" planner entry (V2 planner Slice 3 — pushes `PlannerView`) above two **unit libraries** — `ExerciseLibraryView`
 (command-anchored click drills) and `LoopLibraryView` (measured song `Loop`s) — each a row that
 pushes its own list. The split is for clarity/accessibility; the two models stay separate
 (`Exercise` is audio-free, `Loop` is file-bound) but both are "things you train," the multi-source
@@ -207,8 +207,34 @@ and −10s/+10s, local/iCloud files only (ADR 0001); it loops until skipped by d
 once and advances per the `routineSongLoop` setting. It has **zero evaluation surface** (ADR 0070) —
 completion is the material's length, not a graded take. `RoutinePresets` seeds three curated in-house
 starter routines once on first launch (after `PracticePresets`, resolving blocks against the seeded
-exercises **by name**; exercise-only, since loops/songs need user audio at cold start). The planner (a
-producer of the same model) is the remaining later slice. `ExerciseLibraryView` owns exercise **create**
+exercises **by name**; exercise-only, since loops/songs need user audio at cold start). The **planner**
+(ADR 0072, V2 Slice 1) is now a live producer of this same `Routine`: a pure two-stage pipeline in
+`Pocket/Core/Planner/` — `DueScore` ranks candidates (`goalWeight × dueness(lastPracticed) ×
+(1 − mastery/5)`, ADR 0015 S5) and `SessionBuilder.buildSession` lays the ranked `PlannerCandidate`s
+into `[SessionBlock]` honouring the ADR 0014 pacing (60-min cap, ≤20-min blocks, rests between
+focused work, U-shape with the top-due drill last, warm-up LRU-picked / unbudgeted). Both import
+Foundation only (no SwiftData/SwiftUI), so they're unit-tested and reusable by a future AI producer
+(ADR 0002). The **front-half** (ADR 0073, V2 Slice 2) sits ahead of `buildSession`: a `Goal` (title,
+`weight`, `skillIDs` indexing the pure `TechniqueTaxonomy` table, optional `targetSong`) is expanded
+by `CandidateDeriver.deriveCandidates` into that ranked `[PlannerCandidate]` — Path A resolves a
+technique skill to library exercises via the coarse `SkillFamilyMap` (`ExerciseTemplate → [SkillID]`,
+no per-exercise tagging) **plus any loop the user tagged with a matching skill bucket** (ADR 0074,
+V2 Slice 4 — `SkillFamilyMap.recognizedTemplate(for:)` reads a `Loop.tag` back to a coarse template,
+projected onto `PlannerLoop.templates`; untagged loops stay Path-B only, no schema change), Path B
+resolves a `repertoire` skill to the goal's target song (its loops + the song run), with a **soft**
+down-weight when a skill's direct prerequisites are unrated (never a hard gate — ADR 0016 ↔ 0071 at
+the selection level). The dueScore multiply stays in `SessionBuilder`,
+so goal-priority and dueness/mastery compose once. `GoalTemplateLibrary` seeds four curated goals.
+The impure `PracticePlanner` (`@MainActor`) projects `Exercise`/`Loop`/`Song` into candidates
+(`planQuickSession`/`planGoalSession`) and materialises the blocks into a persisted `Routine`
+(exercises by `uid`, loops by `uid`, songs by a deterministic `PlannerID` since `Song` has no stored
+`uid`). The **UI** (ADR 0015/0073, V2 Slice 3) is `Features/Practice/PlannerView` — a duration
+selector (`SessionLength`), a list of `Goal`s, and **Generate** → a provisional `Routine` reviewed in
+`RoutineDetailView` before Start (no active goals ⇒ the Quick-session fallback) — and `GoalEditorView`
+(template picker → name → priority → skill-trim → optional target song → met/delete), with the pure
+`GoalPriority` mapping Low/Normal/High ↔ the stored `weight`. `Exercise` gained self-rated
+**`mastery: Int?`** + **`lastPracticed: Date?`** (mirroring `Loop`/`Song`; the app never grades
+playing — ADR 0070/0072), stamped on run and rated on the detail sheet. `ExerciseLibraryView` owns exercise **create**
 (`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
 (swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command

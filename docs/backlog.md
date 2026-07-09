@@ -30,15 +30,42 @@ docs so this stays a pointer list:
   goal-driven session generator: two pure functions — `deriveCandidates` (front-half,
   0015) → `buildSession` (back-half, 0014) — that produce a `Routine` (ADR 0066) run by
   the shipped player. Fully designed 2026-07-08; **cold-start build plan:
-  `docs/plans/planner-build-plan.md`** (branch `pocket-109-practice-planner`, Slice 1
-  next). Decisions locked: self-rated `Exercise.mastery` / `lastPracticed` feeding a
-  `dueScore` (no grading — ADR 0070); broad `ExerciseTemplate → [SkillID]` skill
-  resolution (no new per-exercise tagging); two candidate paths (technique → exercise,
-  repertoire → loop/song via `Goal.targetSong`); soft prereq staging (reconciles ADR
-  0016 with 0071); in-house goal templates; loop skill-tagging as a phase-2 slice;
-  **AI suggester deferred** — the planner ships fully local-first, no backend. The
-  substrate (routine model + player + presets, PR #102) has shipped, so this is now
-  the active V2 build.
+  `docs/plans/planner-build-plan.md`**. Decisions locked: self-rated `Exercise.mastery`
+  / `lastPracticed` feeding a `dueScore` (no grading — ADR 0070); broad
+  `ExerciseTemplate → [SkillID]` skill resolution (no new per-exercise tagging); two
+  candidate paths (technique → exercise, repertoire → loop/song via `Goal.targetSong`);
+  soft prereq staging (reconciles ADR 0016 with 0071); in-house goal templates; loop
+  skill-tagging as a phase-2 slice; **AI suggester deferred** — the planner ships fully
+  local-first, no backend. The substrate (routine model + player + presets, PR #102)
+  has shipped.
+  - **Slice 1 — back-half + mastery parity: DONE (branch `pocket-112-practice-planner`,
+    ADR 0072).** `Exercise` gained self-rated `mastery` + `lastPracticed`; pure
+    `DueScore` + `SessionBuilder.buildSession` + warm-up LRU (Foundation-only,
+    unit-tested); impure `PracticePlanner` projects/materialises a `Routine`; "Quick
+    session" ✨ button in the Routines library is the first surface (dueness-only).
+  - **Slice 2 — front-half: goals + candidate derivation: DONE (branch
+    `pocket-112-practice-planner`, ADR 0073).** `TechniqueTaxonomy` + `SkillFamilyMap`
+    (pure tables), `Goal` `@Model`, pure `CandidateDeriver.deriveCandidates` (Path A
+    technique→exercise via the family map, Path B repertoire→target-song loops+run,
+    soft direct-prereq down-weight), `GoalTemplateLibrary` (4 curated templates), and
+    `PracticePlanner.planGoalSession`/library projector + loop/song materialisation
+    (songs keyed by a deterministic `PlannerID`). Front-half composes with the back-half
+    end-to-end; unit-tested (ADR 0015 property list). No UI yet.
+  - **Slice 3 — planner UI: DONE (branch `pocket-112-practice-planner`, ADR 0015/0073).**
+    `PlannerView` (the live "Build today's session" entry in Practice): duration selector
+    (`SessionLength`), goals list, **Generate** → provisional `Routine` review → shipped
+    player, with a no-goals Quick-session fallback. `GoalEditorView`: template picker →
+    name → priority (`GoalPriority` Low/Normal/High ↔ `weight`, pure + unit-tested) →
+    skill-trim → optional target song → met toggle / delete. `RoutineDetailView`'s
+    provisional init broadened to resolve loop/song blocks.
+  - **Slice 4 — loop skill-tags: DONE (branch `pocket-112-practice-planner`, ADR 0074).**
+    A `Loop.tag` matching a coarse `ExerciseTemplate` bucket (recognised by
+    `SkillFamilyMap.recognizedTemplate(for:)`, offered as ✨ suggestions in the loop tag
+    editor) lets a technique goal's Path A surface that loop alongside exercises;
+    projected onto `PlannerLoop.templates`. Opt-in — untagged loops stay Path-B only;
+    reuses ADR 0034 tags (no schema change); pure + unit-tested.
+  - **Next — Slice 5 (AI decomposition): OUT OF SCOPE** — noted only. Planner ships
+    fully local-first; slices 1–4 complete the V2 planner.
 
 - **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
   play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer

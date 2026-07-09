@@ -42,6 +42,48 @@ All notable changes to Pocket are documented here. Format loosely follows
     appearance instead, and moved to its own file in the split.
 
 ### Added
+- **Loops can now feed technique goals (V2 planner Slice 4, ADR 0074).** Tag a loop with a skill
+  bucket — the loop tag editor offers ✨ **Picking / Legato / Scales / …** suggestions — and the
+  planner's technique goals will schedule that loop alongside your exercises, not just when you're
+  learning its song. It reuses the existing loop tags (no new setup), it's entirely opt-in (untagged
+  loops behave exactly as before, surfacing only via a "learn this song" goal), and it stays coarse:
+  a "Picking" loop answers any picking goal. All matching is pure and unit-tested.
+- **Build today's session — the practice planner is live (V2 planner Slice 3, ADRs 0014–0016/0015).**
+  Practice's "Build today's session" entry is no longer a placeholder: it opens a planner where you
+  pick how long you have (**Quick 15 / Focused 30 / Full 60**, default short), keep a short list of
+  **goals**, and tap **Generate** to get a ready-to-run session. A **goal editor** starts from one of
+  four curated templates ("Play a specific song", "Build speed", "Improvise in a style", "General
+  progress"), then lets you name it, set its priority (**Low / Normal / High**), trim its skills, and
+  — for a "learn a song" goal — pick the target song; editing adds a **met** toggle and delete. The
+  generated session opens as the same **provisional** routine you review before it's kept (Save to
+  name-and-keep, or Start to run it now; back out and it's discarded). With no active goals, Generate
+  falls back to a due-based Quick session so it always produces something.
+- **Goals feed the planner (V2 planner Slice 2, ADR 0073).** The planner's front-half now turns
+  what you *want to get better at* into what to practise. A **goal** carries a set of skills (from a
+  curated technique taxonomy) and an optional target song; the planner expands your active goals into
+  a ranked pool of your own exercises, loops and songs, then lays them out into a session — the same
+  ready-to-run routine the Quick session produces. Coarse, honest matching: a "sweep picking" goal
+  surfaces all your Picking drills (no per-exercise tagging in V2). A goal weighted harder pulls its
+  skills up; a skill whose prerequisites you haven't rated yet is *gently* down-weighted (it still
+  appears, just later — the app never refuses to schedule what you asked for); marking a goal met
+  drops it from the next session. Four in-house goal templates ("Play a specific song", "Build
+  speed", "Improvise in a style", "General progress") seed sensible skill sets. All selection logic
+  is pure, unit-tested (the ADR 0015 property list). The goal-editor UI ships in Slice 3 (above).
+- **Quick session — the practice planner's first surface (ADR 0072, V2 planner Slice 1).** A new
+  ✨ button in the Routines library generates a ready-to-run session from your exercise library and
+  opens it as a **provisional** routine you review before it's kept — nothing lands in the library
+  until you explicitly **Save** it (with a chance to rename; the default is dated and unique, e.g.
+  "8 Jul Quick Session", "… 2" for repeats the same day) or **Start** it. Back out and it's discarded.
+  It ranks drills by **dueness** — how long since you practised each,
+  softened by how well you've *rated* you own it (you set the rating; the app never scores your
+  playing, ADR 0070) — leads with a least-recently-used warm-up, keeps focused blocks short with
+  rests between them, and finishes on the most-due drill (the practice-science session shape, ADR
+  0014). No goals yet — that's the next slice; this already turns "I have 15 minutes" into a real
+  routine. Exercises gain a self-rated **mastery** dot rating and a **last-practised** readout on the
+  detail sheet, mirroring loops. The selection ranking and session layout are pure, unit-tested logic.
+- **Routine detail screens now have a bottom "Start" button.** Every routine's overview (hand-built
+  or generated) carries a pinned Start button that launches the player, so previewing the blocks and
+  starting the session are one screen apart — no more launching blind from the library row.
 - **Swap the transport's Loop/Marker sides (Settings → Transport).** The big idle Loop and Marker
   buttons flanking the practice transport bar can now be swapped left-to-right from a new **Transport**
   section in Settings. Default is unchanged — Marker on the left, Loop on the right; the toggle only
