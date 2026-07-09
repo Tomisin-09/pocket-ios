@@ -35,10 +35,6 @@ struct RoutineDetailView: View {
     /// The routine to run, resolved into the main context — drives the full-screen player. `nil`
     /// when not playing.
     @State private var playingRoutine: Routine?
-    /// Drives the "name this session" rename alert shown when saving a provisional Quick session.
-    @State private var namingSave = false
-    /// The editable name in that alert — seeded from the dated default, committed on confirm.
-    @State private var draftName = ""
 
     /// Build the sandbox. An existing routine is faulted into the child context by its id (opens
     /// read-only); a nil `existing` means a fresh routine created only in the sandbox, opened in edit
@@ -94,12 +90,23 @@ struct RoutineDetailView: View {
 
     var body: some View {
         List {
-            if isEditing {
-                Section("Name") {
+            // The name is editable both in edit mode and on a **provisional generated session** —
+            // surfaced inline (not buried behind a Save-time alert) so the session you'll keep going
+            // back to can be named right on the review screen (R1b).
+            if isEditing || !existsInStore {
+                Section {
                     TextField("Routine name", text: $routine.name)
                         .font(.futura(.body))
                         .foregroundStyle(PocketColor.textPrimary)
                         .listRowBackground(PocketColor.background)
+                } header: {
+                    Text("Name")
+                } footer: {
+                    if !existsInStore {
+                        Text("Name it to keep it in your routines and run it again.")
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
                 }
             }
 
@@ -160,13 +167,6 @@ struct RoutineDetailView: View {
                                 onPickSong: { addSong($0); addingUnit = false })
         }
         .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
-        .alert("Name this session", isPresented: $namingSave) {
-            TextField("Session name", text: $draftName)
-            Button("Save") { commitProvisional(named: draftName) }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Give it a name, or keep the suggested one.")
-        }
     }
 
     /// The bottom **Start** button that launches the player — the primary action once a routine is
@@ -199,34 +199,24 @@ struct RoutineDetailView: View {
         haptic(.medium)
     }
 
-    /// Open the rename alert, seeded with the current (dated default) name — the "chance to name it"
-    /// before a provisional session is saved.
-    private func beginNaming() {
-        draftName = routine.name
-        namingSave = true
-        haptic(.light)
-    }
-
-    /// Commit a provisional Quick session to the library under `name` (or the current default if the
-    /// field was blanked), de-duplicated against the existing routines, and flip it into a normal
-    /// stored routine. Idempotent — a no-op once already stored.
+    /// Commit a provisional generated session to the library under `name` (the inline Name field),
+    /// de-duplicated against the existing routines, and flip it into a normal stored routine. If the
+    /// field was blanked, fall back to a fresh dated default rather than saving an unnamed session.
+    /// Idempotent — a no-op once already stored.
     private func commitProvisional(named name: String) {
         guard !existsInStore else { return }
+        let others = ((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])
+            .filter { $0.persistentModelID != routine.persistentModelID }
+            .map(\.name)
         let requested = name.trimmingCharacters(in: .whitespaces)
-        routine.name = uniqueName(requested.isEmpty ? routine.name : requested)
+        let base = requested.isEmpty
+            ? QuickSessionNaming.defaultName(existing: others, date: .now)
+            : requested
+        routine.name = QuickSessionNaming.uniqued(base, existing: others)
         try? editContext.save()
         existsInStore = true
         isEditing = false
         haptic(.medium)
-    }
-
-    /// `base` de-duplicated against every *other* routine's name in the store — so an auto-default (or
-    /// a colliding custom name) becomes "base 2", "base 3", …
-    private func uniqueName(_ base: String) -> String {
-        let others = ((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])
-            .filter { $0.persistentModelID != routine.persistentModelID }
-            .map(\.name)
-        return QuickSessionNaming.uniqued(base, existing: others)
     }
 
     @ToolbarContentBuilder
@@ -242,10 +232,11 @@ struct RoutineDetailView: View {
                     .tint(PocketColor.practice)
             }
         } else if !existsInStore {
-            // A provisional generated session: the primary action is an explicit Save (with a chance
-            // to rename), not Edit — nothing is in the library until the user commits it.
+            // A provisional generated session: the primary action is an explicit Save, not Edit —
+            // nothing is in the library until the user commits it. The name is edited inline in the
+            // Name section above (R1b), so Save commits the current name directly.
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") { beginNaming() }
+                Button("Save") { commitProvisional(named: routine.name) }
                     .font(.futura(.body, weight: .bold))
                     .tint(PocketColor.practice)
             }

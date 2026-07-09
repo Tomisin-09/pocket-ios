@@ -14,12 +14,16 @@ import SwiftUI
 struct RoutinePlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    /// The routine being run — held so we can stamp `lastPracticed` when the session starts (the
+    /// home hub's "recent routines" rail reads it). The player itself is a pure conductor over stages.
+    private let routine: Routine
     @State private var player: RoutineSessionPlayer
     /// The just-finished unit block awaiting an end-of-block reflection (ADR 0071), or `nil`. Set
     /// when a block completes with the reflection setting on; dismissing the sheet advances.
     @State private var reflectingStage: RoutineStage?
 
     init(routine: Routine) {
+        self.routine = routine
         _player = State(initialValue: RoutineSessionPlayer(routine: routine))
     }
 
@@ -37,11 +41,21 @@ struct RoutinePlayerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(PocketColor.background.ignoresSafeArea())
         }
-        .onAppear(perform: player.start)
+        .onAppear { player.start(); markPracticed() }
         .onDisappear(perform: player.end)
         .sheet(item: $reflectingStage, onDismiss: player.advance) { stage in
             reflectionSheet(for: stage)
         }
+    }
+
+    /// Stamp the routine as practised *now* — for the home hub's "recent routines" rail. Only when
+    /// there's something to play (an empty/all-orphaned routine lands straight on the "Nothing to
+    /// play" summary, which isn't a practice). Setting the property dirties the model; save so the
+    /// rail reflects it even if the app is backgrounded before the next autosave.
+    private func markPracticed() {
+        guard !player.stages.isEmpty else { return }
+        routine.lastPracticed = .now
+        try? modelContext.save()
     }
 
     /// A block finished on its own. With the reflection setting on, pause on a journal sheet for that
@@ -146,6 +160,8 @@ struct RoutinePlayerView: View {
         .padding(24)
         .navigationTitle("Rest")
         .routineSessionChrome(context)
+        .keepAwakeDuringPractice()   // hold the screen through the rest (ADR 0050); the block run
+                                     // screens have it, but a rest has no child to assert it
     }
 
     // MARK: - Finished
@@ -173,6 +189,7 @@ struct RoutinePlayerView: View {
         }
         .padding(.horizontal, 24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .keepAwakeDuringPractice()   // the summary lingers on screen after the last block (ADR 0050)
     }
 
     /// A judgement-free recap — just *what* you worked through this session, no scores (ADR 0070).

@@ -191,7 +191,9 @@ surface the planner composes from. That composition now has a home: **`Routine` 
 (ADR 0066) is the multi-unit *session* container — an ordered list of typed blocks (`focused` /
 `warmup` / `play` / `rest`), each non-rest block referencing exactly one `Exercise`/`Loop`/`Song`
 via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orphans the block
-rather than deleting the routine). Its pacing rules (only focused work budgeted; block caps;
+rather than deleting the routine). An additive optional `Routine.lastPracticed: Date?` is stamped
+when a session starts (safe SwiftData lightweight migration) and drives the home hub's "recent
+routines" rail. Its pacing rules (only focused work budgeted; block caps;
 proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. Authoring is a
 sandboxed editor (`RoutineDetailView`, child `ModelContext` committed only on Save), and the
 **player** (ADR 0071) is a *thin* session conductor — `RoutineSessionPlayer` (`@Observable`, owns no

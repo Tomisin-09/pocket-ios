@@ -272,6 +272,16 @@ name carries it.
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
+- **Bulk song import from local/iCloud files.** The Add-song button currently imports one
+  file. Extend it to multi-select. Desired routing (agreed 2026-07-09): a **single** added
+  song lands on its **waveform** (straight into practice); a **bulk** import returns to the
+  **library** (no waveform hop). Needs the `fileImporter` set to `allowsMultipleSelection`
+  and the post-import navigation to branch on count.
+- **Loop edit blocked while playing.** You can't edit a loop's practice details (ramp/reach
+  etc.) while that loop is activated and playing — you have to pause first. Decide the intended
+  behaviour: allow live edits, or make the "pause to edit" requirement explicit/graceful rather
+  than a silent block. Found on device 2026-07-09.
+
 - **Manual target override (loops, and likely exercises).** Let a player set their own reach
   instead of the auto-derived one (ADR 0059 makes the derived reach a milestone capped at song
   tempo, then overspeed). User asked for this but flagged it as **not immediate**. Design Qs: is it
