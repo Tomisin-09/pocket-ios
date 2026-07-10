@@ -120,13 +120,13 @@ docs so this stays a pointer list:
       `PracticePresets` (curated in-house ordered exercise sequences — "10-Min
       Warm-Up", "Alt-Picking Builder", "Chord-Change Bootcamp"; same one-time-flag,
       deletion-sticks pattern; encode the method, author all copy in-house).
-    - **Build-order consequence:** ship **exercise + loop** routines first, **defer
-      Song items.** Exercise/loop items run in the compact run screens; only a Song
-      item needs the hard full-waveform-screen handoff (slice 3). Exercises-first
-      therefore *shrinks* the risky slice. Keep the model **freeform** (any mix) — no
-      rigid "routine type" enum; curate exercise-heavy routines via presets, not
-      schema. Authoring: sectioned add-unit picker (Exercises / Loops / Songs) with
-      exercises as a primary source. No new model ADR needed — lives inside 0066 R4;
+    - **Build-order consequence (all SHIPPED now):** exercise + loop routines shipped
+      first, then **Song items too** — a song block runs the audio-only `SongPlayAlongView`
+      (own `SongPlayAlongModel` / `PracticeAudioEngine`; fixed play-along speed, no waveform
+      handoff needed after all), authored via `AddRoutineUnitSheet`'s flat **Songs** bucket
+      (`onPickSong`) and played by `RoutineSessionPlayer`. The model stayed **freeform** (any
+      mix) — no rigid "routine type" enum; exercise-heavy routines curated via presets, not
+      schema. No new model ADR needed — lives inside 0066 R4;
       `RoutinePresets` is its own slice after the player works.
   - **`RoutinePresets` — SHIPPED (2026-07-08), folded into the routines PR #102.** Three
     curated in-house starter routines (Morning Warm-up, Picking Builder, Rhythm & Changes)
@@ -330,7 +330,13 @@ editable inline in the song details sheet. Narrowed ADR 0012's three-scope
 forecast to loop-only; markers get neither. AI summaries over the journal remain
 in the AI phase (below).
 
-## Journal authoring → Practice screen (ownership shape settled — ADR 0058)
+## Journal authoring → Practice screen — SHIPPED (ADR 0058)
+
+**SHIPPED.** Journal authoring lives on the Practice run screens (`ExerciseRunView` /
+`LoopRunView` — `JournalSheet(owner:)` + `JournalPreviewSection`), the waveform journal
+is read-only, and exercises have their own journal (polymorphic `JournalEntry`, owner =
+loop XOR exercise, with the honest `commandBpmAtEntry` snapshot). The migration was
+device-verified and merged. The original plan is kept below for record.
 
 **Ownership decided (ADR 0058, 2026-07-01):** one polymorphic `JournalEntry`
 (owner = loop **XOR** exercise), reusing the existing list/undo/kind/sheet
@@ -340,11 +346,10 @@ Additive schema (new optional `exercise` relationship + `commandBpmAtEntry`) —
 device-verify the migration before merge. **Loops-first is an acceptable partial
 ship** if the exercise side slips.
 
-**Built (2026-07-02).** Model layer + full UI: `JournalOwner`/`JournalWriter`
-shared write path, `JournalSheet(owner:readOnly:)` generalised from the loop-only
-sheet, book button on both run screens, waveform journal made read-only, old
-waveform write helpers retired. 531 tests green. **Remaining: on-device migration
-verification before merge.**
+**Built (2026-07-02), device-verified & MERGED.** Model layer + full UI:
+`JournalOwner`/`JournalWriter` shared write path, `JournalSheet(owner:readOnly:)`
+generalised from the loop-only sheet, book button on both run screens, waveform journal
+made read-only, old waveform write helpers retired.
 
 
 Relocate journal **authoring** to the Practice run screens; make the waveform
