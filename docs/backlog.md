@@ -595,7 +595,7 @@ the original compact bar once a loop is active** (small stacked Loop/Marker colu
 the running loop already reads on the existing Loops panel below. So the mock's "dedicated
 active-loop Loops panel" is **resolved by reuse** — no new panel needed. One follow-up remains:
 
-- **Home-settings toggle to swap Loop/Marker sides.** The user wants the left/right placement of the
-  idle Loop and Marker controls to be user-configurable from the **Home settings** (Settings screen),
-  not hardcoded. Add a persisted preference (e.g. `AppStorage`) and thread it into `TransportBar` so
-  the two flanking controls swap sides. Default stays Marker-left / Loop-right.
+- ~~**Home-settings toggle to swap Loop/Marker sides.**~~ **SHIPPED.** Settings has a
+  **"Loop control on left"** toggle (`AppSettings.transportLoopOnLeft`, default off = Marker-left /
+  Loop-right) which `WaveformTransportBar` reads to swap the two idle flanking controls. Applies to
+  the idle buttons only — while a loop is active the compact column + colour strip keep their sides.
