@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Repeat a routine block.** In the routine editor, tap a block while editing to set how many times
+  it repeats (1–9), so you can say "run this warm-up three times before moving on." A repeated block
+  shows a small `×N` badge in the routine, and the estimated length accounts for it. In the player, a
+  repeated block runs back-to-back with a **"Rep 2 of 3"** counter on the progress strip; the Done
+  screen (mastery + note) appears only after the last rep, and **Skip** jumps past any remaining reps
+  to the next block.
 - **Set your own target tempo.** The **Reach** — the goal speed above the command tempo you own — used
   to be fixed at an automatic "a little faster." Now you can edit it directly, on both exercises and
   loops: nudge or type the Reach in the run setup (Practice Settings) or the exercise's Tempo section,

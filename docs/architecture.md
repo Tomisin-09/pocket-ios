@@ -213,7 +213,12 @@ callbacks; the conductor itself plays only the fixed rest countdown. On completi
 **Done screen** (`RoutineBlockDoneView` — completion beat + optional mastery tap + optional inline note +
 an **Up next** preview of the next unit, committed together on Continue/Finish) — **manual advance the
 default** (ADR 0071 R4); the `routineAutoAdvance` setting (default off) advances straight through
-instead, and a Skip always bypasses the gate. Each block is previewable **before** the routine starts
+instead, and a Skip always bypasses the gate. A block authored to **repeat** (`RoutineItem.reps`, ADR
+0076) runs back-to-back that many times before advancing — the pure cursor carries a rep counter
+alongside the block index, `advance()` steps the rep (rolling to the next block on the last one) while
+a user **Skip** (`skip()`) abandons remaining reps; the Done screen shows only after the last rep, the
+progress strip reads "Rep N of M", and the run screen is keyed on the rep so each restarts fresh. Each
+block is previewable **before** the routine starts
 (ADR 0071 R4b): tapping an exercise/loop block in the detail editor pushes a read-only `RoutineBlockPreview`
 (content + tempo + staircase + a short audio audition — a `CommandTempoPreviewPlayer` metronome click for
 exercises, a `LoopAudioPreviewPlayer` of the loop's real audio for loops, each on its own engine). Because

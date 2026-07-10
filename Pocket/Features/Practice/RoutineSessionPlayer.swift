@@ -7,6 +7,9 @@ import SwiftData
 struct RoutineStage: Identifiable {
     let id: UUID
     let title: String
+    /// How many times this block runs back-to-back before the session advances (ADR 0076) — the
+    /// block's `RoutineItem.effectiveReps`. `1` for a single run and always for a rest.
+    let reps: Int
     let payload: Payload
 
     enum Payload { case exercise(Exercise), loop(Loop), song(Song), rest }
@@ -66,6 +69,13 @@ final class RoutineSessionPlayer {
     var progressLabel: String { cursor.progressLabel }
     var isFinished: Bool { state == .finished }
 
+    /// 1-based run within the current block, and whether another rep remains (ADR 0076). The player
+    /// view keys each run screen on `currentRep` so a fresh rep restarts the drill, and shows
+    /// `repLabel` while a multi-rep block is in play.
+    var currentRep: Int { cursor.rep }
+    var hasMoreReps: Bool { cursor.hasMoreReps }
+    var repLabel: String { cursor.repLabel }
+
     /// The block after the current one — drives the rest screen's "up next" preview; `nil` if the
     /// current block is the last.
     var upNext: RoutineStage? {
@@ -99,7 +109,7 @@ final class RoutineSessionPlayer {
         let playable = routine.orderedItems.filter { !$0.isOrphaned && Self.isPlayable($0) }
         let mapped = playable.map(Self.stage(for:))
         stages = mapped
-        cursor = RoutineSessionCursor(total: mapped.count)
+        cursor = RoutineSessionCursor(reps: mapped.map(\.reps))
     }
 
     /// Whether the player can actually run this block's unit. Exercises and loops always can; a song
@@ -111,19 +121,20 @@ final class RoutineSessionPlayer {
     }
 
     private static func stage(for item: RoutineItem) -> RoutineStage {
+        let reps = item.effectiveReps
         if let exercise = item.exercise {
             let title = exercise.name.isEmpty ? "Exercise" : exercise.name
-            return RoutineStage(id: item.uid, title: title, payload: .exercise(exercise))
+            return RoutineStage(id: item.uid, title: title, reps: reps, payload: .exercise(exercise))
         }
         if let loop = item.loop {
             return RoutineStage(id: item.uid, title: loop.name.isEmpty ? "Loop" : loop.name,
-                                payload: .loop(loop))
+                                reps: reps, payload: .loop(loop))
         }
         if let song = item.song {
             return RoutineStage(id: item.uid, title: song.title.isEmpty ? "Song" : song.title,
-                                payload: .song(song))
+                                reps: reps, payload: .song(song))
         }
-        return RoutineStage(id: item.uid, title: "Rest", payload: .rest)
+        return RoutineStage(id: item.uid, title: "Rest", reps: 1, payload: .rest)
     }
 
     // MARK: - Lifecycle
@@ -142,10 +153,21 @@ final class RoutineSessionPlayer {
         state = .finished
     }
 
-    /// Advance to the next block — the shared path for a natural completion *and* a user Skip.
+    /// Advance on a **natural completion** (ADR 0076): step to the next rep of a multi-rep block, or —
+    /// on its last rep — roll to the next block. Also the path a rest countdown and a Done-screen
+    /// Continue take (both land on the last rep). The player view keys the run screen on `currentRep`,
+    /// so a next-rep advance restarts the same drill fresh.
     func advance() {
         stopRestTimer()
         cursor.advance()
+        beginCurrentStage()
+    }
+
+    /// **Skip** to the next block (user-initiated), abandoning any remaining reps of the current one —
+    /// distinct from `advance()`, which would only step to the next rep of a multi-rep block.
+    func skip() {
+        stopRestTimer()
+        cursor.skip()
         beginCurrentStage()
     }
 
