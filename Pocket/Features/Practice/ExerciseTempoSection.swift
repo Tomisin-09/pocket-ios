@@ -15,10 +15,25 @@ struct ExerciseTempoSection: View {
     /// The edited command tempo, committed by the host sheet on Done. Editable only for a measured
     /// command; an un-measured exercise shows a read-only "not yet measured".
     @Binding var command: Int
+    /// A manually pinned **reach** (BPM), or `nil` for the auto derivation (ADR 0075). Held by the
+    /// host, committed on Done. Kept above command; a command nudged up to it clears the pin here.
+    @Binding var reachOverride: Int?
 
     /// A self-contained metronome audio preview — owns its own engine, so it never disturbs a live
     /// practice engine, and auto-stops after a few seconds.
     @State private var preview = CommandTempoPreviewPlayer()
+
+    /// The **auto** reach derived from the held command — the reset-to-auto fallback (ADR 0075).
+    private var autoReach: Int { TempoStretch.targetBPM(forCommand: command) }
+    /// The **effective** reach: a pin when set, else the auto derivation.
+    private var reach: Int { reachOverride ?? autoReach }
+    private var reachIsCustom: Bool { reachOverride != nil }
+
+    /// Reach steps stay strictly above command (a goal you haven't reached yet).
+    private var reachRange: ClosedRange<Int> {
+        let upper = StandaloneMetronomeEngine.bpmRange.upperBound
+        return min(command + 1, upper)...upper
+    }
 
     var body: some View {
         Section {
@@ -35,15 +50,48 @@ struct ExerciseTempoSection: View {
                         .foregroundStyle(PocketColor.textSecondary)
                 }
             }
-            LabeledContent("Reach") { bpmText(exercise.derivedTarget) }
+            Stepper(value: reachBinding, in: reachRange) {
+                LabeledContent {
+                    bpmText(reach)
+                } label: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Reach")
+                        Text(reachIsCustom ? "custom goal" : "auto · +\(max(0, reach - command))")
+                            .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
+                    }
+                }
+            }
+            if reachIsCustom {
+                Button {
+                    reachOverride = nil; haptic(.light)
+                } label: {
+                    Label("Reset to auto", systemImage: "arrow.uturn.backward")
+                        .font(.futura(.subheadline))
+                        .foregroundStyle(PocketColor.practice)
+                }
+            }
         } header: {
             Text("Tempo")
         } footer: {
             Text("Command is the fastest you own it clean; working is the warm-up floor and reach is "
-                 + "the goal above command. Nudge command here or hear it, and fine-tune every anchor "
-                 + "on the run screen.")
+                 + "the goal above command. Nudge command or reach here (or hear command), and "
+                 + "fine-tune every anchor on the run screen.")
+        }
+        .onChange(of: command) { _, updated in
+            // A command nudged up to meet the pin drops it — a reach must stay above command (ADR 0075).
+            if let pinned = reachOverride, pinned <= updated { reachOverride = nil }
         }
         .onDisappear { preview.stop() }
+    }
+
+    /// Drives the reach Stepper: reads the effective reach, writes a clamped pin (clearing to auto
+    /// when it lands back on the derived value), so ± and typing share one clamp (ADR 0075).
+    private var reachBinding: Binding<Int> {
+        Binding(get: { reach }, set: { newValue in
+            let upper = StandaloneMetronomeEngine.bpmRange.upperBound
+            let clamped = min(upper, max(command + 1, newValue))
+            reachOverride = (clamped == autoReach) ? nil : clamped
+        })
     }
 
     /// A short metronome audio preview of the command tempo — an audition, not a run.

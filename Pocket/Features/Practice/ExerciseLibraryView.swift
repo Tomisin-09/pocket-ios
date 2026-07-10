@@ -60,7 +60,7 @@ struct ExerciseLibraryView: View {
                                 PracticeUnitRow(
                                     title: exercise.name.isEmpty ? "Untitled" : exercise.name,
                                     progress: "Command \(exercise.command) → "
-                                        + "\(exercise.derivedTarget) BPM")
+                                        + "\(exercise.reachTempo) BPM")
                             }
                             .listRowBackground(PocketColor.background)
                         }

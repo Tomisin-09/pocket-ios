@@ -15,10 +15,15 @@ struct PracticeSettingsPanel: View {
     let working: Int
     let command: Int
     let reach: Int
+    /// Whether the reach is a manual pin (vs the auto derivation) — drives the caption + reset button.
+    let reachIsCustom: Bool
     let onStepWorking: (Int) -> Void
     let onTypeWorking: (Int) -> Void
     let onStepCommand: (Int) -> Void
     let onTypeCommand: (Int) -> Void
+    let onStepReach: (Int) -> Void
+    let onTypeReach: (Int) -> Void
+    let onResetReach: () -> Void
 
     // Steps — bound straight through to the nested `RoutineStepsControls`.
     @Binding var stepsExpanded: Bool
@@ -83,18 +88,23 @@ struct PracticeSettingsPanel: View {
                              tint: tint, onStep: onStepWorking, onType: onTypeWorking)
             EditableTempoRow(label: "Command", caption: "fastest you own", value: command,
                              tint: tint, onStep: onStepCommand, onType: onTypeCommand)
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Reach").font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
-                    Text("auto · +\(reach - command) BPM")
-                        .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
+            EditableTempoRow(label: "Reach", caption: reachCaption, value: reach, tint: tint,
+                             onStep: onStepReach, onType: onTypeReach)
+            if reachIsCustom {
+                Button(action: onResetReach) {
+                    Label("Reset to auto", systemImage: "arrow.uturn.backward")
+                        .font(.futura(.caption)).foregroundStyle(tint)
                 }
-                Spacer()
-                Text("\(reach) BPM")
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(tint)
-                    .contentTransition(.numericText())
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .accessibilityHint("Clear the custom reach; use the auto-derived goal")
             }
         }
+    }
+
+    /// The Reach caption: custom-vs-auto (ADR 0075). Auto shows the derived stretch above command;
+    /// a pin reads "custom goal" so the override state is legible at a glance.
+    private var reachCaption: String {
+        reachIsCustom ? "custom goal" : "auto · +\(max(0, reach - command)) BPM"
     }
 }

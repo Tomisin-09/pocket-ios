@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Set your own target tempo.** The **Reach** — the goal speed above the command tempo you own — used
+  to be fixed at an automatic "a little faster." Now you can edit it directly, on both exercises and
+  loops: nudge or type the Reach in the run setup (Practice Settings) or the exercise's Tempo section,
+  and it sticks. A **Reset to auto** button appears whenever you've set a custom goal, and the caption
+  switches from "auto · +X" to "custom goal" so you can tell at a glance. A target always sits above the
+  tempo you already own — promoting your command up to (or past) a custom target automatically hands the
+  reach back to auto above your new command.
 - **Import a whole batch of songs at once.** The library's **+** now lets you pick several audio files in
   one go instead of one at a time. Each file's waveform is decoded off the main thread with an
   "Importing N of M…" progress card, so the app stays responsive, and files that can't be read (empty,
@@ -54,6 +61,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **Routines play straight through.** Because every block is previewable up front, tapping **Start** now
   runs straight into the first exercise (after the count-in) instead of waiting on a per-block preview.
   Turning *Auto-start blocks* off still makes every block wait for a manual start.
+
+### Changed
+- **The practice transport bar no longer shows a duplicate timecode.** When no loop was active, the
+  transport bar's centre displayed the playback time — the same value already shown by the time bubble
+  that rides the playhead on the waveform. The redundant readout is gone; the row keeps its height, so
+  nothing shifts, and the playhead's time bubble still tracks as before.
 
 ### Fixed
 - **A loop's Focus and Type now actually change in its edit sheet.** On the waveform, opening a loop's

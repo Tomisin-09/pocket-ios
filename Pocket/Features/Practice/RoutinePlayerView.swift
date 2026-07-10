@@ -112,7 +112,7 @@ struct RoutinePlayerView: View {
     /// (song). Mirrors `RoutineItemRow`.
     private func detailLine(for stage: RoutineStage) -> String? {
         if let exercise = stage.exercise {
-            return "Command \(exercise.command) → \(exercise.derivedTarget) BPM"
+            return "Command \(exercise.command) → \(exercise.reachTempo) BPM"
         }
         if let loop = stage.loop { return loop.song?.title }
         if let song = stage.song { return song.artist.isEmpty ? "Play-along" : song.artist }

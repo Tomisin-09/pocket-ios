@@ -166,7 +166,6 @@ import SwiftUI
         TransportBar(isPlaying: false, onPlayPause: {},
                      onRestart: {}, onPrevious: {}, onNext: {},
                      hasPrevious: false, hasNext: true,
-                     currentTime: 10,
                      loop: song.loops.first,
                      loopColor: song.loops.first.map { LoopColor.color(for: $0, among: song.loopsByStart) },
                      onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
@@ -179,7 +178,6 @@ import SwiftUI
         TransportBar(isPlaying: true, onPlayPause: {},
                      onRestart: {}, onPrevious: {}, onNext: {},
                      hasPrevious: false, hasNext: false,
-                     currentTime: 47,
                      loop: nil, loopColor: nil,
                      onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
     }

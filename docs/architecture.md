@@ -181,6 +181,9 @@ captures the current (breakdown) tempo and presents Practice's
 funnel through the single `Exercise.commandAnchored(name:command:)` factory, so the two entry
 points can't drift. **Command-anchored progress** (ADR
 0045) — reach = command + ~6%, clamped — is the pure `TempoStretch`, now exercised from Practice.
+The reach can also be **manually pinned** (ADR 0075): optional `Exercise.targetTempoOverride` /
+`Loop.targetSpeedOverride` fields, read through the effective `reachTempo` / `targetSpeed`
+accessors (`override ?? auto`), with `promoteCommand` auto-clearing a pin once command catches up.
 Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044), full-screen.
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from

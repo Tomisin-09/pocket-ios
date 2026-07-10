@@ -57,7 +57,7 @@ struct LoopLibraryView: View {
                         PracticeUnitRow(title: loop.name.isEmpty ? "Untitled loop" : loop.name,
                                         context: loop.song?.title,
                                         progress: "Command \(LoopCommandRamp.percent(loop.command))% → "
-                                            + "\(LoopCommandRamp.percent(loop.derivedTargetSpeed))%")
+                                            + "\(LoopCommandRamp.percent(loop.targetSpeed))%")
                     }
                     .listRowBackground(PocketColor.background)
                 }

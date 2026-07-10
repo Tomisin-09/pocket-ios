@@ -44,7 +44,7 @@ struct ExerciseBlockPreview: View {
                 if let sheet = exercise.strumChordSheet { StrumChordsPreview(sheet: sheet) }
 
                 PreviewTempoReadout(anchors: "\(exercise.workingTempo) → \(exercise.command)",
-                                    reach: "\(exercise.derivedTarget)", unit: "BPM")
+                                    reach: "\(exercise.reachTempo)", unit: "BPM")
                 RoutineStairs(plateaus: exercise.ramp.plateaus, tint: PocketColor.practice)
                     .frame(height: 120)
                 if let strumPattern {
