@@ -10,11 +10,11 @@ The order below reflects a deliberate scoping call, not just priority:
 
 - **V1 (first release):** practice screen + library + a richer **creation
   experience** + **notes/journal**. **No planner.**
-- **Planner → V2, now in progress (2026-07-08).** Routine generation and
-  goal-driven selection (ADRs 0014 / 0015 / 0016) are the active V2 workstream now
-  that V1 (notes/journal) and the routine substrate (ADR 0066, PR #102) have shipped.
-  Fully designed with a cold-start build plan — see **Practice planner** under
-  "V2 vision" below.
+- **Planner → V2, SHIPPED (2026-07-10).** Routine generation and goal-driven selection
+  (ADRs 0014 / 0015 / 0016) shipped across Slices 1–4 plus the review-refinements pass, player
+  polish, and the reps follow-up (ADR 0076). The planner is functionally complete and live. What
+  remains is the deferred tail — **AI decomposition** (gated on the AI phase) and the
+  **learned-target reach default** — neither scheduled. See **Practice planner** under "V2 vision".
 - **AI layer → late phase.** Every AI feature (note summaries, suggested
   automator settings, etc.) is built only once the rest of the app is solid
   and the foundations are in place: the Claude proxy backend (ADR 0002, still
@@ -64,8 +64,12 @@ docs so this stays a pointer list:
     editor) lets a technique goal's Path A surface that loop alongside exercises;
     projected onto `PlannerLoop.templates`. Opt-in — untagged loops stay Path-B only;
     reuses ADR 0034 tags (no schema change); pure + unit-tested.
-  - **Next — Slice 5 (AI decomposition): OUT OF SCOPE** — noted only. Planner ships
-    fully local-first; slices 1–4 complete the V2 planner.
+  - **Slices 1–4 complete the V2 planner (all shipped).** Plus the full review-refinements pass
+    (R0–R5), player polish (P1–P3), and the reps authoring follow-up (ADR 0076, PR #117). The
+    planner is functionally complete and live.
+  - **Deferred (user, 2026-07-10), not now:** **Slice 5 (AI decomposition)** — still OUT OF SCOPE,
+    gated on the AI phase; and the **learned-target reach default** fast-follow (its own future ADR;
+    ADR 0075's manual pins are its data substrate).
 
 - **Exercise content templates — ADR 0065 (Accepted).** A per-exercise "what to
   play" layer (`Exercise.kind` + a versioned `Codable` `templatePayload`, renderer
@@ -272,11 +276,11 @@ name carries it.
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
-- **Bulk song import from local/iCloud files.** The Add-song button currently imports one
-  file. Extend it to multi-select. Desired routing (agreed 2026-07-09): a **single** added
-  song lands on its **waveform** (straight into practice); a **bulk** import returns to the
-  **library** (no waveform hop). Needs the `fileImporter` set to `allowsMultipleSelection`
-  and the post-import navigation to branch on count.
+- ~~**Bulk song import from local/iCloud files.**~~ **SHIPPED (PR #114, pocket-120, 2026-07-10).**
+  Multi-select `fileImporter` on both entry points (home hub + library `+`); each file decoded off
+  the main thread behind an "Importing N of M…" overlay, partial-failure tolerant (unreadable/DRM
+  files skipped, good ones still import) with a summary alert. Home import navigates into the library
+  afterwards; library stays put. Pure `SongImportSummary` unit-tested.
 - ~~**Loop edit "blocked while playing".**~~ **FIXED (pocket-121, 2026-07-10.)** The real cause
   wasn't playback at all: in a loop's waveform edit sheet the **Focus** and **Type** rows were
   interactive `.menu` `Picker`s in a `LabeledContent` value slot, which need several taps to register and
@@ -284,13 +288,22 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
   are now a plain `Button` opening a `confirmationDialog` that writes the choice directly (a `Menu` of
   `Button`s was tried first but still needed multiple taps). Mastery/Command tempo always worked — not Pickers.
 
-- **Manual target override (loops, and likely exercises).** Let a player set their own reach
-  instead of the auto-derived one (ADR 0059 makes the derived reach a milestone capped at song
-  tempo, then overspeed). User asked for this but flagged it as **not immediate**. Design Qs: is it
-  a per-loop stored override that suppresses the derivation, or a one-off nudge on the run screen?
-  How does a manual target interact with the 100% milestone cap and promote? Keep the derived value
-  as the default; manual is opt-in. Probably a stored `Loop` field (additive) + an editable control
-  on the run screen next to the reach readout.
+- ~~**Manual target override (loops, and likely exercises).**~~ **SHIPPED (PR #116, pocket-122,
+  2026-07-10) — ADR 0075.** Applied to **both** loops (`Loop.targetSpeedOverride: Double?`, ×) and
+  exercises (`Exercise.targetTempoOverride: Int?`, BPM) — additive optionals read through effective
+  `targetSpeed`/`reachTempo` (`override ?? auto`). The reach is editable in place (run-setup Practice
+  Settings + the exercise Tempo section) with **reset-to-auto**; a pin must stay above command, so
+  `promoteCommand` **auto-clears** it once command catches up. `Exercise.targetTempo` went vestigial
+  (retained, unwritten). Also dropped the redundant idle transport timecode. **Fast-follow deferred:**
+  a per-user on-device *learned* reach default over the accumulated pins (own future ADR) — the pins
+  are its data substrate; not built (no data to train on yet).
+
+- ~~**Routine block repeats (reps authoring follow-up).**~~ **SHIPPED (PR #117, pocket-123,
+  2026-07-10) — ADR 0076.** The R3 `RoutineItem.reps`/`effectiveReps` + reps-aware length estimate
+  were infra-only; this added authoring (tap a unit block in edit mode → a `BlockRepsEditor` sheet
+  with a stepper, 1–9; a tappable `×N` chip is the affordance) and player looping (a multi-rep block
+  runs back-to-back with a "Rep N of M" counter, Done screen only after the last rep; Skip abandons
+  remaining reps). Rep stepping lives in the pure `RoutineSessionCursor`.
 
 - **Practice — exercise creation entry point (design experiment).** The create sheet now asks
   for **command tempo** explicitly (working floor + reach derive from it), which fixes the
