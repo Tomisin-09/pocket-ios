@@ -120,18 +120,24 @@ extension WaveformView {
 
         // The one label to show: the nearest *lone* marker to the playhead, within reach (clustered
         // markers show a count chip instead, so their labels stay in the panel). Gated by the setting.
+        // Written as a plain loop, not a long `.filter/.map/.min/.flatMap` chain — that chain
+        // type-checks locally but times out CI's stricter compiler (AGENTS.md CI-strictness note).
         guard showsMarkerLabels else { return }
         let playheadX = atX(playheadFraction)
-        let activeLabel: (screenX: CGFloat, text: String)? = clusters
-            .filter { $0.count == 1 }
-            .map { $0[0] }
-            .filter { $0.screenX > -Self.markerHalfWidth && $0.screenX < size.width + Self.markerHalfWidth }
-            .filter { !$0.marker.label.isEmpty }
-            .min { abs($0.screenX - playheadX) < abs($1.screenX - playheadX) }
-            .flatMap { abs($0.screenX - playheadX) <= Self.markerLabelProximity
-                ? (screenX: $0.screenX, text: $0.marker.label) : nil }
-        if let activeLabel {
-            drawMarkerLabel(in: context, size: size, atX: activeLabel.screenX, text: activeLabel.text)
+        var nearest: (screenX: CGFloat, text: String)?
+        var nearestDistance = Self.markerLabelProximity
+        for cluster in clusters where cluster.count == 1 {
+            let item = cluster[0]
+            guard item.screenX > -Self.markerHalfWidth, item.screenX < size.width + Self.markerHalfWidth,
+                  !item.marker.label.isEmpty else { continue }
+            let distance = abs(item.screenX - playheadX)
+            if distance <= nearestDistance {
+                nearest = (screenX: item.screenX, text: item.marker.label)
+                nearestDistance = distance
+            }
+        }
+        if let nearest {
+            drawMarkerLabel(in: context, size: size, atX: nearest.screenX, text: nearest.text)
         }
     }
 
