@@ -13,6 +13,12 @@ struct HomeView: View {
     @Query private var routines: [Routine]
     @State private var importing = false
     @State private var importError: String?
+    /// Drives multi-select import: progress overlay + partial-failure summary (shared
+    /// behaviour with the library's + button).
+    @State private var importModel = SongImportModel()
+    /// Pushes the library after a home-screen import lands songs, so the user sees
+    /// where they went (from the library itself there's nowhere to go).
+    @State private var showingLibrary = false
     @State private var showingMetronome = false
     /// A recent routine tapped for a **replay** (exact re-run, ADR 0066) — distinct from the
     /// goal-adaptive "today's session" CTA, which regenerates. Presents the player full-screen.
@@ -85,12 +91,14 @@ struct HomeView: View {
                 }
             }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.audio],
-                          onCompletion: handleImport)
+                          allowsMultipleSelection: true, onCompletion: handleImport)
             .alert("Couldn’t import", isPresented: importErrorBinding) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(importError ?? "")
             }
+            .songImportFeedback(importModel)
+            .navigationDestination(isPresented: $showingLibrary) { LibraryView() }
             .fullScreenCover(isPresented: $showingMetronome) {
                 MetronomeView()
             }
@@ -308,13 +316,14 @@ struct HomeView: View {
         Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })
     }
 
-    private func handleImport(_ result: Result<URL, Error>) {
+    private func handleImport(_ result: Result<[URL], Error>) {
         switch result {
-        case .success(let url):
-            do {
-                try SongImporter.importSong(from: url, into: context)
-            } catch {
-                importError = error.localizedDescription
+        case .success(let urls):
+            Task {
+                let outcome = await importModel.run(urls: urls, into: context)
+                // Land the user in the library so they see the songs they just added;
+                // if nothing imported (all skipped), stay put — the summary alert explains.
+                if outcome.imported > 0 { showingLibrary = true }
             }
         case .failure(let error):
             importError = error.localizedDescription
