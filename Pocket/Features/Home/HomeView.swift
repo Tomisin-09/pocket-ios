@@ -35,9 +35,14 @@ struct HomeView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    songLibraryCard
-                    metronomeCard
-                    practiceCard
+                    // The three navigation strips (songs / tool / content) read as one group,
+                    // so they sit tighter together than the 28-pt rhythm separating the home's
+                    // major sections.
+                    VStack(spacing: 10) {
+                        songLibraryCard
+                        metronomeCard
+                        practiceCard
+                    }
                     if !recentRoutines.isEmpty { recentRoutinesRail }
                 }
                 .padding(20)

@@ -12,6 +12,15 @@ All notable changes to Pocket are documented here. Format loosely follows
   the screen; the song length (which duplicated the ruler/minimap) is dropped from the header, and the
   transport bar is a touch shorter. A new **Show minimap** setting (Settings → Transport, default on)
   hides the full-song overview strip under the waveform to give the waveform and loops even more room.
+- **Marker labels surface as you play up to them.** As the playhead nears a marker, that marker's
+  label floats as a small chip just below its triangle at the top of the waveform — one active label at
+  a time (the nearest marker), so you read what a section is without opening the Markers panel. A new
+  **Show marker labels** setting (Settings → Transport, default on) turns this off, keeping labels in
+  the Markers panel only. When you're zoomed out far enough that marker triangles would overlap, they
+  collapse into a single count chip (e.g. "3") instead of smearing together.
+- **The Journal's "Add entry" is now a clear full-width button.** The composer's Add-entry control is a
+  full-width primary pill, greyed out until you've actually typed something and filled in once there's
+  text — so it reads plainly as the button to press rather than a faint list row.
 - **Strumming exercises now sound their pattern.** A strumming or Strum & Chords drill's metronome —
   both in the block preview's **Hear the strum** button and **during the actual run** — follows the
   pattern's down / up / accent / mute rhythm (rests stay silent) instead of a plain click, so the audio

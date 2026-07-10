@@ -32,6 +32,12 @@ struct JournalSheet: View {
         JournalGrouping.byDay(owner.entries) { $0.createdAt }
     }
 
+    /// The "Add entry" primary button gates on real content — enabled only once the draft
+    /// holds non-whitespace text (P3).
+    private var canAdd: Bool {
+        !draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -98,7 +104,7 @@ struct JournalSheet: View {
 
     // MARK: - New-entry composer
 
-    private var composer: some View {
+    @ViewBuilder private var composer: some View {
         Section {
             Picker("Kind", selection: $draftKind) {
                 ForEach(EntryKind.pickerOrder) { kind in
@@ -110,19 +116,34 @@ struct JournalSheet: View {
 
             TextField("What happened?", text: $draftText, axis: .vertical)
                 .lineLimit(2...5)
+        } header: {
+            Text("New entry")
+        }
 
-            Button("Add entry") {
+        // The primary button lives in its own section (P3): a full-width pill floating on a
+        // clear row, separated from the input fields' grouped container by the standard
+        // section gap — so its rounded corners no longer nest awkwardly into the text field's.
+        Section {
+            Button {
                 onAdd(draftText, draftKind)
                 draftText = ""
                 draftKind = .default
+            } label: {
+                Text("Add entry")
+                    .font(.futura(.headline))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .foregroundStyle(canAdd ? PocketColor.background : PocketColor.textSecondary)
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(canAdd ? PocketColor.practiceCTA : PocketColor.surfaceBorder))
             }
             // `.borderless` makes this an independent hit-target inside the Form row: without it
             // the default row-wide button swallows the first tap to dismiss the composer's focused
             // TextField instead of firing, so "Add entry" read as a dead/static button (feedback #4).
             .buttonStyle(.borderless)
-            .disabled(draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        } header: {
-            Text("New entry")
+            .disabled(!canAdd)
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+            .listRowBackground(Color.clear)
         } footer: {
             capturePreview
         }
