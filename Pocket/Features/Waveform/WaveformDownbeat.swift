@@ -79,33 +79,125 @@ extension WaveformView {
         }
     }
 
-    /// All saved markers as purple inverted triangles along the top border, apex pointing
-    /// down at the position (ADR 0023 — replaces the stem+dot pin). A near-background halo
-    /// keeps the triangle crisp; a short tick drops from the apex to pin the exact spot.
+    /// All saved markers along the top border (ADR 0023; P2 refinements):
+    ///
+    /// - Each marker is a purple inverted triangle, apex pointing down at its position, with
+    ///   a near-background halo and a short precision tick into the bars.
+    /// - Where triangles would collide at low zoom they **merge into a single count chip**, so
+    ///   a zoomed-out timeline shows "3" rather than a smear of overlapping triangles.
+    /// - The marker nearest the playhead (within reach, and not swallowed by a cluster) shows its
+    ///   **label** as a chip just below its triangle — one active label at a time, gated by the
+    ///   Settings toggle — so you read what a marker means as you play up to it.
+    ///
     /// Moved here from `WaveformCanvas.swift` for the file-length budget (ADR 0041 follow-up).
-    func drawMarkerTriangles(in context: GraphicsContext, size: CGSize, atX: (Double) -> CGFloat) {
-        let halfWidth: CGFloat = 3.5
+    func drawMarkers(in context: GraphicsContext, size: CGSize, atX: (Double) -> CGFloat) {
+        guard !markers.isEmpty else { return }
+
+        // Screen x for each marker, walked left→right so neighbours cluster in one pass.
+        let placed = markers
+            .map { (marker: $0, screenX: atX($0.fraction)) }
+            .sorted { $0.screenX < $1.screenX }
+
+        // Group markers whose triangles would overlap at this zoom: start a new cluster
+        // whenever the gap from the previous marker exceeds the collision width.
+        var clusters: [[(marker: WaveformMarker, screenX: CGFloat)]] = []
+        for item in placed {
+            if let lastX = clusters.last?.last?.screenX, item.screenX - lastX <= Self.markerClusterGap {
+                clusters[clusters.count - 1].append(item)
+            } else {
+                clusters.append([item])
+            }
+        }
+
+        for cluster in clusters {
+            if cluster.count == 1 {
+                drawMarkerTriangle(in: context, size: size, atX: cluster[0].screenX)
+            } else {
+                let meanX = cluster.map(\.screenX).reduce(0, +) / CGFloat(cluster.count)
+                drawMarkerClusterChip(in: context, size: size, atX: meanX, count: cluster.count)
+            }
+        }
+
+        // The one label to show: the nearest *lone* marker to the playhead, within reach (clustered
+        // markers show a count chip instead, so their labels stay in the panel). Gated by the setting.
+        // Written as a plain loop, not a long `.filter/.map/.min/.flatMap` chain — that chain
+        // type-checks locally but times out CI's stricter compiler (AGENTS.md CI-strictness note).
+        guard showsMarkerLabels else { return }
+        let playheadX = atX(playheadFraction)
+        var nearest: (screenX: CGFloat, text: String)?
+        var nearestDistance = Self.markerLabelProximity
+        for cluster in clusters where cluster.count == 1 {
+            let item = cluster[0]
+            guard item.screenX > -Self.markerHalfWidth, item.screenX < size.width + Self.markerHalfWidth,
+                  !item.marker.label.isEmpty else { continue }
+            let distance = abs(item.screenX - playheadX)
+            if distance <= nearestDistance {
+                nearest = (screenX: item.screenX, text: item.marker.label)
+                nearestDistance = distance
+            }
+        }
+        if let nearest {
+            drawMarkerLabel(in: context, size: size, atX: nearest.screenX, text: nearest.text)
+        }
+    }
+
+    /// One marker triangle (+ precision tick) at a screen x. Culled when fully off-screen.
+    private func drawMarkerTriangle(in context: GraphicsContext, size: CGSize, atX pinX: CGFloat) {
+        let halfWidth = Self.markerHalfWidth
         let triHeight: CGFloat = 6
         let apexY = Self.markerBand - 3        // apex sits just above the bars
         let topY = apexY - triHeight
-        for fraction in markerFractions {
-            let pinX = atX(fraction)
-            guard pinX > -halfWidth, pinX < size.width + halfWidth else { continue }  // off-screen
-            var triangle = Path()
-            triangle.move(to: CGPoint(x: pinX - halfWidth, y: topY))
-            triangle.addLine(to: CGPoint(x: pinX + halfWidth, y: topY))
-            triangle.addLine(to: CGPoint(x: pinX, y: apexY))
-            triangle.closeSubpath()
-            // Halo outline behind, then the purple fill.
-            context.stroke(triangle, with: .color(PocketColor.background.opacity(0.55)),
-                           style: StrokeStyle(lineWidth: 2.5, lineJoin: .round))
-            context.fill(triangle, with: .color(PocketColor.pin))
-            // Precision tick from the apex into the bar region.
-            var tick = Path()
-            tick.move(to: CGPoint(x: pinX, y: apexY))
-            tick.addLine(to: CGPoint(x: pinX, y: apexY + 3))
-            context.stroke(tick, with: .color(PocketColor.pin.opacity(0.6)), lineWidth: 1)
-        }
+        guard pinX > -halfWidth, pinX < size.width + halfWidth else { return }  // off-screen
+        var triangle = Path()
+        triangle.move(to: CGPoint(x: pinX - halfWidth, y: topY))
+        triangle.addLine(to: CGPoint(x: pinX + halfWidth, y: topY))
+        triangle.addLine(to: CGPoint(x: pinX, y: apexY))
+        triangle.closeSubpath()
+        // Halo outline behind, then the purple fill.
+        context.stroke(triangle, with: .color(PocketColor.background.opacity(0.55)),
+                       style: StrokeStyle(lineWidth: 2.5, lineJoin: .round))
+        context.fill(triangle, with: .color(PocketColor.pin))
+        // Precision tick from the apex into the bar region.
+        var tick = Path()
+        tick.move(to: CGPoint(x: pinX, y: apexY))
+        tick.addLine(to: CGPoint(x: pinX, y: apexY + 3))
+        context.stroke(tick, with: .color(PocketColor.pin.opacity(0.6)), lineWidth: 1)
+    }
+
+    /// A count chip standing in for a cluster of collided markers — a filled pill badged with
+    /// the marker count, in the pin colour, sitting in the top marker band.
+    private func drawMarkerClusterChip(in context: GraphicsContext, size: CGSize,
+                                       atX centreX: CGFloat, count: Int) {
+        guard centreX > -20, centreX < size.width + 20 else { return }   // off-screen
+        let resolved = context.resolve(
+            Text("\(count)").font(.pocketMono(.caption2)).foregroundStyle(PocketColor.background))
+        let textSize = resolved.measure(in: CGSize(width: 40, height: 40))
+        let height: CGFloat = 14
+        let width = max(height, textSize.width + 10)
+        let rect = CGRect(x: centreX - width / 2, y: 1, width: width, height: height)
+        context.stroke(Path(roundedRect: rect, cornerRadius: height / 2),
+                       with: .color(PocketColor.background.opacity(0.55)), lineWidth: 2)
+        context.fill(Path(roundedRect: rect, cornerRadius: height / 2), with: .color(PocketColor.pin))
+        context.draw(resolved, at: CGPoint(x: centreX, y: rect.midY))
+    }
+
+    /// The active marker's label as a chip just below its triangle — the app font (Futura) in a
+    /// pin-bordered capsule, clamped by its own half-width so it hugs the marker while staying
+    /// fully on-screen at either edge.
+    private func drawMarkerLabel(in context: GraphicsContext, size: CGSize,
+                                 atX anchorX: CGFloat, text: String) {
+        let resolved = context.resolve(
+            Text(text).font(.futura(.caption2, weight: .semibold)).foregroundStyle(PocketColor.textPrimary))
+        let textSize = resolved.measure(in: CGSize(width: 160, height: 40))
+        let width = textSize.width + 16
+        let height = textSize.height + 6
+        let centreX = min(max(width / 2, anchorX), size.width - width / 2)
+        let rect = CGRect(x: centreX - width / 2, y: Self.markerBand + 2, width: width, height: height)
+        context.fill(Path(roundedRect: rect, cornerRadius: height / 2),
+                     with: .color(PocketColor.background.opacity(0.92)))
+        context.stroke(Path(roundedRect: rect, cornerRadius: height / 2),
+                       with: .color(PocketColor.pin.opacity(0.6)), lineWidth: 1)
+        context.draw(resolved, at: CGPoint(x: centreX, y: rect.midY))
     }
 
     /// The draggable "set the 1" handle (ADR 0024): a high-contrast line — the app's

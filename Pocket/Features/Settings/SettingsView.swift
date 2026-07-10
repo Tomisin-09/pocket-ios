@@ -18,6 +18,8 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.routineRestSeconds) private var routineRestSeconds = 20
     @AppStorage(AppSettings.Key.routineSongLoop) private var routineSongLoop = true
     @AppStorage(AppSettings.Key.transportLoopOnLeft) private var transportLoopOnLeft = false
+    @AppStorage(AppSettings.Key.waveformMinimapVisible) private var waveformMinimapVisible = true
+    @AppStorage(AppSettings.Key.waveformMarkerLabels) private var waveformMarkerLabels = true
 
     var body: some View {
         Form {
@@ -80,12 +82,17 @@ struct SettingsView: View {
 
             Section {
                 Toggle("Loop control on left", isOn: $transportLoopOnLeft)
+                Toggle("Show minimap", isOn: $waveformMinimapVisible)
+                Toggle("Show marker labels", isOn: $waveformMarkerLabels)
             } header: {
                 Text("Transport")
             } footer: {
                 Text("On the practice screen, big Loop and Marker buttons flank the transport bar "
                      + "while idle. By default Marker sits on the left and Loop on the right — turn "
-                     + "this on to swap them.")
+                     + "this on to swap them. The minimap is the full-song overview strip under the "
+                     + "waveform — turn it off to give the waveform and loops a little more room. "
+                     + "Marker labels float a marker's name over the timeline as you play up to it — "
+                     + "turn them off to keep labels in the Markers panel only.")
             }
 
             Section {

@@ -26,7 +26,11 @@ struct SongStrip: View {
     var onHoldTitle: () -> Void = {}
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        // P1a: a tight two-line title/artist stack with the proficiency stars beside it on
+        // the right (rather than stacked below), so the header stays two lines tall and the
+        // waveform + loops move up. The song length used to sit on the right; it's dropped
+        // (`song.duration` is still used for marker/minimap math, just not shown here).
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title)
                     .font(.futura(.headline))
@@ -37,31 +41,28 @@ struct SongStrip: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .lineLimit(1)
             }
-            .contentShape(Rectangle())
-            .onLongPressGesture(minimumDuration: 0.4) {
-                haptic(.medium)     // confirm the hold landed before the sheet appears
-                onHoldTitle()
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityHint("Hold to view song details")
-            // VoiceOver can't long-press, so surface the same action explicitly.
-            .accessibilityAction(named: "Song details", onHoldTitle)
             Spacer(minLength: 12)
-            VStack(alignment: .trailing, spacing: 2) {
-                // Derived song mastery (ADR 0036) — shown only when the song has loops
-                // to roll up; an unrated song just shows its length.
-                if let mastery = song.mastery {
-                    Text(stars(mastery))
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.mastery)
-                        .accessibilityLabel("Mastery \(mastery) of 5")
-                }
-                Text(timecode(song.duration))
-                    .font(.pocketMono(.subheadline))
-                    .foregroundStyle(PocketColor.textSecondary)
+            // Derived song mastery (ADR 0036) — shown only when the song has loops to
+            // roll up. An unrated song simply omits it (no length fallback anymore).
+            if let mastery = song.mastery {
+                Text(stars(mastery))
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.mastery)
+                    .padding(.trailing, 4)   // nudge off the screen edge
+                    .accessibilityLabel("Mastery \(mastery) of 5")
             }
         }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onLongPressGesture(minimumDuration: 0.4) {
+            haptic(.medium)     // confirm the hold landed before the sheet appears
+            onHoldTitle()
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("Hold to view song details")
+        // VoiceOver can't long-press, so surface the same action explicitly.
+        .accessibilityAction(named: "Song details", onHoldTitle)
     }
 }
 

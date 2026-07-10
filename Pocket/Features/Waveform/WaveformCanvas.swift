@@ -30,6 +30,14 @@ struct WaveformDetailBars: Equatable {
     let end: Double
 }
 
+/// A saved marker for the waveform: its song-fraction position (0…1) plus its label.
+/// The position feeds the top-border triangles / cluster chips; the label surfaces as
+/// a single floating chip when the playhead draws near (P2 — one active label at a time).
+struct WaveformMarker: Equatable {
+    let fraction: Double
+    let label: String
+}
+
 struct WaveformView: View {
     let amplitudes: [Double]
     /// The crisp windowed bars to draw, or `nil` to fall back to the stored whole-song
@@ -43,9 +51,10 @@ struct WaveformView: View {
     /// loop *identity* (each loop its own hue), with state carried by line weight.
     /// See ADR 0023 (supersedes ADR 0018's colour-is-state rule).
     let loops: [Loop]
-    /// Saved markers as song fractions (0…1) — drawn as purple inverted triangles
-    /// along the top border (ADR 0023).
-    let markerFractions: [Double]
+    /// Saved markers (position + label) — drawn as purple inverted triangles along the
+    /// top border (ADR 0023), merging into a count chip where they collide at low zoom,
+    /// with the nearest-the-playhead marker's label floating as a chip (P2).
+    let markers: [WaveformMarker]
     /// The beat grid (ADR 0022): beats + bar-start downbeats as song fractions, drawn
     /// faintly behind the bars (downbeats brighter). Empty when the song has no tempo
     /// or no downbeat anchor, so the whole grid simply doesn't render. Defaulted so
@@ -104,6 +113,9 @@ struct WaveformView: View {
     /// fixed portrait height — landscape gives it the leftover room so the transport still
     /// pins to the bottom (ADR 0042). The canvas is geometry-driven, so it adapts for free.
     var fillsHeight: Bool = false
+    /// Whether the active marker's label floats over the timeline (P2 setting, default on).
+    /// Off ⇒ triangles / count chips still draw, but labels live only in the Markers panel.
+    var showsMarkerLabels: Bool = true
 
     // Gesture bookkeeping. Not `private` — the gesture recogniser lives in a
     // `WaveformView` extension in `WaveformCanvasGestures.swift`, so it reads this
@@ -212,7 +224,7 @@ struct WaveformView: View {
         // Annotations on the borders (ADR 0023): per-loop coloured lines along the
         // bottom (lane-stacked), purple inverted triangles along the top.
         drawLoopLines(in: context, size: size, atX: atX)
-        drawMarkerTriangles(in: context, size: size, atX: atX)
+        drawMarkers(in: context, size: size, atX: atX)
 
         // A/B span handles in front of the bars (helper in `WaveformDownbeat.swift`). The
         // active loop's edges are *not* drawn as handles — they're no longer directly
@@ -319,6 +331,11 @@ struct WaveformView: View {
     static let markerBand: CGFloat = 16             // top: marker triangles (used by the helpers file)
     static let loopBand: CGFloat = 24               // bottom: loop lines (maxLanes × laneHeight + pad;
                                                      // used by the helpers file too)
+
+    // Marker labelling / clustering (P2; used by the drawing helpers file).
+    static let markerHalfWidth: CGFloat = 3.5       // px: half a triangle, for off-screen culling
+    static let markerClusterGap: CGFloat = 14       // px: triangles closer than this merge into a count chip
+    static let markerLabelProximity: CGFloat = 44   // px from the playhead within which a marker's label shows
 
     /// The identity colour for a loop (ADR 0023) — shared via `LoopColor` so the
     /// waveform, minimap, and transport strip all resolve the same hue. Not `private` —

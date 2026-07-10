@@ -14,6 +14,10 @@ struct PracticeCockpit<Header: View>: View {
     var landscape: Bool = false
     @ViewBuilder var header: () -> Header
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// P1c — hide the full-song minimap strip when the user turns it off in Settings (default on).
+    @AppStorage(AppSettings.Key.waveformMinimapVisible) private var minimapVisible = true
+    /// P2 — float a marker's label over the timeline as the playhead nears it (default on).
+    @AppStorage(AppSettings.Key.waveformMarkerLabels) private var markerLabelsVisible = true
 
     var body: some View {
         VStack(spacing: landscape ? 8 : 16) {
@@ -29,14 +33,16 @@ struct PracticeCockpit<Header: View>: View {
             waveform                                                    // 5
             TimeRuler(start: model.viewport.start * model.duration,      // 6
                       end: model.viewport.end * model.duration)
-            Minimap(song: model.song, activeLoop: model.activeLoop,     // 7
-                    samples: model.amplitudes,
-                    markers: model.markers,
-                    fineSelection: model.abSpan.bounds,
-                    playheadFraction: model.playheadFraction,
-                    viewport: model.viewport,
-                    onSeek: model.seekToFraction,
-                    onSeekEnded: model.seekMinimapSnapping)
+            if minimapVisible {
+                Minimap(song: model.song, activeLoop: model.activeLoop, // 7
+                        samples: model.amplitudes,
+                        markers: model.markers,
+                        fineSelection: model.abSpan.bounds,
+                        playheadFraction: model.playheadFraction,
+                        viewport: model.viewport,
+                        onSeek: model.seekToFraction,
+                        onSeekEnded: model.seekMinimapSnapping)
+            }
             transport                                                   // 8
         }
     }
@@ -76,7 +82,8 @@ struct PracticeCockpit<Header: View>: View {
                      playheadFraction: model.playheadFraction,
                      loop: model.activeLoop,
                      loops: model.loops,
-                     markerFractions: model.markers.map { $0.seconds / model.duration },
+                     markers: model.markers.map {
+                        WaveformMarker(fraction: $0.seconds / model.duration, label: $0.label) },
                      beats: model.beatGrid,
                      showsGrid: model.song.showsGridlines,
                      formingStart: model.formingMarker,
@@ -98,7 +105,8 @@ struct PracticeCockpit<Header: View>: View {
                      onDownbeatEnded: model.endDownbeatDrag,
                      onTouchBegan: model.beginWaveformTouch,
                      onTouchEnded: model.endWaveformTouch,
-                     fillsHeight: landscape)
+                     fillsHeight: landscape,
+                     showsMarkerLabels: markerLabelsVisible)
             // Fit / 1× reset — only while zoomed; sits above the waveform's gestures so
             // its tap wins (ADR 0010). Pinned bottom-trailing, clear of the time bubble.
             .overlay(alignment: .bottomTrailing) {

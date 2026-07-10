@@ -170,32 +170,32 @@ clips only if pattern-only tests as insufficient.
 
 ## Separate track — player polish (own branch, NOT the planner)
 
-### P1 — Player layout + transport fold + minimap
+### P1 — Player layout + minimap — SHIPPED (pocket-119, P1a + P1c; P1b DROPPED)
 The top of the practice screen wastes vertical space — reclaiming it is the highest-value
 item here (the biggest offender in the screenshot).
 
-**P1a — Compact header** (`SongStrip`, `WaveformSections.swift:22`). Today it's a
-two-column `HStack`: title+artist (left) vs. mastery stars + duration (right). Restack
-into a **single left-aligned vertical block — title, artist, proficiency (mastery
-stars)** — so the header shrinks and the waveform + loops/markers move **up**. **Remove
-the song length** (`timecode(song.duration)`, lines 60–62) from the card entirely (the
-"unrated song shows its length" fallback goes with it). `song.duration` stays used for
-marker/minimap math — just not displayed here.
+**P1a — Compact header + reclaimed top band** (`SongStrip` in
+`Pocket/Features/Waveform/WaveformSections.swift`; nav in `WaveformPracticeView`) — SHIPPED.
+Header is a compact title/artist stack with the **mastery stars beside it** (device-testing
+landed here rather than stars-stacked-below — keeps the header two lines). **Song length
+removed** (the "unrated song shows its length" fallback went with it); `song.duration` still
+drives marker/minimap math. The biggest win came from **hiding the portrait system nav bar**:
+it set no title, so it reserved a tall *empty* large-title band above the strip — now hidden
+in both orientations, with a compact inline back button (shared `backButton`), so the cockpit
+rises to just under the status bar. The **transport bar** was also trimmed a touch (height
+64→56, smaller glyphs + identity circles).
 
-**P1b — Fold transport on scroll** (`WaveformTransportBar.swift`), **Setting default
-OFF**. The Safari-toolbar move, with guardrails because on a practice tool play/pause is
-the one control you must never hunt for mid-take:
-- collapse to a **slim pill (play/pause + scrub)**, not a full disappear;
-- reappears on scroll-down, and whenever a **loop/marker is activated** (until the next
-  swipe-up);
-- **tap-anywhere to peek it back**; **respect Reduce Motion**;
-- keep the gesture logic **simple — threshold + debounce** (touch directional-scroll
-  detection is fiddly).
+**P1b — Fold transport on scroll — DROPPED** (2026-07-09). The premise assumed the
+transport lived in a scroll view; in reality it's pinned in a **fixed cockpit**
+(`PracticeCockpit`, a non-scrolling `VStack`) and the only scrolling surface (the
+loops/markers `PracticeReference` drawer) sits *below* it — so there's no scroll offset to
+drive a Safari-style fold. P1a already reclaims the top, and on a play-tool keeping
+play/pause always visible is the right default, so the fold was dropped rather than forced.
 
-**P1c — Minimap on/off Setting, default ON** (`WaveformMinimap.swift`). No other notes.
-
-P1b + P1c add two additive `@AppStorage` toggles to the Settings screen (same shape as
-`keepScreenAwake`).
+**P1c — Minimap on/off Setting, default ON** — SHIPPED. New additive `@AppStorage`
+`waveformMinimapVisible` (`AppSettings`), a **Show minimap** toggle in Settings' Transport
+section, gating the `Minimap` in `PracticeCockpit`. Hidden ⇒ the waveform + loops gain a
+little vertical room.
 
 ### P2 — Marker labels on playhead hover
 - Treat "hover" as **playhead proximity**; show **one active label max** (the marker the
@@ -224,7 +224,7 @@ stop competing.
 | 6 | Last 3 routines practiced (recent-routines rail) | **R1** |
 | 7 | Name the generated session | **R1b** |
 | 8 | Player: reclaim vertical space, stack song/artist/proficiency | **P1a** |
-| 9 | Player: transport fold on scroll (default off) | **P1b** |
+| 9 | Player: transport fold on scroll (default off) | **P1b — DROPPED** (fixed cockpit, no scroll to fold against) |
 | 10 | Player: minimap on/off (default on) | **P1c** |
 | 11 | Journal "Add entry" prominence vs "Done" | **P3** |
 | 12 | Routine: enter each block → preview + edit tempo | **R4** |
