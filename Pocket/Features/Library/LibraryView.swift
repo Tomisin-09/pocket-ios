@@ -11,6 +11,8 @@ struct LibraryView: View {
     @Query(sort: \Song.title) private var songs: [Song]
     @State private var importing = false
     @State private var importError: String?
+    /// Drives multi-select import: progress overlay + partial-failure summary.
+    @State private var importModel = SongImportModel()
     @State private var editingSong: Song?
     /// Canonical collection names the library is filtered by; empty ⇒ no filter
     /// (intersection/AND semantics — a song matches if it has all selected). ADR 0033.
@@ -43,15 +45,17 @@ struct LibraryView: View {
                 if !availableCollections.isEmpty { filterMenu }
                 Button { importing = true } label: { Image(systemName: "plus") }
                     .tint(PocketColor.active)
-                    .accessibilityLabel("Import a song")
+                    .accessibilityLabel("Import songs")
             }
         }
-        .fileImporter(isPresented: $importing, allowedContentTypes: [.audio], onCompletion: handleImport)
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.audio],
+                      allowsMultipleSelection: true, onCompletion: handleImport)
         .alert("Couldn’t import", isPresented: importErrorBinding) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(importError ?? "")
         }
+        .songImportFeedback(importModel)
         .sheet(item: $editingSong) { song in
             SongEditSheet(song: song)
         }
@@ -201,14 +205,13 @@ struct LibraryView: View {
         Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })
     }
 
-    private func handleImport(_ result: Result<URL, Error>) {
+    /// The document picker returns one or more files; `SongImportModel` imports them
+    /// off-main and reports any that couldn't be read. A picker-level failure (rare)
+    /// surfaces through the separate `importError` alert.
+    private func handleImport(_ result: Result<[URL], Error>) {
         switch result {
-        case .success(let url):
-            do {
-                try SongImporter.importSong(from: url, into: context)
-            } catch {
-                importError = error.localizedDescription
-            }
+        case .success(let urls):
+            Task { await importModel.run(urls: urls, into: context) }
         case .failure(let error):
             importError = error.localizedDescription
         }

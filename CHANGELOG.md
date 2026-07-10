@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Import a whole batch of songs at once.** The library's **+** now lets you pick several audio files in
+  one go instead of one at a time. Each file's waveform is decoded off the main thread with an
+  "Importing N of M…" progress card, so the app stays responsive, and files that can't be read (empty,
+  DRM-protected, unsupported) are skipped without aborting the batch — the good ones still import, and a
+  short summary tells you which were skipped. A confirmation alert reports what imported ("Songs added —
+  Imported 3 songs"), and importing from the **home screen** also drops you into the song library
+  afterwards so you can see what landed; importing from the library stays put.
 - **A tighter practice screen — more room for the waveform.** The song header is now a compact
   title / artist stack with the mastery stars beside it, and the empty navigation band above it is gone
   (a compact back button now sits inline with the title), so the whole cockpit rises toward the top of
