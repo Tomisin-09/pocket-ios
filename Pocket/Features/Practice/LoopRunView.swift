@@ -21,41 +21,46 @@ struct LoopRunView: View {
     let loop: Loop
     /// Routine-session chrome (progress, Skip, auto-advance) when a block in a routine; `nil` standalone.
     var routineContext: RoutineRunContext?
-    @State private var model: LoopRunModel
-    @Environment(\.modelContext) private var modelContext
+    @State var model: LoopRunModel
+    @Environment(\.modelContext) var modelContext
 
     // Local edit state (percent of original), seeded on appear, committed only on Start.
-    @State private var working = 0
-    @State private var command = 0
-    @State private var steps = 0
-    @State private var reachSteps = 0
-    @State private var backoffSteps = 0
-    @State private var repsPerStep = LoopCommandRamp.defaultRepsPerStep
+    @State var working = 0
+    @State var command = 0
+    @State var steps = 0
+    @State var reachSteps = 0
+    @State var backoffSteps = 0
+    @State var repsPerStep = LoopCommandRamp.defaultRepsPerStep
+    /// A manually pinned **reach** (% of original), or `nil` to use the auto-derived reach
+    /// (ADR 0075). Seeded from `loop.targetSpeedOverride`, committed on Start / Save. Always kept
+    /// above `command`; auto-cleared locally when command is nudged up to it, mirroring the model.
+    @State var targetOverride: Int?
     /// The top-level "Practice Settings" disclosure — collapsed by default so the run screen opens on
     /// the summary + staircase (parity with the exercise run); expands to reveal tempos/reps/Steps.
-    @State private var showSettings = false
-    @State private var showSteps = false
+    @State var showSettings = false
+    @State var showSteps = false
     /// Whether the routine count-in overlay is showing (routine mode only) — gates the run start.
-    @State private var showCountIn = false
-    @State private var seeded = false
+    @State var showCountIn = false
+    @State var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
-    @State private var showingJournal = false
+    @State var showingJournal = false
     /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
     /// button shows only while the edits differ (ADR 0057). All six persisted fields — the two
     /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
     /// of them arms Save Changes.
-    @State private var baseline: LoopSetupState?
+    @State var baseline: LoopSetupState?
 
-    private var current: LoopSetupState {
+    var current: LoopSetupState {
         LoopSetupState(working: working, command: command, warmupSteps: steps,
-                       reachSteps: reachSteps, backoffSteps: backoffSteps, repsPerStep: repsPerStep)
+                       reachSteps: reachSteps, backoffSteps: backoffSteps, repsPerStep: repsPerStep,
+                       targetOverride: targetOverride)
     }
     private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
-    private static let repsRange = 1...8
+    static let repsRange = 1...8
 
     /// Playback-speed bounds as integer percent (the engine clamps 0.25×–2.0×).
-    private static let percentRange =
+    static let percentRange =
         Int(TempoMath.minSpeed * 100)...Int(TempoMath.maxSpeed * 100)
 
     init(loop: Loop, routineContext: RoutineRunContext? = nil) {
@@ -64,11 +69,15 @@ struct LoopRunView: View {
         _model = State(initialValue: LoopRunModel(loop: loop))
     }
 
-    /// The reach (% of original) derived from the (local) command — proportional + clamped via the
-    /// `×`-unit `TempoStretch`, mapped back to percent.
-    private var reach: Int {
+    /// The **auto** reach (% of original) derived from the (local) command — proportional + clamped
+    /// via the `×`-unit `TempoStretch`, mapped back to percent. The fallback for reset-to-auto.
+    var autoReach: Int {
         LoopCommandRamp.percent(TempoStretch.targetSpeed(forCommand: Double(command) / 100))
     }
+
+    /// The **effective** reach (% of original): a pinned override when set, else the auto reach
+    /// (ADR 0075). Every surface here reads this — the staircase summit, promote, summary.
+    private var reach: Int { targetOverride ?? autoReach }
 
     /// The warm-up step size (percent points) the chosen number of intermediate stops implies.
     private var stepPercent: Int {
@@ -77,7 +86,7 @@ struct LoopRunView: View {
 
     /// The routine the current edits describe — the staircase preview and the exact `CommandRamp`
     /// (percent units) handed to the run on Start.
-    private var routine: CommandRamp {
+    var routine: CommandRamp {
         CommandRamp(working: working, command: command, target: reach, stepBPM: stepPercent,
                     intervalCount: max(1, repsPerStep), unit: .bars,
                     dwellIntervals: LoopCommandRamp.defaultDwellIntervals, includeBackoff: true,
@@ -85,7 +94,7 @@ struct LoopRunView: View {
     }
 
     private var hasReach: Bool { reach > command }
-    private var isRunning: Bool { model.isRunning }
+    var isRunning: Bool { model.isRunning }
     private var title: String { loop.name.isEmpty ? "Loop" : loop.name }
 
     var body: some View {
@@ -175,8 +184,11 @@ struct LoopRunView: View {
         LoopSettingsPanel(
             expanded: $showSettings,
             working: working, command: command, reach: reach,
+            reachIsCustom: targetOverride != nil,
             onStepWorking: { adjustWorking(by: $0) }, onTypeWorking: { setWorking($0) },
             onStepCommand: { adjustCommand(by: $0) }, onTypeCommand: { setCommand($0) },
+            onStepReach: { adjustReach(by: $0) }, onTypeReach: { setReach($0) },
+            onResetReach: resetReach,
             repsPerStep: $repsPerStep, repsRange: Self.repsRange,
             stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
             backoffSteps: $backoffSteps, warmupStepBPM: stepPercent,
@@ -187,6 +199,7 @@ struct LoopRunView: View {
         Button {
             withAnimation(.easeInOut(duration: 0.2)) {
                 command = min(Self.percentRange.upperBound, reach)
+                clearOverrideIfCaughtUp()
             }
             haptic(.medium)
         } label: {
@@ -260,117 +273,6 @@ struct LoopRunView: View {
         .padding(.top, 8)
         .background(PocketColor.background.opacity(0.95))
     }
-}
-
-// MARK: - Actions
-
-private extension LoopRunView {
-
-    /// Seed the editor once. With a measured command, load the saved speeds as-is; without one,
-    /// default command to the loop's start speed and working to a floor below it (so the two start
-    /// apart, not equal), mirroring `ExerciseRunView`.
-    private func seedIfNeeded() {
-        guard !seeded else { return }
-        if loop.hasMeasuredCommand {
-            command = clampPercent(LoopCommandRamp.percent(loop.command))
-            working = min(command, clampPercent(LoopCommandRamp.percent(loop.speed)))
-        } else {
-            command = clampPercent(LoopCommandRamp.percent(loop.speed))
-            working = max(Self.percentRange.lowerBound, command - 15)
-        }
-        // Restore the saved ramp shape (ADR 0057 follow-up); migrated/new loops read the
-        // declaration defaults (no intermediate stops, single drop, one rep per step).
-        steps = loop.rampWarmupSteps
-        reachSteps = loop.rampReachSteps
-        backoffSteps = loop.rampBackoffSteps
-        repsPerStep = max(Self.repsRange.lowerBound, loop.rampRepsPerStep)
-        // In a routine, a naturally-finished ramp auto-advances the session (never a manual stop).
-        model.onFinished = routineContext?.onFinished
-        seeded = true
-        baseline = current
-    }
-
-    /// Write the current tempos to the loop — shared by Save Changes and Start so the two write
-    /// paths never diverge (ADR 0057). Re-baselines so the Save Changes button hides.
-    private func persist() {
-        loop.speed = Double(working) / 100
-        loop.promoteCommand(to: Double(command) / 100)
-        loop.rampWarmupSteps = steps
-        loop.rampReachSteps = reachSteps
-        loop.rampBackoffSteps = backoffSteps
-        loop.rampRepsPerStep = repsPerStep
-        try? modelContext.save()
-        baseline = current
-    }
-
-    /// Save the tuning without starting a run (ADR 0057). Leaving still discards *unsaved* edits.
-    private func saveChanges() {
-        persist()
-        haptic(.medium)
-    }
-
-    /// Start tapped: in a routine, run the count-in first (ADR 0071); standalone, start immediately.
-    private func startTapped() {
-        if routineContext != nil { showCountIn = true; haptic(.light) } else { commitAndStart() }
-    }
-
-    /// Auto-start on arrival when the context asks for it (Settings-gated; never the first block) and
-    /// the audio is ready — routes through the same count-in as a tapped Start.
-    private func maybeAutoStart() {
-        if routineContext?.autoStart == true, !isRunning, !model.isLoading, !model.loadFailed {
-            showCountIn = true
-        }
-    }
-
-    /// The count-in reached zero — drop the overlay and begin the run.
-    private func countInFinished() {
-        showCountIn = false
-        commitAndStart()
-    }
-
-    /// Persist the edits to the loop and start the run in one tap.
-    private func commitAndStart() {
-        persist()
-        model.start(ramp: routine)
-        haptic(.medium)
-    }
-
-    // Pure clamps — `StepperButton` owns the ±/hold-repeat haptics, so these must not fire their own.
-    private func adjustWorking(by delta: Int) {
-        working = min(command, max(Self.percentRange.lowerBound, working + delta))
-    }
-    private func adjustCommand(by delta: Int) {
-        command = min(Self.percentRange.upperBound, max(working, command + delta))
-    }
-
-    /// Working stays in range and never above command (the floor sits below the owned speed).
-    private func setWorking(_ value: Int) {
-        working = min(command, max(Self.percentRange.lowerBound, value))
-        haptic(.light)
-    }
-
-    /// Command stays in range and never below working; the reach re-derives automatically.
-    private func setCommand(_ value: Int) {
-        command = min(Self.percentRange.upperBound, max(working, value))
-        haptic(.light)
-    }
-
-    private func clampPercent(_ value: Int) -> Int {
-        min(Self.percentRange.upperBound, max(Self.percentRange.lowerBound, value))
-    }
-}
-
-/// Snapshot of the loop run-setup fields that persist — the two tempos (working + command %) plus
-/// the four ramp-shape controls (ADR 0057 follow-up) — compared against the live values to decide
-/// whether the Save Changes button shows (ADR 0057). Every persisted field is tracked, so editing
-/// the ramp shape alone still arms Save Changes.
-struct LoopSetupState: Equatable {
-    var working: Int
-    var command: Int
-    var warmupSteps: Int
-    var reachSteps: Int
-    var backoffSteps: Int
-    var repsPerStep: Int
 }
 
 #Preview("Loop run") {

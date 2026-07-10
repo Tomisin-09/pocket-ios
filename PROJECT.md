@@ -167,7 +167,13 @@ exercise run setup the tempos (working/command/reach) and the Steps granularity 
 collapsible **Practice Settings** panel (`PracticeSettingsPanel`) below the title — collapsed by
 default to a one-line tempo summary, mirroring the nested Steps disclosure. The
 run staircase lights the live plateau as it climbs, tempos are typable as well as nudged, and the
-routine takes reach / back-up steps beyond warm-up. A new exercise picks a **time signature**
+routine takes reach / back-up steps beyond warm-up. The **reach is editable** (ADR 0075): it
+defaults to the auto-derived goal above command but can be pinned to a custom target (nudged/typed in
+Practice Settings, or in `ExerciseTempoSection`), with a **Reset to auto** affordance; a pin is stored
+per unit (`Exercise.targetTempoOverride: Int?` / `Loop.targetSpeedOverride: Double?`, additive
+optionals) and read through the effective `Exercise.reachTempo` / `Loop.targetSpeed`. A pin must stay
+above command, so `promoteCommand` auto-clears it once command catches up (the vestigial
+`Exercise.targetTempo` is retained un-removed for migration but no longer written). A new exercise picks a **time signature**
 (`NewExerciseSheet`, default 4/4) — also editable on an existing exercise from the run-setup nav
 bar — that drives the run click's accents + **count-in** length; a training run **counts you in**
 before the climb (honoring the Settings toggle/length, ADR 0052). The running readout is just the
@@ -188,9 +194,9 @@ recipe natively in `ramp*`/dwell/backoff/`rampReachSteps`/`rampBackoffSteps` fie
 `automator* → ramp*` rename done data-preservingly via `@Attribute(originalName:)`. A loop trains
 the **same** warm-up → dwell → reach → back-off `CommandRamp`, but in percent-of-original against
 its time-stretched audio: `LoopRunModel` owns a `PracticeAudioEngine`, loops the region, and steps
-the playback rate by elapsed seconds; the `×` reach derives from `TempoStretch.targetSpeed` and the
-staircase reuses `CommandRamp` via `LoopCommandRamp`'s `×`→percent mapping — no new stored `Loop`
-fields), a metronome card, and a preview of your songs with
+the playback rate by elapsed seconds; the `×` reach derives from `TempoStretch.targetSpeed` (or a
+pinned `targetSpeedOverride`, ADR 0075) and the staircase reuses `CommandRamp` via `LoopCommandRamp`'s
+`×`→percent mapping), a metronome card, and a preview of your songs with
 **See all** pushing the full **song library** (`LibraryView`), now one tap from the front
 door rather than the root. Importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),

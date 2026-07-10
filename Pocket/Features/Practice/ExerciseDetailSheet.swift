@@ -43,12 +43,16 @@ struct ExerciseDetailSheet: View {
     /// Done via the canonical `promoteCommand` setter (the same mutation the run screen uses, so no
     /// second write path diverges, ADR 0057). Only editable for a measured command.
     @State private var command: Int
+    /// The manually pinned **reach** (BPM) or `nil` for the auto derivation (ADR 0075), held here and
+    /// committed on Done. Seeded from `exercise.targetTempoOverride`.
+    @State private var reachOverride: Int?
 
     init(exercise: Exercise) {
         self.exercise = exercise
         _notes = State(initialValue: exercise.notes)
         _mastery = State(initialValue: exercise.mastery)
         _command = State(initialValue: exercise.command)
+        _reachOverride = State(initialValue: exercise.targetTempoOverride)
         _strum = State(initialValue: exercise.strumPattern
                        ?? .downstrokes(beatsPerBar: exercise.beatsPerBar))
         let content = exercise.fretboardContent
@@ -66,7 +70,8 @@ struct ExerciseDetailSheet: View {
                 templateSection
                 descriptionSection
                 ExerciseProgressSection(mastery: $mastery, lastPracticed: exercise.lastPracticed)
-                ExerciseTempoSection(exercise: exercise, command: $command)
+                ExerciseTempoSection(exercise: exercise, command: $command,
+                                     reachOverride: $reachOverride)
                 feelSection
                 routineSection
                 switch exercise.template.bespokeEditor {
@@ -87,8 +92,9 @@ struct ExerciseDetailSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        commitNotes(); commitMastery(); commitCommand(); commitStrum()
-                        commitFretboard(); commitChords(); commitStrumChords(); dismiss()
+                        commitNotes(); commitMastery(); commitCommand(); commitReach()
+                        commitStrum(); commitFretboard(); commitChords(); commitStrumChords()
+                        dismiss()
                     }
                 }
             }
@@ -181,6 +187,16 @@ struct ExerciseDetailSheet: View {
     private func commitCommand() {
         guard exercise.hasMeasuredCommand, command != exercise.command else { return }
         exercise.promoteCommand(to: command)
+        try? modelContext.save()
+    }
+
+    /// Persist an edited reach pin on Done (ADR 0075), only when it differs from what's stored. Runs
+    /// **after** `commitCommand` so `promoteCommand`'s auto-clear can't wipe the pin we're writing
+    /// (the local `reachOverride` already dropped if command caught up to it). Writing `nil` reverts
+    /// the reach to the auto derivation.
+    private func commitReach() {
+        guard reachOverride != exercise.targetTempoOverride else { return }
+        exercise.targetTempoOverride = reachOverride
         try? modelContext.save()
     }
 

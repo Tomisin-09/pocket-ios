@@ -230,7 +230,9 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
    the active one's circle fills with its colour. **Centre:** a header (fixed height,
    matched font size so the states cross-fade without the row shifting) over a
    background-free **rewind · pause · forward** cluster — the header is the loop name +
-   range when a loop is active, else the live playhead time. Rewind: 1× restart, 2×
+   range when a loop is active, else **empty** (the idle playhead timecode was dropped as
+   redundant — the live time already rides the playhead as a `TimeBubble` on the canvas,
+   ADR 0075; the fixed height is kept so nothing shifts). Rewind: 1× restart, 2×
    previous loop; forward: next loop (cross-song deferred — forward/prev dim with no
    loop). **Right (loop active only):** a strip in the loop's **identity colour** with an
    ✕ deactivator — the "a loop is armed" signal. Click lives on the speed bar (ADR 0027).

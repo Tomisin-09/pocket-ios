@@ -129,7 +129,6 @@ struct PracticeCockpit<Header: View>: View {
                      onNext: model.transportNext,
                      hasPrevious: model.hasPreviousTarget,
                      hasNext: model.hasNextTarget,
-                     currentTime: model.engine.currentTime,
                      loop: model.activeLoop,
                      loopColor: model.activeLoopColor,
                      onClearLoop: model.clearActiveLoop,

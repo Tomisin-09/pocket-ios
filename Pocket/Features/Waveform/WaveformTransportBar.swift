@@ -13,7 +13,8 @@ import SwiftUI
 //   the running loop now reads on the Loops panel below, so the bar steps back out of the way
 //   (feedback #1 round 2).
 // The centre cluster is the header over rewind · pause · forward; the header reserves a fixed height
-// and reads the loop's name when active, else the live playhead time, so the row never shifts.
+// and reads the loop's name when active, else stays empty — the live playhead time renders as the
+// `TimeBubble` on the waveform canvas, so the redundant idle timecode was dropped (ADR 0075).
 
 // MARK: - 8. Transport bar
 
@@ -30,7 +31,6 @@ struct TransportBar: View {
     let hasPrevious: Bool
     let hasNext: Bool
 
-    let currentTime: TimeInterval
     let loop: Loop?
     /// The active loop's identity colour, for the right strip. `nil` ⇒ no active loop.
     let loopColor: Color?
@@ -148,12 +148,10 @@ struct TransportBar: View {
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(1)
                     .accessibilityLabel("Looping \(loop.name)")
-            } else {
-                Text(timecode(currentTime))
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .accessibilityLabel("Playback position \(timecode(currentTime))")
             }
+            // Idle: no timecode — the live playhead time already renders as the `TimeBubble` on the
+            // waveform canvas, so the redundant readout was dropped (ADR 0075). The fixed height below
+            // keeps the empty header from shifting the transport row.
         }
         .frame(height: 22)        // single-line header height, matched across both states
         .transition(.opacity)

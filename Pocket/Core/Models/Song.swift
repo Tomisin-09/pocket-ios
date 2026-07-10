@@ -202,6 +202,15 @@ final class Loop {
     /// would badge 100%. Migrates pre-0039 loops to `nil` (CoreData 134110 exempt).
     var commandTempo: Double?
 
+    /// A **manually pinned reach** (× of original) — the player's own goal above `command`,
+    /// overriding the auto-derived `derivedTargetSpeed` (ADR 0075). `nil` = use the derived
+    /// reach (the default). **Optional with no declaration default** so SwiftData lightweight
+    /// migration leaves loops saved before this as `nil` (auto), the CoreData 134110 rule
+    /// (ADR 0012) shared with `mastery`/`commandTempo`. Auto-cleared by `promoteCommand` once
+    /// the owned command catches up to it (a reach must stay above command). Read through the
+    /// effective `targetSpeed`, never directly, so a pin shows through everywhere.
+    var targetSpeedOverride: Double?
+
     /// Backing storage for `loopType` — a plain `String` raw value, **not** the enum
     /// itself. A custom enum attribute does not survive SwiftData lightweight migration:
     /// pre-0036 loop rows have no value to decode and fault → crash when the attribute is
@@ -327,13 +336,25 @@ final class Loop {
     var hasMeasuredCommand: Bool { commandTempo != nil }
 
     /// The reach (×) derived from the current `command` — proportional + clamped to `+0.02…+0.10×`
-    /// (pure `TempoStretch`). The loop analogue of `Exercise.derivedTarget`; surfaced so the
-    /// run screen can preview the reach above the owned command.
+    /// (pure `TempoStretch`). The loop analogue of `Exercise.derivedTarget`; the **auto** value, kept
+    /// pure so a reset-to-auto affordance can fall back to it. Read `targetSpeed` for the effective reach.
     var derivedTargetSpeed: Double { TempoStretch.targetSpeed(forCommand: command) }
 
-    /// Promote a newly-owned speed to `commandTempo` (ADR 0046, Phase B). The reach is derived,
-    /// not stored, so promotion is a single write — the loop analogue of `Exercise.promoteCommand`.
-    func promoteCommand(to speed: Double) { commandTempo = speed }
+    /// The **effective** reach (×): the pinned `targetSpeedOverride` when set, else the auto
+    /// `derivedTargetSpeed` (ADR 0075). Every surface that renders "the goal" reads this so a pin
+    /// shows through. Mirrors `Exercise.reachTempo`.
+    var targetSpeed: Double { targetSpeedOverride ?? derivedTargetSpeed }
+
+    /// Whether the reach is a manual pin vs the auto derivation — gates the reset-to-auto affordance.
+    var hasTargetOverride: Bool { targetSpeedOverride != nil }
+
+    /// Promote a newly-owned speed to `commandTempo` (ADR 0046, Phase B / 0075). The auto reach is
+    /// derived, so promotion is a single write — but a **pinned** reach that the new command has
+    /// caught up to is auto-cleared (a reach must stay above command), reverting to the auto value.
+    func promoteCommand(to speed: Double) {
+        commandTempo = speed
+        if let pinned = targetSpeedOverride, pinned <= command { targetSpeedOverride = nil }
+    }
 
     /// The command-anchored **training ramp** this loop prescribes (ADR 0046 Phase B) — warm up
     /// from `speed`, dwell at the owned command, summit at the derived reach, back off — in percent

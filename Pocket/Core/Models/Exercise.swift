@@ -42,9 +42,19 @@ final class Exercise {
     /// old light model until promoted. Mirrors `Loop.commandTempo` (same meaning, absolute
     /// BPM not a song fraction). Optional ⇒ migrates pre-0045 rows to `nil` with no wipe.
     var commandTempo: Int?
-    /// The **goal** tempo (absolute BPM) you reach for — `command` + a proportional stretch
-    /// once promoted (ADR 0045), recomputed on each promotion; also the automator's summit.
+    /// **Vestigial** (ADR 0075): historically the recomputed goal tempo, but every reach read
+    /// now goes through `reachTempo`/`derivedTarget`, and `promoteCommand` no longer writes it.
+    /// Retained un-removed purely for SwiftData migration safety (dropping a stored attribute is
+    /// not additive). Do not read it — use `reachTempo`.
     var targetTempo: Int = 120
+
+    /// A **manually pinned reach** (absolute BPM) — the player's own goal above `command`,
+    /// overriding the auto-derived `derivedTarget` (ADR 0075). `nil` = use the derived reach
+    /// (the default). **Optional with no declaration default** so SwiftData lightweight migration
+    /// leaves exercises saved before this as `nil` (auto), the CoreData 134110 rule (ADR 0012)
+    /// shared with `commandTempo`. Auto-cleared by `promoteCommand` once the owned command catches
+    /// up to it (a reach must stay above command). Read through `reachTempo`, never directly.
+    var targetTempoOverride: Int?
 
     // Time signature: beats per bar (the click count and downbeat grouping) and the note
     // value (denominator — 4, 8, …). The standalone beat generator (slice 1) needs only
@@ -248,9 +258,18 @@ final class Exercise {
     /// Whether a command tempo has been measured/promoted yet (vs falling back to working).
     var hasMeasuredCommand: Bool { commandTempo != nil }
 
-    /// The reach derived from the current `command` (ADR 0045): proportional + clamped.
-    /// What `targetTempo` is set to on promotion; surfaced so the UI can preview the reach.
+    /// The reach derived from the current `command` (ADR 0045): proportional + clamped. The
+    /// **auto** value, kept pure so a reset-to-auto affordance can fall back to it. Read
+    /// `reachTempo` for the effective reach.
     var derivedTarget: Int { TempoStretch.targetBPM(forCommand: command) }
+
+    /// The **effective** reach (BPM): the pinned `targetTempoOverride` when set, else the auto
+    /// `derivedTarget` (ADR 0075). Every surface that renders "the goal" reads this so a pin
+    /// shows through. Mirrors `Loop.targetSpeed`.
+    var reachTempo: Int { targetTempoOverride ?? derivedTarget }
+
+    /// Whether the reach is a manual pin vs the auto derivation — gates the reset-to-auto affordance.
+    var hasTargetOverride: Bool { targetTempoOverride != nil }
 
     /// The command-anchored **training routine** this exercise prescribes (ADR 0045/0046):
     /// warm up from the working floor to the owned command, dwell there, summit briefly at the
@@ -260,19 +279,20 @@ final class Exercise {
     /// interval / unit / `dwellIntervals` / `includeBackoff`). Pure and UI-free, so the plateau
     /// math stays unit-tested per AGENTS.md.
     var ramp: CommandRamp {
-        CommandRamp(working: workingTempo, command: command, target: derivedTarget,
+        CommandRamp(working: workingTempo, command: command, target: reachTempo,
                     stepBPM: max(1, rampStepBPM), intervalCount: max(1, rampIntervalCount),
                     unit: rampIntervalUnit, dwellIntervals: max(1, dwellIntervals),
                     includeBackoff: includeBackoff,
                     reachSteps: max(0, rampReachSteps), backoffSteps: max(0, rampBackoffSteps))
     }
 
-    /// Promote a newly-owned tempo to `command` and recompute the `target` reach above it
-    /// (ADR 0045, Phase 1 — manual "I own this"). Phase 1 overwrites `targetTempo` from the
-    /// new command; a Phase 2 milestone record and pinned-target flag are out of scope here.
+    /// Promote a newly-owned tempo to `command` (ADR 0045 / 0075). The auto reach is derived, so
+    /// promotion is a single write — but a **pinned** reach (`targetTempoOverride`) that the new
+    /// command has caught up to is auto-cleared (a reach must stay above command), reverting to the
+    /// auto value. No longer writes the vestigial `targetTempo` (ADR 0075).
     func promoteCommand(to tempo: Int) {
         commandTempo = tempo
-        targetTempo = TempoStretch.targetBPM(forCommand: tempo)
+        if let pinned = targetTempoOverride, pinned <= command { targetTempoOverride = nil }
     }
 
     /// The Italian tempo marking for the current working tempo (ADR 0043, slice 1) —

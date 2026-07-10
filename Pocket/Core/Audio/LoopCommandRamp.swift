@@ -51,13 +51,13 @@ enum LoopCommandRamp {
     }
 
     /// Convenience: build the ramp directly from a `Loop`'s measured progression — `speed` is the
-    /// warm-up floor, `command` the owned tempo, `derivedTargetSpeed` the reach.
+    /// warm-up floor, `command` the owned tempo, `targetSpeed` the reach (a pinned override or the auto).
     static func make(loop: Loop, warmupSteps: Int,
                      dwellIntervals: Int = defaultDwellIntervals,
                      reachSteps: Int = 0, backoffSteps: Int = 0,
                      includeBackoff: Bool = true,
                      repsPerStep: Int = defaultRepsPerStep) -> CommandRamp {
-        make(working: loop.speed, command: loop.command, target: loop.derivedTargetSpeed,
+        make(working: loop.speed, command: loop.command, target: loop.targetSpeed,
              warmupSteps: warmupSteps, dwellIntervals: dwellIntervals,
              reachSteps: reachSteps, backoffSteps: backoffSteps,
              includeBackoff: includeBackoff, repsPerStep: repsPerStep)

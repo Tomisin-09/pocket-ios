@@ -84,7 +84,7 @@ struct RoutineItemRow: View {
         if item.kind == .rest { return "Breather" }
         if item.isOrphaned { return "Skipped — the unit was deleted" }
         if let exercise = item.exercise {
-            return "Command \(exercise.command) → \(exercise.derivedTarget) BPM"
+            return "Command \(exercise.command) → \(exercise.reachTempo) BPM"
         }
         if let loop = item.loop {
             return loop.song?.title
