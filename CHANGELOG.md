@@ -56,6 +56,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   Turning *Auto-start blocks* off still makes every block wait for a manual start.
 
 ### Fixed
+- **A loop's Focus and Type now actually change in its edit sheet.** On the waveform, opening a loop's
+  settings and picking a **Focus** (Backburner / Active / Sharpening) or **Type** (Lick / Riff / Chords /
+  Passage) did nothing — the dropdown needed several taps to even register and the choice never stuck, so
+  those fields felt frozen. They were the only two fields built on an interactive picker inside the row's
+  value slot, which is unreliable at the sheet's partial height; both are now a tap that opens a simple
+  options sheet and writes the choice immediately.
 - **The screen no longer sleeps during a routine session's rest or completion screens.** The
   keep-awake modifier (ADR 0050) was on every block run screen (exercise/loop/song) but not on the
   routine player's between-blocks **rest** countdown or its end-of-session summary. Leaving a block

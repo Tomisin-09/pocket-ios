@@ -277,10 +277,12 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
   song lands on its **waveform** (straight into practice); a **bulk** import returns to the
   **library** (no waveform hop). Needs the `fileImporter` set to `allowsMultipleSelection`
   and the post-import navigation to branch on count.
-- **Loop edit blocked while playing.** You can't edit a loop's practice details (ramp/reach
-  etc.) while that loop is activated and playing — you have to pause first. Decide the intended
-  behaviour: allow live edits, or make the "pause to edit" requirement explicit/graceful rather
-  than a silent block. Found on device 2026-07-09.
+- ~~**Loop edit "blocked while playing".**~~ **FIXED (pocket-121, 2026-07-10.)** The real cause
+  wasn't playback at all: in a loop's waveform edit sheet the **Focus** and **Type** rows were
+  interactive `.menu` `Picker`s in a `LabeledContent` value slot, which need several taps to register and
+  never commit their selection at the sheet's partial detent — so those two fields appeared frozen. Both
+  are now a plain `Button` opening a `confirmationDialog` that writes the choice directly (a `Menu` of
+  `Button`s was tried first but still needed multiple taps). Mastery/Command tempo always worked — not Pickers.
 
 - **Manual target override (loops, and likely exercises).** Let a player set their own reach
   instead of the auto-derived one (ADR 0059 makes the derived reach a milestone capped at song
