@@ -1,10 +1,9 @@
 import SwiftData
 import SwiftUI
 
-// Edit sheets for loops and markers (brief: native system sheets). Tapping a
-// row in the Loops/Markers panels presents these. They take a snapshot of the
-// item, edit local copies, and hand the result back via `onSave` / `onDelete`
-// so the screen owns the source of truth.
+// Edit sheets for loops and markers (native system sheets), presented by tapping a row in the
+// Loops/Markers panels. They edit local copies and write straight to the @Model on Done (Cancel
+// discards), with an Undo snapshot handed back via `onSaved`.
 
 struct LoopEditSheet: View {
     /// The persisted loop — edits apply straight to it on Done (so Cancel discards).
@@ -35,6 +34,11 @@ struct LoopEditSheet: View {
     @State private var newTag = ""
     // The loop's journal now lives here in settings (read-only), off the waveform row (ADR 0067).
     @State private var showingJournal = false
+    // Focus / Type pick via a bottom action sheet off a plain Button — a Menu/Picker in a
+    // `LabeledContent` value slot needs several taps to register and won't commit at this sheet's
+    // partial detent (device bug 2026-07-10). A Button + confirmationDialog is reliable at any detent.
+    @State private var showingTypeOptions = false
+    @State private var showingFocusOptions = false
 
     init(loop: Loop, autoColor: Color,
          onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void,
@@ -156,15 +160,13 @@ struct LoopEditSheet: View {
     }
 }
 
-// Field-building sections split into an extension to keep the primary declaration under the
-// type-body length limit — same file, so the `private` stored props above stay reachable.
+// Field-building sections split into an extension (same file) to keep the type body under limit.
 extension LoopEditSheet {
 
     // MARK: - Journal (ADR 0067)
 
-    /// The loop's practice journal, read-only. Authoring lives on the Practice run screen
-    /// (ADR 0058); this is the "peek" surface, moved off the waveform loop row into the loop's
-    /// settings so the row's second control can become fine-adjust. The count reads as the
+    /// The loop's practice journal, read-only (authoring lives on the Practice run screen, ADR
+    /// 0058); moved off the waveform loop row into settings (ADR 0067). The count reads as the
     /// unrated-style absence signal (ADR 0039): "None" until there's something to see.
     private var journalSection: some View {
         Section("Journal") {
@@ -196,21 +198,19 @@ extension LoopEditSheet {
         }
     }
 
-    /// Loop type. `.menu` (not the Form default navigation-link style): this sheet opens at the
-    /// `.medium` detent, and a navigation-link Picker can't push its options list out of a
-    /// partial-height sheet — the push is swallowed, so the value never changes. A menu dropdown
-    /// is self-contained and works at any detent. Wrapped in `LabeledContent` so the ⓘ sits in the
-    /// (independently tappable) label slot while the menu owns the trailing value.
+    /// Loop type. A plain `Button` showing the current value that opens a bottom action sheet — **not**
+    /// an interactive `Picker`/`Menu`, which in a `LabeledContent` value slot needs multiple taps and
+    /// won't commit at this sheet's partial detent (device bug 2026-07-10). Each dialog Button's explicit
+    /// `loopType =` write always lands; ⓘ stays in the independently-tappable label slot.
     private var typeRow: some View {
         LabeledContent {
-            Picker("Type", selection: $loopType) {
-                ForEach(LoopType.pickerOrder) { type in
-                    Text(type.label).tag(type)
+            Button(loopType.label) { showingTypeOptions = true }
+                .foregroundStyle(PocketColor.textSecondary)
+                .confirmationDialog("Type", isPresented: $showingTypeOptions, titleVisibility: .visible) {
+                    ForEach(LoopType.pickerOrder) { type in
+                        Button(type == .unset ? "None" : type.label) { loopType = type }
+                    }
                 }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .foregroundStyle(PocketColor.textSecondary)
         } label: {
             FieldInfoLabel(title: "Type", info: PracticeFieldInfo.loopType)
         }
@@ -243,31 +243,35 @@ extension LoopEditSheet {
         }
     }
 
-    /// Practice intent — Backburner / Active / Sharpening, or Not set (`nil`, ADR 0039).
-    /// A menu (not a segmented control): a 4th "unset" segment is too cramped on a phone,
-    /// and a menu handles `nil` cleanly while matching the `Type` menu above it. Stored as
-    /// `Int?` per ADR 0036 (the planner reads the raw value); labels live in the view. Wrapped in
-    /// `LabeledContent` so the ⓘ stays independently tappable (a menu Picker's row swallows taps).
+    /// Practice intent — Backburner / Active / Sharpening, or Not set (`nil`, ADR 0039). Stored as
+    /// `Int?` per ADR 0036 (the planner reads the raw value); labels live in the view. Same Button +
+    /// action-sheet pattern as `typeRow` (a Menu/Picker here won't commit, device bug 2026-07-10);
+    /// each dialog Button writes `focus` directly.
     private var focusRow: some View {
         LabeledContent {
-            Picker("Focus", selection: $focus) {
-                Text("Not set").tag(Int?.none)
-                Text("Backburner").tag(Int?(1))
-                Text("Active").tag(Int?(2))
-                Text("Sharpening").tag(Int?(3))
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .foregroundStyle(PocketColor.textSecondary)
+            Button(focusLabel) { showingFocusOptions = true }
+                .foregroundStyle(PocketColor.textSecondary)
+                .confirmationDialog("Focus", isPresented: $showingFocusOptions, titleVisibility: .visible) {
+                    ForEach(Self.focusOptions, id: \.value) { option in
+                        Button(option.label) { focus = option.value }
+                    }
+                }
         } label: {
             FieldInfoLabel(title: "Focus", info: PracticeFieldInfo.focus)
         }
     }
 
-    /// Command tempo as a percentage of original (ADR 0036), or not yet measured (`nil`,
-    /// ADR 0039). A slider can't express "unset," so when unmeasured the row offers a
-    /// **Set** button (seeded from the loop's current practice `speed`, a tempo you're
-    /// demonstrably at); once set, the slider shows with a **Clear** control back to unset.
+    /// The focus intents in dialog order (`nil` = Not set), shared by the action sheet and the label.
+    private static let focusOptions: [(value: Int?, label: String)] =
+        [(nil, "Not set"), (1, "Backburner"), (2, "Active"), (3, "Sharpening")]
+
+    private var focusLabel: String {
+        Self.focusOptions.first { $0.value == focus }?.label ?? "Not set"
+    }
+
+    /// Command tempo as a percentage of original (ADR 0036), or not yet measured (`nil`, ADR 0039).
+    /// A slider can't express "unset," so when unmeasured the row offers a **Set** button (seeded
+    /// from the loop's practice `speed`); once set, the slider shows with a **Clear** back to unset.
     private var commandTempoRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let value = commandTempo {
@@ -297,11 +301,9 @@ extension LoopEditSheet {
 
     // MARK: - Tags (ADR 0034)
 
-    /// The loop's descriptive tags. The tags already on this loop render as removable
-    /// `selected` chips (tap the ✕ to remove) in a wrapping cloud so they're all visible at
-    /// a glance; below sits an add field and a row of `suggestion` chips drawn from tags used
-    /// on any loop in the library (the convergence mechanism — many loops sharing the *same*
-    /// tag). One chip vocabulary, add and remove symmetric (ADR 0034).
+    /// The loop's descriptive tags: those already applied render as removable `selected` chips in a
+    /// wrapping cloud; below sits an add field and `suggestion` chips drawn from tags used on any
+    /// loop in the library (the convergence mechanism). One vocabulary, add/remove symmetric (ADR 0034).
     private var tagsSection: some View {
         Section("Tags") {
             if !tags.isEmpty {
@@ -330,10 +332,9 @@ extension LoopEditSheet {
         }
     }
 
-    /// The **skill-bucket** suggestions (V2 planner Slice 4): tagging a loop with one of these
-    /// canonical names lets the planner's technique goals surface it (Path A). Always present (not
-    /// drawn from other loops) so the practice signal is discoverable; excludes buckets already on
-    /// this loop, prefixed with a ✨ so it reads apart from descriptive tags.
+    /// The **skill-bucket** suggestions (V2 planner Slice 4): tagging a loop with one lets the
+    /// planner's technique goals surface it (Path A). Always present (not drawn from other loops),
+    /// excludes buckets already on this loop, prefixed ✨ so it reads apart from descriptive tags.
     private var skillTagChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
@@ -353,8 +354,7 @@ extension LoopEditSheet {
         return SkillFamilyMap.suggestedLoopTags.filter { !applied.contains($0.lowercased()) }
     }
 
-    /// Tappable chips of tags already used on other loops — tap to add the canonical form.
-    /// Horizontally scrolling (not wrapped) since the library-wide set can be long.
+    /// Tappable chips of tags used on other loops — tap to add; horizontally scrolling since long.
     private var tagSuggestionChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
@@ -368,9 +368,8 @@ extension LoopEditSheet {
         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
     }
 
-    /// Distinct, normalised tags used across every loop in the library, excluding those
-    /// already on this loop. The flat-map is the loop-set aggregation (ADR 0034 slice 1);
-    /// `Labels.suggestions` does the distinct/normalise/exclude/sort, shared with collections.
+    /// Distinct, normalised tags used across every loop in the library, excluding those already on
+    /// this loop. `Labels.suggestions` does the distinct/normalise/exclude/sort (shared, ADR 0034).
     private var tagSuggestions: [String] {
         Labels.suggestions(from: allLoops.flatMap(\.tags), excluding: tags)
     }
