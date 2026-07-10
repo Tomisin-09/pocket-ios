@@ -60,4 +60,51 @@ final class RoutineSessionPlayerTests: XCTestCase {
         // old "first unit always waits" exception is gone.
         XCTAssertEqual(player.shouldAutoStart(at: 0), player.shouldAutoStart(at: 1))
     }
+
+    // MARK: - Reps (ADR 0076)
+
+    /// A block set to run twice stays the current block across the first natural completion, then
+    /// rolls to the next on the last rep — `advance()` is rep-aware.
+    func testMultiRepBlockRepeatsBeforeAdvancing() {
+        let drill = Exercise(name: "Alt picking")
+        let next = Exercise(name: "Legato")
+        let first = RoutineItem.item(drill, order: 0); first.reps = 2
+        let player = RoutineSessionPlayer(routine: routine([first, .item(next, order: 1)]))
+
+        XCTAssertEqual(player.currentRep, 1)
+        XCTAssertTrue(player.hasMoreReps)
+        XCTAssertEqual(player.repLabel, "Rep 1 of 2")
+        XCTAssertEqual(player.current?.title, "Alt picking")
+
+        player.advance()                              // rep 1 → 2, same block
+        XCTAssertEqual(player.currentRep, 2)
+        XCTAssertFalse(player.hasMoreReps)
+        XCTAssertEqual(player.current?.title, "Alt picking")
+
+        player.advance()                              // last rep → next block
+        XCTAssertEqual(player.current?.title, "Legato")
+        XCTAssertEqual(player.currentRep, 1)
+    }
+
+    /// Skip abandons the remaining reps and jumps to the next block, unlike `advance()`.
+    func testSkipBypassesRemainingReps() {
+        let drill = Exercise(name: "Spider")
+        let next = Exercise(name: "Scales")
+        let first = RoutineItem.item(drill, order: 0); first.reps = 3
+        let player = RoutineSessionPlayer(routine: routine([first, .item(next, order: 1)]))
+
+        player.skip()                                 // from rep 1 → straight to the next block
+        XCTAssertEqual(player.current?.title, "Scales")
+        XCTAssertEqual(player.currentRep, 1)
+    }
+
+    /// The block progress label counts blocks, not reps, so a repeated block never inflates "N of M".
+    func testProgressLabelUnaffectedByReps() {
+        let drill = Exercise(name: "Warm-up")
+        let item = RoutineItem.item(drill, order: 0); item.reps = 3
+        let player = RoutineSessionPlayer(routine: routine([item, .rest(order: 1)]))
+        XCTAssertEqual(player.progressLabel, "1 of 2")
+        player.advance()
+        XCTAssertEqual(player.progressLabel, "1 of 2")   // still the same block, rep 2
+    }
 }

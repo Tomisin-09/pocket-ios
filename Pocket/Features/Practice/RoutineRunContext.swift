@@ -18,6 +18,8 @@ struct RoutineRunContext {
     let autoStart: Bool
     /// Whether there's a previous block to step back to (disables the ‹ control at the first block).
     let canGoBack: Bool
+    /// "Rep 2 of 3" while a multi-rep block is in play, else empty (ADR 0076) — shown on the progress strip.
+    var repLabel: String = ""
     /// Step back to the previous block (user-initiated).
     let onBack: () -> Void
     /// Jump to the next block now (user-initiated).
@@ -47,7 +49,7 @@ extension View {
         .safeAreaInset(edge: .top) {
             if let context {
                 RoutineProgressStrip(index: context.stageIndex, count: context.stageCount,
-                                     canGoBack: context.canGoBack,
+                                     canGoBack: context.canGoBack, repLabel: context.repLabel,
                                      onBack: context.onBack, onNext: context.onSkip)
             }
         }
@@ -63,6 +65,8 @@ struct RoutineProgressStrip: View {
     let index: Int
     let count: Int
     let canGoBack: Bool
+    /// "Rep 2 of 3" for a multi-rep block (ADR 0076); empty for a single-run block (no rep line shown).
+    var repLabel: String = ""
     let onBack: () -> Void
     let onNext: () -> Void
 
@@ -78,6 +82,14 @@ struct RoutineProgressStrip: View {
                 }
                 HStack {
                     Text("Start")
+                    Spacer()
+                    // The rep counter rides the centre while a multi-rep block runs, so "Rep 2 of 3"
+                    // reads without stealing a row from the compact strip.
+                    if !repLabel.isEmpty {
+                        Text(repLabel)
+                            .font(.futura(.caption2, weight: .semibold))
+                            .foregroundStyle(PocketColor.practice)
+                    }
                     Spacer()
                     Text("Finish")
                 }

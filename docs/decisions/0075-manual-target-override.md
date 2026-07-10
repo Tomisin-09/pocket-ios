@@ -70,8 +70,8 @@ height preserved so the row never shifts). Design brief §4.1 updated.
 - Players can pin a goal more or less ambitious than the auto `+~6%`, and it sticks across command
   promotions until command catches up.
 - **The pins are the data substrate for a learned default.** Each pin is stored per unit as a real
-  "at command X, this player reached for Y" signal, with no new logging. This opens ADR 0076
-  (fast-follow): a pure, per-user, **on-device** `learnedProportion` over the accumulated
+  "at command X, this player reached for Y" signal, with no new logging. This opens a **future
+  fast-follow ADR**: a pure, per-user, **on-device** `learnedProportion` over the accumulated
   target/command ratios that seeds the reach for *newly-created* units only — never retroactively
   mutating an existing un-pinned reach, no analytics backend (AGENTS.md no-telemetry). Not built here
   (a learner tuned against zero pins just reproduces `0.06`); this ADR keeps the door open by
@@ -82,5 +82,5 @@ height preserved so the row never shifts). Design brief §4.1 updated.
 - **A one-off run-screen nudge, not stored.** Rejected — the goal should persist and be the training
   data; an ephemeral nudge is neither.
 - **Removing `Exercise.targetTempo`.** Rejected — not an additive migration; retained vestigial.
-- **Building the learned default now.** Deferred to ADR 0076 — no pin data to train on until this
-  ships.
+- **Building the learned default now.** Deferred to a future fast-follow ADR — no pin data to train
+  on until this ships.

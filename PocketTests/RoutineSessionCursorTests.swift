@@ -75,4 +75,69 @@ final class RoutineSessionCursorTests: XCTestCase {
         XCTAssertFalse(cursor.isComplete)
         XCTAssertEqual(cursor.index, 1)
     }
+
+    // MARK: - Reps (ADR 0076)
+
+    func testSingleRunBlocksHaveNoRepCounter() {
+        // The `total:` convenience makes every block a single run — advance walks blocks, no reps.
+        var cursor = RoutineSessionCursor(total: 2)
+        XCTAssertEqual(cursor.rep, 1)
+        XCTAssertEqual(cursor.repsForCurrent, 1)
+        XCTAssertFalse(cursor.hasMoreReps)
+        XCTAssertEqual(cursor.repLabel, "")   // a single run shows no "Rep 1 of 1"
+        cursor.advance()
+        XCTAssertEqual(cursor.index, 1)
+        XCTAssertEqual(cursor.rep, 1)
+    }
+
+    func testAdvanceStepsRepsBeforeRollingToNextBlock() {
+        var cursor = RoutineSessionCursor(reps: [3, 1])
+        XCTAssertEqual(cursor.repLabel, "Rep 1 of 3")
+        XCTAssertTrue(cursor.hasMoreReps)
+        cursor.advance()                     // rep 1 → 2, same block
+        XCTAssertEqual(cursor.index, 0)
+        XCTAssertEqual(cursor.rep, 2)
+        XCTAssertEqual(cursor.repLabel, "Rep 2 of 3")
+        cursor.advance()                     // rep 2 → 3, same block
+        XCTAssertEqual(cursor.index, 0)
+        XCTAssertEqual(cursor.rep, 3)
+        XCTAssertFalse(cursor.hasMoreReps)   // last rep
+        cursor.advance()                     // last rep → next block, rep resets
+        XCTAssertEqual(cursor.index, 1)
+        XCTAssertEqual(cursor.rep, 1)
+    }
+
+    func testSkipAbandonsRemainingRepsAndJumpsBlock() {
+        var cursor = RoutineSessionCursor(reps: [3, 2])
+        cursor.advance()                     // on rep 2 of block 0
+        XCTAssertEqual(cursor.rep, 2)
+        cursor.skip()                        // skip the rest of block 0's reps
+        XCTAssertEqual(cursor.index, 1)
+        XCTAssertEqual(cursor.rep, 1)
+        XCTAssertEqual(cursor.repLabel, "Rep 1 of 2")
+    }
+
+    func testRetreatResetsTheRepCounter() {
+        var cursor = RoutineSessionCursor(reps: [1, 3])
+        cursor.advance()                     // to block 1, rep 1
+        cursor.advance()                     // block 1, rep 2
+        XCTAssertEqual(cursor.rep, 2)
+        cursor.retreat()                     // back to block 0, rep reset
+        XCTAssertEqual(cursor.index, 0)
+        XCTAssertEqual(cursor.rep, 1)
+    }
+
+    func testRepsAreClampedToAtLeastOne() {
+        let cursor = RoutineSessionCursor(reps: [0, -2])
+        XCTAssertEqual(cursor.repsForCurrent, 1)
+        XCTAssertEqual(cursor.total, 2)
+    }
+
+    func testProgressLabelIsBlockBasedNotRepBased() {
+        // "N of M" always counts blocks, so a multi-rep block doesn't inflate the session length.
+        var cursor = RoutineSessionCursor(reps: [2, 1])
+        XCTAssertEqual(cursor.progressLabel, "1 of 2")
+        cursor.advance()                     // still block 1 (rep 2)
+        XCTAssertEqual(cursor.progressLabel, "1 of 2")
+    }
 }

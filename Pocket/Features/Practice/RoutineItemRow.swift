@@ -13,6 +13,9 @@ struct RoutineItemRow: View {
     /// 1-based position in the routine, shown as a leading number so the sequence is clear at a
     /// glance (ADR 0071). `nil` hides it (e.g. contexts that don't want numbering).
     var number: Int?
+    /// Whether to show the read-only `×N` repeat badge (ADR 0076). The editor turns it off because it
+    /// shows its own always-visible, tappable `×N` **chip** in the same slot instead.
+    var showsRepsBadge: Bool = true
 
     var body: some View {
         HStack(spacing: 12) {
@@ -36,6 +39,14 @@ struct RoutineItemRow: View {
                 }
             }
             Spacer(minLength: 4)
+            if showsReps {
+                Text("×\(item.effectiveReps)")
+                    .font(.pocketMono(.caption))
+                    .foregroundStyle(PocketColor.practice)
+                    .padding(.horizontal, 7).padding(.vertical, 3)
+                    .background(Capsule().fill(PocketColor.practiceCircleWash))
+                    .accessibilityLabel("Repeats \(item.effectiveReps) times")
+            }
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
@@ -52,6 +63,13 @@ struct RoutineItemRow: View {
             .frame(width: 34, height: 34)
             .background(Circle().fill(item.kind == .rest || item.isOrphaned
                                       ? PocketColor.barPlayed : PocketColor.practiceCircleWash))
+    }
+
+    /// Whether to badge the repeat count — a real unit block set to run more than once (ADR 0076).
+    /// Rests and orphans never repeat; a single run needs no badge; and the editor suppresses it
+    /// (`showsRepsBadge`) in favour of its own tappable chip.
+    private var showsReps: Bool {
+        showsRepsBadge && item.kind != .rest && !item.isOrphaned && item.effectiveReps > 1
     }
 
     private var symbolName: String {

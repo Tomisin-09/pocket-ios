@@ -58,13 +58,16 @@ struct RoutinePlayerView: View {
         try? modelContext.save()
     }
 
-    /// A block finished on its own. With manual advance (the default) it lands on the **Done screen**
-    /// for that unit; with auto-advance on it moves straight on. Skip bypasses this. Only units with a
-    /// journal (exercise/loop) show Done — a song has no journal/mastery, so it advances without an
-    /// empty gate (and in the default loop mode a song never finishes on its own anyway; a Skip moves
-    /// it on).
+    /// A block finished on its own. On a **multi-rep** block with reps left, it runs the next rep
+    /// straight away — reps are back-to-back, so no Done gate between them (ADR 0076). On the **last**
+    /// rep: with manual advance (the default) it lands on the **Done screen** for that unit; with
+    /// auto-advance on it moves straight on. Skip bypasses all of this. Only units with a journal
+    /// (exercise/loop) show Done — a song has no journal/mastery, so it advances without an empty gate
+    /// (and in the default loop mode a song never finishes on its own anyway; a Skip moves it on).
     private func finishedBlock() {
-        if !AppSettings.routineAutoAdvance, let stage = player.current, owner(for: stage) != nil {
+        if player.hasMoreReps {
+            player.advance()      // next rep of the same block — the run screen restarts on its new id
+        } else if !AppSettings.routineAutoAdvance, let stage = player.current, owner(for: stage) != nil {
             doneStage = stage
         } else {
             player.advance()
@@ -147,8 +150,9 @@ struct RoutinePlayerView: View {
                           stageCount: player.stageCount,
                           autoStart: player.shouldAutoStart(at: player.currentIndex),
                           canGoBack: player.canGoBack,
+                          repLabel: player.repLabel,
                           onBack: { player.back(); haptic(.light) },
-                          onSkip: { player.advance(); haptic(.light) },
+                          onSkip: { player.skip(); haptic(.light) },
                           onFinished: { finishedBlock() },
                           onExit: { dismiss() })
     }
@@ -157,13 +161,16 @@ struct RoutinePlayerView: View {
 
     @ViewBuilder
     private func stageView(_ stage: RoutineStage) -> some View {
+        // Key each run screen on the block **and** the current rep, so a multi-rep block restarts the
+        // drill from scratch on every rep rather than SwiftUI reusing the finished one (ADR 0076).
+        let runID = "\(stage.id.uuidString)-rep\(player.currentRep)"
         switch stage.payload {
         case .exercise(let exercise):
-            ExerciseRunView(exercise: exercise, routineContext: context).id(stage.id)
+            ExerciseRunView(exercise: exercise, routineContext: context).id(runID)
         case .loop(let loop):
-            LoopRunView(loop: loop, routineContext: context).id(stage.id)
+            LoopRunView(loop: loop, routineContext: context).id(runID)
         case .song(let song):
-            SongPlayAlongView(song: song, routineContext: context).id(stage.id)
+            SongPlayAlongView(song: song, routineContext: context).id(runID)
         case .rest:
             EmptyView()   // rests never reach here — the conductor is in `.resting`
         }
