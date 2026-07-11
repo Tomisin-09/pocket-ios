@@ -74,18 +74,17 @@ struct HomeView: View {
                         .frame(height: 22)
                         .accessibilityLabel("Red Moon")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    // Solid green disc with a bold dark plus — mirrors the app's
-                    // dark-content-on-filled-colour convention (e.g. the plum CTA).
-                    Button { importing = true } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(PocketColor.background)
-                            .frame(width: 34, height: 34)
-                            .background(Circle().fill(PocketColor.active))
-                    }
-                    .accessibilityLabel("Add a song")
-                }
+                // Drop iOS 26's shared-glass toolbar background so the green add disc
+                // reads as a solid fill. The modifier is iOS-26-SDK-only, so `#if compiler`
+                // gates it out of Xcode 16 CI (a runtime `#available` can't — symbol absent).
+                #if compiler(>=6.2)
+                if #available(iOS 26.0, *) {
+                    ToolbarItem(placement: .topBarTrailing) { addSongButton }
+                        .sharedBackgroundVisibility(.hidden)
+                } else { ToolbarItem(placement: .topBarTrailing) { addSongButton } }
+                #else
+                ToolbarItem(placement: .topBarTrailing) { addSongButton }
+                #endif
             }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.audio],
                           allowsMultipleSelection: true, onCompletion: handleImport)
@@ -166,8 +165,8 @@ struct HomeView: View {
 
     /// The top-level **Practice** space (ADR 0046) — where trainable units live and
     /// command-anchored runs happen. A push (it's a *place* with its own list and run screens),
-    /// in its own indigo accent (`PocketColor.practice`) so it reads as distinct from the
-    /// metronome tool below it.
+    /// in the brand teal accent (`PocketColor.practice`, the brand hero) so it reads as distinct
+    /// from the metronome tool below it.
     private var practiceCard: some View {
         NavigationLink { PracticeView() } label: {
             HStack(spacing: 14) {
@@ -198,8 +197,8 @@ struct HomeView: View {
 
     // MARK: - Metronome card
 
-    /// The one splash of colour on the screen (teal, `PocketColor.metronome`) — the standalone
-    /// metronome, presented full-screen (it owns its own navigation + dismiss, ADR 0043).
+    /// The standalone metronome (plum, `PocketColor.metronome` — the one theme-invariant home
+    /// hue), presented full-screen (it owns its own navigation + dismiss, ADR 0043).
     private var metronomeCard: some View {
         Button { showingMetronome = true } label: {
             HStack(spacing: 14) {
@@ -231,10 +230,10 @@ struct HomeView: View {
     // MARK: - Song library strip
 
     /// The songs place, folded into a single nav strip (matching the Metronome/Practice pattern) in
-    /// its own **blue** identity (ADR 0023 song-surface hue, baked `library` tokens — no opacity
-    /// blend, ADR 0062). Replaces the old inline "Your songs" preview list; adding a song now lives in
-    /// the toolbar's green button. Together with the teal Metronome and plum Practice strips this
-    /// forms the blue · teal · plum home triad (songs / tool / content).
+    /// its own warm **terracotta** identity (baked `library` tokens — no opacity blend, ADR
+    /// 0062/0081). Replaces the old inline "Your songs" preview list; adding a song now lives in the
+    /// toolbar's green button. Together with the teal Practice and plum Metronome strips this forms
+    /// the teal · plum · terracotta home triad (content / tool / songs).
     private var songLibraryCard: some View {
         NavigationLink { LibraryView() } label: {
             HStack(spacing: 14) {
@@ -326,6 +325,24 @@ struct HomeView: View {
         case .failure(let error):
             importError = error.localizedDescription
         }
+    }
+}
+
+/// The add-song toolbar button, split into an extension so `HomeView`'s body stays within
+/// SwiftLint's `type_body_length`.
+private extension HomeView {
+    /// Solid green disc with a bold dark plus — mirrors the app's dark-content-on-filled-colour
+    /// convention (e.g. the teal CTA). Its enclosing `ToolbarItem` drops the iOS 26 shared glass
+    /// background so the disc reads as a flat fill.
+    var addSongButton: some View {
+        Button { importing = true } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(PocketColor.background)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(PocketColor.active))
+        }
+        .accessibilityLabel("Add a song")
     }
 }
 

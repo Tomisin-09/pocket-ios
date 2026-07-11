@@ -76,6 +76,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   Turning *Auto-start blocks* off still makes every block wait for a manual start.
 
 ### Changed
+- **The home screen now leads with the brand colour.** Practice — the app's most-used space and the big
+  "Start today's session" button — wears the brand **teal**, the Metronome moves to **plum**, and the
+  Song library takes a warm **terracotta**, for a teal · plum · terracotta home. Mastery dots follow the
+  brand teal. (Groundwork for a selectable "Blood Moon" terracotta theme, coming next.)
 - **The exercise ⓘ info sheet is now purely for reading.** It's been reordered so the **description**
   comes first, then your **progress** (mastery, last practised), the **feel** (meter/subdivision), and
   the **training-routine shape**, with the template chip moved to the bottom. Tempo is **no longer
@@ -139,6 +143,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   kept in place so it can slot in later without touching these editors.
 
 ### Fixed
+- **The add-song button on the home screen is now a clean solid green.** It used to show a faint pale
+  ring/edge (the iOS 26 nav-bar glass sitting behind it); that background is now suppressed so the green
+  disc reads flush.
 - **A scrub on the waveform lands where you let go, not on the nearest beat.** Dragging the playhead to a
   point *between* beats used to get yanked onto the pulse — with a dense beat grid, the playhead felt
   magnetized and you couldn't land it where you meant. A **scrub** now catches only the sparse landmarks

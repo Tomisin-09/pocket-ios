@@ -63,13 +63,14 @@ new token and note it so it can be added to the code in the same change.
 
 Colour carries meaning and is consistent everywhere:
 
-Teal identity (the song's bars, matching the metronome accent) with **green** as the
-live state. Hue carries meaning: teal = the song/metronome, green = live/go, and the
-per-loop identity hues are kept out of both families. The table is grouped by
-**semantic role** — the seam a future swappable theme slots into (see ADR 0063's
-consequences: the roles are theme-ready, the values are still hand-tuned per token,
-not derived from a base hue, so a second theme today means re-tuning all of them by
-hand).
+The brand **teal** leads (ADR 0081): it wears the Practice space — the app's most-used
+surface — and its "Start today's session" CTA, so the brand hue carries the home.
+**Green** is the live state, **plum** the metronome tool, **terracotta** the songs
+place; the detail-waveform bars stay teal. Hue carries meaning, and the per-loop
+identity hues are kept out of these families. The table is grouped by **semantic
+role** — the seam the swappable theme uses: a theme is a role → hue *mapping*, so the
+planned **Blood Moon** theme swaps Practice↔Library to terracotta-led without a second
+baked palette (ADR 0081), and `mastery` tracks whichever hue Practice wears.
 
 **Light + dark appearance (ADR 0062), pinnable in Settings (ADR 0063).** The app
 follows the system Light/Dark setting by default; **Settings → Appearance** can pin
@@ -95,30 +96,31 @@ near-invisible on near-black (ADR 0063).
 | `surfaceStandard` | ink @ 9% | ink @ 9% | Cards, pills, capsules, toggle "off" states |
 | `surfaceEmphasis` | ink @ 18% | ink @ 18% | Selected/highlighted chip or row |
 | `surfaceBorder` | ink @ 15% | ink @ 15% | Capsule/badge stroke outlines |
-| `waveformBar` | `#60A8C7` @ 85% | `#2B6982` @ 85% | Detail-waveform bar, ahead of the playhead (the song) — matches `metronome` (ADR 0063) |
+| `waveformBar` | `#60A8C7` @ 85% | `#2B6982` @ 85% | Detail-waveform bar, ahead of the playhead (the song) — the brand teal, theme-invariant (ADR 0081) |
 | `waveformBarPlayed` | `#60A8C7` @ 40% | `#2B6982` @ 40% | Detail-waveform bar, behind the playhead (recedes) |
+| `waveformAccent` | `#60A8C7` | `#2B6982` | Full-opacity song accent — the practice-screen speed slider, "Set BPM", and the in-song metronome-click toggle; matches the bars and stays teal in every theme (ADR 0081) |
 | `gridLine` | `#202020` | `#968F88` | Beat-grid downbeat lines — baked flat, not `ink.opacity()` (ADR 0062/0063) |
 | `active` / `confirm` | green | green | Live state / confirm-save (system dynamic colour) |
 | `danger` | red | red | Discard / delete / destructive (system dynamic colour) |
-| `metronome` | teal `#60A8C7` | `#2B6982` | The metronome **tool** — accent on the home card, metronome screen, tempo slider, waveform bars. Boosted from ~20% to ~50% saturation in ADR 0063 |
-| `metronomeCTA` | `#799BA9` | `#18698B` | Metronome's primary-button fill — deliberately different from `metronome` (a solid CTA fill needs its own contrast recipe, ADR 0062 follow-up) |
-| `metronomeCardWash` / `metronomeCircleWash` | `#153A44` / `#1D4E5C` | `#ACCBD3` / `#C2D2D5` | Home card/icon-circle tint — baked flat per appearance (ADR 0063) |
-| `practice` | plum `#9272CA` | `#603B9B` | The **Practice** space (ADR 0046) — brand-muted register in ADR 0062, boosted to ~45% saturation in ADR 0063 |
-| `practiceCTA` | `#8D7EA6` | `#593399` | Practice's primary-button fill, same rationale as `metronomeCTA` |
-| `practiceCardWash` / `practiceCircleWash` | `#2C203E` / `#3E2C56` | `#C2A7CF` / `#D0BAD2` | Home/Practice-hub card/icon-circle tint — baked flat per appearance (ADR 0063) |
-| `library` | blue `#60A5FA` | `#1D4ED8` | The **songs place** — accent on the home "Song library" strip (ADR 0023 song hue), completing the blue · teal · plum home triad |
-| `libraryCardWash` / `libraryCircleWash` | `#1C2C52` / `#283A62` | `#B4C6EC` / `#C7D6F2` | Song-library strip card/icon-circle tint — baked flat per appearance (planner review R1) |
+| `metronome` | plum `#9272CA` | `#603B9B` | The metronome **tool** — the one **theme-invariant** home hue (ADR 0081). Accent on the home card and the standalone metronome screen. (Plum values from ADR 0063; handed teal to `practice`.) |
+| `metronomeCTA` | `#8D7EA6` | `#593399` | Metronome's primary-button fill — a solid CTA fill needs its own contrast recipe (ADR 0062 follow-up) |
+| `metronomeCardWash` / `metronomeCircleWash` | `#2C203E` / `#3E2C56` | `#C2A7CF` / `#D0BAD2` | Home metronome card/icon-circle tint — baked flat per appearance |
+| `practice` | teal `#60A8C7` | `#2B6982` | The **Practice** space (ADR 0046) and the app's **brand hero** (ADR 0081) — leads the home + the "Start today's session" CTA; ~120 call sites reskin from this one token |
+| `practiceCTA` | `#799BA9` | `#18698B` | Practice's primary-button fill (incl. "Start today's session"), same rationale as `metronomeCTA` |
+| `practiceCardWash` / `practiceCircleWash` | `#153A44` / `#1D4E5C` | `#ACCBD3` / `#C2D2D5` | Home/Practice-hub card/icon-circle tint — baked flat per appearance |
+| `library` | terracotta `#E07E57` | `#C24A2C` | The **songs place** — the home "Song library" strip (ADR 0081), completing the teal · plum · terracotta home triad; retires the ADR 0023 song-blue |
+| `libraryCardWash` / `libraryCircleWash` | `#37241B` / `#4A2C1E` | `#E8C7B6` / `#EFD6C7` | Song-library strip card/icon-circle tint — baked flat per appearance |
 | `confirmWash` | `#13421E` | `#B4DAAF` | "Add a song" tint — baked flat, same rationale (ADR 0063) |
 | `fine` | `#EAF2FF` (high-key) | `#1F3651` (low-key) | Fine-mode precision selection — same cool hue, inverted key |
-| `mastery` | teal `#60A8C7` | `#2B6982` | Mastery dots/stars (Home, Library, waveform loop picker) — reuses `metronome`, moved off the amber `marker` swatch so "mastered" reads as an on-brand positive state |
+| `mastery` | teal `#60A8C7` | `#2B6982` | Mastery dots/stars (Home, Library, waveform loop picker) — **tracks the brand hero** `practice` (teal by default; follows it to terracotta in Blood Moon, ADR 0081), never the metronome plum |
 | `marker` | orange | orange | Reserved (ADR 0023) — not currently drawn anywhere; kept as the next free functional hue |
 | `pin` | purple | purple | Waveform markers, single-point (system dynamic colour) |
 | `loopPalette` | red/orange/gold/magenta/violet/blue | deepened twins, same hues | Per-loop **identity** colour (ADR 0023); plain non-brand hues since ADR 0063 — a loop's job is to be distinguishable, not brand-consistent |
 | `barDefault` | `#5C5C5C` | `#88817A` | Neutral "off" fill — empty mastery dots, minimap base track |
 | `barPlayed` | `#313131` | `#C1B6AD` | Neutral track (minimap) |
 
-The detail waveform is tinted the **teal anchor** (matching `metronome`, ADR 0062/0063
-follow-up) so the song reads as themed chrome, stays distinct from the neutral **beat
+The detail waveform is tinted the **teal anchor** (the brand hero, ADR 0081) so the
+song reads as themed chrome, stays distinct from the neutral **beat
 grid** behind it (ADR 0022), and lets the **green** live state and the **per-loop
 coloured** annotations pop against it. The capture overlays (forming/punch wash) use
 `active` (green) and remain bounded by the playhead. Per-loop colour encodes loop
@@ -136,11 +138,11 @@ from comfortable to target speed).
 
 **The brand mark stays distinct from product chrome.** The "Red Moon" brand mark (app
 icon + Settings/About logo, ADR 0061; background keyed transparent in ADR 0063) keeps
-its original, dustier slate-teal artwork — it was *not* re-saturated alongside
-`metronome` in ADR 0063, so the interactive accent and the static mark are now the
-same hue family but no longer a pixel match (a deliberate tradeoff: the mark stays
-quiet, the UI accent carries its own visual weight). Don't reach for a literal hex
-directly in views; go through `PocketColor.metronome`/`.practice`, and use the other
+its original, dustier slate-teal artwork — the same teal *hue family* as the brand hero
+(`practice`) but not a pixel match, so the static mark stays quiet while the UI accent
+carries its own visual weight. (The planned **Blood Moon** theme re-tints the wordmark
+and this logo terracotta — Slice 2, ADR 0081.) Don't reach for a literal hex directly
+in views; go through `PocketColor.practice`/`.metronome`/`.library`, and use the other
 tokens for everything else.
 
 ### 3.2 Typography

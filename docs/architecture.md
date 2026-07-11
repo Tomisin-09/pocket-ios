@@ -295,7 +295,7 @@ block finishes on (`upNext: nil` — ADR 0079 §2, reusing the integrated surfac
 one): completion beat + optional mastery + note + an editable **Move command to {value}** promote toggle
 (defaults to `min(ceiling, reach)`, ±/typed for a custom command) that, on Finish, moves command to the
 chosen value and **persists immediately** (no later Start to carry the write — ADR 0079 §3); no toggle
-when the ceiling-aware `PromoteOffer.canPromote` is false. The old pre-run promote button is gone (§4). Its indigo `practice` accent marks it as a distinct space from the metronome's teal.
+when the ceiling-aware `PromoteOffer.canPromote` is false. The old pre-run promote button is gone (§4). Its teal `practice` accent (the brand hero, ADR 0081) marks it as a distinct space from the metronome's plum.
 The `Exercise` model now stores the `CommandRamp` recipe **natively** (ADR 0046 §5): `rampStepBPM`
 / `rampIntervalCount` / `rampIntervalUnit` plus `dwellIntervals` (the command-plateau hold, **now
 user-tunable** via a Dwell row in the Steps panel — ADR 0078, previously hardcoded on save),

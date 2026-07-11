@@ -104,7 +104,7 @@ struct SpeedBar: View {
                 // single-axis iteration; a linear slider stands in for now.
                 Slider(value: $speed, in: 0.25...2.0,
                        onEditingChanged: { editing in if editing { onUserAdjust() } })
-                    .tint(PocketColor.metronome)
+                    .tint(PocketColor.waveformAccent)
                     .accessibilityLabel("Playback speed")
 
                 if let displayedBPM {
@@ -133,7 +133,7 @@ struct SpeedBar: View {
                     Button(action: onSetBPM) {
                         Text("Set BPM")
                             .font(.pocketMono(.footnote))
-                            .foregroundStyle(PocketColor.metronome)
+                            .foregroundStyle(PocketColor.waveformAccent)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(Capsule().fill(PocketColor.surfaceStandard))
@@ -170,8 +170,9 @@ struct SpeedBar: View {
     }
 }
 
-/// In-song metronome click toggle on the speed bar (ADR 0027). Icon-only, in the
-/// metronome's own teal so it doesn't read as a transport control; greys out until
+/// In-song metronome click toggle on the speed bar (ADR 0027). Icon-only, in the song's
+/// teal accent (`waveformAccent`, ADR 0081) so it sits with the waveform cockpit and doesn't
+/// read as a transport control; greys out until
 /// the song has a beat grid (tempo + downbeat). A 44pt target around a 30pt badge.
 private struct MetronomeToggle: View {
     let isOn: Bool
@@ -184,7 +185,7 @@ private struct MetronomeToggle: View {
                 .font(.futura(size: 15, weight: .semibold))
                 .foregroundStyle(foreground)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(isOn ? PocketColor.metronome : PocketColor.surfaceStandard))
+                .background(Circle().fill(isOn ? PocketColor.waveformAccent : PocketColor.surfaceStandard))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -197,7 +198,7 @@ private struct MetronomeToggle: View {
 
     private var foreground: Color {
         if !isEnabled { return PocketColor.textSecondary.opacity(0.4) }
-        return isOn ? PocketColor.background : PocketColor.metronome
+        return isOn ? PocketColor.background : PocketColor.waveformAccent
     }
 }
 

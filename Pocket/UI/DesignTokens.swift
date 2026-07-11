@@ -73,6 +73,12 @@ enum PocketColor {
     /// brighter; played recedes.
     static let waveformBar = Color("WaveformBarBase").opacity(0.85)
     static let waveformBarPlayed = Color("WaveformBarBase").opacity(0.4)
+    /// Full-opacity song accent — the `WaveformBarBase` teal at full strength, for
+    /// song-tempo chrome that must match the bars and stay teal in **every** theme: the
+    /// practice screen's speed slider and its "Set BPM" affordance. Deliberately *not*
+    /// `metronome` (the metronome tool, plum) nor `practice` (the brand hero, which turns
+    /// terracotta in Blood Moon) — the song's tempo reads as the song (ADR 0081).
+    static let waveformAccent = Color("WaveformBarBase")
     /// Beat-grid downbeat lines (ADR 0022). Baked per appearance rather than
     /// `ink.opacity(_)`, because a shared low opacity reads faintly on dark but nearly
     /// vanishes on cream (ADR 0062 follow-up) — light is boosted so the grid stays
@@ -94,62 +100,57 @@ enum PocketColor {
     /// Discard / delete / destructive — the red ✗ of the loop-capture toolbar.
     static let danger = Color.red
     /// In-song metronome click, and the Metronome space's identity colour (ADR 0026 /
-    /// 0027; retuned to the "Red Moon" brand teal in ADR 0061/0062, retiring the old
-    /// `#35C8C8`). A second ADR 0062 follow-up raised its saturation (~20% → ~50%) after
-    /// the first pass read as too washed-out/dusty in everyday use, on *both*
-    /// appearances — a lesson distinct from the wash-token bug: this wasn't a light/dark
-    /// blending asymmetry, just genuinely too little saturation at the source. Sits
-    /// clear of every other functional hue — green (live), the blue bars, orange
-    /// (markers), purple (pins), red (danger).
-    static let metronome = Color("Metronome")
-    /// **Practice** — the identity hue of the top-level Practice space (ADR 0046),
-    /// retuned from a generic indigo to a plum in the brand's register (ADR 0062), then
-    /// boosted in saturation alongside `metronome` in the second follow-up above. Kept
-    /// clear of the metronome teal (the metronome is the *tool*; Practice is the
-    /// *content*) and of every other functional hue.
-    static let practice = Color("Practice")
+    /// 0027). The metronome is the one home feature whose hue is **theme-invariant**: it
+    /// stays the brand **plum** in both the default and Blood Moon themes (ADR 0081),
+    /// having handed its former teal to Practice so the brand's teal now leads via the
+    /// most-used space. Sits clear of every other functional hue — green (live), teal
+    /// (Practice/brand), terracotta (songs), orange (markers), purple (pins), red (danger).
+    static let metronome = Color("Plum")
+    /// **Practice** — the identity hue of the top-level Practice space (ADR 0046), and the
+    /// app's **brand hero**: it wears the brand **teal** (ADR 0081), so the most-used space
+    /// and its "Start today's session" CTA lead in the brand colour. Every one of its ~120
+    /// call sites reads this token, so the whole Practice surface reskins from here — which
+    /// is also the seam the Blood Moon theme uses to swap it to terracotta (Slice 2). Kept
+    /// clear of the metronome plum and every other functional hue.
+    static let practice = Color("Teal")
     /// Mastery indicator accent — the dots/stars showing how well a loop or song is
     /// owned (Home's "Mastered" stat, the mastery dots on song cards and the loop
-    /// mastery picker, mastery stars). Reuses the brand teal (`metronome`) rather than
-    /// its own hue — "mastered" reads as an on-brand positive state, not an arbitrary
-    /// UI-kit colour. Previously the ADR 0023 amber `marker` swatch; moved off amber so
-    /// the brand blue/teal is what reads as "progress" everywhere it shows up.
-    static let mastery = metronome
+    /// mastery picker, mastery stars). **Tracks the brand hero** (`practice`) rather than
+    /// its own hue — "mastered" reads as an on-brand positive state — so it is teal in the
+    /// default theme and follows Practice to terracotta in Blood Moon (ADR 0081). Never the
+    /// metronome plum.
+    static let mastery = practice
 
     /// Card/circle **wash** fills for the Metronome and Practice feature cards (Home).
     /// Fully resolved per appearance — *not* `metronome`/`practice` at a shared opacity —
-    /// because a shared low opacity doesn't transfer symmetrically: blended at 10–15%,
-    /// `metronome`/`practice` barely tints the cream background (reading as washed-out
-    /// grey — the original ADR 0062 follow-up bug) *and*, it turns out, also reads as
-    /// near-invisible against near-black (the same low-opacity blend just multiplies the
-    /// colour down toward black rather than up toward grey). Both appearances now use an
-    /// independently baked, clearly-teal/plum flat colour rather than any shared-opacity
-    /// blend, with the circle kept dim enough that the `metronome`/`practice` icon glyph
-    /// on top still clears ~3:1 contrast.
-    static let metronomeCardWash = Color("MetronomeCardWash")
-    static let metronomeCircleWash = Color("MetronomeCircleWash")
-    static let practiceCardWash = Color("PracticeCardWash")
-    static let practiceCircleWash = Color("PracticeCircleWash")
+    /// because a shared low opacity doesn't transfer symmetrically: blended at 10–15% it
+    /// reads as washed-out grey on cream *and* near-invisible against near-black (the
+    /// ADR 0062 follow-up bug). Each hue therefore has an independently baked flat
+    /// card/circle wash per appearance, dim enough that the icon glyph on top still clears
+    /// ~3:1. Practice draws the **teal** washes (brand hero); Metronome the **plum**.
+    static let metronomeCardWash = Color("PlumCardWash")
+    static let metronomeCircleWash = Color("PlumCircleWash")
+    static let practiceCardWash = Color("TealCardWash")
+    static let practiceCircleWash = Color("TealCircleWash")
 
-    /// **Library** — the identity hue of the songs place (the home hub's "Song library" nav strip),
-    /// the ADR 0023 song-surface blue, so it sits clear of the metronome teal and Practice plum for a
-    /// blue · teal · plum home triad. Baked flat per appearance like the washes above — *not* a shared
-    /// opacity on `library` (ADR 0062 lesson: a low-opacity blend reads washed-grey on cream and near-
-    /// invisible on near-black). The song rows' left bars stay mastery-tier accents; blue is free to
-    /// mean "the songs place".
-    static let library = Color("Library")
-    static let libraryCardWash = Color("LibraryCardWash")
-    static let libraryCircleWash = Color("LibraryCircleWash")
+    /// **Library** — the identity hue of the songs place (the home hub's "Song library" nav strip).
+    /// Now the warm **terracotta** (ADR 0081), completing a teal · plum · terracotta home triad
+    /// (Practice / Metronome / songs) in place of the retired ADR 0023 song-blue. Baked flat per
+    /// appearance like the washes above — *not* a shared opacity on `library` (ADR 0062 lesson: a
+    /// low-opacity blend reads washed-grey on cream and near-invisible on near-black). In the Blood
+    /// Moon theme Library and Practice swap, so this becomes teal (Slice 2). No `libraryCTA`: the
+    /// library strip is never a filled CTA.
+    static let library = Color("Terracotta")
+    static let libraryCardWash = Color("TerracottaCardWash")
+    static let libraryCircleWash = Color("TerracottaCircleWash")
 
     /// Full-opacity **CTA fill** for the Metronome/Practice primary transport buttons
-    /// (Start/Pause/Resume; the run screens' big pill). Same asymmetry as the washes
-    /// above, one level up: `metronome`/`practice`'s light value is deepened for
-    /// *foreground* contrast, so as a solid button fill it reads as flat/grey rather
-    /// than a vivid, clearly-tappable CTA (ADR 0062 follow-up). Dark is unchanged
-    /// (already vivid against near-black); light uses a richer, more saturated fill
-    /// with `PocketColor.background` (cream) text on top still ≥4.5:1.
-    static let metronomeCTA = Color("MetronomeCTA")
-    static let practiceCTA = Color("PracticeCTA")
+    /// (Start/Pause/Resume; the run screens' big pill) and Home's "Start today's session".
+    /// A deepened per-appearance fill (not the base hue at opacity) so the cream
+    /// `PocketColor.background` text on top stays ≥4.5:1 (ADR 0062 follow-up). Practice's
+    /// CTA is **teal** (brand hero), Metronome's is **plum**.
+    static let metronomeCTA = Color("PlumCTA")
+    static let practiceCTA = Color("TealCTA")
 
     /// "Add a song" wash (Home) — same fix as the card washes above, applied to the
     /// system `active` green: `Color.green.opacity(0.14)` reads as a washed, near-
