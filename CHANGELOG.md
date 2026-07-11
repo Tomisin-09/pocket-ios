@@ -69,6 +69,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   Turning *Auto-start blocks* off still makes every block wait for a manual start.
 
 ### Changed
+- **The exercise ⓘ info sheet is now purely for reading.** It's been reordered so the **description**
+  comes first, then your **progress** (mastery, last practised), the **feel** (meter/subdivision), and
+  the **training-routine shape**, with the template chip moved to the bottom. Tempo is **no longer
+  edited here** — you tune the command and reach on the run screen (and, inside a routine, on the block
+  itself), so there's a single place to change speed instead of the info sheet doubling as an editor.
 - **The practice transport bar no longer shows a duplicate timecode.** When no loop was active, the
   transport bar's centre displayed the playback time — the same value already shown by the time bubble
   that rides the playhead on the waveform. The redundant readout is gone; the row keeps its height, so

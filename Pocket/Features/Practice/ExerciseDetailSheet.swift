@@ -1,16 +1,18 @@
 import SwiftData
 import SwiftUI
 
-/// A reference sheet for one exercise (V1 feedback #2): the place to read — and lightly annotate —
-/// what an exercise *is*, kept separate from the run-setup tuning. It surfaces the exercise's
-/// **template** (read-only — set at creation, immutable, ADR 0068), an editable **description** (the
-/// model's `notes`), the tempo anchors (working / command / reach), the meter + subdivision, a
-/// read-only preview of the training routine staircase, and — for a **strumming** template — the
-/// tap-to-edit arrow-pattern editor. Reached from the exercise run screen's nav bar (ⓘ).
+/// A **read-only reference sheet** for one exercise (V1 feedback #2; ADR 0077): the place to read —
+/// and lightly annotate — what an exercise *is*, kept entirely separate from tempo tuning. Tempo is
+/// **not** editable here anymore (ADR 0077 pulled it out): it's tuned on the run screen and, in a
+/// routine, on the block surface. This sheet surfaces, top to bottom, an editable **description**
+/// (the model's `notes`), the self-rated **mastery**, the meter + subdivision (**Feel**), a read-only
+/// preview of the training-routine staircase, the per-template **content editor** (moving to the
+/// board in a later slice), and — at the bottom — the read-only **template** chip (ADR 0068,
+/// immutable). Reached from the exercise run screen's nav bar (ⓘ).
 ///
-/// The description and (for strumming) the pattern are the only editable fields; they're committed
-/// to the model on Done / dismiss (a no-op when unchanged) so a quick open-and-close never writes.
-/// Everything else is read-only — the tempos and routine are tuned on the run screen, not here.
+/// Editable: description, mastery, and the template's content — each committed on Done / dismiss (a
+/// no-op when unchanged) so a quick open-and-close never writes. Tempo and the routine shape are
+/// tuned elsewhere.
 struct ExerciseDetailSheet: View {
     let exercise: Exercise
 
@@ -39,20 +41,11 @@ struct ExerciseDetailSheet: View {
     /// The exercise's strum-chord sheet (Strum & Chords template), seeded from the stored payload with
     /// a defensive fallback; only surfaced and committed for a strum-chords template.
     @State private var strumChords: StrumChordSheet
-    /// The edited **command** tempo (ADR 0071 R4) — nudged in `ExerciseTempoSection` and committed on
-    /// Done via the canonical `promoteCommand` setter (the same mutation the run screen uses, so no
-    /// second write path diverges, ADR 0057). Only editable for a measured command.
-    @State private var command: Int
-    /// The manually pinned **reach** (BPM) or `nil` for the auto derivation (ADR 0075), held here and
-    /// committed on Done. Seeded from `exercise.targetTempoOverride`.
-    @State private var reachOverride: Int?
 
     init(exercise: Exercise) {
         self.exercise = exercise
         _notes = State(initialValue: exercise.notes)
         _mastery = State(initialValue: exercise.mastery)
-        _command = State(initialValue: exercise.command)
-        _reachOverride = State(initialValue: exercise.targetTempoOverride)
         _strum = State(initialValue: exercise.strumPattern
                        ?? .downstrokes(beatsPerBar: exercise.beatsPerBar))
         let content = exercise.fretboardContent
@@ -67,11 +60,8 @@ struct ExerciseDetailSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                templateSection
                 descriptionSection
                 ExerciseProgressSection(mastery: $mastery, lastPracticed: exercise.lastPracticed)
-                ExerciseTempoSection(exercise: exercise, command: $command,
-                                     reachOverride: $reachOverride)
                 feelSection
                 routineSection
                 switch exercise.template.bespokeEditor {
@@ -84,6 +74,7 @@ struct ExerciseDetailSheet: View {
                 case .fretboardGrid?: fretboardSection
                 case nil: EmptyView()
                 }
+                templateSection
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
@@ -92,7 +83,7 @@ struct ExerciseDetailSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        commitNotes(); commitMastery(); commitCommand(); commitReach()
+                        commitNotes(); commitMastery()
                         commitStrum(); commitFretboard(); commitChords(); commitStrumChords()
                         dismiss()
                     }
@@ -178,25 +169,6 @@ struct ExerciseDetailSheet: View {
         let trimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed != exercise.notes else { return }
         exercise.notes = trimmed
-        try? modelContext.save()
-    }
-
-    /// Persist an edited command tempo on Done via the canonical `promoteCommand` setter — the *same*
-    /// mutation the run screen uses (so the two surfaces never diverge, ADR 0057), which also
-    /// recomputes the reach. Only for a measured command and only when it actually changed.
-    private func commitCommand() {
-        guard exercise.hasMeasuredCommand, command != exercise.command else { return }
-        exercise.promoteCommand(to: command)
-        try? modelContext.save()
-    }
-
-    /// Persist an edited reach pin on Done (ADR 0075), only when it differs from what's stored. Runs
-    /// **after** `commitCommand` so `promoteCommand`'s auto-clear can't wipe the pin we're writing
-    /// (the local `reachOverride` already dropped if command caught up to it). Writing `nil` reverts
-    /// the reach to the auto derivation.
-    private func commitReach() {
-        guard reachOverride != exercise.targetTempoOverride else { return }
-        exercise.targetTempoOverride = reachOverride
         try? modelContext.save()
     }
 
