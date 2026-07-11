@@ -75,7 +75,9 @@ struct WaveformView: View {
     /// Live playhead time, shown in a bubble pinned to the playhead.
     let playheadLabel: String
 
-    let onSeek: (Double) -> Void
+    /// Seek on release — `fraction` and whether the gesture was a **scrub** (`true`) or a
+    /// plain tap (`false`), so the two can snap to different candidate sets (ADR 0080).
+    let onSeek: (Double, Bool) -> Void
     let onScrub: (Double) -> Void
     /// Drag / release of an A/B span handle (ADR 0041) — drag an A or B edge in place,
     /// no mode hop; release passes the moved handle.

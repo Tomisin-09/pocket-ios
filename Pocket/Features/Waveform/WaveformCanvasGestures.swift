@@ -141,10 +141,11 @@ extension WaveformView {
         // Seek-and-snap on release for a tap or scrub — *including* a tap that started on a
         // loop edge (a pended grab that never moved): the edge stays put, the playhead moves
         // there. The live scrub stayed raw so it tracked the finger; the release catches the
-        // nearest marker / loop edge / beat (ADR 0021 amendment).
+        // nearest candidate. A **tap** catches the full set (marker / loop edge / beat); a
+        // **scrub** drops the dense beat grid and catches only sparse landmarks (ADR 0080).
         pendingGrab = nil
         grabbedHandleOrigin = nil
-        onSeek(fraction)
+        onSeek(fraction, didScrub)
         dragStartX = nil
     }
 
