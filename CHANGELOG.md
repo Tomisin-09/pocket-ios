@@ -6,6 +6,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Finishing a loop practice run now asks how it went — and offers to bump it up.** When a loop's
+  training run reaches the top and finishes on its own, you land on the same completion screen as an
+  exercise: rate how clean it felt (optional), jot a note (optional), and — if you summited above the
+  tempo you own — an opt-in **"I own this now — move command up"** toggle, all saved together. Before,
+  a finished loop run just dropped you back on the setup screen with nothing recorded.
+- **Practice a loop straight from its edit sheet.** Once a loop has a command tempo set, its edit sheet
+  (hold a loop on the waveform) shows a **Practice now** button that takes you straight into the loop's
+  training run; finishing or backing out returns you to the waveform where you started.
 - **Set how long you hold at command tempo.** The command plateau — the flat top of the practice
   staircase where you consolidate at the fastest tempo you own — used to be a fixed length. There's now
   a **Command** control in the Steps panel (on both exercises and loops), so you can make the hold shorter
@@ -76,6 +84,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   Turning *Auto-start blocks* off still makes every block wait for a manual start.
 
 ### Changed
+- **The loop run's pre-run "promote" button is gone.** Promotion now happens *after* a run you actually
+  completed (see the completion screen, above), not as a claim you tap beforehand — matching how
+  exercises already work.
 - **The home screen now leads with the brand colour.** Practice — the app's most-used space and the big
   "Start today's session" button — wears the brand **teal**, the Metronome moves to **plum**, and the
   Song library takes a warm **terracotta**, for a teal · plum · terracotta home. Mastery dots follow the

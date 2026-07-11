@@ -319,7 +319,19 @@ to integer percent (`0.85×` → `85`) and builds a `CommandRamp` with `unit: .s
 metronome bars), and the `×` reach derives from `TempoStretch.targetSpeed(forCommand:)` — the
 unit-generic `target(forCommand:…)` with `×`-unit clamps (`+0.02…+0.10×`). `LoopRunView` mirrors
 `ExerciseRunView` (working/command as %, derived reach, the same `RoutineStairs` /
-`RoutineStepsControls`, promote), and **owns a `LoopRunModel`** which in turn owns a private
+`RoutineStepsControls`), and — like the exercise run (ADR 0082, mirroring ADR 0079) — a **standalone
+loop run that finishes naturally** now lands on the same `RoutineBlockDoneView` (completion beat +
+optional mastery + note + an editable **Move command to {value}** promote toggle, `PromoteOffer` at a
+200%-of-original ceiling; since a loop's command is a percent of original, every loop tempo reads with a
+**`%`** and never "BPM" — the nudge reads **"90%"** and the shared `RoutineStairs` signpost, once
+hardcoded to `"{n} BPM"`, now reads **"90%"** for a loop — via a single value-only `TempoUnit`
+(`.bpm`/`.percent`) passed into both `RoutineBlockDoneView` and `RoutineStairs`), committing all three
+through the loop's single `persist()`; the old in-setup
+loop promote button is gone. A loop's trainer is reachable from Practice → Loops **and** via a
+**Practice now** button in the loop edit sheet (shown once a command tempo is set — the same gate that
+surfaces a loop into Practice → Loops), which the waveform launches full-screen (`practiceLoop`, staged
+through `pendingPracticeLoop` so the run cover presents only after the sheet dismisses) and returns you
+to the waveform on exit. It **owns a `LoopRunModel`** which in turn owns a private
 `PracticeAudioEngine`: it resolves the song file (the shared `SecurityScopedAccess`, extracted from
 `WaveformPracticeModel`), loops the region (`setLoop`), and polls the engine's **`loopIteration`**
 each tick → `ramp.bpm(elapsedBars: reps)` → `setRate(percent/100)`, stopping at `ramp.isFinished`.

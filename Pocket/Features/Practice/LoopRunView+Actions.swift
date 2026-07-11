@@ -79,8 +79,56 @@ extension LoopRunView {
     /// Persist the edits to the loop and start the run in one tap.
     func commitAndStart() {
         persist()
+        // Standalone: arm the post-run completion offer (ADR 0082, mirroring ADR 0079), capturing the
+        // reach being run so the screen's copy/target stay stable even if the setup is edited after. In
+        // a routine the hook is the player's advance (set in `seedIfNeeded`), so leave it untouched.
+        if routineContext == nil { armCompletionOffer() }
         model.start(ramp: routine)
         haptic(.medium)
+    }
+
+    /// Wire `model.onFinished` to raise the post-run completion screen for a standalone run (ADR 0082).
+    /// Fires only when the ramp runs its full course (dwell → summit → back off), never on a manual
+    /// stop. The reach/command (percent of original) are snapshotted now so the offer stays stable
+    /// regardless of later edits.
+    private func armCompletionOffer() {
+        let summitedReach = reach
+        let summitedCommand = command
+        model.onFinished = {
+            completion = RunCompletion(reach: summitedReach, command: summitedCommand)
+        }
+    }
+
+    /// The promote offer for the standalone completion screen (ADR 0082) — `nil` when the
+    /// (ceiling-clamped) reach isn't above command, so the row is omitted. Percent-of-original units;
+    /// the ceiling is the playback percent range's upper bound. The target defaults to the reach and
+    /// is editable from just above the summited command up to that ceiling.
+    func completionPromoteConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.PromoteConfig? {
+        let ceiling = Self.percentRange.upperBound
+        guard PromoteOffer.canPromote(reach: finished.reach, command: finished.command, ceiling: ceiling)
+        else { return nil }
+        // A loop's command is a percent of original, so the nudge reads "90%" (ADR 0082), never a BPM.
+        return .init(defaultTarget: PromoteOffer.promotedCommand(reach: finished.reach, ceiling: ceiling),
+                     minValue: finished.command + 1, maxValue: ceiling, unit: .percent)
+    }
+
+    /// Commit the post-run completion screen (ADR 0082) — the same `RoutineBlockDoneView` a routine
+    /// block finishes on, reused for a standalone loop run: an optional mastery self-rating, an
+    /// optional journal note, and the opt-in promote, committed together in the one Finish. Each may
+    /// be a no-op (unchanged rating, empty note, toggle off). When on, `promoteTo` is the chosen
+    /// (possibly custom) command percent — already clamped by the screen's stepper — so command moves
+    /// there and a caught-up reach pin drops. Everything lands through the single write path
+    /// (`persist`, ADR 0057); there's no following Start, so this *is* the commit.
+    func commitCompletion(mastery: Int?, note: String, promoteTo: Int?) {
+        loop.mastery = mastery
+        _ = JournalWriter.add(to: .loop(loop), text: note, kind: .note, into: modelContext)
+        if let promoteTo {
+            command = promoteTo
+            clearOverrideIfCaughtUp()
+        }
+        persist()
+        haptic(.light)
+        completion = nil
     }
 
     // Pure clamps — `StepperButton` owns the ±/hold-repeat haptics, so these must not fire their own.

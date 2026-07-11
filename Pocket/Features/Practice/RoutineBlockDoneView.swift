@@ -1,5 +1,26 @@
 import SwiftUI
 
+/// The unit a training tempo reads in (ADR 0082). An exercise's tempo is an absolute **BPM**; a loop's
+/// is a **percent of original**, so every loop tempo reference carries a `%` and never a "BPM" suffix.
+/// Value-only so the views using it stay SwiftData-free; top-level (not nested) to satisfy the nesting
+/// limit. Shared by the completion nudge (`RoutineBlockDoneView`) and the staircase (`RoutineStairs`).
+enum TempoUnit: Equatable {
+    case bpm
+    case percent
+
+    /// The value with its unit for an **inline** reference — "85%" for a loop; bare "106" for BPM (a
+    /// phrase like "Move command to 106" already reads as BPM from context, so no suffix is added).
+    func inline(_ value: Int) -> String {
+        self == .percent ? "\(value)%" : "\(value)"
+    }
+
+    /// The value as a **standalone** label (e.g. the staircase signpost) — "85%" for a loop, "106 BPM"
+    /// for an exercise, where the unit must be explicit because there's no surrounding phrase.
+    func signpost(_ value: Int) -> String {
+        self == .percent ? "\(value)%" : "\(value) BPM"
+    }
+}
+
 /// The **post-block Done screen** shown when a routine unit finishes on its own with manual advance
 /// on (the default — ADR 0071 R4) — **and reused for a standalone exercise finish** (`upNext: nil`,
 /// ADR 0079 §2), so a solo run and a routine block share one completion surface. It **collapses** the
@@ -35,12 +56,15 @@ struct RoutineBlockDoneView: View {
     let onContinue: (_ mastery: Int?, _ note: String, _ promoteTo: Int?) -> Void
 
     /// The bounds of the promote row's editable command value: where it defaults (the reach, clamped
-    /// to the BPM ceiling), and the range the ±/typed value may take — from just above the current
-    /// command up to the ceiling. Kept value-only so the view stays SwiftData-free.
+    /// to the ceiling), and the range the ±/typed value may take — from just above the current command
+    /// up to the ceiling — plus how that value **reads** (ADR 0082). Kept value-only so the view stays
+    /// SwiftData-free.
     struct PromoteConfig: Equatable {
         let defaultTarget: Int
         let minValue: Int
         let maxValue: Int
+        /// How the value is unit-labelled. Defaults to bare BPM (exercises); loops set `.percent`.
+        var unit: TempoUnit = .bpm
     }
 
     /// A plain descriptor of the upcoming unit — kept value-only so this view stays SwiftData-free
@@ -157,7 +181,7 @@ struct RoutineBlockDoneView: View {
         VStack(spacing: 12) {
             Toggle(isOn: $promoteOn) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Move command to \(promoteValue)")
+                    Text("Move command to \(config.unit.inline(promoteValue))")
                         .font(.futura(.body))
                         .foregroundStyle(PocketColor.textPrimary)
                     Text("You summited it this run — bump the drill up.")
@@ -186,7 +210,7 @@ struct RoutineBlockDoneView: View {
             StepperButton(symbol: "minus", label: "Lower new command", tint: PocketColor.practice) {
                 promoteValue = max(config.minValue, promoteValue - 1)
             }
-            Text("\(promoteValue)")
+            Text(config.unit.inline(promoteValue))
                 .font(.pocketMono(.title3))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(minWidth: 52)

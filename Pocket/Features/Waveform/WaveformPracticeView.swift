@@ -78,12 +78,29 @@ struct WaveformPracticeView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .sheet(item: $model.editingLoop) { loop in
+        .sheet(item: $model.editingLoop, onDismiss: model.launchPendingPractice) { loop in
             LoopEditSheet(loop: loop,
                           autoColor: LoopColor.derivedColor(for: loop, among: model.loops),
                           onDelete: { model.deleteLoop(loop) },
                           onAdjustRange: { model.startRangeEdit(loop) },
-                          onSaved: { restore in model.presentUndo("Saved changes", undo: restore) })
+                          onSaved: { restore in model.presentUndo("Saved changes", undo: restore) },
+                          onPracticeNow: { model.pendingPracticeLoop = loop })
+        }
+        .fullScreenCover(item: $model.practiceLoop) { loop in
+            // "Practice now" from the edit sheet (ADR 0082): the loop trainer full-screen. The back
+            // control returns to the waveform it launched from (a cover has no back button of its own;
+            // standalone `LoopRunView` leaves the leading slot empty, so there's no conflict).
+            NavigationStack {
+                LoopRunView(loop: loop)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button { model.practiceLoop = nil } label: {
+                                Image(systemName: "chevron.backward")
+                            }
+                            .accessibilityLabel("Back to waveform")
+                        }
+                    }
+            }
         }
         .sheet(item: $model.editingMarker) { marker in
             MarkerEditSheet(marker: marker, onDelete: { model.deleteMarker(marker) })

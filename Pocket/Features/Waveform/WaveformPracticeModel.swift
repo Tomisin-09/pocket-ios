@@ -107,6 +107,13 @@ final class WaveformPracticeModel {
     }
     var editingLoop: Loop?
     var editingMarker: Marker?
+    /// The loop being trained full-screen via "Practice now" from the edit sheet (ADR 0082). Set only
+    /// after the edit sheet dismisses (see `pendingPracticeLoop`), so the run cover never races the
+    /// sheet's dismissal; exiting the run returns to the waveform it launched from.
+    var practiceLoop: Loop?
+    /// Staged by the edit sheet's "Practice now" so the run launches from the sheet's `onDismiss`
+    /// (`launchPendingPractice`), never mid-dismiss.
+    var pendingPracticeLoop: Loop?
     /// The loop whose automator (speed ramp) is being set up (drives the sheet, ADR 0013).
     var editingAutomatorLoop: Loop?
     /// Drives the tap-tempo / manual BPM sheet (ADR 0024), opened from "Set BPM".
