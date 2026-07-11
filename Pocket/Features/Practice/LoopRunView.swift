@@ -52,6 +52,10 @@ struct LoopRunView: View {
     /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
     /// of them arms Save Changes.
     @State var baseline: LoopSetupState?
+    /// Set from `model.onFinished` on natural completion of a standalone run; drives the post-run
+    /// completion screen (ADR 0082, loop parity with ADR 0079). Never set in a routine — there the
+    /// ramp's completion advances the session instead.
+    @State var completion: RunCompletion?
 
     var current: LoopSetupState {
         LoopSetupState(working: working, command: command, warmupSteps: steps,
@@ -79,8 +83,9 @@ struct LoopRunView: View {
     }
 
     /// The **effective** reach (% of original): a pinned override when set, else the auto reach
-    /// (ADR 0075). Every surface here reads this — the staircase summit, promote, summary.
-    private var reach: Int { targetOverride ?? autoReach }
+    /// (ADR 0075). Every surface here reads this — the staircase summit, promote, summary. Internal
+    /// (not private) so the `+Actions` extension can snapshot it for the post-run offer (ADR 0082).
+    var reach: Int { targetOverride ?? autoReach }
 
     /// The warm-up step size (percent points) the chosen number of intermediate stops implies.
     private var stepPercent: Int {
@@ -116,9 +121,8 @@ struct LoopRunView: View {
                     practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, command: routine.command,
-                              tint: PocketColor.practice,
+                              tint: PocketColor.practice, unit: .percent,
                               currentIndex: model.currentPlateau(in: routine))
-                if !isRunning { promoteButton }
                 if !isRunning, isDirty { saveChangesButton }
                 if !isRunning, routineContext == nil {
                     JournalPreviewSection(owner: .loop(loop)) { showingJournal = true }
@@ -150,6 +154,17 @@ struct LoopRunView: View {
                              JournalWriter.delete(entry, from: modelContext)
                              try? modelContext.save(); haptic(.light)
                          })
+        }
+        .fullScreenCover(item: $completion) { finished in
+            // Reuse the routine block's Done screen for a standalone loop finish (ADR 0082, mirroring
+            // ADR 0079 for exercises) — completion beat + optional mastery + note + editable promote,
+            // minus the "Up next" card (nothing follows a solo run).
+            RoutineBlockDoneView(title: title,
+                                 initialMastery: loop.mastery,
+                                 promote: completionPromoteConfig(finished),
+                                 isLast: true, upNext: nil) { mastery, note, promoteTo in
+                commitCompletion(mastery: mastery, note: note, promoteTo: promoteTo)
+            }
         }
     }
 
@@ -205,25 +220,6 @@ struct LoopRunView: View {
             backoffSteps: $backoffSteps, dwell: $dwell, dwellCaption: dwellCaption,
             warmupStepBPM: stepPercent,
             hasReach: hasReach, tint: PocketColor.practice, onToggle: { haptic(.light) })
-    }
-
-    private var promoteButton: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                command = min(Self.percentRange.upperBound, reach)
-                clearOverrideIfCaughtUp()
-            }
-            haptic(.medium)
-        } label: {
-            Label("I own \(reach)% now — promote", systemImage: "arrow.up.circle.fill")
-                .font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(PocketColor.practice)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Capsule().stroke(PocketColor.practice, lineWidth: 1.5))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Promote: I own \(reach) percent now")
     }
 
     /// Persist the tuning without starting a run (ADR 0057) — shown only while the setup differs

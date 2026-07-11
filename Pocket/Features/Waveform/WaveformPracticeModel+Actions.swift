@@ -194,6 +194,18 @@ extension WaveformPracticeModel {
         engine.play()
     }
 
+    /// "Practice now" from the loop edit sheet (ADR 0082): the sheet stages the loop and dismisses;
+    /// this runs from the sheet's `onDismiss`, promoting the staged loop into the full-screen run so
+    /// the cover presents only after the sheet is gone (no sheet-over-cover race).
+    func launchPendingPractice() {
+        guard let loop = pendingPracticeLoop else { return }
+        pendingPracticeLoop = nil
+        // End any waveform playback before the run takes over — the loop trainer owns a separate audio
+        // engine, so leaving this one playing would double up (ADR 0082).
+        if engine.isPlaying { engine.pause() }
+        practiceLoop = loop
+    }
+
     /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
     /// Arming a *different* loop restores its last-practiced speed (ADR 0040); re-tapping the
     /// already-active loop only toggles play/pause, keeping the speed you're sitting at.

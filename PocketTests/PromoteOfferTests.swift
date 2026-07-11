@@ -41,4 +41,31 @@ final class PromoteOfferTests: XCTestCase {
     func testPromotesToReachExactlyAtCeiling() {
         XCTAssertEqual(PromoteOffer.promotedCommand(reach: 300, ceiling: 300), 300)
     }
+
+    // MARK: - Loop units (ADR 0082) — same math, percent-of-original with a 200% ceiling
+
+    func testLoopPercentPromoteMovesCommandToReach() {
+        // A loop run (Loop 3 in the design): command 85%, summited reach 90% → offer, promote to 90.
+        XCTAssertTrue(PromoteOffer.canPromote(reach: 90, command: 85, ceiling: 200))
+        XCTAssertEqual(PromoteOffer.promotedCommand(reach: 90, ceiling: 200), 90)
+    }
+
+    func testLoopPercentPromoteClampsToTwoHundred() {
+        // A reach past the playback ceiling (200% of original) promotes only to the ceiling.
+        XCTAssertEqual(PromoteOffer.promotedCommand(reach: 210, ceiling: 200), 200)
+    }
+
+    // MARK: - Tempo unit labels (ADR 0082)
+
+    func testExerciseUnitIsBPM() {
+        // Inline (in a "Move command to …" phrase) reads bare; a standalone signpost carries "BPM".
+        XCTAssertEqual(TempoUnit.bpm.inline(106), "106")
+        XCTAssertEqual(TempoUnit.bpm.signpost(106), "106 BPM")
+    }
+
+    func testLoopUnitIsPercentEverywhere() {
+        // A loop's tempo is a percent of original — always a "%", inline or standalone, never "BPM".
+        XCTAssertEqual(TempoUnit.percent.inline(90), "90%")
+        XCTAssertEqual(TempoUnit.percent.signpost(90), "90%")
+    }
 }

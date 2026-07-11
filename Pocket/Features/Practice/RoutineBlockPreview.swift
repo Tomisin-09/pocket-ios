@@ -232,7 +232,7 @@ struct LoopBlockPreview: View {
                 PreviewTempoReadout(anchors: "\(loop.ramp.working)% → \(loop.ramp.command)%",
                                     reach: "\(loop.ramp.target)%", unit: "of original")
                 RoutineStairs(plateaus: loop.ramp.plateaus, command: loop.ramp.command,
-                              tint: PocketColor.practice)
+                              tint: PocketColor.practice, unit: .percent)
                     .frame(height: 120)
                 if preview.isUnavailable {
                     Text("Audio unavailable — the song file couldn't be found.")

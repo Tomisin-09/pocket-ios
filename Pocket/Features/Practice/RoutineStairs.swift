@@ -14,6 +14,9 @@ struct RoutineStairs: View {
     /// "which bar is widest" (which lands on the warm-up when the dwell is a single interval).
     let command: Int
     let tint: Color
+    /// The unit the plateau tempos read in (ADR 0082) — `.bpm` for an exercise (the default),
+    /// `.percent` for a loop, so the signpost reads "85%" not a mislabelled "85 BPM".
+    var unit: TempoUnit = .bpm
     /// The plateau the run is currently on — lit while a training run plays. `nil` in the
     /// stopped setup preview, where every bar reads at one even weight (the dwell is conveyed by
     /// its width, not a permanent highlight).
@@ -152,7 +155,7 @@ struct RoutineStairs: View {
         if let dwell = dwellIndex {
             let barTop = Self.chartHeight - Self.barAreaHeight * heightFraction(plateaus[dwell].bpm, low, span)
             let labelY = max(Self.labelStripHeight / 2, barTop - Self.labelStripHeight / 2 - 2)
-            Text("\(plateaus[dwell].bpm) BPM")
+            Text(unit.signpost(plateaus[dwell].bpm))
                 .font(.futura(.caption2, weight: .semibold))
                 .foregroundStyle(tint)
                 .fixedSize()
