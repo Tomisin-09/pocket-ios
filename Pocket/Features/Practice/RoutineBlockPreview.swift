@@ -182,7 +182,7 @@ struct ExerciseBlockPreview: View {
     /// Each dwell interval is `automatorDefaultBars` bars at command — the row's caption (ADR 0078).
     private var dwellCaption: String {
         "≈ \(max(1, exercise.dwellIntervals) * StandaloneMetronomeEngine.automatorDefaultBars) "
-            + "bars at command"
+            + "bars"
     }
 
     /// Pin the reach strictly above command; landing back on the auto derivation clears the pin.

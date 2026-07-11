@@ -6,12 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
-- **Set how long you dwell at command tempo.** The command plateau — the flat top of the practice
+- **Set how long you hold at command tempo.** The command plateau — the flat top of the practice
   staircase where you consolidate at the fastest tempo you own — used to be a fixed length. There's now
-  a **Dwell** control in the Steps panel (on both exercises and loops), so you can make the hold shorter
-  or longer: an exercise dwells in bars ("≈ 16 bars at command"), a loop in passes through the region
-  ("≈ 4 passes at command"). It appears everywhere the other step controls do — the standalone run
-  screens and inside a routine.
+  a **Command** control in the Steps panel (on both exercises and loops), so you can make the hold shorter
+  or longer: an exercise holds in bars ("≈ 16 bars"), a loop in passes through the region ("≈ 4 passes").
+  It appears everywhere the other step controls do — the standalone run screens and inside a routine. (The
+  phase is labelled **command** throughout — on the staircase chart, the step control, and the summary —
+  rather than the earlier "dwell" jargon.)
 - **Repeat a routine block.** In the routine editor, tap a block while editing to set how many times
   it repeats (1–9), so you can say "run this warm-up three times before moving on." A repeated block
   shows a small `×N` badge in the routine, and the estimated length accounts for it. In the player, a

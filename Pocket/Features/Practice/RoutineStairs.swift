@@ -109,7 +109,7 @@ struct RoutineStairs: View {
                                                  spacing: spacing, totalIntervals: totalIntervals),
                                       y: midY)
                     }
-                    caption("dwell", tint, weight: .semibold)
+                    caption("command", tint, weight: .semibold)
                         .position(x: centerX(of: dwell..<(dwell + 1), usableWidth: usableWidth,
                                              spacing: spacing, totalIntervals: totalIntervals),
                                   y: midY)

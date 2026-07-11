@@ -101,7 +101,7 @@ struct LoopRunView: View {
     /// The dwell row's caption — each interval holds `repsPerStep` loop passes, so N intervals ≈
     /// N×reps passes at command (ADR 0078). Tracks the live reps value.
     private var dwellCaption: String {
-        "≈ \(max(1, dwell) * max(1, repsPerStep)) passes at command"
+        "≈ \(max(1, dwell) * max(1, repsPerStep)) passes"
     }
 
     var isRunning: Bool { model.isRunning }

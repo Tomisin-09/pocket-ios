@@ -260,7 +260,7 @@ struct ExerciseRunView: View {
     /// The dwell row's caption — each interval is `automatorDefaultBars` bars at command, so N
     /// intervals ≈ N×that many bars (ADR 0078).
     private var dwellCaption: String {
-        "≈ \(max(1, dwell) * StandaloneMetronomeEngine.automatorDefaultBars) bars at command"
+        "≈ \(max(1, dwell) * StandaloneMetronomeEngine.automatorDefaultBars) bars"
     }
 
     /// The "Edit shape" action handed to the template preview cards (ADR 0077) — opens the
