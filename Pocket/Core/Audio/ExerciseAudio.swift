@@ -78,30 +78,7 @@ extension EnvironmentValues {
     }
 }
 
-/// A **sound-preview affordance** for the fretboard editors — the visible home of the audio feature.
-/// It reads the injected engine: disabled and captioned "Sound soon" while the silent placeholder is
-/// in place, and a live "Preview" button once a real engine is injected. No audio logic of its own.
-struct SoundPreviewButton: View {
-    let drill: FretboardDrill
-    var tempoBPM: Int = 60
-    var tint: Color = PocketColor.practice
-    @Environment(\.exerciseAudio) private var audio
-
-    var body: some View {
-        Button {
-            audio.preview(drill, tempoBPM: tempoBPM)
-            haptic(.light)
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: audio.isAvailable ? "speaker.wave.2" : "speaker.slash")
-                Text(audio.isAvailable ? "Preview" : "Sound soon")
-            }
-            .font(.futura(.caption, weight: .semibold))
-            .foregroundStyle(audio.isAvailable ? tint : PocketColor.textSecondary)
-        }
-        .buttonStyle(.borderless)
-        .disabled(!audio.isAvailable)
-        .accessibilityLabel("Sound preview")
-        .accessibilityHint(audio.isAvailable ? "Hear the run" : "Audio preview coming soon")
-    }
-}
+// The visible "Sound soon" button was removed from the fretboard editors (ADR 0077): it was a
+// disabled scaffold advertising a feature with no backend. The seam above (protocol, settings,
+// environment key, silent default) is deliberately **kept** so a real pitch-audition engine can slot
+// in with no call-site changes when audio resources land — it simply has no UI consumer for now.

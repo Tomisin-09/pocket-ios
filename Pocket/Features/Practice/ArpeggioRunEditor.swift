@@ -50,7 +50,6 @@ struct ArpeggioRunEditor: View {
     private var displayOptionsControl: some View {
         HStack {
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
-            SoundPreviewButton(drill: run.expanded(), tint: tint)
             Spacer()
             Menu {
                 Picker("Labels", selection: $storedLabelMode) {

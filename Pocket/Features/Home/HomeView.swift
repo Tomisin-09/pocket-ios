@@ -20,9 +20,6 @@ struct HomeView: View {
     /// where they went (from the library itself there's nowhere to go).
     @State private var showingLibrary = false
     @State private var showingMetronome = false
-    /// A recent routine tapped for a **replay** (exact re-run, ADR 0066) — distinct from the
-    /// goal-adaptive "today's session" CTA, which regenerates. Presents the player full-screen.
-    @State private var playingRoutine: Routine?
 
     /// How many routines the "recent routines" rail shows.
     private let recentRoutineLimit = 3
@@ -102,9 +99,6 @@ struct HomeView: View {
             .fullScreenCover(isPresented: $showingMetronome) {
                 MetronomeView()
             }
-            .fullScreenCover(item: $playingRoutine) { routine in
-                RoutinePlayerView(routine: routine)
-            }
             // Seed the curated Practice presets once, ever (ADR 0046). The app root is the right
             // place — they exist before the user opens Practice — and the seeder's own
             // `UserDefaults` guard makes this idempotent across launches. Routines seed **after**
@@ -138,7 +132,7 @@ struct HomeView: View {
 
     /// The **primary** home action (planner, ADR 0046/0015): a filled plum CTA that pushes
     /// `PlannerView`, where goals (set once) drive a freshly-generated, goal-adaptive session each
-    /// run. Distinct from the "recent routines" rail below, which *replays* a past routine exactly.
+    /// run. Distinct from the "recent routines" rail below, which reopens a past routine's detail.
     /// Sits in the slot the dropped "Your progress" strip vacated.
     private var startTodaySessionCard: some View {
         NavigationLink { PlannerView() } label: {
@@ -277,9 +271,11 @@ struct HomeView: View {
 
     // MARK: - Recent routines rail
 
-    /// The last few routines you actually **practised** (newest first), each a one-tap *exact replay*
-    /// — the counterpart to the adaptive "Start today's session" CTA above. Reads `Routine.lastPracticed`
-    /// (stamped on run); never-run routines don't appear.
+    /// The last few routines you actually **practised** (newest first). A tap **reopens the routine's
+    /// detail** (`RoutineDetailView` — blocks + Edit + Start), rather than replaying it straight into
+    /// the player, so you can glance at the blocks or tweak before starting (device feedback
+    /// 2026-07-11; supersedes ADR 0066's one-tap replay *from home* — the library ▶ still replays
+    /// directly). Reads `Routine.lastPracticed` (stamped on run); never-run routines don't appear.
     private var recentRoutinesRail: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Recent routines")
@@ -288,7 +284,9 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(recentRoutines) { routine in
-                        Button { playingRoutine = routine; haptic(.light) } label: {
+                        NavigationLink {
+                            RoutineDetailView(container: context.container, existing: routine)
+                        } label: {
                             RecentRoutineCard(routine: routine)
                         }
                         .buttonStyle(.plain)

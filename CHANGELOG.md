@@ -79,7 +79,27 @@ All notable changes to Pocket are documented here. Format loosely follows
   comes first, then your **progress** (mastery, last practised), the **feel** (meter/subdivision), and
   the **training-routine shape**, with the template chip moved to the bottom. Tempo is **no longer
   edited here** — you tune the command and reach on the run screen (and, inside a routine, on the block
-  itself), so there's a single place to change speed instead of the info sheet doubling as an editor.
+  itself) — and neither is the drill's **shape**: the finger pattern, scale, chords or strum lane now
+  live behind an **Edit shape** button on the run screen (see below), so the info sheet only shows and
+  lightly annotates what an exercise is.
+- **Edit an exercise's shape right next to the board.** The per-template content editor — the finger
+  pattern and reach of a run, the scale or arpeggio and its root, the chord progression, the strum
+  lane, or a hand-placed fretboard grid — used to be buried inside the ⓘ info sheet. It's now a
+  compact **Edit shape** control in the top-right of the board preview on the exercise run screen,
+  opening a focused editor with its own live walk-through. It appears **only in the library**; inside
+  a routine an exercise stays tempo-only.
+- **The exercise ⓘ info sheet is leaner.** The redundant "Training routine" staircase preview is gone
+  (you tune that staircase on the run screen, where it already lives), and the template row is tighter,
+  so the sheet reads as description → progress → feel → template.
+- **Reopen a recent routine to look before you leap.** Tapping a card in the home screen's **Recent
+  routines** rail now opens that routine's **detail screen** (its blocks, with Edit and Start) instead
+  of dropping you straight into the player. You can glance at what's in the session or tweak it first;
+  the routine library's ▶ still starts a replay directly.
+- **The one-shot "Watch" preview only shows when it's actually needed.** On the fretboard editors,
+  Watch (a single walk-through of the shape) used to always be present. Now it **hides when
+  "Animate exercises" is on** — the board is already walking continuously, so the one-shot is
+  redundant — and **shows when animation is off or Reduce Motion is on**, where it's the only way to
+  see the shape move. The motion-averse escape hatch stays exactly where it matters.
 - **Inside a routine, an exercise no longer looks like the library editor.** Opening an exercise from a
   routine — whether previewing a block before you start or reaching it mid-session — used to show the
   *same* full run editor as the library (promote, Save, the journal, the meter picker, "Start
@@ -93,6 +113,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   transport bar's centre displayed the playback time — the same value already shown by the time bubble
   that rides the playhead on the waveform. The redundant readout is gone; the row keeps its height, so
   nothing shifts, and the playhead's time bubble still tracks as before.
+
+### Removed
+- **The greyed-out "Sound soon" button is gone.** The fretboard editors carried a disabled
+  `speaker.slash` "Sound soon" button that advertised an audio preview with no backend — it did
+  nothing. It's been removed. A real pitch audition is still planned; the underlying audio boundary is
+  kept in place so it can slot in later without touching these editors.
 
 ### Fixed
 - **A loop's Focus and Type now actually change in its edit sheet.** On the waveform, opening a loop's

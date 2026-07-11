@@ -1,6 +1,6 @@
 # 0077 — Exercise editing boundaries: library edits, routines tune, ⓘ informs
 
-- **Status:** Proposed (decisions locked 2026-07-11; build not started — see
+- **Status:** Accepted (Slices 1–3 shipped 2026-07-11; Slice 4 — post-run promote — not started. See
   `docs/plans/exercise-vs-routine-presentation.md`)
 - **Date:** 2026-07-11
 - **Extends:** ADR 0057 (single write path per model), ADR 0058 (journal authoring on the run
