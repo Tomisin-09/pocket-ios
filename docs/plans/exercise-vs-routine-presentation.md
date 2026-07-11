@@ -146,18 +146,30 @@ half of Slice 1) so shape editing is never homeless.
 - **`Display`** (label mode) stays.
 - **Exercises only** — loops have no fretboard toolbar, so nothing here touches them.
 
-### Slice 4 — rethink promote timing + framing *(own slice, real behaviour change)*
-Independent; can ship anytime after Slice 1.
+### Slice 4 — rethink promote timing + framing *(own slice, real behaviour change)* — **DESIGNED (ADR 0079), not built**
+Independent; can ship anytime after Slice 1. **Decisions locked 2026-07-11; build deferred to a later
+session** — see [ADR 0079](../decisions/0079-post-run-promote-completion-screen.md).
 - **Problem (user):** mid-drill nobody taps "I own 106 now — promote"; they're playing. And "target
   tempo" reads as confusing.
 - **Half-done already:** the term was renamed **target → reach** app-wide (footers say "summit at
   the reach"); only the promote button still carries the old framing.
-- **Change:** surface the promote *after* a run completes as an opportunity to **bump the command
-  tempo** ("You just held 100 — move command up?"), rather than an in-setup "do you own the reach?"
-  prompt. Weightlifting analogy the user cited: command = working weight, reach = 1-rep-max.
-  Applies to the **exercise** "I own X now — promote" affordance. **Loops keep as-is.**
-- Needs its own micro-decision (post-run prompt copy + when it triggers); note in ADR 0077 or a
-  short follow-up ADR.
+- **Locked design (ADR 0079):**
+  - **Trigger** — only a **naturally completed** run (`onRampFinished` fires; a manual stop is
+    silent). Natural completion inherently means the command dwell was held and the reach summited, so
+    it *is* "held the top" — no extra bookkeeping. The standalone `onRampFinished` seam is currently
+    `nil` (`ExerciseRunView+Actions.swift:36`), so it's a ready consumer.
+  - **Presentation** — a brief **completion screen** mirroring `RoutineBlockDoneView` (completion beat
+    + promote CTA), not a setup-screen card or a modal alert.
+  - **Accept** — sets `command = min(ceiling, reach)`, reach re-derives, a custom reach clears
+    (ADR 0075); **persists immediately** (no following Start to piggyback the write on — this is the
+    commit moment, still one write path per ADR 0057).
+  - **Remove** the in-setup `promoteButton` (reverses ADR 0046's placement).
+  - **Nothing to promote** (`reach <= command`) ⇒ acknowledge the run without a CTA.
+  - **Copy** (final at build): "Nice run" / "You summited {reach} today" / "Move command to {reach}"
+    / "Keep it where it is." Never grades (ADR 0070).
+  - **Loops keep as-is.**
+- **Open at build:** exact microcopy; whether to also fold in a mastery tap / journal note on the
+  completion screen (deferred — journaling has its own entry, ADR 0058).
 
 ---
 
@@ -186,7 +198,8 @@ ones). The `ExerciseAudioEngine.preview(_:tempoBPM:)` / `sound(_:)` hooks are al
 - ~~Slice 2: one shared in-routine view for #2 and #3, or keep them separate?~~ **Resolved: shared
   component (`RoutineTempoNudger`), distinct hosts.** #3 = gated `ExerciseRunView`, keeps its ramp;
   tempo pre-start only.
-- Slice 4: exact trigger for the post-run promote (every run? only when the top plateau was held?).
+- ~~Slice 4: exact trigger for the post-run promote (every run? only when the top plateau was held?).~~
+  **Resolved (ADR 0079): only a naturally completed run** — which inherently means the top was held.
 
 ## Not in scope
 - **Loops** — no changes to loop presentation in this batch (in-session consistency is a separate
