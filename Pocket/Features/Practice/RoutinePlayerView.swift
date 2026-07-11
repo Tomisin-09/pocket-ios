@@ -74,14 +74,19 @@ struct RoutinePlayerView: View {
         }
     }
 
-    /// Commit the Done screen's optional mastery self-rating and inline note in **one** action (the P3
-    /// lesson — no competing "Add entry" button), then advance. Mastery writes to the unit; the note
-    /// writes a `JournalWriter` entry (which snapshots the unit's context). Either may be a no-op — an
-    /// unchanged rating and an empty note both commit nothing.
-    private func commitDone(_ stage: RoutineStage, mastery: Int?, note: String) {
+    /// Commit the Done screen's optional mastery self-rating, inline note, and opt-in promote in
+    /// **one** action (the P3 lesson — no competing "Add entry" button), then advance. Mastery writes
+    /// to the unit; the note writes a `JournalWriter` entry (which snapshots the unit's context); an
+    /// accepted promote moves an exercise's command up to its reach (ADR 0079 §7). Each may be a no-op
+    /// — an unchanged rating, an empty note, and an un-flipped toggle all commit nothing.
+    private func commitDone(_ stage: RoutineStage, mastery: Int?, note: String, promoteTo: Int?) {
         if let owner = owner(for: stage) {
             switch owner {
-            case .exercise(let exercise): exercise.mastery = mastery
+            case .exercise(let exercise):
+                exercise.mastery = mastery
+                // Promote is exercises-only (ADR 0079 §Scope/§7); the chosen value is already clamped
+                // by the Done screen's stepper, and `promoteCommand` also drops a caught-up reach pin.
+                if let promoteTo { exercise.promoteCommand(to: promoteTo) }
             case .loop(let loop): loop.mastery = mastery
             }
             _ = JournalWriter.add(to: owner, text: note, kind: .note, into: modelContext)
@@ -96,10 +101,37 @@ struct RoutinePlayerView: View {
     private func doneView(for stage: RoutineStage) -> some View {
         RoutineBlockDoneView(title: stage.title,
                              initialMastery: mastery(for: stage),
+                             promote: promoteConfig(for: stage),
                              isLast: player.upNext == nil,
-                             upNext: upNextDescriptor()) { mastery, note in
-            commitDone(stage, mastery: mastery, note: note)
+                             upNext: upNextDescriptor()) { mastery, note, promoteTo in
+            commitDone(stage, mastery: mastery, note: note, promoteTo: promoteTo)
         }
+        // The Done screen sits outside the per-block session chrome, so give it its own way out —
+        // Continue advances, but a player mid-routine needs to be able to leave from here too.
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                }
+                .tint(PocketColor.textSecondary)
+                .accessibilityLabel("Exit routine")
+            }
+        }
+    }
+
+    /// The promote offer for the Done screen (ADR 0079 §7), or `nil` for no row — only for an
+    /// **exercise** unit whose (ceiling-clamped) reach sits above command (nothing to promote
+    /// otherwise, and loops keep their own promote behaviour, ADR 0079 §Scope). The target defaults to
+    /// the reach and is editable from just above command up to the BPM ceiling.
+    private func promoteConfig(for stage: RoutineStage) -> RoutineBlockDoneView.PromoteConfig? {
+        let ceiling = StandaloneMetronomeEngine.bpmRange.upperBound
+        guard let exercise = stage.exercise,
+              PromoteOffer.canPromote(reach: exercise.reachTempo, command: exercise.command,
+                                      ceiling: ceiling)
+        else { return nil }
+        return .init(defaultTarget: PromoteOffer.promotedCommand(reach: exercise.reachTempo,
+                                                                 ceiling: ceiling),
+                     minValue: exercise.command + 1, maxValue: ceiling)
     }
 
     /// Build the "Up next" descriptor from the next **unit** stage (rests skipped), or `nil` when only

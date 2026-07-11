@@ -71,8 +71,9 @@ struct MetronomeView: View {
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") { dismissKeyboard() }
+                    Button { dismissKeyboard() } label: { Image(systemName: "checkmark") }
                         .tint(PocketColor.metronome)
+                        .accessibilityLabel("Dismiss keyboard")
                 }
             }
         }

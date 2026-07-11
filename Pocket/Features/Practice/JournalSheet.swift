@@ -116,6 +116,7 @@ struct JournalSheet: View {
 
             TextField("What happened?", text: $draftText, axis: .vertical)
                 .lineLimit(2...5)
+                .keyboardDoneButton()
         } header: {
             Text("New entry")
         }
@@ -259,6 +260,7 @@ private struct JournalEntryEditor: View {
             Section("Entry") {
                 TextField("What happened?", text: $text, axis: .vertical)
                     .lineLimit(2...8)
+                    .keyboardDoneButton()
             }
             // Read-only: the snapshot is fixed at creation (ADR 0038).
             Section {

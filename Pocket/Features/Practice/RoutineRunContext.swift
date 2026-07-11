@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The **session context** a routine player injects into a per-unit run screen (`ExerciseRunView` /
 /// `LoopRunView`) so those screens keep *all* their training aids — fretboard/strum/chord preview,
-/// Practice Settings, the ramp staircase, promote, journal — and gain only the routine-specific
+/// Practice Settings, the ramp staircase, journal — and gain only the routine-specific
 /// chrome: a session **progress strip** (with Start / Finish markers), a **Skip** control, an
 /// **exit**, an optional **auto-start**, and the natural-completion hook the player advances on.
 /// `nil` in standalone use, so a normal run screen is completely unaffected (ADR 0071).

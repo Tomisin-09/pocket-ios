@@ -189,6 +189,7 @@ struct BPMSheet: View {
                 TextField("BPM", text: $manualText)
                     .keyboardType(.decimalPad)
                     .font(.pocketMono(.body))
+                    .keyboardDoneButton()
                 Text("BPM")
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)

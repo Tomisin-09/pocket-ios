@@ -1,7 +1,8 @@
 # 0079 — Post-run promote: a completion screen offers to move command up
 
-- **Status:** Proposed (decisions locked 2026-07-11; **build deferred** to a later session — this ADR
-  records the design so implementation is a mechanical follow-through)
+- **Status:** Accepted — **built** 2026-07-11. Standalone finish **reuses `RoutineBlockDoneView`**
+  (`upNext: nil`) rather than a bespoke screen (see §2, revised at build); routine Done-screen promote
+  toggle per §7; pure `PromoteOffer` math; in-setup promote button removed.
 - **Date:** 2026-07-11
 - **Follows up / resolves:** ADR 0077 §6, which decided promotion should move *after* a run and
   reframe, but explicitly deferred the **trigger** and **copy** to "a short follow-up ADR with the
@@ -11,7 +12,8 @@
   (post-run is also where journaling already lives).
 - **Reverses in part:** ADR 0046's **in-setup** promote button (a pre-run "I own X now — promote"
   affordance) — removed; promotion is now offered only *after* a completed run.
-- **Scope:** **exercises only.** Loops keep their current promote behaviour.
+- **Scope:** **exercises only.** Loops keep their current promote behaviour. Applies to a
+  standalone run *and* to an exercise block run inside a routine — see §7 for the routine flow.
 - **Non-negotiable:** ADR 0070 — the app never grades. The completion screen is a neutral
   acknowledgement plus an *offer*, never a score, timing verdict, or pass/fail.
 
@@ -45,21 +47,36 @@ a standalone exercise run (`routineContext == nil`). A manual stop partway shows
 after *every* run, or after any run that merely reached command — naggy and fuzzier, and it decouples
 the offer from actually earning it.)
 
-### 2. Presentation — a brief completion screen (mirrors the routine Done screen)
-On natural completion, present a short **completion screen** rather than silently returning to setup —
-the same shape as `RoutineBlockDoneView` (a completion beat + a CTA), so exercises read consistently
-whether run solo or in a routine. It is a deliberate "you finished" moment, not a modal interruption
-and not a persistent card the user must dismiss. (Rejected: a card bolted onto the returned setup
-screen — quieter but easy to miss and clutters setup; a system **alert** — interruptive and reads as a
-verdict, against ADR 0070.)
+### 2. Presentation — **reuse** the routine Done screen (`RoutineBlockDoneView`)
+On natural completion, present a short **completion screen** rather than silently returning to setup.
+**Built decision (revised at build, 2026-07-11):** rather than a bespoke standalone view, the run
+presents the *actual* `RoutineBlockDoneView` — the routine block's finish screen — with **`upNext:
+nil`** (nothing follows a solo run). It's the more integrated surface and gives a standalone run the
+same completion beat, **optional mastery tap**, **optional inline note**, and the **opt-in promote
+toggle** a routine block gets. This **supersedes** the earlier plan of a bespoke completion view whose
+promote was the *primary* CTA (§6 copy), and **reverses** the "fold mastery/journal in — deferred"
+alternative below: the reuse gets it for free and reads consistently whether an exercise is run solo or
+in a routine. It's a deliberate "you finished" moment, not a modal interruption or a persistent card.
+(Rejected: a bespoke second surface — divergent for no benefit; a card bolted onto the returned setup
+screen — easy to miss and clutters setup; a system **alert** — interruptive and reads as a verdict,
+against ADR 0070.)
 
-### 3. What accepting offers — move command up to the reach
-Accepting sets **command = min(ceiling, reach)** and lets reach re-derive a bit above the new command
-(TempoStretch, ADR 0045); a **custom-pinned reach** clears back to auto when command catches up to it
-(ADR 0075, the existing `clearOverrideIfCaughtUp` semantics). This is exactly what today's in-setup
-promote does — retimed, not re-invented — and the reach is only ~5–8% above command, so it's already a
-modest step. (Rejected: a one-warm-up-step bump — gentler but diverges from the established promote
-semantics and needs the step size in hand.)
+### 3. What accepting offers — move command up to the reach (default), or a **custom** value
+Accepting defaults command to **min(ceiling, reach)** and lets reach re-derive a bit above the new
+command (TempoStretch, ADR 0045); a **custom-pinned reach** clears back to auto when command catches up
+to it (ADR 0075, the existing `clearOverrideIfCaughtUp` semantics). The reach is only ~5–8% above
+command, so it's already a modest step.
+
+**Follow-up (built 2026-07-11): the target is editable.** The promote row's value defaults to the
+reach but the player can nudge it with a ±/typed stepper before committing — a **custom command** they
+feel they actually own — clamped to **`(command, ceiling]`** (strictly a promotion, never past the BPM
+ceiling). The commit path is unchanged (`promoteCommand(to: chosen)`); only the target is now
+player-chosen rather than fixed at the reach. Applies to **both** Done screens (the row is the same
+`RoutineBlockDoneView` control). The gate stays `PromoteOffer.canPromote` — now **ceiling-aware**
+(`min(ceiling, reach) > command`), so a command already at the ceiling reads as "nothing to promote"
+instead of offering a no-op. (Rejected: a one-warm-up-step bump — diverges from promote semantics;
+free-typing below command — a "promotion" that lowers command is contradictory, so the floor is
+`command + 1`.)
 
 **The promote persists immediately.** Unlike the in-setup button, which only mutated local `command`
 state and relied on a subsequent **Save Changes** / **Start** to write (ADR 0057), the post-run promote
@@ -78,14 +95,42 @@ there's nothing to promote. The completion screen still acknowledges the run but
 CTA** (a plain "nice run — done"), rather than offering a no-op. (Exact treatment — omit the CTA vs
 skip the screen entirely — settled at build; the lean is to keep a minimal acknowledgement.)
 
-### 6. Copy (direction; final microcopy at build)
-Neutral acknowledgement + an offer, in the app's **reach** vocabulary ("summit at the reach"):
-- Title: *"Nice run"* (no praise about *how* they played — ADR 0070).
-- Body: *"You summited {reach} today."*
-- Promote CTA: *"Move command to {reach}."*
-- Dismiss: *"Keep it where it is"* / *"Done."*
+### 6. Copy (superseded by the reuse in §2)
+The original plan gave the bespoke screen its own copy (title *"Nice run"*, body *"You summited
+{reach} today"*, a *"Move command to {reach}"* primary CTA, a *"Keep it where it is"* dismiss). With
+the build reusing `RoutineBlockDoneView` (§2), the **shared** copy stands instead: the *"Nice work"* +
+drill-name completion beat, the mastery/note prompts, the promote **toggle** *"Move command to
+{reach}"* (with the sub-line "You summited it this run — bump the drill up"), and a **Finish** primary.
+Still neutral acknowledgement + an offer, never praise about *how* they played (ADR 0070).
 
 Exercises only.
+
+### 7. Inside a routine — fold the promote into the Done screen's single commit
+An exercise block run in the routine player fires the **same** `onRampFinished` on natural
+completion, but that hook is already consumed for advancement (`finishedBlock()`), and a
+naturally-completed unit already lands on `RoutineBlockDoneView` (mastery tap + note + Continue) when
+**manual advance** is on (ADR 0071 R4). So the routine promote reuses that surface rather than adding
+a second completion screen:
+
+- When the finished block is an exercise with **`reach > command`**, `RoutineBlockDoneView` shows one
+  extra **optional toggle** — *"Move command to {reach}"*, default **off** — beside the mastery tap
+  and note. When `reach <= command` the toggle is absent (nothing to promote, §5).
+- **`Continue` stays the single primary** (the P3 lesson — no competing CTA). It commits all three
+  atomically in `commitDone`: mastery, the journal note, and — if the toggle is on — the promote math
+  (`command = min(ceiling, reach)` + `clearOverrideIfCaughtUp`), under the existing single
+  `modelContext.save()`. Promote is opt-in and never a silent bump.
+- **Auto-advance ⇒ no promote.** With auto-advance on, the Done screen is skipped entirely, so there
+  is nowhere (and no intent) to offer the bump. This asymmetry is deliberate: auto-advance means
+  "don't stop me," and the app never mutates `command` the player didn't see and accept (ADR 0070's
+  no-silent-verdict spirit). A summited block under auto-advance simply advances.
+- **Reps:** a multi-rep block only reaches the Done screen after its **last** rep (reps are
+  back-to-back, ADR 0076), so the toggle is offered once per block, not per rep.
+
+Presentation differs by context, deliberately: standalone makes promote the **primary** CTA (§2/§6 —
+finishing *is* the point of that screen); in a routine it is an **optional toggle** under Continue
+(advancing is the point). Same math, same persist-on-accept, context-appropriate framing. This
+**narrows** the earlier "routines are untouched" note in Consequences — routines gain the opt-in
+toggle, but their advance flow, auto-advance behaviour, and journal commit are otherwise unchanged.
 
 ## Consequences
 
@@ -95,8 +140,10 @@ Exercises only.
   promote is an invitation you can decline by dismissing.
 - One real behaviour change beyond retiming: the post-run promote **persists on accept**, because
   there's no later Start to carry the write. Still one write path (ADR 0057).
-- The standalone `onRampFinished` seam finally has a consumer; routines are untouched (they already
-  hook it for advancement).
+- The standalone `onRampFinished` seam finally has a consumer. Routines already hook it for
+  advancement and keep that flow; the only routine change is an **opt-in promote toggle** folded into
+  the existing Done-screen commit (§7) — offered on a summited block under manual advance, absent
+  under auto-advance.
 
 ## Alternatives considered
 
@@ -109,20 +156,33 @@ Exercises only.
 - **Keep the in-setup button too.** Rejected — re-introduces the mistimed pre-run prompt this change
   set out to remove.
 - **Fold a mastery tap / journal note into the completion screen** (as `RoutineBlockDoneView` does).
-  Deferred — attractive symmetry, but keep the first cut to completion + promote; journaling already
-  has its own entry point (ADR 0058) and can be added here later without reopening this decision.
+  Deferred at design — but **adopted at build**: reusing `RoutineBlockDoneView` for the standalone
+  finish (§2 revised) brings the mastery tap and inline note along for free, and reads consistently
+  with a routine block. So a standalone finish now also commits an optional self-rating + note.
 
-## Implementation notes (for the build session)
+## Implementation notes (as built)
 
-- Set `engine.onRampFinished` for the standalone case (`routineContext == nil`) to present the
-  completion screen, capturing the **reach at completion** in state (so the copy/target are stable
-  even as local edits change afterward).
-- Present the screen as a `fullScreenCover`/overlay in the spirit of `RoutineBlockDoneView`; the
-  promote action calls the existing promote math (`command = min(ceiling, reach)` +
-  `clearOverrideIfCaughtUp`) **and** `modelContext.save()`.
-- Guard the CTA on `reach > command`.
+- Set `engine.onRampFinished` for the standalone case in `commitAndStart` (`routineContext == nil`),
+  capturing the **reach at run start** in a `RunCompletion` value (stable even as the returned setup is
+  edited afterward); the routine hook stays the player's advance, set in `seedIfNeeded`.
+- Present the finish as a `fullScreenCover` hosting **`RoutineBlockDoneView`** with `upNext: nil`
+  (§2) — *not* a bespoke view. The commit closure writes mastery + note (`JournalWriter`) and, when the
+  promote toggle is on, the promote math (`PromoteOffer.promotedCommand` + `clearOverrideIfCaughtUp`)
+  through the single write path (`persist`, ADR 0057) — accepting *is* the commit.
+- Pass a `RoutineBlockDoneView.PromoteConfig` (default target = `promotedCommand`, `minValue =
+  command + 1`, `maxValue = ceiling`) only when `PromoteOffer.canPromote(reach:command:ceiling:)`;
+  otherwise `nil` (no row). The view holds the editable `promoteValue`; the toggle gates whether it's
+  applied, and `onContinue` hands back `promoteTo: Int?` (nil = off, else the chosen value).
 - Remove `promoteButton` and its call site; keep **Save Changes** (still the manual persist path for
-  other edits) and **Start**.
+  other edits) and **Start**. `ExerciseRunView.reach` made internal so the +Actions extension reads it.
 - Unit-test the pure predicate ("offer promote?" = completed && reach > command) and rely on existing
   `TempoStretch` coverage for the target math. Keep the promote logic pure/testable per AGENTS.md.
+- **Routine path (§7):** add an optional `canPromote: Bool` + promote-target to
+  `RoutineBlockDoneView`, rendering the *"Move command to {reach}"* toggle only when true and only for
+  an exercise unit; thread a `promote: Bool` back through the `onContinue` closure. In
+  `RoutinePlayerView.commitDone`, when `promote` is set for an `.exercise` owner, apply the same
+  promote math as the standalone case before the existing `save()`. Nothing to add for auto-advance
+  (Done screen already skipped) or for the song/loop/rest paths. Same pure predicate both paths — and
+  since the standalone finish now hosts this very view, `RoutineBlockDoneView` is the single completion
+  surface for both.
 - Loops: no change.

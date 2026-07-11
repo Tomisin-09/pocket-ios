@@ -81,6 +81,7 @@ struct ExerciseDetailSheet: View {
         Section {
             TextField("Technique cues, target feel, where it's from…", text: $notes, axis: .vertical)
                 .lineLimit(3...8)
+                .keyboardDoneButton()
             if !exercise.tags.isEmpty {
                 FlowLayout(spacing: 6) {
                     ForEach(exercise.tags, id: \.self) { tag in

@@ -4,9 +4,11 @@ import SwiftUI
 /// A **training run** on one exercise (ADR 0046, Phase A): the screen reached by tapping a unit in
 /// Practice. It **owns its own `StandaloneMetronomeEngine`**, so a drill here never disturbs the
 /// metronome screen. Two modes: **set up** (stopped) edits the three tempos — working floor, command,
-/// derived reach — plus warm-up steps, drawn as a staircase with a one-tap promote; **running** shows
-/// the live BPM and the beat/template surface. **Start** commits the edits and hands the engine a
-/// `CommandRamp` (`engine.run(ramp:)`); edits are held in local state until then, so leaving discards.
+/// derived reach — plus warm-up steps, drawn as a staircase; **running** shows the live BPM and the
+/// beat/template surface. **Start** commits the edits and hands the engine a `CommandRamp`
+/// (`engine.run(ramp:)`); edits are held in local state until then, so leaving discards. Promotion is
+/// no longer a pre-run button — a run that finishes *naturally* lands on a post-run completion screen
+/// that offers to move command up to the reach (ADR 0079).
 struct ExerciseRunView: View {
     let exercise: Exercise
     /// Routine-session chrome (progress, Skip, auto-advance) when a block in a routine; `nil` standalone.
@@ -46,6 +48,10 @@ struct ExerciseRunView: View {
     /// The setup as it was last persisted — captured on seed and after each Save, so the Save
     /// Changes button shows only while the current edits differ from what's stored (ADR 0057).
     @State var baseline: ExerciseSetupState?
+    /// A just-finished **standalone** run awaiting the post-run promote offer (ADR 0079), or `nil`.
+    /// Set from `onRampFinished` on natural completion; drives the completion screen. Never set in a
+    /// routine — there the player's Done screen carries the offer instead (ADR 0079 §7).
+    @State var completion: RunCompletion?
 
     /// The persistable setup as it stands now — what Start / Save would write.
     var current: ExerciseSetupState {
@@ -61,8 +67,9 @@ struct ExerciseRunView: View {
     /// fallback for reset-to-auto.
     var autoReach: Int { TempoStretch.targetBPM(forCommand: command) }
 
-    /// The **effective** reach: a pinned override when set, else the auto reach (ADR 0075).
-    private var reach: Int { targetOverride ?? autoReach }
+    /// The **effective** reach: a pinned override when set, else the auto reach (ADR 0075). Read by
+    /// the run-setup extension to snapshot the reach for the post-run promote offer (ADR 0079).
+    var reach: Int { targetOverride ?? autoReach }
 
     /// The warm-up step size the chosen number of intermediate stops implies.
     var stepBPM: Int {
@@ -109,9 +116,8 @@ struct ExerciseRunView: View {
                     // Save, journal, meter) still drop out below (ADR 0077).
                     practiceSettings
                 }
-                RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
+                RoutineStairs(plateaus: routine.plateaus, command: command, tint: PocketColor.practice,
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
-                if !isRunning, routineContext == nil { promoteButton }
                 if !isRunning, routineContext == nil, isDirty { saveChangesButton }
                 if !isRunning, routineContext == nil {
                     JournalPreviewSection(owner: .exercise(exercise)) { showingJournal = true }
@@ -160,6 +166,17 @@ struct ExerciseRunView: View {
         }
         .sheet(isPresented: $showingShape) {
             ExerciseShapeSheet(exercise: exercise)
+        }
+        .fullScreenCover(item: $completion) { finished in
+            // Reuse the routine block's Done screen for a standalone finish (ADR 0079) — the same
+            // completion beat + optional mastery + note + editable promote, minus the "Up next" card
+            // (nothing follows a solo run). One integrated surface, not a bespoke second one.
+            RoutineBlockDoneView(title: exercise.name.isEmpty ? "Exercise" : exercise.name,
+                                 initialMastery: exercise.mastery,
+                                 promote: completionPromoteConfig(finished),
+                                 isLast: true, upNext: nil) { mastery, note, promoteTo in
+                commitCompletion(mastery: mastery, note: note, promoteTo: promoteTo)
+            }
         }
     }
 
@@ -255,28 +272,9 @@ struct ExerciseRunView: View {
         return { showingShape = true; haptic(.light) }
     }
 
-    private var promoteButton: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                command = min(StandaloneMetronomeEngine.bpmRange.upperBound, reach)
-                clearOverrideIfCaughtUp()
-            }
-            haptic(.medium)
-        } label: {
-            Label("I own \(reach) now — promote", systemImage: "arrow.up.circle.fill")
-                .font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(PocketColor.practice)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Capsule().stroke(PocketColor.practice, lineWidth: 1.5))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Promote: I own \(reach) beats per minute now")
-    }
-
     /// Persist the tuning without starting a run (ADR 0057) — shown only while the setup differs
-    /// from what's stored. A subtle filled capsule, distinct from the outlined Promote above it
-    /// and the filled Start pill below. Leaving still discards *unsaved* edits.
+    /// from what's stored. A subtle filled capsule, distinct from the filled Start pill below.
+    /// Leaving still discards *unsaved* edits.
     private var saveChangesButton: some View {
         Button(action: saveChanges) {
             Label("Save changes", systemImage: "checkmark.circle.fill")
