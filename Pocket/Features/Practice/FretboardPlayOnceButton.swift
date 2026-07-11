@@ -37,8 +37,10 @@ struct FretboardPlayOnceButton: View {
     /// Whether Watch should be shown (ADR 0077). The board walks continuously only when the animate
     /// preference is on **and** Reduce Motion is off; in that case the one-shot is redundant, so hide
     /// it. Otherwise (animation off, or Reduce Motion forcing the board static) show it — it's the
-    /// only way to see the shape move. Pure so it's unit-testable without a view.
-    static func shouldShow(animates: Bool, reduceMotion: Bool) -> Bool {
+    /// only way to see the shape move. Pure and `nonisolated` so it's unit-testable synchronously
+    /// from a non-main-actor context (the view itself is main-actor-isolated; CI's Swift 6 strict
+    /// concurrency rejects calling a main-actor static method from XCTest otherwise).
+    nonisolated static func shouldShow(animates: Bool, reduceMotion: Bool) -> Bool {
         !(animates && !reduceMotion)
     }
 }
