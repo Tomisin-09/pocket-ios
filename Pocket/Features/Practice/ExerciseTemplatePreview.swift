@@ -9,9 +9,12 @@ import SwiftUI
 /// A static strum-pattern card.
 struct StrumPatternPreview: View {
     let pattern: StrumPattern
+    /// Optional "Edit shape" action, tucked into the card header (ADR 0077). Passed only from the
+    /// library run screen; `nil` in a routine preview, where an exercise is read-only.
+    var editShape: (() -> Void)?
 
     var body: some View {
-        templatePreviewCard("Strum pattern") {
+        templatePreviewCard("Strum pattern", editShape: editShape) {
             StrumLane(pattern: pattern, tint: PocketColor.practice)
         }
     }
@@ -21,11 +24,12 @@ struct StrumPatternPreview: View {
 /// creation preview and the live board.
 struct FretboardExercisePreview: View {
     let drill: FretboardDrill
+    var editShape: (() -> Void)?
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
 
     var body: some View {
-        templatePreviewCard("Fretboard") {
+        templatePreviewCard("Fretboard", editShape: editShape) {
             FretboardDrillPreview(drill: drill, tint: PocketColor.practice, labelMode: labelMode)
         }
     }
@@ -35,9 +39,10 @@ struct FretboardExercisePreview: View {
 /// read the whole progression before you press Start. The first chord shows active; the rest preview.
 struct ChordProgressionPreview: View {
     let progression: ChordProgression
+    var editShape: (() -> Void)?
 
     var body: some View {
-        templatePreviewCard("Chord progression") {
+        templatePreviewCard("Chord progression", editShape: editShape) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 14) {
                     ForEach(Array(progression.changes.enumerated()), id: \.offset) { index, change in
@@ -58,9 +63,10 @@ struct ChordProgressionPreview: View {
 /// you read both before you press Start. The first chord shows active; the rest preview.
 struct StrumChordsPreview: View {
     let sheet: StrumChordSheet
+    var editShape: (() -> Void)?
 
     var body: some View {
-        templatePreviewCard("Strum & chords") {
+        templatePreviewCard("Strum & chords", editShape: editShape) {
             VStack(alignment: .leading, spacing: 10) {
                 StrumLane(pattern: sheet.strumPattern, tint: PocketColor.practice)
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -114,15 +120,35 @@ struct ExerciseTemplateSurface: View {
     }
 }
 
-/// A titled, rounded card every preview shares.
-@ViewBuilder
+/// A titled, rounded card every preview shares. The header carries the title on the left and, when an
+/// `editShape` action is supplied (library run screen only, ADR 0077), a compact **Edit shape**
+/// affordance on the right — so shape editing sits in the card's own header rather than eating a
+/// full-width button below the board.
+@MainActor @ViewBuilder
 private func templatePreviewCard<Content: View>(_ title: String,
+                                                editShape: (() -> Void)? = nil,
                                                 @ViewBuilder content: () -> Content) -> some View {
     VStack(spacing: 8) {
-        Text(title)
-            .font(.futura(.caption, weight: .semibold))
-            .foregroundStyle(PocketColor.textSecondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.futura(.caption, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+            Spacer(minLength: 8)
+            if let editShape {
+                Button {
+                    editShape()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "slider.horizontal.3")
+                        Text("Edit shape")
+                    }
+                    .font(.futura(.caption, weight: .semibold))
+                    .foregroundStyle(PocketColor.practice)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Edit the shape of this exercise")
+            }
+        }
         content()
     }
     .padding(14)

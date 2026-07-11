@@ -106,14 +106,26 @@ panel appears (standalone + in-routine). Needed one additive `Loop.rampDwellInte
 - **Exercises only.** Loop blocks keep their current in-session behaviour (`LoopRunView` with
   `routineContext`) untouched — do not gate loop editing on this slice.
 
-### Slice 3 — board-level toggles + relocate the shape editor *(library editor, exercises only)*
-Moves fretboard-run shape authoring off ⓘ and onto the board where the effect is visible live, and
-thins the toolbar. **This slice removes the content editors from ⓘ** (the deferred half of Slice 1)
-so shape editing is never homeless.
+### Slice 3 — board-level toggles + relocate the shape editor *(library editor, exercises only)* — **SHIPPED (branch `pocket-127-slice3-board-shape-editor`)**
+Built 2026-07-11. Moves fretboard-run shape authoring off ⓘ and onto the board where the effect is
+visible live, and thins the toolbar. **This slice removes the content editors from ⓘ** (the deferred
+half of Slice 1) so shape editing is never homeless.
 - **Add a shape-settings toggle** on the board that opens the run editor (finger pattern, starts on
   fret, across, up/back, advanced) — the panel currently living in `FretboardRunEditor` inside ⓘ.
   Same commit: remove those editors from `ExerciseDetailSheet`, dropping `commitFretboard` /
   `commitStrum` / `commitChords` / `commitStrumChords`.
+  - **As built:** a compact **"Edit shape"** control in the **preview card header** (top-right) on the
+    library run screen (`routineContext == nil` only, threaded through `templatePreviewCard` via an
+    optional `editShape` closure) opens a new **`ExerciseShapeSheet`** — the per-template editors,
+    verbatim, extracted from ⓘ with their commit helpers. Presentation is a sheet (not an inline
+    disclosure) — closest to the old ⓘ behaviour, relocated. `ExerciseDetailSheet` is now purely
+    informational: Description → Progress → Feel → template chip, committing only notes + mastery.
+  - **Device-test refinements (2026-07-11):** (i) the first cut used a full-width "Edit shape" capsule
+    below the preview — too heavy; moved into the preview card header. (ii) ⓘ's redundant "Training
+    routine" staircase preview removed (it lives on the run screen). (iii) Unrelated but same session:
+    the **home** "Recent routines" rail now opens `RoutineDetailView` (blocks + Edit + Start) instead
+    of replaying straight into the player — supersedes ADR 0066's one-tap-replay *from home*; the
+    routine library ▶ still replays directly.
 - **Watch (`FretboardPlayOnceButton`) — flip its gating (reverses ADR 0065, decided 2026-07-11).**
   Today Watch is always shown and deliberately ignores the animate/reduce-motion preference. New
   rule: **hide Watch when `exerciseAnimates` is ON** (the board already walks continuously, so the

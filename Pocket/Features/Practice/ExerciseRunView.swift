@@ -40,6 +40,9 @@ struct ExerciseRunView: View {
     @State var showingJournal = false
     /// The exercise detail/reference sheet (V1 feedback #2) — an ⓘ in the nav bar opens it.
     @State var showingDetail = false
+    /// The content/shape editor sheet (ADR 0077) — an "Edit shape" button on the board opens it.
+    /// Library-only: in a routine an exercise is tempo-only, so the button is never shown there.
+    @State var showingShape = false
     /// The setup as it was last persisted — captured on seed and after each Save, so the Save
     /// Changes button shows only while the current edits differ from what's stored (ADR 0057).
     @State var baseline: ExerciseSetupState?
@@ -86,12 +89,21 @@ struct ExerciseRunView: View {
                 if isRunning {
                     liveReadout
                 } else {
-                    if let pattern = exercise.strumPattern { StrumPatternPreview(pattern: pattern) }
-                    if let drill = exercise.fretboardDrill { FretboardExercisePreview(drill: drill) }
-                    if let progression = exercise.chordProgression {
-                        ChordProgressionPreview(progression: progression)
+                    // Shape editing lives on the board now (ADR 0077), not on the ⓘ reference sheet —
+                    // tucked into each preview card's header. Library-only: in a routine an exercise
+                    // is tempo-only, so no edit affordance (the closure stays `nil`).
+                    if let pattern = exercise.strumPattern {
+                        StrumPatternPreview(pattern: pattern, editShape: editShapeAction)
                     }
-                    if let sheet = exercise.strumChordSheet { StrumChordsPreview(sheet: sheet) }
+                    if let drill = exercise.fretboardDrill {
+                        FretboardExercisePreview(drill: drill, editShape: editShapeAction)
+                    }
+                    if let progression = exercise.chordProgression {
+                        ChordProgressionPreview(progression: progression, editShape: editShapeAction)
+                    }
+                    if let sheet = exercise.strumChordSheet {
+                        StrumChordsPreview(sheet: sheet, editShape: editShapeAction)
+                    }
                     // Practice Settings (collapsed by default) in every context. In a routine it's the
                     // *ramp shape* you tune — tempo + steps; the library-only affordances (promote,
                     // Save, journal, meter) still drop out below (ADR 0077).
@@ -145,6 +157,9 @@ struct ExerciseRunView: View {
         }
         .sheet(isPresented: $showingDetail) {
             ExerciseDetailSheet(exercise: exercise)
+        }
+        .sheet(isPresented: $showingShape) {
+            ExerciseShapeSheet(exercise: exercise)
         }
     }
 
@@ -229,6 +244,15 @@ struct ExerciseRunView: View {
     /// intervals ≈ N×that many bars (ADR 0078).
     private var dwellCaption: String {
         "≈ \(max(1, dwell) * StandaloneMetronomeEngine.automatorDefaultBars) bars at command"
+    }
+
+    /// The "Edit shape" action handed to the template preview cards (ADR 0077) — opens the
+    /// per-template content editor that used to live on the ⓘ sheet, now surfaced from the board's own
+    /// header. `nil` in a routine (an exercise is tempo-only) or for a template with no bespoke editor,
+    /// so no edit affordance renders there.
+    private var editShapeAction: (() -> Void)? {
+        guard routineContext == nil, exercise.template.bespokeEditor != nil else { return nil }
+        return { showingShape = true; haptic(.light) }
     }
 
     private var promoteButton: some View {

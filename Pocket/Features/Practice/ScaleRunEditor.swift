@@ -47,12 +47,12 @@ struct ScaleRunEditor: View {
     // MARK: - Display options (labels, global preference)
 
     /// A compact menu, top-right of the board, holding how notes are captioned (name / interval /
-    /// off) plus Watch/sound-preview — the walking-highlight preference itself lives only in
-    /// Settings now, since Watch already covers "see it move once" here.
+    /// off) plus Watch — the walking-highlight preference itself lives only in Settings now, since
+    /// Watch already covers "see it move once" here (the dead "Sound soon" scaffold was removed in
+    /// ADR 0077).
     private var labelModeControl: some View {
         HStack {
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
-            SoundPreviewButton(drill: run.expanded(), tint: tint)
             Spacer()
             Menu {
                 Picker("Labels", selection: $storedLabelMode) {

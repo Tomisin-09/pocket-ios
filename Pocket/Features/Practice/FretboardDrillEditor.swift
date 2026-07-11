@@ -59,14 +59,13 @@ struct FretboardDrillEditor: View {
 
     // MARK: - Display options (labels, global preference)
 
-    /// A compact menu, top of the editor, holding how notes are captioned plus a watch/sound preview
-    /// of the hand-placed drill — the row every other fretboard-family editor carries (ADR 0065).
-    /// The walking-highlight preference itself lives only in Settings now, since Watch already
-    /// covers "see it move once" here.
+    /// A compact menu, top of the editor, holding how notes are captioned plus a Watch pass of the
+    /// hand-placed drill — the row every other fretboard-family editor carries (ADR 0065; the dead
+    /// "Sound soon" scaffold was removed in ADR 0077). The walking-highlight preference itself lives
+    /// only in Settings now, since Watch already covers "see it move once" here.
     private var displayOptionsControl: some View {
         HStack {
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
-            SoundPreviewButton(drill: drill, tint: tint)
             Spacer()
             Menu {
                 Picker("Labels", selection: $storedLabelMode) {

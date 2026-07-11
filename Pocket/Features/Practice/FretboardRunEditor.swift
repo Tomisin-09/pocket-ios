@@ -52,13 +52,12 @@ struct FretboardRunEditor: View {
     // MARK: - Display options (labels, global preference)
 
     /// A compact menu, top of the board, holding how notes are captioned (name / interval / off)
-    /// plus Watch/sound-preview — the same row the Scale/Arpeggio editors carry (ADR 0065). The
-    /// walking-highlight preference itself lives only in Settings now, since Watch already covers
-    /// "see it move once" here.
+    /// plus Watch — the same row the Scale/Arpeggio editors carry (ADR 0065; the dead "Sound soon"
+    /// scaffold was removed in ADR 0077). The walking-highlight preference itself lives only in
+    /// Settings now, since Watch already covers "see it move once" here.
     private var displayOptionsControl: some View {
         HStack {
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
-            SoundPreviewButton(drill: run.expanded(), tint: tint)
             Spacer()
             Menu {
                 Picker("Labels", selection: $storedLabelMode) {
