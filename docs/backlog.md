@@ -88,6 +88,28 @@ docs so this stays a pointer list:
   the **Chords** template — which has now shipped (PR #97) on a shared `ChordVoicing`.
   A triad is a 3-note chord voicing and the CAGED box engine generates arbitrary note
   sets, so the shape/inversion lives with chords as planned. No separate category.
+- **Movable chord shapes + custom-chord placer (near-term fretboard slice, buildable
+  now).** From a notes session 2026-07-11 (a movable-barre-shape chart + a "custom chord"
+  ask). Two parts over the shipped fretboard renderer (`FretboardContent`, pocket-102) and
+  the shared `ChordVoicing`:
+  1. **Curated movable shapes.** Add variety to the chord exercise as *movable grips* —
+     a relative shape (E-root / A-root grip) + a fret offset (transposition), taught as
+     "pick a shape, slide it to the right fret." The note data itself is fully derivable
+     (chromatic fret→note on the E/A strings, standard barre grips) — **do not store a
+     voicing table**; emit grips programmatically and transpose. **Tier the ceiling**, the
+     real product decision (not a knowledge gap — all tiers are generatable):
+     - *Tier 1* — triads + 7ths (maj/min/dom7/min7/maj7 × E-root & A-root; the chart's 10).
+     - *Tier 2* — + sus2/sus4, 6ths, basic 9ths (guitar-idiomatic voicings; e.g. sus2 is
+       voiced A-root, not on the awkward E-shape).
+     - *Tier 3* — shells (root-3-7), extensions (9/11/13), altered (7♯9/7♭9/7♯5/7alt).
+     Default the curated exercise to **Tier 1–2**; let the placer (below) cover Tier 3 so
+     there's no giant voicing table to maintain.
+  2. **Custom-chord fretboard placer** — a per-string picker (fretted note / open / muted)
+     that composes an arbitrary voicing the curated set can't express. The escape hatch for
+     Tier 3 and anything bespoke; persists as a `ChordVoicing`. This is where advanced/jazz
+     voicing choices live, since they multiply and get instrument-specific.
+  Open design question flagged in the note: **how to present** the movable-shape idea
+  (slide-to-fret) so it teaches, not just displays. Natural fretboard slice after scales.
 - **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
   container (distinct from the intra-exercise ramp staircase): `Routine` +
   `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit
@@ -166,6 +188,15 @@ docs so this stays a pointer list:
   first (it powers preset guides and shares its clock/substrate with the
   strumming-pattern animation), ASCII-tab import second, Guitar Pro/MusicXML
   later (licensing-gated), OCR never-planned.
+- **Tab → song metadata (FUTURE, gated on the AI/parse phase).** From the notes session
+  2026-07-11, flagged "for the future" by the user. Translate imported song tablature into
+  structured **song metadata** — key, chord progression, time signature, and played
+  **techniques** (slides, vibrato, bends) — so the app can drive fretboard/chord surfaces
+  and planner skill-tagging from real song content instead of manual entry. Sits on top of
+  the tab-import substrate above (shares the notation model); the technique/key/progression
+  inference is the AI-phase piece (ADR 0002 proxy, still paper-only). Not scheduled; a big
+  parse+inference feature deliberately deferred behind the tab-import renderer and the AI
+  foundations.
 - **Strumming-pattern animation + preset expansion (near-term, buildable now):**
   an animated D/DU pattern lane accompanied by the metronome, plus presets from
   the exercise-inventory sheet (warm-ups/spider, hammer-on/pull-off/slide

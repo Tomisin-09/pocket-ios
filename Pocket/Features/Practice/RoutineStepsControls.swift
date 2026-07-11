@@ -72,7 +72,7 @@ struct RoutineStepsControls: View {
             }
             stepRow(label: "Back-up steps", value: $backoffSteps,
                     caption: backoffSteps == 0 ? "drop straight to back-off" : "ease back down")
-            stepRow(label: "Dwell", value: $dwell, caption: dwellCaption, range: dwellRange)
+            stepRow(label: "Command", value: $dwell, caption: dwellCaption, range: dwellRange)
         }
     }
 
@@ -81,7 +81,7 @@ struct RoutineStepsControls: View {
         var parts = ["\(warmupSteps) warm-up"]
         if hasReach { parts.append("\(reachSteps) reach") }
         parts.append("\(backoffSteps) back-up")
-        parts.append("\(dwell) dwell")
+        parts.append("\(dwell) command")
         return parts.joined(separator: " · ")
     }
 
