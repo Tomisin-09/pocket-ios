@@ -62,7 +62,12 @@ and a downbeat anchor** (`Song.downbeatSeconds`), pure `BeatGrid` turns tempo + 
 into per-beat song fractions (flagging bar-start downbeats, 4/4); these are drawn as a
 faint, density-aware grid behind the bars and **added to the snap candidates**, so a
 release also catches the pulse — no grid is drawn or snapped to without both BPM and
-the anchor (ADR 0022). Tempo and the downbeat are set behind **"Set BPM"** (`BPMSheet`):
+the anchor (ADR 0022). A **seek release splits by gesture** (ADR 0080): a **tap** ("take
+me to that structure") snaps to the full set including beats, while a free **scrub** ("put
+the playhead exactly here") drops the dense beat grid and catches only the sparse landmarks
+(markers + loop edges) — the same candidate set the minimap uses, so a deliberate scrub
+between beats lands where the finger lifts. Beat snap for *placement* (loop-edge commit,
+Fine-handle release, the downbeat) is unaffected; only the seek scrub stops catching beats. Tempo and the downbeat are set behind **"Set BPM"** (`BPMSheet`):
 **tap-tempo** captures the engine's song-time per tap (pure `TempoMath.bpm(fromTapTimes:)`,
 so in-loop / slowed tapping reads the true tempo) or **manual** entry, and **the 1** is
 placed by a draggable waveform handle that **snaps to the loudest transient** near the drop

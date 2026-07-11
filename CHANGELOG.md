@@ -139,6 +139,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   kept in place so it can slot in later without touching these editors.
 
 ### Fixed
+- **A scrub on the waveform lands where you let go, not on the nearest beat.** Dragging the playhead to a
+  point *between* beats used to get yanked onto the pulse — with a dense beat grid, the playhead felt
+  magnetized and you couldn't land it where you meant. A **scrub** now catches only the sparse landmarks
+  (markers and saved-loop edges), dropping the beat grid, so a deliberate scrub between beats stays put
+  while still catching a marker or loop edge you were aiming at. A quick **tap** is unchanged — it still
+  jumps to the nearest structure, beats included — so "take me to that beat" stays one tap. This is the
+  same rule the minimap already used; the two seek surfaces now share it. (ADR 0080)
 - **The practice staircase's labels line up with their steps.** The `<n> BPM` signpost is meant to mark
   the command tempo (the wide dwell bar); when the **Dwell** was set to a single interval, the command
   bar was no longer the widest, so the label jumped to the warm-up bar and showed the warm-up tempo.
