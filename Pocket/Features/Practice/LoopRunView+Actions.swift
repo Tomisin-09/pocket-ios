@@ -26,6 +26,7 @@ extension LoopRunView {
         reachSteps = loop.rampReachSteps
         backoffSteps = loop.rampBackoffSteps
         repsPerStep = max(Self.repsRange.lowerBound, loop.rampRepsPerStep)
+        dwell = max(1, loop.rampDwellIntervals)
         targetOverride = loop.targetSpeedOverride.map { LoopCommandRamp.percent($0) }
         // In a routine, a naturally-finished ramp auto-advances the session (never a manual stop).
         model.onFinished = routineContext?.onFinished
@@ -45,6 +46,7 @@ extension LoopRunView {
         loop.rampReachSteps = reachSteps
         loop.rampBackoffSteps = backoffSteps
         loop.rampRepsPerStep = repsPerStep
+        loop.rampDwellIntervals = max(1, dwell)
         try? modelContext.save()
         baseline = current
     }
@@ -141,6 +143,8 @@ struct LoopSetupState: Equatable {
     var reachSteps: Int
     var backoffSteps: Int
     var repsPerStep: Int
+    /// The command-plateau dwell (ADR 0078) — editing it arms the Save button.
+    var dwell: Int
     /// The pinned reach (% of original) or `nil` for the auto derivation — editing it arms Save (ADR 0075).
     var targetOverride: Int?
 }

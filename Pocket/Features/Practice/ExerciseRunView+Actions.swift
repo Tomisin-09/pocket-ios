@@ -26,6 +26,7 @@ extension ExerciseRunView {
                                               stepBPM: exercise.rampStepBPM)
         reachSteps = max(0, exercise.rampReachSteps)
         backoffSteps = max(0, exercise.rampBackoffSteps)
+        dwell = max(1, exercise.dwellIntervals)
         targetOverride = exercise.targetTempoOverride
         signature = TimeSignature.forStored(beats: exercise.beatsPerBar,
                                             noteValue: exercise.noteValue,
@@ -48,7 +49,7 @@ extension ExerciseRunView {
         exercise.rampStepBPM = stepBPM
         exercise.rampIntervalUnit = .bars
         exercise.rampIntervalCount = StandaloneMetronomeEngine.automatorDefaultBars
-        exercise.dwellIntervals = StandaloneMetronomeEngine.automatorDefaultDwell
+        exercise.dwellIntervals = max(1, dwell)
         exercise.includeBackoff = true
         exercise.rampReachSteps = reachSteps
         exercise.rampBackoffSteps = backoffSteps
@@ -146,6 +147,8 @@ struct ExerciseSetupState: Equatable {
     var steps: Int
     var reachSteps: Int
     var backoffSteps: Int
+    /// The command-plateau dwell (ADR 0078) — editing it arms the Save button.
+    var dwell: Int
     var signature: TimeSignature
     /// The pinned reach (BPM) or `nil` for the auto derivation — editing it arms Save (ADR 0075).
     var targetOverride: Int?

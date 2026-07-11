@@ -284,7 +284,9 @@ readout. While a run plays, `RoutineStairs` **lights the live plateau** — fed 
 `currentRampPlateau` (the pure `CommandRamp.currentPlateauIndex(…)` over the accrued elapsed) —
 instead of the old permanent dwell highlight. Its indigo `practice` accent marks it as a distinct space from the metronome's teal.
 The `Exercise` model now stores the `CommandRamp` recipe **natively** (ADR 0046 §5): `rampStepBPM`
-/ `rampIntervalCount` / `rampIntervalUnit` plus `dwellIntervals`, `includeBackoff`, and the
+/ `rampIntervalCount` / `rampIntervalUnit` plus `dwellIntervals` (the command-plateau hold, **now
+user-tunable** via a Dwell row in the Steps panel — ADR 0078, previously hardcoded on save),
+`includeBackoff`, and the
 `rampReachSteps` / `rampBackoffSteps` counts (additive `Int` fields, declaration-defaulted to `0`),
 instead of borrowing the free-play automator fields the ADR 0045 shortcut reused. The `automator* → ramp*`
 rename is a **lightweight, data-preserving** migration via `@Attribute(originalName:)` (no
@@ -309,7 +311,8 @@ unit-generic `target(forCommand:…)` with `×`-unit clamps (`+0.02…+0.10×`).
 `WaveformPracticeModel`), loops the region (`setLoop`), and polls the engine's **`loopIteration`**
 each tick → `ramp.bpm(elapsedBars: reps)` → `setRate(percent/100)`, stopping at `ramp.isFinished`.
 The ramp advances by **loop repetitions, not seconds** — one pass through the region is one step
-(reps-per-step is user-set in the run setup, default 1; the command dwell holds several). The ramp
+(reps-per-step is user-set in the run setup, default 1; the command dwell holds several — the dwell
+count is itself user-tunable via the new additive `rampDwellIntervals` field, ADR 0078). The ramp
 reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as loop passes, and
 `loopIteration` is rate-independent so a plateau holds a fixed number of reps regardless of the
 tempo it plays at (and freezes naturally on pause). The tempos ride existing fields —

@@ -10,7 +10,7 @@ final class LoopRampSetupTests: XCTestCase {
 
     private func makeState() -> LoopSetupState {
         LoopSetupState(working: 70, command: 85, warmupSteps: 2,
-                       reachSteps: 1, backoffSteps: 1, repsPerStep: 3)
+                       reachSteps: 1, backoffSteps: 1, repsPerStep: 3, dwell: 4)
     }
 
     // MARK: - isDirty driver (LoopSetupState equality, per field)
@@ -23,17 +23,19 @@ final class LoopRampSetupTests: XCTestCase {
         let base = makeState()
 
         XCTAssertNotEqual(LoopSetupState(working: 71, command: 85, warmupSteps: 2,
-                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 3), base)
+                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 3, dwell: 4), base)
         XCTAssertNotEqual(LoopSetupState(working: 70, command: 86, warmupSteps: 2,
-                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 3), base)
+                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 3, dwell: 4), base)
         XCTAssertNotEqual(LoopSetupState(working: 70, command: 85, warmupSteps: 3,
-                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 3), base)
+                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 3, dwell: 4), base)
         XCTAssertNotEqual(LoopSetupState(working: 70, command: 85, warmupSteps: 2,
-                                         reachSteps: 2, backoffSteps: 1, repsPerStep: 3), base)
+                                         reachSteps: 2, backoffSteps: 1, repsPerStep: 3, dwell: 4), base)
         XCTAssertNotEqual(LoopSetupState(working: 70, command: 85, warmupSteps: 2,
-                                         reachSteps: 1, backoffSteps: 2, repsPerStep: 3), base)
+                                         reachSteps: 1, backoffSteps: 2, repsPerStep: 3, dwell: 4), base)
         XCTAssertNotEqual(LoopSetupState(working: 70, command: 85, warmupSteps: 2,
-                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 4), base)
+                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 4, dwell: 4), base)
+        XCTAssertNotEqual(LoopSetupState(working: 70, command: 85, warmupSteps: 2,
+                                         reachSteps: 1, backoffSteps: 1, repsPerStep: 3, dwell: 6), base)
     }
 
     // MARK: - Model round-trip (the four dedicated fields)
@@ -44,6 +46,7 @@ final class LoopRampSetupTests: XCTestCase {
         XCTAssertEqual(loop.rampReachSteps, 0)
         XCTAssertEqual(loop.rampBackoffSteps, 0)
         XCTAssertEqual(loop.rampRepsPerStep, LoopCommandRamp.defaultRepsPerStep)
+        XCTAssertEqual(loop.rampDwellIntervals, LoopCommandRamp.defaultDwellIntervals)
     }
 
     func testRampFieldsRoundTrip() {
@@ -53,11 +56,25 @@ final class LoopRampSetupTests: XCTestCase {
         loop.rampReachSteps = 2
         loop.rampBackoffSteps = 1
         loop.rampRepsPerStep = 4
+        loop.rampDwellIntervals = 6
 
         XCTAssertEqual(loop.rampWarmupSteps, 3)
         XCTAssertEqual(loop.rampReachSteps, 2)
         XCTAssertEqual(loop.rampBackoffSteps, 1)
         XCTAssertEqual(loop.rampRepsPerStep, 4)
+        XCTAssertEqual(loop.rampDwellIntervals, 6)
+    }
+
+    /// The stored dwell flows into the loop's `ramp` — the command plateau holds `rampDwellIntervals`
+    /// intervals (ADR 0078). Verifies the model → `CommandRamp` seam a routine block runs from.
+    func testDwellFlowsIntoLoopRamp() {
+        let loop = Loop(name: "Verse", start: 0.1, end: 0.3, speed: 0.85, repeats: 4)
+        loop.promoteCommand(to: 0.95)
+        loop.rampDwellIntervals = 7
+
+        let commandPct = LoopCommandRamp.percent(loop.command)
+        let dwellPlateau = loop.ramp.plateaus.first { $0.bpm == commandPct }
+        XCTAssertEqual(dwellPlateau?.intervals, 7)
     }
 
     /// The four ramp fields are independent of the ADR-0013 automator fields — writing one family

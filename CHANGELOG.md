@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Set how long you dwell at command tempo.** The command plateau — the flat top of the practice
+  staircase where you consolidate at the fastest tempo you own — used to be a fixed length. There's now
+  a **Dwell** control in the Steps panel (on both exercises and loops), so you can make the hold shorter
+  or longer: an exercise dwells in bars ("≈ 16 bars at command"), a loop in passes through the region
+  ("≈ 4 passes at command"). It appears everywhere the other step controls do — the standalone run
+  screens and inside a routine.
 - **Repeat a routine block.** In the routine editor, tap a block while editing to set how many times
   it repeats (1–9), so you can say "run this warm-up three times before moving on." A repeated block
   shows a small `×N` badge in the routine, and the estimated length accounts for it. In the player, a
@@ -74,6 +80,15 @@ All notable changes to Pocket are documented here. Format loosely follows
   the **training-routine shape**, with the template chip moved to the bottom. Tempo is **no longer
   edited here** — you tune the command and reach on the run screen (and, inside a routine, on the block
   itself), so there's a single place to change speed instead of the info sheet doubling as an editor.
+- **Inside a routine, an exercise no longer looks like the library editor.** Opening an exercise from a
+  routine — whether previewing a block before you start or reaching it mid-session — used to show the
+  *same* full run editor as the library (promote, Save, the journal, the meter picker, "Start
+  training"), which made "the exercise in my routine" hard to tell apart from "the exercise in my
+  library." Now the routine surfaces keep only the **Practice Settings** panel — the tempos and step
+  granularity you'd actually tune per routine, collapsed by default — and drop the library-only
+  affordances (promote, Save, journal, meter). The block preview writes changes straight through; a
+  live-session block still runs its full ramp, count-in and staircase and commits any tweak when you hit
+  Start. Promoting, saving and journaling still live in the library run screen, the one full editor.
 - **The practice transport bar no longer shows a duplicate timecode.** When no loop was active, the
   transport bar's centre displayed the playback time — the same value already shown by the time bubble
   that rides the playhead on the waveform. The redundant readout is gone; the row keeps its height, so

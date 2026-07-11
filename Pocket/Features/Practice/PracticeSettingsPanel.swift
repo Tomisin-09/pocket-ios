@@ -30,6 +30,9 @@ struct PracticeSettingsPanel: View {
     @Binding var warmupSteps: Int
     @Binding var reachSteps: Int
     @Binding var backoffSteps: Int
+    /// The command-plateau dwell (ADR 0078) + its per-type caption, threaded to `RoutineStepsControls`.
+    @Binding var dwell: Int
+    let dwellCaption: String
     let warmupStepBPM: Int
     let hasReach: Bool
     let tint: Color
@@ -43,6 +46,7 @@ struct PracticeSettingsPanel: View {
                 tempos
                 RoutineStepsControls(expanded: $stepsExpanded, warmupSteps: $warmupSteps,
                                      reachSteps: $reachSteps, backoffSteps: $backoffSteps,
+                                     dwell: $dwell, dwellCaption: dwellCaption,
                                      warmupStepBPM: warmupStepBPM, reach: reach,
                                      hasReach: hasReach, tint: tint, onChange: onToggle)
             }

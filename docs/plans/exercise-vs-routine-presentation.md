@@ -75,7 +75,23 @@ The change that makes everything else coherent; do it first.
   anywhere). So they stay in ⓘ through Slice 1 and are relocated-and-removed in a single Slice 3
   commit. Tempo is safe to remove now — the library run screen already hosts Practice Settings.
 
-### Slice 2 — in-routine surface is tempo-only (#2 and #3 unified) *(the actual fix)*
+### Slice 2 — in-routine surface is tempo-only (#2 and #3 unified) *(the actual fix)* — **SHIPPED (branch `pocket-126-in-routine-tempo-only`)**
+Built 2026-07-11. Resolved the two open questions below: **#3 keeps its ramp running** (only the
+*editor* is stripped, not the metronome), and **tempo is nudged pre-start only** (read-only live BPM
+once running). Architecture: a shared `RoutineTempoNudger` (command + reach editable, working +
+meter read-only) hosted by both surfaces — `ExerciseRunView` is gated on `routineContext != nil`
+rather than forking into a second view, so #1 and #3 are no longer near-clones. #2's nudge writes
+straight to the model; #3's commits on Start. The redundant pre-start "Hear command tempo" audition
+was **omitted from #3** (Start plays the real click a tap away); #2 keeps its audition.
+
+**Device-test refinement (2026-07-11).** Feedback on the first cut: the bespoke tempo-only nudger was
+too restrictive. Revised so both routine surfaces use the shared collapsible **`PracticeSettingsPanel`**
+(tempos + step granularity, collapsed by default) instead — the library-only affordances (promote,
+Save, journal, meter) still drop out, but the ramp *shape* is tunable. `RoutineTempoNudger` was
+removed. This also surfaced that **dwell** (the command-plateau hold) was never user-controllable →
+**ADR 0078**: a Dwell count added to the Steps panel for **both exercises and loops**, everywhere the
+panel appears (standalone + in-routine). Needed one additive `Loop.rampDwellIntervals` field
+(lightweight migration) — verify on device.
 - **#2 (block preview):** promote the tempo nudger onto the preview surface itself so
   "routine = only tempo editable" is literally true (today tempo edit hides one layer down under
   ⓘ). Everything else stays read-only.
@@ -155,7 +171,9 @@ Open when we get there: sample set vs synth voice; exact home (per-template, onl
 ones). The `ExerciseAudioEngine.preview(_:tempoBPM:)` / `sound(_:)` hooks are already the slot.
 
 ## Open questions
-- Slice 2: one shared in-routine view for #2 and #3, or keep them separate? (Lean: shared.)
+- ~~Slice 2: one shared in-routine view for #2 and #3, or keep them separate?~~ **Resolved: shared
+  component (`RoutineTempoNudger`), distinct hosts.** #3 = gated `ExerciseRunView`, keeps its ramp;
+  tempo pre-start only.
 - Slice 4: exact trigger for the post-run promote (every run? only when the top plateau was held?).
 
 ## Not in scope
