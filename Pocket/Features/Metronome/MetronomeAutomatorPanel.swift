@@ -212,6 +212,7 @@ struct AutomatorNumberField: View {
                 .frame(width: 54)
                 .focused($focused)
                 .onChange(of: focused) { _, isFocused in if !isFocused { commit(Int(text) ?? value) } }
+                .keyboardDoneButton(tint: PocketColor.metronome)
             nudge("plus") { commit(value + step) }
         }
         .onAppear { text = "\(value)" }

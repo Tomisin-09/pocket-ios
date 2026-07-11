@@ -113,6 +113,23 @@ All notable changes to Pocket are documented here. Format loosely follows
   transport bar's centre displayed the playback time — the same value already shown by the time bubble
   that rides the playhead on the waveform. The redundant readout is gone; the row keeps its height, so
   nothing shifts, and the playhead's time bubble still tracks as before.
+- **"Promote" now comes after a run, not before it.** The pre-run "I own X now — promote" button on the
+  exercise setup screen is gone. Instead, when a training run **finishes on its own** — you held the
+  command tempo and summited the reach — you land on the **same finish screen a routine block uses**: a
+  completion beat, an optional "how clean did that feel?" rating and note, and an optional **"Move
+  command to {reach}"** toggle. Flip it and tap **Finish** and the drill steps up (saved right away);
+  leave it off to keep the tempo where it is. The bumped-to value **defaults to the reach but is
+  editable** — a −/+ stepper lets you set a custom command you feel you own (anywhere above your current
+  command, up to the max). If there's nothing above your command to move to, there's no toggle — just
+  the completion. It's an offer, never a score — the app still never grades how you played. Inside a
+  **routine** the same toggle rides that Done screen (which now also has a top-left chevron to leave the
+  routine); with auto-advance on (no Done screen) nothing is bumped.
+- **One consistent way off the keyboard everywhere.** Every text field that the keyboard's Return key
+  can't dismiss — the multiline note fields (finish-screen note, journal composer and editor, exercise
+  description, song notes) and the number pads (tempo entry, metronome BPM, the automator's fields, the
+  waveform BPM sheet) — now carries the **same checkmark button** in its keyboard bar to close it. The
+  couple of fields that previously showed a text "Done" were switched to the checkmark so the affordance
+  reads identically across the app.
 
 ### Removed
 - **The greyed-out "Sound soon" button is gone.** The fretboard editors carried a disabled
@@ -121,6 +138,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   kept in place so it can slot in later without touching these editors.
 
 ### Fixed
+- **The practice staircase's labels line up with their steps.** The `<n> BPM` signpost is meant to mark
+  the command tempo (the wide dwell bar); when the **Dwell** was set to a single interval, the command
+  bar was no longer the widest, so the label jumped to the warm-up bar and showed the warm-up tempo.
+  It's now pinned to the command step by tempo, whatever the dwell length. The phase captions
+  underneath were likewise on an even three-way split, floating off their unequal-width bars; each now
+  sits **centred under the bars it names** — "warm-up" over the climb, "dwell" over the command bar, and
+  "reach" and "back off" as **two separate captions** over the ascent and the descent (each omitted when
+  that phase has no bars). The dwell caption is also shortened from "dwell at command" to just "dwell".
 - **A loop's Focus and Type now actually change in its edit sheet.** On the waveform, opening a loop's
   settings and picking a **Focus** (Backburner / Active / Sharpening) or **Type** (Lick / Riff / Chords /
   Passage) did nothing — the dropdown needed several taps to even register and the choice never stuck, so

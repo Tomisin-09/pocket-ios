@@ -80,12 +80,57 @@ extension ExerciseRunView {
         // (V2 planner Slice 1). Persist() already saved; this rides the next context save.
         exercise.markPracticed()
         try? modelContext.save()
+        // Standalone: arm the post-run completion offer (ADR 0079), capturing the reach being run so
+        // the screen's copy/target stay stable even if the returned setup is edited afterward. In a
+        // routine the hook is the player's advance (set in `seedIfNeeded`), so leave it untouched.
+        if routineContext == nil { armCompletionOffer() }
         // Meter → accents + count-in length (ADR 0052); a rhythm drill's click follows the strum
         // pattern (ADR 0071 R5) unless Settings opts out. Both set before `run(ramp:)` so the grid holds.
         engine.setTimeSignature(signature)
         engine.setStrumPattern(runStrumPattern)
         engine.run(ramp: routine)
         haptic(.medium)
+    }
+
+    /// Wire `onRampFinished` to raise the post-run completion screen for a standalone run (ADR 0079).
+    /// Fires only when the ramp runs its full course (dwell → summit → backoff), never on a manual
+    /// stop. The reach/command are snapshotted now so the offer is stable regardless of later edits.
+    private func armCompletionOffer() {
+        let summitedReach = reach
+        let summitedCommand = command
+        engine.onRampFinished = {
+            completion = RunCompletion(reach: summitedReach, command: summitedCommand)
+        }
+    }
+
+    /// The promote offer for the standalone completion screen (ADR 0079) — `nil` when the
+    /// (ceiling-clamped) reach isn't above command. The target defaults to the reach and is editable
+    /// from just above the summited command up to the BPM ceiling.
+    func completionPromoteConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.PromoteConfig? {
+        let ceiling = StandaloneMetronomeEngine.bpmRange.upperBound
+        guard PromoteOffer.canPromote(reach: finished.reach, command: finished.command, ceiling: ceiling)
+        else { return nil }
+        return .init(defaultTarget: PromoteOffer.promotedCommand(reach: finished.reach, ceiling: ceiling),
+                     minValue: finished.command + 1, maxValue: ceiling)
+    }
+
+    /// Commit the post-run completion screen (ADR 0079) — the same `RoutineBlockDoneView` a routine
+    /// block finishes on, reused for a standalone run: an optional mastery self-rating, an optional
+    /// journal note, and the opt-in promote, committed together in the one Finish. Each may be a no-op
+    /// (unchanged rating, empty note, toggle off). When on, `promoteTo` is the chosen (possibly custom)
+    /// command — already clamped by the screen's stepper — so command moves there and a caught-up reach
+    /// pin drops; everything lands through the single write path (`persist`, ADR 0057) — there's no
+    /// following Start, so this *is* the commit.
+    func commitCompletion(mastery: Int?, note: String, promoteTo: Int?) {
+        exercise.mastery = mastery
+        _ = JournalWriter.add(to: .exercise(exercise), text: note, kind: .note, into: modelContext)
+        if let promoteTo {
+            command = promoteTo
+            clearOverrideIfCaughtUp()
+        }
+        persist()
+        haptic(.light)
+        completion = nil
     }
 
     /// The strum pattern the run should sound — a rhythm drill's pattern, unless the user turned off
@@ -137,6 +182,18 @@ extension ExerciseRunView {
     func clampCommand(_ value: Int) -> Int {
         min(StandaloneMetronomeEngine.bpmRange.upperBound, max(working, value))
     }
+}
+
+/// A just-finished standalone run awaiting the post-run promote offer (ADR 0079). Snapshotted at the
+/// moment the ramp completes so the copy/target stay stable even if the returned setup is edited.
+/// `Identifiable` so it drives a `fullScreenCover(item:)`.
+struct RunCompletion: Identifiable, Equatable {
+    let id = UUID()
+    /// The reach the run summited — the promote's default target.
+    let reach: Int
+    /// The command the run held — the floor the editable promote value sits above, and what the
+    /// "anything to promote?" gate compares against (ADR 0079 §5).
+    let command: Int
 }
 
 /// Snapshot of the run-setup fields Start / Save persist — compared against the live values to

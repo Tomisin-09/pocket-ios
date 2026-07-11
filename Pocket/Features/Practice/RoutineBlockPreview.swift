@@ -61,7 +61,8 @@ struct ExerciseBlockPreview: View {
                     dwell: dwellBinding, dwellCaption: dwellCaption,
                     warmupStepBPM: warmupStepBPM, hasReach: hasReach,
                     tint: PocketColor.practice, onToggle: { haptic(.light) })
-                RoutineStairs(plateaus: exercise.ramp.plateaus, tint: PocketColor.practice)
+                RoutineStairs(plateaus: exercise.ramp.plateaus, command: exercise.ramp.command,
+                              tint: PocketColor.practice)
                     .frame(height: 120)
                 if let strumPattern {
                     PreviewAudioButton(isPlaying: strumPreview.isPlaying,
@@ -230,7 +231,8 @@ struct LoopBlockPreview: View {
 
                 PreviewTempoReadout(anchors: "\(loop.ramp.working)% → \(loop.ramp.command)%",
                                     reach: "\(loop.ramp.target)%", unit: "of original")
-                RoutineStairs(plateaus: loop.ramp.plateaus, tint: PocketColor.practice)
+                RoutineStairs(plateaus: loop.ramp.plateaus, command: loop.ramp.command,
+                              tint: PocketColor.practice)
                     .frame(height: 120)
                 if preview.isUnavailable {
                     Text("Audio unavailable — the song file couldn't be found.")

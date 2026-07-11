@@ -51,7 +51,8 @@ struct EditableTempoRow: View {
             if typing {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") { typing = false }
+                    Button { typing = false } label: { Image(systemName: "checkmark") }
+                        .accessibilityLabel("Dismiss keyboard")
                 }
             }
         }

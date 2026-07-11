@@ -104,6 +104,12 @@ Terminology is already half-done (target → **reach** app-wide); only the butto
 framing. The exact **trigger** (every run, or only when the top plateau was actually held) and copy
 are an open decision, recorded in a **short follow-up ADR** with the implementation. Exercises only.
 
+**Resolved by [ADR 0079](0079-post-run-promote-completion-screen.md)** (decisions locked 2026-07-11,
+build deferred): trigger = **only a naturally completed run** (which inherently means the top was
+held — a manual stop is silent); presentation = a brief **completion screen** (mirrors
+`RoutineBlockDoneView`); accepting **moves command up to the reach** and **persists immediately**; the
+in-setup promote button is **removed**.
+
 ### 7. Loops are out of scope
 
 None of the above touches loops: the ⓘ reformat (`ExerciseDetailSheet` is exercise-only), the

@@ -1,29 +1,47 @@
 import SwiftUI
 
 /// The **post-block Done screen** shown when a routine unit finishes on its own with manual advance
-/// on (the default — ADR 0071 R4). It **collapses** the earlier separate two-option reflection sheet
-/// into one surface: a completion beat, an *optional* mastery tap, an *optional* inline journal note,
-/// and a single primary **Continue / Finish** that commits both in one action (the P3 lesson — no
-/// competing "Add entry" button). A deliberate Skip bypasses this gate, and auto-advance skips it
-/// entirely; it appears only for units that carry a journal (exercise/loop), never a song/rest.
+/// on (the default — ADR 0071 R4) — **and reused for a standalone exercise finish** (`upNext: nil`,
+/// ADR 0079 §2), so a solo run and a routine block share one completion surface. It **collapses** the
+/// earlier separate two-option reflection sheet into one surface: a completion beat, an *optional*
+/// mastery tap, an *optional* inline journal note, an *optional* post-run promote toggle (exercises,
+/// ADR 0079 §7), and a single primary **Continue / Finish** that commits them in one action (the P3
+/// lesson — no competing "Add entry" button). In a routine a deliberate Skip bypasses this gate, and
+/// auto-advance skips it entirely; it appears only for units that carry a journal (exercise/loop),
+/// never a song/rest.
 ///
-/// No evaluation (ADR 0070): mastery is the player's own self-rating, never a score the app measured.
-/// The host commits — this view only gathers `(mastery, note)` and hands them back — so it stays
-/// SwiftData-free and independently previewable.
+/// No evaluation (ADR 0070): mastery is the player's own self-rating, never a score the app measured,
+/// and the promote is an opt-in offer, never an automatic bump. The host commits — this view only
+/// gathers `(mastery, note, promote)` and hands them back — so it stays SwiftData-free and previewable.
 struct RoutineBlockDoneView: View {
     /// The just-finished block's title (the drill name) — the completion line names what you did.
     let title: String
     /// The unit's current self-rated mastery (0–5, `nil` = unrated), pre-filled so a tap *adjusts*
     /// rather than starts from blank.
     let initialMastery: Int?
+    /// The promote offer (ADR 0079 §7), or `nil` for no promote row — set only for an exercise unit
+    /// whose reach sits above command; `nil` for loops/songs and when there's nothing to promote. When
+    /// present, the row's target is **editable** (custom command value), defaulting to the reach.
+    let promote: PromoteConfig?
     /// Whether this is the last block — the primary reads **Finish** (→ end-of-routine summary)
     /// instead of **Continue** (→ next block / rest).
     let isLast: Bool
     /// The next **unit** coming up (rests skipped), shown so you know what you're continuing into
     /// (ADR 0071 R4b). `nil` when nothing playable remains.
     let upNext: UpNext?
-    /// Commit the optional mastery (unchanged ⇒ pass through) and the optional note, then advance.
-    let onContinue: (_ mastery: Int?, _ note: String) -> Void
+    /// Commit the optional mastery (unchanged ⇒ pass through), the optional note, and the command to
+    /// promote to — `nil` when the promote toggle is off, else the chosen (possibly custom) value
+    /// (ADR 0079 §7) — then advance.
+    let onContinue: (_ mastery: Int?, _ note: String, _ promoteTo: Int?) -> Void
+
+    /// The bounds of the promote row's editable command value: where it defaults (the reach, clamped
+    /// to the BPM ceiling), and the range the ±/typed value may take — from just above the current
+    /// command up to the ceiling. Kept value-only so the view stays SwiftData-free.
+    struct PromoteConfig: Equatable {
+        let defaultTarget: Int
+        let minValue: Int
+        let maxValue: Int
+    }
 
     /// A plain descriptor of the upcoming unit — kept value-only so this view stays SwiftData-free
     /// (the host builds it from the next stage).
@@ -35,16 +53,21 @@ struct RoutineBlockDoneView: View {
 
     @State private var mastery: Int?
     @State private var note = ""
-    @FocusState private var noteFocused: Bool
+    /// Whether to promote command on Continue — opt-in, default off (ADR 0079 §7).
+    @State private var promoteOn = false
+    /// The command value to promote to — defaults to the reach, editable within the config's bounds.
+    @State private var promoteValue: Int
 
-    init(title: String, initialMastery: Int?, isLast: Bool, upNext: UpNext?,
-         onContinue: @escaping (_ mastery: Int?, _ note: String) -> Void) {
+    init(title: String, initialMastery: Int?, promote: PromoteConfig? = nil, isLast: Bool, upNext: UpNext?,
+         onContinue: @escaping (_ mastery: Int?, _ note: String, _ promoteTo: Int?) -> Void) {
         self.title = title
         self.initialMastery = initialMastery
+        self.promote = promote
         self.isLast = isLast
         self.upNext = upNext
         self.onContinue = onContinue
         _mastery = State(initialValue: initialMastery)
+        _promoteValue = State(initialValue: promote?.defaultTarget ?? 0)
     }
 
     var body: some View {
@@ -53,6 +76,7 @@ struct RoutineBlockDoneView: View {
                 completionBeat
                 masteryTap
                 noteField
+                if let promote { promoteRow(promote) }
                 if let upNext { upNextCard(upNext) }
             }
             .padding(.horizontal, 24)
@@ -116,10 +140,62 @@ struct RoutineBlockDoneView: View {
             TextField("Jot how it went…", text: $note, axis: .vertical)
                 .font(.futura(.body))
                 .lineLimit(2...5)
-                .focused($noteFocused)
                 .padding(12)
                 .background(PocketColor.surfaceStandard, in: RoundedRectangle(cornerRadius: 12))
+                // The note grows vertically, so Return inserts a newline — give the keyboard its own
+                // checkmark to dismiss it (there's otherwise no way off the keyboard).
+                .keyboardDoneButton()
         }
+    }
+
+    /// The opt-in **promote** row (ADR 0079 §7) — offered only for an exercise that summited a reach
+    /// above command. Default off; flipping it on commits the bump atomically with Continue, so the
+    /// single primary stays the only action (no competing CTA). The target defaults to the reach but is
+    /// **editable** via a ±/typed stepper once on, so the player can set a custom command they feel they
+    /// own. Neutral framing — an offer, never a verdict (ADR 0070).
+    private func promoteRow(_ config: PromoteConfig) -> some View {
+        VStack(spacing: 12) {
+            Toggle(isOn: $promoteOn) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Move command to \(promoteValue)")
+                        .font(.futura(.body))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    Text("You summited it this run — bump the drill up.")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+            }
+            .tint(PocketColor.practice)
+            if promoteOn { promoteStepper(config) }
+        }
+        .padding(12)
+        .background(PocketColor.surfaceStandard, in: RoundedRectangle(cornerRadius: 12))
+        .animation(.easeInOut(duration: 0.2), value: promoteOn)
+        .onChange(of: promoteOn) { _, _ in haptic(.light) }
+    }
+
+    /// The custom-command adjuster shown when promote is on — nudge the target within the config's
+    /// range (just above the current command, up to the BPM ceiling). `StepperButton` owns its own
+    /// press/hold haptics, so the clamp closures stay pure.
+    private func promoteStepper(_ config: PromoteConfig) -> some View {
+        HStack(spacing: 16) {
+            Text("New command")
+                .font(.futura(.footnote, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+            Spacer()
+            StepperButton(symbol: "minus", label: "Lower new command", tint: PocketColor.practice) {
+                promoteValue = max(config.minValue, promoteValue - 1)
+            }
+            Text("\(promoteValue)")
+                .font(.pocketMono(.title3))
+                .foregroundStyle(PocketColor.textPrimary)
+                .frame(minWidth: 52)
+                .contentTransition(.numericText())
+            StepperButton(symbol: "plus", label: "Raise new command", tint: PocketColor.practice) {
+                promoteValue = min(config.maxValue, promoteValue + 1)
+            }
+        }
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     private func upNextCard(_ next: UpNext) -> some View {
@@ -155,7 +231,7 @@ struct RoutineBlockDoneView: View {
 
     private var continueBar: some View {
         Button {
-            onContinue(mastery, note)
+            onContinue(mastery, note, promoteOn ? promoteValue : nil)
         } label: {
             Label(isLast ? "Finish" : "Continue",
                   systemImage: isLast ? "flag.checkered" : "arrow.right")
@@ -169,8 +245,10 @@ struct RoutineBlockDoneView: View {
 
 #Preview("Block done") {
     RoutineBlockDoneView(title: "Alternate picking · 8ths",
-                         initialMastery: 2, isLast: false,
+                         initialMastery: 2,
+                         promote: .init(defaultTarget: 106, minValue: 93, maxValue: 300),
+                         isLast: false,
                          upNext: .init(title: "A Minor Pentatonic",
                                        detail: "Command 92 → 98 BPM",
-                                       symbol: "point.topleft.down.curvedto.point.bottomright.up")) { _, _ in }
+                                       symbol: "point.topleft.down.curvedto.point.bottomright.up")) { _, _, _ in }
 }

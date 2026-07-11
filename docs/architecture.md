@@ -204,16 +204,18 @@ proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. Aut
 sandboxed editor (`RoutineDetailView`, child `ModelContext` committed only on Save), and the
 **player** (ADR 0071) is a *thin* session conductor — `RoutineSessionPlayer` (`@Observable`, owns no
 engine) over a pure `RoutineSessionCursor` — that **embeds the real `ExerciseRunView` / `LoopRunView` /
-`SongPlayAlongView` per block** (so every training aid — previews, staircase, promote, journal — is
+`SongPlayAlongView` per block** (so every training aid — previews, staircase, journal — is
 kept, not re-implemented), injecting a `RoutineRunContext` (progress · Skip · exit · natural-completion
 hook). Each run screen keeps its own per-unit engine (`StandaloneMetronomeEngine` / `LoopRunModel` /
 `SongPlayAlongModel`, the last two on a private `PracticeAudioEngine`) and signals **natural completion**
 (one command-ramp pass) through additive `onRampFinished` / `onFinished` / `onReachedEnd` engine
 callbacks; the conductor itself plays only the fixed rest countdown. On completion a unit lands on a
 **Done screen** (`RoutineBlockDoneView` — completion beat + optional mastery tap + optional inline note +
-an **Up next** preview of the next unit, committed together on Continue/Finish) — **manual advance the
-default** (ADR 0071 R4); the `routineAutoAdvance` setting (default off) advances straight through
-instead, and a Skip always bypasses the gate. A block authored to **repeat** (`RoutineItem.reps`, ADR
+an optional **Move command to {value}** promote toggle for a summited exercise (opt-in, exercises-only,
+target defaults to the reach but is **editable** for a custom command — ADR 0079 §7) + an **Up next**
+preview of the next unit, committed together on Continue/Finish; a top-left chevron exits the routine
+from here) — **manual advance the default** (ADR 0071 R4); the `routineAutoAdvance` setting (default off)
+advances straight through instead (skipping the Done screen and so any promote), Skip bypasses the gate. A block authored to **repeat** (`RoutineItem.reps`, ADR
 0076) runs back-to-back that many times before advancing — the pure cursor carries a rep counter
 alongside the block index, `advance()` steps the rep (rolling to the next block on the last one) while
 a user **Skip** (`skip()`) abandons remaining reps; the Done screen shows only after the last rep, the
@@ -282,7 +284,13 @@ routine staircase (the shared `RoutineStairs`), and on **Start** commits the edi
 `Exercise`-shaped `CommandRamp` via `engine.run(ramp:)`, then shows a live BPM / beat / session
 readout. While a run plays, `RoutineStairs` **lights the live plateau** — fed by the engine's
 `currentRampPlateau` (the pure `CommandRamp.currentPlateauIndex(…)` over the accrued elapsed) —
-instead of the old permanent dwell highlight. Its indigo `practice` accent marks it as a distinct space from the metronome's teal.
+instead of the old permanent dwell highlight. When a standalone run **finishes naturally** (the ramp's
+own `onRampFinished`, never a manual stop), it presents the **same `RoutineBlockDoneView`** a routine
+block finishes on (`upNext: nil` — ADR 0079 §2, reusing the integrated surface rather than a bespoke
+one): completion beat + optional mastery + note + an editable **Move command to {value}** promote toggle
+(defaults to `min(ceiling, reach)`, ±/typed for a custom command) that, on Finish, moves command to the
+chosen value and **persists immediately** (no later Start to carry the write — ADR 0079 §3); no toggle
+when the ceiling-aware `PromoteOffer.canPromote` is false. The old pre-run promote button is gone (§4). Its indigo `practice` accent marks it as a distinct space from the metronome's teal.
 The `Exercise` model now stores the `CommandRamp` recipe **natively** (ADR 0046 §5): `rampStepBPM`
 / `rampIntervalCount` / `rampIntervalUnit` plus `dwellIntervals` (the command-plateau hold, **now
 user-tunable** via a Dwell row in the Steps panel — ADR 0078, previously hardcoded on save),

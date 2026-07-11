@@ -115,7 +115,8 @@ struct LoopRunView: View {
                 } else {
                     practiceSettings
                 }
-                RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
+                RoutineStairs(plateaus: routine.plateaus, command: routine.command,
+                              tint: PocketColor.practice,
                               currentIndex: model.currentPlateau(in: routine))
                 if !isRunning { promoteButton }
                 if !isRunning, isDirty { saveChangesButton }
