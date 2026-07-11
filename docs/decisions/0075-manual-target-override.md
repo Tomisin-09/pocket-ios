@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-10
+- **Superseded in part by:** ADR 0077 — §3's reach editor **on the exercise detail sheet** (the
+  `Stepper` + `commitReach` in ⓘ) is removed as ⓘ becomes read-only. The override model itself — the
+  stored optionals, effective accessors, auto-clear on catch-up, and **run-screen** reach editing —
+  is fully retained.
 - **Extends:** ADR 0045 (exercise command/target reach), ADR 0046 (command-anchored run ramp,
   Phase A/B), ADR 0057 (single write path per model). Pairs with ADR 0013 (loop automator target,
   already user-editable, out of scope here) and ADR 0070 (no grading).
