@@ -303,6 +303,27 @@ name carries it.
   decides the qualifier (e.g. "Red Moon: Practice"). Reservation is free and
   immediate.
 
+## Blood Moon theme — Slice 2 (parked 2026-07-11)
+
+The default brand re-theme shipped in **ADR 0081 / Slice 1** (Practice = brand
+teal, Metronome = plum, Song library = terracotta `#C24A2C`; mastery tracks the
+teal hero). We're **sitting with the default theme for a while** before building the
+second, selectable theme. When picked back up:
+
+- **Blood Moon** = a selectable theme that swaps **Practice ↔ Library** so Practice
+  (the dominant feature + the "Start today's session" CTA) goes **terracotta** and
+  the library goes teal — making terracotta the main colour of the home. Metronome
+  stays plum. Mastery tracks the hero (→ terracotta), never plum.
+- It's a **role → hue mapping in code**, not a second baked palette — the three hues
+  keep their single light+dark asset pairs (the terracotta sets already exist). Add a
+  theme abstraction + a **Settings picker** beside Appearance (orthogonal to
+  light/dark).
+- **Also re-tint the wordmark + Settings logo terracotta** in Blood Moon. Open
+  question: the textured **moon logo** is raster art — flat-tinting flattens the
+  crater detail, so it needs a terracotta art variant (the wordmark tints cleanly as
+  a template). Decide art-vs-tint when we start.
+- See ADR 0081 for the full mapping and consequences.
+
 ## Near-term (active, not parked)
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
