@@ -74,16 +74,17 @@ struct HomeView: View {
                         .frame(height: 22)
                         .accessibilityLabel("Red Moon")
                 }
-                // On iOS 26 the nav bar wraps bar items in a shared glass background;
-                // `.sharedBackgroundVisibility(.hidden)` drops it so the green disc reads
-                // as a solid fill with no pale halo/edge. The modifier is 26-only, so the
-                // pre-26 path just omits it (there's no glass there to suppress).
+                // Drop iOS 26's shared-glass toolbar background so the green add disc
+                // reads as a solid fill. The modifier is iOS-26-SDK-only, so `#if compiler`
+                // gates it out of Xcode 16 CI (a runtime `#available` can't — symbol absent).
+                #if compiler(>=6.2)
                 if #available(iOS 26.0, *) {
                     ToolbarItem(placement: .topBarTrailing) { addSongButton }
                         .sharedBackgroundVisibility(.hidden)
-                } else {
-                    ToolbarItem(placement: .topBarTrailing) { addSongButton }
-                }
+                } else { ToolbarItem(placement: .topBarTrailing) { addSongButton } }
+                #else
+                ToolbarItem(placement: .topBarTrailing) { addSongButton }
+                #endif
             }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.audio],
                           allowsMultipleSelection: true, onCompletion: handleImport)
