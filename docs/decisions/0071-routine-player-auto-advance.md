@@ -2,6 +2,11 @@
 
 - **Status:** Accepted (2026-07-07; player/editor refinements 2026-07-08)
 - **Date:** 2026-07-07
+- **Superseded in part by:** ADR 0077 — mid-session an exercise block is now **tempo-only**, so the
+  full standalone `ExerciseRunView` editor (Practice Settings, promote, "Start training") is no longer
+  reused inside a routine; and R4's command/reach editor in `ExerciseDetailSheet` is removed (ⓘ
+  becomes read-only). The session chrome — progress strip, count-in, auto-advance — and the **R4b
+  pre-start block previews** are retained and extended, not reversed.
 
 ## Player & editor refinements (2026-07-08)
 

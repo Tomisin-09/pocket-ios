@@ -257,6 +257,10 @@ final class Loop {
     var rampReachSteps: Int = 0
     var rampBackoffSteps: Int = 0
     var rampRepsPerStep: Int = 1
+    /// How many intervals the command plateau dwells — the consolidation hold, now user-tunable
+    /// (ADR 0078). Defaults to `LoopCommandRamp.defaultDwellIntervals` (4) so loops saved before
+    /// this field migrate cleanly via SwiftData lightweight migration, matching the old fixed value.
+    var rampDwellIntervals: Int = 4
 
     /// Manual identity-colour override: an index into `PocketColor.loopPalette`, or
     /// `nil` to derive the colour from start-order (ADR 0023 / 0031). Optional, so
@@ -364,6 +368,7 @@ final class Loop {
     /// state; this is the saved-recipe seam. Pure and UI-free.
     var ramp: CommandRamp {
         LoopCommandRamp.make(loop: self, warmupSteps: rampWarmupSteps,
+                             dwellIntervals: max(1, rampDwellIntervals),
                              reachSteps: rampReachSteps, backoffSteps: rampBackoffSteps,
                              repsPerStep: max(1, rampRepsPerStep))
     }

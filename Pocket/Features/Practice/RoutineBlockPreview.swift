@@ -23,9 +23,14 @@ enum RoutineBlockPreviewTarget: Identifiable, Hashable {
 /// run screen uses. Deeper tuning stays behind the **Details** button (`ExerciseDetailSheet`).
 struct ExerciseBlockPreview: View {
     let exercise: Exercise
+    @Environment(\.modelContext) private var modelContext
     @State private var preview = CommandTempoPreviewPlayer()
     @State private var strumPreview = StrumPatternPreviewPlayer()
     @State private var showingDetail = false
+    /// Disclosure state for the collapsible tempo + steps panel — purely local UI; the edits
+    /// themselves write straight to the model (see the actions below).
+    @State private var showSettings = false
+    @State private var showSteps = false
 
     /// The strum pattern to audition, if this is a strumming or strum-&-chords drill (R5). Other
     /// templates have no strum rhythm, so they fall back to the plain command-tempo click.
@@ -43,8 +48,19 @@ struct ExerciseBlockPreview: View {
                 }
                 if let sheet = exercise.strumChordSheet { StrumChordsPreview(sheet: sheet) }
 
-                PreviewTempoReadout(anchors: "\(exercise.workingTempo) → \(exercise.command)",
-                                    reach: "\(exercise.reachTempo)", unit: "BPM")
+                PracticeSettingsPanel(
+                    expanded: $showSettings,
+                    working: exercise.workingTempo, command: exercise.command,
+                    reach: exercise.reachTempo, reachIsCustom: exercise.hasTargetOverride,
+                    onStepWorking: { stepWorking(by: $0) }, onTypeWorking: { setWorking($0) },
+                    onStepCommand: { stepCommand(by: $0) }, onTypeCommand: { setCommand($0) },
+                    onStepReach: { stepReach(by: $0) }, onTypeReach: { setReach($0) },
+                    onResetReach: resetReach,
+                    stepsExpanded: $showSteps, warmupSteps: warmupStepsBinding,
+                    reachSteps: reachStepsBinding, backoffSteps: backoffStepsBinding,
+                    dwell: dwellBinding, dwellCaption: dwellCaption,
+                    warmupStepBPM: warmupStepBPM, hasReach: hasReach,
+                    tint: PocketColor.practice, onToggle: { haptic(.light) })
                 RoutineStairs(plateaus: exercise.ramp.plateaus, tint: PocketColor.practice)
                     .frame(height: 120)
                 if let strumPattern {
@@ -81,6 +97,104 @@ struct ExerciseBlockPreview: View {
     private var signature: TimeSignature {
         TimeSignature.forStored(beats: exercise.beatsPerBar, noteValue: exercise.noteValue,
                                 accentBeats: exercise.accentBeats)
+    }
+
+    // MARK: - Tempo + step edits (ADR 0077)
+    //
+    // Unlike the run screen — which holds edits in local state and commits on Start — the preview has
+    // no Start to defer to, so each edit writes straight to the model through the canonical setters
+    // (`promoteCommand`, `targetTempoOverride`, the ramp-shape fields) and saves. Steppers stay pure
+    // (no haptic — `StepperButton` owns the hold-repeat feedback); typed setters carry the commit haptic.
+
+    private func stepWorking(by delta: Int) {
+        commit { exercise.workingTempo = clampWorking(exercise.workingTempo + delta) }
+    }
+    private func setWorking(_ value: Int) {
+        commit { exercise.workingTempo = clampWorking(value) }; haptic(.light)
+    }
+    private func stepCommand(by delta: Int) {
+        commit { exercise.promoteCommand(to: clampCommand(exercise.command + delta)) }
+    }
+    private func setCommand(_ value: Int) {
+        commit { exercise.promoteCommand(to: clampCommand(value)) }; haptic(.light)
+    }
+    private func stepReach(by delta: Int) { commit { pinReach(exercise.reachTempo + delta) } }
+    private func setReach(_ value: Int) { commit { pinReach(value) }; haptic(.light) }
+    private func resetReach() { commit { exercise.targetTempoOverride = nil }; haptic(.light) }
+
+    /// Working stays in range and never above command (it's the warm-up floor below the owned tempo).
+    private func clampWorking(_ value: Int) -> Int {
+        min(exercise.command, max(StandaloneMetronomeEngine.bpmRange.lowerBound, value))
+    }
+
+    /// Command stays in range and never below the working floor; a reach the new command has caught up
+    /// to is dropped inside `promoteCommand` (ADR 0075).
+    private func clampCommand(_ value: Int) -> Int {
+        min(StandaloneMetronomeEngine.bpmRange.upperBound, max(exercise.workingTempo, value))
+    }
+
+    // MARK: - Ramp-shape (steps) — model-backed bindings for `PracticeSettingsPanel`
+
+    /// Whether there's a climb above command to place reach stops on — gates the reach step row.
+    private var hasReach: Bool { exercise.reachTempo > exercise.command }
+
+    /// The warm-up step count the stored per-step BPM implies (the panel edits count, not BPM).
+    private var currentWarmupSteps: Int {
+        CommandRamp.intermediateSteps(working: exercise.workingTempo, command: exercise.command,
+                                      stepBPM: exercise.rampStepBPM)
+    }
+
+    /// The BPM each warm-up step adds at the current count — the panel's warm-up caption.
+    private var warmupStepBPM: Int {
+        CommandRamp.warmupStepBPM(working: exercise.workingTempo, command: exercise.command,
+                                  intermediateSteps: currentWarmupSteps)
+    }
+
+    /// Warm-up steps ↔ the stored `rampStepBPM`: reading derives the count, writing re-derives the
+    /// per-step BPM the requested count implies (mirrors the run screen's persist).
+    private var warmupStepsBinding: Binding<Int> {
+        Binding(get: { currentWarmupSteps }, set: { newValue in
+            commit {
+                exercise.rampStepBPM = CommandRamp.warmupStepBPM(
+                    working: exercise.workingTempo, command: exercise.command,
+                    intermediateSteps: max(0, newValue))
+            }
+        })
+    }
+
+    private var reachStepsBinding: Binding<Int> {
+        Binding(get: { exercise.rampReachSteps },
+                set: { newValue in commit { exercise.rampReachSteps = max(0, newValue) } })
+    }
+
+    private var backoffStepsBinding: Binding<Int> {
+        Binding(get: { exercise.rampBackoffSteps },
+                set: { newValue in commit { exercise.rampBackoffSteps = max(0, newValue) } })
+    }
+
+    /// The command-plateau dwell (ADR 0078), model-backed — kept ≥ 1 (the command plateau must hold).
+    private var dwellBinding: Binding<Int> {
+        Binding(get: { max(1, exercise.dwellIntervals) },
+                set: { newValue in commit { exercise.dwellIntervals = max(1, newValue) } })
+    }
+
+    /// Each dwell interval is `automatorDefaultBars` bars at command — the row's caption (ADR 0078).
+    private var dwellCaption: String {
+        "≈ \(max(1, exercise.dwellIntervals) * StandaloneMetronomeEngine.automatorDefaultBars) "
+            + "bars at command"
+    }
+
+    /// Pin the reach strictly above command; landing back on the auto derivation clears the pin.
+    private func pinReach(_ value: Int) {
+        let upper = StandaloneMetronomeEngine.bpmRange.upperBound
+        let clamped = min(upper, max(exercise.command + 1, value))
+        exercise.targetTempoOverride = (clamped == exercise.derivedTarget) ? nil : clamped
+    }
+
+    /// Apply a model mutation and persist it — the preview edits are live, not deferred.
+    private func commit(_ change: () -> Void) {
+        change()
+        try? modelContext.save()
     }
 }
 

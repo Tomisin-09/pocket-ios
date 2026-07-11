@@ -31,6 +31,9 @@ struct LoopRunView: View {
     @State var reachSteps = 0
     @State var backoffSteps = 0
     @State var repsPerStep = LoopCommandRamp.defaultRepsPerStep
+    /// How many intervals the command plateau dwells — the consolidation hold, now user-tunable
+    /// (ADR 0078). Seeded from the loop, committed on Start / Save like the other ramp fields.
+    @State var dwell = LoopCommandRamp.defaultDwellIntervals
     /// A manually pinned **reach** (% of original), or `nil` to use the auto-derived reach
     /// (ADR 0075). Seeded from `loop.targetSpeedOverride`, committed on Start / Save. Always kept
     /// above `command`; auto-cleared locally when command is nudged up to it, mirroring the model.
@@ -53,7 +56,7 @@ struct LoopRunView: View {
     var current: LoopSetupState {
         LoopSetupState(working: working, command: command, warmupSteps: steps,
                        reachSteps: reachSteps, backoffSteps: backoffSteps, repsPerStep: repsPerStep,
-                       targetOverride: targetOverride)
+                       dwell: dwell, targetOverride: targetOverride)
     }
     private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
@@ -89,11 +92,18 @@ struct LoopRunView: View {
     var routine: CommandRamp {
         CommandRamp(working: working, command: command, target: reach, stepBPM: stepPercent,
                     intervalCount: max(1, repsPerStep), unit: .bars,
-                    dwellIntervals: LoopCommandRamp.defaultDwellIntervals, includeBackoff: true,
+                    dwellIntervals: max(1, dwell), includeBackoff: true,
                     reachSteps: reachSteps, backoffSteps: backoffSteps)
     }
 
     private var hasReach: Bool { reach > command }
+
+    /// The dwell row's caption — each interval holds `repsPerStep` loop passes, so N intervals ≈
+    /// N×reps passes at command (ADR 0078). Tracks the live reps value.
+    private var dwellCaption: String {
+        "≈ \(max(1, dwell) * max(1, repsPerStep)) passes at command"
+    }
+
     var isRunning: Bool { model.isRunning }
     private var title: String { loop.name.isEmpty ? "Loop" : loop.name }
 
@@ -191,7 +201,8 @@ struct LoopRunView: View {
             onResetReach: resetReach,
             repsPerStep: $repsPerStep, repsRange: Self.repsRange,
             stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
-            backoffSteps: $backoffSteps, warmupStepBPM: stepPercent,
+            backoffSteps: $backoffSteps, dwell: $dwell, dwellCaption: dwellCaption,
+            warmupStepBPM: stepPercent,
             hasReach: hasReach, tint: PocketColor.practice, onToggle: { haptic(.light) })
     }
 

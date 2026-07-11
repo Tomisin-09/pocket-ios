@@ -2,6 +2,11 @@
 
 - **Status:** Accepted (2026-07-05)
 - **Date:** 2026-07-05
+- **Superseded in part by:** ADR 0077 — the **Watch** one-shot flips its gating (hidden when
+  animation is on, shown when off / Reduce Motion, reversing the always-visible, motion-agnostic rule
+  set here), and the disabled **"Sound soon"** `SoundPreviewButton` is removed. The
+  `ExerciseAudioEngine` seam (protocol, environment key, `AccompanimentSettings`) is **retained**; a
+  real pitch audition is deferred to a future ADR.
 
 ## Context
 

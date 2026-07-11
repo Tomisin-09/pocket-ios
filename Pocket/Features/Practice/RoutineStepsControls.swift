@@ -9,6 +9,14 @@ struct RoutineStepsControls: View {
     @Binding var warmupSteps: Int
     @Binding var reachSteps: Int
     @Binding var backoffSteps: Int
+    /// How many intervals the **command plateau** holds — the consolidation dwell (ADR 0078). Range
+    /// and caption are supplied by the host so the unit reads right per type (bars vs loop passes).
+    @Binding var dwell: Int
+    /// The dwell row's caption, e.g. "≈ 16 bars at command" / "≈ 4 passes at command" — the host
+    /// recomputes it from the live dwell + the interval size, so it tracks as the stepper moves.
+    let dwellCaption: String
+    /// The permitted dwell range (dwell is always ≥ 1 — the command plateau must hold).
+    var dwellRange: ClosedRange<Int> = 1...12
     /// The amount each warm-up step adds — for the warm-up caption.
     let warmupStepBPM: Int
     /// The reach value — for the reach caption. `hasReach` gates whether the reach row shows.
@@ -64,6 +72,7 @@ struct RoutineStepsControls: View {
             }
             stepRow(label: "Back-up steps", value: $backoffSteps,
                     caption: backoffSteps == 0 ? "drop straight to back-off" : "ease back down")
+            stepRow(label: "Dwell", value: $dwell, caption: dwellCaption, range: dwellRange)
         }
     }
 
@@ -72,30 +81,35 @@ struct RoutineStepsControls: View {
         var parts = ["\(warmupSteps) warm-up"]
         if hasReach { parts.append("\(reachSteps) reach") }
         parts.append("\(backoffSteps) back-up")
+        parts.append("\(dwell) dwell")
         return parts.joined(separator: " · ")
     }
 
-    private func stepRow(label: String, value: Binding<Int>, caption: String) -> some View {
+    private func stepRow(label: String, value: Binding<Int>, caption: String,
+                         range: ClosedRange<Int> = Self.range) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label).font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
                 Text(caption).font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
-            StepperButton(symbol: "minus", label: "Fewer \(label)", tint: tint) { adjust(value, by: -1) }
+            StepperButton(symbol: "minus", label: "Fewer \(label)", tint: tint) {
+                adjust(value, by: -1, in: range)
+            }
             Text("\(value.wrappedValue)")
                 .font(.pocketMono(.title3))
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 56)
                 .contentTransition(.numericText())
-            StepperButton(symbol: "plus", label: "More \(label)", tint: tint) { adjust(value, by: 1) }
+            StepperButton(symbol: "plus", label: "More \(label)", tint: tint) {
+                adjust(value, by: 1, in: range)
+            }
         }
     }
 
     /// Pure clamp — `StepperButton` owns the ±/hold-repeat haptics, so this must not call `onChange`
     /// (the disclosure toggle still does). The bindings drive the host's dirty tracking directly.
-    private func adjust(_ value: Binding<Int>, by delta: Int) {
-        value.wrappedValue = min(Self.range.upperBound,
-                                 max(Self.range.lowerBound, value.wrappedValue + delta))
+    private func adjust(_ value: Binding<Int>, by delta: Int, in range: ClosedRange<Int>) {
+        value.wrappedValue = min(range.upperBound, max(range.lowerBound, value.wrappedValue + delta))
     }
 }

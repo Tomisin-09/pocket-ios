@@ -24,6 +24,9 @@ struct ExerciseRunView: View {
     @State var steps = 0
     @State var reachSteps = 0
     @State var backoffSteps = 0
+    /// How many intervals the command plateau holds — the consolidation dwell, now user-tunable
+    /// (ADR 0078). Seeded from the exercise, committed on Start / Save like the other ramp fields.
+    @State var dwell = StandaloneMetronomeEngine.automatorDefaultDwell
     /// A manually pinned **reach** (BPM), or `nil` to use the auto-derived reach (ADR 0075). Seeded
     /// from `exercise.targetTempoOverride`, committed on Start / Save. Always kept above `command`;
     /// auto-cleared locally when command is nudged up to it, mirroring the model.
@@ -44,8 +47,8 @@ struct ExerciseRunView: View {
     /// The persistable setup as it stands now — what Start / Save would write.
     var current: ExerciseSetupState {
         ExerciseSetupState(working: working, command: command, steps: steps,
-                           reachSteps: reachSteps, backoffSteps: backoffSteps, signature: signature,
-                           targetOverride: targetOverride)
+                           reachSteps: reachSteps, backoffSteps: backoffSteps, dwell: dwell,
+                           signature: signature, targetOverride: targetOverride)
     }
 
     /// True when the setup has unsaved edits — drives the Save Changes button.
@@ -68,7 +71,7 @@ struct ExerciseRunView: View {
     var routine: CommandRamp {
         CommandRamp(working: working, command: command, target: reach,
                     stepBPM: stepBPM, intervalCount: StandaloneMetronomeEngine.automatorDefaultBars,
-                    unit: .bars, dwellIntervals: StandaloneMetronomeEngine.automatorDefaultDwell,
+                    unit: .bars, dwellIntervals: max(1, dwell),
                     includeBackoff: true, reachSteps: reachSteps, backoffSteps: backoffSteps)
     }
 
@@ -89,12 +92,15 @@ struct ExerciseRunView: View {
                         ChordProgressionPreview(progression: progression)
                     }
                     if let sheet = exercise.strumChordSheet { StrumChordsPreview(sheet: sheet) }
+                    // Practice Settings (collapsed by default) in every context. In a routine it's the
+                    // *ramp shape* you tune — tempo + steps; the library-only affordances (promote,
+                    // Save, journal, meter) still drop out below (ADR 0077).
                     practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, tint: PocketColor.practice,
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
-                if !isRunning { promoteButton }
-                if !isRunning, isDirty { saveChangesButton }
+                if !isRunning, routineContext == nil { promoteButton }
+                if !isRunning, routineContext == nil, isDirty { saveChangesButton }
                 if !isRunning, routineContext == nil {
                     JournalPreviewSection(owner: .exercise(exercise)) { showingJournal = true }
                         .padding(.top, 4)
@@ -108,7 +114,8 @@ struct ExerciseRunView: View {
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if !isRunning {
+            // Meter is part of the full editor — in a routine it's fixed, tempo is the only knob (ADR 0077).
+            if !isRunning, routineContext == nil {
                 ToolbarItem(placement: .topBarTrailing) { signaturePicker }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -213,8 +220,15 @@ struct ExerciseRunView: View {
             onStepReach: { adjustReach(by: $0) }, onTypeReach: { setReach($0) },
             onResetReach: resetReach,
             stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
-            backoffSteps: $backoffSteps, warmupStepBPM: stepBPM,
+            backoffSteps: $backoffSteps, dwell: $dwell, dwellCaption: dwellCaption,
+            warmupStepBPM: stepBPM,
             hasReach: hasReach, tint: PocketColor.practice, onToggle: { haptic(.light) })
+    }
+
+    /// The dwell row's caption — each interval is `automatorDefaultBars` bars at command, so N
+    /// intervals ≈ N×that many bars (ADR 0078).
+    private var dwellCaption: String {
+        "≈ \(max(1, dwell) * StandaloneMetronomeEngine.automatorDefaultBars) bars at command"
     }
 
     private var promoteButton: some View {
