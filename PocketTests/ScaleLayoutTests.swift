@@ -19,11 +19,15 @@ final class ScaleLayoutTests: XCTestCase {
         for scale in [GuitarScale.minorPentatonic, .majorPentatonic] {
             XCTAssertEqual(scale.supportedLayouts, [.box, .extended], "\(scale) offers the diagonal")
         }
-        for scale in [GuitarScale.major, .naturalMinor] {
+        // The modes join the major and natural minor as 7-tone diatonic scales that take 3-NPS.
+        for scale in [GuitarScale.major, .naturalMinor, .dorian, .phrygian, .lydian, .mixolydian, .locrian] {
             XCTAssertEqual(scale.supportedLayouts, [.box, .threePerString], "\(scale) is diatonic")
         }
-        // The blues scale's semitone ♭5 steps don't climb the two-per-string diagonal — box only.
-        XCTAssertEqual(GuitarScale.blues.supportedLayouts, [.box])
+        // The blues and bebop scales carry a chromatic passing tone the neck-spanning generators don't
+        // model — box only.
+        for scale in [GuitarScale.blues, .bebopMajor, .bebopDominant] {
+            XCTAssertEqual(scale.supportedLayouts, [.box], "\(scale) is box-only")
+        }
     }
 
     func testUnsupportedLayoutCoercesToBox() {
@@ -96,7 +100,7 @@ final class ScaleLayoutTests: XCTestCase {
     /// 3-NPS crosses to a new string every three notes — no note is ever a slide, and each string
     /// carries exactly three tones.
     func testThreePerStringCrossesStringsWithNoSlides() {
-        for scale in [GuitarScale.major, .naturalMinor] {
+        for scale in [GuitarScale.major, .naturalMinor, .dorian, .phrygian, .lydian, .mixolydian, .locrian] {
             for root in everyRoot {
                 for position in 1...scale.positionCount {
                     let notes = ScaleRun(scale: scale, rootPitchClass: root,

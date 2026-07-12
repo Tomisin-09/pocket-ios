@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Seven more scales in the scale library.** The **Scale** picker now offers the five remaining modes of
+  the major scale — **Dorian, Phrygian, Lydian, Mixolydian, Locrian** (Ionian and Aeolian already ship as
+  *Major* and *Natural Minor*) — plus the two **bebop** scales, **Bebop Major** (the major with a chromatic
+  ♯5) and **Bebop Dominant** (Mixolydian with a chromatic ♮7). Every one is a real CAGED box in your chosen
+  key and position, correct by construction, with the modes also available as **3 Notes / String** runs.
 - **Scales can now span the neck, not just sit in one box.** A scale drill gained a **Layout** choice.
   Pentatonics offer **Extended** — one long diagonal run that links three boxes up the neck with a
   same-string slide into each new box, with the board following the climb and dimming the boxes you're

@@ -132,13 +132,15 @@ extension ScaleRun {
 
 extension ScaleRun {
     /// The chosen CAGED box, placed in this run's key and filtered to the scale's degrees (the shared
-    /// `CAGEDShape` generator). The blues note (♭5), which no diatonic box contains, is threaded in as
-    /// a chromatic passing tone.
+    /// `CAGEDShape` generator). A chromatic passing tone that no diatonic box contains — the blues ♭5,
+    /// the bebop ♯5/♮7 — is threaded in afterwards, one fret above its anchor degree.
     var boxNotes: [FretNote] {
         var notes = CAGEDShape.filteredBox(position: position, root: rootPitchClass,
                                            relativeMajorSemitones: scale.relativeMajorSemitones,
                                            degrees: scale.degrees)
-        if scale == .blues { notes = Self.insertingBlueNote(into: notes, root: rootPitchClass) }
+        if let anchor = scale.passingToneAnchorDegree {
+            notes = Self.insertingPassingTone(into: notes, root: rootPitchClass, afterDegree: anchor)
+        }
         return notes
     }
 
@@ -162,11 +164,14 @@ extension ScaleRun {
     /// the scale, and the run climbs strictly.
     var ascendingNotes: [FretNote] { ascendingLayout.notes }
 
-    /// Thread the blue note (♭5) in as a chromatic passing tone one fret above each p4, so a blues
-    /// box reads as its minor pentatonic with the tritone added where players actually sound it.
-    private static func insertingBlueNote(into notes: [FretNote], root: Int) -> [FretNote] {
+    /// Thread a chromatic passing tone in one fret above each note at `afterDegree`, on the same string,
+    /// so a blues box reads as its pentatonic with the ♭5 added, and a bebop box as its mode with the
+    /// ♯5/♮7 added, where players actually sound them. The anchor's next diatonic tone is a whole step
+    /// up, so the inserted note stays strictly between the two and the run keeps climbing.
+    private static func insertingPassingTone(into notes: [FretNote], root: Int,
+                                             afterDegree degree: Int) -> [FretNote] {
         notes.flatMap { note -> [FretNote] in
-            CAGEDShape.degree(of: note, root: root) == 5   // a perfect fourth
+            CAGEDShape.degree(of: note, root: root) == degree
                 ? [note, FretNote(string: note.string, fret: note.fret + 1)]
                 : [note]
         }

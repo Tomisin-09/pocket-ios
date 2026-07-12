@@ -50,8 +50,13 @@ extension GuitarScale {
     var supportedLayouts: [ScaleLayout] {
         switch self {
         case .minorPentatonic, .majorPentatonic: return [.box, .extended]
-        case .major, .naturalMinor: return [.box, .threePerString]
-        case .blues: return [.box]
+        // The modes are 7-tone diatonic scales, so they take the even three-per-string climb like the
+        // major and natural minor they sit between.
+        case .major, .naturalMinor, .dorian, .phrygian, .lydian, .mixolydian, .locrian:
+            return [.box, .threePerString]
+        // The blues and bebop scales carry a chromatic passing tone the neck-spanning generators don't
+        // model (and whose semitone steps don't climb the two-per-string diagonal) — box only.
+        case .blues, .bebopMajor, .bebopDominant: return [.box]
         }
     }
 

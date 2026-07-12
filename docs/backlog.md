@@ -144,6 +144,13 @@ docs so this stays a pointer list:
   "Movement" disclosure. **Sequencing (3s/4s/6s) is a SEPARATE orthogonal future axis over ALL
   layouts — deliberately NOT a 3-NPS feature, its own later ADR.** **Order: slice 1 first** (see
   ADR). Shares the slide-teaching UX with the movable-chord item above.
+- **Symmetric scales: diminished + whole-tone (deferred from ADR 0085).** The scale catalog gained the
+  five modes + the two bebop scales (ADR 0085), but the **whole-half / half-whole diminished** and
+  **whole-tone** scales were left out on purpose. They are *symmetric* — they repeat every minor third /
+  whole step and are **not** subsets of a single major scale — so the "place a `CAGEDShape` major box,
+  filter it" generator can't produce them. They need their **own placement generator** (a repeating-cell
+  shape rather than a filtered CAGED box). Do this when that generator is warranted; nothing in ADR 0085
+  blocks it (additive enum cases + a new generator path, `supportedLayouts` = box until proven otherwise).
 - **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
   container (distinct from the intra-exercise ramp staircase): `Routine` +
   `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit
