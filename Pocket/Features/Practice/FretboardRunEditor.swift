@@ -17,6 +17,9 @@ struct FretboardRunEditor: View {
     /// Whether the demoted subdivision control is revealed — eighths suits nearly every run, so it
     /// starts collapsed (the feedback that the subdivision picker was confusing up front).
     @State private var showsAdvanced = false
+    /// Whether the position-shifting controls (ADR 0083) are revealed — off by default so a plain
+    /// warm-up stays four taps and the power controls are one tap away.
+    @State private var showsMovement = false
     /// The global note-caption preference, so this preview matches the scale editor and practice board.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
@@ -26,6 +29,8 @@ struct FretboardRunEditor: View {
     @State private var playOnceToken: Date?
 
     private static let maxBaseFret = 15
+    private static let maxShiftPerPass = 5
+    private static let staggerRange = -2...3
     private static let stringOrder = [5, 4, 3, 2, 1, 0]   // low E → high e, as the neck reads
     private static let subdivisions: [(perBeat: Int, label: String)] =
         [(1, "Quarters"), (2, "Eighths"), (3, "Triplets"), (4, "Sixteenths")]
@@ -41,6 +46,7 @@ struct FretboardRunEditor: View {
             Toggle("Up and back", isOn: $run.roundTrip)
                 .font(.futura(.subheadline, weight: .semibold))
                 .tint(tint)
+            movement
             advanced
             Text("Set the finger pattern, then where it sits and how far it travels — the run builds "
                  + "itself. Watch it walk above before you save.")
@@ -232,6 +238,122 @@ struct FretboardRunEditor: View {
         guard run.fingers.count > 1 else { return }
         run.fingers.removeLast()
         haptic(.light)
+    }
+}
+
+// MARK: - Movement (position-shifting, ADR 0083 — demoted)
+
+/// The ADR 0083 position-shifting controls, split into their own extension so the primary editor
+/// body stays lean: climb the neck after each run, stagger the pattern diagonally per string, and —
+/// when the run comes back — pick how the descent is fingered. All default off, tucked under a
+/// disclosure so the common path stays calm (S3, the ADR 0065 over-busy-editor caution).
+extension FretboardRunEditor {
+    var movement: some View {
+        DisclosureGroup(isExpanded: $showsMovement) {
+            VStack(alignment: .leading, spacing: 16) {
+                shiftPerPassField
+                if run.fretShiftPerPass != 0 { passCountField }
+                staggerPerStringField
+                if run.roundTrip { returnStyleField }
+            }
+            .padding(.top, 10)
+        } label: {
+            HStack {
+                Text("Movement").font(.futura(.subheadline, weight: .semibold))
+                Spacer()
+                Text(movementSummary).font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+        }
+        .tint(tint)
+        .onChange(of: run.baseFret) { _, _ in clampPassCount() }
+        .onChange(of: run.fretShiftPerPass) { _, _ in clampPassCount() }
+        .onChange(of: run.fretShiftPerString) { _, _ in clampPassCount() }
+    }
+
+    /// A terse "what's on" read for the collapsed row, so a run's movement is legible without opening.
+    private var movementSummary: String {
+        var parts: [String] = []
+        if run.fretShiftPerPass != 0 {
+            parts.append("↑\(run.fretShiftPerPass)/run × \(run.passCount)")
+        }
+        if run.fretShiftPerString != 0 { parts.append("diag \(signed(run.fretShiftPerString))") }
+        if run.roundTrip, run.returnStyle == .restate { parts.append("restate") }
+        return parts.isEmpty ? "Off" : parts.joined(separator: " · ")
+    }
+
+    private var shiftPerPassField: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                fieldLabel("Shift up after each run")
+                Text("Climb the neck a few frets each pass.").font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            Spacer()
+            stepper(stepDown: { run.fretShiftPerPass = max(0, run.fretShiftPerPass - 1) },
+                    stepUp: { run.fretShiftPerPass = min(Self.maxShiftPerPass, run.fretShiftPerPass + 1) },
+                    value: run.fretShiftPerPass == 0 ? "Off" : "+\(run.fretShiftPerPass)",
+                    canGoDown: run.fretShiftPerPass > 0,
+                    canGoUp: run.fretShiftPerPass < Self.maxShiftPerPass)
+        }
+    }
+
+    private var passCountField: some View {
+        HStack {
+            fieldLabel("Passes")
+            Spacer()
+            stepper(stepDown: { run.passCount = max(1, run.passCount - 1) },
+                    stepUp: { run.passCount = min(maxPasses, run.passCount + 1) },
+                    value: "\(run.passCount)",
+                    canGoDown: run.passCount > 1,
+                    canGoUp: run.passCount < maxPasses)
+        }
+    }
+
+    private var staggerPerStringField: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                fieldLabel("Stagger per string")
+                Text("Land higher (or lower) on each string — a diagonal.").font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            Spacer()
+            stepper(stepDown: { run.fretShiftPerString = max(Self.staggerRange.lowerBound,
+                                                             run.fretShiftPerString - 1) },
+                    stepUp: { run.fretShiftPerString = min(Self.staggerRange.upperBound,
+                                                           run.fretShiftPerString + 1) },
+                    value: run.fretShiftPerString == 0 ? "Off" : signed(run.fretShiftPerString),
+                    canGoDown: run.fretShiftPerString > Self.staggerRange.lowerBound,
+                    canGoUp: run.fretShiftPerString < Self.staggerRange.upperBound)
+        }
+    }
+
+    private var returnStyleField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            fieldLabel("Coming back")
+            Picker("Coming back", selection: $run.returnStyle) {
+                ForEach(ReturnStyle.allCases) { style in
+                    Text(style.label).tag(style)
+                }
+            }
+            .pickerStyle(.segmented)
+            Text(run.returnStyle.caption).font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    /// The pass count the editor allows — the neck-fit cap (S10) held under the UI ceiling.
+    private var maxPasses: Int { min(FretboardRun.passCountUICap, run.maxPassCount) }
+
+    /// Keep `passCount` within the neck-fit cap as the base fret, climb, or stagger change (S10).
+    private func clampPassCount() {
+        if run.passCount > maxPasses { run.passCount = maxPasses }
+    }
+
+    /// A signed fret count for a stagger/shift read (`+2`, `−1`).
+    private func signed(_ value: Int) -> String {
+        value < 0 ? "−\(abs(value))" : "+\(value)"
     }
 }
 

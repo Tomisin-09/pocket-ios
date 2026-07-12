@@ -197,7 +197,15 @@ drawn. Ten rules govern it.
 ## Build order (slices)
 
 1. **Shift primitive + come-back fingering on `FretboardRun` (S1–S3, S9) + the
-   slide-seam cue (S8).** The cheapest, theory-free start — chromatic climbs,
+   slide-seam cue (S8).** ✅ **Shipped (pocket-134).** The `FretboardRun` recipe gained
+   `fretShiftPerPass` / `passCount` (horizontal climb), `fretShiftPerString` (vertical diagonal), and
+   `returnStyle` (`.retrace` / `.restate`) — all additive, decode-time-defaulted, no store migration;
+   defaults reproduce every existing run byte-for-byte. Expansion stays pure and unit-tested (shift
+   cycle length, `.slide` only at same-string pass seams, `.restate` seam de-dup, neck clamp + pass
+   cap). The editor surfaces them under a collapsed **Movement** disclosure. S8's slide is drawn by
+   `SlideCue` — a static arrow along the string that brightens when active and degrades to the badge
+   under Reduce Motion. **S5's following viewport is deferred to slice 2**, so a tall climb still
+   renders in the static window for now. The cheapest, theory-free start — chromatic climbs,
    diagonals, and the retrace/restate descent only. It proves the whole idea
    end-to-end and makes the shift *visible* (the player sees the climb walk) before
    any scale generation is committed. Recommended first because it de-risks S8's
