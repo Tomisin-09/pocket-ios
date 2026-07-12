@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **A climbing run now highlights the position you're on.** When a warm-up or picking run climbs the
+  neck in several passes, the board keeps the pass you're currently playing at full strength and gently
+  fades the other passes back — so your eye locks onto the hand position that matters right now while the
+  rest of the run's shape stays visible as context. A single-pass run, and every scale or custom drill,
+  looks exactly as before.
 - **The fretboard now follows your hand up the neck.** When a warm-up or picking run climbs past a
   comfortable board (about eight frets), the board no longer crams the whole neck into a sliver — while
   the run walks, it shows a hand-width window that *follows* the sounding note. It only ever scrolls

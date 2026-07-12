@@ -81,17 +81,37 @@ struct FretboardDrill: Codable, Equatable {
     /// arpeggio run sets it so the renderer can light the root notes; a spider walk or picking
     /// pattern leaves it `nil` (no root to mark). Optional so legacy blobs decode unchanged.
     var rootPitchClass: Int?
+    /// The **pass index** each note belongs to (ADR 0083 S2b — "pass focus"), parallel to `notes` and
+    /// the same length: a multi-pass climbing run tags every note with the pass that emitted it, so the
+    /// renderer can keep the pass being played at full strength and fade the others to a ghost. `nil`
+    /// for every non-run drill (scales, arpeggios, custom hand-authored) and for a single-pass run's
+    /// callers that don't populate it; a single-pass run fills one uniform group, which reads as "no
+    /// dimming." **Transient — never encoded** (omitted from `CodingKeys`): it is a pure generation
+    /// artifact re-derived on each `expanded()`, so there is no persisted-shape change and no store
+    /// migration, and a decoded drill always comes back `nil` (an implicitly-`nil` optional, which the
+    /// synthesized `Decodable` uses as the default for the omitted key).
+    var noteGroups: [Int]?
 
     init(notesPerBeat: Int,
          notes: [FretNote?],
          stringCount: Int = 6,
          rootPitchClass: Int? = nil,
+         noteGroups: [Int]? = nil,
          version: Int = FretboardDrill.currentVersion) {
         self.version = version
         self.notesPerBeat = max(1, notesPerBeat)
         self.notes = notes
         self.stringCount = max(1, stringCount)
         self.rootPitchClass = rootPitchClass.map { (($0 % 12) + 12) % 12 }
+        self.noteGroups = noteGroups
+    }
+
+    /// Explicit keys so `noteGroups` (a transient generation artifact, ADR 0083 S2b) is **excluded**
+    /// from the encoded shape — no persisted-blob change, no migration. Every other field codes and
+    /// decodes exactly as the synthesized conformance did before; `noteGroups` decodes to its `nil`
+    /// default.
+    private enum CodingKeys: String, CodingKey {
+        case version, notesPerBeat, notes, stringCount, rootPitchClass
     }
 }
 

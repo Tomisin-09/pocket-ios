@@ -184,12 +184,17 @@ extension FretboardRun {
         }
     }
 
-    /// One full cycle of notes. A single-pass run (the default) is one `pass`; a climbing run
-    /// (`passCount` > 1 with a non-zero `fretShiftPerPass`) stacks each pass anchored one climb
-    /// higher and concatenates them into the one wrapping cycle, marking the first note of a pass a
-    /// `.slide` when it walks the **same string** up from where the previous pass ended (S2).
-    var sequence: [FretNote] {
+    /// One full cycle of notes, each paired with the **pass index** that emitted it (ADR 0083 S2b —
+    /// "pass focus"). A single-pass run (the default) is one `pass`, so every note is tagged `0` — one
+    /// group, which the renderer reads as "no dimming." A climbing run (`passCount` > 1 with a non-zero
+    /// `fretShiftPerPass`) stacks each pass anchored one climb higher and concatenates them into the one
+    /// wrapping cycle, marking the first note of a pass a `.slide` when it walks the **same string** up
+    /// from where the previous pass ended (S2); every note carries its own pass index so the board can
+    /// focus the pass being played. The two arrays are the same length and index-aligned by
+    /// construction.
+    var sequenceWithPasses: (notes: [FretNote], passes: [Int]) {
         var cycle: [FretNote] = []
+        var passes: [Int] = []
         for index in 0..<max(1, passCount) {
             var notes = pass(anchor: baseFret + index * fretShiftPerPass)
             if index > 0, let previous = cycle.last, var first = notes.first,
@@ -198,17 +203,24 @@ extension FretboardRun {
                 notes[0] = first
             }
             cycle += notes
+            passes += Array(repeating: index, count: notes.count)
         }
-        return cycle
+        return (cycle, passes)
     }
+
+    /// One full cycle of notes (the pass tags dropped) — the shape most callers and tests read.
+    var sequence: [FretNote] { sequenceWithPasses.notes }
 
     /// Expand into the evenly-gridded `FretboardDrill` the board plays — one note per subdivision,
     /// no rests, wrapping at its own natural length (it defines its own phrase, independent of the
-    /// exercise meter).
+    /// exercise meter). Carries the per-note **pass groups** so the renderer can focus the active pass
+    /// (ADR 0083 S2b); a single-pass run tags one uniform group, so nothing dims.
     func expanded() -> FretboardDrill {
-        FretboardDrill(notesPerBeat: notesPerBeat,
-                       notes: sequence.map { Optional($0) },
-                       stringCount: 6)
+        let (notes, passes) = sequenceWithPasses
+        return FretboardDrill(notesPerBeat: notesPerBeat,
+                              notes: notes.map { Optional($0) },
+                              stringCount: 6,
+                              noteGroups: passes)
     }
 
     /// The cap on `passCount` so the **top** pass still fits a real neck (S10): the highest finger of
