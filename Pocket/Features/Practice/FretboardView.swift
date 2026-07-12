@@ -151,17 +151,42 @@ struct FretboardGrid: View {
                 let isActive = index == activeIndex
                 let isRoot = isRoot(note)
                 let diameter = dotDiameter(isActive: isActive, isRoot: isRoot)
+                let focus = passFocusOpacity(noteIndex: index)
                 Circle()
                     .fill(fill(isActive: isActive, isRoot: isRoot))
                     .frame(width: diameter, height: diameter)
                     .overlay(rootRing(isRoot: isRoot, isActive: isActive))
                     .overlay(noteLabel(note, isActive: isActive, isRoot: isRoot))
+                    .opacity(focus)
                     .position(x: noteX(note.fret, in: width), y: rowY(note.string, in: height))
                     .animation(.easeOut(duration: 0.07), value: isActive)
+                    .animation(.easeOut(duration: 0.14), value: focus)
             }
         }
         // Keep the enlarged active dot on top even where notes share a cell.
         .zIndex(active == nil ? 0 : 1)
+    }
+
+    /// How faint an **off-pass** note fades to while a multi-pass run walks (ADR 0083 S2b — "pass
+    /// focus"): the current pass reads as the focus, the rest stays visible as context. Feel value.
+    private static let offPassGhostOpacity: Double = 0.2
+
+    /// Whether the drill is a genuine multi-pass run — the gate for pass focus. A single-pass run tags
+    /// one uniform group, and every non-run drill has no groups at all, so neither ever dims.
+    private var isMultiPass: Bool {
+        guard let groups = drill.noteGroups else { return false }
+        return Set(groups).count > 1
+    }
+
+    /// The opacity for a note under **pass focus** (ADR 0083 S2b): while a multi-pass run walks, notes
+    /// outside the active note's pass drop to a ghost so the eye locks onto the position being played;
+    /// the active pass, a single-pass run, and the static board (no `activeIndex`) render fully. The
+    /// reusable substrate slice 3's box focus will read the same way.
+    private func passFocusOpacity(noteIndex: Int) -> Double {
+        guard isMultiPass, let activeIndex, let groups = drill.noteGroups,
+              groups.indices.contains(noteIndex), groups.indices.contains(activeIndex)
+        else { return 1 }
+        return groups[noteIndex] == groups[activeIndex] ? 1 : Self.offPassGhostOpacity
     }
 
     /// Dot size — enlarged when captions are on so a "♭7" fits, and enlarged again when lit.
@@ -369,28 +394,6 @@ struct FretboardView: View {
         FretboardGrid(drill: .spiderWalk, activeIndex: 2)
         FretboardView(engine: StandaloneMetronomeEngine(), drill: .spiderWalk)
     }
-    .padding()
-    .background(PocketColor.background)
-    .preferredColorScheme(.dark)
-}
-
-/// The **following viewport** (ADR 0083 S5): a run that climbs fret 1 → 16 up one string, shown at
-/// three moments of its walk. At rest the whole climb is a full-neck reference diagram; while it
-/// walks, the board holds a comfortable window still until the note reaches the edge, then scrolls the
-/// minimum needed — keeping several already-played frets behind the note. Watch it hold, then scroll.
-#Preview("Following viewport") {
-    let climb = FretboardRun(fingers: [1, 2, 3, 4], baseFret: 1,
-                             fromString: 5, toString: 5, roundTrip: false,
-                             fretShiftPerPass: 4, passCount: 4).expanded()
-    return VStack(alignment: .leading, spacing: 20) {
-        Text("At rest — full climb").font(.futura(.caption))
-        FretboardGrid(drill: climb, activeIndex: nil)
-        Text("Walking, fret 3 — window still holds at the bottom").font(.futura(.caption))
-        FretboardGrid(drill: climb, activeIndex: 2)
-        Text("Walking, fret 9 — scrolled once; runway ahead, one fret of history behind").font(.futura(.caption))
-        FretboardGrid(drill: climb, activeIndex: 8)
-    }
-    .foregroundStyle(PocketColor.textSecondary)
     .padding()
     .background(PocketColor.background)
     .preferredColorScheme(.dark)

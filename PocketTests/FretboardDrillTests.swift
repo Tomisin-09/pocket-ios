@@ -280,6 +280,18 @@ final class FretboardDrillTests: XCTestCase {
         XCTAssertEqual(FretboardDrill.spiderWalk.version, FretboardDrill.currentVersion)
     }
 
+    /// `noteGroups` (ADR 0083 S2b — pass focus) is a transient generation artifact: it must never
+    /// touch the encoded shape (no persisted-blob change, no migration) and decodes back to `nil`.
+    func testPassGroupsAreNeverEncodedAndDecodeToNil() throws {
+        let tagged = FretboardDrill(notesPerBeat: 2,
+                                    notes: [FretNote(string: 5, fret: 1), FretNote(string: 5, fret: 3)],
+                                    noteGroups: [0, 1])
+        let data = try JSONEncoder().encode(tagged)
+        let json = try XCTUnwrap(String(bytes: data, encoding: .utf8))
+        XCTAssertFalse(json.contains("noteGroups"))
+        XCTAssertNil(try JSONDecoder().decode(FretboardDrill.self, from: data).noteGroups)
+    }
+
     /// A blob written by a newer build still decodes best-effort — the version rides along so a
     /// future decode-time upgrade can act on it (T4).
     func testDecodesPayloadFromANewerVersion() throws {

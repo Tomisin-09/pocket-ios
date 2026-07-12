@@ -233,6 +233,18 @@ drawn. Ten rules govern it.
    still visible, which read as confusing. Replaced with the raise-to-8 + only-scroll-when-needed
    (hysteresis) model above. Once a run can climb, the board must follow. Shared substrate for
    everything after.
+   - **Slice 2b — pass focus.** ✅ **Shipped (pocket-136).** The complement to the viewport: while a
+     multi-pass climb walks, the board keeps the *active* pass at full strength and fades the other
+     passes to a faint ghost, so the eye locks onto the position being played while the whole climb's
+     shape stays on screen as context. `FretboardRun.sequenceWithPasses` tags every generated note with
+     the pass that emitted it; `expanded()` carries the parallel `[Int]` on a new transient
+     `FretboardDrill.noteGroups` (excluded from `Codable` via explicit `CodingKeys` — no persisted-shape
+     change, no migration, decodes to `nil`). The renderer dims off-pass notes only when there is more
+     than one group *and* a note is active, so a single-pass run, and the static / animate-off board,
+     are byte-for-byte unchanged. Where the viewport scrolls a *tall* climb, pass focus disambiguates a
+     *gentle* one that fits the comfortable board (never scrolls) yet still overlaps its passes. The
+     ghost opacity is a tunable feel value. **This is the reusable substrate for slice 3's box focus**
+     (`.extended` boxes read the same per-position grouping).
 3. **`ScaleRun` layout axis — `.extended` + `.threePerString` (S4, S6, S10).** The
    theory-heavy piece: the `layout` axis with both new placement rules generated
    over the now-proven shift + slide + follow substrate, each guarded by the ADR

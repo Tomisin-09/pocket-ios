@@ -136,6 +136,42 @@ final class FretboardRunTests: XCTestCase {
         ])
     }
 
+    // MARK: - Pass groups (S2b — pass focus)
+
+    func testPassGroupsTagEachNoteWithItsPass() {
+        // 1-2-3 on the low E, up and back, 3 climbing passes: each pass emits `onePassLength` notes,
+        // all carrying that pass's index, in order.
+        let run = FretboardRun(fingers: [1, 2, 3], baseFret: 1,
+                               fromString: 5, toString: 5, roundTrip: true,
+                               fretShiftPerPass: 2, passCount: 3)
+        let onePassLength = 4
+        XCTAssertEqual(run.sequenceWithPasses.passes,
+                       Array(repeating: 0, count: onePassLength)
+                       + Array(repeating: 1, count: onePassLength)
+                       + Array(repeating: 2, count: onePassLength))
+    }
+
+    func testPassGroupsAlignOneToOneWithTheSequence() {
+        // The two arrays are the same length and index-aligned by construction, and the drill carries
+        // them through expansion so the renderer can read them.
+        let run = FretboardRun(fingers: [1, 2, 3, 4], baseFret: 3,
+                               fromString: 5, toString: 3, roundTrip: false,
+                               fretShiftPerPass: 2, passCount: 3)
+        let pair = run.sequenceWithPasses
+        XCTAssertEqual(pair.passes.count, pair.notes.count)
+        XCTAssertEqual(run.expanded().noteGroups, pair.passes)
+        XCTAssertEqual(run.expanded().noteGroups?.count, run.expanded().notes.count)
+    }
+
+    func testSinglePassRunTagsOneUniformGroupSoNothingDims() {
+        // A single-pass run (the default) fills one group of all-zero tags — one distinct group, which
+        // the renderer reads as "no dimming."
+        let run = FretboardRun(fingers: [1, 2, 3, 4], baseFret: 5, fromString: 5, toString: 4)
+        let groups = run.expanded().noteGroups
+        XCTAssertEqual(groups, Array(repeating: 0, count: run.sequence.count))
+        XCTAssertEqual(Set(groups ?? []).count, 1)
+    }
+
     // MARK: - Come-back fingering (S9)
 
     func testRestateReplaysTheAscendingPatternPerStringWalkingStringsBack() {
