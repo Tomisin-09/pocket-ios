@@ -212,8 +212,27 @@ drawn. Ten rules govern it.
    "teach the slide" question on the simplest content. (`returnStyle` is small and
    independent — it could ship on its own even ahead of the shift work if the
    spider-descent choice is wanted sooner.)
-2. **Following viewport (S5).** Once a run can climb, the board must follow. Shared
-   substrate for everything after.
+2. **Following viewport (S5).** ✅ **Shipped (pocket-135).** The display window is a pure
+   `FretboardDrill.displayWindow(activeIndex:)`: at rest, or for any run that fits the comfortable
+   board (`comfortableFretSpan` = **8** frets), it returns today's static full window unchanged
+   (existing runs byte-for-byte; a *gentle* climb that lives inside ~8 frets — e.g. a +1-per-pass
+   warm-up — stays fully static, **never** scrolls). Only a genuine neck-climb wider than that, **while
+   it walks**, follows the hand by the **"only scroll when you have to"** rule: an 8-fret window holds
+   completely still until the active note comes within `followEdgeMargin` (1) of an edge, then scrolls
+   so the note lands just `followTrailing` (1) fret in from the edge it is leaving — a sliver of history
+   behind, the rest of the window the **runway ahead**. Because a climbing hand reads the frets *ahead*,
+   this look-ahead landing lets the note travel ~6 frets before the next scroll, so a full 1→16 climb
+   reframes only **twice** — fewer, larger shifts being far easier to track than frequent small ones. It
+   therefore **cannot** reframe while the note is comfortably mid-board.
+   Still a pure `fn(activeIndex)` despite the window having memory: the walk is deterministic, so the
+   window is recovered by folding the scroll rule over the notes from the start of the cycle to the
+   active one (the loop wrap resets for free). `FretboardGrid` reads it and hides off-window
+   notes/slides/inlays (a no-op in the static case). Exhaustively unit-tested (S6).
+   **Device-feedback correction (2026-07-12):** the first cut used a 6-fret threshold and a *paged*
+   window keyed to fixed fret-ranges — it engaged on a 7-fret warm-up and reframed while the note was
+   still visible, which read as confusing. Replaced with the raise-to-8 + only-scroll-when-needed
+   (hysteresis) model above. Once a run can climb, the board must follow. Shared substrate for
+   everything after.
 3. **`ScaleRun` layout axis — `.extended` + `.threePerString` (S4, S6, S10).** The
    theory-heavy piece: the `layout` axis with both new placement rules generated
    over the now-proven shift + slide + follow substrate, each guarded by the ADR
@@ -273,9 +292,16 @@ Slices 1–2 are buildable now with no scale theory; slice 3 depends on both.
 
 - **S8 slide-teaching cue** — the exact travelling-highlight treatment (shared
   with movable chords); the deciding factor for slice 1's feel.
-- **S5 follow behaviour** — hard scroll vs. anchored window vs. per-pass jump;
-  which reads best on a phone-width board for a diagonal that also moves
-  vertically.
+- **S5 follow behaviour** — *settled (slice 2, revised after device feedback):* the
+  window holds an 8-fret view **static** and scrolls **only when the active note reaches
+  the edge** (hysteresis), landing the note near the trailing edge so the window prioritises
+  the **runway ahead** (a climbing hand reads forward) and reframes only ~twice over a whole
+  neck-climb — fewer, larger shifts being easier to follow. This structurally
+  never moves while the note is still visible — the guarantee that a first *paged* cut
+  (reframing on fixed fret-ranges) failed to give, confusing the player on a gentle
+  7-fret climb. A run that fits the comfortable board never follows at all. Chosen over
+  per-pass because the expanded drill carries no pass boundaries; kept pure by folding
+  the scroll rule over the deterministic walk.
 - **`.extended` anchor vocabulary** — how many curated extended anchors to seed
   and how to name them (the reference diagrams' "Pattern #4" numbering vs. the
   CAGED shape-letter labels ADR 0065 slice 5 already surfaces).

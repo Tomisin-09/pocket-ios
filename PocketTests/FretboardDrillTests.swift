@@ -97,6 +97,111 @@ final class FretboardDrillTests: XCTestCase {
         XCTAssertEqual(openOnly.displayFretSpan, 4)
     }
 
+    // MARK: - Following viewport (ADR 0083 S5 — pure "only scroll when you have to" fn of the walk)
+
+    /// A run climbing one string from fret 1 to fret 12 in eighths — a genuine neck-climb, too wide for
+    /// the static board, so the following viewport engages. `notes[i]` is fret `i + 1`.
+    private func climb1to12() -> FretboardDrill {
+        FretboardDrill(notesPerBeat: 2, notes: (1...12).map { FretNote(string: 5, fret: $0) })
+    }
+
+    /// A longer climb (frets 1 → 16) whose top is far enough up the neck that the follow window is not
+    /// pinned by the run's own ceiling — so the look-ahead behaviour shows without the `maxLow` clamp.
+    private func climb1to16() -> FretboardDrill {
+        FretboardDrill(notesPerBeat: 2, notes: (1...16).map { FretNote(string: 5, fret: $0) })
+    }
+
+    func testFollowingIsInertAtRestAndForNarrowRuns() {
+        // A rest / animate-off read (activeIndex nil) always keeps the full static window…
+        let climb = climb1to12()
+        XCTAssertEqual(climb.displayWindow(activeIndex: nil),
+                       FretWindow(lowestFret: climb.displayLowestFret, span: climb.displayFretSpan))
+        // …and a run that already fits the comfortable board never follows, even mid-walk.
+        let narrow = FretboardDrill.spiderWalk
+        XCTAssertEqual(narrow.displayWindow(activeIndex: 3),
+                       FretWindow(lowestFret: narrow.displayLowestFret, span: narrow.displayFretSpan))
+    }
+
+    func testGentleClimbThatFitsTheComfortableBoardNeverFollows() {
+        // The reported case: a 1-2-3-4 pattern climbing +1 fret per pass over 4 passes lives entirely
+        // in frets 1–7 (≤ the comfortable board), so the window must stay static the whole walk — no
+        // pointless mid-run shift.
+        let run = FretboardRun(fingers: [1, 2, 3, 4], baseFret: 1, fromString: 5, toString: 0,
+                               roundTrip: false, fretShiftPerPass: 1, passCount: 4)
+        let drill = run.expanded()
+        XCTAssertEqual(drill.displayFretSpan, 7)   // frets 1…7
+        let staticWindow = FretWindow(lowestFret: drill.displayLowestFret, span: drill.displayFretSpan)
+        for activeIndex in 0..<drill.noteCount {
+            XCTAssertEqual(drill.displayWindow(activeIndex: activeIndex), staticWindow,
+                           "a gentle climb reframed at index \(activeIndex) when it should stay static")
+        }
+    }
+
+    func testFollowingHoldsStillThenScrollsOnlyWhenTheNoteReachesTheEdge() {
+        let climb = climb1to12()   // width-8 following window
+        // Frets 1–7 all sit inside the opening window [1…8] — it does not budge as the note climbs.
+        for activeIndex in 0...6 {
+            XCTAssertEqual(climb.displayWindow(activeIndex: activeIndex), FretWindow(lowestFret: 1, span: 8))
+        }
+        // Fret 8 reaches the right edge → a single scroll, and that one scroll carries the rest of the
+        // climb (frets 8–12 all sit in the new window — no further reframes near the run's ceiling).
+        for activeIndex in 7...11 {
+            XCTAssertEqual(climb.displayWindow(activeIndex: activeIndex), FretWindow(lowestFret: 5, span: 8))
+        }
+    }
+
+    func testFollowingLandsTheNoteNearTheTrailingEdgeToMaximiseLookAhead() {
+        // The look-ahead priority: when the window scrolls mid-neck (away from the run's ceiling), the
+        // note lands one fret in from the trailing edge, so most of the window is the runway ahead and
+        // the board travels far before it needs to scroll again.
+        let climb = climb1to16()
+        // Holds [1…8] up to fret 7, then one scroll at fret 8 places it at column 1 of [7…14].
+        XCTAssertEqual(climb.displayWindow(activeIndex: 6), FretWindow(lowestFret: 1, span: 8))
+        XCTAssertEqual(climb.displayWindow(activeIndex: 7), FretWindow(lowestFret: 7, span: 8))
+        XCTAssertEqual(climb.displayWindow(activeIndex: 7).lowestFret, 8 - FretboardDrill.followTrailing)
+        // That one scroll then carries five more frets before the next — frets 8–13 share the window.
+        for activeIndex in 7...12 {
+            XCTAssertEqual(climb.displayWindow(activeIndex: activeIndex).lowestFret, 7)
+        }
+        XCTAssertNotEqual(climb.displayWindow(activeIndex: 13).lowestFret, 7)   // fret 14 finally reframes
+    }
+
+    func testFollowingKeepsTheNoteInViewEveryFrame() {
+        for climb in [climb1to12(), climb1to16()] {
+            for activeIndex in 0..<climb.noteCount {
+                let window = climb.displayWindow(activeIndex: activeIndex)
+                let activeFret = activeIndex + 1
+                XCTAssertTrue((window.lowestFret..<(window.lowestFret + window.span)).contains(activeFret),
+                              "fret \(activeFret) fell outside \(window)")
+            }
+        }
+    }
+
+    func testFollowingReframesRarely() {
+        // The whole point of the trailing-edge landing: a full 16-fret climb reframes only a couple of
+        // times, so the board is easy to track (fewer shifts read as calmer than many small ones).
+        let climb = climb1to16()
+        let lows = (0..<climb.noteCount).map { climb.displayWindow(activeIndex: $0).lowestFret }
+        let reframes = zip(lows, lows.dropFirst()).filter { $0 != $1 }.count
+        XCTAssertLessThanOrEqual(reframes, 2, "a 16-fret climb should reframe at most twice, got \(reframes)")
+    }
+
+    func testFollowingResetsToTheBottomWhenTheCycleWraps() {
+        // The walk loops: the top of the climb reframes high, and returning to note 0 snaps back to the
+        // opening window rather than staying stuck at the top.
+        let climb = climb1to12()
+        XCTAssertEqual(climb.displayWindow(activeIndex: 11).lowestFret, 5)   // top of the climb
+        XCTAssertEqual(climb.displayWindow(activeIndex: 0).lowestFret, 1)    // wrapped back to the start
+    }
+
+    func testFollowingTracksTheNearestFrettedNoteAcrossARest() {
+        // A rest mid-climb holds the window on the nearest fretted neighbour rather than snapping it.
+        var notes: [FretNote?] = (1...12).map { FretNote(string: 5, fret: $0) }
+        notes[8] = nil   // a rest where fret 9 would sound; the fretted neighbour is fret 8 (index 7)
+        let drill = FretboardDrill(notesPerBeat: 2, notes: notes)
+        XCTAssertEqual(drill.displayWindow(activeIndex: 8), FretWindow(lowestFret: 5, span: 8))
+    }
+
     // MARK: - Presets
 
     func testSpiderWalkIsChromaticOnTheLowTwoStrings() {
