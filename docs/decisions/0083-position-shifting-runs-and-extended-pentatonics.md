@@ -111,9 +111,10 @@ drawn. Ten rules govern it.
     a chosen position and climb through adjacent CAGED boxes, linking them with the
     S2 same-string slides — reproducing the two reference diagrams by construction
     (a shape is picked, never hand-drawn — the ADR 0065 "generated, not placed"
-    rule). The "which extended shape" choice is an anchor position, not new
-    geometry; the two diagrams are two anchors of the one generator. Pentatonics
-    first (where the extended vocabulary lives).
+    rule). The "which extended shape" choice is one of **two** fingerings (the
+    seam string-pair, see the refinement in build-order §3), not new geometry; the
+    two diagrams are the two shapes of the one generator. Pentatonics first (where
+    the extended vocabulary lives).
   - *`.threePerString`* — three scale tones per string across the neck; its own
     regular placement rule (not a CAGED box). Ships **plain** (ascend/descend,
     up-and-back) — a legitimate drill on its own; **sequencing** is *not* part of
@@ -245,16 +246,46 @@ drawn. Ten rules govern it.
      *gentle* one that fits the comfortable board (never scrolls) yet still overlaps its passes. The
      ghost opacity is a tunable feel value. **This is the reusable substrate for slice 3's box focus**
      (`.extended` boxes read the same per-position grouping).
-3. **`ScaleRun` layout axis — `.extended` + `.threePerString` (S4, S6, S10).** The
-   theory-heavy piece: the `layout` axis with both new placement rules generated
-   over the now-proven shift + slide + follow substrate, each guarded by the ADR
-   0065 property test. `.extended` reproduces the two reference diagrams; a plain
-   `.threePerString` ships alongside it (same axis, viewport, and test net — its
-   note-placement function is the one genuinely new bit, and it's regular). Seeded
-   presets land here (e.g. "A Minor Pentatonic — Extended"). If this slice starts
-   feeling heavy, `.threePerString` cleanly splits into a fast-follow 3b with no
-   rework — but it is planned *in* this slice. **Sequencing is not in scope** (its
-   own future orthogonal axis, S4).
+3. **`ScaleRun` layout axis — `.extended` + `.threePerString` (S4, S6, S10).** ✅
+   **Shipped (pocket-137).** `ScaleRun` gained a `layoutRaw`/`layout` axis
+   (`ScaleLayout`: `.box` default, `.extended`, `.threePerString`) — additive,
+   String-backed (ADR 0036), custom-decoded with a decode-time default so a blob
+   written before the axis existed decodes to `.box` and generates byte-for-byte as
+   before (no store migration, T4). Both new placement rules live in a pure
+   `ScaleNeckLayout` namespace and dispatch through `ascendingLayout`. **`.extended`**
+   is the pentatonic diagonal: two tones per string, with a third **slide** tone on the
+   seam strings that walks the hand up into the next box, so three boxes read as one
+   continuous climb (S2 — slides only on same-string steps); it carries a per-note box
+   group so the board focuses the box being played (S2b).
+
+   **Refinement (from device review of the player's two diagrams):** the extended
+   diagonal is *one pattern that repeats every two strings*, so there are exactly **two**
+   canonical fingerings — the `.agSlide` shape (slides on the **A & G** strings) and the
+   `.dbSlide` shape (slides on the **D & B** strings) — and `.extended` offers only those
+   two, not five arbitrary CAGED anchors. The seam string-pair is a property of the shape
+   (`ExtendedPentatonicShape.seamStrings`); the low-E start degree is chosen so **both**
+   seam slides land as a clean whole-step (a wrong anchor produced awkward three-fret
+   slides — the exact defect the player flagged in Image 2). A major pentatonic and its
+   relative minor share the shape one degree apart, so the two shapes generalise across
+   both pentatonics from one rule. The run reuses `position` (1…2) to select the shape;
+   the editor caps it at two and labels it as a CAGED **Shape** (A / D), not a number. **`.threePerString`**
+   is the diatonic drill: three tones on every string, no slides (each string change is
+   a cross). **Layouts are gated per scale family** (`GuitarScale.supportedLayouts`):
+   `.extended` for the minor/major pentatonic, `.threePerString` for the 7-tone diatonic
+   scales (major, natural minor) — musically honest *and* the reason every generated shape
+   stays on a 24-fret neck (a pentatonic 3-NPS would climb ~18 frets and run off the board;
+   a diatonic scale spans ~10). The blues scale stays box-only — its semitone ♭5 steps climb
+   the two-per-string diagonal too slowly to lay out cleanly. The editor grows a
+   **Layout** picker (shown only when the scale offers a choice), hides **Octaves** for
+   the neck-spanning layouts (S4), and preserves the layout across every other edit;
+   the following viewport (S5) and box focus (S2b) light up for free on these climbing
+   shapes. Correct-by-construction: the property net (`ScaleLayoutTests`) proves every
+   note in-scale, strictly ascending, on the neck, and slides only at same-string seams,
+   across **every root and position**, plus a flagship shape-lock for the reference
+   A-minor extended diagonal. Two seeded starters land (v9 batch): *A Minor Pentatonic —
+   Extended*, *G Major — 3 Notes Per String*. **`.threePerString` shipped in-slice** (no
+   3b split needed). **Sequencing remains out of scope** (its own future orthogonal
+   axis, S4).
 
 Slices 1–2 are buildable now with no scale theory; slice 3 depends on both.
 

@@ -121,7 +121,7 @@ struct ArpeggioRunEditor: View {
         HStack {
             fieldLabel("Position")
             Spacer()
-            stepper(value: "\(run.position)",
+            stepper(value: "\(run.shapeLetter) shape",
                     canGoDown: run.position > 1,
                     canGoUp: run.position < run.positionCount,
                     stepDown: { run = rebuilt(position: run.position - 1) },
