@@ -6,6 +6,24 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Seven more scales in the scale library.** The **Scale** picker now offers the five remaining modes of
+  the major scale — **Dorian, Phrygian, Lydian, Mixolydian, Locrian** (Ionian and Aeolian already ship as
+  *Major* and *Natural Minor*) — plus the two **bebop** scales, **Bebop Major** (the major with a chromatic
+  ♯5) and **Bebop Dominant** (Mixolydian with a chromatic ♮7). Every one is a real CAGED box in your chosen
+  key and position, correct by construction, with the modes also available as **3 Notes / String** runs.
+- **Scales can now span the neck, not just sit in one box.** A scale drill gained a **Layout** choice.
+  Pentatonics offer **Extended** — one long diagonal run that links three boxes up the neck with a
+  same-string slide into each new box, with the board following the climb and dimming the boxes you're
+  not currently on. There are the **two** canonical extended fingerings (the *A shape*, sliding on the A
+  and G strings, and the *D shape*, sliding on the D and B strings); both slide by a clean whole-step,
+  and **Up and back** retraces the diagonal on the way down. Major and minor scales offer **3 Notes /
+  String** — three tones on every string from the low E to the high e, the even,
+  alternate-picking-friendly shape that covers the whole neck. Every existing scale stays a single-box
+  run exactly as before, and two new starters ship: *A Minor Pentatonic — Extended* and *G Major — 3
+  Notes Per String*.
+- **Scale and arpeggio positions now read as CAGED shapes.** The Position control in the scale and
+  arpeggio editors shows the shape letter you actually recognise — *E / D / C / A / G shape* — instead
+  of a bare "Position 1…5".
 - **A climbing run now highlights the position you're on.** When a warm-up or picking run climbs the
   neck in several passes, the board keeps the pass you're currently playing at full strength and gently
   fades the other passes back — so your eye locks onto the hand position that matters right now while the

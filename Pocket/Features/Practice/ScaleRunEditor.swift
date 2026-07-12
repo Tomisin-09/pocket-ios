@@ -35,8 +35,9 @@ struct ScaleRunEditor: View {
             titleField
             menuRow(label: "Scale", picker: AnyView(scalePicker))
             menuRow(label: "Root", picker: AnyView(rootPicker))
+            if run.scale.supportedLayouts.count > 1 { layoutRow }
             positionRow
-            octavesRow
+            if run.layout.usesOctaves { octavesRow }
             Toggle("Up and back", isOn: roundTripBinding)
                 .font(.futura(.subheadline, weight: .semibold))
                 .tint(tint)
@@ -79,14 +80,39 @@ struct ScaleRunEditor: View {
             Text(run.title)
                 .font(.futura(.headline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
-            Text("\(run.shapeLetter) shape · \(run.position) of \(run.scale.positionCount) · fret "
-                 + "\(run.anchorFret)")
+            Text(subtitle)
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
     }
 
+    /// The box layout reads as a CAGED shape at a position; the neck-spanning layouts name themselves
+    /// and just report where they start.
+    private var subtitle: String {
+        switch run.layout {
+        case .box:
+            return "\(run.shapeLetter) shape · \(run.position) of \(run.scale.positionCount) · "
+                + "fret \(run.anchorFret)"
+        case .extended, .threePerString:
+            return "\(run.layout.displayName) · from fret \(run.anchorFret)"
+        }
+    }
+
     // MARK: - Menus
+
+    private var layoutRow: some View {
+        HStack {
+            fieldLabel("Layout")
+            Spacer()
+            Picker("Layout", selection: layoutBinding) {
+                ForEach(run.scale.supportedLayouts) { layout in Text(layout.displayName).tag(layout) }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .tint(tint)
+            .accessibilityLabel("Layout, \(run.layout.displayName)")
+        }
+    }
 
     private func menuRow(label: String, picker: AnyView) -> some View {
         HStack {
@@ -120,13 +146,15 @@ struct ScaleRunEditor: View {
 
     // MARK: - Position + octaves
 
+    /// The neck position selector — shown as a CAGED **shape** (E/D/C/A/G) for the box, the two extended
+    /// fingerings for the diagonal, or a pattern number for 3-notes-per-string — never a bare index.
     private var positionRow: some View {
         HStack {
-            fieldLabel("Position")
+            fieldLabel(run.layout == .extended ? "Shape" : "Position")
             Spacer()
-            stepper(value: "\(run.position)",
+            stepper(value: run.positionLabel,
                     canGoDown: run.position > 1,
-                    canGoUp: run.position < run.scale.positionCount,
+                    canGoUp: run.position < run.positionCount,
                     stepDown: { setPosition(run.position - 1) },
                     stepUp: { setPosition(run.position + 1) })
         }
@@ -204,13 +232,19 @@ struct ScaleRunEditor: View {
 
     private func rebuilt(scale: GuitarScale? = nil, rootPitchClass: Int? = nil,
                          position: Int? = nil, octaves: Int? = nil,
-                         roundTrip: Bool? = nil, notesPerBeat: Int? = nil) -> ScaleRun {
+                         roundTrip: Bool? = nil, notesPerBeat: Int? = nil,
+                         layout: ScaleLayout? = nil) -> ScaleRun {
         ScaleRun(scale: scale ?? run.scale,
                  rootPitchClass: rootPitchClass ?? run.rootPitchClass,
                  position: position ?? run.position,
                  octaves: octaves ?? run.octaves,
                  roundTrip: roundTrip ?? run.roundTrip,
-                 notesPerBeat: notesPerBeat ?? run.notesPerBeat)
+                 notesPerBeat: notesPerBeat ?? run.notesPerBeat,
+                 layout: layout ?? run.layout)
+    }
+
+    private var layoutBinding: Binding<ScaleLayout> {
+        Binding(get: { run.layout }, set: { run = rebuilt(layout: $0); haptic(.light) })
     }
 
     private var scaleBinding: Binding<GuitarScale> {
@@ -237,6 +271,30 @@ struct ScaleRunEditor: View {
 #Preview("Scale run editor") {
     struct Harness: View {
         @State private var run = ScaleRun.aMinorPentatonic
+        var body: some View {
+            ScaleRunEditor(run: $run)
+                .padding()
+                .background(PocketColor.background)
+        }
+    }
+    return Harness().preferredColorScheme(.dark)
+}
+
+#Preview("Extended pentatonic (diagonal)") {
+    struct Harness: View {
+        @State private var run = ScaleRun.aMinorPentatonicExtended
+        var body: some View {
+            ScaleRunEditor(run: $run)
+                .padding()
+                .background(PocketColor.background)
+        }
+    }
+    return Harness().preferredColorScheme(.dark)
+}
+
+#Preview("3 notes per string") {
+    struct Harness: View {
+        @State private var run = ScaleRun.gMajorThreePerString
         var body: some View {
             ScaleRunEditor(run: $run)
                 .padding()

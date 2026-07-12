@@ -144,6 +144,7 @@ final class PracticePresetsTests: XCTestCase {
             + PracticePresets.fretboardSpecs.count + PracticePresets.scaleSpecs.count
             + PracticePresets.arpeggioSpecs.count + PracticePresets.chordSpecs.count
             + PracticePresets.syncopatedMuteSpecs.count + PracticePresets.strumChordsSpecs.count
+            + PracticePresets.scaleLayoutSpecs.count
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
 
@@ -169,7 +170,7 @@ final class PracticePresetsTests: XCTestCase {
                        PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count
                        + PracticePresets.scaleSpecs.count + PracticePresets.arpeggioSpecs.count
                        + PracticePresets.chordSpecs.count + PracticePresets.syncopatedMuteSpecs.count
-                       + PracticePresets.strumChordsSpecs.count)
+                       + PracticePresets.strumChordsSpecs.count + PracticePresets.scaleLayoutSpecs.count)
         // All newer batches arrive (fetch order isn't insertion order, so check the set).
         XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard, .chords, .strumChords])
     }

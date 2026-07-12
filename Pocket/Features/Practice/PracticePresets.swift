@@ -100,6 +100,25 @@ enum PracticePresets {
              fretboard: .scale(.aMinorPentatonic))
     ]
 
+    /// The **scale layouts** batch (ADR 0083 S4) — seeded under its own key so a user who already has
+    /// the earlier scale set gains the two neck-spanning layouts on the next launch. Ships a real
+    /// extended-diagonal and a 3-notes-per-string run so both new placement rules are exercised by
+    /// content, and so the following viewport and box focus (S5/S2b) have a climbing shape to show.
+    static let scaleLayoutSpecs: [Spec] = [
+        Spec(name: "A Minor Pentatonic — Extended", command: 80, subdivision: .eighths,
+             tags: ["scales", "lead"],
+             notes: "One diagonal run linking three pentatonic boxes up the neck — slide up on the A "
+                  + "and G strings to shift into the next box. Watch the board follow the climb.",
+             template: .scales,
+             fretboard: .scale(.aMinorPentatonicExtended)),
+        Spec(name: "G Major — 3 Notes Per String", command: 80, subdivision: .eighths,
+             tags: ["scales", "technique"],
+             notes: "Three tones on every string, low E to high e — the even, alternate-picking-friendly "
+                  + "shape that spans the neck. Keep the picking hand relaxed and the notes even.",
+             template: .scales,
+             fretboard: .scale(.gMajorThreePerString))
+    ]
+
     /// The **arpeggio library** batch (ADR 0065 build 2, Slice 3) — seeded under a *fifth* key. Ships a
     /// real preprogrammed arpeggio run so the arpeggio editor and renderer are exercised by content.
     static let arpeggioSpecs: [Spec] = [
@@ -176,12 +195,13 @@ enum PracticePresets {
     static let seededChordDefaultsKey = "practicePresetsSeeded.v6"
     static let seededSyncopatedMuteDefaultsKey = "practicePresetsSeeded.v7"
     static let seededStrumChordsDefaultsKey = "practicePresetsSeeded.v8"
+    static let seededScaleLayoutDefaultsKey = "practicePresetsSeeded.v9"
 
     /// Seed the curated presets **once each, ever**: the v1 technique drills, the v2 strumming batch,
     /// the v3 fretboard warm-up, the v4 scale-library batch, the v5 arpeggio batch, the v6 chords
-    /// batch, the v7 accent/mute strumming batch, then the v8 strum & chords batch, each guarded by
-    /// its own key so a deleted preset never returns and an existing user picks up each newer batch
-    /// additively. Safe to call on every launch.
+    /// batch, the v7 accent/mute strumming batch, the v8 strum & chords batch, then the v9 scale-layout
+    /// batch (extended + 3-notes-per-string), each guarded by its own key so a deleted preset never
+    /// returns and an existing user picks up each newer batch additively. Safe to call on every launch.
     static func seedIfNeeded(into context: ModelContext, defaults: UserDefaults = .standard) {
         seedBatch(specs, key: seededDefaultsKey, into: context, defaults: defaults)
         seedBatch(templateSpecs, key: seededTemplateDefaultsKey, into: context, defaults: defaults)
@@ -191,6 +211,7 @@ enum PracticePresets {
         seedBatch(chordSpecs, key: seededChordDefaultsKey, into: context, defaults: defaults)
         seedBatch(syncopatedMuteSpecs, key: seededSyncopatedMuteDefaultsKey, into: context, defaults: defaults)
         seedBatch(strumChordsSpecs, key: seededStrumChordsDefaultsKey, into: context, defaults: defaults)
+        seedBatch(scaleLayoutSpecs, key: seededScaleLayoutDefaultsKey, into: context, defaults: defaults)
     }
 
     /// Seed one batch once, guarded by its `key`. No-op after its first successful run.

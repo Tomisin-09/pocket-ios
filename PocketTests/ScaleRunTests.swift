@@ -37,10 +37,13 @@ final class ScaleRunTests: XCTestCase {
                     XCTAssertTrue(notes.contains { GuitarScale.pitchClass(string: $0.string,
                                                                           fret: $0.fret) == 9 },
                                   "\(context) should contain the tonic")
-                    // A single hand position: the fretted span stays tight (a blues box adds one for ♭5).
+                    // A single hand position: the fretted span stays tight. A chromatic passing tone
+                    // (blues ♭5, bebop ♯5/♮7) can reach one fret past the diatonic box, so those scales
+                    // are allowed an extra fret.
                     let frets = notes.map(\.fret)
                     let fretSpan = (frets.max() ?? 0) - (frets.min() ?? 0)
-                    XCTAssertLessThanOrEqual(fretSpan, 7, "\(context) fret span too wide")
+                    let allowedSpan = scale.passingToneAnchorDegree == nil ? 7 : 8
+                    XCTAssertLessThanOrEqual(fretSpan, allowedSpan, "\(context) fret span too wide")
                     if octaves == 1 {
                         let span = midi(notes[notes.count - 1]) - midi(notes[0])
                         XCTAssertLessThanOrEqual(span, 12, "\(context) one-octave run overshot")
@@ -112,6 +115,53 @@ final class ScaleRunTests: XCTestCase {
             FretNote(string: 1, fret: 5), FretNote(string: 1, fret: 7),
             FretNote(string: 0, fret: 4), FretNote(string: 0, fret: 5), FretNote(string: 0, fret: 7)
         ])
+    }
+
+    // MARK: - Modes (borrow the parent-major box, seen from the mode's own tonic)
+
+    /// A mode is its **parent major's** CAGED boxes seen from a different tonic: D Dorian is the C-major
+    /// boxes, so its neck geometry is identical to C major at every position — only the highlighted
+    /// tonic differs. Proves the `relativeMajorSemitones` offset lands each mode on the right box.
+    func testDorianIsTheParentMajorBoxWithItsOwnTonic() {
+        for position in 1...5 {
+            let dorian = ScaleRun(scale: .dorian, rootPitchClass: 2, position: position, roundTrip: false)
+            let parentMajor = ScaleRun(scale: .major, rootPitchClass: 0, position: position, roundTrip: false)
+            XCTAssertEqual(dorian.ascendingNotes, parentMajor.ascendingNotes,
+                           "D Dorian position \(position) is the C major box")
+            XCTAssertEqual(dorian.rootPitchClass, 2, "but the tonic that lights up is D, not C")
+        }
+    }
+
+    // MARK: - Bebop (a mode plus one threaded chromatic passing tone)
+
+    /// Bebop Dominant is Mixolydian with a ♮7 threaded in; Bebop Major is the major with a ♯5. In each,
+    /// stripping the passing tone must leave exactly the underlying diatonic box — proof the extra tone
+    /// is the only difference and it's the *right* tone.
+    func testBebopScalesThreadOneChromaticPassingToneOntoTheModeBox() {
+        // ♮7 (interval 11) over the mixolydian's ♭7; ♯5 (interval 8) over the major's P5.
+        assertBebopThreadsPassingTone(.bebopDominant, over: .mixolydian, passingInterval: 11)
+        assertBebopThreadsPassingTone(.bebopMajor, over: .major, passingInterval: 8)
+    }
+
+    private func assertBebopThreadsPassingTone(_ bebop: GuitarScale, over mode: GuitarScale,
+                                               passingInterval: Int) {
+        let root = 7   // G
+        let passingClass = (root + passingInterval) % 12
+        func pitchClass(_ note: FretNote) -> Int {
+            GuitarScale.pitchClass(string: note.string, fret: note.fret)
+        }
+        for position in 1...5 {
+            let bebopRun = ScaleRun(scale: bebop, rootPitchClass: root, position: position, roundTrip: false)
+            let modeRun = ScaleRun(scale: mode, rootPitchClass: root, position: position, roundTrip: false)
+            let context = "\(bebop) pos \(position)"
+            XCTAssertTrue(bebopRun.ascendingNotes.contains { pitchClass($0) == passingClass },
+                          "\(context) should sound its passing tone")
+            XCTAssertFalse(modeRun.ascendingNotes.contains { pitchClass($0) == passingClass },
+                           "\(context): the plain mode has no passing tone")
+            XCTAssertEqual(bebopRun.ascendingNotes.filter { pitchClass($0) != passingClass },
+                           modeRun.ascendingNotes,
+                           "\(context): stripping the passing tone leaves the mode box")
+        }
     }
 
     // MARK: - Scale metadata
