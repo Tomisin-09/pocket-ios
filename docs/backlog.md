@@ -88,9 +88,17 @@ docs so this stays a pointer list:
   the **Chords** template — which has now shipped (PR #97) on a shared `ChordVoicing`.
   A triad is a 3-note chord voicing and the CAGED box engine generates arbitrary note
   sets, so the shape/inversion lives with chords as planned. No separate category.
-- **Movable chord shapes + custom-chord placer (near-term fretboard slice, buildable
-  now).** From a notes session 2026-07-11 (a movable-barre-shape chart + a "custom chord"
-  ask). Two parts over the shipped fretboard renderer (`FretboardContent`, pocket-102) and
+- **Movable chord shapes + custom-chord placer — ADR 0084 (Accepted, 2026-07-12).**
+  From a notes session 2026-07-11 (a movable-barre-shape chart + a "custom chord"
+  ask). Written up as ADR 0084 (branch pocket-133, with 0083). Rules M1–M8: generate grips
+  don't store a table (M1); a `ChordGrip` = relative geometry + root string + quality,
+  placed by root note → auto-named `ChordVoicing` (M2); tiered ceiling (M3, below); custom
+  placer is the Tier-3 escape hatch (M4); one output type so the renderer is untouched + the
+  two library barres retrofit into grips byte-identically (M5); slide-to-fret must TEACH —
+  shared cue with **ADR 0083 S8** (M6); pure + property-tested via `ChordVoicing`'s accessors
+  (M7). **3 slices:** (1) `ChordGrip` + transposition + Tier-1 grips + barre retrofit (pure,
+  no UI); (2) movable-shape authoring + the shared slide cue + Tier-2 grips; (3) custom placer.
+  Two parts over the shipped fretboard renderer (`FretboardContent`, pocket-102) and
   the shared `ChordVoicing`:
   1. **Curated movable shapes.** Add variety to the chord exercise as *movable grips* —
      a relative shape (E-root / A-root grip) + a fret offset (transposition), taught as
@@ -108,8 +116,34 @@ docs so this stays a pointer list:
      that composes an arbitrary voicing the curated set can't express. The escape hatch for
      Tier 3 and anything bespoke; persists as a `ChordVoicing`. This is where advanced/jazz
      voicing choices live, since they multiply and get instrument-specific.
-  Open design question flagged in the note: **how to present** the movable-shape idea
-  (slide-to-fret) so it teaches, not just displays. Natural fretboard slice after scales.
+  Open design question (now ADR 0084 M6 ⇄ 0083 S8): **how to present** the movable-shape idea
+  (slide-to-fret) so it teaches, not just displays — the SAME slide-teaching cue as the
+  position-shifting runs; whichever ships first solves it for both. Natural fretboard slice
+  after scales.
+- **Position-shifting runs + extended pentatonics — ADR 0083 (Accepted, 2026-07-12).** From a
+  design session 2026-07-12 (flexible picking runs + two player-supplied extended-pentatonic
+  diagrams). One insight: a neck-climbing picking run, a diagonal warm-up, and a diagonal
+  extended pentatonic are **the same primitive** — a run whose anchor fret *shifts
+  mid-sequence*, with a slide at each same-string seam. Build the shift once, it produces all
+  three. Additive over the shipped `FretboardRun` / `ScaleRun` (ADR 0065), timing engine
+  untouched. **Three slices:** (1) player-authored shift controls on `FretboardRun`
+  (`fretShiftPerPass`/`passCount` horizontal climb + `fretShiftPerString` diagonal) + the
+  slide-seam **teaching** cue — cheapest, no scale theory, de-risks the "teach the slide"
+  question shared with movable chords (S8); (2) **following viewport** — the board tracks the
+  hand for climbing runs (the one non-free piece: today's window is static, `displayLowestFret`
+  /`displayFretSpan`); (3) `ScaleRun` **`layout` axis** generating `.extended` (the two reference
+  diagrams) **and** a plain `.threePerString` (3-NPS folded IN — same generator/viewport/test-net
+  substrate) over that substrate, ADR 0065 property test as the correctness net. Slides reuse the
+  existing `FretTechnique.slide` (its first producer). Slice 1 also carries a **come-back
+  fingering** choice (S9): `returnStyle` = `.retrace` (today's strict palindrome, 4-3-2-1 down —
+  default, keeps the seeded warm-up byte-identical) vs `.restate` (keep 1-2-3-4 per string,
+  strings walked back high→low) — small and independent, could ship even ahead of the shift work.
+  Resolved at accept: a "pass" = one full `sequence()` at the anchor (up-and-back included); shifts
+  clamp to a real neck + editor caps `passCount` (S10); `.extended`/`.threePerString` read
+  `position` as start anchor and ignore `octaves`; the run editor tucks the shift controls under a
+  "Movement" disclosure. **Sequencing (3s/4s/6s) is a SEPARATE orthogonal future axis over ALL
+  layouts — deliberately NOT a 3-NPS feature, its own later ADR.** **Order: slice 1 first** (see
+  ADR). Shares the slide-teaching UX with the movable-chord item above.
 - **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
   container (distinct from the intra-exercise ramp staircase): `Routine` +
   `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit
