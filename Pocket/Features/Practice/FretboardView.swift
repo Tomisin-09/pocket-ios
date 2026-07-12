@@ -8,25 +8,7 @@ import SwiftUI
 /// **T10** — every colour resolves through a semantic `PocketColor` role: the strings and fret
 /// separators via the grid-line role, the nut and labels via the ink roles, plotted notes a dimmed
 /// ink, and the active note in the content `tint` — so the board reskins under light/dark and any
-/// future theme.
-/// How each fretboard note is captioned (ADR 0065 build 2). A viewing preference the player toggles —
-/// note names, scale-degree intervals, or nothing — persisted globally so the creation preview and
-/// the live practice board agree. Intervals need a tonal centre (`FretboardDrill.rootPitchClass`); a
-/// rootless drill (a spider walk) shows nothing in interval mode.
-enum FretLabelMode: String, CaseIterable, Identifiable {
-    case none, note, interval
-    var id: String { rawValue }
-
-    /// The control's short label for each mode.
-    var pickerLabel: String {
-        switch self {
-        case .none: return "Off"
-        case .note: return "Note"
-        case .interval: return "Interval"
-        }
-    }
-}
-
+/// future theme. `FretLabelMode` (the caption preference) lives beside this file.
 struct FretboardGrid: View {
     let drill: FretboardDrill
     /// The note lit now, or `nil` for a static (nothing-lit) read.
@@ -36,8 +18,18 @@ struct FretboardGrid: View {
     var labelMode: FretLabelMode = .none
 
     private var stringCount: Int { max(1, drill.stringCount) }
-    private var span: Int { max(1, drill.displayFretSpan) }
-    private var lowestFret: Int { drill.displayLowestFret }
+    /// The visible neck window (ADR 0083 S5). At rest it is the drill's full static span; while a long
+    /// climb walks it follows the active note, so `span`/`lowestFret` here are window-relative.
+    private var window: FretWindow { drill.displayWindow(activeIndex: activeIndex) }
+    private var span: Int { max(1, window.span) }
+    private var lowestFret: Int { window.lowestFret }
+
+    /// Whether a note falls inside the visible window — open notes (fret 0) always show on the nut; a
+    /// fretted note shows only within `[lowestFret, lowestFret + span)`. In the static full-window case
+    /// this is true for every plotted note, so the at-rest board is unchanged.
+    private func isVisible(_ note: FretNote) -> Bool {
+        note.fret == 0 || (note.fret >= lowestFret && note.fret < lowestFret + span)
+    }
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -105,7 +97,7 @@ struct FretboardGrid: View {
     /// is the static "slide" badge when motion is off.
     private func slideCues(width: CGFloat, height: CGFloat) -> some View {
         ForEach(Array(drill.notes.enumerated()), id: \.offset) { index, note in
-            if let note, note.technique == .slide, index > 0,
+            if let note, note.technique == .slide, index > 0, isVisible(note),
                let previous = drill.notes[index - 1], previous.string == note.string {
                 SlideCue(fromX: noteX(previous.fret, in: width),
                          toX: noteX(note.fret, in: width),
@@ -155,7 +147,7 @@ struct FretboardGrid: View {
     private func notes(width: CGFloat, height: CGFloat) -> some View {
         let active = activeIndex.flatMap { drill.note(at: $0) }
         return ForEach(Array(drill.notes.enumerated()), id: \.offset) { index, note in
-            if let note {
+            if let note, isVisible(note) {
                 let isActive = index == activeIndex
                 let isRoot = isRoot(note)
                 let diameter = dotDiameter(isActive: isActive, isRoot: isRoot)
@@ -377,6 +369,28 @@ struct FretboardView: View {
         FretboardGrid(drill: .spiderWalk, activeIndex: 2)
         FretboardView(engine: StandaloneMetronomeEngine(), drill: .spiderWalk)
     }
+    .padding()
+    .background(PocketColor.background)
+    .preferredColorScheme(.dark)
+}
+
+/// The **following viewport** (ADR 0083 S5): a run that climbs fret 1 → 16 up one string, shown at
+/// three moments of its walk. At rest the whole climb is a full-neck reference diagram; while it
+/// walks, the board holds a comfortable window still until the note reaches the edge, then scrolls the
+/// minimum needed — keeping several already-played frets behind the note. Watch it hold, then scroll.
+#Preview("Following viewport") {
+    let climb = FretboardRun(fingers: [1, 2, 3, 4], baseFret: 1,
+                             fromString: 5, toString: 5, roundTrip: false,
+                             fretShiftPerPass: 4, passCount: 4).expanded()
+    return VStack(alignment: .leading, spacing: 20) {
+        Text("At rest — full climb").font(.futura(.caption))
+        FretboardGrid(drill: climb, activeIndex: nil)
+        Text("Walking, fret 3 — window still holds at the bottom").font(.futura(.caption))
+        FretboardGrid(drill: climb, activeIndex: 2)
+        Text("Walking, fret 9 — scrolled once; runway ahead, one fret of history behind").font(.futura(.caption))
+        FretboardGrid(drill: climb, activeIndex: 8)
+    }
+    .foregroundStyle(PocketColor.textSecondary)
     .padding()
     .background(PocketColor.background)
     .preferredColorScheme(.dark)

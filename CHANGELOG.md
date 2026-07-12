@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **The fretboard now follows your hand up the neck.** When a warm-up or picking run climbs past a
+  comfortable board (about eight frets), the board no longer crams the whole neck into a sliver — while
+  the run walks, it shows a hand-width window that *follows* the sounding note. It only ever scrolls
+  when the note actually reaches the edge, and when it does it favours showing the frets *coming up* over
+  the ones behind — so it shifts rarely (just a couple of times over a whole neck-climb) and stays easy to
+  track. A gentler climb that already fits the board, and every short run, stays a full static diagram.
 - **Warm-up and picking runs can climb the neck and go diagonal.** A fretboard run (the generative
   warm-up / picking / legato editor) gained a **Movement** section, tucked under a disclosure so a
   plain warm-up is still four taps. Inside: **Shift up after each run** climbs the pattern a few frets

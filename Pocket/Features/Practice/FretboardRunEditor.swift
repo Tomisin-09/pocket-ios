@@ -288,6 +288,7 @@ extension FretboardRunEditor {
                 fieldLabel("Shift up after each run")
                 Text("Climb the neck a few frets each pass.").font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             stepper(stepDown: { run.fretShiftPerPass = max(0, run.fretShiftPerPass - 1) },
@@ -316,6 +317,7 @@ extension FretboardRunEditor {
                 fieldLabel("Stagger per string")
                 Text("Land higher (or lower) on each string — a diagonal.").font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             stepper(stepDown: { run.fretShiftPerString = max(Self.staggerRange.lowerBound,
