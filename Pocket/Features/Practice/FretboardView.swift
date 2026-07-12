@@ -75,6 +75,7 @@ struct FretboardGrid: View {
                 fretSeparators(width: width, height: height)
                 nut(height: height)
                 inlayDots(width: width, height: height)
+                slideCues(width: width, height: height)
                 notes(width: width, height: height)
             }
         }
@@ -94,6 +95,23 @@ struct FretboardGrid: View {
                 inlayDot(diameter: 6, at: CGPoint(x: noteX(fret, in: width), y: height * 0.7))
             } else if Self.singleInlayFrets.contains(fret) {
                 inlayDot(diameter: 6, at: CGPoint(x: noteX(fret, in: width), y: height / 2))
+            }
+        }
+    }
+
+    /// The slide-teaching cues (ADR 0083 S8): for every note that slides in on the **same string**
+    /// from the one before it, a static arrow from the departed fret to the landed fret. Brightened
+    /// while its target note is active so the walk and the arrow read together; always drawn, so it
+    /// is the static "slide" badge when motion is off.
+    private func slideCues(width: CGFloat, height: CGFloat) -> some View {
+        ForEach(Array(drill.notes.enumerated()), id: \.offset) { index, note in
+            if let note, note.technique == .slide, index > 0,
+               let previous = drill.notes[index - 1], previous.string == note.string {
+                SlideCue(fromX: noteX(previous.fret, in: width),
+                         toX: noteX(note.fret, in: width),
+                         midY: rowY(note.string, in: height))
+                    .stroke(tint.opacity(index == activeIndex ? 0.95 : 0.55),
+                            style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
             }
         }
     }

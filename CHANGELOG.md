@@ -6,6 +6,15 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Warm-up and picking runs can climb the neck and go diagonal.** A fretboard run (the generative
+  warm-up / picking / legato editor) gained a **Movement** section, tucked under a disclosure so a
+  plain warm-up is still four taps. Inside: **Shift up after each run** climbs the pattern a few frets
+  each pass over a **Passes** count (a chromatic-climb-up-the-neck), **Stagger per string** lands the
+  pattern higher or lower on each successive string (a diagonal), and — when a run comes back —
+  **Coming back** picks how the descent is fingered: *Retrace* (today's strict path reversal, each
+  string 4-3-2-1) or *Restate* (re-state the ascending 1-2-3-4 on each string walking back). A shift
+  that walks the hand up one string is drawn as a **slide arrow** on the board — a static teaching cue
+  that also reads under Reduce Motion. All controls default off, so every existing run is unchanged.
 - **Finishing a loop practice run now asks how it went — and offers to bump it up.** When a loop's
   training run reaches the top and finishes on its own, you land on the same completion screen as an
   exercise: rate how clean it felt (optional), jot a note (optional), and — if you summited above the
