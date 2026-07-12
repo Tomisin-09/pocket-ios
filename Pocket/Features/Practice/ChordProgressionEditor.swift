@@ -12,6 +12,21 @@ import SwiftUI
 struct ChordProgressionEditor: View {
     @Binding var progression: ChordProgression
 
+    /// Which slot a presented `MovableChordSheet` writes into — a new chord, or a swap of an existing
+    /// one (ADR 0084 M2: movable grips mix inline with the open-shape library).
+    @State private var movableTarget: MovableTarget?
+
+    private enum MovableTarget: Identifiable {
+        case add
+        case replace(Int)
+        var id: String {
+            switch self {
+            case .add: return "add"
+            case .replace(let index): return "replace-\(index)"
+            }
+        }
+    }
+
     /// Root names in menu order starting at C (pitch class 0 … 11), the way a key is spoken.
     private let rootNames = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]
 
@@ -26,6 +41,19 @@ struct ChordProgressionEditor: View {
             addMenu
         }
         .padding(.vertical, 4)
+        .sheet(item: $movableTarget) { target in
+            MovableChordSheet { voicing in apply(voicing, to: target) }
+        }
+    }
+
+    /// Route a grip-generated voicing to the slot the sheet was opened for.
+    private func apply(_ voicing: ChordVoicing, to target: MovableTarget) {
+        switch target {
+        case .add:
+            progression = progression.appending(voicing)
+        case .replace(let index):
+            progression = progression.replacingVoicing(at: index, with: voicing)
+        }
     }
 
     /// Sets the key the Roman-numeral badges read against — an Auto option (infer from the first
@@ -85,6 +113,12 @@ struct ChordProgressionEditor: View {
 
     private func voicingMenu(index: Int, current: ChordVoicing) -> some View {
         Menu {
+            Button {
+                movableTarget = .replace(index)
+            } label: {
+                Label("Movable shape…", systemImage: "arrow.left.and.right")
+            }
+            Divider()
             ForEach(ChordVoicing.library) { voicing in
                 Button(voicing.name) {
                     progression = progression.replacingVoicing(at: index, with: voicing)
@@ -113,6 +147,12 @@ struct ChordProgressionEditor: View {
 
     private var addMenu: some View {
         Menu {
+            Button {
+                movableTarget = .add
+            } label: {
+                Label("Movable shape…", systemImage: "arrow.left.and.right")
+            }
+            Divider()
             ForEach(ChordVoicing.library) { voicing in
                 Button(voicing.name) { progression = progression.appending(voicing) }
             }

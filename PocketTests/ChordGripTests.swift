@@ -26,7 +26,7 @@ final class ChordGripTests: XCTestCase {
     // MARK: - Property net: every grip, every root, is a valid voicing with the right root & quality
 
     func testEveryGripAtEveryRootIsValidWithMatchingRootAndQuality() {
-        for grip in ChordGrip.tier1 {
+        for grip in ChordGrip.curated {
             for rootPitchClass in 0..<12 {
                 let voicing = grip.voicing(rootPitchClass: rootPitchClass)
                 let label = "\(grip.name) \(grip.quality) @ pc \(rootPitchClass) → \(voicing.name)"
@@ -61,6 +61,15 @@ final class ChordGripTests: XCTestCase {
         case .maj7:
             XCTAssertFalse(voicing.isTriad, "maj7 is four notes: \(label)")
             XCTAssertTrue(has(4) && has(7) && has(11), "maj7 = root+M3+P5+M7: \(label)")
+        case .sus2:
+            XCTAssertTrue(voicing.isTriad, "sus2 is three notes: \(label)")
+            XCTAssertTrue(has(2) && has(7) && !has(3) && !has(4), "sus2 = root+M2+P5, no 3rd: \(label)")
+        case .sus4:
+            XCTAssertTrue(voicing.isTriad, "sus4 is three notes: \(label)")
+            XCTAssertTrue(has(5) && has(7) && !has(3) && !has(4), "sus4 = root+P4+P5, no 3rd: \(label)")
+        case .sixth:
+            XCTAssertFalse(voicing.isTriad, "6 is four notes: \(label)")
+            XCTAssertTrue(has(4) && has(7) && has(9), "6 = root+M3+P5+M6: \(label)")
         }
     }
 
@@ -70,6 +79,22 @@ final class ChordGripTests: XCTestCase {
         XCTAssertEqual(ChordGrip.eShapeDom7.voicing(rootPitchClass: 7).name, "G7")   // E-shape @ G
         XCTAssertEqual(ChordGrip.aShapeMaj7.voicing(rootPitchClass: 0).name, "Cmaj7") // A-shape @ C
         XCTAssertEqual(ChordGrip.aShapeMin7.voicing(rootPitchClass: 2).name, "Dm7")   // A-shape @ D
+        XCTAssertEqual(ChordGrip.aShapeSus2.voicing(rootPitchClass: 9).name, "Asus2") // A-shape @ A
+        XCTAssertEqual(ChordGrip.eShapeSixth.voicing(rootPitchClass: 4).name, "E6")   // E-shape @ E
+    }
+
+    // MARK: - Curated tiers (M3)
+
+    func testSus2IsAShapeOnly() {
+        // The E-shape sus2 is the awkward stretch nobody plays (M3), so it's absent from the E family.
+        let eShapeQualities = ChordGrip.curated.filter { $0.rootString == .eRoot }.map(\.quality)
+        let aShapeQualities = ChordGrip.curated.filter { $0.rootString == .aRoot }.map(\.quality)
+        XCTAssertFalse(eShapeQualities.contains(.sus2), "no E-shape sus2")
+        XCTAssertTrue(aShapeQualities.contains(.sus2), "A-shape sus2 is offered")
+    }
+
+    func testCuratedIsTier1PlusTier2() {
+        XCTAssertEqual(ChordGrip.curated.count, ChordGrip.tier1.count + ChordGrip.tier2.count)
     }
 
     func testRootStringCarriesTheRootFret() {

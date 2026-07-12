@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Movable chord shapes.** Building a chord progression (the **Chords** and **Strum & Chords** drills),
+  the chord menu — both **Add chord** and the per-chord swap — gained a **Movable shape…** option: pick
+  an **E-shape** or **A-shape** barre grip and a **quality** (major, minor, dominant 7, minor 7, major 7,
+  sus2, sus4, 6th), choose a **root note**, and it lands as that chord — the same fingering slid up the
+  neck. A live diagram shows the result at its fret (e.g. *E-shape · fret 3 → G7*), so a slid barre reads
+  as "the open shape moved up." Slid shapes mix freely with the open-shape library in one progression.
 - **Seven more scales in the scale library.** The **Scale** picker now offers the five remaining modes of
   the major scale — **Dorian, Phrygian, Lydian, Mixolydian, Locrian** (Ionian and Aeolian already ship as
   *Major* and *Natural Minor*) — plus the two **bebop** scales, **Bebop Major** (the major with a chromatic

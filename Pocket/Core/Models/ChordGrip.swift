@@ -13,11 +13,13 @@ import Foundation
 struct ChordGrip: Equatable {
 
     /// The chord quality a grip sounds. Names the generated voicing (`root` + suffix) and is the
-    /// property test's oracle (M7).
+    /// property test's oracle (M7). Tier 1 (ADR 0084 M3) is the triads + 7ths; Tier 2 adds the
+    /// suspensions and sixths.
     enum Quality: String, CaseIterable {
-        case major, minor, dom7, min7, maj7
+        case major, minor, dom7, min7, maj7   // Tier 1
+        case sus2, sus4, sixth                // Tier 2
 
-        /// The suffix appended to the root note to name the voicing — "F", "Fm", "F7", "Fm7", "Fmaj7".
+        /// The suffix appended to the root note to name the voicing — "F", "Fm7", "Fsus4", "F6".
         var nameSuffix: String {
             switch self {
             case .major: return ""
@@ -25,6 +27,23 @@ struct ChordGrip: Equatable {
             case .dom7: return "7"
             case .min7: return "m7"
             case .maj7: return "maj7"
+            case .sus2: return "sus2"
+            case .sus4: return "sus4"
+            case .sixth: return "6"
+            }
+        }
+
+        /// Player-facing label for the quality menu.
+        var displayName: String {
+            switch self {
+            case .major: return "Major"
+            case .minor: return "Minor"
+            case .dom7: return "Dominant 7"
+            case .min7: return "Minor 7"
+            case .maj7: return "Major 7"
+            case .sus2: return "Sus2"
+            case .sus4: return "Sus4"
+            case .sixth: return "Sixth"
             }
         }
     }
@@ -104,4 +123,29 @@ extension ChordGrip {
         .eShapeMajor, .eShapeMinor, .eShapeDom7, .eShapeMin7, .eShapeMaj7,
         .aShapeMajor, .aShapeMinor, .aShapeDom7, .aShapeMin7, .aShapeMaj7
     ]
+
+    // Tier 2 (M3): suspensions + sixths, in guitar-idiomatic voicings. Sus2 is A-shape only — the
+    // E-shape sus2 is an awkward stretch nobody plays (ADR 0084 M3). "Basic 9ths" are deliberately
+    // left to the placer (slice 3): the movable dom-9 shape needs a string *below* the root fret, so
+    // it can't sit in open position and jumps an octave — an honest fit for the per-string placer, not
+    // a clean grip.
+    static let aShapeSus2 = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                      offsets: [0, 0, 2, 2, 0, nil], quality: .sus2)
+    static let eShapeSus4 = ChordGrip(name: "E-shape", rootString: .eRoot,
+                                      offsets: [0, 0, 2, 2, 2, 0], quality: .sus4)
+    static let aShapeSus4 = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                      offsets: [0, 3, 2, 2, 0, nil], quality: .sus4)
+    static let eShapeSixth = ChordGrip(name: "E-shape", rootString: .eRoot,
+                                       offsets: [0, 2, 1, 2, 2, 0], quality: .sixth)
+    static let aShapeSixth = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                       offsets: [2, 2, 2, 2, 0, nil], quality: .sixth)
+
+    /// Tier 2 (M3): suspensions + sixths.
+    static let tier2: [ChordGrip] = [
+        .aShapeSus2, .eShapeSus4, .aShapeSus4, .eShapeSixth, .aShapeSixth
+    ]
+
+    /// The **curated** movable set the authoring sheet offers — Tier 1–2 (ADR 0084 M3). Tier 3
+    /// (shells / extensions / altered) lives behind the custom placer, not here.
+    static let curated: [ChordGrip] = tier1 + tier2
 }

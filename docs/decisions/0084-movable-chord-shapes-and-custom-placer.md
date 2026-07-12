@@ -150,12 +150,19 @@ decision; slice 3 is independent and could land any time.
 
 ## Open questions (to settle at build time)
 
-- **M6 slide-teaching cue** — the shared 0083-S8 travelling-highlight treatment; the deciding
-  factor for slice 2's feel.
-- **D-root grips** — whether to add a D-root shape family beyond E/A, or leave D-root chords to
-  the placer.
-- **Grip → progression authoring flow** — do generated grips appear inline in the existing
-  `ChordProgressionEditor` picker, or behind a "movable shape" mode? (Leaning inline, so a
-  progression can freely mix open shapes, slid grips, and placed customs.)
-- **Placer finger hints** — whether the placer captures the optional `ChordVoicing.fingers`, or
-  leaves fingering unspecified for custom voicings.
+- **M6 slide-teaching cue** — **RESOLVED (slice 2): no animation for the chord case.** Unlike a run
+  (0083 S8), a chord progression is a sequence of *distinct* chords the player forms at their frets —
+  nobody physically slides between them, so there is no in-performance motion to teach. The movable
+  idea is *conceptual* and carried statically: the authoring sheet shows the **shape family + fret**
+  ("E-shape · fret 3 → G7") beside a live diagram. The travelling-highlight arrow stays a runs-only
+  treatment; M6's "shared cue" assumption didn't hold once examined.
+- **Grip → progression authoring flow** — **RESOLVED (slice 2): a dedicated `MovableChordSheet`,
+  inline output.** Reached from a **Movable shape…** item in both the Add-chord and per-chord swap
+  menus of `ChordProgressionEditor`; it emits a plain `ChordVoicing` mixed inline with the open-shape
+  library (leaning-inline confirmed — a progression freely mixes open shapes, slid grips, and, later,
+  placed customs). A sheet, not a nested menu, so the shape/quality/root choice has room to show a live
+  preview.
+- **D-root grips** — **deferred:** E/A-shape only for now; D-root chords go to the placer (slice 3).
+- **Placer finger hints** — still open, belongs to slice 3 (the placer). Grips currently generate
+  fretted geometry only; the two library barres keep their hand-authored `fingers` (not replaced), so
+  no fingering is lost.
