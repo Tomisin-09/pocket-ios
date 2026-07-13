@@ -6,6 +6,9 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Fixed
+- **The loop editor no longer closes itself while you're editing.** Opening the edit sheet on a loop (or
+  marker) you'd just created could dismiss it mid-edit when the app auto-saved — losing your place. The
+  sheet is now anchored to the loop's stable id, so it stays put through a save.
 - **Switching loops no longer carries the wrong tempo.** Arming a loop that has no command tempo set now
   plays at 100% instead of inheriting the tempo of the loop you were just on. A loop *with* a command
   tempo arms at that tempo. (Previously a loop with no command tempo could keep the previous loop's

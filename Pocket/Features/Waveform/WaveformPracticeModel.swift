@@ -105,8 +105,11 @@ final class WaveformPracticeModel {
             }
         }
     }
-    var editingLoop: Loop?
-    var editingMarker: Marker?
+    // Edit-sheet targets are held as `uid`-keyed `StableRef`s, not the raw @Model, so a SwiftData
+    // autosave promoting a freshly-created loop/marker's temporary `persistentModelID` doesn't read as
+    // an identity change and dismiss the open sheet mid-edit (see `StableModelRef`).
+    var editingLoop: StableRef<Loop>?
+    var editingMarker: StableRef<Marker>?
     /// The loop being trained full-screen via "Practice now" from the edit sheet (ADR 0082). Set only
     /// after the edit sheet dismisses (see `pendingPracticeLoop`), so the run cover never races the
     /// sheet's dismissal; exiting the run returns to the waveform it launched from.
@@ -115,7 +118,7 @@ final class WaveformPracticeModel {
     /// (`launchPendingPractice`), never mid-dismiss.
     var pendingPracticeLoop: Loop?
     /// The loop whose automator (speed ramp) is being set up (drives the sheet, ADR 0013).
-    var editingAutomatorLoop: Loop?
+    var editingAutomatorLoop: StableRef<Loop>?
     /// Drives the tap-tempo / manual BPM sheet (ADR 0024), opened from "Set BPM".
     var settingBPM = false
     /// Drives the read-first `SongDetailsSheet` (Edit → `SongEditSheet`), opened by holding the title.

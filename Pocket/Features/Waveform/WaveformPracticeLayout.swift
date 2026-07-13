@@ -155,13 +155,13 @@ struct PracticeReference: View {
             VStack(spacing: 16) {
                 LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
                            activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
-                           onActivate: model.activate, onEdit: { model.editingLoop = $0 },
+                           onActivate: model.activate, onEdit: { model.editingLoop = StableRef(value: $0) },
                            onDelete: model.deleteLoop,
                            onAdjustRange: { model.startRangeEdit($0) },
-                           onAutomator: { model.editingAutomatorLoop = $0 },
+                           onAutomator: { model.editingAutomatorLoop = StableRef(value: $0) },
                            compact: compact)
                 MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
-                             onSeek: model.seekToMarker, onEdit: { model.editingMarker = $0 },
+                             onSeek: model.seekToMarker, onEdit: { model.editingMarker = StableRef(value: $0) },
                              onDelete: model.deleteMarker)
             }
             .padding(.horizontal, 16)
