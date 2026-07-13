@@ -97,6 +97,35 @@ final class ChordGripTests: XCTestCase {
         XCTAssertEqual(ChordGrip.curated.count, ChordGrip.tier1.count + ChordGrip.tier2.count)
     }
 
+    // MARK: - "As actually played" voicings (2026-07-13 device review)
+
+    func testAShapeGripsMuteBothOuterStrings() {
+        // Every A-shape is the 4-string A-D-G-B barre: low E (index 5) and high e (index 0) muted.
+        for grip in ChordGrip.curated where grip.rootString == .aRoot {
+            let voicing = grip.voicing(rootPitchClass: 0)
+            XCTAssertNil(voicing.frets[0], "\(voicing.name): high e should be muted on an A-shape")
+            XCTAssertNil(voicing.frets[5], "\(voicing.name): low E should be muted on an A-shape")
+        }
+    }
+
+    func testEShapeMaj7IsTheShellVoicing() {
+        // The E-shape maj7 mutes the A string (index 4) and high e (index 0) — the playable shell, not
+        // the six-string barre-plus-stretch.
+        let gmaj7 = ChordGrip.eShapeMaj7.voicing(rootPitchClass: 7)   // G
+        XCTAssertNil(gmaj7.frets[0], "high e muted on the E-shape maj7 shell")
+        XCTAssertNil(gmaj7.frets[4], "A string muted on the E-shape maj7 shell")
+        XCTAssertEqual(gmaj7.pitchClasses, [7, 11, 2, 6], "still G B D F# = Gmaj7")
+    }
+
+    func testSixthIsEShapeOnly() {
+        // The A-shape 6 voices its 6th on the high e — muting that string would erase it — so Sixth is
+        // offered only on the E-shape, where the 6th sits on the B string.
+        let sixthFamilies = ChordGrip.curated.filter { $0.quality == .sixth }.map(\.rootString)
+        XCTAssertEqual(sixthFamilies, [.eRoot], "Sixth is E-shape only")
+        XCTAssertTrue(ChordGrip.eShapeSixth.voicing(rootPitchClass: 4).pitchClasses.contains(1),
+                      "E6 still sounds its 6th (C#)")
+    }
+
     func testRootStringCarriesTheRootFret() {
         // A-shape at C (pc 0): A string open is pc 9, so the root fret is 3; the A-string entry (index
         // 4, offset 0) lands on fret 3 and the low E (index 5) stays muted.

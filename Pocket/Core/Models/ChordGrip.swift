@@ -101,21 +101,26 @@ extension ChordGrip {
                                       offsets: [0, 0, 1, 0, 2, 0], quality: .dom7)
     static let eShapeMin7 = ChordGrip(name: "E-shape", rootString: .eRoot,
                                       offsets: [0, 0, 0, 0, 2, 0], quality: .min7)
+    // Maj7 is the one E-shape that isn't a full barre as actually played (2026-07-13 device review
+    // vs. the standard CAGED chart): the six-string barre-plus-stretch is unplayable, so the shape
+    // mutes the A and high e and voices the shell (root, maj7, 3, 5) on low E / D / G / B.
     static let eShapeMaj7 = ChordGrip(name: "E-shape", rootString: .eRoot,
-                                      offsets: [0, 0, 1, 1, 2, 0], quality: .maj7)
+                                      offsets: [nil, 0, 1, 1, nil, 0], quality: .maj7)
 
-    // A-shape family — root on the A string, low E muted. `aShapeMinor` placed at fret 2 (B)
-    // reproduces `ChordVoicing.bMinorBarre` byte-for-byte (M5).
+    // A-shape family — root on the A string, **low E and high e both muted**: the common 4-string
+    // A-D-G-B barre (2026-07-13 review), not the 5-string form — barring cleanly under the high e is
+    // awkward, and it only doubles a tone already sounding. `aShapeMinor` placed at fret 2 (B)
+    // reproduces `ChordVoicing.bMinorBarre` byte-for-byte (M5); both mute the high e.
     static let aShapeMajor = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                       offsets: [0, 2, 2, 2, 0, nil], quality: .major)
+                                       offsets: [nil, 2, 2, 2, 0, nil], quality: .major)
     static let aShapeMinor = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                       offsets: [0, 1, 2, 2, 0, nil], quality: .minor)
+                                       offsets: [nil, 1, 2, 2, 0, nil], quality: .minor)
     static let aShapeDom7 = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                      offsets: [0, 2, 0, 2, 0, nil], quality: .dom7)
+                                      offsets: [nil, 2, 0, 2, 0, nil], quality: .dom7)
     static let aShapeMin7 = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                      offsets: [0, 1, 0, 2, 0, nil], quality: .min7)
+                                      offsets: [nil, 1, 0, 2, 0, nil], quality: .min7)
     static let aShapeMaj7 = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                      offsets: [0, 2, 1, 2, 0, nil], quality: .maj7)
+                                      offsets: [nil, 2, 1, 2, 0, nil], quality: .maj7)
 
     /// Tier 1 (ADR 0084 M3): triads + 7ths on the two CAGED root strings — the curated **default**
     /// movable set. Generated, not tabled (M1): the whole vocabulary is these ten grips × a root note.
@@ -124,25 +129,25 @@ extension ChordGrip {
         .aShapeMajor, .aShapeMinor, .aShapeDom7, .aShapeMin7, .aShapeMaj7
     ]
 
-    // Tier 2 (M3): suspensions + sixths, in guitar-idiomatic voicings. Sus2 is A-shape only — the
-    // E-shape sus2 is an awkward stretch nobody plays (ADR 0084 M3). "Basic 9ths" are deliberately
-    // left to the placer (slice 3): the movable dom-9 shape needs a string *below* the root fret, so
-    // it can't sit in open position and jumps an octave — an honest fit for the per-string placer, not
-    // a clean grip.
+    // Tier 2 (M3): suspensions + sixths, in guitar-idiomatic voicings. A-shapes mute the high e like
+    // their Tier-1 kin. Sus2 is A-shape only (the E-shape sus2 is an awkward stretch nobody plays);
+    // conversely **Sixth is E-shape only** — the A-shape 6 voices its defining 6th *on* the high e
+    // string, so muting that string (the 4-string A-D-G-B barre) would erase the 6th and leave a plain
+    // major. The 6th sits safely on the B string in the E-shape. "Basic 9ths" stay with the placer
+    // (slice 3): the movable dom-9 needs a string *below* the root fret, so it can't sit in open
+    // position and jumps an octave — an honest fit for the per-string placer, not a clean grip.
     static let aShapeSus2 = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                      offsets: [0, 0, 2, 2, 0, nil], quality: .sus2)
+                                      offsets: [nil, 0, 2, 2, 0, nil], quality: .sus2)
     static let eShapeSus4 = ChordGrip(name: "E-shape", rootString: .eRoot,
                                       offsets: [0, 0, 2, 2, 2, 0], quality: .sus4)
     static let aShapeSus4 = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                      offsets: [0, 3, 2, 2, 0, nil], quality: .sus4)
+                                      offsets: [nil, 3, 2, 2, 0, nil], quality: .sus4)
     static let eShapeSixth = ChordGrip(name: "E-shape", rootString: .eRoot,
                                        offsets: [0, 2, 1, 2, 2, 0], quality: .sixth)
-    static let aShapeSixth = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                       offsets: [2, 2, 2, 2, 0, nil], quality: .sixth)
 
     /// Tier 2 (M3): suspensions + sixths.
     static let tier2: [ChordGrip] = [
-        .aShapeSus2, .eShapeSus4, .aShapeSus4, .eShapeSixth, .aShapeSixth
+        .aShapeSus2, .eShapeSus4, .aShapeSus4, .eShapeSixth
     ]
 
     /// The **curated** movable set the authoring sheet offers — Tier 1–2 (ADR 0084 M3). Tier 3

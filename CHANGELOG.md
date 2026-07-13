@@ -12,6 +12,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   sus2, sus4, 6th), choose a **root note**, and it lands as that chord — the same fingering slid up the
   neck. A live diagram shows the result at its fret (e.g. *E-shape · fret 3 → G7*), so a slid barre reads
   as "the open shape moved up." Slid shapes mix freely with the open-shape library in one progression.
+  Voicings match how the shapes are **actually played**, not just the theory: the E-shape major 7 is the
+  playable shell (A + high e muted, no six-string stretch), and A-shape barres are the common 4-string
+  A-D-G-B form (high e muted). *Sixth* is offered on the E-shape only (the A-shape 6 voices its 6th on
+  the muted high e). The library **Bm** now shows the same 4-string A-shape barre.
 - **Seven more scales in the scale library.** The **Scale** picker now offers the five remaining modes of
   the major scale — **Dorian, Phrygian, Lydian, Mixolydian, Locrian** (Ionian and Aeolian already ship as
   *Major* and *Natural Minor*) — plus the two **bebop** scales, **Bebop Major** (the major with a chromatic
