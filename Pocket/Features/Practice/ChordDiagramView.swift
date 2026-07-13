@@ -14,8 +14,6 @@ struct ChordDiagramView: View {
     /// The active chord shows solid `tint` dots; a dimmed "up next" preview passes `false`.
     var isActive: Bool = true
     var tint: Color = PocketColor.practice
-    /// The Roman-numeral badge (I, V, vi …) shown beside the name, or `nil` to hide it.
-    var degreeLabel: String?
     /// How many frets the window shows.
     var fretWindow: Int = 4
 
@@ -27,19 +25,9 @@ struct ChordDiagramView: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            HStack(spacing: 5) {
-                Text(voicing.name)
-                    .font(.futura(.subheadline, weight: .semibold))
-                    .foregroundStyle(isActive ? PocketColor.textPrimary : PocketColor.textSecondary)
-                if let degreeLabel {
-                    Text(degreeLabel)
-                        .font(.futura(.caption2, weight: .bold))
-                        .foregroundStyle(isActive ? tint : PocketColor.textSecondary)
-                        .padding(.horizontal, 5).padding(.vertical, 1)
-                        .background(Capsule().fill((isActive ? tint : PocketColor.textSecondary)
-                            .opacity(0.16)))
-                }
-            }
+            Text(voicing.name)
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(isActive ? PocketColor.textPrimary : PocketColor.textSecondary)
             GeometryReader { geo in
                 board(in: geo.size)
             }

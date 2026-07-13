@@ -82,8 +82,7 @@ struct StrumChordsView: View {
 
         HStack(alignment: .top, spacing: 24) {
             if let current {
-                ChordDiagramView(voicing: current, isActive: isRunning, tint: tint,
-                                 degreeLabel: progression.numeral(for: current))
+                ChordDiagramView(voicing: current, isActive: isRunning, tint: tint)
                     .frame(maxWidth: 190)
                     .animation(.easeInOut(duration: 0.15), value: current)
             }
@@ -92,8 +91,7 @@ struct StrumChordsView: View {
                     Text(isRunning ? "Next" : "Get ready")
                         .font(.futura(.caption, weight: .semibold))
                         .foregroundStyle(PocketColor.textSecondary)
-                    ChordDiagramView(voicing: next, isActive: false, tint: tint,
-                                     degreeLabel: progression.numeral(for: next))
+                    ChordDiagramView(voicing: next, isActive: false, tint: tint)
                         .frame(maxWidth: 120)
                 }
             }

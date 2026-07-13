@@ -12,11 +12,13 @@ import SwiftUI
 struct ChordProgressionEditor: View {
     @Binding var progression: ChordProgression
 
-    /// Which slot a presented `MovableChordSheet` writes into — a new chord, or a swap of an existing
-    /// one (ADR 0084 M2: movable grips mix inline with the open-shape library).
-    @State private var movableTarget: MovableTarget?
+    /// Which slot a presented authoring sheet writes into — a new chord, or a swap of an existing one.
+    /// Both the movable grip (M2) and the custom placer (M4) emit a plain `ChordVoicing` mixed inline
+    /// with the open-shape library.
+    @State private var movableTarget: ChordSlot?
+    @State private var customTarget: ChordSlot?
 
-    private enum MovableTarget: Identifiable {
+    private enum ChordSlot: Identifiable {
         case add
         case replace(Int)
         var id: String {
@@ -27,13 +29,8 @@ struct ChordProgressionEditor: View {
         }
     }
 
-    /// Root names in menu order starting at C (pitch class 0 … 11), the way a key is spoken.
-    private let rootNames = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]
-
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            keyPicker
-            Divider()
             ForEach(Array(progression.changes.enumerated()), id: \.offset) { index, change in
                 changeRow(index: index, change: change)
                 if index < progression.changeCount - 1 { Divider() }
@@ -44,10 +41,13 @@ struct ChordProgressionEditor: View {
         .sheet(item: $movableTarget) { target in
             MovableChordSheet { voicing in apply(voicing, to: target) }
         }
+        .fullScreenCover(item: $customTarget) { target in
+            CustomChordSheet { voicing in apply(voicing, to: target) }
+        }
     }
 
-    /// Route a grip-generated voicing to the slot the sheet was opened for.
-    private func apply(_ voicing: ChordVoicing, to target: MovableTarget) {
+    /// Route a generated or placed voicing to the slot the sheet was opened for.
+    private func apply(_ voicing: ChordVoicing, to target: ChordSlot) {
         switch target {
         case .add:
             progression = progression.appending(voicing)
@@ -56,45 +56,9 @@ struct ChordProgressionEditor: View {
         }
     }
 
-    /// Sets the key the Roman-numeral badges read against — an Auto option (infer from the first
-    /// chord) plus every root, and a major/minor toggle.
-    private var keyPicker: some View {
-        HStack(spacing: 10) {
-            Text("Key").font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-            Spacer(minLength: 0)
-            Menu {
-                Button("Auto") { progression.keyRoot = nil }
-                ForEach(rootNames.indices, id: \.self) { root in
-                    Button(rootNames[root]) { progression.keyRoot = root }
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Text(keyRootLabel).font(.futura(.subheadline, weight: .semibold))
-                    Image(systemName: "chevron.up.chevron.down").font(.caption2)
-                }
-                .foregroundStyle(PocketColor.practice)
-            }
-            .buttonStyle(.borderless)
-            Picker("", selection: $progression.keyIsMinor) {
-                Text("Major").tag(false)
-                Text("Minor").tag(true)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 140)
-        }
-    }
-
-    private var keyRootLabel: String {
-        guard let root = progression.keyRoot else { return "Auto" }
-        return rootNames[((root % 12) + 12) % 12]
-    }
-
     private func changeRow(index: Int, change: ChordChange) -> some View {
         HStack(alignment: .center, spacing: 14) {
-            ChordDiagramView(voicing: change.voicing, tint: PocketColor.practice,
-                             degreeLabel: progression.numeral(for: change.voicing))
+            ChordDiagramView(voicing: change.voicing, tint: PocketColor.practice)
                 .frame(width: 56)
             VStack(alignment: .leading, spacing: 8) {
                 voicingMenu(index: index, current: change.voicing)
@@ -117,6 +81,11 @@ struct ChordProgressionEditor: View {
                 movableTarget = .replace(index)
             } label: {
                 Label("Movable shape…", systemImage: "arrow.left.and.right")
+            }
+            Button {
+                customTarget = .replace(index)
+            } label: {
+                Label("Custom chord…", systemImage: "square.and.pencil")
             }
             Divider()
             ForEach(ChordVoicing.library) { voicing in
@@ -151,6 +120,11 @@ struct ChordProgressionEditor: View {
                 movableTarget = .add
             } label: {
                 Label("Movable shape…", systemImage: "arrow.left.and.right")
+            }
+            Button {
+                customTarget = .add
+            } label: {
+                Label("Custom chord…", systemImage: "square.and.pencil")
             }
             Divider()
             ForEach(ChordVoicing.library) { voicing in

@@ -97,3 +97,28 @@ extension ChordVoicing {
             && !soundedStrings.isEmpty
     }
 }
+
+// MARK: - Scale degrees (ADR 0084 — the custom placer's live analysis)
+
+extension ChordVoicing {
+    /// Chromatic scale-degree names for an interval in semitones above the root — "R", "♭3", "5", "♭7".
+    /// Deliberately the plain chromatic reading (no jazz-extension renaming like ♭13): honest and
+    /// unambiguous for an arbitrary voicing, where a full chord-name analysis would guess.
+    private static let degreeNames = ["R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"]
+
+    static func degreeName(semitonesAboveRoot semitones: Int) -> String {
+        degreeNames[(((semitones % 12) + 12) % 12)]
+    }
+
+    /// The degree each sounded string plays relative to the voicing's root (its lowest sounding pitch),
+    /// high-e first (index 0 … 5 low E); `nil` for a muted string. The custom placer draws these on the
+    /// board so the player sees the intervals a bespoke shape spells as they build it.
+    var degreeLabels: [String?] {
+        guard let root = rootPitchClass else { return Array(repeating: nil, count: frets.count) }
+        return frets.indices.map { index in
+            guard let fret = frets[index] else { return nil }
+            let pitchClass = (((ChordVoicing.openMidi[index] + fret) % 12) + 12) % 12
+            return ChordVoicing.degreeName(semitonesAboveRoot: pitchClass - root)
+        }
+    }
+}

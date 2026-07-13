@@ -127,8 +127,8 @@ private struct ConfigureExerciseForm: View {
         let drillSeed = template.defaultFretboardContent?.customValue ?? .spiderWalk
         _customDrill = State(initialValue: drillSeed.resized(notesPerBeat: drillSeed.notesPerBeat,
                                                              beatsPerBar: bars))
-        _chords = State(initialValue: template.defaultChordProgression ?? .gMajorPop)
-        let sheetSeed = template.defaultStrumChordSheet ?? .popGroove
+        _chords = State(initialValue: template.defaultChordProgression ?? .empty)
+        let sheetSeed = template.defaultStrumChordSheet ?? .empty
         _strumChords = State(initialValue: StrumChordSheet(
             strumPattern: sheetSeed.strumPattern.resized(
                 slotsPerBeat: sheetSeed.strumPattern.slotsPerBeat, beatsPerBar: bars),
@@ -137,6 +137,17 @@ private struct ConfigureExerciseForm: View {
 
     private var trimmedName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// A Chords (or Strum & Chords) drill starts with an empty progression now, so Create also needs at
+    /// least one chord placed — an empty progression has nothing to change through.
+    private var canCreate: Bool {
+        guard !trimmedName.isEmpty else { return false }
+        switch template.bespokeEditor {
+        case .chords: return !chords.changes.isEmpty
+        case .strumChords: return !strumChords.chordProgression.changes.isEmpty
+        default: return true
+        }
     }
 
     private func clampCommand(_ value: Int) -> Int {
@@ -193,7 +204,7 @@ private struct ConfigureExerciseForm: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Create") { create(plan) }
-                    .disabled(trimmedName.isEmpty)
+                    .disabled(!canCreate)
             }
         }
     }

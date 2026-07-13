@@ -162,7 +162,25 @@ decision; slice 3 is independent and could land any time.
   library (leaning-inline confirmed — a progression freely mixes open shapes, slid grips, and, later,
   placed customs). A sheet, not a nested menu, so the shape/quality/root choice has room to show a live
   preview.
-- **D-root grips** — **deferred:** E/A-shape only for now; D-root chords go to the placer (slice 3).
-- **Placer finger hints** — still open, belongs to slice 3 (the placer). Grips currently generate
-  fretted geometry only; the two library barres keep their hand-authored `fingers` (not replaced), so
-  no fingering is lost.
+- **D-root grips** — **RESOLVED (slice 3): the placer covers them.** No curated D-root grip family was
+  added; a D-root voicing (or any bespoke shape) is composed directly in the custom placer
+  (`CustomChordSheet`), which is exactly the escape hatch M4 describes. E/A-shape stay the only *generated*
+  grip families.
+- **Placer finger hints** — **RESOLVED (slice 3): deferred, no finger control.** The shared
+  `ChordDiagramView` deliberately doesn't draw finger numbers (they read as noise at diagram scale), so a
+  finger picker in the placer would have no visible effect. The placer composes fretted/open/muted geometry
+  only — the same fretted-only output the grips generate. Fingers can return once a surface actually renders
+  them; the two library barres still keep their hand-authored `fingers` (not replaced), so no fingering is
+  lost.
+- **Custom-chord placer (M4)** — **DELIVERED (slice 3): `CustomChordSheet`, a full-screen tappable chord
+  box.** Reached from a **Custom chord…** item in both the Add-chord and per-chord swap menus of
+  `ChordProgressionEditor` (beside **Movable shape…**), presented `.fullScreenCover`. Rather than a menu
+  list, the placer is an *editable twin of `ChordDiagramView`* (device feedback, 2026-07-13): strings are
+  columns (low E left → high e right), tapping a fret cell frets that string (tap again to clear), tapping
+  the ✕/○ marker above a string cycles muted ↔ open, and a position control slides a 5-fret window up the
+  neck (frets 1–16). Each sounded string shows its **scale degree from the lowest note** (R / 3 / 5 / ♭7 …)
+  via the pure `ChordVoicing.degreeLabels` / `degreeName` — a plain chromatic reading, *not* a full
+  chord-name analysis (that would guess at altered/extended voicings; deferred). The player names the
+  bespoke voicing (no derivable name, unlike a slid grip); Insert is gated on `ChordVoicing.isValid` + a
+  non-empty name; the output is a plain `ChordVoicing` mixed inline (M4/M5) — no new persisted type,
+  renderer and run screen untouched. **All three slices of ADR 0084 are now shipped.**

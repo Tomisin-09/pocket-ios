@@ -57,4 +57,9 @@ extension ChordProgression {
         ChordChange(.eMinor, beats: 4),
         ChordChange(.cMajor, beats: 4)
     ], keyRoot: 7, keyIsMinor: false)  // G major → I V vi IV
+
+    /// An empty progression — what a freshly-created Chords exercise starts on, so the editor opens
+    /// clean with just "Add chord" (no default turnaround to clear out first). Still used by the seeded
+    /// preset (`gMajorPop`), which ships real chords.
+    static let empty = ChordProgression(changes: [])
 }
