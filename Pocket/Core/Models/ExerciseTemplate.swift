@@ -50,7 +50,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scales: return "Scales"
         case .arpeggios: return "Arpeggios"
         case .chords: return "Chords"
-        case .strumChords: return "Strum & Chords"
+        case .strumChords: return "Chords & Strum"
         case .picking: return "Picking"
         case .legato: return "Legato"
         case .fingerstyle: return "Fingerstyle"
@@ -142,6 +142,16 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// tempo + meter settings) — true for Strumming and the fretboard family; grows as renderers land.
     var hasBespokeEditor: Bool { bespokeEditor != nil }
 
+    /// Templates listed in the create picker but **not yet buildable** — shown disabled with a
+    /// "Coming Soon" badge so the menu previews the roadmap without offering a dead drill
+    /// (2026-07-13, ADR 0087). Ear Training and Theory have no renderer or authoring surface yet.
+    var isComingSoon: Bool {
+        switch self {
+        case .earTraining, .theory: return true
+        default: return false
+        }
+    }
+
     /// The starter **strum** pattern a freshly-created exercise begins with — a folk pattern for
     /// Strumming (so its lane is never empty), `nil` otherwise. Encoded at creation via
     /// `setStrumPattern`.
@@ -176,10 +186,23 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         bespokeEditor == .strumChords ? .empty : nil
     }
 
-    /// The templates offered in the create picker, in menu order: the flexible **Basic** catch-all
-    /// first (the default, no-fuss drill), then the bespoke Strumming, then the other techniques.
+    /// **Every** template in canonical menu order — the grouping / section order for *existing*
+    /// exercises (e.g. the routine-unit picker), so it includes the retired **Fingerstyle** and
+    /// **Rhythm** templates: drills a player already created under those still group under their
+    /// section even though the create picker no longer offers them.
+    static let displayOrder: [ExerciseTemplate] = [
+        .basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
+        .arpeggios, .legato, .fingerstyle, .rhythm, .earTraining, .theory
+    ]
+
+    /// The templates offered in the **create** picker, in menu order (ADR 0087, 2026-07-13):
+    /// **Basic** first (the default, no-fuss drill), then Warm-up and the techniques. **Fingerstyle**
+    /// and **Rhythm** are dropped (fingerstyle out of scope; rhythm already covered by Strumming +
+    /// Chords). **Ear Training** and **Theory** appear last but are gated `isComingSoon` — the picker
+    /// renders them disabled with a badge. The full `displayOrder` (above) drives grouping instead,
+    /// so retiring a template from creation never hides drills already made under it.
     static let creatable: [ExerciseTemplate] = [
-        .basic, .strumming, .scales, .arpeggios, .chords, .strumChords, .picking,
-        .legato, .fingerstyle, .rhythm, .warmup, .earTraining, .theory
+        .basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
+        .arpeggios, .legato, .earTraining, .theory
     ]
 }

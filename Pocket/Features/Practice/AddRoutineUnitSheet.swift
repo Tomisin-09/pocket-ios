@@ -116,11 +116,12 @@ struct AddRoutineUnitSheet: View {
 
     // MARK: - Grouped data
 
-    /// Exercises bucketed by their (immutable) **template**, in the create-menu order (`creatable`),
+    /// Exercises bucketed by their (immutable) **template**, in canonical menu order
+    /// (`displayOrder` — the *full* set, so drills made under a now-retired template still group),
     /// dropping templates with no exercises. Each group drills into its own unit list.
     private var exerciseGroups: [PickGroup] {
         let byTemplate = Dictionary(grouping: exercises, by: \.template)
-        return ExerciseTemplate.creatable.compactMap { template in
+        return ExerciseTemplate.displayOrder.compactMap { template in
             guard let members = byTemplate[template], !members.isEmpty else { return nil }
             return PickGroup(id: template.rawValue, title: template.displayName,
                              icon: template.iconName, rows: members.map(exerciseRow))

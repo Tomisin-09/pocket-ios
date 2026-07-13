@@ -15,8 +15,15 @@ struct ExerciseTemplatePicker: View {
         List {
             Section {
                 ForEach(ExerciseTemplate.creatable) { template in
-                    Button { onSelect(template); haptic(.light) } label: { row(template) }
-                        .listRowBackground(PocketColor.background)
+                    // Coming-soon templates preview the roadmap but aren't buildable yet — a plain,
+                    // disabled row (no tap, no chevron), the rest a live create button (ADR 0087).
+                    if template.isComingSoon {
+                        row(template)
+                            .listRowBackground(PocketColor.background)
+                    } else {
+                        Button { onSelect(template); haptic(.light) } label: { row(template) }
+                            .listRowBackground(PocketColor.background)
+                    }
                 }
             } footer: {
                 Text("Pick the kind of drill. This sets how you build and run it — and can't be "
@@ -32,7 +39,8 @@ struct ExerciseTemplatePicker: View {
     }
 
     private func row(_ template: ExerciseTemplate) -> some View {
-        HStack(spacing: 14) {
+        let comingSoon = template.isComingSoon
+        return HStack(spacing: 14) {
             Image(systemName: template.iconName)
                 .font(.futura(.title3))
                 .foregroundStyle(PocketColor.practice)
@@ -42,21 +50,27 @@ struct ExerciseTemplatePicker: View {
                     Text(template.displayName)
                         .font(.futura(.body, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
-                    if template.hasBespokeEditor { bespokeBadge }
+                    if comingSoon { comingSoonBadge } else if template.hasBespokeEditor { bespokeBadge }
                 }
                 Text(template.blurb)
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(PocketColor.textSecondary)
+            // Live rows disclose into the editor; coming-soon rows have nowhere to go.
+            if !comingSoon {
+                Image(systemName: "chevron.right")
+                    .font(.futura(.caption, weight: .semibold))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+        // Dim the whole row so a coming-soon template reads as not-yet-available.
+        .opacity(comingSoon ? 0.5 : 1)
         .accessibilityElement(children: .combine)
-        .accessibilityHint(template.hasBespokeEditor ? "Has its own editor" : "")
+        .accessibilityHint(comingSoon ? "Coming soon"
+                           : (template.hasBespokeEditor ? "Has its own editor" : ""))
     }
 
     private var bespokeBadge: some View {
@@ -65,6 +79,14 @@ struct ExerciseTemplatePicker: View {
             .foregroundStyle(PocketColor.practice)
             .padding(.horizontal, 6).padding(.vertical, 1)
             .background(Capsule().fill(PocketColor.practice.opacity(0.16)))
+    }
+
+    private var comingSoonBadge: some View {
+        Text("Coming Soon")
+            .font(.futura(.caption2, weight: .bold))
+            .foregroundStyle(PocketColor.textSecondary)
+            .padding(.horizontal, 6).padding(.vertical, 1)
+            .background(Capsule().fill(PocketColor.textSecondary.opacity(0.14)))
     }
 }
 

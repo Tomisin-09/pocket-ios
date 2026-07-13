@@ -6,6 +6,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **New-exercise picker reordered, and two drills changed.** The create list is now **Basic, Warm-up,
+  Strumming, Picking, Scales, Chords, Chords & Strum, Arpeggios, Legato, Ear Training, Theory**.
+  **Fingerstyle** and **Rhythm** are no longer offered (fingerstyle is out of scope; rhythm is already
+  covered by Strumming and Chords) — exercises you already made under them are untouched. **Ear Training**
+  and **Theory** appear as **Coming Soon** (listed but not yet buildable). **Strum & Chords** is renamed
+  **Chords & Strum**.
 - **Chord drills start empty and lost the key selector.** Creating a **Chords** exercise now opens on a
   clean **Add chord** button instead of a default G–D–Em–C turnaround you had to clear out first (Create
   stays disabled until you add at least one chord). **Strum & Chords** starts blank the same way — an
