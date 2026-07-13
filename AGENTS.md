@@ -8,7 +8,10 @@ changing files or targets.
 ## Apple frameworks evolve — verify, don't assume
 
 SwiftUI, SwiftData, MusicKit and AVFoundation change meaningfully between OS
-versions, and APIs may differ from training data. Before writing against an
+versions, and APIs may differ from training data. **SwiftData especially has a
+set of device-only footguns this project has already hit — read
+`docs/swiftdata-gotchas.md` before touching a `@Model`, `#Predicate`, or
+model-driven sheet.** Before writing against an
 Apple framework, check the current API (Xcode docs / developer.apple.com) and
 heed deprecations. Pin the deployment target in `project.yml` and write to it.
 
@@ -22,12 +25,22 @@ Apple-Music-as-waveform-source assumption without revisiting that ADR.
 
 Run these before every commit that touches app code. Do not push until all pass.
 
+> **Automated:** `./scripts/install-hooks.sh` installs a `pre-push` hook that
+> mirrors CI (lint `--strict` + Swift-6 strict-concurrency build) so failures
+> surface locally instead of as a follow-up "Fix CI" commit. Tiers via
+> `POCKET_PREPUSH`: `fast` (default) · `full` (runs the `PocketAll` plan) ·
+> `skip`. Bypass once with `git push --no-verify`. The steps below are the
+> manual equivalent. Note CI runs an **older** toolchain (Xcode 16 / macOS-15)
+> that is stricter than local Xcode 26.5 — the hook narrows but can't fully
+> close that gap.
+
 1. **Lint** — `swiftlint`. Fix all errors. Suppress only with
    `// swiftlint:disable:next <rule>` on the exact line, never file-wide.
 2. **Build** — `xcodebuild build -scheme Pocket -destination 'generic/platform=iOS Simulator'`.
    Fix all errors and warnings. This catches breakage in files with no test
    coverage — do not skip it.
-3. **Tests** — `xcodebuild test -scheme Pocket -destination 'platform=iOS Simulator,name=iPhone 15 Pro'`.
+3. **Tests** — `xcodebuild test -scheme Pocket -destination 'platform=iOS Simulator,name=iPhone 17'`.
+   (Use `-testPlan PocketAll` to include `PocketUITests`, as CI does.)
    When adding or changing a feature, update the relevant test. When adding a
    new module with non-trivial logic, add a test under `PocketTests/`. Pure,
    UI-free logic (tempo math, slider mapping, automator stepping, planner
