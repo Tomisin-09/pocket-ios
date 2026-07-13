@@ -85,12 +85,35 @@ final class ExerciseTemplateTests: XCTestCase {
         }
     }
 
-    func testCreatableListsEveryTemplateWithBasicFirst() {
-        // The create picker offers every template, Basic (the default catch-all) first.
-        XCTAssertEqual(Set(ExerciseTemplate.creatable), Set(ExerciseTemplate.allCases))
-        XCTAssertEqual(ExerciseTemplate.creatable.count, ExerciseTemplate.allCases.count)
-        XCTAssertEqual(ExerciseTemplate.creatable.first, .basic)
-        XCTAssertEqual(ExerciseTemplate.creatable.dropFirst().first, .strumming)
+    func testCreatablePickerOrderAndRetiredTemplates() {
+        // The create picker (ADR 0087): Basic first, then Warm-up, in the agreed order — and it no
+        // longer offers the retired Fingerstyle / Rhythm templates.
+        XCTAssertEqual(ExerciseTemplate.creatable,
+                       [.basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
+                        .arpeggios, .legato, .earTraining, .theory])
+        XCTAssertFalse(ExerciseTemplate.creatable.contains(.fingerstyle))
+        XCTAssertFalse(ExerciseTemplate.creatable.contains(.rhythm))
+    }
+
+    func testDisplayOrderCoversEveryTemplateForGrouping() {
+        // Grouping order stays complete — every case, including the retired ones — so drills already
+        // made under Fingerstyle / Rhythm still bucket under their section.
+        XCTAssertEqual(Set(ExerciseTemplate.displayOrder), Set(ExerciseTemplate.allCases))
+        XCTAssertEqual(ExerciseTemplate.displayOrder.count, ExerciseTemplate.allCases.count)
+        XCTAssertEqual(ExerciseTemplate.displayOrder.first, .basic)
+        // The picker list is a subset of the grouping order, same relative order.
+        XCTAssertEqual(ExerciseTemplate.creatable,
+                       ExerciseTemplate.displayOrder.filter(ExerciseTemplate.creatable.contains))
+    }
+
+    func testComingSoonTemplates() {
+        // Ear Training and Theory are listed but not yet buildable.
+        XCTAssertTrue(ExerciseTemplate.earTraining.isComingSoon)
+        XCTAssertTrue(ExerciseTemplate.theory.isComingSoon)
+        for template in ExerciseTemplate.creatable where !template.isComingSoon {
+            XCTAssertFalse(template.isComingSoon, "\(template) should be buildable")
+        }
+        XCTAssertEqual(ExerciseTemplate.strumChords.displayName, "Chords & Strum")
     }
 
     func testEveryTemplateHasNonEmptyDisplayNameBlurbAndIcon() {
