@@ -78,7 +78,8 @@ struct WaveformPracticeView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .sheet(item: $model.editingLoop, onDismiss: model.launchPendingPractice) { loop in
+        .sheet(item: $model.editingLoop, onDismiss: model.launchPendingPractice) { ref in
+            let loop = ref.value
             LoopEditSheet(loop: loop,
                           autoColor: LoopColor.derivedColor(for: loop, among: model.loops),
                           onDelete: { model.deleteLoop(loop) },
@@ -102,10 +103,12 @@ struct WaveformPracticeView: View {
                     }
             }
         }
-        .sheet(item: $model.editingMarker) { marker in
+        .sheet(item: $model.editingMarker) { ref in
+            let marker = ref.value
             MarkerEditSheet(marker: marker, onDelete: { model.deleteMarker(marker) })
         }
-        .sheet(item: $model.editingAutomatorLoop) { loop in
+        .sheet(item: $model.editingAutomatorLoop) { ref in
+            let loop = ref.value
             AutomatorSheet(loop: loop, song: model.song,
                            onSet: { model.startAutomator(for: loop) },
                            onTurnOff: { model.turnOffAutomator(for: loop) })
