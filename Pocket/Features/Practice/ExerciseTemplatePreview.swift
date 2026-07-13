@@ -47,8 +47,7 @@ struct ChordProgressionPreview: View {
                 HStack(alignment: .top, spacing: 14) {
                     ForEach(Array(progression.changes.enumerated()), id: \.offset) { index, change in
                         ChordDiagramView(voicing: change.voicing, isActive: index == 0,
-                                         tint: PocketColor.practice,
-                                         degreeLabel: progression.numeral(for: change.voicing))
+                                         tint: PocketColor.practice)
                             .frame(width: 78)
                     }
                 }
@@ -74,8 +73,7 @@ struct StrumChordsPreview: View {
                         ForEach(Array(sheet.chordProgression.changes.enumerated()),
                                 id: \.offset) { index, change in
                             ChordDiagramView(voicing: change.voicing, isActive: index == 0,
-                                             tint: PocketColor.practice,
-                                             degreeLabel: sheet.chordProgression.numeral(for: change.voicing))
+                                             tint: PocketColor.practice)
                                 .frame(width: 78)
                         }
                     }

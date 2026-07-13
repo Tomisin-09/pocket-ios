@@ -5,7 +5,32 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Chord drills start empty and lost the key selector.** Creating a **Chords** exercise now opens on a
+  clean **Add chord** button instead of a default G–D–Em–C turnaround you had to clear out first (Create
+  stays disabled until you add at least one chord). **Strum & Chords** starts blank the same way — an
+  empty groove over no chords, both built from scratch. The **Key** picker and the **Roman-numeral badges**
+  (I, V, vi …) are gone from the chord editor and the live practice screen — the chord name identifies
+  each chord, and the key added little for its screen cost.
+
 ### Added
+- **Movable chord shapes.** Building a chord progression (the **Chords** and **Strum & Chords** drills),
+  the chord menu — both **Add chord** and the per-chord swap — gained a **Movable shape…** option: pick
+  an **E-shape** or **A-shape** barre grip and a **quality** (major, minor, dominant 7, minor 7, major 7,
+  sus2, sus4, 6th), choose a **root note**, and it lands as that chord — the same fingering slid up the
+  neck. A live diagram shows the result at its fret (e.g. *E-shape · fret 3 → G7*), so a slid barre reads
+  as "the open shape moved up." Slid shapes mix freely with the open-shape library in one progression.
+  Voicings match how the shapes are **actually played**, not just the theory: the E-shape major 7 is the
+  playable shell (A + high e muted, no six-string stretch), and A-shape barres are the common 4-string
+  A-D-G-B form (high e muted). *Sixth* is offered on the E-shape only (the A-shape 6 voices its 6th on
+  the muted high e). The library **Bm** now shows the same 4-string A-shape barre.
+- **Custom chord placer.** The same chord menus gained a **Custom chord…** option for any voicing the
+  curated shapes can't express — jazz shells, extensions, altered dominants, D-root shapes, anything
+  bespoke. It opens a **full-screen, tappable chord box**: tap a fret to place it on that string, tap the
+  same fret again to clear it, and tap the **✕ / ○ above a string** to mute or open it. A position control
+  slides the window up the neck, so a shape can sit anywhere. Each sounded string shows its **degree** from
+  the lowest note (R, 3, 5, ♭7 …), so you can see the intervals as you build. Name it and it lands in the
+  progression like any other, mixing freely with open shapes and slid grips.
 - **Seven more scales in the scale library.** The **Scale** picker now offers the five remaining modes of
   the major scale — **Dorian, Phrygian, Lydian, Mixolydian, Locrian** (Ionian and Aeolian already ship as
   *Major* and *Natural Minor*) — plus the two **bebop** scales, **Bebop Major** (the major with a chromatic

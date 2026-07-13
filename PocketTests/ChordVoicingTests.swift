@@ -73,6 +73,47 @@ final class ChordVoicingTests: XCTestCase {
         XCTAssertEqual(ChordVoicing.dMajor.soundedStrings, [0, 1, 2, 3])
     }
 
+    // MARK: - Custom placer contract (ADR 0084 M4)
+
+    /// The custom-chord placer composes an arbitrary `[Int?]` per string and gates "Insert" on
+    /// `isValid`; these lock the exact validity semantics that gate relies on.
+    func testPlacerComposedVoicingIsValidWhenAnyStringSounds() {
+        // A bespoke shell (Cadd9-ish): x3203x — three sounded strings, no negatives.
+        let composed = ChordVoicing("Custom", frets: [nil, 3, 0, 2, 3, nil])
+        XCTAssertTrue(composed.isValid, "a composed shape with sounded strings is insertable")
+    }
+
+    func testPlacerAllMutedVoicingIsInvalid() {
+        // The placer starts every string muted; nothing sounds, so Insert stays disabled.
+        let empty = ChordVoicing("Custom", frets: Array(repeating: nil, count: ChordVoicing.stringCount))
+        XCTAssertFalse(empty.isValid, "an all-muted composition sounds nothing and is not insertable")
+    }
+
+    // MARK: - Degree labels (ADR 0084 M4 — the placer's live analysis)
+
+    func testDegreeNameMapsTheChromaticScale() {
+        XCTAssertEqual(ChordVoicing.degreeName(semitonesAboveRoot: 0), "R")
+        XCTAssertEqual(ChordVoicing.degreeName(semitonesAboveRoot: 4), "3")
+        XCTAssertEqual(ChordVoicing.degreeName(semitonesAboveRoot: 7), "5")
+        XCTAssertEqual(ChordVoicing.degreeName(semitonesAboveRoot: 10), "♭7")
+        // Wraps across the octave and handles negatives (the placer subtracts a root pitch class).
+        XCTAssertEqual(ChordVoicing.degreeName(semitonesAboveRoot: 12), "R")
+        XCTAssertEqual(ChordVoicing.degreeName(semitonesAboveRoot: -1), "7")
+    }
+
+    func testDegreeLabelsSpellTheChordFromTheLowestNote() {
+        // E dom7 (020100): E is the root → E R, B 5, D ♭7, G♯ 3, B 5, E R (high-e first index 0).
+        XCTAssertEqual(ChordVoicing.eDom7.degreeLabels, ["R", "5", "3", "♭7", "5", "R"])
+    }
+
+    func testDegreeLabelsAreNilForMutedStrings() {
+        // D major (xx0232): the two muted low strings carry no degree.
+        let labels = ChordVoicing.dMajor.degreeLabels
+        XCTAssertNil(labels[5], "muted low E has no degree")
+        XCTAssertNil(labels[4], "muted A has no degree")
+        XCTAssertEqual(labels[3], "R", "the open D string is the root")
+    }
+
     // MARK: - Codable round-trip
 
     func testVoicingRoundTripsThroughCodable() throws {

@@ -58,11 +58,18 @@ final class ExerciseTemplateTests: XCTestCase {
         XCTAssertEqual(ExerciseTemplate.arpeggios.defaultFretboardContent, .arpeggio(.aMinorSeventh))
 
         XCTAssertEqual(ExerciseTemplate.chords.bespokeEditor, .chords)
-        XCTAssertEqual(ExerciseTemplate.chords.defaultChordProgression, .gMajorPop)
+        // A new Chords exercise now starts empty — the editor opens on just "Add chord" (2026-07-13).
+        XCTAssertEqual(ExerciseTemplate.chords.defaultChordProgression, .empty)
+        XCTAssertEqual(ExerciseTemplate.chords.defaultChordProgression?.changeCount, 0)
         XCTAssertNil(ExerciseTemplate.chords.defaultFretboardContent, "chords isn't fretboard content")
 
         XCTAssertEqual(ExerciseTemplate.strumChords.bespokeEditor, .strumChords)
-        XCTAssertEqual(ExerciseTemplate.strumChords.defaultStrumChordSheet, .popGroove)
+        // A new Strum & Chords exercise now starts empty too — a rest-only groove over no chords (ADR 0086).
+        XCTAssertEqual(ExerciseTemplate.strumChords.defaultStrumChordSheet, .empty)
+        XCTAssertEqual(ExerciseTemplate.strumChords.defaultStrumChordSheet?.chordProgression.changeCount, 0)
+        XCTAssertEqual(ExerciseTemplate.strumChords.defaultStrumChordSheet?.strumPattern.slots.allSatisfy {
+            $0.direction == .rest
+        }, true)
         XCTAssertNil(ExerciseTemplate.strumChords.defaultStrumPattern, "sheet isn't a bare strum pattern")
         XCTAssertNil(ExerciseTemplate.strumChords.defaultChordProgression, "sheet isn't a bare progression")
         XCTAssertNil(ExerciseTemplate.strumChords.defaultFretboardContent)

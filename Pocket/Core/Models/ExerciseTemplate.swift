@@ -161,18 +161,19 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    /// The starter **chord progression** a freshly-created Chords exercise begins with — the I–V–vi–IV
-    /// pop turnaround so its surface is never empty. `nil` for non-chords templates. Encoded at
-    /// creation via `setChordProgression`.
+    /// The starter **chord progression** a freshly-created Chords exercise begins with — **empty**, so
+    /// the editor opens clean with just "Add chord" rather than a default turnaround the player has to
+    /// delete (2026-07-13). `nil` for non-chords templates. Encoded at creation via `setChordProgression`.
     var defaultChordProgression: ChordProgression? {
-        bespokeEditor == .chords ? .gMajorPop : nil
+        bespokeEditor == .chords ? .empty : nil
     }
 
-    /// The starter **strum-chord sheet** a freshly-created Strum & Chords exercise begins with — the
-    /// folk groove under the pop turnaround (`.popGroove`) so both surfaces are never empty. `nil` for
-    /// every other template. Encoded at creation via `setStrumChordSheet`.
+    /// The starter **strum-chord sheet** a freshly-created Strum & Chords exercise begins with —
+    /// **empty** (a rest-only groove over an empty progression, ADR 0086), so both surfaces open blank
+    /// and the player builds each from scratch. `nil` for every other template. Encoded at creation via
+    /// `setStrumChordSheet`.
     var defaultStrumChordSheet: StrumChordSheet? {
-        bespokeEditor == .strumChords ? .popGroove : nil
+        bespokeEditor == .strumChords ? .empty : nil
     }
 
     /// The templates offered in the create picker, in menu order: the flexible **Basic** catch-all

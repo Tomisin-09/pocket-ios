@@ -270,6 +270,12 @@ extension StrumPattern {
         StrumPattern(slotsPerBeat: 1, slots: Array(repeating: .down, count: max(1, beatsPerBar)))
     }
 
+    /// An empty groove — one rest per beat, nothing struck. The blank slate a freshly-created Strum &
+    /// Chords drill starts on (2026-07-13), so the player builds the strum from scratch like the chords.
+    static func empty(beatsPerBar: Int = 4) -> StrumPattern {
+        StrumPattern(slotsPerBeat: 1, slots: Array(repeating: .rest, count: max(1, beatsPerBar)))
+    }
+
     /// The ubiquitous folk **D · D U · U D U** — eight eighth-note slots over a 4/4 bar, with
     /// the "and" of beats 1 and 3 rested (the classic ghost). Common-practice vocabulary (T8).
     static let folk = StrumPattern(

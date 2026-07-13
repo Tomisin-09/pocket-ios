@@ -38,6 +38,12 @@ struct StrumChordSheet: Codable, Equatable {
 
 extension StrumChordSheet {
     /// A seeded starter: the folk **D · D U · U D U** groove (one 4/4 bar) under the **G · D · Em · C**
-    /// pop turnaround (one bar per chord) — the groove completes exactly once per chord.
+    /// pop turnaround (one bar per chord) — the groove completes exactly once per chord. Still used by
+    /// the seeded preset.
     static let popGroove = StrumChordSheet(strumPattern: .folk, chordProgression: .gMajorPop)
+
+    /// An empty sheet — a rest-only groove over an empty progression. What a freshly-created Strum &
+    /// Chords exercise starts on (2026-07-13), so both surfaces open blank and the player builds each
+    /// from scratch (matching the Chords template's empty default, ADR 0086).
+    static let empty = StrumChordSheet(strumPattern: .empty(), chordProgression: .empty)
 }

@@ -28,7 +28,9 @@ extension ChordVoicing {
 
     // MARK: Barre
     static let fBarre = ChordVoicing("F", frets: [1, 1, 2, 3, 3, 1], fingers: [1, 1, 2, 4, 3, 1])
-    static let bMinorBarre = ChordVoicing("Bm", frets: [2, 3, 4, 4, 2, nil], fingers: [1, 2, 4, 3, 1, nil])
+    // A-shape barre, high e muted — the common 4-string A-D-G-B form (2026-07-13 review); kept in step
+    // with `ChordGrip.aShapeMinor`, which reproduces this byte-for-byte (ADR 0084 M5).
+    static let bMinorBarre = ChordVoicing("Bm", frets: [nil, 3, 4, 4, 2, nil], fingers: [nil, 2, 4, 3, 1, nil])
 
     // MARK: Triads (a triad is just a three-note voicing — folded in, not a separate axis)
     static let cTriad = ChordVoicing("C triad", frets: [3, 5, 5, nil, nil, nil],
@@ -55,4 +57,9 @@ extension ChordProgression {
         ChordChange(.eMinor, beats: 4),
         ChordChange(.cMajor, beats: 4)
     ], keyRoot: 7, keyIsMinor: false)  // G major → I V vi IV
+
+    /// An empty progression — what a freshly-created Chords exercise starts on, so the editor opens
+    /// clean with just "Add chord" (no default turnaround to clear out first). Still used by the seeded
+    /// preset (`gMajorPop`), which ships real chords.
+    static let empty = ChordProgression(changes: [])
 }
