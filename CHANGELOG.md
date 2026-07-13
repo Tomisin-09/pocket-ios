@@ -5,6 +5,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Fixed
+- **Switching loops no longer carries the wrong tempo.** Arming a loop that has no command tempo set now
+  plays at 100% instead of inheriting the tempo of the loop you were just on. A loop *with* a command
+  tempo arms at that tempo. (Previously a loop with no command tempo could keep the previous loop's
+  reduced speed.)
+
 ### Changed
 - **New-exercise picker reordered, and two drills changed.** The create list is now **Basic, Warm-up,
   Strumming, Picking, Scales, Chords, Chords & Strum, Arpeggios, Legato, Ear Training, Theory**.

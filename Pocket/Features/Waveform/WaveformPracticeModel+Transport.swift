@@ -53,12 +53,13 @@ extension WaveformPracticeModel {
     }
 
     /// Activate `loop` as the transport region and seek to its start, preserving the
-    /// current play/pause state (a skip while paused stays paused). Restores the loop's
-    /// last-practiced speed (ADR 0040); the `didSet` persists the outgoing loop's.
+    /// current play/pause state (a skip while paused stays paused). Arms at the loop's
+    /// command-anchored speed (ADR 0089 — its command tempo, else 100%, never the previous loop's);
+    /// the `didSet` records the outgoing loop's leave speed.
     private func jump(to loop: Loop) {
         let wasPlaying = engine.isPlaying
         activeLoopID = loop.uid
-        speed = loop.resumeSpeed
+        speed = loop.armingSpeed
         applyActiveLoopToEngine()
         engine.seek(toSeconds: loop.startSeconds)
         if wasPlaying { engine.play() }

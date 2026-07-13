@@ -139,6 +139,24 @@ final class SongTests: XCTestCase {
         XCTAssertEqual(loop.resumeSpeed, 0.9, accuracy: 1e-9)
     }
 
+    // MARK: - Loop arming speed (ADR 0089 — command-anchored)
+
+    func testArmingSpeedIsFullTempoWhenNoCommand() {
+        // A loop with no measured command tempo arms at 100% — never inheriting the previous loop's
+        // rate (the tempo-bleed bug). Its stale creation `speed` / last-practised speed are ignored.
+        let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 0.5, repeats: 1)
+        loop.lastPracticedSpeed = 0.6
+        XCTAssertNil(loop.commandTempo)
+        XCTAssertEqual(loop.armingSpeed, 1.0, accuracy: 1e-9)
+    }
+
+    func testArmingSpeedIsCommandTempoWhenSet() {
+        // A loop with a measured command tempo arms at that tempo.
+        let loop = Loop(name: "L", start: 0.1, end: 0.2, speed: 1.0, repeats: 1)
+        loop.commandTempo = 0.85
+        XCTAssertEqual(loop.armingSpeed, 0.85, accuracy: 1e-9)
+    }
+
     // MARK: - Song-level resume tempo (ADR 0044)
 
     func testSongResumeSpeedDefaultsToFullWhenNeverPractised() {

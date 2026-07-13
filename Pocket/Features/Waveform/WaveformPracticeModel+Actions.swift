@@ -220,8 +220,8 @@ extension WaveformPracticeModel {
             }
             return
         }
-        activeLoopID = loop.uid               // didSet persists the outgoing loop's speed
-        speed = loop.resumeSpeed              // restore this loop's last-practiced speed
+        activeLoopID = loop.uid               // didSet records the outgoing loop's leave speed
+        speed = loop.armingSpeed              // command-anchored: its command tempo, else 100% (ADR 0089)
         applyActiveLoopToEngine()
         engine.seek(toSeconds: loop.startSeconds)
         engine.play()
