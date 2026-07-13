@@ -182,6 +182,40 @@ final class ScaleRunTests: XCTestCase {
         }
     }
 
+    // MARK: - Root anchor + most-common badge (ADR 0091)
+
+    func testRootAnchorNamesTheLowestRootStringAndFretForTheFamousBox() {
+        // The famous A-minor-pentatonic box (root on the low E, 5th fret) is the G-shape / position 5.
+        let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 5, octaves: 2)
+        XCTAssertEqual(run.rootAnchor, "root on low E · fret 5")
+    }
+
+    func testRootAnchorNamesTheActualStringWhenTheLowestRootIsNotOnTheLowE() {
+        // Position 1 (the E-shape box at frets 7–10) anchors its lowest root on the D string, fret 7 —
+        // proof the anchor reads the real notes rather than assuming the low E.
+        let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1, octaves: 2)
+        XCTAssertEqual(run.rootAnchor, "root on D · fret 7")
+    }
+
+    func testRootAnchorFollowsTheKey() {
+        // Slide the flagship box up two frets by moving A → B: the anchor fret moves with it.
+        let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 11, position: 5, octaves: 2)
+        XCTAssertEqual(run.rootAnchor, "root on low E · fret 7")
+    }
+
+    func testFlagshipIsTheLowERootBoxAndOnlyItIsFlaggedMostCommon() {
+        // Minor pentatonic: the flagship is the G-shape (position 5), not position 1.
+        let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 5)
+        XCTAssertEqual(run.flagshipPosition, 5)
+        XCTAssertTrue(run.isMostCommon)
+        XCTAssertFalse(ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1).isMostCommon)
+        // Major scale: its flagship low-E-root box is position 1.
+        XCTAssertEqual(ScaleRun(scale: .major, rootPitchClass: 9, position: 1).flagshipPosition, 1)
+        // The neck-spanning layouts aren't CAGED boxes, so they carry no "most common" box.
+        XCTAssertFalse(ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 5,
+                                layout: .extended).isMostCommon)
+    }
+
     // MARK: - Clamping
 
     func testPositionOctaveAndRootClampIntoRange() {
@@ -209,7 +243,9 @@ final class ScaleRunTests: XCTestCase {
     func testTitleReadsRootThenScale() {
         XCTAssertEqual(ScaleRun.aMinorPentatonic.rootName, "A")
         XCTAssertEqual(ScaleRun.aMinorPentatonic.title, "A Minor Pentatonic")
-        XCTAssertEqual(ScaleRun.aMinorPentatonic.position, 1)
+        // The seed opens on the flagship box — the famous 5th-fret G-shape (position 5), not 1 (ADR 0091).
+        XCTAssertEqual(ScaleRun.aMinorPentatonic.position, 5)
+        XCTAssertTrue(ScaleRun.aMinorPentatonic.isMostCommon)
         XCTAssertEqual(ScaleRun.aMinorPentatonic.octaves, 2)
     }
 

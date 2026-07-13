@@ -86,6 +86,22 @@ final class ArpeggioRunTests: XCTestCase {
         XCTAssertEqual(ArpeggioRun(quality: .dominantSeventh, rootPitchClass: 4).title, "E Dominant 7")
     }
 
+    // MARK: - Root anchor + most-common badge (ADR 0091)
+
+    func testDefaultArpeggioOpensOnItsFlagshipLowERootBox() {
+        let seed = ArpeggioRun.aMinorSeventh
+        XCTAssertEqual(seed.position, seed.flagshipPosition)
+        XCTAssertTrue(seed.isMostCommon)
+        XCTAssertTrue(seed.rootAnchor.hasPrefix("root on low E"), seed.rootAnchor)
+    }
+
+    func testPositionLabelReadsAsARootAnchor() {
+        // The primary label is where the hand goes, not a CAGED letter or box number (ADR 0091).
+        let label = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9, position: 3).positionLabel
+        XCTAssertTrue(label.hasPrefix("root on ") || label.hasPrefix("root: open ")
+                      || label.hasPrefix("from fret "), label)
+    }
+
     // MARK: - Codable + content
 
     func testArpeggioRunRoundTripsThroughCodable() throws {

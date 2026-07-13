@@ -15,6 +15,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   reduced speed.)
 
 ### Changed
+- **Scale & arpeggio boxes now read by where your hand goes, and open on the shape you know.** The
+  position control for Scales and Arpeggios no longer labels boxes with a bare CAGED letter ("E shape",
+  "D shape", …) — which, for a minor or modal scale, was the letter of the *relative major* and rarely
+  the shape you'd name. Each box is now named by its root — **"root on low E · fret 5"** — with the CAGED
+  letter kept as a small caption. A new drill also opens on the **flagship box**: the root-position
+  6th-string shape a player learns first (for the minor pentatonic that's the famous 5th-fret box —
+  position 5, not 1), flagged **"Most common."** All five positions stay reachable.
 - **New-exercise picker reordered, and two drills changed.** The create list is now **Basic, Warm-up,
   Strumming, Picking, Scales, Chords, Chords & Strum, Arpeggios, Legato, Ear Training, Theory**.
   **Fingerstyle** and **Rhythm** are no longer offered (fingerstyle is out of scope; rhythm is already

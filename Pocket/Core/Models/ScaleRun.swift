@@ -100,9 +100,30 @@ extension ScaleRun {
     /// generated run so it reads correctly for every layout, not just the box.
     var anchorFret: Int { ascendingNotes.map(\.fret).filter { $0 > 0 }.min() ?? 1 }
 
-    /// The CAGED reference letter for the current position (E/D/C/A/G) — how a player actually
-    /// recognises the shape, shown instead of a bare position number.
+    /// The CAGED reference letter for the current position (E/D/C/A/G). Demoted to a secondary caption
+    /// (ADR 0091): it's the letter of the box in the *reference/relative-major* key, so for a
+    /// minor/modal scale it isn't the letter a player names relative to the tonic — kept for those who
+    /// read CAGED, but no longer the primary position label.
     var shapeLetter: String { CAGEDShape(clampedPosition: position).shapeLetter }
+
+    /// A plain-language location for the current **box** (ADR 0091), e.g. "root on low E · fret 5" —
+    /// where the box's lowest root note actually sits, shown under the box number in place of the CAGED
+    /// letter. Reads the generated notes, so it's honest for every scale and key. Only the box layout
+    /// carries a single anchoring root; the neck-spanning layouts report their own start instead.
+    var rootAnchor: String { CAGEDShape.rootAnchor(in: ascendingNotes, root: rootPitchClass) }
+
+    /// The flagship box for this scale/key — the root-position 6th-string box a player learns first
+    /// (position 5 for the minor pentatonic, not 1; ADR 0091). Computed per scale, so it tracks the
+    /// famous box whatever the CAGED offset.
+    var flagshipPosition: Int {
+        CAGEDShape.flagshipPosition(root: rootPitchClass,
+                                    relativeMajorSemitones: scale.relativeMajorSemitones,
+                                    degrees: scale.degrees)
+    }
+
+    /// Whether the current position is the flagship **most-common** box — drives the "Most common"
+    /// badge; only meaningful for the box layout.
+    var isMostCommon: Bool { layout == .box && position == flagshipPosition }
 
     /// The extended diagonal's fingering — one of the two canonical shapes — derived from `position`
     /// (which the editor caps at 1…2 for this layout). Only meaningful when `layout == .extended`.
@@ -116,12 +137,13 @@ extension ScaleRun {
         layout == .extended ? ExtendedPentatonicShape.allCases.count : scale.positionCount
     }
 
-    /// The player-facing name for the current position — a CAGED shape letter rather than a bare number
-    /// (ADR 0083 refinement): the box's CAGED letter for `.box`, the extended shape's mnemonic for
-    /// `.extended`, and the pattern number for the diatonic `.threePerString` (which isn't a CAGED box).
+    /// The player-facing name for the current position (ADR 0091): the box's **root anchor** — where
+    /// the hand goes, "root on low E · fret 5" — as the primary label for `.box` (no CAGED letter or box
+    /// number up front); the extended shape's mnemonic for `.extended`; the pattern number for the
+    /// diatonic `.threePerString`.
     var positionLabel: String {
         switch layout {
-        case .box: return "\(shapeLetter) shape"
+        case .box: return rootAnchor
         case .extended: return "\(extendedShape.shapeLetter) shape"
         case .threePerString: return "Pattern \(position)"
         }
@@ -210,10 +232,16 @@ extension ScaleRun {
 // MARK: - Curated default (T8)
 
 extension ScaleRun {
-    /// The starter scale a freshly-created Scales drill opens on — **A minor pentatonic**, position 1,
-    /// two octaves: the workhorse box from the 5th fret. A real, playable run from the first moment.
-    static let aMinorPentatonic = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9,
-                                           position: 1, octaves: 2)
+    /// The starter scale a freshly-created Scales drill opens on — **A minor pentatonic**, two octaves,
+    /// on its **flagship box**: the famous 5th-fret box with the root on the low E (the G-shape /
+    /// position 5, not position 1 — ADR 0091), so a new drill opens on the shape everyone knows.
+    static let aMinorPentatonic = ScaleRun(
+        scale: .minorPentatonic, rootPitchClass: 9,
+        position: CAGEDShape.flagshipPosition(
+            root: 9,
+            relativeMajorSemitones: GuitarScale.minorPentatonic.relativeMajorSemitones,
+            degrees: GuitarScale.minorPentatonic.degrees),
+        octaves: 2)
 
     /// The **extended** A minor pentatonic (ADR 0083 S4) — the A-G-slide diagonal (shape 1 of the two
     /// canonical fingerings), three boxes stitched into one climb by whole-step slides on the A and G
