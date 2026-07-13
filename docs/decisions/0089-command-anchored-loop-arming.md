@@ -24,7 +24,10 @@ tempo. `commandTempo` and the working `speed` were fully decoupled at the arming
   (`commandTempo ?? 1.0`) is the working speed a loop arms at. `activate(_:)` and `jump(to:)` both set
   `speed = loop.armingSpeed`. Switching to a loop with no command tempo now resets to full tempo instead
   of inheriting the previous loop's rate; a loop *with* a command tempo arms at that tempo (the tempo you
-  own it at is the sensible working tempo). Pure and unit-tested (`SongTests`).
+  own it at is the sensible working tempo). Pure and unit-tested (`SongTests`). The arming sites also push
+  the new rate to the engine **synchronously** (`engine.setRate(speed)`) rather than relying on the async
+  `onChange(of: speed)`, so the switched-to loop starts rendering at its own tempo instead of briefly
+  lurching from the old rate (the "buggy audio on switch" symptom).
 - **A2 — Retire ADR 0040's last-practised *resume* for arming, keep the leave *record*.**
   `lastPracticedSpeed` is still written on leave (the `activeLoopID` `didSet`) and `Loop.resumeSpeed`
   still computes it, but nothing arms from it anymore — retained as the record of where a loop was left

@@ -207,7 +207,7 @@ extension WaveformPracticeModel {
     }
 
     /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
-    /// Arming a *different* loop restores its last-practiced speed (ADR 0040); re-tapping the
+    /// Arming a *different* loop sets its command-anchored speed (ADR 0089); re-tapping the
     /// already-active loop only toggles play/pause, keeping the speed you're sitting at.
     func activate(_ loop: Loop) {
         abSpan = .idle                        // arming a saved loop drops any live A/B span
@@ -222,6 +222,8 @@ extension WaveformPracticeModel {
         }
         activeLoopID = loop.uid               // didSet records the outgoing loop's leave speed
         speed = loop.armingSpeed              // command-anchored: its command tempo, else 100% (ADR 0089)
+        engine.setRate(speed)                 // push the rate NOW (not via the async speed onChange) so the
+                                              // new loop starts at its own tempo — no mid-switch lurch (ADR 0089)
         applyActiveLoopToEngine()
         engine.seek(toSeconds: loop.startSeconds)
         engine.play()

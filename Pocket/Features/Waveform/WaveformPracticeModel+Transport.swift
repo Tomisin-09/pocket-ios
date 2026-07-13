@@ -60,6 +60,7 @@ extension WaveformPracticeModel {
         let wasPlaying = engine.isPlaying
         activeLoopID = loop.uid
         speed = loop.armingSpeed
+        engine.setRate(speed)                 // sync, so the skipped-to loop starts at its own tempo (ADR 0089)
         applyActiveLoopToEngine()
         engine.seek(toSeconds: loop.startSeconds)
         if wasPlaying { engine.play() }
