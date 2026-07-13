@@ -114,9 +114,29 @@ extension ArpeggioRun {
     /// The lowest fret the current position's box occupies — shown as "Anchored at fret N".
     var anchorFret: Int { boxNotes.map(\.fret).min() ?? 1 }
 
-    /// The CAGED reference letter for the current position (E/D/C/A/G) — how a player actually
-    /// recognises the shape, shown instead of a bare position number.
+    /// The player-facing name for the current position — the box's **root anchor** (ADR 0091), "root on
+    /// low E · fret 5", where the hand goes, in place of a CAGED letter or box number.
+    var positionLabel: String { rootAnchor }
+
+    /// The CAGED reference letter for the current position (E/D/C/A/G). Demoted to a secondary caption
+    /// (ADR 0091): it's the letter of the box in the *relative-major* key, not the letter a player names
+    /// relative to the tonic — kept for CAGED readers, but no longer the primary position label.
     var shapeLetter: String { CAGEDShape(clampedPosition: position).shapeLetter }
+
+    /// A plain-language location for the current box (ADR 0091), e.g. "root on low E · fret 5" — where
+    /// the box's lowest root note actually sits, shown under the box number in place of the CAGED letter.
+    var rootAnchor: String { CAGEDShape.rootAnchor(in: ascendingNotes, root: rootPitchClass) }
+
+    /// The flagship box for this quality/key — the root-position 6th-string box a player learns first
+    /// (ADR 0091), computed per quality so it tracks the famous box whatever the CAGED offset.
+    var flagshipPosition: Int {
+        CAGEDShape.flagshipPosition(root: rootPitchClass,
+                                    relativeMajorSemitones: quality.relativeMajorSemitones,
+                                    degrees: quality.degrees)
+    }
+
+    /// Whether the current position is the flagship **most-common** box — drives the "Most common" badge.
+    var isMostCommon: Bool { position == flagshipPosition }
 }
 
 // MARK: - Generation (pure — shared CAGED box, filtered to the chord tones)
@@ -153,8 +173,14 @@ extension ArpeggioRun {
 // MARK: - Curated default (T8)
 
 extension ArpeggioRun {
-    /// The starter arpeggio a freshly-created Arpeggios drill opens on — **A minor 7**, position 1,
-    /// two octaves: a real, playable arpeggio from the first moment.
-    static let aMinorSeventh = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9,
-                                           position: 1, octaves: 2)
+    /// The starter arpeggio a freshly-created Arpeggios drill opens on — **A minor 7**, two octaves, on
+    /// its **flagship box**: the root-position box with the root on the low E (ADR 0091), so a new drill
+    /// opens on the shape a player anchors to first.
+    static let aMinorSeventh = ArpeggioRun(
+        quality: .minorSeventh, rootPitchClass: 9,
+        position: CAGEDShape.flagshipPosition(
+            root: 9,
+            relativeMajorSemitones: ArpeggioQuality.minorSeventh.relativeMajorSemitones,
+            degrees: ArpeggioQuality.minorSeventh.degrees),
+        octaves: 2)
 }

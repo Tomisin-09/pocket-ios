@@ -85,6 +85,55 @@ extension CAGEDShape {
         (((GuitarScale.pitchClass(string: note.string, fret: note.fret) - root) % 12) + 12) % 12
     }
 
+    /// The conventional name of a string by our index (5 = low E … 0 = high e), as a player says it.
+    static func stringName(_ string: Int) -> String {
+        ["high e", "B", "G", "D", "A", "low E"][min(max(0, string), 5)]
+    }
+
+    /// The **flagship box** for a scale/arpeggio in a key (ADR 0091): the root-position 6th-string box a
+    /// player learns first — the famous 5th-fret box for the minor pentatonic, which is the G-shape /
+    /// position 5 here, *not* position 1. Defined as the box whose ascending run **begins on the tonic
+    /// on the low E (6th) string**, tie-broken to the lowest starting fret. A box can *pass through* a
+    /// low-E root without starting there (position 4's A-shape tops out on the root at fret 5 but opens
+    /// on the ♭7 below it), so "begins on" — the first note played — is what picks the shape a player
+    /// recognises. Falls back to the lowest low-E root, then position 1, for scales whose 6th-string box
+    /// doesn't open on the tonic. Drives the default and the "Most common" badge.
+    static func flagshipPosition(root: Int, relativeMajorSemitones: Int, degrees: Set<Int>) -> Int {
+        let lowE = 5
+        var opensOnRoot: (fret: Int, position: Int)?
+        var lowestLowERoot: (fret: Int, position: Int)?
+        for position in 1...allCases.count {
+            // `filteredBox` returns the box ascending by pitch, so `first` is the note the run opens on.
+            let box = filteredBox(position: position, root: root,
+                                  relativeMajorSemitones: relativeMajorSemitones, degrees: degrees)
+            if let start = box.first, start.string == lowE, degree(of: start, root: root) == 0,
+               start.fret < (opensOnRoot?.fret ?? Int.max) {
+                opensOnRoot = (start.fret, position)
+            }
+            if let fret = box.filter({ $0.string == lowE && degree(of: $0, root: root) == 0 })
+                .map(\.fret).min(), fret < (lowestLowERoot?.fret ?? Int.max) {
+                lowestLowERoot = (fret, position)
+            }
+        }
+        return opensOnRoot?.position ?? lowestLowERoot?.position ?? 1
+    }
+
+    /// A **plain-language anchor** for a box (ADR 0091): where its lowest root note sits, e.g.
+    /// "root on low E · fret 5" — the concrete location shown in place of a CAGED letter, so a player
+    /// reads a box by where their hand goes rather than by a shape name they may not know. Reads the
+    /// generated notes, so it stays true for every scale, quality and key. Falls back to the lowest
+    /// fretted note when a run holds no root (a one-octave box trim can omit it).
+    static func rootAnchor(in notes: [FretNote], root: Int) -> String {
+        guard let anchor = notes.filter({ degree(of: $0, root: root) == 0 })
+            .min(by: { midi($0) < midi($1) }) else {
+            let fret = notes.map(\.fret).filter { $0 > 0 }.min() ?? notes.map(\.fret).min() ?? 1
+            return "from fret \(fret)"
+        }
+        return anchor.fret == 0
+            ? "root: open \(stringName(anchor.string))"
+            : "root on \(stringName(anchor.string)) · fret \(anchor.fret)"
+    }
+
     /// Place the `position` box for a run whose tonic is `root`, borrowing the CAGED boxes of the
     /// relative major `relativeMajorSemitones` above it, and keep the notes whose interval above the
     /// tonic is in `degrees` — a scale, a pentatonic, or an arpeggio, all the same box filtered

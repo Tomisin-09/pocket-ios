@@ -76,8 +76,7 @@ struct ArpeggioRunEditor: View {
             Text(run.title)
                 .font(.futura(.headline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
-            Text("\(run.shapeLetter) shape · \(run.position) of \(run.positionCount) · fret "
-                 + "\(run.anchorFret)")
+            Text("CAGED \(run.shapeLetter) shape · from fret \(run.anchorFret)")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
@@ -117,16 +116,34 @@ struct ArpeggioRunEditor: View {
 
     // MARK: - Position + octaves
 
+    /// The box's **root anchor** as the primary label (ADR 0091), the flagship box (root on the low E)
+    /// badged "Most common"; the CAGED letter is demoted to the subtitle caption above. The stepper
+    /// spans the row so the longer anchor label has room.
     private var positionRow: some View {
-        HStack {
-            fieldLabel("Position")
-            Spacer()
-            stepper(value: "\(run.shapeLetter) shape",
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                fieldLabel("Position")
+                if run.isMostCommon { mostCommonBadge }
+                Spacer()
+            }
+            stepper(value: run.positionLabel,
                     canGoDown: run.position > 1,
                     canGoUp: run.position < run.positionCount,
                     stepDown: { run = rebuilt(position: run.position - 1) },
                     stepUp: { run = rebuilt(position: run.position + 1) })
         }
+    }
+
+    /// A small tint capsule flagging the flagship box so the common shape reads as the front door
+    /// without hiding the others (ADR 0091).
+    private var mostCommonBadge: some View {
+        Text("Most common")
+            .font(.futura(.caption, weight: .semibold))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .background(tint.opacity(0.16), in: Capsule())
+            .foregroundStyle(tint)
+            .accessibilityLabel("Most common position")
     }
 
     private var octavesRow: some View {
@@ -177,14 +194,19 @@ struct ArpeggioRunEditor: View {
             .foregroundStyle(PocketColor.textPrimary)
     }
 
+    /// A full-width stepper: the label centres between the ∓ controls, so a long root-anchor label
+    /// ("root on low E · fret 5") reads on its own row (ADR 0091).
     private func stepper(value: String, canGoDown: Bool, canGoUp: Bool,
                          stepDown: @escaping () -> Void, stepUp: @escaping () -> Void) -> some View {
         HStack(spacing: 14) {
             Button { stepDown(); haptic(.light) } label: { Image(systemName: "minus.circle") }
                 .buttonStyle(.borderless)
                 .disabled(!canGoDown)
-            Text(value).font(.pocketMono(.body)).frame(minWidth: 20)
+            Spacer(minLength: 12)
+            Text(value).font(.pocketMono(.body))
                 .foregroundStyle(PocketColor.textPrimary)
+                .multilineTextAlignment(.center)
+            Spacer(minLength: 12)
             Button { stepUp(); haptic(.light) } label: { Image(systemName: "plus.circle") }
                 .buttonStyle(.borderless)
                 .disabled(!canGoUp)
