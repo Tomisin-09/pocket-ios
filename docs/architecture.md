@@ -391,12 +391,13 @@ loops each, up *or* down — or level when start = target). The ramp is **finite
 the target) × `loopsPerStep` — then `automatorAdvance` **pauses and rewinds** the engine to
 the loop start, so it can be replayed. **Set ramp** arms the config and *starts the loop
 playing* from the top (`startAutomator`). Setting `speed` reuses the existing
-speed→engine path; grabbing the slider disables the loop's ramp. Each loop also remembers
-the speed it was last practised at (`Loop.lastPracticedSpeed`, ADR 0040): a single `didSet`
-on `activeLoopID` persists the *outgoing* loop's `speed` on any leave/switch/exit, and arming
-a loop restores it (`Loop.resumeSpeed` = last-practised, else the loop's `speed`) — so the
-three loop tempos (`speed` = ramp start, `lastPracticedSpeed` = resume, `commandTempo` =
-fastest owned) stay distinct. The **same `didSet`** carries the song's own resume tempo
+speed→engine path; grabbing the slider disables the loop's ramp. Arming a loop is
+**command-anchored** (`Loop.armingSpeed` = `commandTempo`, else 100%, ADR 0089): it arms at the
+tempo you own the loop at, never the previous loop's rate, so a no-command loop resets to full tempo
+(the tempo-bleed fix) — superseding ADR 0040's arm-at-last-practised. A single `didSet` on
+`activeLoopID` still persists the *outgoing* loop's `speed` into `Loop.lastPracticedSpeed` on any
+leave/switch/exit (the leave record, no longer read to arm). The **same `didSet`** carries the song's
+own resume tempo
 (`Song.lastPracticedSpeed`, ADR 0044): it holds the invariant "no loop armed ⇒ `speed` is the
 song's tempo" — banking the song speed when the first loop arms, restoring it when the last
 disarms — so the model opens the full song at its last-practiced tempo without a loop's speed

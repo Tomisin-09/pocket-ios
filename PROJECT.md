@@ -139,14 +139,16 @@ auto-named ("Marker 3", same `AutoName`), no naming step, renamed later from the
 **Undo** toast that restores it with its original identity (ADR 0019). Practice
 opens on the **full song** — no loop is armed until you pick one — and leaving the
 screen **wipes** the transient session knobs (active loop, speed, click, mode) while
-persisted song data is left untouched (ADR 0029). Both the **full song and individual loops remember the
-speed you last practised them at** (`Song.lastPracticedSpeed` ADR 0044 / `Loop.lastPracticedSpeed`
-ADR 0040 — refining 0029): arming a loop restores its speed (a loop slowed to 0.7× reopens at
-0.7×), persisted when you leave it via a single `activeLoopID` `didSet` choke point —
-`nil`/never-practised falls back to the loop's `speed`. The **song** resumes at its own
-last-practiced tempo on reopen via the same choke point, which holds the invariant "no loop
-armed ⇒ `speed` is the song's tempo" (bank on arm, restore on disarm) so a loop's speed never
-leaks in (ADR 0044). The session still opens clean (no loop armed), only the tempo is remembered.
+persisted song data is left untouched (ADR 0029). Arming a loop is now **command-anchored** (ADR 0089):
+a loop arms at its measured `commandTempo`, else 100% (`Loop.armingSpeed`) — **never** the tempo of the
+loop you were just on — so switching to a loop with no command tempo resets to full tempo instead of
+inheriting the previous loop's reduced rate (the tempo-bleed fix). This supersedes ADR 0040's arm-at-last-
+practised for both arming sites (`activate`, the ◀◀/▶▶ `jump`); `Loop.lastPracticedSpeed` is still
+recorded on leave (via the `activeLoopID` `didSet`) as the leave record, just no longer read to arm. The
+**song** still resumes at its own last-practiced tempo on reopen (`Song.lastPracticedSpeed`, ADR 0044) via
+the same choke point, which holds the invariant "no loop armed ⇒ `speed` is the song's tempo" (bank on
+arm, restore on disarm) so a loop's speed never leaks in. The session still opens clean (no loop armed),
+only the tempo is remembered.
 State + handlers live in an `@Observable` `WaveformPracticeModel`
 (ADR 0007), now bound to a **persisted `Song`** — loops/markers are SwiftData
 `@Model`s that survive relaunches (ADR 0011). The practice screen is the **one
