@@ -24,6 +24,9 @@ struct LoopEditSheet: View {
     // the 400-line cap), so the state they read is `internal`, not `private` — Swift has no
     // cross-file-private for a single type. `name`/`colorChoice` stay private (only `body` uses them).
     @Environment(\.dismiss) var dismiss
+    // The store, for writing journal entries straight from this sheet (ADR 0088) — journal
+    // authoring is back on song loops, sharing the `JournalWriter` path with the run screen.
+    @Environment(\.modelContext) private var modelContext
     // All loops across the library, to suggest tags already used elsewhere (ADR 0034) —
     // the cross-song convergence read ADR 0032 forecast, here a top-level `@Query`.
     @Query var allLoops: [Loop]
@@ -169,8 +172,24 @@ struct LoopEditSheet: View {
         }
         .presentationDetents([.medium, .large])
         .sheet(isPresented: $showingJournal) {
-            // Read-only — authoring stays on the Practice run screen (ADR 0058).
-            JournalSheet(owner: .loop(loop), readOnly: true)
+            // Authorable again from song loops (ADR 0088, reversing 0058's waveform read-only) —
+            // the same `JournalWriter` path the Practice run screen uses, each entry snapshotting
+            // the loop's mastery + command tempo at write time.
+            JournalSheet(owner: .loop(loop),
+                         onAdd: { text, kind in
+                             if JournalWriter.add(to: .loop(loop), text: text, kind: kind,
+                                                  into: modelContext) {
+                                 try? modelContext.save(); haptic(.light)
+                             }
+                         },
+                         onUpdate: { entry, text, kind in
+                             JournalWriter.update(entry, text: text, kind: kind)
+                             try? modelContext.save()
+                         },
+                         onDelete: { entry in
+                             JournalWriter.delete(entry, from: modelContext)
+                             try? modelContext.save(); haptic(.light)
+                         })
         }
     }
 }

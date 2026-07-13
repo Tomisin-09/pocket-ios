@@ -1,25 +1,22 @@
 import SwiftData
 import SwiftUI
 
-/// The practice journal (ADR 0038/0058): dated entries that snapshot a unit's context at the
+/// The practice journal (ADR 0038/0058/0088): dated entries that snapshot a unit's context at the
 /// moment of writing. Generalised over its owner — a **loop** (mastery + song-fraction command
 /// tempo) or an **exercise** (absolute command BPM, no mastery) — so one sheet serves both. The
 /// snapshot is immutable; only an entry's text and kind are editable.
 ///
-/// Two modes:
-/// - **Authoring** (`readOnly == false`, from the Practice run screens): a composer to add
-///   entries, plus swipe-to-delete and push-to-edit on history. This is the journal's home.
-/// - **Read-only** (`readOnly == true`, from the waveform screen): history only — writing moved
-///   to Practice (ADR 0058), so the waveform screen just reflects past notes.
+/// Always **authoring**: a composer to add entries, plus swipe-to-delete and push-to-edit on
+/// history. Reached from the Practice run screens and (ADR 0088, reversing 0058's waveform
+/// read-only) the loop edit sheet — writing a song loop's journal no longer needs a run.
 ///
 /// Presented at `.large` only — a journal wants room, and a single large detent keeps the
 /// push-to-edit navigation clear of the medium-detent push bug (see LoopEditSheet).
 struct JournalSheet: View {
     let owner: JournalOwner
-    var readOnly = false
-    /// Add an entry — snapshots the owner's current context. Ignored when `readOnly`.
+    /// Add an entry — snapshots the owner's current context.
     var onAdd: (String, EntryKind) -> Void = { _, _ in }
-    /// Edit an existing entry's text + kind (snapshot stays fixed). Ignored when `readOnly`.
+    /// Edit an existing entry's text + kind (the snapshot stays fixed).
     var onUpdate: (JournalEntry, String, EntryKind) -> Void = { _, _, _ in }
     var onDelete: (JournalEntry) -> Void = { _ in }
 
@@ -41,7 +38,7 @@ struct JournalSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                if !readOnly { composer }
+                composer
                 if owner.isEmpty {
                     Section { Text(emptyMessage)
                         .font(.futura(.footnote))
@@ -63,35 +60,25 @@ struct JournalSheet: View {
         .presentationDetents([.large])
     }
 
-    /// One day's section of entries. Rows push to the editor when authoring; read-only rows are
-    /// plain (no push, no swipe-delete) — the waveform screen just reflects past notes (ADR 0058).
+    /// One day's section of entries. Rows push to the editor; swipe-to-delete removes an entry.
     @ViewBuilder private func daySection(
         _ section: JournalGrouping.DaySection<JournalEntry>) -> some View {
         Section(dayHeader(section.day)) {
             ForEach(section.entries) { entry in
-                if readOnly {
+                NavigationLink {
+                    JournalEntryEditor(entry: entry, onUpdate: onUpdate)
+                } label: {
                     JournalEntryRow(entry: entry)
-                } else {
-                    NavigationLink {
-                        JournalEntryEditor(entry: entry, onUpdate: onUpdate)
-                    } label: {
-                        JournalEntryRow(entry: entry)
-                    }
                 }
             }
-            .onDelete(perform: readOnly ? nil : { offsets in
+            .onDelete { offsets in
                 offsets.map { section.entries[$0] }.forEach(onDelete)
-            })
+            }
         }
     }
 
-    /// The empty-state prompt — the authoring variant nudges what to write; the read-only variant
-    /// points to the journal's new home (the Practice run screen) so it isn't a dead end.
+    /// The empty-state prompt — nudges what to write.
     private var emptyMessage: String {
-        if readOnly {
-            return "No entries yet. Write notes from the Practice run screen — each one remembers "
-                + "where you were at the time."
-        }
         switch owner {
         case .loop:
             return "No entries yet. Log a goal, a breakthrough, or what's fighting back — each "

@@ -12,6 +12,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   covered by Strumming and Chords) — exercises you already made under them are untouched. **Ear Training**
   and **Theory** appear as **Coming Soon** (listed but not yet buildable). **Strum & Chords** is renamed
   **Chords & Strum**.
+- **Journal a song loop straight from the loop editor.** The loop edit sheet's **Journal** row (renamed
+  from "View entries", tally kept) now opens a full journal you can **write** in — add, edit, and delete
+  entries without launching a practice run. Each entry still snapshots the loop's mastery and command
+  tempo at the moment you write it.
 - **Chord drills start empty and lost the key selector.** Creating a **Chords** exercise now opens on a
   clean **Add chord** button instead of a default G–D–Em–C turnaround you had to clear out first (Create
   stays disabled until you add at least one chord). **Strum & Chords** starts blank the same way — an

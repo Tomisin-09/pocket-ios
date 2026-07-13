@@ -5,11 +5,12 @@ import SwiftUI
 // 400-line cap (the sheet's core lives in `WaveformEditSheets.swift`).
 extension LoopEditSheet {
 
-    // MARK: - Journal (ADR 0067)
+    // MARK: - Journal (ADR 0067 / 0088)
 
-    /// The loop's practice journal, read-only (authoring lives on the Practice run screen, ADR
-    /// 0058); moved off the waveform loop row into settings (ADR 0067). The count reads as the
-    /// unrated-style absence signal (ADR 0039): "None" until there's something to see.
+    /// The loop's practice journal — now **authorable** from here (ADR 0088, reversing 0058's
+    /// waveform read-only), so a song loop can be journalled without launching a run; moved off the
+    /// waveform loop row into settings (ADR 0067). The row reads simply **Journal**, with the count
+    /// as the unrated-style absence signal (ADR 0039): "None" until there's something to see.
     var journalSection: some View {
         Section("Journal") {
             Button {
@@ -19,12 +20,12 @@ extension LoopEditSheet {
                     Text(loop.journal.isEmpty ? "None" : "\(loop.journal.count)")
                         .foregroundStyle(PocketColor.textSecondary)
                 } label: {
-                    Label("View entries", systemImage: "book.closed")
+                    Label("Journal", systemImage: "book.closed")
                 }
             }
             .accessibilityLabel(loop.journal.isEmpty
-                                ? "View journal, no entries"
-                                : "View journal, \(loop.journal.count) "
+                                ? "Journal, no entries"
+                                : "Journal, \(loop.journal.count) "
                                     + "entr\(loop.journal.count == 1 ? "y" : "ies")")
         }
     }
