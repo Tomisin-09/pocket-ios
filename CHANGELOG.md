@@ -15,6 +15,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   reduced speed.)
 
 ### Changed
+- **Settings explanations now live on each row, a tap away.** Every setting carries a small ⓘ that
+  reveals what it does in a popover — the same pattern as the loop editor's practice fields — instead
+  of a paragraph under each section. The list reads at a glance while the detail stays reachable.
 - **Scale & arpeggio boxes now read by where your hand goes, and open on the shape you know.** The
   position control for Scales and Arpeggios no longer labels boxes with a bare CAGED letter ("E shape",
   "D shape", …) — which, for a minor or modal scale, was the letter of the *relative major* and rarely
