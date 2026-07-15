@@ -18,8 +18,11 @@ struct PlannerView: View {
     @Query private var routines: [Routine]
 
     @State private var length: SessionLength = .default
-    /// The goal being edited (or `nil` sentinel via `editingNew`) — presented as a sheet.
-    @State private var editingGoal: Goal?
+    /// The goal being edited, presented as a sheet. Held as a `uid`-keyed `StableRef`, not the raw
+    /// `Goal`: a goal added and edited in the same session has a temporary `persistentModelID` that
+    /// flips on the first save, which would dismiss the editor mid-edit if the sheet were keyed on it
+    /// (ADR 0090 / swiftdata-gotchas).
+    @State private var editingGoal: StableRef<Goal>?
     @State private var addingGoal = false
     /// A freshly-generated session awaiting review — pushed as a provisional `RoutineDetailView`.
     @State private var draft: QuickSessionDraft?
@@ -49,8 +52,8 @@ struct PlannerView: View {
         .sheet(isPresented: $addingGoal) {
             GoalEditorView(existing: nil, songs: songs)
         }
-        .sheet(item: $editingGoal) { goal in
-            GoalEditorView(existing: goal, songs: songs)
+        .sheet(item: $editingGoal) { ref in
+            GoalEditorView(existing: ref.value, songs: songs)
         }
         .navigationDestination(item: $draft) { draft in
             RoutineDetailView(container: context.container,
@@ -109,7 +112,7 @@ struct PlannerView: View {
     private var metSection: some View {
         Section("Met") {
             ForEach(metGoals) { goal in
-                Button { editingGoal = goal; haptic(.light) } label: {
+                Button { editingGoal = StableRef(value: goal); haptic(.light) } label: {
                     HStack {
                         Text(goal.title.isEmpty ? "Untitled goal" : goal.title)
                             .font(.futura(.body))
@@ -128,7 +131,7 @@ struct PlannerView: View {
     }
 
     private func goalRow(_ goal: Goal) -> some View {
-        Button { editingGoal = goal; haptic(.light) } label: {
+        Button { editingGoal = StableRef(value: goal); haptic(.light) } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(goal.title.isEmpty ? "Untitled goal" : goal.title)

@@ -1,7 +1,7 @@
 import XCTest
 @testable import Pocket
 
-/// The loop/marker edit sheets present through a `uid`-keyed `StableRef` so a SwiftData autosave
+/// The loop/marker/goal/reps edit sheets present through a `uid`-keyed `StableRef` so a SwiftData autosave
 /// promoting a freshly-inserted model's `persistentModelID` can't read as an identity change and
 /// dismiss the sheet mid-edit. These lock the one invariant that fix rests on: the ref's `id` is the
 /// model's stable `uid`, and never its (mutable) `persistentModelID`. Uses uninserted `@Model`
@@ -16,6 +16,16 @@ final class StableModelRefTests: XCTestCase {
     func testMarkerRefIDIsTheMarkerUID() {
         let marker = Marker(seconds: 12, label: "chorus")
         XCTAssertEqual(StableRef(value: marker).id, marker.uid)
+    }
+
+    func testGoalRefIDIsTheGoalUID() {
+        let goal = Goal(title: "learn the solo")
+        XCTAssertEqual(StableRef(value: goal).id, goal.uid)
+    }
+
+    func testRoutineItemRefIDIsTheItemUID() {
+        let item = RoutineItem(kind: .rest, order: 0)
+        XCTAssertEqual(StableRef(value: item).id, item.uid)
     }
 
     func testDistinctLoopsGetDistinctRefIDs() {

@@ -15,7 +15,7 @@ extension RoutineDetailView {
     func blockRow(_ item: RoutineItem, number: Int) -> some View {
         if isEditing && item.kind.carriesUnit && !item.isOrphaned {
             Button {
-                repsEditorItem = item
+                repsEditorItem = StableRef(value: item)
                 haptic(.light)
             } label: {
                 HStack(spacing: 8) {
