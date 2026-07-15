@@ -36,74 +36,65 @@ struct SettingsView: View {
                 Text("System follows your device's Light/Dark setting.")
             }
 
-            Section {
-                Toggle("Haptics", isOn: $hapticsEnabled)
-            } header: {
-                Text("Feel")
-            } footer: {
-                Text("Light taps that confirm gestures like setting a loop or tapping tempo.")
+            Section("Feel") {
+                Toggle(isOn: $hapticsEnabled) {
+                    FieldInfoLabel(title: "Haptics", info: SettingsInfo.haptics)
+                }
             }
 
-            Section {
-                Toggle("Count-in", isOn: $countInEnabled)
+            Section("Practice") {
+                Toggle(isOn: $countInEnabled) {
+                    FieldInfoLabel(title: "Count-in", info: SettingsInfo.countIn)
+                }
                 if countInEnabled {
                     Stepper(value: $countInBars, in: AppSettings.countInBarsRange) {
                         LabeledContent("Count-in length", value: barsLabel(countInBars))
                     }
                 }
-                Toggle("Keep screen awake", isOn: $keepScreenAwake)
-                Toggle("Strumming click follows the pattern", isOn: $strumClickFollowsPattern)
-            } header: {
-                Text("Practice")
-            } footer: {
-                Text("A count-in before a tempo climb begins, so you can settle in. Keeping the "
-                     + "screen awake stops it locking while you play along hands-free. For a strumming "
-                     + "drill, the metronome can play the pattern's rhythm (down/up/accent) or, turned "
-                     + "off, a plain click you strum the rhythm against.")
-            }
-
-            Section {
-                Toggle("Auto-start blocks", isOn: $routineAutoStart)
-                Toggle("Advance automatically", isOn: $routineAutoAdvance)
-                Stepper(value: $routineRestSeconds, in: AppSettings.routineRestSecondsRange, step: 5) {
-                    LabeledContent("Rest length", value: "\(routineRestSeconds)s")
+                Toggle(isOn: $keepScreenAwake) {
+                    FieldInfoLabel(title: "Keep screen awake", info: SettingsInfo.keepScreenAwake)
                 }
-                Toggle("Loop song blocks", isOn: $routineSongLoop)
-            } header: {
-                Text("Routines")
-            } footer: {
-                Text("In a routine, each block after the first starts on its own (the first always "
-                     + "waits for you). When a block finishes, a Done screen lets you rate how it "
-                     + "felt and jot a note before moving on — turn Advance automatically on to skip "
-                     + "straight to the next block instead. Rest length sets the breather between "
-                     + "blocks. A song block loops as an open jam and moves on only when you skip; "
-                     + "turn Loop song blocks off to play it through once and auto-advance.")
+                Toggle(isOn: $strumClickFollowsPattern) {
+                    FieldInfoLabel(title: "Strumming click follows the pattern",
+                                   info: SettingsInfo.strumClick)
+                }
             }
 
-            Section {
-                Toggle("Loop control on left", isOn: $transportLoopOnLeft)
-                Toggle("Show minimap", isOn: $waveformMinimapVisible)
-                Toggle("Show marker labels", isOn: $waveformMarkerLabels)
-            } header: {
-                Text("Transport")
-            } footer: {
-                Text("On the practice screen, big Loop and Marker buttons flank the transport bar "
-                     + "while idle. By default Marker sits on the left and Loop on the right — turn "
-                     + "this on to swap them. The minimap is the full-song overview strip under the "
-                     + "waveform — turn it off to give the waveform and loops a little more room. "
-                     + "Marker labels float a marker's name over the timeline as you play up to it — "
-                     + "turn them off to keep labels in the Markers panel only.")
+            Section("Routines") {
+                Toggle(isOn: $routineAutoStart) {
+                    FieldInfoLabel(title: "Auto-start blocks", info: SettingsInfo.routineAutoStart)
+                }
+                Toggle(isOn: $routineAutoAdvance) {
+                    FieldInfoLabel(title: "Advance automatically", info: SettingsInfo.routineAutoAdvance)
+                }
+                Stepper(value: $routineRestSeconds, in: AppSettings.routineRestSecondsRange, step: 5) {
+                    LabeledContent {
+                        Text("\(routineRestSeconds)s")
+                    } label: {
+                        FieldInfoLabel(title: "Rest length", info: SettingsInfo.routineRest)
+                    }
+                }
+                Toggle(isOn: $routineSongLoop) {
+                    FieldInfoLabel(title: "Loop song blocks", info: SettingsInfo.routineSongLoop)
+                }
             }
 
-            Section {
-                Toggle("Animate exercises", isOn: $exerciseAnimates)
-            } header: {
-                Text("Motion")
-            } footer: {
-                Text("A moving highlight walks the exercise in time — the notes on the fretboard, the "
-                     + "strokes on the strum lane. Off by default, and always off when your device has "
-                     + "Reduce Motion on — some people find blinking motion uncomfortable. With it off, "
-                     + "the exercise is shown statically.")
+            Section("Transport") {
+                Toggle(isOn: $transportLoopOnLeft) {
+                    FieldInfoLabel(title: "Loop control on left", info: SettingsInfo.transportLoopOnLeft)
+                }
+                Toggle(isOn: $waveformMinimapVisible) {
+                    FieldInfoLabel(title: "Show minimap", info: SettingsInfo.minimap)
+                }
+                Toggle(isOn: $waveformMarkerLabels) {
+                    FieldInfoLabel(title: "Show marker labels", info: SettingsInfo.markerLabels)
+                }
+            }
+
+            Section("Motion") {
+                Toggle(isOn: $exerciseAnimates) {
+                    FieldInfoLabel(title: "Animate exercises", info: SettingsInfo.animateExercises)
+                }
             }
 
             Section {
@@ -139,6 +130,44 @@ struct SettingsView: View {
     private static var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
     }
+}
+
+/// The per-row ⓘ copy, centralised the way `PracticeFieldInfo` is for the loop sheet. Moving the
+/// explanations off the section footers and onto each row's `FieldInfoLabel` keeps the list scannable
+/// while the nuance stays a tap away. The Appearance picker has no label slot for an ⓘ, so it keeps its
+/// short footer instead.
+enum SettingsInfo {
+    static let haptics =
+        "Light taps that confirm gestures like setting a loop or tapping tempo."
+    static let countIn =
+        "A count-in before a tempo climb begins, so you can settle in before playing."
+    static let keepScreenAwake =
+        "Stops the screen locking while you play along hands-free."
+    static let strumClick =
+        "For a strumming drill, the metronome plays the pattern's rhythm (down/up/accent). Turned "
+        + "off, it's a plain click you strum the rhythm against."
+    static let routineAutoStart =
+        "In a routine, each block after the first starts on its own — the first always waits for you."
+    static let routineAutoAdvance =
+        "When a block finishes, a Done screen lets you rate how it felt and jot a note. Turn this on "
+        + "to skip it and go straight to the next block."
+    static let routineRest =
+        "The breather between blocks."
+    static let routineSongLoop =
+        "A song block loops as an open jam and moves on only when you skip. Off plays it through once, "
+        + "then auto-advances."
+    static let transportLoopOnLeft =
+        "Big Loop and Marker buttons flank the transport bar while idle. Marker sits on the left and "
+        + "Loop on the right by default — turn this on to swap them."
+    static let minimap =
+        "The full-song overview strip under the waveform. Off gives the waveform and loops a little "
+        + "more room."
+    static let markerLabels =
+        "Floats a marker's name over the timeline as you play up to it. Off keeps labels in the "
+        + "Markers panel only."
+    static let animateExercises =
+        "A moving highlight walks the exercise in time — the notes on the fretboard, the strokes on "
+        + "the strum lane. Always off when your device has Reduce Motion on."
 }
 
 #Preview {
