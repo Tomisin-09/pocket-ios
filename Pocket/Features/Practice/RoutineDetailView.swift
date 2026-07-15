@@ -44,8 +44,11 @@ struct RoutineDetailView: View {
     @State var previewTarget: RoutineBlockPreviewTarget?
     /// The block whose **reps** are being edited (ADR 0076) — set by tapping a unit block in edit
     /// mode, presenting the `BlockRepsEditor` sheet. The item lives in the editing sandbox, so its
-    /// change is provisional until Save. Internal so the block-row extension can set it.
-    @State var repsEditorItem: RoutineItem?
+    /// change is provisional until Save. Internal so the block-row extension can set it. Held as a
+    /// `uid`-keyed `StableRef`, not the raw `RoutineItem`: an item in a just-generated or unsaved
+    /// routine has a temporary `persistentModelID` that flips on the first save, which would dismiss
+    /// the reps editor mid-edit if keyed on it (ADR 0090 / swiftdata-gotchas).
+    @State var repsEditorItem: StableRef<RoutineItem>?
 
     /// The session length the user asked the planner for, in minutes — set only on a provisional
     /// generated session so the review screen can show its estimate against a soft budget (R3).
@@ -189,7 +192,7 @@ struct RoutineDetailView: View {
                                 onPickSong: { addSong($0); addingUnit = false })
         }
         .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
-        .sheet(item: $repsEditorItem) { repsEditorSheet($0) }
+        .sheet(item: $repsEditorItem) { repsEditorSheet($0.value) }
         .navigationDestination(item: $previewTarget) { target in
             switch target {
             case .exercise(let exercise): ExerciseBlockPreview(exercise: exercise)

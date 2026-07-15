@@ -56,8 +56,17 @@ struct LibraryView: View {
             Text(importError ?? "")
         }
         .songImportFeedback(importModel)
-        .sheet(item: $editingSong) { song in
-            SongEditSheet(song: song)
+        // Present by a Bool, not `.sheet(item:)` on the `Song`: a session-new song's
+        // `persistentModelID` (its default Identifiable id) flips temporary→permanent on the
+        // first autosave, and item-based presentation reads that as an identity change and
+        // dismisses the sheet mid-edit — the same defect ADR 0090 fixed for loops/markers.
+        // `Song` has no stable `uid` to hang a `StableRef` on, so we key the presentation on a
+        // Bool instead (as `SongDetailsSheet`'s nested Edit sheet already does).
+        .sheet(isPresented: Binding(get: { editingSong != nil },
+                                    set: { if !$0 { editingSong = nil } })) {
+            if let song = editingSong {
+                SongEditSheet(song: song)
+            }
         }
     }
 

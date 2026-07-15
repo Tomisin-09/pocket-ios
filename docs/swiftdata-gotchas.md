@@ -37,7 +37,12 @@ tuition.
       `persistentModelID`.** On first save the ID flips from temporary to
       permanent, SwiftUI sees the identity change, and the sheet **dismisses
       itself mid-edit**. Only session-new models hit this.
-      Present by a stable `uid` via a `StableRef` wrapper instead.
+      Present by a stable `uid` via a `StableRef` wrapper instead. If the model has
+      **no** stable `uid` to key on (e.g. `Song`), present by a `Bool`
+      (`.sheet(isPresented:)`) rather than adding a stored `uid` just for this —
+      the Bool, not the model's flipping id, becomes the presentation identity, and
+      you avoid a migration on the central model. (`LibraryView`'s song editor and
+      `SongDetailsSheet`'s nested Edit sheet both do this.)
       → [ADR 0090](decisions/0090-present-model-sheets-by-stable-uid.md),
       memory `swiftdata-sheet-item-persistentid-dismiss`
 
