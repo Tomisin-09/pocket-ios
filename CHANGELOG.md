@@ -19,6 +19,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   reduced speed.)
 
 ### Changed
+- **iPhone-only for v1.** The app now targets iPhone (`TARGETED_DEVICE_FAMILY = 1`) rather than the
+  universal iPhone + iPad default. Red Moon is a portrait, phone-first app and was never designed for
+  iPad; scoping it to iPhone matches the design, avoids the iPad-multitasking orientation requirement,
+  and keeps the store listing to the iPhone screenshots we ship. It still runs on iPad in
+  iPhone-compatibility mode; native iPad support can come later as a feature update.
 - **Settings explanations now live on each row, a tap away.** Every setting carries a small ⓘ that
   reveals what it does in a popover — the same pattern as the loop editor's practice fields — instead
   of a paragraph under each section. The list reads at a glance while the detail stays reachable.
