@@ -144,7 +144,7 @@ Done: `Documents/Red Moon Screenshots 2/appstore-1242x2688/` (named 01–08 in s
 - [ ] Category: Music (primary) / Education (secondary)
 - [ ] Age rating questionnaire → 4+
 - [ ] Price: Free · Availability set
-- [ ] `xcodegen generate` → Archive (Release, team TM4A2QK3MJ) → Upload
+- [ ] `xcodegen generate` → Archive (Release, team 2L35PZ86GP — Deco Operations Ltd, paid; owns `click.decooperations.pocket`) → Upload
 - [ ] Build finished processing and attached to version 1.0
 - [ ] Add for Review → Submit
 - [ ] (optional) fix "Dont" → "Don't" in the seeded library before re-shooting #8
