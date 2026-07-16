@@ -603,6 +603,23 @@ A coherent vision, captured for V1's creation experience:
   passage can be perfectly owned. Considered collapsing mastery into a
   derivative of command tempo (2026-06-25) and rejected it for this reason.
 
+## Analytics — decision made 2026-07-16 (v1 = Apple-only)
+
+**v1 ships with no in-app analytics SDK, deliberately.** Rely on the free,
+Apple-side surfaces that cost zero code and zero privacy: App Store Connect →
+**App Analytics** (impressions, downloads, active devices, sessions, retention,
+deletions) and Xcode Organizer → **Crashes**. These aggregate from OS-level
+opt-in users, so they don't touch the privacy manifest or the "collects nothing"
+policy/questionnaire posture we submit at launch.
+
+**Designated later path (when usage funnels are actually wanted):** a
+privacy-first Swift SDK — **TelemetryDeck** or **Aptabase** (anonymized,
+non-personal events, no third-party ad trackers). Not Firebase/Amplitude/Mixpanel
+— those contradict the app's ethos. Adopting one is a clean additive 1.1 change:
+add the SDK, flip App Privacy to "Data Collected → not linked to identity",
+update the privacy section (the "if a future version processes data differently,
+opt-in and disclosed" clause is already pre-written), aligned with ADR 0092.
+
 ## AI phase (late — gated on backend + pricing)
 
 Parked until the foundations above are solid (see Release sequencing). Captured
@@ -684,6 +701,31 @@ route through.
     home for the song's key / mastery / collections.
   - Consider inline editing vs. the current Edit → `SongEditSheet` hop.
   - Surface tempo precision / downbeat state if useful (currently shows rounded BPM).
+
+- **Numeric font — explore alternatives to system monospace (parked 2026-07-16).**
+  Today Futura carries all prose/UI while numerals (tempo `1.00×`, BPM, timecodes,
+  loop bubble) use system monospace (`Font.pocketMono` = SF Mono) — chosen for
+  tabular alignment, since Futura ships no monospaced face (`DesignTokens.swift`
+  §Typography, ADR 0061). Question raised: could numerals better fit the Futura
+  aesthetic? Framing for whoever picks this up:
+  - **Reframe:** alignment needs *tabular figures*, not a monospaced font.
+    SwiftUI `.monospacedDigit()` turns on tabular digits for any face that ships
+    them (letters stay proportional). So monospace is a *stylistic*, not
+    *functional*, requirement — one-family alignment is achievable.
+  - **Three strategies:** (1) *Unify* — Futura-flavored digits that still align:
+    **Jost** (free OFL Futura revival, has tabular figures), or Futura +
+    `.monospacedDigit()` (only works if the cut ships tabular metrics — test, may
+    be a no-op). (2) *Deliberate companion* — **DIN Alternate** (on iOS, canonical
+    Futura pairing, instrument-readout connotation suits BPM/tempo) or **Avenir
+    Next** (on iOS, Futura descendant, strong tabular set). (3) *Keep the contrast
+    but make it designed* — the display-face-for-voice / mono-for-data register
+    split is a legitimate pattern (reads as studio gear, on-brand); if kept, upgrade
+    the default SF Mono to an intentional geometric mono like **Space Mono** (free
+    OFL).
+  - **Cheap to settle:** DIN Alternate and Avenir Next are both on-device (no
+    bundling). Prototype = a font toggle on the rate/timecode/BPM readouts, run on
+    device, compare the four against real Futura headings. See the four options
+    before arguing.
 
 ## Transport bar — deferred pieces of V1 feedback #1 (parked 2026-07-04)
 
