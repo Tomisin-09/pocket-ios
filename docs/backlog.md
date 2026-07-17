@@ -457,8 +457,21 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   build/hear/explore/keep flows, and phasing (**Slice 1 = shell + My Chords + Glossary**, the only
   zero-dependency tenants). **D1–D5 ratified 2026-07-17 → ADR 0096 ACCEPTED:** attach = **fourth home card**
   ("**Toolkit**", **indigo/violet**), *Hear*/audio **deferred to Slice 2 + own ADR**, **Slice 1 = shell +
-  My Chords + Glossary** (audio-free). Slice 1 scoped and ready to schedule — not yet started. The player's
-  idea, worth its own destination rather than bolting reference onto authoring surfaces.
+  My Chords + Glossary** (audio-free). **Slice 1 BUILT (pocket-155, 2026-07-17).**
+- **Hear / audio-preview across the app (ADR 0097 — resolves 0096 D4). NEXT PRIORITY (player-flagged,
+  2026-07-17): build before v1 submission.** On-device spike confirmed a **synthesized** tone (built-in
+  `AVAudioUnitSampler`, zero assets) is good enough as a pitch reference; **block chords, no strum** for
+  v1. One shared **sequence-capable `ToneEngine`** (`Core/Audio`) with `sound(notes:)` + `sequence(notes:…)`
+  feeds every surface, reading MIDI the models already expose (`ChordVoicing.midiNotes`,
+  `ScaleRun.sequence`→`CAGEDShape.midi`, `FretboardDrill.notes`). Provisional slice order:
+  1. **`ToneEngine` + block-chord Hear in My Chords** (promote the spike; delete `ChordTonePlayer`/`HearSpikeView`).
+  2. **Hear on the chord identifier / custom placer** (sound the shape being built).
+  3. **Scale/CAGED-box preview** (sequence asc/desc) + **arpeggios** (a chord's notes, sequenced).
+  4. **Fretboard/picking-run preview**; **Glossary "Hear" affordance** on interval/chord terms.
+  5. **Intervals / ear-training** playback (ADR 0094, still needs its own build ADR; objective, no quiz).
+  *Optional later:* bundle a CC0 guitar SoundFont for a guitar timbre (ADR 0097 D4.3) — deferred, gated on
+  a redistributable asset. **Submission-timing note:** this pushes the paused v1 (see App Store status)
+  later by the player's explicit call — sequence against the launch gate when scheduling.
 
 ## Notes & journal — DONE (ADR 0038)
 

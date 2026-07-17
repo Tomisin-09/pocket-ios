@@ -35,6 +35,16 @@ struct ToolkitView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Glossary, chord, scale and theory terms")
+
+                // SPIKE (ADR 0096 D4): throwaway entry to the Hear tone bench. Remove with
+                // HearSpikeView / ChordTonePlayer once the D4 sound-source decision is made.
+                NavigationLink { HearSpikeView() } label: {
+                    ToolkitSectionRow(icon: "speaker.wave.2",
+                                      title: "Hear spike",
+                                      subtitle: "D4 tone bench (throwaway)",
+                                      trailing: "SPIKE")
+                }
+                .buttonStyle(.plain)
             }
             .padding(20)
         }
