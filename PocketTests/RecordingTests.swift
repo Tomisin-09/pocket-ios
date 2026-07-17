@@ -48,6 +48,26 @@ final class RecordingTests: XCTestCase {
         XCTAssertNil(exerciseTake.song, "an exercise take carries no song owner")
     }
 
+    func testRecordingOwnerAttachRoutesToTheRightRelationship() throws {
+        let context = ModelContext(try makeContainer())
+        let loop = Loop(name: "Verse", start: 0, end: 0.2, speed: 0.9, repeats: 2)
+        let exercise = Exercise(name: "Spider")
+        context.insert(loop)
+        context.insert(exercise)
+
+        let loopTake = Recording(fileName: "l.m4a", duration: 5)
+        let exerciseTake = Recording(fileName: "e.m4a", duration: 5)
+        context.insert(loopTake)
+        context.insert(exerciseTake)
+        RecordingOwner.loop(loop).attach(to: loopTake)
+        RecordingOwner.exercise(exercise).attach(to: exerciseTake)
+        try context.save()
+
+        XCTAssertEqual(loopTake.ownerKind, .loop)
+        XCTAssertEqual(exerciseTake.ownerKind, .exercise)
+        XCTAssertNil(loopTake.exercise)
+    }
+
     func testDeletingOwnerCascadesTheTakeRow() throws {
         let context = ModelContext(try makeContainer())
         let loop = Loop(name: "Chorus", start: 0.3, end: 0.5, speed: 1, repeats: 1)

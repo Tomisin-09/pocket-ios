@@ -29,7 +29,15 @@ Sliced post-v1 on its own branch, never riding the paused v1.0 submission:
   orphan-sweep retention logic. `TakeRecorder` captures mic-only to AAC via
   `AVAudioRecorder` (not tapping the playback engine — engines stay unchanged per
   §3). Owner-resolution + orphan logic unit-tested; real capture is device-only.
-- **Slice 2** — arm/record/stop UI + the speaker nudge wired to the classifier.
+- **Slice 2 (loop-trainer UI, `pocket-148`)** — recording is a **pre-start arm
+  toggle** beside Start training (off by default), not a mid-run button (device
+  feedback 2026-07-17). Arming requests mic permission on the setup screen and
+  samples the route so the headphone-vs-speaker nudge shows *before* the run; the
+  take begins when the run commences (after the count-in) and stops when the run
+  does. This also **fixed an audible glitch**: configuring `.playAndRecord` before
+  playback starts, rather than flipping the category mid-stream, removes the
+  interruption. Same slice: standalone **loop training now gets the visual
+  count-in** (respecting the Count-in setting) that exercises already had.
 - **Slice 3** — relisten/playback + journal integration.
 
 ## Context

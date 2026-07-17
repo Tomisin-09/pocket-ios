@@ -56,6 +56,9 @@ struct LoopRunView: View {
     /// completion screen (ADR 0082, loop parity with ADR 0079). Never set in a routine — there the
     /// ramp's completion advances the session instead.
     @State var completion: RunCompletion?
+    /// Practice-take recording over this loop (ADR 0069, slice 2) — mic-only capture that rides the
+    /// running transport, owned so it can be finalized on run-stop / screen exit.
+    @State var recorder = RecordingController()
 
     var current: LoopSetupState {
         LoopSetupState(working: working, command: command, warmupSteps: steps,
@@ -117,6 +120,7 @@ struct LoopRunView: View {
             VStack(spacing: 22) {
                 if isRunning {
                     liveReadout
+                    recordingStatus
                 } else {
                     practiceSettings
                 }
@@ -142,7 +146,10 @@ struct LoopRunView: View {
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
         .task { await model.loadIfNeeded(); maybeAutoStart() }
-        .onDisappear { model.stop() }
+        .onChange(of: isRunning) { _, running in
+            if !running { finishTakeIfNeeded() }   // run stopped ⇒ never leave a take recording
+        }
+        .onDisappear { finishTakeIfNeeded(); model.stop() }
         .sheet(isPresented: $showingJournal) {
             JournalSheet(owner: .loop(loop),
                          onAdd: addJournalEntry,
@@ -267,13 +274,18 @@ struct LoopRunView: View {
                             .foregroundStyle(PocketColor.textSecondary)
                             .multilineTextAlignment(.center)
                     }
-                    Button(action: startTapped) {
-                        Label("Start training", systemImage: "play.fill").pocketRunButton
+                    HStack(spacing: 14) {
+                        Button(action: startTapped) {
+                            Label("Start training", systemImage: "play.fill").pocketRunButton
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(model.isLoading || model.loadFailed)
+                        .accessibilityLabel("Start training routine")
+                        recordArmToggle
                     }
-                    .buttonStyle(.plain)
-                    .disabled(model.isLoading || model.loadFailed)
-                    .accessibilityLabel("Start training routine")
+                    recordSetupHint
                 }
+                .animation(.easeInOut(duration: 0.2), value: recorder.isArmed)
             }
         }
         .padding(.horizontal, 24)

@@ -5,6 +5,16 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Record your practice takes on a loop.** A **loop training run** now has a record toggle beside
+  **Start training** (off by default). Arm it and a **mic-only** recording of your own playing captures
+  automatically for the session — it starts with the run (after the count-in) and saves when you stop.
+  It records *you*, never the backing track: on headphones you get a clean take by construction, and on
+  the phone speaker a hint nudges you toward headphones (the room's audio would otherwise be captured).
+  The take stays on your device. (Relisten arrives in a later update.)
+- **Loops now get a count-in too.** Starting a loop training run plays the same 3-2-1 count-in exercises
+  already had (respecting your **Count-in** setting), so you're not caught mid-reach at the downbeat.
+
 ### Fixed
 - **Edit sheets no longer close themselves while you're editing.** Opening **Edit** on a song you'd
   just imported, a planner goal you'd just added, or the reps editor on a freshly generated routine
