@@ -1,11 +1,25 @@
 # 0096 — A dedicated chords / theory / resources hub (direction)
 
-- **Status:** Proposed (2026-07-17) — **IA/design pass complete (2026-07-17); awaiting ratification of
-  D1–D5 to promote to Accepted.** No build scheduled until then.
+- **Status:** **Accepted (2026-07-17)** — IA/design pass done and decisions D1–D5 ratified (below).
+  **Slice 1 scoped, not yet scheduled to build.**
 - **Date:** 2026-07-17
 - **IA / design pass:** [`docs/plans/chords-theory-hub-ia.md`](../plans/chords-theory-hub-ia.md) — resolves
-  the deferred questions below (attach point, screen inventory, the build/hear/explore/keep flows, empty
-  states, phasing) and lists the decisions (D1–D5) the player ratifies to move this ADR to Accepted.
+  the deferred questions (attach point, screen inventory, the build/hear/explore/keep flows, empty states,
+  phasing) that this ADR's ratified decisions summarise.
+
+## Ratified decisions (2026-07-17)
+
+- **D1 — Attach point: a fourth home nav card → its own `NavigationStack`.** Peer to Practice / Metronome /
+  Song library. No `TabView`; not nested under Practice; not in Settings.
+- **D2 — Name: "Toolkit."** Distinct from the AI layer's "Red Moon Oracle" (ADR 0092) — this is the free,
+  deterministic floor, that is the paid layer on top.
+- **D3 — Accent: indigo / violet.** A "study / reference" hue, distinct from the teal·plum·terracotta triad;
+  a new `PocketColor` token with light/dark bakes (ADR 0062/0081).
+- **D4 — *Hear* (auditioning chords/scales/intervals) is deferred to Slice 2 with its own ADR.** The app has
+  no pitched-tone source today (ADR 0001 is file playback + metronome click); synth-vs-sampled is a
+  foundation decision made when Slice 2 is scoped, not now.
+- **D5 — Slice 1 = the hub shell + My Chords + Glossary** — the only two tenants with zero new dependencies.
+  Audio-free by construction (matches D4). Shipping Slice 1 is what realises this Accepted ADR.
 - **Sets direction for:** pulling the objective-reference features out of the exercise editors into a
   destination of their own.
 - **Builds on / gathers:** ADR 0093 (chord-naming engine — the shared theory core), ADR 0094 (theory &

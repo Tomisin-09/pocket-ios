@@ -135,18 +135,18 @@ Slice 1 deliberately avoids the audio dependency so the hub can exist before Hea
 
 ---
 
-## 6. Decisions to ratify (to promote ADR 0096 → Accepted)
+## 6. Decisions — ratified 2026-07-17 (promoted ADR 0096 → Accepted)
 
-| # | Decision | Recommendation |
+| # | Decision | Ratified |
 |---|---|---|
-| **D1** | Attach as a **fourth home card → own NavigationStack** (vs. a tab, vs. nested under Practice)? | **Home card.** Matches the app's card pattern; satisfies H1; no nav re-architecture. |
-| **D2** | Player-facing **name** of the hub. | **"Toolkit"** (candidates: Toolkit · Chords & Theory · Workshop · Fretwork). Not "Red Moon Oracle" — that's the AI layer (ADR 0092), not this free floor. |
-| **D3** | The **fourth accent hue** (the triad is teal·plum·terracotta). | A distinct reference hue — proposal: a deep **indigo/violet** so it reads as "study/reference," clearly not-a-tool and not-a-song. Needs a `PocketColor` token + light/dark bake (ADR 0062/0081). Design call. |
-| **D4** | **Hear** — auditioning chords/scales/intervals needs an audio source the app doesn't have yet. Today's audio is DRM-free *file* playback + the metronome click (ADR 0001); playing pitched tones needs a **tone generator or a sampled instrument**. Is that in scope, and synth vs. sampled? | Scope it as **Slice-2's** central question with its own ADR. Keep Slice 1 audio-free so the hub ships first. (A sampled acoustic-guitar one-shot set reads best but is an asset+licensing job; a simple synthesized pluck is cheaper and good enough for reference.) |
-| **D5** | Slice-1 scope = **shell + My Chords + Glossary**? | Yes — the only two tenants with zero new dependencies; smallest coherent hub. |
+| **D1** | Attach point (fourth card vs. tab vs. nested vs. Settings). | ✅ **Fourth home card → own NavigationStack.** Peer to Practice/Metronome/Song library; no tab bar, not nested under Practice, not in Settings. |
+| **D2** | Player-facing name. | ✅ **"Toolkit."** Not "Red Moon Oracle" — that's the paid AI layer (ADR 0092); this is the free floor. |
+| **D3** | The fourth accent hue (triad is teal·plum·terracotta). | ✅ **Indigo/violet** — a "study/reference" hue. New `PocketColor` token + light/dark bake (ADR 0062/0081); exact swatch chosen at build. |
+| **D4** | *Hear* — needs a pitched-tone source the app lacks (ADR 0001 = file playback + click). Synth vs. sampled? | ✅ **Deferred to Slice 2 with its own ADR.** Slice 1 stays audio-free; synth-vs-sampled decided when Slice 2 is scoped. |
+| **D5** | Slice-1 scope. | ✅ **Shell + My Chords + Glossary** — the only two zero-dependency tenants; smallest coherent, audio-free hub. |
 
-Once D1–D3 and D5 are settled, ADR 0096 can be revised to **Accepted** with Slice 1 scheduled; D4 gets its
-own ADR when Slice 2 is scoped.
+ADR 0096 is now **Accepted**. **Slice 1** (§5) is scoped and ready to schedule; D4 gets its own ADR when
+Slice 2 is taken up.
 
 ---
 
