@@ -1,7 +1,24 @@
 # 0069 — Practice-take recording (mic-only "audio journal")
 
-- **Status:** Proposed (2026-07-07)
-- **Date:** 2026-07-07
+- **Status:** Accepted (2026-07-16)
+- **Date:** 2026-07-07 (proposed), 2026-07-16 (accepted)
+
+## Build (accepted 2026-07-16)
+
+Sliced post-v1 on its own branch, never riding the paused v1.0 submission:
+
+- **Slice 0 (foundations, this branch `pocket-148`)** — mic permission string +
+  `AVAudioApplication.requestRecordPermission` flow; a record-capable session
+  config in `AudioPlumbing` (§3); and the **pure route classifier** that drives
+  the headphone-clean vs speaker-bleed cue (§2), unit-tested. No model, no
+  capture, no UI yet. The session options are the copyright/quality guardrails
+  baked in at the substrate: `.playAndRecord` + `.defaultToSpeaker` +
+  `.allowBluetoothA2DP` **without** `.allowBluetooth` — output stays high-quality
+  A2DP and input falls back to the built-in mic (avoids the Bluetooth
+  HFP-collapse; the guitar is in the room, not the earbuds).
+- **Slice 1** — `Recording` SwiftData model (§5) + AAC capture + storage/retention.
+- **Slice 2** — arm/record/stop UI + the speaker nudge wired to the classifier.
+- **Slice 3** — relisten/playback + journal integration.
 
 ## Context
 

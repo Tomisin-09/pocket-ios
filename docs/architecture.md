@@ -191,6 +191,24 @@ The reach can also be **manually pinned** (ADR 0075): optional `Exercise.targetT
 accessors (`override ?? auto`), with `promoteCommand` auto-clearing a pin once command catches up.
 Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044), full-screen.
 
+**Practice-take recording foundations** (`Core/Audio/`, ADR 0069, slice 0) — the substrate
+for a mic-only "audio journal," not yet a feature. Recording needs `.playAndRecord`, which
+changes routing app-wide, so it is a *separate* session config (`AudioPlumbing.configureRecordSession`)
+applied only while a take is armed — never a global flip — with `configurePlaybackSession`
+as the restore path, leaving the metronome/playback graph untouched when nothing is armed.
+The option set is the copyright/quality guardrail: `.defaultToSpeaker` (not the quiet earpiece)
++ `.allowBluetoothA2DP` and **deliberately not** `.allowBluetooth` — with HFP allowed iOS
+collapses a Bluetooth route to phone-call quality to grab the earbud mic, so A2DP-only keeps
+output clean and lets input fall to the built-in mic (the guitar is in the room, not the
+earbuds). Isolation is a **route question, not a DSP one**: with mic-only capture the loop
+couples in only *acoustically* (speaker → air → mic), so the pure **`RecordingRoute`** classifier
+maps the current output ports to a *clean* take (private listening — headphones/BT/wired) or a
+*bleed* nudge (speaker/AirPlay/car/unknown → "use headphones"), unit-tested and driving an honest
+UX cue rather than a voice-tuned AEC that would mangle guitar tone. Mic access is the iOS 17+
+`AVAudioApplication` flow (`MicPermission`) behind a specific `NSMicrophoneUsageDescription`. The
+`Recording` model, AAC capture, and UI arrive in later slices; the app never renders its own
+loop/song playback into a file (ADR 0001/0064).
+
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
 from the metronome at the product level. `PracticeView` is a **hub**: the live "Build today's
