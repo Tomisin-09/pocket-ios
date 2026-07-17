@@ -15,6 +15,7 @@ struct PocketApp: App {
                 .preferredColorScheme(appearance.colorScheme)
         }
         .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,
-                              Exercise.self, Routine.self, RoutineItem.self, Goal.self])
+                              Exercise.self, Routine.self, RoutineItem.self, Goal.self,
+                              Recording.self])
     }
 }

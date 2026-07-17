@@ -16,7 +16,19 @@ Sliced post-v1 on its own branch, never riding the paused v1.0 submission:
   `.allowBluetoothA2DP` **without** `.allowBluetooth` — output stays high-quality
   A2DP and input falls back to the built-in mic (avoids the Bluetooth
   HFP-collapse; the guitar is in the room, not the earbuds).
-- **Slice 1** — `Recording` SwiftData model (§5) + AAC capture + storage/retention.
+- **Slice 1 (model + capture + storage, `pocket-148`)** — `Recording` SwiftData
+  model (§5): app-authored AAC file addressed by a relative `fileName`, with a
+  **polymorphic owner** (`loop`/`exercise`/`song`, the JournalEntry/ADR-0058
+  pattern; `ownerKind` derived, no stored enum) that is **cascade-owned** by its
+  owner via an inverse `recordings` array on `Loop`/`Exercise`/`Song`, mirroring
+  the sibling `journal` pillar — deleting an owner deletes the take's row, and the
+  now-unreferenced file is reaped by the orphan sweep. (A bare unidirectional
+  relationship was found to leave the link *dangling* at a deleted model rather
+  than clearing — the inverse is required for any delete rule to fire.)
+  `RecordingStore` owns the container directory + delete/size and the pure
+  orphan-sweep retention logic. `TakeRecorder` captures mic-only to AAC via
+  `AVAudioRecorder` (not tapping the playback engine — engines stay unchanged per
+  §3). Owner-resolution + orphan logic unit-tested; real capture is device-only.
 - **Slice 2** — arm/record/stop UI + the speaker nudge wired to the classifier.
 - **Slice 3** — relisten/playback + journal integration.
 

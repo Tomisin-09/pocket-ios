@@ -205,9 +205,18 @@ couples in only *acoustically* (speaker → air → mic), so the pure **`Recordi
 maps the current output ports to a *clean* take (private listening — headphones/BT/wired) or a
 *bleed* nudge (speaker/AirPlay/car/unknown → "use headphones"), unit-tested and driving an honest
 UX cue rather than a voice-tuned AEC that would mangle guitar tone. Mic access is the iOS 17+
-`AVAudioApplication` flow (`MicPermission`) behind a specific `NSMicrophoneUsageDescription`. The
-`Recording` model, AAC capture, and UI arrive in later slices; the app never renders its own
-loop/song playback into a file (ADR 0001/0064).
+`AVAudioApplication` flow (`MicPermission`) behind a specific `NSMicrophoneUsageDescription`.
+Capture is **`TakeRecorder`** — mic-only to AAC via `AVAudioRecorder`, deliberately *not* tapping
+the playback engine's graph, so both engines are untouched while a take is armed (the recorder
+captures the mic, the practice engine keeps playing out, and the two never share a node — the app
+therefore never renders its own playback into the file, ADR 0001/0064). Takes are **app-authored**
+files (unlike songs, which are bookmarks to files in place): the **`Recording`** `@Model` holds
+`uid`/`createdAt`/`duration` + a relative `fileName`, with a **polymorphic, cascade-owned** owner
+(`loop`/`exercise`/`song` — inverse `recordings` arrays on those models, mirroring the `journal`
+pillar; `ownerKind` is derived, no stored enum). **`RecordingStore`** owns the app-container
+`Recordings/` directory and the retention story — delete/size plus a pure orphan sweep that reaps
+files whose model row was cascade-deleted (cascade drops the row, not the on-disk audio). The
+arm/record UI and relisten arrive in later slices.
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises

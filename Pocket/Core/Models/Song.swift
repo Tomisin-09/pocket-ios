@@ -83,6 +83,10 @@ final class Song {
 
     @Relationship(deleteRule: .cascade, inverse: \Loop.song) var loops: [Loop] = []
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
+    /// Practice takes recorded against this song (ADR 0069) — e.g. during a play-along.
+    /// Cascade-owned like `loops`/`markers`; the files are reaped by `RecordingStore`'s orphan
+    /// sweep. Declaration default keeps the migration additive (CoreData 134110 rule).
+    @Relationship(deleteRule: .cascade, inverse: \Recording.song) var recordings: [Recording] = []
 
     /// Routine blocks that **reference** this song for a repertoire run-through (ADR 0066
     /// R4/R5). Inverse of `RoutineItem.song`, **nullify** delete rule: deleting the song
@@ -277,6 +281,14 @@ final class Loop {
     @Relationship(deleteRule: .cascade, inverse: \JournalEntry.loop)
     var journal: [JournalEntry] = []
 
+    /// Practice takes recorded against this loop (ADR 0069). **Cascade-owned**, mirroring
+    /// `journal`: deleting the loop deletes its takes' rows — their files are then reaped by
+    /// `RecordingStore`'s orphan sweep (cascade removes the row, not the on-disk audio).
+    /// Declaration default keeps the migration additive (CoreData 134110 rule) for loops
+    /// saved before recording shipped.
+    @Relationship(deleteRule: .cascade, inverse: \Recording.loop)
+    var recordings: [Recording] = []
+
     /// Journal entries newest-first — the order the journal sheet lists them in.
     var journalByRecent: [JournalEntry] {
         journal.sorted { $0.createdAt > $1.createdAt }
@@ -379,19 +391,5 @@ final class Loop {
                              dwellIntervals: max(1, rampDwellIntervals),
                              reachSteps: rampReachSteps, backoffSteps: rampBackoffSteps,
                              repsPerStep: max(1, rampRepsPerStep))
-    }
-}
-
-@Model
-final class Marker {
-    var uid: UUID
-    var seconds: TimeInterval
-    var label: String
-    var song: Song?
-
-    init(seconds: TimeInterval, label: String) {
-        self.uid = UUID()
-        self.seconds = seconds
-        self.label = label
     }
 }
