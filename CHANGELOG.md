@@ -6,16 +6,17 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
-- **Record your practice takes on a loop, and listen back.** A **loop training run** now has a record
-  toggle beside **Start training** (off by default). Arm it and a **mic-only** recording of your own
-  playing captures automatically for the session — it starts with the run (after the count-in) and
-  saves when you stop. It records *you*, never the backing track: on headphones you get a clean take by
-  construction, and on the phone speaker a hint nudges you toward headphones (the room's audio would
-  otherwise be captured). Your takes are reachable from a **Takes** pill on the loop's setup screen —
-  play them back, or swipe to delete. Everything stays on your device.
-- **Journal & Takes now share one compact row.** On a loop's setup screen, the journal and your takes
-  are two count pills side by side (each opening its own list) instead of stacked previews — so they
-  stay one tap away without crowding the screen as they fill up.
+- **Record your practice takes, and listen back.** A **loop or exercise training run** now has a
+  record toggle beside **Start training** (off by default). Arm it and a **mic-only** recording of your
+  own playing captures automatically for the session — it starts with the run and saves when you stop.
+  It records *you*, never the backing track: on headphones you get a clean take by construction, and on
+  the phone speaker a hint nudges you toward headphones (the room's audio would otherwise be captured).
+  Your takes are reachable from a **Takes** pill on the unit's setup screen — play them back, or swipe
+  to delete. Everything stays on your device. (Recording is for standalone practice runs; routine
+  sessions stay focused.)
+- **Journal & Takes now share one compact row.** On a loop's or exercise's setup screen, the journal
+  and your takes are two count pills side by side (each opening its own list) instead of stacked
+  previews — so they stay one tap away without crowding the screen as they fill up.
 - **Loops now get a count-in too.** Starting a loop training run plays the same 3-2-1 count-in exercises
   already had (respecting your **Count-in** setting), so you're not caught mid-reach at the downbeat.
 

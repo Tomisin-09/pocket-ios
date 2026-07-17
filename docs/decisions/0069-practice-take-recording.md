@@ -46,8 +46,23 @@ Sliced post-v1 on its own branch, never riding the paused v1.0 submission:
   drowning as history builds (device feedback 2026-07-17), the two stacked inline
   previews (journal + takes) were replaced by a single-row **`PracticeReviewBar`**:
   two count pills, each opening its sheet — bounded to one row forever, counts as
-  the at-a-glance signal, content in the sheets. Takes are loop-only so far;
-  exercise/song surfaces reuse the same owner-agnostic `RecordingOwner` pieces.
+  the at-a-glance signal, content in the sheets.
+- **Slice 4 (exercise runs + scope, `pocket-148`)** — recording extended to the
+  standalone **`ExerciseRunView`**, the exact loop-trainer treatment (arm toggle +
+  `PracticeReviewBar` + Takes sheet), which also **unified the journal presentation**
+  (exercises' old stacked `JournalPreviewSection` → the same pill bar). The record
+  controls (`RecordArmToggle` / `RecordSetupHint` / `RecordingStatusView`) were
+  extracted to a shared, owner-agnostic `RecordControls.swift` so both screens style
+  them in one place. The metronome engine's `configureSession()` gained a guard so it
+  won't downgrade an armed `.playAndRecord` session on `start()` (unlike the loop
+  engine it reconfigures every start). **Scope decision — recording is a standalone-
+  practice feature only**, gated to `routineContext == nil` (arm toggle *and* review
+  bar): routine blocks stay focused (ADR 0071/0077), and since **song play-along
+  exists only inside routines**, songs are **deliberately excluded** — no standalone
+  song surface to record against. `RecordingOwner.song` stays in the model for a
+  future standalone song surface. Exercise take start is before the engine's audible
+  count-in, so a *speaker* take catches a couple of count-in clicks; a headphone take
+  stays clean.
 
 ## Context
 

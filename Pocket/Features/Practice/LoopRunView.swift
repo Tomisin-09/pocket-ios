@@ -128,7 +128,7 @@ struct LoopRunView: View {
             VStack(spacing: 22) {
                 if isRunning {
                     liveReadout
-                    recordingStatus
+                    RecordingStatusView(recorder: recorder)
                 } else {
                     practiceSettings
                 }
@@ -295,9 +295,14 @@ struct LoopRunView: View {
                         .buttonStyle(.plain)
                         .disabled(model.isLoading || model.loadFailed)
                         .accessibilityLabel("Start training routine")
-                        recordArmToggle
+                        // Recording is a standalone-practice feature — routine blocks stay focused
+                        // (ADR 0071/0077), matching the Takes/Journal bar's `routineContext == nil` gate.
+                        if routineContext == nil {
+                            RecordArmToggle(recorder: recorder,
+                                            disabled: model.isLoading || model.loadFailed)
+                        }
                     }
-                    recordSetupHint
+                    RecordSetupHint(recorder: recorder)
                 }
                 .animation(.easeInOut(duration: 0.2), value: recorder.isArmed)
             }
