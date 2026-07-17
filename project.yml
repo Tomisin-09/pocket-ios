@@ -35,6 +35,12 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: click.decooperations.pocket
         INFOPLIST_FILE: Pocket/Resources/Info.plist
+        # iPhone-only (1). Red Moon is a portrait, phone-first app — never QA'd
+        # for iPad. Being universal (the Xcode default) triggers App Store
+        # validation 90474 (iPad multitasking needs all 4 orientations incl.
+        # PortraitUpsideDown) and would require iPad screenshots. iPhone-only
+        # sidesteps both; the app still runs on iPad in compatibility mode.
+        TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Manual
         # App icon lives in Pocket/Resources/Assets.xcassets (AppIcon set).
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

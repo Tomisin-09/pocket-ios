@@ -20,7 +20,7 @@ export PATH="/opt/homebrew/bin:$PATH"
 
 SCHEME="Pocket"
 BUNDLE_ID="${POCKET_BUNDLE_ID:-click.decooperations.pocket}"
-TEAM="${POCKET_TEAM:-YX426B7RZR}"
+TEAM="${POCKET_TEAM:-2L35PZ86GP}"   # Deco Operations Ltd (paid); NOT the free personal team YX426B7RZR — free-team builds expire in 7 days
 DEST_UDID="${POCKET_DEST_UDID:-00008140-0014684A2284801C}"          # xcodebuild -destination id
 DEVICECTL_ID="${POCKET_DEVICECTL_ID:-9328B690-0B53-55B3-978F-C6B3603767B7}"  # devicectl --device
 DERIVED="build-device"
