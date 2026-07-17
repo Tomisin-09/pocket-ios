@@ -450,9 +450,15 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   destination (separate from the exercise editors) carrying **My Chords** (the ADR-0095 library promoted
   to its own screen) + **theory & ear-training** (ADR 0094 tools) + a **glossary/vocabulary** sheet, all
   objective/additive (no grading, no quiz — ADR 0070/0094). Built on the shared `Core/Theory` +
-  scale-catalog + `SavedChord` substrates. **No build scheduled** — needs its own IA/design pass before
-  ADR 0096 moves to Accepted; ADRs 0093–0095 ship and stand alone without it. The player's idea, worth
-  its own destination rather than bolting reference onto authoring surfaces.
+  scale-catalog + `SavedChord` substrates. **IA/design pass DONE (2026-07-17):**
+  [`docs/plans/chords-theory-hub-ia.md`](plans/chords-theory-hub-ia.md) resolves the attach point (a
+  **fourth home card → own NavigationStack**, matching the teal·plum·terracotta triad), the five-section
+  screen inventory (My Chords · chord identifier · scales & modes · intervals & ear · glossary), the
+  build/hear/explore/keep flows, and phasing (**Slice 1 = shell + My Chords + Glossary**, the only
+  zero-dependency tenants). **D1–D5 ratified 2026-07-17 → ADR 0096 ACCEPTED:** attach = **fourth home card**
+  ("**Toolkit**", **indigo/violet**), *Hear*/audio **deferred to Slice 2 + own ADR**, **Slice 1 = shell +
+  My Chords + Glossary** (audio-free). Slice 1 scoped and ready to schedule — not yet started. The player's
+  idea, worth its own destination rather than bolting reference onto authoring surfaces.
 
 ## Notes & journal — DONE (ADR 0038)
 
