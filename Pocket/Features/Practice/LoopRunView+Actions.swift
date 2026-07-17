@@ -15,7 +15,10 @@ extension LoopRunView {
         guard !seeded else { return }
         if loop.hasMeasuredCommand {
             command = clampPercent(LoopCommandRamp.percent(loop.command))
-            working = min(command, clampPercent(LoopCommandRamp.percent(loop.speed)))
+            // Seed the warm-up floor a step below command (not *at* it) so the ramp has room to climb;
+            // a saved speed that's already lower wins (device feedback 2026-07-17).
+            working = clampPercent(min(command - Self.defaultWorkingGap,
+                                       LoopCommandRamp.percent(loop.speed)))
         } else {
             command = clampPercent(LoopCommandRamp.percent(loop.speed))
             working = max(Self.percentRange.lowerBound, command - 15)

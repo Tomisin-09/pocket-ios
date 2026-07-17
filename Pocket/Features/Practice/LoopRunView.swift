@@ -69,6 +69,12 @@ struct LoopRunView: View {
 
     static let repsRange = 1...8
 
+    /// How far below command the warm-up **working** floor seeds by default, in percentage points
+    /// (loops train in % of original, so this is the loop analogue of a few BPM). A gap so the ramp
+    /// actually climbs — device feedback 2026-07-17: seeding working *at* command left nothing to warm
+    /// up through. A saved speed that's already lower than this is honoured as-is.
+    static let defaultWorkingGap = 5
+
     /// Playback-speed bounds as integer percent (the engine clamps 0.25×–2.0×).
     static let percentRange =
         Int(TempoMath.minSpeed * 100)...Int(TempoMath.maxSpeed * 100)
