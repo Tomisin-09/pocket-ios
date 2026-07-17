@@ -50,6 +50,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   reduced speed.)
 
 ### Changed
+- **Internal:** the custom-chord placer's tappable fret board is now a standalone `ChordBoardEditor`
+  view, extracted from `CustomChordSheet` (no behaviour change) — keeps the sheet under the file-length
+  ceiling and makes the editable board reusable.
 - **iPhone-only for v1.** The app now targets iPhone (`TARGETED_DEVICE_FAMILY = 1`) rather than the
   universal iPhone + iPad default. Red Moon is a portrait, phone-first app and was never designed for
   iPad; scoping it to iPhone matches the design, avoids the iPad-multitasking orientation requirement,
