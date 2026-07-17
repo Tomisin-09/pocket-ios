@@ -70,6 +70,7 @@ struct CustomChordSheet: View {
             VStack(spacing: 22) {
                 titleRow
                 board
+                identifier
                 nameField
                 hint
                 Spacer(minLength: 0)
@@ -316,6 +317,27 @@ struct CustomChordSheet: View {
 // MARK: - Geometry + edit helpers
 
 private extension CustomChordSheet {
+    /// The shape has enough distinct notes (≥3) to name — below that it's still mid-build (a dyad is an
+    /// interval, not a chord), so the identifier stays hidden rather than nagging.
+    var canIdentify: Bool { voicing.pitchClasses.count >= 3 }
+
+    /// Live reverse-lookup readings of the shape being built (ADR 0093 N7) — ranked, best first. The
+    /// name the player *typed* never feeds this; it reads the geometry only.
+    var chordCandidates: [ChordCandidate] {
+        ChordNamer.candidates(for: ChordVoicing("", frets: frets))
+    }
+
+    /// Under the board: what the shape looks like it's called (`ChordIdentifierPanel`). Hidden until there
+    /// are enough notes to name; tapping a suggestion fills the name field (the player can still override).
+    @ViewBuilder var identifier: some View {
+        if canIdentify {
+            ChordIdentifierPanel(candidates: chordCandidates) { picked in
+                name = picked
+                haptic(.light)
+            }
+        }
+    }
+
     func columnCenter(_ column: Int) -> CGFloat { (CGFloat(column) + 0.5) * cellSize }
     func rowCenter(_ row: Int) -> CGFloat { (CGFloat(row) + 0.5) * cellSize }
     func stringName(_ string: Int) -> String { stringNames[string] }
