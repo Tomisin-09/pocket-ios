@@ -16,6 +16,9 @@ struct ChordDiagramView: View {
     var tint: Color = PocketColor.practice
     /// How many frets the window shows.
     var fretWindow: Int = 4
+    /// Whether to draw the chord's name above the box. On by default (the labelled chart); the My Chords
+    /// detail passes `false` because its navigation title already names the chord (ADR 0096).
+    var showsName: Bool = true
 
     /// Display order left → right: low E (index 5) first … high e (index 0) last — the standard way
     /// a chart is drawn when the guitar faces you.
@@ -25,9 +28,11 @@ struct ChordDiagramView: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            Text(voicing.name)
-                .font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(isActive ? PocketColor.textPrimary : PocketColor.textSecondary)
+            if showsName {
+                Text(voicing.name)
+                    .font(.futura(.subheadline, weight: .semibold))
+                    .foregroundStyle(isActive ? PocketColor.textPrimary : PocketColor.textSecondary)
+            }
             GeometryReader { geo in
                 board(in: geo.size)
             }

@@ -48,6 +48,18 @@ final class SavedChord {
         (try? JSONDecoder().decode(ChordVoicing.self, from: voicingData))
             ?? ChordVoicing(name, frets: Array(repeating: nil, count: ChordVoicing.stringCount))
     }
+
+    /// Rename in place (My Chords detail, ADR 0096) — keeps the queryable `name` column and the encoded
+    /// voicing's own `name` in step, so the diagram's caption and the list row never disagree. A no-op
+    /// for a blank/whitespace-only name (the caller guards the button, this guards the model).
+    func rename(to newName: String) {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        name = trimmed
+        var renamed = voicing
+        renamed.name = trimmed
+        voicingData = (try? JSONEncoder().encode(renamed)) ?? voicingData
+    }
 }
 
 extension SavedChord {

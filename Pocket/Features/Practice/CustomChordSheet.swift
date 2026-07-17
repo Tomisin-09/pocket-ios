@@ -11,6 +11,11 @@ struct CustomChordSheet: View {
     /// Called with the composed voicing when the player confirms.
     let onInsert: (ChordVoicing) -> Void
 
+    /// Label for the primary confirmation button. Defaults to **Insert** (the progression editor's
+    /// "add to this slot" intent); the Toolkit's "Build a chord" flow passes **Save**, where confirming
+    /// keeps the shape in My Chords rather than inserting it anywhere (ADR 0096 Slice 1).
+    var confirmTitle: String = "Insert"
+
     /// Optional seam (ADR 0095): when set, a **Save to My chords** button appears and hands the caller the
     /// voicing to persist — kept separate from `onInsert` so saving and inserting are distinct intents.
     var onSave: ((ChordVoicing) -> Void)?
@@ -60,7 +65,7 @@ struct CustomChordSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Insert") {
+                    Button(confirmTitle) {
                         onInsert(voicing)
                         dismiss()
                     }

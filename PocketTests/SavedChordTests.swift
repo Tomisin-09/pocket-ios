@@ -42,4 +42,28 @@ final class SavedChordTests: XCTestCase {
     func testEmptyLibraryHasNoDuplicates() {
         XCTAssertFalse(SavedChord.isAlreadySaved(.cMajor, among: []))
     }
+
+    // MARK: - Rename (My Chords detail, ADR 0096)
+
+    func testRenameUpdatesBothColumnAndVoicing() {
+        // Rename must keep the queryable `name` column and the encoded voicing's own name in step, or the
+        // list row and the diagram caption would disagree.
+        let saved = SavedChord(ChordVoicing("Cadd9", frets: [3, 3, 0, 2, 3, nil]))
+        saved.rename(to: "Csus2")
+        XCTAssertEqual(saved.name, "Csus2")
+        XCTAssertEqual(saved.voicing.name, "Csus2")
+        XCTAssertEqual(saved.voicing.frets, [3, 3, 0, 2, 3, nil])   // geometry untouched
+    }
+
+    func testRenameTrimsWhitespace() {
+        let saved = SavedChord(ChordVoicing("Am", frets: [0, 1, 2, 2, 0, nil]))
+        saved.rename(to: "  A minor  ")
+        XCTAssertEqual(saved.name, "A minor")
+    }
+
+    func testRenameIgnoresBlankName() {
+        let saved = SavedChord(ChordVoicing("Am", frets: [0, 1, 2, 2, 0, nil]))
+        saved.rename(to: "   ")
+        XCTAssertEqual(saved.name, "Am")   // unchanged
+    }
 }

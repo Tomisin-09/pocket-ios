@@ -45,6 +45,7 @@ struct HomeView: View {
                         songLibraryCard
                         metronomeCard
                         practiceCard
+                        toolkitCard
                     }
                     if !recentRoutines.isEmpty { recentRoutinesRail }
                 }
@@ -169,30 +170,32 @@ struct HomeView: View {
     /// from the metronome tool below it.
     private var practiceCard: some View {
         NavigationLink { PracticeView() } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "figure.run")
-                    .font(.futura(.title2))
-                    .foregroundStyle(PocketColor.practice)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(PocketColor.practiceCircleWash))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Practice")
-                        .font(.futura(.headline))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text("Your exercises & training runs")
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.futura(.footnote, weight: .semibold))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-            .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCardWash))
+            HomeNavCard(icon: "figure.run", title: "Practice",
+                        subtitle: "Your exercises & training runs",
+                        tint: PocketColor.practice,
+                        cardWash: PocketColor.practiceCardWash,
+                        circleWash: PocketColor.practiceCircleWash)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Practice, your exercises and training runs")
+    }
+
+    // MARK: - Toolkit card
+
+    /// The **Toolkit** hub (ADR 0096) — the free, deterministic reference destination (My Chords +
+    /// Glossary in Slice 1). A push (it's a *place* with its own list of sections), in the new
+    /// indigo/violet "study/reference" accent (`PocketColor.toolkit`), the fourth home hue kept clear
+    /// of the teal · plum · terracotta triad above it.
+    private var toolkitCard: some View {
+        NavigationLink { ToolkitView() } label: {
+            HomeNavCard(icon: "books.vertical.fill", title: "Toolkit",
+                        subtitle: "Chords, scales & theory reference",
+                        tint: PocketColor.toolkit,
+                        cardWash: PocketColor.toolkitCardWash,
+                        circleWash: PocketColor.toolkitCircleWash)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Toolkit, chords, scales and theory reference")
     }
 
     // MARK: - Metronome card
@@ -201,27 +204,11 @@ struct HomeView: View {
     /// hue), presented full-screen (it owns its own navigation + dismiss, ADR 0043).
     private var metronomeCard: some View {
         Button { showingMetronome = true } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "metronome.fill")
-                    .font(.futura(.title2))
-                    .foregroundStyle(PocketColor.metronome)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(PocketColor.metronomeCircleWash))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Metronome")
-                        .font(.futura(.headline))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text("Standalone click & tempo trainer")
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.futura(.footnote, weight: .semibold))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-            .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.metronomeCardWash))
+            HomeNavCard(icon: "metronome.fill", title: "Metronome",
+                        subtitle: "Standalone click & tempo trainer",
+                        tint: PocketColor.metronome,
+                        cardWash: PocketColor.metronomeCardWash,
+                        circleWash: PocketColor.metronomeCircleWash)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Metronome, standalone click and tempo trainer")
@@ -236,27 +223,11 @@ struct HomeView: View {
     /// the teal · plum · terracotta home triad (content / tool / songs).
     private var songLibraryCard: some View {
         NavigationLink { LibraryView() } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "music.note.list")
-                    .font(.futura(.title2))
-                    .foregroundStyle(PocketColor.library)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(PocketColor.libraryCircleWash))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Song library")
-                        .font(.futura(.headline))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text(librarySubtitle)
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.futura(.footnote, weight: .semibold))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-            .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.libraryCardWash))
+            HomeNavCard(icon: "music.note.list", title: "Song library",
+                        subtitle: librarySubtitle,
+                        tint: PocketColor.library,
+                        cardWash: PocketColor.libraryCardWash,
+                        circleWash: PocketColor.libraryCircleWash)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Song library, \(librarySubtitle)")

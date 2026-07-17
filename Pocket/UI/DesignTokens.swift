@@ -144,6 +144,17 @@ enum PocketColor {
     static let libraryCardWash = Color("TerracottaCardWash")
     static let libraryCircleWash = Color("TerracottaCircleWash")
 
+    /// **Toolkit** — the identity hue of the chords/theory/resources hub (ADR 0096, the fourth home
+    /// card). An **indigo/violet** "study / reference" hue, deliberately distinct from the
+    /// teal · plum · terracotta home triad so the reference destination reads as its own place (ADR
+    /// 0096 D3). Baked flat per appearance like the other card hues — *not* a shared opacity on
+    /// `toolkit` (ADR 0062 lesson: a low-opacity blend reads washed-grey on cream and near-invisible on
+    /// near-black). Theme-invariant for now (there is no Blood Moon swap for the hub). No `toolkitCTA`:
+    /// the hub is reference, never a filled transport CTA.
+    static let toolkit = Color("Indigo")
+    static let toolkitCardWash = Color("IndigoCardWash")
+    static let toolkitCircleWash = Color("IndigoCircleWash")
+
     /// Full-opacity **CTA fill** for the Metronome/Practice primary transport buttons
     /// (Start/Pause/Resume; the run screens' big pill) and Home's "Start today's session".
     /// A deepened per-appearance fill (not the base hue at opacity) so the cream

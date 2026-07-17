@@ -455,6 +455,33 @@ finger is down (ADR 0030).
 Apple Music tracks skip stages 2–4 (no raw audio) — they are browse/metadata
 only. See `docs/decisions/0001`.
 
+## Toolkit hub (Features/Toolkit)
+
+The **Toolkit** (`Features/Toolkit/`, ADR 0096) is a top-level **reference** destination — *explore /
+keep* — distinct from the exercise editors' *author* job. It is the fourth home card (a `NavigationLink`
+onto the home stack, like Practice/Library) in the new indigo/violet `PocketColor.toolkit` accent (baked
+per-appearance `Indigo`/`IndigoCardWash`/`IndigoCircleWash` colour sets, ADR 0062/0081), and the free,
+deterministic floor the paid AI layer (ADR 0092) will later sit on. `ToolkitView` is a landing list of
+sections; **Slice 1** carries the two zero-dependency tenants and is **audio-free by construction** (ADR
+0096 D4/D5 — *Hear* has no pitched-tone source yet, ADR 0001):
+
+- **My Chords** (`MyChordsView`) promotes the `SavedChord` library (ADR 0095) from its in-context Add
+  menu to a full grid of saved voicings (newest-first `@Query`). A cell pushes `MyChordDetailView` — a
+  large `ChordDiagramView` plus **Rename** (`SavedChord.rename(to:)` keeps the queryable `name` column
+  and the encoded voicing's own name in step) and **Delete** (pops back). **+** presents the existing
+  `CustomChordSheet` in "Save" mode — a new optional `confirmTitle` (default `"Insert"`) reads `"Save"`
+  here so confirming *keeps* the shape rather than *inserting* it into a progression; the dedupe reuses
+  the pure `SavedChord.isAlreadySaved`. The in-context `SavedChordsSheet` menu **stays** for inline reuse
+  inside an exercise — both surfaces read the same `@Query`, so this screen *manages*, the menu *reuses*.
+- **Glossary** (`GlossaryView`) is a searchable, area-grouped static terms sheet over the pure
+  `GlossaryTerm` catalog (`GlossaryTerm.all`). Filtering is the pure `matches(_:)`/`matching(_:)` (case-
+  and diacritic-insensitive over term **and** definition), unit-tested. Definitions state objective
+  identity only — a glossary informs, never grades (ADR 0070).
+
+The four home strips (Song library / Metronome / Practice / Toolkit) share one presentational
+`HomeNavCard` component (icon + title + subtitle + chevron on a washed card); each home card just
+supplies its copy and its `PocketColor` hue trio, keeping the owning link/button in `HomeView`.
+
 ## Persistence
 
 - **SwiftData `@Model` domain** (`Core/Models/`): `Song` is the aggregate root, with
@@ -465,7 +492,8 @@ only. See `docs/decisions/0001`.
   `name` column for sorting, deliberately not a stored `ChordVoicing`/enum attribute (the payload-as-blob
   pattern that dodges the migration footgun). Adding it is an additive schema change (new table; nothing
   existing migrates). Surfaced as a **My chords** section in the chord editor's Add/swap menus + the
-  `SavedChordsSheet` list (tap-to-insert, swipe-to-delete); saved from the placer's **Save to My chords**.
+  `SavedChordsSheet` list (tap-to-insert, swipe-to-delete); saved from the placer's **Save to My chords**;
+  and **managed** on the Toolkit hub's `MyChordsView` (grid + rename/delete, ADR 0096 — see above).
 - **Song metadata editing** (`Features/Library/SongEditSheet.swift`, ADR 0012): the
   editable counterpart to the read-only `SongDetailsSheet` (the practice screen's
   `SongInfoPanel` was removed in ADR 0042; song facts now live only in the details sheet).
