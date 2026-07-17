@@ -120,6 +120,9 @@ struct MovableChordSheet: View {
                         Text("\(grip.name) · \(fretCaption(voicing))")
                             .font(.futura(.subheadline))
                             .foregroundStyle(PocketColor.textSecondary)
+                        // The reverse-lookup reading (ADR 0093), confirming the movable idea in theory
+                        // terms ("this E-shape at G spells G7"). Always shown here as reassurance.
+                        ChordIdentityCaption(voicing: voicing)
                     }
                     Spacer(minLength: 0)
                 }

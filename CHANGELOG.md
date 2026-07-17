@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Chords now tell you what they are, everywhere you build a progression.** The "Looks like…" reading
+  from the custom-chord board (ADR 0093) now also appears on the **movable-shape sheet** — confirming
+  that, say, an E-shape rooted at G spells **G7** — and on each **row of a chord progression**, where a
+  slid or bespoke voicing reads its true name ("Looks like **B/F♯ · 2nd inv**"). On progression rows the
+  caption stays quiet when it would only echo the chord's own name, so it appears only when it adds
+  something — an inversion, or a custom shape whose name isn't the textbook one. Purely informational,
+  on-device, never a judgement.
 - **Save your custom chords and reuse them.** Built a bespoke voicing you like? Tap **Save to My
   chords** in the custom-chord placer to keep it. Saved chords show up as a **My chords** section at the
   top of the Add-chord (and swap) menu in any progression — one tap to drop one in — and a **Manage…**
