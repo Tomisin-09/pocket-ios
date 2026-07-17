@@ -414,6 +414,30 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
   to a ~30% side rail); every other screen stays portrait. The bottom song-info
   panel was removed in the same pass.
 
+## Chords & theory (logged 2026-07-17)
+
+Direction sense-checked 2026-07-17: music **theory & ear training are fair game** and do **not**
+conflict with "Pocket never grades the player" (ADR 0070) — that rule is about the *subjective* act
+of playing; interval/chord/scale identity is *objective* and needs no performance to assess. The
+ADR-0086 removal of key/Roman-numerals was scoped to the **chord-template surface only**, so a
+dedicated theory/ear-training context isn't bound by it. Worth its own ADR before building.
+
+- ~~**Scrollable custom-chord board + Display toggle.**~~ **DONE (pocket-149, 2026-07-17).** The
+  placer scrolls the neck (frets 1–15), mute/open + string names pinned, inlay dots at 3·5·7·9·12·15;
+  new **Display** menu (Note / Interval / Off) reusing the scale boards' control and global pref.
+  Added `ChordVoicing.noteLabels`.
+- **Chord suggestions / chord identifier (next slice).** In the space below the custom-chord board,
+  surface likely names for the shape being built (reverse lookup: sounded pitch classes → chord
+  name(s), inversions/enharmonics handled). Needs a real chord-**naming** engine — the same theory
+  core an interval/scale-degree feature would use, so build it once and let the identifier be its
+  first consumer. Additive & factual (never grades).
+- **Ear-training & theory space (direction, needs ADR).** Stay on the clearly-safe side of the
+  no-grading line: **reference/exploration** tools (interval player, chord voicer that sounds the
+  shape, scale/mode explorer with audio over the existing 12-scale catalog) and **call-and-response,
+  self-judged** drills (app plays → you echo on guitar → *you* decide; nothing listens or scores).
+  Avoid quiz/right-wrong framing. A "coach that explains the theory" is an **AI** feature → ADR 0092,
+  deferred/paid.
+
 ## Notes & journal — DONE (ADR 0038)
 
 Shipped in PR #50: a per-loop **practice journal** (dated entries snapshotting
@@ -557,11 +581,13 @@ tests. Scheduled **after** the remaining Cluster 4 items land.
   (ADR 0006); think scratch/rehearsal span. Net-new. *Note:* the A/B span is now
   also the basis for **#6 (A/B as creation primitive)** above — build the span
   once, serve both the rehearsal and the save-as-loop use.
-- **Loops accessible outside their song?** Open question. Today a `Loop`
-  belongs to one `Song`. Cross-song access is largely what the **planner**
-  delivers (pulling loops across songs into a session) and ties to cross-song
-  filter-by-tag (deferred in ADR 0034). Revisit when the planner (V2) lands;
-  decide whether anything is needed before then.
+- ~~**Loops accessible outside their song?**~~ **RESOLVED (2026-07-17).** A `Loop`
+  still belongs to one `Song`, but cross-song *access* is now delivered in practice:
+  **routine** loop blocks reference loops from any song, and the **planner** (V2,
+  built) session-builds by pulling loops across songs. The need surfaced and was met
+  through loop practice/routines — no separate cross-song loop surface is required.
+  Cross-song *filter-by-tag* stays deferred (ADR 0034) as a distinct, lower-priority
+  concern.
 
 ## Onboarding — "the art of creating loops" + musician voice
 

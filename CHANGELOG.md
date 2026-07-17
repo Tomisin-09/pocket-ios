@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **The custom-chord board now scrolls the whole neck.** Building a bespoke voicing, the fret grid
+  scrolls up the neck (frets 1–15) with the mute/open row and string names pinned, and inlay dots
+  mark frets 3·5·7·9·12·15 for reference — replacing the old paged "Frets 1–5" window. A new
+  **Display** menu (matching the scale boards, and sharing their preference) labels each sounded
+  string with its **note name**, its **scale degree**, or nothing.
 - **Record your practice takes, and listen back.** A **loop or exercise training run** now has a
   record toggle beside **Start training** (off by default). Arm it and a **mic-only** recording of your
   own playing captures automatically for the session — it starts with the run and saves when you stop.
