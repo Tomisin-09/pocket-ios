@@ -6,10 +6,15 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Save your custom chords and reuse them.** Built a bespoke voicing you like? Tap **Save to My
+  chords** in the custom-chord placer to keep it. Saved chords show up as a **My chords** section at the
+  top of the Add-chord (and swap) menu in any progression — one tap to drop one in — and a **Manage…**
+  item opens a list where you can swipe to delete. No more rebuilding the same shape for every exercise.
 - **The custom-chord board now tells you what you built.** As you place a bespoke voicing, a row under
   the board shows what the shape looks like it's called — "Looks like **Cmaj7**" — with alternate
-  readings (and inversions named with a slash, e.g. **C/E**) beside it. **Tap a suggestion to use it as
-  the name.** It's purely informational: it never blocks anything and never says a shape is "wrong"; a
+  readings beside it. **Inversions are recognised and labelled** — a 2nd-inversion B major reads
+  "**B/F♯ · 2nd inv**" alongside the plain "**B**", and the board's degree dots line up with the chord's
+  root. **Tap a suggestion to use it as the name.** It's purely informational: it never blocks anything and never says a shape is "wrong"; a
   shape that isn't a common chord simply reads "No common name," and you name it yourself. The naming is
   done on-device from music theory (no key assumed, sharp-spelled to match the board).
 - **The custom-chord board now scrolls the whole neck.** Building a bespoke voicing, the fret grid

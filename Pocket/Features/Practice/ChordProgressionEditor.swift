@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The **chord-progression authoring editor** (ADR 0065): build the sequence of chords the drill
@@ -17,6 +18,14 @@ struct ChordProgressionEditor: View {
     /// with the open-shape library.
     @State private var movableTarget: ChordSlot?
     @State private var customTarget: ChordSlot?
+
+    /// Which slot a pick from the "My chords" manager writes into (ADR 0095 S4).
+    @State private var savedChordsTarget: ChordSlot?
+
+    @Environment(\.modelContext) private var modelContext
+    /// The player's saved custom chords, offered for one-tap reuse in the menus. Sorted by a primitive
+    /// column (never an optional `#Predicate` — `docs/swiftdata-gotchas.md`).
+    @Query(sort: \SavedChord.name) private var savedChords: [SavedChord]
 
     private enum ChordSlot: Identifiable {
         case add
@@ -42,8 +51,18 @@ struct ChordProgressionEditor: View {
             MovableChordSheet { voicing in apply(voicing, to: target) }
         }
         .fullScreenCover(item: $customTarget) { target in
-            CustomChordSheet { voicing in apply(voicing, to: target) }
+            CustomChordSheet(onInsert: { voicing in apply(voicing, to: target) },
+                             onSave: save)
         }
+        .sheet(item: $savedChordsTarget) { target in
+            SavedChordsSheet { voicing in apply(voicing, to: target) }
+        }
+    }
+
+    /// Persist an authored voicing to the "My chords" library, de-duping identical shapes (ADR 0095 S3).
+    private func save(_ voicing: ChordVoicing) {
+        guard !SavedChord.isAlreadySaved(voicing, among: savedChords.map(\.voicing)) else { return }
+        modelContext.insert(SavedChord(voicing))
     }
 
     /// Route a generated or placed voicing to the slot the sheet was opened for.
@@ -88,6 +107,10 @@ struct ChordProgressionEditor: View {
                 Label("Custom chord…", systemImage: "square.and.pencil")
             }
             Divider()
+            savedChordsSection(
+                insert: { progression = progression.replacingVoicing(at: index, with: $0) },
+                manageTarget: .replace(index)
+            )
             ForEach(ChordVoicing.library) { voicing in
                 Button(voicing.name) {
                     progression = progression.replacingVoicing(at: index, with: voicing)
@@ -127,6 +150,10 @@ struct ChordProgressionEditor: View {
                 Label("Custom chord…", systemImage: "square.and.pencil")
             }
             Divider()
+            savedChordsSection(
+                insert: { progression = progression.appending($0) },
+                manageTarget: .add
+            )
             ForEach(ChordVoicing.library) { voicing in
                 Button(voicing.name) { progression = progression.appending(voicing) }
             }
@@ -136,6 +163,26 @@ struct ChordProgressionEditor: View {
                 .foregroundStyle(PocketColor.practice)
         }
         .buttonStyle(.borderless)
+    }
+
+    /// The **My chords** section shared by the Add + swap menus (ADR 0095 S4) — one-tap insert of each
+    /// saved voicing above the curated library, plus a **Manage…** item opening the swipe-to-delete list.
+    /// Shown only when the library is non-empty.
+    @ViewBuilder
+    private func savedChordsSection(insert: @escaping (ChordVoicing) -> Void,
+                                    manageTarget: ChordSlot) -> some View {
+        if !savedChords.isEmpty {
+            Section("My chords") {
+                ForEach(savedChords) { saved in
+                    Button(saved.name) { insert(saved.voicing) }
+                }
+                Button {
+                    savedChordsTarget = manageTarget
+                } label: {
+                    Label("Manage…", systemImage: "slider.horizontal.3")
+                }
+            }
+        }
     }
 
     /// "4 beats" — or "4 beats · 1 bar" when the hold is a whole number of 4/4 bars, the way players
@@ -160,5 +207,7 @@ struct ChordProgressionEditor: View {
             .tint(PocketColor.practice)
         }
     }
-    return Harness().preferredColorScheme(.dark)
+    return Harness()
+        .modelContainer(for: SavedChord.self, inMemory: true)
+        .preferredColorScheme(.dark)
 }

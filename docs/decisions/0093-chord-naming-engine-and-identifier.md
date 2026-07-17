@@ -73,6 +73,13 @@ against a vocabulary of chord qualities, choosing a root, detecting inversions, 
   slash form when the bass ≠ root (that's what the player fingered), with the plain name available as a
   secondary candidate. `dim7` and `aug` (symmetric chords) legitimately have several equal roots — the
   engine returns all, ranked by bass, and the UI may show "= B°7 / D°7 / F°7 / A♭°7".
+  **Refinement (2026-07-17, device review):** a `ChordCandidate` also exposes its **inversion number**
+  (the bass note's index among the stacked chord tones → `inversionLabel` "1st inv"…"3rd inv"); the panel
+  renders that tag on the slash chip **and** offers the plain root-position name as a second chip — so a
+  2nd-inversion B major reads "B/F♯ · 2nd inv" *and* "B", making the recognised triad unmistakable rather
+  than looking like a miss. The board's degree dots also **re-anchor to the identified chord root**
+  (`ChordVoicing.degreeLabels(relativeTo:)`) so they agree with the identifier (R on B, not on the F♯
+  bass), falling back to the bass-relative read only when no chord is recognised.
 
 - **N6 — Enharmonic spelling: sharps by default, honest and unambiguous.** With no key (ADR 0086), the
   engine spells roots with the same sharp table `ChordVoicing.noteLabels` already uses (`C♯` not `D♭`),

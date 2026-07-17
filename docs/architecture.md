@@ -460,6 +460,12 @@ only. See `docs/decisions/0001`.
 - **SwiftData `@Model` domain** (`Core/Models/`): `Song` is the aggregate root, with
   cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
   persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.
+  **`SavedChord`** (ADR 0095) is a standalone, relationship-free library entry — a user-saved custom
+  voicing stored as an encoded `Data` blob (`voicingData`, decoded via `voicing`) plus a primitive
+  `name` column for sorting, deliberately not a stored `ChordVoicing`/enum attribute (the payload-as-blob
+  pattern that dodges the migration footgun). Adding it is an additive schema change (new table; nothing
+  existing migrates). Surfaced as a **My chords** section in the chord editor's Add/swap menus + the
+  `SavedChordsSheet` list (tap-to-insert, swipe-to-delete); saved from the placer's **Save to My chords**.
 - **Song metadata editing** (`Features/Library/SongEditSheet.swift`, ADR 0012): the
   editable counterpart to the read-only `SongDetailsSheet` (the practice screen's
   `SongInfoPanel` was removed in ADR 0042; song facts now live only in the details sheet).

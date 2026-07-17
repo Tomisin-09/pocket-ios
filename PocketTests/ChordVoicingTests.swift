@@ -114,6 +114,17 @@ final class ChordVoicingTests: XCTestCase {
         XCTAssertEqual(labels[3], "R", "the open D string is the root")
     }
 
+    func testDegreeLabelsCanAnchorToAnExplicitRoot() {
+        // A 2nd-inversion B major (F♯ in bass, on D/G/B strings at fret 4). Anchored to the chord root
+        // B (pitch class 11), the dots read from B: F♯ is the 5th, B the root, D♯ the 3rd — agreeing
+        // with the identifier's "B/F♯" instead of the bass-relative R/4/6 (ADR 0093).
+        let voicing = ChordVoicing("B/F♯", frets: [nil, 4, 4, 4, nil, nil])
+        let labels = voicing.degreeLabels(relativeTo: 11)
+        XCTAssertEqual(labels[1], "3", "B string → D♯ is the 3rd of B")
+        XCTAssertEqual(labels[2], "R", "G string → B is the root")
+        XCTAssertEqual(labels[3], "5", "D string → F♯ is the 5th of B")
+    }
+
     // MARK: - Note labels (Display → Note)
 
     func testNoteLabelsNameEachSoundedString() {

@@ -24,7 +24,12 @@ struct ChordIdentifierPanel: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                            chip(candidate, isPrimary: index == 0)
+                            chip(candidate.displayName, tag: candidate.inversionLabel, isPrimary: index == 0)
+                        }
+                        // When the best reading is an inversion, also offer the plain root-position name,
+                        // so a slid triad like "B/F♯" is unmistakably a "B" chord (ADR 0093 N5).
+                        if let primary = candidates.first, primary.isInversion {
+                            chip(primary.name, tag: nil, isPrimary: false)
                         }
                     }
                     .padding(.vertical, 2)
@@ -34,20 +39,26 @@ struct ChordIdentifierPanel: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// A tappable suggestion — the top-ranked reading is filled, the rest outlined.
-    private func chip(_ candidate: ChordCandidate, isPrimary: Bool) -> some View {
-        Button { onPick(candidate.displayName) } label: {
-            Text(candidate.displayName)
-                .font(.futura(.subheadline, weight: isPrimary ? .bold : .semibold))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(
-                    Capsule().fill(isPrimary ? PocketColor.practice : PocketColor.practice.opacity(0.14))
-                )
-                .foregroundStyle(isPrimary ? .white : PocketColor.practice)
+    /// A tappable suggestion — the top-ranked reading is filled, the rest outlined. An optional `tag`
+    /// (e.g. "2nd inv") rides alongside the name without changing what tapping fills.
+    private func chip(_ name: String, tag: String?, isPrimary: Bool) -> some View {
+        Button { onPick(name) } label: {
+            HStack(spacing: 5) {
+                Text(name)
+                    .font(.futura(.subheadline, weight: isPrimary ? .bold : .semibold))
+                if let tag {
+                    Text(tag)
+                        .font(.futura(.caption2, weight: .semibold))
+                        .opacity(0.7)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(Capsule().fill(isPrimary ? PocketColor.practice : PocketColor.practice.opacity(0.14)))
+            .foregroundStyle(isPrimary ? .white : PocketColor.practice)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Name this chord \(candidate.displayName)")
+        .accessibilityLabel("Name this chord \(name)\(tag.map { ", \($0)" } ?? "")")
         .accessibilityHint("Uses this name")
     }
 }
