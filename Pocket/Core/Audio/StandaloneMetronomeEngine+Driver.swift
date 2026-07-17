@@ -38,6 +38,12 @@ extension StandaloneMetronomeEngine {
     }
 
     func configureSession() {
+        // Don't stomp a record-capable session an armed take set up (ADR 0069): the metronome plays
+        // fine under `.playAndRecord`, and forcing `.playback` here mid-run would kill the in-flight
+        // recording. Unlike `PracticeAudioEngine` (which configures once at load), this engine
+        // reconfigures on every `start()`, so the guard lives here. The restore to `.playback` after
+        // a take ends is done explicitly by `RecordingController`, not here.
+        guard AVAudioSession.sharedInstance().category != .playAndRecord else { return }
         AudioPlumbing.configurePlaybackSession(label: "metronome")
     }
 }

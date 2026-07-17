@@ -176,6 +176,13 @@ final class Exercise {
     @Relationship(deleteRule: .cascade, inverse: \JournalEntry.exercise)
     var journal: [JournalEntry] = []
 
+    /// Practice takes recorded against this exercise (ADR 0069). **Cascade-owned**, mirroring
+    /// `journal`: deleting the exercise deletes its takes' rows; the files are reaped by
+    /// `RecordingStore`'s orphan sweep. Declaration default keeps the migration additive
+    /// (CoreData 134110 rule) for exercises saved before recording shipped.
+    @Relationship(deleteRule: .cascade, inverse: \Recording.exercise)
+    var recordings: [Recording] = []
+
     /// Journal entries newest-first — the order the journal lists them in (mirrors `Loop`).
     var journalByRecent: [JournalEntry] {
         journal.sorted { $0.createdAt > $1.createdAt }

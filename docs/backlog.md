@@ -635,6 +635,27 @@ so the intent isn't lost:
   pay — find the sustainable balance without burning backend cost. Decide
   alongside the backend build (ADR 0002).
 
+## Monetization — first paid lever (parked 2026-07-17, decide once features are set)
+
+Deferred deliberately: settle the full feature set first, *then* design monetization
+(user's call, 2026-07-17). Captured so the reasoning isn't lost.
+
+- **Recording (ADR 0069) as a candidate first paid tier — before the AI layer.**
+  Rationale: recordings are local (zero marginal cost, high perceived value), so
+  they're pure margin if they convert; and shipping a paid feature *before* AI lets
+  us build + validate the paywall plumbing (StoreKit 2, entitlements, restore,
+  pricing, trust UX — the ADR 0092 "foundations bar") on a simple, no-eval-risk
+  feature instead of betting the first paid tier on AI.
+- **Caution — don't gate *all* recording.** It's the audio twin of the free-core
+  journal and a strong retention hook. Preferred shape: **basic recording free**
+  (the hook), **premium = the richer layer** (unlimited/long takes, take
+  organization, and later **AI review of takes** — which folds recording into the
+  AI story rather than competing with it).
+- **Needs its own ADR when picked up** — it closes off "recording is free core" and
+  sets monetization architecture; reconcile with **ADR 0092** (AI as *the* paid
+  lever) and the V1 free-core scope. Gating is a wrapper added later, so it does
+  **not** block finishing the recording feature (slices).
+
 ## Haptics — configurable section (parked, build at finishing-touches)
 
 Decided 2026-07-01. Two motion-tracking haptics are worth adding, but only as an

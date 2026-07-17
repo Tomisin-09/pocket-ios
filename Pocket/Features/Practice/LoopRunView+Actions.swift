@@ -15,7 +15,10 @@ extension LoopRunView {
         guard !seeded else { return }
         if loop.hasMeasuredCommand {
             command = clampPercent(LoopCommandRamp.percent(loop.command))
-            working = min(command, clampPercent(LoopCommandRamp.percent(loop.speed)))
+            // Seed the warm-up floor a step below command (not *at* it) so the ramp has room to climb;
+            // a saved speed that's already lower wins (device feedback 2026-07-17).
+            working = clampPercent(min(command - Self.defaultWorkingGap,
+                                       LoopCommandRamp.percent(loop.speed)))
         } else {
             command = clampPercent(LoopCommandRamp.percent(loop.speed))
             working = max(Self.percentRange.lowerBound, command - 15)
@@ -57,9 +60,16 @@ extension LoopRunView {
         haptic(.medium)
     }
 
-    /// Start tapped: in a routine, run the count-in first (ADR 0071); standalone, start immediately.
+    /// Start tapped: run the visual count-in first — always in a routine (ADR 0071), and for a
+    /// standalone run when the Count-in setting is on (device feedback 2026-07-17: loops deserve the
+    /// same lead-in exercises get). With the setting off standalone, start immediately.
     func startTapped() {
-        if routineContext != nil { showCountIn = true; haptic(.light) } else { commitAndStart() }
+        if routineContext != nil || AppSettings.countInEnabled {
+            showCountIn = true
+            haptic(.light)
+        } else {
+            commitAndStart()
+        }
     }
 
     /// Auto-start on arrival when the context asks for it (Settings-gated; never the first block) and
@@ -83,6 +93,10 @@ extension LoopRunView {
         // reach being run so the screen's copy/target stay stable even if the setup is edited after. In
         // a routine the hook is the player's advance (set in `seedIfNeeded`), so leave it untouched.
         if routineContext == nil { armCompletionOffer() }
+        // If a take is armed, begin capture **before** playback starts, so the session flips to
+        // `.playAndRecord` with no audio in flight (no mid-play glitch — device feedback 2026-07-17).
+        // The count-in has already run, so the take is the playing only, not the lead-in.
+        recorder.beginArmedTake()
         model.start(ramp: routine)
         haptic(.medium)
     }

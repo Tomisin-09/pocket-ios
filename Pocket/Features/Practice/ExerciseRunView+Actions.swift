@@ -88,6 +88,11 @@ extension ExerciseRunView {
         // pattern (ADR 0071 R5) unless Settings opts out. Both set before `run(ramp:)` so the grid holds.
         engine.setTimeSignature(signature)
         engine.setStrumPattern(runStrumPattern)
+        // If a take is armed, arm the record session + start capture *before* the engine runs, so its
+        // `configureSession()` (guarded) leaves `.playAndRecord` in place rather than flipping mid-run
+        // (ADR 0069). The exercise's count-in is the engine's audible metronome, so a speaker take
+        // catches a couple of count-in clicks; a headphone take stays clean.
+        recorder.beginArmedTake()
         engine.run(ramp: routine)
         haptic(.medium)
     }

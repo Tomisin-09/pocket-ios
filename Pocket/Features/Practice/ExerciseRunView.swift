@@ -40,6 +40,10 @@ struct ExerciseRunView: View {
     @State var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State var showingJournal = false
+    /// The Takes sheet — relisten to practice-take recordings (ADR 0069).
+    @State var showingTakes = false
+    /// Practice-take recording over this exercise (ADR 0069) — mic-only capture armed before the run.
+    @State var recorder = RecordingController()
     /// The exercise detail/reference sheet (V1 feedback #2) — an ⓘ in the nav bar opens it.
     @State var showingDetail = false
     /// The content/shape editor sheet (ADR 0077) — an "Edit shape" button on the board opens it.
@@ -95,6 +99,7 @@ struct ExerciseRunView: View {
             VStack(spacing: 22) {
                 if isRunning {
                     liveReadout
+                    RecordingStatusView(recorder: recorder)
                 } else {
                     // Shape editing lives on the board now (ADR 0077), not on the ⓘ reference sheet —
                     // tucked into each preview card's header. Library-only: in a routine an exercise
@@ -120,7 +125,10 @@ struct ExerciseRunView: View {
                               currentIndex: isRunning ? engine.currentRampPlateau : nil)
                 if !isRunning, routineContext == nil, isDirty { saveChangesButton }
                 if !isRunning, routineContext == nil {
-                    JournalPreviewSection(owner: .exercise(exercise)) { showingJournal = true }
+                    PracticeReviewBar(journalCount: exercise.journal.count,
+                                      takesCount: exercise.recordings.count,
+                                      onJournal: { showingJournal = true },
+                                      onTakes: { showingTakes = true })
                         .padding(.top, 4)
                 }
             }
@@ -148,7 +156,10 @@ struct ExerciseRunView: View {
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear { seedIfNeeded(); maybeAutoStart() }
-        .onDisappear { engine.stop() }
+        .onChange(of: isRunning) { _, running in
+            if !running { finishTakeIfNeeded() }   // run stopped ⇒ never leave a take recording
+        }
+        .onDisappear { finishTakeIfNeeded(); engine.stop() }
         .sheet(isPresented: $showingJournal) {
             JournalSheet(owner: .exercise(exercise),
                          onAdd: addJournalEntry,
@@ -160,6 +171,9 @@ struct ExerciseRunView: View {
                              JournalWriter.delete(entry, from: modelContext)
                              try? modelContext.save(); haptic(.light)
                          })
+        }
+        .sheet(isPresented: $showingTakes) {
+            TakesSheet(owner: .exercise(exercise), onDelete: deleteTake)
         }
         .sheet(isPresented: $showingDetail) {
             ExerciseDetailSheet(exercise: exercise)
@@ -293,7 +307,12 @@ struct ExerciseRunView: View {
 
     /// Stopped → **Start training** (commit + `run(ramp:)`). Running → pause / resume with a
     /// secondary stop that ends the run and clears the ramp.
-    private var transport: some View {
+}
+
+// Transport split into a same-file extension to keep the main struct body under the
+// `type_body_length` cap; `private` still reaches same-file extensions.
+extension ExerciseRunView {
+    fileprivate var transport: some View {
         HStack(spacing: 14) {
             if isRunning {
                 Button { engine.stop(); haptic(.medium) } label: {
@@ -312,11 +331,22 @@ struct ExerciseRunView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Button(action: commitAndStart) {
-                    Label("Start training", systemImage: "play.fill").pocketRunButton
+                VStack(spacing: 8) {
+                    HStack(spacing: 14) {
+                        Button(action: commitAndStart) {
+                            Label("Start training", systemImage: "play.fill").pocketRunButton
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Start training routine")
+                        // Standalone-only — routine blocks stay focused (ADR 0071/0077), matching the
+                        // Takes/Journal bar gate.
+                        if routineContext == nil {
+                            RecordArmToggle(recorder: recorder)
+                        }
+                    }
+                    RecordSetupHint(recorder: recorder)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Start training routine")
+                .animation(.easeInOut(duration: 0.2), value: recorder.isArmed)
             }
         }
         .padding(.horizontal, 24)

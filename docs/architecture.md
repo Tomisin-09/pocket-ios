@@ -191,6 +191,37 @@ The reach can also be **manually pinned** (ADR 0075): optional `Exercise.targetT
 accessors (`override ?? auto`), with `promoteCommand` auto-clearing a pin once command catches up.
 Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044), full-screen.
 
+**Practice-take recording foundations** (`Core/Audio/`, ADR 0069, slice 0) — the substrate
+for a mic-only "audio journal," not yet a feature. Recording needs `.playAndRecord`, which
+changes routing app-wide, so it is a *separate* session config (`AudioPlumbing.configureRecordSession`)
+applied only while a take is armed — never a global flip — with `configurePlaybackSession`
+as the restore path, leaving the metronome/playback graph untouched when nothing is armed.
+The option set is the copyright/quality guardrail: `.defaultToSpeaker` (not the quiet earpiece)
++ `.allowBluetoothA2DP` and **deliberately not** `.allowBluetooth` — with HFP allowed iOS
+collapses a Bluetooth route to phone-call quality to grab the earbud mic, so A2DP-only keeps
+output clean and lets input fall to the built-in mic (the guitar is in the room, not the
+earbuds). Isolation is a **route question, not a DSP one**: with mic-only capture the loop
+couples in only *acoustically* (speaker → air → mic), so the pure **`RecordingRoute`** classifier
+maps the current output ports to a *clean* take (private listening — headphones/BT/wired) or a
+*bleed* nudge (speaker/AirPlay/car/unknown → "use headphones"), unit-tested and driving an honest
+UX cue rather than a voice-tuned AEC that would mangle guitar tone. Mic access is the iOS 17+
+`AVAudioApplication` flow (`MicPermission`) behind a specific `NSMicrophoneUsageDescription`.
+Capture is **`TakeRecorder`** — mic-only to AAC via `AVAudioRecorder`, deliberately *not* tapping
+the playback engine's graph, so both engines are untouched while a take is armed (the recorder
+captures the mic, the practice engine keeps playing out, and the two never share a node — the app
+therefore never renders its own playback into the file, ADR 0001/0064). Takes are **app-authored**
+files (unlike songs, which are bookmarks to files in place): the **`Recording`** `@Model` holds
+`uid`/`createdAt`/`duration` + a relative `fileName`, with a **polymorphic, cascade-owned** owner
+(`loop`/`exercise`/`song` — inverse `recordings` arrays on those models, mirroring the `journal`
+pillar; `ownerKind` is derived, no stored enum). **`RecordingStore`** owns the app-container
+`Recordings/` directory and the retention story — delete/size plus a pure orphan sweep that reaps
+files whose model row was cascade-deleted (cascade drops the row, not the on-disk audio). On the
+**loop trainer**, `RecordingController` orchestrates a take as a **pre-start arm toggle** beside Start
+(permission + route sampled up front; the take begins *before* playback so the `.playAndRecord` flip
+never happens mid-stream — the fix for an audible glitch), and `RecordingPlayer` plays takes back one
+at a time. Takes surface **beside the journal** via the one-row `PracticeReviewBar` (Journal + Takes
+count pills → each opens its sheet), keeping the review aids bounded as history builds.
+
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
 from the metronome at the product level. `PracticeView` is a **hub**: the live "Build today's

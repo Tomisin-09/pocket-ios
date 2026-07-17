@@ -47,6 +47,8 @@ struct LoopRunView: View {
     @State var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State var showingJournal = false
+    /// The Takes sheet — relisten to practice-take recordings (ADR 0069, slice 3).
+    @State var showingTakes = false
     /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
     /// button shows only while the edits differ (ADR 0057). All six persisted fields — the two
     /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
@@ -56,6 +58,9 @@ struct LoopRunView: View {
     /// completion screen (ADR 0082, loop parity with ADR 0079). Never set in a routine — there the
     /// ramp's completion advances the session instead.
     @State var completion: RunCompletion?
+    /// Practice-take recording over this loop (ADR 0069, slice 2) — mic-only capture that rides the
+    /// running transport, owned so it can be finalized on run-stop / screen exit.
+    @State var recorder = RecordingController()
 
     var current: LoopSetupState {
         LoopSetupState(working: working, command: command, warmupSteps: steps,
@@ -65,6 +70,12 @@ struct LoopRunView: View {
     private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
     static let repsRange = 1...8
+
+    /// How far below command the warm-up **working** floor seeds by default, in percentage points
+    /// (loops train in % of original, so this is the loop analogue of a few BPM). A gap so the ramp
+    /// actually climbs — device feedback 2026-07-17: seeding working *at* command left nothing to warm
+    /// up through. A saved speed that's already lower than this is honoured as-is.
+    static let defaultWorkingGap = 5
 
     /// Playback-speed bounds as integer percent (the engine clamps 0.25×–2.0×).
     static let percentRange =
@@ -117,6 +128,7 @@ struct LoopRunView: View {
             VStack(spacing: 22) {
                 if isRunning {
                     liveReadout
+                    RecordingStatusView(recorder: recorder)
                 } else {
                     practiceSettings
                 }
@@ -125,7 +137,10 @@ struct LoopRunView: View {
                               currentIndex: model.currentPlateau(in: routine))
                 if !isRunning, isDirty { saveChangesButton }
                 if !isRunning, routineContext == nil {
-                    JournalPreviewSection(owner: .loop(loop)) { showingJournal = true }
+                    PracticeReviewBar(journalCount: loop.journal.count,
+                                      takesCount: loop.recordings.count,
+                                      onJournal: { showingJournal = true },
+                                      onTakes: { showingTakes = true })
                         .padding(.top, 4)
                 }
             }
@@ -142,7 +157,10 @@ struct LoopRunView: View {
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear(perform: seedIfNeeded)
         .task { await model.loadIfNeeded(); maybeAutoStart() }
-        .onDisappear { model.stop() }
+        .onChange(of: isRunning) { _, running in
+            if !running { finishTakeIfNeeded() }   // run stopped ⇒ never leave a take recording
+        }
+        .onDisappear { finishTakeIfNeeded(); model.stop() }
         .sheet(isPresented: $showingJournal) {
             JournalSheet(owner: .loop(loop),
                          onAdd: addJournalEntry,
@@ -154,6 +172,9 @@ struct LoopRunView: View {
                              JournalWriter.delete(entry, from: modelContext)
                              try? modelContext.save(); haptic(.light)
                          })
+        }
+        .sheet(isPresented: $showingTakes) {
+            TakesSheet(owner: .loop(loop), onDelete: deleteTake)
         }
         .fullScreenCover(item: $completion) { finished in
             // Reuse the routine block's Done screen for a standalone loop finish (ADR 0082, mirroring
@@ -267,13 +288,23 @@ struct LoopRunView: View {
                             .foregroundStyle(PocketColor.textSecondary)
                             .multilineTextAlignment(.center)
                     }
-                    Button(action: startTapped) {
-                        Label("Start training", systemImage: "play.fill").pocketRunButton
+                    HStack(spacing: 14) {
+                        Button(action: startTapped) {
+                            Label("Start training", systemImage: "play.fill").pocketRunButton
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(model.isLoading || model.loadFailed)
+                        .accessibilityLabel("Start training routine")
+                        // Recording is a standalone-practice feature — routine blocks stay focused
+                        // (ADR 0071/0077), matching the Takes/Journal bar's `routineContext == nil` gate.
+                        if routineContext == nil {
+                            RecordArmToggle(recorder: recorder,
+                                            disabled: model.isLoading || model.loadFailed)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .disabled(model.isLoading || model.loadFailed)
-                    .accessibilityLabel("Start training routine")
+                    RecordSetupHint(recorder: recorder)
                 }
+                .animation(.easeInOut(duration: 0.2), value: recorder.isArmed)
             }
         }
         .padding(.horizontal, 24)

@@ -1,7 +1,68 @@
 # 0069 — Practice-take recording (mic-only "audio journal")
 
-- **Status:** Proposed (2026-07-07)
-- **Date:** 2026-07-07
+- **Status:** Accepted (2026-07-16)
+- **Date:** 2026-07-07 (proposed), 2026-07-16 (accepted)
+
+## Build (accepted 2026-07-16)
+
+Sliced post-v1 on its own branch, never riding the paused v1.0 submission:
+
+- **Slice 0 (foundations, this branch `pocket-148`)** — mic permission string +
+  `AVAudioApplication.requestRecordPermission` flow; a record-capable session
+  config in `AudioPlumbing` (§3); and the **pure route classifier** that drives
+  the headphone-clean vs speaker-bleed cue (§2), unit-tested. No model, no
+  capture, no UI yet. The session options are the copyright/quality guardrails
+  baked in at the substrate: `.playAndRecord` + `.defaultToSpeaker` +
+  `.allowBluetoothA2DP` **without** `.allowBluetooth` — output stays high-quality
+  A2DP and input falls back to the built-in mic (avoids the Bluetooth
+  HFP-collapse; the guitar is in the room, not the earbuds).
+- **Slice 1 (model + capture + storage, `pocket-148`)** — `Recording` SwiftData
+  model (§5): app-authored AAC file addressed by a relative `fileName`, with a
+  **polymorphic owner** (`loop`/`exercise`/`song`, the JournalEntry/ADR-0058
+  pattern; `ownerKind` derived, no stored enum) that is **cascade-owned** by its
+  owner via an inverse `recordings` array on `Loop`/`Exercise`/`Song`, mirroring
+  the sibling `journal` pillar — deleting an owner deletes the take's row, and the
+  now-unreferenced file is reaped by the orphan sweep. (A bare unidirectional
+  relationship was found to leave the link *dangling* at a deleted model rather
+  than clearing — the inverse is required for any delete rule to fire.)
+  `RecordingStore` owns the container directory + delete/size and the pure
+  orphan-sweep retention logic. `TakeRecorder` captures mic-only to AAC via
+  `AVAudioRecorder` (not tapping the playback engine — engines stay unchanged per
+  §3). Owner-resolution + orphan logic unit-tested; real capture is device-only.
+- **Slice 2 (loop-trainer UI, `pocket-148`)** — recording is a **pre-start arm
+  toggle** beside Start training (off by default), not a mid-run button (device
+  feedback 2026-07-17). Arming requests mic permission on the setup screen and
+  samples the route so the headphone-vs-speaker nudge shows *before* the run; the
+  take begins when the run commences (after the count-in) and stops when the run
+  does. This also **fixed an audible glitch**: configuring `.playAndRecord` before
+  playback starts, rather than flipping the category mid-stream, removes the
+  interruption. Same slice: standalone **loop training now gets the visual
+  count-in** (respecting the Count-in setting) that exercises already had.
+- **Slice 3 (relisten, `pocket-148`)** — a loop's takes are reachable from the
+  run-setup screen and play back: `RecordingPlayer` (one `AVAudioPlayer` take at a
+  time) + `TakesSheet` (rows with play/pause + swipe-to-delete, deleting the file
+  and the row). Surfaced **beside the journal** — the ADR frames recording as the
+  audio counterpart to the notes/journal pillar. To keep the setup screen from
+  drowning as history builds (device feedback 2026-07-17), the two stacked inline
+  previews (journal + takes) were replaced by a single-row **`PracticeReviewBar`**:
+  two count pills, each opening its sheet — bounded to one row forever, counts as
+  the at-a-glance signal, content in the sheets.
+- **Slice 4 (exercise runs + scope, `pocket-148`)** — recording extended to the
+  standalone **`ExerciseRunView`**, the exact loop-trainer treatment (arm toggle +
+  `PracticeReviewBar` + Takes sheet), which also **unified the journal presentation**
+  (exercises' old stacked `JournalPreviewSection` → the same pill bar). The record
+  controls (`RecordArmToggle` / `RecordSetupHint` / `RecordingStatusView`) were
+  extracted to a shared, owner-agnostic `RecordControls.swift` so both screens style
+  them in one place. The metronome engine's `configureSession()` gained a guard so it
+  won't downgrade an armed `.playAndRecord` session on `start()` (unlike the loop
+  engine it reconfigures every start). **Scope decision — recording is a standalone-
+  practice feature only**, gated to `routineContext == nil` (arm toggle *and* review
+  bar): routine blocks stay focused (ADR 0071/0077), and since **song play-along
+  exists only inside routines**, songs are **deliberately excluded** — no standalone
+  song surface to record against. `RecordingOwner.song` stays in the model for a
+  future standalone song surface. Exercise take start is before the engine's audible
+  count-in, so a *speaker* take catches a couple of count-in clicks; a headphone take
+  stays clean.
 
 ## Context
 
