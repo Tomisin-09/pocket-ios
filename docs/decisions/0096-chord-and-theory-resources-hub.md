@@ -1,7 +1,11 @@
 # 0096 — A dedicated chords / theory / resources hub (direction)
 
-- **Status:** Proposed (2026-07-17) — **direction only; parked, no build scheduled.**
+- **Status:** Proposed (2026-07-17) — **IA/design pass complete (2026-07-17); awaiting ratification of
+  D1–D5 to promote to Accepted.** No build scheduled until then.
 - **Date:** 2026-07-17
+- **IA / design pass:** [`docs/plans/chords-theory-hub-ia.md`](../plans/chords-theory-hub-ia.md) — resolves
+  the deferred questions below (attach point, screen inventory, the build/hear/explore/keep flows, empty
+  states, phasing) and lists the decisions (D1–D5) the player ratifies to move this ADR to Accepted.
 - **Sets direction for:** pulling the objective-reference features out of the exercise editors into a
   destination of their own.
 - **Builds on / gathers:** ADR 0093 (chord-naming engine — the shared theory core), ADR 0094 (theory &
