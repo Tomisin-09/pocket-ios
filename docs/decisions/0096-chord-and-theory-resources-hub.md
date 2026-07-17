@@ -1,7 +1,10 @@
 # 0096 — A dedicated chords / theory / resources hub (direction)
 
 - **Status:** **Accepted (2026-07-17)** — IA/design pass done and decisions D1–D5 ratified (below).
-  **Slice 1 scoped, not yet scheduled to build.**
+  **Slice 1 built (2026-07-17):** the "Toolkit" hub shell (fourth home card + indigo/violet accent) with
+  **My Chords** (the `SavedChord` library promoted to a full screen — grid, build, rename, delete) and a
+  static searchable **Glossary**. Audio-free, matching D4/D5. Slices 2–4 (identifier·Hear / scales / ear
+  training) remain future work, each with its own ADR when scoped.
 - **Date:** 2026-07-17
 - **IA / design pass:** [`docs/plans/chords-theory-hub-ia.md`](../plans/chords-theory-hub-ia.md) — resolves
   the deferred questions (attach point, screen inventory, the build/hear/explore/keep flows, empty states,

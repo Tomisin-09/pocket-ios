@@ -3,6 +3,44 @@ import SwiftUI
 /// The presentational cards for the home hub (`HomeView`), split out to keep the hub file under the
 /// 400-line limit. Each is a small, self-contained view; the hub owns their data and navigation.
 
+/// One home **navigation strip** — the shared chrome behind the Song library / Metronome / Practice /
+/// Toolkit rows: an accent glyph in a washed circle, a title + one-line subtitle, and a chevron, on a
+/// washed rounded card. The four rows are visually identical bar their hue and copy, so they route
+/// through this one component (each home card just supplies its icon/title/subtitle and its `PocketColor`
+/// trio); the owning `NavigationLink`/`Button` and accessibility label stay in `HomeView`.
+struct HomeNavCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let tint: Color
+    let cardWash: Color
+    let circleWash: Color
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.futura(.title2))
+                .foregroundStyle(tint)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(circleWash))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.futura(.headline))
+                    .foregroundStyle(PocketColor.textPrimary)
+                Text(subtitle)
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.futura(.footnote, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        .padding(16)
+        .background(RoundedRectangle(cornerRadius: 16).fill(cardWash))
+    }
+}
+
 /// The "Jump back in" card: the song you last practised, with its mastery and when you last
 /// touched it. Resumes the song (at its last-practiced tempo, ADR 0044) on tap. Neutral
 /// chrome — the metronome card owns the screen's one accent colour.

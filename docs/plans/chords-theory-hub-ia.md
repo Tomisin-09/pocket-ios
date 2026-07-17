@@ -148,6 +148,25 @@ Slice 1 deliberately avoids the audio dependency so the hub can exist before Hea
 ADR 0096 is now **Accepted**. **Slice 1** (§5) is scoped and ready to schedule; D4 gets its own ADR when
 Slice 2 is taken up.
 
+### Slice 1 — built (2026-07-17)
+
+Shipped as `Pocket/Features/Toolkit/` + the `Indigo`/`IndigoCardWash`/`IndigoCircleWash` colour sets and
+`PocketColor.toolkit`:
+
+- **Home card** — a fourth `HomeNavCard` (the four home strips were refactored onto one shared component)
+  pushes `ToolkitView` in the indigo accent.
+- **`ToolkitView`** — landing list of sections (My chords with a live "N saved" count; Glossary with its
+  term count), one visual level down from the home cards.
+- **`MyChordsView`** — the `SavedChord` library as a full grid; `MyChordDetailView` gives each a large
+  diagram + Rename/Delete; **+** opens the existing `CustomChordSheet` in "Save" mode (a new
+  `confirmTitle` seam) so building here *keeps* rather than *inserts*. The in-context menu
+  (`SavedChordsSheet`) stays for inline reuse — both read the same `@Query`.
+- **`GlossaryView` + `GlossaryTerm`** — a static, searchable, area-grouped terms sheet; the catalog +
+  pure `matches(_:)`/`matching(_:)` search are unit-tested.
+
+Deferred within the sections as planned: *Hear*, the identifier reading, and *Use in an exercise* on the
+My Chords detail (Slice 2+ / D4).
+
 ---
 
 ## 7. Open risks / notes

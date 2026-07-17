@@ -66,7 +66,9 @@ Colour carries meaning and is consistent everywhere:
 The brand **teal** leads (ADR 0081): it wears the Practice space — the app's most-used
 surface — and its "Start today's session" CTA, so the brand hue carries the home.
 **Green** is the live state, **plum** the metronome tool, **terracotta** the songs
-place; the detail-waveform bars stay teal. Hue carries meaning, and the per-loop
+place, and **indigo/violet** the Toolkit reference hub (ADR 0096 — the fourth home
+hue, a "study/reference" tone clear of the triad); the detail-waveform bars stay
+teal. Hue carries meaning, and the per-loop
 identity hues are kept out of these families. The table is grouped by **semantic
 role** — the seam the swappable theme uses: a theme is a role → hue *mapping*, so the
 planned **Blood Moon** theme swaps Practice↔Library to terracotta-led without a second
@@ -110,6 +112,8 @@ near-invisible on near-black (ADR 0063).
 | `practiceCardWash` / `practiceCircleWash` | `#153A44` / `#1D4E5C` | `#ACCBD3` / `#C2D2D5` | Home/Practice-hub card/icon-circle tint — baked flat per appearance |
 | `library` | terracotta `#E07E57` | `#C24A2C` | The **songs place** — the home "Song library" strip (ADR 0081), completing the teal · plum · terracotta home triad; retires the ADR 0023 song-blue |
 | `libraryCardWash` / `libraryCircleWash` | `#37241B` / `#4A2C1E` | `#E8C7B6` / `#EFD6C7` | Song-library strip card/icon-circle tint — baked flat per appearance |
+| `toolkit` | indigo/violet `#9E8CE6` | `#4B3F94` | The **Toolkit** hub (ADR 0096) — the fourth home card + reference destination. A "study/reference" hue kept clear of the teal · plum · terracotta triad; theme-invariant for now (no Blood Moon swap) |
+| `toolkitCardWash` / `toolkitCircleWash` | `#231D48` / `#2D2657` | `#D4CEEC` / `#CEC7E9` | Toolkit strip + hub-section card/icon-circle tint — baked flat per appearance |
 | `confirmWash` | `#13421E` | `#B4DAAF` | "Add a song" tint — baked flat, same rationale (ADR 0063) |
 | `fine` | `#EAF2FF` (high-key) | `#1F3651` (low-key) | Fine-mode precision selection — same cool hue, inverted key |
 | `mastery` | teal `#60A8C7` | `#2B6982` | Mastery dots/stars (Home, Library, waveform loop picker) — **tracks the brand hero** `practice` (teal by default; follows it to terracotta in Blood Moon, ADR 0081), never the metronome plum |
@@ -192,8 +196,9 @@ vision if useful, but know that **Phase 1** is what gets built first.
 | P2 | Loops panel + Loop active panel | Active panel has speed, repeat, tempo automator, session notes. |
 | P2 | Markers panel + Pin Marker popover | Single-point annotations; purple. |
 | ~~P2~~ | ~~Song info / Repertoire panel~~ | **Removed (ADR 0042).** Key / mastery / collections now live only in the song-details sheet (hold the title); not duplicated in the practice scroll area. |
-| **P1** | **Home hub** | The app's front door (ADR 0044). Header shows the "Red Moon" wordmark graphic (ADR 0063) in place of plain title text. Greeting · "Jump back in" resume card · **Practice card** · Metronome card · "Your songs" preview (See all → Library) · Add a song. **Planner-free for V1** — see §4.2. |
+| **P1** | **Home hub** | The app's front door (ADR 0044). Header shows the "Red Moon" wordmark graphic (ADR 0063) in place of plain title text. Greeting · "Jump back in" resume card · **Practice card** · Metronome card · Song library strip · **Toolkit card** (→ the chords/theory reference hub, ADR 0096) · Add a song. **Planner-free for V1** — see §4.2. |
 | **P1** | **Practice space** | A top-level destination (ADR 0046), plum `practice` accent. A list of **your exercises** (command → reach) above a live **"Build today's session"** planner entry (V2 planner Slice 3). Tap **+** to create; tap a unit → its **training run** (own engine, `engine.run(ramp:)`): set up working/command/reach + warm-up steps with a routine staircase, then a live BPM/beat/session readout while it plays. |
+| **P1** | **Toolkit hub** | A top-level **reference** destination (ADR 0096), the fourth home card in the indigo/violet `toolkit` accent — *explore / keep*, distinct from Practice's *author*. A landing list of sections; **Slice 1**: **My chords** (the `SavedChord` library as a full grid; tap → large diagram + rename/delete; **+** builds via the placer in "Save" mode) and a searchable **Glossary** of chord/scale/theory terms. Audio-free by design; *Hear* / identifier / scales / ear-training are Slices 2–4, each its own ADR. |
 | **V2** | **Practice planner** | The "Build today's session" path **inside Practice** (ADR 0046 re-homes ADRs 0014–0016; ADR 0015/0072/0073). `PlannerView`: a duration selector (Quick 15 / Focused 30 / Full 60, default short) · a short list of **goals** that steer selection · **Generate** → a provisional `Routine` you review, then Start in the shipped player. `GoalEditorView`: template picker (four in-house `GoalTemplate`s) → name → priority (Low/Normal/High over the stored weight) → skill trim → optional target song → met toggle. No active goals ⇒ Generate falls back to a due-based Quick session. AI decomposition remains deferred (Slice 5). |
 
 ### 4.1 Waveform practice screen — layout
