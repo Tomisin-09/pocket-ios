@@ -1,32 +1,31 @@
 import SwiftUI
 
-/// The **custom-chord placer** (ADR 0084 slice 3, M4) — a full-screen, *tappable* chord box for any
-/// voicing the curated grips can't express: jazz shells, extensions, altered dominants, D-root shapes,
-/// anything bespoke. It's an editable twin of `ChordDiagramView`: strings are columns (low E left →
-/// high e right), **tap a fret cell** to fret that string (tap it again to clear), and **tap the ✕/○
-/// marker above the nut** to cycle a string muted ↔ open. The board **scrolls up the neck** (frets 1…15)
-/// with the mute/open row and string names pinned, and inlay dots (3·5·7·9·12·15) mark position — so a
-/// shape can sit anywhere without an endless grid or a paging control. A **Display** menu captions each
-/// sounded string with its note name, its scale degree (R / 3 / 5 / ♭7 …), or nothing, sharing the same
-/// global preference the scale boards use.
-///
-/// The player names the result (an arbitrary voicing has no derivable name, unlike a slid grip); it
-/// lands as a plain `ChordVoicing` mixed inline (M4/M5 — same output type a grip emits, so the renderer,
-/// progression, and run screen are untouched). Fingers stay omitted: the shared diagram doesn't draw
-/// them, so the placer composes fretted geometry only, like the grips (ADR 0084 open question).
+/// The **custom-chord placer** (ADR 0084 slice 3, M4) — a full-screen, *tappable* chord box (an editable
+/// twin of `ChordDiagramView`) for any voicing the curated grips can't express. Strings are columns (low
+/// E left → high e right): tap a fret cell to fret/clear it, tap the ✕/○ marker to cycle a string
+/// muted↔open. The board scrolls the neck (frets 1…15) with the marker/name rows pinned and inlay dots
+/// for orientation, a **Display** menu captions notes/degrees (shared scale-board preference), and a live
+/// `ChordIdentifierPanel` suggests names (ADR 0093). The player names the result; it lands as a plain
+/// `ChordVoicing` mixed inline (M4/M5 — renderer untouched; fingers omitted, like the grips). An optional
+/// **Save to My chords** button persists the shape for reuse (ADR 0095).
 struct CustomChordSheet: View {
     /// Called with the composed voicing when the player confirms.
     let onInsert: (ChordVoicing) -> Void
 
+    /// Optional seam (ADR 0095): when set, a **Save to My chords** button appears and hands the caller the
+    /// voicing to persist — kept separate from `onInsert` so saving and inserting are distinct intents.
+    var onSave: ((ChordVoicing) -> Void)?
+
     @Environment(\.dismiss) private var dismiss
 
-    /// Per-string fret, high-e first (index 0 … 5 low E) — `nil` muted, `0` open, `n` fretted at n.
-    /// Starts all muted: the player composes the shape from scratch.
+    /// Last voicing handed to `onSave`, so the button reads "Saved" until the shape changes.
+    @State private var lastSaved: ChordVoicing?
+
+    /// Per-string fret, high-e first (0…5 low E) — `nil` muted, `0` open, `n` fretted. Starts all muted.
     @State private var frets: [Int?] = Array(repeating: nil, count: ChordVoicing.stringCount)
     @State private var name: String = ""
 
-    /// Caption mode for sounded strings — shared globally with the scale boards so chords and scales
-    /// agree (ADR 0065). `interval` shows scale degrees, `note` shows note names, `none` hides labels.
+    /// Caption mode for sounded strings — shared globally with the scale boards so chords/scales agree.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
 
@@ -57,7 +56,7 @@ struct CustomChordSheet: View {
         switch labelMode {
         case .none: return Array(repeating: nil, count: frets.count)
         case .note: return voicing.noteLabels
-        case .interval: return voicing.degreeLabels
+        case .interval: return voicing.degreeLabels(relativeTo: chordCandidates.first?.rootPitchClass)
         }
     }
 
@@ -72,6 +71,7 @@ struct CustomChordSheet: View {
                 board
                 identifier
                 nameField
+                saveButton
                 hint
                 Spacer(minLength: 0)
             }
@@ -214,7 +214,6 @@ struct CustomChordSheet: View {
                 }
             }
             .stroke(PocketColor.gridLine, lineWidth: 1)
-
             Path { path in
                 path.move(to: CGPoint(x: columnCenter(0), y: 0))
                 path.addLine(to: CGPoint(x: columnCenter(columns.count - 1), y: 0))
@@ -223,8 +222,7 @@ struct CustomChordSheet: View {
         }
     }
 
-    /// Faint position markers — a single dot at 3·5·7·9·15, a double at the octave (12) — so the player
-    /// orients on the neck the way real inlays do.
+    /// Faint inlay markers — single dots at 3·5·7·9·15, a double at the octave (12) — for orientation.
     private var inlays: some View {
         ForEach(1...Self.totalFretCount, id: \.self) { fret in
             let posY = rowCenter(fret - 1)
@@ -262,8 +260,7 @@ struct CustomChordSheet: View {
         }
     }
 
-    /// Transparent tap targets over every cell — one per string × fret — mapping a tap to a fret
-    /// placement. Sits above the grid lines so the whole board is live.
+    /// Transparent tap targets over every string × fret cell, above the grid lines so the board is live.
     private var interactiveCells: some View {
         VStack(spacing: 0) {
             ForEach(1...Self.totalFretCount, id: \.self) { fret in
@@ -317,24 +314,43 @@ struct CustomChordSheet: View {
 // MARK: - Geometry + edit helpers
 
 private extension CustomChordSheet {
-    /// The shape has enough distinct notes (≥3) to name — below that it's still mid-build (a dyad is an
-    /// interval, not a chord), so the identifier stays hidden rather than nagging.
+    /// Enough distinct notes (≥3) to name — below that it's still mid-build, so the identifier stays hidden.
     var canIdentify: Bool { voicing.pitchClasses.count >= 3 }
 
-    /// Live reverse-lookup readings of the shape being built (ADR 0093 N7) — ranked, best first. The
-    /// name the player *typed* never feeds this; it reads the geometry only.
+    /// Live reverse-lookup readings of the shape (ADR 0093 N7), ranked best first — reads geometry only.
     var chordCandidates: [ChordCandidate] {
         ChordNamer.candidates(for: ChordVoicing("", frets: frets))
     }
 
-    /// Under the board: what the shape looks like it's called (`ChordIdentifierPanel`). Hidden until there
-    /// are enough notes to name; tapping a suggestion fills the name field (the player can still override).
+    /// Under the board: the `ChordIdentifierPanel`; tapping a suggestion fills the name field (overridable).
     @ViewBuilder var identifier: some View {
         if canIdentify {
             ChordIdentifierPanel(candidates: chordCandidates) { picked in
                 name = picked
                 haptic(.light)
             }
+        }
+    }
+
+    /// Whether the current shape has already been handed to `onSave` (so the button reads "Saved").
+    var isSaved: Bool { lastSaved == voicing }
+
+    /// "Save to My chords" — explicit, separate from Insert (ADR 0095 S3); valid+named, flips to "Saved".
+    @ViewBuilder var saveButton: some View {
+        if let onSave {
+            Button {
+                onSave(voicing)
+                lastSaved = voicing
+                haptic(.light)
+            } label: {
+                Label(isSaved ? "Saved to My chords" : "Save to My chords",
+                      systemImage: isSaved ? "checkmark" : "bookmark")
+                    .font(.futura(.subheadline, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .tint(PocketColor.practice)
+            .disabled(!canInsert || isSaved)
         }
     }
 
@@ -348,8 +364,8 @@ private extension CustomChordSheet {
         haptic(.light)
     }
 
-    /// The marker chooses the string's *non-fretted* state — muted → open → muted; a fretted string
-    /// steps to open (removing the fret), the natural "un-fret from the top" gesture.
+    /// The marker cycles the string's *non-fretted* state (muted → open → muted); a fretted string
+    /// steps to open — the natural "un-fret from the top" gesture.
     func toggleMarker(_ string: Int) {
         switch frets[string] {
         case .none: frets[string] = 0
@@ -377,9 +393,7 @@ private extension CustomChordSheet {
 }
 
 #Preview("Custom chord placer") {
-    Color.clear
-        .fullScreenCover(isPresented: .constant(true)) {
-            CustomChordSheet { _ in }
-                .preferredColorScheme(.dark)
-        }
+    Color.clear.fullScreenCover(isPresented: .constant(true)) {
+        CustomChordSheet(onInsert: { _ in }, onSave: { _ in }).preferredColorScheme(.dark)
+    }
 }

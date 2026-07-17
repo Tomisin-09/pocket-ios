@@ -442,6 +442,17 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   **App-scored right/wrong quizzes are forbidden** (ADR 0094 T2c) — that's the bright line. No
   streaks/scores/XP. Direction ratified in ADR 0094; **no build scheduled yet.** A "coach that
   explains the theory" is an **AI** feature → ADR 0092, deferred/paid.
+- **Saved custom chords — "My chords" (ADR 0095). DONE (pocket-151):** the placer gains an explicit
+  **Save to My chords** button; saved voicings persist as a standalone `SavedChord` `@Model` (voicing as
+  an encoded blob, migration-safe) and reappear as a **My chords** section in the Add/swap menus + a
+  `SavedChordsSheet` list (tap-to-insert, swipe-to-delete). Interim home; graduates to the hub below.
+- **Chords / theory / resources HUB (direction — ADR 0096, PARKED).** A dedicated top-level *reference*
+  destination (separate from the exercise editors) carrying **My Chords** (the ADR-0095 library promoted
+  to its own screen) + **theory & ear-training** (ADR 0094 tools) + a **glossary/vocabulary** sheet, all
+  objective/additive (no grading, no quiz — ADR 0070/0094). Built on the shared `Core/Theory` +
+  scale-catalog + `SavedChord` substrates. **No build scheduled** — needs its own IA/design pass before
+  ADR 0096 moves to Accepted; ADRs 0093–0095 ship and stand alone without it. The player's idea, worth
+  its own destination rather than bolting reference onto authoring surfaces.
 
 ## Notes & journal — DONE (ADR 0038)
 

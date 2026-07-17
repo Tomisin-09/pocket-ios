@@ -113,12 +113,17 @@ extension ChordVoicing {
     /// The degree each sounded string plays relative to the voicing's root (its lowest sounding pitch),
     /// high-e first (index 0 … 5 low E); `nil` for a muted string. The custom placer draws these on the
     /// board so the player sees the intervals a bespoke shape spells as they build it.
-    var degreeLabels: [String?] {
-        guard let root = rootPitchClass else { return Array(repeating: nil, count: frets.count) }
+    var degreeLabels: [String?] { degreeLabels(relativeTo: nil) }
+
+    /// Degree labels relative to an **explicit** root pitch class — used so the board's dots can agree
+    /// with the chord the namer identified (ADR 0093), rather than the lowest note. `nil` root falls back
+    /// to `rootPitchClass` (the bass), the honest chromatic read when no chord is recognised.
+    func degreeLabels(relativeTo root: Int?) -> [String?] {
+        guard let anchor = root ?? rootPitchClass else { return Array(repeating: nil, count: frets.count) }
         return frets.indices.map { index in
             guard let fret = frets[index] else { return nil }
             let pitchClass = (((ChordVoicing.openMidi[index] + fret) % 12) + 12) % 12
-            return ChordVoicing.degreeName(semitonesAboveRoot: pitchClass - root)
+            return ChordVoicing.degreeName(semitonesAboveRoot: pitchClass - anchor)
         }
     }
 

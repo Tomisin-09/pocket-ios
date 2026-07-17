@@ -65,6 +65,28 @@ final class ChordNamerTests: XCTestCase {
         XCTAssertEqual(best?.name, "C")   // the root-position reading is still available
     }
 
+    func testSecondInversionTriadIsTagged() {
+        // {F♯, B, D♯} with F♯ (the 5th of B) in the bass ⇒ B/F♯, a 2nd-inversion B major.
+        let best = ChordNamer.candidates(pitchClasses: [6, 11, 3], bassPitchClass: 6).first
+        XCTAssertEqual(best?.displayName, "B/F#")
+        XCTAssertEqual(best?.name, "B")            // the plain triad name the panel also offers
+        XCTAssertEqual(best?.inversion, 2)
+        XCTAssertEqual(best?.inversionLabel, "2nd inv")
+    }
+
+    func testFirstInversionIsTagged() {
+        // {E, G, C} with E (the 3rd of C) in the bass ⇒ C/E, a 1st inversion.
+        let best = ChordNamer.candidates(pitchClasses: [0, 4, 7], bassPitchClass: 4).first
+        XCTAssertEqual(best?.inversion, 1)
+        XCTAssertEqual(best?.inversionLabel, "1st inv")
+    }
+
+    func testRootPositionHasNoInversionTag() {
+        let best = ChordNamer.candidates(pitchClasses: [0, 4, 7], bassPitchClass: 0).first
+        XCTAssertEqual(best?.inversion, 0)
+        XCTAssertNil(best?.inversionLabel)
+    }
+
     func testDiminishedSeventhReturnsAllFourRoots() {
         // {C, E♭, G♭, A} is fully symmetric — four true dim7 readings; C in the bass names it first.
         let candidates = ChordNamer.candidates(pitchClasses: [0, 3, 6, 9], bassPitchClass: 0)

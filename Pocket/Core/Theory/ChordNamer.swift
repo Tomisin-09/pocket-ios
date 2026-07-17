@@ -62,6 +62,24 @@ struct ChordCandidate: Equatable, Identifiable {
         return bass != rootPitchClass
     }
 
+    /// Which chord tone sits in the bass: `0` root position, `1` first inversion (3rd in bass), `2`
+    /// second (5th), `3` third (7th) — the bass note's index among the quality's stacked intervals.
+    var inversion: Int {
+        guard let bass = bassPitchClass else { return 0 }
+        let bassInterval = (((bass - rootPitchClass) % 12) + 12) % 12
+        return quality.intervals.sorted().firstIndex(of: bassInterval) ?? 0
+    }
+
+    /// A short tag for the identifier ("1st inv" … "3rd inv"), or `nil` in root position.
+    var inversionLabel: String? {
+        switch inversion {
+        case 1: return "1st inv"
+        case 2: return "2nd inv"
+        case 3: return "3rd inv"
+        default: return nil
+        }
+    }
+
     /// The name a player would see for *this voicing*: the slash-bass form for an inversion
     /// (`"C/E"`), otherwise the plain root-position name. This is what the identifier surfaces, because
     /// the bass note is what the player actually fingered.
