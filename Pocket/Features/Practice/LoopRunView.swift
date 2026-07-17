@@ -47,6 +47,8 @@ struct LoopRunView: View {
     @State var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State var showingJournal = false
+    /// The Takes sheet — relisten to practice-take recordings (ADR 0069, slice 3).
+    @State var showingTakes = false
     /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
     /// button shows only while the edits differ (ADR 0057). All six persisted fields — the two
     /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
@@ -135,7 +137,10 @@ struct LoopRunView: View {
                               currentIndex: model.currentPlateau(in: routine))
                 if !isRunning, isDirty { saveChangesButton }
                 if !isRunning, routineContext == nil {
-                    JournalPreviewSection(owner: .loop(loop)) { showingJournal = true }
+                    PracticeReviewBar(journalCount: loop.journal.count,
+                                      takesCount: loop.recordings.count,
+                                      onJournal: { showingJournal = true },
+                                      onTakes: { showingTakes = true })
                         .padding(.top, 4)
                 }
             }
@@ -167,6 +172,9 @@ struct LoopRunView: View {
                              JournalWriter.delete(entry, from: modelContext)
                              try? modelContext.save(); haptic(.light)
                          })
+        }
+        .sheet(isPresented: $showingTakes) {
+            TakesSheet(owner: .loop(loop), onDelete: deleteTake)
         }
         .fullScreenCover(item: $completion) { finished in
             // Reuse the routine block's Done screen for a standalone loop finish (ADR 0082, mirroring

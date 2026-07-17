@@ -215,8 +215,12 @@ files (unlike songs, which are bookmarks to files in place): the **`Recording`**
 (`loop`/`exercise`/`song` — inverse `recordings` arrays on those models, mirroring the `journal`
 pillar; `ownerKind` is derived, no stored enum). **`RecordingStore`** owns the app-container
 `Recordings/` directory and the retention story — delete/size plus a pure orphan sweep that reaps
-files whose model row was cascade-deleted (cascade drops the row, not the on-disk audio). The
-arm/record UI and relisten arrive in later slices.
+files whose model row was cascade-deleted (cascade drops the row, not the on-disk audio). On the
+**loop trainer**, `RecordingController` orchestrates a take as a **pre-start arm toggle** beside Start
+(permission + route sampled up front; the take begins *before* playback so the `.playAndRecord` flip
+never happens mid-stream — the fix for an audible glitch), and `RecordingPlayer` plays takes back one
+at a time. Takes surface **beside the journal** via the one-row `PracticeReviewBar` (Journal + Takes
+count pills → each opens its sheet), keeping the review aids bounded as history builds.
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises

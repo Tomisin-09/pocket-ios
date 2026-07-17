@@ -17,6 +17,16 @@ enum RecordingOwner {
         case .song(let song): recording.song = song
         }
     }
+
+    /// This owner's takes, newest-first — what the Takes list surfaces (ADR 0069 slice 3). Reading
+    /// through the model tracks the SwiftData relationship, so the list refreshes on add/delete.
+    var recordingsByRecent: [Recording] {
+        switch self {
+        case .loop(let loop): loop.recordingsByRecent
+        case .exercise(let exercise): exercise.recordingsByRecent
+        case .song(let song): song.recordingsByRecent
+        }
+    }
 }
 
 /// Orchestrates one **practice take** over a practice run (ADR 0069): mic permission → arm the

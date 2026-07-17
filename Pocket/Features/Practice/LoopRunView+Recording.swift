@@ -84,6 +84,14 @@ extension LoopRunView {
         recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
     }
 
+    /// Delete a take from the Takes sheet — remove the file and the model row (ADR 0069 retention).
+    /// Cascade would drop the row if the loop were deleted; this is the explicit per-take delete.
+    func deleteTake(_ take: Recording) {
+        try? RecordingStore.delete(fileName: take.fileName)
+        modelContext.delete(take)
+        try? modelContext.save()
+    }
+
     static func takeTime(_ seconds: TimeInterval) -> String {
         let total = Int(seconds)
         return String(format: "%d:%02d", total / 60, total % 60)

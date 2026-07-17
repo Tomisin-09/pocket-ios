@@ -38,7 +38,16 @@ Sliced post-v1 on its own branch, never riding the paused v1.0 submission:
   playback starts, rather than flipping the category mid-stream, removes the
   interruption. Same slice: standalone **loop training now gets the visual
   count-in** (respecting the Count-in setting) that exercises already had.
-- **Slice 3** — relisten/playback + journal integration.
+- **Slice 3 (relisten, `pocket-148`)** — a loop's takes are reachable from the
+  run-setup screen and play back: `RecordingPlayer` (one `AVAudioPlayer` take at a
+  time) + `TakesSheet` (rows with play/pause + swipe-to-delete, deleting the file
+  and the row). Surfaced **beside the journal** — the ADR frames recording as the
+  audio counterpart to the notes/journal pillar. To keep the setup screen from
+  drowning as history builds (device feedback 2026-07-17), the two stacked inline
+  previews (journal + takes) were replaced by a single-row **`PracticeReviewBar`**:
+  two count pills, each opening its sheet — bounded to one row forever, counts as
+  the at-a-glance signal, content in the sheets. Takes are loop-only so far;
+  exercise/song surfaces reuse the same owner-agnostic `RecordingOwner` pieces.
 
 ## Context
 

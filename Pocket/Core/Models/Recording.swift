@@ -70,4 +70,11 @@ final class Recording {
         if song != nil { return .song }
         return .none
     }
+
+    /// Duration as `m:ss` for the Takes list (ADR 0069 slice 3). Plain string formatting — no UI
+    /// dependency — so it stays with the model.
+    var durationLabel: String {
+        let total = Int(duration.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
+    }
 }
