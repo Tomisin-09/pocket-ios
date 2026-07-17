@@ -426,17 +426,22 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   placer scrolls the neck (frets 1–15), mute/open + string names pinned, inlay dots at 3·5·7·9·12·15;
   new **Display** menu (Note / Interval / Off) reusing the scale boards' control and global pref.
   Added `ChordVoicing.noteLabels`.
-- **Chord suggestions / chord identifier (next slice).** In the space below the custom-chord board,
+- **Chord suggestions / chord identifier (ADR 0093).** In the space below the custom-chord board,
   surface likely names for the shape being built (reverse lookup: sounded pitch classes → chord
-  name(s), inversions/enharmonics handled). Needs a real chord-**naming** engine — the same theory
-  core an interval/scale-degree feature would use, so build it once and let the identifier be its
-  first consumer. Additive & factual (never grades).
-- **Ear-training & theory space (direction, needs ADR).** Stay on the clearly-safe side of the
+  name(s), inversions/enharmonics handled). **Slice 1 DONE (pocket-150):** the pure naming engine
+  `Core/Theory/ChordNamer` (common-practice vocabulary, ranked candidates, slash inversions, sharp
+  spelling, 18 unit tests) — the shared theory core, with a `ChordVoicing` adapter as its first
+  consumer. **Slice 2 DONE (pocket-150):** live `ChordIdentifierPanel` under the custom-chord board in
+  `CustomChordSheet` — "Looks like Cmaj7" + alternate/inversion chips, tap-to-fill-name, "No common
+  name" fallback; hidden until ≥3 distinct notes. Additive & factual (never grades). *Follow-on if
+  wanted:* surface the same panel on the movable sheet / progression editor rows.
+- **Ear-training & theory space (direction — ADR 0094).** Stay on the clearly-safe side of the
   no-grading line: **reference/exploration** tools (interval player, chord voicer that sounds the
   shape, scale/mode explorer with audio over the existing 12-scale catalog) and **call-and-response,
   self-judged** drills (app plays → you echo on guitar → *you* decide; nothing listens or scores).
-  Avoid quiz/right-wrong framing. A "coach that explains the theory" is an **AI** feature → ADR 0092,
-  deferred/paid.
+  **App-scored right/wrong quizzes are forbidden** (ADR 0094 T2c) — that's the bright line. No
+  streaks/scores/XP. Direction ratified in ADR 0094; **no build scheduled yet.** A "coach that
+  explains the theory" is an **AI** feature → ADR 0092, deferred/paid.
 
 ## Notes & journal — DONE (ADR 0038)
 
