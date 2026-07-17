@@ -121,4 +121,18 @@ extension ChordVoicing {
             return ChordVoicing.degreeName(semitonesAboveRoot: pitchClass - root)
         }
     }
+
+    /// Sharp-spelled pitch-class names (a plain, unambiguous reading — the placer's note labels are a
+    /// reference, not a key-aware spelling).
+    private static let pitchClassNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
+
+    /// The note name each sounded string plays, high-e first (index 0 … 5 low E); `nil` for a muted
+    /// string. Feeds the custom placer's Display → Note mode.
+    var noteLabels: [String?] {
+        frets.indices.map { index in
+            guard let fret = frets[index] else { return nil }
+            let pitchClass = (((ChordVoicing.openMidi[index] + fret) % 12) + 12) % 12
+            return ChordVoicing.pitchClassNames[pitchClass]
+        }
+    }
 }

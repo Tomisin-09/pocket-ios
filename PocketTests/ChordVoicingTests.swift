@@ -114,6 +114,21 @@ final class ChordVoicingTests: XCTestCase {
         XCTAssertEqual(labels[3], "R", "the open D string is the root")
     }
 
+    // MARK: - Note labels (Display → Note)
+
+    func testNoteLabelsNameEachSoundedString() {
+        // E dom7 (020100): high-e first — e E, B B, G♯ (G string fret 1), D, B (A string fret 2), E.
+        XCTAssertEqual(ChordVoicing.eDom7.noteLabels, ["E", "B", "G♯", "D", "B", "E"])
+    }
+
+    func testNoteLabelsAreNilForMutedStrings() {
+        // D major (xx0232): the two muted low strings carry no note name.
+        let labels = ChordVoicing.dMajor.noteLabels
+        XCTAssertNil(labels[5], "muted low E has no note")
+        XCTAssertNil(labels[4], "muted A has no note")
+        XCTAssertEqual(labels[3], "D", "the open D string sounds D")
+    }
+
     // MARK: - Codable round-trip
 
     func testVoicingRoundTripsThroughCodable() throws {
