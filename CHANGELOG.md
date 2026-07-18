@@ -6,14 +6,17 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Hear your saved chords.** A saved chord's detail screen now has a **Hear** button that sounds the
+  voicing so you can check it by ear — a clean synthesized pitch reference (no downloads, all on-device).
+  This is the first slice of app-wide *Hear*; sounding scales, arpeggios and intervals rides the same
+  new audio engine and follows in later slices.
 - **New "Toolkit" space — a home for chords, scales & theory reference.** A fourth card on the home
   screen (in a new indigo/violet accent) opens **Toolkit**, a reference destination separate from your
   practice content. Slice 1 carries two sections: **My chords** — your saved custom voicings now get a
-  full screen of their own (a grid of every chord you've kept; tap one for a big diagram with **Rename**
-  and **Delete**; **+** builds a new one) — and a searchable **Glossary** of guitar and theory terms
-  (sus4, tritone, CAGED, pentatonic, and more). Audio-free by design; *hearing* chords/scales comes in a
-  later slice. Saving chords from inside a chord exercise still works exactly as before — the Toolkit is
-  where the collection is now managed.
+  full screen of their own (a grid of every chord you've kept; tap one for a big diagram with **Hear**,
+  **Rename** and **Delete**; **+** builds a new one) — and a searchable **Glossary** of guitar and theory
+  terms (sus4, tritone, CAGED, pentatonic, and more). Saving chords from inside a chord exercise still
+  works exactly as before — the Toolkit is where the collection is now managed.
 - **Chords now tell you what they are, everywhere you build a progression.** The "Looks like…" reading
   from the custom-chord board (ADR 0093) now also appears on the **movable-shape sheet** — confirming
   that, say, an E-shape rooted at G spells **G7** — and on each **row of a chord progression**, where a

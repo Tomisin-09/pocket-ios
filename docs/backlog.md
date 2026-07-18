@@ -464,14 +464,20 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   v1. One shared **sequence-capable `ToneEngine`** (`Core/Audio`) with `sound(notes:)` + `sequence(notes:…)`
   feeds every surface, reading MIDI the models already expose (`ChordVoicing.midiNotes`,
   `ScaleRun.sequence`→`CAGEDShape.midi`, `FretboardDrill.notes`). Provisional slice order:
-  1. **`ToneEngine` + block-chord Hear in My Chords** (promote the spike; delete `ChordTonePlayer`/`HearSpikeView`).
+  1. ~~**`ToneEngine` + block-chord Hear in My Chords** (promote the spike; delete `ChordTonePlayer`/`HearSpikeView`).~~ **DONE (pocket-156, 2026-07-17):** shared sequence-capable `ToneEngine` (`Core/Audio/`, built-in tone) shipped; **Hear** button on `MyChordDetailView` sounds the voicing (block); spike files + temporary Toolkit row removed.
   2. **Hear on the chord identifier / custom placer** (sound the shape being built).
   3. **Scale/CAGED-box preview** (sequence asc/desc) + **arpeggios** (a chord's notes, sequenced).
   4. **Fretboard/picking-run preview**; **Glossary "Hear" affordance** on interval/chord terms.
   5. **Intervals / ear-training** playback (ADR 0094, still needs its own build ADR; objective, no quiz).
-  *Optional later:* bundle a CC0 guitar SoundFont for a guitar timbre (ADR 0097 D4.3) — deferred, gated on
-  a redistributable asset. **Submission-timing note:** this pushes the paused v1 (see App Store status)
-  later by the player's explicit call — sequence against the launch gate when scheduling.
+  *Optional later — CC0 guitar SoundFont (ADR 0097 D4.3):* **built-in tone judged good enough on device
+  (2026-07-17), staying as-is for v1** — the clean synth tone is arguably *clearer* for a reference tool
+  (dense voicings read as distinct pitches without a guitar's overtones muddying them). Loading a nylon
+  guitar `.sf2` is a drop-in over the *same wired code path* (`ToneEngine.loadSoundFontIfPresent`, expects
+  `HearGuitar.sf2`) — no rewrite. It's a **trade, not a strict upgrade** and quality is entirely the
+  font's, so it's a separate later slice: (1) find a **genuinely CC0/public-domain** font licensed for
+  redistribution *as a playable instrument in a shipped app* (same rights posture as the Kontakt/GarageBand
+  rejections), (2) **audition candidates on device**, (3) keep or revert. A few MB of bundle weight.
+  Deferred, not blocking v1.
 
 ## Notes & journal — DONE (ADR 0038)
 
