@@ -74,18 +74,40 @@ struct CustomChordSheet: View {
             }
         }
         .tint(PocketColor.practice)
+        .onDisappear { ToneEngine.shared.stop() }
     }
 
     // MARK: - Title + Display (the live name, plus the label toggle like the scale boards)
 
     private var titleRow: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline, spacing: 16) {
             Text(trimmedName.isEmpty ? "New chord" : trimmedName)
                 .font(.futura(.title2, weight: .semibold))
                 .foregroundStyle(trimmedName.isEmpty ? PocketColor.textSecondary : PocketColor.textPrimary)
             Spacer()
+            hearButton
             displayMenu
         }
+    }
+
+    /// Sound the shape as it's being built (ADR 0097 Slice 2) — a block chord through the shared
+    /// `ToneEngine`, gated only on a *soundable* voicing (≥1 sounded string), not on naming: hearing
+    /// the intervals is what helps you name it. Sits beside Display, both compact "inspect" controls.
+    private var hearButton: some View {
+        Button {
+            ToneEngine.shared.sound(voicing.midiNotes)
+            haptic(.light)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "speaker.wave.2.fill")
+                Text("Hear")
+            }
+            .font(.futura(.caption, weight: .semibold))
+            .foregroundStyle(PocketColor.practice)
+        }
+        .disabled(!voicing.isValid)
+        .opacity(voicing.isValid ? 1 : 0.35)
+        .accessibilityLabel("Hear this chord")
     }
 
     /// Note / Interval / Off, matching the scale editors' control and sharing their global preference.

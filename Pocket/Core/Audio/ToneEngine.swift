@@ -10,9 +10,7 @@ import os
 /// **One engine, every surface (ADR 0097 D4.5/D4.6).** The primitive is "sound an ordered set of MIDI
 /// notes"; a chord is just the *simultaneous* case of the *sequential* one. Callers hand it MIDI the
 /// models already expose (`ChordVoicing.midiNotes`, `ScaleRun.sequence`→`CAGEDShape.midi`,
-/// `FretboardDrill.notes`), so no per-feature note-derivation is built. v1 wires only block-chord Hear
-/// in My Chords; `sequence(_:)` is here from day one so scale/arpeggio/interval preview are thin
-/// follow-up slices, not a rewrite.
+/// `FretboardDrill.notes`), so no per-feature note-derivation is built.
 ///
 /// **Sound source (ADR 0097 D4.2/D4.3).** On iOS an *unloaded* `AVAudioUnitSampler` renders a clean
 /// built-in tone (envelope + sine-ish) — there is no accessible system GM bank on iOS — which is a
@@ -34,13 +32,8 @@ final class ToneEngine {
 
     private let engine = AVAudioEngine()
     private let sampler = AVAudioUnitSampler()
+    private let sequencer: HearSequencer
     private(set) var source: Source = .builtInTone
-
-    /// In-flight note-on/off work items, so a re-tap can cancel a still-ringing preview and retrigger
-    /// cleanly instead of layering two chords on top of each other.
-    private var pending: [DispatchWorkItem] = []
-    /// MIDI notes currently sounding — stopped on `reset()` so a retrigger starts from silence.
-    private var ringing: Set<UInt8> = []
 
     /// GM melodic-bank selectors (`kAUSampler_DefaultMelodicBankMSB` / `…DefaultBankLSB`) and the
     /// 0-indexed GM program for Acoustic Guitar (nylon) = 24 — used only if a SoundFont is present.
@@ -51,6 +44,7 @@ final class ToneEngine {
     init() {
         engine.attach(sampler)
         engine.connect(sampler, to: engine.mainMixerNode, format: nil)
+        sequencer = HearSequencer(sampler: sampler)
         loadSoundFontIfPresent()
     }
 
@@ -59,56 +53,32 @@ final class ToneEngine {
     /// Sound `notes` **together** as a block chord — every note speaks at once and releases after
     /// `sustain`. This is the v1 chord Hear (ADR 0097 D4.4: block only, strum dropped).
     func sound(_ notes: [Int], velocity: UInt8 = 90, sustain: TimeInterval = 1.8) {
-        fire(notes: notes, stride: 0, duration: sustain, velocity: velocity)
+        start()
+        sequencer.schedule(notes: notes.map { $0 }, stride: 0, duration: sustain, velocity: velocity)
     }
 
     /// Sound `notes` **one at a time** as a melodic line — each note onsets `noteDuration + gap` after
-    /// the previous and sustains for `noteDuration`. Feeds scale runs, arpeggios and intervals (not
-    /// wired in Slice 1, but the reason `ToneEngine` exists rather than a chord-only player).
-    func sequence(_ notes: [Int], noteDuration: TimeInterval = 0.32, gap: TimeInterval = 0.06,
+    /// the previous and sustains for `noteDuration`. Feeds scale runs, arpeggios, picking runs and
+    /// intervals; the caller paces it (`noteDuration + gap`) to match any visual walk it's synced to
+    /// (ADR 0097 S3). A `nil` entry is a **rest** — it consumes its time slot (so a custom drill's empty
+    /// grid cells keep the line aligned to the walking highlight) but sounds nothing.
+    func sequence(_ notes: [Int?], noteDuration: TimeInterval = 0.32, gap: TimeInterval = 0.06,
                   velocity: UInt8 = 90) {
-        fire(notes: notes, stride: noteDuration + gap, duration: noteDuration, velocity: velocity)
+        start()
+        sequencer.schedule(notes: notes, stride: noteDuration + gap, duration: noteDuration,
+                           velocity: velocity)
     }
 
     /// Silence any in-flight preview immediately (cancels scheduled note-ons and stops ringing notes).
-    func stop() { reset() }
+    func stop() { sequencer.stopAll() }
 
-    // MARK: - Scheduling
+    // MARK: - Engine start
 
-    /// Schedule `notes` with a fixed `stride` between successive onsets (0 = block) and a per-note
-    /// `duration`. Starts the session/engine lazily on first sound, and cancels any prior preview so a
-    /// re-tap retriggers cleanly.
-    private func fire(notes: [Int], stride: TimeInterval, duration: TimeInterval, velocity: UInt8) {
-        guard !notes.isEmpty else { return }
+    /// Bring the session/engine up lazily on first sound. Cheap and idempotent once running; kept on the
+    /// main actor (session/engine setup) while note *timing* runs off it, on the sequencer's own queue.
+    private func start() {
         AudioPlumbing.configurePlaybackSession(label: "Hear")
         AudioPlumbing.startIfNeeded(engine, label: "Hear")
-        reset()
-
-        for (index, note) in notes.enumerated() {
-            let midi = UInt8(clamping: note)
-            let onset = Double(index) * stride
-
-            let noteOn = DispatchWorkItem { [weak self] in
-                self?.sampler.startNote(midi, withVelocity: velocity, onChannel: 0)
-                self?.ringing.insert(midi)
-            }
-            let noteOff = DispatchWorkItem { [weak self] in
-                self?.sampler.stopNote(midi, onChannel: 0)
-                self?.ringing.remove(midi)
-            }
-            pending.append(noteOn)
-            pending.append(noteOff)
-            DispatchQueue.main.asyncAfter(deadline: .now() + onset, execute: noteOn)
-            DispatchQueue.main.asyncAfter(deadline: .now() + onset + duration, execute: noteOff)
-        }
-    }
-
-    /// Cancel every scheduled note-on/off and silence anything still sounding.
-    private func reset() {
-        pending.forEach { $0.cancel() }
-        pending.removeAll()
-        for midi in ringing { sampler.stopNote(midi, onChannel: 0) }
-        ringing.removeAll()
     }
 
     // MARK: - Sound source
@@ -128,5 +98,72 @@ final class ToneEngine {
         } catch {
             AudioPlumbing.log.error("Hear: sf2 load failed: \(error.localizedDescription)")
         }
+    }
+}
+
+/// The off-main note scheduler behind `ToneEngine`. All timing runs on a dedicated `userInteractive`
+/// **serial queue that does nothing but fire notes**, so the events are immune to main-thread load —
+/// the fix for ADR 0097 Slice 3's drift, where the 60fps walking-highlight animation starved the old
+/// `DispatchQueue.main` timers and the tone slipped progressively late (worst on the way back).
+///
+/// Deadlines are **absolute** (`start + index·stride`), so lateness never accumulates. A `generation`
+/// counter invalidates a still-ringing preview when a re-tap retriggers, instead of tracking per-note
+/// work items. `AVAudioUnitSampler`'s `startNote`/`stopNote` are thread-safe, and every piece of mutable
+/// state (`ringing`, `generation`) is confined to `queue`, so the class is safe to treat as `Sendable`.
+private final class HearSequencer: @unchecked Sendable {
+    private let sampler: AVAudioUnitSampler
+    private let queue = DispatchQueue(label: "click.decooperations.pocket.hear.timing",
+                                      qos: .userInteractive)
+    /// MIDI notes currently sounding — stopped on retrigger/stop so a new preview starts from silence.
+    private var ringing: Set<UInt8> = []
+    /// Bumped on every schedule/stop; a scheduled note-on/off only fires if its captured generation is
+    /// still current, so a re-tap cleanly cancels the previous preview's remaining events.
+    private var generation = 0
+
+    init(sampler: AVAudioUnitSampler) { self.sampler = sampler }
+
+    /// Schedule `notes` with a fixed `stride` between successive onsets (0 = block) and a per-note
+    /// `duration`. Cancels any prior preview so a re-tap retriggers cleanly. A **block** (stride 0) speaks
+    /// polyphonically — every note rings together (a chord). A **melodic line** (stride > 0) is played
+    /// **monophonically**: each onset first silences whatever's ringing, so at most one voice sounds at a
+    /// time. A scale run / arpeggio *is* a single melodic line, and mono playback makes it immune to voice
+    /// pile-up on a long run (the extended-pentatonic diagonal was dropping out on the return, ADR 0097 S3).
+    func schedule(notes: [Int?], stride: TimeInterval, duration: TimeInterval, velocity: UInt8) {
+        queue.async {
+            self.stopRinging()
+            self.generation += 1
+            let generation = self.generation
+            let mono = stride > 0
+            let start = DispatchTime.now()
+            for (index, note) in notes.enumerated() {
+                guard let note else { continue }   // a rest: its slot still advances `index`, but no note
+                let midi = UInt8(clamping: note)
+                let onset = Double(index) * stride
+                self.queue.asyncAfter(deadline: start + onset) {
+                    guard generation == self.generation else { return }
+                    if mono { self.stopRinging() }   // one voice at a time for a melodic line
+                    self.sampler.startNote(midi, withVelocity: velocity, onChannel: 0)
+                    self.ringing.insert(midi)
+                }
+                self.queue.asyncAfter(deadline: start + onset + duration) {
+                    guard generation == self.generation else { return }
+                    self.sampler.stopNote(midi, onChannel: 0)
+                    self.ringing.remove(midi)
+                }
+            }
+        }
+    }
+
+    /// Silence everything and invalidate any still-scheduled events.
+    func stopAll() {
+        queue.async {
+            self.stopRinging()
+            self.generation += 1
+        }
+    }
+
+    private func stopRinging() {
+        for midi in ringing { sampler.stopNote(midi, onChannel: 0) }
+        ringing.removeAll()
     }
 }

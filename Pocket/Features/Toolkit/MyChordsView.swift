@@ -152,6 +152,7 @@ struct MyChordDetailView: View {
         .navigationTitle(chord.name)
         .navigationBarTitleDisplayMode(.inline)
         .tint(PocketColor.toolkit)
+        .onDisappear { ToneEngine.shared.stop() }
         .alert("Rename chord", isPresented: $renaming) {
             TextField("Name", text: $draftName)
                 .autocorrectionDisabled()

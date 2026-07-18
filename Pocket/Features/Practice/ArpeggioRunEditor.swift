@@ -18,6 +18,12 @@ struct ArpeggioRunEditor: View {
     /// practice board.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
+    /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S3).
+    private var secondsPerNote: Double {
+        60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
+    }
+    /// The run's notes as MIDI, in playing order — what Hear sounds (no rests in a generated arpeggio).
+    private var heardNotes: [Int?] { run.sequence.map { Optional(CAGEDShape.midi($0)) } }
     /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
     /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
     /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
@@ -43,12 +49,15 @@ struct ArpeggioRunEditor: View {
                 .tint(tint)
             advanced
         }
+        .onDisappear { ToneEngine.shared.stop() }
     }
 
     // MARK: - Display options (labels, global preference)
 
     private var displayOptionsControl: some View {
-        HStack {
+        HStack(spacing: 16) {
+            FretboardHearButton(notes: heardNotes, secondsPerNote: secondsPerNote,
+                                playToken: $playOnceToken, tint: tint)
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
             Spacer()
             Menu {

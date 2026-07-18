@@ -12,7 +12,10 @@ struct FretboardDrillPreview: View {
     let drill: FretboardDrill
     /// A gentle **preview tempo** — slower than any real practice pace so the shape is easy to follow
     /// at a glance. The live practice board is engine-driven and plays at the actual exercise tempo.
-    var bpm: Int = 60
+    /// Exposed as a constant so `FretboardHearButton` can pace its audio to the *same* cadence and the
+    /// tone stays locked to the walking highlight (ADR 0097 Slice 3).
+    static let previewBPM = 60
+    var bpm: Int = FretboardDrillPreview.previewBPM
     var tint: Color = PocketColor.practice
     var labelMode: FretLabelMode = .none
     /// Set (to a fresh `Date()`) by a `FretboardPlayOnceButton` to request a single walk-through,
