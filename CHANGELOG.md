@@ -14,6 +14,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   **Hear** button that sounds the shape you're forming. On the placer it lights up as soon as one string
   sounds — before you've named it — so you can find the name by ear; on the movable sheet it plays the
   generated chord as you slide it up the neck. Same on-device pitch reference as saved-chord Hear.
+- **Hear a scale or arpeggio.** The Scales and Arpeggios editors now have a **Hear** button beside
+  **Watch**. Hear plays the box note by note (up, then back down when "Up and back" is on) **and lights
+  up each note on the neck in time with the tone** — the highlight and the sound stay locked together,
+  including while "Animate exercises" is on. It follows whatever you've picked live: change the root,
+  position or octaves and Hear sounds the new box. Tap **Stop** (or leave the screen) to silence it. Same
+  on-device tone as the chord previews.
 - **New "Toolkit" space — a home for chords, scales & theory reference.** A fourth card on the home
   screen (in a new indigo/violet accent) opens **Toolkit**, a reference destination separate from your
   practice content. Slice 1 carries two sections: **My chords** — your saved custom voicings now get a

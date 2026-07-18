@@ -74,6 +74,7 @@ struct CustomChordSheet: View {
             }
         }
         .tint(PocketColor.practice)
+        .onDisappear { ToneEngine.shared.stop() }
     }
 
     // MARK: - Title + Display (the live name, plus the label toggle like the scale boards)

@@ -60,6 +60,7 @@ struct MovableChordSheet: View {
         }
         .tint(PocketColor.practice)
         .presentationDetents([.medium, .large])
+        .onDisappear { ToneEngine.shared.stop() }
     }
 
     // MARK: - Shape (family + quality)

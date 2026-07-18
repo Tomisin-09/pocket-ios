@@ -17,6 +17,10 @@ struct ScaleRunEditor: View {
     /// in the live practice run.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
+    /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S3).
+    private var secondsPerNote: Double {
+        60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
+    }
     /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
     /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
     /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
@@ -43,6 +47,7 @@ struct ScaleRunEditor: View {
                 .tint(tint)
             advanced
         }
+        .onDisappear { ToneEngine.shared.stop() }
     }
 
     // MARK: - Display options (labels, global preference)
@@ -52,7 +57,9 @@ struct ScaleRunEditor: View {
     /// Watch already covers "see it move once" here (the dead "Sound soon" scaffold was removed in
     /// ADR 0077).
     private var labelModeControl: some View {
-        HStack {
+        HStack(spacing: 16) {
+            FretboardHearButton(notes: run.sequence.map(CAGEDShape.midi),
+                                secondsPerNote: secondsPerNote, playToken: $playOnceToken, tint: tint)
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
             Spacer()
             Menu {
