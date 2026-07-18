@@ -15,8 +15,10 @@ import SwiftUI
 /// it also self-resets when the run finishes on its own. The paired view stops the tone on disappear too,
 /// so leaving the screen never leaves a preview ringing.
 struct FretboardHearButton: View {
-    /// The run's notes as MIDI, in playing order (ascending, then the descent when round-trip is on).
-    let notes: [Int]
+    /// The run's notes as MIDI, in playing order (ascending, then the descent when round-trip is on). A
+    /// `nil` entry is a **rest** — it keeps its slot in the walk (so a custom drill's empty cells stay
+    /// aligned to the highlight) but sounds nothing.
+    let notes: [Int?]
     /// Seconds each note occupies on the preview walk — the audio matches it so tone and highlight
     /// advance together (`60 / FretboardDrillPreview.previewBPM / notesPerBeat`).
     let secondsPerNote: Double
@@ -41,7 +43,7 @@ struct FretboardHearButton: View {
             .foregroundStyle(tint)
         }
         .buttonStyle(.borderless)
-        .disabled(notes.isEmpty)
+        .disabled(!notes.contains { $0 != nil })
         .accessibilityLabel(isPlaying ? "Stop" : "Hear the run")
         .accessibilityHint(isPlaying ? "Stops the preview" : "Plays the notes one at a time, with the highlight")
     }
@@ -74,7 +76,7 @@ struct FretboardHearButton: View {
     struct Harness: View {
         @State private var token: Date?
         var body: some View {
-            FretboardHearButton(notes: ScaleRun.aMinorPentatonic.sequence.map(CAGEDShape.midi),
+            FretboardHearButton(notes: ScaleRun.aMinorPentatonic.sequence.map { Optional(CAGEDShape.midi($0)) },
                                 secondsPerNote: 0.5, playToken: $token)
         }
     }

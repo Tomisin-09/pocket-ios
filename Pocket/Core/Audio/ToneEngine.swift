@@ -54,13 +54,15 @@ final class ToneEngine {
     /// `sustain`. This is the v1 chord Hear (ADR 0097 D4.4: block only, strum dropped).
     func sound(_ notes: [Int], velocity: UInt8 = 90, sustain: TimeInterval = 1.8) {
         start()
-        sequencer.schedule(notes: notes, stride: 0, duration: sustain, velocity: velocity)
+        sequencer.schedule(notes: notes.map { $0 }, stride: 0, duration: sustain, velocity: velocity)
     }
 
     /// Sound `notes` **one at a time** as a melodic line — each note onsets `noteDuration + gap` after
-    /// the previous and sustains for `noteDuration`. Feeds scale runs, arpeggios and intervals; the
-    /// caller paces it (`noteDuration + gap`) to match any visual walk it's synced to (ADR 0097 S3).
-    func sequence(_ notes: [Int], noteDuration: TimeInterval = 0.32, gap: TimeInterval = 0.06,
+    /// the previous and sustains for `noteDuration`. Feeds scale runs, arpeggios, picking runs and
+    /// intervals; the caller paces it (`noteDuration + gap`) to match any visual walk it's synced to
+    /// (ADR 0097 S3). A `nil` entry is a **rest** — it consumes its time slot (so a custom drill's empty
+    /// grid cells keep the line aligned to the walking highlight) but sounds nothing.
+    func sequence(_ notes: [Int?], noteDuration: TimeInterval = 0.32, gap: TimeInterval = 0.06,
                   velocity: UInt8 = 90) {
         start()
         sequencer.schedule(notes: notes, stride: noteDuration + gap, duration: noteDuration,
@@ -126,7 +128,7 @@ private final class HearSequencer: @unchecked Sendable {
     /// **monophonically**: each onset first silences whatever's ringing, so at most one voice sounds at a
     /// time. A scale run / arpeggio *is* a single melodic line, and mono playback makes it immune to voice
     /// pile-up on a long run (the extended-pentatonic diagonal was dropping out on the return, ADR 0097 S3).
-    func schedule(notes: [Int], stride: TimeInterval, duration: TimeInterval, velocity: UInt8) {
+    func schedule(notes: [Int?], stride: TimeInterval, duration: TimeInterval, velocity: UInt8) {
         queue.async {
             self.stopRinging()
             self.generation += 1
@@ -134,6 +136,7 @@ private final class HearSequencer: @unchecked Sendable {
             let mono = stride > 0
             let start = DispatchTime.now()
             for (index, note) in notes.enumerated() {
+                guard let note else { continue }   // a rest: its slot still advances `index`, but no note
                 let midi = UInt8(clamping: note)
                 let onset = Double(index) * stride
                 self.queue.asyncAfter(deadline: start + onset) {

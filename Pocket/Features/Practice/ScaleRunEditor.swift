@@ -21,6 +21,8 @@ struct ScaleRunEditor: View {
     private var secondsPerNote: Double {
         60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
     }
+    /// The run's notes as MIDI, in playing order — what Hear sounds (no rests in a generated scale run).
+    private var heardNotes: [Int?] { run.sequence.map { Optional(CAGEDShape.midi($0)) } }
     /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
     /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
     /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
@@ -58,8 +60,8 @@ struct ScaleRunEditor: View {
     /// ADR 0077).
     private var labelModeControl: some View {
         HStack(spacing: 16) {
-            FretboardHearButton(notes: run.sequence.map(CAGEDShape.midi),
-                                secondsPerNote: secondsPerNote, playToken: $playOnceToken, tint: tint)
+            FretboardHearButton(notes: heardNotes, secondsPerNote: secondsPerNote,
+                                playToken: $playOnceToken, tint: tint)
             FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
             Spacer()
             Menu {

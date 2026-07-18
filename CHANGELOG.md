@@ -20,6 +20,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   including while "Animate exercises" is on. It follows whatever you've picked live: change the root,
   position or octaves and Hear sounds the new box. Tap **Stop** (or leave the screen) to silence it. Same
   on-device tone as the chord previews.
+- **Hear picking runs and custom fretboard drills.** The **Hear** button now also rides the picking-run
+  editor and the custom note-grid editor, locked to the walking highlight the same way — empty cells in a
+  custom drill sound as rests, so the tone stays lined up with the neck.
 - **New "Toolkit" space — a home for chords, scales & theory reference.** A fourth card on the home
   screen (in a new indigo/violet accent) opens **Toolkit**, a reference destination separate from your
   practice content. Slice 1 carries two sections: **My chords** — your saved custom voicings now get a
