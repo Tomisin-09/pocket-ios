@@ -131,32 +131,29 @@ private final class HearSequencer: @unchecked Sendable {
     init(sampler: AVAudioUnitSampler) { self.sampler = sampler }
 
     /// Schedule `notes` with a fixed `stride` between successive onsets (0 = block) and a per-note
-    /// `duration`. Cancels any prior preview so a re-tap retriggers cleanly. A **block** (stride 0) speaks
-    /// polyphonically — every note rings together (a chord). A **melodic line** (stride > 0) is played
-    /// **monophonically**: each onset first silences whatever's ringing, so at most one voice sounds at a
-    /// time. A scale run / arpeggio *is* a single melodic line, and mono playback makes it immune to voice
-    /// pile-up on a long run (the extended-pentatonic diagonal was dropping out on the return, ADR 0097 S3).
+    /// `duration`. Cancels any prior preview so a re-tap retriggers cleanly. The *what-sounds-when* is
+    /// computed purely by `HearPlan` (block vs melodic, rests, absolute deadlines); this method just
+    /// dispatches those events against the sampler, silencing the previous note on each onset when the
+    /// plan is monophonic so a long run never piles up voices (ADR 0097 S3).
     func schedule(notes: [Int?], stride: TimeInterval, duration: TimeInterval, velocity: UInt8) {
+        let events = HearPlan.events(notes: notes, stride: stride, duration: duration)
+        let mono = HearPlan.isMonophonic(stride: stride)
         queue.async {
             self.stopRinging()
             self.generation += 1
             let generation = self.generation
-            let mono = stride > 0
             let start = DispatchTime.now()
-            for (index, note) in notes.enumerated() {
-                guard let note else { continue }   // a rest: its slot still advances `index`, but no note
-                let midi = UInt8(clamping: note)
-                let onset = Double(index) * stride
-                self.queue.asyncAfter(deadline: start + onset) {
+            for event in events {
+                self.queue.asyncAfter(deadline: start + event.onset) {
                     guard generation == self.generation else { return }
                     if mono { self.stopRinging() }   // one voice at a time for a melodic line
-                    self.sampler.startNote(midi, withVelocity: velocity, onChannel: 0)
-                    self.ringing.insert(midi)
+                    self.sampler.startNote(event.midi, withVelocity: velocity, onChannel: 0)
+                    self.ringing.insert(event.midi)
                 }
-                self.queue.asyncAfter(deadline: start + onset + duration) {
+                self.queue.asyncAfter(deadline: start + event.offset) {
                     guard generation == self.generation else { return }
-                    self.sampler.stopNote(midi, onChannel: 0)
-                    self.ringing.remove(midi)
+                    self.sampler.stopNote(event.midi, onChannel: 0)
+                    self.ringing.remove(event.midi)
                 }
             }
         }
