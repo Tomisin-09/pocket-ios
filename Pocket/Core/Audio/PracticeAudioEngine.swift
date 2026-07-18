@@ -380,8 +380,9 @@ final class PracticeAudioEngine {
 // MARK: - Metronome (ADR 0026)
 
 extension PracticeAudioEngine {
-    /// Turn the in-song click on/off. The song's beat grid is supplied separately via
-    /// `setMetronomeBeats` (no grid ⇒ nothing schedules); click scheduling lives in the `+Metronome` split.
+    /// Turn the in-song click on/off. Writes the `private(set) metronomeOn` flag, so it stays in the
+    /// declaring file (the rest of the metronome surface is in the `+Metronome` split). The beat grid is
+    /// supplied separately via `setMetronomeBeats` (no grid ⇒ nothing schedules).
     func setMetronome(enabled: Bool) {
         metronomeOn = enabled
         if enabled {
@@ -390,11 +391,4 @@ extension PracticeAudioEngine {
             clickVoice.stopAll()
         }
     }
-}
-
-/// Carries a non-`Sendable` value across an actor boundary when the caller guarantees single-threaded
-/// use (here: open off-main, then main-actor only).
-private struct UncheckedSendableBox<Value>: @unchecked Sendable {
-    let value: Value
-    init(_ value: Value) { self.value = value }
 }

@@ -43,15 +43,13 @@ struct FretboardDrillEditor: View {
     /// slots aligned to the walking highlight (ADR 0097 S4).
     private var heardNotes: [Int?] { drill.notes.map { $0.map(CAGEDShape.midi) } }
 
-    /// The subdivisions the segmented control offers, mapped to notes-per-beat.
-    private static let resolutions: [(perBeat: Int, label: String)] =
-        [(1, "Quarters"), (2, "Eighths"), (3, "Triplets"), (4, "Sixteenths")]
     private static let visibleFretCount = 5
     private static let maxLowestFret = 15
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            displayOptionsControl
+            FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
+                                       playToken: $playOnceToken, tint: tint)
             FretboardDrillPreview(drill: drill, tint: tint, labelMode: labelMode,
                                   playOnceToken: playOnceToken)
             resolutionPicker
@@ -62,44 +60,16 @@ struct FretboardDrillEditor: View {
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
-        .onDisappear { ToneEngine.shared.stop() }
-    }
-
-    // MARK: - Display options (labels, global preference)
-
-    /// A compact menu, top of the editor, holding how notes are captioned plus a Watch pass of the
-    /// hand-placed drill — the row every other fretboard-family editor carries (ADR 0065; the dead
-    /// "Sound soon" scaffold was removed in ADR 0077). The walking-highlight preference itself lives
-    /// only in Settings now, since Watch already covers "see it move once" here.
-    private var displayOptionsControl: some View {
-        HStack(spacing: 16) {
-            FretboardHearButton(notes: heardNotes, secondsPerNote: secondsPerNote,
-                                playToken: $playOnceToken, tint: tint)
-            FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
-            Spacer()
-            Menu {
-                Picker("Labels", selection: $storedLabelMode) {
-                    ForEach(FretLabelMode.allCases) { mode in
-                        Text(mode.pickerLabel).tag(mode.rawValue)
-                    }
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "slider.horizontal.3")
-                    Text("Display")
-                }
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(tint)
-            }
-            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel)")
-        }
+        .hearStopsOnDisappear()
     }
 
     // MARK: - Subdivision
 
+    /// A segmented resolution picker (shown inline, not under an Advanced disclosure like the generative
+    /// editors) — changing it re-grids the drill, so it stays a primary control.
     private var resolutionPicker: some View {
         Picker("Subdivision", selection: resolutionBinding) {
-            ForEach(Self.resolutions, id: \.perBeat) { resolution in
+            ForEach(FretboardSubdivisions.options, id: \.perBeat) { resolution in
                 Text(resolution.label).tag(resolution.perBeat)
             }
         }

@@ -68,6 +68,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   already had (respecting your **Count-in** setting), so you're not caught mid-reach at the downbeat.
 
 ### Fixed
+- **Hearing a saved chord now gives the same tap feedback as everywhere else.** The **Hear** button on
+  a saved chord's detail was missing the light haptic the other Hear buttons fire; all Hear buttons now
+  behave identically (they share one implementation).
 - **Edit sheets no longer close themselves while you're editing.** Opening **Edit** on a song you'd
   just imported, a planner goal you'd just added, or the reps editor on a freshly generated routine
   could dismiss the sheet mid-edit when the app auto-saved — the same defect the loop editor had. All

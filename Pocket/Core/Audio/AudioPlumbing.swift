@@ -1,9 +1,10 @@
 import AVFoundation
 import os
 
-/// Shared AVAudioSession / engine-start plumbing for the app's two audio engines
-/// (`PracticeAudioEngine`, `StandaloneMetronomeEngine`) — one place for the
-/// category/activation dance both need before sound can come out.
+/// Shared AVAudioSession / engine-start plumbing for the app's audio engines
+/// (`PracticeAudioEngine`, `StandaloneMetronomeEngine`, `ToneEngine`, and the
+/// recording path) — one place for the category/activation dance they each need
+/// before sound can come out.
 ///
 /// Failures are **logged, not swallowed** (backlog robustness item, audit
 /// 2026-07-05): for an audio-first app a dead session means silent no-sound, so

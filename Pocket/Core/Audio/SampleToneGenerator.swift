@@ -44,4 +44,14 @@ enum SampleToneGenerator {
         try outFile.write(from: buffer)
         return Sample(url: url, amplitudes: amplitudes)
     }
+
+    /// Generate the demo sample **off the main actor** — the synthesis + file write is CPU/IO work, so
+    /// every model that falls back to demo audio (loop run, song play-along, waveform practice) hops it
+    /// onto a detached task rather than blocking the actor that awaits it. One home for that hop, since
+    /// all three did it identically.
+    static func makeDemoSample(duration: TimeInterval) async throws -> Sample {
+        try await Task.detached(priority: .userInitiated) {
+            try makeSample(duration: duration)
+        }.value
+    }
 }

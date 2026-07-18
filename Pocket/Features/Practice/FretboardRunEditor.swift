@@ -38,12 +38,11 @@ struct FretboardRunEditor: View {
     private static let maxShiftPerPass = 5
     private static let staggerRange = -2...3
     private static let stringOrder = [5, 4, 3, 2, 1, 0]   // low E → high e, as the neck reads
-    private static let subdivisions: [(perBeat: Int, label: String)] =
-        [(1, "Quarters"), (2, "Eighths"), (3, "Triplets"), (4, "Sixteenths")]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            displayOptionsControl
+            FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
+                                       playToken: $playOnceToken, tint: tint)
             FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
                                   playOnceToken: playOnceToken)
             patternField
@@ -53,50 +52,21 @@ struct FretboardRunEditor: View {
                 .font(.futura(.subheadline, weight: .semibold))
                 .tint(tint)
             movement
-            advanced
+            AdvancedSubdivisionRow(isExpanded: $showsAdvanced, notesPerBeat: $run.notesPerBeat,
+                                   accessibilityLabel: "Fretboard subdivision", tint: tint)
             Text("Set the finger pattern, then where it sits and how far it travels — the run builds "
                  + "itself. Watch it walk above before you save.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
-        .onDisappear { ToneEngine.shared.stop() }
-    }
-
-    // MARK: - Display options (labels, global preference)
-
-    /// A compact menu, top of the board, holding how notes are captioned (name / interval / off)
-    /// plus Watch — the same row the Scale/Arpeggio editors carry (ADR 0065; the dead "Sound soon"
-    /// scaffold was removed in ADR 0077). The walking-highlight preference itself lives only in
-    /// Settings now, since Watch already covers "see it move once" here.
-    private var displayOptionsControl: some View {
-        HStack(spacing: 16) {
-            FretboardHearButton(notes: heardNotes, secondsPerNote: secondsPerNote,
-                                playToken: $playOnceToken, tint: tint)
-            FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
-            Spacer()
-            Menu {
-                Picker("Labels", selection: $storedLabelMode) {
-                    ForEach(FretLabelMode.allCases) { mode in
-                        Text(mode.pickerLabel).tag(mode.rawValue)
-                    }
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "slider.horizontal.3")
-                    Text("Display")
-                }
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(tint)
-            }
-            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel)")
-        }
+        .hearStopsOnDisappear()
     }
 
     // MARK: - Finger pattern
 
     private var patternField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            fieldLabel("Finger pattern")
+            EditorFieldLabel("Finger pattern")
             HStack(spacing: 6) {
                 if run.fingers.isEmpty {
                     Text("Tap a finger below").font(.futura(.caption))
@@ -145,13 +115,13 @@ struct FretboardRunEditor: View {
 
     private var baseFretField: some View {
         HStack {
-            fieldLabel("Starts on fret")
+            EditorFieldLabel("Starts on fret")
             Spacer()
-            stepper(stepDown: { run.baseFret = max(1, run.baseFret - 1) },
-                    stepUp: { run.baseFret = min(Self.maxBaseFret, run.baseFret + 1) },
-                    value: "\(run.baseFret)",
-                    canGoDown: run.baseFret > 1,
-                    canGoUp: run.baseFret < Self.maxBaseFret)
+            EditorStepper(value: "\(run.baseFret)",
+                          canGoDown: run.baseFret > 1, canGoUp: run.baseFret < Self.maxBaseFret,
+                          tint: tint,
+                          stepDown: { run.baseFret = max(1, run.baseFret - 1) },
+                          stepUp: { run.baseFret = min(Self.maxBaseFret, run.baseFret + 1) })
         }
     }
 
@@ -159,7 +129,7 @@ struct FretboardRunEditor: View {
 
     private var spanField: some View {
         HStack {
-            fieldLabel("Across")
+            EditorFieldLabel("Across")
             Spacer()
             stringMenu(selection: $run.fromString)
             Image(systemName: "arrow.right")
@@ -184,56 +154,6 @@ struct FretboardRunEditor: View {
     private func stringLabel(_ index: Int) -> String {
         let names = ["high e", "B", "G", "D", "A", "low E"]
         return names.indices.contains(index) ? names[index] : "String \(index + 1)"
-    }
-
-    // MARK: - Advanced (subdivision, demoted)
-
-    private var advanced: some View {
-        DisclosureGroup(isExpanded: $showsAdvanced) {
-            Picker("Subdivision", selection: $run.notesPerBeat) {
-                ForEach(Self.subdivisions, id: \.perBeat) { option in
-                    Text(option.label).tag(option.perBeat)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.top, 6)
-            .accessibilityLabel("Fretboard subdivision")
-        } label: {
-            HStack {
-                Text("Advanced").font(.futura(.subheadline, weight: .semibold))
-                Spacer()
-                Text(subdivisionLabel).font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-        }
-        .tint(tint)
-    }
-
-    private var subdivisionLabel: String {
-        Self.subdivisions.first { $0.perBeat == run.notesPerBeat }?.label ?? "Eighths"
-    }
-
-    // MARK: - Shared bits
-
-    private func fieldLabel(_ text: String) -> some View {
-        Text(text).font(.futura(.subheadline, weight: .semibold))
-            .foregroundStyle(PocketColor.textPrimary)
-    }
-
-    private func stepper(stepDown: @escaping () -> Void, stepUp: @escaping () -> Void,
-                         value: String, canGoDown: Bool, canGoUp: Bool) -> some View {
-        HStack(spacing: 14) {
-            Button { stepDown(); haptic(.light) } label: { Image(systemName: "minus.circle") }
-                .buttonStyle(.borderless)
-                .disabled(!canGoDown)
-            Text(value).font(.pocketMono(.body)).frame(minWidth: 28)
-                .foregroundStyle(PocketColor.textPrimary)
-            Button { stepUp(); haptic(.light) } label: { Image(systemName: "plus.circle") }
-                .buttonStyle(.borderless)
-                .disabled(!canGoUp)
-        }
-        .font(.title3)
-        .tint(tint)
     }
 
     // MARK: - Edits
@@ -294,54 +214,57 @@ extension FretboardRunEditor {
     private var shiftPerPassField: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                fieldLabel("Shift up after each run")
+                EditorFieldLabel("Shift up after each run")
                 Text("Climb the neck a few frets each pass.").font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
-            stepper(stepDown: { run.fretShiftPerPass = max(0, run.fretShiftPerPass - 1) },
-                    stepUp: { run.fretShiftPerPass = min(Self.maxShiftPerPass, run.fretShiftPerPass + 1) },
-                    value: run.fretShiftPerPass == 0 ? "Off" : "+\(run.fretShiftPerPass)",
-                    canGoDown: run.fretShiftPerPass > 0,
-                    canGoUp: run.fretShiftPerPass < Self.maxShiftPerPass)
+            EditorStepper(value: run.fretShiftPerPass == 0 ? "Off" : "+\(run.fretShiftPerPass)",
+                          canGoDown: run.fretShiftPerPass > 0,
+                          canGoUp: run.fretShiftPerPass < Self.maxShiftPerPass,
+                          tint: tint,
+                          stepDown: { run.fretShiftPerPass = max(0, run.fretShiftPerPass - 1) },
+                          stepUp: { run.fretShiftPerPass = min(Self.maxShiftPerPass,
+                                                               run.fretShiftPerPass + 1) })
         }
     }
 
     private var passCountField: some View {
         HStack {
-            fieldLabel("Passes")
+            EditorFieldLabel("Passes")
             Spacer()
-            stepper(stepDown: { run.passCount = max(1, run.passCount - 1) },
-                    stepUp: { run.passCount = min(maxPasses, run.passCount + 1) },
-                    value: "\(run.passCount)",
-                    canGoDown: run.passCount > 1,
-                    canGoUp: run.passCount < maxPasses)
+            EditorStepper(value: "\(run.passCount)",
+                          canGoDown: run.passCount > 1, canGoUp: run.passCount < maxPasses,
+                          tint: tint,
+                          stepDown: { run.passCount = max(1, run.passCount - 1) },
+                          stepUp: { run.passCount = min(maxPasses, run.passCount + 1) })
         }
     }
 
     private var staggerPerStringField: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                fieldLabel("Stagger per string")
+                EditorFieldLabel("Stagger per string")
                 Text("Land higher (or lower) on each string — a diagonal.").font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
-            stepper(stepDown: { run.fretShiftPerString = max(Self.staggerRange.lowerBound,
-                                                             run.fretShiftPerString - 1) },
-                    stepUp: { run.fretShiftPerString = min(Self.staggerRange.upperBound,
-                                                           run.fretShiftPerString + 1) },
-                    value: run.fretShiftPerString == 0 ? "Off" : signed(run.fretShiftPerString),
-                    canGoDown: run.fretShiftPerString > Self.staggerRange.lowerBound,
-                    canGoUp: run.fretShiftPerString < Self.staggerRange.upperBound)
+            EditorStepper(value: run.fretShiftPerString == 0 ? "Off" : signed(run.fretShiftPerString),
+                          canGoDown: run.fretShiftPerString > Self.staggerRange.lowerBound,
+                          canGoUp: run.fretShiftPerString < Self.staggerRange.upperBound,
+                          tint: tint,
+                          stepDown: { run.fretShiftPerString = max(Self.staggerRange.lowerBound,
+                                                                   run.fretShiftPerString - 1) },
+                          stepUp: { run.fretShiftPerString = min(Self.staggerRange.upperBound,
+                                                                 run.fretShiftPerString + 1) })
         }
     }
 
     private var returnStyleField: some View {
         VStack(alignment: .leading, spacing: 6) {
-            fieldLabel("Coming back")
+            EditorFieldLabel("Coming back")
             Picker("Coming back", selection: $run.returnStyle) {
                 ForEach(ReturnStyle.allCases) { style in
                     Text(style.label).tag(style)
