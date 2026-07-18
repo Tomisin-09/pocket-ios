@@ -1,7 +1,8 @@
 import AVFoundation
 
 // The metronome's click scheduling (ADR 0026), split out of `PracticeAudioEngine.swift`
-// for file length. The on/off toggle (`setMetronome`) stays with the engine; this file
+// for file length. The on/off toggle (`setMetronome`) stays with the engine — it writes
+// the `private(set) metronomeOn` flag, which only the declaring file may set; this file
 // holds the grid update and the per-tick arming / flushing / scheduling. The engine's
 // click state (`clickVoice`, `metronomeBeats`, watermark, …) is engine-internal so this
 // extension — in the same module — can drive it.
