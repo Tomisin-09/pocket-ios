@@ -9,7 +9,8 @@ import SwiftUI
 ///
 /// The in-context menu section (`SavedChordsSheet`, ADR 0095) **stays** — that is where the library is
 /// *reused inline* in an exercise; this screen is where it is *managed*. Both read the same `@Query`.
-/// Audio-free: *Hear* and the identifier reading are Slice 2+ (ADR 0096 D4).
+/// *Hear* (block-chord tone preview, ADR 0097 Slice 1) lives on the chord detail; the identifier
+/// reading is a later Toolkit slice (ADR 0096 D4).
 struct MyChordsView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -88,9 +89,10 @@ struct MyChordsView: View {
     }
 }
 
-/// A saved chord's detail — its large diagram plus manage actions (rename, delete). Reached by tapping a
-/// cell in `MyChordsView`. Deleting pops back to the grid. *Hear* / *Use in an exercise* / the identifier
-/// reading are deferred to later Toolkit slices (ADR 0096 D4 / §3.1).
+/// A saved chord's detail — its large diagram, a *Hear* preview, plus manage actions (rename, delete).
+/// Reached by tapping a cell in `MyChordsView`. Deleting pops back to the grid. *Hear* sounds the
+/// voicing as a block chord through the shared `ToneEngine` (ADR 0097 Slice 1); *Use in an exercise* /
+/// the identifier reading are deferred to later Toolkit slices (ADR 0096 §3.1).
 struct MyChordDetailView: View {
     @Bindable var chord: SavedChord
 
@@ -113,6 +115,15 @@ struct MyChordDetailView: View {
                     .padding(.top, 24)
 
                 VStack(spacing: 12) {
+                    Button {
+                        ToneEngine.shared.sound(chord.voicing.midiNotes)
+                    } label: {
+                        Label("Hear", systemImage: "speaker.wave.2.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(PocketColor.toolkit)
+
                     Button {
                         draftName = chord.name
                         renaming = true

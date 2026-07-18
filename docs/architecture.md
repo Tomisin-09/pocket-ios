@@ -192,6 +192,19 @@ The reach can also be **manually pinned** (ADR 0075): optional `Exercise.targetT
 accessors (`override ?? auto`), with `promoteCommand` auto-clearing a pin once command catches up.
 Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044), full-screen.
 
+**Hear — pitched-tone preview** (`ToneEngine`, `Core/Audio/`, ADR 0097). A shared, sequence-capable
+tone service for the Toolkit's reference surfaces, **separate from the file-playback pipeline** (a
+pitch reference, not song audio — so it does not touch ADR 0001). It owns its own tiny `AVAudioEngine`
+graph over a single `AVAudioUnitSampler`: on iOS an *unloaded* sampler renders a clean built-in tone
+(no accessible system GM bank), which is the **zero-asset** pitch reference v1 ships; a redistributable
+(CC0) `HearGuitar.sf2` in the bundle would swap in a nylon-guitar program over the same path (deferred,
+ADR 0097 D4.3). Its primitive is "sound an ordered set of MIDI notes": `sound(_:)` plays them together
+(a **block chord**), `sequence(_:)` spaces them in time (scale run / arpeggio / interval), both reading
+MIDI the models already expose (`ChordVoicing.midiNotes`, `ScaleRun.sequence`→`CAGEDShape.midi(_:)`).
+A re-tap cancels any in-flight preview and retriggers cleanly (tracked note-on/off work items + a
+ringing-note set). **Slice 1 wires block-chord Hear on the My Chords detail** (`Features/Toolkit/`);
+scale/arpeggio/interval preview are thin follow-up slices over the same engine.
+
 **Practice-take recording foundations** (`Core/Audio/`, ADR 0069, slice 0) — the substrate
 for a mic-only "audio journal," not yet a feature. Recording needs `.playAndRecord`, which
 changes routing app-wide, so it is a *separate* session config (`AudioPlumbing.configureRecordSession`)

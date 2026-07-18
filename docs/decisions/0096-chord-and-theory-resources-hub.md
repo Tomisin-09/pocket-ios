@@ -20,7 +20,9 @@
   a new `PocketColor` token with light/dark bakes (ADR 0062/0081).
 - **D4 — *Hear* (auditioning chords/scales/intervals) is deferred to Slice 2 with its own ADR.** The app has
   no pitched-tone source today (ADR 0001 is file playback + metronome click); synth-vs-sampled is a
-  foundation decision made when Slice 2 is scoped, not now.
+  foundation decision made when Slice 2 is scoped, not now. **Resolved 2026-07-17 → [ADR 0097](0097-hear-synthesized-tone-preview.md):**
+  synthesize via `AVAudioUnitSampler` (built-in tone, zero assets; block chords for v1), behind one shared
+  sequence-capable `ToneEngine` that also feeds scale/arpeggio/interval preview.
 - **D5 — Slice 1 = the hub shell + My Chords + Glossary** — the only two tenants with zero new dependencies.
   Audio-free by construction (matches D4). Shipping Slice 1 is what realises this Accepted ADR.
 - **Sets direction for:** pulling the objective-reference features out of the exercise editors into a

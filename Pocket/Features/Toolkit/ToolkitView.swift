@@ -7,10 +7,10 @@ import SwiftUI
 /// `LibraryView`) rather than owning one, so its sections push onto the home stack.
 ///
 /// Slice 1 carries the only two zero-dependency tenants (ADR 0096 D5): **My Chords** (the `SavedChord`
-/// library promoted from the in-context menu to a full screen) and a static **Glossary**. It is
-/// **audio-free by construction** — *Hear* and the identifier/scales/ear-training sections are Slice 2+
-/// with their own ADRs (D4). The landing is a simple list of sections in the indigo "study/reference"
-/// accent (`PocketColor.toolkit`), one visual level down from the home cards.
+/// library promoted from the in-context menu to a full screen) and a static **Glossary**. *Hear* now
+/// sounds a saved chord from its detail (ADR 0097 Slice 1); the identifier/scales/ear-training sections
+/// remain later slices with their own ADRs. The landing is a simple list of sections in the indigo
+/// "study/reference" accent (`PocketColor.toolkit`), one visual level down from the home cards.
 struct ToolkitView: View {
     /// Drives the "N saved" count on the My Chords row — the same `@Query` the library screen reads.
     @Query private var savedChords: [SavedChord]
