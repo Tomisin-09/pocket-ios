@@ -8,14 +8,14 @@ import SwiftUI
 ///
 /// A thin skin over `ArpeggioRun` — each control rebuilds the bound recipe (whose init clamps the
 /// position/octaves), and the preview reads `run.expanded()`; no timing logic here (T5). **T10** —
-/// every colour is a semantic `PocketColor` role.
+/// every colour is a semantic `PocketColor` role. Shared chrome lives in `FretboardEditorChrome`.
 struct ArpeggioRunEditor: View {
     @Binding var run: ArpeggioRun
     var tint: Color = PocketColor.practice
 
     @State private var showsAdvanced = false
     /// Note captions are a global viewing preference shared with the scale editor and the live
-    /// practice board.
+    /// practice board; the Display menu that sets it lives in the shared options bar.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
     /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S3).
@@ -24,58 +24,30 @@ struct ArpeggioRunEditor: View {
     }
     /// The run's notes as MIDI, in playing order — what Hear sounds (no rests in a generated arpeggio).
     private var heardNotes: [Int?] { run.sequence.map { Optional(CAGEDShape.midi($0)) } }
-    /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
-    /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
-    /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
+    /// A one-shot "watch it" request (ADR 0065) — set by the options bar's Hear/Watch, read by the
+    /// preview below.
     @State private var playOnceToken: Date?
-
-    /// Root notes in menu order, starting at A (pitch classes, A = 9 … G# = 8).
-    private static let noteOrder = [9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8]
-    private static let subdivisions: [(perBeat: Int, label: String)] =
-        [(1, "Quarters"), (2, "Eighths"), (3, "Triplets"), (4, "Sixteenths")]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            displayOptionsControl
+            FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
+                                       playToken: $playOnceToken, tint: tint)
             FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
                                   playOnceToken: playOnceToken)
             titleField
-            menuRow(label: "Arpeggio", picker: AnyView(qualityPicker))
-            menuRow(label: "Root", picker: AnyView(rootPicker))
+            LabeledMenuRow(label: "Arpeggio") { qualityPicker }
+            LabeledMenuRow(label: "Root") {
+                RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName)
+            }
             positionRow
             octavesRow
             Toggle("Up and back", isOn: roundTripBinding)
                 .font(.futura(.subheadline, weight: .semibold))
                 .tint(tint)
-            advanced
+            AdvancedSubdivisionRow(isExpanded: $showsAdvanced, notesPerBeat: subdivisionBinding,
+                                   accessibilityLabel: "Arpeggio subdivision", tint: tint)
         }
-        .onDisappear { ToneEngine.shared.stop() }
-    }
-
-    // MARK: - Display options (labels, global preference)
-
-    private var displayOptionsControl: some View {
-        HStack(spacing: 16) {
-            FretboardHearButton(notes: heardNotes, secondsPerNote: secondsPerNote,
-                                playToken: $playOnceToken, tint: tint)
-            FretboardPlayOnceButton(playToken: $playOnceToken, tint: tint)
-            Spacer()
-            Menu {
-                Picker("Labels", selection: $storedLabelMode) {
-                    ForEach(FretLabelMode.allCases) { mode in
-                        Text(mode.pickerLabel).tag(mode.rawValue)
-                    }
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "slider.horizontal.3")
-                    Text("Display")
-                }
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(tint)
-            }
-            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel)")
-        }
+        .hearStopsOnDisappear()
     }
 
     // MARK: - Title
@@ -93,14 +65,6 @@ struct ArpeggioRunEditor: View {
 
     // MARK: - Menus
 
-    private func menuRow(label: String, picker: AnyView) -> some View {
-        HStack {
-            fieldLabel(label)
-            Spacer()
-            picker
-        }
-    }
-
     private var qualityPicker: some View {
         Picker("Arpeggio", selection: qualityBinding) {
             ForEach(ArpeggioQuality.allCases) { quality in Text(quality.displayName).tag(quality) }
@@ -111,18 +75,6 @@ struct ArpeggioRunEditor: View {
         .accessibilityLabel("Arpeggio quality, \(run.quality.displayName)")
     }
 
-    private var rootPicker: some View {
-        Picker("Root", selection: rootBinding) {
-            ForEach(Self.noteOrder, id: \.self) { pitchClass in
-                Text(GuitarScale.noteName(forPitchClass: pitchClass)).tag(pitchClass)
-            }
-        }
-        .pickerStyle(.menu)
-        .labelsHidden()
-        .tint(tint)
-        .accessibilityLabel("Root note, \(run.rootName)")
-    }
-
     // MARK: - Position + octaves
 
     /// The box's **root anchor** as the primary label (ADR 0091), the flagship box (root on the low E)
@@ -131,34 +83,20 @@ struct ArpeggioRunEditor: View {
     private var positionRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                fieldLabel("Position")
-                if run.isMostCommon { mostCommonBadge }
+                EditorFieldLabel("Position")
+                if run.isMostCommon { MostCommonBadge(tint: tint) }
                 Spacer()
             }
-            stepper(value: run.positionLabel,
-                    canGoDown: run.position > 1,
-                    canGoUp: run.position < run.positionCount,
-                    stepDown: { run = rebuilt(position: run.position - 1) },
-                    stepUp: { run = rebuilt(position: run.position + 1) })
+            EditorStepper(value: run.positionLabel, width: .expanding,
+                          canGoDown: run.position > 1, canGoUp: run.position < run.positionCount,
+                          tint: tint,
+                          stepDown: { run = rebuilt(position: run.position - 1) },
+                          stepUp: { run = rebuilt(position: run.position + 1) })
         }
     }
 
-    /// A small tint capsule flagging the flagship box so the common shape reads as the front door
-    /// without hiding the others (ADR 0091).
-    private var mostCommonBadge: some View {
-        Text("Most common")
-            .font(.futura(.caption, weight: .semibold))
-            .padding(.horizontal, 7)
-            .padding(.vertical, 2)
-            .background(tint.opacity(0.16), in: Capsule())
-            .foregroundStyle(tint)
-            .accessibilityLabel("Most common position")
-    }
-
     private var octavesRow: some View {
-        HStack {
-            fieldLabel("Octaves")
-            Spacer()
+        LabeledMenuRow(label: "Octaves") {
             Picker("Octaves", selection: octavesBinding) {
                 Text("1").tag(1)
                 Text("2").tag(2)
@@ -167,61 +105,6 @@ struct ArpeggioRunEditor: View {
             .frame(width: 120)
             .labelsHidden()
         }
-    }
-
-    // MARK: - Advanced (subdivision, demoted)
-
-    private var advanced: some View {
-        DisclosureGroup(isExpanded: $showsAdvanced) {
-            Picker("Subdivision", selection: subdivisionBinding) {
-                ForEach(Self.subdivisions, id: \.perBeat) { option in
-                    Text(option.label).tag(option.perBeat)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.top, 6)
-            .accessibilityLabel("Arpeggio subdivision")
-        } label: {
-            HStack {
-                Text("Advanced").font(.futura(.subheadline, weight: .semibold))
-                Spacer()
-                Text(subdivisionLabel).font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-        }
-        .tint(tint)
-    }
-
-    private var subdivisionLabel: String {
-        Self.subdivisions.first { $0.perBeat == run.notesPerBeat }?.label ?? "Eighths"
-    }
-
-    // MARK: - Shared bits
-
-    private func fieldLabel(_ text: String) -> some View {
-        Text(text).font(.futura(.subheadline, weight: .semibold))
-            .foregroundStyle(PocketColor.textPrimary)
-    }
-
-    /// A full-width stepper: the label centres between the ∓ controls, so a long root-anchor label
-    /// ("root on low E · fret 5") reads on its own row (ADR 0091).
-    private func stepper(value: String, canGoDown: Bool, canGoUp: Bool,
-                         stepDown: @escaping () -> Void, stepUp: @escaping () -> Void) -> some View {
-        HStack(spacing: 14) {
-            Button { stepDown(); haptic(.light) } label: { Image(systemName: "minus.circle") }
-                .buttonStyle(.borderless)
-                .disabled(!canGoDown)
-            Spacer(minLength: 12)
-            Text(value).font(.pocketMono(.body))
-                .foregroundStyle(PocketColor.textPrimary)
-                .multilineTextAlignment(.center)
-            Spacer(minLength: 12)
-            Button { stepUp(); haptic(.light) } label: { Image(systemName: "plus.circle") }
-                .buttonStyle(.borderless)
-                .disabled(!canGoUp)
-        }
-        .font(.title3)
-        .tint(tint)
     }
 
     // MARK: - Edits (rebuild the recipe; its init clamps)
