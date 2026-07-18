@@ -115,14 +115,7 @@ struct MyChordDetailView: View {
                     .padding(.top, 24)
 
                 VStack(spacing: 12) {
-                    Button {
-                        ToneEngine.shared.sound(chord.voicing.midiNotes)
-                    } label: {
-                        Label("Hear", systemImage: "speaker.wave.2.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(PocketColor.toolkit)
+                    ChordHearButton(voicing: chord.voicing, style: .prominent, tint: PocketColor.toolkit)
 
                     Button {
                         draftName = chord.name
@@ -152,7 +145,7 @@ struct MyChordDetailView: View {
         .navigationTitle(chord.name)
         .navigationBarTitleDisplayMode(.inline)
         .tint(PocketColor.toolkit)
-        .onDisappear { ToneEngine.shared.stop() }
+        .hearStopsOnDisappear()
         .alert("Rename chord", isPresented: $renaming) {
             TextField("Name", text: $draftName)
                 .autocorrectionDisabled()

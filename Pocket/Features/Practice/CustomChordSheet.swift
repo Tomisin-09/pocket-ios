@@ -74,7 +74,7 @@ struct CustomChordSheet: View {
             }
         }
         .tint(PocketColor.practice)
-        .onDisappear { ToneEngine.shared.stop() }
+        .hearStopsOnDisappear()
     }
 
     // MARK: - Title + Display (the live name, plus the label toggle like the scale boards)
@@ -94,20 +94,8 @@ struct CustomChordSheet: View {
     /// `ToneEngine`, gated only on a *soundable* voicing (≥1 sounded string), not on naming: hearing
     /// the intervals is what helps you name it. Sits beside Display, both compact "inspect" controls.
     private var hearButton: some View {
-        Button {
-            ToneEngine.shared.sound(voicing.midiNotes)
-            haptic(.light)
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "speaker.wave.2.fill")
-                Text("Hear")
-            }
-            .font(.futura(.caption, weight: .semibold))
-            .foregroundStyle(PocketColor.practice)
-        }
-        .disabled(!voicing.isValid)
-        .opacity(voicing.isValid ? 1 : 0.35)
-        .accessibilityLabel("Hear this chord")
+        ChordHearButton(voicing: voicing, style: .compact, tint: PocketColor.practice,
+                        gatesOnValidity: true)
     }
 
     /// Note / Interval / Off, matching the scale editors' control and sharing their global preference.
