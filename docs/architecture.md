@@ -202,8 +202,13 @@ ADR 0097 D4.3). Its primitive is "sound an ordered set of MIDI notes": `sound(_:
 (a **block chord**), `sequence(_:)` spaces them in time (scale run / arpeggio / interval), both reading
 MIDI the models already expose (`ChordVoicing.midiNotes`, `ScaleRun.sequence`→`CAGEDShape.midi(_:)`).
 A re-tap cancels any in-flight preview and retriggers cleanly (tracked note-on/off work items + a
-ringing-note set). **Slice 1 wires block-chord Hear on the My Chords detail** (`Features/Toolkit/`);
-scale/arpeggio/interval preview are thin follow-up slices over the same engine.
+ringing-note set). The *what-sounds-when* arithmetic — block vs melodic timing, rests keeping their walk
+slot, absolute onset deadlines — is a pure, Foundation-only `HearPlan` (unit-tested), so the sequencer
+stays a thin dispatcher over it. `start()` never reconfigures the audio session off `.playAndRecord`, so
+a Hear tap can't steal the session from an in-flight recording take (ADR 0069). **Every reference surface
+now drives it** — block-chord Hear on My Chords / the movable & custom chord sheets, sequenced Hear on the
+scale, arpeggio, picking-run and custom-drill editors — through the shared `ChordHearButton` and the
+`FretboardDisplayOptionsBar` in `FretboardEditorChrome`.
 
 **Practice-take recording foundations** (`Core/Audio/`, ADR 0069, slice 0) — the substrate
 for a mic-only "audio journal," not yet a feature. Recording needs `.playAndRecord`, which
