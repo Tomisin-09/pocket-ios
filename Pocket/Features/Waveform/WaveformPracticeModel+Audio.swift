@@ -84,7 +84,7 @@ extension WaveformPracticeModel {
     /// Generate the dev arpeggio off the main actor and hand it to the engine (the
     /// demo sample). The render writes a WAV, so it's kept off the main thread too.
     private func loadDemoSample() async {
-        guard let sample = try? await Self.makeDemoSample(duration: song.duration) else {
+        guard let sample = try? await SampleToneGenerator.makeDemoSample(duration: song.duration) else {
             AudioPlumbing.log.error("Practice: demo sample render failed — audio unavailable")
             audioLoadFailed = true
             return
@@ -97,11 +97,5 @@ extension WaveformPracticeModel {
             AudioPlumbing.log.error("Practice: demo sample failed to load: \(error.localizedDescription)")
             audioLoadFailed = true
         }
-    }
-
-    private static func makeDemoSample(duration: TimeInterval) async throws -> SampleToneGenerator.Sample {
-        try await Task.detached(priority: .userInitiated) {
-            try SampleToneGenerator.makeSample(duration: duration)
-        }.value
     }
 }

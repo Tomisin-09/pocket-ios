@@ -121,7 +121,7 @@ final class LoopRunModel {
 
     private func loadDemoSample() async {
         let duration = loop.song?.duration ?? 0
-        guard let sample = try? await Self.makeDemoSample(duration: duration) else {
+        guard let sample = try? await SampleToneGenerator.makeDemoSample(duration: duration) else {
             AudioPlumbing.log.error("Loop run: demo sample render failed — audio unavailable")
             loadFailed = true
             return
@@ -132,12 +132,6 @@ final class LoopRunModel {
             AudioPlumbing.log.error("Loop run: demo sample failed to load: \(error.localizedDescription)")
             loadFailed = true
         }
-    }
-
-    private static func makeDemoSample(duration: TimeInterval) async throws -> SampleToneGenerator.Sample {
-        try await Task.detached(priority: .userInitiated) {
-            try SampleToneGenerator.makeSample(duration: duration)
-        }.value
     }
 
     /// Loop the engine on this loop's region, in seconds, against the loaded file's duration.

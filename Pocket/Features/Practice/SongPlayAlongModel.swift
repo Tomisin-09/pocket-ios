@@ -98,7 +98,7 @@ final class SongPlayAlongModel {
     }
 
     private func loadDemoSample() async {
-        guard let sample = try? await Self.makeDemoSample(duration: song.duration) else {
+        guard let sample = try? await SampleToneGenerator.makeDemoSample(duration: song.duration) else {
             AudioPlumbing.log.error("Song play-along: demo sample render failed — audio unavailable")
             loadFailed = true
             return
@@ -109,12 +109,6 @@ final class SongPlayAlongModel {
             AudioPlumbing.log.error("Song play-along: demo sample failed to load: \(error.localizedDescription)")
             loadFailed = true
         }
-    }
-
-    private static func makeDemoSample(duration: TimeInterval) async throws -> SampleToneGenerator.Sample {
-        try await Task.detached(priority: .userInitiated) {
-            try SampleToneGenerator.makeSample(duration: duration)
-        }.value
     }
 
     // MARK: - Transport

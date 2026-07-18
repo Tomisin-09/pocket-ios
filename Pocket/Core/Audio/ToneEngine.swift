@@ -76,8 +76,16 @@ final class ToneEngine {
 
     /// Bring the session/engine up lazily on first sound. Cheap and idempotent once running; kept on the
     /// main actor (session/engine setup) while note *timing* runs off it, on the sequencer's own queue.
+    ///
+    /// **Never steals the session from a live take.** The session goes `.playAndRecord` only while a take
+    /// is actually recording (ADR 0069 §3); reconfiguring it to `.playback` mid-take would kill the mic
+    /// capture. A Hear surface is unreachable during a take today, but the guard keeps the pitch-preview
+    /// path from ever contending with recording if one becomes reachable while armed — the tone still
+    /// sounds out through the record-capable session, it just doesn't flip the category.
     private func start() {
-        AudioPlumbing.configurePlaybackSession(label: "Hear")
+        if AVAudioSession.sharedInstance().category != .playAndRecord {
+            AudioPlumbing.configurePlaybackSession(label: "Hear")
+        }
         AudioPlumbing.startIfNeeded(engine, label: "Hear")
     }
 
