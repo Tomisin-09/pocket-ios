@@ -465,7 +465,7 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   feeds every surface, reading MIDI the models already expose (`ChordVoicing.midiNotes`,
   `ScaleRun.sequence`→`CAGEDShape.midi`, `FretboardDrill.notes`). Provisional slice order:
   1. ~~**`ToneEngine` + block-chord Hear in My Chords** (promote the spike; delete `ChordTonePlayer`/`HearSpikeView`).~~ **DONE (pocket-156, 2026-07-17):** shared sequence-capable `ToneEngine` (`Core/Audio/`, built-in tone) shipped; **Hear** button on `MyChordDetailView` sounds the voicing (block); spike files + temporary Toolkit row removed.
-  2. **Hear on the chord identifier / custom placer** (sound the shape being built).
+  2. ~~**Hear on the chord identifier / custom placer** (sound the shape being built).~~ **DONE (pocket-156, 2026-07-17):** a **Hear** control sounds the live voicing on the **custom placer** (`CustomChordSheet`, beside Display — enabled as soon as any string sounds, before naming) and the **movable-shape sheet** (`MovableChordSheet`, in the live preview). Same block-chord `ToneEngine.sound` path as Slice 1.
   3. **Scale/CAGED-box preview** (sequence asc/desc) + **arpeggios** (a chord's notes, sequenced).
   4. **Fretboard/picking-run preview**; **Glossary "Hear" affordance** on interval/chord terms.
   5. **Intervals / ear-training** playback (ADR 0094, still needs its own build ADR; objective, no quiz).

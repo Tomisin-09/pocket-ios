@@ -128,6 +128,20 @@ struct MovableChordSheet: View {
                 }
                 .padding(.vertical, 4)
                 .listRowBackground(Color.clear)
+
+                // Sound the generated shape as you slide it up the neck (ADR 0097 Slice 2) — a block
+                // chord through the shared `ToneEngine`, so the movable idea is audible, not just drawn.
+                Button {
+                    ToneEngine.shared.sound(voicing.midiNotes)
+                    haptic(.light)
+                } label: {
+                    Label("Hear", systemImage: "speaker.wave.2.fill")
+                        .font(.futura(.subheadline, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(PocketColor.practice)
+                .listRowBackground(Color.clear)
             }
         }
     }
