@@ -4,6 +4,93 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## User-testing pass — plan of attack (2026-07-20)
+
+A round of on-device user testing produced ~13 notes (embedded in annotated
+screenshots), reviewed and triaged 2026-07-20. **v1 is mid-flight in App Store
+review — none of this chases the current submission; treat all as fast-follow /
+v2.** Sequenced by impact-per-effort into waves. Details for items that already
+have a home live in their own sections (cross-referenced); this is the index.
+
+**Wave 0 — contained cleanups (no ADR, decisions already made):**
+
+- ~~**Note 9 — song card row 3.**~~ **DONE (pocket-159, 2026-07-20).** `SongCard.metadata`
+  now emits only `N loops · M markers`; key + BPM dropped from the card (still in the
+  song details sheet). Artist row + collection chips unchanged.
+- ~~**Note 10 — chord-template de-crowd.**~~ **DONE (pocket-159, 2026-07-20).** Removed the
+  `ChordIdentityCaption` ("Looks like …") from each `changeRow` in `ChordProgressionEditor`
+  — the row now shows name + length only. The reverse-lookup reading still surfaces while
+  *building* a shape (custom-chord board + `MovableChordSheet`), so no capability was lost.
+- **Note 3 — default Red Moon artwork.** A crescent-moon fallback artwork for songs
+  with no embedded art, shown at the now-playing touchpoint. Pick the dark variant
+  (reads on the system now-playing card). Asset + fallback only. Ties to the
+  *Branding — Red Moon* mark.
+- **Note 6 — back-off step toggle.** Add a toggle for the ramp's **back-off** step
+  (default **on** = no behaviour change) and, when on, let the tempo be edited. Ramp
+  math is pure → unit-test it. Lands in the routine/command-ramp settings sheet.
+
+**Wave 1 — core loop feel (small ADRs, highest quality lift):**
+
+- **Note 5 — zoom anchor.** The waveform zoom is anchored to the playhead, so it
+  shifts under you while inspecting a spot ("feels weird"). Re-anchor zoom to the
+  **gesture focal point** (pinch centre), with an optional **"follow playhead"** pin.
+  "What zoom anchors to" is a real interaction decision → its own ADR. Highest
+  perceived-quality lift; **do this first of the two.** Sits on the P1 waveform
+  roadmap; relates to the parked *rotary haptic zoom mode*.
+- **Note 4 — snap free-control near neighbours.** Snap-to-grid fights loop-handle
+  drags when two loops are close together. Snap should **weaken/yield** as a handle
+  nears a neighbour's boundary, plus a **free-control escape** (drag-past-threshold
+  or long-press). Reuses `WaveformPracticeModel+Snap` geometry. Same waveform ADR
+  can cover both 4 + 5 as "loop-editing precision."
+
+**Wave 2 — new surfaces (ADR each, design-first):**
+
+- **Note 8 — journal entries tab.** A read-only surface, reachable from Home, that
+  aggregates all journal entries across loops + exercises. Mostly *surfacing* data
+  ADR 0069/0058 already store → modest lift, high payoff; **build first of the three.**
+  See *Journal authoring* / *Notes & journal*.
+- **Note 12 — chord picker redesign.** Search-first, Insert/Build split, diagram
+  grid, movable barre shapes browsable in Insert. Full write-up + interactive mockup
+  under *Chords & theory*. **Needs its own ADR.**
+- **Note 7 — ear training as "loops, re-surfaced."** Reframe ear training as
+  listening/internalising/singing/transcribing **the loops** (loops under a different
+  surface), not a generic interval trainer. Stays clear of ADR 0070 as long as
+  sing/transcribe is **self-checked, not scored**; overlaps Hear (ADR 0097) and the
+  ear-training direction (ADR 0094). Own ADR, framed as internalisation, not a new
+  content pillar.
+
+**Wave 3 — strategy tracks (decide before building — user flagged these need more
+thought 2026-07-20):**
+
+- **Note 11 — bandmate sharing (not a forum).** The real need is **sharing prepared
+  material with specific people** (bandmates), à la the user's Google-Sheets set-list
+  workflow — *not* discovery/community. Start with the **zero-backend** path: export
+  an exercise / set-list as a shareable bundle (AirDrop/Messages/Files), import on the
+  other end — aligns exactly with **ADR 0064** (exercises shareable, audio never).
+  **Profiles + a forum are explicitly out of scope** for the first cut (that's a
+  different, moderation-heavy product); layer identity (SIWA)/discovery only later if
+  the need proves real. Own ADR. See *Social layer boundaries (ADR 0064)*.
+- **Note 1 — local-file → library friction + Bandcamp/legal.** Two tracks: (a) reduce
+  *import* friction (clearer drag-in / file-picker / recently-added) — safe within
+  **ADR 0001** (local-first); (b) any Bandcamp/mp3-provider "collaboration" is a
+  **business-development / API-licensing** conversation, not a design change. Keep the
+  app **bring-your-own-DRM-free-file** and agnostic; do **not** reintroduce
+  streaming-as-source (the ADR 0001 wall). Legal note (non-authoritative): importing a
+  user's *own purchased* DRM-free file for private practice is analogous to importing
+  into Apple Music; risk lives in fetching-on-their-behalf or *sharing* audio (already
+  closed by ADR 0064). Needs real thought before acting.
+- **Note 2 — pricing: lifetime + "own it after 2 years."** A **lifetime / one-time
+  tier alongside a subscription** is clean and recommended. The **subscribe-2-years →
+  own-it** mechanic is parked: no native StoreKit primitive for it, "own it" is
+  ambiguous (perpetual license to which version?), and rev-rec gets messy. Fold into
+  *Monetization* — decide once the feature set is settled (user's standing call).
+- **Note 13 — onboarding: tutorials / walkthroughs / FAQs.** Good pre-growth, not
+  pre-submission. Cheapest high-value start: (1) first-run coach-marks on the 3–4 core
+  flows (create a loop, run an exercise, save a chord); (2) an in-app **FAQ/help**
+  screen backed by static markdown (updatable without a release); (3) empty-state
+  hints (already used). **Not** a heavy tutorial engine. Own ADR; connects to the
+  *Onboarding — "the art of creating loops"* vision + musician-voice principle.
+
 ## Release sequencing (decided 2026-06-24)
 
 The order below reflects a deliberate scoping call, not just priority:
@@ -478,6 +565,37 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   redistribution *as a playable instrument in a shipped app* (same rights posture as the Kontakt/GarageBand
   rejections), (2) **audition candidates on device**, (3) keep or revert. A few MB of bundle weight.
   Deferred, not blocking v1.
+
+- **Chord picker redesign — search-first, Insert/Build split (user-testing Note 12, logged 2026-07-20).**
+  From a user-testing pass: the chord-**insert** surface felt **dense** and made saved chords **hard to
+  find**. Root cause is structural — `voicingMenu`/`addMenu` in
+  [`ChordProgressionEditor.swift`](../Pocket/Features/Practice/ChordProgressionEditor.swift) are a single
+  flat SwiftUI `Menu` that stacks *Movable shape… → Custom chord… → My chords (unbounded) → Manage… →
+  curated `ChordVoicing.library`* in one growing text column with no filter. As the ADR-0095 **My chords**
+  library grows, density and findability both degrade and there's no search to escape it. **Proposed shape**
+  (mockup: <https://claude.ai/code/artifact/e9681690-b22e-4f76-8ad8-f8f722025105> — interactive, dark-committed
+  to match the app):
+  1. **Replace the flat `Menu` with a picker sheet** carrying a live **search field** at the top — type
+     "maj9"/"lenny" and filter, the fix a growing list can't get from ordering alone (findability).
+  2. **Split *Insert* from *Build*** (segmented): *Insert* = pick an existing voicing; *Build* = the two
+     authoring actions (Movable shape / Custom chord) as cards. Empties the everyday path of its two
+     least-used rows (de-density).
+  3. **Diagram grid, not a word list**: mini chord-diagram chips read shape at a glance and pack tighter
+     than text, in three browsable groups — **My chords** (surfaced first, badged as yours), **Movable
+     shapes**, then **Open shapes**.
+  4. **Movable shapes are first-class in Insert (ADR 0084).** The **Movable shapes** group shows common
+     generated barre grips (E-/A-shape maj/min/dom7 as `ChordGrip`s, badged "slide to any root") as
+     tap-to-insert diagram chips — so the everyday "I want an F barre" no longer requires diving into the
+     Build authoring flow. **Build → Movable shape** stays for full grip-to-arbitrary-root placement; the
+     two are the browse-vs-author split of the same ADR-0084 substrate (grips generated, never a stored
+     table). Chips read `ChordGrip` geometry, so no new data.
+  Additive over the shipped surfaces — no model change (reads `ChordVoicing`/`SavedChord` (ADR 0095) +
+  `ChordGrip` (ADR 0084); grips generated on the fly); the renderer is untouched. Touches both call sites
+  (`addMenu` + `voicingMenu`) plus likely
+  [`SavedChordsSheet.swift`](../Pocket/Features/Practice/SavedChordsSheet.swift) /
+  [`MyChordsView.swift`](../Pocket/Features/Toolkit/MyChordsView.swift) for consistency. **Needs its own
+  ADR** (closes off the native-`Menu` approach for chord insert) before building; small-to-medium. Not yet
+  scheduled — sits in Wave 2 of the 2026-07-20 user-testing plan of attack.
 
 ## Notes & journal — DONE (ADR 0038)
 
