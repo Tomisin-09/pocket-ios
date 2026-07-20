@@ -6,6 +6,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **A Red Moon cover on the lock screen.** Practising a song now shows the Red Moon crescent as its
+  artwork on the lock screen and in Control Center, instead of a blank tile — your songs are your own
+  local files with no cover art, so this gives every one a consistent home at that touchpoint.
+- **Turn the practice back-off on or off, and set its tempo.** Practice Settings — for both **exercises**
+  and **loops** — now has a **Back off** switch (on by default): leave it on to finish each run eased
+  *below* command tempo — on clean control, not the edge — or turn it off to end at command. With it on,
+  the **Back-off** tempo is editable (with a **Reset to auto** to return to the derived floor), just like
+  the reach. When it's off, the back-up step control tidies itself away.
 - **Hear your saved chords.** A saved chord's detail screen now has a **Hear** button that sounds the
   voicing so you can check it by ear — a clean synthesized pitch reference (no downloads, all on-device).
   This is the first slice of app-wide *Hear*; sounding scales, arpeggios and intervals rides the same
@@ -30,13 +38,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   **Rename** and **Delete**; **+** builds a new one) — and a searchable **Glossary** of guitar and theory
   terms (sus4, tritone, CAGED, pentatonic, and more). Saving chords from inside a chord exercise still
   works exactly as before — the Toolkit is where the collection is now managed.
-- **Chords now tell you what they are, everywhere you build a progression.** The "Looks like…" reading
-  from the custom-chord board (ADR 0093) now also appears on the **movable-shape sheet** — confirming
-  that, say, an E-shape rooted at G spells **G7** — and on each **row of a chord progression**, where a
-  slid or bespoke voicing reads its true name ("Looks like **B/F♯ · 2nd inv**"). On progression rows the
-  caption stays quiet when it would only echo the chord's own name, so it appears only when it adds
-  something — an inversion, or a custom shape whose name isn't the textbook one. Purely informational,
-  on-device, never a judgement.
+- **Chords now tell you what they are on the movable-shape sheet.** The "Looks like…" reading from the
+  custom-chord board (ADR 0093) now also appears on the **movable-shape sheet** — confirming that, say, an
+  E-shape rooted at G spells **G7**. Purely informational, on-device, never a judgement.
 - **Save your custom chords and reuse them.** Built a bespoke voicing you like? Tap **Save to My
   chords** in the custom-chord placer to keep it. Saved chords show up as a **My chords** section at the
   top of the Add-chord (and swap) menu in any progression — one tap to drop one in — and a **Manage…**
@@ -84,6 +88,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   reduced speed.)
 
 ### Changed
+- **Cleaner library song cards.** A song card's third line now shows just its **loops and markers**
+  (e.g. "8 loops · 1 marker"); the key and BPM moved off the card — they still live in the song details
+  sheet. Keeps the card scannable at a glance, with the artist and collection tags unchanged.
+- **Less clutter on chord-progression rows.** Removed the secondary "Looks like…" caption from each row
+  of a chord progression — the row now reads its name and length only. The same reverse-lookup reading is
+  still there when you're building a shape (the custom-chord board and the movable-shape sheet).
 - **Internal:** the custom-chord placer's tappable fret board is now a standalone `ChordBoardEditor`
   view, extracted from `CustomChordSheet` (no behaviour change) — keeps the sheet under the file-length
   ceiling and makes the editable board reusable.

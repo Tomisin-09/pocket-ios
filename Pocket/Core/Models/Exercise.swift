@@ -132,6 +132,11 @@ final class Exercise {
     /// Intermediate stops on the descent from the summit down to the backoff floor (ADR 0046
     /// run-UI). `0` ⇒ a single drop. Declaration default, as `rampReachSteps`.
     var rampBackoffSteps: Int = 0
+    /// A manually pinned **backoff floor** (BPM) the routine settles the tail to, or `nil` to derive
+    /// it from command/reach (user-testing note 6). An ADR-0075-style override — Optional with no
+    /// declaration default, so pre-existing exercises migrate to `nil` (CoreData 134110 exempt),
+    /// mirroring `targetTempoOverride`.
+    var backoffTempoOverride: Int?
 
     /// Whether the routine steps every N **bars** or every N **seconds** — typed view over
     /// `rampIntervalUnitRaw`.
@@ -213,6 +218,7 @@ final class Exercise {
          includeBackoff: Bool = true,
          rampReachSteps: Int = 0,
          rampBackoffSteps: Int = 0,
+         backoffTempoOverride: Int? = nil,
          tags: [String] = [],
          notes: String = "",
          mastery: Int? = nil,
@@ -236,6 +242,7 @@ final class Exercise {
         self.includeBackoff = includeBackoff
         self.rampReachSteps = rampReachSteps
         self.rampBackoffSteps = rampBackoffSteps
+        self.backoffTempoOverride = backoffTempoOverride
         self.tags = tags
         self.notes = notes
         self.mastery = mastery
@@ -278,6 +285,19 @@ final class Exercise {
     /// Whether the reach is a manual pin vs the auto derivation — gates the reset-to-auto affordance.
     var hasTargetOverride: Bool { targetTempoOverride != nil }
 
+    /// The **auto** backoff floor derived from the current command / reach / working (user-testing
+    /// note 6) — the fallback for reset-to-auto. Read `backoffTempo` for the effective value.
+    var derivedBackoff: Int {
+        TempoStretch.backoffBPM(command: command, target: reachTempo, floor: workingTempo)
+    }
+
+    /// The **effective** backoff floor (BPM): the pinned `backoffTempoOverride` when set, else the
+    /// auto `derivedBackoff` (note 6). Mirrors `reachTempo`.
+    var backoffTempo: Int { backoffTempoOverride ?? derivedBackoff }
+
+    /// Whether the backoff is a manual pin vs the auto derivation — gates the reset-to-auto affordance.
+    var hasBackoffOverride: Bool { backoffTempoOverride != nil }
+
     /// The command-anchored **training routine** this exercise prescribes (ADR 0045/0046):
     /// warm up from the working floor to the owned command, dwell there, summit briefly at the
     /// derived reach, then back off below command. The single pure seam Practice launches a run
@@ -290,7 +310,8 @@ final class Exercise {
                     stepBPM: max(1, rampStepBPM), intervalCount: max(1, rampIntervalCount),
                     unit: rampIntervalUnit, dwellIntervals: max(1, dwellIntervals),
                     includeBackoff: includeBackoff,
-                    reachSteps: max(0, rampReachSteps), backoffSteps: max(0, rampBackoffSteps))
+                    reachSteps: max(0, rampReachSteps), backoffSteps: max(0, rampBackoffSteps),
+                    backoffOverride: backoffTempoOverride)
     }
 
     /// Promote a newly-owned tempo to `command` (ADR 0045 / 0075). The auto reach is derived, so

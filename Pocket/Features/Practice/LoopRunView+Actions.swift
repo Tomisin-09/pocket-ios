@@ -31,6 +31,8 @@ extension LoopRunView {
         repsPerStep = max(Self.repsRange.lowerBound, loop.rampRepsPerStep)
         dwell = max(1, loop.rampDwellIntervals)
         targetOverride = loop.targetSpeedOverride.map { LoopCommandRamp.percent($0) }
+        includeBackoff = loop.includeBackoff
+        backoffOverride = loop.backoffSpeedOverride.map { LoopCommandRamp.percent($0) }
         // In a routine, a naturally-finished ramp auto-advances the session (never a manual stop).
         model.onFinished = routineContext?.onFinished
         seeded = true
@@ -45,6 +47,8 @@ extension LoopRunView {
         // After promoteCommand (which auto-clears a caught-up pin), write the current pin — always
         // above command here, so it survives — or clear it when reset to auto (ADR 0075).
         loop.targetSpeedOverride = targetOverride.map { Double($0) / 100 }
+        loop.includeBackoff = includeBackoff
+        loop.backoffSpeedOverride = backoffOverride.map { Double($0) / 100 }
         loop.rampWarmupSteps = steps
         loop.rampReachSteps = reachSteps
         loop.rampBackoffSteps = backoffSteps
@@ -183,6 +187,21 @@ extension LoopRunView {
         targetOverride = (clamped == autoReach) ? nil : clamped
     }
 
+    /// Pin the backoff floor to a nudged value (no haptic — `StepperButton` owns it). Clamped
+    /// **below** command; landing exactly on the auto value clears the pin (user-testing note 6).
+    func adjustBackoff(by delta: Int) { pinBackoff((backoffOverride ?? autoBackoff) + delta) }
+
+    /// Pin the backoff floor to a typed value (note 6) — same clamp, with the type-commit haptic.
+    func setBackoff(_ value: Int) { pinBackoff(value); haptic(.light) }
+
+    /// Clear the pin — the backoff falls back to the auto derivation below the current command.
+    func resetBackoff() { backoffOverride = nil; haptic(.light) }
+
+    func pinBackoff(_ value: Int) {
+        let clamped = max(Self.percentRange.lowerBound, min(command - 1, value))
+        backoffOverride = (clamped == autoBackoff) ? nil : clamped
+    }
+
     /// Drop a pinned reach once command has risen to meet or pass it — a reach must stay above
     /// command (ADR 0075); the auto reach then takes over above the new command.
     func clearOverrideIfCaughtUp() {
@@ -209,4 +228,9 @@ struct LoopSetupState: Equatable {
     var dwell: Int
     /// The pinned reach (% of original) or `nil` for the auto derivation — editing it arms Save (ADR 0075).
     var targetOverride: Int?
+    /// Whether the ramp backs off below command after the summit (user-testing note 6) — toggling it
+    /// arms Save. Defaulted so existing snapshot constructions stay terse; `current` always sets it.
+    var includeBackoff: Bool = true
+    /// The pinned backoff floor (% of original) or `nil` for the auto derivation — editing it arms Save.
+    var backoffOverride: Int?
 }

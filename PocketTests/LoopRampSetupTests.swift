@@ -36,6 +36,13 @@ final class LoopRampSetupTests: XCTestCase {
                                          reachSteps: 1, backoffSteps: 1, repsPerStep: 4, dwell: 4), base)
         XCTAssertNotEqual(LoopSetupState(working: 70, command: 85, warmupSteps: 2,
                                          reachSteps: 1, backoffSteps: 1, repsPerStep: 3, dwell: 6), base)
+        // Back-off toggle + pinned floor (user-testing note 6) each arm Save.
+        XCTAssertNotEqual(LoopSetupState(working: 70, command: 85, warmupSteps: 2, reachSteps: 1,
+                                         backoffSteps: 1, repsPerStep: 3, dwell: 4,
+                                         includeBackoff: false), base)
+        XCTAssertNotEqual(LoopSetupState(working: 70, command: 85, warmupSteps: 2, reachSteps: 1,
+                                         backoffSteps: 1, repsPerStep: 3, dwell: 4,
+                                         backoffOverride: 72), base)
     }
 
     // MARK: - Model round-trip (the four dedicated fields)

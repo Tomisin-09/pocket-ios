@@ -22,6 +22,10 @@ struct RoutineStepsControls: View {
     /// The reach value — for the reach caption. `hasReach` gates whether the reach row shows.
     let reach: Int
     let hasReach: Bool
+    /// Whether the back-off tail is enabled (user-testing note 6) — gates the "Back-up steps" row,
+    /// since intermediate descent stops are meaningless with no descent. Defaults `true` so any
+    /// other call site is unchanged.
+    var hasBackoff = true
     let tint: Color
     /// The tempo unit shown in the warm-up step caption — "BPM" for an exercise, "%" for a loop
     /// run (whose tempos are percent-of-original, ADR 0046 Phase B). Defaults to "BPM" so the
@@ -70,8 +74,10 @@ struct RoutineStepsControls: View {
                 stepRow(label: "Reach steps", value: $reachSteps,
                         caption: reachSteps == 0 ? "jump straight to reach" : "ease up to \(reach)")
             }
-            stepRow(label: "Back-up steps", value: $backoffSteps,
-                    caption: backoffSteps == 0 ? "drop straight to back-off" : "ease back down")
+            if hasBackoff {
+                stepRow(label: "Back-up steps", value: $backoffSteps,
+                        caption: backoffSteps == 0 ? "drop straight to back-off" : "ease back down")
+            }
             stepRow(label: "Command", value: $dwell, caption: dwellCaption, range: dwellRange)
         }
     }
@@ -80,7 +86,7 @@ struct RoutineStepsControls: View {
     private var summary: String {
         var parts = ["\(warmupSteps) warm-up"]
         if hasReach { parts.append("\(reachSteps) reach") }
-        parts.append("\(backoffSteps) back-up")
+        if hasBackoff { parts.append("\(backoffSteps) back-up") }
         parts.append("\(dwell) command")
         return parts.joined(separator: " · ")
     }

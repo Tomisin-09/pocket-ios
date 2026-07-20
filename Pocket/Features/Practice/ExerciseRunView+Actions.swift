@@ -28,6 +28,8 @@ extension ExerciseRunView {
         backoffSteps = max(0, exercise.rampBackoffSteps)
         dwell = max(1, exercise.dwellIntervals)
         targetOverride = exercise.targetTempoOverride
+        includeBackoff = exercise.includeBackoff
+        backoffOverride = exercise.backoffTempoOverride
         signature = TimeSignature.forStored(beats: exercise.beatsPerBar,
                                             noteValue: exercise.noteValue,
                                             accentBeats: exercise.accentBeats)
@@ -50,7 +52,8 @@ extension ExerciseRunView {
         exercise.rampIntervalUnit = .bars
         exercise.rampIntervalCount = StandaloneMetronomeEngine.automatorDefaultBars
         exercise.dwellIntervals = max(1, dwell)
-        exercise.includeBackoff = true
+        exercise.includeBackoff = includeBackoff
+        exercise.backoffTempoOverride = backoffOverride
         exercise.rampReachSteps = reachSteps
         exercise.rampBackoffSteps = backoffSteps
         exercise.beatsPerBar = signature.beats
@@ -172,6 +175,22 @@ extension ExerciseRunView {
         targetOverride = (clamped == autoReach) ? nil : clamped
     }
 
+    /// Pin the backoff floor to a nudged value (no haptic — `StepperButton` owns it). Clamped
+    /// **below** command; landing exactly on the auto value clears the pin (user-testing note 6).
+    func adjustBackoff(by delta: Int) { pinBackoff((backoffOverride ?? autoBackoff) + delta) }
+
+    /// Pin the backoff floor to a typed value (note 6) — same clamp, with the type-commit haptic.
+    func setBackoff(_ value: Int) { pinBackoff(value); haptic(.light) }
+
+    /// Clear the pin — the backoff falls back to the auto derivation below the current command.
+    func resetBackoff() { backoffOverride = nil; haptic(.light) }
+
+    func pinBackoff(_ value: Int) {
+        let lower = StandaloneMetronomeEngine.bpmRange.lowerBound
+        let clamped = max(lower, min(command - 1, value))
+        backoffOverride = (clamped == autoBackoff) ? nil : clamped
+    }
+
     /// Drop a pinned reach once command has risen to meet or pass it — a reach must stay above
     /// command (ADR 0075); the auto reach then takes over above the new command.
     func clearOverrideIfCaughtUp() {
@@ -214,4 +233,9 @@ struct ExerciseSetupState: Equatable {
     var signature: TimeSignature
     /// The pinned reach (BPM) or `nil` for the auto derivation — editing it arms Save (ADR 0075).
     var targetOverride: Int?
+    /// Whether the routine backs off below command after the summit (user-testing note 6) —
+    /// toggling it arms Save.
+    var includeBackoff: Bool
+    /// The pinned backoff floor (BPM) or `nil` for the auto derivation — editing it arms Save (note 6).
+    var backoffOverride: Int?
 }

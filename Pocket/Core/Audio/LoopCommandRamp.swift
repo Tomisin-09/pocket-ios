@@ -37,7 +37,7 @@ enum LoopCommandRamp {
                      warmupSteps: Int,
                      dwellIntervals: Int = defaultDwellIntervals,
                      reachSteps: Int = 0, backoffSteps: Int = 0,
-                     includeBackoff: Bool = true,
+                     includeBackoff: Bool = true, backoffOverride: Double? = nil,
                      repsPerStep: Int = defaultRepsPerStep) -> CommandRamp {
         let workingPct = percent(working)
         let commandPct = percent(command)
@@ -47,7 +47,8 @@ enum LoopCommandRamp {
         return CommandRamp(working: workingPct, command: commandPct, target: targetPct,
                            stepBPM: stepBPM, intervalCount: max(1, repsPerStep), unit: .bars,
                            dwellIntervals: max(1, dwellIntervals), includeBackoff: includeBackoff,
-                           reachSteps: max(0, reachSteps), backoffSteps: max(0, backoffSteps))
+                           reachSteps: max(0, reachSteps), backoffSteps: max(0, backoffSteps),
+                           backoffOverride: backoffOverride.map(percent))
     }
 
     /// Convenience: build the ramp directly from a `Loop`'s measured progression — `speed` is the
@@ -55,11 +56,11 @@ enum LoopCommandRamp {
     static func make(loop: Loop, warmupSteps: Int,
                      dwellIntervals: Int = defaultDwellIntervals,
                      reachSteps: Int = 0, backoffSteps: Int = 0,
-                     includeBackoff: Bool = true,
+                     includeBackoff: Bool = true, backoffOverride: Double? = nil,
                      repsPerStep: Int = defaultRepsPerStep) -> CommandRamp {
         make(working: loop.speed, command: loop.command, target: loop.targetSpeed,
              warmupSteps: warmupSteps, dwellIntervals: dwellIntervals,
              reachSteps: reachSteps, backoffSteps: backoffSteps,
-             includeBackoff: includeBackoff, repsPerStep: repsPerStep)
+             includeBackoff: includeBackoff, backoffOverride: backoffOverride, repsPerStep: repsPerStep)
     }
 }

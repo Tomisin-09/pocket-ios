@@ -81,10 +81,9 @@ struct ChordProgressionEditor: View {
                 .frame(width: 56)
             VStack(alignment: .leading, spacing: 8) {
                 voicingMenu(index: index, current: change.voicing)
-                // The reverse-lookup reading (ADR 0093), surfaced only when it adds information —
-                // an inversion, or a voicing whose stored name isn't the theoretical one (so a plain
-                // "C" row stays uncaptioned, while a slid triad reads "Looks like B/F♯ · 2nd inv").
-                ChordIdentityCaption(voicing: change.voicing, suppressIfMatches: change.voicing.name)
+                // The reverse-lookup "Looks like …" caption was removed here (user-testing note 10,
+                // 2026-07-20): it crowded the row and its reading is still available on the movable
+                // sheet (`ChordIdentityCaption` in `MovableChordSheet`) and the identifier panel.
                 beatsStepper(index: index, change: change)
             }
             Spacer(minLength: 0)

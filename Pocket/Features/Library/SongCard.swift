@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// A rich, text-forward library card (ADR 0035): a leading colour accent (in place of
-/// artwork), the title, a metadata line (key · BPM · loops · markers), collection chips,
+/// artwork), the title, a metadata line (loops · markers), collection chips,
 /// and mastery dots. The colour accent is derived from the (derived) mastery tier, so the
 /// list reads as practice state at a glance without any cover art (ADR 0036).
 struct SongCard: View {
@@ -49,11 +49,11 @@ struct SongCard: View {
         .contentShape(Rectangle())
     }
 
-    /// "C · 120 BPM · 4 loops · 2 markers" — known facts only, in that order.
+    /// "4 loops · 2 markers" — loop + marker counts only (user-testing note 9, 2026-07-20).
+    /// Key and BPM moved off the card to de-clutter row 3; both still live in the song
+    /// details sheet.
     private var metadata: String {
         var parts: [String] = []
-        if song.musicalKey != .unknown { parts.append(song.musicalKey.displayName) }
-        if let bpm = song.bpm { parts.append("\(bpm) BPM") }
         let loops = song.loops.count
         if loops > 0 { parts.append("\(loops) loop\(loops == 1 ? "" : "s")") }
         let markers = song.markers.count

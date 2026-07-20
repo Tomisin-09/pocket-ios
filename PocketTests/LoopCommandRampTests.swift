@@ -102,6 +102,29 @@ final class LoopCommandRampTests: XCTestCase {
         XCTAssertEqual(ramp.plateaus.last?.bpm, 79)
     }
 
+    func testBackoffOverrideConvertsSpeedToPercentTail() {
+        // A pinned 0.76× floor lands the tail at 76% — replacing the derived 79.
+        let ramp = LoopCommandRamp.make(working: 0.70, command: 0.85, target: 0.91,
+                                        warmupSteps: 0, includeBackoff: true, backoffOverride: 0.76)
+        XCTAssertEqual(ramp.plateaus.last?.bpm, 76)
+    }
+
+    func testBackoffOverrideIgnoredWhenBackoffIsOff() {
+        let ramp = LoopCommandRamp.make(working: 0.70, command: 0.85, target: 0.91,
+                                        warmupSteps: 0, includeBackoff: false, backoffOverride: 0.76)
+        XCTAssertEqual(ramp.plateaus.last?.bpm, 91)   // ends at the summit, no tail
+    }
+
+    func testLoopRampHonoursBackoffToggleAndOverride() {
+        let loop = makeLoop(speed: 0.70, command: 0.85)
+        loop.includeBackoff = false
+        // Off ⇒ the ramp ends at the summit (the reach), no tail below command.
+        XCTAssertEqual(loop.ramp.plateaus.last?.bpm, LoopCommandRamp.percent(loop.targetSpeed))
+        loop.includeBackoff = true
+        loop.backoffSpeedOverride = 0.72
+        XCTAssertEqual(loop.ramp.plateaus.last?.bpm, 72)   // pinned floor, in percent
+    }
+
     func testRampBuiltFromLoopMatchesExplicitTempos() {
         let loop = makeLoop(speed: 0.70, command: 0.85)
         let fromLoop = LoopCommandRamp.make(loop: loop, warmupSteps: 1)

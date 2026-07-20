@@ -77,8 +77,10 @@ cockpit over a scrollable reference area, with named/editable loops & markers
 pitch-preserving speed, and **seamless, click-free region looping** (a crossfaded
 `.loops` buffer, ADRs 0006 & 0008) — fed by an imported file's real audio (or a
 generated dev sample for the demo). Playback surfaces on the **lock screen /
-Control Center** (title, artist, play/pause only) via a `NowPlayingController`
-bridge over `MPNowPlayingInfoCenter` + `MPRemoteCommandCenter`, driven by a pure
+Control Center** (title, artist, play/pause only — plus a default **Red Moon
+crescent artwork**, since imported songs carry no cover art) via a
+`NowPlayingController` bridge over `MPNowPlayingInfoCenter` +
+`MPRemoteCommandCenter`, driven by a pure
 unit-tested `NowPlayingState`; leaving the screen **stops** audio and removes the
 global command targets (`onDisappear` → `endPlaybackSession`), while locking the
 phone mid-practice keeps it playing (ADR 0025). Interaction: **tap = seek, drag = scrub, hold-drag = select a loop, pinch = zoom**
@@ -179,7 +181,13 @@ Practice Settings, or in `ExerciseTempoSection`), with a **Reset to auto** affor
 per unit (`Exercise.targetTempoOverride: Int?` / `Loop.targetSpeedOverride: Double?`, additive
 optionals) and read through the effective `Exercise.reachTempo` / `Loop.targetSpeed`. A pin must stay
 above command, so `promoteCommand` auto-clears it once command catches up (the vestigial
-`Exercise.targetTempo` is retained un-removed for migration but no longer written). A new exercise picks a **time signature**
+`Exercise.targetTempo` is retained un-removed for migration but no longer written). The
+**back-off** tail (finishing below command on control, not the edge) is likewise controllable on both
+exercises and loops: a **Back off** switch (`Exercise.includeBackoff` / `Loop.includeBackoff`, default
+on) toggles it, and when on its floor is a pinnable override (`Exercise.backoffTempoOverride: Int?` BPM
+/ `Loop.backoffSpeedOverride: Double?` ×, additive optionals mirroring the reach pin) with its own
+**Reset to auto** — the `CommandRamp` takes an optional `backoffOverride` (percent for loops) and
+otherwise derives the floor via `TempoStretch`. A new exercise picks a **time signature**
 (`NewExerciseSheet`, default 4/4) — also editable on an existing exercise from the run-setup nav
 bar — that drives the run click's accents + **count-in** length; a training run **counts you in**
 before the climb (honoring the Settings toggle/length, ADR 0052). The running readout is just the
