@@ -56,6 +56,10 @@ struct ExerciseBlockPreview: View {
                     onStepCommand: { stepCommand(by: $0) }, onTypeCommand: { setCommand($0) },
                     onStepReach: { stepReach(by: $0) }, onTypeReach: { setReach($0) },
                     onResetReach: resetReach,
+                    includeBackoff: includeBackoffBinding, backoff: exercise.backoffTempo,
+                    backoffIsCustom: exercise.hasBackoffOverride,
+                    onStepBackoff: { stepBackoff(by: $0) }, onTypeBackoff: { setBackoff($0) },
+                    onResetBackoff: resetBackoff,
                     stepsExpanded: $showSteps, warmupSteps: warmupStepsBinding,
                     reachSteps: reachStepsBinding, backoffSteps: backoffStepsBinding,
                     dwell: dwellBinding, dwellCaption: dwellCaption,
@@ -123,6 +127,10 @@ struct ExerciseBlockPreview: View {
     private func setReach(_ value: Int) { commit { pinReach(value) }; haptic(.light) }
     private func resetReach() { commit { exercise.targetTempoOverride = nil }; haptic(.light) }
 
+    private func stepBackoff(by delta: Int) { commit { pinBackoff(exercise.backoffTempo + delta) } }
+    private func setBackoff(_ value: Int) { commit { pinBackoff(value) }; haptic(.light) }
+    private func resetBackoff() { commit { exercise.backoffTempoOverride = nil }; haptic(.light) }
+
     /// Working stays in range and never above command (it's the warm-up floor below the owned tempo).
     private func clampWorking(_ value: Int) -> Int {
         min(exercise.command, max(StandaloneMetronomeEngine.bpmRange.lowerBound, value))
@@ -173,6 +181,12 @@ struct ExerciseBlockPreview: View {
                 set: { newValue in commit { exercise.rampBackoffSteps = max(0, newValue) } })
     }
 
+    /// Whether the back-off tail is on (user-testing note 6), model-backed — toggling writes live.
+    private var includeBackoffBinding: Binding<Bool> {
+        Binding(get: { exercise.includeBackoff },
+                set: { newValue in commit { exercise.includeBackoff = newValue } })
+    }
+
     /// The command-plateau dwell (ADR 0078), model-backed — kept ≥ 1 (the command plateau must hold).
     private var dwellBinding: Binding<Int> {
         Binding(get: { max(1, exercise.dwellIntervals) },
@@ -190,6 +204,13 @@ struct ExerciseBlockPreview: View {
         let upper = StandaloneMetronomeEngine.bpmRange.upperBound
         let clamped = min(upper, max(exercise.command + 1, value))
         exercise.targetTempoOverride = (clamped == exercise.derivedTarget) ? nil : clamped
+    }
+
+    /// Pin the back-off strictly below command (note 6); landing on the auto derivation clears the pin.
+    private func pinBackoff(_ value: Int) {
+        let lower = StandaloneMetronomeEngine.bpmRange.lowerBound
+        let clamped = max(lower, min(exercise.command - 1, value))
+        exercise.backoffTempoOverride = (clamped == exercise.derivedBackoff) ? nil : clamped
     }
 
     /// Apply a model mutation and persist it — the preview edits are live, not deferred.

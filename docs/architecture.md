@@ -97,7 +97,9 @@ both gapless and free of the splice click; the visual playhead wraps via pure
 **lock screen / Control Center** (play/pause only) by `NowPlayingController` — a
 `@MainActor` bridge that owns the `MPRemoteCommandCenter` targets and pushes
 `MPNowPlayingInfoCenter` updates from a pure, unit-tested `NowPlayingState`
-(`reportedRate` = speed while playing, 0 when paused). Because the command center
+(`reportedRate` = speed while playing, 0 when paused); it also attaches a default **Red Moon
+crescent artwork** (the `DefaultArtwork` asset), since imported songs carry no embedded cover art.
+Because the command center
 is a process-global singleton, its targets are removed on screen exit:
 `WaveformPracticeView.onDisappear` → `model.endPlaybackSession()` clears the info,
 removes the targets, and calls `engine.stop()` (halt → deactivate the session), so
@@ -190,6 +192,9 @@ points can't drift. **Command-anchored progress** (ADR
 The reach can also be **manually pinned** (ADR 0075): optional `Exercise.targetTempoOverride` /
 `Loop.targetSpeedOverride` fields, read through the effective `reachTempo` / `targetSpeed`
 accessors (`override ?? auto`), with `promoteCommand` auto-clearing a pin once command catches up.
+The **back-off** tail is per-exercise controllable (user-testing note 6): `Exercise.includeBackoff`
+(default on) toggles it and an optional `Exercise.backoffTempoOverride` pins the floor, read through
+`backoffTempo` and fed to `CommandRamp.backoffOverride` (nil ⇒ the `TempoStretch`-derived floor).
 Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044), full-screen.
 
 **Hear — pitched-tone preview** (`ToneEngine`, `Core/Audio/`, ADR 0097). A shared, sequence-capable

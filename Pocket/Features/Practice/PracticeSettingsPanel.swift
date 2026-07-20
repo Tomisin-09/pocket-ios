@@ -25,6 +25,16 @@ struct PracticeSettingsPanel: View {
     let onTypeReach: (Int) -> Void
     let onResetReach: () -> Void
 
+    // Back-off (user-testing note 6) — an on/off for the tail below command, with an editable floor.
+    /// Whether the routine backs off below command after the summit. Default on.
+    @Binding var includeBackoff: Bool
+    let backoff: Int
+    /// Whether the backoff floor is a manual pin (vs the auto derivation) — drives caption + reset.
+    let backoffIsCustom: Bool
+    let onStepBackoff: (Int) -> Void
+    let onTypeBackoff: (Int) -> Void
+    let onResetBackoff: () -> Void
+
     // Steps — bound straight through to the nested `RoutineStepsControls`.
     @Binding var stepsExpanded: Bool
     @Binding var warmupSteps: Int
@@ -48,7 +58,8 @@ struct PracticeSettingsPanel: View {
                                      reachSteps: $reachSteps, backoffSteps: $backoffSteps,
                                      dwell: $dwell, dwellCaption: dwellCaption,
                                      warmupStepBPM: warmupStepBPM, reach: reach,
-                                     hasReach: hasReach, tint: tint, onChange: onToggle)
+                                     hasReach: hasReach, hasBackoff: includeBackoff,
+                                     tint: tint, onChange: onToggle)
             }
         }
     }
@@ -95,15 +106,50 @@ struct PracticeSettingsPanel: View {
             EditableTempoRow(label: "Reach", caption: reachCaption, value: reach, tint: tint,
                              onStep: onStepReach, onType: onTypeReach)
             if reachIsCustom {
-                Button(action: onResetReach) {
-                    Label("Reset to auto", systemImage: "arrow.uturn.backward")
-                        .font(.futura(.caption)).foregroundStyle(tint)
+                resetButton(action: onResetReach, hint: "Clear the custom reach; use the auto-derived goal")
+            }
+            backoffToggle
+            if includeBackoff {
+                EditableTempoRow(label: "Back-off", caption: backoffCaption, value: backoff,
+                                 tint: tint, onStep: onStepBackoff, onType: onTypeBackoff)
+                if backoffIsCustom {
+                    resetButton(action: onResetBackoff,
+                                hint: "Clear the custom back-off; use the auto-derived floor")
                 }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .accessibilityHint("Clear the custom reach; use the auto-derived goal")
             }
         }
+    }
+
+    /// The on/off for the back-off tail (user-testing note 6). Off ⇒ the routine ends at command
+    /// (or the reach) instead of easing down; on ⇒ the editable floor below appears.
+    private var backoffToggle: some View {
+        Toggle(isOn: $includeBackoff) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Back off")
+                    .font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
+                Text("finish below command, on control not the edge")
+                    .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
+            }
+        }
+        .tint(tint)
+        .accessibilityHint("Ease the tempo down after the summit to finish on clean control")
+    }
+
+    /// Shared reset-to-auto affordance for the pinned reach / back-off rows.
+    private func resetButton(action: @escaping () -> Void, hint: String) -> some View {
+        Button(action: action) {
+            Label("Reset to auto", systemImage: "arrow.uturn.backward")
+                .font(.futura(.caption)).foregroundStyle(tint)
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .accessibilityHint(hint)
+    }
+
+    /// The Back-off caption: custom-vs-auto, mirroring `reachCaption`. Auto shows the drop below
+    /// command; a pin reads "custom floor".
+    private var backoffCaption: String {
+        backoffIsCustom ? "custom floor" : "auto · −\(max(0, command - backoff)) BPM"
     }
 
     /// The Reach caption: custom-vs-auto (ADR 0075). Auto shows the derived stretch above command;

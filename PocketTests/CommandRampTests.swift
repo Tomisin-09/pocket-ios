@@ -134,6 +134,40 @@ final class CommandRampTests: XCTestCase {
         XCTAssertEqual(plateaus.map(\.bpm), [80, 85, 90, 95, 100, 106, 94])
     }
 
+    // MARK: - Editable back-off floor (user-testing note 6)
+
+    func testBackoffOverrideReplacesTheDerivedFloor() {
+        // Default derives a 94 tail; a pin to 88 must land the tail there instead.
+        var cmd = ramp()
+        cmd.backoffOverride = 88
+        XCTAssertEqual(cmd.plateaus.map(\.bpm), [80, 85, 90, 95, 100, 106, 88])
+    }
+
+    func testBackoffOverrideIsIgnoredWhenBackoffIsOff() {
+        // The toggle wins: no tail at all, override notwithstanding.
+        var cmd = ramp(backoff: false)
+        cmd.backoffOverride = 88
+        XCTAssertEqual(cmd.plateaus.map(\.bpm), [80, 85, 90, 95, 100, 106])
+    }
+
+    func testBackoffOverrideAtOrAboveCommandDropsTheTail() {
+        // A floor that isn't below command can't be a back-off — the guard drops it.
+        var cmd = ramp()
+        cmd.backoffOverride = 100
+        XCTAssertEqual(cmd.plateaus.map(\.bpm).last, 106)   // ends at the summit, no tail
+    }
+
+    func testBackoffOverrideDrivesTheIntermediateDescent() throws {
+        // working 70, command 100, summit 130, pinned floor 76, 2 back-up steps ⇒ the stops
+        // interpolate toward the pinned floor (not the derived one).
+        var cmd = ramp(working: 70, command: 100, target: 130)
+        cmd.backoffOverride = 76
+        cmd.backoffSteps = 2
+        let bpms = cmd.plateaus.map(\.bpm)
+        let summit = try XCTUnwrap(bpms.firstIndex(of: 130))
+        XCTAssertEqual(Array(bpms[(summit + 1)...]), [112, 94, 76])
+    }
+
     func testIntermediateBPMsAreEvenlySpacedAndExcludeEndpoints() {
         XCTAssertEqual(CommandRamp.intermediateBPMs(from: 100, to: 120, steps: 3), [105, 110, 115])
         XCTAssertEqual(CommandRamp.intermediateBPMs(from: 120, to: 100, steps: 3), [115, 110, 105])

@@ -21,13 +21,19 @@ have a home live in their own sections (cross-referenced); this is the index.
   `ChordIdentityCaption` ("Looks like …") from each `changeRow` in `ChordProgressionEditor`
   — the row now shows name + length only. The reverse-lookup reading still surfaces while
   *building* a shape (custom-chord board + `MovableChordSheet`), so no capability was lost.
-- **Note 3 — default Red Moon artwork.** A crescent-moon fallback artwork for songs
-  with no embedded art, shown at the now-playing touchpoint. Pick the dark variant
-  (reads on the system now-playing card). Asset + fallback only. Ties to the
-  *Branding — Red Moon* mark.
-- **Note 6 — back-off step toggle.** Add a toggle for the ramp's **back-off** step
-  (default **on** = no behaviour change) and, when on, let the tempo be edited. Ramp
-  math is pure → unit-test it. Lands in the routine/command-ramp settings sheet.
+- ~~**Note 3 — default Red Moon artwork.**~~ **DONE (pocket-159, 2026-07-20).** `NowPlayingController`
+  now attaches a default `DefaultArtwork` asset (the dark crescent, a copy of the app icon) to the
+  now-playing info, so every song shows the Red Moon mark on the lock screen / Control Center instead
+  of a blank tile. Pure `NowPlayingState` stays UIKit-free.
+- ~~**Note 6 — back-off step toggle + editable tempo.**~~ **DONE for exercises (pocket-159,
+  2026-07-20).** A **Back off** switch (`Exercise.includeBackoff`, default on) in Practice Settings,
+  and when on an editable **Back-off** floor (`Exercise.backoffTempoOverride: Int?`, additive optional
+  mirroring ADR 0075's reach pin; `CommandRamp.backoffOverride`; reset-to-auto) with the back-up step
+  row gated off when disabled. Ramp math unit-tested (4 new `CommandRampTests`). **Follow-up:** the
+  **loop** path (LoopRunView / LoopSettingsPanel) still hardcodes `includeBackoff: true` — mirror the
+  same toggle+pin there for parity. **Gate:** the new optional field is a live schema change — additive
+  and proven-safe (same shape as the shipped `targetTempoOverride`), but **device-verify** the migration
+  against a pre-field store before merge (SwiftData migration-crash lesson).
 
 **Wave 1 — core loop feel (small ADRs, highest quality lift):**
 

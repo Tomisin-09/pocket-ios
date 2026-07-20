@@ -46,6 +46,11 @@ struct CommandRamp: Equatable, TempoRamp {
     /// Intermediate plateaus on the descent from the summit down to the backoff floor. `0` ⇒ a
     /// single drop to the backoff tail (the original behaviour). Defaulted, as `reachSteps`.
     var backoffSteps: Int = 0
+    /// A manually pinned **backoff floor** (BPM) — the tempo the tail settles to (user-testing note
+    /// 6). `nil` derives it from `TempoStretch.backoffBPM` (the original behaviour). Honoured only
+    /// while `includeBackoff` and when it sits below `command`. Defaulted so existing call sites are
+    /// unaffected (the synthesized memberwise init still defaults an omitted optional to `nil`).
+    var backoffOverride: Int?
 
     /// One held tempo and how many `intervalCount`-units it holds for.
     struct Plateau: Equatable {
@@ -95,7 +100,8 @@ struct CommandRamp: Equatable, TempoRamp {
             result.append(Plateau(bpm: target, intervals: 1))
         }
         if includeBackoff {
-            let backoff = TempoStretch.backoffBPM(command: command, target: target, floor: working)
+            let backoff = backoffOverride
+                ?? TempoStretch.backoffBPM(command: command, target: target, floor: working)
             if backoff < command {
                 let summit = target > command ? target : command
                 for bpm in Self.intermediateBPMs(from: summit, to: backoff, steps: backoffSteps) {

@@ -1,4 +1,5 @@
 import MediaPlayer
+import UIKit
 
 /// Bridges the practice transport to the system lock screen / Control Center:
 /// owns the `MPRemoteCommandCenter` play/pause targets and pushes
@@ -13,6 +14,16 @@ import MediaPlayer
 final class NowPlayingController {
 
     private let infoCenter = MPNowPlayingInfoCenter.default()
+
+    /// A default Red Moon artwork shown for every song at the lock screen /
+    /// Control Center touchpoint (user-testing note 3, 2026-07-20). The app's
+    /// songs are local files with no embedded cover art, so without this the
+    /// system draws a blank tile; the crescent mark on a near-black ground reads
+    /// cleanly on the now-playing card. Built once and reused.
+    private static let defaultArtwork: MPMediaItemArtwork? = {
+        guard let image = UIImage(named: "DefaultArtwork") else { return nil }
+        return MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+    }()
     /// Registered command targets, kept so `teardown` can remove exactly what it
     /// added (rather than clobbering targets another part of the app might own).
     private var registrations: [(command: MPRemoteCommand, token: Any)] = []
@@ -46,6 +57,7 @@ final class NowPlayingController {
             MPNowPlayingInfoPropertyPlaybackRate: state.reportedRate
         ]
         if !state.artist.isEmpty { info[MPMediaItemPropertyArtist] = state.artist }
+        if let artwork = Self.defaultArtwork { info[MPMediaItemPropertyArtwork] = artwork }
         infoCenter.nowPlayingInfo = info
     }
 

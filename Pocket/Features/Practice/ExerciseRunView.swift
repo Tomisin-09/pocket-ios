@@ -33,6 +33,12 @@ struct ExerciseRunView: View {
     /// from `exercise.targetTempoOverride`, committed on Start / Save. Always kept above `command`;
     /// auto-cleared locally when command is nudged up to it, mirroring the model.
     @State var targetOverride: Int?
+    /// Whether the routine backs off below command after the summit (user-testing note 6). Seeded
+    /// from `exercise.includeBackoff`, committed on Start / Save. Default on.
+    @State var includeBackoff = true
+    /// A manually pinned **backoff floor** (BPM), or `nil` to use the auto derivation (note 6).
+    /// Seeded from `exercise.backoffTempoOverride`, committed on Start / Save. Kept below `command`.
+    @State var backoffOverride: Int?
     @State var showSteps = false
     /// The top-level "Practice Settings" disclosure — collapsed by default (V1 feedback).
     @State var showSettings = false
@@ -61,7 +67,8 @@ struct ExerciseRunView: View {
     var current: ExerciseSetupState {
         ExerciseSetupState(working: working, command: command, steps: steps,
                            reachSteps: reachSteps, backoffSteps: backoffSteps, dwell: dwell,
-                           signature: signature, targetOverride: targetOverride)
+                           signature: signature, targetOverride: targetOverride,
+                           includeBackoff: includeBackoff, backoffOverride: backoffOverride)
     }
 
     /// True when the setup has unsaved edits — drives the Save Changes button.
@@ -75,6 +82,12 @@ struct ExerciseRunView: View {
     /// the run-setup extension to snapshot the reach for the post-run promote offer (ADR 0079).
     var reach: Int { targetOverride ?? autoReach }
 
+    /// The **auto** backoff floor for the current tempos — the reset-to-auto fallback (note 6).
+    var autoBackoff: Int { TempoStretch.backoffBPM(command: command, target: reach, floor: working) }
+
+    /// The **effective** backoff floor: a pinned override when set, else the auto value (note 6).
+    var backoff: Int { backoffOverride ?? autoBackoff }
+
     /// The warm-up step size the chosen number of intermediate stops implies.
     var stepBPM: Int {
         CommandRamp.warmupStepBPM(working: working, command: command, intermediateSteps: steps)
@@ -86,7 +99,8 @@ struct ExerciseRunView: View {
         CommandRamp(working: working, command: command, target: reach,
                     stepBPM: stepBPM, intervalCount: StandaloneMetronomeEngine.automatorDefaultBars,
                     unit: .bars, dwellIntervals: max(1, dwell),
-                    includeBackoff: true, reachSteps: reachSteps, backoffSteps: backoffSteps)
+                    includeBackoff: includeBackoff, reachSteps: reachSteps, backoffSteps: backoffSteps,
+                    backoffOverride: backoffOverride)
     }
 
     /// Whether there's a climb above command to put intermediate reach stops on.
@@ -265,6 +279,9 @@ struct ExerciseRunView: View {
             onStepCommand: { adjustCommand(by: $0) }, onTypeCommand: { setCommand($0) },
             onStepReach: { adjustReach(by: $0) }, onTypeReach: { setReach($0) },
             onResetReach: resetReach,
+            includeBackoff: $includeBackoff, backoff: backoff, backoffIsCustom: backoffOverride != nil,
+            onStepBackoff: { adjustBackoff(by: $0) }, onTypeBackoff: { setBackoff($0) },
+            onResetBackoff: resetBackoff,
             stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
             backoffSteps: $backoffSteps, dwell: $dwell, dwellCaption: dwellCaption,
             warmupStepBPM: stepBPM,
