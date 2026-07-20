@@ -6,10 +6,32 @@ import SwiftUI
 extension WaveformPracticeModel {
 
     /// Pinch-to-zoom: set how much of the song the waveform shows (clamped), then
-    /// re-anchor the window so the playhead stays on screen at the new span.
+    /// re-anchor the window so the playhead stays on screen at the new span. Used by
+    /// programmatic callers with no focal point (`resetZoom`, tests); the pinch gesture
+    /// goes through `setZoom(span:focalScreenFraction:)` to anchor on the pinch (ADR 0098).
     func setZoomSpan(_ span: Double) {
         zoomSpan = WaveformGesture.clampSpan(span)
         advancePageIfNeeded()
+    }
+
+    /// Pinch-to-zoom anchored to the **gesture focal point** (ADR 0098): keep the song
+    /// fraction under the pinch centre (`focalScreenFraction`, a `0…1` position on the
+    /// visible waveform) fixed on screen as the span changes, so the spot being inspected
+    /// doesn't drift. Opting into **"Zoom follows playhead"** keeps the legacy
+    /// playhead-anchored paging instead. Page-mode during *playback* is unaffected —
+    /// this governs only the pinch itself.
+    func setZoom(span: Double, focalScreenFraction: Double) {
+        let clamped = WaveformGesture.clampSpan(span)
+        if AppSettings.zoomFollowsPlayhead {
+            zoomSpan = clamped
+            advancePageIfNeeded()
+        } else {
+            let window = viewport
+            viewportStart = WaveformGesture.zoomAnchored(
+                baseStart: window.start, baseSpan: window.end - window.start,
+                focalScreenFraction: focalScreenFraction, newSpan: clamped)
+            zoomSpan = clamped
+        }
     }
 
     /// Page-mode (ADR 0010): hold the window still until the playhead sweeps to ~90%

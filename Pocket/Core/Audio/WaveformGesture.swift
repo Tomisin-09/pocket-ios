@@ -55,6 +55,24 @@ enum WaveformGesture {
         return (playhead - leadIn * span).clamped(to: 0...maxStart)
     }
 
+    /// **Focal-point zoom** anchoring (ADR 0098): the new `viewportStart` that keeps the
+    /// song fraction under the pinch centre pinned to the same on-screen position as the
+    /// span changes — so the spot you're inspecting doesn't drift out from under your
+    /// fingers (the fix for the playhead-anchored "feels weird" zoom).
+    ///
+    /// `focalScreenFraction` is the pinch centre as a `0…1` position on the *visible*
+    /// waveform (`MagnifyGesture.startAnchor.x`). `focalSong = baseStart +
+    /// focalScreenFraction · baseSpan` is the song fraction there now; the returned start
+    /// holds it at `focalScreenFraction` under the new span, clamped to `0…(1 − newSpan)`
+    /// so it never scrolls past a song end (at which point the focal point drifts — the
+    /// standard zoom-at-bounds behaviour).
+    static func zoomAnchored(baseStart: Double, baseSpan: Double,
+                             focalScreenFraction: Double, newSpan: Double) -> Double {
+        let focalSong = baseStart + focalScreenFraction * baseSpan
+        let maxStart = Swift.max(0, 1 - newSpan)
+        return (focalSong - focalScreenFraction * newSpan).clamped(to: 0...maxStart)
+    }
+
     /// Song fraction at the *centre* of bar `index` of a `count`-bar set that
     /// covers the song range `[coveredStart, coveredEnd]`. Used to place each
     /// waveform bar: the stored envelope covers `[0, 1]`; a crisp re-downsample

@@ -70,7 +70,7 @@ import SwiftUI
                      onScrub: { _ in },
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
-                     viewport: (0, 1), onSetZoomSpan: { _ in }).padding()
+                     viewport: (0, 1), onSetZoom: { _, _ in }).padding()
     }
 }
 
@@ -94,7 +94,7 @@ import SwiftUI
                      onScrub: { _ in },
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
-                     viewport: (0.0, 0.25), onSetZoomSpan: { _ in }).padding()
+                     viewport: (0.0, 0.25), onSetZoom: { _, _ in }).padding()
     }
 }
 
@@ -114,7 +114,7 @@ import SwiftUI
                      onScrub: { _ in },
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
-                     viewport: (0.25, 0.65), onSetZoomSpan: { _ in }).padding()
+                     viewport: (0.25, 0.65), onSetZoom: { _, _ in }).padding()
     }
 }
 
@@ -138,7 +138,7 @@ import SwiftUI
                      onScrub: { _ in },
                      onSelectBegan: { _ in }, onSelectChanged: { _ in },
                      onSelectEnded: {}, onSelectCancelled: {},
-                     viewport: (0.30, 0.50), onSetZoomSpan: { _ in })
+                     viewport: (0.30, 0.50), onSetZoom: { _, _ in })
             .overlay(alignment: .bottomTrailing) { ZoomResetButton(action: {}).padding(8) }
             .padding()
     }
@@ -261,7 +261,7 @@ import SwiftUI
                          onScrub: { _ in },
                          onSelectBegan: { _ in }, onSelectChanged: { _ in },
                          onSelectEnded: {}, onSelectCancelled: {},
-                         viewport: (0, 1), onSetZoomSpan: { _ in })
+                         viewport: (0, 1), onSetZoom: { _, _ in })
             Spacer()
         }
         .padding()

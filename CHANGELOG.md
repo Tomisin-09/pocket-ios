@@ -5,6 +5,12 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Pinch-to-zoom holds the spot under your fingers.** Zooming the practice waveform now anchors to
+  where you pinch instead of jumping to the playhead, so the passage you're inspecting stays put as you
+  zoom in and out. A new **Zoom follows playhead** toggle (Settings → Transport, off by default) brings
+  back the old playhead-anchored behaviour if you prefer it.
+
 ### Added
 - **A Red Moon cover on the lock screen.** Practising a song now shows the Red Moon crescent as its
   artwork on the lock screen and in Control Center, instead of a blank tile — your songs are your own

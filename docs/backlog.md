@@ -40,12 +40,12 @@ have a home live in their own sections (cross-referenced); this is the index.
 
 **Wave 1 — core loop feel (small ADRs, highest quality lift):**
 
-- **Note 5 — zoom anchor.** The waveform zoom is anchored to the playhead, so it
-  shifts under you while inspecting a spot ("feels weird"). Re-anchor zoom to the
-  **gesture focal point** (pinch centre), with an optional **"follow playhead"** pin.
-  "What zoom anchors to" is a real interaction decision → its own ADR. Highest
-  perceived-quality lift; **do this first of the two.** Sits on the P1 waveform
-  roadmap; relates to the parked *rotary haptic zoom mode*.
+- ~~**Note 5 — zoom anchor.**~~ **BUILT (pocket-160, ADR 0098; device-verify + merge
+  pending).** Pinch-zoom now anchors to the **gesture focal point** (`MagnifyGesture.startAnchor`)
+  via the pure `WaveformGesture.zoomAnchored` (unit-tested), so the spot under your fingers holds
+  still instead of jumping to the playhead. New default-off **Zoom follows playhead** setting
+  (Settings → Transport) restores the legacy playhead-anchored paging. Page-mode during playback
+  (ADR 0010) untouched. Relates to the parked *rotary haptic zoom mode*.
 - **Note 4 — snap free-control near neighbours.** Snap-to-grid fights loop-handle
   drags when two loops are close together. Snap should **weaken/yield** as a handle
   nears a neighbour's boundary, plus a **free-control escape** (drag-past-threshold

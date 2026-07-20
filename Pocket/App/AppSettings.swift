@@ -43,6 +43,7 @@ enum AppSettings {
         static let transportLoopOnLeft = "transportLoopOnLeft"
         static let waveformMinimapVisible = "waveformMinimapVisible"
         static let waveformMarkerLabels = "waveformMarkerLabels"
+        static let zoomFollowsPlayhead = "zoomFollowsPlayhead"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -118,6 +119,12 @@ enum AppSettings {
     /// Default **on**. Off ⇒ markers still show as triangles / count chips, but you read their
     /// labels only in the Markers panel.
     static var waveformMarkerLabels: Bool { bool(Key.waveformMarkerLabels, default: true) }
+
+    /// Whether pinch-to-zoom on the detail waveform re-anchors to the **playhead** as you zoom
+    /// (the legacy paging), rather than to the **pinch focal point** (ADR 0098). Default **off** ⇒
+    /// the spot under your fingers holds still; on ⇒ the window recenters on the playhead. Only
+    /// governs the pinch gesture — page-mode during playback follows the playhead regardless.
+    static var zoomFollowsPlayhead: Bool { bool(Key.zoomFollowsPlayhead, default: false) }
 
     /// Appearance override. Default `.system` — the app follows the device setting until
     /// the user opts into a pinned light/dark appearance.
