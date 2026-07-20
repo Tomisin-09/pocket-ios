@@ -192,9 +192,10 @@ points can't drift. **Command-anchored progress** (ADR
 The reach can also be **manually pinned** (ADR 0075): optional `Exercise.targetTempoOverride` /
 `Loop.targetSpeedOverride` fields, read through the effective `reachTempo` / `targetSpeed`
 accessors (`override ?? auto`), with `promoteCommand` auto-clearing a pin once command catches up.
-The **back-off** tail is per-exercise controllable (user-testing note 6): `Exercise.includeBackoff`
-(default on) toggles it and an optional `Exercise.backoffTempoOverride` pins the floor, read through
-`backoffTempo` and fed to `CommandRamp.backoffOverride` (nil ⇒ the `TempoStretch`-derived floor).
+The **back-off** tail is controllable on exercises **and loops** (user-testing note 6):
+`Exercise.includeBackoff` / `Loop.includeBackoff` (default on) toggle it, and an optional
+`Exercise.backoffTempoOverride` (BPM) / `Loop.backoffSpeedOverride` (×) pins the floor, fed to
+`CommandRamp.backoffOverride` (nil ⇒ the `TempoStretch`-derived floor; `LoopCommandRamp` maps × → %).
 Reached from the **Metronome card on the home hub** (`Features/Home/`, ADR 0044), full-screen.
 
 **Hear — pitched-tone preview** (`ToneEngine`, `Core/Audio/`, ADR 0097). A shared, sequence-capable

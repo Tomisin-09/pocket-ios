@@ -182,11 +182,12 @@ per unit (`Exercise.targetTempoOverride: Int?` / `Loop.targetSpeedOverride: Doub
 optionals) and read through the effective `Exercise.reachTempo` / `Loop.targetSpeed`. A pin must stay
 above command, so `promoteCommand` auto-clears it once command catches up (the vestigial
 `Exercise.targetTempo` is retained un-removed for migration but no longer written). The
-**back-off** tail (finishing below command on control, not the edge) is likewise controllable per
-exercise: a **Back off** switch (`Exercise.includeBackoff`, default on) toggles it, and when on its
-floor is a pinnable `Exercise.backoffTempoOverride: Int?` (additive optional, mirroring the reach
-pin) read through the effective `Exercise.backoffTempo` with its own **Reset to auto** — the
-`CommandRamp` takes an optional `backoffOverride` and otherwise derives the floor via `TempoStretch`. A new exercise picks a **time signature**
+**back-off** tail (finishing below command on control, not the edge) is likewise controllable on both
+exercises and loops: a **Back off** switch (`Exercise.includeBackoff` / `Loop.includeBackoff`, default
+on) toggles it, and when on its floor is a pinnable override (`Exercise.backoffTempoOverride: Int?` BPM
+/ `Loop.backoffSpeedOverride: Double?` ×, additive optionals mirroring the reach pin) with its own
+**Reset to auto** — the `CommandRamp` takes an optional `backoffOverride` (percent for loops) and
+otherwise derives the floor via `TempoStretch`. A new exercise picks a **time signature**
 (`NewExerciseSheet`, default 4/4) — also editable on an existing exercise from the run-setup nav
 bar — that drives the run click's accents + **count-in** length; a training run **counts you in**
 before the climb (honoring the Settings toggle/length, ADR 0052). The running readout is just the

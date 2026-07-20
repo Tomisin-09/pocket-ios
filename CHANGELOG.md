@@ -9,11 +9,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **A Red Moon cover on the lock screen.** Practising a song now shows the Red Moon crescent as its
   artwork on the lock screen and in Control Center, instead of a blank tile — your songs are your own
   local files with no cover art, so this gives every one a consistent home at that touchpoint.
-- **Turn the practice back-off on or off, and set its tempo.** An exercise's Practice Settings now has a
-  **Back off** switch (on by default): leave it on to finish each run eased *below* command tempo — on
-  clean control, not the edge — or turn it off to end at command. With it on, the **Back-off** tempo is
-  editable (with a **Reset to auto** to return to the derived floor), just like the reach. When it's off,
-  the back-up step control tidies itself away.
+- **Turn the practice back-off on or off, and set its tempo.** Practice Settings — for both **exercises**
+  and **loops** — now has a **Back off** switch (on by default): leave it on to finish each run eased
+  *below* command tempo — on clean control, not the edge — or turn it off to end at command. With it on,
+  the **Back-off** tempo is editable (with a **Reset to auto** to return to the derived floor), just like
+  the reach. When it's off, the back-up step control tidies itself away.
 - **Hear your saved chords.** A saved chord's detail screen now has a **Hear** button that sounds the
   voicing so you can check it by ear — a clean synthesized pitch reference (no downloads, all on-device).
   This is the first slice of app-wide *Hear*; sounding scales, arpeggios and intervals rides the same

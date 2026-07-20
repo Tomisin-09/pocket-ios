@@ -265,6 +265,12 @@ final class Loop {
     /// (ADR 0078). Defaults to `LoopCommandRamp.defaultDwellIntervals` (4) so loops saved before
     /// this field migrate cleanly via SwiftData lightweight migration, matching the old fixed value.
     var rampDwellIntervals: Int = 4
+    /// Whether the ramp **backs off** below command after the summit (user-testing note 6; loop
+    /// counterpart of `Exercise.includeBackoff`). Declaration default → additive migration.
+    var includeBackoff: Bool = true
+    /// A pinned **backoff floor** (× of original), or `nil` to derive it (note 6). Additive optional,
+    /// mirroring `targetSpeedOverride`.
+    var backoffSpeedOverride: Double?
 
     /// Manual identity-colour override: an index into `PocketColor.loopPalette`, or
     /// `nil` to derive the colour from start-order (ADR 0023 / 0031). Optional, so
@@ -380,16 +386,14 @@ final class Loop {
         if let pinned = targetSpeedOverride, pinned <= command { targetSpeedOverride = nil }
     }
 
-    /// The command-anchored **training ramp** this loop prescribes (ADR 0046 Phase B) — warm up
-    /// from `speed`, dwell at the owned command, summit at the derived reach, back off — in percent
-    /// units, intervals counted in loop passes. Built from the saved ramp-shape fields so the
-    /// routine **player** (ADR 0066, slice 3) can run a loop block's stored recipe with no setup UI,
-    /// exactly as `Exercise.ramp` does for a drill. `LoopRunView` still builds its own from live edit
-    /// state; this is the saved-recipe seam. Pure and UI-free.
+    /// The command-anchored **training ramp** this loop prescribes (ADR 0046 Phase B) — warm up →
+    /// dwell at command → summit at the reach → back off, in percent units, from the saved ramp-shape
+    /// fields so the routine player (ADR 0066) runs a stored recipe with no setup UI. Pure/UI-free.
     var ramp: CommandRamp {
         LoopCommandRamp.make(loop: self, warmupSteps: rampWarmupSteps,
                              dwellIntervals: max(1, rampDwellIntervals),
                              reachSteps: rampReachSteps, backoffSteps: rampBackoffSteps,
+                             includeBackoff: includeBackoff, backoffOverride: backoffSpeedOverride,
                              repsPerStep: max(1, rampRepsPerStep))
     }
 }

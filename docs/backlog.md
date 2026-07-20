@@ -29,11 +29,14 @@ have a home live in their own sections (cross-referenced); this is the index.
   2026-07-20).** A **Back off** switch (`Exercise.includeBackoff`, default on) in Practice Settings,
   and when on an editable **Back-off** floor (`Exercise.backoffTempoOverride: Int?`, additive optional
   mirroring ADR 0075's reach pin; `CommandRamp.backoffOverride`; reset-to-auto) with the back-up step
-  row gated off when disabled. Ramp math unit-tested (4 new `CommandRampTests`). **Follow-up:** the
-  **loop** path (LoopRunView / LoopSettingsPanel) still hardcodes `includeBackoff: true` — mirror the
-  same toggle+pin there for parity. **Gate:** the new optional field is a live schema change — additive
-  and proven-safe (same shape as the shipped `targetTempoOverride`), but **device-verify** the migration
-  against a pre-field store before merge (SwiftData migration-crash lesson).
+  row gated off when disabled. Ramp math unit-tested (4 new `CommandRampTests`). **Loop parity DONE
+  (pocket-159, 2026-07-20):** the loop path now mirrors it — new `Loop.includeBackoff` (default on) +
+  `Loop.backoffSpeedOverride: Double?` (× of original), threaded through `LoopCommandRamp.make`
+  (× → % conversion) and surfaced in `LoopSettingsPanel`; loop ramp tests added. **Gate:** the
+  **exercise** fields were device-verified on the 2026-07-20 run; the **loop** fields
+  (`Loop.includeBackoff` / `backoffSpeedOverride`) were added *after* that run, so they still want a
+  device launch against a pre-field store before merge — additive and proven-safe (same shape as the
+  shipped `targetSpeedOverride`), but unverified on device as of this writing.
 
 **Wave 1 — core loop feel (small ADRs, highest quality lift):**
 

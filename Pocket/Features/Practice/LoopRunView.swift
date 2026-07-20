@@ -38,6 +38,12 @@ struct LoopRunView: View {
     /// (ADR 0075). Seeded from `loop.targetSpeedOverride`, committed on Start / Save. Always kept
     /// above `command`; auto-cleared locally when command is nudged up to it, mirroring the model.
     @State var targetOverride: Int?
+    /// Whether the ramp backs off below command after the summit (user-testing note 6). Seeded from
+    /// `loop.includeBackoff`, committed on Start / Save. Default on.
+    @State var includeBackoff = true
+    /// A manually pinned **backoff floor** (% of original), or `nil` for the auto derivation (note 6).
+    /// Seeded from `loop.backoffSpeedOverride`, committed on Start / Save. Kept below `command`.
+    @State var backoffOverride: Int?
     /// The top-level "Practice Settings" disclosure — collapsed by default so the run screen opens on
     /// the summary + staircase (parity with the exercise run); expands to reveal tempos/reps/Steps.
     @State var showSettings = false
@@ -65,7 +71,8 @@ struct LoopRunView: View {
     var current: LoopSetupState {
         LoopSetupState(working: working, command: command, warmupSteps: steps,
                        reachSteps: reachSteps, backoffSteps: backoffSteps, repsPerStep: repsPerStep,
-                       dwell: dwell, targetOverride: targetOverride)
+                       dwell: dwell, targetOverride: targetOverride,
+                       includeBackoff: includeBackoff, backoffOverride: backoffOverride)
     }
     private var isDirty: Bool { baseline.map { $0 != current } ?? false }
 
@@ -98,6 +105,13 @@ struct LoopRunView: View {
     /// (not private) so the `+Actions` extension can snapshot it for the post-run offer (ADR 0082).
     var reach: Int { targetOverride ?? autoReach }
 
+    /// The **auto** backoff floor (% of original) for the current tempos — the reset-to-auto fallback
+    /// (user-testing note 6). The same percent-space derivation `CommandRamp` uses when unpinned.
+    var autoBackoff: Int { TempoStretch.backoffBPM(command: command, target: reach, floor: working) }
+
+    /// The **effective** backoff floor (% of original): a pinned override when set, else the auto value.
+    var backoff: Int { backoffOverride ?? autoBackoff }
+
     /// The warm-up step size (percent points) the chosen number of intermediate stops implies.
     private var stepPercent: Int {
         CommandRamp.warmupStepBPM(working: working, command: command, intermediateSteps: steps)
@@ -108,8 +122,8 @@ struct LoopRunView: View {
     var routine: CommandRamp {
         CommandRamp(working: working, command: command, target: reach, stepBPM: stepPercent,
                     intervalCount: max(1, repsPerStep), unit: .bars,
-                    dwellIntervals: max(1, dwell), includeBackoff: true,
-                    reachSteps: reachSteps, backoffSteps: backoffSteps)
+                    dwellIntervals: max(1, dwell), includeBackoff: includeBackoff,
+                    reachSteps: reachSteps, backoffSteps: backoffSteps, backoffOverride: backoffOverride)
     }
 
     private var hasReach: Bool { reach > command }
@@ -236,6 +250,9 @@ struct LoopRunView: View {
             onStepCommand: { adjustCommand(by: $0) }, onTypeCommand: { setCommand($0) },
             onStepReach: { adjustReach(by: $0) }, onTypeReach: { setReach($0) },
             onResetReach: resetReach,
+            includeBackoff: $includeBackoff, backoff: backoff, backoffIsCustom: backoffOverride != nil,
+            onStepBackoff: { adjustBackoff(by: $0) }, onTypeBackoff: { setBackoff($0) },
+            onResetBackoff: resetBackoff,
             repsPerStep: $repsPerStep, repsRange: Self.repsRange,
             stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
             backoffSteps: $backoffSteps, dwell: $dwell, dwellCaption: dwellCaption,

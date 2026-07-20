@@ -25,6 +25,16 @@ struct LoopSettingsPanel: View {
     let onTypeReach: (Int) -> Void
     let onResetReach: () -> Void
 
+    // Back-off (user-testing note 6) — an on/off for the tail below command, with an editable floor.
+    /// Whether the ramp backs off below command after the summit. Default on.
+    @Binding var includeBackoff: Bool
+    let backoff: Int
+    /// Whether the backoff floor is a manual pin (vs the auto derivation) — drives caption + reset.
+    let backoffIsCustom: Bool
+    let onStepBackoff: (Int) -> Void
+    let onTypeBackoff: (Int) -> Void
+    let onResetBackoff: () -> Void
+
     // Reps per step + the nested Steps controls.
     @Binding var repsPerStep: Int
     let repsRange: ClosedRange<Int>
@@ -51,7 +61,8 @@ struct LoopSettingsPanel: View {
                                      reachSteps: $reachSteps, backoffSteps: $backoffSteps,
                                      dwell: $dwell, dwellCaption: dwellCaption,
                                      warmupStepBPM: warmupStepBPM, reach: reach,
-                                     hasReach: hasReach, tint: tint, stepUnit: "%", onChange: onToggle)
+                                     hasReach: hasReach, hasBackoff: includeBackoff,
+                                     tint: tint, stepUnit: "%", onChange: onToggle)
             }
         }
     }
@@ -98,13 +109,16 @@ struct LoopSettingsPanel: View {
             EditableTempoRow(label: "Reach", caption: reachCaption, value: reach, tint: tint,
                              onStep: onStepReach, onType: onTypeReach)
             if reachIsCustom {
-                Button(action: onResetReach) {
-                    Label("Reset to auto", systemImage: "arrow.uturn.backward")
-                        .font(.futura(.caption)).foregroundStyle(tint)
+                resetButton(action: onResetReach, hint: "Clear the custom reach; use the auto-derived goal")
+            }
+            backoffToggle
+            if includeBackoff {
+                EditableTempoRow(label: "Back-off", caption: backoffCaption, value: backoff,
+                                 tint: tint, onStep: onStepBackoff, onType: onTypeBackoff)
+                if backoffIsCustom {
+                    resetButton(action: onResetBackoff,
+                                hint: "Clear the custom back-off; use the auto-derived floor")
                 }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .accessibilityHint("Clear the custom reach; use the auto-derived goal")
             }
         }
     }
@@ -113,6 +127,37 @@ struct LoopSettingsPanel: View {
     /// stretch above command; a pin reads "custom" so the override state is legible at a glance.
     private var reachCaption: String {
         reachIsCustom ? "custom goal (% of original)" : "auto · +\(max(0, reach - command))%"
+    }
+
+    /// The on/off for the back-off tail (user-testing note 6). Off ⇒ the run ends at command (or the
+    /// reach) instead of easing down; on ⇒ the editable floor below appears.
+    private var backoffToggle: some View {
+        Toggle(isOn: $includeBackoff) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Back off")
+                    .font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
+                Text("finish below command, on control not the edge")
+                    .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
+            }
+        }
+        .tint(tint)
+        .accessibilityHint("Ease the tempo down after the summit to finish on clean control")
+    }
+
+    /// Shared reset-to-auto affordance for the pinned reach / back-off rows.
+    private func resetButton(action: @escaping () -> Void, hint: String) -> some View {
+        Button(action: action) {
+            Label("Reset to auto", systemImage: "arrow.uturn.backward")
+                .font(.futura(.caption)).foregroundStyle(tint)
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .accessibilityHint(hint)
+    }
+
+    /// The Back-off caption: custom-vs-auto, mirroring `reachCaption` (% of original).
+    private var backoffCaption: String {
+        backoffIsCustom ? "custom floor (% of original)" : "auto · −\(max(0, command - backoff))%"
     }
 
     /// How many loop passes each step holds before the tempo bumps (ADR 0046 Phase B).
