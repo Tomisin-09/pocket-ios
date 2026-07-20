@@ -95,8 +95,10 @@ struct WaveformView: View {
     /// Pinch-to-zoom: the visible window of the song (song fractions). Both the
     /// rendering and the touch→song-fraction mapping go through it.
     let viewport: (start: Double, end: Double)
-    /// Pinch magnification → set the new zoom span (visible fraction of the song).
-    let onSetZoomSpan: (Double) -> Void
+    /// Pinch magnification → set the new zoom span (visible fraction of the song) and the
+    /// **focal screen fraction** (pinch centre, `0…1` across the visible waveform), so the
+    /// zoom anchors to the spot under the fingers rather than the playhead (ADR 0098).
+    let onSetZoom: (_ span: Double, _ focalScreenFraction: Double) -> Void
 
     /// "Set the 1 on the waveform" (ADR 0024): the downbeat fraction being placed, or
     /// `nil` when not in downbeat mode. When set, a labelled "1" handle is drawn here

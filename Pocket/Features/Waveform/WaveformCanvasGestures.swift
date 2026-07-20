@@ -30,7 +30,10 @@ extension WaveformView {
                 pendingGrab = nil
                 let base = pinchBaseSpan ?? (viewport.end - viewport.start)
                 pinchBaseSpan = base
-                onSetZoomSpan(WaveformGesture.clampSpan(base / value.magnification))
+                // Anchor the zoom to the pinch centre (`startAnchor.x`, a 0…1 position on the
+                // visible waveform) so the spot under the fingers holds still (ADR 0098).
+                onSetZoom(WaveformGesture.clampSpan(base / value.magnification),
+                          Double(value.startAnchor.x))
             }
             // Leave `didPinch` set — magnify.onEnded fires *before* drag.onEnded, so
             // the drag uses it to swallow the trailing phantom tap, then clears it.

@@ -246,4 +246,52 @@ final class WaveformGestureTests: XCTestCase {
         XCTAssertNil(WaveformGesture.snap(0.50001, to: [0.5], tolerance: 0))
         XCTAssertEqual(WaveformGesture.snap(0.5, to: [0.5], tolerance: 0), 0.5)
     }
+
+    // MARK: - Focal-point zoom (ADR 0098)
+
+    func testZoomAnchoredKeepsFocalPointFixedOnScreen() {
+        // Window 0.40…0.60 (span 0.20), pinch centred a quarter across → focal song 0.45.
+        // Zoom in to span 0.10; the new start must keep 0.45 a quarter of the way in: 0.425.
+        let start = WaveformGesture.zoomAnchored(baseStart: 0.40, baseSpan: 0.20,
+                                                 focalScreenFraction: 0.25, newSpan: 0.10)
+        XCTAssertEqual(start, 0.425, accuracy: 1e-9)
+        // The focal song fraction still lands at the same screen fraction under the new span.
+        let screen = WaveformGesture.screenFraction(songFraction: 0.45,
+                                                    viewport: (start, start + 0.10))
+        XCTAssertEqual(screen, 0.25, accuracy: 1e-9)
+    }
+
+    func testZoomAnchoredIsStableAcrossFrames() {
+        // Recomputing from the already-anchored viewport each frame preserves the focal song,
+        // so a second zoom step from the first result keeps it fixed (no drift).
+        let step1 = WaveformGesture.zoomAnchored(baseStart: 0.40, baseSpan: 0.20,
+                                                 focalScreenFraction: 0.25, newSpan: 0.10)
+        let step2 = WaveformGesture.zoomAnchored(baseStart: step1, baseSpan: 0.10,
+                                                 focalScreenFraction: 0.25, newSpan: 0.05)
+        let screen = WaveformGesture.screenFraction(songFraction: 0.45,
+                                                    viewport: (step2, step2 + 0.05))
+        XCTAssertEqual(screen, 0.25, accuracy: 1e-9)
+    }
+
+    func testZoomAnchoredClampsAtSongStart() {
+        // Zooming out around a focal point near the head would push start negative
+        // (focal song 0.05 wants to sit mid-screen under a 0.30 span → −0.10) — clamps to 0.
+        let start = WaveformGesture.zoomAnchored(baseStart: 0.0, baseSpan: 0.10,
+                                                 focalScreenFraction: 0.5, newSpan: 0.30)
+        XCTAssertEqual(start, 0, accuracy: 1e-9)
+    }
+
+    func testZoomAnchoredClampsAtSongEnd() {
+        // Near the tail, start can't exceed 1 − span.
+        let start = WaveformGesture.zoomAnchored(baseStart: 0.85, baseSpan: 0.15,
+                                                 focalScreenFraction: 0.95, newSpan: 0.20)
+        XCTAssertEqual(start, 0.80, accuracy: 1e-9)
+    }
+
+    func testZoomOutToWholeSongAnchorsAtZero() {
+        // Zooming fully out (span 1) can only sit at 0 regardless of focal point.
+        let start = WaveformGesture.zoomAnchored(baseStart: 0.30, baseSpan: 0.20,
+                                                 focalScreenFraction: 0.5, newSpan: 1.0)
+        XCTAssertEqual(start, 0, accuracy: 1e-9)
+    }
 }

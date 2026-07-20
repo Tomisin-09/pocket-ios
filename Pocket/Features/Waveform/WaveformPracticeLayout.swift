@@ -99,7 +99,7 @@ struct PracticeCockpit<Header: View>: View {
                      onSelectEnded: model.endDragSelection,
                      onSelectCancelled: model.cancelDragSelection,
                      viewport: model.viewport,
-                     onSetZoomSpan: model.setZoomSpan,
+                     onSetZoom: model.setZoom,
                      downbeatDraft: model.downbeatDraft,
                      onDownbeatMove: model.moveDownbeatDraft,
                      onDownbeatEnded: model.endDownbeatDrag,

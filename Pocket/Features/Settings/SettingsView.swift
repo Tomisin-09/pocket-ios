@@ -20,6 +20,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.transportLoopOnLeft) private var transportLoopOnLeft = false
     @AppStorage(AppSettings.Key.waveformMinimapVisible) private var waveformMinimapVisible = true
     @AppStorage(AppSettings.Key.waveformMarkerLabels) private var waveformMarkerLabels = true
+    @AppStorage(AppSettings.Key.zoomFollowsPlayhead) private var zoomFollowsPlayhead = false
 
     var body: some View {
         Form {
@@ -88,6 +89,9 @@ struct SettingsView: View {
                 }
                 Toggle(isOn: $waveformMarkerLabels) {
                     FieldInfoLabel(title: "Show marker labels", info: SettingsInfo.markerLabels)
+                }
+                Toggle(isOn: $zoomFollowsPlayhead) {
+                    FieldInfoLabel(title: "Zoom follows playhead", info: SettingsInfo.zoomFollowsPlayhead)
                 }
             }
 
@@ -165,6 +169,9 @@ enum SettingsInfo {
     static let markerLabels =
         "Floats a marker's name over the timeline as you play up to it. Off keeps labels in the "
         + "Markers panel only."
+    static let zoomFollowsPlayhead =
+        "Pinch-zoom normally keeps the spot under your fingers still. Turn this on to have the "
+        + "window re-center on the playhead as you zoom instead."
     static let animateExercises =
         "A moving highlight walks the exercise in time — the notes on the fretboard, the strokes on "
         + "the strum lane. Always off when your device has Reduce Motion on."
