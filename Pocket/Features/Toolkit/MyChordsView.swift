@@ -7,10 +7,10 @@ import SwiftUI
 /// the existing `CustomChordSheet` placer in "Save" mode (ADR 0096 — confirming keeps it here rather
 /// than inserting into a progression).
 ///
-/// The in-context menu section (`SavedChordsSheet`, ADR 0095) **stays** — that is where the library is
-/// *reused inline* in an exercise; this screen is where it is *managed*. Both read the same `@Query`.
-/// *Hear* (block-chord tone preview, ADR 0097 Slice 1) lives on the chord detail; the identifier
-/// reading is a later Toolkit slice (ADR 0096 D4).
+/// This screen is the **management home** for saved chords (ADR 0103 D5) — the chord picker's My chords
+/// group is insert-only, so renaming and deleting live here. (The old inline `SavedChordsSheet` manager
+/// was removed with the picker redesign.) *Hear* (block-chord tone preview, ADR 0097 Slice 1) lives on
+/// the chord detail; the identifier reading is a later Toolkit slice (ADR 0096 D4).
 struct MyChordsView: View {
     @Environment(\.modelContext) private var modelContext
 

@@ -495,8 +495,10 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
   and the encoded voicing's own name in step) and **Delete** (pops back). **+** presents the existing
   `CustomChordSheet` in "Save" mode — a new optional `confirmTitle` (default `"Insert"`) reads `"Save"`
   here so confirming *keeps* the shape rather than *inserting* it into a progression; the dedupe reuses
-  the pure `SavedChord.isAlreadySaved`. The in-context `SavedChordsSheet` menu **stays** for inline reuse
-  inside an exercise — both surfaces read the same `@Query`, so this screen *manages*, the menu *reuses*.
+  the pure `SavedChord.isAlreadySaved`. The chord picker's **My chords** group reuses the same library
+  inline inside an exercise (ADR 0103); both surfaces read the same `@Query`, so this screen *manages*
+  (rename/delete) while the picker *reuses* (tap-to-insert). The old inline `SavedChordsSheet` manager was
+  removed with the picker redesign.
 - **Glossary** (`GlossaryView`) is a searchable, area-grouped static terms sheet over the pure
   `GlossaryTerm` catalog (`GlossaryTerm.all`). Filtering is the pure `matches(_:)`/`matching(_:)` (case-
   and diacritic-insensitive over term **and** definition), unit-tested. Definitions state objective
@@ -515,9 +517,9 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   voicing stored as an encoded `Data` blob (`voicingData`, decoded via `voicing`) plus a primitive
   `name` column for sorting, deliberately not a stored `ChordVoicing`/enum attribute (the payload-as-blob
   pattern that dodges the migration footgun). Adding it is an additive schema change (new table; nothing
-  existing migrates). Surfaced as a **My chords** section in the chord editor's Add/swap menus + the
-  `SavedChordsSheet` list (tap-to-insert, swipe-to-delete); saved from the placer's **Save to My chords**;
-  and **managed** on the Toolkit hub's `MyChordsView` (grid + rename/delete, ADR 0096 — see above).
+  existing migrates). Surfaced as the **My chords** group in the chord picker's Insert grid (ADR 0103,
+  tap-to-insert); saved from the placer's **Save to My chords**; and **managed** on the Toolkit hub's
+  `MyChordsView` (grid + rename/delete, ADR 0096 — see above).
 - **Song metadata editing** (`Features/Library/SongEditSheet.swift`, ADR 0012): the
   editable counterpart to the read-only `SongDetailsSheet` (the practice screen's
   `SongInfoPanel` was removed in ADR 0042; song facts now live only in the details sheet).

@@ -193,3 +193,17 @@ extension ChordGrip {
     /// (shells / extensions / altered) lives behind the custom placer, not here.
     static let curated: [ChordGrip] = tier1 + tier2
 }
+
+// MARK: - Browse picture (ADR 0103 — the chord picker's Insert grid)
+
+extension ChordGrip {
+    /// A representative voicing for *browsing* a movable shape in the picker's Insert grid (ADR 0103):
+    /// the grip barred at **fret 5**, a clean mid-neck picture of the shape. The chip is deliberately
+    /// root-agnostic — it names the quality + family, not this note — because the player chooses the real
+    /// root on tap (`voicing(rootPitchClass:)`). Fret 5 is `openRoot + 5`, so an E-shape draws at A and an
+    /// A-shape at D, both a full five-string window below the nut region.
+    var browseVoicing: ChordVoicing {
+        let openRoot = GuitarScale.pitchClass(string: rootString.rawValue, fret: 0)
+        return voicing(rootPitchClass: (openRoot + 5) % 12)
+    }
+}
