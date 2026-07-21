@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **The chord picker is search-first.** Adding or swapping a chord in a progression now opens a picker
+  you can **search** ("maj9", "minor", "e-shape") instead of scrolling one long menu. It splits **Insert**
+  (browse existing chords) from **Build** (make a new one), and shows chords as **mini diagrams** in three
+  groups — **My chords** first, then **Movable shapes** (common barre grips — tap one and pick any root),
+  then **Open shapes**. Managing saved chords lives in **Toolkit → My chords**.
 - **The Home screen is grouped into sections.** Instead of one long list of destinations, Home now sorts
   them under headings — **Practice** (Practice · Metronome) and **Your stuff** (Song library · Journal ·
   Toolkit) — so it stays easy to scan as more places are added.

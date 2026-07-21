@@ -62,9 +62,9 @@ have a home live in their own sections (cross-referenced); this is the index.
   completion screen (`RoutineBlockDoneView`) now tags its note with the 🎯/⚡️/🧗/📝/🎬 kinds
   (was a plain note), threaded through all three run hosts — feeds richer, filterable entries into
   the space. See *Journal authoring* / *Notes & journal*.
-- **Note 12 — chord picker redesign.** Search-first, Insert/Build split, diagram
-  grid, movable barre shapes browsable in Insert. Full write-up + interactive mockup
-  under *Chords & theory*. **Needs its own ADR.**
+- ~~**Note 12 — chord picker redesign.**~~ **DONE (pocket-165, ADR 0103).** Search-first
+  `ChordPickerSheet`, Insert/Build split, diagram grid, movable barre shapes browsable in Insert
+  (tap → root menu). Replaced the flat insert `Menu`; `SavedChordsSheet` removed (management → Toolkit).
 - **Note 7 — ear training as "loops, re-surfaced."** Reframe ear training as
   listening/internalising/singing/transcribing **the loops** (loops under a different
   surface), not a generic interval trainer. Stays clear of ADR 0070 as long as
@@ -579,7 +579,11 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   rejections), (2) **audition candidates on device**, (3) keep or revert. A few MB of bundle weight.
   Deferred, not blocking v1.
 
-- **Chord picker redesign — search-first, Insert/Build split (user-testing Note 12, logged 2026-07-20).**
+- ~~**Chord picker redesign — search-first, Insert/Build split (user-testing Note 12, logged 2026-07-20).**~~
+  **DONE (pocket-165, ADR 0103).** Shipped as `ChordPickerSheet`: search field over an Insert grid
+  (My chords → Movable shapes → Open shapes) + a Build segment (Movable/Custom cards); movable chips tap →
+  root menu → placed grip; `SavedChordsSheet` removed, management lives in Toolkit → My chords (ADR 0103 D5).
+  Original write-up kept below for record.
   From a user-testing pass: the chord-**insert** surface felt **dense** and made saved chords **hard to
   find**. Root cause is structural — `voicingMenu`/`addMenu` in
   [`ChordProgressionEditor.swift`](../Pocket/Features/Practice/ChordProgressionEditor.swift) are a single

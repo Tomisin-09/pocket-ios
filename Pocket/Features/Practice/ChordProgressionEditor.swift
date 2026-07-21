@@ -6,25 +6,26 @@ import SwiftUI
 /// helpers (append / replace / re-beat / remove, T5) — every control just calls one and writes the
 /// result back through the binding, so there's no editing state to keep in sync.
 ///
-/// Each row shows the voicing's diagram, a menu to swap it for any library shape, a stepper for its
-/// hold in beats, and a remove control (never below one chord). "Add chord" appends from the same
-/// library. Buttons carry `.borderless` so a tap hits only its own control, not every button in the
-/// Form row (the sibling-button gotcha, learned on the fretboard editors).
+/// Each row shows the voicing's diagram, a button to swap it (opening the `ChordPickerSheet`), a stepper
+/// for its hold in beats, and a remove control (never below one chord). "Add chord" appends via the same
+/// picker. Buttons carry `.borderless` so a tap hits only its own control, not every button in the Form
+/// row (the sibling-button gotcha, learned on the fretboard editors).
+///
+/// The flat insert `Menu` this used to carry was replaced by the search-first picker (ADR 0103) — both
+/// the Add button and a row's chord-name button now present `ChordPickerSheet`, which owns the Insert
+/// grid + the Movable / Custom authoring sub-sheets.
 struct ChordProgressionEditor: View {
     @Binding var progression: ChordProgression
 
-    /// Which slot a presented authoring sheet writes into — a new chord, or a swap of an existing one.
-    /// Both the movable grip (M2) and the custom placer (M4) emit a plain `ChordVoicing` mixed inline
-    /// with the open-shape library.
-    @State private var movableTarget: ChordSlot?
-    @State private var customTarget: ChordSlot?
-
-    /// Which slot a pick from the "My chords" manager writes into (ADR 0095 S4).
-    @State private var savedChordsTarget: ChordSlot?
+    /// Which slot the picker writes into — a new chord (`.add`) or a swap of an existing one
+    /// (`.replace`). The picker emits a plain `ChordVoicing`, whatever the source (library, saved,
+    /// movable grip, or the custom placer).
+    @State private var pickerTarget: ChordSlot?
 
     @Environment(\.modelContext) private var modelContext
-    /// The player's saved custom chords, offered for one-tap reuse in the menus. Sorted by a primitive
-    /// column (never an optional `#Predicate` — `docs/swiftdata-gotchas.md`).
+    /// The player's saved custom chords — read only to de-dupe when the custom placer saves one (the
+    /// picker surfaces the library itself). Sorted by a primitive column (never an optional `#Predicate`
+    /// — `docs/swiftdata-gotchas.md`).
     @Query(sort: \SavedChord.name) private var savedChords: [SavedChord]
 
     private enum ChordSlot: Identifiable {
@@ -36,6 +37,7 @@ struct ChordProgressionEditor: View {
             case .replace(let index): return "replace-\(index)"
             }
         }
+        var isReplace: Bool { if case .replace = self { return true } else { return false } }
     }
 
     var body: some View {
@@ -44,18 +46,13 @@ struct ChordProgressionEditor: View {
                 changeRow(index: index, change: change)
                 if index < progression.changeCount - 1 { Divider() }
             }
-            addMenu
+            addButton
         }
         .padding(.vertical, 4)
-        .sheet(item: $movableTarget) { target in
-            MovableChordSheet { voicing in apply(voicing, to: target) }
-        }
-        .fullScreenCover(item: $customTarget) { target in
-            CustomChordSheet(onInsert: { voicing in apply(voicing, to: target) },
-                             onSave: save)
-        }
-        .sheet(item: $savedChordsTarget) { target in
-            SavedChordsSheet { voicing in apply(voicing, to: target) }
+        .sheet(item: $pickerTarget) { target in
+            ChordPickerSheet(onInsert: { apply($0, to: target) },
+                             onSave: save,
+                             title: target.isReplace ? "Swap chord" : "Add a chord")
         }
     }
 
@@ -80,7 +77,7 @@ struct ChordProgressionEditor: View {
             ChordDiagramView(voicing: change.voicing, tint: PocketColor.practice)
                 .frame(width: 56)
             VStack(alignment: .leading, spacing: 8) {
-                voicingMenu(index: index, current: change.voicing)
+                voicingButton(index: index, current: change.voicing)
                 // The reverse-lookup "Looks like …" caption was removed here (user-testing note 10,
                 // 2026-07-20): it crowded the row and its reading is still available on the movable
                 // sheet (`ChordIdentityCaption` in `MovableChordSheet`) and the identifier panel.
@@ -97,28 +94,11 @@ struct ChordProgressionEditor: View {
         }
     }
 
-    private func voicingMenu(index: Int, current: ChordVoicing) -> some View {
-        Menu {
-            Button {
-                movableTarget = .replace(index)
-            } label: {
-                Label("Movable shape…", systemImage: "arrow.left.and.right")
-            }
-            Button {
-                customTarget = .replace(index)
-            } label: {
-                Label("Custom chord…", systemImage: "square.and.pencil")
-            }
-            Divider()
-            savedChordsSection(
-                insert: { progression = progression.replacingVoicing(at: index, with: $0) },
-                manageTarget: .replace(index)
-            )
-            ForEach(ChordVoicing.library) { voicing in
-                Button(voicing.name) {
-                    progression = progression.replacingVoicing(at: index, with: voicing)
-                }
-            }
+    /// The chord's name, tapped to open the picker on this slot for a swap (ADR 0103). The chevron reads
+    /// as "this opens a chooser".
+    private func voicingButton(index: Int, current: ChordVoicing) -> some View {
+        Button {
+            pickerTarget = .replace(index)
         } label: {
             HStack(spacing: 4) {
                 Text(current.name).font(.futura(.subheadline, weight: .semibold))
@@ -127,6 +107,7 @@ struct ChordProgressionEditor: View {
             .foregroundStyle(PocketColor.practice)
         }
         .buttonStyle(.borderless)
+        .accessibilityLabel("Swap chord \(current.name)")
     }
 
     private func beatsStepper(index: Int, change: ChordChange) -> some View {
@@ -140,52 +121,15 @@ struct ChordProgressionEditor: View {
         }
     }
 
-    private var addMenu: some View {
-        Menu {
-            Button {
-                movableTarget = .add
-            } label: {
-                Label("Movable shape…", systemImage: "arrow.left.and.right")
-            }
-            Button {
-                customTarget = .add
-            } label: {
-                Label("Custom chord…", systemImage: "square.and.pencil")
-            }
-            Divider()
-            savedChordsSection(
-                insert: { progression = progression.appending($0) },
-                manageTarget: .add
-            )
-            ForEach(ChordVoicing.library) { voicing in
-                Button(voicing.name) { progression = progression.appending(voicing) }
-            }
+    private var addButton: some View {
+        Button {
+            pickerTarget = .add
         } label: {
             Label("Add chord", systemImage: "plus.circle.fill")
                 .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
         }
         .buttonStyle(.borderless)
-    }
-
-    /// The **My chords** section shared by the Add + swap menus (ADR 0095 S4) — one-tap insert of each
-    /// saved voicing above the curated library, plus a **Manage…** item opening the swipe-to-delete list.
-    /// Shown only when the library is non-empty.
-    @ViewBuilder
-    private func savedChordsSection(insert: @escaping (ChordVoicing) -> Void,
-                                    manageTarget: ChordSlot) -> some View {
-        if !savedChords.isEmpty {
-            Section("My chords") {
-                ForEach(savedChords) { saved in
-                    Button(saved.name) { insert(saved.voicing) }
-                }
-                Button {
-                    savedChordsTarget = manageTarget
-                } label: {
-                    Label("Manage…", systemImage: "slider.horizontal.3")
-                }
-            }
-        }
     }
 
     /// "4 beats" — or "4 beats · 1 bar" when the hold is a whole number of 4/4 bars, the way players
