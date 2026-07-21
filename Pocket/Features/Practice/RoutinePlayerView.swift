@@ -79,7 +79,8 @@ struct RoutinePlayerView: View {
     /// to the unit; the note writes a `JournalWriter` entry (which snapshots the unit's context); an
     /// accepted promote moves an exercise's command up to its reach (ADR 0079 §7). Each may be a no-op
     /// — an unchanged rating, an empty note, and an un-flipped toggle all commit nothing.
-    private func commitDone(_ stage: RoutineStage, mastery: Int?, note: String, promoteTo: Int?) {
+    private func commitDone(_ stage: RoutineStage, mastery: Int?, note: String, kind: EntryKind,
+                            promoteTo: Int?) {
         if let owner = owner(for: stage) {
             switch owner {
             case .exercise(let exercise):
@@ -89,7 +90,7 @@ struct RoutinePlayerView: View {
                 if let promoteTo { exercise.promoteCommand(to: promoteTo) }
             case .loop(let loop): loop.mastery = mastery
             }
-            _ = JournalWriter.add(to: owner, text: note, kind: .note, into: modelContext)
+            _ = JournalWriter.add(to: owner, text: note, kind: kind, into: modelContext)
             try? modelContext.save()
         }
         doneStage = nil
@@ -103,8 +104,8 @@ struct RoutinePlayerView: View {
                              initialMastery: mastery(for: stage),
                              promote: promoteConfig(for: stage),
                              isLast: player.upNext == nil,
-                             upNext: upNextDescriptor()) { mastery, note, promoteTo in
-            commitDone(stage, mastery: mastery, note: note, promoteTo: promoteTo)
+                             upNext: upNextDescriptor()) { mastery, note, kind, promoteTo in
+            commitDone(stage, mastery: mastery, note: note, kind: kind, promoteTo: promoteTo)
         }
         // The Done screen sits outside the per-block session chrome, so give it its own way out —
         // Continue advances, but a player mid-routine needs to be able to leave from here too.

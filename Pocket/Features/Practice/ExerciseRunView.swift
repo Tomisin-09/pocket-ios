@@ -202,8 +202,8 @@ struct ExerciseRunView: View {
             RoutineBlockDoneView(title: exercise.name.isEmpty ? "Exercise" : exercise.name,
                                  initialMastery: exercise.mastery,
                                  promote: completionPromoteConfig(finished),
-                                 isLast: true, upNext: nil) { mastery, note, promoteTo in
-                commitCompletion(mastery: mastery, note: note, promoteTo: promoteTo)
+                                 isLast: true, upNext: nil) { mastery, note, kind, promoteTo in
+                commitCompletion(mastery: mastery, note: note, kind: kind, promoteTo: promoteTo)
             }
         }
     }

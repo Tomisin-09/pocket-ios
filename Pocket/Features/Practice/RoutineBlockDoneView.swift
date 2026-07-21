@@ -50,10 +50,10 @@ struct RoutineBlockDoneView: View {
     /// The next **unit** coming up (rests skipped), shown so you know what you're continuing into
     /// (ADR 0071 R4b). `nil` when nothing playable remains.
     let upNext: UpNext?
-    /// Commit the optional mastery (unchanged ⇒ pass through), the optional note, and the command to
-    /// promote to — `nil` when the promote toggle is off, else the chosen (possibly custom) value
-    /// (ADR 0079 §7) — then advance.
-    let onContinue: (_ mastery: Int?, _ note: String, _ promoteTo: Int?) -> Void
+    /// Commit the optional mastery (unchanged ⇒ pass through), the optional note **and its kind tag**
+    /// (🎯/⚡️/🧗/📝/🎬 — defaults to `.note`, ADR 0100), and the command to promote to — `nil` when
+    /// the promote toggle is off, else the chosen (possibly custom) value (ADR 0079 §7) — then advance.
+    let onContinue: (_ mastery: Int?, _ note: String, _ kind: EntryKind, _ promoteTo: Int?) -> Void
 
     /// The bounds of the promote row's editable command value: where it defaults (the reach, clamped
     /// to the ceiling), and the range the ±/typed value may take — from just above the current command
@@ -77,13 +77,16 @@ struct RoutineBlockDoneView: View {
 
     @State private var mastery: Int?
     @State private var note = ""
+    /// The note's kind tag (ADR 0100) — defaults to a plain `.note`, so an untagged completion note
+    /// behaves exactly as before; a tap upgrades it to a goal/breakthrough/struggle/session.
+    @State private var kind: EntryKind = .note
     /// Whether to promote command on Continue — opt-in, default off (ADR 0079 §7).
     @State private var promoteOn = false
     /// The command value to promote to — defaults to the reach, editable within the config's bounds.
     @State private var promoteValue: Int
 
     init(title: String, initialMastery: Int?, promote: PromoteConfig? = nil, isLast: Bool, upNext: UpNext?,
-         onContinue: @escaping (_ mastery: Int?, _ note: String, _ promoteTo: Int?) -> Void) {
+         onContinue: @escaping (_ mastery: Int?, _ note: String, _ kind: EntryKind, _ promoteTo: Int?) -> Void) {
         self.title = title
         self.initialMastery = initialMastery
         self.promote = promote
@@ -99,6 +102,7 @@ struct RoutineBlockDoneView: View {
             VStack(spacing: 28) {
                 completionBeat
                 masteryTap
+                tagSelector
                 noteField
                 if let promote { promoteRow(promote) }
                 if let upNext { upNextCard(upNext) }
@@ -154,6 +158,49 @@ struct RoutineBlockDoneView: View {
                 .foregroundStyle(PocketColor.textSecondary.opacity(0.8))
                 .multilineTextAlignment(.center)
         }
+    }
+
+    /// The **kind tag** for the note (ADR 0100) — the same 🎯/⚡️/🧗/📝/🎬 vocabulary as the full
+    /// journal composer, so the moment right after a run can be captured as a breakthrough or a
+    /// struggle, not just a generic note. A horizontal row of selectable chips; `.note` is preselected,
+    /// so doing nothing keeps the old behaviour. Neutral — a label, never a verdict (ADR 0070).
+    private var tagSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Tag this")
+                .font(.futura(.footnote, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(EntryKind.pickerOrder) { option in
+                        tagChip(option)
+                    }
+                }
+                .padding(.horizontal, 1)   // keeps selected chips' stroke from clipping at the edges
+            }
+        }
+    }
+
+    /// One selectable kind chip. Selected reads in the kind's own tint (shared `KindChip.tint`);
+    /// unselected stays quiet so the row doesn't shout.
+    private func tagChip(_ option: EntryKind) -> some View {
+        let selected = option == kind
+        let tint = KindChip.tint(for: option)
+        return Button {
+            kind = option
+            haptic(.light)
+        } label: {
+            Text("\(option.emoji)  \(option.label)")
+                .font(.futura(.subheadline, weight: selected ? .semibold : .regular))
+                .foregroundStyle(selected ? tint : PocketColor.textSecondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(selected ? tint.opacity(0.18) : PocketColor.surfaceStandard))
+                .overlay(Capsule().stroke(selected ? tint : PocketColor.surfaceBorder, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(option.label)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     private var noteField: some View {
@@ -255,7 +302,7 @@ struct RoutineBlockDoneView: View {
 
     private var continueBar: some View {
         Button {
-            onContinue(mastery, note, promoteOn ? promoteValue : nil)
+            onContinue(mastery, note, kind, promoteOn ? promoteValue : nil)
         } label: {
             Label(isLast ? "Finish" : "Continue",
                   systemImage: isLast ? "flag.checkered" : "arrow.right")
@@ -274,5 +321,5 @@ struct RoutineBlockDoneView: View {
                          isLast: false,
                          upNext: .init(title: "A Minor Pentatonic",
                                        detail: "Command 92 → 98 BPM",
-                                       symbol: "point.topleft.down.curvedto.point.bottomright.up")) { _, _, _ in }
+                                       symbol: "point.topleft.down.curvedto.point.bottomright.up")) { _, _, _, _ in }
 }

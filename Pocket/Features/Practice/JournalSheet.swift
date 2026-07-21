@@ -68,7 +68,7 @@ struct JournalSheet: View {
                 NavigationLink {
                     JournalEntryEditor(entry: entry, onUpdate: onUpdate)
                 } label: {
-                    JournalEntryRow(entry: entry)
+                    JournalEntryRow(entry: entry, ownerLabel: nil)
                 }
             }
             .onDelete { offsets in
@@ -174,48 +174,6 @@ struct JournalSheet: View {
     }
 }
 
-// MARK: - Entry row
-
-/// One journal entry, **self-describing** by owner: a loop entry shows its mastery + command-tempo
-/// percent; an exercise entry shows its command BPM. Keyed off `entry.exercise` so the two
-/// snapshots are never rendered in the wrong units (ADR 0058).
-private struct JournalEntryRow: View {
-    let entry: JournalEntry
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                KindChip(kind: entry.kind)
-                Spacer(minLength: 0)
-                Text(entry.createdAt.formatted(date: .omitted, time: .shortened))
-                    .font(.pocketMono(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-            Text(entry.text)
-                .font(.futura(.subheadline))
-                .foregroundStyle(PocketColor.textPrimary)
-            snapshot
-        }
-        .padding(.vertical, 2)
-    }
-
-    /// The immutable context snapshot — where the owner's achievement stood at write time.
-    @ViewBuilder private var snapshot: some View {
-        if entry.exercise != nil {
-            Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry))
-                .font(.pocketMono(.caption))
-                .foregroundStyle(PocketColor.textSecondary)
-        } else {
-            HStack(spacing: 8) {
-                MasteryReadout(mastery: entry.masteryAtEntry)
-                Text("· \(LoopProgressFormat.percentLabel(entry.commandTempoAtEntry))")
-                    .font(.pocketMono(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-        }
-    }
-}
-
 // MARK: - Entry editor (push)
 
 private struct JournalEntryEditor: View {
@@ -283,33 +241,6 @@ private struct JournalEntryEditor: View {
                 }
                 .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-        }
-    }
-}
-
-// MARK: - Shared bits
-
-/// A small coloured pill for an entry's kind — emoji + label. The colour mapping lives here
-/// (presentation), keeping `EntryKind` itself UI-free and unit-testable.
-private struct KindChip: View {
-    let kind: EntryKind
-
-    var body: some View {
-        Text("\(kind.emoji)  \(kind.label)")
-            .font(.futura(.caption, weight: .semibold))
-            .foregroundStyle(tint)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Capsule().fill(tint.opacity(0.16)))
-    }
-
-    private var tint: Color {
-        switch kind {
-        case .goal: return .blue
-        case .breakthrough: return PocketColor.active
-        case .struggle: return .orange
-        case .note: return PocketColor.textSecondary
-        case .session: return .purple
         }
     }
 }
