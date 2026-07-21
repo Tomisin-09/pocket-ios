@@ -18,6 +18,14 @@ final class ToolkitUITests: XCTestCase {
 
         let toolkitCard = app.buttons["Toolkit, chords, scales and theory reference"]
         XCTAssertTrue(toolkitCard.waitForExistence(timeout: 5), "Toolkit card missing on Home")
+        // Toolkit is now the 5th home strip (Journal slots in 4th, ADR 0100), so it can start below the
+        // fold — scroll it into view before tapping rather than assuming it's on the first screen.
+        var swipes = 0
+        while !toolkitCard.isHittable && swipes < 6 {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(toolkitCard.isHittable, "Toolkit card not reachable by scrolling")
         toolkitCard.tap()
 
         // The hub pushed onto the home stack (ADR 0096 Slice 1).

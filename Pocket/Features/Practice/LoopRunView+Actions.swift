@@ -137,9 +137,9 @@ extension LoopRunView {
     /// (possibly custom) command percent — already clamped by the screen's stepper — so command moves
     /// there and a caught-up reach pin drops. Everything lands through the single write path
     /// (`persist`, ADR 0057); there's no following Start, so this *is* the commit.
-    func commitCompletion(mastery: Int?, note: String, promoteTo: Int?) {
+    func commitCompletion(mastery: Int?, note: String, kind: EntryKind, promoteTo: Int?) {
         loop.mastery = mastery
-        _ = JournalWriter.add(to: .loop(loop), text: note, kind: .note, into: modelContext)
+        _ = JournalWriter.add(to: .loop(loop), text: note, kind: kind, into: modelContext)
         if let promoteTo {
             command = promoteTo
             clearOverrideIfCaughtUp()

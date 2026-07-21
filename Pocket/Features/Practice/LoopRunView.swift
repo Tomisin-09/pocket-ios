@@ -197,8 +197,8 @@ struct LoopRunView: View {
             RoutineBlockDoneView(title: title,
                                  initialMastery: loop.mastery,
                                  promote: completionPromoteConfig(finished),
-                                 isLast: true, upNext: nil) { mastery, note, promoteTo in
-                commitCompletion(mastery: mastery, note: note, promoteTo: promoteTo)
+                                 isLast: true, upNext: nil) { mastery, note, kind, promoteTo in
+                commitCompletion(mastery: mastery, note: note, kind: kind, promoteTo: promoteTo)
             }
         }
     }

@@ -155,6 +155,17 @@ enum PocketColor {
     static let toolkitCardWash = Color("IndigoCardWash")
     static let toolkitCircleWash = Color("IndigoCircleWash")
 
+    /// **Journal** — the identity hue of the read-only practice-history space (the fifth home card,
+    /// slotted 4th, between Practice and Toolkit). A warm **gold** "notebook/ink" hue: personal and
+    /// reflective, deliberately set apart from the teal · plum · terracotta home triad and the
+    /// indigo reference hub, so the journal reads as its own place. Baked flat per appearance like
+    /// the other card hues (ADR 0062 lesson — not a shared opacity on `journal`). The gold also tints
+    /// the owner-attribution captions inside the space. No `journalCTA`: the journal is history,
+    /// never a filled transport CTA.
+    static let journal = Color("Gold")
+    static let journalCardWash = Color("GoldCardWash")
+    static let journalCircleWash = Color("GoldCircleWash")
+
     /// Full-opacity **CTA fill** for the Metronome/Practice primary transport buttons
     /// (Start/Pause/Resume; the run screens' big pill) and Home's "Start today's session".
     /// A deepened per-appearance fill (not the base hue at opacity) so the cream

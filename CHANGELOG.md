@@ -17,6 +17,16 @@ All notable changes to Pocket are documented here. Format loosely follows
   you want, anywhere.
 
 ### Added
+- **A Journal, all in one place.** A new **Journal** space — the fourth card on Home, in its own warm
+  gold — gathers everything you've written and recorded across your loops *and* exercises onto one
+  timeline: notes and practice takes together, grouped by day, newest first. Each item says what it's
+  about, and you can filter to just **Notes** or just **Takes**, **search** by song, exercise, template
+  or date, and flip the order **newest- or oldest-first**. It's a place to look back (takes play right
+  there); you still write and edit entries where you always have, on the loop or exercise itself.
+- **Tag your note right after a run.** The "Nice work" screen at the end of an exercise or routine block
+  now lets you tag the note — 🎯 Goal, ⚡️ Breakthrough, 🧗 Struggle, 📝 Note, 🎬 Session — instead of
+  only a plain note, so the way a run *felt* is captured at the truest moment and shows up, filterable,
+  in your Journal.
 - **A Red Moon cover on the lock screen.** Practising a song now shows the Red Moon crescent as its
   artwork on the lock screen and in Control Center, instead of a blank tile — your songs are your own
   local files with no cover art, so this gives every one a consistent home at that touchpoint.

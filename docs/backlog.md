@@ -54,10 +54,14 @@ have a home live in their own sections (cross-referenced); this is the index.
 
 **Wave 2 — new surfaces (ADR each, design-first):**
 
-- **Note 8 — journal entries tab.** A read-only surface, reachable from Home, that
-  aggregates all journal entries across loops + exercises. Mostly *surfacing* data
-  ADR 0069/0058 already store → modest lift, high payoff; **build first of the three.**
-  See *Journal authoring* / *Notes & journal*.
+- **Note 8 — journal entries tab. DONE (pocket-162, ADR 0100).** A read-only, cross-cutting
+  **Journal space** — the 4th Home card (warm-gold) — merging journal notes **and** takes across
+  loops + exercises on one day-grouped timeline (pure `JournalTimeline`), All/Notes/Takes filter,
+  gold owner captions; takes play in place, authoring stays on the owner. Scope grew from the
+  original "entries only" to entries + takes in design. **Folded in the same PR:** the post-run
+  completion screen (`RoutineBlockDoneView`) now tags its note with the 🎯/⚡️/🧗/📝/🎬 kinds
+  (was a plain note), threaded through all three run hosts — feeds richer, filterable entries into
+  the space. See *Journal authoring* / *Notes & journal*.
 - **Note 12 — chord picker redesign.** Search-first, Insert/Build split, diagram
   grid, movable barre shapes browsable in Insert. Full write-up + interactive mockup
   under *Chords & theory*. **Needs its own ADR.**

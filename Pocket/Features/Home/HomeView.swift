@@ -45,6 +45,7 @@ struct HomeView: View {
                         songLibraryCard
                         metronomeCard
                         practiceCard
+                        journalCard
                         toolkitCard
                     }
                     if !recentRoutines.isEmpty { recentRoutinesRail }
@@ -196,6 +197,24 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Toolkit, chords, scales and theory reference")
+    }
+
+    // MARK: - Journal card
+
+    /// The **Journal** space (ADR 0100) — the read-only practice-history destination that aggregates
+    /// notes + takes across loops and exercises. The 4th strip (between Practice and Toolkit), in its
+    /// own warm **gold** identity (`PocketColor.journal`), a fifth home hue kept clear of the
+    /// teal · plum · terracotta triad and the indigo reference hub.
+    private var journalCard: some View {
+        NavigationLink { JournalTabView() } label: {
+            HomeNavCard(icon: "book.closed.fill", title: "Journal",
+                        subtitle: "Your notes & practice takes",
+                        tint: PocketColor.journal,
+                        cardWash: PocketColor.journalCardWash,
+                        circleWash: PocketColor.journalCircleWash)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Journal, your notes and practice takes")
     }
 
     // MARK: - Metronome card
