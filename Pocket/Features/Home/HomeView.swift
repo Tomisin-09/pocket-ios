@@ -38,15 +38,22 @@ struct HomeView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    // The three navigation strips (songs / tool / content) read as one group,
-                    // so they sit tighter together than the 28-pt rhythm separating the home's
-                    // major sections.
-                    VStack(spacing: 10) {
-                        songLibraryCard
-                        metronomeCard
-                        practiceCard
-                        journalCard
-                        toolkitCard
+                    // The navigation strips are grouped into titled sections (ADR 0102) rather than
+                    // one flat run: hierarchy keeps the home calm as destinations accrue and gives a
+                    // new arrival a section to join instead of becoming a sixth same-weight peer.
+                    // Interim two-section split — Toolkit rides in "Your stuff" until Red Moon Oracle
+                    // ships, when Toolkit + Oracle break out into their own "Learn" section. Sections
+                    // breathe at the 20-pt rhythm; strips within a section stay tight at 10.
+                    VStack(alignment: .leading, spacing: 20) {
+                        HomeSection(title: "Practice") {
+                            practiceCard
+                            metronomeCard
+                        }
+                        HomeSection(title: "Your stuff") {
+                            songLibraryCard
+                            journalCard
+                            toolkitCard
+                        }
                     }
                     if !recentRoutines.isEmpty { recentRoutinesRail }
                 }

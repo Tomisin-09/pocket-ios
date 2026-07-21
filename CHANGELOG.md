@@ -6,6 +6,9 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **The Home screen is grouped into sections.** Instead of one long list of destinations, Home now sorts
+  them under headings — **Practice** (Practice · Metronome) and **Your stuff** (Song library · Journal ·
+  Toolkit) — so it stays easy to scan as more places are added.
 - **Pinch-to-zoom holds the spot under your fingers.** Zooming the practice waveform now anchors to
   where you pinch instead of jumping to the playhead, so the passage you're inspecting stays put as you
   zoom in and out. A new **Zoom follows playhead** toggle (Settings → Transport, off by default) brings

@@ -3,6 +3,28 @@ import SwiftUI
 /// The presentational cards for the home hub (`HomeView`), split out to keep the hub file under the
 /// 400-line limit. Each is a small, self-contained view; the hub owns their data and navigation.
 
+/// One titled **home section** (ADR 0102): an uppercase eyebrow header over a stack of nav strips. The
+/// home's destinations used to sit in one flat run of same-weight, one-hue-each strips; once that hit
+/// five it read as clutter and left no calm slot for a sixth (Red Moon Oracle). Grouping restores
+/// hierarchy so new destinations join a *section* rather than becoming another peer strip. The header
+/// carries the `.isHeader` trait so VoiceOver announces the grouping too. The owning strips (with their
+/// `NavigationLink`s + accessibility labels) are passed in unchanged by the hub.
+struct HomeSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title.uppercased())
+                .font(.futura(.caption, weight: .semibold))
+                .tracking(1.4)
+                .foregroundStyle(PocketColor.textSecondary)
+                .accessibilityAddTraits(.isHeader)
+            content
+        }
+    }
+}
+
 /// One home **navigation strip** — the shared chrome behind the Song library / Metronome / Practice /
 /// Toolkit rows: an accent glyph in a washed circle, a title + one-line subtitle, and a chevron, on a
 /// washed rounded card. The four rows are visually identical bar their hue and copy, so they route
