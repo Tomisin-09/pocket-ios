@@ -110,10 +110,18 @@ extension WaveformPracticeModel {
     }
 
     /// A/B `handle` release — snap the moved edge to a nearby marker / loop boundary
-    /// (ADR 0021), then re-arm the engine loop to the new span (no playhead yank).
-    func endABHandle(_ handle: WaveformGesture.Handle) {
+    /// (ADR 0021), then re-arm the engine loop to the new span (no playhead yank). When
+    /// range-editing a saved loop the snap is **neighbour-aware** (ADR 0099): a facing
+    /// neighbour edge yields in a tight gap. `snapping: false` (a long-press turned snap off
+    /// mid-drag) skips the catch entirely for arbitrary free placement.
+    func endABHandle(_ handle: WaveformGesture.Handle, snapping: Bool = true) {
         guard case .set(let start, let end) = abSpan else { return }
-        if let target = snapTarget(handle == .start ? start : end) {
+        let movingFraction = handle == .start ? start : end
+        let target = snapping
+            ? (abEditingLoop.map { loopEdgeSnapTarget(movingFraction, editing: $0, handle: handle) }
+                ?? snapTarget(movingFraction))
+            : nil
+        if let target {
             let bounds = WaveformGesture.movingHandle(handle, toFraction: target, start: start, end: end)
             abSpan = .set(start: bounds.start, end: bounds.end)
             haptic(.light)

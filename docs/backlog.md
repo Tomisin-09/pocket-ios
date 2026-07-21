@@ -606,6 +606,26 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   ADR** (closes off the native-`Menu` approach for chord insert) before building; small-to-medium. Not yet
   scheduled — sits in Wave 2 of the 2026-07-20 user-testing plan of attack.
 
+- **maj9 / min9 movable A-shapes (ADR 0084 follow-up, requested 2026-07-20).** Add ninth
+  extensions to the curated movable set (`ChordGrip`), at least the **A-shape** family the request
+  named. The ADR-0084 comment parked "basic 9ths" to the custom placer, but the common A-shape ninths
+  are clean movable grips — the note under-sold them. Concrete voicings (root on the A string, high-e
+  muted like the other A-shapes), offsets high-e-first `[e, B, G, D, A, lowE]`:
+  - **maj9** — C maj9 = `x3243x` → `[nil, 0, 1, -1, 0, nil]` (D-string = 3rd, G = maj7, B = 9).
+  - **min9** — Cm9 = `x3133x` → `[nil, 0, 0, -2, 0, nil]` (D = ♭3, G = ♭7, B = 9).
+  - *(optional)* **dom9** — C9 = `x3233x` → `[nil, 0, 0, -1, 0, nil]`; the most-used of the three and
+    the same shape family, so worth folding in unless we deliberately keep it placer-only.
+  - **The one wrinkle:** every 9th voicing puts the D string **below** the root fret (offset −1/−2),
+    so a root fret of 0 (A) — and fret 1 (B♭) for min9 — would emit a negative fret. Fix is a one-line
+    **octave-bump** in `ChordGrip.voicing(rootPitchClass:)`: if any resulting fret < 0, add 12 to the
+    root fret (A9 lands at fret 12, a legit playable voicing — the "jumps an octave" the ADR comment
+    predicted). Every other root places cleanly with no bump.
+  - **Work:** add `maj9`/`min9`(/`dom9`) to `ChordGrip.Quality` (+ `nameSuffix`/`displayName`), the
+    A-shape grips, extend `tier2`, add the octave-guard, and **unit-test the A/B♭ edge** (the exact
+    slider-style math AGENTS.md requires covered). No renderer or sheet changes — `MovableChordSheet`
+    reads the curated list dynamically. **Reopens the ADR-0084 Tier-2/3 "9ths → placer" call**, so it
+    wants a short ADR note (or an 0084 amendment) before building. Small.
+
 ## Notes & journal — DONE (ADR 0038)
 
 Shipped in PR #50: a per-loop **practice journal** (dated entries snapshotting
@@ -887,6 +907,22 @@ the master `hapticsEnabled` switch.
 route through.
 
 ## UI / polish
+
+- **iPad layout pass (logged 2026-07-20).** Pocket is phone-first (iOS 17+, portrait-primary);
+  it *runs* on iPad but the UI doesn't use the extra width — a first-pass adaptation, not a feature.
+  Concrete offenders to tackle when this is picked up:
+  - **Sheets read sparse.** The many `.medium`/`.large` detent sheets (movable/custom chord,
+    song details, loop edit, settings) stretch a single narrow column across the iPad. Consider
+    width-capped content, `.form`/two-column grouping, or `.presentationSizing` on iPad.
+  - **Single-column layouts leave the width empty.** Home, Library, and the Toolkit hub stack
+    vertically; a `NavigationSplitView` (sidebar + detail) or an adaptive grid would earn the space.
+  - **The practice/waveform screen** already has a landscape path (ADR 0042) — check how it holds
+    up at iPad width and whether the side rail proportions still read.
+  - **Regular vs. compact size classes** aren't branched on anywhere; that's the lever (not a
+    device check). Prerequisite discipline is already in place: every view draws from semantic
+    tokens (brief §3) and layouts are geometry-driven, so this is layout tuning, not a rework.
+  Not scheduled; captured so the phone-first assumption is a deliberate, revisitable choice. Own
+  design pass (likely its own ADR if it changes navigation structure, e.g. adopting split view).
 
 - **Swappable themes (design-system extension, roadmap).** `DesignTokens.swift`
   was built for this from day one — every colour is a semantic role, and the file

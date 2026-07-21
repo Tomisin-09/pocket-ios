@@ -10,6 +10,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   where you pinch instead of jumping to the playhead, so the passage you're inspecting stays put as you
   zoom in and out. A new **Zoom follows playhead** toggle (Settings → Transport, off by default) brings
   back the old playhead-anchored behaviour if you prefer it.
+- **Placing loops that sit close together is easier.** When you drag a loop's edge near a neighbouring
+  loop, the snap-to-edge magnet now eases off in a tight gap, so you can leave a deliberate small space
+  instead of the two loops slamming flush. And holding the edge still for a moment mid-drag turns
+  snapping off entirely for that drag (a little buzz confirms it) — for placing an edge exactly where
+  you want, anywhere.
 
 ### Added
 - **A Red Moon cover on the lock screen.** Practising a song now shows the Red Moon crescent as its

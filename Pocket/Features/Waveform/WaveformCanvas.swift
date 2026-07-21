@@ -82,7 +82,10 @@ struct WaveformView: View {
     /// Drag / release of an A/B span handle (ADR 0041) — drag an A or B edge in place,
     /// no mode hop; release passes the moved handle.
     var onMoveABHandle: (WaveformGesture.Handle, Double) -> Void = { _, _ in }
-    var onMoveABHandleEnded: (WaveformGesture.Handle) -> Void = { _ in }
+    /// Release of an A/B handle drag: the moved handle + whether snap applies (`false` = a
+    /// long-press suspended snap mid-drag for free placement, ADR 0099).
+    var onMoveABHandleEnded: (WaveformGesture.Handle, Bool) -> Void = { _, _ in }
+    var onSnapSuspended: () -> Void = {}   // long-press freed the drag → fire the confirm haptic (ADR 0099)
     /// Long-press-drag select (navigate mode): a hold fired — begin a selection at
     /// this fraction. The drag then extends it (`onSelectChanged`).
     let onSelectBegan: (Double) -> Void
@@ -139,10 +142,15 @@ struct WaveformView: View {
     @State var longPressTask: Task<Void, Never>?    // pending hold timer
     @State var isSelecting = false                  // armed — the drag is painting a loop
     @State var holdFraction: Double = 0             // where a firing hold anchors (tracks the still finger)
+    @State var freeDragTask: Task<Void, Never>?     // ADR 0099: stillness timer; a mid-drag hold frees snap
+    @State var snapSuspended = false                // this handle drag went free (long-press fired)
+    @State var lastHandleFraction: Double?          // last handle position, to detect stillness
 
     let scrubThreshold: CGFloat = 6                 // px before a press counts as a scrub vs a tap
     let handleTolerance = 0.06                      // fraction either side of a handle that grabs it
     let longPressDuration: Duration = .milliseconds(350)  // still-hold before a drag becomes a selection
+    let freeDragHoldDuration: Duration = .milliseconds(400)  // hold-still before a handle drag goes free
+    let freeDragStillEpsilon = 0.004                // fraction of movement that counts as "still holding"
 
     var body: some View {
         GeometryReader { geo in
