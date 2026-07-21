@@ -17,6 +17,15 @@ final class PracticeRunUITests: XCTestCase {
 
         let practiceCard = app.buttons["Practice, your exercises and training runs"]
         XCTAssertTrue(practiceCard.waitForExistence(timeout: 5), "Practice card missing")
+        // Home groups its strips into titled sections (ADR 0102); Practice heads the first section, so
+        // it's normally above the fold — but scroll it into view before tapping rather than assuming a
+        // fixed position, matching the robust pattern in ToolkitUITests.
+        var swipes = 0
+        while !practiceCard.isHittable && swipes < 6 {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(practiceCard.isHittable, "Practice card not reachable by scrolling")
         practiceCard.tap()
 
         // Practice is a hub (ADR 0046): open the Exercises library first.
