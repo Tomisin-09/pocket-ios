@@ -18,6 +18,7 @@ struct ChordGrip: Equatable {
     enum Quality: String, CaseIterable {
         case major, minor, dom7, min7, maj7   // Tier 1
         case sus2, sus4, sixth                // Tier 2
+        case dom9, maj9, min9                 // Tier 2 — the 9ths (ADR 0101)
 
         /// The suffix appended to the root note to name the voicing — "F", "Fm7", "Fsus4", "F6".
         var nameSuffix: String {
@@ -30,6 +31,9 @@ struct ChordGrip: Equatable {
             case .sus2: return "sus2"
             case .sus4: return "sus4"
             case .sixth: return "6"
+            case .dom9: return "9"
+            case .maj9: return "maj9"
+            case .min9: return "m9"
             }
         }
 
@@ -44,6 +48,9 @@ struct ChordGrip: Equatable {
             case .sus2: return "Sus2"
             case .sus4: return "Sus4"
             case .sixth: return "Sixth"
+            case .dom9: return "Dominant 9"
+            case .maj9: return "Major 9"
+            case .min9: return "Minor 9"
             }
         }
     }
@@ -78,7 +85,15 @@ extension ChordGrip {
     /// auto-names ("G", "B♭7") with no naming table.
     func voicing(rootPitchClass: Int) -> ChordVoicing {
         let openRootPitchClass = GuitarScale.pitchClass(string: rootString.rawValue, fret: 0)
-        let rootFret = (((rootPitchClass - openRootPitchClass) % 12) + 12) % 12
+        var rootFret = (((rootPitchClass - openRootPitchClass) % 12) + 12) % 12
+        // A grip with a **sub-root offset** — the 9ths, whose 9th (or 3rd) idiomatically sits a fret
+        // *below* the root on an inner string (ADR 0101) — can fall off the nut at a low root. Bump the
+        // whole shape up an octave so every fret stays playable: the movable idea holds, the voicing
+        // just lands higher up the neck (the "jumps an octave" the ADR 0084 note anticipated). Grips
+        // with only non-negative offsets never trigger this, so open shapes are unaffected.
+        if let minOffset = offsets.compactMap({ $0 }).min(), rootFret + minOffset < 0 {
+            rootFret += 12
+        }
         let frets = offsets.map { offset -> Int? in
             guard let offset else { return nil }
             return rootFret + offset
@@ -133,9 +148,7 @@ extension ChordGrip {
     // their Tier-1 kin. Sus2 is A-shape only (the E-shape sus2 is an awkward stretch nobody plays);
     // conversely **Sixth is E-shape only** — the A-shape 6 voices its defining 6th *on* the high e
     // string, so muting that string (the 4-string A-D-G-B barre) would erase the 6th and leave a plain
-    // major. The 6th sits safely on the B string in the E-shape. "Basic 9ths" stay with the placer
-    // (slice 3): the movable dom-9 needs a string *below* the root fret, so it can't sit in open
-    // position and jumps an octave — an honest fit for the per-string placer, not a clean grip.
+    // major. The 6th sits safely on the B string in the E-shape.
     static let aShapeSus2 = ChordGrip(name: "A-shape", rootString: .aRoot,
                                       offsets: [nil, 0, 2, 2, 0, nil], quality: .sus2)
     static let eShapeSus4 = ChordGrip(name: "E-shape", rootString: .eRoot,
@@ -145,9 +158,35 @@ extension ChordGrip {
     static let eShapeSixth = ChordGrip(name: "E-shape", rootString: .eRoot,
                                        offsets: [0, 2, 1, 2, 2, 0], quality: .sixth)
 
-    /// Tier 2 (M3): suspensions + sixths.
+    // Tier 2 — the **9ths** (ADR 0101, reversing the ADR 0084 note that punted these to the placer).
+    // The 9th is a 2nd above the root; on an inner string that pitch sits a fret *below* the root fret,
+    // so the A-shape 9ths carry sub-root offsets and rely on the octave-bump in `voicing()`. All are
+    // drop-5-tolerant guitar-idiomatic forms, verified against the standard chart (and on device for
+    // the E-shapes). `dom9`/`min9` sound the high e (a doubled 5th on the iconic barre); `maj9` mutes
+    // it for the clean R-3-7-9 shell.
+    //
+    // A-shape (root on A) — the idiomatic home of the movable 9th. `aShapeDom9` @ C is x-3-2-3-3-3
+    // (the funk "9 chord"); `aShapeMaj9` @ C is x-3-2-4-3-x; `aShapeMin9` @ C is x-3-1-3-3-3.
+    static let aShapeDom9 = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                      offsets: [0, 0, 0, -1, 0, nil], quality: .dom9)
+    static let aShapeMaj9 = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                      offsets: [nil, 0, 1, -1, 0, nil], quality: .maj9)
+    static let aShapeMin9 = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                      offsets: [0, 0, 0, -2, 0, nil], quality: .min9)
+    // E-shape (root on low E) — barre-derived, so every offset is ≥ 0 (no octave-bump needed).
+    // `eShapeDom9` @ F is the 3-1-2-1-3-1 (low→high) F9 barre; the maj9/min9 shells move the 9 onto the
+    // high e. The maj9 mutes the A string like its maj7 kin (the full barre is unplayable, ADR 0084).
+    static let eShapeDom9 = ChordGrip(name: "E-shape", rootString: .eRoot,
+                                      offsets: [2, 0, 1, 0, 2, 0], quality: .dom9)
+    static let eShapeMaj9 = ChordGrip(name: "E-shape", rootString: .eRoot,
+                                      offsets: [2, 0, 1, 1, nil, 0], quality: .maj9)
+    static let eShapeMin9 = ChordGrip(name: "E-shape", rootString: .eRoot,
+                                      offsets: [2, 0, 0, 0, 2, 0], quality: .min9)
+
+    /// Tier 2 (M3): suspensions + sixths + 9ths.
     static let tier2: [ChordGrip] = [
-        .aShapeSus2, .eShapeSus4, .aShapeSus4, .eShapeSixth
+        .aShapeSus2, .eShapeSus4, .aShapeSus4, .eShapeSixth,
+        .aShapeDom9, .eShapeDom9, .aShapeMaj9, .eShapeMaj9, .aShapeMin9, .eShapeMin9
     ]
 
     /// The **curated** movable set the authoring sheet offers — Tier 1–2 (ADR 0084 M3). Tier 3

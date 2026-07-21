@@ -38,38 +38,45 @@ final class ChordGripTests: XCTestCase {
         }
     }
 
+    /// What a generated voicing must contain, per quality: whether it's a three-note triad, the
+    /// intervals (semitones above root) that must sound, and the intervals that must *not* (the 3rds a
+    /// suspension replaces). The 9ths list only R-3-7-9 — the 5th is droppable in guitar voicings.
+    private struct QualitySpec {
+        let isTriad: Bool
+        let required: [Int]
+        let forbidden: [Int]
+        init(triad: Bool, required: [Int], forbidden: [Int] = []) {
+            self.isTriad = triad; self.required = required; self.forbidden = forbidden
+        }
+    }
+
+    private static let qualitySpecs: [ChordGrip.Quality: QualitySpec] = [
+        .major: .init(triad: true, required: [4, 7]),
+        .minor: .init(triad: true, required: [3, 7], forbidden: [4]),
+        .dom7: .init(triad: false, required: [4, 7, 10]),
+        .min7: .init(triad: false, required: [3, 7, 10], forbidden: [4]),
+        .maj7: .init(triad: false, required: [4, 7, 11]),
+        .sus2: .init(triad: true, required: [2, 7], forbidden: [3, 4]),
+        .sus4: .init(triad: true, required: [5, 7], forbidden: [3, 4]),
+        .sixth: .init(triad: false, required: [4, 7, 9]),
+        .dom9: .init(triad: false, required: [4, 10, 2]),
+        .maj9: .init(triad: false, required: [4, 11, 2]),
+        .min9: .init(triad: false, required: [3, 10, 2], forbidden: [4])
+    ]
+
     /// The grip's quality must show up in the generated voicing's actual pitch content.
     private func assertQualityMatches(_ voicing: ChordVoicing, _ quality: ChordGrip.Quality, label: String) {
         guard let root = voicing.rootPitchClass else { return XCTFail("no root: \(label)") }
+        guard let spec = Self.qualitySpecs[quality] else { return XCTFail("no spec for \(quality): \(label)") }
         let pcs = voicing.pitchClasses
         let has: (Int) -> Bool = { pcs.contains((root + $0) % 12) }
 
-        switch quality {
-        case .major:
-            XCTAssertTrue(voicing.isTriad, "major should be a triad: \(label)")
-            XCTAssertTrue(has(4) && has(7), "major = root+M3+P5: \(label)")
-        case .minor:
-            XCTAssertTrue(voicing.isTriad, "minor should be a triad: \(label)")
-            XCTAssertTrue(voicing.isMinorQuality, "minor quality: \(label)")
-            XCTAssertTrue(has(3) && has(7), "minor = root+m3+P5: \(label)")
-        case .dom7:
-            XCTAssertFalse(voicing.isTriad, "dom7 is four notes: \(label)")
-            XCTAssertTrue(has(4) && has(7) && has(10), "dom7 = root+M3+P5+m7: \(label)")
-        case .min7:
-            XCTAssertFalse(voicing.isTriad, "min7 is four notes: \(label)")
-            XCTAssertTrue(has(3) && has(7) && has(10), "min7 = root+m3+P5+m7: \(label)")
-        case .maj7:
-            XCTAssertFalse(voicing.isTriad, "maj7 is four notes: \(label)")
-            XCTAssertTrue(has(4) && has(7) && has(11), "maj7 = root+M3+P5+M7: \(label)")
-        case .sus2:
-            XCTAssertTrue(voicing.isTriad, "sus2 is three notes: \(label)")
-            XCTAssertTrue(has(2) && has(7) && !has(3) && !has(4), "sus2 = root+M2+P5, no 3rd: \(label)")
-        case .sus4:
-            XCTAssertTrue(voicing.isTriad, "sus4 is three notes: \(label)")
-            XCTAssertTrue(has(5) && has(7) && !has(3) && !has(4), "sus4 = root+P4+P5, no 3rd: \(label)")
-        case .sixth:
-            XCTAssertFalse(voicing.isTriad, "6 is four notes: \(label)")
-            XCTAssertTrue(has(4) && has(7) && has(9), "6 = root+M3+P5+M6: \(label)")
+        XCTAssertEqual(voicing.isTriad, spec.isTriad, "triad-ness for \(quality): \(label)")
+        for interval in spec.required {
+            XCTAssertTrue(has(interval), "\(quality) needs interval \(interval): \(label)")
+        }
+        for interval in spec.forbidden {
+            XCTAssertFalse(has(interval), "\(quality) must not sound interval \(interval): \(label)")
         }
     }
 
@@ -99,12 +106,22 @@ final class ChordGripTests: XCTestCase {
 
     // MARK: - "As actually played" voicings (2026-07-13 device review)
 
-    func testAShapeGripsMuteBothOuterStrings() {
-        // Every A-shape is the 4-string A-D-G-B barre: low E (index 5) and high e (index 0) muted.
+    func testAShapeGripsMuteLowE() {
+        // Every A-shape roots on the A string, so the low E (index 5) is always muted.
         for grip in ChordGrip.curated where grip.rootString == .aRoot {
             let voicing = grip.voicing(rootPitchClass: 0)
-            XCTAssertNil(voicing.frets[0], "\(voicing.name): high e should be muted on an A-shape")
             XCTAssertNil(voicing.frets[5], "\(voicing.name): low E should be muted on an A-shape")
+        }
+    }
+
+    func testAShapeTriadsAndSeventhsMuteHighE() {
+        // The Tier-1/-2 non-9th A-shapes are the 4-string A-D-G-B barre — high e (index 0) muted too.
+        // The 9ths break this: their iconic barre voices the top 5th on the high e (x-3-2-3-3-3), so
+        // they are excluded (maj9 still mutes it for the R-3-7-9 shell — covered below).
+        let nonNinth: Set<ChordGrip.Quality> = [.dom9, .maj9, .min9]
+        for grip in ChordGrip.curated where grip.rootString == .aRoot && !nonNinth.contains(grip.quality) {
+            let voicing = grip.voicing(rootPitchClass: 0)
+            XCTAssertNil(voicing.frets[0], "\(voicing.name): high e should be muted on an A-shape triad/7th")
         }
     }
 
@@ -124,6 +141,56 @@ final class ChordGripTests: XCTestCase {
         XCTAssertEqual(sixthFamilies, [.eRoot], "Sixth is E-shape only")
         XCTAssertTrue(ChordGrip.eShapeSixth.voicing(rootPitchClass: 4).pitchClasses.contains(1),
                       "E6 still sounds its 6th (C#)")
+    }
+
+    // MARK: - 9th grips (ADR 0101) — known-shape oracles, octave-bump, and reverse naming
+
+    func testAShape9thsMatchTheStandardChartAtC() {
+        // The three A-shape 9ths at C are the shapes every chart prints (tab shown low→high).
+        XCTAssertEqual(ChordGrip.aShapeDom9.voicing(rootPitchClass: 0).frets, [3, 3, 3, 2, 3, nil],
+                       "A-shape 9 @ C = x-3-2-3-3-3 (the funk '9 chord')")
+        XCTAssertEqual(ChordGrip.aShapeMaj9.voicing(rootPitchClass: 0).frets, [nil, 3, 4, 2, 3, nil],
+                       "A-shape maj9 @ C = x-3-2-4-3-x")
+        XCTAssertEqual(ChordGrip.aShapeMin9.voicing(rootPitchClass: 0).frets, [3, 3, 3, 1, 3, nil],
+                       "A-shape m9 @ C = x-3-1-3-3-3")
+    }
+
+    func testEShapeDom9MatchesTheF9Barre() {
+        // E-shape 9 @ F is the 6-string F9 barre, 1-3-1-2-1-3 low→high.
+        XCTAssertEqual(ChordGrip.eShapeDom9.voicing(rootPitchClass: 5).frets, [3, 1, 2, 1, 3, 1],
+                       "E-shape 9 @ F = the F9 barre")
+    }
+
+    func testSubRootGripBumpsAnOctaveRatherThanFallingOffTheNut() {
+        // A-shape m9's D-string ♭3 sits two frets below the root; at A (root fret 0) a naive placement
+        // would be fret -2. The octave-bump lands the whole shape at fret 12 instead — still valid, still
+        // Am9, just higher up the neck (ADR 0101).
+        let am9 = ChordGrip.aShapeMin9.voicing(rootPitchClass: 9)   // A
+        XCTAssertTrue(am9.isValid, "the bumped shape is playable")
+        XCTAssertTrue((am9.frets.compactMap { $0 }).allSatisfy { $0 >= 0 }, "no string falls off the nut")
+        XCTAssertEqual(am9.frets[4], 12, "root sits on the A string at fret 12 after the octave bump")
+        XCTAssertEqual(am9.rootPitchClass, 9, "still rooted on A")
+    }
+
+    func testNonNinthGripsAreUnaffectedByTheBump() {
+        // Every offset-≥0 grip must place identically to before at every root (open shapes never bump).
+        for grip in ChordGrip.curated where !(grip.offsets.compactMap { $0 }.contains { $0 < 0 }) {
+            for root in 0..<12 {
+                let low = grip.voicing(rootPitchClass: root).frets.compactMap { $0 }.min() ?? 0
+                XCTAssertLessThan(low, 12, "\(grip.name) \(grip.quality) @ \(root) should not have bumped")
+            }
+        }
+    }
+
+    func testNamerRecognisesTheSlid9thGrips() {
+        // The reverse-lookup namer (ADR 0093) must independently spell the generated 9ths — this is what
+        // the sheet's identity caption shows, and it exercises both the full and drop-5 catalog forms.
+        XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.aShapeDom9.voicing(rootPitchClass: 0)), "C9")
+        XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.aShapeMaj9.voicing(rootPitchClass: 0)), "Cmaj9")
+        XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.aShapeMin9.voicing(rootPitchClass: 0)), "Cm9")
+        XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.eShapeDom9.voicing(rootPitchClass: 5)), "F9")
+        XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.eShapeMaj9.voicing(rootPitchClass: 5)), "Fmaj9")
+        XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.eShapeMin9.voicing(rootPitchClass: 5)), "Fm9")
     }
 
     func testRootStringCarriesTheRootFret() {
