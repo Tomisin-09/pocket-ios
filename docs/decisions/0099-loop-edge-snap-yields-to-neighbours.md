@@ -1,6 +1,6 @@
 # 0099 — Loop-edge snap yields near a neighbour; long-press suspends it
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-07-20 (`pocket-161-loop-snap-neighbours`)
 
 ## Context

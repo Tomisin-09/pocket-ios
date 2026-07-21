@@ -60,6 +60,34 @@ extension WaveformPracticeModel {
         }
     }
 
+    /// Loop-edge release candidates with **per-candidate** tolerances (ADR 0099): markers and
+    /// beats keep the full `snapTolerance`, but every *other* loop's edges yield — their catch
+    /// radius shrinks to half the gap to the moving edge's grab origin (the edited loop's stored
+    /// facing edge), so a facing neighbour in a tight gap stops hijacking the release while a
+    /// roomy one still lines up. The edited loop's own edges are dropped (you don't snap a loop
+    /// to itself). Loop-vs-loop softening only — markers/beats are untouched.
+    func loopEdgeSnapCandidates(editing loop: Loop,
+                                handle: WaveformGesture.Handle) -> [(value: Double, tolerance: Double)] {
+        let base = snapTolerance
+        let movingOrigin = handle == .start ? loop.start : loop.end
+        let markerFractions = duration > 0 ? markers.map { $0.seconds / duration } : []
+        var candidates = (markerFractions + beatGrid.map(\.fraction)).map { (value: $0, tolerance: base) }
+        for other in loops where other.uid != loop.uid {
+            for edge in [other.start, other.end] {
+                let yielded = WaveformGesture.yieldedTolerance(base: base, gap: abs(edge - movingOrigin))
+                candidates.append((value: edge, tolerance: yielded))
+            }
+        }
+        return candidates
+    }
+
+    /// The fraction a range-edited loop edge should snap to under the neighbour-aware yield
+    /// (ADR 0099), or `nil` if nothing catches within its (possibly-yielded) radius.
+    func loopEdgeSnapTarget(_ fraction: Double, editing loop: Loop,
+                            handle: WaveformGesture.Handle) -> Double? {
+        WaveformGesture.snap(fraction, to: loopEdgeSnapCandidates(editing: loop, handle: handle))
+    }
+
     /// Minimap seek *release* — snap the playhead to a nearby **marker or saved-loop edge**
     /// with a light haptic on a catch, always excluding the beat grid: on the compressed
     /// full-song strip the beats pack too densely to land cleanly, whereas markers and loop

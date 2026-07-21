@@ -28,6 +28,7 @@ extension WaveformView {
                 grabbedHandle = nil
                 grabbedHandleOrigin = nil
                 pendingGrab = nil
+                resetFreeDrag()   // a pinch aborts the free-drag hold (ADR 0099)
                 let base = pinchBaseSpan ?? (viewport.end - viewport.start)
                 pinchBaseSpan = base
                 // Anchor the zoom to the pinch centre (`startAnchor.x`, a 0…1 position on the
@@ -93,8 +94,10 @@ extension WaveformView {
             if grabbedHandle == nil {                   // first real movement — commit the grab
                 grabbedHandle = pending
                 didScrub = true
+                resetFreeDrag()                         // a fresh handle drag starts with snap on
             }
             onMoveABHandle(pending, fraction)
+            trackFreeDragHold(fraction: fraction)       // holding still mid-drag → go free (ADR 0099)
         } else if didScrub || moved > scrubThreshold {  // a real drag scrubs the playhead
             didScrub = true
             cancelHold()                                // moved → it's a scrub, not a hold
@@ -116,6 +119,7 @@ extension WaveformView {
             pendingGrab = nil
             isSelecting = false
             dragStartX = nil
+            resetFreeDrag()
             return
         }
         // Setting the 1 (ADR 0024) — snap the placed downbeat to the nearest peak.
@@ -134,7 +138,8 @@ extension WaveformView {
         }
         let fraction = songFraction(atX: value.location.x, width: width)
         if let grabbedHandle {               // a committed A/B-edge drag — snap + re-loop, no seek
-            onMoveABHandleEnded(grabbedHandle)
+            onMoveABHandleEnded(grabbedHandle, !snapSuspended)   // long-press went free → skip snap (ADR 0099)
+            resetFreeDrag()
             self.grabbedHandle = nil
             grabbedHandleOrigin = nil
             pendingGrab = nil
@@ -183,6 +188,33 @@ extension WaveformView {
     private func cancelHold() {
         longPressTask?.cancel()
         longPressTask = nil
+    }
+
+    /// While dragging a grabbed A/B handle, arm/refresh the "held still → go free" timer
+    /// (ADR 0099). A `DragGesture.onChanged` fires only on movement, so a timer (re)armed on
+    /// each meaningful move fires exactly when the finger stops; once it fires, snap stays
+    /// suspended for the rest of this drag. A move within `freeDragStillEpsilon` counts as
+    /// still and lets the running timer complete.
+    private func trackFreeDragHold(fraction: Double) {
+        guard !snapSuspended else { return }
+        if let last = lastHandleFraction, abs(fraction - last) < freeDragStillEpsilon { return }
+        lastHandleFraction = fraction
+        freeDragTask?.cancel()
+        freeDragTask = Task { @MainActor in
+            try? await Task.sleep(for: freeDragHoldDuration)
+            guard !Task.isCancelled else { return }
+            snapSuspended = true
+            onSnapSuspended()   // "entered free mode" haptic
+        }
+    }
+
+    /// Clear the free-drag hold state — at the start of a fresh handle drag, on release, and
+    /// when a pinch takes over.
+    private func resetFreeDrag() {
+        freeDragTask?.cancel()
+        freeDragTask = nil
+        snapSuspended = false
+        lastHandleFraction = nil
     }
 
     /// The hold fired — switch from scrub to select. Re-checks the guards in case

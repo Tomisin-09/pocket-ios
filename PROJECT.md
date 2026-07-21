@@ -101,7 +101,11 @@ cross-song deferred) plus an **active-loop colour strip** with an ✕ deactivato
 a left-edge **swipe-back guard** stops a scrub from popping back to the library mid-adjust.
 On **release**, a dragged A/B edge / tap-seek **snaps to a nearby marker or
 saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, light haptic;
-the continuous scrub stays free; ADR 0021). The **minimap** snaps a released seek to a
+the continuous scrub stays free; ADR 0021). When **range-editing a saved loop**, that edge
+snap is **neighbour-aware** (ADR 0099): a facing neighbour loop's edge yields — its catch
+radius shrinks to half the gap (`WaveformGesture.yieldedTolerance`) so a deliberate small gap
+between two loops survives — and **holding the edge still mid-drag** (~400 ms) suspends snap
+for that drag (medium haptic) for arbitrary free placement. The **minimap** snaps a released seek to a
 nearby **marker or saved-loop edge** (but not beats — the full-song strip is too compressed
 for the grid to land cleanly), so a tap or drag near a marker dot or loop boundary catches it. When a song has a **BPM and a downbeat anchor**, a
 a **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on

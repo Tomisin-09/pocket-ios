@@ -294,4 +294,50 @@ final class WaveformGestureTests: XCTestCase {
                                                  focalScreenFraction: 0.5, newSpan: 1.0)
         XCTAssertEqual(start, 0, accuracy: 1e-9)
     }
+
+    // MARK: - Neighbour-aware loop-edge snap (ADR 0099)
+
+    func testYieldedToleranceRoomyGapKeepsFullRadius() {
+        // A far neighbour: half the gap exceeds the base, so the full base radius stands.
+        XCTAssertEqual(WaveformGesture.yieldedTolerance(base: 0.03, gap: 0.25), 0.03, accuracy: 1e-9)
+    }
+
+    func testYieldedToleranceTightGapShrinksToHalf() {
+        // A close facing edge: the radius shrinks to half the gap, leaving a dead zone.
+        XCTAssertEqual(WaveformGesture.yieldedTolerance(base: 0.03, gap: 0.02), 0.01, accuracy: 1e-9)
+    }
+
+    func testYieldedToleranceZeroGapIsZero() {
+        // Touching edges: no catch radius at all (never negative).
+        XCTAssertEqual(WaveformGesture.yieldedTolerance(base: 0.03, gap: 0), 0, accuracy: 1e-9)
+    }
+
+    func testWeightedSnapCatchesWithinOwnTolerance() throws {
+        let snapped = try XCTUnwrap(WaveformGesture.snap(0.32, to: [(0.30, 0.05), (0.80, 0.05)]))
+        XCTAssertEqual(snapped, 0.30, accuracy: 1e-9)
+    }
+
+    func testWeightedSnapYieldsToNeighbourInTightGap() {
+        // Editing an edge whose origin is 0.50, with a neighbour edge at 0.52 (gap 0.02 →
+        // yielded radius 0.01). Releasing at 0.505 is 0.015 away — beyond the yielded zone,
+        // so it does NOT snap, even though the flat base tolerance (0.03) would have.
+        let yielded = WaveformGesture.yieldedTolerance(base: 0.03, gap: 0.02)
+        XCTAssertNil(WaveformGesture.snap(0.505, to: [(0.52, yielded)]))
+        XCTAssertNotNil(WaveformGesture.snap(0.505, to: [0.52], tolerance: 0.03))   // flat would have snapped
+    }
+
+    func testWeightedSnapStillCatchesFlushRelease() throws {
+        // Releasing right up against the neighbour (0.518, 0.002 away) still clicks flush.
+        let yielded = WaveformGesture.yieldedTolerance(base: 0.03, gap: 0.02)
+        let snapped = try XCTUnwrap(WaveformGesture.snap(0.518, to: [(0.52, yielded)]))
+        XCTAssertEqual(snapped, 0.52, accuracy: 1e-9)
+    }
+
+    func testWeightedSnapMarkerBeatsFullRadiusBeatNeighbourYielded() throws {
+        // A marker at full radius and a yielded neighbour edge coexist: a release near the
+        // marker catches it; near the yielded edge (but outside its shrunk zone) stays free.
+        let candidates: [(value: Double, tolerance: Double)] = [(0.40, 0.03), (0.52, 0.005)]
+        XCTAssertEqual(try XCTUnwrap(WaveformGesture.snap(0.42, to: candidates)), 0.40, accuracy: 1e-9)
+        XCTAssertNil(WaveformGesture.snap(0.51, to: candidates))
+    }
 }

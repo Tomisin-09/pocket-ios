@@ -152,6 +152,31 @@ enum WaveformGesture {
         return best
     }
 
+    /// Snap `fraction` to the nearest candidate that lies within its **own** catch radius,
+    /// else `nil`. Unlike the flat `snap(_:to:tolerance:)`, each candidate carries its own
+    /// tolerance, so a neighbour loop edge can yield in a tight gap while markers/beats keep
+    /// the full radius (ADR 0099). The nearest qualifying candidate wins.
+    static func snap(_ fraction: Double, to candidates: [(value: Double, tolerance: Double)]) -> Double? {
+        var best: Double?
+        var bestDistance = Double.infinity
+        for candidate in candidates {
+            let distance = abs(candidate.value - fraction)
+            if distance <= candidate.tolerance && distance < bestDistance {
+                best = candidate.value
+                bestDistance = distance
+            }
+        }
+        return best
+    }
+
+    /// A neighbour loop edge's **yielded** catch radius (ADR 0099): half the `gap` to the
+    /// moving edge, capped at the base `tolerance` and never negative. A roomy neighbour
+    /// keeps the full radius (snap still lines loops up); a close facing edge shrinks its
+    /// zone so a deliberate small gap between two loops always survives to release into.
+    static func yieldedTolerance(base tolerance: Double, gap: Double) -> Double {
+        Swift.max(0, Swift.min(tolerance, gap / 2))
+    }
+
     /// Which handle a touch at fraction `point` is grabbing, or `nil` if neither
     /// is within `tolerance` (also a fraction). When both are in range the nearer
     /// one wins; ties resolve to `.start`.
