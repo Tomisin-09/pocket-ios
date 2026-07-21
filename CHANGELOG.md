@@ -17,6 +17,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   you want, anywhere.
 
 ### Added
+- **Movable 9th chords.** The movable-shape sheet now offers **dominant 9, major 9 and minor 9** grips on
+  both the E-shape and A-shape — the funk "9 chord", jazzy maj9 and moody min9 — sliding to any root just
+  like the barre and 7th shapes. Because a 9th's shape reaches below the root fret, at a low root it lands
+  an octave up the neck rather than off the nut, and the preview names it for you (e.g. "C9", "Fm9").
 - **A Journal, all in one place.** A new **Journal** space — the fourth card on Home, in its own warm
   gold — gathers everything you've written and recorded across your loops *and* exercises onto one
   timeline: notes and practice takes together, grouped by day, newest first. Each item says what it's

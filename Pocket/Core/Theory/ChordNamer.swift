@@ -14,8 +14,10 @@ struct ChordQuality: Equatable {
     let rarity: Int
 
     /// The common-practice vocabulary (ADR 0093 N3) — everything the curated grips (ADR 0084 tiers 1–2)
-    /// and the custom placer can idiomatically produce. Ordered by `rarity`. Jazz extensions
-    /// (9/11/13, altered dominants) are deliberately out of scope for v1; this table extends additively.
+    /// and the custom placer can idiomatically produce. Ordered by `rarity`. The 9ths (ADR 0101) are
+    /// listed in both their full 5-note form and the drop-5 4-note form guitar actually voices, so a
+    /// slid 9th grip names correctly in the preview. Higher extensions (11/13, altered dominants) remain
+    /// out of scope for v1; this table extends additively.
     static let catalog: [ChordQuality] = [
         ChordQuality(suffix: "", intervals: [0, 4, 7], rarity: 0), // major triad
         ChordQuality(suffix: "m", intervals: [0, 3, 7], rarity: 1), // minor triad
@@ -33,7 +35,14 @@ struct ChordQuality: Equatable {
         ChordQuality(suffix: "m7♭5", intervals: [0, 3, 6, 10], rarity: 13), // half-diminished
         ChordQuality(suffix: "dim7", intervals: [0, 3, 6, 9], rarity: 14), // diminished 7th
         ChordQuality(suffix: "mMaj7", intervals: [0, 3, 7, 11], rarity: 15), // minor-major 7th
-        ChordQuality(suffix: "6/9", intervals: [0, 2, 4, 7, 9], rarity: 16) // 6/9
+        ChordQuality(suffix: "6/9", intervals: [0, 2, 4, 7, 9], rarity: 16), // 6/9
+        // The 9ths (ADR 0101) — full 5-note forms first, then the drop-5 4-note forms guitar voices.
+        ChordQuality(suffix: "9", intervals: [0, 4, 7, 10, 2], rarity: 17), // dominant 9th
+        ChordQuality(suffix: "m9", intervals: [0, 3, 7, 10, 2], rarity: 18), // minor 9th
+        ChordQuality(suffix: "maj9", intervals: [0, 4, 7, 11, 2], rarity: 19), // major 9th
+        ChordQuality(suffix: "9", intervals: [0, 4, 10, 2], rarity: 20), // dominant 9th, no 5th
+        ChordQuality(suffix: "m9", intervals: [0, 3, 10, 2], rarity: 21), // minor 9th, no 5th
+        ChordQuality(suffix: "maj9", intervals: [0, 4, 11, 2], rarity: 22) // major 9th, no 5th
     ]
 }
 
