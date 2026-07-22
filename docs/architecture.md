@@ -5,6 +5,8 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ SwiftUI Features (Home · Library · Waveform · Metronome · Practice · Journal · Toolkit · Repertoire)
+│   UI       — shared components + design tokens (PocketColor) · AdaptiveLayout (ADR 0105 iPad groundwork:
+│              PocketLayout readable-width cap + readableWidth() modifier — dormant while TARGETED_DEVICE_FAMILY=1)
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
