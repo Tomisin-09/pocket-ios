@@ -59,9 +59,29 @@ so the dormant layout stays inspectable without an iPad build.
 
 ### 4 — Scope guard: cap first, split sparingly
 The default adaptive treatment is a shared **readable-width cap**, not a
-rearchitecture. Only Home and Library are candidates for a two-pane
-(`NavigationSplitView`) treatment; every other screen consumes the width cap and
-is otherwise unchanged. We do not blanket-convert the app to split views.
+rearchitecture. Home and Library get the cap now. A two-pane
+(`NavigationSplitView`) treatment is a *candidate* for the app root, not a
+mandate, and every other screen consumes the width cap and is otherwise
+unchanged. We do not blanket-convert the app to split views.
+
+### 5 — What defers to the universal-flip PR
+Two kinds of adaptivity are **only observable on an actual iPad** and so cannot
+satisfy the §3 preview rule while the flag is `1` — building them now would be
+unverifiable, speculative code:
+
+- **Sheet iPad sizing.** On iPad a `.sheet` is a *form sheet* (~540 pt), and
+  `presentationDetents` are effectively ignored there — so the OS already
+  width-caps every sheet; there is no overflow to fix. The real improvement is
+  giving content-heavy sheets (chord-picker grid, automator, add-routine picker)
+  a larger `presentationSizing(.page)` (iOS 18+) so they aren't crammed. But the
+  form/page *idiom* exists only on iPad — an iPhone `.sheet` is always a bottom
+  sheet, and forcing `horizontalSizeClass` in a preview does not produce a form
+  sheet. So this batches into the flip PR, where it's visible on a real iPad.
+- **Root master-detail / sidebar split.** `LibraryView` is a *pushed* destination
+  without its own navigation stack, so a `NavigationSplitView` really belongs at
+  the app root (sidebar of destinations | detail), replacing the phone card-hub
+  on iPad — a genuine architecture change best tuned on an iPad and worth its own
+  ADR at flip time. For v1 groundwork Library gets the **width cap** only.
 
 ## Alternatives considered
 

@@ -34,6 +34,11 @@ struct LibraryView: View {
                     .searchable(text: $searchText, prompt: "Songs and artists")
             }
         }
+        // Cap the list/empty state to a readable column so it doesn't stretch a single
+        // narrow run of rows across the full width at regular width (iPad / iPhone Pro Max
+        // landscape). Dormant on the iPhone-only v1 build — a no-op at compact width (ADR 0105).
+        // The background stays full-bleed behind the centred column.
+        .readableWidth()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle("Library")
@@ -335,6 +340,29 @@ private struct PreviewSeed {
     return NavigationStack { LibraryView() }
         .modelContainer(container)
         .preferredColorScheme(.dark)
+}
+
+// Regular-width variant (ADR 0105): forces the regular horizontal size class in a wide frame
+// to inspect how the list caps to a centred readable column at iPad / landscape width without
+// an iPad build. Dormant on the iPhone-only v1 build.
+#Preview("Library — regular width (iPad groundwork)") {
+    // swiftlint:disable:next force_try
+    let container = try! ModelContainer(for: Song.self,
+                                        configurations: .init(isStoredInMemoryOnly: true))
+    for seed in PreviewSeed.library {
+        let song = Song.sample()
+        song.title = seed.title
+        song.artist = seed.artist
+        song.genre = seed.genre
+        if let mastery = seed.mastery { song.loops.forEach { $0.mastery = mastery } } else { song.loops = [] }
+        song.collections = seed.collections
+        song.dateAdded = .now
+        container.mainContext.insert(song)
+    }
+    return NavigationStack { LibraryView() }
+        .modelContainer(container)
+        .environment(\.horizontalSizeClass, .regular)
+        .frame(width: 1024, height: 900)
 }
 
 #Preview("Library — empty") {

@@ -933,8 +933,19 @@ route through.
 
 ## UI / polish
 
-- **iPad layout pass (logged 2026-07-20).** Pocket is phone-first (iOS 17+, portrait-primary);
-  it *runs* on iPad but the UI doesn't use the extra width — a first-pass adaptation, not a feature.
+- **iPad layout pass (logged 2026-07-20; IN PROGRESS 2026-07-22, ADR 0105, pocket-167).** Pocket is
+  phone-first (iOS 17+, portrait-primary); it *runs* on iPad but the UI doesn't use the extra width —
+  a first-pass adaptation, not a feature. **Approach (ADR 0105): write the adaptivity now but keep
+  `TARGETED_DEVICE_FAMILY: "1"` for v1** — layouts land dormant (no submission risk), and the eventual
+  universal flip becomes a one-line flag change + iPad screenshots. Verification is preview-driven
+  (forced `.regular` size class) while the flag stays `1`.
+  - **DONE so far:** shared `readableWidth()` cap primitive (`PocketLayout`, verified via
+    `AdaptiveLayoutTests`) applied to **Home** and **Library**.
+  - **DEFERRED to the universal-flip PR** (only observable on a real iPad, so unverifiable now):
+    **(a) sheet iPad sizing** — the OS already form-sheet-caps sheets on iPad; the real win is
+    `presentationSizing(.page)` (iOS 18+) for content-heavy sheets so they aren't crammed; and
+    **(b) a root master-detail / sidebar `NavigationSplitView`** (its own ADR — `LibraryView` is a
+    pushed destination, so the split belongs at the app root, not inside Library).
   Concrete offenders to tackle when this is picked up:
   - **Sheets read sparse.** The many `.medium`/`.large` detent sheets (movable/custom chord,
     song details, loop edit, settings) stretch a single narrow column across the iPad. Consider
