@@ -1,0 +1,130 @@
+#if DEBUG
+import Foundation
+import SwiftData
+
+/// DEBUG-only, opt-in library seed for App Store screenshot shoots.
+///
+/// Normal launches are untouched: this runs **only** when the app is launched with
+/// the `-seedScreenshots` argument (Scheme › Arguments, or `simctl launch … -seedScreenshots`).
+/// It builds a small, realistic guitarist's library so the content-dependent shots
+/// (loop trainer, library) have real material without fighting the document picker.
+///
+/// Real audio: drop `.mp3`/`.m4a` files into the app's `Documents/SeedAudio/` folder
+/// (copy them in from the Mac via `simctl get_app_container … data`). Each is imported
+/// with a genuine extracted waveform + bookmark, so it renders like a real import.
+/// The bundled `Song.sample()` ("Little Wing") is added too — it plays via the tone
+/// generator and ships with loops, so it drives the "loop playing" hero shot.
+///
+/// Idempotent: skips entirely if the library already has songs.
+enum ScreenshotSeed {
+
+    /// One loop to attach to a seeded song. `start`/`end` are fractions of duration;
+    /// `mastery` is 0–5. Positional init keeps the metadata table compact.
+    private struct LoopSpec {
+        let name: String
+        let start: Double
+        let end: Double
+        let speed: Double
+        let repeats: Int
+        let mastery: Int
+        init(_ name: String, _ start: Double, _ end: Double,
+             _ speed: Double, _ repeats: Int, _ mastery: Int) {
+            self.name = name
+            self.start = start
+            self.end = end
+            self.speed = speed
+            self.repeats = repeats
+            self.mastery = mastery
+        }
+    }
+
+    /// Metadata applied to a seeded real-file song, keyed by the imported title
+    /// (filename without extension). Titles not listed still import with sensible defaults.
+    private struct Meta {
+        let artist: String
+        let genre: String
+        let bpm: Int
+        let key: String
+        let collections: [String]
+        let loops: [LoopSpec]
+    }
+
+    private static let metadata: [String: Meta] = [
+        "Red Moon": Meta(
+            artist: "Tom Misch", genre: "Neo-Soul", bpm: 92, key: "D Major",
+            collections: ["solos", "chill"],
+            loops: [
+                LoopSpec("Main lick", 0.30, 0.44, 1.0, 4, 3),
+                LoopSpec("Outro turnaround", 0.68, 0.79, 0.75, 3, 2)
+            ]),
+        "I Don't Trust Myself With Loving You": Meta(
+            artist: "John Mayer", genre: "Blues", bpm: 80, key: "C# Minor",
+            collections: ["blues", "solos"],
+            loops: [LoopSpec("Intro riff", 0.05, 0.18, 0.75, 6, 4)]),
+        "I'd Rather Go Blind": Meta(
+            artist: "Etta James", genre: "Blues", bpm: 68, key: "C Major",
+            collections: ["blues", "needs-work"],
+            loops: [LoopSpec("Verse phrasing", 0.22, 0.36, 0.75, 4, 1)])
+    ]
+
+    /// Seed the library if launched with `-seedScreenshots` and it's currently empty.
+    @MainActor
+    static func seedIfNeeded(into context: ModelContext) {
+        guard CommandLine.arguments.contains("-seedScreenshots") else { return }
+        let existing = (try? context.fetchCount(FetchDescriptor<Song>())) ?? 0
+        guard existing == 0 else { return }
+
+        // Playable hero: Little Wing (tone-generator audio + pre-made loops).
+        context.insert(Song.sample())
+
+        // Real-file imports with genuine waveforms, in a stable display order.
+        for url in seedAudioURLs() {
+            importReal(url, into: context)
+        }
+        try? context.save()
+    }
+
+    /// `.mp3`/`.m4a`/`.wav` files staged in `Documents/SeedAudio/`, sorted by name.
+    private static func seedAudioURLs() -> [URL] {
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        else { return [] }
+        let dir = docs.appendingPathComponent("SeedAudio", isDirectory: true)
+        let contents = (try? FileManager.default.contentsOfDirectory(
+            at: dir, includingPropertiesForKeys: nil)) ?? []
+        let audioExt: Set<String> = ["mp3", "m4a", "wav", "aac", "aif", "aiff"]
+        return contents
+            .filter { audioExt.contains($0.pathExtension.lowercased()) }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+
+    /// Import one owned file: extract its waveform (the app owns `Documents`, so no
+    /// security scope is needed to read it), take a bookmark, and attach metadata + loops.
+    @MainActor
+    private static func importReal(_ url: URL, into context: ModelContext) {
+        let title = url.deletingPathExtension().lastPathComponent
+        guard let (duration, amplitudes) = try? WaveformExtractor.extract(from: url),
+              let bookmark = try? url.bookmarkData()
+        else { return }
+
+        let meta = metadata[title]
+        let song = Song(
+            title: title, artist: meta?.artist ?? "", genre: meta?.genre ?? "",
+            key: meta?.key ?? "", bpm: meta?.bpm,
+            collections: meta?.collections ?? [],
+            duration: duration, amplitudes: amplitudes, dateAdded: .now,
+            ref: .localFile(bookmark: bookmark))
+
+        if let specs = meta?.loops {
+            let loops = specs.map { spec -> Loop in
+                let loop = Loop(name: spec.name, start: spec.start, end: spec.end,
+                                speed: spec.speed, repeats: spec.repeats)
+                loop.mastery = spec.mastery
+                return loop
+            }
+            song.loops = loops
+            for loop in loops where loop.song == nil { loop.song = song }
+        }
+        context.insert(song)
+    }
+}
+#endif

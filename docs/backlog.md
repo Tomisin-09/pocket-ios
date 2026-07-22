@@ -651,6 +651,22 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
     reads the curated list dynamically. **Reopens the ADR-0084 Tier-2/3 "9ths → placer" call**, so it
     wants a short ADR note (or an 0084 amendment) before building. Small.
 
+- **Toolkit hub is thinner than the card promises — only My Chords + Glossary surface
+  (found during the v1 screenshot shoot, 2026-07-22).** The Home **Toolkit** card is
+  subtitled "*Chords, scales & theory reference*", but the hub currently carries only
+  **My Chords** and **Glossary** — the scales & modes, chord-identifier, and
+  intervals/ear sections from the hub IA
+  ([`docs/plans/chords-theory-hub-ia.md`](plans/chords-theory-hub-ia.md) sections 2–5)
+  were deferred past Slice 1 (see the ADR-0096 entry above). Consequences: **(a)** the
+  card copy over-promises "scales & theory reference" that isn't there yet, and **(b)**
+  there's **no *Hear* / audio-preview reachable from Toolkit** — Hear shipped only as
+  inline buttons inside the Practice-side exercise editors (scales/arpeggios/chords/runs,
+  ADR 0097), so a user browsing Toolkit as a *reference* destination never meets it.
+  Fix path = build the deferred hub slices (scales & modes explorer + intervals/ear per
+  ADR 0094 Slice 5) so the reference Hear surfaces there; until then, at minimum align
+  the Home card subtitle with what the hub actually contains. Relates to the Wave-2
+  "split Toolkit into a Learn section" step.
+
 ## Notes & journal — DONE (ADR 0038)
 
 Shipped in PR #50: a per-loop **practice journal** (dated entries snapshotting
@@ -756,6 +772,20 @@ adjust → range-edit lift → Fine retirement + hold-drag wiring).
 - **#8 "Loop 1/2/3" naming:** deferred naming (ADR 0019) stays — if a loop's
   unclear you play it to remember, and the glanceable row (#2) lowers the cost
   further.
+
+**Found during the v1 screenshot shoot (2026-07-22) — two loop-practice-library gaps:**
+
+- **Loops practice library shows empty despite songs having loops.** Songs in the
+  library carry saved loops (visible in each song's loop trainer), but the centralised
+  loops practice library lists none of them — the aggregation isn't surfacing
+  song-owned loops. *Verify it's not a seed artefact first:* the shoot's loops were
+  inserted programmatically by `ScreenshotSeed`; confirm the gap also reproduces with a
+  loop saved by hand via **Save as loop** before treating it as a pure query bug.
+- **From the loops practice library, ramp is the only practice mode — ear training
+  doesn't surface.** Opening a loop from that library only offers command-ramp practice;
+  the ear-training mode (ADR 0104, "the loops, re-surfaced") should be selectable there
+  too. Bring the ear-training entry point to parity with ramp in the loops-library launch
+  surface.
 
 ## Practice run-setup — persist loop ramp shape — DONE (2026-07-01, ADR 0057 follow-up)
 
