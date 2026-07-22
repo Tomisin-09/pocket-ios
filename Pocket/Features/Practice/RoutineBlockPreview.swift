@@ -6,11 +6,14 @@ import SwiftUI
 enum RoutineBlockPreviewTarget: Identifiable, Hashable {
     case exercise(Exercise)
     case loop(Loop)
+    /// A loop block in **ear-training** mode (ADR 0104 Slice 2) — previews the ears-only surface,
+    /// not the trainer ramp.
+    case earLoop(Loop)
 
     var id: PersistentIdentifier {
         switch self {
         case .exercise(let exercise): return exercise.persistentModelID
-        case .loop(let loop): return loop.persistentModelID
+        case .loop(let loop), .earLoop(let loop): return loop.persistentModelID
         }
     }
 }
@@ -269,6 +272,59 @@ struct LoopBlockPreview: View {
         }
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(loop.name.isEmpty ? "Loop" : loop.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .onDisappear { preview.stop() }
+    }
+}
+
+/// The pre-start preview of an **ear-training** loop block (ADR 0104 Slice 2). Unlike `LoopBlockPreview`
+/// there's no ramp/staircase — ear mode plays at a self-chosen tempo with no climb — so it shows the
+/// loop + song, an "Ear training" label, and the same real-audio audition, so a player can confirm the
+/// block before starting the routine.
+struct EarLoopBlockPreview: View {
+    let loop: Loop
+    @State private var preview: LoopAudioPreviewPlayer
+
+    init(loop: Loop) {
+        self.loop = loop
+        _preview = State(initialValue: LoopAudioPreviewPlayer(loop: loop))
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 22) {
+                VStack(spacing: 4) {
+                    Text(loop.name.isEmpty ? "Untitled loop" : loop.name)
+                        .font(.futura(.title3, weight: .semibold))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    if let song = loop.song {
+                        Text(song.artist.isEmpty ? "from \(song.title)"
+                                                 : "from \(song.title) · \(song.artist)")
+                            .font(.futura(.subheadline))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 8)
+
+                Label("Ear training — hum or sing it back", systemImage: "ear")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.journal)
+
+                if preview.isUnavailable {
+                    Text("Audio unavailable — the song file couldn't be found.")
+                        .font(.futura(.footnote))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .multilineTextAlignment(.center)
+                } else {
+                    PreviewAudioButton(isPlaying: preview.isPlaying,
+                                       idleTitle: "Hear the loop") { preview.toggle() }
+                }
+            }
+            .padding(24)
+        }
+        .background(PocketColor.background.ignoresSafeArea())
+        .navigationTitle(loop.name.isEmpty ? "Ear training" : loop.name)
         .navigationBarTitleDisplayMode(.inline)
         .onDisappear { preview.stop() }
     }

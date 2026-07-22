@@ -85,6 +85,19 @@ final class RoutineItem {
     /// on a unit-bearing block — a `rest` carries no run to repeat. Read via `effectiveReps`.
     var reps: Int = 1
 
+    /// Backing storage for `loopRunMode` — a plain `String`, **not** the enum (the SwiftData
+    /// enum-attribute migration rule; see `kindRaw`). Only meaningful on a **loop** block; ignored
+    /// elsewhere. Declaration default = `.trainer` so every loop block saved before ADR 0104 Slice 2
+    /// migrates to the standard trainer with no store wipe (CoreData 134110).
+    var loopRunModeRaw: String = LoopRunMode.default.rawValue
+
+    /// Typed view over `loopRunModeRaw` — whether a loop block runs the standard trainer or ear
+    /// training (ADR 0104). Unrecognised/empty reads as `.trainer`. Meaningless on non-loop blocks.
+    var loopRunMode: LoopRunMode {
+        get { LoopRunMode(raw: loopRunModeRaw) }
+        set { loopRunModeRaw = newValue.rawValue }
+    }
+
     /// `reps` clamped to at least one run — the count the player and the session estimate use.
     var effectiveReps: Int { max(1, reps) }
 
@@ -121,6 +134,17 @@ final class RoutineItem {
                      order: Int = 0) -> RoutineItem {
         let routineItem = RoutineItem(kind: kind, order: order)
         routineItem.loop = loop
+        return routineItem
+    }
+
+    /// An **ear-training** block on a loop (ADR 0104 Slice 2) — the same `Loop`, run ears-only.
+    /// Defaults to `warmup`: unbudgeted and self-paced, since ear internalisation has no ramp length
+    /// and advances manually (there's nothing to time or drill against a budget).
+    static func earLoopItem(_ loop: Loop, kind: RoutineItemKind = .warmup,
+                            order: Int = 0) -> RoutineItem {
+        let routineItem = RoutineItem(kind: kind, order: order)
+        routineItem.loop = loop
+        routineItem.loopRunMode = .ear
         return routineItem
     }
 

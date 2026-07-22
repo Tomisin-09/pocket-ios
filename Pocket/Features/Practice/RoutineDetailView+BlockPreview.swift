@@ -73,7 +73,8 @@ extension RoutineDetailView {
             previewTarget = .exercise(appExercise)
         } else if let loop = item.loop,
                   let appLoop = appContext.model(for: loop.persistentModelID) as? Loop {
-            previewTarget = .loop(appLoop)
+            // A loop block carries a mode (ADR 0104 Slice 2): ear blocks preview the ears-only surface.
+            previewTarget = item.loopRunMode == .ear ? .earLoop(appLoop) : .loop(appLoop)
         } else {
             return
         }

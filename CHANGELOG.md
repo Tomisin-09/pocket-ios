@@ -5,7 +5,25 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Train your ear on any loop.** A loop's edit sheet has a new **Train your ear** option — an
+  away-from-the-guitar exercise: it plays the loop's own audio cycling continuously so you can **hum or
+  sing it back**, then listen again and compare. The loop and the song it's from are shown up top, and a
+  **tempo control** lets you slow the phrase right down (or nudge it back up) while it plays. Jot **what
+  you hear** and it saves to that loop's **Journal** tagged 👂, on the same timeline as your practice
+  notes. No score and no right/wrong — you're the judge.
+- **Add ear training to a routine.** The **Add to routine** picker has a new **Ear training** bucket:
+  pick a loop and it becomes an ears-only block in your routine. During the session it plays the loop for
+  you to hum/sing back; tap **Done** when you've got it to move on (no scoring — it's self-paced).
+- **Preview loops while building a routine.** Loop and Ear-training rows in the **Add to routine** picker
+  now have a play button that **auditions the loop's audio** in place — handy when loops share a name
+  like "Loop 5" / "Loop 8".
+- **Search the Add-to-routine picker.** A search field filters across everything you can add —
+  exercises, loops, songs, and ear-training — so you don't have to drill through buckets to find a unit.
+
 ### Changed
+- **Removed the "Coming Soon" Ear Training and Theory rows** from the New Exercise sheet. Ear training now
+  lives on loops (see above) rather than as an exercise type.
 - **The chord picker is search-first.** Adding or swapping a chord in a progression now opens a picker
   you can **search** ("maj9", "minor", "e-shape") instead of scrolling one long menu. It splits **Insert**
   (browse existing chords) from **Build** (make a new one), and shows chords as **mini diagrams** in three

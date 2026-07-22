@@ -12,18 +12,25 @@ struct RoutineStage: Identifiable {
     let reps: Int
     let payload: Payload
 
-    enum Payload { case exercise(Exercise), loop(Loop), song(Song), rest }
+    enum Payload { case exercise(Exercise), loop(Loop), earLoop(Loop), song(Song), rest }
 
     var kind: RoutineStageKind {
         switch payload {
         case .exercise: return .exercise
         case .loop: return .loop
+        case .earLoop: return .earLoop
         case .song: return .song
         case .rest: return .rest
         }
     }
     var exercise: Exercise? { if case .exercise(let value) = payload { return value }; return nil }
-    var loop: Loop? { if case .loop(let value) = payload { return value }; return nil }
+    /// The loop unit for **either** loop mode — standard trainer (`.loop`) or ear (`.earLoop`).
+    var loop: Loop? {
+        switch payload {
+        case .loop(let value), .earLoop(let value): return value
+        default: return nil
+        }
+    }
     var song: Song? { if case .song(let value) = payload { return value }; return nil }
 }
 
@@ -127,8 +134,12 @@ final class RoutineSessionPlayer {
             return RoutineStage(id: item.uid, title: title, reps: reps, payload: .exercise(exercise))
         }
         if let loop = item.loop {
-            return RoutineStage(id: item.uid, title: loop.name.isEmpty ? "Loop" : loop.name,
-                                reps: reps, payload: .loop(loop))
+            let title = loop.name.isEmpty ? "Loop" : loop.name
+            // A loop block carries a mode (ADR 0104 Slice 2): ear training embeds the ears-only
+            // surface, everything else the standard command-anchored trainer.
+            let payload: RoutineStage.Payload =
+                item.loopRunMode == .ear ? .earLoop(loop) : .loop(loop)
+            return RoutineStage(id: item.uid, title: title, reps: reps, payload: payload)
         }
         if let song = item.song {
             return RoutineStage(id: item.uid, title: song.title.isEmpty ? "Song" : song.title,

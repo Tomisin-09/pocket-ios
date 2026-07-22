@@ -48,6 +48,20 @@ final class RoutineSessionPlayerTests: XCTestCase {
         XCTAssertEqual(player.nextUnitStage(after: 0)?.title, "End")
     }
 
+    // MARK: - Loop block mode → stage kind (ADR 0104 Slice 2)
+
+    func testLoopBlockModeMapsToTheMatchingStageKind() {
+        let loop = Loop(name: "Riff", start: 0.1, end: 0.2, speed: 1, repeats: 4)
+        let earLoop = Loop(name: "Lick", start: 0.3, end: 0.4, speed: 1, repeats: 4)
+        let player = RoutineSessionPlayer(routine: routine([
+            .item(loop, order: 0), .earLoopItem(earLoop, order: 1)
+        ]))
+        // A standard loop block runs the trainer; an ear-mode block resolves to `.earLoop` so the
+        // player embeds the ears-only surface — both from the same `Loop` unit.
+        XCTAssertEqual(player.stages.map(\.kind), [.loop, .earLoop])
+        XCTAssertIdentical(player.stages[1].loop, earLoop)   // `loop` accessor covers both modes
+    }
+
     // MARK: - Auto-start no longer excludes the first block (ADR 0071 R4b)
 
     func testAutoStartTreatsEveryBlockAlike() {

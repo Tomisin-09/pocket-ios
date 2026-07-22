@@ -50,6 +50,34 @@ final class RoutineModelTests: XCTestCase {
         XCTAssertFalse(item.isOrphaned)
     }
 
+    func testLoopFactoryDefaultsToTheStandardTrainerMode() {
+        let loop = Loop(name: "Riff", start: 0.1, end: 0.2, speed: 1, repeats: 4)
+        let item = RoutineItem.item(loop)
+        XCTAssertIdentical(item.loop, loop)
+        XCTAssertEqual(item.loopRunMode, .trainer)   // ADR 0104: default mode, unchanged behaviour
+    }
+
+    func testEarLoopFactorySetsEarModeOnTheSameLoop() {
+        let loop = Loop(name: "Riff", start: 0.1, end: 0.2, speed: 1, repeats: 4)
+        let item = RoutineItem.earLoopItem(loop, order: 3)
+        XCTAssertIdentical(item.loop, loop)          // same unit type — no separate loop entity
+        XCTAssertEqual(item.loopRunMode, .ear)
+        XCTAssertEqual(item.order, 3)
+        XCTAssertEqual(item.kind, .warmup)           // unbudgeted, self-paced (no ramp to time)
+        XCTAssertNil(item.exercise)
+        XCTAssertNil(item.song)
+        XCTAssertTrue(item.hasResolvableUnit)
+    }
+
+    func testLoopRunModeRoundTripsThroughItsRawBacking() {
+        let item = RoutineItem()
+        XCTAssertEqual(item.loopRunMode, .trainer)   // declaration default
+        item.loopRunMode = .ear
+        XCTAssertEqual(item.loopRunModeRaw, "ear")
+        item.loopRunModeRaw = "not-a-mode"
+        XCTAssertEqual(item.loopRunMode, .trainer)   // unknown folds to the default
+    }
+
     func testSongFactoryDefaultsToAPlayRunThrough() {
         let song = Song(title: "Red Moon", duration: 200,
                         ref: SongRef(id: "x", source: .localFile, bookmark: nil))

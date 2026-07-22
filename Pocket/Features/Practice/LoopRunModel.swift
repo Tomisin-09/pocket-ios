@@ -165,6 +165,16 @@ final class LoopRunModel {
         transport = .playing
     }
 
+    /// Adjust the audition playback rate **live** — the ear-training tempo control (ADR 0104). Stores
+    /// the percent (so a next `startAudition` could seed from it) and, while sounding, pushes the new
+    /// rate to the engine so slowing/speeding takes effect mid-listen. No-op semantics outside an
+    /// audition are fine: it just records the value.
+    func setAuditionPercent(_ percent: Int) {
+        currentPercent = percent
+        guard transport == .playing else { return }
+        engine.setRate(Self.rate(forPercent: percent))
+    }
+
     /// Pause / resume the run. The rep counter rides the engine's render position, so it freezes on
     /// pause and resumes on play with no extra bookkeeping.
     func toggle() {

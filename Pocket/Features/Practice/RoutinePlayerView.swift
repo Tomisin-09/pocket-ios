@@ -67,7 +67,10 @@ struct RoutinePlayerView: View {
     private func finishedBlock() {
         if player.hasMoreReps {
             player.advance()      // next rep of the same block — the run screen restarts on its new id
-        } else if !AppSettings.routineAutoAdvance, let stage = player.current, owner(for: stage) != nil {
+        } else if !AppSettings.routineAutoAdvance, let stage = player.current,
+                  stage.kind != .earLoop, owner(for: stage) != nil {
+            // Ear-training blocks never show a Done screen — there's nothing to grade or promote
+            // (ADR 0104 Slice 2); their own Done button is the completion, so advance straight on.
             doneStage = stage
         } else {
             player.advance()
@@ -150,14 +153,20 @@ struct RoutinePlayerView: View {
         if let exercise = stage.exercise {
             return "Command \(exercise.command) → \(exercise.reachTempo) BPM"
         }
-        if let loop = stage.loop { return loop.song?.title }
+        if let loop = stage.loop {
+            if stage.kind == .earLoop {
+                return loop.song.map { "Ear training · \($0.title)" } ?? "Ear training"
+            }
+            return loop.song?.title
+        }
         if let song = stage.song { return song.artist.isEmpty ? "Play-along" : song.artist }
         return nil
     }
 
-    /// The upcoming unit's type glyph — the exercise's template icon, else a loop/song symbol.
+    /// The upcoming unit's type glyph — the exercise's template icon, else a loop/ear/song symbol.
     private func symbol(for stage: RoutineStage) -> String {
         if let exercise = stage.exercise { return exercise.template.iconName }
+        if stage.kind == .earLoop { return "ear" }
         if stage.loop != nil { return "repeat" }
         if stage.song != nil { return "music.note" }
         return "questionmark"
@@ -202,6 +211,8 @@ struct RoutinePlayerView: View {
             ExerciseRunView(exercise: exercise, routineContext: context).id(runID)
         case .loop(let loop):
             LoopRunView(loop: loop, routineContext: context).id(runID)
+        case .earLoop(let loop):
+            EarLoopRunView(loop: loop, routineContext: context).id(runID)
         case .song(let song):
             SongPlayAlongView(song: song, routineContext: context).id(runID)
         case .rest:
