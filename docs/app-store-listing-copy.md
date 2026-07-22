@@ -114,29 +114,59 @@ exists / forwards before submission. Marketing URL: leave blank for v1 (full
 marketing site is a post-launch project; point the Marketing URL at it later — no
 new build needed).
 
-## Screenshots — final upload order (6.5", 1242×2688)
-NOTE: this app's listing exposes the **6.5"** iPhone slot, which accepts only
-1242×2688 / 1284×2778 — NOT the 6.9" 1320×2868 size. Rescale to 1242×2688.
-Curated 8, ordered for the install sheet (first 3 carry the pitch):
+## Screenshots — REVISED shoot guide (re-shoot, 2026-07-21)
 
-1. Loop trainer, Solo 1 playing (1.00×, 86 BPM) — hero, the moat
-2. A–B loop + "Save as loop" (0.75×) — the core gesture
-3. A Minor Pentatonic (fretboard + ramp + journal) — "it teaches"
-4. Red Moon Practice Routine — session spine
-5. Metronome + Automator — trust/utility
-6. Custom chord placer (C minor) — novelty
-7. Chord run (Irreplaceable plagal) — chords in action
-8. Library (clean) — where you live
+**Why re-shoot:** the `appstore-final/` set was shot **2026-07-16** and now predates
+a batch of UI-changing merges (all Jul 20–21): Home regrouped into titled sections
+(ADR 0102 / #159), search-first chord picker (ADR 0103 / #160), centralised Journal
+(ADR 0100 / #157), 9th-chord grips (#158), pinch-zoom focal + loop-edge snap
+(ADR 0098/0099), plus the net-new **Hear** audio surfaces (ADR 0097). Sequence the
+shoot **after** Hear merges so the build and the shots match.
 
-Upscale every shot from 16 Pro native (1206×2622) to the 6.5" size before upload:
+**Target size — CONFIRMED 6.5" / 1242×2688 (2026-07-22).** ASC rejected a 1320×2868
+upload ("dimensions should be 1242×2688 / 1284×2778 …") — this listing exposes the
+**iPhone 6.5" Display** slot only. Workflow that worked: shoot on the **iPhone 17 Pro
+Max simulator** at native **1320×2868**, then **downscale** to 1242×2688 with
+`sips -z 2688 1242` (downscaling stays crisp — unlike the old 16 Pro 1206×2622 set that
+was *upscaled* → soft; the 0.4% aspect difference is invisible). Final upload set lives
+in `Documents/Red Moon Screenshots 2/appstore-2026-07-22/upload-6.5/`.
+
+**Clean status bar (don't crop — normalise):** slots demand exact pixel dimensions,
+so you can't crop the clock/battery/signal off and submit a shorter image. Instead
+override the Simulator status bar to Apple's canonical clean state before every shot:
 ```bash
-for f in *.png *.PNG; do sips -z 2688 1242 "$f" --out "appstore-$f"; done
+# boot the sim, then override once per boot:
+xcrun simctl status_bar booted override \
+  --time "9:41" --batteryState charged --batteryLevel 100 \
+  --cellularMode active --cellularBars 4 \
+  --dataNetwork wifi --wifiMode active --wifiBars 3
+# navigate to each screen, then capture:
+xcrun simctl io booted screenshot 01-hero-loop.png
 ```
-Done: `Documents/Red Moon Screenshots 2/appstore-1242x2688/` (named 01–08 in slot order).
+Loop-trainer shots (#1/#2) need a **local audio file** imported into the sim first
+(Apple Music can't be tapped); everything else runs off seeded content.
+
+Curated slots, ordered for the install sheet (first 3 carry the pitch):
+
+| # | Subject | Verdict | Set-up |
+|---|---|---|---|
+| 1 | Loop trainer, Solo playing (1.00×) — hero, the moat | Re-shoot | import demo local file; loop playing |
+| 2 | A–B loop + "Save as loop" (0.75×) — core gesture | Re-shoot | same session, save sheet up |
+| 3 | A Minor Pentatonic (fretboard + ramp + journal) — "it teaches" | Re-shoot | Journal centralised (#157) — confirm/reframe panel |
+| 4 | Red Moon Practice Routine — session spine | Re-shoot | UI ~unchanged; reshoot for clean-bar consistency |
+| 5 | Metronome + Automator — trust/utility | Re-shoot | UI ~unchanged; reshoot for consistency |
+| 6 | Custom chord placer — novelty | Re-shoot | chord authoring redesigned (#158/#160) |
+| 7 | Chord run — chords in action | Re-shoot | same redesign |
+| 8 | Library (clean) — where you live | Re-shoot | Home/nav regrouped (#159); fix "Dont"→"Don't" seed typo first |
+| + | **Home (grouped sections)** — new hero look | Consider adding | #159 gave Home a real hero; candidate for slot 1 |
+| + | **Hear / audio preview** — differentiator | Consider adding | once ADR 0097 lands |
+
+Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–08,
+1242×2688, shot 2026-07-16).
 
 ## Pre-submission checklist
 - [ ] Subtitle, promotional text, keywords, description entered (above)
-- [ ] 8 screenshots upscaled to 1320×2868 and uploaded in order
+- [ ] 8 screenshots re-shot on iPhone 17 Pro Max sim (native 1320×2868, clean 9:41 status bar) and uploaded in order — see revised shoot guide above; verify ASC slot size on sign-in
 - [ ] `support@decooperations.click` mailbox live
 - [ ] "Red Moon Practice" section added to decooperations.co.uk/privacy; `#red-moon-practice` anchor resolves
 - [ ] support.html deployed to decooperations.click/redmoon/support

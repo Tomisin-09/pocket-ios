@@ -122,6 +122,9 @@ struct HomeView: View {
                 PracticePresets.seedIfNeeded(into: context)
                 await Task.yield()
                 RoutinePresets.seedIfNeeded(into: context)
+                #if DEBUG
+                ScreenshotSeed.seedIfNeeded(into: context)
+                #endif
             }
         }
     }
