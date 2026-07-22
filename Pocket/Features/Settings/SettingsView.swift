@@ -123,6 +123,9 @@ struct SettingsView: View {
             }
         }
         .scrollContentBackground(.hidden)
+        // Cap the form to a readable column at regular width (iPad / landscape); no-op at
+        // compact width, dormant on the iPhone-only v1 build (ADR 0105).
+        .readableWidth()
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
@@ -175,6 +178,13 @@ enum SettingsInfo {
     static let animateExercises =
         "A moving highlight walks the exercise in time — the notes on the fretboard, the strokes on "
         + "the strum lane. Always off when your device has Reduce Motion on."
+}
+
+// Regular-width variant (ADR 0105): caps to a centred column at iPad / landscape width.
+#Preview("Settings — regular width (iPad groundwork)") {
+    NavigationStack { SettingsView() }
+        .environment(\.horizontalSizeClass, .regular)
+        .frame(width: 1024, height: 900)
 }
 
 #Preview {

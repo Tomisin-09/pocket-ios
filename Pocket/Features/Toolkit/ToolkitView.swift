@@ -37,6 +37,9 @@ struct ToolkitView: View {
                 .accessibilityLabel("Glossary, chord, scale and theory terms")
             }
             .padding(20)
+            // Cap to a readable column at regular width (iPad / landscape); no-op at compact
+            // width, dormant on the iPhone-only v1 build (ADR 0105).
+            .readableWidth()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(PocketColor.background.ignoresSafeArea())
@@ -87,6 +90,13 @@ struct ToolkitSectionRow: View {
         .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.toolkitCardWash))
         .accessibilityElement(children: .ignore)
     }
+}
+
+// Regular-width variant (ADR 0105): caps to a centred column at iPad / landscape width.
+#Preview("Toolkit — regular width (iPad groundwork)") {
+    NavigationStack { ToolkitView() }
+        .environment(\.horizontalSizeClass, .regular)
+        .frame(width: 1024, height: 900)
 }
 
 #Preview("Toolkit") {

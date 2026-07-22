@@ -50,6 +50,9 @@ struct JournalTabView: View {
             scopePicker
             if sections.isEmpty { emptyState } else { list }
         }
+        // Cap to a readable column at regular width (iPad / landscape); no-op at compact
+        // width, dormant on the iPhone-only v1 build (ADR 0105).
+        .readableWidth()
         .navigationTitle("Journal")
         .navigationBarTitleDisplayMode(.inline)
         .background(PocketColor.background.ignoresSafeArea())
@@ -220,6 +223,14 @@ private struct JournalTakeRow: View {
     NavigationStack { JournalTabView() }
         .modelContainer(JournalTabPreview.container())
         .preferredColorScheme(.dark)
+}
+
+// Regular-width variant (ADR 0105): caps to a centred column at iPad / landscape width.
+#Preview("Journal — regular width (iPad groundwork)") {
+    NavigationStack { JournalTabView() }
+        .modelContainer(JournalTabPreview.container())
+        .environment(\.horizontalSizeClass, .regular)
+        .frame(width: 1024, height: 900)
 }
 
 /// Seeds an in-memory store with a mixed feed (loop + exercise notes and a take) for the preview.

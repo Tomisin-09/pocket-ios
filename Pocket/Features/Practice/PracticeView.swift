@@ -45,6 +45,9 @@ struct PracticeView: View {
             }
         }
         .scrollContentBackground(.hidden)
+        // Cap the list to a readable column at regular width (iPad / landscape); no-op at
+        // compact width, dormant on the iPhone-only v1 build (ADR 0105).
+        .readableWidth()
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle("Practice")
         .navigationBarTitleDisplayMode(.inline)
@@ -128,4 +131,17 @@ struct PracticeView: View {
     return NavigationStack { PracticeView() }
         .modelContainer(container)
         .preferredColorScheme(.dark)
+}
+
+// Regular-width variant (ADR 0105): caps to a centred column at iPad / landscape width.
+#Preview("Practice hub — regular width (iPad groundwork)") {
+    // swiftlint:disable:next force_try
+    let container = try! ModelContainer(for: Exercise.self, Song.self, Routine.self,
+                                        configurations: .init(isStoredInMemoryOnly: true))
+    container.mainContext.insert(Exercise(name: "Alternating picking",
+                                          currentTempo: 70, commandTempo: 96))
+    return NavigationStack { PracticeView() }
+        .modelContainer(container)
+        .environment(\.horizontalSizeClass, .regular)
+        .frame(width: 1024, height: 900)
 }
