@@ -189,7 +189,8 @@ struct RoutineDetailView: View {
             // any drill-in depth dismisses cleanly — a child's own dismiss would only pop.
             AddRoutineUnitSheet(onPickExercise: { addExercise($0); addingUnit = false },
                                 onPickLoop: { addLoop($0); addingUnit = false },
-                                onPickSong: { addSong($0); addingUnit = false })
+                                onPickSong: { addSong($0); addingUnit = false },
+                                onPickEarLoop: { addEarLoop($0); addingUnit = false })
         }
         .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
         .sheet(item: $repsEditorItem) { repsEditorSheet($0.value) }
@@ -197,6 +198,7 @@ struct RoutineDetailView: View {
             switch target {
             case .exercise(let exercise): ExerciseBlockPreview(exercise: exercise)
             case .loop(let loop): LoopBlockPreview(loop: loop)
+            case .earLoop(let loop): EarLoopBlockPreview(loop: loop)
             }
         }
     }
@@ -311,26 +313,9 @@ struct RoutineDetailView: View {
     }
 
     // MARK: - Mutations (sandbox only — provisional until Save)
-
-    /// Add a picked exercise as a block. The picker hands back the unit from the app's main
-    /// context, so it's re-resolved into the sandbox by id before it's referenced (never mix
-    /// objects across contexts).
-    private func addExercise(_ picked: Exercise) {
-        guard let local = editContext.model(for: picked.persistentModelID) as? Exercise else {
-            return
-        }
-        insert(.item(local, order: nextOrder))
-    }
-
-    private func addLoop(_ picked: Loop) {
-        guard let local = editContext.model(for: picked.persistentModelID) as? Loop else { return }
-        insert(.item(local, order: nextOrder))
-    }
-
-    private func addSong(_ picked: Song) {
-        guard let local = editContext.model(for: picked.persistentModelID) as? Song else { return }
-        insert(.item(local, order: nextOrder))
-    }
+    //
+    // The unit-adders live in a same-file extension below (they only touch private members, still
+    // in-file-accessible), keeping the primary struct body under the type-length cap.
 
     private func addRest() {
         insert(.rest(order: nextOrder))
@@ -358,6 +343,34 @@ struct RoutineDetailView: View {
         for index in offsets { editContext.delete(ordered[index]) }
         for (index, item) in routine.orderedItems.enumerated() { item.order = index }
         haptic(.medium)
+    }
+}
+
+// MARK: - Unit adders (same-file extension — keeps the struct body under the type-length cap)
+
+extension RoutineDetailView {
+    /// Add a picked exercise as a block. The picker hands back the unit from the app's main
+    /// context, so it's re-resolved into the sandbox by id before it's referenced (never mix
+    /// objects across contexts).
+    func addExercise(_ picked: Exercise) {
+        guard let local = editContext.model(for: picked.persistentModelID) as? Exercise else { return }
+        insert(.item(local, order: nextOrder))
+    }
+
+    func addLoop(_ picked: Loop) {
+        guard let local = editContext.model(for: picked.persistentModelID) as? Loop else { return }
+        insert(.item(local, order: nextOrder))
+    }
+
+    /// Add a loop as an **ear-training** block (ADR 0104 Slice 2) — same loop, ears-only mode.
+    func addEarLoop(_ picked: Loop) {
+        guard let local = editContext.model(for: picked.persistentModelID) as? Loop else { return }
+        insert(.earLoopItem(local, order: nextOrder))
+    }
+
+    func addSong(_ picked: Song) {
+        guard let local = editContext.model(for: picked.persistentModelID) as? Song else { return }
+        insert(.item(local, order: nextOrder))
     }
 }
 

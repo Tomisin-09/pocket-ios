@@ -65,12 +65,19 @@ have a home live in their own sections (cross-referenced); this is the index.
 - ~~**Note 12 — chord picker redesign.**~~ **DONE (pocket-165, ADR 0103).** Search-first
   `ChordPickerSheet`, Insert/Build split, diagram grid, movable barre shapes browsable in Insert
   (tap → root menu). Replaced the flat insert `Menu`; `SavedChordsSheet` removed (management → Toolkit).
-- **Note 7 — ear training as "loops, re-surfaced."** Reframe ear training as
-  listening/internalising/singing/transcribing **the loops** (loops under a different
-  surface), not a generic interval trainer. Stays clear of ADR 0070 as long as
-  sing/transcribe is **self-checked, not scored**; overlaps Hear (ADR 0097) and the
-  ear-training direction (ADR 0094). Own ADR, framed as internalisation, not a new
-  content pillar.
+- **Note 7 — ear training as "loops, re-surfaced." DONE (pocket-166, ADR 0104).** **Slice 1:** a
+  **Train your ear** mode on a loop's edit sheet — ears-only continuous playback of the loop's
+  own audio (loop + song shown up top; hum/sing framing; a live −/+ **tempo control** to slow it
+  down), with "what you hear" notes saved to the loop's Journal tagged 👂 `.ear`. Self-judged, no
+  score (ADR 0094 T2b/T3); reuses the Journal write path (ADR 0100/0058) and loop audio (ADR 0001),
+  not the Hear synth (ADR 0097) — the point is to hear the *real* music. **Slice 2:** ear training
+  as a **routine block** — a loop `RoutineItem` carries a `LoopRunMode` (`.trainer`/`.ear`), an
+  `.ear` block resolves to `RoutineStageKind.earLoop` → `EarLoopRunView` (shared core + routine
+  chrome + manual Done, no completion screen), authored from a peer **Ear training** bucket in
+  `AddRoutineUnitSheet` (the loop-settings entry stays too). Folded in: the "Coming Soon" **Ear
+  Training/Theory** rows removed from the New Exercise picker (ear training is a loop mode, not an
+  exercise template). Follow-ups parked: waveform-on-reveal, a dedicated Home Ear destination
+  (ADR 0094 T1, deferred).
 
 **Wave 3 — strategy tracks (decide before building — user flagged these need more
 thought 2026-07-20):**
@@ -468,6 +475,16 @@ second, selectable theme. When picked back up:
 ## Near-term (active, not parked)
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
+
+- ~~**Add-routine picker: audio previews on loop rows.**~~ **SHIPPED (pocket-166, ADR 0104 Slice 2
+  follow-up, 2026-07-22).** A per-row **audition** speaker (reusable `AddRoutineUnitRow` +
+  `LoopAudioPreviewPlayer`, one loop at a time per screen) on the **Loops** and **Ear training**
+  buckets — and every loop row in search — so indistinctly-named loops ("Loop 5/8") can be told apart
+  by ear.
+- ~~**Add-routine picker: make the whole picker searchable.**~~ **SHIPPED (pocket-166, ADR 0104
+  Slice 2 follow-up, 2026-07-22).** `.searchable` on `AddRoutineUnitSheet` flattens the buckets into
+  typed result sections across **all** elements — Exercises · Loops · **Ear training** (same loops) ·
+  Songs — matching on unit name + song title.
 
 - ~~**Bulk song import from local/iCloud files.**~~ **SHIPPED (PR #114, pocket-120, 2026-07-10).**
   Multi-select `fileImporter` on both entry points (home hub + library `+`); each file decoded off

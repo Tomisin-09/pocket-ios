@@ -17,10 +17,16 @@ struct AddRoutineUnitSheet: View {
     @Query(sort: \Loop.name) private var loops: [Loop]
     @Query(sort: \Song.title) private var songs: [Song]
     @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+    /// The row auditioning on the root screen (recently-added / search results) — one loop at a time.
+    @State private var rootPlayingID: String?
 
     let onPickExercise: (Exercise) -> Void
     let onPickLoop: (Loop) -> Void
     let onPickSong: (Song) -> Void
+    /// Add a loop as an **ear-training** block (ADR 0104 Slice 2) — same loops, run ears-only. A
+    /// no-op default keeps existing callers (and previews) compiling.
+    var onPickEarLoop: (Loop) -> Void = { _ in }
 
     /// Only loops with a measured command tempo are trainable in a routine (the same gate as the
     /// loop library — an unmeasured loop has no ramp for the player to run).
@@ -34,42 +40,25 @@ struct AddRoutineUnitSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    NavigationLink {
-                        GroupPickList(title: "Exercises", groups: exerciseGroups)
-                    } label: {
-                        bucketRow(title: "Exercises", subtitle: "By template",
-                                  icon: "metronome", count: exercises.count)
+                if query.isEmpty {
+                    bucketsSection
+                    if !recentlyAdded.isEmpty {
+                        Section("Recently Added") {
+                            ForEach(recentlyAdded) { row in
+                                AddRoutineUnitRow(row: row, playingID: $rootPlayingID)
+                                    .listRowBackground(PocketColor.background)
+                            }
+                        }
                     }
-                    .listRowBackground(PocketColor.background)
-
-                    NavigationLink {
-                        GroupPickList(title: "Loops", groups: loopGroups)
-                    } label: {
-                        bucketRow(title: "Loops", subtitle: "By song",
-                                  icon: "repeat", count: trainableLoops.count)
-                    }
-                    .listRowBackground(PocketColor.background)
-
-                    NavigationLink {
-                        UnitPickList(title: "Songs", rows: playableSongs.map(songRow))
-                    } label: {
-                        bucketRow(title: "Songs", subtitle: "Play along",
-                                  icon: "music.note", count: playableSongs.count)
-                    }
-                    .listRowBackground(PocketColor.background)
-                }
-
-                if !recentlyAdded.isEmpty {
-                    Section("Recently Added") {
-                        ForEach(recentlyAdded) { pickButton(for: $0) }
-                    }
+                } else {
+                    searchResults
                 }
             }
             .scrollContentBackground(.hidden)
             .background(PocketColor.background.ignoresSafeArea())
             .navigationTitle("Add to routine")
             .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: "Search exercises, loops, songs")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
@@ -78,6 +67,93 @@ struct AddRoutineUnitSheet: View {
             }
         }
         .presentationDetents([.large])
+    }
+
+    /// The default browse view — the four typed buckets (ADR 0104 Slice 2 adds Ear training).
+    @ViewBuilder private var bucketsSection: some View {
+        Section {
+            NavigationLink {
+                GroupPickList(title: "Exercises", groups: exerciseGroups)
+            } label: {
+                bucketRow(title: "Exercises", subtitle: "By template",
+                          icon: "metronome", count: exercises.count)
+            }
+            .listRowBackground(PocketColor.background)
+
+            NavigationLink {
+                GroupPickList(title: "Loops", groups: loopGroups)
+            } label: {
+                bucketRow(title: "Loops", subtitle: "By song",
+                          icon: "repeat", count: trainableLoops.count)
+            }
+            .listRowBackground(PocketColor.background)
+
+            NavigationLink {
+                UnitPickList(title: "Songs", rows: playableSongs.map(songRow))
+            } label: {
+                bucketRow(title: "Songs", subtitle: "Play along",
+                          icon: "music.note", count: playableSongs.count)
+            }
+            .listRowBackground(PocketColor.background)
+
+            // Ear training (ADR 0104 Slice 2): the same loops, added as an ears-only block —
+            // hum/sing a loop inside the routine. Kept a peer bucket so it's discoverable
+            // without burying a mode toggle under Loops.
+            NavigationLink {
+                GroupPickList(title: "Ear training", groups: earLoopGroups)
+            } label: {
+                bucketRow(title: "Ear training", subtitle: "Hum & sing a loop",
+                          icon: "ear", count: trainableLoops.count)
+            }
+            .listRowBackground(PocketColor.background)
+        }
+    }
+
+    // MARK: - Search (ADR 0104 Slice 2 follow-up)
+    //
+    // A `.searchable` field flattens the buckets into typed result sections across **every** add-routine
+    // element — exercises, loops, songs, and ear training (the same loops, ears-only). Matches on the
+    // unit name plus a loop/song's song title, case/diacritic-insensitive.
+
+    private var query: String { searchText.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    private func matches(_ text: String?) -> Bool {
+        guard let text, !query.isEmpty else { return false }
+        return text.localizedCaseInsensitiveContains(query)
+    }
+
+    private var matchingExercises: [Exercise] { exercises.filter { matches($0.name) } }
+    private var matchingLoops: [Loop] {
+        trainableLoops.filter { matches($0.name) || matches($0.song?.title) }
+    }
+    private var matchingSongs: [Song] {
+        playableSongs.filter { matches($0.title) || matches($0.artist) }
+    }
+
+    @ViewBuilder private var searchResults: some View {
+        if matchingExercises.isEmpty && matchingLoops.isEmpty && matchingSongs.isEmpty {
+            Text("No matches.")
+                .font(.futura(.footnote))
+                .foregroundStyle(PocketColor.textSecondary)
+                .listRowBackground(PocketColor.background)
+        } else {
+            resultSection("Exercises", rows: matchingExercises.map(exerciseRow))
+            resultSection("Loops", rows: matchingLoops.map(loopRow))
+            // Loops appear again as ear-training picks — the same units, a different block (ADR 0104).
+            resultSection("Ear training", rows: matchingLoops.map(earLoopRow))
+            resultSection("Songs", rows: matchingSongs.map(songRow))
+        }
+    }
+
+    @ViewBuilder private func resultSection(_ title: String, rows: [PickRow]) -> some View {
+        if !rows.isEmpty {
+            Section(title) {
+                ForEach(rows) { row in
+                    AddRoutineUnitRow(row: row, playingID: $rootPlayingID)
+                        .listRowBackground(PocketColor.background)
+                }
+            }
+        }
     }
 
     // MARK: - Rows
@@ -107,13 +183,6 @@ struct AddRoutineUnitSheet: View {
         .accessibilityLabel("\(title), \(count)")
     }
 
-    private func pickButton(for row: PickRow) -> some View {
-        Button { row.pick() } label: {
-            PracticeUnitRow(title: row.title, context: row.context, progress: row.progress)
-        }
-        .listRowBackground(PocketColor.background)
-    }
-
     // MARK: - Grouped data
 
     /// Exercises bucketed by their (immutable) **template**, in canonical menu order
@@ -129,8 +198,13 @@ struct AddRoutineUnitSheet: View {
     }
 
     /// Trainable loops bucketed by their **song**, songs A→Z, loops with no song collected under
-    /// "No song" last. Each group drills into its own unit list.
-    private var loopGroups: [PickGroup] {
+    /// "No song" last. Each group drills into its own unit list. The standard **Loops** bucket adds a
+    /// command-anchored trainer block; the **Ear training** bucket reuses the same grouping with an
+    /// ears-only pick action (ADR 0104 Slice 2), so both stay one implementation.
+    private var loopGroups: [PickGroup] { loopGroups(makeRow: loopRow) }
+    private var earLoopGroups: [PickGroup] { loopGroups(makeRow: earLoopRow) }
+
+    private func loopGroups(makeRow: (Loop) -> PickRow) -> [PickGroup] {
         let bySong = Dictionary(grouping: trainableLoops) { $0.song?.title ?? "" }
         return bySong.keys.sorted { lhs, rhs in
             if lhs.isEmpty != rhs.isEmpty { return !lhs.isEmpty }  // "No song" sinks to the bottom
@@ -139,7 +213,7 @@ struct AddRoutineUnitSheet: View {
             let members = bySong[key] ?? []
             return PickGroup(id: key.isEmpty ? "\u{0}nosong" : key,
                              title: key.isEmpty ? "No song" : key,
-                             icon: "music.note", rows: members.map(loopRow))
+                             icon: "music.note", rows: members.map(makeRow))
         }
     }
 
@@ -165,7 +239,16 @@ struct AddRoutineUnitSheet: View {
         PickRow(id: loop.uid.uuidString, title: loop.name.isEmpty ? "Untitled loop" : loop.name,
                 context: loop.song?.title,
                 progress: "Command \(Int((loop.command * 100).rounded()))%",
-                pick: { onPickLoop(loop) })
+                pick: { onPickLoop(loop) }, previewLoop: loop)
+    }
+
+    /// The ear-training variant of `loopRow` — same loop, but the pick adds an ears-only block
+    /// (ADR 0104). A prefixed id keeps it distinct from the trainer row in the shared grouping.
+    private func earLoopRow(_ loop: Loop) -> PickRow {
+        PickRow(id: "ear-" + loop.uid.uuidString,
+                title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+                context: loop.song?.title, progress: "Ear training",
+                pick: { onPickEarLoop(loop) }, previewLoop: loop)
     }
 
     private func songRow(_ song: Song) -> PickRow {
@@ -228,6 +311,8 @@ private struct GroupPickList: View {
 private struct UnitPickList: View {
     let title: String
     let rows: [PickRow]
+    /// The row currently auditioning (loops/ear), so only one plays at a time on this screen.
+    @State private var playingID: String?
 
     var body: some View {
         List {
@@ -238,11 +323,8 @@ private struct UnitPickList: View {
                     .listRowBackground(PocketColor.background)
             } else {
                 ForEach(rows) { row in
-                    Button { row.pick() } label: {
-                        PracticeUnitRow(title: row.title, context: row.context,
-                                        progress: row.progress)
-                    }
-                    .listRowBackground(PocketColor.background)
+                    AddRoutineUnitRow(row: row, playingID: $playingID)
+                        .listRowBackground(PocketColor.background)
                 }
             }
         }
@@ -264,10 +346,13 @@ private struct PickGroup: Identifiable {
 
 /// A single pickable unit projected for display — the row's text plus the action that adds it
 /// to the routine. Decouples the list UI from `Exercise`/`Loop` so both flow through one row.
-private struct PickRow: Identifiable {
+/// `previewLoop` (loops/ear rows only) carries the loop to **audition** in the row (ADR 0104 Slice 2
+/// follow-up) so indistinctly-named loops can be told apart by ear; `nil` = no preview affordance.
+struct PickRow: Identifiable {
     let id: String
     let title: String
     let context: String?
     let progress: String
     let pick: () -> Void
+    var previewLoop: Loop?
 }

@@ -87,12 +87,15 @@ final class ExerciseTemplateTests: XCTestCase {
 
     func testCreatablePickerOrderAndRetiredTemplates() {
         // The create picker (ADR 0087): Basic first, then Warm-up, in the agreed order — and it no
-        // longer offers the retired Fingerstyle / Rhythm templates.
+        // longer offers the retired Fingerstyle / Rhythm templates, nor the ex-"Coming Soon" Ear
+        // Training / Theory rows (removed 2026-07-22; ear training shipped as a loop mode, ADR 0104).
         XCTAssertEqual(ExerciseTemplate.creatable,
                        [.basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
-                        .arpeggios, .legato, .earTraining, .theory])
+                        .arpeggios, .legato])
         XCTAssertFalse(ExerciseTemplate.creatable.contains(.fingerstyle))
         XCTAssertFalse(ExerciseTemplate.creatable.contains(.rhythm))
+        XCTAssertFalse(ExerciseTemplate.creatable.contains(.earTraining))
+        XCTAssertFalse(ExerciseTemplate.creatable.contains(.theory))
     }
 
     func testDisplayOrderCoversEveryTemplateForGrouping() {
@@ -106,13 +109,12 @@ final class ExerciseTemplateTests: XCTestCase {
                        ExerciseTemplate.displayOrder.filter(ExerciseTemplate.creatable.contains))
     }
 
-    func testComingSoonTemplates() {
-        // Ear Training and Theory are listed but not yet buildable.
-        XCTAssertTrue(ExerciseTemplate.earTraining.isComingSoon)
-        XCTAssertTrue(ExerciseTemplate.theory.isComingSoon)
-        for template in ExerciseTemplate.creatable where !template.isComingSoon {
-            XCTAssertFalse(template.isComingSoon, "\(template) should be buildable")
-        }
+    func testEarTrainingAndTheoryAreNotCreatable() {
+        // Their "Coming Soon" rows were removed 2026-07-22 (ear training shipped as a loop mode,
+        // ADR 0104) — the create picker no longer offers them, though the enum cases live on for
+        // the planner's SkillFamilyMap.
+        XCTAssertFalse(ExerciseTemplate.creatable.contains(.earTraining))
+        XCTAssertFalse(ExerciseTemplate.creatable.contains(.theory))
         XCTAssertEqual(ExerciseTemplate.strumChords.displayName, "Chords & Strum")
     }
 

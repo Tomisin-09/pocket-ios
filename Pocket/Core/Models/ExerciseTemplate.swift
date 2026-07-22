@@ -142,16 +142,6 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// tempo + meter settings) — true for Strumming and the fretboard family; grows as renderers land.
     var hasBespokeEditor: Bool { bespokeEditor != nil }
 
-    /// Templates listed in the create picker but **not yet buildable** — shown disabled with a
-    /// "Coming Soon" badge so the menu previews the roadmap without offering a dead drill
-    /// (2026-07-13, ADR 0087). Ear Training and Theory have no renderer or authoring surface yet.
-    var isComingSoon: Bool {
-        switch self {
-        case .earTraining, .theory: return true
-        default: return false
-        }
-    }
-
     /// The starter **strum** pattern a freshly-created exercise begins with — a folk pattern for
     /// Strumming (so its lane is never empty), `nil` otherwise. Encoded at creation via
     /// `setStrumPattern`.
@@ -198,11 +188,13 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// The templates offered in the **create** picker, in menu order (ADR 0087, 2026-07-13):
     /// **Basic** first (the default, no-fuss drill), then Warm-up and the techniques. **Fingerstyle**
     /// and **Rhythm** are dropped (fingerstyle out of scope; rhythm already covered by Strumming +
-    /// Chords). **Ear Training** and **Theory** appear last but are gated `isComingSoon` — the picker
-    /// renders them disabled with a badge. The full `displayOrder` (above) drives grouping instead,
-    /// so retiring a template from creation never hides drills already made under it.
+    /// Chords). **Ear Training** and **Theory** are no longer listed here (their "Coming Soon" rows were
+    /// removed 2026-07-22): ear training shipped as a loop mode, not an exercise template (ADR 0104), so
+    /// a placeholder promising a generic interval trainer would misdescribe the direction. The enum cases
+    /// live on for the planner's `SkillFamilyMap`. The full `displayOrder` (above) drives grouping, so
+    /// retiring a template from creation never hides drills already made under it.
     static let creatable: [ExerciseTemplate] = [
         .basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
-        .arpeggios, .legato, .earTraining, .theory
+        .arpeggios, .legato
     ]
 }

@@ -10,6 +10,10 @@ import Foundation
 /// "pure logic stays pure" rule, AGENTS.md).
 enum RoutineStageKind: Equatable {
     case exercise, loop, song, rest
+    /// A loop run **ears-only** for ear training (ADR 0104 Slice 2) — same loop unit as `.loop`, but
+    /// the player embeds `EarLoopRunView` (continuous playback + hum/sing + note) instead of the
+    /// command-anchored trainer. Manual-advance, no ramp; treated as a unit block (never a rest).
+    case earLoop
 }
 
 /// A pure cursor over a routine's playable blocks (ADR 0066, slice 3): position and advancement

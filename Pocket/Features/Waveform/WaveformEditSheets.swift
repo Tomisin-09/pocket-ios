@@ -43,6 +43,8 @@ struct LoopEditSheet: View {
     @State var newTag = ""
     // The loop's journal now lives here in settings (read-only), off the waveform row (ADR 0067).
     @State var showingJournal = false
+    // "Train your ear" ear-training mode on this loop (ADR 0104) — ears-only playback + journal capture.
+    @State var showingEarTraining = false
     // Focus / Type pick via a bottom action sheet off a plain Button — a Menu/Picker in a
     // `LabeledContent` value slot needs several taps to register and won't commit at this sheet's
     // partial detent (device bug 2026-07-10). A Button + confirmationDialog is reliable at any detent.
@@ -190,6 +192,11 @@ struct LoopEditSheet: View {
                              JournalWriter.delete(entry, from: modelContext)
                              try? modelContext.save(); haptic(.light)
                          })
+        }
+        .sheet(isPresented: $showingEarTraining) {
+            // Ears-only ear training on this loop (ADR 0104) — plays the loop's real audio and captures
+            // "what you heard" notes back through the same `JournalWriter` path, tagged 👂.
+            EarTrainingSheet(loop: loop)
         }
     }
 }

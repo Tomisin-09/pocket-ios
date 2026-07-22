@@ -14,6 +14,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
     case struggle       // a sticking point — what's fighting back
     case note           // neutral observation (default)
     case session        // a practice-session log
+    case ear            // what you heard, training your ear on a loop (ADR 0104)
 
     var id: String { rawValue }
 
@@ -25,6 +26,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
         case .struggle: return "🧗"
         case .note: return "📝"
         case .session: return "🎬"
+        case .ear: return "👂"
         }
     }
 
@@ -36,6 +38,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
         case .struggle: return "Struggle"
         case .note: return "Note"
         case .session: return "Session"
+        case .ear: return "Ear"
         }
     }
 
@@ -47,5 +50,5 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
 
     /// Picker order: the action kinds first (goal → breakthrough → struggle),
     /// then the two neutral logs (note default, then session).
-    static var pickerOrder: [EntryKind] { [.goal, .breakthrough, .struggle, .note, .session] }
+    static var pickerOrder: [EntryKind] { [.goal, .breakthrough, .struggle, .note, .session, .ear] }
 }

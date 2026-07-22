@@ -247,6 +247,22 @@ never happens mid-stream — the fix for an audible glitch), and `RecordingPlaye
 at a time. Takes surface **beside the journal** via the one-row `PracticeReviewBar` (Journal + Takes
 count pills → each opens its sheet), keeping the review aids bounded as history builds.
 
+**Ear training — "the loops, re-surfaced"** (ADR 0104): a loop's settings sheet carries a **Train your
+ear** button opening `EarTrainingSheet`, an *away-from-the-guitar* mode that plays the loop's own audio
+cycling continuously (an `EarTrainingPlayer` wrapping a `LoopRunModel`, with **no** auto-stop — the
+difference from the routine-preview `LoopAudioPreviewPlayer`) so the player can **hum or sing it back**,
+with a live **−/+ tempo control** (25–150% of original in 5% steps, `LoopRunModel.setAuditionPercent`
+pushing the rate to the engine mid-listen) to slow the phrase down. The loop's identity (name + song
+prominent, type/tempo/range caption) is shown up top always — no reveal toggle; "what you hear" notes
+save through the shared `JournalWriter` path tagged 👂 (`EntryKind.ear`) onto the same Journal timeline
+as every other note — no bespoke store. Self-judged, no score (ADR 0094 T2b/T3): the app plays, nothing
+listens, the player is the judge (ADR 0070). It replays the *real* loop audio (ADR 0001), deliberately
+not the Hear synth (ADR 0097). **Slice 2** makes it a **routine block**: a loop `RoutineItem` carries a
+`LoopRunMode` (`.trainer`/`.ear`, String-backed like `kindRaw`), an `.ear` block resolves to
+`RoutineStageKind.earLoop` and the player embeds `EarLoopRunView` (the shared `EarTrainingView` core +
+routine chrome + a manual **Done**, no completion screen — nothing to grade), authored from a peer **Ear
+training** bucket in `AddRoutineUnitSheet`. Same `Loop` unit, no new schema — just a mode.
+
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
 from the metronome at the product level. `PracticeView` is a **hub**: the live "Build today's

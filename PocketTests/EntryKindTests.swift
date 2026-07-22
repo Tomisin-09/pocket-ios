@@ -13,6 +13,15 @@ final class EntryKindTests: XCTestCase {
         XCTAssertEqual(EntryKind.struggle.rawValue, "struggle")
         XCTAssertEqual(EntryKind.note.rawValue, "note")
         XCTAssertEqual(EntryKind.session.rawValue, "session")
+        XCTAssertEqual(EntryKind.ear.rawValue, "ear")   // ADR 0104 — ear-training note tag
+    }
+
+    func testEarKindDecodesAndHasGlyph() {
+        // The ADR 0104 addition: 👂 "Ear", storable and round-tripping like every other kind.
+        XCTAssertEqual(EntryKind(raw: "ear"), .ear)
+        XCTAssertEqual(EntryKind.ear.emoji, "👂")
+        XCTAssertEqual(EntryKind.ear.label, "Ear")
+        XCTAssertTrue(EntryKind.pickerOrder.contains(.ear))
     }
 
     func testRawValueRoundTrips() {
