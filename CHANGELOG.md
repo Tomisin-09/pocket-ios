@@ -89,8 +89,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   you want, anywhere.
 
 ### Fixed
-- **Empty box in the Strum & Chords editor.** The stray divider between the strum lane and the chord list
-  no longer renders as a mysterious empty card — it's a hairline separator again.
+- **Empty box in the Strum & Chords editor.** The divider between the strum lane and the chord list used
+  to sit in its own tall list row, reading as a mysterious empty box between two separators. The strum
+  and chord editors now share one row with an inline hairline, so the phantom box is gone (both the New
+  and Edit sheets).
 
 ### Added
 - **Movable 9th chords.** The movable-shape sheet now offers **dominant 9, major 9 and minor 9** grips on

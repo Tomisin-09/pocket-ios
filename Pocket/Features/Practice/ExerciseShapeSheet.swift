@@ -241,12 +241,15 @@ private extension ExerciseShapeSheet {
     /// Same immutability contract: the template stays strum-chords.
     var strumChordsSection: some View {
         Section {
-            StrumPatternEditor(beatsPerBar: exercise.beatsPerBar,
-                              pattern: $strumChords.strumPattern)
-                .listRowBackground(Color.clear)
-            Divider()
-            ChordProgressionEditor(progression: $strumChords.chordProgression)
-                .listRowBackground(Color.clear)
+            // One row with an in-VStack hairline — a standalone `Divider` row rendered as a phantom
+            // empty box between the Form's row separators (device feedback 2026-07-23).
+            VStack(spacing: 14) {
+                StrumPatternEditor(beatsPerBar: exercise.beatsPerBar,
+                                   pattern: $strumChords.strumPattern)
+                Divider()
+                ChordProgressionEditor(progression: $strumChords.chordProgression)
+            }
+            .listRowBackground(Color.clear)
         } header: {
             Text("How to play — strum & chords")
         } footer: {

@@ -313,17 +313,17 @@ private struct ConfigureExerciseForm: View {
 
     private var strumChordsSection: some View {
         Section {
-            StrumPatternEditor(beatsPerBar: signature.beats,
-                              pattern: $strumChords.strumPattern)
-                .listRowBackground(Color.clear)
-            // Clear background + zero insets so this reads as a hairline separator, not a phantom
-            // inset-grouped row card (device feedback 2026-07-23: without it the bare `Divider` row kept
-            // the default rounded row background and looked like a mysterious empty box).
-            Divider()
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
-            ChordProgressionEditor(progression: $strumChords.chordProgression)
-                .listRowBackground(Color.clear)
+            // Both editors live in ONE row (a single VStack) with an internal hairline between them.
+            // Keeping them as separate Section rows put the `Divider` in its own ~44pt-tall List row,
+            // bracketed by the Form's row separators — the "phantom empty box" of device feedback
+            // (2026-07-23). One row with an in-VStack divider removes the extra row entirely.
+            VStack(spacing: 14) {
+                StrumPatternEditor(beatsPerBar: signature.beats,
+                                   pattern: $strumChords.strumPattern)
+                Divider()
+                ChordProgressionEditor(progression: $strumChords.chordProgression)
+            }
+            .listRowBackground(Color.clear)
         } header: {
             Text("Strum & chords")
         } footer: {
