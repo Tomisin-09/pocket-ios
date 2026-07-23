@@ -488,6 +488,16 @@ second, selectable theme. When picked back up:
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
+- **Extend "draw your own" to the technique templates (parked 2026-07-23).** The generate-or-draw split
+  + hand-drawn `FretboardDrillEditor` canvas with the scale **Guide** (ADR 0107) currently lives only on
+  the **Scales** template. Extend the same toggle to **Warm-up**, **Picking** and **Legato** (the `.run`
+  `bespokeEditor`), so those can be hand-drawn too, not only declared as a generated `FretboardRun`.
+  Sketch: add a `runMode` (generate/draw) alongside `scaleMode` in `NewExerciseSheet` **and**
+  `ExerciseShapeSheet`; draw mode shows `FretboardDrillEditor(referenceEnabled: true)` and
+  `fretboardContent` returns `.custom(drill)` for `.run` when drawing; seed the draw canvas from an empty
+  bar for run templates. Same shape as the Scales work — low risk, no model change (all four already store
+  `FretboardContent`).
+
 - **Link exercises ↔ songs → curated routine generator (logged 2026-07-23).** Decided direction:
   a **direct, user-authored Exercise↔Song edge** (many-to-many) that feeds a **"Build a practice
   routine for this song"** action — pulls the song's linked exercises + its own loops into a fresh
@@ -498,15 +508,16 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
   - **Model:** `Exercise.linkedSongs` + inverse `Song.linkedExercises` (typed relationship,
     `.nullify` on both sides — deleting either end clears the link, never cascades). Additive optional
     relationships (CoreData 134110 rule). **Crosses the deliberate "Exercise is Song-free" boundary**
-    (see `Exercise.swift` header) → needs **ADR 0109** to record the reversal + reason.
+    (see `Exercise.swift` header) → needs a **new ADR** to record the reversal + reason. (Note: 0109 was
+    taken by the triad-shapes work on 2026-07-23; use the next free number when this is built.)
   - **Generator:** a pure, unit-tested helper that materialises a `Routine` from a song's linked
     exercises (as `focused`/`warmup` blocks) + its loops + a `play` block for the song itself.
   - **⚠ Sequencing gate (why parked):** this is a cross-cutting `@Model` schema change — the repo's
     documented migration footgun — and there are **16 local branches + a large unpushed stack** across
     multiple sessions. **Do NOT start until all open PRs are merged** and `Exercise.swift` / `Song.swift`
-    are quiet. Then cut a fresh branch off `main` (next free `pocket-0XX`), write ADR 0109, add the
-    edge, then the generator. Confirm no other in-flight branch adds a stored attribute to `Exercise`
-    or `Song` before editing those classes.
+    are quiet. Then cut a fresh branch off `main` (next free `pocket-0XX`), write a new ADR (next free
+    number — 0109 is taken), add the edge, then the generator. Confirm no other in-flight branch adds a
+    stored attribute to `Exercise` or `Song` before editing those classes.
 
 - **Futura navigation titles app-wide (spotted in the v1 screenshot shoot, 2026-07-23).** Every
   SwiftUI `.navigationTitle` renders in **San Francisco**, not Futura — there's no SwiftUI-native
