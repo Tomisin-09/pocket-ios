@@ -213,8 +213,9 @@ struct FretboardDrillEditor: View {
                         .foregroundStyle(PocketColor.textSecondary)
                         .frame(height: 30)
                 }
-                Color.clear.frame(height: 14)   // aligns labels against the fret-number row
+                Color.clear.frame(width: 1, height: 14)   // aligns labels against the fret-number row
             }
+            .frame(width: 16)   // fixed gutter — matches FretboardGrid so the two boards line up
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     VStack(spacing: 4) {
@@ -227,7 +228,6 @@ struct FretboardDrillEditor: View {
                         }
                         fretNumbers
                     }
-                    .padding(.horizontal, 2)
                 }
                 .onChange(of: scrollTargetFret) { _, fret in
                     guard let fret else { return }
