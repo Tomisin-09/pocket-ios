@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Draw your own warm-up, picking & legato runs.** The **Generate / Draw your own** switch — until now
+  only on Scales — is now on every run-family template (**Warm-up, Picking, Legato, Fingerstyle**), at
+  both create and Edit shape. "Draw your own" opens the same tap-to-place fretboard (with the optional
+  scale **Guide**) so you can hand-shape a run the generator can't declare, instead of only picking a
+  finger pattern. No format change — a drawn run is stored like any custom drill.
 - **Triad shapes in the chord picker.** The Insert grid has a new **Triads** category — major and minor
   triads on the three upper string sets (**G‑B‑e**, **D‑G‑B**, **A‑D‑G**), in **all three inversions**
   (root · 1st · 2nd), each sliding to any root like the movable barres (18 shapes; the chip subtitle names
