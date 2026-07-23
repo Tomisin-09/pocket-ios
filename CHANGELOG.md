@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Longer custom drills + a scrollable neck.** The tap-to-place fretboard editor (custom scales/drills)
+  gained a **Bars** stepper — build a run across up to **8 bars**, not just one. Slots-per-bar follow the
+  time signature and subdivision, so a wider meter naturally holds more. The neck itself is now
+  **horizontally scrollable** across the full fretboard (frets 0–15) instead of paging a 5-fret window,
+  and selecting a placed note scrolls its fret into view.
 - **Power chords in the everyday Insert grid.** The chord picker's quick **Insert** shapes now offer the
   movable **power chord** on both the E-shape and A-shape (replacing dom7, which moves to Build → Movable
   shape) — the root-and-5th pop/rock shape sits alongside the plain major and minor barres. Its label no

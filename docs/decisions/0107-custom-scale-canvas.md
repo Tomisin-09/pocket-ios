@@ -53,6 +53,12 @@ for any scale the generator can't place (symmetric, sequenced, or invented):
   unchanged.
 - The guide only *shows* a scale; it can't yet *name* what you drew (no scale identifier). That's the
   richer custom-chord parallel (`ChordIdentifierPanel`), deferred below.
+- **Multi-bar + scrollable neck (pocket-176, device feedback 2026-07-23).** The shared
+  `FretboardDrillEditor` is no longer capped at one bar: a **Bars** stepper (1–8) grows the drill via the
+  pure `FretboardDrill.withBarCount`, and `resized` now preserves bar count across subdivision changes.
+  The placement board became a **horizontally-scrollable full neck** (frets 0–15) with a `ScrollViewReader`
+  that follows the selected note, replacing the chevron-paged 5-fret window. Purely editor/UX; the model
+  already stored an arbitrary-length `notes` array, so there was no schema change.
 
 ## Out of scope (follow-ups)
 

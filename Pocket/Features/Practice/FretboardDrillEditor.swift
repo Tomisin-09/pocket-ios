@@ -22,9 +22,9 @@ struct FretboardDrillEditor: View {
 
     /// The slot the next placed note lands in — highlighted in the strip and reflected on the board.
     @State private var selectedSlot = 0
-    /// The lowest fret the board window shows; `0` includes the open string. Scrolled by the position
-    /// control so notes anywhere on the neck can be authored.
-    @State private var lowestVisibleFret = 1
+    /// The fret the horizontally-scrollable neck should scroll into view — set when a placed slot is
+    /// selected so its note comes into view, consumed by the board's `ScrollViewReader`.
+    @State private var scrollTargetFret: Int?
     /// The global note-caption preference — shown on the preview strip above (not on the placement
     /// board below, which stays focused on *where*, not *what*). Shared with every other fretboard
     /// editor and the live practice run (ADR 0065 T10).
@@ -58,8 +58,12 @@ struct FretboardDrillEditor: View {
     /// slots aligned to the walking highlight (ADR 0097 S4).
     private var heardNotes: [Int?] { drill.notes.map { $0.map(CAGEDShape.midi) } }
 
-    private static let visibleFretCount = 5
-    private static let maxLowestFret = 15
+    /// The full neck the scrollable board draws — frets 0…`maxFret`. Wide enough for any hand position;
+    /// the board scrolls horizontally rather than paging a 5-fret window (device feedback 2026-07-23).
+    private static let maxFret = 15
+    /// Ceiling on the Bars stepper — a custom drill can span up to this many bars of the exercise meter.
+    private static let maxBars = 8
+    private var barCount: Int { drill.barCount(beatsPerBar: beatsPerBar) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -68,12 +72,13 @@ struct FretboardDrillEditor: View {
             FretboardDrillPreview(drill: drill, tint: tint, labelMode: labelMode,
                                   playOnceToken: playOnceToken)
             resolutionPicker
+            barsStepper
             slotStrip
             if referenceEnabled { guideControls }
             board
-            positionControls
             editControls
-            Text("Pick a slot, then tap a fret to place a note. Tap a placed note to clear it.")
+            Text("Pick a slot, then tap a fret to place a note. Tap a placed note to clear it. "
+                 + "Swipe the neck to reach any fret; add bars for a longer run.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
@@ -106,6 +111,32 @@ struct FretboardDrillEditor: View {
             })
     }
 
+    // MARK: - Bars
+
+    /// A stepper for how many bars the run spans (1…`maxBars`) — growing appends empty bars, shrinking
+    /// drops the trailing ones (pure `withBarCount`). Slots-per-bar follow the meter × subdivision, so a
+    /// longer run in a wider time signature naturally holds more slots.
+    private var barsStepper: some View {
+        Stepper(value: barsBinding, in: 1...Self.maxBars) {
+            Text("Bars: \(barCount)")
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.textPrimary)
+        }
+        .tint(PocketColor.practice)
+        .accessibilityLabel("Bars")
+        .accessibilityValue("\(barCount)")
+    }
+
+    private var barsBinding: Binding<Int> {
+        Binding(
+            get: { barCount },
+            set: { newBars in
+                mutate { $0.withBarCount(newBars, beatsPerBar: beatsPerBar) }
+                selectedSlot = min(selectedSlot, max(0, drill.notes.count - 1))
+                haptic(.light)
+            })
+    }
+
     // MARK: - Slot strip
 
     /// The bar's slots, grouped by beat and wrapping to new rows (`FlowLayout`) so a denser grid grows
@@ -132,7 +163,7 @@ struct FretboardDrillEditor: View {
         let isSelected = index == selectedSlot
         return Button {
             selectedSlot = index
-            if let note { lowestVisibleFret = windowLowest(for: note.fret) }
+            if let note { scrollTargetFret = note.fret }
             haptic(.light)
         } label: {
             ZStack {
@@ -170,6 +201,9 @@ struct FretboardDrillEditor: View {
 
     // MARK: - Fretboard
 
+    /// The placement neck: pinned string labels on the left, then a **horizontally-scrollable** full
+    /// board (frets 0…`maxFret`) so any hand position is reachable without paging a window. Selecting a
+    /// placed slot scrolls its fret into view via the `ScrollViewReader` (keyed on the fret-number row).
     private var board: some View {
         HStack(alignment: .center, spacing: 8) {
             VStack(spacing: 4) {
@@ -179,16 +213,26 @@ struct FretboardDrillEditor: View {
                         .foregroundStyle(PocketColor.textSecondary)
                         .frame(height: 30)
                 }
+                Color.clear.frame(height: 14)   // aligns labels against the fret-number row
             }
-            VStack(spacing: 4) {
-                ForEach(0..<drill.stringCount, id: \.self) { row in
-                    HStack(spacing: 4) {
-                        ForEach(0..<Self.visibleFretCount, id: \.self) { column in
-                            boardCell(string: row, fret: lowestVisibleFret + column)
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    VStack(spacing: 4) {
+                        ForEach(0..<drill.stringCount, id: \.self) { row in
+                            HStack(spacing: 4) {
+                                ForEach(0...Self.maxFret, id: \.self) { fret in
+                                    boardCell(string: row, fret: fret)
+                                }
+                            }
                         }
+                        fretNumbers
                     }
+                    .padding(.horizontal, 2)
                 }
-                fretNumbers
+                .onChange(of: scrollTargetFret) { _, fret in
+                    guard let fret else { return }
+                    withAnimation(.easeInOut(duration: 0.2)) { proxy.scrollTo(fret, anchor: .center) }
+                }
             }
         }
     }
@@ -208,7 +252,7 @@ struct FretboardDrillEditor: View {
                            inGuide: inGuide, isGuideRoot: isGuideRoot))
                 .frame(width: 24, height: 24)
                 .overlay(Circle().stroke(PocketColor.surfaceBorder, lineWidth: isSelected ? 0 : 1))
-                .frame(maxWidth: .infinity, minHeight: 30)
+                .frame(width: 30, height: 30)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -229,41 +273,18 @@ struct FretboardDrillEditor: View {
         return PocketColor.surfaceSubtle.opacity(0.5)
     }
 
+    /// The fret-number ruler under the board — one label per fret across the full neck. Each carries its
+    /// fret as a scroll `.id` so the `ScrollViewReader` can bring a selected note's fret into view.
     private var fretNumbers: some View {
         HStack(spacing: 4) {
-            ForEach(0..<Self.visibleFretCount, id: \.self) { column in
-                Text(lowestVisibleFret + column == 0 ? "0" : "\(lowestVisibleFret + column)")
+            ForEach(0...Self.maxFret, id: \.self) { fret in
+                Text("\(fret)")
                     .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.textSecondary.opacity(0.7))
-                    .frame(maxWidth: .infinity)
+                    .frame(width: 30)
+                    .id(fret)
             }
         }
-    }
-
-    // MARK: - Position control
-
-    private var positionControls: some View {
-        HStack(spacing: 16) {
-            Button { moveWindow(-1) } label: { Image(systemName: "chevron.left") }
-                .disabled(lowestVisibleFret <= 0)
-            Text(windowLabel)
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(minWidth: 96)
-            Button { moveWindow(1) } label: { Image(systemName: "chevron.right") }
-                .disabled(lowestVisibleFret >= Self.maxLowestFret)
-            Spacer()
-            Button("Rest") { placeOrClear(nil) }
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(PocketColor.practice)
-        }
-        .tint(PocketColor.practice)
-    }
-
-    private var windowLabel: String {
-        let highest = lowestVisibleFret + Self.visibleFretCount - 1
-        let low = lowestVisibleFret == 0 ? "Open" : "Fret \(lowestVisibleFret)"
-        return "\(low)–\(highest)"
     }
 
     // MARK: - Edits (map a tap to a pure op)
@@ -308,18 +329,6 @@ struct FretboardDrillEditor: View {
         haptic(.medium)
     }
 
-    private func moveWindow(_ delta: Int) {
-        lowestVisibleFret = min(Self.maxLowestFret, max(0, lowestVisibleFret + delta))
-        haptic(.light)
-    }
-
-    /// The window low that keeps `fret` comfortably in view when a slot is selected.
-    private func windowLowest(for fret: Int) -> Int {
-        guard fret > 0 else { return 0 }
-        let clamped = min(Self.maxLowestFret, max(1, fret - 1))
-        return clamped
-    }
-
     private func slotAccessibility(_ note: FretNote?) -> String {
         guard let note else { return "rest" }
         let name = FretboardGrid.stringName(note.string, of: drill.stringCount)
@@ -330,8 +339,9 @@ struct FretboardDrillEditor: View {
 // MARK: - Undo / clear controls
 
 private extension FretboardDrillEditor {
-    /// **Undo** the last tap and **Clear** every placed note — both leave a scale guide untouched (it
-    /// isn't in the undo snapshot). Undo disables on an empty history; Clear disables on an empty board.
+    /// **Undo** the last tap, **Clear** every placed note, and set the selected slot to a **Rest**. Undo
+    /// and Clear leave a scale guide untouched (it isn't in the undo snapshot). Undo disables on an empty
+    /// history; Clear disables on an empty board.
     var editControls: some View {
         HStack(spacing: 20) {
             Button { undo() } label: { Label("Undo", systemImage: "arrow.uturn.backward") }
@@ -341,6 +351,7 @@ private extension FretboardDrillEditor {
             }
             .disabled(drill.hasNoNotes)
             Spacer()
+            Button("Rest") { placeOrClear(nil) }
         }
         .font(.futura(.caption, weight: .semibold))
         .buttonStyle(.borderless)
