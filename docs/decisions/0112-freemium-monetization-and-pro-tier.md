@@ -38,13 +38,13 @@ picking warm-up and legato), but **authoring is Pro** — both *creating a new e
 template* and the **"draw your own" custom fretboard canvas**, even within a family whose presets are
 free to run. Nudging tempo on a preset is free; building your own technique content is not.
 
-### Pocket Pro — flat price, zero marginal cost
+### Red Moon Pro — flat price, zero marginal cost
 The full exercise catalog (all scales — modes/positions/CAGED; all chords — movable + custom
 placer), **unlimited** custom exercises & routines (including "draw your own"), and the deterministic
 **"Today's session"** self-rated planner. No per-use cost, so unlimited is safe.
 
 **Price: £4.99/mo, or £39.99/yr** (annual ≈ £3.33/mo, ~33% off — the retention lever this category
-lives on; lead with annual in the paywall). Deliberately **below** Justin Guitar's ~£11/mo: Pocket
+lives on; lead with annual in the paywall). Deliberately **below** Justin Guitar's ~£11/mo: Red Moon
 Pro is a practice *workbench*, not a curriculum, and a modest Pro price leaves clean headroom for
 **Oracle** (~£10–12) to be the premium AI tier where the Justin-comparable price fits. No lifetime
 option — it undercuts recurring revenue and the future Oracle upsell. Reversible: start slightly low
@@ -123,10 +123,10 @@ app capabilities). The design:
 - [ ] Enrolled in the **Small Business Program** (15% commission).
 
 *Group & products* (Monetization → Subscriptions)
-- [ ] One **subscription group** "Pocket Pro" — both plans in it (single entitlement; monthly↔annual
+- [ ] One **subscription group** "Red Moon Pro" — both plans in it (single entitlement; monthly↔annual
   switching).
-- [ ] **Pocket Pro Monthly** — id `click.decooperations.pocket.pro.monthly`, 1 month, **£4.99**.
-- [ ] **Pocket Pro Annual** — id `…pocket.pro.annual`, 1 year, **£39.99**.
+- [ ] **Red Moon Pro Monthly** — id `click.decooperations.pocket.pro.monthly`, 1 month, **£4.99**.
+- [ ] **Red Moon Pro Annual** — id `…pocket.pro.annual`, 1 year, **£39.99**.
 - [ ] Rank **Annual above Monthly** (annual = the upgrade); tax category set; price matrix reviewed.
 
 *Trial*
