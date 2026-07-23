@@ -16,7 +16,11 @@ final class ToolkitUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        let toolkitCard = app.buttons["Toolkit, chords, scales and theory reference"]
+        // Match by label prefix, not the full subtitle — the card's subtitle changes as the hub grows
+        // (it read "chords, scales and theory reference", now "your chords and a music glossary"), and a
+        // hard-coded full label made this wiring guard brittle to copy edits.
+        let toolkitCard = app.buttons
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Toolkit,")).firstMatch
         XCTAssertTrue(toolkitCard.waitForExistence(timeout: 5), "Toolkit card missing on Home")
         // Home groups its strips into titled sections (ADR 0102); Toolkit sits in the "Your stuff"
         // section and starts below the fold — scroll it into view before tapping rather than assuming
