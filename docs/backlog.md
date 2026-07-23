@@ -509,12 +509,19 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
     "Exercise is Song-free" boundary is reversed for repertoire association only (audio/tempo firewall
     stands) and recorded in **ADR 0111** (0109 was taken by the triad-shapes work). In-memory
     `ModelContainer` round-trip + both nullify-not-cascade directions covered in
-    `ExerciseSongLinkTests`. **⚠ Migration still needs device verification** (SwiftData store-wipe
-    footguns are device-only).
+    `ExerciseSongLinkTests`. **Migration device-verified 2026-07-23** — installed over a populated
+    store, launched clean, existing library intact (no wipe).
+  - **Authoring UI — ✅ DONE (pocket-182, 2026-07-23).** Both-sides link authoring: a **Songs** section
+    on `ExerciseDetailSheet` and an **Exercises for this song** section on `SongDetailsSheet`, over a
+    shared presentation-only `LinkPickerSheet` (searchable multi-select, swipe-to-unlink, persists
+    immediately). `SongDetailsSheet` is reached from the Library long-press **Details** action (added
+    alongside Edit) as well as the waveform title-hold — Edit stays the staged metadata form
+    (Cancel-discards), which is why the immediate-persist link UI lives on Details, not Edit. No schema
+    change — reads/writes the 0111 edge.
   - **Generator — NEXT (not built).** A pure, unit-tested helper that materialises a `Routine` from a
     song's linked exercises (as `focused`/`warmup` blocks) + its loops + a `play` block for the song
-    itself. Plus the UI to author the link (add/remove songs on an exercise, or exercises on a song)
-    and the "Build a routine for this song" entry point. No schema change — reads the 0111 edge.
+    itself, plus a **"Build a routine for this song"** entry point (natural home: the new "Drills for
+    this song" section on `SongDetailsSheet`). No schema change — reads the 0111 edge.
 
 - ~~**Futura navigation titles app-wide (spotted in the v1 screenshot shoot, 2026-07-23).**~~ **DONE
   (pocket-181, ADR 0110, 2026-07-23).** Shipped exactly as the decision below: one global

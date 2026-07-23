@@ -20,6 +20,9 @@ struct ExerciseDetailSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    /// Every song, to offer in the link picker (ADR 0111). Sorted by title, matching the library.
+    @Query(sort: \Song.title) private var allSongs: [Song]
+    @State private var showingSongPicker = false
     @State private var notes: String
     /// The exercise's self-rated mastery (0–5, `nil` = unrated), held locally and committed on
     /// Done — the planner's dueScore *need* signal (V2 planner Slice 1, ADR 0070: self-set, never
@@ -37,6 +40,7 @@ struct ExerciseDetailSheet: View {
             Form {
                 descriptionSection
                 ExerciseProgressSection(mastery: $mastery, lastPracticed: exercise.lastPracticed)
+                linkedSongsSection
                 feelSection
                 templateSection
             }
@@ -44,6 +48,18 @@ struct ExerciseDetailSheet: View {
             .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
             .navigationBarTitleDisplayMode(.inline)
             .tint(PocketColor.practice)
+            .sheet(isPresented: $showingSongPicker) {
+                LinkPickerSheet(
+                    title: "Link songs",
+                    prompt: "Search songs",
+                    emptyCatalog: "No songs in your library yet.",
+                    candidates: allSongs,
+                    label: { $0.title.isEmpty ? "Untitled song" : $0.title },
+                    subtitle: { $0.artist.isEmpty ? nil : $0.artist },
+                    isLinked: { isLinked($0) },
+                    toggle: { toggleLink($0) },
+                    accent: PocketColor.practice)
+            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
@@ -99,6 +115,71 @@ struct ExerciseDetailSheet: View {
         } footer: {
             Text("A note to yourself about the drill — saved with the exercise.")
         }
+    }
+
+    // MARK: - Linked songs (ADR 0111)
+
+    /// The songs this drill is **for** — the exercise side of the `Exercise.linkedSongs` ↔
+    /// `Song.linkedExercises` edge. A reusable repertoire association (it outlives any routine);
+    /// each row unlinks with a swipe, and **Link songs** opens the multi-select picker. Link
+    /// changes persist immediately (a discrete add/remove, unlike the on-Done notes/mastery commit).
+    private var linkedSongsSection: some View {
+        Section {
+            if exercise.linkedSongs.isEmpty {
+                Text("Not linked to any songs yet — link the songs this drill helps you play.")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+            } else {
+                ForEach(linkedSongsByTitle, id: \.persistentModelID) { song in
+                    HStack(spacing: 8) {
+                        Text(song.title.isEmpty ? "Untitled song" : song.title)
+                            .foregroundStyle(PocketColor.textPrimary)
+                        if !song.artist.isEmpty {
+                            Text(song.artist)
+                                .font(.futura(.caption))
+                                .foregroundStyle(PocketColor.textSecondary)
+                        }
+                    }
+                }
+                .onDelete(perform: unlinkSongs)
+            }
+            Button { showingSongPicker = true } label: {
+                Label("Link songs", systemImage: "plus.circle")
+                    .foregroundStyle(PocketColor.practice)
+            }
+        } header: {
+            Text("Songs")
+        } footer: {
+            Text("The songs this drill is for. Links show on the song too, and later seed a "
+                 + "one-tap practice routine for it.")
+        }
+    }
+
+    private var linkedSongsByTitle: [Song] {
+        exercise.linkedSongs.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
+    private func isLinked(_ song: Song) -> Bool {
+        exercise.linkedSongs.contains { $0.persistentModelID == song.persistentModelID }
+    }
+
+    /// Toggle a song's link from the picker — mutating the relationship persists it; `save()` makes
+    /// it durable so the picker checkmark and the section behind it both reflect it live.
+    private func toggleLink(_ song: Song) {
+        if let index = exercise.linkedSongs.firstIndex(where: { $0.persistentModelID == song.persistentModelID }) {
+            exercise.linkedSongs.remove(at: index)
+        } else {
+            exercise.linkedSongs.append(song)
+        }
+        try? modelContext.save()
+    }
+
+    private func unlinkSongs(at offsets: IndexSet) {
+        let targets = offsets.map { linkedSongsByTitle[$0] }
+        for song in targets {
+            exercise.linkedSongs.removeAll { $0.persistentModelID == song.persistentModelID }
+        }
+        try? modelContext.save()
     }
 
     // MARK: - Meter & subdivision (read-only)
