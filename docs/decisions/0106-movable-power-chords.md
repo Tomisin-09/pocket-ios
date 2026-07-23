@@ -50,11 +50,11 @@ property net, plus known-shape oracles for E5/A5.
 
 ## Out of scope (follow-ups)
 
-- **Power chords in the ADR-0103 everyday *Insert* grid.** `ChordPicker.insertMovableGrips` is a
-  deliberately small six-shape browse set (maj/min/dom7 × E/A). Power chords are arguably as everyday,
-  but adding them reopens that ADR-0103 D4 decision **and** needs a subtitle fix — `movableSubtitle`
-  calls every chip a "barre", which a power chord is not. Left to a follow-up that revisits the Insert
-  set as a whole.
+- ~~**Power chords in the ADR-0103 everyday *Insert* grid.**~~ **DONE (pocket-175, device feedback
+  2026-07-23).** `ChordPicker.insertMovableGrips` now offers **maj / min / power chord × E/A** — the
+  power chord **replaced dom7** (which stays in Build → Movable shape), keeping the Insert set at six and
+  matching the everyday-pop theme. `movableSubtitle` / `movableSearchText` special-case `.fifth` so a
+  power chord is no longer labelled or searched as a "barre" (it isn't one).
 - ~~**Naming a hand-built root-and-5th dyad** in the chord identifier (ADR 0093).~~ **DONE
   (pocket-174, device feedback).** `ChordNamer` gained a `"5"` quality (`[0, 7]`) and its ≥3-note guard
   was relaxed to allow the two-note power-chord case (every other dyad still names nothing, since only

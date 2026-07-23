@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Power chords in the everyday Insert grid.** The chord picker's quick **Insert** shapes now offer the
+  movable **power chord** on both the E-shape and A-shape (replacing dom7, which moves to Build → Movable
+  shape) — the root-and-5th pop/rock shape sits alongside the plain major and minor barres. Its label no
+  longer calls it a "barre" (it isn't one).
+- **Undo and clear on the fretboard editor.** The tap-to-place fretboard (custom scales, custom drills)
+  gained **Undo** (step back your last tap) and **Clear taps** (wipe every placed note). Both leave a
+  chosen scale **Guide** untouched, so you can reset your notes without losing your tracing reference.
 - **Power chords are named when you build one.** Placing a root + 5th in the custom-chord placer now
   reads "Looks like **G5**" — the identifier recognises power chords (previously it needed three notes).
 - **Draw your own scale — now at creation too.** The **Generate / Draw your own** switch (and its scale
@@ -71,6 +78,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   instead of the two loops slamming flush. And holding the edge still for a moment mid-drag turns
   snapping off entirely for that drag (a little buzz confirms it) — for placing an edge exactly where
   you want, anywhere.
+
+### Fixed
+- **Empty box in the Strum & Chords editor.** The stray divider between the strum lane and the chord list
+  no longer renders as a mysterious empty card — it's a hairline separator again.
 
 ### Added
 - **Movable 9th chords.** The movable-shape sheet now offers **dominant 9, major 9 and minor 9** grips on

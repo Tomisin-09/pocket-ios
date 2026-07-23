@@ -1,20 +1,15 @@
 import SwiftUI
 
-/// The **fretboard template's authoring editor** (ADR 0065 build 2 — the per-kind payload editor the
-/// ADR defers and slices). The "steps lane + tap-to-place" model: a segmented control sets the
-/// subdivision, a **slot strip** shows the bar's note slots (tap to select one), and an interactive
-/// **fretboard** places a note into the selected slot (tap advances to the next slot; tapping a slot's
-/// own note clears it to a rest). A fret-**position** control scrolls the visible window up the neck,
-/// so a drill can sit anywhere — the "span across the fretboard" the notes occupy follows what you
-/// place, and the playback window derives from it.
+/// The **fretboard template's authoring editor** (ADR 0065 build 2). The "steps lane + tap-to-place"
+/// model: a segmented control sets the subdivision, a **slot strip** shows the bar's note slots (tap to
+/// select one), and an interactive **fretboard** places a note into the selected slot (tap advances;
+/// tapping a slot's own note clears it). A fret-**position** control scrolls the visible window up the
+/// neck, so a drill can sit anywhere. **Undo/Clear** step back or wipe the taps.
 ///
-/// A thin skin over `FretboardDrill`'s pure ops (`replacingNote`, `resized`) — the view maps taps to
-/// those and draws the result, holding no timing logic of its own (T5). **T10** — every colour is a
-/// semantic `PocketColor` role, so the editor reskins under light/dark and any future theme.
-///
-/// A `FretboardDrillPreview` sits above the placement board — the board shows *where* notes are
-/// placed, the preview shows *when* they'd sound, so "watch it before you save" works for a
-/// hand-placed drill too, not just the generative editors.
+/// A thin skin over `FretboardDrill`'s pure ops (`replacingNote`, `resized`, `cleared`) — the view maps
+/// taps to those and draws the result, holding no timing logic of its own (T5). Colours are semantic
+/// `PocketColor` roles (T10). A `FretboardDrillPreview` sits above the board — board shows *where*, the
+/// preview *when* — so "watch it before you save" works for a hand-placed drill too.
 struct FretboardDrillEditor: View {
     /// Beats per bar (the exercise's meter) — fixes how many slots each subdivision produces.
     let beatsPerBar: Int
@@ -40,9 +35,14 @@ struct FretboardDrillEditor: View {
     /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
     @State private var playOnceToken: Date?
     /// The scale being ghosted as a tracing guide (`nil` = off), and its key (root pitch class). Only
-    /// consulted when `referenceEnabled` — the guide overlay on the placement board.
-    @State private var referenceScale: ScaleReference?
-    @State private var referenceRoot = 0   // C
+    /// consulted when `referenceEnabled` — the guide overlay on the placement board. Non-private so the
+    /// guide controls in `FretboardDrillEditor+Guide.swift` can bind them (same-module split).
+    @State var referenceScale: ScaleReference?
+    @State var referenceRoot = 0   // C
+    /// Undo stack of drill snapshots — one per note edit, so **Undo** steps back a tap and **Clear** is
+    /// reversible (2026-07-23). Holds only the *drill*, never the guide; capped to stay bounded.
+    @State private var history: [FretboardDrill] = []
+    private static let maxHistory = 100
 
     /// Whether the guide is on and a scale is chosen.
     private var referenceActive: Bool { referenceEnabled && referenceScale != nil }
@@ -72,6 +72,7 @@ struct FretboardDrillEditor: View {
             if referenceEnabled { guideControls }
             board
             positionControls
+            editControls
             Text("Pick a slot, then tap a fret to place a note. Tap a placed note to clear it.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
@@ -99,7 +100,7 @@ struct FretboardDrillEditor: View {
         Binding(
             get: { drill.notesPerBeat },
             set: { newPerBeat in
-                drill = drill.resized(notesPerBeat: newPerBeat, beatsPerBar: beatsPerBar)
+                mutate { $0.resized(notesPerBeat: newPerBeat, beatsPerBar: beatsPerBar) }
                 selectedSlot = min(selectedSlot, max(0, drill.notes.count - 1))
                 haptic(.light)
             })
@@ -217,10 +218,9 @@ struct FretboardDrillEditor: View {
         .accessibilityHint(isSelected ? "Placed here — tap to clear" : "Tap to place")
     }
 
-    /// Cell colour by role (T10): the selected slot's note in the content tint, notes used by other
-    /// slots a faint ink so the drill's shape reads, empty cells a near-clear surface. When the scale
-    /// guide is on, an unplayed cell that belongs to the ghosted scale is faintly tinted (its **root**
-    /// more strongly) so the scale's shape reads through the empty board — a tracing aid, no snapping.
+    /// Cell colour by role (T10): selected slot in the tint, notes used by other slots a faint ink,
+    /// empty cells near-clear. With the guide on, a cell in the ghosted scale is faintly tinted (its
+    /// **root** stronger) so the shape reads through the board — a tracing aid, no snapping.
     private func fill(isSelected: Bool, isUsed: Bool, inGuide: Bool, isGuideRoot: Bool) -> Color {
         if isSelected { return tint }
         if isUsed { return PocketColor.textPrimary.opacity(0.18) }
@@ -272,12 +272,40 @@ struct FretboardDrillEditor: View {
     /// `nil`) clears it instead. Auto-advance wraps so a run can be tapped in quickly.
     private func placeOrClear(_ cell: FretNote?) {
         if let cell, drill.note(at: selectedSlot) != cell {
-            drill = drill.replacingNote(at: selectedSlot, with: cell)
+            mutate { $0.replacingNote(at: selectedSlot, with: cell) }
             selectedSlot = (selectedSlot + 1) % max(1, drill.notes.count)
         } else {
-            drill = drill.replacingNote(at: selectedSlot, with: nil)
+            mutate { $0.replacingNote(at: selectedSlot, with: nil) }
         }
         haptic(.light)
+    }
+
+    /// Apply a pure edit, snapshotting the prior drill onto the undo stack first — but only when the edit
+    /// changes something (a no-op tap leaves no dead undo step). The guide isn't captured, so undo never
+    /// disturbs it.
+    private func mutate(_ transform: (FretboardDrill) -> FretboardDrill) {
+        let before = drill
+        let after = transform(before)
+        guard after != before else { return }
+        history.append(before)
+        if history.count > Self.maxHistory { history.removeFirst(history.count - Self.maxHistory) }
+        drill = after
+    }
+
+    /// Step back one edit — pop the last snapshot and keep the selection in range.
+    private func undo() {
+        guard let previous = history.popLast() else { return }
+        drill = previous
+        selectedSlot = min(selectedSlot, max(0, drill.notes.count - 1))
+        haptic(.light)
+    }
+
+    /// Wipe every placed note via `cleared()` — grid, subdivision, and guide stay put — and reset the
+    /// cursor. Undoable.
+    private func clearTaps() {
+        mutate { $0.cleared() }
+        selectedSlot = 0
+        haptic(.medium)
     }
 
     private func moveWindow(_ delta: Int) {
@@ -299,53 +327,24 @@ struct FretboardDrillEditor: View {
     }
 }
 
-// MARK: - Scale guide (opt-in tracing overlay)
+// MARK: - Undo / clear controls
 
 private extension FretboardDrillEditor {
-    /// The guide controls: a scale picker (Off + the full `ScaleReference` catalog, symmetric scales
-    /// first) and, once a scale is chosen, a key picker. Setting them ghosts the scale's notes on the
-    /// board below. Purely a drawing aid — nothing snaps, the player still taps each note.
-    var guideControls: some View {
-        HStack(spacing: 10) {
-            Text("Guide")
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(PocketColor.textSecondary)
-            Menu {
-                Button("Off") { referenceScale = nil }
-                Divider()
-                ForEach(ScaleReference.all) { reference in
-                    Button(reference.name) { referenceScale = reference }
-                }
-            } label: {
-                guideMenuLabel(referenceScale?.name ?? "Off")
+    /// **Undo** the last tap and **Clear** every placed note — both leave a scale guide untouched (it
+    /// isn't in the undo snapshot). Undo disables on an empty history; Clear disables on an empty board.
+    var editControls: some View {
+        HStack(spacing: 20) {
+            Button { undo() } label: { Label("Undo", systemImage: "arrow.uturn.backward") }
+                .disabled(history.isEmpty)
+            Button(role: .destructive) { clearTaps() } label: {
+                Label("Clear taps", systemImage: "xmark.circle")
             }
-            if referenceScale != nil {
-                Menu {
-                    ForEach(0..<12, id: \.self) { pitchClass in
-                        Button(GuitarScale.noteName(forPitchClass: pitchClass)) {
-                            referenceRoot = pitchClass
-                        }
-                    }
-                } label: {
-                    guideMenuLabel("Key: \(GuitarScale.noteName(forPitchClass: referenceRoot))")
-                }
-            }
+            .disabled(drill.hasNoNotes)
             Spacer()
         }
-        .tint(PocketColor.practice)
-        .accessibilityElement(children: .contain)
-    }
-
-    func guideMenuLabel(_ text: String) -> some View {
-        HStack(spacing: 4) {
-            Text(text)
-            Image(systemName: "chevron.up.chevron.down").font(.system(size: 9))
-        }
         .font(.futura(.caption, weight: .semibold))
-        .foregroundStyle(PocketColor.practice)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(PocketColor.surfaceSubtle, in: Capsule())
+        .buttonStyle(.borderless)
+        .tint(PocketColor.practice)
     }
 }
 

@@ -272,6 +272,20 @@ extension FretboardDrill {
                               stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
     }
 
+    /// Every slot reset to a rest, **preserving the grid** — subdivision, length, string count, and root
+    /// are untouched, only the placed notes clear. Backs the editor's "Clear taps": it wipes what the
+    /// player tapped without disturbing the drill's shape or any overlaid scale guide (device feedback,
+    /// 2026-07-23).
+    func cleared() -> FretboardDrill {
+        FretboardDrill(notesPerBeat: notesPerBeat,
+                       notes: Array(repeating: nil, count: notes.count),
+                       stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
+    }
+
+    /// True when no slot holds a note (every slot is a rest) — the editor disables Clear/Undo when there's
+    /// nothing to remove.
+    var hasNoNotes: Bool { notes.allSatisfy { $0 == nil } }
+
     /// The drill re-gridded to a new resolution over `beatsPerBar` — `beatsPerBar * notesPerBeat`
     /// slots — remapping existing notes **by beat position**, not by raw array index (the same fix
     /// `StrumPattern.resized` carries). Each new slot inherits the old note that fell on the *same*

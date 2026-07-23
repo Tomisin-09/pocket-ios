@@ -316,7 +316,12 @@ private struct ConfigureExerciseForm: View {
             StrumPatternEditor(beatsPerBar: signature.beats,
                               pattern: $strumChords.strumPattern)
                 .listRowBackground(Color.clear)
+            // Clear background + zero insets so this reads as a hairline separator, not a phantom
+            // inset-grouped row card (device feedback 2026-07-23: without it the bare `Divider` row kept
+            // the default rounded row background and looked like a mysterious empty box).
             Divider()
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             ChordProgressionEditor(progression: $strumChords.chordProgression)
                 .listRowBackground(Color.clear)
         } header: {

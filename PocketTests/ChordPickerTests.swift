@@ -31,12 +31,21 @@ final class ChordPickerTests: XCTestCase {
 
     // MARK: - Insert movable set
 
-    func testInsertMovableSetIsTheSixEverydayBarres() {
+    func testInsertMovableSetIsTheSixEverydayShapes() {
         XCTAssertEqual(ChordPicker.insertMovableGrips.count, 6)
         let qualities = Set(ChordPicker.insertMovableGrips.map(\.quality))
-        XCTAssertEqual(qualities, [.major, .minor, .dom7], "Insert offers maj/min/dom7 only")
+        XCTAssertEqual(qualities, [.major, .minor, .fifth],
+                       "Insert offers maj/min/power chord (dom7 moved to Build → Movable, ADR 0106)")
         let families = Set(ChordPicker.insertMovableGrips.map(\.name))
-        XCTAssertEqual(families, ["E-shape", "A-shape"], "both barre families are present")
+        XCTAssertEqual(families, ["E-shape", "A-shape"], "both shape families are present")
+    }
+
+    func testPowerChordSubtitleIsNotCalledABarre() {
+        XCTAssertEqual(ChordPicker.movableSubtitle(.eShapeFifth), "E-shape")
+        XCTAssertEqual(ChordPicker.movableSubtitle(.eShapeMajor), "E-shape barre")
+        let text = ChordPicker.movableSearchText(.aShapeFifth)
+        XCTAssertTrue(ChordPicker.matches(query: "power", in: text))
+        XCTAssertFalse(ChordPicker.matches(query: "barre", in: text), "a power chord is not a barre")
     }
 
     // MARK: - Search match (ADR 0103 D1)
