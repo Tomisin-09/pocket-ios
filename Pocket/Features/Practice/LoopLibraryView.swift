@@ -3,8 +3,10 @@ import SwiftUI
 
 /// The **Loops** library inside Practice (ADR 0046 Phase B): the focused list of song loops you've
 /// **measured** (a command tempo set), pushed from the Practice hub. A measured loop is a trainable
-/// unit — tapping it opens its `LoopRunView` to train the same warm-up → dwell → reach → back-off
-/// staircase as an exercise, against the loop's time-stretched audio.
+/// unit — tapping a row opens its `LoopRunView` to train the same warm-up → dwell → reach → back-off
+/// staircase as an exercise, against the loop's time-stretched audio, and a per-row **Ear** button
+/// opens the same loop in **ear training** (`EarTrainingView`, ADR 0104) so both practice modes are
+/// reachable here, not just the ramp.
 ///
 /// No creation or deletion here: a loop belongs to its **song**, made and removed on the waveform
 /// screen. This library is a read-through onto the loops worth training. The `commandTempo != nil`
@@ -17,6 +19,22 @@ struct LoopLibraryView: View {
     @AppStorage("loopLibrarySort") private var sortKey: LoopSortKey = .song
     @AppStorage("loopLibrarySortAscending") private var sortAscending = true
     @State private var searchText = ""
+    /// The loop + mode a row launched, driving a programmatic push (a plain `NavigationLink` can't carry
+    /// the two side-by-side buttons without the row swallowing the Ear tap).
+    @State private var launch: LoopLaunch?
+
+    /// A loop opened in one of its two practice modes — the ramp `trainer` or `ear` training (ADR 0104).
+    private enum LoopLaunch: Identifiable, Hashable {
+        case trainer(Loop)
+        case ear(Loop)
+
+        var id: String {
+            switch self {
+            case .trainer(let loop): return "trainer-\(loop.uid)"
+            case .ear(let loop): return "ear-\(loop.uid)"
+            }
+        }
+    }
 
     /// The measured loops (a command set) narrowed by search and ordered by the current sort.
     private var visibleLoops: [Loop] {
@@ -51,15 +69,8 @@ struct LoopLibraryView: View {
                     .listRowBackground(PocketColor.background)
             } else {
                 ForEach(visibleLoops) { loop in
-                    NavigationLink {
-                        LoopRunView(loop: loop)
-                    } label: {
-                        PracticeUnitRow(title: loop.name.isEmpty ? "Untitled loop" : loop.name,
-                                        context: loop.song?.title,
-                                        progress: "Command \(LoopCommandRamp.percent(loop.command))% → "
-                                            + "\(LoopCommandRamp.percent(loop.targetSpeed))%")
-                    }
-                    .listRowBackground(PocketColor.background)
+                    loopRow(loop)
+                        .listRowBackground(PocketColor.background)
                 }
             }
         }
@@ -72,6 +83,53 @@ struct LoopLibraryView: View {
             if hasMeasuredLoops {
                 ToolbarItem(placement: .topBarTrailing) { sortMenu }
             }
+        }
+        .navigationDestination(item: $launch) { launch in
+            switch launch {
+            case .trainer(let loop):
+                LoopRunView(loop: loop)
+            case .ear(let loop):
+                EarTrainingView(loop: loop)
+                    .navigationTitle("Train your ear")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+    }
+
+    /// A loop row: the unit summary (tap → ramp trainer) beside an **Ear** button (tap → ear training).
+    /// Two sibling buttons rather than a nested pair, each with a non-default style, so the List routes
+    /// each tap to its own target instead of firing the whole row.
+    @ViewBuilder
+    private func loopRow(_ loop: Loop) -> some View {
+        HStack(spacing: 12) {
+            Button {
+                launch = .trainer(loop)
+            } label: {
+                HStack {
+                    PracticeUnitRow(title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+                                    context: loop.song?.title,
+                                    progress: "Command \(LoopCommandRamp.percent(loop.command))% → "
+                                        + "\(LoopCommandRamp.percent(loop.targetSpeed))%")
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                launch = .ear(loop)
+            } label: {
+                VStack(spacing: 2) {
+                    Image(systemName: "ear")
+                        .font(.futura(.body))
+                    Text("Ear")
+                        .font(.futura(.caption2))
+                }
+                .foregroundStyle(PocketColor.practice)
+                .padding(.leading, 4)
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Train your ear with \(loop.name.isEmpty ? "untitled loop" : loop.name)")
         }
     }
 

@@ -6,6 +6,16 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Train your ear from the Loops library too.** Every loop in the Practice → **Loops** library now has an
+  **Ear** button beside it, so you can open a loop straight into ear training — not just the speed-ramp
+  trainer. Tapping the row still opens the ramp; the Ear button opens the same hum-and-sing mode as the
+  loop edit sheet.
+- **Three more strumming patterns.** The seeded strumming exercises now include **Down-Up Eighths**
+  (continuous alternating eighths), **Reggae Offbeat** (the up-stroke "skank"), and **Boom-Chick** (a
+  downstroke answered by a muted chuck) — a fuller starter set for the animated strumming lane.
+- **More glossary terms.** The Toolkit **Glossary** gained ~30 new entries across chords, scales,
+  intervals, technique and general terms — including whole-tone and diminished scales, three-notes-per-string,
+  shell voicings, downstroke/upstroke, syncopation and transpose.
 - **Train your ear on any loop.** A loop's edit sheet has a new **Train your ear** option — an
   away-from-the-guitar exercise: it plays the loop's own audio cycling continuously so you can **hum or
   sing it back**, then listen again and compare. The loop and the song it's from are shown up top, and a
@@ -22,6 +32,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   exercises, loops, songs, and ear-training — so you don't have to drill through buckets to find a unit.
 
 ### Changed
+- **Toolkit card subtitle now matches what's inside.** The Home **Toolkit** card reads "Your chords & a
+  music glossary" instead of "Chords, scales & theory reference" — the scales/identifier/ear sections are
+  still to come, so the card no longer promises them.
 - **Removed the "Coming Soon" Ear Training and Theory rows** from the New Exercise sheet. Ear training now
   lives on loops (see above) rather than as an exercise type.
 - **The chord picker is search-first.** Adding or swapping a chord in a progression now opens a picker

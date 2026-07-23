@@ -51,4 +51,15 @@ final class GlossaryTermTests: XCTestCase {
     func testSearchReturnsEmptyForNonsense() {
         XCTAssertTrue(GlossaryTerm.matching("zzzznotathing").isEmpty)
     }
+
+    // MARK: - Expanded catalog (pocket-170) — terms that underpin Pocket's chord/scale/strum tools
+
+    func testExpandedTermsArePresentAndSearchable() {
+        // A sample across the areas the expansion filled out — each must survive as a searchable term.
+        for term in ["Whole-tone scale", "Diminished scale", "Three notes per string",
+                     "Shell voicing", "Downstroke / upstroke", "Syncopation", "Transpose"] {
+            XCTAssertTrue(GlossaryTerm.matching(term).contains { $0.term == term },
+                          "Expected glossary term “\(term)” to be present and searchable")
+        }
+    }
 }

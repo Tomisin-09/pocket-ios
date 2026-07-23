@@ -288,4 +288,25 @@ extension StrumPattern {
     static let syncopatedMute = StrumPattern(
         slotsPerBeat: 2,
         slots: [.down, .rest, .down, .mute, .rest, StrumSlot(.up, accented: true), .down, .up])
+
+    /// **Continuous down-up eighths** — a stroke on every eighth, alternating direction. The metronomic
+    /// strumming drill: keep the hand swinging in even eighths so the arm, not the wrist, keeps time.
+    /// Common-practice vocabulary (T8).
+    static let downUpEighths = StrumPattern(
+        slotsPerBeat: 2,
+        slots: [.down, .up, .down, .up, .down, .up, .down, .up])
+
+    /// The **reggae / ska "skank"** — upstrokes on the off-beats (the "and" of each beat), the downbeats
+    /// left silent. Trains off-beat placement: the hand still moves down on the beat but only sounds on
+    /// the way back up. Common-practice vocabulary (T8).
+    static let offbeatUps = StrumPattern(
+        slotsPerBeat: 2,
+        slots: [.rest, .up, .rest, .up, .rest, .up, .rest, .up])
+
+    /// A **boom-chick** country/folk groove — a downstroke on the beat answered by a muted "chuck" on
+    /// the off-beat, mimicking the bass-then-strum of a picked accompaniment. Trains the damped mute
+    /// against a steady pulse. Common-practice vocabulary (T8).
+    static let boomChick = StrumPattern(
+        slotsPerBeat: 2,
+        slots: [.down, .mute, .down, .mute, .down, .mute, .down, .mute])
 }
