@@ -17,10 +17,11 @@ struct ChordGrip: Equatable {
     /// suspensions and sixths.
     enum Quality: String, CaseIterable {
         case major, minor, dom7, min7, maj7   // Tier 1
+        case fifth                            // Tier 1 — the power chord (root + 5th, ADR 0106)
         case sus2, sus4, sixth                // Tier 2
         case dom9, maj9, min9                 // Tier 2 — the 9ths (ADR 0101)
 
-        /// The suffix appended to the root note to name the voicing — "F", "Fm7", "Fsus4", "F6".
+        /// The suffix appended to the root note to name the voicing — "F", "Fm7", "Fsus4", "F5".
         var nameSuffix: String {
             switch self {
             case .major: return ""
@@ -28,6 +29,7 @@ struct ChordGrip: Equatable {
             case .dom7: return "7"
             case .min7: return "m7"
             case .maj7: return "maj7"
+            case .fifth: return "5"
             case .sus2: return "sus2"
             case .sus4: return "sus4"
             case .sixth: return "6"
@@ -45,6 +47,7 @@ struct ChordGrip: Equatable {
             case .dom7: return "Dominant 7"
             case .min7: return "Minor 7"
             case .maj7: return "Major 7"
+            case .fifth: return "Power chord"
             case .sus2: return "Sus2"
             case .sus4: return "Sus4"
             case .sixth: return "Sixth"
@@ -137,11 +140,22 @@ extension ChordGrip {
     static let aShapeMaj7 = ChordGrip(name: "A-shape", rootString: .aRoot,
                                       offsets: [nil, 2, 1, 2, 0, nil], quality: .maj7)
 
-    /// Tier 1 (ADR 0084 M3): triads + 7ths on the two CAGED root strings — the curated **default**
-    /// movable set. Generated, not tabled (M1): the whole vocabulary is these ten grips × a root note.
+    // Power chords (ADR 0106) — root + 5th + octave root, no 3rd, so neither major nor minor. The two
+    // standard three-string movable shapes: the E-shape roots on the low E (5th on A, octave on D) and
+    // sounds those three strings only; the A-shape roots on the A (5th on D, octave on G) and mutes the
+    // low E like its A-shape kin. Both derive their name straight from the root — "E5", "A5" — with no
+    // 3rd to colour, so the reverse-namer's ≥3-note rule never sees them; the grip names them itself.
+    static let eShapeFifth = ChordGrip(name: "E-shape", rootString: .eRoot,
+                                       offsets: [nil, nil, nil, 2, 2, 0], quality: .fifth)
+    static let aShapeFifth = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                       offsets: [nil, nil, 2, 2, 0, nil], quality: .fifth)
+
+    /// Tier 1 (ADR 0084 M3, extended by ADR 0106): triads + 7ths + power chords on the two CAGED root
+    /// strings — the curated **default** movable set. Generated, not tabled (M1): the whole vocabulary is
+    /// these twelve grips × a root note.
     static let tier1: [ChordGrip] = [
-        .eShapeMajor, .eShapeMinor, .eShapeDom7, .eShapeMin7, .eShapeMaj7,
-        .aShapeMajor, .aShapeMinor, .aShapeDom7, .aShapeMin7, .aShapeMaj7
+        .eShapeMajor, .eShapeMinor, .eShapeDom7, .eShapeMin7, .eShapeMaj7, .eShapeFifth,
+        .aShapeMajor, .aShapeMinor, .aShapeDom7, .aShapeMin7, .aShapeMaj7, .aShapeFifth
     ]
 
     // Tier 2 (M3): suspensions + sixths, in guitar-idiomatic voicings. A-shapes mute the high e like

@@ -53,6 +53,9 @@ final class ChordGripTests: XCTestCase {
     private static let qualitySpecs: [ChordGrip.Quality: QualitySpec] = [
         .major: .init(triad: true, required: [4, 7]),
         .minor: .init(triad: true, required: [3, 7], forbidden: [4]),
+        // Power chord: root + 5th (+ octave root) only — two pitch classes, so not a triad, and it must
+        // sound neither 3rd (that's the whole point of a "5").
+        .fifth: .init(triad: false, required: [7], forbidden: [3, 4]),
         .dom7: .init(triad: false, required: [4, 7, 10]),
         .min7: .init(triad: false, required: [3, 7, 10], forbidden: [4]),
         .maj7: .init(triad: false, required: [4, 7, 11]),
@@ -191,6 +194,28 @@ final class ChordGripTests: XCTestCase {
         XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.eShapeDom9.voicing(rootPitchClass: 5)), "F9")
         XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.eShapeMaj9.voicing(rootPitchClass: 5)), "Fmaj9")
         XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.eShapeMin9.voicing(rootPitchClass: 5)), "Fm9")
+    }
+
+    // MARK: - Power chords (ADR 0106)
+
+    func testPowerChordShapesAtKnownRoots() {
+        // E-shape power rooted on the open low E is E5: low-E/A/D at 0-2-2, the top three strings muted.
+        let ePower = ChordGrip.eShapeFifth.voicing(rootPitchClass: 4)   // E
+        XCTAssertEqual(ePower.frets, [nil, nil, nil, 2, 2, 0], "E5 = 0-2-2 on low E / A / D, top muted")
+        XCTAssertEqual(ePower.name, "E5", "auto-named from the root + '5' suffix")
+        XCTAssertEqual(ePower.pitchClasses, [4, 11], "E5 sounds only E and its 5th, B")
+
+        // A-shape power rooted on the open A is A5: A/D/G at 0-2-2, low E and the top two strings muted.
+        let aPower = ChordGrip.aShapeFifth.voicing(rootPitchClass: 9)   // A
+        XCTAssertEqual(aPower.frets, [nil, nil, 2, 2, 0, nil], "A5 = 0-2-2 on A / D / G, low E + top muted")
+        XCTAssertEqual(aPower.name, "A5")
+        XCTAssertEqual(aPower.pitchClasses, [9, 4], "A5 sounds only A and its 5th, E")
+    }
+
+    func testPowerChordsAreInTier1AndBothFamilies() {
+        let fifths = ChordGrip.tier1.filter { $0.quality == .fifth }
+        XCTAssertEqual(Set(fifths.map(\.name)), ["E-shape", "A-shape"],
+                       "power chords ship in Tier 1 on both CAGED root strings")
     }
 
     func testRootStringCarriesTheRootFret() {

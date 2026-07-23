@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Power chords in the movable chord builder.** Building a chord (Build → Movable shape) now offers a
+  **Power chord** quality on both the E-shape and A-shape — the root-and-5th shape you slide to any root
+  (E5, A5, …), no third, neither major nor minor. It sits in the default set alongside the barre triads
+  and 7ths.
 - **Train your ear from the Loops library too.** Every loop in the Practice → **Loops** library now has an
   **Ear** button beside it, so you can open a loop straight into ear training — not just the speed-ramp
   trainer. Tapping the row still opens the ramp; the Ear button opens the same hum-and-sing mode as the
