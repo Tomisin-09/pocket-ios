@@ -48,8 +48,20 @@ the "no relationship to `Song`" clause of ADR 0043/0046 for this one purpose.
 
 The edge is **the substrate only**. What it unlocks — a "Build a practice routine for this song"
 generator that materialises a `Routine` from a song's `linkedExercises` + its `loops` + a `play`
-block — is a **separate, later slice** and gets its own decision. This ADR commits to the schema and
-the boundary change, nothing more, so the migration lands and settles on its own.
+block — is a **separate, later slice**. This ADR commits to the schema and the boundary change,
+nothing more, so the migration lands and settles on its own.
+
+### Follow-up (implemented, same PR): the generator
+
+The generator shipped alongside this ADR and needed **no decision of its own** — it closes off no
+alternative the way a new ADR would, because it reuses the planner's existing session-materialisation
+seam wholesale. The pure `SongRoutineBuilder` (Core/Planner) reads a song's `linkedExercises` (`.focus`
+blocks) + `loops` (`.focus` blocks) + the song itself (a trailing `.play` block) and emits the
+planner's `[SessionBlock]`; the entry point (`SongDetailsSheet` → **Build a routine for this song**)
+hands those to `RoutineDetailView(generatedSession:)` → `PracticePlanner.materialise`, so the routine
+is reviewed in the normal editor and **only persists on Save** (Cancel/back leaves no orphan). This is
+the "the planner becomes just a smarter producer of these same edges" consequence below, realised: the
+direct edge is simply the *first* producer of session blocks, sharing the planner's materialiser.
 
 ### First many-to-many in the store
 

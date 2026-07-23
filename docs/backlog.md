@@ -518,10 +518,13 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
     alongside Edit) as well as the waveform title-hold — Edit stays the staged metadata form
     (Cancel-discards), which is why the immediate-persist link UI lives on Details, not Edit. No schema
     change — reads/writes the 0111 edge.
-  - **Generator — NEXT (not built).** A pure, unit-tested helper that materialises a `Routine` from a
-    song's linked exercises (as `focused`/`warmup` blocks) + its loops + a `play` block for the song
-    itself, plus a **"Build a routine for this song"** entry point (natural home: the new "Drills for
-    this song" section on `SongDetailsSheet`). No schema change — reads the 0111 edge.
+  - **Generator — ✅ DONE (pocket-182, 2026-07-23).** Pure, unit-tested `SongRoutineBuilder`
+    (Core/Planner) emits `[SessionBlock]` from a song's linked exercises (`.focus`) + its loops
+    (`.focus`) + a trailing `.play` play-through, reusing `RoutineDetailView(generatedSession:)` →
+    `PracticePlanner.materialise` so nothing persists until Save (Cancel/back = no orphan). Entry
+    point: **Build a routine for this song** in the *Exercises for this song* section on
+    `SongDetailsSheet`, disabled unless there's ≥1 linked exercise or loop. No schema change — reads
+    the 0111 edge. **This completes the exercise↔song feature** (schema + authoring UI + generator).
 
 - ~~**Futura navigation titles app-wide (spotted in the v1 screenshot shoot, 2026-07-23).**~~ **DONE
   (pocket-181, ADR 0110, 2026-07-23).** Shipped exactly as the decision below: one global

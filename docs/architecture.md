@@ -281,8 +281,12 @@ inferred-inverse array, and both delete rules are **`.nullify`** (deleting eithe
 membership, never cascades to the counterpart). Additive optional (empty set on migration), so it's a
 safe lightweight migration on two already-registered models. This narrows the old ADR-0043/0046
 "`Exercise` has no relationship to `Song`" rule to *audio/tempo*-free — the edge is plain metadata,
-never an audio or tempo input — and is the substrate for a later "build a practice routine for this
-song" generator (deferred to its own slice). That composition now has a home: **`Routine` + `RoutineItem`**
+never an audio or tempo input. It powers **"Build a routine for this song"**: the pure
+`SongRoutineBuilder` reads a song's linked exercises + its loops + itself and emits `[SessionBlock]`
+(exercises/loops as `.focus`, the song as a trailing `.play`), reusing the planner's
+`RoutineDetailView(generatedSession:)` → `PracticePlanner.materialise` review-then-Save seam so nothing
+persists until the player commits — the "planner becomes a producer of these edges" framing, with the
+direct edge as the first producer. That composition has a home: **`Routine` + `RoutineItem`**
 (ADR 0066) is the multi-unit *session* container — an ordered list of typed blocks (`focused` /
 `warmup` / `play` / `rest`), each non-rest block referencing exactly one `Exercise`/`Loop`/`Song`
 via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orphans the block

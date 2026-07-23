@@ -18,6 +18,7 @@ struct SongDetailsSheet: View {
     /// Every exercise, to offer in the link picker (ADR 0111). Sorted by name, like the library.
     @Query(sort: \Exercise.name) private var allExercises: [Exercise]
     @State private var showingExercisePicker = false
+    @State private var buildingRoutine = false
     @State private var editing = false
     // Inline notes editing: a local draft committed on Update, so the read view only
     // changes when you explicitly save (not keystroke-by-keystroke).
@@ -52,6 +53,13 @@ struct SongDetailsSheet: View {
                     isLinked: { isLinked($0) },
                     toggle: { toggleLink($0) },
                     accent: PocketColor.practice)
+            }
+            // Push (not a modal cover) so RoutineDetailView's provisional state — Save-only, no
+            // Cancel button — still has the nav back button to abandon it, matching the planner flow.
+            .navigationDestination(isPresented: $buildingRoutine) {
+                RoutineDetailView(container: modelContext.container,
+                                  generatedSession: SongRoutineBuilder.sessionBlocks(for: song),
+                                  defaultName: SongRoutineBuilder.defaultName(for: song))
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -221,16 +229,28 @@ struct SongDetailsSheet: View {
                 Label("Link exercises", systemImage: "plus.circle")
                     .foregroundStyle(PocketColor.practice)
             }
+            Button { buildingRoutine = true } label: {
+                Label("Build a routine for this song", systemImage: "wand.and.stars")
+                    .foregroundStyle(canBuildRoutine ? PocketColor.practice : PocketColor.textSecondary)
+            }
+            .disabled(!canBuildRoutine)
         } header: {
             Text("Exercises for this song")
         } footer: {
-            Text("Exercises that help you play this song. Links show on the exercise too.")
+            Text("Exercises that help you play this song — they show on the exercise too. "
+                 + "Build a routine strings these together with your saved loops and a full "
+                 + "play-through, ready to review and save.")
         }
     }
 
     private var linkedExercisesByName: [Exercise] {
         song.linkedExercises.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
+
+    /// Whether "Build a routine" has anything to work with — a linked exercise or a saved loop
+    /// (ADR 0111). Mirrors `SongRoutineBuilder.canBuild` so the button disables when the generated
+    /// routine would be a lone play-through.
+    private var canBuildRoutine: Bool { SongRoutineBuilder.canBuild(for: song) }
 
     private func isLinked(_ exercise: Exercise) -> Bool {
         song.linkedExercises.contains { $0.persistentModelID == exercise.persistentModelID }

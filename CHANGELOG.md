@@ -17,8 +17,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   and a song's details sheet gains an **Exercises for this song** section — each with a searchable
   multi-select picker to link, and swipe-to-unlink. A link made on one side shows on the other. The
   song details sheet is now reachable straight from the Library (long-press a song → **Details**), not
-  only via the waveform screen. (The "build a practice routine for this song" action this sets up is
-  still a follow-up.) Existing data is untouched.
+  only via the waveform screen. Existing data is untouched.
+- **Build a practice routine for a song, in one tap.** The song details sheet's *Exercises for this
+  song* section gains **Build a routine for this song** — it strings the song's linked exercises, its
+  saved loops (the passages you've isolated on the waveform), and a full play-through into a fresh
+  routine, opened in the routine editor to review, reorder, and save. Nothing is saved until you tap
+  **Save**. Disabled until the song has at least one linked exercise or loop to work with.
 - **Draw your own warm-up, picking & legato runs.** The **Generate / Draw your own** switch — until now
   only on Scales — is now on every run-family template (**Warm-up, Picking, Legato, Fingerstyle**), at
   both create and Edit shape. "Draw your own" opens the same tap-to-place fretboard (with the optional
