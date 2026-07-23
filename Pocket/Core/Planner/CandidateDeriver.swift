@@ -35,16 +35,21 @@ enum CandidateDeriver {
     /// cold-start where everything is unrated, simply ranks no-prereq beginner skills first.
     static let prereqReadyMastery = 2.0
 
-    /// Derive the ranked candidate pool from the active goals over the projected library. Pure.
-    static func deriveCandidates(goals: [PlannerGoal], library: PlannerLibrary) -> [PlannerCandidate] {
+    /// Derive the ranked candidate pool from the active goals over the projected library, tilted by
+    /// the profile's `emphasis` (ADR 0113 S3 — a lift-only multiplier on `priority`, defaulting to
+    /// `.neutral` so a profile-less call behaves exactly as before). Pure.
+    static func deriveCandidates(goals: [PlannerGoal], library: PlannerLibrary,
+                                 emphasis: PracticeEmphasis = .neutral) -> [PlannerCandidate] {
         var strongest: [PlannerUnitRef: PlannerCandidate] = [:]
 
         for goal in goals where !goal.isMet {
             for skillID in goal.skillIDs {
                 guard let info = TechniqueTaxonomy.info(skillID) else { continue }  // unknown ⇒ skip
                 let resolved = info.mode.isRepertoire
-                    ? repertoireCandidates(goal: goal, skillID: skillID, library: library)
-                    : techniqueCandidates(goal: goal, info: info, library: library)
+                    ? repertoireCandidates(goal: goal, skillID: skillID, library: library,
+                                           emphasis: emphasis)
+                    : techniqueCandidates(goal: goal, info: info, library: library,
+                                          emphasis: emphasis)
                 for candidate in resolved {
                     if let existing = strongest[candidate.unit], existing.priority >= candidate.priority {
                         continue  // keep the strongest claim on a unit surfaced by several goals
@@ -62,8 +67,10 @@ enum CandidateDeriver {
     /// carries the goal weight softened by prerequisite readiness.
     private static func techniqueCandidates(goal: PlannerGoal,
                                             info: SkillInfo,
-                                            library: PlannerLibrary) -> [PlannerCandidate] {
+                                            library: PlannerLibrary,
+                                            emphasis: PracticeEmphasis) -> [PlannerCandidate] {
         let priority = goal.weight * prereqReadiness(for: info, library: library)
+            * emphasis.multiplier(forSkillID: info.id, mode: info.mode)
         let exercises = library.exercises
             .filter { SkillFamilyMap.template($0.template, serves: info.id) }
             .map { exercise in
@@ -91,13 +98,16 @@ enum CandidateDeriver {
     /// run itself. No prerequisite down-weight (repertoire prereqs are themselves song-routed).
     private static func repertoireCandidates(goal: PlannerGoal,
                                              skillID: String,
-                                             library: PlannerLibrary) -> [PlannerCandidate] {
+                                             library: PlannerLibrary,
+                                             emphasis: PracticeEmphasis) -> [PlannerCandidate] {
         guard let songUID = goal.targetSongUID else { return [] }
+        // Repertoire is always the `.repertoire` mode; the emphasis lift applies to the whole path.
+        let priority = goal.weight * emphasis.multiplier(forSkillID: skillID, mode: .repertoire)
         var result: [PlannerCandidate] = library.loops
             .filter { $0.songUID == songUID }
             .map { loop in
                 PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
-                                 priority: goal.weight,
+                                 priority: priority,
                                  mastery: loop.mastery,
                                  lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes,
@@ -105,7 +115,7 @@ enum CandidateDeriver {
             }
         if let song = library.songs.first(where: { $0.uid == songUID }) {
             result.append(PlannerCandidate(unit: PlannerUnitRef(song.uid, .song),
-                                           priority: goal.weight,
+                                           priority: priority,
                                            mastery: nil,  // song mastery is derived; treat run as max-due
                                            lastPracticed: song.lastPracticed,
                                            estimatedMinutes: song.estimatedMinutes,

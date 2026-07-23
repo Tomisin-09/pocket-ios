@@ -34,17 +34,21 @@ enum PracticePlanner {
     /// Generate a **goal-driven session** (Slice 2 milestone): the front-half (`CandidateDeriver`)
     /// expands the active goals into a ranked candidate pool over the projected library, then the
     /// back-half (`SessionBuilder`) lays it out — warm-up still LRU-picked from `template == .warmup`
-    /// exercises (structural, never due-scored). Returns the pure block layout; pass it to
-    /// `materialise` with the same model arrays to persist and run.
+    /// exercises (structural, never due-scored). The optional `profile` supplies the ADR 0113 S3
+    /// **emphasis mix** (declared genres + dream), a lift-only tilt on candidate priority; omit it (or
+    /// pass a curation-free profile) for the pre-S3 due/goal-only ranking. Returns the pure block
+    /// layout; pass it to `materialise` with the same model arrays to persist and run.
     static func planGoalSession(minutes: Int,
                                 goals: [Goal],
                                 exercises: [Exercise],
                                 loops: [Loop] = [],
                                 songs: [Song] = [],
+                                profile: Profile? = nil,
                                 now: Date = .now) -> [SessionBlock] {
         let library = library(exercises: exercises, loops: loops, songs: songs)
+        let emphasis = profile.map { PracticeEmphasis(genres: $0.genres, dream: $0.dream) } ?? .neutral
         let candidates = CandidateDeriver.deriveCandidates(goals: goals.map(\.plannerProjection),
-                                                           library: library)
+                                                           library: library, emphasis: emphasis)
         let warmUps = exercises.filter { $0.template == .warmup }.map { candidate(for: $0) }
         let warmUp = SessionBuilder.warmUpPick(warmUps)
         return SessionBuilder.buildSession(minutes: minutes, candidates: candidates,
