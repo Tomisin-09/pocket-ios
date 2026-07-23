@@ -38,6 +38,9 @@ struct ConfigureExerciseForm: View {
     /// The authored **arpeggio run** for the Arpeggios template — seeded from the template default.
     /// Not meter-bound: an arpeggio run defines its own phrase length.
     @State private var arpeggio: ArpeggioRun
+    /// How an Arpeggios drill authors its content at creation: the generative chord-tone box picker or
+    /// the hand-drawn canvas (ADR 0107) — the same generate-or-draw split the Scales drill offers.
+    @State private var arpeggioMode: AuthoringMode = .generate
     /// The authored **custom drill** for the tap-to-place grid — seeded from the template default and
     /// re-gridded on a meter change so its slots fill the bar.
     @State private var customDrill: FretboardDrill
@@ -66,10 +69,11 @@ struct ConfigureExerciseForm: View {
         _run = State(initialValue: template.defaultFretboardContent?.runValue ?? .chromaticWarmup)
         _scale = State(initialValue: template.defaultFretboardContent?.scaleValue ?? .aMinorPentatonic)
         _arpeggio = State(initialValue: template.defaultFretboardContent?.arpeggioValue ?? .aMinorSeventh)
-        // The custom-grid template starts from the spider-walk canvas; a Scales *or* run-family drill
-        // switched to "draw your own" (ADR 0107) starts from an empty neck instead of a pre-filled
-        // warm-up.
+        // The custom-grid template starts from the spider-walk canvas; a Scales, run-family, *or*
+        // Arpeggios drill switched to "draw your own" (ADR 0107) starts from an empty neck instead of a
+        // pre-filled warm-up.
         let drawStartsEmpty = template.bespokeEditor == .scale || template.bespokeEditor == .run
+            || template.bespokeEditor == .arpeggio
         let drillSeed = template.defaultFretboardContent?.customValue
             ?? (drawStartsEmpty ? .emptyBar(beatsPerBar: bars) : .spiderWalk)
         _customDrill = State(initialValue: drillSeed.resized(notesPerBeat: drillSeed.notesPerBeat,
@@ -176,7 +180,8 @@ private extension ConfigureExerciseForm {
         case .run: return runMode == .draw ? .custom(customDrill) : .run(run)
         // A Scales drill carries its generated box or, in draw mode, the hand-placed custom drill (ADR 0107).
         case .scale: return scaleMode == .draw ? .custom(customDrill) : .scale(scale)
-        case .arpeggio: return .arpeggio(arpeggio)
+        // An Arpeggios drill carries its generated chord-tone box or, in draw mode, the custom drill.
+        case .arpeggio: return arpeggioMode == .draw ? .custom(customDrill) : .arpeggio(arpeggio)
         case .fretboardGrid: return .custom(customDrill)
         case .strumming, .chords, .strumChords, .none: return nil
         }
@@ -289,15 +294,35 @@ private extension ConfigureExerciseForm {
         }
     }
 
+    /// The Arpeggios template's authoring surface — the same generate-or-draw split (ADR 0107): the
+    /// `ArpeggioRunEditor` chord-tone box picker, or the tap-to-place canvas with its scale guide for
+    /// any hand-shaped arpeggio the box generator can't declare.
     var arpeggioSection: some View {
         Section {
-            ArpeggioRunEditor(run: $arpeggio)
-                .listRowBackground(Color.clear)
+            Picker("How to author", selection: $arpeggioMode) {
+                Text("Generate").tag(AuthoringMode.generate)
+                Text("Draw your own").tag(AuthoringMode.draw)
+            }
+            .pickerStyle(.segmented)
+            .listRowBackground(Color.clear)
+
+            switch arpeggioMode {
+            case .generate:
+                ArpeggioRunEditor(run: $arpeggio)
+                    .listRowBackground(Color.clear)
+            case .draw:
+                FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill,
+                                     referenceEnabled: true)
+                    .listRowBackground(Color.clear)
+            }
         } header: {
             Text("Arpeggio run")
         } footer: {
-            Text("Pick a quality and its root — the chord-tone box walks the neck over the click. "
-                 + "You can change it later too.")
+            Text(arpeggioMode == .generate
+                 ? "Pick a quality and its root — the chord-tone box walks the neck over the click. "
+                    + "You can change it later too."
+                 : "Draw the arpeggio yourself — tap the chord tones onto the board. Turn on a Guide "
+                    + "to ghost a scale's notes to trace. You can edit it later too.")
         }
     }
 
