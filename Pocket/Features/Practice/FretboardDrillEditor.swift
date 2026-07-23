@@ -20,6 +20,10 @@ struct FretboardDrillEditor: View {
     let beatsPerBar: Int
     @Binding var drill: FretboardDrill
     var tint: Color = PocketColor.practice
+    /// When set, shows the **scale guide** — a scale + key picker whose notes are ghosted on the board so
+    /// a player can trace and tap a scale (incl. the symmetric ones the box generator can't produce). Off
+    /// for plain custom drills; the Scales "draw your own" surface turns it on. Purely a drawing aid.
+    var referenceEnabled: Bool = false
 
     /// The slot the next placed note lands in — highlighted in the strip and reflected on the board.
     @State private var selectedSlot = 0
@@ -35,6 +39,17 @@ struct FretboardDrillEditor: View {
     /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
     /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
     @State private var playOnceToken: Date?
+    /// The scale being ghosted as a tracing guide (`nil` = off), and its key (root pitch class). Only
+    /// consulted when `referenceEnabled` — the guide overlay on the placement board.
+    @State private var referenceScale: ScaleReference?
+    @State private var referenceRoot = 0   // C
+
+    /// Whether the guide is on and a scale is chosen.
+    private var referenceActive: Bool { referenceEnabled && referenceScale != nil }
+    /// The pitch classes the guide ghosts, for the chosen scale + key.
+    private var referencePitchClasses: Set<Int> {
+        referenceScale?.pitchClasses(root: referenceRoot) ?? []
+    }
     /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S4).
     private var secondsPerNote: Double {
         60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, drill.notesPerBeat))
@@ -54,6 +69,7 @@ struct FretboardDrillEditor: View {
                                   playOnceToken: playOnceToken)
             resolutionPicker
             slotStrip
+            if referenceEnabled { guideControls }
             board
             positionControls
             Text("Pick a slot, then tap a fret to place a note. Tap a placed note to clear it.")
@@ -180,11 +196,15 @@ struct FretboardDrillEditor: View {
         let cell = FretNote(string: string, fret: fret)
         let isSelected = drill.note(at: selectedSlot) == cell
         let isUsed = drill.notes.contains(cell)
+        let pitchClass = GuitarScale.pitchClass(string: string, fret: fret)
+        let inGuide = referenceActive && referencePitchClasses.contains(pitchClass)
+        let isGuideRoot = inGuide && pitchClass == referenceRoot
         return Button {
             placeOrClear(cell)
         } label: {
             Circle()
-                .fill(fill(isSelected: isSelected, isUsed: isUsed))
+                .fill(fill(isSelected: isSelected, isUsed: isUsed,
+                           inGuide: inGuide, isGuideRoot: isGuideRoot))
                 .frame(width: 24, height: 24)
                 .overlay(Circle().stroke(PocketColor.surfaceBorder, lineWidth: isSelected ? 0 : 1))
                 .frame(maxWidth: .infinity, minHeight: 30)
@@ -192,15 +212,20 @@ struct FretboardDrillEditor: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(FretboardGrid.stringName(string, of: drill.stringCount)) "
-                            + (fret == 0 ? "open" : "fret \(fret)"))
+                            + (fret == 0 ? "open" : "fret \(fret)")
+                            + (inGuide ? ", in guide scale" : ""))
         .accessibilityHint(isSelected ? "Placed here — tap to clear" : "Tap to place")
     }
 
     /// Cell colour by role (T10): the selected slot's note in the content tint, notes used by other
-    /// slots a faint ink so the drill's shape reads, empty cells a near-clear surface.
-    private func fill(isSelected: Bool, isUsed: Bool) -> Color {
+    /// slots a faint ink so the drill's shape reads, empty cells a near-clear surface. When the scale
+    /// guide is on, an unplayed cell that belongs to the ghosted scale is faintly tinted (its **root**
+    /// more strongly) so the scale's shape reads through the empty board — a tracing aid, no snapping.
+    private func fill(isSelected: Bool, isUsed: Bool, inGuide: Bool, isGuideRoot: Bool) -> Color {
         if isSelected { return tint }
         if isUsed { return PocketColor.textPrimary.opacity(0.18) }
+        if isGuideRoot { return tint.opacity(0.45) }
+        if inGuide { return tint.opacity(0.20) }
         return PocketColor.surfaceSubtle.opacity(0.5)
     }
 
@@ -271,6 +296,56 @@ struct FretboardDrillEditor: View {
         guard let note else { return "rest" }
         let name = FretboardGrid.stringName(note.string, of: drill.stringCount)
         return note.fret == 0 ? "\(name) open" : "\(name) fret \(note.fret)"
+    }
+}
+
+// MARK: - Scale guide (opt-in tracing overlay)
+
+private extension FretboardDrillEditor {
+    /// The guide controls: a scale picker (Off + the full `ScaleReference` catalog, symmetric scales
+    /// first) and, once a scale is chosen, a key picker. Setting them ghosts the scale's notes on the
+    /// board below. Purely a drawing aid — nothing snaps, the player still taps each note.
+    var guideControls: some View {
+        HStack(spacing: 10) {
+            Text("Guide")
+                .font(.futura(.caption, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+            Menu {
+                Button("Off") { referenceScale = nil }
+                Divider()
+                ForEach(ScaleReference.all) { reference in
+                    Button(reference.name) { referenceScale = reference }
+                }
+            } label: {
+                guideMenuLabel(referenceScale?.name ?? "Off")
+            }
+            if referenceScale != nil {
+                Menu {
+                    ForEach(0..<12, id: \.self) { pitchClass in
+                        Button(GuitarScale.noteName(forPitchClass: pitchClass)) {
+                            referenceRoot = pitchClass
+                        }
+                    }
+                } label: {
+                    guideMenuLabel("Key: \(GuitarScale.noteName(forPitchClass: referenceRoot))")
+                }
+            }
+            Spacer()
+        }
+        .tint(PocketColor.practice)
+        .accessibilityElement(children: .contain)
+    }
+
+    func guideMenuLabel(_ text: String) -> some View {
+        HStack(spacing: 4) {
+            Text(text)
+            Image(systemName: "chevron.up.chevron.down").font(.system(size: 9))
+        }
+        .font(.futura(.caption, weight: .semibold))
+        .foregroundStyle(PocketColor.practice)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(PocketColor.surfaceSubtle, in: Capsule())
     }
 }
 

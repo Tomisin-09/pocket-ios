@@ -254,13 +254,15 @@ docs so this stays a pointer list:
   "Movement" disclosure. **Sequencing (3s/4s/6s) is a SEPARATE orthogonal future axis over ALL
   layouts — deliberately NOT a 3-NPS feature, its own later ADR.** **Order: slice 1 first** (see
   ADR). Shares the slide-teaching UX with the movable-chord item above.
-- **Symmetric scales: diminished + whole-tone (deferred from ADR 0085).** The scale catalog gained the
-  five modes + the two bebop scales (ADR 0085), but the **whole-half / half-whole diminished** and
-  **whole-tone** scales were left out on purpose. They are *symmetric* — they repeat every minor third /
-  whole step and are **not** subsets of a single major scale — so the "place a `CAGEDShape` major box,
-  filter it" generator can't produce them. They need their **own placement generator** (a repeating-cell
-  shape rather than a filtered CAGED box). Do this when that generator is warranted; nothing in ADR 0085
-  blocks it (additive enum cases + a new generator path, `supportedLayouts` = box until proven otherwise).
+- ~~**Symmetric scales: diminished + whole-tone (deferred from ADR 0085).**~~ **ADDRESSED via the custom
+  scale canvas (pocket-172, ADR 0107), not a generator.** Rather than build the "own placement generator"
+  a filtered CAGED box can't provide, symmetric scales (and any sequenced/exotic/hand-shaped run) are now
+  **drawn** on the Scales exercise's **Draw your own** canvas, with a **scale guide** that ghosts a chosen
+  scale + key's notes to trace — the three symmetric scales ship as pure `ScaleReference` formulas
+  (whole-tone + both diminished modes), never touching the CAGED engine or its tests. **Still deferred (if
+  ever warranted):** *first-class generated* symmetric scales in `GuitarScale` (a repeating-cell
+  generator) — the canvas removes the urgency, so it stays unbuilt rather than speculative. A **scale
+  identifier** (name what you drew, the `ChordNamer` analog) is the other ADR-0107 follow-up.
 - **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
   container (distinct from the intra-exercise ramp staircase): `Routine` +
   `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit

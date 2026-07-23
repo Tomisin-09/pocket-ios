@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Draw your own scale.** A Scales exercise now has a **Generate / Draw your own** switch. "Draw your
+  own" opens a tap-to-place fretboard where you build a scale or run by hand — the escape hatch for
+  shapes the box picker can't generate (whole-tone, diminished) and any sequenced or invented pattern.
+  Turn on a **Guide** to ghost a chosen scale + key's notes on the board (whole-tone and both diminished
+  scales included) and just tap them up the neck. It plays and animates like any other scale drill.
 - **Power chords in the movable chord builder.** Building a chord (Build → Movable shape) now offers a
   **Power chord** quality on both the E-shape and A-shape — the root-and-5th shape you slide to any root
   (E5, A5, …), no third, neither major nor minor. It sits in the default set alongside the barre triads

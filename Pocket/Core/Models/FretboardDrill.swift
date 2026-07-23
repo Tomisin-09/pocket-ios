@@ -312,4 +312,12 @@ extension FretboardDrill {
         ]
         return FretboardDrill(notesPerBeat: 2, notes: notes)
     }()
+
+    /// A **blank canvas** — one bar of rests at the given resolution, nothing placed. The starting
+    /// point when a player switches a Scales drill to "draw your own" (the custom-scale canvas), so they
+    /// build the run from an empty neck rather than editing a pre-filled warm-up.
+    static func emptyBar(beatsPerBar: Int, notesPerBeat: Int = 2) -> FretboardDrill {
+        FretboardDrill(notesPerBeat: notesPerBeat,
+                       notes: Array(repeating: nil, count: max(1, beatsPerBar) * max(1, notesPerBeat)))
+    }
 }
