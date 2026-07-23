@@ -11,6 +11,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **A personalised home greeting, if you want one.** You can now give yourself an **artist name**,
+  and the home screen greets you by it — "Evening, Vega" — shifting with the time of day. It's
+  entirely optional and never asked for at the door: once you've earned it — after you finish an
+  exercise or capture your first loop — a quiet full-screen moment offers once to name you (you can
+  decline), and the name is always set or changed in **Settings → You**. No account, no sign-up —
+  it stays on this device and is never treated as personal data (ADR 0113). Leave it unset and the
+  greeting reads exactly as before.
 - **Privacy Policy & Terms of Use links in Settings.** The **About** section now links out to
   Red Moon Practice's privacy policy and to Apple's standard End User License Agreement — the licence
   that governs the app while we ship no custom terms. Together these pre-satisfy the "Terms of Use

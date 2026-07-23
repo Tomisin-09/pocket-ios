@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// App settings (Settings V1, ADR 0050). A thin `Form`, pushed from the Home toolbar gear.
@@ -6,6 +7,20 @@ import SwiftUI
 /// `AppSettings.hapticsEnabled`). Deliberately small — feature-specific controls (e.g. the
 /// contextual gridlines toggle) live on their own screens, not here.
 struct SettingsView: View {
+    @Environment(\.modelContext) private var context
+    /// The local artist profile (ADR 0113). At most one row; `.first` is the singleton (or `nil`
+    /// on an untouched install, before a name has ever been set).
+    @Query private var profiles: [Profile]
+    /// Draft of the artist name being edited. Seeded from the profile on appear and committed on
+    /// submit / when the screen leaves, so we write the store once per edit rather than per
+    /// keystroke (and never insert a row mid-typing).
+    @State private var artistNameDraft = ""
+    #if DEBUG
+    /// DEBUG-only: lets the developer re-arm the one-time "you've earned a name" prompt without a
+    /// data-wiping reinstall (see the Developer section below).
+    @AppStorage(AppSettings.Key.artistNamePromptSeen) private var artistNamePromptSeen = false
+    #endif
+
     @AppStorage(AppSettings.Key.hapticsEnabled) private var hapticsEnabled = true
     @AppStorage(AppSettings.Key.countInEnabled) private var countInEnabled = true
     @AppStorage(AppSettings.Key.countInBars) private var countInBars = AppSettings.countInBarsRange.lowerBound
@@ -24,6 +39,17 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                TextField("Artist name", text: $artistNameDraft)
+                    .textInputAutocapitalization(.words)
+                    .submitLabel(.done)
+                    .onSubmit(commitArtistName)
+            } header: {
+                Text("You")
+            } footer: {
+                Text("Your artist name greets you on the home screen. Optional, and it stays on this device.")
+            }
+
             Section {
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppearancePreference.allCases, id: \.self) { option in
@@ -101,6 +127,18 @@ struct SettingsView: View {
                 }
             }
 
+            #if DEBUG
+            // DEBUG-only scaffold (never ships): re-arm the one-time artist-name prompt so the
+            // ceremony can be re-tested on a real install without a data-wiping reinstall.
+            Section {
+                Button("Reset naming prompt", role: .destructive, action: resetNamingPrompt)
+            } header: {
+                Text("Developer")
+            } footer: {
+                Text("DEBUG only. Clears your artist name and re-arms the “you've earned a name” prompt.")
+            }
+            #endif
+
             Section {
                 LabeledContent("Version", value: Self.appVersion)
                 // Apple's standard EULA (the licence that governs use of the app on the
@@ -149,9 +187,29 @@ struct SettingsView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { artistNameDraft = profiles.first?.artistName ?? "" }
+        // Commit when the screen leaves too, so an edit the user typed without pressing Done
+        // still saves.
+        .onDisappear(perform: commitArtistName)
     }
 
     private func barsLabel(_ bars: Int) -> String { bars == 1 ? "1 bar" : "\(bars) bars" }
+
+    /// Persist the drafted artist name to the local profile (creating the singleton row on first
+    /// non-empty name, clearing it back to name-free when blank).
+    private func commitArtistName() {
+        Profile.setArtistName(artistNameDraft, in: context)
+    }
+
+    #if DEBUG
+    /// DEBUG-only: clear the artist name and re-arm the one-time naming prompt, so the "you've
+    /// earned a name" ceremony can be exercised again on a real install (no reinstall / data loss).
+    private func resetNamingPrompt() {
+        Profile.setArtistName(nil, in: context)
+        artistNamePromptSeen = false
+        artistNameDraft = ""
+    }
+    #endif
 
     /// Marketing version from the bundle (`MARKETING_VERSION`), e.g. "0.0.1".
     private static var appVersion: String {
@@ -216,9 +274,11 @@ enum SettingsInfo {
     NavigationStack { SettingsView() }
         .environment(\.horizontalSizeClass, .regular)
         .frame(width: 1024, height: 900)
+        .modelContainer(for: Profile.self, inMemory: true)
 }
 
 #Preview {
     NavigationStack { SettingsView() }
         .preferredColorScheme(.dark)
+        .modelContainer(for: Profile.self, inMemory: true)
 }
