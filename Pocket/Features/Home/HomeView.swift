@@ -204,13 +204,13 @@ struct HomeView: View {
     private var toolkitCard: some View {
         NavigationLink { ToolkitView() } label: {
             HomeNavCard(icon: "books.vertical.fill", title: "Toolkit",
-                        subtitle: "Chords, scales & theory reference",
+                        subtitle: "Your chords & a music glossary",
                         tint: PocketColor.toolkit,
                         cardWash: PocketColor.toolkitCardWash,
                         circleWash: PocketColor.toolkitCircleWash)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Toolkit, chords, scales and theory reference")
+        .accessibilityLabel("Toolkit, your chords and a music glossary")
     }
 
     // MARK: - Journal card

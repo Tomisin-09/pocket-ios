@@ -227,6 +227,24 @@ final class FretboardDrillTests: XCTestCase {
         XCTAssertNil(cleared.notes[0])
     }
 
+    func testClearedResetsEveryNoteButKeepsTheGrid() {
+        let drill = FretboardDrill(notesPerBeat: 3,
+                                   notes: [FretNote(string: 5, fret: 1), nil, FretNote(string: 4, fret: 3)],
+                                   stringCount: 6, rootPitchClass: 7)
+        let cleared = drill.cleared()
+        XCTAssertTrue(cleared.notes.allSatisfy { $0 == nil }, "every slot becomes a rest")
+        XCTAssertEqual(cleared.notes.count, drill.notes.count, "same length")
+        XCTAssertEqual(cleared.notesPerBeat, 3, "subdivision preserved")
+        XCTAssertEqual(cleared.stringCount, 6)
+        XCTAssertEqual(cleared.rootPitchClass, 7, "root preserved")
+    }
+
+    func testHasNoNotesReflectsWhetherAnySlotIsPlaced() {
+        XCTAssertFalse(FretboardDrill.spiderWalk.hasNoNotes)
+        XCTAssertTrue(FretboardDrill.spiderWalk.cleared().hasNoNotes)
+        XCTAssertTrue(FretboardDrill(notesPerBeat: 2, notes: [nil, nil]).hasNoNotes)
+    }
+
     func testReplacingNoteOutOfRangeIsUnchanged() {
         let drill = FretboardDrill.spiderWalk
         XCTAssertEqual(drill.replacingNote(at: 99, with: FretNote(string: 0, fret: 0)), drill)

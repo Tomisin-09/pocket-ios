@@ -28,9 +28,11 @@ final class PracticeRunUITests: XCTestCase {
         XCTAssertTrue(practiceCard.isHittable, "Practice card not reachable by scrolling")
         practiceCard.tap()
 
-        // Practice is a hub (ADR 0046): open the Exercises library first.
+        // Practice is a hub (ADR 0046): open the Exercises library first. Generous timeout — on a cold
+        // simulator the hub only paints once first-launch seeding has run (the same variance the drill
+        // wait below allows for), so a tight 5s here flaked on cold CI/sim runs.
         let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
-        XCTAssertTrue(exercisesRow.waitForExistence(timeout: 5), "Exercises library row missing")
+        XCTAssertTrue(exercisesRow.waitForExistence(timeout: 20), "Exercises library row missing")
         exercisesRow.tap()
 
         // Tapping a seeded unit must open its run screen without the freeze. The library groups

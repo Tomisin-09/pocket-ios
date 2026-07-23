@@ -166,6 +166,43 @@ enum PracticePresets {
              strumChords: .popGroove)
     ]
 
+    /// The **strumming expansion** batch (pocket-170) — seeded under a *tenth* key. Broadens the seeded
+    /// rhythm vocabulary beyond the folk + syncopated-mute patterns with three more common grooves
+    /// (continuous down-up eighths, the reggae off-beat "skank", and a boom-chick mute), so the
+    /// strumming lane and its editor ship with a fuller starter set. In-house patterns (T8).
+    static let strumExpansionSpecs: [Spec] = [
+        Spec(name: "Strumming — Down-Up Eighths", command: 84, subdivision: .eighths,
+             tags: ["rhythm", "strumming"],
+             notes: "A stroke on every eighth, down-up-down-up. Keep the strumming hand swinging evenly "
+                  + "from the elbow — the click exposes any stroke that rushes or drags.",
+             template: .strumming,
+             strum: .downUpEighths),
+        Spec(name: "Strumming — Reggae Offbeat", command: 76, subdivision: .eighths,
+             tags: ["rhythm", "strumming"],
+             notes: "Upstrokes on the off-beats only — the reggae 'skank'. Keep the hand moving down on "
+                  + "each beat but sound only on the way back up, so the accents land between the clicks.",
+             template: .strumming,
+             strum: .offbeatUps),
+        Spec(name: "Strumming — Boom-Chick", command: 80, subdivision: .eighths,
+             tags: ["rhythm", "strumming"],
+             notes: "A downstroke on the beat answered by a muted chuck on the off-beat — the boom-chick "
+                  + "of a country accompaniment. Keep the chuck short and percussive, the down full.",
+             template: .strumming,
+             strum: .boomChick)
+    ]
+
+    /// The **scale sequencing** batch (pocket-173, ADR 0108) — seeded under an *eleventh* key. Ships the
+    /// G major scale reordered into melodic thirds so the new sequence axis and its editor are exercised
+    /// by content, not just the straight box run.
+    static let scaleSequenceSpecs: [Spec] = [
+        Spec(name: "G Major — in 3rds", command: 76, subdivision: .eighths,
+             tags: ["scales", "technique"],
+             notes: "The G major box played in thirds — 1-3-2-4-3-5 up and back. A classic pattern drill: "
+                  + "keep the picking even and let the click expose any note that rushes.",
+             template: .scales,
+             fretboard: .scale(.gMajorInThirds))
+    ]
+
     /// Build the preset exercises (un-inserted) for a given batch, each through the shared
     /// `commandAnchored` factory so the working floor + reach derive identically to a user-created
     /// drill (the single creation path, ADR 0046). Applies any content-template payload (T9).
@@ -196,12 +233,16 @@ enum PracticePresets {
     static let seededSyncopatedMuteDefaultsKey = "practicePresetsSeeded.v7"
     static let seededStrumChordsDefaultsKey = "practicePresetsSeeded.v8"
     static let seededScaleLayoutDefaultsKey = "practicePresetsSeeded.v9"
+    static let seededStrumExpansionDefaultsKey = "practicePresetsSeeded.v10"
+    static let seededScaleSequenceDefaultsKey = "practicePresetsSeeded.v11"
 
     /// Seed the curated presets **once each, ever**: the v1 technique drills, the v2 strumming batch,
     /// the v3 fretboard warm-up, the v4 scale-library batch, the v5 arpeggio batch, the v6 chords
-    /// batch, the v7 accent/mute strumming batch, the v8 strum & chords batch, then the v9 scale-layout
-    /// batch (extended + 3-notes-per-string), each guarded by its own key so a deleted preset never
-    /// returns and an existing user picks up each newer batch additively. Safe to call on every launch.
+    /// batch, the v7 accent/mute strumming batch, the v8 strum & chords batch, the v9 scale-layout
+    /// batch (extended + 3-notes-per-string), the v10 strumming-expansion batch (down-up eighths,
+    /// reggae off-beat, boom-chick), then the v11 scale-sequencing batch (G major in 3rds), each guarded
+    /// by its own key so a deleted preset never returns and an existing user picks up each newer batch
+    /// additively. Safe to call on every launch.
     static func seedIfNeeded(into context: ModelContext, defaults: UserDefaults = .standard) {
         seedBatch(specs, key: seededDefaultsKey, into: context, defaults: defaults)
         seedBatch(templateSpecs, key: seededTemplateDefaultsKey, into: context, defaults: defaults)
@@ -212,6 +253,8 @@ enum PracticePresets {
         seedBatch(syncopatedMuteSpecs, key: seededSyncopatedMuteDefaultsKey, into: context, defaults: defaults)
         seedBatch(strumChordsSpecs, key: seededStrumChordsDefaultsKey, into: context, defaults: defaults)
         seedBatch(scaleLayoutSpecs, key: seededScaleLayoutDefaultsKey, into: context, defaults: defaults)
+        seedBatch(strumExpansionSpecs, key: seededStrumExpansionDefaultsKey, into: context, defaults: defaults)
+        seedBatch(scaleSequenceSpecs, key: seededScaleSequenceDefaultsKey, into: context, defaults: defaults)
     }
 
     /// Seed one batch once, guarded by its `key`. No-op after its first successful run.

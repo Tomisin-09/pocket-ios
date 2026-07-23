@@ -32,25 +32,28 @@ have a home live in their own sections (cross-referenced); this is the index.
   row gated off when disabled. Ramp math unit-tested (4 new `CommandRampTests`). **Loop parity DONE
   (pocket-159, 2026-07-20):** the loop path now mirrors it — new `Loop.includeBackoff` (default on) +
   `Loop.backoffSpeedOverride: Double?` (× of original), threaded through `LoopCommandRamp.make`
-  (× → % conversion) and surfaced in `LoopSettingsPanel`; loop ramp tests added. **Gate:** the
-  **exercise** fields were device-verified on the 2026-07-20 run; the **loop** fields
-  (`Loop.includeBackoff` / `backoffSpeedOverride`) were added *after* that run, so they still want a
-  device launch against a pre-field store before merge — additive and proven-safe (same shape as the
-  shipped `targetSpeedOverride`), but unverified on device as of this writing.
+  (× → % conversion) and surfaced in `LoopSettingsPanel`; loop ramp tests added. **Merged** in
+  PR #154 (commit `161a203`, "back-off toggle + editable tempo for loops — note 6 parity") — the
+  earlier "loop fields want a device launch before merge" gate is resolved.
 
 **Wave 1 — core loop feel (small ADRs, highest quality lift):**
 
-- ~~**Note 5 — zoom anchor.**~~ **BUILT (pocket-160, ADR 0098; device-verify + merge
-  pending).** Pinch-zoom now anchors to the **gesture focal point** (`MagnifyGesture.startAnchor`)
+- ~~**Note 5 — zoom anchor.**~~ **DONE — MERGED (pocket-160, ADR 0098, PR #155).** Pinch-zoom now
+  anchors to the **gesture focal point** (`MagnifyGesture.startAnchor`)
   via the pure `WaveformGesture.zoomAnchored` (unit-tested), so the spot under your fingers holds
   still instead of jumping to the playhead. New default-off **Zoom follows playhead** setting
   (Settings → Transport) restores the legacy playhead-anchored paging. Page-mode during playback
   (ADR 0010) untouched. Relates to the parked *rotary haptic zoom mode*.
-- **Note 4 — snap free-control near neighbours.** Snap-to-grid fights loop-handle
-  drags when two loops are close together. Snap should **weaken/yield** as a handle
-  nears a neighbour's boundary, plus a **free-control escape** (drag-past-threshold
-  or long-press). Reuses `WaveformPracticeModel+Snap` geometry. Same waveform ADR
-  can cover both 4 + 5 as "loop-editing precision."
+- ~~**Note 4 — snap free-control near neighbours.**~~ **DONE — MERGED (pocket-161, ADR 0099,
+  PR #156).** Both halves shipped: **(1)** a neighbouring loop's edge gets a gap-scaled reduced
+  catch radius (`WaveformGesture.yieldedTolerance` = `max(0, min(base, gap/2))`, per-candidate
+  tolerance via `loopEdgeSnapCandidates`), so a facing neighbour in a tight gap stops hijacking
+  the release while roomy edits still line up (markers/beats keep full radius); and **(2)** the
+  **free-control escape** — a ~400 ms long-press mid-drag (`snapSuspended`, `freeDragHoldDuration`)
+  suspends snap for the rest of that gesture, confirmed with a medium haptic. Reuses
+  `WaveformPracticeModel+Snap` geometry. Deferred follow-ups (ADR 0099 "out of scope"): a visible
+  "snap off" indicator; neighbour-yield for a brand-new span's drag; live-drag (not release-only)
+  snap.
 
 **Wave 2 — new surfaces (ADR each, design-first):**
 
@@ -248,16 +251,21 @@ docs so this stays a pointer list:
   Resolved at accept: a "pass" = one full `sequence()` at the anchor (up-and-back included); shifts
   clamp to a real neck + editor caps `passCount` (S10); `.extended`/`.threePerString` read
   `position` as start anchor and ignore `octaves`; the run editor tucks the shift controls under a
-  "Movement" disclosure. **Sequencing (3s/4s/6s) is a SEPARATE orthogonal future axis over ALL
-  layouts — deliberately NOT a 3-NPS feature, its own later ADR.** **Order: slice 1 first** (see
-  ADR). Shares the slide-teaching UX with the movable-chord item above.
-- **Symmetric scales: diminished + whole-tone (deferred from ADR 0085).** The scale catalog gained the
-  five modes + the two bebop scales (ADR 0085), but the **whole-half / half-whole diminished** and
-  **whole-tone** scales were left out on purpose. They are *symmetric* — they repeat every minor third /
-  whole step and are **not** subsets of a single major scale — so the "place a `CAGEDShape` major box,
-  filter it" generator can't produce them. They need their **own placement generator** (a repeating-cell
-  shape rather than a filtered CAGED box). Do this when that generator is warranted; nothing in ADR 0085
-  blocks it (additive enum cases + a new generator path, `supportedLayouts` = box until proven otherwise).
+  "Movement" disclosure. ~~**Sequencing (3s/4s/6s) is a SEPARATE orthogonal future axis over ALL
+  layouts — deliberately NOT a 3-NPS feature, its own later ADR.**~~ **DONE (pocket-173, ADR 0108):**
+  the `SequencePattern` axis on `ScaleRun` (straight/thirds/fourths/groups-of-3-4) — a pure permutation
+  of the played run, orthogonal to every layout, applied in `sequenceWithGroups` so the box stays
+  untouched. **Order: slice 1 first** (see ADR). Shares the slide-teaching UX with the movable-chord
+  item above.
+- ~~**Symmetric scales: diminished + whole-tone (deferred from ADR 0085).**~~ **ADDRESSED via the custom
+  scale canvas (pocket-172, ADR 0107), not a generator.** Rather than build the "own placement generator"
+  a filtered CAGED box can't provide, symmetric scales (and any sequenced/exotic/hand-shaped run) are now
+  **drawn** on the Scales exercise's **Draw your own** canvas, with a **scale guide** that ghosts a chosen
+  scale + key's notes to trace — the three symmetric scales ship as pure `ScaleReference` formulas
+  (whole-tone + both diminished modes), never touching the CAGED engine or its tests. **Still deferred (if
+  ever warranted):** *first-class generated* symmetric scales in `GuitarScale` (a repeating-cell
+  generator) — the canvas removes the urgency, so it stays unbuilt rather than speculative. A **scale
+  identifier** (name what you drew, the `ChordNamer` analog) is the other ADR-0107 follow-up.
 - **Practice routine model — ADR 0066 (Accepted).** The multi-unit *session*
   container (distinct from the intra-exercise ramp staircase): `Routine` +
   `RoutineItem` (typed relationship to Exercise/Loop/Song or a rest block, explicit
@@ -345,12 +353,16 @@ docs so this stays a pointer list:
   inference is the AI-phase piece (ADR 0002 proxy, still paper-only). Not scheduled; a big
   parse+inference feature deliberately deferred behind the tab-import renderer and the AI
   foundations.
-- **Strumming-pattern animation + preset expansion (near-term, buildable now):**
-  an animated D/DU pattern lane accompanied by the metronome, plus presets from
-  the exercise-inventory sheet (warm-ups/spider, hammer-on/pull-off/slide
-  ladders, scale + arpeggio runs, open/barre/triad progression changes,
-  strumming rhythms). Per the content strategy: encode the *methods*, all copy
-  and exercises authored in-house.
+- ~~**Strumming-pattern animation + preset expansion (near-term, buildable now):**~~
+  **Animation SHIPPED (ADR 0065): `StrummingLaneView` + `StrumPatternPreviewPlayer` render an
+  animated D/DU lane driven by `StrumPattern.activeSlotIndex(atBeat:)`, wired to the metronome via
+  `clickIntensities`.** **Preset expansion DONE (pocket-170, 2026-07-23):** three more curated
+  `StrumPattern` grooves — **Down-Up Eighths**, **Reggae Offbeat** (the up-stroke "skank"), **Boom-Chick**
+  (down + muted chuck) — added and seeded as a v10 `PracticePresets` batch. The broader
+  *exercise-inventory* preset expansion (warm-ups/spider, hammer-on/pull-off/slide ladders, scale +
+  arpeggio runs, open/barre/triad progression changes) is largely covered by the shipped ADR 0065
+  template batches (fretboard/scales/arpeggios/chords/strum); remaining curation is incremental. Per the
+  content strategy: encode the *methods*, all copy and exercises authored in-house.
 - **Backing tracks:** a content-production decision before a code one —
   outsource vs self-record (start tiny: 3–5 first-party tracks, common keys /
   I–IV–V / 12-bar, recorded as owned work product). Technically trivial:
@@ -475,6 +487,70 @@ second, selectable theme. When picked back up:
 ## Near-term (active, not parked)
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
+
+- **Extend "draw your own" to the technique templates (parked 2026-07-23).** The generate-or-draw split
+  + hand-drawn `FretboardDrillEditor` canvas with the scale **Guide** (ADR 0107) currently lives only on
+  the **Scales** template. Extend the same toggle to **Warm-up**, **Picking** and **Legato** (the `.run`
+  `bespokeEditor`), so those can be hand-drawn too, not only declared as a generated `FretboardRun`.
+  Sketch: add a `runMode` (generate/draw) alongside `scaleMode` in `NewExerciseSheet` **and**
+  `ExerciseShapeSheet`; draw mode shows `FretboardDrillEditor(referenceEnabled: true)` and
+  `fretboardContent` returns `.custom(drill)` for `.run` when drawing; seed the draw canvas from an empty
+  bar for run templates. Same shape as the Scales work — low risk, no model change (all four already store
+  `FretboardContent`).
+
+- **Link exercises ↔ songs → curated routine generator (logged 2026-07-23).** Decided direction:
+  a **direct, user-authored Exercise↔Song edge** (many-to-many) that feeds a **"Build a practice
+  routine for this song"** action — pulls the song's linked exercises + its own loops into a fresh
+  `Routine`. This is the smallest change with the biggest unlock: curated routines *without* pulling
+  forward the deferred V2 planner. Rejected alternatives: routine-only (no reusable link, dies with
+  the routine) and reviving the planner `Goal.targetSong`/`skillIDs` machinery (heavier, indirect via
+  the skill taxonomy). The planner, when it lands, becomes just a smarter producer of the same edges.
+  - **Model:** `Exercise.linkedSongs` + inverse `Song.linkedExercises` (typed relationship,
+    `.nullify` on both sides — deleting either end clears the link, never cascades). Additive optional
+    relationships (CoreData 134110 rule). **Crosses the deliberate "Exercise is Song-free" boundary**
+    (see `Exercise.swift` header) → needs a **new ADR** to record the reversal + reason. (Note: 0109 was
+    taken by the triad-shapes work on 2026-07-23; use the next free number when this is built.)
+  - **Generator:** a pure, unit-tested helper that materialises a `Routine` from a song's linked
+    exercises (as `focused`/`warmup` blocks) + its loops + a `play` block for the song itself.
+  - **⚠ Sequencing gate (why parked):** this is a cross-cutting `@Model` schema change — the repo's
+    documented migration footgun — and there are **16 local branches + a large unpushed stack** across
+    multiple sessions. **Do NOT start until all open PRs are merged** and `Exercise.swift` / `Song.swift`
+    are quiet. Then cut a fresh branch off `main` (next free `pocket-0XX`), write a new ADR (next free
+    number — 0109 is taken), add the edge, then the generator. Confirm no other in-flight branch adds a
+    stored attribute to `Exercise` or `Song` before editing those classes.
+
+- **Futura navigation titles app-wide (spotted in the v1 screenshot shoot, 2026-07-23).** Every
+  SwiftUI `.navigationTitle` renders in **San Francisco**, not Futura — there's no SwiftUI-native
+  hook to swap the face. Spotted on the exercise run screen ("A Minor Pentatonic"), but it's
+  systemic: **~45 titles across the app**, nearly all `.inline`. Only two screens already dodge it
+  by hand-rolling a `.principal` toolbar item in Futura — Home's wordmark and `MetronomeView`'s
+  header (`Text(.font(.futura(.headline)))`). **Sequenced SECOND**, after the *Link exercises ↔
+  songs* item above — both wait for the same all-open-PRs-merged gate, but this one is smaller and
+  carries no schema risk, so it goes right after.
+  - **Decision (2026-07-23): one global override, including large titles.** A single
+    `UINavigationBarAppearance` set once at launch — new `Pocket/UI/NavigationBarStyle.swift`,
+    called from `AppDelegate.application(_:didFinishLaunchingWithOptions:)` in
+    `OrientationGate.swift`. Overrides `titleTextAttributes` **and** `largeTitleTextAttributes` to
+    **Futura-Bold** (`.headline`/`.largeTitle` sizes, `UIFontMetrics`-scaled so Dynamic Type still
+    grows them) in `UIColor(named: "Ink")` (= `PocketColor.textPrimary`). Fonts resolve as
+    `"Futura-Bold"` (see `Font.futura`, `DesignTokens.swift`). The two `.principal` screens override
+    their own centre, so they're untouched.
+  - **Why global, not per-screen:** the app has **zero** per-screen toolbar-background
+    customisation (grep: only `WaveformPracticeView` hides its bar; nothing sets
+    `.toolbarBackground`), so there's nothing for the proxy to clash with. Editing ~45 call sites
+    would churn and drift; the proxy also catches every *future* screen for free.
+  - **Preserve the current look:** keep default material for `standardAppearance`/`compactAppearance`
+    (shown when content scrolls under the bar) and a **transparent** `scrollEdgeAppearance` (the flat
+    black bar at rest, as shown in the screenshot) — only the title text changes.
+  - **Reversibility (required):** keep it isolated to that **one file + one call site** so it's
+    trivially removable, and gate large titles as a **one-line removal** (drop
+    `largeTitleTextAttributes`) if they read wrong at 34pt. Fallback if the proxy misbehaves: a
+    per-screen SwiftUI `.principal` Futura modifier mirroring `MetronomeView` (safe, zero background
+    risk, but ~40 edit sites) — the proxy is the first choice precisely because it's the easiest to
+    undo wholesale.
+  - **Verify (Xcode preview, per the usual flow — not sim screenshots):** the run screen's title in
+    Futura, the **scrolled-under** bar material on a long screen, and the one large-title screen
+    (`LibraryView` has no explicit `.inline`). Small.
 
 - ~~**Add-routine picker: audio previews on loop rows.**~~ **SHIPPED (pocket-166, ADR 0104 Slice 2
   follow-up, 2026-07-22).** A per-row **audition** speaker (reusable `AddRoutineUnitRow` +
@@ -631,7 +707,10 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   ADR** (closes off the native-`Menu` approach for chord insert) before building; small-to-medium. Not yet
   scheduled — sits in Wave 2 of the 2026-07-20 user-testing plan of attack.
 
-- **maj9 / min9 movable A-shapes (ADR 0084 follow-up, requested 2026-07-20).** Add ninth
+- ~~**maj9 / min9 movable A-shapes (ADR 0084 follow-up, requested 2026-07-20).**~~ **DONE — MERGED
+  (ADR 0101, PR #158).** Shipped all three — `dom9`/`maj9`/`min9` are in `ChordGrip.Quality` with the
+  A-shape grips, `tier2` extension, and the octave-bump guard for the A/B♭ edge; the reopened
+  Tier-2/3 "9ths → placer" call was settled by ADR 0101. Original write-up kept below for record. Add ninth
   extensions to the curated movable set (`ChordGrip`), at least the **A-shape** family the request
   named. The ADR-0084 comment parked "basic 9ths" to the custom placer, but the common A-shape ninths
   are clean movable grips — the note under-sold them. Concrete voicings (root on the A string, high-e
@@ -652,19 +731,19 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
     wants a short ADR note (or an 0084 amendment) before building. Small.
 
 - **Toolkit hub is thinner than the card promises — only My Chords + Glossary surface
-  (found during the v1 screenshot shoot, 2026-07-22).** The Home **Toolkit** card is
-  subtitled "*Chords, scales & theory reference*", but the hub currently carries only
-  **My Chords** and **Glossary** — the scales & modes, chord-identifier, and
-  intervals/ear sections from the hub IA
+  (found during the v1 screenshot shoot, 2026-07-22).** **Subtitle realigned (pocket-170,
+  2026-07-23):** the Home **Toolkit** card now reads "*Your chords & a music glossary*"
+  instead of "*Chords, scales & theory reference*", so the copy no longer over-promises the
+  not-yet-built sections. **Still open (the deferred build):** the hub carries only **My
+  Chords** and **Glossary** — the scales & modes, chord-identifier, and intervals/ear
+  sections from the hub IA
   ([`docs/plans/chords-theory-hub-ia.md`](plans/chords-theory-hub-ia.md) sections 2–5)
-  were deferred past Slice 1 (see the ADR-0096 entry above). Consequences: **(a)** the
-  card copy over-promises "scales & theory reference" that isn't there yet, and **(b)**
+  were deferred past Slice 1 (see the ADR-0096 entry above). Consequence still to fix:
   there's **no *Hear* / audio-preview reachable from Toolkit** — Hear shipped only as
   inline buttons inside the Practice-side exercise editors (scales/arpeggios/chords/runs,
   ADR 0097), so a user browsing Toolkit as a *reference* destination never meets it.
   Fix path = build the deferred hub slices (scales & modes explorer + intervals/ear per
-  ADR 0094 Slice 5) so the reference Hear surfaces there; until then, at minimum align
-  the Home card subtitle with what the hub actually contains. Relates to the Wave-2
+  ADR 0094 Slice 5) so the reference Hear surfaces there. Relates to the Wave-2
   "split Toolkit into a Learn section" step.
 
 ## Notes & journal — DONE (ADR 0038)
@@ -781,11 +860,11 @@ adjust → range-edit lift → Fine retirement + hold-drag wiring).
   song-owned loops. *Verify it's not a seed artefact first:* the shoot's loops were
   inserted programmatically by `ScreenshotSeed`; confirm the gap also reproduces with a
   loop saved by hand via **Save as loop** before treating it as a pure query bug.
-- **From the loops practice library, ramp is the only practice mode — ear training
-  doesn't surface.** Opening a loop from that library only offers command-ramp practice;
-  the ear-training mode (ADR 0104, "the loops, re-surfaced") should be selectable there
-  too. Bring the ear-training entry point to parity with ramp in the loops-library launch
-  surface.
+- ~~**From the loops practice library, ramp is the only practice mode — ear training
+  doesn't surface.**~~ **DONE (pocket-170, 2026-07-23).** `LoopLibraryView` rows now carry a
+  per-row **Ear** button beside the ramp tap: tapping the row opens the command-ramp `LoopRunView`
+  (unchanged), the Ear button pushes `EarTrainingView` (ADR 0104). Two sibling buttons + programmatic
+  `navigationDestination(item:)` so the List routes each tap to its own mode.
 
 ## Practice run-setup — persist loop ramp shape — DONE (2026-07-01, ADR 0057 follow-up)
 

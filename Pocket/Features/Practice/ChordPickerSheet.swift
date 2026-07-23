@@ -29,6 +29,9 @@ struct ChordPickerSheet: View {
     @State private var mode: Mode = .insert
     @State private var showMovableBuilder = false
     @State private var showCustomBuilder = false
+    /// Insert section headers the player has collapsed (ADR 0109) — tapping a header toggles it. Ignored
+    /// while searching (a query force-expands every section so a match can't hide in a collapsed one).
+    @State private var collapsedSections: Set<String> = []
 
     private enum Mode: String, CaseIterable, Identifiable {
         case insert, build
@@ -51,11 +54,17 @@ struct ChordPickerSheet: View {
             ChordPicker.matches(query: query, in: ChordPicker.movableSearchText($0))
         }
     }
+    private var filteredTriads: [ChordGrip] {
+        ChordPicker.insertTriadGrips.filter {
+            ChordPicker.matches(query: query, in: ChordPicker.triadSearchText($0))
+        }
+    }
     private var filteredOpen: [ChordVoicing] {
         ChordVoicing.library.filter { ChordPicker.matches(query: query, in: $0.name) }
     }
     private var insertIsEmpty: Bool {
-        filteredSaved.isEmpty && filteredMovable.isEmpty && filteredOpen.isEmpty
+        filteredSaved.isEmpty && filteredMovable.isEmpty
+            && filteredTriads.isEmpty && filteredOpen.isEmpty
     }
 
     // MARK: - Body
@@ -156,6 +165,13 @@ struct ChordPickerSheet: View {
                         }
                     }
                 }
+                if !filteredTriads.isEmpty {
+                    group(title: "Triads", count: filteredTriads.count, slide: true) {
+                        ForEach(Array(filteredTriads.enumerated()), id: \.offset) { _, grip in
+                            triadChip(grip)
+                        }
+                    }
+                }
                 if !filteredOpen.isEmpty {
                     group(title: "Open shapes", count: filteredOpen.count, slide: false) {
                         ForEach(filteredOpen) { voicing in
@@ -171,29 +187,55 @@ struct ChordPickerSheet: View {
         }
     }
 
+    /// A collapsible Insert section (ADR 0109): the header toggles the grid open/closed so a picker with
+    /// four categories isn't a wall of diagrams. A live search force-expands (see `isCollapsed`).
     @ViewBuilder
     private func group<Content: View>(title: String, count: Int, slide: Bool,
                                       @ViewBuilder content: () -> Content) -> some View {
+        let isCollapsed = collapsedSections.contains(title) && query.isEmpty
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Text(title.uppercased())
-                    .font(.futura(.caption2, weight: .semibold))
-                    .foregroundStyle(PocketColor.textSecondary)
-                if slide {
-                    Text("slide to any root")
-                        .font(.futura(.caption2))
-                        .foregroundStyle(PocketColor.practice)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(PocketColor.practiceCardWash))
+            Button {
+                if collapsedSections.contains(title) {
+                    collapsedSections.remove(title)
+                } else {
+                    collapsedSections.insert(title)
                 }
-                Spacer(minLength: 0)
-                Text("\(count)")
-                    .font(.futura(.caption2))
-                    .foregroundStyle(PocketColor.textSecondary)
+                haptic(.light)
+            } label: {
+                groupHeader(title: title, count: count, slide: slide, collapsed: isCollapsed)
             }
-            LazyVGrid(columns: columns, spacing: 9) { content() }
+            .buttonStyle(.plain)
+            if !isCollapsed {
+                LazyVGrid(columns: columns, spacing: 9) { content() }
+            }
         }
+    }
+
+    private func groupHeader(title: String, count: Int, slide: Bool, collapsed: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: collapsed ? "chevron.right" : "chevron.down")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+            Text(title.uppercased())
+                .font(.futura(.caption2, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+            if slide {
+                Text("slide to any root")
+                    .font(.futura(.caption2))
+                    .foregroundStyle(PocketColor.practice)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(PocketColor.practiceCardWash))
+            }
+            Spacer(minLength: 0)
+            Text("\(count)")
+                .font(.futura(.caption2))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(count) chords")
+        .accessibilityHint(collapsed ? "Collapsed. Tap to expand." : "Expanded. Tap to collapse.")
     }
 
     private var emptyState: some View {
@@ -209,10 +251,19 @@ struct ChordPickerSheet: View {
         .padding(.vertical, 44)
     }
 
-    // MARK: - Chips
+    // MARK: - Build pane
 
-    private func chip(voicing: ChordVoicing, title: String, subtitle: String?, saved: Bool,
-                      action: @escaping () -> Void) -> some View {
+    private var buildPane: some View {
+        ChordBuildPane(onMovable: { showMovableBuilder = true },
+                       onCustom: { showCustomBuilder = true })
+    }
+}
+
+// MARK: - Chips (split out to keep the picker's struct body within bounds)
+
+private extension ChordPickerSheet {
+    func chip(voicing: ChordVoicing, title: String, subtitle: String?, saved: Bool,
+              action: @escaping () -> Void) -> some View {
         Button(action: action) {
             chipBody(voicing: voicing, title: title, subtitle: subtitle, saved: saved)
         }
@@ -223,20 +274,34 @@ struct ChordPickerSheet: View {
     /// A movable grip's chip: tap opens a compact root menu, and choosing a root places + inserts the
     /// shape there (ADR 0103 D4). The picture is `browseVoicing` (fret-5 barre); the label is the
     /// quality + family, so the chip stays honestly root-agnostic.
-    private func movableChip(_ grip: ChordGrip) -> some View {
+    func movableChip(_ grip: ChordGrip) -> some View {
+        gripChip(grip, subtitle: ChordPicker.movableSubtitle(grip),
+                 accessibility: "\(grip.quality.displayName) \(grip.name) barre, choose a root")
+    }
+
+    /// A triad grip's chip (ADR 0109) — same root-menu interaction as a movable shape; subtitle is the
+    /// string set it voices.
+    func triadChip(_ grip: ChordGrip) -> some View {
+        gripChip(grip, subtitle: ChordPicker.triadSubtitle(grip),
+                 accessibility: "\(grip.quality.displayName) triad on \(grip.name), choose a root")
+    }
+
+    /// Shared chip for any `ChordGrip` browsed by root: a menu of the 12 roots over the grip's browse
+    /// picture. Choosing a root places (`voicing(rootPitchClass:)`) and inserts.
+    func gripChip(_ grip: ChordGrip, subtitle: String, accessibility: String) -> some View {
         Menu {
             ForEach(rootNames.indices, id: \.self) { pitchClass in
                 Button(rootNames[pitchClass]) { insert(grip.voicing(rootPitchClass: pitchClass)) }
             }
         } label: {
             chipBody(voicing: grip.browseVoicing, title: grip.quality.displayName,
-                     subtitle: ChordPicker.movableSubtitle(grip), saved: false)
+                     subtitle: subtitle, saved: false)
         }
-        .accessibilityLabel("\(grip.quality.displayName) \(grip.name) barre, choose a root")
+        .accessibilityLabel(accessibility)
     }
 
-    private func chipBody(voicing: ChordVoicing, title: String, subtitle: String?,
-                          saved: Bool) -> some View {
+    func chipBody(voicing: ChordVoicing, title: String, subtitle: String?,
+                  saved: Bool) -> some View {
         VStack(spacing: 6) {
             ChordDiagramView(voicing: voicing, tint: PocketColor.practice, showsName: false)
                 .frame(height: 54)
@@ -258,13 +323,6 @@ struct ChordPickerSheet: View {
         .overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(
             saved ? PocketColor.practice.opacity(0.35) : PocketColor.surfaceBorder, lineWidth: 1))
         .contentShape(Rectangle())
-    }
-
-    // MARK: - Build pane
-
-    private var buildPane: some View {
-        ChordBuildPane(onMovable: { showMovableBuilder = true },
-                       onCustom: { showCustomBuilder = true })
     }
 }
 

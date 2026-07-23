@@ -117,9 +117,18 @@ final class ChordNamerTests: XCTestCase {
         XCTAssertTrue(ChordNamer.candidates(pitchClasses: [0, 1, 2], bassPitchClass: 0).isEmpty)
     }
 
-    func testTwoNotesAreNotAChord() {
-        // A dyad is an interval, not a chord — v1 needs three distinct pitch classes.
-        XCTAssertTrue(ChordNamer.candidates(pitchClasses: [0, 7], bassPitchClass: 0).isEmpty)
+    func testTwoNoteFifthNamesAPowerChord() {
+        // A root + 5th is a named chord — "C5" (ADR 0106). The lower note is the root/bass.
+        XCTAssertEqual(ChordNamer.candidates(pitchClasses: [0, 7], bassPitchClass: 0).first?.displayName, "C5")
+        // Read from the 5th in the bass, the same two notes are that power chord inverted (G in bass → C5/G).
+        XCTAssertEqual(ChordNamer.candidates(pitchClasses: [0, 7], bassPitchClass: 7).first?.displayName, "C5/G")
+    }
+
+    func testTwoNoteNonFifthIsStillNotAChord() {
+        // Every other dyad remains a bare interval, not a chord — only the perfect 5th names.
+        XCTAssertTrue(ChordNamer.candidates(pitchClasses: [0, 4], bassPitchClass: 0).isEmpty)   // major 3rd
+        XCTAssertTrue(ChordNamer.candidates(pitchClasses: [0, 6], bassPitchClass: 0).isEmpty)   // tritone
+        XCTAssertTrue(ChordNamer.candidates(pitchClasses: [0], bassPitchClass: 0).isEmpty)      // single note
     }
 
     // MARK: - Ambiguity ranking (C6 vs Am7 — the same four notes)

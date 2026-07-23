@@ -42,7 +42,11 @@ struct ChordQuality: Equatable {
         ChordQuality(suffix: "maj9", intervals: [0, 4, 7, 11, 2], rarity: 19), // major 9th
         ChordQuality(suffix: "9", intervals: [0, 4, 10, 2], rarity: 20), // dominant 9th, no 5th
         ChordQuality(suffix: "m9", intervals: [0, 3, 10, 2], rarity: 21), // minor 9th, no 5th
-        ChordQuality(suffix: "maj9", intervals: [0, 4, 11, 2], rarity: 22) // major 9th, no 5th
+        ChordQuality(suffix: "maj9", intervals: [0, 4, 11, 2], rarity: 22), // major 9th, no 5th
+        // The power chord (ADR 0106) — just root + 5th, no 3rd. A two-note quality, so it can only ever
+        // match a bare dyad (a three-note set has three intervals and never equals `[0, 7]`). Ranked last
+        // so it never shadows a fuller reading. (ADR 0093 amend: a root-and-5th is a named chord, "X5".)
+        ChordQuality(suffix: "5", intervals: [0, 7], rarity: 23) // power chord
     ]
 }
 
@@ -114,7 +118,10 @@ enum ChordNamer {
     ///     and inversion (slash) naming. `nil` ranks purely by commonness.
     static func candidates(pitchClasses: Set<Int>, bassPitchClass: Int? = nil) -> [ChordCandidate] {
         let notes = Set(pitchClasses.map { normalise($0) })
-        guard notes.count >= 3 else { return [] }   // two notes are an interval, not a chord (v1)
+        // Three notes name any chord in the catalog; two notes name only the **power chord** (root + 5th,
+        // ADR 0106) — every other dyad is a bare interval, not a chord. The `[0, 7]` quality below matches
+        // exactly the two-note case, so allowing two notes through can't over-name anything else.
+        guard notes.count >= 2 else { return [] }
 
         let bass = bassPitchClass.map(normalise)
         var found: [ChordCandidate] = []

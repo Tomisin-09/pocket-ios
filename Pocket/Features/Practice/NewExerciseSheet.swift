@@ -93,6 +93,12 @@ private struct ConfigureExerciseForm: View {
     /// The authored **scale run** for the Scales template — seeded from the template default. Not
     /// meter-bound: a scale run defines its own phrase length.
     @State private var scale: ScaleRun
+    /// How a Scales drill authors its content at creation: the generative box picker or the hand-drawn
+    /// canvas (ADR 0107) — the same generate-or-draw split the Edit-shape sheet offers.
+    @State private var scaleMode: ScaleAuthoringMode = .generate
+
+    /// The two ways a Scales drill's content is authored (mirrors `ExerciseShapeSheet`).
+    private enum ScaleAuthoringMode: Hashable { case generate, draw }
     /// The authored **arpeggio run** for the Arpeggios template — seeded from the template default.
     /// Not meter-bound: an arpeggio run defines its own phrase length.
     @State private var arpeggio: ArpeggioRun
@@ -124,7 +130,10 @@ private struct ConfigureExerciseForm: View {
         _run = State(initialValue: template.defaultFretboardContent?.runValue ?? .chromaticWarmup)
         _scale = State(initialValue: template.defaultFretboardContent?.scaleValue ?? .aMinorPentatonic)
         _arpeggio = State(initialValue: template.defaultFretboardContent?.arpeggioValue ?? .aMinorSeventh)
-        let drillSeed = template.defaultFretboardContent?.customValue ?? .spiderWalk
+        // The custom-grid template starts from the spider-walk canvas; a Scales drill switched to
+        // "draw your own" (ADR 0107) starts from an empty neck instead of a pre-filled warm-up.
+        let drillSeed = template.defaultFretboardContent?.customValue
+            ?? (template.bespokeEditor == .scale ? .emptyBar(beatsPerBar: bars) : .spiderWalk)
         _customDrill = State(initialValue: drillSeed.resized(notesPerBeat: drillSeed.notesPerBeat,
                                                              beatsPerBar: bars))
         _chords = State(initialValue: template.defaultChordProgression ?? .empty)
@@ -251,13 +260,30 @@ private struct ConfigureExerciseForm: View {
 
     private var scaleSection: some View {
         Section {
-            ScaleRunEditor(run: $scale)
-                .listRowBackground(Color.clear)
+            Picker("How to author", selection: $scaleMode) {
+                Text("Generate").tag(ScaleAuthoringMode.generate)
+                Text("Draw your own").tag(ScaleAuthoringMode.draw)
+            }
+            .pickerStyle(.segmented)
+            .listRowBackground(Color.clear)
+
+            switch scaleMode {
+            case .generate:
+                ScaleRunEditor(run: $scale)
+                    .listRowBackground(Color.clear)
+            case .draw:
+                FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill,
+                                     referenceEnabled: true)
+                    .listRowBackground(Color.clear)
+            }
         } header: {
             Text("Scale run")
         } footer: {
-            Text("Pick a scale and its root — the box walks the neck over the click. You can change "
-                 + "it later too.")
+            Text(scaleMode == .generate
+                 ? "Pick a scale and its root — the box walks the neck over the click. You can change "
+                    + "it later too."
+                 : "Draw the scale yourself. Turn on a Guide to ghost a scale's notes — including "
+                    + "whole-tone and diminished — then tap them up the neck.")
         }
     }
 
@@ -287,12 +313,17 @@ private struct ConfigureExerciseForm: View {
 
     private var strumChordsSection: some View {
         Section {
-            StrumPatternEditor(beatsPerBar: signature.beats,
-                              pattern: $strumChords.strumPattern)
-                .listRowBackground(Color.clear)
-            Divider()
-            ChordProgressionEditor(progression: $strumChords.chordProgression)
-                .listRowBackground(Color.clear)
+            // Both editors live in ONE row (a single VStack) with an internal hairline between them.
+            // Keeping them as separate Section rows put the `Divider` in its own ~44pt-tall List row,
+            // bracketed by the Form's row separators — the "phantom empty box" of device feedback
+            // (2026-07-23). One row with an in-VStack divider removes the extra row entirely.
+            VStack(spacing: 14) {
+                StrumPatternEditor(beatsPerBar: signature.beats,
+                                   pattern: $strumChords.strumPattern)
+                Divider()
+                ChordProgressionEditor(progression: $strumChords.chordProgression)
+            }
+            .listRowBackground(Color.clear)
         } header: {
             Text("Strum & chords")
         } footer: {
@@ -338,7 +369,8 @@ private struct ConfigureExerciseForm: View {
     private var fretboardContent: FretboardContent? {
         switch template.bespokeEditor {
         case .run: return .run(run)
-        case .scale: return .scale(scale)
+        // A Scales drill carries its generated box or, in draw mode, the hand-placed custom drill (ADR 0107).
+        case .scale: return scaleMode == .draw ? .custom(customDrill) : .scale(scale)
         case .arpeggio: return .arpeggio(arpeggio)
         case .fretboardGrid: return .custom(customDrill)
         case .strumming, .chords, .strumChords, .none: return nil

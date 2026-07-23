@@ -33,6 +33,10 @@ struct ScaleRun: Codable, Equatable {
     /// (ADR 0036) — read via `layout`. Additive, decode-time-defaulting to `.box`, so every scale
     /// authored before this axis existed decodes and generates unchanged (no store migration, T4).
     var layoutRaw: String
+    /// **How the run is sequenced** (ADR 0108) — straight, or reordered into thirds/fourths/groups.
+    /// String-backed (ADR 0036) — read via `sequencePattern`. Additive, decode-time-defaulting to
+    /// `.straight`, so every scale authored before this axis existed plays unchanged.
+    var sequenceRaw: String
 
     /// The decoded scale — unknown raw falls back to the minor pentatonic.
     var scale: GuitarScale { GuitarScale(storage: scaleRaw) }
@@ -44,6 +48,9 @@ struct ScaleRun: Codable, Equatable {
         return scale.supports(decoded) ? decoded : .box
     }
 
+    /// The decoded sequence pattern — unknown raw falls back to straight (ADR 0108).
+    var sequencePattern: SequencePattern { SequencePattern(storage: sequenceRaw) }
+
     init(scale: GuitarScale,
          rootPitchClass: Int,
          position: Int = 1,
@@ -51,12 +58,14 @@ struct ScaleRun: Codable, Equatable {
          roundTrip: Bool = true,
          notesPerBeat: Int = 2,
          layout: ScaleLayout = .box,
+         sequence: SequencePattern = .straight,
          version: Int = ScaleRun.currentVersion) {
         self.version = version
         self.scaleRaw = scale.rawValue
         self.rootPitchClass = (((rootPitchClass % 12) + 12) % 12)
         let resolvedLayout = scale.supports(layout) ? layout : .box
         self.layoutRaw = resolvedLayout.rawValue
+        self.sequenceRaw = sequence.rawValue
         self.position = min(max(1, position), Self.positionCount(for: resolvedLayout, scale: scale))
         self.octaves = min(2, max(1, octaves))
         self.roundTrip = roundTrip
@@ -65,6 +74,7 @@ struct ScaleRun: Codable, Equatable {
 
     private enum CodingKeys: String, CodingKey {
         case version, scaleRaw, rootPitchClass, position, octaves, roundTrip, notesPerBeat, layoutRaw
+        case sequenceRaw
     }
 
     /// Custom decode so the ADR 0083 `layoutRaw` defaults when absent (T4 — decode-time default, no
@@ -77,6 +87,8 @@ struct ScaleRun: Codable, Equatable {
         let decodedScale = GuitarScale(storage: scaleRaw)
         let decodedRaw = try container.decodeIfPresent(String.self, forKey: .layoutRaw) ?? ScaleLayout.box.rawValue
         layoutRaw = decodedRaw
+        sequenceRaw = try container.decodeIfPresent(String.self, forKey: .sequenceRaw)
+            ?? SequencePattern.straight.rawValue
         let decodedLayout = decodedScale.supports(ScaleLayout(storage: decodedRaw))
             ? ScaleLayout(storage: decodedRaw) : .box
         position = min(max(1, try container.decode(Int.self, forKey: .position)),
@@ -199,12 +211,15 @@ extension ScaleRun {
         }
     }
 
-    /// One cycle of notes — the ascending run, then (when `roundTrip`) a descent that omits the shared
-    /// peak and start so a looping cycle never double-hits a note — paired with the per-note **group**
-    /// index (box focus for `.extended`, S2b), mirrored across the descent so the two arrays stay
-    /// index-aligned. The same smooth triangle as the other generators.
+    /// One cycle of notes — the ascending run **reordered by the sequence pattern** (ADR 0108: straight,
+    /// thirds, fourths, groups), then (when `roundTrip`) a descent that omits the shared peak and start
+    /// so a looping cycle never double-hits a note — paired with the per-note **group** index (box focus
+    /// for `.extended`, S2b), mirrored across the descent so the two arrays stay index-aligned. The
+    /// sequencing is a pure permutation of the ascending notes, so `ascendingNotes` (and everything that
+    /// reads it — the box labels, anchors) is unchanged; only the *played* order here differs.
     var sequenceWithGroups: (notes: [FretNote], groups: [Int]?) {
-        let (ascent, ascentGroups) = ascendingLayout
+        let (ascentRaw, ascentGroupsRaw) = ascendingLayout
+        let (ascent, ascentGroups) = sequencePattern.apply(to: ascentRaw, groups: ascentGroupsRaw)
         guard roundTrip, ascent.count > 2 else { return (ascent, ascentGroups) }
         let descentRange = Array(ascent.indices.dropFirst().dropLast().reversed())
         let notes = ascent + descentRange.map { ascent[$0] }
@@ -253,4 +268,9 @@ extension ScaleRun {
     /// tones on every string from the low E up. The flagship for the 3-NPS layout.
     static let gMajorThreePerString = ScaleRun(scale: .major, rootPitchClass: 7,
                                                position: 1, layout: .threePerString)
+
+    /// The **G major scale in 3rds** (ADR 0108) — the box run reordered into melodic thirds
+    /// (1 3 2 4 3 5 …), the classic pattern drill. The flagship for the sequence axis.
+    static let gMajorInThirds = ScaleRun(scale: .major, rootPitchClass: 7,
+                                         position: 1, octaves: 2, sequence: .thirds)
 }

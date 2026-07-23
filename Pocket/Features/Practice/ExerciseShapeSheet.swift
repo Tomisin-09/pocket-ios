@@ -35,6 +35,13 @@ struct ExerciseShapeSheet: View {
     /// The exercise's strum-chord sheet (Strum & Chords template), seeded from the stored payload with
     /// a defensive fallback; only surfaced and committed for a strum-chords template.
     @State private var strumChords: StrumChordSheet
+    /// How a **Scales** drill authors its content: the generative box picker or the hand-drawn canvas
+    /// (the custom-scale surface). Seeded from the stored content — a Scales exercise already holding a
+    /// `.custom` drill opens in draw mode. Only meaningful for the scales template.
+    @State private var scaleMode: ScaleAuthoringMode
+
+    /// The two ways a Scales drill's content is authored (the generate-or-draw split).
+    private enum ScaleAuthoringMode: Hashable { case generate, draw }
 
     init(exercise: Exercise) {
         self.exercise = exercise
@@ -44,7 +51,13 @@ struct ExerciseShapeSheet: View {
         _run = State(initialValue: content?.runValue ?? .chromaticWarmup)
         _scale = State(initialValue: content?.scaleValue ?? .aMinorPentatonic)
         _arpeggio = State(initialValue: content?.arpeggioValue ?? .aMinorSeventh)
-        _customDrill = State(initialValue: content?.customValue ?? .spiderWalk)
+        // A Scales drill drawn by hand opens the empty canvas; the custom-grid template keeps the
+        // spider-walk starter. A stored custom drill (either template) seeds itself.
+        let drawnScale = exercise.template.bespokeEditor == .scale && content?.customValue != nil
+        let customDefault: FretboardDrill = exercise.template.bespokeEditor == .scale
+            ? .emptyBar(beatsPerBar: exercise.beatsPerBar) : .spiderWalk
+        _customDrill = State(initialValue: content?.customValue ?? customDefault)
+        _scaleMode = State(initialValue: drawnScale ? .draw : .generate)
         _chords = State(initialValue: exercise.chordProgression ?? .gMajorPop)
         _strumChords = State(initialValue: exercise.strumChordSheet ?? .popGroove)
     }
@@ -98,7 +111,8 @@ struct ExerciseShapeSheet: View {
         let content: FretboardContent
         switch editor {
         case .run: content = .run(run)
-        case .scale: content = .scale(scale)
+        // A Scales drill writes its generated box or, in draw mode, the hand-placed custom drill.
+        case .scale: content = scaleMode == .draw ? .custom(customDrill) : .scale(scale)
         case .arpeggio: content = .arpeggio(arpeggio)
         case .fretboardGrid: content = .custom(customDrill)
         case .strumming, .chords, .strumChords: return
@@ -161,17 +175,36 @@ private extension ExerciseShapeSheet {
         }
     }
 
-    /// The Scales template's authoring surface — the `ScaleRunEditor` scale-library picker. Same
-    /// immutability contract: the template stays fretboard; you pick the scale and root.
+    /// The Scales template's authoring surface — a **generate-or-draw** split: the `ScaleRunEditor`
+    /// box picker (generate), or the tap-to-place `FretboardDrillEditor` with its scale guide (draw your
+    /// own), the escape hatch for scales the box generator can't place (whole-tone, diminished) and any
+    /// hand-shaped run. Same immutability contract: the template stays a fretboard scales drill.
     var scaleSection: some View {
         Section {
-            ScaleRunEditor(run: $scale)
-                .listRowBackground(Color.clear)
+            Picker("How to author", selection: $scaleMode) {
+                Text("Generate").tag(ScaleAuthoringMode.generate)
+                Text("Draw your own").tag(ScaleAuthoringMode.draw)
+            }
+            .pickerStyle(.segmented)
+            .listRowBackground(Color.clear)
+
+            switch scaleMode {
+            case .generate:
+                ScaleRunEditor(run: $scale)
+                    .listRowBackground(Color.clear)
+            case .draw:
+                FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill,
+                                     referenceEnabled: true)
+                    .listRowBackground(Color.clear)
+            }
         } header: {
             Text("How to play — scale")
         } footer: {
-            Text("Pick a scale and its root; the box walks the neck over the click while you run "
-                 + "the drill.")
+            Text(scaleMode == .generate
+                 ? "Pick a scale and its root; the box walks the neck over the click while you run "
+                    + "the drill."
+                 : "Draw the scale yourself. Turn on a Guide to ghost a scale's notes on the board — "
+                    + "including whole-tone and diminished — then tap them up the neck.")
         }
     }
 
@@ -208,12 +241,15 @@ private extension ExerciseShapeSheet {
     /// Same immutability contract: the template stays strum-chords.
     var strumChordsSection: some View {
         Section {
-            StrumPatternEditor(beatsPerBar: exercise.beatsPerBar,
-                              pattern: $strumChords.strumPattern)
-                .listRowBackground(Color.clear)
-            Divider()
-            ChordProgressionEditor(progression: $strumChords.chordProgression)
-                .listRowBackground(Color.clear)
+            // One row with an in-VStack hairline — a standalone `Divider` row rendered as a phantom
+            // empty box between the Form's row separators (device feedback 2026-07-23).
+            VStack(spacing: 14) {
+                StrumPatternEditor(beatsPerBar: exercise.beatsPerBar,
+                                   pattern: $strumChords.strumPattern)
+                Divider()
+                ChordProgressionEditor(progression: $strumChords.chordProgression)
+            }
+            .listRowBackground(Color.clear)
         } header: {
             Text("How to play — strum & chords")
         } footer: {

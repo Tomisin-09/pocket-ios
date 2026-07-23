@@ -41,6 +41,9 @@ final class PracticePresetsTests: XCTestCase {
             + PracticePresets.makeExercises(PracticePresets.chordSpecs)
             + PracticePresets.makeExercises(PracticePresets.syncopatedMuteSpecs)
             + PracticePresets.makeExercises(PracticePresets.strumChordsSpecs)
+            + PracticePresets.makeExercises(PracticePresets.scaleLayoutSpecs)
+            + PracticePresets.makeExercises(PracticePresets.strumExpansionSpecs)
+            + PracticePresets.makeExercises(PracticePresets.scaleSequenceSpecs)
         for exercise in all {
             XCTAssertNotEqual(exercise.template, .basic,
                               "\(exercise.name) should ship with a specific (non-basic) template")
@@ -132,6 +135,32 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertTrue(strumChords?.hasMeasuredCommand ?? false)
     }
 
+    // MARK: - Strumming expansion batch (pocket-170)
+
+    func testStrumExpansionSpecsShipThreeStrummingExercises() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.strumExpansionSpecs)
+        XCTAssertEqual(exercises.count, 3)
+        for exercise in exercises {
+            XCTAssertEqual(exercise.kind, .strumming)
+            XCTAssertTrue(exercise.hasMeasuredCommand)
+        }
+        // Each ships its distinct curated pattern, in order.
+        XCTAssertEqual(exercises.map(\.strumPattern),
+                       [.downUpEighths, .offbeatUps, .boomChick])
+    }
+
+    // MARK: - Scale sequencing batch (pocket-173, ADR 0108)
+
+    func testScaleSequenceSpecsShipASequencedScaleRun() {
+        let exercises = PracticePresets.makeExercises(PracticePresets.scaleSequenceSpecs)
+        XCTAssertEqual(exercises.count, 1)
+        let scale = try? XCTUnwrap(exercises.first)
+        XCTAssertEqual(scale?.kind, .fretboard)
+        XCTAssertEqual(scale?.fretboardContent, .scale(.gMajorInThirds))
+        XCTAssertEqual(scale?.fretboardContent?.scaleValue?.sequencePattern, .thirds)
+        XCTAssertTrue(scale?.hasMeasuredCommand ?? false)
+    }
+
     // MARK: - Seed-once guard
 
     func testSeedIfNeededInsertsBothBatchesOnceThenIsIdempotent() throws {
@@ -144,7 +173,8 @@ final class PracticePresetsTests: XCTestCase {
             + PracticePresets.fretboardSpecs.count + PracticePresets.scaleSpecs.count
             + PracticePresets.arpeggioSpecs.count + PracticePresets.chordSpecs.count
             + PracticePresets.syncopatedMuteSpecs.count + PracticePresets.strumChordsSpecs.count
-            + PracticePresets.scaleLayoutSpecs.count
+            + PracticePresets.scaleLayoutSpecs.count + PracticePresets.strumExpansionSpecs.count
+            + PracticePresets.scaleSequenceSpecs.count
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
 
@@ -170,7 +200,9 @@ final class PracticePresetsTests: XCTestCase {
                        PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count
                        + PracticePresets.scaleSpecs.count + PracticePresets.arpeggioSpecs.count
                        + PracticePresets.chordSpecs.count + PracticePresets.syncopatedMuteSpecs.count
-                       + PracticePresets.strumChordsSpecs.count + PracticePresets.scaleLayoutSpecs.count)
+                       + PracticePresets.strumChordsSpecs.count + PracticePresets.scaleLayoutSpecs.count
+                       + PracticePresets.strumExpansionSpecs.count
+                       + PracticePresets.scaleSequenceSpecs.count)
         // All newer batches arrive (fetch order isn't insertion order, so check the set).
         XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard, .chords, .strumChords])
     }

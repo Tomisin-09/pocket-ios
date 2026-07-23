@@ -272,16 +272,40 @@ extension FretboardDrill {
                               stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
     }
 
-    /// The drill re-gridded to a new resolution over `beatsPerBar` — `beatsPerBar * notesPerBeat`
-    /// slots — remapping existing notes **by beat position**, not by raw array index (the same fix
+    /// Every slot reset to a rest, **preserving the grid** — subdivision, length, string count, and root
+    /// are untouched, only the placed notes clear. Backs the editor's "Clear taps": it wipes what the
+    /// player tapped without disturbing the drill's shape or any overlaid scale guide (device feedback,
+    /// 2026-07-23).
+    func cleared() -> FretboardDrill {
+        FretboardDrill(notesPerBeat: notesPerBeat,
+                       notes: Array(repeating: nil, count: notes.count),
+                       stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
+    }
+
+    /// True when no slot holds a note (every slot is a rest) — the editor disables Clear/Undo when there's
+    /// nothing to remove.
+    var hasNoNotes: Bool { notes.allSatisfy { $0 == nil } }
+
+    /// How many whole bars the placed notes span, given the exercise meter — `notes.count ÷ (beats ×
+    /// subdivision)`, at least one. Backs the editor's Bars stepper and keeps a subdivision change from
+    /// silently collapsing a multi-bar drill to one bar.
+    func barCount(beatsPerBar: Int) -> Int {
+        let perBar = max(1, notesPerBeat) * max(1, beatsPerBar)
+        return max(1, notes.count / perBar)
+    }
+
+    /// The drill re-gridded to a new resolution over `beatsPerBar`, **preserving its bar count** —
+    /// remapping existing notes **by beat position**, not by raw array index (the same fix
     /// `StrumPattern.resized` carries). Each new slot inherits the old note that fell on the *same*
     /// beat offset; positions between old notes become rests. Refining keeps notes on their beats;
     /// coarsening keeps the on-beat notes and drops the sub-beat ones (an inherent, deliberate
-    /// downsample), so visiting a coarser resolution and returning never wipes the tail.
+    /// downsample), so visiting a coarser resolution and returning never wipes the tail. A one-bar drill
+    /// stays one bar; an N-bar drill stays N bars.
     func resized(notesPerBeat newNotesPerBeat: Int, beatsPerBar: Int) -> FretboardDrill {
         let perBeat = max(1, newNotesPerBeat)
         let oldPerBeat = max(1, notesPerBeat)
-        let count = max(1, beatsPerBar) * perBeat
+        let bars = barCount(beatsPerBar: beatsPerBar)
+        let count = max(1, beatsPerBar) * perBeat * bars
         var resizedNotes: [FretNote?] = Array(repeating: nil, count: count)
         for newIndex in 0..<count {
             let oldPosition = Double(newIndex) * Double(oldPerBeat) / Double(perBeat)
@@ -291,6 +315,19 @@ extension FretboardDrill {
             if notes.indices.contains(oldIndex) { resizedNotes[newIndex] = notes[oldIndex] }
         }
         return FretboardDrill(notesPerBeat: perBeat, notes: resizedNotes,
+                              stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
+    }
+
+    /// The drill grown or shrunk to `bars` whole bars at the current subdivision, **preserving placed
+    /// notes by index** — growing appends rests, shrinking drops the trailing slots. Backs the editor's
+    /// Bars stepper (device feedback 2026-07-23: the custom-scale canvas was capped at one bar). Bars is
+    /// clamped to at least one.
+    func withBarCount(_ bars: Int, beatsPerBar: Int) -> FretboardDrill {
+        let perBar = max(1, notesPerBeat) * max(1, beatsPerBar)
+        let count = max(1, bars) * perBar
+        var updated = Array(notes.prefix(count))
+        if updated.count < count { updated.append(contentsOf: Array(repeating: nil, count: count - updated.count)) }
+        return FretboardDrill(notesPerBeat: notesPerBeat, notes: updated,
                               stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
     }
 }
@@ -312,4 +349,12 @@ extension FretboardDrill {
         ]
         return FretboardDrill(notesPerBeat: 2, notes: notes)
     }()
+
+    /// A **blank canvas** — `bars` bars of rests at the given resolution, nothing placed. The starting
+    /// point when a player switches a Scales drill to "draw your own" (the custom-scale canvas), so they
+    /// build the run from an empty neck rather than editing a pre-filled warm-up.
+    static func emptyBar(beatsPerBar: Int, notesPerBeat: Int = 2, bars: Int = 1) -> FretboardDrill {
+        let count = max(1, beatsPerBar) * max(1, notesPerBeat) * max(1, bars)
+        return FretboardDrill(notesPerBeat: notesPerBeat, notes: Array(repeating: nil, count: count))
+    }
 }

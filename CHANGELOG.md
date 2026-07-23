@@ -6,6 +6,55 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Triad shapes in the chord picker.** The Insert grid has a new **Triads** category — major and minor
+  triads on the three upper string sets (**G‑B‑e**, **D‑G‑B**, **A‑D‑G**), in **all three inversions**
+  (root · 1st · 2nd), each sliding to any root like the movable barres (18 shapes; the chip subtitle names
+  the set + inversion). And the Insert categories (My chords · Movable · Triads · Open) are now
+  **collapsible** — tap a section header to fold it away, so the picker isn't a wall of diagrams (a search
+  still expands everything so nothing hides).
+- **Strum preset picker.** The strumming editor (Strumming and Strum & Chords) has a new **Presets**
+  menu — drop in a curated groove (Folk, Down-Up Eighths, Reggae Offbeat, Boom-Chick, Syncopated Mute) as
+  a one-tap starting point, adapted to the exercise's meter, instead of building every pattern from
+  scratch or hunting for the seeded example exercises.
+- **Longer custom drills + a scrollable neck.** The tap-to-place fretboard editor (custom scales/drills)
+  gained a **Bars** stepper — build a run across up to **8 bars**, not just one. Slots-per-bar follow the
+  time signature and subdivision, so a wider meter naturally holds more. The neck itself is now
+  **horizontally scrollable** across the full fretboard (frets 0–15) instead of paging a 5-fret window,
+  and selecting a placed note scrolls its fret into view.
+- **Power chords in the everyday Insert grid.** The chord picker's quick **Insert** shapes now offer the
+  movable **power chord** on both the E-shape and A-shape (replacing dom7, which moves to Build → Movable
+  shape) — the root-and-5th pop/rock shape sits alongside the plain major and minor barres. Its label no
+  longer calls it a "barre" (it isn't one).
+- **Undo and clear on the fretboard editor.** The tap-to-place fretboard (custom scales, custom drills)
+  gained **Undo** (step back your last tap) and **Clear taps** (wipe every placed note). Both leave a
+  chosen scale **Guide** untouched, so you can reset your notes without losing your tracing reference.
+- **Power chords are named when you build one.** Placing a root + 5th in the custom-chord placer now
+  reads "Looks like **G5**" — the identifier recognises power chords (previously it needed three notes).
+- **Draw your own scale — now at creation too.** The **Generate / Draw your own** switch (and its scale
+  guide) is available when you first create a Scales exercise, not only under Edit shape.
+- **Play scales in patterns.** A generated Scales exercise has a new **Sequence** control: **Straight**
+  (as before), **In 3rds**, **In 4ths**, **Groups of 3**, or **Groups of 4**. Pick one and the run is
+  reordered into that classic pattern (e.g. a major scale in thirds — 1‑3‑2‑4‑3‑5) automatically, no
+  hand-placement. Ships with a "G Major — in 3rds" starter drill.
+- **Draw your own scale.** A Scales exercise now has a **Generate / Draw your own** switch. "Draw your
+  own" opens a tap-to-place fretboard where you build a scale or run by hand — the escape hatch for
+  shapes the box picker can't generate (whole-tone, diminished) and any sequenced or invented pattern.
+  Turn on a **Guide** to ghost a chosen scale + key's notes on the board (whole-tone and both diminished
+  scales included) and just tap them up the neck. It plays and animates like any other scale drill.
+- **Power chords in the movable chord builder.** Building a chord (Build → Movable shape) now offers a
+  **Power chord** quality on both the E-shape and A-shape — the root-and-5th shape you slide to any root
+  (E5, A5, …), no third, neither major nor minor. It sits in the default set alongside the barre triads
+  and 7ths.
+- **Train your ear from the Loops library too.** Every loop in the Practice → **Loops** library now has an
+  **Ear** button beside it, so you can open a loop straight into ear training — not just the speed-ramp
+  trainer. Tapping the row still opens the ramp; the Ear button opens the same hum-and-sing mode as the
+  loop edit sheet.
+- **Three more strumming patterns.** The seeded strumming exercises now include **Down-Up Eighths**
+  (continuous alternating eighths), **Reggae Offbeat** (the up-stroke "skank"), and **Boom-Chick** (a
+  downstroke answered by a muted chuck) — a fuller starter set for the animated strumming lane.
+- **More glossary terms.** The Toolkit **Glossary** gained ~30 new entries across chords, scales,
+  intervals, technique and general terms — including whole-tone and diminished scales, three-notes-per-string,
+  shell voicings, downstroke/upstroke, syncopation and transpose.
 - **Train your ear on any loop.** A loop's edit sheet has a new **Train your ear** option — an
   away-from-the-guitar exercise: it plays the loop's own audio cycling continuously so you can **hum or
   sing it back**, then listen again and compare. The loop and the song it's from are shown up top, and a
@@ -22,6 +71,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   exercises, loops, songs, and ear-training — so you don't have to drill through buckets to find a unit.
 
 ### Changed
+- **Toolkit card subtitle now matches what's inside.** The Home **Toolkit** card reads "Your chords & a
+  music glossary" instead of "Chords, scales & theory reference" — the scales/identifier/ear sections are
+  still to come, so the card no longer promises them.
 - **Removed the "Coming Soon" Ear Training and Theory rows** from the New Exercise sheet. Ear training now
   lives on loops (see above) rather than as an exercise type.
 - **The chord picker is search-first.** Adding or swapping a chord in a progression now opens a picker
@@ -41,6 +93,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   instead of the two loops slamming flush. And holding the edge still for a moment mid-drag turns
   snapping off entirely for that drag (a little buzz confirms it) — for placing an edge exactly where
   you want, anywhere.
+
+### Fixed
+- **Empty box in the Strum & Chords editor.** The divider between the strum lane and the chord list used
+  to sit in its own tall list row, reading as a mysterious empty box between two separators. The strum
+  and chord editors now share one row with an inline hairline, so the phantom box is gone (both the New
+  and Edit sheets).
 
 ### Added
 - **Movable 9th chords.** The movable-shape sheet now offers **dominant 9, major 9 and minor 9** grips on
