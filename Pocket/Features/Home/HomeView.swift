@@ -132,7 +132,7 @@ struct HomeView: View {
             // never returns. The name stays editable in Settings regardless.
             .fullScreenCover(isPresented: $showingNamePrompt,
                              onDismiss: { artistNamePromptSeen = true },
-                             content: { ArtistNamePromptSheet() })
+                             content: { ArtistNamePromptSheet(profile: profiles.first) })
             // The first-launch curation intake (ADR 0113 S2). Offered once, before any name is
             // earned; dismissing (Done or Skip) marks it seen so it never returns. The fields stay
             // editable in Settings. Mutually exclusive with the name prompt (see maybeOfferProfileMoment).

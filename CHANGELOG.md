@@ -11,6 +11,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **The app now offers you an artist name.** When the "earn your name" moment arrives, the signature
+  line comes pre-filled with a name in the Red Moon register — *Vega*, *Velvet Wolf*, *Midnight Ash* —
+  seeded from your setup answers so the first one feels like yours. Tap **Spin another** for a different
+  one, or just type your own over it. Keep it, spin it, or write it — it's a spark, never an imposition,
+  and everything stays on this device (ADR 0113).
 - **A short, skippable first-launch setup — so the app can fit you.** On first launch Red Moon now asks
   four quick, one-per-card questions — where you are with the guitar, what you want to play, the dream,
   and how long you practise most days — then gets out of the way. Every question is optional and the
