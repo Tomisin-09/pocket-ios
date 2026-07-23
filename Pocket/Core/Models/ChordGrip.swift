@@ -58,12 +58,14 @@ struct ChordGrip: Equatable {
         }
     }
 
-    /// The string a grip anchors its root on (M2) — the two the CAGED chart uses. Raw value indexes
-    /// the shared high-e-first string order (0 = high e … 5 = low E). D-root is left to the placer for
-    /// now (ADR 0084 open question).
+    /// The string a grip anchors its root on (M2). Raw value indexes the shared high-e-first string
+    /// order (0 = high e … 5 = low E). The two barre families root on low E / A; the triad shapes
+    /// (ADR 0109) also root on the D and G strings for their upper-string sets.
     enum RootString: Int {
         case eRoot = 5   // low E — the E-shape barre family
-        case aRoot = 4   // A string — the A-shape barre family
+        case aRoot = 4   // A string — the A-shape barre family + the A-D-G triad set
+        case dRoot = 3   // D string — the D-G-B triad set
+        case gRoot = 2   // G string — the G-B-e triad set
     }
 
     /// Player-facing label for the shape family — "E-shape", "A-shape".
@@ -206,6 +208,42 @@ extension ChordGrip {
     /// The **curated** movable set the authoring sheet offers — Tier 1–2 (ADR 0084 M3). Tier 3
     /// (shells / extensions / altered) lives behind the custom placer, not here.
     static let curated: [ChordGrip] = tier1 + tier2
+}
+
+// MARK: - Triad shapes (ADR 0109 — root-position major/minor on the three upper string sets)
+
+extension ChordGrip {
+    // Small three-string triads — root, 3rd, 5th on one adjacent string group, no doublings. Root
+    // position only (lowest note = root). `name` is the **string set**; offsets are relative to the root
+    // fret, high-e first. Upper-string sets put the 5th on a higher string than the root, so some offsets
+    // are negative — the octave-bump in `voicing()` keeps a low root playable (the shape climbs a register
+    // rather than falling off the nut). Placed at a root they auto-name plain "C" / "Cm" like any triad.
+
+    /// **G-B-e set** — root on the G string, 3rd on B, 5th on high e.
+    static let triadGBEMajor = ChordGrip(name: "G-B-e", rootString: .gRoot,
+                                         offsets: [-2, 0, 0, nil, nil, nil], quality: .major)
+    static let triadGBEMinor = ChordGrip(name: "G-B-e", rootString: .gRoot,
+                                         offsets: [-2, -1, 0, nil, nil, nil], quality: .minor)
+
+    /// **D-G-B set** — root on the D string, 3rd on G, 5th on B.
+    static let triadDGBMajor = ChordGrip(name: "D-G-B", rootString: .dRoot,
+                                         offsets: [nil, -2, -1, 0, nil, nil], quality: .major)
+    static let triadDGBMinor = ChordGrip(name: "D-G-B", rootString: .dRoot,
+                                         offsets: [nil, -2, -2, 0, nil, nil], quality: .minor)
+
+    /// **A-D-G set** — root on the A string, 3rd on D, 5th on G.
+    static let triadADGMajor = ChordGrip(name: "A-D-G", rootString: .aRoot,
+                                         offsets: [nil, nil, -3, -1, 0, nil], quality: .major)
+    static let triadADGMinor = ChordGrip(name: "A-D-G", rootString: .aRoot,
+                                         offsets: [nil, nil, -3, -2, 0, nil], quality: .minor)
+
+    /// The curated triad set (ADR 0109) — major + minor on the three upper string sets, root position.
+    /// Generated, not tabled (M1): six shapes × a root note is the whole triad vocabulary.
+    static let triads: [ChordGrip] = [
+        triadGBEMajor, triadGBEMinor,
+        triadDGBMajor, triadDGBMinor,
+        triadADGMajor, triadADGMinor
+    ]
 }
 
 // MARK: - Browse picture (ADR 0103 — the chord picker's Insert grid)

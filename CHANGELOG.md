@@ -6,6 +6,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Triad shapes in the chord picker.** The Insert grid has a new **Triads** category — major and minor
+  root-position triads on the three upper string sets (**G‑B‑e**, **D‑G‑B**, **A‑D‑G**), each sliding to
+  any root like the movable barres. And the Insert categories (My chords · Movable · Triads · Open) are
+  now **collapsible** — tap a section header to fold it away, so the picker isn't a wall of diagrams (a
+  search still expands everything so nothing hides).
 - **Strum preset picker.** The strumming editor (Strumming and Strum & Chords) has a new **Presets**
   menu — drop in a curated groove (Folk, Down-Up Eighths, Reggae Offbeat, Boom-Chick, Syncopated Mute) as
   a one-tap starting point, adapted to the exercise's meter, instead of building every pattern from

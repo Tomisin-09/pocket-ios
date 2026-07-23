@@ -32,6 +32,21 @@ enum ChordPicker {
         return "\(grip.quality.displayName) \(grip.name)\(barre)"
     }
 
+    /// The **triad** grips offered as Insert chips (ADR 0109) — major / minor on the three upper string
+    /// sets (G-B-e, D-G-B, A-D-G), root position. Small three-note shapes, slid to any root like the
+    /// movable barres; browsed in their own collapsible Insert section.
+    static let insertTriadGrips: [ChordGrip] = ChordGrip.triads
+
+    /// A triad chip's subtitle — the **string set** it voices ("G-B-e"). The chip title is the quality;
+    /// together they read root-agnostically since the root is chosen on tap.
+    static func triadSubtitle(_ grip: ChordGrip) -> String { grip.name }
+
+    /// The text a triad chip matches search against — quality, the word "triad", and the string set, so
+    /// "triad", "major", "minor", and "g-b-e" all filter it.
+    static func triadSearchText(_ grip: ChordGrip) -> String {
+        "\(grip.quality.displayName) triad \(grip.name)"
+    }
+
     /// Case- and diacritic-insensitive substring match driving the picker's live search (ADR 0103 D1).
     /// An empty or whitespace-only query matches everything.
     static func matches(query: String, in text: String) -> Bool {
