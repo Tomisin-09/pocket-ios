@@ -16,7 +16,8 @@ struct PlannerView: View {
     @Query private var loops: [Loop]
     @Query private var songs: [Song]
     @Query private var routines: [Routine]
-    /// The local profile (ADR 0113 S2): its minutes-per-day seeds the initial session length.
+    /// The local profile (ADR 0113): its minutes-per-day seeds the initial session length (S2) and its
+    /// genres + dream drive the goal-session emphasis mix (S3).
     @Query private var profiles: [Profile]
 
     @State private var length: SessionLength = .default
@@ -206,7 +207,8 @@ struct PlannerView: View {
         let blocks: [SessionBlock] = active.isEmpty
             ? PracticePlanner.planQuickSession(minutes: length.minutes, exercises: exercises)
             : PracticePlanner.planGoalSession(minutes: length.minutes, goals: active,
-                                              exercises: exercises, loops: loops, songs: songs)
+                                              exercises: exercises, loops: loops, songs: songs,
+                                              profile: profiles.first)
         guard blocks.contains(where: { $0.unit != nil }) else {
             showingEmptyNotice = true
             haptic(.medium)

@@ -11,6 +11,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **"Today's session" now leans toward your taste.** The planner reads the **genres** and **dream** you
+  set in setup and gently emphasises matching work when it builds a session — a blues player sees more
+  bends, pentatonics and blues-scale drills surface first; "get properly good" nudges technique up;
+  "write my own music" leans toward theory. It's a *nudge*, never a filter: nothing you'd otherwise
+  practise is dropped, and a goal you've marked **High** always outranks the taste tilt. Skip the setup
+  and the planner behaves exactly as before (ADR 0113).
 - **A short, skippable first-launch setup — so the app can fit you.** On first launch Red Moon now asks
   four quick, one-per-card questions — where you are with the guitar, what you want to play, the dream,
   and how long you practise most days — then gets out of the way. Every question is optional and the
