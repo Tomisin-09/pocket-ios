@@ -11,6 +11,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **A short, skippable first-launch setup — so the app can fit you.** On first launch Red Moon now asks
+  four quick, one-per-card questions — where you are with the guitar, what you want to play, the dream,
+  and how long you practise most days — then gets out of the way. Every question is optional and the
+  whole thing is skippable; nothing is a wall, and no demographics or personal data are collected. What
+  you answer *does* something today: your **experience** seeds the starting tempo of a new exercise, and
+  your **time most days** seeds the length of a generated session — both still fully adjustable. It all
+  stays on this device and is editable any time under **Settings → Your sound** (ADR 0113).
 - **A personalised home greeting, if you want one.** You can now give yourself an **artist name**,
   and the home screen greets you by it — "Evening, Vega" — shifting with the time of day. It's
   entirely optional and never asked for at the door: once you've earned it — after you finish an

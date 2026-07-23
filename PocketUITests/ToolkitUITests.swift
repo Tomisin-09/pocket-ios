@@ -14,6 +14,7 @@ final class ToolkitUITests: XCTestCase {
     @MainActor
     func testToolkitHubOpensAndListsItsSections() throws {
         let app = XCUIApplication()
+        app.launchArguments += ["-uiTesting"] // suppress the first-launch profile intake covering Home
         app.launch()
 
         // Match by label prefix, not the full subtitle — the card's subtitle changes as the hub grows
