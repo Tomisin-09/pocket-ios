@@ -12,6 +12,9 @@ import SwiftUI
 struct ExerciseLibraryView: View {
     @Environment(\.modelContext) private var context
     @Query private var exercises: [Exercise]
+    /// The local profile (ADR 0113 S2): its self-rated experience seeds a new exercise's default
+    /// command tempo, so a beginner starts near the floor and a seasoned player higher up.
+    @Query private var profiles: [Profile]
     @State private var creating = false
     /// Sort key + direction, persisted across launches (ADR 0056).
     @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
@@ -87,8 +90,15 @@ struct ExerciseLibraryView: View {
             }
         }
         .sheet(isPresented: $creating) {
-            NewExerciseSheet(onCreate: create)
+            NewExerciseSheet(initialCommand: defaultCommand, onCreate: create)
         }
+    }
+
+    /// The command tempo a fresh exercise pre-fills (ADR 0113 S2 consumer): the profile's experience
+    /// default when declared, else the engine floor — the same value `NewExerciseSheet` uses by
+    /// default, so an untouched install is unchanged.
+    private var defaultCommand: Int {
+        profiles.first?.experience?.defaultCommandTempo ?? StandaloneMetronomeEngine.defaultCommandBPM
     }
 
     /// The sort control — a menu whose label spells out the active key with a direction arrow

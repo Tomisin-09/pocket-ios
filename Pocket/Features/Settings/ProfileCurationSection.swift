@@ -1,0 +1,130 @@
+import SwiftData
+import SwiftUI
+
+/// The **"Your sound"** editor in Settings (ADR 0113, Slice 2): the four curation fields the
+/// first-launch intake collects, editable any time. Split out of `SettingsView` so that screen stays
+/// under the file/type-length cap. Reads the singleton `Profile` passed in and writes every change
+/// straight through `Profile.setCuration`, creating the row on first use — a player who skipped the
+/// intake can still declare intent here, and one who ran it can revise it.
+///
+/// Optional by design: each picker offers a "Not set" choice and genres can be empty, matching the
+/// intake's skippable nature. Nothing here is PII — musical preferences only.
+struct ProfileCurationSection: View {
+    @Environment(\.modelContext) private var context
+    /// The singleton profile (or `nil` before any row exists). Its properties seed the drafts.
+    let profile: Profile?
+
+    @State private var experience: ArtistExperience?
+    @State private var genres: Set<MusicGenre> = []
+    @State private var dream: MusicalDream?
+    @State private var minutes: PracticeMinutes?
+    @State private var seeded = false
+
+    var body: some View {
+        Section {
+            Picker("Experience", selection: $experience) {
+                Text("Not set").tag(ArtistExperience?.none)
+                ForEach(ArtistExperience.allCases) { option in
+                    Text(option.displayName).tag(ArtistExperience?.some(option))
+                }
+            }
+
+            NavigationLink {
+                GenreMultiSelectView(selection: $genres)
+                    .onChange(of: genres) { commit() }
+            } label: {
+                HStack {
+                    Text("Genres")
+                    Spacer()
+                    Text(genreSummary)
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Picker("Dream", selection: $dream) {
+                Text("Not set").tag(MusicalDream?.none)
+                ForEach(MusicalDream.allCases) { option in
+                    Text(option.displayName).tag(MusicalDream?.some(option))
+                }
+            }
+
+            Picker("Time most days", selection: $minutes) {
+                Text("Not set").tag(PracticeMinutes?.none)
+                ForEach(PracticeMinutes.allCases) { option in
+                    Text(option.displayName).tag(PracticeMinutes?.some(option))
+                }
+            }
+        } header: {
+            Text("Your sound")
+        } footer: {
+            Text("Shapes what the app suggests — starting tempo, session length, and what surfaces "
+                 + "first. Optional, and it stays on this device.")
+        }
+        .onAppear(perform: seedFromProfile)
+        .onChange(of: experience) { commit() }
+        .onChange(of: dream) { commit() }
+        .onChange(of: minutes) { commit() }
+    }
+
+    /// A one-line summary of the chosen genres for the row's trailing value.
+    private var genreSummary: String {
+        guard !genres.isEmpty else { return "Any" }
+        return MusicGenre.allCases
+            .filter { genres.contains($0) }
+            .map(\.displayName)
+            .joined(separator: ", ")
+    }
+
+    /// Seed the drafts from the profile once, so re-appearing (e.g. after editing genres) doesn't
+    /// clobber in-flight edits.
+    private func seedFromProfile() {
+        guard !seeded else { return }
+        experience = profile?.experience
+        genres = Set(profile?.genres ?? [])
+        dream = profile?.dream
+        minutes = profile?.minutesPerDay
+        seeded = true
+    }
+
+    /// Persist the current drafts (skipped fields stay unset). Cheap; the whole profile is one row.
+    private func commit() {
+        guard seeded else { return } // ignore the initial programmatic seeding
+        Profile.setCuration(experience: experience, genres: Array(genres),
+                            dream: dream, minutesPerDay: minutes, in: context)
+    }
+}
+
+/// A native multi-select checklist for the genre field, pushed from the "Your sound" section.
+struct GenreMultiSelectView: View {
+    @Binding var selection: Set<MusicGenre>
+
+    var body: some View {
+        List {
+            ForEach(MusicGenre.allCases) { genre in
+                Button {
+                    if selection.contains(genre) { selection.remove(genre) } else { selection.insert(genre) }
+                    haptic(.light)
+                } label: {
+                    HStack {
+                        Text(genre.displayName)
+                            .foregroundStyle(PocketColor.textPrimary)
+                        Spacer()
+                        if selection.contains(genre) {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(PocketColor.practice)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .listRowBackground(PocketColor.background)
+                .accessibilityAddTraits(selection.contains(genre) ? .isSelected : [])
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(PocketColor.background.ignoresSafeArea())
+        .navigationTitle("Genres")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}

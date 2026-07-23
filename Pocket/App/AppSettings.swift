@@ -45,6 +45,7 @@ enum AppSettings {
         static let waveformMarkerLabels = "waveformMarkerLabels"
         static let zoomFollowsPlayhead = "zoomFollowsPlayhead"
         static let artistNamePromptSeen = "artistNamePromptSeen"
+        static let artistIntakeSeen = "artistIntakeSeen"
     }
 
     /// Count-in length is offered as whole bars in this range.

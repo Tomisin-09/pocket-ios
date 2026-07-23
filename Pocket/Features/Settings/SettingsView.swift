@@ -19,6 +19,8 @@ struct SettingsView: View {
     /// DEBUG-only: lets the developer re-arm the one-time "you've earned a name" prompt without a
     /// data-wiping reinstall (see the Developer section below).
     @AppStorage(AppSettings.Key.artistNamePromptSeen) private var artistNamePromptSeen = false
+    /// DEBUG-only: lets the developer re-arm the first-launch curation intake (ADR 0113 S2).
+    @AppStorage(AppSettings.Key.artistIntakeSeen) private var artistIntakeSeen = false
     #endif
 
     @AppStorage(AppSettings.Key.hapticsEnabled) private var hapticsEnabled = true
@@ -49,6 +51,9 @@ struct SettingsView: View {
             } footer: {
                 Text("Your artist name greets you on the home screen. Optional, and it stays on this device.")
             }
+
+            // The curation fields (ADR 0113 S2) — the intake's four questions, editable any time.
+            ProfileCurationSection(profile: profiles.first)
 
             Section {
                 Picker("Appearance", selection: $appearance) {
@@ -132,10 +137,12 @@ struct SettingsView: View {
             // ceremony can be re-tested on a real install without a data-wiping reinstall.
             Section {
                 Button("Reset naming prompt", role: .destructive, action: resetNamingPrompt)
+                Button("Reset first-launch intake", role: .destructive, action: resetIntake)
             } header: {
                 Text("Developer")
             } footer: {
-                Text("DEBUG only. Clears your artist name and re-arms the “you've earned a name” prompt.")
+                Text("DEBUG only. Clears your artist name and re-arms the “you've earned a name” "
+                     + "prompt; the second row re-arms the first-launch curation intake.")
             }
             #endif
 
@@ -208,6 +215,13 @@ struct SettingsView: View {
         Profile.setArtistName(nil, in: context)
         artistNamePromptSeen = false
         artistNameDraft = ""
+    }
+
+    /// DEBUG-only: re-arm the one-time first-launch curation intake so it can be re-tested on a real
+    /// install. Leaves the stored curation in place (it stays visible/editable in "Your sound"); this
+    /// only flips the "seen" gate so Home offers the flow again on next appearance.
+    private func resetIntake() {
+        artistIntakeSeen = false
     }
     #endif
 

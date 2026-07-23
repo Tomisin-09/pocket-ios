@@ -16,8 +16,13 @@ struct PlannerView: View {
     @Query private var loops: [Loop]
     @Query private var songs: [Song]
     @Query private var routines: [Routine]
+    /// The local profile (ADR 0113 S2): its minutes-per-day seeds the initial session length.
+    @Query private var profiles: [Profile]
 
     @State private var length: SessionLength = .default
+    /// Seed the length from the profile only once, so revisiting the planner doesn't overwrite a
+    /// duration the player just picked by hand.
+    @State private var seededLength = false
     /// The goal being edited, presented as a sheet. Held as a `uid`-keyed `StableRef`, not the raw
     /// `Goal`: a goal added and edited in the same session has a temporary `persistentModelID` that
     /// flips on the first save, which would dismiss the editor mid-edit if the sheet were keyed on it
@@ -48,6 +53,7 @@ struct PlannerView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle("Today's session")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear(perform: seedLengthFromProfile)
         .safeAreaInset(edge: .bottom) { generateBar }
         .sheet(isPresented: $addingGoal) {
             GoalEditorView(existing: nil, songs: songs)
@@ -182,6 +188,17 @@ struct PlannerView: View {
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
         .accessibilityLabel("Generate today's session")
+    }
+
+    /// Seed the duration picker from the profile's minutes-per-day once per screen (ADR 0113 S2
+    /// consumer). Only a starting point — the player can change it freely, and an unset profile
+    /// leaves the planner's own short default in place.
+    private func seedLengthFromProfile() {
+        guard !seededLength else { return }
+        seededLength = true
+        if let preferred = profiles.first?.minutesPerDay?.preferredSessionLength {
+            length = preferred
+        }
     }
 
     private func generate() {
