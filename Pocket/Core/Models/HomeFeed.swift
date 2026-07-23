@@ -23,13 +23,29 @@ enum HomeFeed {
             }
         }
 
-        /// The lead-in greeting shown above the headline.
+        /// The lead-in greeting shown above the headline, name-free.
         var greeting: String {
             switch self {
             case .morning: return "Good morning"
             case .afternoon: return "Good afternoon"
             case .evening: return "Good evening"
             case .night: return "Late session"
+            }
+        }
+
+        /// The lead-in greeting, personalised with the artist name when there is one (ADR 0113).
+        /// A `nil`/blank name is first-class — it falls straight back to the name-free `greeting`,
+        /// so an un-named profile reads exactly as before. Named copy stays in the Red Moon
+        /// register: quiet, no exclamation marks, night reads "Late one, {name}". The name is
+        /// trimmed; an all-whitespace name counts as unset.
+        func greeting(name: String?) -> String {
+            let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let trimmed, !trimmed.isEmpty else { return greeting }
+            switch self {
+            case .morning: return "Morning, \(trimmed)"
+            case .afternoon: return "Afternoon, \(trimmed)"
+            case .evening: return "Evening, \(trimmed)"
+            case .night: return "Late one, \(trimmed)"
             }
         }
     }

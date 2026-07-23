@@ -11,6 +11,15 @@ struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Song.title) private var songs: [Song]
     @Query private var routines: [Routine]
+    @Query private var exercises: [Exercise]
+    @Query private var loops: [Loop]
+    /// The local artist profile (ADR 0113). `.first?.artistName` personalises the greeting; `nil`
+    /// (untouched install / no name) reads name-free.
+    @Query private var profiles: [Profile]
+    /// One-time gate for the after-first-session name invitation, so it's offered once and never nags.
+    @AppStorage(AppSettings.Key.artistNamePromptSeen) private var artistNamePromptSeen = false
+    /// Drives the after-first-session artist-name sheet.
+    @State private var showingNamePrompt = false
     @State private var importing = false
     @State private var importError: String?
     /// Drives multi-select import: progress overlay + partial-failure summary (shared
@@ -111,6 +120,14 @@ struct HomeView: View {
             .fullScreenCover(isPresented: $showingMetronome) {
                 MetronomeView()
             }
+            // The "you've earned a name" invitation (ADR 0113). Offered once, full-screen, only
+            // after the player has completed an exercise or captured a loop, and only if they
+            // haven't named themselves yet; dismissing (This is me or Not now) marks it seen so it
+            // never returns. The name stays editable in Settings regardless.
+            .fullScreenCover(isPresented: $showingNamePrompt,
+                             onDismiss: { artistNamePromptSeen = true },
+                             content: { ArtistNamePromptSheet() })
+            .onAppear(perform: maybeOfferArtistName)
             // Seed the curated Practice presets once, ever (ADR 0046). The app root is the right
             // place — they exist before the user opens Practice — and the seeder's own
             // `UserDefaults` guard makes this idempotent across launches. Routines seed **after**
@@ -133,7 +150,8 @@ struct HomeView: View {
 
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(HomeFeed.TimeOfDay.at(hour: Calendar.current.component(.hour, from: .now)).greeting)
+            Text(HomeFeed.TimeOfDay.at(hour: Calendar.current.component(.hour, from: .now))
+                .greeting(name: profiles.first?.artistName))
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
             Text("Ready to practice?")
@@ -141,6 +159,25 @@ struct HomeView: View {
                 .foregroundStyle(PocketColor.textPrimary)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    /// Offer the artist name once, after the player has earned it (ADR 0113): present the prompt
+    /// when they've done real work, haven't named themselves yet, and haven't already seen (or
+    /// dismissed) the prompt. A home-appearance check rather than a per-action callback — for a
+    /// loop, that just means the offer surfaces when they return to Home after leaving the song,
+    /// which is the calmer moment anyway.
+    private func maybeOfferArtistName() {
+        guard !artistNamePromptSeen,
+              profiles.first?.artistName == nil,
+              hasEarnedAName else { return }
+        showingNamePrompt = true
+    }
+
+    /// Whether the player has done something that earns the naming invitation (ADR 0113): they've
+    /// **completed at least one exercise** (any exercise carries a `lastPracticed` stamp) **or
+    /// captured at least one loop**.
+    private var hasEarnedAName: Bool {
+        exercises.contains { $0.lastPracticed != nil } || !loops.isEmpty
     }
 
     // MARK: - Start today's session (primary CTA)

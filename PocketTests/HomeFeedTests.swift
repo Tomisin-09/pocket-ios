@@ -31,6 +31,30 @@ final class HomeFeedTests: XCTestCase {
         XCTAssertEqual(HomeFeed.TimeOfDay.evening.greeting, "Good evening")
     }
 
+    // MARK: - Name-aware greeting (ADR 0113)
+
+    func testNamedGreetingUsesArtistName() {
+        XCTAssertEqual(HomeFeed.TimeOfDay.morning.greeting(name: "Vega"), "Morning, Vega")
+        XCTAssertEqual(HomeFeed.TimeOfDay.afternoon.greeting(name: "Vega"), "Afternoon, Vega")
+        XCTAssertEqual(HomeFeed.TimeOfDay.evening.greeting(name: "Vega"), "Evening, Vega")
+        // Night keeps the quiet register — "Late one", no exclamation.
+        XCTAssertEqual(HomeFeed.TimeOfDay.night.greeting(name: "Vega"), "Late one, Vega")
+    }
+
+    func testGreetingFallsBackToNameFreeWhenNil() {
+        XCTAssertEqual(HomeFeed.TimeOfDay.morning.greeting(name: nil), "Good morning")
+        XCTAssertEqual(HomeFeed.TimeOfDay.night.greeting(name: nil), "Late session")
+    }
+
+    func testGreetingTreatsBlankNameAsUnset() {
+        XCTAssertEqual(HomeFeed.TimeOfDay.evening.greeting(name: ""), "Good evening")
+        XCTAssertEqual(HomeFeed.TimeOfDay.evening.greeting(name: "   "), "Good evening")
+    }
+
+    func testGreetingTrimsSurroundingWhitespace() {
+        XCTAssertEqual(HomeFeed.TimeOfDay.morning.greeting(name: "  Vega  "), "Morning, Vega")
+    }
+
     // MARK: - Most recently practised
 
     private struct Item { let name: String; let practiced: Date? }
