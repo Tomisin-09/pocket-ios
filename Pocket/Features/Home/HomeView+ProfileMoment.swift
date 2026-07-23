@@ -11,6 +11,10 @@ extension HomeView {
     /// home-appearance check rather than a per-action callback — for a loop, that just means the offer
     /// surfaces when they return to Home after leaving the song, the calmer moment.
     func maybeOfferProfileMoment() {
+        // Under UI testing the app launches fresh, so the first-launch intake would cover Home and
+        // block the cards the tests drive. Suppress both first-run moments there (they're exercised
+        // on device and in unit tests instead), matching the `-seedScreenshots` launch-arg convention.
+        if CommandLine.arguments.contains("-uiTesting") { return }
         if !artistIntakeSeen {
             showingIntake = true
             return

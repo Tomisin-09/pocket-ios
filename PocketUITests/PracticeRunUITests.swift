@@ -13,6 +13,7 @@ final class PracticeRunUITests: XCTestCase {
     @MainActor
     func testTappingExerciseOpensRunScreen() throws {
         let app = XCUIApplication()
+        app.launchArguments += ["-uiTesting"] // suppress the first-launch profile intake covering Home
         app.launch()
 
         let practiceCard = app.buttons["Practice, your exercises and training runs"]

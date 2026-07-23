@@ -9,6 +9,7 @@ final class PocketLaunchUITests: XCTestCase {
     @MainActor
     func testAppLaunches() throws {
         let app = XCUIApplication()
+        app.launchArguments += ["-uiTesting"] // suppress the first-launch profile intake covering Home
         app.launch()
         // The app launches into the home hub (HomeView, ADR 0044). Assert a stable element
         // present whether or not there's any practice history yet: the greeting headline.
