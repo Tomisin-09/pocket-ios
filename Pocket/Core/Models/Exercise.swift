@@ -6,10 +6,13 @@ import SwiftData
 /// working / command tempos, time signature, accents, subdivision, and a native command-ramp
 /// training recipe. A list of these is the Practice space's unit list.
 ///
-/// Deliberately **audio-free** and separate from `Loop`: a `Loop` is bound to an audio
+/// Deliberately **audio/tempo-free** and separate from `Loop`: a `Loop` is bound to an audio
 /// file/region, an exercise has no audio source, so overloading `Loop` would leak audio
-/// assumptions into a click-only entity. It is a standalone top-level entity in the
-/// store (no relationship to `Song`).
+/// assumptions into a click-only entity. It is a standalone top-level entity in the store —
+/// with one **repertoire** association: a user-authored `linkedSongs` edge (ADR 0111) recording
+/// which songs a drill is *for*. That edge is plain metadata; the audio/tempo firewall stands
+/// (no audio source, no waveform region, absolute-BPM tempos). The old "no relationship to
+/// `Song`" absolute (ADR 0043/0046) is narrowed by 0111 to audio/tempo, not association.
 ///
 /// Follows the established model discipline (ADR 0011/0012/0036): a `uid: UUID` business
 /// id; **declaration defaults** on every non-optional attribute so SwiftData lightweight
@@ -200,6 +203,18 @@ final class Exercise {
     /// relationship (CoreData 134110 rule) for exercises saved before routines shipped.
     @Relationship(deleteRule: .nullify, inverse: \RoutineItem.exercise)
     var routineItems: [RoutineItem] = []
+
+    /// The songs this drill is **for** (ADR 0111) — a user-authored repertoire edge, the
+    /// inverse of `Song.linkedExercises`. The store's **first many-to-many**: the `@Relationship`
+    /// (with its `inverse:` key path) is declared on this side only; `Song.linkedExercises` is a
+    /// plain array whose inverse SwiftData infers (declaring `inverse:` on both sides is a
+    /// circular-reference error). **`.nullify`, no cascade** — deleting a song just removes it from
+    /// this set; the exercise (a standalone unit) survives, and vice versa. Additive optional
+    /// relationship (declaration default `[]`) so SwiftData lightweight migration fills exercises
+    /// saved before the edge with an empty set — no store wipe (CoreData 134110 rule). Pure
+    /// metadata: never an audio or tempo input, so the exercise's audio/tempo firewall is intact.
+    @Relationship(deleteRule: .nullify, inverse: \Song.linkedExercises)
+    var linkedSongs: [Song] = []
 
     init(name: String = "",
          currentTempo: Int = 80,

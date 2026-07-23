@@ -503,19 +503,18 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
   forward the deferred V2 planner. Rejected alternatives: routine-only (no reusable link, dies with
   the routine) and reviving the planner `Goal.targetSong`/`skillIDs` machinery (heavier, indirect via
   the skill taxonomy). The planner, when it lands, becomes just a smarter producer of the same edges.
-  - **Model:** `Exercise.linkedSongs` + inverse `Song.linkedExercises` (typed relationship,
-    `.nullify` on both sides — deleting either end clears the link, never cascades). Additive optional
-    relationships (CoreData 134110 rule). **Crosses the deliberate "Exercise is Song-free" boundary**
-    (see `Exercise.swift` header) → needs a **new ADR** to record the reversal + reason. (Note: 0109 was
-    taken by the triad-shapes work on 2026-07-23; use the next free number when this is built.)
-  - **Generator:** a pure, unit-tested helper that materialises a `Routine` from a song's linked
-    exercises (as `focused`/`warmup` blocks) + its loops + a `play` block for the song itself.
-  - **⚠ Sequencing gate (why parked):** this is a cross-cutting `@Model` schema change — the repo's
-    documented migration footgun — and there are **16 local branches + a large unpushed stack** across
-    multiple sessions. **Do NOT start until all open PRs are merged** and `Exercise.swift` / `Song.swift`
-    are quiet. Then cut a fresh branch off `main` (next free `pocket-0XX`), write a new ADR (next free
-    number — 0109 is taken), add the edge, then the generator. Confirm no other in-flight branch adds a
-    stored attribute to `Exercise` or `Song` before editing those classes.
+  - **Model — ✅ DONE (pocket-182, ADR 0111, 2026-07-23).** Shipped the edge: `Exercise.linkedSongs`
+    + inverse `Song.linkedExercises`, the store's first many-to-many (`@Relationship(inverse:)` on the
+    `Exercise` side only, `.nullify` both ways, additive optional → empty set on migration). The
+    "Exercise is Song-free" boundary is reversed for repertoire association only (audio/tempo firewall
+    stands) and recorded in **ADR 0111** (0109 was taken by the triad-shapes work). In-memory
+    `ModelContainer` round-trip + both nullify-not-cascade directions covered in
+    `ExerciseSongLinkTests`. **⚠ Migration still needs device verification** (SwiftData store-wipe
+    footguns are device-only).
+  - **Generator — NEXT (not built).** A pure, unit-tested helper that materialises a `Routine` from a
+    song's linked exercises (as `focused`/`warmup` blocks) + its loops + a `play` block for the song
+    itself. Plus the UI to author the link (add/remove songs on an exercise, or exercises on a song)
+    and the "Build a routine for this song" entry point. No schema change — reads the 0111 edge.
 
 - ~~**Futura navigation titles app-wide (spotted in the v1 screenshot shoot, 2026-07-23).**~~ **DONE
   (pocket-181, ADR 0110, 2026-07-23).** Shipped exactly as the decision below: one global

@@ -11,6 +11,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **Exercises can be linked to songs (data groundwork).** Under the hood, an exercise and a song can now
+  be associated as repertoire — "this drill is *for* that song" — as a reusable, two-way link that
+  outlives any routine (ADR 0111). This slice adds the storage only; the "build a practice routine for
+  this song" action it enables is a follow-up. No visible UI change yet; existing data is untouched.
 - **Draw your own warm-up, picking & legato runs.** The **Generate / Draw your own** switch — until now
   only on Scales — is now on every run-family template (**Warm-up, Picking, Legato, Fingerstyle**), at
   both create and Edit shape. "Draw your own" opens the same tap-to-place fretboard (with the optional
