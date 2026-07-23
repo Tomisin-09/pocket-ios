@@ -72,6 +72,13 @@ for any scale the generator can't place (symmetric, sequenced, or invented):
   also appears in the **New Scales** create sheet (`NewExerciseSheet`), not only Edit-shape, so the canvas
   + guide are discoverable when first making a Scales drill. A Scales drill switched to draw at creation
   starts from an empty neck (`FretboardDrill.emptyBar`).
+- ~~**Draw mode for the run families.**~~ **DONE (pocket-180).** The same generate-or-draw toggle now
+  extends to every `.run` bespoke editor — **Warm-up, Picking, Legato, Fingerstyle** — at both create
+  (`ConfigureExerciseForm`) and Edit shape (`ExerciseShapeSheet`). Draw mode emits a `.custom` drill and
+  starts from an empty neck; generate mode still emits the declared `FretboardRun`. No model change:
+  rendering/playback already keys off `FretboardContent` (via `.drill`), never the template, so a `.run`
+  template carrying `.custom` content plays exactly like a drawn Scales drill. `ConfigureExerciseForm`
+  was extracted from `NewExerciseSheet.swift` into its own file to stay under the 400-line cap.
 
 ## Alternatives considered
 

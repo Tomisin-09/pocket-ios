@@ -488,15 +488,13 @@ second, selectable theme. When picked back up:
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
 
-- **Extend "draw your own" to the technique templates (parked 2026-07-23).** The generate-or-draw split
-  + hand-drawn `FretboardDrillEditor` canvas with the scale **Guide** (ADR 0107) currently lives only on
-  the **Scales** template. Extend the same toggle to **Warm-up**, **Picking** and **Legato** (the `.run`
-  `bespokeEditor`), so those can be hand-drawn too, not only declared as a generated `FretboardRun`.
-  Sketch: add a `runMode` (generate/draw) alongside `scaleMode` in `NewExerciseSheet` **and**
-  `ExerciseShapeSheet`; draw mode shows `FretboardDrillEditor(referenceEnabled: true)` and
-  `fretboardContent` returns `.custom(drill)` for `.run` when drawing; seed the draw canvas from an empty
-  bar for run templates. Same shape as the Scales work — low risk, no model change (all four already store
-  `FretboardContent`).
+- ~~**Extend "draw your own" to the technique templates (parked 2026-07-23).**~~ **DONE (pocket-180,
+  2026-07-23).** The generate-or-draw toggle + hand-drawn `FretboardDrillEditor` canvas with the scale
+  **Guide** now extends to all four `.run` bespoke editors — **Warm-up, Picking, Legato, Fingerstyle** —
+  at both create (`ConfigureExerciseForm`, extracted from `NewExerciseSheet.swift`) and Edit shape
+  (`ExerciseShapeSheet`). A `runMode` (generate/draw) mirrors `scaleMode`; draw mode emits `.custom(drill)`
+  from an empty-bar seed, generate mode the declared `FretboardRun`. No model change — rendering keys off
+  `FretboardContent.drill`, not the template. Recorded as an ADR 0107 follow-up (no new ADR needed).
 
 - **Link exercises ↔ songs → curated routine generator (logged 2026-07-23).** Decided direction:
   a **direct, user-authored Exercise↔Song edge** (many-to-many) that feeds a **"Build a practice

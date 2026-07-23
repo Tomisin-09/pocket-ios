@@ -38,10 +38,14 @@ struct ExerciseShapeSheet: View {
     /// How a **Scales** drill authors its content: the generative box picker or the hand-drawn canvas
     /// (the custom-scale surface). Seeded from the stored content — a Scales exercise already holding a
     /// `.custom` drill opens in draw mode. Only meaningful for the scales template.
-    @State private var scaleMode: ScaleAuthoringMode
+    @State private var scaleMode: AuthoringMode
+    /// How a **run-family** drill (warm-up/picking/legato/fingerstyle) authors its content: the
+    /// generative `FretboardRunEditor` or the same hand-drawn canvas. Seeded from the stored content —
+    /// a run exercise already holding a `.custom` drill opens in draw mode. Only meaningful for `.run`.
+    @State private var runMode: AuthoringMode
 
-    /// The two ways a Scales drill's content is authored (the generate-or-draw split).
-    private enum ScaleAuthoringMode: Hashable { case generate, draw }
+    /// The two ways a fretboard drill's content is authored (the generate-or-draw split).
+    private enum AuthoringMode: Hashable { case generate, draw }
 
     init(exercise: Exercise) {
         self.exercise = exercise
@@ -51,13 +55,17 @@ struct ExerciseShapeSheet: View {
         _run = State(initialValue: content?.runValue ?? .chromaticWarmup)
         _scale = State(initialValue: content?.scaleValue ?? .aMinorPentatonic)
         _arpeggio = State(initialValue: content?.arpeggioValue ?? .aMinorSeventh)
-        // A Scales drill drawn by hand opens the empty canvas; the custom-grid template keeps the
-        // spider-walk starter. A stored custom drill (either template) seeds itself.
-        let drawnScale = exercise.template.bespokeEditor == .scale && content?.customValue != nil
-        let customDefault: FretboardDrill = exercise.template.bespokeEditor == .scale
+        // A Scales *or* run-family drill drawn by hand opens the empty canvas; the custom-grid template
+        // keeps the spider-walk starter. A stored custom drill (any drawable template) seeds itself and
+        // opens in draw mode.
+        let editor = exercise.template.bespokeEditor
+        let drawnCustom = content?.customValue != nil
+        let drawableEditor = editor == .scale || editor == .run
+        let customDefault: FretboardDrill = drawableEditor
             ? .emptyBar(beatsPerBar: exercise.beatsPerBar) : .spiderWalk
         _customDrill = State(initialValue: content?.customValue ?? customDefault)
-        _scaleMode = State(initialValue: drawnScale ? .draw : .generate)
+        _scaleMode = State(initialValue: editor == .scale && drawnCustom ? .draw : .generate)
+        _runMode = State(initialValue: editor == .run && drawnCustom ? .draw : .generate)
         _chords = State(initialValue: exercise.chordProgression ?? .gMajorPop)
         _strumChords = State(initialValue: exercise.strumChordSheet ?? .popGroove)
     }
@@ -110,7 +118,8 @@ struct ExerciseShapeSheet: View {
         guard let editor = exercise.template.bespokeEditor else { return }
         let content: FretboardContent
         switch editor {
-        case .run: content = .run(run)
+        // A run-family drill writes its generated run or, in draw mode, the hand-placed custom drill.
+        case .run: content = runMode == .draw ? .custom(customDrill) : .run(run)
         // A Scales drill writes its generated box or, in draw mode, the hand-placed custom drill.
         case .scale: content = scaleMode == .draw ? .custom(customDrill) : .scale(scale)
         case .arpeggio: content = .arpeggio(arpeggio)
@@ -161,17 +170,36 @@ private extension ExerciseShapeSheet {
         }
     }
 
-    /// The warm-up family's authoring surface — the generative `FretboardRunEditor`. Same
-    /// immutability contract: the template stays fretboard; you edit the run's shape.
+    /// The warm-up family's authoring surface — a **generate-or-draw** split (ADR 0107): the generative
+    /// `FretboardRunEditor` (generate), or the tap-to-place `FretboardDrillEditor` with its scale guide
+    /// (draw your own), the escape hatch for any hand-shaped run the generator can't declare. Same
+    /// immutability contract: the template stays a fretboard run; you edit its shape.
     var runSection: some View {
         Section {
-            FretboardRunEditor(run: $run)
-                .listRowBackground(Color.clear)
+            Picker("How to author", selection: $runMode) {
+                Text("Generate").tag(AuthoringMode.generate)
+                Text("Draw your own").tag(AuthoringMode.draw)
+            }
+            .pickerStyle(.segmented)
+            .listRowBackground(Color.clear)
+
+            switch runMode {
+            case .generate:
+                FretboardRunEditor(run: $run)
+                    .listRowBackground(Color.clear)
+            case .draw:
+                FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill,
+                                     referenceEnabled: true)
+                    .listRowBackground(Color.clear)
+            }
         } header: {
             Text("How to play — run")
         } footer: {
-            Text("Declare the run's shape and it walks the board over the click while you run the "
-                 + "drill.")
+            Text(runMode == .generate
+                 ? "Declare the run's shape and it walks the board over the click while you run the "
+                    + "drill."
+                 : "Draw the run yourself — tap the notes onto the board. Turn on a Guide to ghost a "
+                    + "scale's notes to trace.")
         }
     }
 
@@ -182,8 +210,8 @@ private extension ExerciseShapeSheet {
     var scaleSection: some View {
         Section {
             Picker("How to author", selection: $scaleMode) {
-                Text("Generate").tag(ScaleAuthoringMode.generate)
-                Text("Draw your own").tag(ScaleAuthoringMode.draw)
+                Text("Generate").tag(AuthoringMode.generate)
+                Text("Draw your own").tag(AuthoringMode.draw)
             }
             .pickerStyle(.segmented)
             .listRowBackground(Color.clear)
