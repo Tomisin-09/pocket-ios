@@ -519,14 +519,20 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
     number — 0109 is taken), add the edge, then the generator. Confirm no other in-flight branch adds a
     stored attribute to `Exercise` or `Song` before editing those classes.
 
-- **Futura navigation titles app-wide (spotted in the v1 screenshot shoot, 2026-07-23).** Every
-  SwiftUI `.navigationTitle` renders in **San Francisco**, not Futura — there's no SwiftUI-native
+- ~~**Futura navigation titles app-wide (spotted in the v1 screenshot shoot, 2026-07-23).**~~ **DONE
+  (pocket-181, ADR 0110, 2026-07-23).** Shipped exactly as the decision below: one global
+  `UINavigationBarAppearance` in `Pocket/UI/NavigationBarStyle.swift`, applied once from
+  `AppDelegate.application(_:didFinishLaunchingWithOptions:)`. Futura-Bold title + large-title
+  attributes (`UIFontMetrics`-scaled) in `Ink`; default material on standard/compact, transparent on
+  scroll edge; the two `.principal` screens untouched. **Correction to the verify note:** the proxy is
+  installed by the app delegate, so it is **not** visible in a SwiftUI `#Preview` — verified on a real
+  run (device/sim), not the canvas. Original write-up kept below for record.
+
+  Every SwiftUI `.navigationTitle` renders in **San Francisco**, not Futura — there's no SwiftUI-native
   hook to swap the face. Spotted on the exercise run screen ("A Minor Pentatonic"), but it's
   systemic: **~45 titles across the app**, nearly all `.inline`. Only two screens already dodge it
   by hand-rolling a `.principal` toolbar item in Futura — Home's wordmark and `MetronomeView`'s
-  header (`Text(.font(.futura(.headline)))`). **Sequenced SECOND**, after the *Link exercises ↔
-  songs* item above — both wait for the same all-open-PRs-merged gate, but this one is smaller and
-  carries no schema risk, so it goes right after.
+  header (`Text(.font(.futura(.headline)))`).
   - **Decision (2026-07-23): one global override, including large titles.** A single
     `UINavigationBarAppearance` set once at launch — new `Pocket/UI/NavigationBarStyle.swift`,
     called from `AppDelegate.application(_:didFinishLaunchingWithOptions:)` in

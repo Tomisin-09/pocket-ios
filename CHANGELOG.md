@@ -5,6 +5,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Navigation titles now in Futura.** Every screen's title bar renders in **Futura-Bold** instead of
+  the system font, matching the rest of the app's type. Inline and large titles both, app-wide; only the
+  title text changes — bar backgrounds and layout are unchanged.
+
 ### Added
 - **Triad shapes in the chord picker.** The Insert grid has a new **Triads** category — major and minor
   triads on the three upper string sets (**G‑B‑e**, **D‑G‑B**, **A‑D‑G**), in **all three inversions**
