@@ -15,10 +15,14 @@ struct FretboardDrillEditor: View {
     let beatsPerBar: Int
     @Binding var drill: FretboardDrill
     var tint: Color = PocketColor.practice
-    /// When set, shows the **scale guide** — a scale + key picker whose notes are ghosted on the board so
-    /// a player can trace and tap a scale (incl. the symmetric ones the box generator can't produce). Off
-    /// for plain custom drills; the Scales "draw your own" surface turns it on. Purely a drawing aid.
+    /// When set, shows the **guide** — a reference + key picker whose notes are ghosted on the board so
+    /// a player can trace and tap them. Off for plain custom drills; the "draw your own" surfaces turn it
+    /// on. Purely a drawing aid — nothing snaps.
     var referenceEnabled: Bool = false
+    /// The catalog the guide lists — the **scale** references by default (the custom-scale canvas, incl.
+    /// the symmetric scales the box generator can't produce), or the **arpeggio** chord-tone shapes for
+    /// the Arpeggios "draw your own" surface. Only consulted when `referenceEnabled`.
+    var guideCatalog: [ScaleReference] = ScaleReference.all
 
     /// The slot the next placed note lands in — highlighted in the strip and reflected on the board.
     @State private var selectedSlot = 0
@@ -258,7 +262,7 @@ struct FretboardDrillEditor: View {
         .buttonStyle(.plain)
         .accessibilityLabel("\(FretboardGrid.stringName(string, of: drill.stringCount)) "
                             + (fret == 0 ? "open" : "fret \(fret)")
-                            + (inGuide ? ", in guide scale" : ""))
+                            + (inGuide ? ", in guide" : ""))
         .accessibilityHint(isSelected ? "Placed here — tap to clear" : "Tap to place")
     }
 

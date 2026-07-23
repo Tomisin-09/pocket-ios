@@ -261,7 +261,7 @@ private extension ExerciseShapeSheet {
                     .listRowBackground(Color.clear)
             case .draw:
                 FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill,
-                                     referenceEnabled: true)
+                                     referenceEnabled: true, guideCatalog: ScaleReference.arpeggios)
                     .listRowBackground(Color.clear)
             }
         } header: {
@@ -271,7 +271,7 @@ private extension ExerciseShapeSheet {
                  ? "Pick a quality and its root; the chord-tone box walks the neck over the click "
                     + "while you run the drill."
                  : "Draw the arpeggio yourself — tap the chord tones onto the board. Turn on a Guide "
-                    + "to ghost a scale's notes to trace.")
+                    + "to ghost an arpeggio's chord tones to trace.")
         }
     }
 

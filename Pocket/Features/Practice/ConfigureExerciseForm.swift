@@ -312,7 +312,7 @@ private extension ConfigureExerciseForm {
                     .listRowBackground(Color.clear)
             case .draw:
                 FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill,
-                                     referenceEnabled: true)
+                                     referenceEnabled: true, guideCatalog: ScaleReference.arpeggios)
                     .listRowBackground(Color.clear)
             }
         } header: {
@@ -322,7 +322,7 @@ private extension ConfigureExerciseForm {
                  ? "Pick a quality and its root — the chord-tone box walks the neck over the click. "
                     + "You can change it later too."
                  : "Draw the arpeggio yourself — tap the chord tones onto the board. Turn on a Guide "
-                    + "to ghost a scale's notes to trace. You can edit it later too.")
+                    + "to ghost an arpeggio's chord tones to trace. You can edit it later too.")
         }
     }
 

@@ -36,9 +36,17 @@ extension ScaleReference {
         .init(name: "Diminished (half–whole)", intervals: [0, 1, 3, 4, 6, 7, 9, 10])
     ]
 
-    /// The full guide catalog: every `GuitarScale` (reusing its own formula, so the two never drift)
-    /// **plus** the symmetric scales the generator can't produce. The symmetric ones lead — they're the
-    /// reason a player reaches for the canvas — then the familiar diatonic/pentatonic references.
+    /// The full **scale** guide catalog: every `GuitarScale` (reusing its own formula, so the two never
+    /// drift) **plus** the symmetric scales the generator can't produce. The symmetric ones lead —
+    /// they're the reason a player reaches for the canvas — then the familiar diatonic/pentatonic
+    /// references. Ghosted on the Scales (and run-family) "draw your own" canvas.
     static let all: [ScaleReference] =
         symmetric + GuitarScale.allCases.map { ScaleReference(name: $0.displayName, intervals: $0.intervals) }
+
+    /// The **arpeggio** guide catalog — the chord-tone shapes ghosted on the Arpeggios "draw your own"
+    /// canvas (ADR 0107). An arpeggio is just a chord-tone formula (R 3 5, optionally a 7th), so it
+    /// ghosts onto the board like any scale — letting a player trace the *chord tones* themselves rather
+    /// than a parent scale. Reuses `ArpeggioQuality`'s own interval formula, so the two never drift.
+    static let arpeggios: [ScaleReference] =
+        ArpeggioQuality.allCases.map { ScaleReference(name: $0.displayName, intervals: $0.intervals) }
 }

@@ -13,9 +13,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ### Added
 - **Draw your own arpeggios.** The Arpeggios drill now has the same **Generate / Draw your own** toggle
   scales and warm-ups already carry. Generate keeps the pick-a-quality-and-box editor; **Draw your own**
-  hands you the fretboard canvas to tap out any arpeggio shape by hand — with an optional scale guide to
-  ghost notes to trace — the escape hatch for shapes the box picker can't place. Available both when
-  creating a new Arpeggios drill and when editing an existing one's shape (ADR 0107).
+  hands you the fretboard canvas to tap out any arpeggio shape by hand — with an optional guide that
+  ghosts the **chord tones** (Major, Minor, Maj7, Min7, Dom7) to trace — the escape hatch for shapes the
+  box picker can't place. Available both when creating a new Arpeggios drill and when editing an existing
+  one's shape (ADR 0107).
 - **The app can offer you an artist name.** When the "earn your name" moment arrives, sign your own
   name — or tap **Spin a name** and one is offered in the Red Moon register: *Vega*, *Velvet Wolf*,
   *Midnight Ash*. The first suggestion is seeded from your setup answers so it feels like yours; spin

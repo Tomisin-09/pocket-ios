@@ -85,8 +85,10 @@ for any scale the generator can't place (symmetric, sequenced, or invented):
   `.arpeggio(run)`); Draw shows the `FretboardDrillEditor` with its scale guide (writes `.custom(drill)`)
   and starts from an empty neck — the escape hatch for a hand-shaped arpeggio the CAGED box can't declare.
   Same zero-model-change contract: an `.arpeggio` template carrying `.custom` content plays exactly like a
-  drawn Scales drill. The shared scale guide is reused as-is (a chord-tone-specific guide catalog stays a
-  possible follow-up).
+  drawn Scales drill. The guide is **chord-tone-specific** on this surface: `FretboardDrillEditor` gained
+  a `guideCatalog` parameter (defaulting to the scale references, so Scales/run families are unchanged),
+  and the Arpeggios canvas passes `ScaleReference.arpeggios` — a new pure catalog reusing every
+  `ArpeggioQuality` formula — so the guide ghosts the *chord tones* to trace, not a parent scale.
 
 ## Alternatives considered
 
