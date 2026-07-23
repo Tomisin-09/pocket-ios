@@ -14,6 +14,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     /// in (via `.landscapeEnabled()`) widens it, and reverts on disappear.
     static var orientationMask: UIInterfaceOrientationMask = .portrait
 
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        // Install the global Futura navigation-title appearance once, before any bar is built
+        // (ADR 0110). Isolated here so the whole feature is this call plus `NavigationBarStyle`.
+        NavigationBarStyle.apply()
+        return true
+    }
+
     func application(_ application: UIApplication,
                      supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         AppDelegate.orientationMask

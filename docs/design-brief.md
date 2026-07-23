@@ -164,6 +164,10 @@ tokens for everything else.
   everything through `futura`/`pocketMono` so the family stays swappable from one place.
 - Respect **Dynamic Type** — `futura` is built with `relativeTo:` so styles still scale;
   don't hard-code point sizes where a text style fits.
+- **Navigation-bar titles** are Futura too, via a single global `UINavigationBarAppearance`
+  (`NavigationBarStyle`, applied once at launch — ADR 0110), since SwiftUI's `.navigationTitle` has no
+  native font hook. Only the title font changes; bar backgrounds are untouched. Screens that need a
+  custom centre (Home wordmark, Metronome header) still use a `.principal` toolbar item.
 
 ### 3.3 Motion
 

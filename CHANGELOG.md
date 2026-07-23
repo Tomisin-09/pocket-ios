@@ -5,6 +5,11 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Navigation titles now in Futura.** Every screen's title bar renders in **Futura-Bold** instead of
+  the system font, matching the rest of the app's type. Inline and large titles both, app-wide; only the
+  title text changes — bar backgrounds and layout are unchanged.
+
 ### Added
 - **Draw your own warm-up, picking & legato runs.** The **Generate / Draw your own** switch — until now
   only on Scales — is now on every run-family template (**Warm-up, Picking, Legato, Fingerstyle**), at
