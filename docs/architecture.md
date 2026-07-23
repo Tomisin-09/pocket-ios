@@ -566,12 +566,13 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   once from Home — a ceremonial full-screen cover (`ArtistNamePromptSheet`) — after the player has
   **completed an exercise or captured a loop** (a Home-appearance check gated by the
   `artistNamePromptSeen` UserDefaults flag). Nothing leaves the device; it is deliberately not treated as PII.
-  **Slice 4 (ADR 0113)** upgrades that prompt from a blank field to an **offered name**: the pure
+  **Slice 4 (ADR 0113)** adds an **offered name** to that prompt: the signature field starts **blank**
+  (providing a name is an explicit act — type, or tap **Spin a name**), and the pure
   `ArtistNameGenerator` (`seed → name` over curated Red Moon word pools + a `blocklist`, safe by
-  construction) pre-fills the signature line with a name seeded from the intake answers
-  (`ArtistNameGenerator.seed(experience:genres:dream:)`, a stable FNV-1a hash so the first name is
-  *fated*; skipped intake ⇒ random device seed), with **Spin another** rerolling to a fresh random
-  seed and typing overriding — deterministic-then-random, fully unit-tested, no network.
+  construction) supplies one. The *first* spin is seeded from the intake answers
+  (`ArtistNameGenerator.seed(experience:genres:dream:)`, a stable FNV-1a hash so it feels *fated*;
+  skipped intake ⇒ random device seed); each later spin draws a fresh random seed and typing overrides
+  — deterministic-then-random, fully unit-tested, no network.
   **Slice 2 (ADR 0113)** adds four **curation** fields as additive optionals — `experienceRaw`,
   `genresRaw: [String]`, `dreamRaw`, `minutesPerDayRaw` — each **backed by a primitive** with a computed
   enum accessor (`experience`/`genres`/`dream`/`minutesPerDay` over the pure `ProfileCuration` enums

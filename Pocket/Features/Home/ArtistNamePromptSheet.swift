@@ -12,10 +12,11 @@ import SwiftUI
 /// the moment breathe, and a centred *signature*-style field — Red Moon register throughout (quiet,
 /// faintly mythic, no exclamation). A soft haptic punctuates the commit.
 ///
-/// **Slice 4 — an offered name, not a blank field.** The signature line arrives *pre-filled* with a
-/// generated name (`ArtistNameGenerator`), seeded from the player's intake answers so the first one
-/// feels fated; **Spin another** rerolls, and typing over it makes it their own. Accepting saves
-/// whatever is in the field (generated, spun, or hand-typed) — the greeting doesn't care which.
+/// **Slice 4 — a name is offered, never imposed.** The signature line starts **blank**; providing a
+/// name is an explicit act — type your own, or tap **Spin a name** to have one offered
+/// (`ArtistNameGenerator`). The *first* spin is seeded from the player's intake answers so it feels
+/// fated; each **Spin another** rerolls randomly. Accepting saves whatever is in the field (spun or
+/// hand-typed) — the greeting doesn't care which, and "This is me" stays disabled until there is one.
 struct ArtistNamePromptSheet: View {
     /// The local profile, if any — its intake answers seed the *first* offered name so it feels
     /// theirs. `nil` (skipped intake / no profile) falls back to a random device seed.
@@ -26,9 +27,13 @@ struct ArtistNamePromptSheet: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var fieldFocused: Bool
     @State private var name = ""
-    /// The seed behind the currently-shown generated name — advanced on each spin.
-    @State private var seed: UInt64 = 0
-    /// Drives the staged fade/rise-in on appear — the pause before the name *is* the ceremony.
+    /// The **fated** seed for the *first* spin — computed from the intake on appear, used once so the
+    /// first offered name feels theirs; subsequent spins draw a fresh random seed.
+    @State private var firstSeed: UInt64 = 0
+    /// Whether the player has spun at least once — the first spin uses `firstSeed`, later ones random,
+    /// and the button label shifts "Spin a name" → "Spin another".
+    @State private var hasSpun = false
+    /// Drives the staged fade/rise-in on appear — the pause before the moment breathes.
     @State private var revealed = false
 
     private var isBlank: Bool {
@@ -57,7 +62,7 @@ struct ArtistNamePromptSheet: View {
                     Text("Every artist earns their name.")
                         .font(.futura(.title2, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
-                    Text("You've put in the work. Here's one — keep it, spin another, or make it your own.")
+                    Text("You've put in the work. Sign your name — or spin one up.")
                         .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
@@ -103,7 +108,8 @@ struct ArtistNamePromptSheet: View {
     // MARK: - Signature + spin
 
     /// The signature: centred, underlined rather than boxed — you sign your name, you don't fill a
-    /// field. Pre-filled with the offered name; **Spin another** rerolls, typing overrides.
+    /// field. Starts **blank**; **Spin a name** offers one (typing overrides), so providing the name
+    /// is always an explicit act.
     private var signature: some View {
         VStack(spacing: 18) {
             VStack(spacing: 10) {
@@ -122,23 +128,26 @@ struct ArtistNamePromptSheet: View {
             }
             .padding(.horizontal, 40)
 
-            Button(action: spin) {
-                Label("Spin another", systemImage: "sparkles")
+            Button(action: spinName) {
+                Label(hasSpun ? "Spin another" : "Spin a name", systemImage: "sparkles")
                     .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
             }
-            .accessibilityHint("Offers a different generated name")
+            .accessibilityHint("Offers a generated name you can keep or edit")
         }
     }
 
     // MARK: - Choreography & actions
 
-    /// Stage the entrance: offer the first name, then fade/rise the content in and let it settle.
-    /// Unlike Slice 1 the keyboard is **not** raised on entry — the offered name should present
-    /// itself; tapping the field to edit (or Spin another) is an explicit choice. Reduce Motion
-    /// collapses the choreography to an instant reveal.
+    /// Stage the entrance: prepare the fated seed, then fade/rise the content in and let it settle.
+    /// The field stays **blank** and the keyboard is **not** raised — providing a name is the
+    /// player's explicit next move (type, or Spin a name). Reduce Motion collapses the choreography
+    /// to an instant reveal.
     private func enter() async {
-        offerFirstName()
+        firstSeed = ArtistNameGenerator.seed(experience: profile?.experience,
+                                             genres: profile?.genres ?? [],
+                                             dream: profile?.dream)
+            ?? UInt64.random(in: UInt64.min...UInt64.max)
         if reduceMotion {
             revealed = true
             return
@@ -146,21 +155,14 @@ struct ArtistNamePromptSheet: View {
         withAnimation(.easeOut(duration: 0.9).delay(0.15)) { revealed = true }
     }
 
-    /// Seed the first offered name from the intake answers (a *fated* name), or a random device seed
-    /// when the intake was skipped. Runs once as the ceremony opens.
-    private func offerFirstName() {
-        let firstSeed = ArtistNameGenerator.seed(experience: profile?.experience,
-                                                  genres: profile?.genres ?? [],
-                                                  dream: profile?.dream)
-            ?? UInt64.random(in: UInt64.min...UInt64.max)
-        seed = firstSeed
-        name = ArtistNameGenerator.name(seed: firstSeed)
-    }
-
-    /// Reroll to a fresh random name — the "spin freely from here" half of deterministic-then-random.
-    private func spin() {
-        seed = UInt64.random(in: UInt64.min...UInt64.max)
+    /// Offer a name into the signature. The first spin uses the intake-seeded `firstSeed` (a *fated*
+    /// name); every spin after draws a fresh random seed — deterministic-then-random. Dismisses the
+    /// keyboard so the offered name is what's on screen; typing over it still overrides.
+    private func spinName() {
+        let seed = hasSpun ? UInt64.random(in: UInt64.min...UInt64.max) : firstSeed
         name = ArtistNameGenerator.name(seed: seed)
+        hasSpun = true
+        fieldFocused = false
         haptic(.light)
     }
 
