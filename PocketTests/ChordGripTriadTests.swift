@@ -63,6 +63,19 @@ final class ChordGripTriadTests: XCTestCase {
         }
     }
 
+    /// The set is ordered so a 3-column grid lays each quality's three inversions on one row: every
+    /// consecutive triple shares a string set + quality and runs root · 1st · 2nd inversion.
+    func testTriadsAreRowGroupedBySetAndQualityAcrossInversions() {
+        let triads = ChordGrip.triads
+        XCTAssertEqual(triads.count % 3, 0)
+        for start in stride(from: 0, to: triads.count, by: 3) {
+            let row = Array(triads[start..<start + 3])
+            XCTAssertEqual(Set(row.map(\.name)).count, 1, "row \(start / 3) mixes string sets")
+            XCTAssertEqual(Set(row.map(\.quality)).count, 1, "row \(start / 3) mixes qualities")
+            XCTAssertEqual(row.map(\.inversion), [0, 1, 2], "row \(start / 3) isn't root/1st/2nd")
+        }
+    }
+
     /// The Insert set is the full 18 — 3 sets × 3 inversions × 2 qualities — and none leak into the
     /// movable barre set.
     func testInsertTriadSetIsEighteenAcrossThreeInversions() {

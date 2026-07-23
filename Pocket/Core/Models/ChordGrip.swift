@@ -279,12 +279,13 @@ extension ChordGrip {
                                           offsets: [nil, nil, -2, 0, 0, nil], quality: .minor, inversion: 2)
 
     /// The curated triad set (ADR 0109) — major + minor on the three upper string sets, in **all three
-    /// inversions** (root · 1st · 2nd) = 18 shapes. Generated, not tabled (M1); grouped by set then
-    /// inversion then quality so the Insert grid reads set-by-set.
+    /// inversions** (root · 1st · 2nd) = 18 shapes. Generated, not tabled (M1). Ordered **set → quality →
+    /// inversion** so the 3-column Insert grid lays each quality's three inversions out on **one row**
+    /// (row 1 = G-B-e major root/1st/2nd, row 2 = G-B-e minor root/1st/2nd, …).
     static let triads: [ChordGrip] = [
-        triadGBEMajor, triadGBEMinor, triadGBEMajor1, triadGBEMinor1, triadGBEMajor2, triadGBEMinor2,
-        triadDGBMajor, triadDGBMinor, triadDGBMajor1, triadDGBMinor1, triadDGBMajor2, triadDGBMinor2,
-        triadADGMajor, triadADGMinor, triadADGMajor1, triadADGMinor1, triadADGMajor2, triadADGMinor2
+        triadGBEMajor, triadGBEMajor1, triadGBEMajor2, triadGBEMinor, triadGBEMinor1, triadGBEMinor2,
+        triadDGBMajor, triadDGBMajor1, triadDGBMajor2, triadDGBMinor, triadDGBMinor1, triadDGBMinor2,
+        triadADGMajor, triadADGMajor1, triadADGMajor2, triadADGMinor, triadADGMinor1, triadADGMinor2
     ]
 }
 
