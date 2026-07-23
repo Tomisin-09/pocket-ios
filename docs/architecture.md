@@ -272,7 +272,21 @@ session" planner entry (V2 planner Slice 3 — pushes `PlannerView`) above two *
 (command-anchored click drills) and `LoopLibraryView` (measured song `Loop`s) — each a row that
 pushes its own list. The split is for clarity/accessibility; the two models stay separate
 (`Exercise` is audio-free, `Loop` is file-bound) but both are "things you train," the multi-source
-surface the planner composes from. That composition now has a home: **`Routine` + `RoutineItem`**
+surface the planner composes from. The two are also **repertoire-linkable** now: a user-authored
+**`Exercise.linkedSongs` ↔ `Song.linkedExercises`** edge (ADR 0111) records which songs a drill is
+*for*, as a reusable association that — unlike a `RoutineItem`'s positional, disposable reference —
+outlives any routine. It is the store's **first many-to-many** (every other relationship is to-one on
+its inverse): `@Relationship(inverse:)` sits on the `Exercise` side only, the `Song` side is a plain
+inferred-inverse array, and both delete rules are **`.nullify`** (deleting either just drops the
+membership, never cascades to the counterpart). Additive optional (empty set on migration), so it's a
+safe lightweight migration on two already-registered models. This narrows the old ADR-0043/0046
+"`Exercise` has no relationship to `Song`" rule to *audio/tempo*-free — the edge is plain metadata,
+never an audio or tempo input. It powers **"Build a routine for this song"**: the pure
+`SongRoutineBuilder` reads a song's linked exercises + its loops + itself and emits `[SessionBlock]`
+(exercises/loops as `.focus`, the song as a trailing `.play`), reusing the planner's
+`RoutineDetailView(generatedSession:)` → `PracticePlanner.materialise` review-then-Save seam so nothing
+persists until the player commits — the "planner becomes a producer of these edges" framing, with the
+direct edge as the first producer. That composition has a home: **`Routine` + `RoutineItem`**
 (ADR 0066) is the multi-unit *session* container — an ordered list of typed blocks (`focused` /
 `warmup` / `play` / `rest`), each non-rest block referencing exactly one `Exercise`/`Loop`/`Song`
 via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orphans the block

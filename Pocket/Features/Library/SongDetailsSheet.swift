@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// A read-first **song details** view, opened by holding the title on the practice
@@ -13,6 +14,11 @@ struct SongDetailsSheet: View {
     let song: Song
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    /// Every exercise, to offer in the link picker (ADR 0111). Sorted by name, like the library.
+    @Query(sort: \Exercise.name) private var allExercises: [Exercise]
+    @State private var showingExercisePicker = false
+    @State private var buildingRoutine = false
     @State private var editing = false
     // Inline notes editing: a local draft committed on Update, so the read view only
     // changes when you explicitly save (not keystroke-by-keystroke).
@@ -31,10 +37,30 @@ struct SongDetailsSheet: View {
                 notesSection
                 detailsSection
                 if !song.collections.isEmpty { collectionsSection }
+                linkedExercisesSection
                 statsSection
             }
             .navigationTitle("Song details")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showingExercisePicker) {
+                LinkPickerSheet(
+                    title: "Link exercises",
+                    prompt: "Search exercises",
+                    emptyCatalog: "No exercises in your library yet.",
+                    candidates: allExercises,
+                    label: { $0.name.isEmpty ? "Untitled exercise" : $0.name },
+                    subtitle: { $0.template.displayName },
+                    isLinked: { isLinked($0) },
+                    toggle: { toggleLink($0) },
+                    accent: PocketColor.practice)
+            }
+            // Push (not a modal cover) so RoutineDetailView's provisional state — Save-only, no
+            // Cancel button — still has the nav back button to abandon it, matching the planner flow.
+            .navigationDestination(isPresented: $buildingRoutine) {
+                RoutineDetailView(container: modelContext.container,
+                                  generatedSession: SongRoutineBuilder.sessionBlocks(for: song),
+                                  defaultName: SongRoutineBuilder.defaultName(for: song))
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
@@ -172,6 +198,81 @@ struct SongDetailsSheet: View {
             try? await Task.sleep(for: .seconds(2))
             withAnimation { savedPulse = false }
         }
+    }
+
+    // MARK: - Linked drills (ADR 0111)
+
+    /// The exercises that **serve** this song — the song side of the `Song.linkedExercises` ↔
+    /// `Exercise.linkedSongs` edge, and the future home of "Build a practice routine for this song".
+    /// Each row unlinks with a swipe; **Link exercises** opens the multi-select picker. Link changes
+    /// persist immediately, matching the inline-notes save here (a discrete, intentional edit).
+    private var linkedExercisesSection: some View {
+        Section {
+            if song.linkedExercises.isEmpty {
+                Text("No drills linked yet — link the exercises that help you play this song.")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+            } else {
+                ForEach(linkedExercisesByName, id: \.persistentModelID) { exercise in
+                    HStack(spacing: 8) {
+                        Text(exercise.name.isEmpty ? "Untitled exercise" : exercise.name)
+                            .foregroundStyle(PocketColor.textPrimary)
+                        Spacer(minLength: 8)
+                        Text(exercise.template.displayName)
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                }
+                .onDelete(perform: unlinkExercises)
+            }
+            Button { showingExercisePicker = true } label: {
+                Label("Link exercises", systemImage: "plus.circle")
+                    .foregroundStyle(PocketColor.practice)
+            }
+            Button { buildingRoutine = true } label: {
+                Label("Build a routine for this song", systemImage: "wand.and.stars")
+                    .foregroundStyle(canBuildRoutine ? PocketColor.practice : PocketColor.textSecondary)
+            }
+            .disabled(!canBuildRoutine)
+        } header: {
+            Text("Exercises for this song")
+        } footer: {
+            Text("Exercises that help you play this song — they show on the exercise too. "
+                 + "Build a routine strings these together with your saved loops and a full "
+                 + "play-through, ready to review and save.")
+        }
+    }
+
+    private var linkedExercisesByName: [Exercise] {
+        song.linkedExercises.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// Whether "Build a routine" has anything to work with — a linked exercise or a saved loop
+    /// (ADR 0111). Mirrors `SongRoutineBuilder.canBuild` so the button disables when the generated
+    /// routine would be a lone play-through.
+    private var canBuildRoutine: Bool { SongRoutineBuilder.canBuild(for: song) }
+
+    private func isLinked(_ exercise: Exercise) -> Bool {
+        song.linkedExercises.contains { $0.persistentModelID == exercise.persistentModelID }
+    }
+
+    /// Toggle a drill's link from the picker — mutating the relationship + `save()` keeps the picker
+    /// checkmark and the section behind it in sync.
+    private func toggleLink(_ exercise: Exercise) {
+        if let index = song.linkedExercises.firstIndex(where: { $0.persistentModelID == exercise.persistentModelID }) {
+            song.linkedExercises.remove(at: index)
+        } else {
+            song.linkedExercises.append(exercise)
+        }
+        try? modelContext.save()
+    }
+
+    private func unlinkExercises(at offsets: IndexSet) {
+        let targets = offsets.map { linkedExercisesByName[$0] }
+        for exercise in targets {
+            song.linkedExercises.removeAll { $0.persistentModelID == exercise.persistentModelID }
+        }
+        try? modelContext.save()
     }
 
     private var statsSection: some View {

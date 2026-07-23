@@ -14,6 +14,7 @@ struct LibraryView: View {
     /// Drives multi-select import: progress overlay + partial-failure summary.
     @State private var importModel = SongImportModel()
     @State private var editingSong: Song?
+    @State private var detailsSong: Song?
     /// Canonical collection names the library is filtered by; empty ⇒ no filter
     /// (intersection/AND semantics — a song matches if it has all selected). ADR 0033.
     @State private var selectedCollections: Set<String> = []
@@ -71,6 +72,15 @@ struct LibraryView: View {
                                     set: { if !$0 { editingSong = nil } })) {
             if let song = editingSong {
                 SongEditSheet(song: song)
+            }
+        }
+        // Details opens the read-first overview (notes + linked exercises, ADR 0111) — reachable
+        // from Library so its link authoring doesn't require the waveform title-hold detour. Same
+        // Bool-binding presentation as Edit, for the same ADR-0090 identity-flip reason above.
+        .sheet(isPresented: Binding(get: { detailsSong != nil },
+                                    set: { if !$0 { detailsSong = nil } })) {
+            if let song = detailsSong {
+                SongDetailsSheet(song: song)
             }
         }
     }
@@ -195,6 +205,9 @@ struct LibraryView: View {
                         // Hold a card for its actions (Edit opens the metadata sheet); swipe
                         // still offers a quick Delete. Tap opens the song for practice.
                         .contextMenu {
+                            Button { detailsSong = song } label: {
+                                Label("Details", systemImage: "info.circle")
+                            }
                             Button { editingSong = song } label: {
                                 Label("Edit", systemImage: "pencil")
                             }
