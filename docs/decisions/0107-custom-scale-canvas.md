@@ -79,6 +79,16 @@ for any scale the generator can't place (symmetric, sequenced, or invented):
   rendering/playback already keys off `FretboardContent` (via `.drill`), never the template, so a `.run`
   template carrying `.custom` content plays exactly like a drawn Scales drill. `ConfigureExerciseForm`
   was extracted from `NewExerciseSheet.swift` into its own file to stay under the 400-line cap.
+- ~~**Draw mode for Arpeggios.**~~ **DONE (pocket-190).** The same generate-or-draw toggle now extends to
+  the **Arpeggios** template at both create (`ConfigureExerciseForm`) and Edit shape
+  (`ExerciseShapeSheet`). Generate keeps the `ArpeggioRunEditor` chord-tone box picker (writes
+  `.arpeggio(run)`); Draw shows the `FretboardDrillEditor` with its scale guide (writes `.custom(drill)`)
+  and starts from an empty neck — the escape hatch for a hand-shaped arpeggio the CAGED box can't declare.
+  Same zero-model-change contract: an `.arpeggio` template carrying `.custom` content plays exactly like a
+  drawn Scales drill. The guide is **chord-tone-specific** on this surface: `FretboardDrillEditor` gained
+  a `guideCatalog` parameter (defaulting to the scale references, so Scales/run families are unchanged),
+  and the Arpeggios canvas passes `ScaleReference.arpeggios` — a new pure catalog reusing every
+  `ArpeggioQuality` formula — so the guide ghosts the *chord tones* to trace, not a parent scale.
 
 ## Alternatives considered
 

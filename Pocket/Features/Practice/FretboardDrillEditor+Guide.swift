@@ -1,12 +1,13 @@
 import SwiftUI
 
-/// The **opt-in scale-tracing guide** for `FretboardDrillEditor` (ADR 0107) — split into its own file so
-/// the editor stays under the file-length ceiling. A scale + key picker ghosts a `ScaleReference`'s notes
-/// on the placement board (incl. the symmetric scales the box generator can't produce) so a player traces
-/// and taps them. Purely a drawing aid: nothing snaps, the player still places each note by hand.
+/// The **opt-in tracing guide** for `FretboardDrillEditor` (ADR 0107) — split into its own file so the
+/// editor stays under the file-length ceiling. A reference + key picker ghosts a `ScaleReference`'s notes
+/// on the placement board so a player traces and taps them: scales on the Scales canvas (incl. the
+/// symmetric ones the box generator can't produce), or chord tones on the Arpeggios canvas, per the
+/// editor's `guideCatalog`. Purely a drawing aid: nothing snaps, the player still places each note by hand.
 extension FretboardDrillEditor {
-    /// A scale picker (Off + the full `ScaleReference` catalog) and, once a scale is chosen, a key picker.
-    /// Setting them ghosts the scale on the board below.
+    /// A reference picker (Off + the editor's `guideCatalog` — scales, or the arpeggio chord-tone shapes)
+    /// and, once one is chosen, a key picker. Setting them ghosts the reference's notes on the board below.
     var guideControls: some View {
         HStack(spacing: 10) {
             Text("Guide")
@@ -15,7 +16,7 @@ extension FretboardDrillEditor {
             Menu {
                 Button("Off") { referenceScale = nil }
                 Divider()
-                ForEach(ScaleReference.all) { reference in
+                ForEach(guideCatalog) { reference in
                     Button(reference.name) { referenceScale = reference }
                 }
             } label: {

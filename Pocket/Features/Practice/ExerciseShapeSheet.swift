@@ -43,6 +43,10 @@ struct ExerciseShapeSheet: View {
     /// generative `FretboardRunEditor` or the same hand-drawn canvas. Seeded from the stored content —
     /// a run exercise already holding a `.custom` drill opens in draw mode. Only meaningful for `.run`.
     @State private var runMode: AuthoringMode
+    /// How an **Arpeggios** drill authors its content: the generative `ArpeggioRunEditor` chord-tone box
+    /// picker or the same hand-drawn canvas (ADR 0107). Seeded from the stored content — an arpeggio
+    /// exercise already holding a `.custom` drill opens in draw mode. Only meaningful for `.arpeggio`.
+    @State private var arpeggioMode: AuthoringMode
 
     /// The two ways a fretboard drill's content is authored (the generate-or-draw split).
     private enum AuthoringMode: Hashable { case generate, draw }
@@ -55,17 +59,18 @@ struct ExerciseShapeSheet: View {
         _run = State(initialValue: content?.runValue ?? .chromaticWarmup)
         _scale = State(initialValue: content?.scaleValue ?? .aMinorPentatonic)
         _arpeggio = State(initialValue: content?.arpeggioValue ?? .aMinorSeventh)
-        // A Scales *or* run-family drill drawn by hand opens the empty canvas; the custom-grid template
-        // keeps the spider-walk starter. A stored custom drill (any drawable template) seeds itself and
-        // opens in draw mode.
+        // A Scales, run-family, *or* Arpeggios drill drawn by hand opens the empty canvas; the
+        // custom-grid template keeps the spider-walk starter. A stored custom drill (any drawable
+        // template) seeds itself and opens in draw mode.
         let editor = exercise.template.bespokeEditor
         let drawnCustom = content?.customValue != nil
-        let drawableEditor = editor == .scale || editor == .run
+        let drawableEditor = editor == .scale || editor == .run || editor == .arpeggio
         let customDefault: FretboardDrill = drawableEditor
             ? .emptyBar(beatsPerBar: exercise.beatsPerBar) : .spiderWalk
         _customDrill = State(initialValue: content?.customValue ?? customDefault)
         _scaleMode = State(initialValue: editor == .scale && drawnCustom ? .draw : .generate)
         _runMode = State(initialValue: editor == .run && drawnCustom ? .draw : .generate)
+        _arpeggioMode = State(initialValue: editor == .arpeggio && drawnCustom ? .draw : .generate)
         _chords = State(initialValue: exercise.chordProgression ?? .gMajorPop)
         _strumChords = State(initialValue: exercise.strumChordSheet ?? .popGroove)
     }
@@ -122,7 +127,8 @@ struct ExerciseShapeSheet: View {
         case .run: content = runMode == .draw ? .custom(customDrill) : .run(run)
         // A Scales drill writes its generated box or, in draw mode, the hand-placed custom drill.
         case .scale: content = scaleMode == .draw ? .custom(customDrill) : .scale(scale)
-        case .arpeggio: content = .arpeggio(arpeggio)
+        // An Arpeggios drill writes its generated chord-tone box or, in draw mode, the custom drill.
+        case .arpeggio: content = arpeggioMode == .draw ? .custom(customDrill) : .arpeggio(arpeggio)
         case .fretboardGrid: content = .custom(customDrill)
         case .strumming, .chords, .strumChords: return
         }
@@ -236,17 +242,36 @@ private extension ExerciseShapeSheet {
         }
     }
 
-    /// The Arpeggios template's authoring surface — the `ArpeggioRunEditor` chord-tone picker. Same
-    /// immutability contract: the template stays fretboard; you pick the quality and root.
+    /// The Arpeggios template's authoring surface — a **generate-or-draw** split (ADR 0107): the
+    /// `ArpeggioRunEditor` chord-tone box picker (generate), or the tap-to-place `FretboardDrillEditor`
+    /// with its scale guide (draw your own), the escape hatch for any hand-shaped arpeggio the box
+    /// generator can't declare. Same immutability contract: the template stays fretboard.
     var arpeggioSection: some View {
         Section {
-            ArpeggioRunEditor(run: $arpeggio)
-                .listRowBackground(Color.clear)
+            Picker("How to author", selection: $arpeggioMode) {
+                Text("Generate").tag(AuthoringMode.generate)
+                Text("Draw your own").tag(AuthoringMode.draw)
+            }
+            .pickerStyle(.segmented)
+            .listRowBackground(Color.clear)
+
+            switch arpeggioMode {
+            case .generate:
+                ArpeggioRunEditor(run: $arpeggio)
+                    .listRowBackground(Color.clear)
+            case .draw:
+                FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill,
+                                     referenceEnabled: true, guideCatalog: ScaleReference.arpeggios)
+                    .listRowBackground(Color.clear)
+            }
         } header: {
             Text("How to play — arpeggio")
         } footer: {
-            Text("Pick a quality and its root; the chord-tone box walks the neck over the click "
-                 + "while you run the drill.")
+            Text(arpeggioMode == .generate
+                 ? "Pick a quality and its root; the chord-tone box walks the neck over the click "
+                    + "while you run the drill."
+                 : "Draw the arpeggio yourself — tap the chord tones onto the board. Turn on a Guide "
+                    + "to ghost an arpeggio's chord tones to trace.")
         }
     }
 

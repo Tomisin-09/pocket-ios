@@ -23,6 +23,20 @@ final class ScaleReferenceTests: XCTestCase {
                        ScaleReference.symmetric.count + GuitarScale.allCases.count)
     }
 
+    func testArpeggioCatalogReusesEveryQualityFormula() {
+        let names = ScaleReference.arpeggios.map(\.name)
+        XCTAssertEqual(names.count, Set(names).count, "duplicate arpeggio reference names")
+        XCTAssertEqual(ScaleReference.arpeggios.count, ArpeggioQuality.allCases.count)
+        // Each arpeggio reference reuses its `ArpeggioQuality` formula (so the two never drift), and
+        // ghosts the same pitch classes the generated box would sound.
+        for quality in ArpeggioQuality.allCases {
+            let reference = ScaleReference.arpeggios.first { $0.name == quality.displayName }
+            XCTAssertEqual(reference?.pitchClasses(root: 9),
+                           Set(quality.intervals.map { (9 + $0) % 12 }),
+                           "the \(quality.displayName) arpeggio reference reuses its chord-tone formula")
+        }
+    }
+
     // MARK: - Pitch-class formulas
 
     func testWholeToneIsSixWholeSteps() {
