@@ -112,6 +112,65 @@ final class CandidateDeriverTests: XCTestCase {
         XCTAssertEqual(readiness, CandidateDeriver.prereqFloor, accuracy: 0.0001)
     }
 
+    // MARK: - Profile emphasis mix (ADR 0113 S3)
+
+    /// A scales exercise (serves the scales family, incl. `scale.pentatonic`) for genre-lift tests.
+    private func scalesExercise(mastery: Int? = nil) -> PlannerExercise {
+        PlannerExercise(uid: UUID(), template: .scales, mastery: mastery,
+                        lastPracticed: nil, estimatedMinutes: 10)
+    }
+
+    func testGenreEmphasisLiftsAMatchingSkillPriority() {
+        // scale.pentatonic is in the blues genre map; a blues profile should lift it above neutral.
+        let exercise = scalesExercise()
+        let library = PlannerLibrary(exercises: [exercise])
+        let goals = [goal(skills: ["scale.pentatonic"])]
+        let neutral = CandidateDeriver.deriveCandidates(goals: goals, library: library)
+        let blues = CandidateDeriver.deriveCandidates(
+            goals: goals, library: library,
+            emphasis: PracticeEmphasis(genres: [.blues], dream: nil))
+        XCTAssertEqual(neutral.count, 1)
+        XCTAssertEqual(blues.count, 1)
+        XCTAssertGreaterThan(blues[0].priority, neutral[0].priority, "declared genre lifts its skill")
+        XCTAssertEqual(blues[0].priority,
+                       neutral[0].priority * PracticeEmphasis.genreLift, accuracy: 0.0001)
+    }
+
+    func testEmphasisNeverExcludesAnUnmatchedCandidate() {
+        // A picking goal with a jazz profile (no picking skills in the jazz map) → present, unchanged.
+        let exercise = pickingExercise()
+        let library = PlannerLibrary(exercises: [exercise])
+        let goals = [goal(skills: ["pick.alternate"])]
+        let neutral = CandidateDeriver.deriveCandidates(goals: goals, library: library)
+        let jazz = CandidateDeriver.deriveCandidates(
+            goals: goals, library: library,
+            emphasis: PracticeEmphasis(genres: [.jazz], dream: nil))
+        XCTAssertEqual(jazz.count, 1, "emphasis re-orders, never gates")
+        XCTAssertEqual(jazz[0].priority, neutral[0].priority, accuracy: 0.0001, "unmatched ⇒ no change")
+    }
+
+    func testHighGoalStillOutranksAnEmphasisedNormalGoal() throws {
+        // Normal goal on a genre+dream-matched, prereq-free skill (metal → pick.alternate, getGood →
+        // speedRamp) sits at the full cap; a High goal on an un-emphasised, prereq-free skill still
+        // wins. Isolates the cap hierarchy — no prereq down-weight in play.
+        let matched = pickingExercise()   // pick.alternate ∈ metal map, mode .speedRamp (getGood tilt)
+        let plain = PlannerExercise(uid: UUID(), template: .chords, mastery: nil,
+                                    lastPracticed: nil, estimatedMinutes: 10)  // rhythm.chord-changes
+        let library = PlannerLibrary(exercises: [matched, plain])
+        let candidates = CandidateDeriver.deriveCandidates(
+            goals: [goal(weight: GoalPriority.normal.weight, skills: ["pick.alternate"]),
+                    goal(weight: GoalPriority.high.weight, skills: ["rhythm.chord-changes"])],
+            library: library,
+            emphasis: PracticeEmphasis(genres: [.metal], dream: .getGood))
+        let byUID = Dictionary(uniqueKeysWithValues: candidates.map { ($0.unit.uid, $0) })
+        let matchedPriority = try XCTUnwrap(byUID[matched.uid]).priority
+        let plainPriority = try XCTUnwrap(byUID[plain.uid]).priority
+        XCTAssertEqual(matchedPriority, GoalPriority.normal.weight * PracticeEmphasis.cap,
+                       accuracy: 0.0001, "Normal goal, genre+dream matched ⇒ full cap")
+        XCTAssertLessThan(matchedPriority, plainPriority,
+                          "a stated High goal beats a fully-emphasised Normal one")
+    }
+
     // MARK: - Path B: repertoire → target song's loops + song run
 
     func testTargetSongContributesLoopsAndSongRun() {

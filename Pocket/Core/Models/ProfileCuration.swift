@@ -46,8 +46,8 @@ enum ArtistExperience: String, CaseIterable, Identifiable {
 }
 
 /// What the player wants to play (intake Q2 → preset ordering + planner emphasis). Multi-select, so a
-/// `Profile` stores an *array* of these. Ordering/emphasis consumers land later; the field is
-/// collected now because the intake asks it once and the value is cheap to keep.
+/// `Profile` stores an *array* of these. The planner-emphasis consumer (`GenreSkillMap` →
+/// `PracticeEmphasis`, ADR 0113 S3) lifts the skills each declared genre leans on.
 enum MusicGenre: String, CaseIterable, Identifiable {
     case rock
     case blues
@@ -77,7 +77,9 @@ enum MusicGenre: String, CaseIterable, Identifiable {
     }
 }
 
-/// The dream (intake Q3 → planner emphasis mix). Consumed by the planner in Slice 3; collected now.
+/// The dream (intake Q3 → planner emphasis mix, ADR 0113 Slice 3). Tilts the planner toward a
+/// practice **mode** (`PracticeEmphasis`): the whole-fretboard grind, the theory desk, the songbook,
+/// or an easy expressive noodle.
 enum MusicalDream: String, CaseIterable, Identifiable {
     case playSongs
     case writeMusic
@@ -93,6 +95,20 @@ enum MusicalDream: String, CaseIterable, Identifiable {
         case .writeMusic: return "Write my own music"
         case .getGood: return "Get properly good"
         case .unwind: return "Just unwind"
+        }
+    }
+
+    /// The single practice **mode** this dream tilts a session toward (ADR 0113 S3 emphasis, Slice 3
+    /// consumer). Songs → `repertoire`; writing → the off-guitar theory/songwriting desk; getting
+    /// good → the technique speed-ramp; unwinding → low-pressure expressive `loopDrill` playing
+    /// (scales, bends, feel) rather than the grind. One mode each keeps the tilt legible — it's a
+    /// nudge, never the whole plan.
+    var emphasisedMode: SkillMode {
+        switch self {
+        case .playSongs: return .repertoire
+        case .writeMusic: return .offGuitar
+        case .getGood: return .speedRamp
+        case .unwind: return .loopDrill
         }
     }
 }
