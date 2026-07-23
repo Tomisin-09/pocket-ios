@@ -309,4 +309,16 @@ extension StrumPattern {
     static let boomChick = StrumPattern(
         slotsPerBeat: 2,
         slots: [.down, .mute, .down, .mute, .down, .mute, .down, .mute])
+
+    /// The curated **built-in grooves** offered as a one-tap starting point in the strum editor (device
+    /// feedback 2026-07-23: the presets existed only as seeded exercises, with no way to drop one into a
+    /// pattern you're editing). Pure data — the editor names each in a menu and resizes the chosen groove
+    /// to the exercise meter. Order runs simplest → most syncopated.
+    static let presets: [(name: String, pattern: StrumPattern)] = [
+        ("Folk (D DU UDU)", folk),
+        ("Down-Up Eighths", downUpEighths),
+        ("Reggae Offbeat", offbeatUps),
+        ("Boom-Chick", boomChick),
+        ("Syncopated Mute", syncopatedMute)
+    ]
 }

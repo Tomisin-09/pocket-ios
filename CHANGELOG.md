@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Strum preset picker.** The strumming editor (Strumming and Strum & Chords) has a new **Presets**
+  menu — drop in a curated groove (Folk, Down-Up Eighths, Reggae Offbeat, Boom-Chick, Syncopated Mute) as
+  a one-tap starting point, adapted to the exercise's meter, instead of building every pattern from
+  scratch or hunting for the seeded example exercises.
 - **Longer custom drills + a scrollable neck.** The tap-to-place fretboard editor (custom scales/drills)
   gained a **Bars** stepper — build a run across up to **8 bars**, not just one. Slots-per-bar follow the
   time signature and subdivision, so a wider meter naturally holds more. The neck itself is now

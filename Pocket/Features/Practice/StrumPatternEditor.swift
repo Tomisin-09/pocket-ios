@@ -26,12 +26,48 @@ struct StrumPatternEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            resolutionPicker
+            HStack {
+                resolutionPicker
+                presetMenu
+            }
             lane
             Text("Tap a slot to cycle it: down → up → mute → rest. Long-press to accent.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
+    }
+
+    // MARK: - Presets
+
+    /// A menu of curated built-in grooves (`StrumPattern.presets`) — pick one to drop it into the lane as
+    /// a starting point, resized to this exercise's meter. Answers "where did the strum presets go?"
+    /// (device feedback 2026-07-23) by surfacing them right where you build a pattern.
+    private var presetMenu: some View {
+        Menu {
+            ForEach(Self.presetOptions, id: \.name) { option in
+                Button(option.name) { apply(option.pattern) }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "music.note.list")
+                Text("Presets")
+            }
+            .font(.futura(.caption, weight: .semibold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(PocketColor.surfaceSubtle, in: Capsule())
+        }
+        .accessibilityLabel("Strum presets")
+    }
+
+    private static let presetOptions = StrumPattern.presets
+
+    /// Drop a preset in, adapting its groove to the editor's meter (a 4-beat preset trims/extends to the
+    /// exercise's `beatsPerBar` via the pure `resized`).
+    private func apply(_ preset: StrumPattern) {
+        pattern = preset.resized(slotsPerBeat: preset.slotsPerBeat, beatsPerBar: beatsPerBar)
+        haptic(.medium)
     }
 
     // MARK: - Resolution
