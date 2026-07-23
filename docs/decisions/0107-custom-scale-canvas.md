@@ -62,8 +62,10 @@ for any scale the generator can't place (symmetric, sequenced, or invented):
 - **First-class generated symmetric scales.** If demand proves it, a dedicated repeating-cell generator
   could still add whole-tone/diminished to `GuitarScale` later — but the canvas removes the urgency, so
   it stays deferred rather than built speculatively.
-- **Draw mode at creation.** Today draw mode is reached via **Edit shape** on a Scales drill; offering it
-  in the create sheet too is a small follow-up if the flow wants it.
+- ~~**Draw mode at creation.**~~ **DONE (pocket-174, device feedback).** The generate-or-draw toggle now
+  also appears in the **New Scales** create sheet (`NewExerciseSheet`), not only Edit-shape, so the canvas
+  + guide are discoverable when first making a Scales drill. A Scales drill switched to draw at creation
+  starts from an empty neck (`FretboardDrill.emptyBar`).
 
 ## Alternatives considered
 

@@ -218,6 +218,13 @@ final class ChordGripTests: XCTestCase {
                        "power chords ship in Tier 1 on both CAGED root strings")
     }
 
+    func testPowerChordGripIsNamedByTheReverseNamer() {
+        // The custom placer's identifier must now spell a hand-built root+5th as "X5" (ADR 0106 amend,
+        // relaxing the ADR-0093 ≥3-note rule for the power-chord dyad).
+        XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.eShapeFifth.voicing(rootPitchClass: 7)), "G5")
+        XCTAssertEqual(ChordNamer.bestName(for: ChordGrip.aShapeFifth.voicing(rootPitchClass: 2)), "D5")
+    }
+
     func testRootStringCarriesTheRootFret() {
         // A-shape at C (pc 0): A string open is pc 9, so the root fret is 3; the A-string entry (index
         // 4, offset 0) lands on fret 3 and the low E (index 5) stays muted.

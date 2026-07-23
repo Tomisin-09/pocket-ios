@@ -55,9 +55,11 @@ property net, plus known-shape oracles for E5/A5.
   but adding them reopens that ADR-0103 D4 decision **and** needs a subtitle fix — `movableSubtitle`
   calls every chip a "barre", which a power chord is not. Left to a follow-up that revisits the Insert
   set as a whole.
-- **Naming a hand-built root-and-5th dyad** in the chord identifier (ADR 0093) — would require relaxing
-  its ≥3-note rule to recognise the "5" interval as a power chord. Deferred; the movable grip already
-  names itself.
+- ~~**Naming a hand-built root-and-5th dyad** in the chord identifier (ADR 0093).~~ **DONE
+  (pocket-174, device feedback).** `ChordNamer` gained a `"5"` quality (`[0, 7]`) and its ≥3-note guard
+  was relaxed to allow the two-note power-chord case (every other dyad still names nothing, since only
+  `[0, 7]` matches a two-interval set). `CustomChordSheet.canIdentify` now shows the identifier panel for
+  a named two-note power chord, so building a root+5th in the placer reads "Looks like G5".
 
 ## Alternatives considered
 

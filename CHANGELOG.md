@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Power chords are named when you build one.** Placing a root + 5th in the custom-chord placer now
+  reads "Looks like **G5**" — the identifier recognises power chords (previously it needed three notes).
+- **Draw your own scale — now at creation too.** The **Generate / Draw your own** switch (and its scale
+  guide) is available when you first create a Scales exercise, not only under Edit shape.
 - **Play scales in patterns.** A generated Scales exercise has a new **Sequence** control: **Straight**
   (as before), **In 3rds**, **In 4ths**, **Groups of 3**, or **Groups of 4**. Pick one and the run is
   reordered into that classic pattern (e.g. a major scale in thirds — 1‑3‑2‑4‑3‑5) automatically, no

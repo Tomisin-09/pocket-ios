@@ -145,8 +145,13 @@ struct CustomChordSheet: View {
 // MARK: - Geometry + edit helpers
 
 private extension CustomChordSheet {
-    /// Enough distinct notes (≥3) to name — below that it's still mid-build, so the identifier stays hidden.
-    var canIdentify: Bool { voicing.pitchClasses.count >= 3 }
+    /// Enough distinct notes to name: three name any chord, and **two** name a power chord (root + 5th,
+    /// ADR 0106) — but only when they actually spell one, so a mid-build dyad that names nothing still
+    /// stays hidden rather than flashing "No common name".
+    var canIdentify: Bool {
+        let distinct = voicing.pitchClasses.count
+        return distinct >= 3 || (distinct == 2 && !chordCandidates.isEmpty)
+    }
 
     /// Live reverse-lookup readings of the shape (ADR 0093 N7), ranked best first — reads geometry only.
     var chordCandidates: [ChordCandidate] {
