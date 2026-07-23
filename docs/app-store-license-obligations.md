@@ -73,6 +73,41 @@ app (not user-supplied files).
   accept **Schedule 2**; all in-app purchases must flow through Apple's IAP
   system (subject to commission).
 
+### Terms of Use (EULA) — App Review Guideline 3.1.2 / Schedule 2
+**Triggered by:** shipping any Terms link, and required once auto-renewable
+subscriptions ship (Red Moon Pro, [ADR 0112](decisions/0112-freemium-monetization-and-pro-tier.md)).
+
+- **Decision (2026-07-23): no custom Terms of Service until the Oracle AI tier
+  introduces its own service relationship.** Apple's [standard EULA](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/)
+  applies by default and satisfies the required "Terms of Use (EULA)" link for
+  both the free app and the Pro subscription. Don't re-litigate writing a custom
+  ToS for v1 or Pro.
+- **When Pro ships:** the paywall and the App Store description must both carry a
+  functional **Terms of Use (EULA)** link (Apple's standard URL is acceptable)
+  **and** a Privacy Policy link, plus the subscription disclosure text (title,
+  duration, price/period, auto-renewal). The Terms link already ships in
+  **Settings → About** (`SettingsView.appleStandardEULA`).
+- **When Oracle AI ships:** write a custom ToS (acceptable-use for the proxy,
+  liability disclaimer for AI output, England & Wales jurisdiction) and repoint
+  the link. See [ADR 0092](decisions/0092-ai-strategy-boundaries-and-foundations.md).
+
+### Privacy Policy link & hosting — §3.3.3 / Guideline 5.1.1
+**Triggered by:** App Store Connect (privacy-policy URL is mandatory) and the
+in-app link.
+
+- **Source of record:** [docs/privacy-policy.md](privacy-policy.md) — standalone
+  Red Moon Practice policy with the real controller details (Deco Operations Ltd,
+  company 17032490, ICO ZC112793).
+- **In-app link:** ships in **Settings → About** (`SettingsView.privacyPolicy`),
+  currently pointed at the live `decooperations.co.uk/privacy#red-moon-practice`
+  anchor.
+- **To deploy standalone:** [docs/site/redmoon-privacy.html](site/redmoon-privacy.html)
+  is deploy-ready. When it's live on the company site, repoint both the Settings
+  link and the App Store Connect privacy URL at its dedicated URL.
+- **Keep it true:** the policy promises zero data collection. The first analytics
+  SDK, crash reporter, Sign in with Apple, or the AI proxy breaks that — update
+  the policy **and** the App Privacy label *before* such a feature ships.
+
 ## Standing risks (not feature-gated)
 - **Indemnification is broad (§10)** — including third-party IP and harmful-content
   claims. Argues for being conservative about any third-party or user-uploaded
