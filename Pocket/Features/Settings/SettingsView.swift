@@ -103,6 +103,26 @@ struct SettingsView: View {
 
             Section {
                 LabeledContent("Version", value: Self.appVersion)
+                // Apple's standard EULA (the licence that governs use of the app on the
+                // App Store) applies by default when we ship no custom terms — see
+                // docs/app-store-license-obligations.md. Surfacing the link here satisfies
+                // the "Terms of Use (EULA)" disclosure Apple requires once auto-renewable
+                // subscriptions ship, and is honest for v1. Swap for a hosted custom-ToS URL
+                // if/when the Oracle AI tier introduces its own terms (ADR 0092).
+                Link(destination: Self.privacyPolicy) {
+                    LabeledContent("Privacy Policy") {
+                        Image(systemName: "arrow.up.right")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Link(destination: Self.appleStandardEULA) {
+                    LabeledContent("Terms of Use") {
+                        Image(systemName: "arrow.up.right")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             } header: {
                 Text("About")
             } footer: {
@@ -137,6 +157,17 @@ struct SettingsView: View {
     private static var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
     }
+
+    /// Apple's standard Licensed Application End User License Agreement — the licence that
+    /// governs use of the app when we ship no custom terms. A valid compile-time literal.
+    private static let appleStandardEULA =
+        URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+
+    /// Red Moon Practice's privacy policy. Points at the live section on the Deco Operations
+    /// site. When the standalone page ships (docs/site/redmoon-privacy.html), repoint this at
+    /// its dedicated URL. A valid compile-time literal.
+    private static let privacyPolicy =
+        URL(string: "https://decooperations.co.uk/privacy#red-moon-practice")!
 }
 
 /// The per-row ⓘ copy, centralised the way `PracticeFieldInfo` is for the loop sheet. Moving the

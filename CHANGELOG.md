@@ -11,6 +11,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **Privacy Policy & Terms of Use links in Settings.** The **About** section now links out to
+  Red Moon Practice's privacy policy and to Apple's standard End User License Agreement — the licence
+  that governs the app while we ship no custom terms. Together these pre-satisfy the "Terms of Use
+  (EULA)" and privacy-policy disclosures Apple requires once paid subscriptions ship.
 - **Link exercises to the songs they're for.** An exercise and a song can now be associated as
   repertoire — "this drill is *for* that song" — as a reusable, two-way link that outlives any routine
   (ADR 0111). Author it from **either side**: the exercise's ⓘ detail sheet gains a **Songs** section,
