@@ -9,16 +9,31 @@ import SwiftUI
 ///
 /// Deliberately ceremonial rather than a form (device feedback: the plain sheet read flat). A
 /// full-screen cover on the app's own ground, a dimmed Red Moon crest, a staged fade-in that lets
-/// the moment breathe, and a centred *signature*-style field you sign your name into — Red Moon
-/// register throughout (quiet, faintly mythic, no exclamation). A soft haptic punctuates the
-/// commit. The generated-name flow (accept / reroll) is ADR 0113 Slice 4; Slice 1 signs by hand.
+/// the moment breathe, and a centred *signature*-style field — Red Moon register throughout (quiet,
+/// faintly mythic, no exclamation). A soft haptic punctuates the commit.
+///
+/// **Slice 4 — a name is offered, never imposed.** The signature line starts **blank**; providing a
+/// name is an explicit act — type your own, or tap **Spin a name** to have one offered
+/// (`ArtistNameGenerator`). The *first* spin is seeded from the player's intake answers so it feels
+/// fated; each **Spin another** rerolls randomly. Accepting saves whatever is in the field (spun or
+/// hand-typed) — the greeting doesn't care which, and "This is me" stays disabled until there is one.
 struct ArtistNamePromptSheet: View {
+    /// The local profile, if any — its intake answers seed the *first* offered name so it feels
+    /// theirs. `nil` (skipped intake / no profile) falls back to a random device seed.
+    var profile: Profile?  // defaults to nil in the memberwise init (keeps the no-arg preview compiling)
+
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var fieldFocused: Bool
     @State private var name = ""
-    /// Drives the staged fade/rise-in on appear — the pause before the field *is* the ceremony.
+    /// The **fated** seed for the *first* spin — computed from the intake on appear, used once so the
+    /// first offered name feels theirs; subsequent spins draw a fresh random seed.
+    @State private var firstSeed: UInt64 = 0
+    /// Whether the player has spun at least once — the first spin uses `firstSeed`, later ones random,
+    /// and the button label shifts "Spin a name" → "Spin another".
+    @State private var hasSpun = false
+    /// Drives the staged fade/rise-in on appear — the pause before the moment breathes.
     @State private var revealed = false
 
     private var isBlank: Bool {
@@ -47,31 +62,15 @@ struct ArtistNamePromptSheet: View {
                     Text("Every artist earns their name.")
                         .font(.futura(.title2, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
-                    Text("You've put in the work. What should we call you?")
+                    Text("You've put in the work. Sign your name — or spin one up.")
                         .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-                .padding(.bottom, 36)
+                .padding(.bottom, 32)
 
-                // The signature: centred, underlined rather than boxed — you sign your name, you
-                // don't fill a field.
-                VStack(spacing: 10) {
-                    TextField("", text: $name, prompt: Text("Your name"))
-                        .font(.futura(.title, weight: .medium))
-                        .multilineTextAlignment(.center)
-                        .textInputAutocapitalization(.words)
-                        .submitLabel(.done)
-                        .focused($fieldFocused)
-                        .onSubmit(save)
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Rectangle()
-                        .fill(PocketColor.surfaceBorder)
-                        .frame(height: 1)
-                        .frame(maxWidth: 200)
-                }
-                .padding(.horizontal, 40)
+                signature
 
                 Spacer()
 
@@ -106,18 +105,65 @@ struct ArtistNamePromptSheet: View {
         .task { await enter() }
     }
 
-    /// Stage the entrance: fade/rise the content in, hold a beat, then raise the keyboard so the
-    /// cursor lands in the signature line. Reduce Motion collapses the choreography to an instant
-    /// reveal + immediate focus.
+    // MARK: - Signature + spin
+
+    /// The signature: centred, underlined rather than boxed — you sign your name, you don't fill a
+    /// field. Starts **blank**; **Spin a name** offers one (typing overrides), so providing the name
+    /// is always an explicit act.
+    private var signature: some View {
+        VStack(spacing: 18) {
+            VStack(spacing: 10) {
+                TextField("", text: $name, prompt: Text("Your name"))
+                    .font(.futura(.title, weight: .medium))
+                    .multilineTextAlignment(.center)
+                    .textInputAutocapitalization(.words)
+                    .submitLabel(.done)
+                    .focused($fieldFocused)
+                    .onSubmit(save)
+                    .foregroundStyle(PocketColor.textPrimary)
+                Rectangle()
+                    .fill(PocketColor.surfaceBorder)
+                    .frame(height: 1)
+                    .frame(maxWidth: 200)
+            }
+            .padding(.horizontal, 40)
+
+            Button(action: spinName) {
+                Label(hasSpun ? "Spin another" : "Spin a name", systemImage: "sparkles")
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            .accessibilityHint("Offers a generated name you can keep or edit")
+        }
+    }
+
+    // MARK: - Choreography & actions
+
+    /// Stage the entrance: prepare the fated seed, then fade/rise the content in and let it settle.
+    /// The field stays **blank** and the keyboard is **not** raised — providing a name is the
+    /// player's explicit next move (type, or Spin a name). Reduce Motion collapses the choreography
+    /// to an instant reveal.
     private func enter() async {
+        firstSeed = ArtistNameGenerator.seed(experience: profile?.experience,
+                                             genres: profile?.genres ?? [],
+                                             dream: profile?.dream)
+            ?? UInt64.random(in: UInt64.min...UInt64.max)
         if reduceMotion {
             revealed = true
-            fieldFocused = true
             return
         }
         withAnimation(.easeOut(duration: 0.9).delay(0.15)) { revealed = true }
-        try? await Task.sleep(for: .seconds(1))
-        fieldFocused = true
+    }
+
+    /// Offer a name into the signature. The first spin uses the intake-seeded `firstSeed` (a *fated*
+    /// name); every spin after draws a fresh random seed — deterministic-then-random. Dismisses the
+    /// keyboard so the offered name is what's on screen; typing over it still overrides.
+    private func spinName() {
+        let seed = hasSpun ? UInt64.random(in: UInt64.min...UInt64.max) : firstSeed
+        name = ArtistNameGenerator.name(seed: seed)
+        hasSpun = true
+        fieldFocused = false
+        haptic(.light)
     }
 
     private func save() {

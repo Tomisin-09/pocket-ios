@@ -11,6 +11,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **The app can offer you an artist name.** When the "earn your name" moment arrives, sign your own
+  name — or tap **Spin a name** and one is offered in the Red Moon register: *Vega*, *Velvet Wolf*,
+  *Midnight Ash*. The first suggestion is seeded from your setup answers so it feels like yours; spin
+  again for another, or type your own over it. It's a spark, never an imposition — the field starts
+  blank and nothing is filled in for you — and everything stays on this device (ADR 0113).
 - **"Today's session" now leans toward your taste.** The planner reads the **genres** and **dream** you
   set in setup and gently emphasises matching work when it builds a session — a blues player sees more
   bends, pentatonics and blues-scale drills surface first; "get properly good" nudges technique up;
