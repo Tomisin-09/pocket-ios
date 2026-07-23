@@ -6,6 +6,10 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Play scales in patterns.** A generated Scales exercise has a new **Sequence** control: **Straight**
+  (as before), **In 3rds**, **In 4ths**, **Groups of 3**, or **Groups of 4**. Pick one and the run is
+  reordered into that classic pattern (e.g. a major scale in thirds — 1‑3‑2‑4‑3‑5) automatically, no
+  hand-placement. Ships with a "G Major — in 3rds" starter drill.
 - **Draw your own scale.** A Scales exercise now has a **Generate / Draw your own** switch. "Draw your
   own" opens a tap-to-place fretboard where you build a scale or run by hand — the escape hatch for
   shapes the box picker can't generate (whole-tone, diminished) and any sequenced or invented pattern.

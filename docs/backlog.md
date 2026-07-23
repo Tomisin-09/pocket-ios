@@ -251,9 +251,12 @@ docs so this stays a pointer list:
   Resolved at accept: a "pass" = one full `sequence()` at the anchor (up-and-back included); shifts
   clamp to a real neck + editor caps `passCount` (S10); `.extended`/`.threePerString` read
   `position` as start anchor and ignore `octaves`; the run editor tucks the shift controls under a
-  "Movement" disclosure. **Sequencing (3s/4s/6s) is a SEPARATE orthogonal future axis over ALL
-  layouts — deliberately NOT a 3-NPS feature, its own later ADR.** **Order: slice 1 first** (see
-  ADR). Shares the slide-teaching UX with the movable-chord item above.
+  "Movement" disclosure. ~~**Sequencing (3s/4s/6s) is a SEPARATE orthogonal future axis over ALL
+  layouts — deliberately NOT a 3-NPS feature, its own later ADR.**~~ **DONE (pocket-173, ADR 0108):**
+  the `SequencePattern` axis on `ScaleRun` (straight/thirds/fourths/groups-of-3-4) — a pure permutation
+  of the played run, orthogonal to every layout, applied in `sequenceWithGroups` so the box stays
+  untouched. **Order: slice 1 first** (see ADR). Shares the slide-teaching UX with the movable-chord
+  item above.
 - ~~**Symmetric scales: diminished + whole-tone (deferred from ADR 0085).**~~ **ADDRESSED via the custom
   scale canvas (pocket-172, ADR 0107), not a generator.** Rather than build the "own placement generator"
   a filtered CAGED box can't provide, symmetric scales (and any sequenced/exotic/hand-shaped run) are now

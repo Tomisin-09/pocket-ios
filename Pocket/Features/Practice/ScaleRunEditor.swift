@@ -42,6 +42,7 @@ struct ScaleRunEditor: View {
             if run.scale.supportedLayouts.count > 1 { layoutRow }
             positionRow
             if run.layout.usesOctaves { octavesRow }
+            sequenceRow
             Toggle("Up and back", isOn: roundTripBinding)
                 .font(.futura(.subheadline, weight: .semibold))
                 .tint(tint)
@@ -99,6 +100,22 @@ struct ScaleRunEditor: View {
         .accessibilityLabel("Scale, \(run.scale.displayName)")
     }
 
+    /// The **sequence** picker (ADR 0108) — straight, or the run reordered into thirds / fourths /
+    /// rolling groups. Orthogonal to scale/root/box, so it's offered for every layout.
+    private var sequenceRow: some View {
+        LabeledMenuRow(label: "Sequence") {
+            Picker("Sequence", selection: sequenceBinding) {
+                ForEach(SequencePattern.allCases) { pattern in
+                    Text(pattern.displayName).tag(pattern)
+                }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .tint(tint)
+            .accessibilityLabel("Sequence, \(run.sequencePattern.displayName)")
+        }
+    }
+
     // MARK: - Position + octaves
 
     /// The neck position selector — the box's **root anchor** as the primary label ("root on low E ·
@@ -141,18 +158,23 @@ struct ScaleRunEditor: View {
     private func rebuilt(scale: GuitarScale? = nil, rootPitchClass: Int? = nil,
                          position: Int? = nil, octaves: Int? = nil,
                          roundTrip: Bool? = nil, notesPerBeat: Int? = nil,
-                         layout: ScaleLayout? = nil) -> ScaleRun {
+                         layout: ScaleLayout? = nil, sequence: SequencePattern? = nil) -> ScaleRun {
         ScaleRun(scale: scale ?? run.scale,
                  rootPitchClass: rootPitchClass ?? run.rootPitchClass,
                  position: position ?? run.position,
                  octaves: octaves ?? run.octaves,
                  roundTrip: roundTrip ?? run.roundTrip,
                  notesPerBeat: notesPerBeat ?? run.notesPerBeat,
-                 layout: layout ?? run.layout)
+                 layout: layout ?? run.layout,
+                 sequence: sequence ?? run.sequencePattern)
     }
 
     private var layoutBinding: Binding<ScaleLayout> {
         Binding(get: { run.layout }, set: { run = rebuilt(layout: $0); haptic(.light) })
+    }
+
+    private var sequenceBinding: Binding<SequencePattern> {
+        Binding(get: { run.sequencePattern }, set: { run = rebuilt(sequence: $0); haptic(.light) })
     }
 
     private var scaleBinding: Binding<GuitarScale> {
