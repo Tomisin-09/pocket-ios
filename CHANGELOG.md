@@ -5,6 +5,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Internal
+- **Groundwork for Red Moon Pro (ADR 0112).** Added a pure, unit-tested entitlement axis —
+  `ExerciseTemplate.authoringTier` (free = Basic/Strumming/Warm-up; Pro = the structured technique
+  catalog) and an `AccessPolicy` (`canAuthor` / `canRun`) that all future paywall gates route
+  through. No StoreKit, no UI, no behaviour change yet — this is the free/Pro rule in one testable
+  place, ahead of the `StoreManager` and paywall slices.
+
 ### Changed
 - **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the
   *Build a session* screen the Quick / Focused / Full tabs read as "Quick · ~10m", "Focused · ~30m",
