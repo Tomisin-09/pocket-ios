@@ -19,6 +19,7 @@ extension PracticeAudioEngine {
     /// watermark so the next tick refills from the live playhead.
     func armMetronome() {
         guard metronomeOn, isPlaying else { return }
+        clickVoice.loadTimbre(AppSettings.clickTimbre)   // pick up a Settings change (ADR 0114)
         clickVoice.start()
         clickWatermark = -.infinity
         metronomeLoopIteration = loopIteration

@@ -14,13 +14,13 @@ import AVFoundation
 @MainActor
 final class ClickVoice {
 
-    /// The three click levels (ADR 0043, slice 5): the accented bar downbeat, a plain beat,
-    /// and a **quieter** subdivision tick so sub-beat clicks sit *under* the main beats
-    /// rather than competing with them.
-    enum ClickLevel { case accent, beat, subdivision }
+    // The click-level enum (`ClickLevel`) now lives with the timbre synthesis in `ClickTimbre.swift`.
 
     private let player = AVAudioPlayerNode()
     private let sampleRate: Double
+    /// The voiced timbre the three buffers were built from (ADR 0114). Reloaded at playback start so
+    /// a Settings change takes effect the next time the click sounds.
+    private var timbre: ClickTimbre = .default
     private var accent: AVAudioPCMBuffer?
     private var beat: AVAudioPCMBuffer?
     private var subdivision: AVAudioPCMBuffer?
@@ -30,15 +30,27 @@ final class ClickVoice {
     }
 
     /// Attach to `engine` and connect to the main mixer (bypassing any time-pitch).
-    /// Builds the click buffers. Call once after the host engine is constructed.
+    /// Builds the click buffers for the user's chosen timbre. Call once after the host engine is
+    /// constructed.
     func attach(to engine: AVAudioEngine) {
         engine.attach(player)
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)
         engine.connect(player, to: engine.mainMixerNode, format: format)
-        accent = Self.makeClick(frequency: 1_200, sampleRate: sampleRate)
-        beat = Self.makeClick(frequency: 900, sampleRate: sampleRate)
-        // Lower and much quieter so subdivisions read as a soft pulse beneath the beats.
-        subdivision = Self.makeClick(frequency: 700, sampleRate: sampleRate, amplitude: 0.28)
+        loadTimbre(AppSettings.clickTimbre)
+    }
+
+    /// (Re)build the three click buffers for `newTimbre` (ADR 0114). Cheap — three ~20–50 ms buffers —
+    /// so callers invoke it at playback start (passing `AppSettings.clickTimbre`) to pick up a Settings
+    /// change on the next play. No-op when the timbre is unchanged and the buffers already exist, so
+    /// re-arming mid-play never rebuilds. The two hosting engines each own a `ClickVoice`, so routing
+    /// the choice through here at start keeps the in-song click and the standalone tool in sync.
+    func loadTimbre(_ newTimbre: ClickTimbre) {
+        guard newTimbre != timbre || accent == nil else { return }
+        timbre = newTimbre
+        accent = Self.buffer(from: newTimbre.samples(for: .accent, sampleRate: sampleRate), sampleRate: sampleRate)
+        beat = Self.buffer(from: newTimbre.samples(for: .beat, sampleRate: sampleRate), sampleRate: sampleRate)
+        subdivision = Self.buffer(from: newTimbre.samples(for: .subdivision, sampleRate: sampleRate),
+                                  sampleRate: sampleRate)
     }
 
     private func buffer(for level: ClickLevel) -> AVAudioPCMBuffer? {
@@ -103,24 +115,18 @@ final class ClickVoice {
         return AVAudioTime(sampleTime: playerTime.sampleTime + offset, atRate: sampleRate)
     }
 
-    /// A short percussive click: a sine burst with a fast exponential decay so it reads
-    /// as a tick, not a tone (~25 ms). Levels differ by pitch and `amplitude` (the
-    /// subdivision tick is quieter). Mirrors the `SampleToneGenerator` PCM-synthesis pattern.
-    private static func makeClick(frequency: Double, sampleRate: Double,
-                                  amplitude: Double = 0.6,
-                                  duration: TimeInterval = 0.025) -> AVAudioPCMBuffer? {
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
-            return nil
-        }
-        let frameCount = AVAudioFrameCount(duration * sampleRate)
-        guard frameCount > 0,
-              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
+    /// Wrap a mono float sample array (synthesized by `ClickTimbre`) in a PCM buffer ready to
+    /// schedule. The click *voicing* is the pure `ClickTimbre` synthesis; this is only the
+    /// AVFoundation packaging.
+    private static func buffer(from samples: [Float], sampleRate: Double) -> AVAudioPCMBuffer? {
+        guard !samples.isEmpty,
+              let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format,
+                                            frameCapacity: AVAudioFrameCount(samples.count)),
               let channel = buffer.floatChannelData?[0] else { return nil }
-        buffer.frameLength = frameCount
-        for frame in 0..<Int(frameCount) {
-            let time = Double(frame) / sampleRate
-            let envelope = exp(-90.0 * time)            // fast decay ⇒ click, not beep
-            channel[frame] = Float(sin(2 * .pi * frequency * time) * envelope * amplitude)
+        buffer.frameLength = AVAudioFrameCount(samples.count)
+        samples.withUnsafeBufferPointer { source in
+            if let base = source.baseAddress { channel.update(from: base, count: samples.count) }
         }
         return buffer
     }

@@ -1055,6 +1055,12 @@ route through.
 
 ## UI / polish
 
+- **Metronome sound picker — UI polish (logged 2026-07-24, ADR 0114).** The four-voice picker shipped
+  functional (row + inline ▶ audition + selected check, `MetronomeSoundSection`) and the *sounds* are
+  approved, but the presentation feels plain — a flat list of Form rows. Ideas when picked up: a richer
+  selection affordance (cards / a segmented feel), a small waveform or motion cue while a voice
+  auditions, tighter play-button styling, maybe a per-voice glyph. Content and behaviour are settled;
+  this is purely a visual pass.
 - **iPad layout pass (logged 2026-07-20; IN PROGRESS 2026-07-22, ADR 0105, pocket-167).** Pocket is
   phone-first (iOS 17+, portrait-primary); it *runs* on iPad but the UI doesn't use the extra width —
   a first-pass adaptation, not a feature. **Approach (ADR 0105): write the adaptivity now but keep

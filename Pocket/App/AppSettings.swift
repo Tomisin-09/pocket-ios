@@ -46,6 +46,7 @@ enum AppSettings {
         static let zoomFollowsPlayhead = "zoomFollowsPlayhead"
         static let artistNamePromptSeen = "artistNamePromptSeen"
         static let artistIntakeSeen = "artistIntakeSeen"
+        static let clickTimbre = "clickTimbre"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -139,6 +140,20 @@ enum AppSettings {
     static func resolvedAppearance(storedValue: String?) -> AppearancePreference {
         guard let storedValue else { return .system }
         return AppearancePreference(rawValue: storedValue) ?? .system
+    }
+
+    /// The metronome click timbre (ADR 0114). Read by `ClickVoice` at playback start so both the
+    /// in-song click and the standalone tool voice the same choice. Default `.click` — the sound
+    /// shipped before this setting existed.
+    static var clickTimbre: ClickTimbre {
+        resolvedClickTimbre(storedValue: UserDefaults.standard.string(forKey: Key.clickTimbre))
+    }
+
+    /// Pure default-resolution: a missing or unrecognised stored value falls back to `.click`
+    /// rather than crashing on a bad raw value (mirrors `resolvedAppearance`).
+    static func resolvedClickTimbre(storedValue: String?) -> ClickTimbre {
+        guard let storedValue else { return .default }
+        return ClickTimbre(rawValue: storedValue) ?? .default
     }
 
     private static func bool(_ key: String, default fallback: Bool = true,
