@@ -27,6 +27,15 @@ struct ToolkitView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("My chords, \(savedCountLabel)")
 
+                NavigationLink { TunerView() } label: {
+                    ToolkitSectionRow(icon: "tuningfork",
+                                      title: "Tuner",
+                                      subtitle: "Tune by ear or mic",
+                                      trailing: "Free")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Tuner, tune by ear or mic")
+
                 NavigationLink { GlossaryView() } label: {
                     ToolkitSectionRow(icon: "text.book.closed",
                                       title: "Glossary",

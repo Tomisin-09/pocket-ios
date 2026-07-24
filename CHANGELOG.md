@@ -11,6 +11,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **Guitar tuner.** The Toolkit has a new **Tuner** — a free, live-mic tuner. Play a string and it shows
+  the note, how many cents sharp or flat you are on an arc-needle gauge, and which string in standard
+  tuning you're closest to; **Hear** sounds the target note as a reference. It listens only while the
+  screen is open, and never grades your playing (ADR 0115).
 - **Choose your metronome sound.** Settings has a new **Metronome sound** section with four click
   voices — **Click** (the classic tick), **Wood block**, **Rim**, and **Beep** — each with a ▶ button to
   hear it at 90 BPM before you pick. Your choice applies to both the standalone metronome and the
