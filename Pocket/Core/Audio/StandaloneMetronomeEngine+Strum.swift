@@ -9,9 +9,9 @@ extension StandaloneMetronomeEngine {
 
     /// A resolved strum pattern for the scheduler: the per-slot click levels (`nil` = a silent rest)
     /// and the sub-tick grid (`slotsPerBeat`). Built from a pure `StrumPattern.clickIntensities`, so
-    /// the only audio-specific step here is mapping intensity → `ClickVoice.ClickLevel`.
+    /// the only audio-specific step here is mapping intensity → `ClickLevel`.
     struct StrumSchedule {
-        let levels: [ClickVoice.ClickLevel?]
+        let levels: [ClickLevel?]
         let ticksPerBeat: Int
     }
 
@@ -28,7 +28,7 @@ extension StandaloneMetronomeEngine {
     /// accented per the time signature, the in-between sub-ticks the quieter subdivision. A **count-in**
     /// always uses the meter default (a steady pulse to count in on), so the pattern only sounds once
     /// the drill itself begins (ADR 0071 R5 · ADR 0052).
-    func scheduledLevel(forTick tickIndex: Int, ticksPerBeat: Int) -> ClickVoice.ClickLevel? {
+    func scheduledLevel(forTick tickIndex: Int, ticksPerBeat: Int) -> ClickLevel? {
         if let schedule = strumSchedule, !schedule.levels.isEmpty, !automatorCountingIn {
             let count = schedule.levels.count
             return schedule.levels[((tickIndex % count) + count) % count]
@@ -41,7 +41,7 @@ extension StandaloneMetronomeEngine {
 
     /// Map a pure strum intensity to the engine's click voice — accent → accent, a normal stroke →
     /// the beat click, a mute → the quieter subdivision "chuck".
-    private static func clickLevel(_ intensity: StrumClickLevel) -> ClickVoice.ClickLevel {
+    private static func clickLevel(_ intensity: StrumClickLevel) -> ClickLevel {
         switch intensity {
         case .accent: return .accent
         case .stroke: return .beat

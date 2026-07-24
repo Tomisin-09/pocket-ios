@@ -159,6 +159,7 @@ final class StandaloneMetronomeEngine {
         guard transport == .stopped else { return }
         configureSession()
         startEngineIfNeeded()
+        clickVoice.loadTimbre(AppSettings.clickTimbre)   // pick up a Settings change (ADR 0114)
         clickVoice.start()
         let session = AVAudioSession.sharedInstance()
         latencyFrames = AVAudioFramePosition((session.outputLatency + session.ioBufferDuration)

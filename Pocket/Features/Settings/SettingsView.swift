@@ -92,6 +92,10 @@ struct SettingsView: View {
                 }
             }
 
+            // Metronome timbre picker with inline audition (ADR 0114). Its own section so each preset
+            // reads as a row with a play button, rather than crowding the Practice toggles.
+            MetronomeSoundSection()
+
             Section("Routines") {
                 Toggle(isOn: $routineAutoStart) {
                     FieldInfoLabel(title: "Auto-start blocks", info: SettingsInfo.routineAutoStart)

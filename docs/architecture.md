@@ -115,7 +115,12 @@ rate`, so the click *follows playback speed* (50% → half-BPM, locked to the sl
 track). The audio is a `ClickVoice`: a second `AVAudioPlayerNode` on the **same
 engine** wired straight to the mixer (bypassing time-pitch, so ticks aren't
 stretched) with three synthesized buffers (accented downbeat / plain beat / a quieter
-subdivision tick — ADR 0043 slice 5, selected per click via `ClickVoice.ClickLevel`). The
+subdivision tick — ADR 0043 slice 5, selected per click via `ClickLevel`). The three
+buffers are voiced by a user-selectable **`ClickTimbre`** (Click / Wood block / Rim / Beep —
+pure PCM synthesis, no sample assets, hybrid-ready; ADR 0114): `ClickVoice.loadTimbre` rebuilds
+them from `AppSettings.clickTimbre` at each playback start, so both this in-song click and the
+standalone tool stay in sync, and a Settings audition (`MetronomeSoundPreviewPlayer`, its own
+throwaway engine) never touches a live session. The
 engine refreshes the schedule on a 0.03 s **metronome timer**, deduping by a watermark,
 and flushes-and-refills on any discontinuity (rate / seek / loop / pause). The **visual
 playhead** is on its own clock: a `CADisplayLink` (`DisplayLinkTicker`) samples the audio

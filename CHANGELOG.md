@@ -11,6 +11,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **Choose your metronome sound.** Settings has a new **Metronome sound** section with four click
+  voices — **Click** (the classic tick), **Wood block**, **Rim**, and **Beep** — each with a ▶ button to
+  hear it at 90 BPM before you pick. Your choice applies to both the standalone metronome and the
+  in-song click. All voices are free; the default is unchanged, so nothing sounds different unless you
+  switch (ADR 0114).
 - **Draw your own arpeggios.** The Arpeggios drill now has the same **Generate / Draw your own** toggle
   scales and warm-ups already carry. Generate keeps the pick-a-quality-and-box editor; **Draw your own**
   hands you the fretboard canvas to tap out any arpeggio shape by hand — with an optional guide that
