@@ -20,13 +20,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **StoreKit 2 entitlement layer (ADR 0112).** Added `StoreManager` (`@MainActor @Observable`) — the
   single source of truth for `isPro`, resolved from `Transaction.currentEntitlements` with a
   `Transaction.updates` listener, plus `loadProducts` / `purchase` / `restore`, injected at the app
-  root. Ships a local `Configuration/RedMoonPro.storekit` (Annual £39.99 / Monthly £4.99, both with a
+  root. Ships a local `Configuration/RedMoonPro.storekit` (Annual £49.99 / Monthly £5.99, both with a
   14-day free intro offer) wired into the run scheme, so the flow is testable with no App Store
   Connect dependency; a DEBUG `isPro` override lets the upcoming gates be exercised before sandbox
   exists.
 - **The Red Moon Pro paywall + its first gates (ADR 0112).** A single `PaywallView` (crescent seal ·
-  Futura · theme-aware) — contextual headline, three value lines, **Annual pre-selected** (£39.99/yr ·
-  "≈ £3.33/mo · best value") over Monthly (£4.99/mo), a trial-aware CTA, **Restore Purchases**, and the
+  Futura · theme-aware) — contextual headline, three value lines, **Annual pre-selected** (£49.99/yr ·
+  "≈ £4.17/mo · best value") over Monthly (£5.99/mo), a trial-aware CTA, **Restore Purchases**, and the
   App-Review-required auto-renew disclosure with Terms/Privacy links; prices live from StoreKit. One
   shared `.presentPaywall` action raises it from any gate. Gates: **Today's session** (Home + Practice),
   **creating a new exercise from a Pro template** (the picker badges + locks Pro templates), the

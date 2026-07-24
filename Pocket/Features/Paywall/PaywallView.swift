@@ -238,15 +238,15 @@ struct PaywallView: View {
     }
 
     private var annualPriceText: String {
-        annualProduct.map { "\($0.displayPrice)/yr" } ?? "£39.99/yr"
+        annualProduct.map { "\($0.displayPrice)/yr" } ?? "£49.99/yr"
     }
     private var monthlyPriceText: String {
-        monthlyProduct.map { "\($0.displayPrice)/mo" } ?? "£4.99/mo"
+        monthlyProduct.map { "\($0.displayPrice)/mo" } ?? "£5.99/mo"
     }
 
     /// The per-month equivalent of the annual plan — the retention lever this category lives on.
     private var annualCaption: String {
-        guard let annual = annualProduct else { return "≈ £3.33/mo · best value" }
+        guard let annual = annualProduct else { return "≈ £4.17/mo · best value" }
         let perMonth = annual.price / 12
         let formatted = perMonth.formatted(annual.priceFormatStyle)
         return "≈ \(formatted)/mo · best value"
