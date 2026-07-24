@@ -48,6 +48,42 @@ enum Instrument: String, CaseIterable, Identifiable {
 
     /// This instrument's Standard tuning — the opening / reset tuning.
     var standardTuning: Tuning { tunings[0] }
+
+    /// The tuning with this name for this instrument, or **Standard** if the name isn't one of the
+    /// instrument's curated tunings. Lets a stored tuning name resolve safely across an instrument
+    /// change — a guitar-only "Open G" left in `@AppStorage` lands on the bass's Standard rather than
+    /// nothing (ADR 0115: a bass tuning never leaks onto guitar, and vice-versa).
+    func tuning(named name: String) -> Tuning {
+        tunings.first { $0.name == name } ?? standardTuning
+    }
+}
+
+/// How the tuner interprets a detected pitch (ADR 0115). **Guided** (default) knows the selected
+/// tuning and names the target string + direction; **Chromatic** names any of the twelve pitches with
+/// no target, for odd/experimental tunings. `String`-raw so it drops straight into `@AppStorage`.
+enum TunerMode: String, CaseIterable, Identifiable {
+    case guided
+    case chromatic
+
+    var id: String { rawValue }
+
+    /// The mode the tuner opens in.
+    static let `default`: TunerMode = .guided
+
+    var displayName: String {
+        switch self {
+        case .guided: return "Guided"
+        case .chromatic: return "Chromatic"
+        }
+    }
+
+    /// One-line explanation for the settings sheet.
+    var blurb: String {
+        switch self {
+        case .guided: return "Tunes to your selected tuning and names the string you're nearest."
+        case .chromatic: return "Names any note with no target — for odd or experimental tunings."
+        }
+    }
 }
 
 /// A named tuning: the open-string MIDI notes, **lowest string first** (ADR 0115). The string count

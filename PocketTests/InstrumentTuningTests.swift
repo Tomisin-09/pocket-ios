@@ -72,4 +72,30 @@ final class InstrumentTuningTests: XCTestCase {
         let tuning = Tuning(name: "tie", midiNotes: [40, 44])
         XCTAssertEqual(tuning.nearestStringIndex(toMidi: 42), 0)
     }
+
+    // MARK: name resolution (settings ↔ tuning)
+
+    func testTuningNamedResolvesAKnownTuning() {
+        XCTAssertEqual(Instrument.guitar.tuning(named: "Drop D").compactLabel, "DADGBE")
+        XCTAssertEqual(Instrument.bass.tuning(named: "Drop D").compactLabel, "DADG")
+    }
+
+    func testTuningNamedFallsBackToStandard() {
+        // A guitar-only tuning name left in @AppStorage after switching to bass must land on the bass
+        // Standard, never leak a guitar tuning onto bass (ADR 0115).
+        XCTAssertEqual(Instrument.bass.tuning(named: "Open G"), Instrument.bass.standardTuning)
+        XCTAssertEqual(Instrument.guitar.tuning(named: "nonsense"), Instrument.guitar.standardTuning)
+    }
+
+    // MARK: mode (guided / chromatic)
+
+    func testTunerModeRawValuesStable() {
+        // Raw values persist as the @AppStorage mode key — a rename silently resets it.
+        XCTAssertEqual(TunerMode.allCases.map(\.rawValue), ["guided", "chromatic"])
+        XCTAssertEqual(TunerMode.default, .guided)
+        for mode in TunerMode.allCases {
+            XCTAssertFalse(mode.displayName.isEmpty)
+            XCTAssertFalse(mode.blurb.isEmpty)
+        }
+    }
 }

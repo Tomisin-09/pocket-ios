@@ -14,10 +14,22 @@ struct TunerView: View {
     @State private var engine = TunerEngine()
     @State private var permission = MicPermission.status
     @State private var hearTask: Task<Void, Never>?
+    @State private var showingSettings = false
     @Environment(\.scenePhase) private var scenePhase
 
-    /// The tuning Slice 3 tunes against (guitar standard). Slice 4 makes this selectable.
-    private let tuning = Instrument.guitar.standardTuning
+    // Tuner preferences (ADR 0115 Slice 4), shared with `TuneSettingsSheet` via `@AppStorage`.
+    @AppStorage(AppSettings.Key.tunerInstrument) private var instrumentRaw = Instrument.default.rawValue
+    @AppStorage(AppSettings.Key.tunerMode) private var modeRaw = TunerMode.default.rawValue
+    @AppStorage(AppSettings.Key.tunerTuning) private var tuningName = Instrument.default.standardTuning.name
+    @AppStorage(AppSettings.Key.tunerReferenceA) private var referenceA = AppSettings.tunerReferenceDefault
+    @AppStorage(AppSettings.Key.tunerChimeEnabled) private var chimeEnabled = true
+
+    private var instrument: Instrument { Instrument(rawValue: instrumentRaw) ?? .default }
+    private var mode: TunerMode { TunerMode(rawValue: modeRaw) ?? .default }
+    private var isGuided: Bool { mode == .guided }
+
+    /// The tuning guided mode tunes against, resolved from the selected instrument + stored name.
+    private var tuning: Tuning { instrument.tuning(named: tuningName) }
 
     var body: some View {
         Group {
@@ -32,6 +44,18 @@ struct TunerView: View {
         .navigationTitle("Tuner")
         .navigationBarTitleDisplayMode(.inline)
         .tint(PocketColor.toolkit)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    haptic(.light)
+                    showingSettings = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .accessibilityLabel("Tune settings")
+            }
+        }
+        .sheet(isPresented: $showingSettings) { TuneSettingsSheet() }
         .onAppear(perform: begin)
         .onDisappear {
             engine.stop()
@@ -40,6 +64,9 @@ struct TunerView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { begin() } else { engine.stop() }
         }
+        // Reference pitch is read live by the engine at map time, so pushing it on change re-names
+        // pitches immediately — no need to re-install the tap (ADR 0115).
+        .onChange(of: referenceA) { _, newHz in engine.referenceA = Double(newHz) }
     }
 
     // MARK: - Tuner
@@ -60,10 +87,10 @@ struct TunerView: View {
                            isActive: reading != nil)
                 .padding(.horizontal, 8)
             endLabels
-            stringRow
+            if isGuided { stringRow }
             hearButton
             Spacer(minLength: 8)
-            Text("A440 · Standard")
+            Text(footerLabel)
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
                 .textCase(.uppercase)
@@ -186,18 +213,30 @@ struct TunerView: View {
         .readableWidth()
     }
 
-    // MARK: - Derived
+}
 
-    private var reading: TunerReading? { engine.reading }
+// MARK: - Derived + actions
+
+private extension TunerView {
+
+    var reading: TunerReading? { engine.reading }
 
     private var nearestStringIndex: Int {
         guard let reading else { return 0 }
         return tuning.nearestStringIndex(toMidi: reading.midiNote)
     }
 
-    /// The open-note MIDI of the nearest string — what Hear sounds and what the label names.
+    /// What Hear sounds and what the target label names: in guided mode the nearest string's open
+    /// note; in chromatic mode the exact pitch of the detected note (its in-tune reference).
     private var targetMIDI: Int? {
-        reading == nil ? nil : tuning.midiNotes[nearestStringIndex]
+        guard let reading else { return nil }
+        return isGuided ? tuning.midiNotes[nearestStringIndex] : reading.midiNote
+    }
+
+    /// The bottom caption: the reference pitch and, in guided mode, the tuning name (Chromatic mode
+    /// has no tuning). E.g. `"A440 · Standard"` or `"A442 · Chromatic"`.
+    private var footerLabel: String {
+        "A\(referenceA) · \(isGuided ? tuning.name : "Chromatic")"
     }
 
     private var targetLabel: String {
@@ -224,7 +263,10 @@ struct TunerView: View {
         guard let reading else { return "Listening…" }
         if isConfirmed { return "You're in tune!" }
         if reading.isInTune { return "In tune" }
-        return reading.cents < 0 ? "Too flat, tune up" : "Too sharp, tune down"
+        // Guided knows the target string, so it can say which way to turn; chromatic just names the
+        // deviation (there's no target to reach).
+        if isGuided { return reading.cents < 0 ? "Too flat, tune up" : "Too sharp, tune down" }
+        return reading.cents < 0 ? "Flat" : "Sharp"
     }
 
     private var statusColor: Color {
@@ -236,6 +278,7 @@ struct TunerView: View {
 
     private func begin() {
         guard !isPreview else { return }
+        engine.referenceA = Double(referenceA)   // apply the saved calibration before we start mapping
         switch MicPermission.status {
         case .granted:
             permission = .granted
@@ -256,6 +299,7 @@ struct TunerView: View {
     /// stealing it). The engine freezes detection for the chime's length so it can't feed back.
     private func confirmFeedback() {
         haptic(.success)
+        guard chimeEnabled else { return }   // the success-sound toggle silences the chime, not the haptic
         ToneEngine.shared.sequence([84, 88], noteDuration: 0.12, gap: 0.02)   // C6→E6, a bright "ding"
     }
 
