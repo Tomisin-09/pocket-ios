@@ -9,9 +9,14 @@ struct PocketApp: App {
     // repaints when it changes, rather than each screen consulting it separately.
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
 
+    // The app's single Red Moon Pro entitlement source (ADR 0112) — resolves `isPro` from StoreKit
+    // and is read by every paywall gate through the environment. Owned here for the app's lifetime.
+    @State private var store = StoreManager()
+
     var body: some Scene {
         WindowGroup {
             HomeView()
+                .environment(store)
                 .preferredColorScheme(appearance.colorScheme)
         }
         .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,

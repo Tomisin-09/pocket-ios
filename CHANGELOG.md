@@ -17,6 +17,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   four run-free-forever presets (pentatonic box, open chords G·D·Em·C, picking warm-up, legato); a
   free player can *run* those even on a Pro template but still can't *edit* them. Still dormant — no
   gate consumes it yet.
+- **StoreKit 2 entitlement layer (ADR 0112).** Added `StoreManager` (`@MainActor @Observable`) — the
+  single source of truth for `isPro`, resolved from `Transaction.currentEntitlements` with a
+  `Transaction.updates` listener, plus `loadProducts` / `purchase` / `restore`, injected at the app
+  root. Ships a local `Configuration/RedMoonPro.storekit` (Annual £39.99 / Monthly £4.99, both with a
+  14-day free intro offer) wired into the run scheme, so the flow is testable with no App Store
+  Connect dependency; a DEBUG `isPro` override lets the upcoming gates be exercised before sandbox
+  exists. Still dormant — no UI reads `isPro` yet.
 
 ### Changed
 - **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the

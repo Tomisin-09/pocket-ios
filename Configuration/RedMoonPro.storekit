@@ -1,0 +1,78 @@
+{
+  "identifier" : "5B2E9C10",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_billingIssuesEnabled" : false,
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21A4F7B0",
+      "localizations" : [
+        {
+          "description" : "The full Red Moon practice workbench.",
+          "displayName" : "Red Moon Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Red Moon Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "8C1D2E01",
+          "introductoryOffer" : {
+            "internalID" : "9D2E3F02",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P2W"
+          },
+          "localizations" : [
+            {
+              "description" : "The full exercise catalog, draw-your-own authoring, and Today's session — billed yearly.",
+              "displayName" : "Red Moon Pro — Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "click.decooperations.pocket.pro.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Red Moon Pro Annual",
+          "subscriptionGroupID" : "21A4F7B0",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A3E4F503",
+          "introductoryOffer" : {
+            "internalID" : "B4F50604",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P2W"
+          },
+          "localizations" : [
+            {
+              "description" : "The full exercise catalog, draw-your-own authoring, and Today's session — billed monthly.",
+              "displayName" : "Red Moon Pro — Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "click.decooperations.pocket.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Red Moon Pro Monthly",
+          "subscriptionGroupID" : "21A4F7B0",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
