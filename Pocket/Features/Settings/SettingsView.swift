@@ -21,6 +21,30 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.artistNamePromptSeen) private var artistNamePromptSeen = false
     /// DEBUG-only: lets the developer re-arm the first-launch curation intake (ADR 0113 S2).
     @AppStorage(AppSettings.Key.artistIntakeSeen) private var artistIntakeSeen = false
+    /// DEBUG-only: force the Red Moon Pro entitlement on/off and preview the paywall (ADR 0112).
+    @Environment(StoreManager.self) private var store
+    @State private var showingDebugPaywall = false
+
+    /// The three debug entitlement choices, bridging `StoreManager.debugProOverride` (a `Bool?`).
+    private enum ProOverrideChoice: Hashable { case defaultReal, free, pro }
+    private var proOverride: Binding<ProOverrideChoice> {
+        Binding(
+            get: {
+                switch store.debugProOverride {
+                case .none: return .defaultReal
+                case .some(true): return .pro
+                case .some(false): return .free
+                }
+            },
+            set: { choice in
+                switch choice {
+                case .defaultReal: store.debugProOverride = nil
+                case .free: store.debugProOverride = false
+                case .pro: store.debugProOverride = true
+                }
+            }
+        )
+    }
     #endif
 
     @AppStorage(AppSettings.Key.hapticsEnabled) private var hapticsEnabled = true
@@ -137,6 +161,24 @@ struct SettingsView: View {
             }
 
             #if DEBUG
+            // DEBUG-only scaffold (never ships): flip the Red Moon Pro entitlement to watch the
+            // paywall gates lock/unlock live, and open the paywall directly (ADR 0112).
+            Section {
+                Picker("Entitlement", selection: proOverride) {
+                    Text("Default").tag(ProOverrideChoice.defaultReal)
+                    Text("Free").tag(ProOverrideChoice.free)
+                    Text("Pro").tag(ProOverrideChoice.pro)
+                }
+                .pickerStyle(.segmented)
+                LabeledContent("Currently", value: store.isPro ? "Pro" : "Free")
+                Button("Show paywall") { showingDebugPaywall = true }
+            } header: {
+                Text("Red Moon Pro (Debug)")
+            } footer: {
+                Text("DEBUG only. Force the Pro entitlement on or off to exercise the paywall gates "
+                     + "before StoreKit sandbox exists. “Default” uses the real StoreKit entitlement.")
+            }
+
             // DEBUG-only scaffold (never ships): re-arm the one-time artist-name prompt so the
             // ceremony can be re-tested on a real install without a data-wiping reinstall.
             Section {
@@ -202,6 +244,11 @@ struct SettingsView: View {
         // Commit when the screen leaves too, so an edit the user typed without pressing Done
         // still saves.
         .onDisappear(perform: commitArtistName)
+        #if DEBUG
+        .sheet(isPresented: $showingDebugPaywall) {
+            PaywallView(trigger: .general).environment(store)
+        }
+        #endif
     }
 
     private func barsLabel(_ bars: Int) -> String { bars == 1 ? "1 bar" : "\(bars) bars" }
@@ -293,10 +340,12 @@ enum SettingsInfo {
         .environment(\.horizontalSizeClass, .regular)
         .frame(width: 1024, height: 900)
         .modelContainer(for: Profile.self, inMemory: true)
+        .environment(StoreManager())
 }
 
 #Preview {
     NavigationStack { SettingsView() }
         .preferredColorScheme(.dark)
         .modelContainer(for: Profile.self, inMemory: true)
+        .environment(StoreManager())
 }

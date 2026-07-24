@@ -16,6 +16,10 @@ struct PocketApp: App {
     var body: some Scene {
         WindowGroup {
             HomeView()
+                // `.environment(store)` must sit **outside** `.paywallHost()`, so the host (which
+                // reads `@Environment(StoreManager.self)` to publish `isPro`) resolves the store from
+                // above it; applied the other way round the host is a parent of the injection and traps.
+                .paywallHost()
                 .environment(store)
                 .preferredColorScheme(appearance.colorScheme)
         }

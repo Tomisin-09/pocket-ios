@@ -23,7 +23,16 @@ All notable changes to Pocket are documented here. Format loosely follows
   root. Ships a local `Configuration/RedMoonPro.storekit` (Annual £39.99 / Monthly £4.99, both with a
   14-day free intro offer) wired into the run scheme, so the flow is testable with no App Store
   Connect dependency; a DEBUG `isPro` override lets the upcoming gates be exercised before sandbox
-  exists. Still dormant — no UI reads `isPro` yet.
+  exists.
+- **The Red Moon Pro paywall + its first gates (ADR 0112).** A single `PaywallView` (crescent seal ·
+  Futura · theme-aware) — contextual headline, three value lines, **Annual pre-selected** (£39.99/yr ·
+  "≈ £3.33/mo · best value") over Monthly (£4.99/mo), a trial-aware CTA, **Restore Purchases**, and the
+  App-Review-required auto-renew disclosure with Terms/Privacy links; prices live from StoreKit. One
+  shared `.presentPaywall` action raises it from any gate. Gated so far: **Today's session** (Home + Practice),
+  **creating a new exercise from a Pro template** (the picker badges Pro templates and locks them), and
+  the **"Draw your own"** canvas — now a shared `AuthoringModePicker` whose Draw segment is greyed with a
+  **PRO** badge for free players (Pro even on a free-tier family like Warm-up). A DEBUG Settings control
+  flips Free/Pro to exercise it all. Ships in the paywall build, **not v1** (v1 stays free).
 
 ### Changed
 - **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the
