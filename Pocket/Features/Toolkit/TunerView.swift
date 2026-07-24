@@ -45,17 +45,24 @@ struct TunerView: View {
     // MARK: - Tuner
 
     private var tuner: some View {
-        VStack(spacing: 22) {
-            Spacer(minLength: 0)
-            noteBlock
-            TunerGaugeView(cents: reading?.cents ?? 0,
-                           isInTune: reading?.isInTune ?? false,
+        VStack(spacing: 16) {
+            Spacer(minLength: 8)
+            Text(statusText)
+                .font(.futura(.title3, weight: .bold))
+                .foregroundStyle(statusColor)
+                .contentTransition(.opacity)
+                .animation(.easeOut(duration: 0.2), value: statusText)
+            noteCircle
+            // On lock-on, drive the needle to dead centre to reinforce the in-tune state (it glides
+            // there via the gauge's own animation), rather than hovering at the residual few cents.
+            TunerGaugeView(cents: isConfirmed ? 0 : (reading?.cents ?? 0),
+                           isInTune: isConfirmed || (reading?.isInTune ?? false),
                            isActive: reading != nil)
                 .padding(.horizontal, 8)
             endLabels
             stringRow
             hearButton
-            Spacer(minLength: 0)
+            Spacer(minLength: 8)
             Text("A440 · Standard")
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
@@ -65,27 +72,36 @@ struct TunerView: View {
         }
         .padding(.horizontal, 24)
         .readableWidth()
+        .onChange(of: engine.confirmationID) { _, _ in confirmFeedback() }
     }
 
-    private var noteBlock: some View {
-        VStack(spacing: 8) {
+    /// The big state-coloured note disc — green in tune, amber off, faint grey while listening — with a
+    /// soft halo and a little "pop" the moment the note locks in (Fender-style at-a-glance state).
+    private var noteCircle: some View {
+        ZStack {
+            Circle()
+                .fill(PocketColor.active.opacity(0.16))
+                .frame(width: 244, height: 244)
+                .opacity(reading?.isInTune == true ? 1 : 0)
+            Circle()
+                .fill(circleColor)
+                .frame(width: 200, height: 200)
             HStack(alignment: .top, spacing: 2) {
                 Text(reading?.noteName ?? "—")
-                    .font(.futura(size: 96, weight: .bold))
-                    .foregroundStyle(noteColor)
+                    .font(.futura(size: 88, weight: .bold))
+                    .foregroundStyle(circleTextColor)
                 if let reading {
                     Text("\(reading.octave)")
-                        .font(.futura(size: 30))
-                        .foregroundStyle(PocketColor.textSecondary)
+                        .font(.futura(size: 26, weight: .medium))
+                        .foregroundStyle(circleTextColor.opacity(0.65))
                         .padding(.top, 12)
                 }
             }
-            .animation(.easeOut(duration: 0.15), value: reading?.midiNote)
-            Text(readoutText)
-                .font(.futura(.headline, weight: .semibold))
-                .foregroundStyle(reading?.isInTune == true ? PocketColor.active : PocketColor.textSecondary)
-                .contentTransition(.opacity)
         }
+        .animation(.easeOut(duration: 0.2), value: reading?.isInTune)
+        .animation(.easeOut(duration: 0.15), value: reading?.midiNote)
+        .scaleEffect(isConfirmed ? 1.04 : 1)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isConfirmed)
     }
 
     private var endLabels: some View {
@@ -190,17 +206,30 @@ struct TunerView: View {
         return "\(name)\(midi / 12 - 1)"
     }
 
-    private var noteColor: Color {
-        guard reading != nil else { return PocketColor.textSecondary }
-        return reading?.isInTune == true ? PocketColor.active : PocketColor.textPrimary
+    private var isConfirmed: Bool { engine.isConfirmed }
+
+    /// Disc fill: green in tune, amber off, a faint neutral while listening.
+    private var circleColor: Color {
+        guard let reading else { return PocketColor.surfaceStandard }
+        return reading.isInTune ? PocketColor.active : PocketColor.marker
     }
 
-    private var readoutText: String {
+    /// Note letter colour: fixed near-black on the bright green/amber fills (accessible in both themes,
+    /// where a token colour would flip and lose contrast); secondary grey on the faint idle disc.
+    private var circleTextColor: Color {
+        reading == nil ? PocketColor.textSecondary : Color.black
+    }
+
+    private var statusText: String {
         guard let reading else { return "Listening…" }
-        guard !reading.isInTune else { return "In tune" }
-        let value = Int(reading.cents.rounded())
-        let sign = value > 0 ? "+" : "−"
-        return "\(sign)\(abs(value))¢ · \(value > 0 ? "tune down" : "tune up")"
+        if isConfirmed { return "You're in tune!" }
+        if reading.isInTune { return "In tune" }
+        return reading.cents < 0 ? "Too flat, tune up" : "Too sharp, tune down"
+    }
+
+    private var statusColor: Color {
+        guard let reading else { return PocketColor.textSecondary }
+        return reading.isInTune ? PocketColor.active : PocketColor.marker
     }
 
     // MARK: - Actions
@@ -220,6 +249,14 @@ struct TunerView: View {
         case .denied:
             permission = .denied
         }
+    }
+
+    /// Fired once when a string locks in tune: a success haptic + a short, bright confirmation chime
+    /// through the shared `ToneEngine` (which plays out over the tuner's record session without
+    /// stealing it). The engine freezes detection for the chime's length so it can't feed back.
+    private func confirmFeedback() {
+        haptic(.success)
+        ToneEngine.shared.sequence([84, 88], noteDuration: 0.12, gap: 0.02)   // C6→E6, a bright "ding"
     }
 
     private func toggleHear() {

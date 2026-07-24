@@ -22,6 +22,11 @@ final class TunerEngine {
     private(set) var reading: TunerReading?
     /// Whether the tap is live.
     private(set) var isRunning = false
+    /// True while a note has held in tune long enough to be *confirmed* — drives the celebratory UI.
+    private(set) var isConfirmed = false
+    /// Bumped once each time a note becomes newly confirmed; the view observes it to fire the
+    /// success chime + haptic exactly on the lock-on transition.
+    private(set) var confirmationID = 0
 
     /// Reference A used to name pitches — the calibratable A432…446 from Tune Settings. Read live on
     /// the main actor at map time, so changing it takes effect immediately without re-installing the tap.
@@ -30,7 +35,10 @@ final class TunerEngine {
     private let engine = AVAudioEngine()
     private let detector = PitchDetector()
     private var smoother = TunerSmoother()
+    private var hold = TuneHold(requiredHold: 1.2)
     private var tapInstalled = false
+    /// Monotonic time until which detection is frozen (during the post-confirmation chime).
+    private var suppressUntil: TimeInterval = 0
 
     /// Analysis window fed to the detector. Sized so even a low bass string (E1 ≈ 41 Hz) spans a couple
     /// of periods regardless of the hardware's actual tap buffer size (which iOS chooses, not us).
@@ -38,24 +46,34 @@ final class TunerEngine {
 
     // MARK: - Lifecycle
 
-    /// Begin listening. Assumes mic permission is already granted. Idempotent.
+    /// Begin listening. Assumes mic permission is already granted. Idempotent — and guarded against the
+    /// double-invocation that the scene-phase churn around the permission dialog can cause.
     func start() {
-        guard !isRunning else { return }
+        guard !isRunning, !tapInstalled else { return }
         AudioPlumbing.configureRecordSession(label: "tuner")
 
         let input = engine.inputNode
-        let format = input.inputFormat(forBus: 0)
+        // Sanity-check the mic route is up before tapping; bail cleanly if not (no crash, just no tune).
+        let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else {
             AudioPlumbing.log.error("tuner: no usable input format (mic unavailable?)")
             AudioPlumbing.configurePlaybackSession(label: "tuner")
             return
         }
-        let sampleRate = format.sampleRate
         let detector = self.detector                       // value type → safe to capture
         let accumulator = SampleAccumulator(capacity: Self.analysisWindow)
 
-        input.installTap(onBus: 0, bufferSize: 2_048, format: format) { [weak self] buffer, _ in
-            guard let mono = buffer.monoSamples() else { return }
+        // `format: nil` installs the tap using the node's **own** output format, so there's no chance
+        // of a format/sample-rate mismatch assertion. The real sample rate is read from each buffer.
+        //
+        // The closure is explicitly **`@Sendable`**. `AVAudioNodeTapBlock` is a legacy, non-Sendable
+        // type, so a closure passed from this `@MainActor` method would otherwise inherit main-actor
+        // isolation — and iOS 18 / Swift 6 inserts an executor assertion at its entry that **traps**
+        // (SIGTRAP) when AVFAudio calls it on the realtime audio thread. `@Sendable` forces it
+        // non-isolated; it touches `self` only via the `Task { @MainActor }` hop below.
+        input.installTap(onBus: 0, bufferSize: 2_048, format: nil) { @Sendable [weak self] buffer, _ in
+            let sampleRate = buffer.format.sampleRate
+            guard sampleRate > 0, let mono = buffer.monoSamples() else { return }
             accumulator.append(mono)
             guard let window = accumulator.window() else { return }   // nil until first full window
             let frequency = detector.detect(window, sampleRate: sampleRate)
@@ -78,7 +96,10 @@ final class TunerEngine {
         engine.stop()
         AudioPlumbing.configurePlaybackSession(label: "tuner")   // flip back off .playAndRecord
         smoother.reset()
+        hold.reset()
+        suppressUntil = 0
         reading = nil
+        isConfirmed = false
         isRunning = false
     }
 
@@ -88,8 +109,21 @@ final class TunerEngine {
     /// publish it. Runs on the main actor — the tap thread only does the pure DSP.
     private func ingest(frequency: Double?) {
         guard isRunning else { return }
+        // Runs per audio buffer (~20 Hz), so the hold timer advances even when the smoothed reading
+        // value is momentarily unchanged. `systemUptime` is monotonic (immune to clock changes).
+        let now = ProcessInfo.processInfo.systemUptime
+        // Freeze the reading briefly right after a confirmation, while the success chime sounds — so the
+        // chime bleeding into the mic can't knock the note off "confirmed" or retrigger it in a loop.
+        // The display stays locked on the note you just nailed for the length of the chime.
+        guard now >= suppressUntil else { return }
+
         let fresh = frequency.flatMap { TunerReading.nearest(toFrequency: $0, referenceA: referenceA) }
         reading = smoother.ingest(fresh)
+        if hold.update(reading: reading, now: now) {
+            confirmationID &+= 1
+            suppressUntil = now + 0.5
+        }
+        isConfirmed = hold.isConfirmed
     }
 }
 

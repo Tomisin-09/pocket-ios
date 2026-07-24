@@ -22,10 +22,11 @@ import UIKit
 }
 
 enum HapticStyle: Hashable {
+    /// Impact buzzes for gesture confirmations.
     case light, medium
-    #if canImport(UIKit)
-    var uiStyle: UIImpactFeedbackGenerator.FeedbackStyle { self == .light ? .light : .medium }
-    #endif
+    /// The system **success** notification pattern (da-dum) — used when the tuner confirms a string has
+    /// held in tune (ADR 0115), distinct from the plain impacts so "you nailed it" feels like an event.
+    case success
 }
 
 /// Holds long-lived feedback generators so the Taptic Engine stays warm between
@@ -35,22 +36,36 @@ enum HapticStyle: Hashable {
     private init() {}
 
     #if canImport(UIKit)
-    private var generators: [HapticStyle: UIImpactFeedbackGenerator] = [:]
+    private var impactGenerators: [HapticStyle: UIImpactFeedbackGenerator] = [:]
+    private lazy var notificationGenerator: UINotificationFeedbackGenerator = {
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        return generator
+    }()
 
-    private func generator(for style: HapticStyle) -> UIImpactFeedbackGenerator {
-        if let existing = generators[style] { return existing }
-        let made = UIImpactFeedbackGenerator(style: style.uiStyle)
+    private func impactStyle(_ style: HapticStyle) -> UIImpactFeedbackGenerator.FeedbackStyle {
+        style == .light ? .light : .medium
+    }
+
+    private func impactGenerator(for style: HapticStyle) -> UIImpactFeedbackGenerator {
+        if let existing = impactGenerators[style] { return existing }
+        let made = UIImpactFeedbackGenerator(style: impactStyle(style))
         made.prepare()
-        generators[style] = made
+        impactGenerators[style] = made
         return made
     }
 
     func prepare(_ style: HapticStyle) {
-        generator(for: style).prepare()
+        if style == .success { notificationGenerator.prepare() } else { impactGenerator(for: style).prepare() }
     }
 
     func fire(_ style: HapticStyle) {
-        let generator = generator(for: style)
+        if style == .success {
+            notificationGenerator.notificationOccurred(.success)
+            notificationGenerator.prepare() // keep warm
+            return
+        }
+        let generator = impactGenerator(for: style)
         generator.impactOccurred()
         generator.prepare() // keep warm for the next buzz
     }
