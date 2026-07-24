@@ -63,8 +63,10 @@ final class PracticeLibrarySortTests: XCTestCase {
 
     private func exercise(_ name: String, command: Int = 100,
                           dateAdded: Date = Date(timeIntervalSince1970: 0),
-                          template: String = ExerciseTemplate.basic.displayName) -> ExerciseSortFields {
-        ExerciseSortFields(name: name, command: command, dateAdded: dateAdded, templateName: template)
+                          template: String = ExerciseTemplate.basic.displayName,
+                          instrument: Instrument = .guitar) -> ExerciseSortFields {
+        ExerciseSortFields(name: name, command: command, dateAdded: dateAdded, templateName: template,
+                           instrument: instrument)
     }
 
     private func sortedExercises(_ items: [ExerciseSortFields], by key: ExerciseSortKey,
@@ -101,6 +103,43 @@ final class PracticeLibrarySortTests: XCTestCase {
         XCTAssertTrue(PracticeLibrarySort.exerciseMatches(exercise("Alternating picking"), query: "pick"))
         XCTAssertFalse(PracticeLibrarySort.exerciseMatches(exercise("Alternating picking"), query: "legato"))
         XCTAssertTrue(PracticeLibrarySort.exerciseMatches(exercise("Spider"), query: ""))
+    }
+
+    // MARK: - Instrument filter (ADR 0116 S4)
+
+    func testExerciseMatchesNilInstrumentFilterMatchesEveryInstrument() {
+        XCTAssertTrue(PracticeLibrarySort.exerciseMatches(exercise("Spider", instrument: .guitar),
+                                                          query: "", instrument: nil))
+        XCTAssertTrue(PracticeLibrarySort.exerciseMatches(exercise("Walk", instrument: .bass),
+                                                          query: "", instrument: nil))
+    }
+
+    func testExerciseMatchesNarrowsToTheSelectedInstrument() {
+        let bass = exercise("Walking line", instrument: .bass)
+        XCTAssertTrue(PracticeLibrarySort.exerciseMatches(bass, query: "", instrument: .bass))
+        XCTAssertFalse(PracticeLibrarySort.exerciseMatches(bass, query: "", instrument: .guitar))
+    }
+
+    func testExerciseMatchesRequiresBothSearchAndInstrument() {
+        let bass = exercise("Walking line", instrument: .bass)
+        // Right instrument, wrong search → no match; right search, wrong instrument → no match.
+        XCTAssertFalse(PracticeLibrarySort.exerciseMatches(bass, query: "legato", instrument: .bass))
+        XCTAssertFalse(PracticeLibrarySort.exerciseMatches(bass, query: "walk", instrument: .guitar))
+        XCTAssertTrue(PracticeLibrarySort.exerciseMatches(bass, query: "walk", instrument: .bass))
+    }
+
+    func testInstrumentsPresentIsDistinctAndInCanonicalOrder() {
+        // Out-of-order, with duplicates → deduped, canonical (guitar before bass).
+        XCTAssertEqual(PracticeLibrarySort.instrumentsPresent([.bass, .guitar, .bass, .guitar]),
+                       [.guitar, .bass])
+    }
+
+    func testInstrumentsPresentDrivesProgressiveDisclosureThreshold() {
+        // Single-instrument library → count 1 → filter stays hidden.
+        XCTAssertEqual(PracticeLibrarySort.instrumentsPresent([.guitar, .guitar]).count, 1)
+        XCTAssertTrue(PracticeLibrarySort.instrumentsPresent([]).isEmpty)
+        // Mixed → count 2 → filter appears.
+        XCTAssertEqual(PracticeLibrarySort.instrumentsPresent([.guitar, .bass]).count, 2)
     }
 
     // MARK: - Template sections (ADR 0068, revised)

@@ -16,6 +16,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   instrument); pick Bass and the box generates and draws on a **four-string neck** (E A D G) — a real
   2-octave bass shape, not a truncated guitar box. The choice is fixed per drill, like the template, so a
   bass drill always renders on the right neck. Guitar drills are unchanged (ADR 0116).
+- **Filter the exercise library by instrument.** Once your Exercises library holds more than one
+  instrument's drills, an **All / Guitar / Bass** filter appears above the list to narrow it. It stays
+  hidden until you have a second instrument, so a guitar-only library looks exactly as before (ADR 0116).
 - **Guitar tuner.** The Toolkit has a new **Tuner** — a free, live-mic tuner. Play a string and it shows
   the note, how many cents sharp or flat you are on an arc-needle gauge, and which string you're closest
   to; **tap any string** to hear its reference pitch (the mic pauses so it isn't heard back). A **Tune

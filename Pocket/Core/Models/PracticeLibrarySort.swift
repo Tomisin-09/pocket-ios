@@ -68,6 +68,9 @@ struct ExerciseSortFields {
     /// The exercise template's display name (ADR 0068, revised) — the library **section** key
     /// (Strumming, Scales, Basic, …). Defaulted so sort-only call sites keep compiling.
     var templateName: String = ExerciseTemplate.basic.displayName
+    /// The exercise's instrument (ADR 0116 S4) — the axis the Library's progressive-disclosure filter
+    /// narrows on. Defaulted to guitar so sort-only call sites keep compiling.
+    var instrument: Instrument = .guitar
 }
 
 /// Pure ordering + search for the two Practice unit libraries (ADR 0056). Generic over the item
@@ -153,12 +156,24 @@ enum PracticeLibrarySort {
             }
     }
 
-    /// Whether an exercise matches a search `query` — a case- and diacritic-insensitive substring
-    /// of its name. Empty/whitespace matches everything.
-    static func exerciseMatches(_ fields: ExerciseSortFields, query: String) -> Bool {
+    /// Whether an exercise matches the active Library filters — the search `query` (a case- and
+    /// diacritic-insensitive substring of its name; empty/whitespace matches everything) **and** the
+    /// optional `instrument` filter (ADR 0116 S4; `nil` = "All", matches every instrument).
+    static func exerciseMatches(_ fields: ExerciseSortFields, query: String,
+                                instrument: Instrument? = nil) -> Bool {
+        if let instrument, fields.instrument != instrument { return false }
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return true }
         return contains(fields.name, trimmed)
+    }
+
+    /// The distinct instruments present across `instruments`, in canonical enum order (guitar, bass) —
+    /// the input to the Library's **progressive-disclosure** instrument filter (ADR 0116 S4): the
+    /// filter appears only when this returns more than one, so a single-instrument player never sees
+    /// it. Pure so the disclosure threshold — the bit that silently over- or under-shows the control —
+    /// is unit-tested.
+    static func instrumentsPresent(_ instruments: [Instrument]) -> [Instrument] {
+        Instrument.allCases.filter { instruments.contains($0) }
     }
 
     private static func exercisePrecedes(_ lhs: ExerciseSortFields, _ rhs: ExerciseSortFields,

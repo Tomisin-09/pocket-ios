@@ -20,13 +20,19 @@ struct ExerciseLibraryView: View {
     @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
     @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
     @State private var searchText = ""
+    /// The active instrument filter (ADR 0116 S4), `nil` = "All". Purely a session filter — not
+    /// persisted, since it's only reachable once the library holds more than one instrument, and it
+    /// resets whenever that stops being true (`showsInstrumentFilter`).
+    @State private var instrumentFilter: Instrument?
 
-    /// The exercises narrowed by search, then grouped into **template sections** (ADR 0068), each
-    /// ordered by the current sort — the sectioned list the user sees, and what deletion indexes
-    /// into (per section).
+    /// The exercises narrowed by search **and** the active instrument filter, then grouped into
+    /// **template sections** (ADR 0068), each ordered by the current sort — the sectioned list the
+    /// user sees, and what deletion indexes into (per section).
     private var sections: [LibrarySection<Exercise>] {
-        let matched = exercises
-            .filter { PracticeLibrarySort.exerciseMatches(fields(for: $0), query: searchText) }
+        let matched = exercises.filter {
+            PracticeLibrarySort.exerciseMatches(fields(for: $0), query: searchText,
+                                                instrument: activeInstrumentFilter)
+        }
         return PracticeLibrarySort.exerciseSections(matched, sortedBy: sortKey,
                                                     ascending: sortAscending, fields: fields(for:))
     }
@@ -34,10 +40,24 @@ struct ExerciseLibraryView: View {
     /// Whether any exercise matches the current search — drives the empty vs no-match states.
     private var hasMatches: Bool { sections.contains { !$0.items.isEmpty } }
 
+    /// The distinct instruments present in the library, canonical order (ADR 0116 S4).
+    private var presentInstruments: [Instrument] {
+        PracticeLibrarySort.instrumentsPresent(exercises.map(\.instrument))
+    }
+
+    /// Progressive disclosure: the instrument filter surfaces only once the library holds more than
+    /// one instrument's content, so the single-instrument player never sees it (ADR 0116 S4).
+    private var showsInstrumentFilter: Bool { presentInstruments.count > 1 }
+
+    /// The instrument filter actually applied to the list — `nil` (All) whenever the control is
+    /// hidden, so a stale selection can never silently narrow the list once disclosure retracts.
+    private var activeInstrumentFilter: Instrument? { showsInstrumentFilter ? instrumentFilter : nil }
+
     private func fields(for exercise: Exercise) -> ExerciseSortFields {
         ExerciseSortFields(name: exercise.name, command: exercise.command,
                            dateAdded: exercise.dateAdded,
-                           templateName: exercise.template.displayName)
+                           templateName: exercise.template.displayName,
+                           instrument: exercise.instrument)
     }
 
     var body: some View {
@@ -74,6 +94,14 @@ struct ExerciseLibraryView: View {
         }
         .scrollContentBackground(.hidden)
         .background(PocketColor.background.ignoresSafeArea())
+        .safeAreaInset(edge: .top) {
+            if showsInstrumentFilter { instrumentFilterBar }
+        }
+        .onChange(of: showsInstrumentFilter) { _, shows in
+            // Once the library drops back to a single instrument, forget any selection so it can't
+            // re-narrow the list if a second instrument is added again later.
+            if !shows { instrumentFilter = nil }
+        }
         .navigationTitle("Exercises")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Exercises")
@@ -107,6 +135,46 @@ struct ExerciseLibraryView: View {
     /// untouched install keeps making guitar drills exactly as before.
     private var defaultInstrument: Instrument {
         profiles.first?.preferredInstrument ?? .guitar
+    }
+
+    /// The progressive-disclosure instrument filter (ADR 0116 S4) — an "All" chip plus one per
+    /// instrument present, pinned above the list. Shown only when the library holds more than one
+    /// instrument (`showsInstrumentFilter`); tapping a chip narrows the sections to that instrument.
+    private var instrumentFilterBar: some View {
+        HStack(spacing: 8) {
+            instrumentChip(title: "All", isSelected: instrumentFilter == nil) { instrumentFilter = nil }
+            ForEach(presentInstruments) { instrument in
+                instrumentChip(title: instrument.displayName,
+                               isSelected: instrumentFilter == instrument) {
+                    instrumentFilter = instrument
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(PocketColor.background)
+    }
+
+    /// One filter chip — a pill that fills with the Practice tint when selected.
+    private func instrumentChip(title: String, isSelected: Bool,
+                                action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+            haptic(.light)
+        } label: {
+            Text(title)
+                .font(.futura(.subheadline))
+                .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(
+                    Capsule().fill(isSelected ? PocketColor.practice : PocketColor.surfaceStandard)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title) exercises")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     /// The sort control — a menu whose label spells out the active key with a direction arrow
@@ -170,6 +238,9 @@ struct ExerciseLibraryView: View {
     container.mainContext.insert(Exercise(name: "Spider", currentTempo: 60, template: .warmup))
     container.mainContext.insert(Exercise(name: "Down Up Down", currentTempo: 80,
                                           template: .strumming))
+    // A bass exercise trips the progressive-disclosure instrument filter (ADR 0116 S4).
+    container.mainContext.insert(Exercise(name: "E minor pentatonic", currentTempo: 60,
+                                          template: .scales, instrument: .bass))
     return NavigationStack { ExerciseLibraryView() }
         .modelContainer(container)
         .preferredColorScheme(.dark)

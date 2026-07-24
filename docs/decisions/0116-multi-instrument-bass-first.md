@@ -55,7 +55,12 @@ Guitar (shipped) → **bass** (this ADR: tuning-as-value + string-count de-hardc
 1. **Boundary adapter + golden tests + this ADR** (pure, guitar byte-identical). ✅
 2. **`Instrument` per-exercise axis** — `instrumentRaw` on `Exercise` + `preferredInstrument` on `Profile`, plumbed through creation and defaulting to guitar. No visible UI yet (every exercise stays guitar), so this commit is guitar-identical too. ✅
 3. Thread the exercise's tuning into the fretboard engine (the de-hardcode); bass scale/arpeggio presets; **and the create-step Guitar/Bass control** — the toggle lands together with the rendering so it never offers an instrument that would draw on the wrong neck. ✅
-4. Library instrument filter (progressive disclosure).
+4. **Library instrument filter (progressive disclosure).** ✅ A pinned "All / Guitar / Bass" chip bar
+   above the Exercises list, surfaced only once `PracticeLibrarySort.instrumentsPresent` finds more than
+   one instrument's content — so the single-instrument player never sees it. The selection is a session
+   filter (not persisted) that resets whenever the library drops back to one instrument, so a stale
+   choice can never silently narrow the list after disclosure retracts. Filter matching and the
+   disclosure threshold are pure in `PracticeLibrarySort` and unit-tested.
 
 ## Slice 3 sub-decision — bass generation is a ladder-based placement rule, not a truncated CAGED box
 
