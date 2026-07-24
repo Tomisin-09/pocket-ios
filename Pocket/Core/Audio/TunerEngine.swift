@@ -103,6 +103,14 @@ final class TunerEngine {
         isRunning = false
     }
 
+    /// Freeze pitch detection for the next `seconds` — used while the view sounds a **reference tone**
+    /// through the shared `ToneEngine`, so the tone bleeding back into the mic isn't read as a played
+    /// string. The last reading stays on screen and detection resumes automatically. This is the same
+    /// mechanism the post-confirmation chime uses; `max` so a longer freeze already in effect wins.
+    func suppressDetection(for seconds: TimeInterval) {
+        suppressUntil = max(suppressUntil, ProcessInfo.processInfo.systemUptime + seconds)
+    }
+
     // MARK: - Ingest (main actor)
 
     /// Map a detected frequency (or `nil`) to a smoothed reading using the current reference pitch, and

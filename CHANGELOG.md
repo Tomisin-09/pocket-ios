@@ -13,7 +13,8 @@ All notable changes to Pocket are documented here. Format loosely follows
 ### Added
 - **Guitar tuner.** The Toolkit has a new **Tuner** — a free, live-mic tuner. Play a string and it shows
   the note, how many cents sharp or flat you are on an arc-needle gauge, and which string you're closest
-  to; **Hear** sounds the target note as a reference. A **Tune Settings** sheet (the ⚙︎ top-right) picks
+  to; **tap any string** to hear its reference pitch (the mic pauses so it isn't heard back). A **Tune
+  Settings** sheet (the ⚙︎ top-right) picks
   your **instrument** (Guitar or Bass), **mode** (**Guided** — names the string and which way to turn,
   or **Chromatic** — names any note), the **tuning** (Standard, Drop D, Open G, DADGAD… for guitar;
   Standard/Drop D/half-step for bass), the **reference pitch** (A432–A446, free), and whether a **chime**

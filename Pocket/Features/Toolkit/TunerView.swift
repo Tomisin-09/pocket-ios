@@ -14,8 +14,14 @@ struct TunerView: View {
     @State private var engine = TunerEngine()
     @State private var permission = MicPermission.status
     @State private var hearTask: Task<Void, Never>?
+    /// Which string's reference tone is currently sounding (its circle lights up), or `nil` when none —
+    /// also `nil` for the chromatic Hear button, which has no circle. Drives the "playing" UI signal.
+    @State private var soundingString: Int?
     @State private var showingSettings = false
     @Environment(\.scenePhase) private var scenePhase
+
+    /// How long a tapped reference tone sustains, and how long detection is frozen around it.
+    private static let referenceSustain: TimeInterval = 1.8
 
     // Tuner preferences (ADR 0115 Slice 4), shared with `TuneSettingsSheet` via `@AppStorage`.
     @AppStorage(AppSettings.Key.tunerInstrument) private var instrumentRaw = Instrument.default.rawValue
@@ -59,7 +65,7 @@ struct TunerView: View {
         .onAppear(perform: begin)
         .onDisappear {
             engine.stop()
-            stopHear()
+            stopReference()
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { begin() } else { engine.stop() }
@@ -87,8 +93,15 @@ struct TunerView: View {
                            isActive: reading != nil)
                 .padding(.horizontal, 8)
             endLabels
-            if isGuided { stringRow }
-            hearButton
+            if isGuided {
+                stringRow
+                Text("Tap a string to hear it")
+                    .font(.futura(.caption, weight: .semibold))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .padding(.top, 2)
+            } else {
+                chromaticHearButton
+            }
             Spacer(minLength: 8)
             Text(footerLabel)
                 .font(.futura(.footnote, weight: .semibold))
@@ -144,35 +157,62 @@ struct TunerView: View {
         .padding(.horizontal, 8)
     }
 
+    /// The tappable open-string row (guided mode). Each circle is the string's reference note: tap it to
+    /// sound the pitch (the mic freezes while it plays so it isn't heard back). The circle nearest the
+    /// detected pitch stays highlighted as the tuning target; a sounding circle fills in the accent.
     private var stringRow: some View {
         HStack(spacing: 12) {
             ForEach(Array(tuning.noteNames.enumerated()), id: \.offset) { index, name in
-                let isTarget = reading != nil && index == nearestStringIndex
-                Text(name)
-                    .font(.futura(.subheadline, weight: .semibold))
-                    .foregroundStyle(isTarget
-                                     ? (reading?.isInTune == true ? PocketColor.active : PocketColor.toolkit)
-                                     : PocketColor.textSecondary)
-                    .frame(width: 38, height: 38)
-                    .background(
-                        Circle().fill(isTarget ? PocketColor.surfaceStandard : .clear)
-                    )
-                    .overlay(
-                        Circle().stroke(isTarget
-                                        ? (reading?.isInTune == true ? PocketColor.active : PocketColor.toolkit)
-                                        : PocketColor.surfaceBorder,
-                                        lineWidth: 1.5)
-                    )
+                stringButton(index: index, name: name)
             }
         }
         .animation(.easeOut(duration: 0.15), value: nearestStringIndex)
+        .animation(.easeOut(duration: 0.15), value: soundingString)
     }
 
-    private var hearButton: some View {
-        Button(action: toggleHear) {
+    private func stringButton(index: Int, name: String) -> some View {
+        let isTarget = reading != nil && index == nearestStringIndex
+        let isSounding = soundingString == index
+        // Highlight the target in green when it's in tune, else the toolkit indigo; a sounding string
+        // always takes the indigo accent.
+        let accent = reading?.isInTune == true ? PocketColor.active : PocketColor.toolkit
+        return Button {
+            playReference(midi: tuning.midiNotes[index], stringIndex: index)
+        } label: {
+            Text(stringLabel(name, index: index))
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(isSounding ? PocketColor.background
+                                 : (isTarget ? accent : PocketColor.textSecondary))
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(isSounding ? PocketColor.toolkit
+                                          : (isTarget ? PocketColor.surfaceStandard : .clear)))
+                .overlay(Circle().stroke(isSounding ? PocketColor.toolkit
+                                         : (isTarget ? accent : PocketColor.surfaceBorder),
+                                         lineWidth: 1.5))
+                .scaleEffect(isSounding ? 1.08 : 1)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Hear the \(stringLabel(name, index: index)) string")
+    }
+
+    /// The string's letter, with the **highest (thinnest) string lowercased** — so the high *e* reads
+    /// distinctly from the low *E* (the standard EADGB*e* convention). Tunings are lowest-first, so the
+    /// highest string is always the last index.
+    private func stringLabel(_ name: String, index: Int) -> String {
+        index == tuning.midiNotes.count - 1 ? name.lowercased() : name
+    }
+
+    /// Chromatic mode has no string circles, so it keeps a single explicit **Hear** control that sounds
+    /// the detected note as an ear reference. Animates while playing (the "it's sounding" signal).
+    private var chromaticHearButton: some View {
+        let isSounding = hearTask != nil
+        return Button {
+            if let midi = targetMIDI { playReference(midi: midi, stringIndex: nil) }
+        } label: {
             HStack(spacing: 8) {
-                Image(systemName: hearTask != nil ? "stop.fill" : "speaker.wave.2.fill")
-                Text(hearTask != nil ? "Stop" : "Hear \(targetLabel)")
+                Image(systemName: isSounding ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                Text(isSounding ? "Playing \(targetLabel)…" : "Hear \(targetLabel)")
             }
             .font(.futura(.subheadline, weight: .semibold))
             .foregroundStyle(PocketColor.toolkit)
@@ -183,7 +223,7 @@ struct TunerView: View {
         .buttonStyle(.plain)
         .disabled(reading == nil)
         .opacity(reading == nil ? 0.5 : 1)
-        .accessibilityLabel(hearTask != nil ? "Stop reference tone" : "Hear reference tone")
+        .accessibilityLabel(isSounding ? "Stop reference tone" : "Hear reference tone")
     }
 
     // MARK: - Permission-denied
@@ -303,20 +343,26 @@ private extension TunerView {
         ToneEngine.shared.sequence([84, 88], noteDuration: 0.12, gap: 0.02)   // C6→E6, a bright "ding"
     }
 
-    private func toggleHear() {
+    /// Sound a reference pitch and **freeze detection** while it plays, so the tone (loud and close to
+    /// the mic) isn't read back as a played string. `stringIndex` lights the matching circle (guided) or
+    /// is `nil` for the chromatic button. Tapping the source that's already sounding stops it.
+    private func playReference(midi: Int, stringIndex: Int?) {
         haptic(.light)
-        if hearTask != nil { stopHear(); return }
-        guard let midi = targetMIDI else { return }
-        ToneEngine.shared.sound([midi], sustain: 1.8)
+        if hearTask != nil, soundingString == stringIndex { stopReference(); return }
+        hearTask?.cancel()
+        engine.suppressDetection(for: Self.referenceSustain + 0.35)   // + a tail for the note's ring-out
+        ToneEngine.shared.sound([midi], sustain: Self.referenceSustain)
+        soundingString = stringIndex
         hearTask = Task {
-            try? await Task.sleep(for: .seconds(1.8))
-            if !Task.isCancelled { hearTask = nil }
+            try? await Task.sleep(for: .seconds(Self.referenceSustain))
+            if !Task.isCancelled { stopReference() }
         }
     }
 
-    private func stopHear() {
+    private func stopReference() {
         hearTask?.cancel()
         hearTask = nil
+        soundingString = nil
         ToneEngine.shared.stop()
     }
 
