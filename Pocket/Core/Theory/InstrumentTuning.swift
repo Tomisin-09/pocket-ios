@@ -99,6 +99,18 @@ struct Tuning: Equatable, Identifiable {
     /// Number of strings this tuning covers.
     var stringCount: Int { midiNotes.count }
 
+    /// The open-string MIDI notes in the **fretboard engine's** canonical order — **highest string
+    /// first** (index 0 = high e / thinnest), the reverse of this struct's lowest-first `midiNotes`
+    /// (ADR 0116). This is the *single* crossing point between the tuner's lowest-first `Tuning`
+    /// value and the engine (`CAGEDShape.openMidi`, `ChordVoicing.openMidi`, `ScaleLayout`,
+    /// `FretNote.string`), all of which index highest-first and are persisted that way — so raw
+    /// `midiNotes` must never reach engine code, only `engineOpenMidi`. Valid only for **monotonic**
+    /// tunings (every curated guitar/bass tuning); a reentrant tuning like ukulele's gCEA is not a
+    /// simple reversal, which is why uke is deferred. Guitar Standard here is
+    /// `[64,59,55,50,45,40]` — byte-for-byte the engine's long-standing hardcoded constant, the
+    /// golden test that proves the refactor changes nothing for guitar.
+    var engineOpenMidi: [Int] { Array(midiNotes.reversed()) }
+
     /// Sharp-spelled open-string names low→high, e.g. `["E","A","D","G","B","E"]`.
     var noteNames: [String] {
         midiNotes.map { GuitarScale.noteName(forPitchClass: (($0 % 12) + 12) % 12) }
