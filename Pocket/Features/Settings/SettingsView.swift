@@ -15,6 +15,15 @@ struct SettingsView: View {
     /// submit / when the screen leaves, so we write the store once per edit rather than per
     /// keystroke (and never insert a row mid-typing).
     @State private var artistNameDraft = ""
+    /// Red Moon Pro entitlement (ADR 0112) — drives the real "Red Moon Pro" section (Manage /
+    /// Upgrade / Restore). `store` is the entitlement source; `isPro` + the shared paywall carry
+    /// preview-safe defaults.
+    @Environment(StoreManager.self) private var store
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
+    /// Presents Apple's native Manage-Subscriptions sheet (subscribers only — no in-app billing UI).
+    @State private var showingManageSubscriptions = false
+
     #if DEBUG
     /// DEBUG-only: lets the developer re-arm the one-time "you've earned a name" prompt without a
     /// data-wiping reinstall (see the Developer section below).
@@ -22,7 +31,6 @@ struct SettingsView: View {
     /// DEBUG-only: lets the developer re-arm the first-launch curation intake (ADR 0113 S2).
     @AppStorage(AppSettings.Key.artistIntakeSeen) private var artistIntakeSeen = false
     /// DEBUG-only: force the Red Moon Pro entitlement on/off and preview the paywall (ADR 0112).
-    @Environment(StoreManager.self) private var store
     @State private var showingDebugPaywall = false
 
     /// The three debug entitlement choices, bridging `StoreManager.debugProOverride` (a `Bool?`).
@@ -160,6 +168,23 @@ struct SettingsView: View {
                 }
             }
 
+            // Red Moon Pro (ADR 0112): a subscriber manages/cancels via Apple's native sheet; a free
+            // player gets a way into the paywall. Restore is always available (App Review requires it).
+            Section {
+                if isPro {
+                    Button("Manage Subscription") { showingManageSubscriptions = true }
+                } else {
+                    Button("Upgrade to Red Moon Pro") { presentPaywall(.general) }
+                }
+                Button("Restore Purchases") { Task { await store.restore() } }
+            } header: {
+                Text("Red Moon Pro")
+            } footer: {
+                Text(isPro
+                     ? "You have Red Moon Pro. Manage or cancel anytime in Manage Subscription."
+                     : "Unlock the full exercise catalog, “draw your own”, and Today's session.")
+            }
+
             #if DEBUG
             // DEBUG-only scaffold (never ships): flip the Red Moon Pro entitlement to watch the
             // paywall gates lock/unlock live, and open the paywall directly (ADR 0112).
@@ -244,6 +269,8 @@ struct SettingsView: View {
         // Commit when the screen leaves too, so an edit the user typed without pressing Done
         // still saves.
         .onDisappear(perform: commitArtistName)
+        // Apple's native Manage-Subscriptions screen — the ADR 0112 "no in-app billing UI" contract.
+        .manageSubscriptionsSheet(isPresented: $showingManageSubscriptions)
         #if DEBUG
         .sheet(isPresented: $showingDebugPaywall) {
             PaywallView(trigger: .general).environment(store)

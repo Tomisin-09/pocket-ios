@@ -34,8 +34,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   badge for free players (Pro even on a free-tier family like Warm-up), **opening a locked Pro exercise**
   in the library (Pro rows stay visible with a **PRO + lock** badge and tap to the paywall — "locked, not
   hidden"), and **editing a free-taste preset** (a free player can *run* the pentatonic / open-chord /
-  picking / legato freebies, but "Edit shape" opens the paywall — editing is authoring). A DEBUG Settings
-  control flips Free/Pro to exercise it all. Ships in the paywall build, **not v1** (v1 stays free).
+  picking / legato freebies, but "Edit shape" opens the paywall — editing is authoring). **Settings**
+  gains a **Red Moon Pro** section: subscribers get **Manage Subscription** (Apple's native sheet — no
+  in-app billing UI), free players an **Upgrade** entry into the paywall, and **Restore Purchases** either
+  way. A DEBUG Settings control flips Free/Pro to exercise it all. Ships in the paywall build, **not v1**
+  (v1 stays free).
 
 ### Changed
 - **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the
