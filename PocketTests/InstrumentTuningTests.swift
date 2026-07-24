@@ -1,0 +1,75 @@
+import XCTest
+@testable import Pocket
+
+/// The pure instrument + tuning catalog (ADR 0115): guitar and bass, their curated tunings, note-name
+/// spelling (shared with the fretboard via `GuitarScale.noteName`), and guided-mode nearest-string.
+final class InstrumentTuningTests: XCTestCase {
+
+    // MARK: catalog
+
+    func testInstrumentRawValuesStable() {
+        // Raw values are the persisted `@AppStorage` keys — a rename would silently reset choices.
+        XCTAssertEqual(Instrument.allCases.map(\.rawValue), ["guitar", "bass"])
+        XCTAssertEqual(Instrument.default, .guitar)
+    }
+
+    func testStandardIsFirstForEveryInstrument() {
+        for instrument in Instrument.allCases {
+            XCTAssertEqual(instrument.tunings.first?.name, "Standard",
+                           "\(instrument) must list Standard first (reset target)")
+            XCTAssertEqual(instrument.standardTuning, instrument.tunings[0])
+            XCTAssertFalse(instrument.displayName.isEmpty)
+        }
+    }
+
+    func testGuitarHasSixStringsAndBassFour() {
+        for tuning in Instrument.guitar.tunings {
+            XCTAssertEqual(tuning.stringCount, 6, "guitar tuning \(tuning.name)")
+        }
+        for tuning in Instrument.bass.tunings {
+            XCTAssertEqual(tuning.stringCount, 4, "bass tuning \(tuning.name)")
+        }
+    }
+
+    // MARK: spelling
+
+    func testCompactLabelsMatchExpectedSpelling() {
+        let guitar = Dictionary(uniqueKeysWithValues: Instrument.guitar.tunings.map { ($0.name, $0.compactLabel) })
+        XCTAssertEqual(guitar["Standard"], "EADGBE")
+        XCTAssertEqual(guitar["Drop D"], "DADGBE")
+        XCTAssertEqual(guitar["Open G"], "DGDGBD")
+        XCTAssertEqual(guitar["Open D"], "DADF#AD")
+        XCTAssertEqual(guitar["Open E"], "EBEG#BE")
+        XCTAssertEqual(guitar["DADGAD"], "DADGAD")
+        XCTAssertEqual(guitar["Drop C"], "CGCFAD")
+
+        let bass = Dictionary(uniqueKeysWithValues: Instrument.bass.tunings.map { ($0.name, $0.compactLabel) })
+        XCTAssertEqual(bass["Standard"], "EADG")
+        XCTAssertEqual(bass["Drop D"], "DADG")
+    }
+
+    // MARK: guided-mode nearest string
+
+    func testNearestStringPicksTheRightOpenString() {
+        let standard = Instrument.guitar.standardTuning         // E2 A2 D3 G3 B3 E4 → 40 45 50 55 59 64
+        XCTAssertEqual(standard.nearestStringIndex(toMidi: 40), 0)   // dead-on low E
+        XCTAssertEqual(standard.nearestStringIndex(toMidi: 64), 5)   // dead-on high E
+        XCTAssertEqual(standard.nearestStringIndex(toMidi: 43), 1)   // closest to A2 (45), not E2 (40)
+        XCTAssertEqual(standard.nearestStringIndex(toMidi: 56), 3)   // closest to G3 (55), one semitone
+    }
+
+    func testNearestStringUsesAbsolutePitchNotClass() throws {
+        // DADGAD has three D's (D2 D3 D4). A detected D3 must map to the middle D string, not the low
+        // one — proof the match is by absolute MIDI distance, not pitch class.
+        let dadgad = try XCTUnwrap(Instrument.guitar.tunings.first { $0.name == "DADGAD" })  // 38 45 50 55 57 62
+        XCTAssertEqual(dadgad.nearestStringIndex(toMidi: 50), 2)   // D3 → 3rd string (index 2)
+        XCTAssertEqual(dadgad.nearestStringIndex(toMidi: 38), 0)   // D2 → 6th string (index 0)
+        XCTAssertEqual(dadgad.nearestStringIndex(toMidi: 62), 5)   // D4 → 1st string (index 5)
+    }
+
+    func testNearestStringTieResolvesToLowerString() {
+        // Exactly between two strings 4 semitones apart → the lower (smaller index) wins.
+        let tuning = Tuning(name: "tie", midiNotes: [40, 44])
+        XCTAssertEqual(tuning.nearestStringIndex(toMidi: 42), 0)
+    }
+}
