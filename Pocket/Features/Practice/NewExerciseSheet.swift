@@ -8,6 +8,9 @@ struct NewExercisePlan {
     let command: Int
     let signature: TimeSignature
     let template: ExerciseTemplate
+    /// The instrument this drill is fixed to (ADR 0116) — seeded from the profile, overridable via the
+    /// create step's Guitar/Bass control. Rides onto the created `Exercise`.
+    let instrument: Instrument
     /// The authored strum pattern for a strumming template; `nil` for every other template.
     let strum: StrumPattern?
     /// The authored fretboard content — a generated run or a custom drill — for a fretboard-family
@@ -36,6 +39,9 @@ struct NewExerciseSheet: View {
     /// When set, skips the template picker and opens directly on the configure step for this
     /// template (the automator "Save as exercise" seam, which is always a `.basic` drill).
     var fixedTemplate: ExerciseTemplate?
+    /// The instrument the create step opens on (ADR 0116) — the profile's preferred instrument, defaulting
+    /// to guitar so an untouched install is unchanged.
+    var defaultInstrument: Instrument = .guitar
     /// Called with the assembled plan when the user confirms. The caller inserts the model.
     let onCreate: (NewExercisePlan) -> Void
 
@@ -47,14 +53,16 @@ struct NewExerciseSheet: View {
             Group {
                 if let fixedTemplate {
                     ConfigureExerciseForm(template: fixedTemplate, initialCommand: initialCommand,
-                                          initialSignature: initialSignature, create: create)
+                                          initialSignature: initialSignature,
+                                          initialInstrument: defaultInstrument, create: create)
                 } else {
                     ExerciseTemplatePicker { chosen = $0 }
                 }
             }
             .navigationDestination(item: $chosen) { template in
                 ConfigureExerciseForm(template: template, initialCommand: initialCommand,
-                                      initialSignature: initialSignature, create: create)
+                                      initialSignature: initialSignature,
+                                      initialInstrument: defaultInstrument, create: create)
             }
             .tint(PocketColor.practice)
             .toolbar {

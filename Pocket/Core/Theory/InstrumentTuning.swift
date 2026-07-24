@@ -58,6 +58,29 @@ enum Instrument: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Fretboard-engine bridge (ADR 0116)
+
+extension Instrument {
+    /// The engine-canonical open-string MIDI — **highest-first** (index 0 = thinnest string) — for this
+    /// instrument's **standard** tuning. The single point the fretboard generators resolve an instrument
+    /// to (ADR 0116): guitar returns `[64,59,55,50,45,40]` (the golden-pinned CAGED constant), bass its
+    /// four strings. Per-exercise alternate tunings (Drop D) and custom tunings are deferred, so
+    /// generation always uses standard.
+    var engineOpenMidi: [Int] { standardTuning.engineOpenMidi }
+
+    /// How many strings this instrument's board draws — the length of its standard tuning (6 / 4).
+    var stringCount: Int { standardTuning.stringCount }
+
+    /// The MIDI pitch a `FretNote` sounds on this instrument's standard tuning — the instrument-aware
+    /// counterpart of `CAGEDShape.midi` / `BassNeckLayout.midi`, used where the neck's actual pitches are
+    /// needed (Hear playback of a generated run).
+    func midi(of note: FretNote) -> Int {
+        let open = engineOpenMidi
+        guard !open.isEmpty else { return note.fret }
+        return open[min(max(0, note.string), open.count - 1)] + note.fret
+    }
+}
+
 /// How the tuner interprets a detected pitch (ADR 0115). **Guided** (default) knows the selected
 /// tuning and names the target string + direction; **Chromatic** names any of the twelve pitches with
 /// no target, for odd/experimental tunings. `String`-raw so it drops straight into `@AppStorage`.

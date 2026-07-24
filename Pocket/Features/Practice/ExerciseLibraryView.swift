@@ -90,7 +90,8 @@ struct ExerciseLibraryView: View {
             }
         }
         .sheet(isPresented: $creating) {
-            NewExerciseSheet(initialCommand: defaultCommand, onCreate: create)
+            NewExerciseSheet(initialCommand: defaultCommand, defaultInstrument: defaultInstrument,
+                             onCreate: create)
         }
     }
 
@@ -143,7 +144,7 @@ struct ExerciseLibraryView: View {
                                                 beatsPerBar: plan.signature.beats,
                                                 noteValue: plan.signature.noteValue,
                                                 template: plan.template,
-                                                instrument: defaultInstrument)
+                                                instrument: plan.instrument)
         if let strum = plan.strum { exercise.setStrumPattern(strum) }
         if let fretboard = plan.fretboard { exercise.setFretboardContent(fretboard) }
         if let chords = plan.chords { exercise.setChordProgression(chords) }

@@ -121,15 +121,17 @@ enum ScaleNeckLayout {
     static let maxFret = 24
 
     /// The scale tones' semitone offsets, sorted and de-duplicated to one octave — the ladder both
-    /// generators climb.
-    private static func toneOffsets(_ scale: GuitarScale) -> [Int] {
+    /// generators climb. Internal (not private) so the bass placement rule (`BassNeckLayout`, ADR 0116)
+    /// reuses this exact tone ladder rather than duplicating it.
+    static func toneOffsets(_ scale: GuitarScale) -> [Int] {
         Array(Set(scale.intervals.map { (($0 % 12) + 12) % 12 })).sorted()
     }
 
     /// Ascending scale-tone MIDI pitches: `count` of them starting **at** `startMidi` (which must be a
-    /// scale tone), each the next tone up. Pure — the ladder the placement rules walk.
-    private static func ascendingTones(fromMidi startMidi: Int, root: Int,
-                                       offsets: [Int], count: Int) -> [Int] {
+    /// scale tone), each the next tone up. Pure — the ladder the placement rules walk. Internal so the
+    /// bass placement rule (`BassNeckLayout`, ADR 0116) reuses it.
+    static func ascendingTones(fromMidi startMidi: Int, root: Int,
+                               offsets: [Int], count: Int) -> [Int] {
         guard !offsets.isEmpty, count > 0 else { return [] }
         let startOffset = (((startMidi - root) % 12) + 12) % 12
         var index = offsets.firstIndex(of: startOffset) ?? 0

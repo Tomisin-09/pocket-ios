@@ -287,8 +287,10 @@ struct FretboardGrid: View {
 
     /// Standard 6-string names top-to-bottom (high e … low E); other counts read as "String N".
     static func stringName(_ index: Int, of count: Int) -> String {
-        let standard = ["e", "B", "G", "D", "A", "E"]
-        if count == standard.count, standard.indices.contains(index) { return standard[index] }
+        let guitar = ["e", "B", "G", "D", "A", "E"]
+        let bass = ["G", "D", "A", "E"]   // standard 4-string bass, highest-first (ADR 0116)
+        if count == guitar.count, guitar.indices.contains(index) { return guitar[index] }
+        if count == bass.count, bass.indices.contains(index) { return bass[index] }
         return "\(index + 1)"
     }
 

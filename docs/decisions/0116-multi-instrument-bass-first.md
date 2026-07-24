@@ -54,5 +54,25 @@ Guitar (shipped) → **bass** (this ADR: tuning-as-value + string-count de-hardc
 
 1. **Boundary adapter + golden tests + this ADR** (pure, guitar byte-identical). ✅
 2. **`Instrument` per-exercise axis** — `instrumentRaw` on `Exercise` + `preferredInstrument` on `Profile`, plumbed through creation and defaulting to guitar. No visible UI yet (every exercise stays guitar), so this commit is guitar-identical too. ✅
-3. Thread the exercise's tuning into the fretboard engine (the de-hardcode); bass scale/arpeggio presets; **and the create-step Guitar/Bass control** — the toggle lands together with the rendering so it never offers an instrument that would draw on the wrong neck.
+3. Thread the exercise's tuning into the fretboard engine (the de-hardcode); bass scale/arpeggio presets; **and the create-step Guitar/Bass control** — the toggle lands together with the rendering so it never offers an instrument that would draw on the wrong neck. ✅
 4. Library instrument filter (progressive disclosure).
+
+## Slice 3 sub-decision — bass generation is a ladder-based placement rule, not a truncated CAGED box
+
+Bass isn't CAGED: a bassist plays a scale as a single **2-octave positional shape** across all four
+strings. Three routes were weighed — truncate a guitar CAGED box to the low four strings (cheap, but the
+run comes out stunted, ~1.3 octaves), hand-author a parallel bass geometry table (highest fidelity, but a
+lasting second system to maintain), or a **middle path**: a dedicated `BassNeckLayout` box built on the
+*existing, already-property-tested* `ScaleNeckLayout.ascendingTones` tone ladder, laid across the strings
+with a bass notes-per-string schedule. The middle path was chosen — it produces a real 2-octave shape with
+no parallel CAGED table, inheriting the ascending/in-scale correctness from the shared ladder. Consequences:
+
+- **The label layer forks** (bass string names E A D G, a single low-string-rooted flagship box, region
+  labels instead of CAGED letters) — unavoidable for any option that truly generates bass, kept minimal.
+- **Bass is box-only:** the diagonal extended-pentatonic and 3-notes-per-string layouts, and the
+  blues/bebop passing-tone insertion, are declared **guitar-only** (they're guitar techniques). Bass ships
+  **one** canonical box per key in v1 (`positionCount == 1`); octave-shifted positions wait for a follow-up.
+- **Instrument is threaded, not persisted in the recipe.** `ScaleRun`/`ArpeggioRun`/`FretboardRun` gain no
+  stored fields; `Exercise.instrument` (S2) is passed into `expanded(instrument:)` at render/edit time, so
+  there is no payload migration and the guitar `expanded()` path is byte-identical (golden + regression
+  tests). Generation uses the instrument's **standard** tuning; alternate/custom tunings stay deferred.

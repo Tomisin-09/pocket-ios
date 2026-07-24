@@ -11,6 +11,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **Bass guitar drills.** Scales, arpeggios and warm-up/picking runs can now be built for **bass**. The
+  create step for a fretboard drill shows a **Guitar / Bass** control (defaulted from your profile's
+  instrument); pick Bass and the box generates and draws on a **four-string neck** (E A D G) — a real
+  2-octave bass shape, not a truncated guitar box. The choice is fixed per drill, like the template, so a
+  bass drill always renders on the right neck. Guitar drills are unchanged (ADR 0116).
 - **Guitar tuner.** The Toolkit has a new **Tuner** — a free, live-mic tuner. Play a string and it shows
   the note, how many cents sharp or flat you are on an arc-needle gauge, and which string you're closest
   to; **tap any string** to hear its reference pitch (the mic pauses so it isn't heard back). A **Tune

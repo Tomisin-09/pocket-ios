@@ -11,6 +11,9 @@ import SwiftUI
 /// stepper, root picker, badge, subdivision row) lives in `FretboardEditorChrome`.
 struct ScaleRunEditor: View {
     @Binding var run: ScaleRun
+    /// The exercise's instrument (ADR 0116) — fixes which neck the preview draws and how the box is
+    /// generated. Guitar (the default) is byte-identical to before; bass renders a four-string 2-octave box.
+    var instrument: Instrument = .guitar
     var tint: Color = PocketColor.practice
 
     @State private var showsAdvanced = false
@@ -23,7 +26,8 @@ struct ScaleRunEditor: View {
         60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
     }
     /// The run's notes as MIDI, in playing order — what Hear sounds (no rests in a generated scale run).
-    private var heardNotes: [Int?] { run.sequence.map { Optional(CAGEDShape.midi($0)) } }
+    /// Resolved through the instrument so a bass run sounds an octave lower on the right strings.
+    private var heardNotes: [Int?] { run.heardMidi(for: instrument).map { Optional($0) } }
     /// A one-shot "watch it" request (ADR 0065) — set by the options bar's Hear/Watch, read by the
     /// preview below.
     @State private var playOnceToken: Date?
@@ -32,15 +36,16 @@ struct ScaleRunEditor: View {
         VStack(alignment: .leading, spacing: 16) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
                                        playToken: $playOnceToken, tint: tint)
-            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
-                                  playOnceToken: playOnceToken)
+            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
+                                  labelMode: labelMode, playOnceToken: playOnceToken)
             titleField
             LabeledMenuRow(label: "Scale") { scalePicker }
             LabeledMenuRow(label: "Root") {
                 RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName)
             }
-            if run.scale.supportedLayouts.count > 1 { layoutRow }
-            positionRow
+            // Bass is box-only (the diagonal / 3-notes-per-string layouts are guitar techniques, ADR 0116).
+            if instrument == .guitar, run.scale.supportedLayouts.count > 1 { layoutRow }
+            if run.positionCount(for: instrument) > 1 { positionRow }
             if run.layout.usesOctaves { octavesRow }
             sequenceRow
             Toggle("Up and back", isOn: roundTripBinding)
@@ -68,6 +73,10 @@ struct ScaleRunEditor: View {
     /// The box's primary label is now its root anchor (in the position row); the subtitle carries the
     /// demoted CAGED letter and the fret span (ADR 0091). The neck-spanning layouts name themselves.
     private var subtitle: String {
+        // Bass has no CAGED letter — just the 2-octave box's start (ADR 0116).
+        guard instrument == .guitar else {
+            return "2 octaves · from fret \(run.anchorFret(for: instrument))"
+        }
         switch run.layout {
         case .box:
             return "CAGED \(run.shapeLetter) shape · from fret \(run.anchorFret)"
@@ -126,11 +135,12 @@ struct ScaleRunEditor: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 EditorFieldLabel(run.layout == .extended ? "Shape" : "Position")
-                if run.isMostCommon { MostCommonBadge(tint: tint) }
+                if run.isMostCommon(for: instrument) { MostCommonBadge(tint: tint) }
                 Spacer()
             }
-            EditorStepper(value: run.positionLabel, width: .expanding,
-                          canGoDown: run.position > 1, canGoUp: run.position < run.positionCount,
+            EditorStepper(value: run.positionLabel(for: instrument), width: .expanding,
+                          canGoDown: run.position > 1,
+                          canGoUp: run.position < run.positionCount(for: instrument),
                           tint: tint,
                           stepDown: { setPosition(run.position - 1) },
                           stepUp: { setPosition(run.position + 1) })
