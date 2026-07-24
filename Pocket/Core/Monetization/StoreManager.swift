@@ -52,7 +52,18 @@ final class StoreManager {
         if let stored = UserDefaults.standard.object(forKey: Self.debugOverrideKey) as? Int {
             debugProOverride = stored < 0 ? nil : (stored == 1)
         }
+        // UI tests run **fully unlocked** so entitlement gating never blocks a feature flow under
+        // test (the gating itself is unit-tested — `AccessPolicyTests`). Setting the override in
+        // `init` deliberately skips its `didSet`, so this is **not** persisted and can't leak into a
+        // later launch; and it's DEBUG-only + launch-args can't be set by an App Store user, so it is
+        // never a Release entitlement bypass.
+        if CommandLine.arguments.contains("-uiTesting") {
+            debugProOverride = true
+        }
         #endif
+        // Apply any override synchronously so the first paint already reflects it (no flash of locked
+        // content, and no race for a UI test that taps before the async entitlement refresh lands).
+        recomputeIsPro()
         // Listen for renewals / revocations / refunds for the life of the app (weak self; the
         // manager is an app-lifetime singleton, so the stream is never orphaned in practice).
         Task { [weak self] in
