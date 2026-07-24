@@ -50,4 +50,36 @@ final class AppSettingsTests: XCTestCase {
     func testUnrecognisedAppearanceFallsBackToSystem() {
         XCTAssertEqual(AppSettings.resolvedAppearance(storedValue: "sepia"), .system)
     }
+
+    // MARK: tuner settings (ADR 0115 Slice 4)
+
+    func testUnsetTunerInstrumentTakesGuitar() {
+        XCTAssertEqual(AppSettings.resolvedInstrument(storedValue: nil), .guitar)
+    }
+
+    func testSetTunerInstrumentReadsItsStoredValue() {
+        XCTAssertEqual(AppSettings.resolvedInstrument(storedValue: "bass"), .bass)
+    }
+
+    func testUnrecognisedTunerInstrumentFallsBackToGuitar() {
+        XCTAssertEqual(AppSettings.resolvedInstrument(storedValue: "banjo"), .guitar)
+    }
+
+    func testUnsetTunerModeTakesGuided() {
+        XCTAssertEqual(AppSettings.resolvedTunerMode(storedValue: nil), .guided)
+    }
+
+    func testSetTunerModeReadsItsStoredValue() {
+        XCTAssertEqual(AppSettings.resolvedTunerMode(storedValue: "chromatic"), .chromatic)
+    }
+
+    func testUnrecognisedTunerModeFallsBackToGuided() {
+        XCTAssertEqual(AppSettings.resolvedTunerMode(storedValue: "spectral"), .guided)
+    }
+
+    func testReferencePitchDefaultSitsInsideItsRange() {
+        // The stepper's default must be a value the stepper can actually reach (A440 in A432–A446).
+        XCTAssertTrue(AppSettings.tunerReferenceRange.contains(AppSettings.tunerReferenceDefault))
+        XCTAssertEqual(AppSettings.tunerReferenceDefault, 440)
+    }
 }

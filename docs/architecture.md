@@ -546,6 +546,18 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
   and diacritic-insensitive over term **and** definition), unit-tested. Definitions state objective
   identity only — a glossary informs, never grades (ADR 0070).
 
+**Tuner** (`TunerView` + `TunerGaugeView`, ADR 0115) is a free, live-mic tuner — the Toolkit's first
+audio-*input* tenant (Slice 1's two were audio-free). `TunerEngine` (`Core/Audio`) is the app's **first
+live `installTap`** on the mic (the recording path writes to a file and never taps live PCM): it
+accumulates a rolling window, runs the pure autocorrelation `PitchDetector` (McLeod NSDF, octave-safe)
+off the audio thread, maps the frequency to the nearest note (`TunerReading`, spelled via the shared
+`GuitarScale.noteName`) against a curated `Instrument`/`Tuning` catalog (guitar + bass), and publishes a
+lightly-smoothed reading (`TunerSmoother` — eases cents, snaps on note change, rides out dropouts). The
+view shows the note, an arc-needle cents gauge, the nearest standard-tuning string, and a `ToneEngine`
+**Hear** reference tone; it starts on appear (after mic permission) and stops on disappear / when the
+scene leaves `.active`, so the mic is never held open. It reports pitch, never grades (ADR 0070).
+Instrument / tuning / chromatic-mode / reference-pitch settings land in Slice 4 (Tune Settings sheet).
+
 The four home strips (Song library / Metronome / Practice / Toolkit) share one presentational
 `HomeNavCard` component (icon + title + subtitle + chevron on a washed card); each home card just
 supplies its copy and its `PocketColor` hue trio, keeping the owning link/button in `HomeView`.

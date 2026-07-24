@@ -484,6 +484,44 @@ second, selectable theme. When picked back up:
   a template). Decide art-vs-tint when we start.
 - See ADR 0081 for the full mapping and consequences.
 
+## Multi-instrument support — bass first (logged 2026-07-24, action after tuner)
+
+Extend the fretboard-family features (scales, chords, arpeggios, custom drills) to other
+stringed instruments — **bass first** (nearly free), ukulele later and reduced-scope. Do **not**
+start until the guitar tuner (ADR 0115, branch pocket-193) is complete; that work already lays the
+data foundation (`Instrument` enum + `Tuning` value in `Core/Theory/InstrumentTuning.swift`).
+
+- **Integration model = Option C: instrument as a per-exercise axis with a profile default.**
+  Instrument is a property fixed at creation (sibling to the immutable `ExerciseTemplate` axis),
+  defaulted from the ADR 0113 profile ("what do you play"), overridable per exercise. **Not** a
+  global "mode" and **not** a launch-time path pick — both fight the Library (wrong-instrument
+  rendering) and the multi-instrumentalist. Surfaces: profile intake sets default → segmented
+  Guitar/Bass on the create/configure step (guitar-only templates like CAGED scale boxes
+  hide/disable off-guitar) → Library instrument filter that appears only once >1 instrument's
+  content exists (progressive disclosure) → renderer needs no new UI (`FretboardGrid` already draws
+  N strings) → tuner/chord-library already per-instrument.
+
+- **String-order mismatch — decided approach: adapt at the boundary, don't unify.** The engine is
+  canonically **highest-first** (`FretNote` "0 = high e … 5 = low E", `CAGEDShape.openMidi =
+  [64,59,55,50,45,40]`, `ScaleLayout`, `ChordGrip.RootString` enum, renderer row-stacking) and it's
+  **persisted** in every stored drill's `FretNote.string` — do not flip it. The tuner's `Tuning` is
+  lowest-first (ADR 0115) and isolated. Cross the two in exactly one place — a pure reversal:
+  ```swift
+  extension Tuning { var engineOpenMidi: [Int] { Array(midiNotes.reversed()) } }  // index 0 = highest
+  ```
+  Rules: (1) raw `tuning.midiNotes` never reaches engine code — only `engineOpenMidi`; (2) golden
+  test `Instrument.guitar.standardTuning.engineOpenMidi == [64,59,55,50,45,40]` proves guitar renders
+  byte-for-byte identical post-refactor; (3) de-hardcode string count at the same boundary (replace
+  `ChordVoicing.stringCount = 6` / `openMidi.count` assumptions with the tuning length). Reversal is
+  valid only for **monotonic** tunings — reentrant ukulele (gCEA) is not a simple reversal, which is
+  the same non-monotonicity that breaks CAGED box generation → **uke deferred**, and when it lands
+  it's chords + custom drills only, no generated scale boxes.
+
+- **Scope ladder:** guitar (today) → **bass** (interval math identical, mostly the tuning-as-value +
+  string-count de-hardcode) → ukulele (chords/drills only, own follow-up). Write an ADR when actioned
+  (canonical convention + boundary adapter + de-hardcoding plan close off the "unify the conventions"
+  alternative). Bass presets grow a small set over time; existing presets tagged guitar.
+
 ## Near-term (active, not parked)
 
 These are scheduled to be picked up shortly — listed here so they're not lost.

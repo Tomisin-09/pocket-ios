@@ -47,10 +47,23 @@ enum AppSettings {
         static let artistNamePromptSeen = "artistNamePromptSeen"
         static let artistIntakeSeen = "artistIntakeSeen"
         static let clickTimbre = "clickTimbre"
+        static let tunerInstrument = "tunerInstrument"
+        static let tunerMode = "tunerMode"
+        static let tunerTuning = "tunerTuning"
+        static let tunerReferenceA = "tunerReferenceA"
+        static let tunerChimeEnabled = "tunerChimeEnabled"
     }
 
     /// Count-in length is offered as whole bars in this range.
     static let countInBarsRange = 1...2
+
+    /// Reference-pitch (concert A) calibration range offered by the tuner, in Hz (ADR 0115). A440 is
+    /// the default; A432–A446 covers the ensembles a player might tune to. Free — unlike Fender, we
+    /// don't gate calibration behind a paid tier (our Pro line is author-vs-run, ADR 0112).
+    static let tunerReferenceRange = 432...446
+
+    /// The tuner's default reference pitch, standard concert A.
+    static let tunerReferenceDefault = 440
 
     /// The between-blocks rest countdown is offered in this range of seconds.
     static let routineRestSecondsRange = 5...60
@@ -155,6 +168,39 @@ enum AppSettings {
         guard let storedValue else { return .default }
         return ClickTimbre(rawValue: storedValue) ?? .default
     }
+
+    /// The tuner's instrument axis (ADR 0115). Default `.guitar`.
+    static var tunerInstrument: Instrument {
+        resolvedInstrument(storedValue: UserDefaults.standard.string(forKey: Key.tunerInstrument))
+    }
+
+    /// Pure default-resolution: a missing or unrecognised value falls back to `.guitar`.
+    static func resolvedInstrument(storedValue: String?) -> Instrument {
+        guard let storedValue else { return .default }
+        return Instrument(rawValue: storedValue) ?? .default
+    }
+
+    /// The tuner's mode — guided vs chromatic (ADR 0115). Default `.guided`.
+    static var tunerMode: TunerMode {
+        resolvedTunerMode(storedValue: UserDefaults.standard.string(forKey: Key.tunerMode))
+    }
+
+    /// Pure default-resolution: a missing or unrecognised value falls back to `.guided`.
+    static func resolvedTunerMode(storedValue: String?) -> TunerMode {
+        guard let storedValue else { return .default }
+        return TunerMode(rawValue: storedValue) ?? .default
+    }
+
+    /// The tuner's reference pitch in Hz, clamped to `tunerReferenceRange` (ADR 0115). Default 440.
+    static var tunerReferenceA: Int {
+        let resolved = resolvedInt(storedValue: UserDefaults.standard.object(forKey: Key.tunerReferenceA),
+                                   default: tunerReferenceDefault)
+        return min(tunerReferenceRange.upperBound, max(tunerReferenceRange.lowerBound, resolved))
+    }
+
+    /// Whether the tuner sounds a short chime when a string settles in tune (ADR 0115). Default on.
+    /// Rewarding an *objective* pitch target — not performance feedback (ADR 0070 intact).
+    static var tunerChimeEnabled: Bool { bool(Key.tunerChimeEnabled, default: true) }
 
     private static func bool(_ key: String, default fallback: Bool = true,
                              store: UserDefaults = .standard) -> Bool {
