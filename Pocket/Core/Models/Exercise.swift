@@ -200,6 +200,17 @@ final class Exercise {
     /// pre-0119 exercises with `false` — additive, no store wipe (CoreData 134110 rule).
     var isFavorite: Bool = false
 
+    /// **Provenance**: the stable slug of the seeded preset this exercise was created from (ADR 0112,
+    /// e.g. `"a-minor-pentatonic"`) — `nil` for a user-authored drill. A plain optional `String`, not
+    /// an enum, so the add is a **lightweight, non-lossy** migration: rows saved before this field
+    /// decode to `nil` (CoreData 134110 rule, ADR 0012/0036). It records *where the drill came from*,
+    /// never a Pro flag — access stays computed live from `isPro` (ADR 0112 "gate at read time"). Its
+    /// only monetization use is the free-taste **run** allowance (`AccessPolicy.isFreeTaste`): a free
+    /// user may run the curated seeded presets even on a Pro-family template. **Never** filter it in a
+    /// `#Predicate` (`presetSlug != nil` starves the main thread — the optional-predicate freeze);
+    /// read it per-object in memory at the gate.
+    var presetSlug: String?
+
     /// The exercise's practice journal — dated, context-snapshotting entries (ADR 0038/0058),
     /// mirroring `Loop.journal`. Cascade-owned: deleting the exercise deletes its entries.
     /// Declaration default keeps SwiftData lightweight migration additive (CoreData 134110

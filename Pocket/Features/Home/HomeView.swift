@@ -149,6 +149,9 @@ struct HomeView: View {
             // install (the run-screen "freeze" that once looked like a regression was this latency).
             .task {
                 PracticePresets.seedIfNeeded(into: context)
+                // Stamp preset provenance onto drills seeded before the slug field existed (ADR 0112),
+                // so the paywall's free-taste run allowance recognises them. Guarded to run once.
+                PracticePresets.backfillPresetSlugsIfNeeded(into: context)
                 await Task.yield()
                 RoutinePresets.seedIfNeeded(into: context)
                 #if DEBUG

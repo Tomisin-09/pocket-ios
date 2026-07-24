@@ -81,9 +81,31 @@ final class AccessPolicyTests: XCTestCase {
         }
     }
 
-    /// The taste is a *run* allowance only — it never grants authoring.
-    func testFreeTastePresetDoesNotGrantAuthoring() {
-        XCTAssertFalse(AccessPolicy.canAuthor(.scales, isPro: false))
-        XCTAssertFalse(AccessPolicy.canAuthor(.legato, isPro: false))
+    /// The taste is a *run* allowance only — it never grants authoring, so a free player **cannot
+    /// edit** a freebie (its template is Pro; editing routes through `canAuthor`, which has no taste
+    /// parameter). This is the "can't edit the freebie" guarantee.
+    func testFreeUserCannotEditAnyFreeTastePreset() {
+        for template: ExerciseTemplate in [.scales, .chords, .picking, .legato] {
+            XCTAssertFalse(AccessPolicy.canAuthor(template, isPro: false),
+                           "a free user must not be able to edit a \(template) freebie")
+        }
+    }
+
+    // MARK: - free-taste allowlist
+
+    func testIsFreeTasteRecognisesTheFourFreebies() {
+        for slug in ["a-minor-pentatonic", "pop-changes", "alternate-picking", "legato"] {
+            XCTAssertTrue(AccessPolicy.isFreeTaste(slug: slug), "\(slug) should be free taste")
+        }
+    }
+
+    func testIsFreeTasteRejectsNilAndOtherPresets() {
+        XCTAssertFalse(AccessPolicy.isFreeTaste(slug: nil))          // a user-authored drill
+        XCTAssertFalse(AccessPolicy.isFreeTaste(slug: "scale-runs")) // a seeded but non-taste preset
+        XCTAssertFalse(AccessPolicy.isFreeTaste(slug: "a-minor-7-arpeggio"))
+    }
+
+    func testExactlyFourFreeTasteSlugs() {
+        XCTAssertEqual(AccessPolicy.freeTasteSlugs.count, 4)
     }
 }

@@ -223,6 +223,106 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, 0)
     }
 
+    // MARK: - Preset provenance / slugs (ADR 0112)
+
+    func testEveryPresetShipsWithANonEmptySlug() {
+        for spec in PracticePresets.allSpecs {
+            XCTAssertFalse(spec.slug.isEmpty, "\(spec.name) must ship with a slug")
+        }
+    }
+
+    func testPresetSlugsAreUnique() {
+        let slugs = PracticePresets.allSpecs.map(\.slug)
+        XCTAssertEqual(Set(slugs).count, slugs.count, "preset slugs must be unique")
+    }
+
+    func testMakeExercisesStampsProvenanceSlug() {
+        for (spec, exercise) in zip(PracticePresets.allSpecs,
+                                    PracticePresets.makeExercises(PracticePresets.allSpecs)) {
+            XCTAssertEqual(exercise.presetSlug, spec.slug, "\(spec.name) should carry its slug")
+        }
+    }
+
+    /// Every free-taste slug the paywall relies on must actually be a shipped preset — guards the
+    /// `AccessPolicy.freeTasteSlugs` ↔ `PracticePresets` contract so a rename can't silently orphan
+    /// a freebie.
+    func testEveryFreeTasteSlugIsAShippedPreset() {
+        let shipped = Set(PracticePresets.allSpecs.map(\.slug))
+        for slug in AccessPolicy.freeTasteSlugs {
+            XCTAssertTrue(shipped.contains(slug), "free-taste slug \(slug) has no shipped preset")
+        }
+    }
+
+    // MARK: - Provenance matcher + backfill
+
+    func testSlugMatcherFindsAPresetByNameAndTemplate() {
+        XCTAssertEqual(PracticePresets.slug(forName: "A Minor Pentatonic", template: .scales),
+                       "a-minor-pentatonic")
+        XCTAssertEqual(PracticePresets.slug(forName: "Legato", template: .legato), "legato")
+    }
+
+    func testSlugMatcherRejectsUnknownOrMismatchedTemplate() {
+        XCTAssertNil(PracticePresets.slug(forName: "My Own Drill", template: .scales))
+        // Right name, wrong template ⇒ no match (guards against a coincidental collision).
+        XCTAssertNil(PracticePresets.slug(forName: "Legato", template: .scales))
+    }
+
+    /// The one-time backfill re-stamps presets that were seeded before the slug field existed:
+    /// seed, wipe the slugs to simulate an old install, then backfill and confirm they return.
+    func testBackfillReStampsSlugsForAPreSlugInstall() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Exercise.self, configurations: config)
+        let context = ModelContext(container)
+        let defaults = try freshDefaults()
+
+        PracticePresets.seedIfNeeded(into: context, defaults: defaults)
+        // Simulate a store seeded before provenance existed: clear every slug.
+        for exercise in try context.fetch(FetchDescriptor<Exercise>()) { exercise.presetSlug = nil }
+        try context.save()
+
+        PracticePresets.backfillPresetSlugsIfNeeded(into: context, defaults: defaults)
+
+        let stamped = try context.fetch(FetchDescriptor<Exercise>())
+            .filter { $0.presetSlug != nil }
+        // Every seeded preset name is unique + matches a spec, so all should be re-stamped.
+        XCTAssertEqual(stamped.count, PracticePresets.makeExercises(PracticePresets.allSpecs).count)
+        let pentatonic = try context.fetch(FetchDescriptor<Exercise>())
+            .first { $0.name == "A Minor Pentatonic" }
+        XCTAssertEqual(pentatonic?.presetSlug, "a-minor-pentatonic")
+    }
+
+    func testBackfillLeavesUserAuthoredDrillsUntouched() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Exercise.self, configurations: config)
+        let context = ModelContext(container)
+        let defaults = try freshDefaults()
+
+        let mine = Exercise(name: "My Own Drill", template: .scales)
+        context.insert(mine)
+        try context.save()
+
+        PracticePresets.backfillPresetSlugsIfNeeded(into: context, defaults: defaults)
+        XCTAssertNil(mine.presetSlug, "a user-authored drill must never be stamped as a preset")
+    }
+
+    func testBackfillRunsAtMostOnce() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Exercise.self, configurations: config)
+        let context = ModelContext(container)
+        let defaults = try freshDefaults()
+
+        PracticePresets.backfillPresetSlugsIfNeeded(into: context, defaults: defaults)
+        // A preset seeded *after* the backfill already ran (slug wiped) must NOT be re-stamped,
+        // because the guard flag is set — proving the backfill is one-shot.
+        let late = Exercise(name: "Legato", template: .legato)
+        late.presetSlug = nil
+        context.insert(late)
+        try context.save()
+
+        PracticePresets.backfillPresetSlugsIfNeeded(into: context, defaults: defaults)
+        XCTAssertNil(late.presetSlug, "backfill must not run a second time")
+    }
+
     /// A throwaway `UserDefaults` suite so the seed flag never touches the real domain.
     private func freshDefaults() throws -> UserDefaults {
         let name = "PracticePresetsTests-\(UUID().uuidString)"

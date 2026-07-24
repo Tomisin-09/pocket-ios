@@ -11,6 +11,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   catalog) and an `AccessPolicy` (`canAuthor` / `canRun`) that all future paywall gates route
   through. No StoreKit, no UI, no behaviour change yet — this is the free/Pro rule in one testable
   place, ahead of the `StoreManager` and paywall slices.
+- **Preset provenance for the free taste (ADR 0112).** Seeded presets now carry a stable
+  `presetSlug` (a new optional `String` on `Exercise` — additive, non-lossy migration), stamped by
+  the seeder and back-filled once onto pre-existing installs. `AccessPolicy.freeTasteSlugs` names the
+  four run-free-forever presets (pentatonic box, open chords G·D·Em·C, picking warm-up, legato); a
+  free player can *run* those even on a Pro template but still can't *edit* them. Still dormant — no
+  gate consumes it yet.
 
 ### Changed
 - **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the

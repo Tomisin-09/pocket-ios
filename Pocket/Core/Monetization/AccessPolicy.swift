@@ -52,8 +52,14 @@ extension ExerciseTemplate {
 ///   given exercise is one of those presets is provenance the caller resolves (Slice 2's preset
 ///   marker); `AccessPolicy` only combines it with the tier and `isPro`.
 enum AccessPolicy {
-    /// May the player **create** a new exercise from `template` (or open the "draw your own" canvas
-    /// for it)? Pro unlocks everything; otherwise only free-tier templates.
+    /// May the player **author** with `template` — create a new exercise from it, open the "draw your
+    /// own" canvas, **or edit an existing exercise's shape/settings**? Pro unlocks everything;
+    /// otherwise only free-tier templates.
+    ///
+    /// Editing routes through here too (not `canRun`), and `canAuthor` deliberately has **no**
+    /// free-taste parameter — so a free player can *run* the seeded pentatonic/open-chord/picking/
+    /// legato freebie but **cannot edit it** (its template is Pro; editing is authoring). Tapping
+    /// "edit" on a freebie hits the paywall while "practice" runs it.
     static func canAuthor(_ template: ExerciseTemplate, isPro: Bool) -> Bool {
         isPro || template.authoringTier == .free
     }
@@ -68,5 +74,26 @@ enum AccessPolicy {
                        isPro: Bool,
                        isFreeTastePreset: Bool = false) -> Bool {
         isPro || template.authoringTier == .free || isFreeTastePreset
+    }
+
+    /// The **permanent free taste** (ADR 0112): the exact seeded presets a free player may *run*
+    /// even though their template is Pro to author — the low-E pentatonic box, the open-chord
+    /// turnaround, the picking warm-up, and legato. A **run** allowance only; it never grants
+    /// authoring. Presets on a *free* template (the warm-ups, all strumming) don't appear here — they
+    /// run free by tier already. These slugs are **frozen identifiers** (they match `presetSlug`
+    /// provenance stamped by the seeder), so renaming a `PracticePresets.Spec` must keep its slug.
+    static let freeTasteSlugs: Set<String> = [
+        "a-minor-pentatonic",   // the low-E minor-pentatonic box (scales)
+        "pop-changes",          // the open-chord set, G·D·Em·C (chords)
+        "alternate-picking",    // the picking warm-up (picking)
+        "legato"                // hammer-ons / pull-offs (legato)
+    ]
+
+    /// Whether `slug` (an `Exercise.presetSlug`) is one of the free-taste presets. `nil` (a
+    /// user-authored drill) is never free taste. The convenience the run-gate sites call with an
+    /// exercise's provenance.
+    static func isFreeTaste(slug: String?) -> Bool {
+        guard let slug else { return false }
+        return freeTasteSlugs.contains(slug)
     }
 }
