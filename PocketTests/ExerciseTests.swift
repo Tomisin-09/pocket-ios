@@ -155,6 +155,35 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(exercise.noteValue, 4)
     }
 
+    // MARK: - Instrument axis (ADR 0116)
+
+    func testInstrumentDefaultsToGuitar() {
+        // Additive migration: every existing / freshly-defaulted exercise is a guitar drill.
+        XCTAssertEqual(Exercise().instrument, .guitar)
+        XCTAssertEqual(Exercise().instrumentRaw, "guitar")
+        XCTAssertEqual(Exercise.commandAnchored(name: "Plain", command: 90).instrument, .guitar)
+    }
+
+    func testInstrumentRoundTripsThroughStringBacking() {
+        let exercise = Exercise()
+        exercise.instrument = .bass
+        XCTAssertEqual(exercise.instrumentRaw, "bass")
+        XCTAssertEqual(exercise.instrument, .bass)
+    }
+
+    func testInstrumentFallsBackToGuitarOnUnknownRaw() {
+        // Forward compatibility: an older build opening a newer instrument reads it as guitar rather
+        // than failing (mirrors templateRaw's fallback).
+        let exercise = Exercise()
+        exercise.instrumentRaw = "sitar"
+        XCTAssertEqual(exercise.instrument, .guitar)
+    }
+
+    func testCommandAnchoredCarriesTheChosenInstrument() {
+        let bass = Exercise.commandAnchored(name: "Bass run", command: 90, instrument: .bass)
+        XCTAssertEqual(bass.instrument, .bass)
+    }
+
     // MARK: - Training ramp (ADR 0046 — the run(ramp:) seam)
 
     func testRampMapsTheSavedRecipe() {

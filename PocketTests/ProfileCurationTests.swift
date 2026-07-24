@@ -94,6 +94,27 @@ final class ProfileCurationTests: XCTestCase {
         XCTAssertEqual(profile.dream, .writeMusic)
         XCTAssertEqual(profile.minutesPerDay, .long)
     }
+
+    // MARK: - Preferred instrument (ADR 0116)
+
+    func testPreferredInstrumentDefaultsToGuitarWhenUnset() {
+        // Unlike the optional curation fields, this one always resolves — a fresh exercise always
+        // needs an instrument, and an untouched / pre-0116 profile means guitar.
+        let profile = Profile()
+        XCTAssertNil(profile.preferredInstrumentRaw)
+        XCTAssertEqual(profile.preferredInstrument, .guitar)
+    }
+
+    func testPreferredInstrumentRoundTripsAndFallsBack() {
+        let profile = Profile()
+        profile.preferredInstrument = .bass
+        XCTAssertEqual(profile.preferredInstrumentRaw, "bass")
+        XCTAssertEqual(profile.preferredInstrument, .bass)
+
+        // A future/renamed instrument value decodes back to guitar rather than crashing.
+        profile.preferredInstrumentRaw = "sitar"
+        XCTAssertEqual(profile.preferredInstrument, .guitar)
+    }
 }
 
 /// Small raw-value fixture kept out of the assertions above so the test reads as intent, not literals.

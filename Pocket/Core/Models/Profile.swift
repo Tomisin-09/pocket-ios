@@ -46,6 +46,11 @@ final class Profile {
     /// length + tempo defaults.
     var minutesPerDayRaw: String?
 
+    /// The player's **preferred instrument** (`Instrument.rawValue`, ADR 0116) — the default a freshly
+    /// created exercise picks up for its instrument axis. `nil`/unrecognised reads as `.guitar`, so an
+    /// untouched install and every pre-0116 profile default to guitar (additive migration).
+    var preferredInstrumentRaw: String?
+
     init(uid: UUID = UUID(), artistName: String? = nil, createdAt: Date = .now) {
         self.uid = uid
         self.artistName = artistName
@@ -78,6 +83,14 @@ final class Profile {
         set { minutesPerDayRaw = newValue?.rawValue }
     }
 
+    /// The preferred instrument as its enum case — **always resolves**, falling back to `.guitar` when
+    /// unset or unrecognised (unlike the optional curation fields, an exercise always needs an
+    /// instrument default, and guitar is it). The create flow reads this for a fresh drill's axis.
+    var preferredInstrument: Instrument {
+        get { preferredInstrumentRaw.flatMap(Instrument.init(rawValue:)) ?? .guitar }
+        set { preferredInstrumentRaw = newValue.rawValue }
+    }
+
     /// The one profile row, if it exists yet. Returns `nil` on an untouched install (no row is
     /// inserted until a name is set *or* the intake writes curation) — callers treat that as the
     /// name-free / no-preferences state.
@@ -107,6 +120,15 @@ final class Profile {
         profile.genres = genres
         profile.dream = dream
         profile.minutesPerDay = minutesPerDay
+        try? context.save()
+    }
+
+    /// Set the preferred instrument, creating the singleton row on first use — a player can declare
+    /// what they play without ever setting an artist name (mirrors `setCuration`). Feeds fresh
+    /// exercises' instrument default (ADR 0116).
+    static func setPreferredInstrument(_ instrument: Instrument, in context: ModelContext) {
+        let profile = fetchOrCreate(in: context)
+        profile.preferredInstrument = instrument
         try? context.save()
     }
 

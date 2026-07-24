@@ -101,6 +101,13 @@ struct ExerciseLibraryView: View {
         profiles.first?.experience?.defaultCommandTempo ?? StandaloneMetronomeEngine.defaultCommandBPM
     }
 
+    /// The instrument a fresh exercise picks up (ADR 0116 S2 consumer): the profile's preferred
+    /// instrument when declared, else guitar — invisible today (no create-step toggle until S3), so an
+    /// untouched install keeps making guitar drills exactly as before.
+    private var defaultInstrument: Instrument {
+        profiles.first?.preferredInstrument ?? .guitar
+    }
+
     /// The sort control — a menu whose label spells out the active key with a direction arrow
     /// (ADR 0056, mirroring the song library and the loop library).
     private var sortMenu: some View {
@@ -135,7 +142,8 @@ struct ExerciseLibraryView: View {
         let exercise = Exercise.commandAnchored(name: plan.name, command: plan.command,
                                                 beatsPerBar: plan.signature.beats,
                                                 noteValue: plan.signature.noteValue,
-                                                template: plan.template)
+                                                template: plan.template,
+                                                instrument: defaultInstrument)
         if let strum = plan.strum { exercise.setStrumPattern(strum) }
         if let fretboard = plan.fretboard { exercise.setFretboardContent(fretboard) }
         if let chords = plan.chords { exercise.setChordProgression(chords) }

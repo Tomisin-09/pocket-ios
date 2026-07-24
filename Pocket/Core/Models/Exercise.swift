@@ -98,6 +98,22 @@ final class Exercise {
         set { templateRaw = newValue.rawValue }
     }
 
+    /// The **instrument** this drill is for (ADR 0116) — a per-exercise axis fixed at creation,
+    /// sibling to `template`, defaulted from the profile's preferred instrument. A plain `String`,
+    /// **not** the enum (the SwiftData enum-attribute migration rule, ADR 0036). **Declaration
+    /// default of `guitar`** so every existing exercise migrates additively as a guitar drill and is
+    /// otherwise untouched (the CoreData 134110 rule); unknown/empty reads as `.guitar` (forward
+    /// compatibility). Governs which tuning the fretboard engine renders against and the library's
+    /// instrument filter.
+    var instrumentRaw: String = Instrument.default.rawValue
+
+    /// The instrument axis — typed view over `instrumentRaw`, unknown/empty ⇒ `.guitar`. Fixed at
+    /// creation like `template`; the fretboard renderer reads its tuning through this.
+    var instrument: Instrument {
+        get { Instrument(rawValue: instrumentRaw) ?? .guitar }
+        set { instrumentRaw = newValue.rawValue }
+    }
+
     /// The runtime **renderer** (ADR 0065) — *derived* from the template, never stored separately.
     /// The run screen switches its content surface on this; the strum payload accessor gates on it.
     var kind: ExerciseKind { template.renderer }
@@ -225,6 +241,7 @@ final class Exercise {
          accentBeats: [Int] = [0],
          subdivision: Subdivision = .none,
          template: ExerciseTemplate = .basic,
+         instrument: Instrument = .guitar,
          templatePayload: Data? = nil,
          rampStepBPM: Int = 5,
          rampIntervalCount: Int = 4,
@@ -249,6 +266,7 @@ final class Exercise {
         self.accentBeats = accentBeats
         self.subdivisionRaw = subdivision.rawValue
         self.templateRaw = template.rawValue
+        self.instrumentRaw = instrument.rawValue
         self.templatePayload = templatePayload
         self.rampStepBPM = rampStepBPM
         self.rampIntervalCount = rampIntervalCount
