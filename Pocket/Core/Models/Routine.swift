@@ -32,6 +32,13 @@ final class Routine {
     /// (CoreData 134110 rule): a declaration default keeps SwiftData lightweight migration clean.
     var lastPracticed: Date?
 
+    /// A manual **favourite** pin (ADR 0119) — the player's explicit "keep this close," surfaced by the
+    /// Routines library's Favourites filter (a "show only starred" toggle). A pin, never a grade
+    /// (ADR 0070): it feeds no algorithm, only where the routine is shown. A plain `Bool` with a
+    /// declaration default so SwiftData lightweight migration fills pre-0119 routines with `false`
+    /// — additive, no store wipe (CoreData 134110 rule).
+    var isFavorite: Bool = false
+
     /// The ordered blocks. **Cascade-owned**: deleting the routine deletes its items (but
     /// never the units those items *reference* — that link nullifies, see `RoutineItem`).
     /// Declaration default keeps SwiftData lightweight migration additive (CoreData 134110).

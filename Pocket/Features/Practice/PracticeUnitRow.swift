@@ -9,12 +9,22 @@ struct PracticeUnitRow: View {
     var context: String?
     /// The command → reach line, in the unit's own tempo unit (BPM for exercises, % for loops).
     let progress: String
+    /// Whether this unit is favourited (ADR 0119) — draws a small star beside the title.
+    var isFavorite: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.futura(.body))
-                .foregroundStyle(PocketColor.textPrimary)
+            HStack(spacing: 6) {
+                Text(title)
+                    .font(.futura(.body))
+                    .foregroundStyle(PocketColor.textPrimary)
+                if isFavorite {
+                    Image(systemName: "star.fill")
+                        .font(.futura(.caption2))
+                        .foregroundStyle(PocketColor.practice)
+                        .accessibilityLabel("Favourite")
+                }
+            }
             if let context, !context.isEmpty {
                 Text(context)
                     .font(.futura(.caption2))
