@@ -91,12 +91,20 @@ struct FretboardDrill: Codable, Equatable {
     /// migration, and a decoded drill always comes back `nil` (an implicitly-`nil` optional, which the
     /// synthesized `Decodable` uses as the default for the omitted key).
     var noteGroups: [Int]?
+    /// The open-string MIDI the board is tuned to, **highest-first** — the instrument's tuning when this
+    /// drill was generated for one (ADR 0116 S5), else `nil` ⇒ guitar. The renderer resolves each note's
+    /// pitch class / root against it, so a bass board labels in bass tuning. **Transient — never encoded**
+    /// (omitted from `CodingKeys`, like `noteGroups`): a pure render concern the generator and
+    /// `FretboardContent.drill(instrument:)` stamp on, so no persisted-shape change; a decoded `.custom`
+    /// bass drill is re-stamped from its exercise's instrument at render time.
+    var openMidi: [Int]?
 
     init(notesPerBeat: Int,
          notes: [FretNote?],
          stringCount: Int = 6,
          rootPitchClass: Int? = nil,
          noteGroups: [Int]? = nil,
+         openMidi: [Int]? = nil,
          version: Int = FretboardDrill.currentVersion) {
         self.version = version
         self.notesPerBeat = max(1, notesPerBeat)
@@ -104,14 +112,33 @@ struct FretboardDrill: Codable, Equatable {
         self.stringCount = max(1, stringCount)
         self.rootPitchClass = rootPitchClass.map { (($0 % 12) + 12) % 12 }
         self.noteGroups = noteGroups
+        self.openMidi = openMidi
     }
 
-    /// Explicit keys so `noteGroups` (a transient generation artifact, ADR 0083 S2b) is **excluded**
-    /// from the encoded shape — no persisted-blob change, no migration. Every other field codes and
-    /// decodes exactly as the synthesized conformance did before; `noteGroups` decodes to its `nil`
+    /// Explicit keys so `noteGroups` and `openMidi` (transient render artifacts) are **excluded** from
+    /// the encoded shape — no persisted-blob change, no migration. Every other field codes and decodes
+    /// exactly as the synthesized conformance did before; the two transients decode to their `nil`
     /// default.
     private enum CodingKeys: String, CodingKey {
         case version, notesPerBeat, notes, stringCount, rootPitchClass
+    }
+
+    /// Guitar standard open MIDI, highest-first — the default tuning labels resolve against when
+    /// `openMidi` is unset. Byte-identical (mod 12) to `GuitarScale.openPitchClass`, so a guitar board is
+    /// unchanged; equals `Instrument.guitar.engineOpenMidi` / `CAGEDShape.openMidi`.
+    static let guitarOpenMidi = [64, 59, 55, 50, 45, 40]
+
+    /// The tuning this drill's labels resolve against — its stamped `openMidi`, or guitar standard.
+    var resolvedOpenMidi: [Int] { openMidi ?? Self.guitarOpenMidi }
+
+    /// The pitch class (0…11) a note sounds on this drill's tuning — the tuning-aware replacement for the
+    /// guitar-hardcoded `GuitarScale.pitchClass(string:fret:)` the renderer used, so bass note names,
+    /// intervals and root rings land on the right notes (ADR 0116 S5). Guitar resolves identically.
+    func pitchClass(of note: FretNote) -> Int {
+        let open = resolvedOpenMidi
+        guard !open.isEmpty else { return ((note.fret % 12) + 12) % 12 }
+        let index = min(max(0, note.string), open.count - 1)
+        return (((open[index] + note.fret) % 12) + 12) % 12
     }
 }
 
@@ -181,11 +208,17 @@ extension FretboardDrill {
     /// The fretted (non-open) fret numbers the drill actually uses.
     private var frettedNumbers: [Int] { notes.compactMap { $0?.fret }.filter { $0 > 0 } }
 
-    /// The lowest fret **column** the board shows — the lowest fretted note, at least 1. Open notes
-    /// (fret 0) sit on the nut to the left of this and don't pull the window down.
+    /// Whether any slot is an **open string** (fret 0) — common on bass, where the flagship box is rooted
+    /// on an open E/A/D/G (ADR 0116 S5).
+    private var hasOpenNotes: Bool { notes.contains { $0?.fret == 0 } }
+
+    /// The lowest fret **column** the board shows — the lowest fretted note, at least 1. When the drill
+    /// also uses **open strings**, the window is framed from the nut (fret 1) so the open root reads
+    /// contiguously with the low frets instead of stranded on the nut with a gap (ADR 0116 S5) — a bass
+    /// box rooted on the open E is the motivating case, and open-position guitar boxes read better too.
     var displayLowestFret: Int {
         guard let low = frettedNumbers.min() else { return 1 }
-        return max(1, low)
+        return hasOpenNotes ? 1 : max(1, low)
     }
 
     /// How many fret **columns** the board shows — enough to reach the highest fretted note, but at
@@ -269,7 +302,8 @@ extension FretboardDrill {
         var updated = notes
         updated[index] = note
         return FretboardDrill(notesPerBeat: notesPerBeat, notes: updated,
-                              stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
+                              stringCount: stringCount, rootPitchClass: rootPitchClass,
+                              openMidi: openMidi, version: version)
     }
 
     /// Every slot reset to a rest, **preserving the grid** — subdivision, length, string count, and root
@@ -279,7 +313,8 @@ extension FretboardDrill {
     func cleared() -> FretboardDrill {
         FretboardDrill(notesPerBeat: notesPerBeat,
                        notes: Array(repeating: nil, count: notes.count),
-                       stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
+                       stringCount: stringCount, rootPitchClass: rootPitchClass,
+                       openMidi: openMidi, version: version)
     }
 
     /// True when no slot holds a note (every slot is a rest) — the editor disables Clear/Undo when there's
@@ -315,7 +350,8 @@ extension FretboardDrill {
             if notes.indices.contains(oldIndex) { resizedNotes[newIndex] = notes[oldIndex] }
         }
         return FretboardDrill(notesPerBeat: perBeat, notes: resizedNotes,
-                              stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
+                              stringCount: stringCount, rootPitchClass: rootPitchClass,
+                              openMidi: openMidi, version: version)
     }
 
     /// The drill grown or shrunk to `bars` whole bars at the current subdivision, **preserving placed
@@ -328,7 +364,8 @@ extension FretboardDrill {
         var updated = Array(notes.prefix(count))
         if updated.count < count { updated.append(contentsOf: Array(repeating: nil, count: count - updated.count)) }
         return FretboardDrill(notesPerBeat: notesPerBeat, notes: updated,
-                              stringCount: stringCount, rootPitchClass: rootPitchClass, version: version)
+                              stringCount: stringCount, rootPitchClass: rootPitchClass,
+                              openMidi: openMidi, version: version)
     }
 }
 
@@ -354,9 +391,9 @@ extension FretboardDrill {
     /// point when a player switches a Scales drill to "draw your own" (the custom-scale canvas), so they
     /// build the run from an empty neck rather than editing a pre-filled warm-up.
     static func emptyBar(beatsPerBar: Int, notesPerBeat: Int = 2, bars: Int = 1,
-                         stringCount: Int = 6) -> FretboardDrill {
+                         stringCount: Int = 6, openMidi: [Int]? = nil) -> FretboardDrill {
         let count = max(1, beatsPerBar) * max(1, notesPerBeat) * max(1, bars)
         return FretboardDrill(notesPerBeat: notesPerBeat, notes: Array(repeating: nil, count: count),
-                              stringCount: stringCount)
+                              stringCount: stringCount, openMidi: openMidi)
     }
 }

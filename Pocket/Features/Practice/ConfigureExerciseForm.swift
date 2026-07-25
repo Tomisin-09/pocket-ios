@@ -87,8 +87,10 @@ struct ConfigureExerciseForm: View {
         let drillSeed: FretboardDrill
         if initialInstrument != .guitar {
             // Every guitar seed (the custom-value default, the spider-walk) is six-string, so a bass drill
-            // starts from an empty four-string bar instead (ADR 0116).
-            drillSeed = .emptyBar(beatsPerBar: bars, stringCount: initialInstrument.stringCount)
+            // starts from an empty four-string bar instead, tuned to bass so its labels/guide read in bass
+            // tuning (ADR 0116 S5).
+            drillSeed = .emptyBar(beatsPerBar: bars, stringCount: initialInstrument.stringCount,
+                                  openMidi: initialInstrument.engineOpenMidi)
         } else {
             drillSeed = template.defaultFretboardContent?.customValue
                 ?? (drawStartsEmpty ? .emptyBar(beatsPerBar: bars) : .spiderWalk)
@@ -158,7 +160,8 @@ struct ConfigureExerciseForm: View {
             run = Self.seededRun(template: template, instrument: newInstrument)
             scale = Self.seededScale(template: template, instrument: newInstrument)
             arpeggio = Self.seededArpeggio(template: template, instrument: newInstrument)
-            customDrill = .emptyBar(beatsPerBar: signature.beats, stringCount: newInstrument.stringCount)
+            customDrill = .emptyBar(beatsPerBar: signature.beats, stringCount: newInstrument.stringCount,
+                                    openMidi: newInstrument == .guitar ? nil : newInstrument.engineOpenMidi)
             haptic(.light)
         }
         .toolbar {

@@ -181,7 +181,8 @@ extension ArpeggioRun {
         return FretboardDrill(notesPerBeat: notesPerBeat,
                               notes: bassSequence(openMidi: instrument.engineOpenMidi).map { Optional($0) },
                               stringCount: instrument.stringCount,
-                              rootPitchClass: rootPitchClass)
+                              rootPitchClass: rootPitchClass,
+                              openMidi: instrument.engineOpenMidi)
     }
 
     /// The bass 2-octave chord-tone box for this run's quality + key on `openMidi` — the same

@@ -245,7 +245,9 @@ struct FretboardDrillEditor: View {
         let cell = FretNote(string: string, fret: fret)
         let isSelected = drill.note(at: selectedSlot) == cell
         let isUsed = drill.notes.contains(cell)
-        let pitchClass = GuitarScale.pitchClass(string: string, fret: fret)
+        // Resolve in the drill's own tuning so the guide overlay ghosts a scale's notes on the right
+        // frets for bass, not guitar's (ADR 0116 S5). Scale pitch classes are tuning-independent.
+        let pitchClass = drill.pitchClass(of: cell)
         let inGuide = referenceActive && referencePitchClasses.contains(pitchClass)
         let isGuideRoot = inGuide && pitchClass == referenceRoot
         return Button {

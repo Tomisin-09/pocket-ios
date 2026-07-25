@@ -231,6 +231,7 @@ extension FretboardRun {
         guard instrument != .guitar else { return expanded() }
         var drill = stringClamped(to: instrument.stringCount).expanded()
         drill.stringCount = instrument.stringCount
+        drill.openMidi = instrument.engineOpenMidi
         return drill
     }
 
@@ -305,7 +306,14 @@ extension FretboardContent {
         case .run(let run): return run.expanded(instrument: instrument)
         case .scale(let scaleRun): return scaleRun.expanded(instrument: instrument)
         case .arpeggio(let arpeggioRun): return arpeggioRun.expanded(instrument: instrument)
-        case .custom(let drill): return drill
+        case .custom(let drill):
+            // A `.custom` drill persists without its (transient) `openMidi`, so stamp the owning
+            // exercise's tuning back on at render time — bass customs then label in bass tuning after a
+            // reload, guitar customs are unchanged (ADR 0116 S5).
+            guard instrument != .guitar else { return drill }
+            var stamped = drill
+            stamped.openMidi = instrument.engineOpenMidi
+            return stamped
         }
     }
 

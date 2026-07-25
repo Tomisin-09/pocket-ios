@@ -49,8 +49,8 @@ struct FretboardRunEditor: View {
         VStack(alignment: .leading, spacing: 18) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
                                        playToken: $playOnceToken, tint: tint)
-            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
-                                  playOnceToken: playOnceToken)
+            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
+                                  labelMode: labelMode, playOnceToken: playOnceToken)
             patternField
             baseFretField
             spanField

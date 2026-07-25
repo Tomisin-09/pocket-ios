@@ -256,7 +256,8 @@ extension ScaleRun {
         return FretboardDrill(notesPerBeat: notesPerBeat,
                               notes: bassSequence(openMidi: instrument.engineOpenMidi).map { Optional($0) },
                               stringCount: instrument.stringCount,
-                              rootPitchClass: rootPitchClass)
+                              rootPitchClass: rootPitchClass,
+                              openMidi: instrument.engineOpenMidi)
     }
 
     /// The bass 2-octave box for this run's scale + key on `openMidi`, box layout only (bass declares the

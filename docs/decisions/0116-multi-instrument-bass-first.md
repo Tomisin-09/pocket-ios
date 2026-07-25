@@ -61,6 +61,13 @@ Guitar (shipped) → **bass** (this ADR: tuning-as-value + string-count de-hardc
    filter (not persisted) that resets whenever the library drops back to one instrument, so a stale
    choice can never silently narrow the list after disclosure retracts. Filter matching and the
    disclosure threshold are pure in `PracticeLibrarySort` and unit-tested.
+5. **Bass render fixes (device-test follow-up).** ✅ Four defects the first on-device pass surfaced — see
+   the "Slice 4 device-test findings" section below. Landed via a transient `FretboardDrill.openMidi` (the
+   single tuning source the renderer resolves labels/roots against), the warm-up preview passing
+   `instrument`, nut-inclusive window framing for open-string boxes, and a grid-alignment fix. Guitar is
+   byte-identical (unset `openMidi` ⇒ guitar); covered by `FretboardDrillTuningTests`.
+6. **Instrument axis moves to the create sheet.** ⏳ Relocate the Guitar/Bass control from the top of
+   `ConfigureExerciseForm` onto the `NewExerciseSheet` template picker — see the "Slice 6" section below.
 
 ## Slice 3 sub-decision — bass generation is a ladder-based placement rule, not a truncated CAGED box
 
@@ -81,3 +88,58 @@ no parallel CAGED table, inheriting the ascending/in-scale correctness from the 
   stored fields; `Exercise.instrument` (S2) is passed into `expanded(instrument:)` at render/edit time, so
   there is no payload migration and the guitar `expanded()` path is byte-identical (golden + regression
   tests). Generation uses the instrument's **standard** tuning; alternate/custom tunings stay deferred.
+
+## Slice 4 device-test findings — bass render fixes (planned, 2026-07-24)
+
+The first on-device pass (bass warm-up / scale / arpeggio creation) surfaced four defects. The bass
+**geometry** is correct; the faults are in the *editor preview*, the *label layer*, and the *display
+window* — none touch the generation invariants proven in Slice 3.
+
+1. **Fretboard previews draw a 6-string neck for bass.** This is not warm-up-specific — it applies to
+   **every fretboard-preview surface except Scales and Arpeggios in Generate mode** (which already pass
+   `instrument`), and Chords is instrument-neutral so it doesn't apply. Two sub-surfaces:
+   - **Generate mode** — `FretboardRunEditor` builds its preview from `run.expanded()` (guitar 6-string)
+     instead of `run.expanded(instrument:)`. This one editor backs **Warm-up, Picking, and Legato**, so the
+     single call fixes all three. The bass run's span is clamped to four strings, so the notes strand on the
+     top four rows of a guitar neck.
+   - **Draw-your-own + the plain Fretboard-drill template** — `FretboardDrillEditor` renders from
+     `drill.stringCount` (so it's string-count-aware), but its bound `customDrill` is seeded as a 6-string
+     drill and never reseeded for bass, so the canvas draws six strings. It's used by the draw mode of
+     **all** fretboard families (run/scale/arpeggio) and the plain fretboard-drill template. **Fix:** seed /
+     reseed `customDrill` at `instrument.stringCount`, and carry the instrument's `openMidi` on that drill so
+     its labels (`FretboardDrillEditor` line ~248 also calls `GuitarScale.pitchClass(string:fret:)`) resolve
+     in the right tuning — the same `openMidi`-on-`FretboardDrill` mechanism as finding 2. The guitar guide/
+     reference overlay stays guitar-only for a bass draw (no bass CAGED guide — consistent with the ADR's
+     box-only bass scope); revisit if a bass guide is wanted.
+   - `ExerciseTemplatePreview` thumbnails on the picker remain guitar; once the instrument control moves
+     onto the picker sheet (Slice 6) they *could* reflect the chosen neck, but that's optional and separate.
+2. **Note names + root anchor are computed in guitar tuning.** `FretboardGrid.label(for:)` and `isRoot(_:)`
+   derive pitch class from `GuitarScale.pitchClass(string:fret:)`, which hardcodes `e B G D A E`. On bass the
+   geometry is right but every caption and the amber root ring are wrong — an open-E root reads as "D". This
+   affects the **live run screen as well as the editor**. **Fix:** give `FretboardDrill` a *transient*
+   `openMidi: [Int]?` (modelled exactly on the existing transient `noteGroups` — excluded from `CodingKeys`,
+   `nil` ⇒ guitar, no migration), set it in the three bass `expanded(instrument:)` paths, and resolve
+   pitch/root/labels through it in `FretboardGrid`. Guitar stays byte-identical; one change fixes both
+   surfaces without threading `instrument` through every view.
+3. **Open-string notes cram against the nut.** `FretboardDrill.displayLowestFret` excludes open notes, so a
+   bass box rooted on an open string (E/A/D/G — the common case) frames from the lowest *fretted* note and
+   the open root sits detached on the nut with a gap. **Fix:** nut-inclusive framing (start the window at
+   fret 1) when the box contains open notes, so the open root reads contiguously with the low frets. Pure,
+   unit-tested; a general improvement that also serves open-position guitar boxes.
+4. **String labels misaligned.** The labels' `GeometryReader` fills the whole grid height (board + the
+   fret-number row + spacing) while the string lines span only the board, so labels drift downward from
+   their rows — worst at the bottom, more visible on four strings. **Fix:** restructure `FretboardGrid.body`
+   so the label column and the board share one height, with the fret numbers below both.
+
+Tests: bass label/root correctness through `openMidi`; `FretboardDrill` open-note window framing; existing
+guitar golden/regression tests stay green (guitar default unchanged). Re-verify on device after.
+
+## Slice 6 — instrument axis moves to the create sheet (planned)
+
+The Guitar/Bass segmented control currently tops `ConfigureExerciseForm`, which the on-device pass found
+crowds the form. Relocate it to the `NewExerciseSheet` **template picker**: a Guitar/Bass control at the top
+of that sheet (defaulted from the profile's preferred instrument) seeds the instrument the configure form
+opens on. The form then drops both its `instrumentSection` and its `onChange(of: instrument)` reseed logic —
+instrument is fixed *before* the form, so it seeds its content once for the chosen instrument. Instrument-
+neutral templates (Basic / Strumming / Chords / Chords & Strum) simply ignore the seed. This is a UI move
+only — the per-exercise axis (S2) and its persistence are unchanged.
