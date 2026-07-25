@@ -78,24 +78,26 @@ final class CollectionSessionBuilderTests: XCTestCase {
         XCTAssertEqual(pool.focusItems, 3, "exercises + loops")
     }
 
-    // MARK: Sizing
+    // MARK: Sizing — the whole session is capped
 
-    func testFocusBlocksAreSizedToTheLengthBudget() throws {
+    func testWholeSessionStaysWithinTheLengthCap() throws {
         let context = try makeContext()
         let song = makeSong("Big", collections: ["set"], into: context)
-        // Six 12-minute drills — more than any preset's budget can hold, so sizing must clamp.
+        // Six 12-minute drills + a 3-minute play-through — more than any preset can hold, so the
+        // budgeter must clamp the *whole* session (focus + rests + play), not just the focus portion.
         song.linkedExercises = (0..<6).map { Exercise(name: "Drill \($0)") }
         song.linkedExercises.forEach(context.insert)
         try context.save()
 
         for length in SessionLength.allCases {
-            let blocks = CollectionSessionBuilder.sessionBlocks(for: "set", in: [song],
-                                                                length: length, order: .structured, seed: 7)
-            let focusedMinutes = blocks.filter { $0.kind == .focused }.reduce(0) { $0 + $1.minutes }
-            XCTAssertEqual(focusedMinutes, length.minutes,
-                           "\(length.displayName) fills exactly its focused budget when units overflow")
-            XCTAssertLessThanOrEqual(focusedMinutes, SessionBuilder.maxSessionMinutes,
-                                     "never past the 60-minute ceiling")
+            for order in OrderMode.allCases {
+                let blocks = CollectionSessionBuilder.sessionBlocks(for: "set", in: [song],
+                                                                    length: length, order: order, seed: 7)
+                let total = blocks.reduce(0) { $0 + $1.minutes }
+                XCTAssertLessThanOrEqual(total, CollectionSessionBuilder.totalCap(for: length),
+                                         "\(length.displayName)/\(order.displayName) fits within its cap")
+                XCTAssertGreaterThan(total, 0, "a buildable collection yields a non-empty session")
+            }
         }
     }
 
@@ -204,6 +206,49 @@ final class CollectionSessionBuilderTests: XCTestCase {
         let unitItems = routine.orderedItems.filter { $0.kind != .rest }
         XCTAssertEqual(unitItems.count, 3)
         XCTAssertEqual(routine.name, "set session")
+    }
+
+    // MARK: estimatedMinutes (Length-tab labels)
+
+    func testEstimatedMinutesSumsTheGeneratedBlocks() throws {
+        let context = try makeContext()
+        let song = makeSong("Estimate", collections: ["set"], into: context)
+        let drill = Exercise(name: "Runs")
+        context.insert(drill)
+        song.linkedExercises = [drill]
+        addLoop(to: song, name: "Hook", start: 0.2, into: context)
+        try context.save()
+
+        // The label figure must equal the total minutes of the (structured) session it estimates —
+        // focus + rests + play-throughs — so it can't drift from what actually gets built.
+        let expected = CollectionSessionBuilder
+            .sessionBlocks(for: "set", in: [song], length: .full, order: .structured, seed: 0)
+            .reduce(0) { $0 + $1.minutes }
+        XCTAssertEqual(CollectionSessionBuilder.estimatedMinutes(for: "set", in: [song], length: .full),
+                       expected)
+    }
+
+    func testEstimatedMinutesStaysWithinTheCapAndGrowsWithLength() throws {
+        let context = try makeContext()
+        let song = makeSong("Bigger", collections: ["set"], into: context)
+        // Plenty of content, so each preset fills to its ceiling and the cap actually bites.
+        song.linkedExercises = (0..<6).map { Exercise(name: "Drill \($0)") }
+        song.linkedExercises.forEach(context.insert)
+        addLoop(to: song, name: "Riff", start: 0.3, into: context)
+        try context.save()
+
+        // The label figure never exceeds the preset's cap — Quick really is ≤10 min…
+        for length in SessionLength.allCases {
+            let estimate = CollectionSessionBuilder.estimatedMinutes(for: "set", in: [song], length: length)
+            XCTAssertLessThanOrEqual(estimate, CollectionSessionBuilder.totalCap(for: length),
+                                     "\(length.displayName) is bounded by its cap")
+            XCTAssertGreaterThan(estimate, 0, "a buildable collection reads a real length")
+        }
+        // …and a longer preset never estimates shorter than a shorter one.
+        let quick = CollectionSessionBuilder.estimatedMinutes(for: "set", in: [song], length: .quick)
+        let full = CollectionSessionBuilder.estimatedMinutes(for: "set", in: [song], length: .full)
+        XCTAssertLessThanOrEqual(quick, 10)
+        XCTAssertGreaterThanOrEqual(full, quick)
     }
 
     // MARK: - Helpers

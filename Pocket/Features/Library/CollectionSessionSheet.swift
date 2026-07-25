@@ -45,13 +45,18 @@ struct CollectionSessionSheet: View {
                          + "enrich it.")
                 }
 
-                Section("Length") {
+                Section {
                     Picker("Length", selection: $length) {
                         ForEach(SessionLength.allCases) { length in
-                            Text(length.displayName).tag(length)
+                            Text(lengthLabel(length)).monospacedDigit().tag(length)
                         }
                     }
                     .pickerStyle(.segmented)
+                } header: {
+                    Text("Length")
+                } footer: {
+                    Text("An estimate of the whole sitting — the focused work plus its rests and a "
+                         + "play-through or two. The exact length shows on the next screen.")
                 }
 
                 Section {
@@ -98,6 +103,15 @@ struct CollectionSessionSheet: View {
                 }
             }
         }
+    }
+
+    /// A Length tab's label — the preset name plus its estimated total minutes ("Quick · ~22m"), so
+    /// each tab reads as a real sitting rather than a bare word. Falls back to the plain name if the
+    /// collection can't yield an estimate (guarded against, as the sheet only shows when it can).
+    private func lengthLabel(_ length: SessionLength) -> String {
+        let minutes = CollectionSessionBuilder.estimatedMinutes(for: collection, in: songs, length: length)
+        guard minutes > 0 else { return length.displayName }
+        return "\(length.displayName) · ~\(minutes)m"
     }
 
     /// One tally row — an item kind, its icon, and a right-aligned count (tabular digits so the
