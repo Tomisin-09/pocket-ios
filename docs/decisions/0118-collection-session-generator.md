@@ -1,6 +1,6 @@
 # 0118 — Build a practice session from a Collection: budget-sized, order-dialled, reusing the planner back-half
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-07-25 (`pocket-197-collection-session`)
 - **Builds on:** ADR 0111 (the `Exercise`↔`Song` repertoire edge and `SongRoutineBuilder`, the pure per-song producer of planner `SessionBlock`s that flows into the Save-only review screen). ADR 0066 (`Routine`/`RoutineItem`; nullify unit references). ADR 0014 (the practice-science planner rules — focused-block caps, between-block rests, the 60-minute session ceiling, and the **Quick / Focused / Full** `SessionLength` presets). ADR 0033/0035 (song **Collections** are a `[String]` label axis normalised through `Labels`, and the Library filter over them). ADR 0064 (the V2 planner as "a smarter producer of the same `SessionBlock`s"). ADR 0070 (never grade the player).
 - **Supersedes:** nothing. Generalises the ADR 0111 per-song generator to a whole collection.
@@ -62,6 +62,20 @@ of trailing `.play` blocks is **capped** so a "Full" session isn't swallowed by 
 
 Randomness takes a **seed** so the pure function is deterministic and unit-testable (AGENTS.md — "pure
 logic stays pure"); the UI passes a fresh seed per generation so "regenerate" reshuffles.
+
+### A template the player customises, not a locked output
+
+The generated session is a **starting template**, not a finished routine. On the review screen a
+provisional generated session (`!existsInStore`) is editable *before* the single Save: the player can
+**add any exercise, loop or song** — including drills from *outside* the source collection — via the
+same library-wide `AddRoutineUnitSheet`, insert rests, swipe to trim, and rename inline. So the builder
+does the tedious pooling/dedup/sizing, and the player finishes the shape by hand. This lifts the review
+screen's provisional mode from view-only-plus-rename to view-plus-add/trim/rename **for every generated
+session**, since they all share `RoutineDetailView(generatedSession:)`: the collection session, the
+ADR 0111 per-song routine, **and the V2 planner's "Generate today's session"** (ADR 0072) — each now a
+customisable template rather than a locked output. The configurator surfaces a **tally** of what
+the collection offers (deduped exercises · loops · songs) so the player sees up front that a thinly-linked
+collection yields a thinner starting template.
 
 ### Reuse the whole back-half
 

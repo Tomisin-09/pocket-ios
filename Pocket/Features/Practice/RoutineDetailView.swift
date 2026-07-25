@@ -111,6 +111,13 @@ struct RoutineDetailView: View {
         routine.items.contains { $0.kind.carriesUnit && $0.hasResolvableUnit }
     }
 
+    /// Whether the block-adding affordances (add unit / insert rest, empty-routine hint) show. True
+    /// in edit mode **and** on a **provisional generated session** (`!existsInStore`): a generated
+    /// session is a *template* the player customises — e.g. adding a drill from outside the source
+    /// collection (ADR 0118) — before the single Save commits it. Swipe-delete works in both;
+    /// drag-reorder still needs edit mode on a stored routine.
+    private var canAddBlocks: Bool { isEditing || !existsInStore }
+
     var body: some View {
         List {
             // The name is editable both in edit mode and on a **provisional generated session** —
@@ -135,7 +142,7 @@ struct RoutineDetailView: View {
 
             Section("Blocks") {
                 if routine.items.isEmpty {
-                    Text(isEditing
+                    Text(canAddBlocks
                          ? "Empty routine. Add exercises, loops or songs, and rests between them."
                          : "Empty routine. Tap Edit to add blocks.")
                         .font(.futura(.footnote))
@@ -153,7 +160,7 @@ struct RoutineDetailView: View {
 
             lengthSection
 
-            if isEditing {
+            if canAddBlocks {
                 Section {
                     Button {
                         addingUnit = true

@@ -133,6 +133,7 @@ struct PlannerView: View {
                 }
                 .buttonStyle(.plain)
                 .listRowBackground(PocketColor.background)
+                .swipeActions(edge: .trailing) { deleteAction(goal) }
             }
         }
     }
@@ -161,6 +162,21 @@ struct PlannerView: View {
         }
         .buttonStyle(.plain)
         .listRowBackground(PocketColor.background)
+        .swipeActions(edge: .trailing) { deleteAction(goal) }
+    }
+
+    /// Trailing swipe → remove a goal outright from this screen — no need to open the editor just to
+    /// delete. Deleting a `Goal` nullifies its optional `targetSong` link (default to-one rule), so no
+    /// song is touched; a met goal is removable the same way.
+    private func deleteAction(_ goal: Goal) -> some View {
+        Button(role: .destructive) { deleteGoal(goal) } label: {
+            Label("Delete", systemImage: "trash")
+        }
+    }
+
+    private func deleteGoal(_ goal: Goal) {
+        context.delete(goal)
+        haptic(.medium)
     }
 
     /// "3 skills · Little Wing" — the goal's shape at a glance; the target song appended when set.

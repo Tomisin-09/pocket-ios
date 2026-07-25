@@ -4,6 +4,36 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## Collection session builder — follow-ups (ADR 0118, parked 2026-07-25)
+
+The `CollectionSessionBuilder` + `CollectionSessionSheet` shipped (branch
+`pocket-197-collection-session`, device-verified). Two enhancements raised on device
+review, deferred to a later session:
+
+- **Show estimated times on the Length tabs.** The Quick / Focused / Full segmented
+  control currently shows only the labels. Add the minute budget so the player knows
+  what each preset means (e.g. "Quick · 15 min", "Focused · 30", "Full · 60"). The
+  numbers already exist — `SessionLength.minutes` (15/30/60, the *focused* budget;
+  warm-up/play sit outside it, ADR 0014 R1). Decide whether to show the raw focused
+  budget or an estimate that includes rests + capped play-throughs (the latter reads
+  truer as "session length" but is fuzzier — the review screen already shows a real
+  length readout via `PracticePlanner.estimatedMinutes`). Cheapest: append
+  `SessionLength.minutes` to each tab label. Use tabular digits (`.monospacedDigit()`).
+
+- ~~**A selectable pool view below the Order tab (Instagram-style ordered multi-select).**~~
+  **SCRAPPED (2026-07-25)** in favour of a simpler "template producer" model: the generated
+  session is now **editable before Save** — on the review screen a provisional generated
+  session (`!existsInStore`) offers "Add exercise, loop or song" (library-wide, so it adds
+  drills from **outside** the collection) + "Insert rest", alongside the existing swipe-delete
+  and inline rename. So the builder generates a *starting template* the player customises,
+  rather than pre-curating a selection. Done this session (`RoutineDetailView.canAddBlocks`);
+  applies to **every** generated-session flow that shares the review screen — the collection
+  session, the ADR-0111 per-song routine, and the V2 planner's "Generate today's session". A **tally** (exercises ·
+  loops · songs) + a "richer collection → fuller session" note now sit on the Build a session
+  page (`CollectionSessionSheet`, `CollectionSessionBuilder.pool`). *Not done:* drag-reorder on
+  a provisional session still needs Save→Edit (swipe-delete + add work provisionally); enable
+  `.onMove` in the provisional state if that gap bites.
+
 ## User-testing pass — plan of attack (2026-07-20)
 
 A round of on-device user testing produced ~13 notes (embedded in annotated

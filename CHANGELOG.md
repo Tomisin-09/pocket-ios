@@ -6,11 +6,23 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Swipe to delete a goal.** On the Today's session (planner) screen you can now **swipe a goal** to
+  remove it outright — no need to open the editor just to delete. Works on active and met goals alike.
 - **Navigation titles now in Futura.** Every screen's title bar renders in **Futura-Bold** instead of
   the system font, matching the rest of the app's type. Inline and large titles both, app-wide; only the
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **Build a practice session from a collection.** Filter the Library to a single **collection** and a
+  **Build a session from these songs** button appears above the list. Pick a **length** (Quick / Focused /
+  Full) and an **order** — *Structured* (drills → passages → play-throughs), *Mixed* (grouped but shuffled),
+  or *Shuffled* (everything random) — and Pocket assembles a right-sized session drawing on every song in
+  the set: their linked exercises and loops as focused blocks (a drill shared across songs appears **once**),
+  capped play-throughs to finish. The configurator shows a **tally** of what the collection holds
+  (exercises · loops · songs) so you can see it depends on how much you've linked. The generated session
+  is a **starting template**: on the review screen you can **add more exercises, loops or songs — even
+  from outside the collection — reorder, trim or rename before you save**; nothing persists until you
+  Save (ADR 0118).
 - **Favourites.** Star the exercises, routines and loops you keep coming back to. Each of the three
   Practice libraries has a **star** in its toolbar to show favourites only, and a **leading swipe** on any
   row to pin or unpin it; favourited rows show a small star. The loops filter, in particular, gives a
