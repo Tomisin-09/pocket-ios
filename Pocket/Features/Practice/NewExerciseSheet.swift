@@ -47,6 +47,22 @@ struct NewExerciseSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var chosen: ExerciseTemplate?
+    /// The Guitar/Bass axis for the drill being created (ADR 0116 S6) — chosen on the picker step, then
+    /// handed to the configure form as its fixed instrument. Seeded from the profile's `defaultInstrument`.
+    @State private var instrument: Instrument
+
+    init(initialCommand: Int = StandaloneMetronomeEngine.defaultCommandBPM,
+         initialSignature: TimeSignature = .standard,
+         fixedTemplate: ExerciseTemplate? = nil,
+         defaultInstrument: Instrument = .guitar,
+         onCreate: @escaping (NewExercisePlan) -> Void) {
+        self.initialCommand = initialCommand
+        self.initialSignature = initialSignature
+        self.fixedTemplate = fixedTemplate
+        self.defaultInstrument = defaultInstrument
+        self.onCreate = onCreate
+        _instrument = State(initialValue: defaultInstrument)
+    }
 
     var body: some View {
         NavigationStack {
@@ -54,15 +70,15 @@ struct NewExerciseSheet: View {
                 if let fixedTemplate {
                     ConfigureExerciseForm(template: fixedTemplate, initialCommand: initialCommand,
                                           initialSignature: initialSignature,
-                                          initialInstrument: defaultInstrument, create: create)
+                                          initialInstrument: instrument, create: create)
                 } else {
-                    ExerciseTemplatePicker { chosen = $0 }
+                    ExerciseTemplatePicker(instrument: $instrument) { chosen = $0 }
                 }
             }
             .navigationDestination(item: $chosen) { template in
                 ConfigureExerciseForm(template: template, initialCommand: initialCommand,
                                       initialSignature: initialSignature,
-                                      initialInstrument: defaultInstrument, create: create)
+                                      initialInstrument: instrument, create: create)
             }
             .tint(PocketColor.practice)
             .toolbar {

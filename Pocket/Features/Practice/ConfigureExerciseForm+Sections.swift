@@ -19,24 +19,6 @@ extension ConfigureExerciseForm {
         }
     }
 
-    /// The **Guitar / Bass** control (ADR 0116) — a per-exercise axis fixed at creation, seeded from the
-    /// profile's preferred instrument. Placed above the content editor so the generated preview below
-    /// already reflects the chosen neck.
-    var instrumentSection: some View {
-        Section {
-            Picker("Instrument", selection: $instrument) {
-                ForEach(Instrument.allCases) { option in
-                    Text(option.displayName).tag(option)
-                }
-            }
-            .pickerStyle(.segmented)
-        } header: {
-            Text("Instrument")
-        } footer: {
-            Text("Sets the neck this drill is drawn and generated for. Fixed after creation.")
-        }
-    }
-
     var strumSection: some View {
         Section {
             StrumPatternEditor(beatsPerBar: signature.beats, pattern: $strum)

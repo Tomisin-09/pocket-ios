@@ -11,17 +11,15 @@ struct ConfigureExerciseForm: View {
     let template: ExerciseTemplate
     let initialCommand: Int
     let initialSignature: TimeSignature
-    /// The instrument the create step opens on (ADR 0116) — the profile's preferred instrument, passed
-    /// down from the library. The Guitar/Bass control seeds from it and the choice rides on the plan.
+    /// The instrument this drill is fixed to (ADR 0116) — chosen on the create sheet's Guitar/Bass
+    /// control *before* this form (S6), so it's set once here and rides onto the plan. The form seeds its
+    /// generated content and draw canvas for it in `init`; it isn't editable on this step.
     let initialInstrument: Instrument
     let create: (NewExercisePlan) -> Void
 
     @State var name = ""
     @State var command: Int
     @State var signature: TimeSignature
-    /// The chosen instrument (ADR 0116) — fixed at creation like the template. Shown as a Guitar/Bass
-    /// segmented control for fretboard-family templates; drives which neck the generated content draws on.
-    @State var instrument: Instrument
     /// The authored strum pattern for a strumming template — seeded from the template default and
     /// re-gridded when the meter changes so the lane always matches the bar.
     @State var strum: StrumPattern
@@ -58,6 +56,10 @@ struct ConfigureExerciseForm: View {
     /// is not meter-bound, same as `chords`.
     @State var strumChords: StrumChordSheet
 
+    /// The instrument this drill draws and generates for — fixed at the create sheet (S6), so it's just
+    /// the seed value the editors and the plan read. Not `@State`: nothing on this step changes it.
+    var instrument: Instrument { initialInstrument }
+
     private let range = StandaloneMetronomeEngine.bpmRange
 
     init(template: ExerciseTemplate, initialCommand: Int, initialSignature: TimeSignature,
@@ -70,7 +72,6 @@ struct ConfigureExerciseForm: View {
         self.create = create
         _command = State(initialValue: initialCommand)
         _signature = State(initialValue: initialSignature)
-        _instrument = State(initialValue: initialInstrument)
         let bars = initialSignature.beats
         let strumSeed = template.defaultStrumPattern ?? .downstrokes(beatsPerBar: bars)
         _strum = State(initialValue: strumSeed.resized(slotsPerBeat: strumSeed.slotsPerBeat,
@@ -110,7 +111,6 @@ struct ConfigureExerciseForm: View {
             Section("Name") {
                 TextField(namePlaceholder, text: $name)
             }
-            if showsInstrumentPicker { instrumentSection }
             switch template.bespokeEditor {
             case .strumming?: strumSection
             case .run?: runSection
@@ -153,17 +153,6 @@ struct ConfigureExerciseForm: View {
             strumChords.strumPattern = strumChords.strumPattern.resized(
                 slotsPerBeat: strumChords.strumPattern.slotsPerBeat, beatsPerBar: meter.beats)
         }
-        .onChange(of: instrument) { _, newInstrument in
-            // Instrument is fixed at creation, but while still on this step a change reseeds the generated
-            // content to that instrument's flagship and resets the draw canvas to its string count (ADR
-            // 0116) — so the toggle never leaves a run drawn on the wrong neck.
-            run = Self.seededRun(template: template, instrument: newInstrument)
-            scale = Self.seededScale(template: template, instrument: newInstrument)
-            arpeggio = Self.seededArpeggio(template: template, instrument: newInstrument)
-            customDrill = .emptyBar(beatsPerBar: signature.beats, stringCount: newInstrument.stringCount,
-                                    openMidi: newInstrument == .guitar ? nil : newInstrument.engineOpenMidi)
-            haptic(.light)
-        }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Create") { create(plan) }
@@ -202,15 +191,6 @@ private extension ConfigureExerciseForm {
                         fretboard: fretboardContent,
                         chords: template.bespokeEditor == .chords ? chords : nil,
                         strumChords: template.bespokeEditor == .strumChords ? strumChords : nil)
-    }
-
-    /// The Guitar/Bass control appears only for the fretboard-family templates whose neck the choice
-    /// actually changes (ADR 0116); a strum or chord drill is instrument-neutral, so it isn't shown there.
-    var showsInstrumentPicker: Bool {
-        switch template.bespokeEditor {
-        case .run, .scale, .arpeggio, .fretboardGrid: return true
-        case .strumming, .chords, .strumChords, .none: return false
-        }
     }
 
     /// The generated seed for a fresh run/scale/arpeggio at a given instrument — the template's guitar

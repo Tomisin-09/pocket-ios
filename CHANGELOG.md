@@ -11,9 +11,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
-- **Bass guitar drills.** Scales, arpeggios and warm-up/picking runs can now be built for **bass**. The
-  create step for a fretboard drill shows a **Guitar / Bass** control (defaulted from your profile's
-  instrument); pick Bass and the box generates and draws on a **four-string neck** (E A D G) — a real
+- **Bass guitar drills.** Scales, arpeggios and warm-up/picking runs can now be built for **bass**. When
+  you create an exercise, a **Guitar / Bass** control sits at the top of the drill-type picker (defaulted
+  from your profile's instrument); pick Bass and the box generates and draws on a **four-string neck**
+  (E A D G) — a real
   2-octave bass shape, not a truncated guitar box. The choice is fixed per drill, like the template, so a
   bass drill always renders on the right neck. Guitar drills are unchanged (ADR 0116).
 - **Filter the exercise library by instrument.** Once your Exercises library holds more than one

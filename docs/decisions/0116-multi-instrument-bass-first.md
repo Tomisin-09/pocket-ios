@@ -66,7 +66,7 @@ Guitar (shipped) → **bass** (this ADR: tuning-as-value + string-count de-hardc
    single tuning source the renderer resolves labels/roots against), the warm-up preview passing
    `instrument`, nut-inclusive window framing for open-string boxes, and a grid-alignment fix. Guitar is
    byte-identical (unset `openMidi` ⇒ guitar); covered by `FretboardDrillTuningTests`.
-6. **Instrument axis moves to the create sheet.** ⏳ Relocate the Guitar/Bass control from the top of
+6. **Instrument axis moves to the create sheet.** ✅ Relocated the Guitar/Bass control from the top of
    `ConfigureExerciseForm` onto the `NewExerciseSheet` template picker — see the "Slice 6" section below.
 
 ## Slice 3 sub-decision — bass generation is a ladder-based placement rule, not a truncated CAGED box
@@ -134,12 +134,22 @@ window* — none touch the generation invariants proven in Slice 3.
 Tests: bass label/root correctness through `openMidi`; `FretboardDrill` open-note window framing; existing
 guitar golden/regression tests stay green (guitar default unchanged). Re-verify on device after.
 
-## Slice 6 — instrument axis moves to the create sheet (planned)
+## Slice 6 — instrument axis moves to the create sheet (done, 2026-07-25)
 
-The Guitar/Bass segmented control currently tops `ConfigureExerciseForm`, which the on-device pass found
-crowds the form. Relocate it to the `NewExerciseSheet` **template picker**: a Guitar/Bass control at the top
-of that sheet (defaulted from the profile's preferred instrument) seeds the instrument the configure form
-opens on. The form then drops both its `instrumentSection` and its `onChange(of: instrument)` reseed logic —
-instrument is fixed *before* the form, so it seeds its content once for the chosen instrument. Instrument-
-neutral templates (Basic / Strumming / Chords / Chords & Strum) simply ignore the seed. This is a UI move
-only — the per-exercise axis (S2) and its persistence are unchanged.
+The Guitar/Bass segmented control used to top `ConfigureExerciseForm`, which the on-device pass found
+crowds the form. It now lives on the `NewExerciseSheet` **template picker**: a Guitar/Bass segmented control
+in a top section of that list (defaulted from the profile's preferred instrument via a `@Binding` held as
+`NewExerciseSheet` state) seeds the instrument the configure form opens on. Because the choice is fixed
+*before* the form:
+
+- `ConfigureExerciseForm` dropped its `instrumentSection` **and** its `onChange(of: instrument)` reseed
+  logic. `instrument` is no longer `@State` — it's a fixed accessor off `initialInstrument`, read once when
+  the editors and the plan are built. The form seeds its generated run/scale/arpeggio and draw canvas for
+  the chosen instrument in `init` (S3/S5 logic, unchanged) and never needs to reseed.
+- The picker's instrument section shows for every template with a footer noting non-fretboard drills ignore
+  it; instrument-neutral templates (Basic / Strumming / Chords / Chords & Strum) simply carry the seed
+  without using it. The automator "Save as exercise" seam (`fixedTemplate: .basic`) skips the picker and
+  takes the profile default directly.
+
+UI move only — the per-exercise axis (S2), its persistence, and every generation/render path (S3/S5) are
+unchanged; all 1256 tests stay green.

@@ -9,10 +9,28 @@ import SwiftUI
 /// **T10** — colours resolve through semantic `PocketColor` roles; the practice tint carries the
 /// icons and the bespoke badge.
 struct ExerciseTemplatePicker: View {
+    /// The Guitar/Bass axis for the drill about to be created (ADR 0116 S6) — hoisted here from the
+    /// configure form so the form stays uncrowded; seeded from the profile's preferred instrument and
+    /// fixed once a template is chosen. Fretboard-family templates open on this neck; the rest ignore it.
+    @Binding var instrument: Instrument
     let onSelect: (ExerciseTemplate) -> Void
 
     var body: some View {
         List {
+            Section {
+                Picker("Instrument", selection: $instrument) {
+                    ForEach(Instrument.allCases) { option in
+                        Text(option.displayName).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .listRowBackground(PocketColor.background)
+            } footer: {
+                Text("Guitar or bass — sets the neck for scale, arpeggio and fretboard drills. Other "
+                     + "drills ignore it. Fixed after creating.")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
             Section {
                 ForEach(ExerciseTemplate.creatable) { template in
                     // Every creatable template is buildable now — the "Coming Soon" (Ear Training /
@@ -72,7 +90,7 @@ struct ExerciseTemplatePicker: View {
 
 #Preview("Template picker") {
     NavigationStack {
-        ExerciseTemplatePicker { _ in }
+        ExerciseTemplatePicker(instrument: .constant(.guitar)) { _ in }
     }
     .preferredColorScheme(.dark)
 }
