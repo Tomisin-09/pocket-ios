@@ -1,6 +1,6 @@
 # 0118 — Build a practice session from a Collection: budget-sized, order-dialled, reusing the planner back-half
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-07-25 (`pocket-197-collection-session`)
 - **Builds on:** ADR 0111 (the `Exercise`↔`Song` repertoire edge and `SongRoutineBuilder`, the pure per-song producer of planner `SessionBlock`s that flows into the Save-only review screen). ADR 0066 (`Routine`/`RoutineItem`; nullify unit references). ADR 0014 (the practice-science planner rules — focused-block caps, between-block rests, the 60-minute session ceiling, and the **Quick / Focused / Full** `SessionLength` presets). ADR 0033/0035 (song **Collections** are a `[String]` label axis normalised through `Labels`, and the Library filter over them). ADR 0064 (the V2 planner as "a smarter producer of the same `SessionBlock`s"). ADR 0070 (never grade the player).
 - **Supersedes:** nothing. Generalises the ADR 0111 per-song generator to a whole collection.

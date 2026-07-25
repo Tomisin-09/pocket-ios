@@ -15,6 +15,9 @@ struct LibraryView: View {
     @State private var importModel = SongImportModel()
     @State private var editingSong: Song?
     @State private var detailsSong: Song?
+    /// The collection to build a practice session from (ADR 0118) — set by the filtered-Library
+    /// banner, drives the `CollectionSessionSheet` configurator.
+    @State private var sessionCollection: String?
     /// Canonical collection names the library is filtered by; empty ⇒ no filter
     /// (intersection/AND semantics — a song matches if it has all selected). ADR 0033.
     @State private var selectedCollections: Set<String> = []
@@ -33,6 +36,7 @@ struct LibraryView: View {
             } else {
                 libraryContent
                     .searchable(text: $searchText, prompt: "Songs and artists")
+                    .safeAreaInset(edge: .top, spacing: 0) { collectionSessionBar }
             }
         }
         // Cap the list/empty state to a readable column so it doesn't stretch a single
@@ -82,6 +86,37 @@ struct LibraryView: View {
             if let song = detailsSong {
                 SongDetailsSheet(song: song)
             }
+        }
+        // Build-a-session configurator (ADR 0118), reached from the filtered-collection banner.
+        // Same Bool-binding presentation as the sheets above (`sessionCollection` is a String, not a
+        // stable-id @Model, so a Bool binding is the natural fit).
+        .sheet(isPresented: Binding(get: { sessionCollection != nil },
+                                    set: { if !$0 { sessionCollection = nil } })) {
+            if let collection = sessionCollection {
+                CollectionSessionSheet(collection: collection, songs: songs)
+            }
+        }
+    }
+
+    /// A prominent "Build a session from these songs" affordance, pinned above the list **only when
+    /// the Library is filtered to a single collection** that has at least one linked exercise or loop
+    /// to draw from (ADR 0118). Hidden otherwise — the action has no meaning without a single
+    /// collection in focus, and would generate lone play-throughs without linked units.
+    @ViewBuilder
+    private var collectionSessionBar: some View {
+        if selectedCollections.count == 1, let collection = selectedCollections.first,
+           CollectionSessionBuilder.canBuild(for: collection, in: songs) {
+            Button { sessionCollection = collection } label: {
+                Label("Build a session from “\(collection)”", systemImage: "wand.and.stars")
+                    .font(.futura(.subheadline, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+            }
+            .background(PocketColor.practice.opacity(0.18), in: .rect(cornerRadius: 12))
+            .foregroundStyle(PocketColor.practice)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(PocketColor.background)
         }
     }
 
@@ -305,93 +340,4 @@ private struct LibraryEmptyState: View {
         }
         .padding(40)
     }
-}
-
-/// Varied songs for the library preview so each Group-by key has buckets to show.
-private struct PreviewSeed {
-    let title: String
-    let artist: String
-    let genre: String
-    /// Target derived mastery — applied to the sample's loops so `Song.mastery` rolls up to
-    /// it. `nil` clears the loops so the song lands in the "Unrated" bucket (ADR 0036).
-    let mastery: Int?
-    let collections: [String]
-
-    static let library: [PreviewSeed] = [
-        .init(title: "Blue Hour", artist: "The Allmans", genre: "Blues",
-              mastery: 3, collections: ["blues"]),
-        .init(title: "Red Moon", artist: "Zydeco Trio", genre: "Folk",
-              mastery: 1, collections: ["blues", "needs-work"]),
-        .init(title: "Apex", artist: "Arc", genre: "Rock",
-              mastery: 5, collections: ["rock"]),
-        .init(title: "Little Wing", artist: "Jimi Hendrix", genre: "Rock",
-              mastery: 2, collections: []),
-        .init(title: "3 Strikes", artist: "", genre: "",
-              mastery: nil, collections: ["needs-work"])
-    ]
-}
-
-#Preview("Library — with songs") {
-    // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Song.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
-    // A few varied songs so the Group-by control has something to bucket.
-    for seed in PreviewSeed.library {
-        let song = Song.sample()
-        song.title = seed.title
-        song.artist = seed.artist
-        song.genre = seed.genre
-        if let mastery = seed.mastery {
-            song.loops.forEach { $0.mastery = mastery }
-        } else {
-            song.loops = []   // no loops → derived mastery is nil ("Unrated")
-        }
-        song.collections = seed.collections
-        song.dateAdded = .now
-        container.mainContext.insert(song)
-    }
-    return NavigationStack { LibraryView() }
-        .modelContainer(container)
-        .preferredColorScheme(.dark)
-}
-
-// Regular-width variant (ADR 0105): forces the regular horizontal size class in a wide frame
-// to inspect how the list caps to a centred readable column at iPad / landscape width without
-// an iPad build. Dormant on the iPhone-only v1 build.
-#Preview("Library — regular width (iPad groundwork)") {
-    // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Song.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
-    for seed in PreviewSeed.library {
-        let song = Song.sample()
-        song.title = seed.title
-        song.artist = seed.artist
-        song.genre = seed.genre
-        if let mastery = seed.mastery { song.loops.forEach { $0.mastery = mastery } } else { song.loops = [] }
-        song.collections = seed.collections
-        song.dateAdded = .now
-        container.mainContext.insert(song)
-    }
-    return NavigationStack { LibraryView() }
-        .modelContainer(container)
-        .environment(\.horizontalSizeClass, .regular)
-        .frame(width: 1024, height: 900)
-}
-
-#Preview("Library — empty") {
-    // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Song.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
-    return NavigationStack { LibraryView() }
-        .modelContainer(container)
-        .preferredColorScheme(.dark)
-}
-
-#Preview("Song edit sheet") {
-    // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Song.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
-    let song = Song.sample()
-    container.mainContext.insert(song)
-    return SongEditSheet(song: song).modelContainer(container)
 }

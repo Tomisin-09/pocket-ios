@@ -4,6 +4,46 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## Collection session builder — follow-ups (ADR 0118, parked 2026-07-25)
+
+The `CollectionSessionBuilder` + `CollectionSessionSheet` shipped (branch
+`pocket-197-collection-session`, device-verified). Two enhancements raised on device
+review, deferred to a later session:
+
+- **Show estimated times on the Length tabs.** The Quick / Focused / Full segmented
+  control currently shows only the labels. Add the minute budget so the player knows
+  what each preset means (e.g. "Quick · 15 min", "Focused · 30", "Full · 60"). The
+  numbers already exist — `SessionLength.minutes` (15/30/60, the *focused* budget;
+  warm-up/play sit outside it, ADR 0014 R1). Decide whether to show the raw focused
+  budget or an estimate that includes rests + capped play-throughs (the latter reads
+  truer as "session length" but is fuzzier — the review screen already shows a real
+  length readout via `PracticePlanner.estimatedMinutes`). Cheapest: append
+  `SessionLength.minutes` to each tab label. Use tabular digits (`.monospacedDigit()`).
+
+- **A selectable pool view below the Order tab.** Before Build, show every exercise,
+  loop and song tied to the collection as **tiles**, and let the player pick which to
+  include — Instagram-multi-select style (tap to toggle, with an **order badge** showing
+  the pick sequence, like selecting photos for a post/attachment). This turns the builder
+  from "auto-size the whole pool" into "curate, then size." Design notes for whoever
+  takes it:
+  - Source the pool from `CollectionSessionBuilder.orderedFocusUnits(...)` (deduped
+    exercises + loops) plus the collection's songs (`matchingSongs`). Tiles need a
+    display name + kind icon — resolve the `PlannerUnitRef.uid` back to the model, or
+    add a small projected view-model so the sheet stays off the `@Model`.
+  - Selection + order: an ordered `[PlannerUnitRef]` (or uid) the player builds by
+    tapping; badge = its index+1. Feed that selection into a new
+    `sessionBlocks(...)` overload that takes an explicit ordered unit list instead of
+    (or alongside) the `OrderMode` dial — i.e. **manual order becomes a fourth point on
+    the order axis**, or an orthogonal "custom selection" mode. Keep the builder pure +
+    seeded; the manual path just skips the shuffle/sort.
+  - Interaction reference: `LinkPickerSheet` already does searchable multi-select over a
+    catalog (no ordering) — extend that pattern with the ordered-badge affordance rather
+    than building from scratch. Watch the tile grid's file length (400-line cap) — likely
+    its own view file.
+  - Open question: does manual selection **override** the `SessionLength` budget (take
+    exactly what's picked) or still clamp to it? Probably "take what's picked, warn if
+    over the 60-min ceiling" — decide when building.
+
 ## User-testing pass — plan of attack (2026-07-20)
 
 A round of on-device user testing produced ~13 notes (embedded in annotated

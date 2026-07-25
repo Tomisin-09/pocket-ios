@@ -291,7 +291,18 @@ never an audio or tempo input. It powers **"Build a routine for this song"**: th
 (exercises/loops as `.focus`, the song as a trailing `.play`), reusing the planner's
 `RoutineDetailView(generatedSession:)` → `PracticePlanner.materialise` review-then-Save seam so nothing
 persists until the player commits — the "planner becomes a producer of these edges" framing, with the
-direct edge as the first producer. That composition has a home: **`Routine` + `RoutineItem`**
+direct edge as the first producer. The **collection-wide** sibling is `CollectionSessionBuilder`
+(ADR 0118): a **Collection** is a `[String]` label axis on `Song` (ADR 0033), not an entity, so the
+builder fans out across every song carrying the label, pools their linked exercises/loops/play-throughs,
+**de-duplicates shared units by `uid`** (a drill linked to three songs warms the set up once), **sizes**
+the pool to a `SessionLength` budget (Quick/Focused/Full, ≤ the 60-min ceiling) and **arranges** it by a
+player-chosen `OrderMode` dial — `.structured` (drills→passages→play, deterministic), `.mixed` (grouped,
+shuffled within), `.shuffled` (all blocks randomised) — with a small seeded `SeededGenerator` (SplitMix64)
+keeping the shuffled modes pure/testable, and trailing play-throughs capped per length. Same emit-only
+contract: it produces `[SessionBlock]` into the identical review-then-Save seam, no new persistence. Entry
+is a **filtered-Library banner** (`CollectionSessionSheet` — a Length + Order configurator) shown only when
+the Library is filtered to a single collection with ≥1 linked exercise/loop. That composition has a home:
+**`Routine` + `RoutineItem`**
 (ADR 0066) is the multi-unit *session* container — an ordered list of typed blocks (`focused` /
 `warmup` / `play` / `rest`), each non-rest block referencing exactly one `Exercise`/`Loop`/`Song`
 via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orphans the block

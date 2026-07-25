@@ -11,6 +11,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **Build a practice session from a collection.** Filter the Library to a single **collection** and a
+  **Build a session from these songs** button appears above the list. Pick a **length** (Quick / Focused /
+  Full) and an **order** — *Structured* (drills → passages → play-throughs), *Mixed* (grouped but shuffled),
+  or *Shuffled* (everything random) — and Pocket assembles a right-sized session drawing on every song in
+  the set: their linked exercises and loops as focused blocks (a drill shared across songs appears **once**),
+  capped play-throughs to finish. It opens in the normal review screen, so you can reorder or trim before
+  saving — nothing persists until you Save (ADR 0118).
 - **Favourites.** Star the exercises, routines and loops you keep coming back to. Each of the three
   Practice libraries has a **star** in its toolbar to show favourites only, and a **leading swipe** on any
   row to pin or unpin it; favourited rows show a small star. The loops filter, in particular, gives a
