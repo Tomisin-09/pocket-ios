@@ -244,6 +244,85 @@ extension ScaleRun {
     }
 }
 
+// MARK: - Bass generation + instrument-aware accessors (ADR 0116 Slice 3)
+
+extension ScaleRun {
+    /// The rendered drill for a given **instrument** — the single seam the run screen and previews call
+    /// once bass exists (ADR 0116). Guitar routes to the untouched `expanded()` above (byte-identical, the
+    /// golden path); bass lays a 2-octave `BassNeckLayout` box on the instrument's four strings. The stored
+    /// recipe is unchanged — instrument comes from the owning `Exercise`, not the payload.
+    func expanded(instrument: Instrument) -> FretboardDrill {
+        guard instrument != .guitar else { return expanded() }
+        return FretboardDrill(notesPerBeat: notesPerBeat,
+                              notes: bassSequence(openMidi: instrument.engineOpenMidi).map { Optional($0) },
+                              stringCount: instrument.stringCount,
+                              rootPitchClass: rootPitchClass,
+                              openMidi: instrument.engineOpenMidi)
+    }
+
+    /// The bass 2-octave box for this run's scale + key on `openMidi`, box layout only (bass declares the
+    /// diagonal / 3-notes-per-string layouts guitar-only). Blues/bebop passing tones need no special
+    /// handling here: they already live in `scale.intervals`, so the tone ladder includes them.
+    func bassBoxNotes(openMidi: [Int]) -> [FretNote] {
+        BassNeckLayout.box(offsets: ScaleNeckLayout.toneOffsets(scale),
+                           root: rootPitchClass, openMidi: openMidi)
+    }
+
+    /// One played cycle on bass — the box trimmed to `octaves`, reordered by the sequence pattern, then an
+    /// up-and-back descent that omits the shared peak/start (mirrors the guitar `sequenceWithGroups`, minus
+    /// the box-focus groups a bass box doesn't carry).
+    func bassSequence(openMidi: [Int]) -> [FretNote] {
+        let box = bassTrimmed(bassBoxNotes(openMidi: openMidi), toOctaves: octaves, openMidi: openMidi)
+        let (ascent, _) = sequencePattern.apply(to: box, groups: nil)
+        guard roundTrip, ascent.count > 2 else { return ascent }
+        let descent = Array(ascent.indices.dropFirst().dropLast().reversed()).map { ascent[$0] }
+        return ascent + descent
+    }
+
+    /// Keep a bass run to `octaves` octaves — the whole box for two, its lower octave for one — measured
+    /// with the bass string layout (the guitar `CAGEDShape.trimmed` measures with guitar open MIDI).
+    private func bassTrimmed(_ notes: [FretNote], toOctaves octaves: Int, openMidi: [Int]) -> [FretNote] {
+        guard octaves < 2, let low = notes.first.map({ BassNeckLayout.midi($0, openMidi: openMidi) }) else {
+            return notes
+        }
+        return notes.filter { BassNeckLayout.midi($0, openMidi: openMidi) <= low + 12 }
+    }
+
+    /// MIDI notes the editor's **Hear** sounds, in playing order, for `instrument` — guitar and bass both
+    /// resolve through `Instrument.midi(of:)` (guitar's is byte-identical to `CAGEDShape.midi`).
+    func heardMidi(for instrument: Instrument) -> [Int] {
+        let notes = instrument == .guitar ? sequence : bassSequence(openMidi: instrument.engineOpenMidi)
+        return notes.map { instrument.midi(of: $0) }
+    }
+
+    /// How many neck positions the editor offers for `instrument` — the guitar layout's count, or bass's
+    /// single canonical box (ADR 0116). Drives the position stepper's range.
+    func positionCount(for instrument: Instrument) -> Int {
+        instrument == .guitar ? positionCount : BassNeckLayout.positionCount
+    }
+
+    /// The player-facing position label for `instrument` — the guitar `positionLabel`, or the bass box's
+    /// root anchor ("root: open E").
+    func positionLabel(for instrument: Instrument) -> String {
+        guard instrument != .guitar else { return positionLabel }
+        let openMidi = instrument.engineOpenMidi
+        return BassNeckLayout.rootAnchor(in: bassBoxNotes(openMidi: openMidi),
+                                         root: rootPitchClass, openMidi: openMidi)
+    }
+
+    /// Whether the current position is the flagship "most-common" box for `instrument` — the single bass
+    /// box always is.
+    func isMostCommon(for instrument: Instrument) -> Bool {
+        instrument == .guitar ? isMostCommon : true
+    }
+
+    /// The lowest fretted fret of the run for `instrument` — shown as "from fret N" in the subtitle.
+    func anchorFret(for instrument: Instrument) -> Int {
+        guard instrument != .guitar else { return anchorFret }
+        return bassBoxNotes(openMidi: instrument.engineOpenMidi).map(\.fret).filter { $0 > 0 }.min() ?? 1
+    }
+}
+
 // MARK: - Curated default (T8)
 
 extension ScaleRun {
@@ -273,4 +352,10 @@ extension ScaleRun {
     /// (1 3 2 4 3 5 …), the classic pattern drill. The flagship for the sequence axis.
     static let gMajorInThirds = ScaleRun(scale: .major, rootPitchClass: 7,
                                          position: 1, octaves: 2, sequence: .thirds)
+
+    /// The starter scale a freshly-created **bass** Scales drill opens on (ADR 0116) — **E minor
+    /// pentatonic**, two octaves, opening on the open low-E string: the first scale most bassists learn.
+    /// The recipe is instrument-agnostic (instrument lives on the `Exercise`); this is just the key/scale
+    /// that renders cleanly on the four-string box.
+    static let eMinorPentatonicBass = ScaleRun(scale: .minorPentatonic, rootPitchClass: 4, octaves: 2)
 }

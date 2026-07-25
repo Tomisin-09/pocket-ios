@@ -31,6 +31,32 @@ final class InstrumentTuningTests: XCTestCase {
         }
     }
 
+    // MARK: engine boundary (ADR 0116 — the one lowest-first → highest-first crossing)
+
+    func testEngineOpenMidiIsGuitarConstantByteForByte() {
+        // The golden test: guitar Standard's engine order must equal the engine's long-standing
+        // hardcoded constant (CAGEDShape.openMidi / ChordVoicing.openMidi), proving the reversal
+        // adapter changes nothing for guitar. If this drifts, every stored guitar drill re-renders.
+        XCTAssertEqual(Instrument.guitar.standardTuning.engineOpenMidi, [64, 59, 55, 50, 45, 40])
+        XCTAssertEqual(Instrument.guitar.standardTuning.engineOpenMidi, CAGEDShape.openMidi)
+        XCTAssertEqual(Instrument.guitar.standardTuning.engineOpenMidi, ChordVoicing.openMidi)
+    }
+
+    func testEngineOpenMidiReversesBassLowestFirstToHighestFirst() {
+        // Bass Standard is E1 A1 D2 G2 lowest-first (28 33 38 43); the engine wants highest-first.
+        XCTAssertEqual(Instrument.bass.standardTuning.midiNotes, [28, 33, 38, 43])
+        XCTAssertEqual(Instrument.bass.standardTuning.engineOpenMidi, [43, 38, 33, 28])
+    }
+
+    func testEngineOpenMidiIsExactReversalPreservingCount() {
+        for instrument in Instrument.allCases {
+            for tuning in instrument.tunings {
+                XCTAssertEqual(tuning.engineOpenMidi, tuning.midiNotes.reversed())
+                XCTAssertEqual(tuning.engineOpenMidi.count, tuning.stringCount)
+            }
+        }
+    }
+
     // MARK: spelling
 
     func testCompactLabelsMatchExpectedSpelling() {

@@ -38,7 +38,7 @@ extension Exercise {
     /// The rendered **fretboard drill** — the run screen's single read (T5): a generated run
     /// expanded, a custom drill as authored. `nil` sends the run to the metronome renderer, which is
     /// exactly what a fretboard-family exercise carrying no payload should do.
-    var fretboardDrill: FretboardDrill? { fretboardContent?.drill }
+    var fretboardDrill: FretboardDrill? { fretboardContent?.drill(instrument: instrument) }
 
     /// Encode fretboard content onto the payload. Like `setStrumPattern`, it leaves the immutable
     /// template alone (ADR 0068, revised) and only updates what the board renders; an encode failure

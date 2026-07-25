@@ -12,6 +12,9 @@ import SwiftUI
 /// semantic `PocketColor` role, so it reskins under light/dark and any future theme.
 struct FretboardRunEditor: View {
     @Binding var run: FretboardRun
+    /// The exercise's instrument (ADR 0116) — guitar (default) is unchanged; bass draws four strings and
+    /// offers only the four bass strings in the span picker.
+    var instrument: Instrument = .guitar
     var tint: Color = PocketColor.practice
 
     /// Whether the demoted subdivision control is revealed — eighths suits nearly every run, so it
@@ -32,19 +35,22 @@ struct FretboardRunEditor: View {
         60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
     }
     /// The run's notes as MIDI, in playing order — what Hear sounds (a generated picking run has no rests).
-    private var heardNotes: [Int?] { run.sequence.map { Optional(CAGEDShape.midi($0)) } }
+    private var heardNotes: [Int?] { run.heardMidi(for: instrument).map { Optional($0) } }
 
     private static let maxBaseFret = 15
     private static let maxShiftPerPass = 5
     private static let staggerRange = -2...3
-    private static let stringOrder = [5, 4, 3, 2, 1, 0]   // low E → high e, as the neck reads
+
+    /// The strings the span picker offers, lowest → highest as the neck reads — all six for guitar, the
+    /// four bass strings otherwise (ADR 0116).
+    private var stringOrder: [Int] { Array((0..<instrument.stringCount).reversed()) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
                                        playToken: $playOnceToken, tint: tint)
-            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
-                                  playOnceToken: playOnceToken)
+            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
+                                  labelMode: labelMode, playOnceToken: playOnceToken)
             patternField
             baseFretField
             spanField
@@ -141,7 +147,7 @@ struct FretboardRunEditor: View {
 
     private func stringMenu(selection: Binding<Int>) -> some View {
         Picker("", selection: selection) {
-            ForEach(Self.stringOrder, id: \.self) { index in
+            ForEach(stringOrder, id: \.self) { index in
                 Text(stringLabel(index)).tag(index)
             }
         }
@@ -152,7 +158,9 @@ struct FretboardRunEditor: View {
 
     /// A full string name for the menu (the single-letter board label is too terse in a picker).
     private func stringLabel(_ index: Int) -> String {
-        let names = ["high e", "B", "G", "D", "A", "low E"]
+        let guitar = ["high e", "B", "G", "D", "A", "low E"]
+        let bass = ["G", "D", "A", "low E"]   // engine index 0 = G … 3 = low E (ADR 0116)
+        let names = instrument == .guitar ? guitar : bass
         return names.indices.contains(index) ? names[index] : "String \(index + 1)"
     }
 

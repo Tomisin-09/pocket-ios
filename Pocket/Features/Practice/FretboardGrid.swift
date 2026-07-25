@@ -31,9 +31,28 @@ struct FretboardGrid: View {
         note.fret == 0 || (note.fret >= lowestFret && note.fret < lowestFret + span)
     }
 
+    /// Width of the string-label gutter, and the spacing to the board — shared by the fret-number row so
+    /// its numbers line up under the board columns.
+    private static let labelGutter: CGFloat = 16
+    private static let labelSpacing: CGFloat = 8
+
+    /// Height of the fret-number row under the board — the labels column reserves the same below its
+    /// names so it shares the board's height exactly (see `body`).
+    private static let fretNumberRowHeight: CGFloat = 12
+
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            stringLabels
+        // Two columns — labels and board — each a VStack of [content, a fixed-height spacer matching the
+        // fret-number row]. Because the spacer is a *fixed* 12pt (not a flexible filler), the board keeps
+        // its full height and the string names share it, so labels align to their string lines instead of
+        // drifting down over the number row (ADR 0116 S5 alignment fix — the board is *not* compressed).
+        HStack(alignment: .top, spacing: Self.labelSpacing) {
+            VStack(spacing: 4) {
+                stringLabels
+                // Both dimensions fixed: width to the label gutter (a loose width would let this column
+                // expand and push the board right), height to the fret-number row (so labels share the
+                // board's height without a flexible filler compressing it).
+                Color.clear.frame(width: Self.labelGutter, height: Self.fretNumberRowHeight)
+            }
             VStack(spacing: 4) {
                 board
                 fretNumbers
@@ -54,7 +73,7 @@ struct FretboardGrid: View {
                     .position(x: 8, y: rowY(row, in: geo.size.height))
             }
         }
-        .frame(width: 16)
+        .frame(width: Self.labelGutter)
     }
 
     /// The board itself: string lines, fret separators + nut, inlay markers, and the plotted / active
@@ -229,7 +248,7 @@ struct FretboardGrid: View {
 
     /// The caption string for a note in the current mode, or `nil` when nothing should show.
     private func label(for note: FretNote) -> String? {
-        let pitchClass = GuitarScale.pitchClass(string: note.string, fret: note.fret)
+        let pitchClass = drill.pitchClass(of: note)
         switch labelMode {
         case .none: return nil
         case .note: return GuitarScale.noteName(forPitchClass: pitchClass)
@@ -252,10 +271,11 @@ struct FretboardGrid: View {
         }
     }
 
-    /// Whether a note sounds the drill's root pitch class (only when the drill names one).
+    /// Whether a note sounds the drill's root pitch class (only when the drill names one) — resolved in
+    /// the drill's own tuning so a bass root ring lands correctly (ADR 0116 S5).
     private func isRoot(_ note: FretNote) -> Bool {
         guard let root = drill.rootPitchClass else { return false }
-        return GuitarScale.pitchClass(string: note.string, fret: note.fret) == root
+        return drill.pitchClass(of: note) == root
     }
 
     private var fretNumbers: some View {
@@ -267,7 +287,7 @@ struct FretboardGrid: View {
                     .position(x: (CGFloat(column) + 0.5) / CGFloat(span) * geo.size.width, y: 6)
             }
         }
-        .frame(height: 12)
+        .frame(height: Self.fretNumberRowHeight)
     }
 
     // MARK: - Pure layout helpers
@@ -287,8 +307,10 @@ struct FretboardGrid: View {
 
     /// Standard 6-string names top-to-bottom (high e … low E); other counts read as "String N".
     static func stringName(_ index: Int, of count: Int) -> String {
-        let standard = ["e", "B", "G", "D", "A", "E"]
-        if count == standard.count, standard.indices.contains(index) { return standard[index] }
+        let guitar = ["e", "B", "G", "D", "A", "E"]
+        let bass = ["G", "D", "A", "E"]   // standard 4-string bass, highest-first (ADR 0116)
+        if count == guitar.count, guitar.indices.contains(index) { return guitar[index] }
+        if count == bass.count, bass.indices.contains(index) { return bass[index] }
         return "\(index + 1)"
     }
 

@@ -58,6 +58,29 @@ enum Instrument: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Fretboard-engine bridge (ADR 0116)
+
+extension Instrument {
+    /// The engine-canonical open-string MIDI — **highest-first** (index 0 = thinnest string) — for this
+    /// instrument's **standard** tuning. The single point the fretboard generators resolve an instrument
+    /// to (ADR 0116): guitar returns `[64,59,55,50,45,40]` (the golden-pinned CAGED constant), bass its
+    /// four strings. Per-exercise alternate tunings (Drop D) and custom tunings are deferred, so
+    /// generation always uses standard.
+    var engineOpenMidi: [Int] { standardTuning.engineOpenMidi }
+
+    /// How many strings this instrument's board draws — the length of its standard tuning (6 / 4).
+    var stringCount: Int { standardTuning.stringCount }
+
+    /// The MIDI pitch a `FretNote` sounds on this instrument's standard tuning — the instrument-aware
+    /// counterpart of `CAGEDShape.midi` / `BassNeckLayout.midi`, used where the neck's actual pitches are
+    /// needed (Hear playback of a generated run).
+    func midi(of note: FretNote) -> Int {
+        let open = engineOpenMidi
+        guard !open.isEmpty else { return note.fret }
+        return open[min(max(0, note.string), open.count - 1)] + note.fret
+    }
+}
+
 /// How the tuner interprets a detected pitch (ADR 0115). **Guided** (default) knows the selected
 /// tuning and names the target string + direction; **Chromatic** names any of the twelve pitches with
 /// no target, for odd/experimental tunings. `String`-raw so it drops straight into `@AppStorage`.
@@ -98,6 +121,18 @@ struct Tuning: Equatable, Identifiable {
 
     /// Number of strings this tuning covers.
     var stringCount: Int { midiNotes.count }
+
+    /// The open-string MIDI notes in the **fretboard engine's** canonical order — **highest string
+    /// first** (index 0 = high e / thinnest), the reverse of this struct's lowest-first `midiNotes`
+    /// (ADR 0116). This is the *single* crossing point between the tuner's lowest-first `Tuning`
+    /// value and the engine (`CAGEDShape.openMidi`, `ChordVoicing.openMidi`, `ScaleLayout`,
+    /// `FretNote.string`), all of which index highest-first and are persisted that way — so raw
+    /// `midiNotes` must never reach engine code, only `engineOpenMidi`. Valid only for **monotonic**
+    /// tunings (every curated guitar/bass tuning); a reentrant tuning like ukulele's gCEA is not a
+    /// simple reversal, which is why uke is deferred. Guitar Standard here is
+    /// `[64,59,55,50,45,40]` — byte-for-byte the engine's long-standing hardcoded constant, the
+    /// golden test that proves the refactor changes nothing for guitar.
+    var engineOpenMidi: [Int] { Array(midiNotes.reversed()) }
 
     /// Sharp-spelled open-string names low→high, e.g. `["E","A","D","G","B","E"]`.
     var noteNames: [String] {

@@ -8,6 +8,9 @@ struct NewExercisePlan {
     let command: Int
     let signature: TimeSignature
     let template: ExerciseTemplate
+    /// The instrument this drill is fixed to (ADR 0116) — seeded from the profile, overridable via the
+    /// create step's Guitar/Bass control. Rides onto the created `Exercise`.
+    let instrument: Instrument
     /// The authored strum pattern for a strumming template; `nil` for every other template.
     let strum: StrumPattern?
     /// The authored fretboard content — a generated run or a custom drill — for a fretboard-family
@@ -36,25 +39,46 @@ struct NewExerciseSheet: View {
     /// When set, skips the template picker and opens directly on the configure step for this
     /// template (the automator "Save as exercise" seam, which is always a `.basic` drill).
     var fixedTemplate: ExerciseTemplate?
+    /// The instrument the create step opens on (ADR 0116) — the profile's preferred instrument, defaulting
+    /// to guitar so an untouched install is unchanged.
+    var defaultInstrument: Instrument = .guitar
     /// Called with the assembled plan when the user confirms. The caller inserts the model.
     let onCreate: (NewExercisePlan) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var chosen: ExerciseTemplate?
+    /// The Guitar/Bass axis for the drill being created (ADR 0116 S6) — chosen on the picker step, then
+    /// handed to the configure form as its fixed instrument. Seeded from the profile's `defaultInstrument`.
+    @State private var instrument: Instrument
+
+    init(initialCommand: Int = StandaloneMetronomeEngine.defaultCommandBPM,
+         initialSignature: TimeSignature = .standard,
+         fixedTemplate: ExerciseTemplate? = nil,
+         defaultInstrument: Instrument = .guitar,
+         onCreate: @escaping (NewExercisePlan) -> Void) {
+        self.initialCommand = initialCommand
+        self.initialSignature = initialSignature
+        self.fixedTemplate = fixedTemplate
+        self.defaultInstrument = defaultInstrument
+        self.onCreate = onCreate
+        _instrument = State(initialValue: defaultInstrument)
+    }
 
     var body: some View {
         NavigationStack {
             Group {
                 if let fixedTemplate {
                     ConfigureExerciseForm(template: fixedTemplate, initialCommand: initialCommand,
-                                          initialSignature: initialSignature, create: create)
+                                          initialSignature: initialSignature,
+                                          initialInstrument: instrument, create: create)
                 } else {
-                    ExerciseTemplatePicker { chosen = $0 }
+                    ExerciseTemplatePicker(instrument: $instrument) { chosen = $0 }
                 }
             }
             .navigationDestination(item: $chosen) { template in
                 ConfigureExerciseForm(template: template, initialCommand: initialCommand,
-                                      initialSignature: initialSignature, create: create)
+                                      initialSignature: initialSignature,
+                                      initialInstrument: instrument, create: create)
             }
             .tint(PocketColor.practice)
             .toolbar {

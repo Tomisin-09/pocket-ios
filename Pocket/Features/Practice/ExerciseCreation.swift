@@ -20,6 +20,7 @@ extension Exercise {
                                 noteValue: Int = 4,
                                 subdivision: Subdivision = .none,
                                 template: ExerciseTemplate = .basic,
+                                instrument: Instrument = .guitar,
                                 tags: [String] = [],
                                 notes: String = "") -> Exercise {
         let working = max(StandaloneMetronomeEngine.bpmRange.lowerBound,
@@ -32,6 +33,7 @@ extension Exercise {
                         noteValue: noteValue,
                         subdivision: subdivision,
                         template: template,
+                        instrument: instrument,
                         tags: tags,
                         notes: notes)
     }

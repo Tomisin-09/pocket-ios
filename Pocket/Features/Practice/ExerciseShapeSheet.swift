@@ -191,7 +191,7 @@ private extension ExerciseShapeSheet {
 
             switch runMode {
             case .generate:
-                FretboardRunEditor(run: $run)
+                FretboardRunEditor(run: $run, instrument: exercise.instrument)
                     .listRowBackground(Color.clear)
             case .draw:
                 FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill,
@@ -224,7 +224,7 @@ private extension ExerciseShapeSheet {
 
             switch scaleMode {
             case .generate:
-                ScaleRunEditor(run: $scale)
+                ScaleRunEditor(run: $scale, instrument: exercise.instrument)
                     .listRowBackground(Color.clear)
             case .draw:
                 FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill,
@@ -257,7 +257,7 @@ private extension ExerciseShapeSheet {
 
             switch arpeggioMode {
             case .generate:
-                ArpeggioRunEditor(run: $arpeggio)
+                ArpeggioRunEditor(run: $arpeggio, instrument: exercise.instrument)
                     .listRowBackground(Color.clear)
             case .draw:
                 FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill,

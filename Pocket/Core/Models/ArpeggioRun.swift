@@ -170,6 +170,70 @@ extension ArpeggioRun {
     }
 }
 
+// MARK: - Bass generation + instrument-aware accessors (ADR 0116 Slice 3)
+
+extension ArpeggioRun {
+    /// The rendered drill for a given **instrument** (ADR 0116) — guitar routes to the untouched
+    /// `expanded()` above (byte-identical); bass lays a 2-octave `BassNeckLayout` box of the chord tones on
+    /// the four strings. The stored recipe is unchanged — instrument comes from the owning `Exercise`.
+    func expanded(instrument: Instrument) -> FretboardDrill {
+        guard instrument != .guitar else { return expanded() }
+        return FretboardDrill(notesPerBeat: notesPerBeat,
+                              notes: bassSequence(openMidi: instrument.engineOpenMidi).map { Optional($0) },
+                              stringCount: instrument.stringCount,
+                              rootPitchClass: rootPitchClass,
+                              openMidi: instrument.engineOpenMidi)
+    }
+
+    /// The bass 2-octave chord-tone box for this run's quality + key on `openMidi` — the same
+    /// `BassNeckLayout.box` the scales use, filtered to the chord tones instead of a scale (an arpeggio is
+    /// just a smaller tone set).
+    func bassBoxNotes(openMidi: [Int]) -> [FretNote] {
+        BassNeckLayout.box(offsets: quality.degrees.sorted(),
+                           root: rootPitchClass, openMidi: openMidi)
+    }
+
+    /// One played cycle on bass — the box, then (when `roundTrip`) an up-and-back descent omitting the
+    /// shared peak/start (mirrors the guitar `sequence`). Bass arpeggios are box-only; `octaves` is folded
+    /// into the box's two-octave span.
+    func bassSequence(openMidi: [Int]) -> [FretNote] {
+        let ascent = bassBoxNotes(openMidi: openMidi)
+        guard roundTrip, ascent.count > 2 else { return ascent }
+        return ascent + Array(ascent.dropFirst().dropLast().reversed())
+    }
+
+    /// MIDI notes the editor's **Hear** sounds, in playing order, for `instrument`.
+    func heardMidi(for instrument: Instrument) -> [Int] {
+        let notes = instrument == .guitar ? sequence : bassSequence(openMidi: instrument.engineOpenMidi)
+        return notes.map { instrument.midi(of: $0) }
+    }
+
+    /// How many neck positions the editor offers for `instrument` — the five CAGED boxes, or bass's single
+    /// canonical box (ADR 0116).
+    func positionCount(for instrument: Instrument) -> Int {
+        instrument == .guitar ? positionCount : BassNeckLayout.positionCount
+    }
+
+    /// The position label for `instrument` — the guitar box's root anchor, or the bass box's.
+    func positionLabel(for instrument: Instrument) -> String {
+        guard instrument != .guitar else { return positionLabel }
+        let openMidi = instrument.engineOpenMidi
+        return BassNeckLayout.rootAnchor(in: bassBoxNotes(openMidi: openMidi),
+                                         root: rootPitchClass, openMidi: openMidi)
+    }
+
+    /// Whether the current position is the flagship box for `instrument` — the single bass box always is.
+    func isMostCommon(for instrument: Instrument) -> Bool {
+        instrument == .guitar ? isMostCommon : true
+    }
+
+    /// The lowest fretted fret of the run for `instrument` — shown as "from fret N".
+    func anchorFret(for instrument: Instrument) -> Int {
+        guard instrument != .guitar else { return anchorFret }
+        return bassBoxNotes(openMidi: instrument.engineOpenMidi).map(\.fret).filter { $0 > 0 }.min() ?? 1
+    }
+}
+
 // MARK: - Curated default (T8)
 
 extension ArpeggioRun {
@@ -183,4 +247,8 @@ extension ArpeggioRun {
             relativeMajorSemitones: ArpeggioQuality.minorSeventh.relativeMajorSemitones,
             degrees: ArpeggioQuality.minorSeventh.degrees),
         octaves: 2)
+
+    /// The starter arpeggio a freshly-created **bass** Arpeggios drill opens on (ADR 0116) — **E minor 7**,
+    /// opening on the open low-E string. Instrument-agnostic recipe; instrument lives on the `Exercise`.
+    static let eMinorSeventhBass = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 4, octaves: 2)
 }

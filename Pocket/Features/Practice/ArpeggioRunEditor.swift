@@ -11,6 +11,9 @@ import SwiftUI
 /// every colour is a semantic `PocketColor` role. Shared chrome lives in `FretboardEditorChrome`.
 struct ArpeggioRunEditor: View {
     @Binding var run: ArpeggioRun
+    /// The exercise's instrument (ADR 0116) — guitar (default) is byte-identical to before; bass renders a
+    /// four-string 2-octave chord-tone box.
+    var instrument: Instrument = .guitar
     var tint: Color = PocketColor.practice
 
     @State private var showsAdvanced = false
@@ -23,7 +26,7 @@ struct ArpeggioRunEditor: View {
         60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
     }
     /// The run's notes as MIDI, in playing order — what Hear sounds (no rests in a generated arpeggio).
-    private var heardNotes: [Int?] { run.sequence.map { Optional(CAGEDShape.midi($0)) } }
+    private var heardNotes: [Int?] { run.heardMidi(for: instrument).map { Optional($0) } }
     /// A one-shot "watch it" request (ADR 0065) — set by the options bar's Hear/Watch, read by the
     /// preview below.
     @State private var playOnceToken: Date?
@@ -32,14 +35,14 @@ struct ArpeggioRunEditor: View {
         VStack(alignment: .leading, spacing: 16) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
                                        playToken: $playOnceToken, tint: tint)
-            FretboardDrillPreview(drill: run.expanded(), tint: tint, labelMode: labelMode,
-                                  playOnceToken: playOnceToken)
+            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
+                                  labelMode: labelMode, playOnceToken: playOnceToken)
             titleField
             LabeledMenuRow(label: "Arpeggio") { qualityPicker }
             LabeledMenuRow(label: "Root") {
                 RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName)
             }
-            positionRow
+            if run.positionCount(for: instrument) > 1 { positionRow }
             octavesRow
             Toggle("Up and back", isOn: roundTripBinding)
                 .font(.futura(.subheadline, weight: .semibold))
@@ -57,7 +60,9 @@ struct ArpeggioRunEditor: View {
             Text(run.title)
                 .font(.futura(.headline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
-            Text("CAGED \(run.shapeLetter) shape · from fret \(run.anchorFret)")
+            Text(instrument == .guitar
+                 ? "CAGED \(run.shapeLetter) shape · from fret \(run.anchorFret)"
+                 : "2 octaves · from fret \(run.anchorFret(for: instrument))")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
@@ -84,11 +89,12 @@ struct ArpeggioRunEditor: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 EditorFieldLabel("Position")
-                if run.isMostCommon { MostCommonBadge(tint: tint) }
+                if run.isMostCommon(for: instrument) { MostCommonBadge(tint: tint) }
                 Spacer()
             }
-            EditorStepper(value: run.positionLabel, width: .expanding,
-                          canGoDown: run.position > 1, canGoUp: run.position < run.positionCount,
+            EditorStepper(value: run.positionLabel(for: instrument), width: .expanding,
+                          canGoDown: run.position > 1,
+                          canGoUp: run.position < run.positionCount(for: instrument),
                           tint: tint,
                           stepDown: { run = rebuilt(position: run.position - 1) },
                           stepUp: { run = rebuilt(position: run.position + 1) })

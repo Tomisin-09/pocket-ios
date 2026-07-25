@@ -223,6 +223,36 @@ extension FretboardRun {
                               noteGroups: passes)
     }
 
+    /// The rendered drill for a given **instrument** (ADR 0116). A warm-up run is a pure finger pattern
+    /// with no pitch math, so bass needs only two adjustments: clamp the string span into the four bass
+    /// strings (a `low E → high e` guitar run becomes `low E → G` on bass) and draw the four-string board.
+    /// Guitar routes to the untouched `expanded()` (byte-identical).
+    func expanded(instrument: Instrument) -> FretboardDrill {
+        guard instrument != .guitar else { return expanded() }
+        var drill = stringClamped(to: instrument.stringCount).expanded()
+        drill.stringCount = instrument.stringCount
+        drill.openMidi = instrument.engineOpenMidi
+        return drill
+    }
+
+    /// A copy of this run with its string span pulled into `stringCount` strings — a `low E → high e`
+    /// guitar run becomes `low E → G` on a four-string bass (ADR 0116). Pure; the shared adjustment behind
+    /// bass expansion and Hear.
+    func stringClamped(to stringCount: Int) -> FretboardRun {
+        let maxIndex = max(0, stringCount - 1)
+        var clamped = self
+        clamped.fromString = min(max(0, fromString), maxIndex)
+        clamped.toString = min(max(0, toString), maxIndex)
+        return clamped
+    }
+
+    /// MIDI notes the editor's **Hear** sounds, in playing order, for `instrument` — bass clamps the span
+    /// and sounds an octave lower on the four strings; guitar is unchanged.
+    func heardMidi(for instrument: Instrument) -> [Int] {
+        let run = instrument == .guitar ? self : stringClamped(to: instrument.stringCount)
+        return run.sequence.map { instrument.midi(of: $0) }
+    }
+
     /// The cap on `passCount` so the **top** pass still fits a real neck (S10): the highest finger of
     /// the last pass, including any per-string stagger, must land at or below `maxFret`. The editor
     /// uses this to refuse a pass that would fall off the board rather than silently clamp it.
@@ -266,13 +296,24 @@ enum FretboardContent: Equatable {
 
 extension FretboardContent {
     /// The drill the board renders — a generated run, scale or arpeggio expanded, a custom drill as
-    /// authored.
-    var drill: FretboardDrill {
+    /// authored. The guitar overload is kept for the many guitar-only call sites and previews; the
+    /// `instrument:` overload (ADR 0116) is what the owning `Exercise` calls so bass content draws on the
+    /// four-string neck. A `.custom` drill already carries its own `stringCount`, so it's instrument-agnostic.
+    var drill: FretboardDrill { drill(instrument: .guitar) }
+
+    func drill(instrument: Instrument) -> FretboardDrill {
         switch self {
-        case .run(let run): return run.expanded()
-        case .scale(let scaleRun): return scaleRun.expanded()
-        case .arpeggio(let arpeggioRun): return arpeggioRun.expanded()
-        case .custom(let drill): return drill
+        case .run(let run): return run.expanded(instrument: instrument)
+        case .scale(let scaleRun): return scaleRun.expanded(instrument: instrument)
+        case .arpeggio(let arpeggioRun): return arpeggioRun.expanded(instrument: instrument)
+        case .custom(let drill):
+            // A `.custom` drill persists without its (transient) `openMidi`, so stamp the owning
+            // exercise's tuning back on at render time — bass customs then label in bass tuning after a
+            // reload, guitar customs are unchanged (ADR 0116 S5).
+            guard instrument != .guitar else { return drill }
+            var stamped = drill
+            stamped.openMidi = instrument.engineOpenMidi
+            return stamped
         }
     }
 
