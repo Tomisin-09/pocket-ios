@@ -27,10 +27,15 @@ struct RoutineLibraryView: View {
     /// A freshly-generated Quick session awaiting review — pushed as a **provisional** detail
     /// (nothing persists until the user Saves or Starts it, V2 planner Slice 1); `nil` when none.
     @State private var quickDraft: QuickSessionDraft?
+    /// Whether the list is narrowed to favourited routines (ADR 0119) — a session toggle, not persisted.
+    @State private var favoritesOnly = false
 
-    /// Newest first — the same default sort key as the other libraries (`dateAdded`).
+    /// Newest first — the same default sort key as the other libraries (`dateAdded`) — optionally
+    /// narrowed to favourites (ADR 0119).
     private var ordered: [Routine] {
-        routines.sorted { $0.dateAdded > $1.dateAdded }
+        routines
+            .filter { !favoritesOnly || $0.isFavorite }
+            .sorted { $0.dateAdded > $1.dateAdded }
     }
 
     var body: some View {
@@ -41,10 +46,16 @@ struct RoutineLibraryView: View {
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
+            } else if ordered.isEmpty {
+                Text("No favourite routines yet. Swipe a routine and tap Favourite to pin it.")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .listRowBackground(PocketColor.background)
             } else {
                 ForEach(ordered) { routine in
                     row(for: routine)
                         .listRowBackground(PocketColor.background)
+                        .swipeActions(edge: .leading) { favoriteButton(for: routine) }
                 }
                 .onDelete(perform: delete)
             }
@@ -61,6 +72,18 @@ struct RoutineLibraryView: View {
                 .tint(PocketColor.practice)
                 .disabled(!exercises.contains { $0.template != .warmup })
                 .accessibilityLabel("Generate a quick session")
+            }
+            if !routines.isEmpty {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        favoritesOnly.toggle()
+                        haptic(.light)
+                    } label: {
+                        Image(systemName: favoritesOnly ? "star.fill" : "star")
+                    }
+                    .tint(PocketColor.practice)
+                    .accessibilityLabel(favoritesOnly ? "Showing favourites only" : "Show favourites only")
+                }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { creatingNew = true; haptic(.light) } label: { Image(systemName: "plus") }
@@ -99,9 +122,17 @@ struct RoutineLibraryView: View {
             Button { editing = routine; haptic(.light) } label: {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(routine.name.isEmpty ? "Untitled routine" : routine.name)
-                            .font(.futura(.body))
-                            .foregroundStyle(PocketColor.textPrimary)
+                        HStack(spacing: 6) {
+                            Text(routine.name.isEmpty ? "Untitled routine" : routine.name)
+                                .font(.futura(.body))
+                                .foregroundStyle(PocketColor.textPrimary)
+                            if routine.isFavorite {
+                                Image(systemName: "star.fill")
+                                    .font(.futura(.caption2))
+                                    .foregroundStyle(PocketColor.practice)
+                                    .accessibilityLabel("Favourite")
+                            }
+                        }
                         Text(summary(for: routine))
                             .font(.futura(.caption))
                             .foregroundStyle(PocketColor.practice)
@@ -116,6 +147,18 @@ struct RoutineLibraryView: View {
             .buttonStyle(.plain)
         }
         .padding(.vertical, 2)
+    }
+
+    /// The leading-swipe favourite toggle for a routine (ADR 0119).
+    private func favoriteButton(for routine: Routine) -> some View {
+        Button {
+            routine.isFavorite.toggle()
+            haptic(.light)
+        } label: {
+            Label(routine.isFavorite ? "Unfavourite" : "Favourite",
+                  systemImage: routine.isFavorite ? "star.slash" : "star")
+        }
+        .tint(PocketColor.practice)
     }
 
     /// "3 units · 1 rest" — the routine's shape at a glance; "Empty" before any blocks.

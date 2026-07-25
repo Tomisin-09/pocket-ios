@@ -19,6 +19,8 @@ struct LoopLibraryView: View {
     @AppStorage("loopLibrarySort") private var sortKey: LoopSortKey = .song
     @AppStorage("loopLibrarySortAscending") private var sortAscending = true
     @State private var searchText = ""
+    /// Whether the list is narrowed to favourited passages (ADR 0119) — a session toggle, not persisted.
+    @State private var favoritesOnly = false
     /// The loop + mode a row launched, driving a programmatic push (a plain `NavigationLink` can't carry
     /// the two side-by-side buttons without the row swallowing the Ear tap).
     @State private var launch: LoopLaunch?
@@ -40,6 +42,7 @@ struct LoopLibraryView: View {
     private var visibleLoops: [Loop] {
         let measured = allLoops
             .filter { $0.commandTempo != nil }
+            .filter { !favoritesOnly || $0.isFavorite }
             .filter { PracticeLibrarySort.loopMatches(fields(for: $0), query: searchText) }
         return PracticeLibrarySort.sortedLoops(measured, by: sortKey,
                                                ascending: sortAscending, fields: fields(for:))
@@ -63,7 +66,9 @@ struct LoopLibraryView: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else if visibleLoops.isEmpty {
-                Text("No loops match “\(searchText)”.")
+                Text(favoritesOnly
+                     ? "No favourite loops yet. Swipe a loop and tap Favourite to pin it."
+                     : "No loops match “\(searchText)”.")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
@@ -71,6 +76,7 @@ struct LoopLibraryView: View {
                 ForEach(visibleLoops) { loop in
                     loopRow(loop)
                         .listRowBackground(PocketColor.background)
+                        .swipeActions(edge: .leading) { favoriteButton(for: loop) }
                 }
             }
         }
@@ -81,6 +87,16 @@ struct LoopLibraryView: View {
         .searchable(text: $searchText, prompt: "Loops and songs")
         .toolbar {
             if hasMeasuredLoops {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        favoritesOnly.toggle()
+                        haptic(.light)
+                    } label: {
+                        Image(systemName: favoritesOnly ? "star.fill" : "star")
+                    }
+                    .tint(PocketColor.practice)
+                    .accessibilityLabel(favoritesOnly ? "Showing favourites only" : "Show favourites only")
+                }
                 ToolbarItem(placement: .topBarTrailing) { sortMenu }
             }
         }
@@ -109,7 +125,8 @@ struct LoopLibraryView: View {
                     PracticeUnitRow(title: loop.name.isEmpty ? "Untitled loop" : loop.name,
                                     context: loop.song?.title,
                                     progress: "Command \(LoopCommandRamp.percent(loop.command))% → "
-                                        + "\(LoopCommandRamp.percent(loop.targetSpeed))%")
+                                        + "\(LoopCommandRamp.percent(loop.targetSpeed))%",
+                                    isFavorite: loop.isFavorite)
                     Spacer(minLength: 0)
                 }
                 .contentShape(Rectangle())
@@ -131,6 +148,19 @@ struct LoopLibraryView: View {
             .buttonStyle(.borderless)
             .accessibilityLabel("Train your ear with \(loop.name.isEmpty ? "untitled loop" : loop.name)")
         }
+    }
+
+    /// The leading-swipe favourite toggle for a loop (ADR 0119) — the pin that surfaces this passage
+    /// in the Home favourites rail's cross-song "my key passages" view.
+    private func favoriteButton(for loop: Loop) -> some View {
+        Button {
+            loop.isFavorite.toggle()
+            haptic(.light)
+        } label: {
+            Label(loop.isFavorite ? "Unfavourite" : "Favourite",
+                  systemImage: loop.isFavorite ? "star.slash" : "star")
+        }
+        .tint(PocketColor.practice)
     }
 
     /// The sort control — a menu whose label spells out the active key with a direction arrow, and

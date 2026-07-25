@@ -20,6 +20,8 @@ struct ExerciseLibraryView: View {
     @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
     @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
     @State private var searchText = ""
+    /// Whether the list is narrowed to favourited drills (ADR 0119) — a session toggle, not persisted.
+    @State private var favoritesOnly = false
     /// The active instrument filter (ADR 0116 S4), `nil` = "All". Purely a session filter — not
     /// persisted, since it's only reachable once the library holds more than one instrument, and it
     /// resets whenever that stops being true (`showsInstrumentFilter`).
@@ -30,8 +32,9 @@ struct ExerciseLibraryView: View {
     /// user sees, and what deletion indexes into (per section).
     private var sections: [LibrarySection<Exercise>] {
         let matched = exercises.filter {
-            PracticeLibrarySort.exerciseMatches(fields(for: $0), query: searchText,
-                                                instrument: activeInstrumentFilter)
+            (!favoritesOnly || $0.isFavorite)
+                && PracticeLibrarySort.exerciseMatches(fields(for: $0), query: searchText,
+                                                       instrument: activeInstrumentFilter)
         }
         return PracticeLibrarySort.exerciseSections(matched, sortedBy: sortKey,
                                                     ascending: sortAscending, fields: fields(for:))
@@ -69,7 +72,7 @@ struct ExerciseLibraryView: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else if !hasMatches {
-                Text("No exercises match “\(searchText)”.")
+                Text(noMatchMessage)
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
@@ -83,9 +86,11 @@ struct ExerciseLibraryView: View {
                                 PracticeUnitRow(
                                     title: exercise.name.isEmpty ? "Untitled" : exercise.name,
                                     progress: "Command \(exercise.command) → "
-                                        + "\(exercise.reachTempo) BPM")
+                                        + "\(exercise.reachTempo) BPM",
+                                    isFavorite: exercise.isFavorite)
                             }
                             .listRowBackground(PocketColor.background)
+                            .swipeActions(edge: .leading) { favoriteButton(for: exercise) }
                         }
                         .onDelete { delete($0, in: section.items) }
                     }
@@ -108,6 +113,7 @@ struct ExerciseLibraryView: View {
         .toolbar {
             if !exercises.isEmpty {
                 ToolbarItem(placement: .topBarLeading) { sortMenu }
+                ToolbarItem(placement: .topBarLeading) { favoritesFilterToggle }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { creating = true; haptic(.light) } label: {
@@ -175,6 +181,38 @@ struct ExerciseLibraryView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("\(title) exercises")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    /// The favourites filter (ADR 0119) — a star that fills when the list is narrowed to favourited
+    /// drills. Mirrors the loop / routine libraries so the three read consistently.
+    private var favoritesFilterToggle: some View {
+        Button {
+            favoritesOnly.toggle()
+            haptic(.light)
+        } label: {
+            Image(systemName: favoritesOnly ? "star.fill" : "star")
+        }
+        .tint(PocketColor.practice)
+        .accessibilityLabel(favoritesOnly ? "Showing favourites only" : "Show favourites only")
+    }
+
+    /// The message shown when nothing matches — favourites-aware so an empty favourites view reads
+    /// as a prompt to pin something, not a false "no search matches".
+    private var noMatchMessage: String {
+        favoritesOnly ? "No favourite exercises yet. Swipe a drill and tap Favourite to pin it."
+                      : "No exercises match “\(searchText)”."
+    }
+
+    /// The leading-swipe favourite toggle for a drill (ADR 0119).
+    private func favoriteButton(for exercise: Exercise) -> some View {
+        Button {
+            exercise.isFavorite.toggle()
+            haptic(.light)
+        } label: {
+            Label(exercise.isFavorite ? "Unfavourite" : "Favourite",
+                  systemImage: exercise.isFavorite ? "star.slash" : "star")
+        }
+        .tint(PocketColor.practice)
     }
 
     /// The sort control — a menu whose label spells out the active key with a direction arrow

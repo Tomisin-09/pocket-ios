@@ -193,6 +193,13 @@ final class Exercise {
     /// When the exercise was created — the default library sort key.
     var dateAdded: Date = Date.now
 
+    /// A manual **favourite** pin (ADR 0119) — the player's explicit "keep this close," surfaced by the
+    /// Exercises library's Favourites filter (a "show only starred" toggle). Not `mastery` (a *derived*
+    /// proficiency, ADR 0036) and not a grade (ADR 0070): it feeds no algorithm, only where the item
+    /// is shown. A plain `Bool` with a declaration default so SwiftData lightweight migration fills
+    /// pre-0119 exercises with `false` — additive, no store wipe (CoreData 134110 rule).
+    var isFavorite: Bool = false
+
     /// The exercise's practice journal — dated, context-snapshotting entries (ADR 0038/0058),
     /// mirroring `Loop.journal`. Cascade-owned: deleting the exercise deletes its entries.
     /// Declaration default keeps SwiftData lightweight migration additive (CoreData 134110

@@ -11,6 +11,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   title text changes — bar backgrounds and layout are unchanged.
 
 ### Added
+- **Favourites.** Star the exercises, routines and loops you keep coming back to. Each of the three
+  Practice libraries has a **star** in its toolbar to show favourites only, and a **leading swipe** on any
+  row to pin or unpin it; favourited rows show a small star. The loops filter, in particular, gives a
+  "my key passages" view across every song. A favourite is just a bookmark: it never grades your playing
+  or changes the planner (ADR 0119).
 - **Bass guitar drills.** Scales, arpeggios and warm-up/picking runs can now be built for **bass**. When
   you create an exercise, a **Guitar / Bass** control sits at the top of the drill-type picker (defaulted
   from your profile's instrument); pick Bass and the box generates and draws on a **four-string neck**

@@ -80,6 +80,14 @@ final class Loop {
     /// array stays CloudKit-clean. Promotion to a `LoopTag` `@Model` stays out of scope.
     var tags: [String] = []
 
+    /// A manual **favourite** pin (ADR 0119) — the player's explicit "keep this passage close,"
+    /// surfaced by the Loops library's Favourites filter, which across every song's loops gives a
+    /// "my key passages" view the per-song browse can't. Distinct from `mastery`/`focus` (the
+    /// planner's *need*/*intent* signals) and never a grade (ADR 0070): it feeds no algorithm, only
+    /// where the loop is shown. A plain `Bool` with a declaration default so SwiftData lightweight
+    /// migration fills pre-0119 loops with `false` — additive, no store wipe (CoreData 134110 rule).
+    var isFavorite: Bool = false
+
     // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
     // SwiftData lightweight migration fills them for loops saved before this — see the
     // ADR 0012 migration note (init-only defaults fail with CoreData 134110). The loop's
