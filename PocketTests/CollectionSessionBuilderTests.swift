@@ -57,6 +57,27 @@ final class CollectionSessionBuilderTests: XCTestCase {
                        "a drill linked to two songs warms the set up once")
     }
 
+    func testPoolCountsDedupedExercisesLoopsAndSongs() throws {
+        let context = try makeContext()
+        let songA = makeSong("A", collections: ["set"], into: context)
+        let songB = makeSong("B", collections: ["set"], into: context)
+        let outsider = makeSong("Out", collections: ["other"], into: context)
+        let shared = Exercise(name: "Shared")
+        let solo = Exercise(name: "Solo")
+        [shared, solo].forEach(context.insert)
+        songA.linkedExercises = [shared, solo]
+        songB.linkedExercises = [shared]           // shared drill — counts once
+        addLoop(to: songA, name: "Riff", start: 0.2, into: context)
+        addLoop(to: outsider, name: "Nope", start: 0.3, into: context)   // outside the collection
+        try context.save()
+
+        let pool = CollectionSessionBuilder.pool(for: "set", in: [songA, songB, outsider])
+        XCTAssertEqual(pool.exercises, 2, "shared drill deduped, outsider ignored")
+        XCTAssertEqual(pool.loops, 1, "only the in-collection loop counts")
+        XCTAssertEqual(pool.songs, 2, "two songs carry the label")
+        XCTAssertEqual(pool.focusItems, 3, "exercises + loops")
+    }
+
     // MARK: Sizing
 
     func testFocusBlocksAreSizedToTheLengthBudget() throws {

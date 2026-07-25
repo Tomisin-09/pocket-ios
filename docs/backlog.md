@@ -20,29 +20,19 @@ review, deferred to a later session:
   length readout via `PracticePlanner.estimatedMinutes`). Cheapest: append
   `SessionLength.minutes` to each tab label. Use tabular digits (`.monospacedDigit()`).
 
-- **A selectable pool view below the Order tab.** Before Build, show every exercise,
-  loop and song tied to the collection as **tiles**, and let the player pick which to
-  include — Instagram-multi-select style (tap to toggle, with an **order badge** showing
-  the pick sequence, like selecting photos for a post/attachment). This turns the builder
-  from "auto-size the whole pool" into "curate, then size." Design notes for whoever
-  takes it:
-  - Source the pool from `CollectionSessionBuilder.orderedFocusUnits(...)` (deduped
-    exercises + loops) plus the collection's songs (`matchingSongs`). Tiles need a
-    display name + kind icon — resolve the `PlannerUnitRef.uid` back to the model, or
-    add a small projected view-model so the sheet stays off the `@Model`.
-  - Selection + order: an ordered `[PlannerUnitRef]` (or uid) the player builds by
-    tapping; badge = its index+1. Feed that selection into a new
-    `sessionBlocks(...)` overload that takes an explicit ordered unit list instead of
-    (or alongside) the `OrderMode` dial — i.e. **manual order becomes a fourth point on
-    the order axis**, or an orthogonal "custom selection" mode. Keep the builder pure +
-    seeded; the manual path just skips the shuffle/sort.
-  - Interaction reference: `LinkPickerSheet` already does searchable multi-select over a
-    catalog (no ordering) — extend that pattern with the ordered-badge affordance rather
-    than building from scratch. Watch the tile grid's file length (400-line cap) — likely
-    its own view file.
-  - Open question: does manual selection **override** the `SessionLength` budget (take
-    exactly what's picked) or still clamp to it? Probably "take what's picked, warn if
-    over the 60-min ceiling" — decide when building.
+- ~~**A selectable pool view below the Order tab (Instagram-style ordered multi-select).**~~
+  **SCRAPPED (2026-07-25)** in favour of a simpler "template producer" model: the generated
+  session is now **editable before Save** — on the review screen a provisional generated
+  session (`!existsInStore`) offers "Add exercise, loop or song" (library-wide, so it adds
+  drills from **outside** the collection) + "Insert rest", alongside the existing swipe-delete
+  and inline rename. So the builder generates a *starting template* the player customises,
+  rather than pre-curating a selection. Done this session (`RoutineDetailView.canAddBlocks`);
+  applies to **every** generated-session flow that shares the review screen — the collection
+  session, the ADR-0111 per-song routine, and the V2 planner's "Generate today's session". A **tally** (exercises ·
+  loops · songs) + a "richer collection → fuller session" note now sit on the Build a session
+  page (`CollectionSessionSheet`, `CollectionSessionBuilder.pool`). *Not done:* drag-reorder on
+  a provisional session still needs Save→Edit (swipe-delete + add work provisionally); enable
+  `.onMove` in the provisional state if that gap bites.
 
 ## User-testing pass — plan of attack (2026-07-20)
 

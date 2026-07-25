@@ -24,9 +24,27 @@ struct CollectionSessionSheet: View {
     @State private var seed: UInt64 = .random(in: .min ... .max)
     @State private var building = false
 
+    /// What the collection offers the builder — deduped exercises/loops + song count (ADR 0118),
+    /// shown as the tally so the player sees the session depends on how much is linked here.
+    private var pool: CollectionSessionBuilder.CollectionPool {
+        CollectionSessionBuilder.pool(for: collection, in: songs)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    tallyRow("Exercises", pool.exercises, "guitars")
+                    tallyRow("Loops", pool.loops, "repeat")
+                    tallyRow("Songs", pool.songs, "music.note.list")
+                } header: {
+                    Text("In “\(collection)”")
+                } footer: {
+                    Text("Your session is drawn from these. A collection with more linked exercises "
+                         + "and loops makes a fuller session — link more from each song's details to "
+                         + "enrich it.")
+                }
+
                 Section("Length") {
                     Picker("Length", selection: $length) {
                         ForEach(SessionLength.allCases) { length in
@@ -49,8 +67,9 @@ struct CollectionSessionSheet: View {
                 } header: {
                     Text("Order")
                 } footer: {
-                    Text("Drills and passages from every song in “\(collection)”, sized to fit — "
-                         + "reorder or trim before you save.")
+                    Text("Drills and passages from every song in “\(collection)”, sized to fit. "
+                         + "It's a starting point — reorder, trim or add more (even exercises from "
+                         + "outside this collection) before you save.")
                 }
             }
             .scrollContentBackground(.hidden)
@@ -79,6 +98,21 @@ struct CollectionSessionSheet: View {
                 }
             }
         }
+    }
+
+    /// One tally row — an item kind, its icon, and a right-aligned count (tabular digits so the
+    /// numbers line up).
+    private func tallyRow(_ label: String, _ count: Int, _ icon: String) -> some View {
+        HStack {
+            Label(label, systemImage: icon)
+                .font(.futura(.body))
+                .foregroundStyle(PocketColor.textPrimary)
+            Spacer()
+            Text("\(count)")
+                .font(.futura(.body).monospacedDigit())
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        .listRowBackground(PocketColor.background)
     }
 }
 

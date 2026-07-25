@@ -71,6 +71,32 @@ enum CollectionSessionBuilder {
         matchingSongs(collection, in: songs).contains { !$0.linkedExercises.isEmpty || !$0.loops.isEmpty }
     }
 
+    /// A count of the practice items a collection offers the builder — its **deduped** exercises +
+    /// loops (the focus pool that fills the session) and the number of songs (the play-through pool).
+    /// Surfaced on the configurator so the player sees what the session draws from *before* building,
+    /// and understands that a thinly-linked collection yields a thinner session (ADR 0118).
+    struct CollectionPool: Equatable {
+        var exercises: Int
+        var loops: Int
+        var songs: Int
+
+        /// Focus items (exercises + loops) — the drills/passages that actually fill the session.
+        var focusItems: Int { exercises + loops }
+    }
+
+    /// The `CollectionPool` tally for `collection` — exercises and loops deduped by `uid` across the
+    /// collection's songs (matching `sessionBlocks`' pool), and the song count.
+    static func pool(for collection: String, in songs: [Song]) -> CollectionPool {
+        let matches = matchingSongs(collection, in: songs)
+        var exercises = Set<UUID>()
+        var loops = Set<UUID>()
+        for song in matches {
+            song.linkedExercises.forEach { exercises.insert($0.uid) }
+            song.loops.forEach { loops.insert($0.uid) }
+        }
+        return CollectionPool(exercises: exercises.count, loops: loops.count, songs: matches.count)
+    }
+
     /// A friendly default name for the generated session — de-duplicated later by the review
     /// screen's `QuickSessionNaming`, so a repeat build won't collide.
     static func defaultName(for collection: String) -> String {

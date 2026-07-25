@@ -63,6 +63,20 @@ of trailing `.play` blocks is **capped** so a "Full" session isn't swallowed by 
 Randomness takes a **seed** so the pure function is deterministic and unit-testable (AGENTS.md — "pure
 logic stays pure"); the UI passes a fresh seed per generation so "regenerate" reshuffles.
 
+### A template the player customises, not a locked output
+
+The generated session is a **starting template**, not a finished routine. On the review screen a
+provisional generated session (`!existsInStore`) is editable *before* the single Save: the player can
+**add any exercise, loop or song** — including drills from *outside* the source collection — via the
+same library-wide `AddRoutineUnitSheet`, insert rests, swipe to trim, and rename inline. So the builder
+does the tedious pooling/dedup/sizing, and the player finishes the shape by hand. This lifts the review
+screen's provisional mode from view-only-plus-rename to view-plus-add/trim/rename **for every generated
+session**, since they all share `RoutineDetailView(generatedSession:)`: the collection session, the
+ADR 0111 per-song routine, **and the V2 planner's "Generate today's session"** (ADR 0072) — each now a
+customisable template rather than a locked output. The configurator surfaces a **tally** of what
+the collection offers (deduped exercises · loops · songs) so the player sees up front that a thinly-linked
+collection yields a thinner starting template.
+
 ### Reuse the whole back-half
 
 `CollectionSessionBuilder` emits `[SessionBlock]` and nothing more. The entry point hands those to
