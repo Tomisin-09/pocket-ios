@@ -55,6 +55,31 @@ enum CollectionSessionBuilder {
     /// so a focus block never needs splitting.
     static let focusedMinutes = RoutineBudget.defaultFocusedMinutes
 
+    /// The ceiling on the **whole** collection session (minutes) per preset — the total of focus work
+    /// **plus** its rests **plus** the play-throughs must fit within this, so "Quick" really is a
+    /// ≤10-minute sitting, "Focused" ≤30, and "Full" the hour. This is deliberately the *total*, not a
+    /// focused budget: `SessionLength.minutes` is the V2 planner's focused allotment (warm-up/play sit
+    /// outside it, ADR 0014 R1), but a collection session is a lighter, self-contained thing, so the
+    /// number the player picks is a hard cap on the entire session — which is exactly what the Length
+    /// tab's "~N min" estimate reads (ADR 0118).
+    static func totalCap(for length: SessionLength) -> Int {
+        switch length {
+        case .quick: return 10
+        case .focused: return 30
+        case .full: return 60
+        }
+    }
+
+    /// The smallest a **trimmed** focus block is allowed to be — below this the remaining budget is
+    /// left for a play-through rather than spent on a stub of a drill. Keeps a tight Quick session from
+    /// ending on a 1-minute fragment.
+    static let minFocusMinutes = 4
+
+    /// Play-throughs may fill at most this share of the session's total cap, so the focus work — the
+    /// point of a practice sitting — always keeps the majority. Half leaves a real block of focus even
+    /// on a Quick session with a song to finish on.
+    static func playMinutesCap(for length: SessionLength) -> Int { totalCap(for: length) / 2 }
+
     /// The songs carrying the collection label (ADR 0033 `allOf` match), sorted by title for a
     /// deterministic pool before any ordering is applied.
     static func matchingSongs(_ collection: String, in songs: [Song]) -> [Song] {
@@ -103,6 +128,22 @@ enum CollectionSessionBuilder {
         collection.isEmpty ? "Collection session" : "\(collection) session"
     }
 
+    /// A rough **total** length (minutes) a `length` preset yields over this collection — the sum of
+    /// the generated blocks' minutes: focus work **plus** the rests between it **plus** the capped
+    /// play-throughs. Always within `totalCap(for:)` (Quick ≤10, Focused ≤30, Full ≤60), since the
+    /// generator budgets the whole session to that ceiling — so it's exactly what the configurator's
+    /// Length tabs read as "~N min", a real sitting rather than a bare label.
+    ///
+    /// Estimated against the deterministic `.structured` arrangement — the worst case for rests, so
+    /// the figure is the **upper bound** across order modes and the Length and Order dials stay
+    /// independent (a Mixed/Shuffled build only comes in shorter). The review screen still shows the
+    /// real length of what's actually built. Returns 0 when nothing can be built (an empty
+    /// collection), so a caller can suppress the suffix.
+    static func estimatedMinutes(for collection: String, in songs: [Song], length: SessionLength) -> Int {
+        sessionBlocks(for: collection, in: songs, length: length, order: .structured, seed: 0)
+            .reduce(0) { $0 + $1.minutes }
+    }
+
     /// Cap on trailing play-through blocks, scaled to the session length so a Quick sitting isn't
     /// swallowed by play-throughs and a Full one still ends on a run or two (ADR 0118).
     static func playThroughCap(for length: SessionLength) -> Int {
@@ -126,10 +167,21 @@ enum CollectionSessionBuilder {
                               seed: UInt64) -> [SessionBlock] {
         let matches = matchingSongs(collection, in: songs)
         var generator = SeededGenerator(seed: seed)
+        let cap = totalCap(for: length)
+
+        // Play-throughs are the fixed-size finishers (a block ≈ a song's length), so budget them
+        // first — bounded to `playMinutesCap` — then hand what's left of the total cap to the focus
+        // work, which fills flexibly. Sizing this way keeps the *whole* session within `cap`.
+        let playBlocks = playThroughBlocks(from: matches, order: order, length: length, using: &generator)
+        let playUsed = playBlocks.reduce(0) { $0 + $1.minutes }
+        let focusBudget = max(0, cap - playUsed)
 
         let focusUnits = orderedFocusUnits(from: matches, order: order, using: &generator)
-        let focusBlocks = budgetFilled(focusUnits, length: length)
-        let playBlocks = playThroughBlocks(from: matches, order: order, length: length, using: &generator)
+        // `budgetFilled` charges a rest before every focus block after the first, so the focus work
+        // *and its rests* fit within `focusBudget` at the worst case (all focus blocks adjacent, i.e.
+        // the structured arc). Any order with fewer adjacencies only comes in shorter, so the cap
+        // holds for every mode.
+        let focusBlocks = budgetFilled(focusUnits, focusBudget: focusBudget)
 
         switch order {
         case .structured, .mixed:
@@ -187,41 +239,55 @@ enum CollectionSessionBuilder {
         }
     }
 
-    /// Greedily lay ordered focus units into `.focus` blocks, each `focusedMinutes`, up to the
-    /// length's focused budget under the 60-minute ceiling (ADR 0014 R7). The final block is trimmed
-    /// to land the total exactly on budget, so the output is a real sitting, not an inventory.
-    static func budgetFilled(_ units: [FocusUnit], length: SessionLength) -> [SessionBlock] {
-        let budget = min(length.minutes, SessionBuilder.maxSessionMinutes)
+    /// Greedily lay ordered focus units into `.focus` blocks, each `focusedMinutes`, so the focus work
+    /// **and the rests that will punctuate it** fit within `focusBudget`. Each block after the first
+    /// charges a `defaultRestMinutes` rest against the budget up front, so the assembled arc (which
+    /// interleaves those rests) never overruns — even in the worst case where every focus block is
+    /// adjacent. The final block is trimmed to what's left, but a would-be block below `minFocusMinutes`
+    /// is dropped so the session doesn't end on a stub. The output is a real sitting, not an inventory.
+    static func budgetFilled(_ units: [FocusUnit], focusBudget: Int) -> [SessionBlock] {
         var blocks: [SessionBlock] = []
         var used = 0
         for unit in units {
-            guard used < budget else { break }
-            let take = min(focusedMinutes, budget - used)
+            let restCost = blocks.isEmpty ? 0 : RoutineBudget.defaultRestMinutes
+            let available = focusBudget - used - restCost
+            guard available >= minFocusMinutes else { break }
+            let take = min(focusedMinutes, available)
             blocks.append(.focus(unit.ref, minutes: take, microRestEvery: nil))
-            used += take
+            used += restCost + take
         }
         return blocks
     }
 
-    /// Up to `playThroughCap` `.play` book-ends — one per song (its length rounded up, ≥ 1).
-    /// Structured takes the first songs by title; mixed / shuffled pick a seeded subset so the set
-    /// varies. Empty when the collection has no songs.
+    /// Up to `playThroughCap` `.play` book-ends — one per song (its length rounded up, ≥ 1) — whose
+    /// **total minutes** also stay within `playMinutesCap`, so play-throughs never crowd out the focus
+    /// work in a tight session. Structured takes the first songs by title; mixed / shuffled pick a
+    /// seeded subset so the set varies. A candidate that would overrun the play budget is skipped (a
+    /// later, shorter one may still fit). Empty when the collection has no songs.
     static func playThroughBlocks(from songs: [Song],
                                   order: OrderMode,
                                   length: SessionLength,
                                   using generator: inout SeededGenerator) -> [SessionBlock] {
         guard !songs.isEmpty else { return [] }
-        let cap = playThroughCap(for: length)
+        let countCap = playThroughCap(for: length)
+        let minutesCap = playMinutesCap(for: length)
         let picked: [Song]
         switch order {
         case .structured:
-            picked = Array(songs.prefix(cap))
+            picked = Array(songs.prefix(countCap))
         case .mixed, .shuffled:
-            picked = Array(songs.shuffled(using: &generator).prefix(cap))
+            picked = Array(songs.shuffled(using: &generator).prefix(countCap))
         }
-        return picked.map {
-            .play(PlannerUnitRef(PlannerID.uid(from: $0.sourceID), .song), minutes: playMinutes(for: $0))
+
+        var blocks: [SessionBlock] = []
+        var used = 0
+        for song in picked {
+            let take = playMinutes(for: song)
+            guard used + take <= minutesCap else { continue }
+            blocks.append(.play(PlannerUnitRef(PlannerID.uid(from: song.sourceID), .song), minutes: take))
+            used += take
         }
+        return blocks
     }
 
     /// Thread a rest between every pair of directly-adjacent `.focus` blocks (ADR 0014 R3) — a break

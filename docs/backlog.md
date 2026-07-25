@@ -10,15 +10,23 @@ The `CollectionSessionBuilder` + `CollectionSessionSheet` shipped (branch
 `pocket-197-collection-session`, device-verified). Two enhancements raised on device
 review, deferred to a later session:
 
-- **Show estimated times on the Length tabs.** The Quick / Focused / Full segmented
-  control currently shows only the labels. Add the minute budget so the player knows
-  what each preset means (e.g. "Quick · 15 min", "Focused · 30", "Full · 60"). The
-  numbers already exist — `SessionLength.minutes` (15/30/60, the *focused* budget;
-  warm-up/play sit outside it, ADR 0014 R1). Decide whether to show the raw focused
-  budget or an estimate that includes rests + capped play-throughs (the latter reads
-  truer as "session length" but is fuzzier — the review screen already shows a real
-  length readout via `PracticePlanner.estimatedMinutes`). Cheapest: append
-  `SessionLength.minutes` to each tab label. Use tabular digits (`.monospacedDigit()`).
+- ~~**Show estimated times on the Length tabs.**~~ **DONE (2026-07-25, branch
+  `pocket-198-collection-session-length-caps`).** The Quick / Focused / Full tabs now read
+  "Quick · ~10m" etc. — the **truer** estimate (focus + rests + capped play-throughs), not the raw
+  focused budget. New pure `CollectionSessionBuilder.estimatedMinutes(for:in:length:)` sums the
+  generated blocks' minutes, pinned to the deterministic `.structured` arrangement (the worst case
+  for rests) so the figure is a **stable upper bound regardless of the Order dial**. Rendered in
+  `CollectionSessionSheet.lengthLabel` with `.monospacedDigit()`, plus a Length-section footer.
+  **Paired with a real cap on the whole session (same session):** the generator now budgets the
+  *entire* sitting — focus + rests + play-throughs — against a per-preset ceiling
+  (`totalCap`: Quick 10 · Focused 30 · Full 60 min), so a Quick session genuinely stays ≤10 min
+  rather than the ~22 the focus-only budget produced. Play-throughs are budgeted first, bounded to
+  half the cap (`playMinutesCap`) so focus keeps the majority, then `budgetFilled` fills the
+  remainder charging a rest before each subsequent focus block so focus **and its rests** fit — the
+  cap holds for every order mode (structured is the worst case). Unit-tested
+  (`CollectionSessionBuilderTests`: whole-session-within-cap across all length×order, estimate
+  within-cap + grows-with-length, sums-the-blocks). Distinct from `SessionLength.minutes`, which the
+  V2 planner still reads as its *focused* budget (ADR 0014 R1) — left unchanged.
 
 - ~~**A selectable pool view below the Order tab (Instagram-style ordered multi-select).**~~
   **SCRAPPED (2026-07-25)** in favour of a simpler "template producer" model: the generated

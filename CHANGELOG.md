@@ -6,6 +6,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the
+  *Build a session* screen the Quick / Focused / Full tabs read as "Quick · ~10m", "Focused · ~30m",
+  "Full · ~60m" — a rough estimate of the *whole* sitting (the focused work plus its rests and a
+  play-through or two). The generator now budgets the entire session against these ceilings, so a Quick
+  session really is no more than about 10 minutes, Focused no more than 30, and Full about an hour —
+  play-throughs can take at most half the sitting so the focus work always keeps the majority. The
+  estimate is drawn from what the collection actually holds and stays the same whatever order you pick;
+  the exact length still shows on the review screen (ADR 0118).
 - **Swipe to delete a goal.** On the Today's session (planner) screen you can now **swipe a goal** to
   remove it outright — no need to open the editor just to delete. Works on active and met goals alike.
 - **Navigation titles now in Futura.** Every screen's title bar renders in **Futura-Bold** instead of
