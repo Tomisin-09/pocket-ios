@@ -15,6 +15,11 @@ struct ExerciseRunView: View {
     var routineContext: RoutineRunContext?
     @State var engine = StandaloneMetronomeEngine()
     @Environment(\.modelContext) var modelContext
+    /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
+    /// Editing a drill's shape is authoring, so it's gated even for a free-taste preset the player may
+    /// *run* (they reach this screen) — the "run the freebie, don't edit it" rule.
+    @Environment(\.isPro) var isPro
+    @Environment(\.presentPaywall) var presentPaywall
     /// The global note-caption preference (set from the exercise editors) — read so the live board
     /// captions notes the same way the creation preview did.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
@@ -300,7 +305,16 @@ struct ExerciseRunView: View {
     /// so no edit affordance renders there.
     private var editShapeAction: (() -> Void)? {
         guard routineContext == nil, exercise.template.bespokeEditor != nil else { return nil }
-        return { showingShape = true; haptic(.light) }
+        // Editing = authoring (ADR 0112): a free player may reach this screen to *run* a free-taste
+        // preset, but editing its shape needs Pro — so gate on `canAuthor`, not `canRun`.
+        return {
+            if AccessPolicy.canAuthor(exercise.template, isPro: isPro) {
+                showingShape = true
+                haptic(.light)
+            } else {
+                presentPaywall(.proExercise)
+            }
+        }
     }
 
     /// Persist the tuning without starting a run (ADR 0057) — shown only while the setup differs

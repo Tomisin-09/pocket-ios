@@ -15,6 +15,11 @@ import SwiftUI
 struct RoutinePlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    /// Entitlement (ADR 0112) — read here purely as **defence in depth**. The library row already
+    /// refuses to present a routine a free player can't run; this second check means a future entry
+    /// point that forgets the gate can't turn the player into a way to run Pro exercises (which embed
+    /// the real `ExerciseRunView`, itself gated only at the library row).
+    @Environment(\.isPro) private var isPro
     /// The routine being run — held so we can stamp `lastPracticed` when the session starts (the
     /// home hub's "recent routines" rail reads it). The player itself is a pure conductor over stages.
     private let routine: Routine
@@ -28,10 +33,19 @@ struct RoutinePlayerView: View {
         _player = State(initialValue: RoutineSessionPlayer(routine: routine))
     }
 
+    /// Whether this routine may be played at all under the current entitlement (ADR 0112).
+    private var runnable: Bool {
+        AccessPolicy.canRunRoutine(
+            isPro: isPro,
+            isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug))
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if let stage = doneStage {
+                if !runnable {
+                    lockedView
+                } else if let stage = doneStage {
                     doneView(for: stage)
                 } else if player.isFinished {
                     finishedView
@@ -44,7 +58,11 @@ struct RoutinePlayerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(PocketColor.background.ignoresSafeArea())
         }
-        .onAppear { player.start(); markPracticed() }
+        .onAppear {
+            guard runnable else { return }
+            player.start()
+            markPracticed()
+        }
         .onDisappear(perform: player.end)
     }
 
@@ -312,6 +330,30 @@ struct RoutinePlayerView: View {
     /// The unit blocks (exercises/loops) in this routine, in order — the recap list; rests omitted.
     private var practicedTitles: [String] {
         player.stages.filter { $0.kind != .rest }.map(\.title)
+    }
+}
+
+extension RoutinePlayerView {
+    /// The entitlement backstop a free player should never actually reach (ADR 0112) — a plain
+    /// "this is Pro" wall with a way out, rather than a silent dismissal or (worse) an unlocked
+    /// session. No paywall is raised from here: the gate that *presents* this screen is the one
+    /// that offers the upgrade. Lives in an extension to keep the main view body under the
+    /// type-body-length cap.
+    var lockedView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "lock.fill")
+                .font(.futura(.largeTitle))
+                .foregroundStyle(PocketColor.textSecondary)
+            Text("Routines are part of Red Moon Pro")
+                .font(.futura(.headline))
+                .foregroundStyle(PocketColor.textPrimary)
+                .multilineTextAlignment(.center)
+            Button("Close") { dismiss() }
+                .font(.futura(.body))
+                .tint(PocketColor.practice)
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

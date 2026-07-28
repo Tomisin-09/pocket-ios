@@ -48,9 +48,6 @@ struct ExerciseShapeSheet: View {
     /// exercise already holding a `.custom` drill opens in draw mode. Only meaningful for `.arpeggio`.
     @State private var arpeggioMode: AuthoringMode
 
-    /// The two ways a fretboard drill's content is authored (the generate-or-draw split).
-    private enum AuthoringMode: Hashable { case generate, draw }
-
     init(exercise: Exercise) {
         self.exercise = exercise
         _strum = State(initialValue: exercise.strumPattern
@@ -182,12 +179,8 @@ private extension ExerciseShapeSheet {
     /// immutability contract: the template stays a fretboard run; you edit its shape.
     var runSection: some View {
         Section {
-            Picker("How to author", selection: $runMode) {
-                Text("Generate").tag(AuthoringMode.generate)
-                Text("Draw your own").tag(AuthoringMode.draw)
-            }
-            .pickerStyle(.segmented)
-            .listRowBackground(Color.clear)
+            AuthoringModePicker(mode: $runMode)
+                .listRowBackground(Color.clear)
 
             switch runMode {
             case .generate:
@@ -215,12 +208,8 @@ private extension ExerciseShapeSheet {
     /// hand-shaped run. Same immutability contract: the template stays a fretboard scales drill.
     var scaleSection: some View {
         Section {
-            Picker("How to author", selection: $scaleMode) {
-                Text("Generate").tag(AuthoringMode.generate)
-                Text("Draw your own").tag(AuthoringMode.draw)
-            }
-            .pickerStyle(.segmented)
-            .listRowBackground(Color.clear)
+            AuthoringModePicker(mode: $scaleMode)
+                .listRowBackground(Color.clear)
 
             switch scaleMode {
             case .generate:
@@ -248,12 +237,8 @@ private extension ExerciseShapeSheet {
     /// generator can't declare. Same immutability contract: the template stays fretboard.
     var arpeggioSection: some View {
         Section {
-            Picker("How to author", selection: $arpeggioMode) {
-                Text("Generate").tag(AuthoringMode.generate)
-                Text("Draw your own").tag(AuthoringMode.draw)
-            }
-            .pickerStyle(.segmented)
-            .listRowBackground(Color.clear)
+            AuthoringModePicker(mode: $arpeggioMode)
+                .listRowBackground(Color.clear)
 
             switch arpeggioMode {
             case .generate:

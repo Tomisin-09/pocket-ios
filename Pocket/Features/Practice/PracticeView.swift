@@ -19,6 +19,9 @@ struct PracticeView: View {
     @Query private var exercises: [Exercise]
     @Query private var allLoops: [Loop]
     @Query private var routines: [Routine]
+    /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
 
     /// Count of trainable loops — those with a measured command tempo (in-memory filter, not a
     /// SwiftData optional `#Predicate`, which starves the main thread; see `PracticeRunUITests`).
@@ -59,30 +62,40 @@ struct PracticeView: View {
     /// goals, and generate a session from your units. The guided "build a session" altitude above the
     /// focused libraries.
     private var plannerCard: some View {
-        NavigationLink { PlannerView() } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "sparkles")
-                    .font(.futura(.title2))
-                    .foregroundStyle(PocketColor.practice)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(PocketColor.practiceCircleWash))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Today's session")
-                        .font(.futura(.headline))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text("A session shaped by your goals")
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.futura(.footnote, weight: .semibold))
-                    .foregroundStyle(PocketColor.textSecondary)
+        // Today's session is a Pro feature (ADR 0112): Pro pushes the planner; free gets the paywall.
+        Group {
+            if isPro {
+                NavigationLink { PlannerView() } label: { plannerCardLabel }
+            } else {
+                Button { presentPaywall(.planner) } label: { plannerCardLabel }
+                    .buttonStyle(.plain)
             }
         }
         .listRowBackground(PocketColor.background)
         .accessibilityLabel("Today's session")
         .accessibilityHint("A session shaped by your goals")
+    }
+
+    private var plannerCardLabel: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "sparkles")
+                .font(.futura(.title2))
+                .foregroundStyle(PocketColor.practice)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(PocketColor.practiceCircleWash))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Today's session")
+                    .font(.futura(.headline))
+                    .foregroundStyle(PocketColor.textPrimary)
+                Text("A session shaped by your goals")
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            Spacer(minLength: 8)
+            Image(systemName: isPro ? "chevron.right" : "lock.fill")
+                .font(.futura(.footnote, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
     }
 
     // MARK: - Library rows

@@ -9,9 +9,18 @@ struct PocketApp: App {
     // repaints when it changes, rather than each screen consulting it separately.
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
 
+    // The app's single Red Moon Pro entitlement source (ADR 0112) — resolves `isPro` from StoreKit
+    // and is read by every paywall gate through the environment. Owned here for the app's lifetime.
+    @State private var store = StoreManager()
+
     var body: some Scene {
         WindowGroup {
             HomeView()
+                // `.environment(store)` must sit **outside** `.paywallHost()`, so the host (which
+                // reads `@Environment(StoreManager.self)` to publish `isPro`) resolves the store from
+                // above it; applied the other way round the host is a parent of the injection and traps.
+                .paywallHost()
+                .environment(store)
                 .preferredColorScheme(appearance.colorScheme)
         }
         .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,

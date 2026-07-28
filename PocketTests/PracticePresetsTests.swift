@@ -163,48 +163,43 @@ final class PracticePresetsTests: XCTestCase {
 
     // MARK: - Seed-once guard
 
-    func testSeedIfNeededInsertsBothBatchesOnceThenIsIdempotent() throws {
+    func testSeedIfNeededInsertsTheFirstRunSetOnceThenIsIdempotent() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: Exercise.self, configurations: config)
         let context = ModelContext(container)
         let defaults = try freshDefaults()
 
-        let total = PracticePresets.specs.count + PracticePresets.templateSpecs.count
-            + PracticePresets.fretboardSpecs.count + PracticePresets.scaleSpecs.count
-            + PracticePresets.arpeggioSpecs.count + PracticePresets.chordSpecs.count
-            + PracticePresets.syncopatedMuteSpecs.count + PracticePresets.strumChordsSpecs.count
-            + PracticePresets.scaleLayoutSpecs.count + PracticePresets.strumExpansionSpecs.count
-            + PracticePresets.scaleSequenceSpecs.count
+        let total = PracticePresets.firstRunSpecs.count
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
 
-        // A second call must not duplicate — both flags are set.
+        // A second call must not duplicate — the flag is set.
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, total)
     }
 
-    /// An existing user who already has the v1 set (its flag set) still gains the later template
-    /// batches (v2 strumming, v3 fretboard) on the next launch — the additive-upgrade guarantee (T9).
-    func testLaterBatchesSeedForAnExistingV1User() throws {
+    /// **The upgrade guarantee, inverted (ADR 0112).** Seeding used to be additive: an existing v1
+    /// player picked up each newer batch on the next launch. Now only the first-run set ships, under
+    /// the *same* v1 key — so a player who already seeded gets **nothing new and loses nothing**. That
+    /// key reuse is the point: minting a new key would re-seed the six onto installs that already hold
+    /// them, duplicating every one.
+    func testExistingSeededUserGainsNothingAndKeepsEverything() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: Exercise.self, configurations: config)
         let context = ModelContext(container)
         let defaults = try freshDefaults()
 
-        // Simulate a user who seeded v1 before templates existed.
+        // Simulate a player who seeded on an earlier build: the v1 flag is set and their library
+        // already holds drills the first-run set no longer ships.
         defaults.set(true, forKey: PracticePresets.seededDefaultsKey)
+        let theirs = Exercise(name: "Scale Runs", currentTempo: 80)
+        context.insert(theirs)
 
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
+
         let fetched = try context.fetch(FetchDescriptor<Exercise>())
-        XCTAssertEqual(fetched.count,
-                       PracticePresets.templateSpecs.count + PracticePresets.fretboardSpecs.count
-                       + PracticePresets.scaleSpecs.count + PracticePresets.arpeggioSpecs.count
-                       + PracticePresets.chordSpecs.count + PracticePresets.syncopatedMuteSpecs.count
-                       + PracticePresets.strumChordsSpecs.count + PracticePresets.scaleLayoutSpecs.count
-                       + PracticePresets.strumExpansionSpecs.count
-                       + PracticePresets.scaleSequenceSpecs.count)
-        // All newer batches arrive (fetch order isn't insertion order, so check the set).
-        XCTAssertEqual(Set(fetched.map(\.kind)), [.strumming, .fretboard, .chords, .strumChords])
+        XCTAssertEqual(fetched.count, 1, "no re-seed, no duplicates")
+        XCTAssertEqual(fetched.first?.name, "Scale Runs", "a retired preset is never removed")
     }
 
     func testDeletedPresetsDoNotReturnOnNextSeed() throws {
@@ -221,6 +216,145 @@ final class PracticePresetsTests: XCTestCase {
         // …and the next launch must leave the space empty, not re-seed.
         PracticePresets.seedIfNeeded(into: context, defaults: defaults)
         XCTAssertEqual(try context.fetch(FetchDescriptor<Exercise>()).count, 0)
+    }
+
+    // MARK: - Preset provenance / slugs (ADR 0112)
+
+    func testEveryPresetShipsWithANonEmptySlug() {
+        for spec in PracticePresets.allSpecs {
+            XCTAssertFalse(spec.slug.isEmpty, "\(spec.name) must ship with a slug")
+        }
+    }
+
+    func testPresetSlugsAreUnique() {
+        let slugs = PracticePresets.allSpecs.map(\.slug)
+        XCTAssertEqual(Set(slugs).count, slugs.count, "preset slugs must be unique")
+    }
+
+    func testMakeExercisesStampsProvenanceSlug() {
+        for (spec, exercise) in zip(PracticePresets.allSpecs,
+                                    PracticePresets.makeExercises(PracticePresets.allSpecs)) {
+            XCTAssertEqual(exercise.presetSlug, spec.slug, "\(spec.name) should carry its slug")
+        }
+    }
+
+    /// Every free-taste slug the paywall relies on must actually be a shipped preset — guards the
+    /// `AccessPolicy.freeTasteSlugs` ↔ `PracticePresets` contract so a rename can't silently orphan
+    /// a freebie.
+    func testEveryFreeTasteSlugIsAShippedPreset() {
+        let shipped = Set(PracticePresets.allSpecs.map(\.slug))
+        for slug in AccessPolicy.freeTasteSlugs {
+            XCTAssertTrue(shipped.contains(slug), "free-taste slug \(slug) has no shipped preset")
+        }
+    }
+
+    // MARK: - Provenance matcher + backfill
+
+    func testSlugMatcherFindsAPresetByNameAndTemplate() {
+        XCTAssertEqual(PracticePresets.slug(forName: "A Minor Pentatonic", template: .scales),
+                       "a-minor-pentatonic")
+        XCTAssertEqual(PracticePresets.slug(forName: "Legato", template: .legato), "legato")
+    }
+
+    func testSlugMatcherRejectsUnknownOrMismatchedTemplate() {
+        XCTAssertNil(PracticePresets.slug(forName: "My Own Drill", template: .scales))
+        // Right name, wrong template ⇒ no match (guards against a coincidental collision).
+        XCTAssertNil(PracticePresets.slug(forName: "Legato", template: .scales))
+    }
+
+    /// The one-time backfill re-stamps presets that were seeded before the slug field existed:
+    /// seed, wipe the slugs to simulate an old install, then backfill and confirm they return.
+    func testBackfillReStampsSlugsForAPreSlugInstall() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Exercise.self, configurations: config)
+        let context = ModelContext(container)
+        let defaults = try freshDefaults()
+
+        PracticePresets.seedIfNeeded(into: context, defaults: defaults)
+        // Simulate a store seeded before provenance existed: clear every slug.
+        for exercise in try context.fetch(FetchDescriptor<Exercise>()) { exercise.presetSlug = nil }
+        try context.save()
+
+        PracticePresets.backfillPresetSlugsIfNeeded(into: context, defaults: defaults)
+
+        let stamped = try context.fetch(FetchDescriptor<Exercise>())
+            .filter { $0.presetSlug != nil }
+        // Every seeded preset name is unique + matches a spec, so all should be re-stamped. Seeding
+        // now ships the first-run set, while the backfill still matches against the whole catalog —
+        // that asymmetry is the point (an older install holds retired presets too).
+        XCTAssertEqual(stamped.count, PracticePresets.firstRunSpecs.count)
+        let pentatonic = try context.fetch(FetchDescriptor<Exercise>())
+            .first { $0.name == "A Minor Pentatonic" }
+        XCTAssertEqual(pentatonic?.presetSlug, "a-minor-pentatonic")
+    }
+
+    func testBackfillLeavesUserAuthoredDrillsUntouched() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Exercise.self, configurations: config)
+        let context = ModelContext(container)
+        let defaults = try freshDefaults()
+
+        let mine = Exercise(name: "My Own Drill", template: .scales)
+        context.insert(mine)
+        try context.save()
+
+        PracticePresets.backfillPresetSlugsIfNeeded(into: context, defaults: defaults)
+        XCTAssertNil(mine.presetSlug, "a user-authored drill must never be stamped as a preset")
+    }
+
+    func testBackfillRunsAtMostOnce() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Exercise.self, configurations: config)
+        let context = ModelContext(container)
+        let defaults = try freshDefaults()
+
+        PracticePresets.backfillPresetSlugsIfNeeded(into: context, defaults: defaults)
+        // A preset seeded *after* the backfill already ran (slug wiped) must NOT be re-stamped,
+        // because the guard flag is set — proving the backfill is one-shot.
+        let late = Exercise(name: "Legato", template: .legato)
+        late.presetSlug = nil
+        context.insert(late)
+        try context.save()
+
+        PracticePresets.backfillPresetSlugsIfNeeded(into: context, defaults: defaults)
+        XCTAssertNil(late.presetSlug, "backfill must not run a second time")
+    }
+
+    // MARK: - The first-run set (ADR 0112)
+
+    /// A fresh install seeds exactly six drills — the union of the free-taste freebies and the
+    /// exercises Morning Routine needs. Pinned so trimming or extending it is a deliberate act.
+    func testFirstRunSeedsExactlySixExercises() {
+        // Equal counts also prove no slug was silently dropped by failing to match a shipped spec.
+        XCTAssertEqual(PracticePresets.firstRunSpecs.count, 6)
+        XCTAssertEqual(PracticePresets.firstRunSlugs.count, 6)
+    }
+
+    /// Every free-taste slug must actually ship on a fresh install. A freebie that isn't seeded is a
+    /// promise the app can't keep — the run allowance would point at an exercise that isn't there.
+    func testEveryFreeTasteExerciseIsSeededOnAFreshInstall() {
+        let firstRun = Set(PracticePresets.firstRunSlugs)
+        for slug in AccessPolicy.freeTasteSlugs {
+            XCTAssertTrue(firstRun.contains(slug), "free-taste \(slug) is never seeded")
+        }
+    }
+
+    /// The whole first-run library is runnable by a free player — two free-tier warm-ups plus the
+    /// four freebies — so a new install opens with nothing locked and nothing broken.
+    func testEveryFirstRunExerciseIsRunnableByAFreePlayer() {
+        for spec in PracticePresets.firstRunSpecs {
+            XCTAssertTrue(
+                AccessPolicy.canRun(spec.template, isPro: false,
+                                    isFreeTastePreset: AccessPolicy.isFreeTaste(slug: spec.slug)),
+                "\(spec.name) ships on a fresh install but a free player can't run it")
+        }
+    }
+
+    /// The retired catalog stays in `allSpecs` — it's the table the provenance backfill matches an
+    /// older install's exercises against, so dropping it would strand them as user-authored.
+    func testRetiredPresetsRemainInTheCatalogForBackfill() {
+        XCTAssertGreaterThan(PracticePresets.allSpecs.count, PracticePresets.firstRunSpecs.count)
+        XCTAssertEqual(PracticePresets.slug(forName: "Scale Runs", template: .scales), "scale-runs")
     }
 
     /// A throwaway `UserDefaults` suite so the seed flag never touches the real domain.

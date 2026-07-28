@@ -86,6 +86,11 @@ schemes:
     build:
       targets:
         Pocket: all
+    run:
+      # Local StoreKit testing for Red Moon Pro (ADR 0112) — the scheme serves the two
+      # subscription products + 14-day intro offer from this config so the paywall and
+      # entitlement flow can be exercised with no App Store Connect / sandbox dependency.
+      storeKitConfiguration: Configuration/RedMoonPro.storekit
     test:
       # Two test plans (see docs/decisions/0053). The default is the fast
       # logic-only plan (unit tests, no coverage) run on local pre-push; CI

@@ -11,6 +11,10 @@ import SwiftUI
 /// indexes the displayed order.
 struct RoutineLibraryView: View {
     @Environment(\.modelContext) private var context
+    /// Entitlement + the shared paywall (ADR 0112). **Routines are Pro**, apart from the one curated
+    /// free-taste routine a free player may run (but not edit).
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
     @Query private var routines: [Routine]
     /// Every exercise in the library — the raw material the planner's Quick session draws from
     /// (V2 planner Slice 1). Ranked by dueness, warm-up LRU-picked; no goals yet.
@@ -67,10 +71,10 @@ struct RoutineLibraryView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button(action: generateQuickSession) {
-                    Image(systemName: "wand.and.stars")
+                    Image(systemName: isPro ? "wand.and.stars" : "lock.fill")
                 }
                 .tint(PocketColor.practice)
-                .disabled(!exercises.contains { $0.template != .warmup })
+                .disabled(isPro && !exercises.contains { $0.template != .warmup })
                 .accessibilityLabel("Generate a quick session")
             }
             if !routines.isEmpty {
@@ -86,9 +90,18 @@ struct RoutineLibraryView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button { creatingNew = true; haptic(.light) } label: { Image(systemName: "plus") }
-                    .tint(PocketColor.practice)
-                    .accessibilityLabel("New routine")
+                Button {
+                    // Building a routine is authoring — Pro, with no free-tier escape (ADR 0112).
+                    guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
+                        return presentPaywall(.routine)
+                    }
+                    creatingNew = true
+                    haptic(.light)
+                } label: {
+                    Image(systemName: isPro ? "plus" : "lock.fill")
+                }
+                .tint(PocketColor.practice)
+                .accessibilityLabel(isPro ? "New routine" : "New routine — Red Moon Pro")
             }
         }
         .navigationDestination(item: $editing) { routine in
@@ -109,44 +122,85 @@ struct RoutineLibraryView: View {
 
     /// A routine row — a ▶ that plays the session, then a tappable name + one-line block summary
     /// that opens the editor. Two independent plain buttons so the two actions never collide.
+    ///
+    /// Entitlement-aware (ADR 0112), and the two halves gate **differently**: ▶ asks `canRunRoutine`
+    /// (so the curated free-taste routine plays for a free player) while the body asks
+    /// `canAuthorRoutine` (so that same routine still can't be *edited* — run the freebie, don't
+    /// author it, exactly as the free-taste exercises behave). A routine a free player can neither run
+    /// nor edit stays **visible but badged** — "locked, not hidden".
     private func row(for routine: Routine) -> some View {
-        HStack(spacing: 14) {
-            Button { playing = routine; haptic(.light) } label: {
-                Image(systemName: "play.circle.fill")
+        let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
+        let runnable = AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo)
+        return HStack(spacing: 14) {
+            Button {
+                guard runnable else { return presentPaywall(.routine) }
+                playing = routine
+                haptic(.light)
+            } label: {
+                Image(systemName: runnable ? "play.circle.fill" : "lock.circle.fill")
                     .font(.futura(.title2))
-                    .foregroundStyle(PocketColor.practice)
+                    .foregroundStyle(runnable ? PocketColor.practice : PocketColor.textSecondary)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Play \(routine.name.isEmpty ? "routine" : routine.name)")
+            .accessibilityLabel(runnable
+                                ? "Play \(routine.name.isEmpty ? "routine" : routine.name)"
+                                : "Locked — Red Moon Pro")
 
-            Button { editing = routine; haptic(.light) } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
-                            Text(routine.name.isEmpty ? "Untitled routine" : routine.name)
-                                .font(.futura(.body))
-                                .foregroundStyle(PocketColor.textPrimary)
-                            if routine.isFavorite {
-                                Image(systemName: "star.fill")
-                                    .font(.futura(.caption2))
-                                    .foregroundStyle(PocketColor.practice)
-                                    .accessibilityLabel("Favourite")
-                            }
-                        }
-                        Text(summary(for: routine))
-                            .font(.futura(.caption))
-                            .foregroundStyle(PocketColor.practice)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.futura(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
+            Button {
+                // The demo exception (ADR 0112): the curated free-taste routine opens for a free
+                // player too — read-only, then rearrange-only under Edit. Adding stays Pro.
+                guard AccessPolicy.canEditRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
+                    return presentPaywall(.routine)
                 }
-                .contentShape(Rectangle())
+                editing = routine
+                haptic(.light)
+            } label: {
+                rowBody(for: routine, openable: runnable)
             }
             .buttonStyle(.plain)
         }
         .padding(.vertical, 2)
+    }
+
+    /// The tappable half of a row: name (+ favourite star), block summary, and the trailing
+    /// entitlement affordances. `openable` means the row leads somewhere for this player — true for
+    /// any routine when Pro, and for the curated demo when free. The PRO capsule and the padlock both
+    /// mark the rows that don't, so the demo reads as ordinary and the rest read as locked.
+    private func rowBody(for routine: Routine, openable: Bool) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(routine.name.isEmpty ? "Untitled routine" : routine.name)
+                        .font(.futura(.body))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    if routine.isFavorite {
+                        Image(systemName: "star.fill")
+                            .font(.futura(.caption2))
+                            .foregroundStyle(PocketColor.practice)
+                            .accessibilityLabel("Favourite")
+                    }
+                }
+                Text(summary(for: routine))
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.practice)
+            }
+            Spacer(minLength: 8)
+            if !openable { proBadge }
+            Image(systemName: openable ? "chevron.right" : "lock.fill")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        .contentShape(Rectangle())
+    }
+
+    /// The "PRO" capsule marking a routine a free player cannot run (ADR 0112). Matches the exercise
+    /// library's badge, and is deliberately absent from the curated free-taste routine, which plays.
+    private var proBadge: some View {
+        Text("PRO")
+            .font(.futura(.caption2, weight: .bold))
+            .foregroundStyle(PocketColor.background)
+            .padding(.horizontal, 6).padding(.vertical, 1)
+            .background(Capsule().fill(PocketColor.practice))
     }
 
     /// The leading-swipe favourite toggle for a routine (ADR 0119).
@@ -176,7 +230,11 @@ struct RoutineLibraryView: View {
     /// push it for **review** — the V2 planner's first surface (Slice 1). Nothing is persisted here:
     /// the blocks are pure, and the provisional detail screen only commits them to the library on an
     /// explicit Save or Start. The default name is dated and de-duplicated against the library.
+    ///
+    /// A **fifth** routine producer, and so gated like the rest (ADR 0112) — it materialises a real
+    /// `Routine`, which is authoring.
     private func generateQuickSession() {
+        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine) }
         let blocks = PracticePlanner.planQuickSession(minutes: SessionLength.default.minutes,
                                                       exercises: exercises)
         guard blocks.contains(where: { $0.unit != nil }) else { return }

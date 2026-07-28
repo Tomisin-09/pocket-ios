@@ -6,6 +6,9 @@ xcuserdata/
 DerivedData/
 build/
 build-device/
+# Simulator derived data, used to verify a genuine fresh install (clean install →
+# inspect the seeded store) without disturbing the device build products above.
+build-sim/
 *.xcuserstate
 *.moved-aside
 

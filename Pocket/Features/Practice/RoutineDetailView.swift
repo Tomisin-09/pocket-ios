@@ -34,6 +34,10 @@ struct RoutineDetailView: View {
     /// routine opens directly in edit mode (there's nothing to view yet).
     @State var isEditing: Bool
 
+    /// Entitlement (ADR 0112) — internal so the access extension reads it. Routines are Pro; the
+    /// curated free-taste routine opens as a rearrange-only demo.
+    @Environment(\.isPro) var isPro
+
     @State private var addingUnit = false
     /// The routine to run, resolved into the main context — drives the full-screen player. `nil`
     /// when not playing.
@@ -111,12 +115,11 @@ struct RoutineDetailView: View {
         routine.items.contains { $0.kind.carriesUnit && $0.hasResolvableUnit }
     }
 
-    /// Whether the block-adding affordances (add unit / insert rest, empty-routine hint) show. True
-    /// in edit mode **and** on a **provisional generated session** (`!existsInStore`): a generated
-    /// session is a *template* the player customises — e.g. adding a drill from outside the source
-    /// collection (ADR 0118) — before the single Save commits it. Swipe-delete works in both;
-    /// drag-reorder still needs edit mode on a stored routine.
-    private var canAddBlocks: Bool { isEditing || !existsInStore }
+    // `canAddBlocks` / `canDeleteBlocks` live in `RoutineDetailView+Access` (ADR 0112). A
+    // provisional generated session (`!existsInStore`) stays editable without an Edit tap — it's a
+    // *template* the player customises (e.g. adding a drill from outside the source collection,
+    // ADR 0118) before the single Save commits it — while drag-reorder needs edit mode on a stored
+    // routine.
 
     var body: some View {
         List {
@@ -140,7 +143,7 @@ struct RoutineDetailView: View {
                 }
             }
 
-            Section("Blocks") {
+            Section {
                 if routine.items.isEmpty {
                     Text(canAddBlocks
                          ? "Empty routine. Add exercises, loops or songs, and rests between them."
@@ -154,8 +157,12 @@ struct RoutineDetailView: View {
                             .listRowBackground(PocketColor.background)
                     }
                     .onMove(perform: move)
-                    .onDelete(perform: delete)
+                    .onDelete(perform: blockDeleteAction)
                 }
+            } header: {
+                Text("Blocks")
+            } footer: {
+                demoFooter
             }
 
             lengthSection
@@ -345,7 +352,7 @@ struct RoutineDetailView: View {
 
     /// Delete the swiped blocks (offsets index the *displayed* ordered list), then renumber
     /// the survivors so `order` stays contiguous.
-    private func delete(_ offsets: IndexSet) {
+    func delete(_ offsets: IndexSet) {
         let ordered = routine.orderedItems
         for index in offsets { editContext.delete(ordered[index]) }
         for (index, item) in routine.orderedItems.enumerated() { item.order = index }
@@ -379,22 +386,4 @@ extension RoutineDetailView {
         guard let local = editContext.model(for: picked.persistentModelID) as? Song else { return }
         insert(.item(local, order: nextOrder))
     }
-}
-
-#Preview("Routine detail") {
-    // swiftlint:disable:next force_try
-    let container = try! ModelContainer(
-        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self,
-        configurations: .init(isStoredInMemoryOnly: true))
-    let drill = Exercise(name: "Alternating picking", currentTempo: 70, commandTempo: 96)
-    container.mainContext.insert(drill)
-    let routine = Routine(name: "Morning warm-up")
-    routine.items = [RoutineItem.item(drill, kind: .warmup, order: 0),
-                     RoutineItem.rest(order: 1),
-                     RoutineItem.item(drill, order: 2)]
-    container.mainContext.insert(routine)
-    try? container.mainContext.save()
-    return NavigationStack { RoutineDetailView(container: container, existing: routine) }
-        .modelContainer(container)
-        .preferredColorScheme(.dark)
 }

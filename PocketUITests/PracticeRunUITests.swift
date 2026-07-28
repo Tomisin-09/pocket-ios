@@ -36,14 +36,21 @@ final class PracticeRunUITests: XCTestCase {
         XCTAssertTrue(exercisesRow.waitForExistence(timeout: 20), "Exercises library row missing")
         exercisesRow.tap()
 
-        // Tapping a seeded unit must open its run screen without the freeze. The library groups
-        // into template sections (ADR 0068), so target a drill in the first alphabetical section
-        // ("Chords" → "Chord Changes") — it's at the top of the list, on-screen without scrolling,
-        // and its row (not a section header) is the tappable NavigationLink.
+        // Tapping a seeded unit must open its run screen without the freeze. Target **Alternate
+        // Picking**: it's in `PracticePresets.firstRunSlugs`, so a genuinely clean install has it
+        // (ADR 0112 cut seeding to six drills — this test used to tap "Chord Changes", which a fresh
+        // install no longer seeds), and its name collides with no section header, unlike "Legato",
+        // which is both a drill and its own template section. It's also free-taste, so it stays
+        // runnable even when CI runs as a free player.
         // Generous timeout to match the run-screen wait below: on a cold install the library only
         // paints once first-launch seeding (exercises + routine presets) has run, which is variable.
-        let drillCell = app.cells.containing(.staticText, identifier: "Chord Changes").firstMatch
+        let drillCell = app.cells.containing(.staticText, identifier: "Alternate Picking").firstMatch
         XCTAssertTrue(drillCell.waitForExistence(timeout: 20), "no seeded exercise to tap")
+        var drillSwipes = 0
+        while !drillCell.isHittable && drillSwipes < 4 {
+            app.swipeUp()
+            drillSwipes += 1
+        }
         drillCell.tap()
 
         // Generous timeout: a cold simulator seeds + spins up the run engine on first navigation.

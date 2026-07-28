@@ -30,8 +30,28 @@ access is safe to sell flat.
 Metronome, songs/library, loops, journal, **takes/recording**, and **all strumming exercises**.
 Plus a **permanent taste** of the paid layer: a curated set of **seeded preset exercises** a free
 user can *run* — the low-E minor-pentatonic box, an open-chord set, **picking warm-up, and legato** —
-and the ability to build **one** manual routine from free exercises. The taste is the hook — a free
-user *experiences* the structured layer, hits its edge, and converts. It never expires with the trial.
+and **one curated starter routine** they can run forever (**Morning Routine**), which they may also
+open and **rearrange** — a demo of what a routine is — but never add to. The taste is the hook
+— a free user *experiences* the structured layer, hits its edge, and converts. It never expires with
+the trial.
+
+> **Amended 2026-07-28 (`pocket-191`).** This previously read "the ability to build **one** manual
+> routine from free exercises". **Routines are now Pro outright**, with a single curated routine
+> runnable (not editable) for free. The count-based allowance was dropped as unbuildable-without-
+> ambiguity: it needed a rule for *which* routine was the free one, and an answer for what happens to
+> the other nine when a trial lapses. A flat rule needs neither. The run-only allowance also **closes
+> a bypass** — see §Consequences.
+>
+> **Refined the same day:** the free routine is a *demo*, not a museum piece. A free player can open
+> it and **drag its blocks into a different order**; what they cannot do is **add** blocks. The split
+> is `canEditRoutine` (Pro, or the curated routine) vs `canAddRoutineUnits` (Pro, always — including
+> inside the demo). Reordering a fixed curated set authors nothing, and forbidding *adding* is what
+> keeps the demo's contents ours and therefore verified free of Pro drills. **Deletion is barred in
+> the demo too** — not for entitlement reasons but because the curated routines seed exactly once
+> ever, so a free player who emptied it could never rebuild it. Also renamed "Morning Warm-up" →
+> "Morning Routine"; the slug stays `morning-warm-up` (frozen), and `RoutinePresets.legacyNameSlugs`
+> keeps the by-name backfill matching installs seeded under the old name — without it the rename
+> would have silently Pro-locked the demo on every existing install.
 
 **The free line is running, not authoring.** Free users can *run* the curated presets (including
 picking warm-up and legato), but **authoring is Pro** — both *creating a new exercise from a Pro
@@ -43,12 +63,13 @@ The full exercise catalog (all scales — modes/positions/CAGED; all chords — 
 placer), **unlimited** custom exercises & routines (including "draw your own"), and the deterministic
 **"Today's session"** self-rated planner. No per-use cost, so unlimited is safe.
 
-**Price: £4.99/mo, or £39.99/yr** (annual ≈ £3.33/mo, ~33% off — the retention lever this category
-lives on; lead with annual in the paywall). Deliberately **below** Justin Guitar's ~£11/mo: Red Moon
+**Price: £5.99/mo, or £49.99/yr** (annual ≈ £4.17/mo, ~30% off — the retention lever this category
+lives on; lead with annual in the paywall). *(Set to £5.99/£49.99 before launch, 2026-07-24 — up from
+the initially-proposed £4.99/£39.99.)* Deliberately **below** Justin Guitar's ~£11/mo: Red Moon
 Pro is a practice *workbench*, not a curriculum, and a modest Pro price leaves clean headroom for
 **Oracle** (~£10–12) to be the premium AI tier where the Justin-comparable price fits. No lifetime
-option — it undercuts recurring revenue and the future Oracle upsell. Reversible: start slightly low
-for goodwill + conversion data, raise later and grandfather existing subscribers.
+option — it undercuts recurring revenue and the future Oracle upsell. Reversible: raise later and
+grandfather existing subscribers.
 
 ### Red Moon Oracle — *future tier, built only after AI ships*
 AI-generated "today's session" and other AI features, **with usage caps** to protect margin (per
@@ -103,7 +124,7 @@ app capabilities). The design:
   paywall via a single shared `.paywall(trigger:)` sheet carrying the intent, so the original action
   resumes after purchase.
 - **The paywall screen** (one `PaywallView`, Futura + design tokens, theme-aware): value prop; **Annual
-  pre-selected** (£39.99/yr, "≈ £3.33/mo · best value") with Monthly (£4.99/mo) beneath; one primary
+  pre-selected** (£49.99/yr, "≈ £4.17/mo · best value") with Monthly (£5.99/mo) beneath; one primary
   CTA; **Restore Purchases**; and the Apple-required disclosure block (auto-renews, price, cancel
   anytime) + Terms/Privacy links — a paywall missing that disclosure is rejected.
 - **Trial-aware CTA:** read `product.subscription?.isEligibleForIntroOffer` → first-timers see "Start
@@ -125,8 +146,8 @@ app capabilities). The design:
 *Group & products* (Monetization → Subscriptions)
 - [ ] One **subscription group** "Red Moon Pro" — both plans in it (single entitlement; monthly↔annual
   switching).
-- [ ] **Red Moon Pro Monthly** — id `click.decooperations.pocket.pro.monthly`, 1 month, **£4.99**.
-- [ ] **Red Moon Pro Annual** — id `…pocket.pro.annual`, 1 year, **£39.99**.
+- [ ] **Red Moon Pro Monthly** — id `click.decooperations.pocket.pro.monthly`, 1 month, **£5.99**.
+- [ ] **Red Moon Pro Annual** — id `…pocket.pro.annual`, 1 year, **£49.99**.
 - [ ] Rank **Annual above Monthly** (annual = the upgrade); tax category set; price matrix reviewed.
 
 *Trial*
@@ -147,11 +168,35 @@ app capabilities). The design:
 
 - Free is a genuinely useful app on its own (a serious practice companion), which protects
   App-Store standing and word-of-mouth; Pro is the structured layer that directs practice.
-- Entitlement gating is **template-scoped**: a template carries a free/Pro flag, and every exercise
-  or routine inherits its access from the templates it uses. This is the single mechanism the app
-  must enforce (and re-enforce at trial lapse).
+- Entitlement gating is **template-scoped** for exercises: a template carries a free/Pro flag, and
+  every exercise inherits its access from it. This is the single mechanism the app must enforce (and
+  re-enforce at trial lapse).
+- **Routines are gated as a whole, not by inheritance** (amended 2026-07-28). Inheritance was the
+  original idea — "a routine inherits its access from the templates it uses" — but it is *unsound* on
+  the run side: the routine player embeds the real `ExerciseRunView` per block with no per-block
+  check, so a free player could add a Pro drill to a hand-built routine and run it there, bypassing
+  the library's per-row lock in three taps. Making routines Pro, with the **one curated free-taste
+  routine whose blocks are free-tier or free-taste by construction**, closes that by construction:
+  the only routine a free player can ever play is one we control. `RoutinePresetsTests` pins that
+  cleanliness so a future edit to the curated recipe can't silently reopen the hole.
+- **The first-run set is the free tier made concrete** (added 2026-07-28). A fresh install seeds six
+  exercises, one routine and one song — not the whole catalog. The six are the *union* of the free-taste
+  freebies and the drills Morning Routine needs; routine blocks resolve by name at seed time, so seeding
+  only the freebies would have shipped the demo routine short two blocks. Every seeded item is runnable
+  free, so a new install has nothing locked in it. The trade-off accepted: the exercise library no longer
+  doubles as a Pro shop window (a free player used to see ~19 drills, most PRO-badged). Merchandising
+  now rests on the paywall and the gated surfaces rather than on a catalog of locked rows.
+- **One bundled third-party track** ships as the demo song (*Binta*, Jack Trader, cleared by the rights
+  holder). This is a deliberate exception to "never ship someone else's material" — that rule is about
+  *pedagogy* (encoding methods, not lifting lessons), not about a licensed demo. It has a compliance
+  consequence: the App Store Connect **Content Rights** answer changes from "no third-party content",
+  and must be updated before the next submission.
+- Routines have **five** producers, all of which must gate: the routines library `+`, its
+  Quick-session wand, the planner's "Today's session", the Library's collection→session builder
+  (ADR 0118), and a song's "Build a routine for this song" (ADR 0111). Two of those live outside the
+  Practice space, which is exactly how a gate gets missed — any *new* producer must gate too.
 - Recording is now unambiguously **Free**, formally reversing the parked ADR-0069 monetization idea.
-- Pro price is set (£4.99/mo · £39.99/yr); only the **Oracle** price stays open — it needs a
+- Pro price is set (£5.99/mo · £49.99/yr); only the **Oracle** price stays open — it needs a
   unit-economics model (Claude API cost per call × caps, net of Apple's cut) before it is set.
 - No tier ever grades the player (ADR 0070) — the free/paid line is about breadth and automation,
   never judgement.

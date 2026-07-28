@@ -11,6 +11,9 @@ import SwiftUI
 /// `PracticeLibrarySort`, so `@Query` stays unsorted and deletion indexes the *displayed* list.
 struct ExerciseLibraryView: View {
     @Environment(\.modelContext) private var context
+    /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
     @Query private var exercises: [Exercise]
     /// The local profile (ADR 0113 S2): its self-rated experience seeds a new exercise's default
     /// command tempo, so a beginner starts near the floor and a seasoned player higher up.
@@ -80,17 +83,9 @@ struct ExerciseLibraryView: View {
                 ForEach(sections, id: \.title) { section in
                     Section(section.title) {
                         ForEach(section.items) { exercise in
-                            NavigationLink {
-                                ExerciseRunView(exercise: exercise)
-                            } label: {
-                                PracticeUnitRow(
-                                    title: exercise.name.isEmpty ? "Untitled" : exercise.name,
-                                    progress: "Command \(exercise.command) → "
-                                        + "\(exercise.reachTempo) BPM",
-                                    isFavorite: exercise.isFavorite)
-                            }
-                            .listRowBackground(PocketColor.background)
-                            .swipeActions(edge: .leading) { favoriteButton(for: exercise) }
+                            exerciseRow(exercise)
+                                .listRowBackground(PocketColor.background)
+                                .swipeActions(edge: .leading) { favoriteButton(for: exercise) }
                         }
                         .onDelete { delete($0, in: section.items) }
                     }
@@ -127,6 +122,44 @@ struct ExerciseLibraryView: View {
             NewExerciseSheet(initialCommand: defaultCommand, defaultInstrument: defaultInstrument,
                              onCreate: create)
         }
+    }
+
+    /// One library row, entitlement-aware (ADR 0112): a runnable drill (free-tier template, a
+    /// free-taste preset, or any drill for a Pro subscriber) pushes its run screen; a locked Pro drill
+    /// stays **visible but badged** and taps to the paywall instead ("locked, not hidden"). The
+    /// free-taste presets stay runnable here — only editing them is gated, on the run screen.
+    @ViewBuilder
+    private func exerciseRow(_ exercise: Exercise) -> some View {
+        let runnable = AccessPolicy.canRun(
+            exercise.template, isPro: isPro,
+            isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug))
+        if runnable {
+            NavigationLink { ExerciseRunView(exercise: exercise) } label: { row(exercise, locked: false) }
+        } else {
+            Button { presentPaywall(.proExercise) } label: { row(exercise, locked: true) }
+                .buttonStyle(.plain)
+        }
+    }
+
+    private func row(_ exercise: Exercise, locked: Bool) -> some View {
+        HStack(spacing: 8) {
+            PracticeUnitRow(
+                title: exercise.name.isEmpty ? "Untitled" : exercise.name,
+                progress: "Command \(exercise.command) → \(exercise.reachTempo) BPM",
+                isFavorite: exercise.isFavorite)
+            if locked {
+                Spacer(minLength: 8)
+                Text("PRO")
+                    .font(.futura(.caption2, weight: .bold))
+                    .foregroundStyle(PocketColor.background)
+                    .padding(.horizontal, 6).padding(.vertical, 1)
+                    .background(Capsule().fill(PocketColor.practice))
+                Image(systemName: "lock.fill")
+                    .font(.futura(.caption, weight: .semibold))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+        }
+        .contentShape(Rectangle())
     }
 
     /// The command tempo a fresh exercise pre-fills (ADR 0113 S2 consumer): the profile's experience

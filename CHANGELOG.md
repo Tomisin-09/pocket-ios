@@ -6,6 +6,79 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **A fresh install now opens with six exercises, one routine and one song.** Previously a new player
+  landed in a library of 19 seeded drills and 3 curated routines. The first-run set is now the *union*
+  of the four free-taste freebies and the four exercises **Morning Routine** needs — Spider Walk,
+  Chromatic Warm-up, Alternate Picking, A Minor Pentatonic, Pop Changes, Legato — which is the smallest
+  set where both stay whole (routine blocks resolve **by name at seed time**, so seeding only the
+  freebies would have shipped the demo routine with two blocks silently missing). Every one of the six
+  is runnable by a free player, so a new install has nothing locked in it and nothing broken. The rest
+  of the catalog is **retired from seeding, not deleted**: it still backs the provenance back-fill, and
+  an existing player keeps every drill and routine they were already given — the seed flags on their
+  device are set, so nothing re-runs and nothing is removed.
+- **One demo song ships with the app: *Binta* by Jack Trader**, used with the rights holder's
+  permission, so a new install has real audio to loop against before importing anything. Copied out of
+  the bundle into `Documents/` on first launch (a bookmark into the bundle would dangle after an app
+  update, since the bundle path carries a per-install UUID) and decoded off the main actor so first
+  paint never waits on it. One-time flag, so a deleted demo stays deleted.
+  ⚠️ **This is the app's first bundled third-party content — the App Store Connect *Content Rights*
+  answer must change from "no third-party content" before the next submission.**
+
+### Internal
+- **Groundwork for Red Moon Pro (ADR 0112).** Added a pure, unit-tested entitlement axis —
+  `ExerciseTemplate.authoringTier` (free = Basic/Strumming/Warm-up; Pro = the structured technique
+  catalog) and an `AccessPolicy` (`canAuthor` / `canRun`) that all future paywall gates route
+  through. No StoreKit, no UI, no behaviour change yet — this is the free/Pro rule in one testable
+  place, ahead of the `StoreManager` and paywall slices.
+- **Preset provenance for the free taste (ADR 0112).** Seeded presets now carry a stable
+  `presetSlug` (a new optional `String` on `Exercise` — additive, non-lossy migration), stamped by
+  the seeder and back-filled once onto pre-existing installs. `AccessPolicy.freeTasteSlugs` names the
+  four run-free-forever presets (pentatonic box, open chords G·D·Em·C, picking warm-up, legato); a
+  free player can *run* those even on a Pro template but still can't *edit* them. Still dormant — no
+  gate consumes it yet.
+- **StoreKit 2 entitlement layer (ADR 0112).** Added `StoreManager` (`@MainActor @Observable`) — the
+  single source of truth for `isPro`, resolved from `Transaction.currentEntitlements` with a
+  `Transaction.updates` listener, plus `loadProducts` / `purchase` / `restore`, injected at the app
+  root. Ships a local `Configuration/RedMoonPro.storekit` (Annual £49.99 / Monthly £5.99, both with a
+  14-day free intro offer) wired into the run scheme, so the flow is testable with no App Store
+  Connect dependency; a DEBUG `isPro` override lets the upcoming gates be exercised before sandbox
+  exists.
+- **The Red Moon Pro paywall + its first gates (ADR 0112).** A single `PaywallView` (crescent seal ·
+  Futura · theme-aware) — contextual headline, three value lines, **Annual pre-selected** (£49.99/yr ·
+  "≈ £4.17/mo · best value") over Monthly (£5.99/mo), a trial-aware CTA, **Restore Purchases**, and the
+  App-Review-required auto-renew disclosure with Terms/Privacy links; prices live from StoreKit. One
+  shared `.presentPaywall` action raises it from any gate. Gates: **Today's session** (Home + Practice),
+  **creating a new exercise from a Pro template** (the picker badges + locks Pro templates), the
+  **"Draw your own"** canvas — a shared `AuthoringModePicker` whose Draw segment is greyed with a **PRO**
+  badge for free players (Pro even on a free-tier family like Warm-up), **opening a locked Pro exercise**
+  in the library (Pro rows stay visible with a **PRO + lock** badge and tap to the paywall — "locked, not
+  hidden"), and **editing a free-taste preset** (a free player can *run* the pentatonic / open-chord /
+  picking / legato freebies, but "Edit shape" opens the paywall — editing is authoring). **Settings**
+  gains a **Red Moon Pro** section: subscribers get **Manage Subscription** (Apple's native sheet — no
+  in-app billing UI), free players an **Upgrade** entry into the paywall, and **Restore Purchases** either
+  way. A DEBUG Settings control flips Free/Pro to exercise it all. Ships in the paywall build, **not v1**
+  (v1 stays free).
+- **Routines are Red Moon Pro, with one curated routine free forever (ADR 0112, amended).** Replaces the
+  ADR's original "build one manual routine free" allowance — a count needed a rule for *which* routine
+  was free and an answer for the rest at trial lapse. Now: authoring any routine is Pro, and a free
+  player may **run** (never edit) the curated **Morning Warm-up**, whose every block is a free-tier
+  template or a free-taste preset — warm-ups, alternate picking, and the A-minor-pentatonic box. This
+  also **closes a bypass**: the routine player embeds the real exercise run screen per block with no
+  per-block check, so a free player could previously add a Pro drill to a routine and run it there,
+  around the library's per-row lock. All five routine producers now gate — the library `+`, the
+  Quick-session wand, "Today's session", the collection→session builder, and "Build a routine for this
+  song" — and locked routines stay **visible but badged**, the free one unbadged and playable. Adds
+  `Routine.presetSlug` provenance (additive optional, non-lossy migration, one-time back-fill by name so
+  an existing install's copy isn't locked).
+- **The free routine is a demo you can rearrange (ADR 0112).** Renamed **Morning Warm-up → Morning
+  Routine** (the slug is frozen, so the rename is cosmetic; a legacy-name table keeps the back-fill
+  matching installs seeded under the old name). A free player can now **open** it and **drag its blocks
+  into a new order** — seeing how a routine fits together — while **adding** blocks stays Pro, which is
+  also what keeps the demo's contents curated and verified free of Pro drills. Deleting blocks is barred
+  inside the demo: the curated routines seed once ever, so an emptied demo could never be rebuilt. A
+  footer names the limit rather than leaving a missing Add button unexplained.
+
+### Changed
 - **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the
   *Build a session* screen the Quick / Focused / Full tabs read as "Quick · ~10m", "Focused · ~30m",
   "Full · ~60m" — a rough estimate of the *whole* sitting (the focused work plus its rests and a

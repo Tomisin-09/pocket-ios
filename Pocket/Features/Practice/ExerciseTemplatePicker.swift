@@ -15,6 +15,10 @@ struct ExerciseTemplatePicker: View {
     @Binding var instrument: Instrument
     let onSelect: (ExerciseTemplate) -> Void
 
+    /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
+
     var body: some View {
         List {
             Section {
@@ -35,7 +39,9 @@ struct ExerciseTemplatePicker: View {
                 ForEach(ExerciseTemplate.creatable) { template in
                     // Every creatable template is buildable now — the "Coming Soon" (Ear Training /
                     // Theory) rows were removed 2026-07-22 (ear training shipped as a loop mode, ADR 0104).
-                    Button { onSelect(template); haptic(.light) } label: { row(template) }
+                    // Authoring a Pro-tier template is gated (ADR 0112): a free tap opens the paywall
+                    // instead of the configure step; Pro (or a free-tier template) proceeds.
+                    Button { select(template) } label: { row(template) }
                         .listRowBackground(PocketColor.background)
                 }
             } footer: {
@@ -51,8 +57,20 @@ struct ExerciseTemplatePicker: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    /// Route a tap: free-tier templates (or a Pro subscriber) proceed to configure; a locked Pro
+    /// template opens the paywall (ADR 0112).
+    private func select(_ template: ExerciseTemplate) {
+        if AccessPolicy.canAuthor(template, isPro: isPro) {
+            onSelect(template)
+            haptic(.light)
+        } else {
+            presentPaywall(.newExercise)
+        }
+    }
+
     private func row(_ template: ExerciseTemplate) -> some View {
-        HStack(spacing: 14) {
+        let locked = !AccessPolicy.canAuthor(template, isPro: isPro)
+        return HStack(spacing: 14) {
             Image(systemName: template.iconName)
                 .font(.futura(.title3))
                 .foregroundStyle(PocketColor.practice)
@@ -63,20 +81,29 @@ struct ExerciseTemplatePicker: View {
                         .font(.futura(.body, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
                     if template.hasBespokeEditor { bespokeBadge }
+                    if locked { proBadge }
                 }
                 Text(template.blurb)
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
+            Image(systemName: locked ? "lock.fill" : "chevron.right")
                 .font(.futura(.caption, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint(template.hasBespokeEditor ? "Has its own editor" : "")
+        .accessibilityHint(locked ? "Red Moon Pro" : (template.hasBespokeEditor ? "Has its own editor" : ""))
+    }
+
+    private var proBadge: some View {
+        Text("PRO")
+            .font(.futura(.caption2, weight: .bold))
+            .foregroundStyle(PocketColor.background)
+            .padding(.horizontal, 6).padding(.vertical, 1)
+            .background(Capsule().fill(PocketColor.practice))
     }
 
     private var bespokeBadge: some View {

@@ -9,6 +9,10 @@ import SwiftUI
 /// deliberately planner-free V1 home.
 struct HomeView: View {
     @Environment(\.modelContext) private var context
+    /// Red Moon Pro entitlement + the shared paywall (ADR 0112). Both carry safe preview defaults
+    /// (free / no-op), so `HomeView` previews render without a `StoreManager` in the environment.
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
     @Query(sort: \Song.title) private var songs: [Song]
     @Query private var routines: [Routine]
     // Non-private so the `HomeView+ProfileMoment` extension (a separate file, for the length cap) can
@@ -140,17 +144,22 @@ struct HomeView: View {
                              onDismiss: { artistIntakeSeen = true },
                              content: { ArtistIntakeView() })
             .onAppear(perform: maybeOfferProfileMoment)
-            // Seed the curated Practice presets once, ever (ADR 0046). The app root is the right
-            // place — they exist before the user opens Practice — and the seeder's own
-            // `UserDefaults` guard makes this idempotent across launches. Routines seed **after**
-            // exercises (ADR 0071) so their by-name blocks resolve against the just-seeded drills.
-            // Yield between the two so the exercise library can paint before routine seeding's
-            // fetch+insert+save runs — chaining both synchronously delays first render on a cold
-            // install (the run-screen "freeze" that once looked like a regression was this latency).
+            // Seed the curated first-run content once, ever (ADR 0046/0112) — the app root is the
+            // right place, and each seeder's own `UserDefaults` guard makes this idempotent.
+            // Routines seed **after** exercises (ADR 0071) so their by-name blocks resolve against
+            // the just-seeded drills, and the demo song comes last (it decodes off-main). Yield
+            // between steps so each surface can paint: chaining them synchronously delays first
+            // render on a cold install (the "freeze" that once looked like a regression was this).
             .task {
                 PracticePresets.seedIfNeeded(into: context)
+                // Stamp provenance onto drills seeded before the slug existed, so the free-taste
+                // run allowance recognises them (ADR 0112). Both backfills run once, then no-op.
+                PracticePresets.backfillPresetSlugsIfNeeded(into: context)
                 await Task.yield()
                 RoutinePresets.seedIfNeeded(into: context)
+                await Task.yield()
+                RoutinePresets.backfillPresetSlugsIfNeeded(into: context)
+                await SongPresets.seedIfNeeded(into: context)
                 #if DEBUG
                 ScreenshotSeed.seedIfNeeded(into: context)
                 #endif
@@ -174,38 +183,6 @@ struct HomeView: View {
     }
 
     // MARK: - Start today's session (primary CTA)
-
-    /// The **primary** home action (planner, ADR 0046/0015): a filled plum CTA that pushes
-    /// `PlannerView`, where goals (set once) drive a freshly-generated, goal-adaptive session each
-    /// run. Distinct from the "recent routines" rail below, which reopens a past routine's detail.
-    /// Sits in the slot the dropped "Your progress" strip vacated.
-    private var startTodaySessionCard: some View {
-        NavigationLink { PlannerView() } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "sparkles")
-                    .font(.futura(.title2))
-                    .foregroundStyle(PocketColor.background)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Start today's session")
-                        .font(.futura(.headline))
-                        .foregroundStyle(PocketColor.background)
-                    Text("A fresh session from your goals and history")
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.background.opacity(0.85))
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.futura(.footnote, weight: .semibold))
-                    .foregroundStyle(PocketColor.background.opacity(0.85))
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCTA))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Start today's session")
-        .accessibilityHint("A fresh session generated from your goals and practice history")
-    }
 
     // MARK: - Practice card
 
@@ -377,5 +354,47 @@ private extension HomeView {
                 .background(Circle().fill(PocketColor.active))
         }
         .accessibilityLabel("Add a song")
+    }
+
+    /// The **primary** home action (planner, ADR 0046/0015): a filled teal CTA that pushes
+    /// `PlannerView`, where goals (set once) drive a freshly-generated, goal-adaptive session each
+    /// run. Today's session is a **Pro** feature (ADR 0112): Pro pushes the planner; a free player
+    /// gets the paywall instead, with a small lock so the card reads as inviting-but-locked, not
+    /// broken. In its own extension so `HomeView`'s body stays within `type_body_length`.
+    var startTodaySessionCard: some View {
+        Group {
+            if isPro {
+                NavigationLink { PlannerView() } label: { startTodaySessionLabel }
+            } else {
+                Button { presentPaywall(.planner) } label: { startTodaySessionLabel }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Start today's session")
+        .accessibilityHint("A fresh session generated from your goals and practice history")
+    }
+
+    var startTodaySessionLabel: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "sparkles")
+                .font(.futura(.title2))
+                .foregroundStyle(PocketColor.background)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Start today's session")
+                    .font(.futura(.headline))
+                    .foregroundStyle(PocketColor.background)
+                Text("A fresh session from your goals and history")
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.background.opacity(0.85))
+            }
+            Spacer(minLength: 8)
+            // Free players see a lock (a Pro gate); Pro sees the usual chevron.
+            Image(systemName: isPro ? "chevron.right" : "lock.fill")
+                .font(.futura(.footnote, weight: .semibold))
+                .foregroundStyle(PocketColor.background.opacity(0.85))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCTA))
     }
 }

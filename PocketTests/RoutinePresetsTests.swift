@@ -30,7 +30,7 @@ final class RoutinePresetsTests: XCTestCase {
     }
 
     func testBuiltRoutinePreservesBlockOrderAndContiguousOrder() {
-        let spec = RoutinePresets.Spec(name: "Test",
+        let spec = RoutinePresets.Spec(name: "Test", slug: "test",
                                        blocks: [.exercise("A"), .rest, .exercise("B")])
         let lookup = ["A": Exercise(name: "A"), "B": Exercise(name: "B")]
         guard let routine = RoutinePresets.makeRoutine(spec, resolving: lookup) else {
@@ -46,7 +46,7 @@ final class RoutinePresetsTests: XCTestCase {
 
     func testBuiltRoutineNameMatchesSpec() {
         let routine = RoutinePresets.makeRoutine(
-            RoutinePresets.Spec(name: "Morning", blocks: [.exercise("A")]),
+            RoutinePresets.Spec(name: "Morning", slug: "morning", blocks: [.exercise("A")]),
             resolving: ["A": Exercise(name: "A")])
         XCTAssertEqual(routine?.name, "Morning")
     }
@@ -54,7 +54,7 @@ final class RoutinePresetsTests: XCTestCase {
     // MARK: - Graceful degradation
 
     func testMissingExerciseBlockIsSkippedButRoutineStillBuilds() {
-        let spec = RoutinePresets.Spec(name: "Test",
+        let spec = RoutinePresets.Spec(name: "Test", slug: "test",
                                        blocks: [.exercise("A"), .exercise("gone"), .exercise("B")])
         let lookup = ["A": Exercise(name: "A"), "B": Exercise(name: "B")]
         let routine = RoutinePresets.makeRoutine(spec, resolving: lookup)
@@ -65,7 +65,7 @@ final class RoutinePresetsTests: XCTestCase {
     }
 
     func testRoutineWithNoResolvableExerciseReturnsNil() {
-        let spec = RoutinePresets.Spec(name: "Test",
+        let spec = RoutinePresets.Spec(name: "Test", slug: "test",
                                        blocks: [.exercise("gone"), .rest, .exercise("also-gone")])
         XCTAssertNil(RoutinePresets.makeRoutine(spec, resolving: [:]),
                      "a routine that resolves no exercise (rests only) is not built")
@@ -74,10 +74,95 @@ final class RoutinePresetsTests: XCTestCase {
     // MARK: - Shipped set integrity
 
     func testShippedRoutinesAreNamedAndNonEmpty() {
-        XCTAssertEqual(RoutinePresets.specs.count, 3)
+        XCTAssertEqual(RoutinePresets.specs.count, 1, "one curated routine ships: the demo")
         for spec in RoutinePresets.specs {
             XCTAssertFalse(spec.name.isEmpty)
             XCTAssertFalse(spec.blocks.isEmpty)
+        }
+    }
+
+    func testShippedRoutineSlugsAreUniqueAndNonEmpty() {
+        let slugs = RoutinePresets.specs.map(\.slug)
+        XCTAssertFalse(slugs.contains(where: \.isEmpty))
+        XCTAssertEqual(Set(slugs).count, slugs.count, "slugs are the provenance key — no duplicates")
+    }
+
+    // MARK: - Provenance (ADR 0112)
+
+    func testMakeRoutineStampsThePresetSlug() {
+        let spec = RoutinePresets.Spec(name: "Test", slug: "test-slug", blocks: [.exercise("A")])
+        let routine = RoutinePresets.makeRoutine(spec, resolving: ["A": Exercise(name: "A")])
+        XCTAssertEqual(routine?.presetSlug, "test-slug")
+    }
+
+    func testBackfillSlugLookupMatchesByNameOnly() {
+        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Routine"), RoutinePresets.freeTasteSlug)
+        XCTAssertNil(RoutinePresets.slug(forName: "My own routine"))
+        // A retired curated routine is no longer recognised — an existing player's copy stays
+        // unslugged and therefore Pro, which is right: only the demo is free.
+        XCTAssertNil(RoutinePresets.slug(forName: "Picking Builder"))
+    }
+
+    /// The rename trap: an install seeded before "Morning Warm-up" became "Morning Routine" still
+    /// holds the old name, and the backfill matches by name. Without the legacy table it would never
+    /// be stamped and the demo would **Pro-lock on every existing install**.
+    func testBackfillStillRecognisesTheOldNameAfterARename() {
+        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Warm-up"), RoutinePresets.freeTasteSlug)
+    }
+
+    /// Every legacy name must map to a slug some shipped spec actually uses — otherwise the table has
+    /// drifted and is stamping provenance nothing recognises.
+    func testEveryLegacyNameMapsToALiveSlug() {
+        let live = Set(RoutinePresets.specs.map(\.slug))
+        for (name, slug) in RoutinePresets.legacyNameSlugs {
+            XCTAssertTrue(live.contains(slug), "legacy name \(name) maps to dead slug \(slug)")
+        }
+    }
+
+    /// The slug is frozen across the rename — that's the whole point of having one.
+    func testFreeTasteSlugIsUnchangedByTheRename() {
+        XCTAssertEqual(RoutinePresets.freeTasteSlug, "morning-warm-up")
+        XCTAssertEqual(RoutinePresets.specs.first?.name, "Morning Routine")
+    }
+
+    // MARK: - The free routine must stay clean
+
+    /// **The invariant that keeps the paywall honest.** A free player may run Morning Routine, and the
+    /// routine player embeds the *real* `ExerciseRunView` per block with no per-block entitlement
+    /// check — so if a Pro-only drill ever lands in this routine, running it becomes a way to reach
+    /// Pro content for free. Every exercise block must therefore be free-tier by template **or** one
+    /// of the free-taste preset slugs. If this fails, either revert the block or add its slug to
+    /// `AccessPolicy.freeTasteSlugs` deliberately.
+    func testFreeTasteRoutineContainsOnlyFreelyRunnableExercises() throws {
+        let spec = try XCTUnwrap(RoutinePresets.specs.first { $0.slug == RoutinePresets.freeTasteSlug })
+        let names: [String] = spec.blocks.compactMap { block in
+            if case .exercise(let name) = block { return name }
+            return nil
+        }
+        XCTAssertFalse(names.isEmpty)
+
+        for name in names {
+            let preset = try XCTUnwrap(PracticePresets.allSpecs.first { $0.name == name },
+                                       "\(name) is not a shipped preset — it can't be verified free")
+            XCTAssertTrue(
+                AccessPolicy.canRun(preset.template, isPro: false,
+                                    isFreeTastePreset: AccessPolicy.isFreeTaste(slug: preset.slug)),
+                "\(name) (\(preset.template), slug \(preset.slug)) is Pro — it leaks out of the free routine")
+        }
+    }
+
+    /// Every block in the shipped routine must name an exercise a **fresh install actually seeds**.
+    /// Blocks resolve by name at seed time, so a drill missing from `firstRunSlugs` doesn't error —
+    /// it's silently skipped, and the demo arrives with holes in it. This is the guard for that.
+    func testEveryRoutineBlockIsSeededOnAFreshInstall() throws {
+        let firstRunNames = Set(PracticePresets.firstRunSpecs.map(\.name))
+        for spec in RoutinePresets.specs {
+            for block in spec.blocks {
+                guard case .exercise(let name) = block else { continue }
+                XCTAssertTrue(firstRunNames.contains(name),
+                              "\(spec.name) block \"\(name)\" is not in the first-run seed set — "
+                              + "it would be skipped, leaving the routine short a block")
+            }
         }
     }
 }
