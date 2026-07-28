@@ -169,6 +169,21 @@ drawn. Ten rules govern it.
   T5/0077) — the teaching cue is motion, so it degrades to a static "slide"
   articulation badge when motion is off.
 
+  **Amended 2026-07-28 (device feedback) — the static badge is withdrawn.** The
+  shipped implementation drew a seam's arrow *permanently*, not only when motion
+  was off, so an extended pentatonic showed a board full of arrows in every
+  sequence and at rest. On device the clutter plainly outweighed the cue: the
+  arrows read as decoration on a static diagram, which is the opposite of the
+  instruct-don't-display goal above. A seam now draws its `SlideCue` arrowhead
+  **only while it is the step being played**, riding the same connector trail the
+  sequenced runs use, so the arrow appears exactly when "slide into this one" is
+  actionable. The clause's substance is intact — the cue is still *motion*, and
+  still the shared answer for the movable-chord slide-to-fret slice — but the
+  motion-off fallback is now the per-note **accessibility summary** (which reads
+  each note's technique) rather than a drawn badge. If a static slide marker
+  turns out to be wanted, the place for it is the note dot, not a full-width
+  arrow between two frets.
+
 - **S9 — Come-back fingering is a choice (`returnStyle`; refines S1/S3).** When
   `roundTrip` is on, a `returnStyle` picks how the descent is built:
   - *`.retrace`* (default — preserves today's expansion, so the shipped

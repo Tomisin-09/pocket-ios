@@ -20,6 +20,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   run's jumps read as direction rather than as dots blinking in an arbitrary order. Dot sizes are
   unchanged.
 
+### Changed
+- **Slide arrows on extended shapes are no longer drawn permanently.** The extended pentatonic's seams
+  carried an arrow at all times, so a static board showed a full set of them whatever the sequence —
+  clutter on a diagram, which is the opposite of what the cue was for. A seam now draws its arrowhead
+  **only while it's the step being played**, riding the same connector trail sequenced runs use, so the
+  arrow appears exactly when "slide into this one" is actionable. Amends ADR 0083 S8; the technique is
+  still read per note by VoiceOver when nothing is moving.
+
 ### Fixed
 - **Picking a sequence no longer greys out some dots on the board.** A sequenced run (thirds, fourths,
   groups of 3/4) plays the same fretboard position several times, and the board was drawing one

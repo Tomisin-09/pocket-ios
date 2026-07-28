@@ -86,7 +86,6 @@ struct FretboardGrid: View {
                 fretSeparators(width: width, height: height)
                 nut(height: height)
                 inlayDots(width: width, height: height)
-                slideCues(width: width, height: height)
                 walkTrail(width: width, height: height)
                 notes(width: width, height: height)
             }
@@ -116,18 +115,37 @@ struct FretboardGrid: View {
     /// board is walking (2026-07-28). Sequenced runs — thirds, fourths, rolling groups — jump around a
     /// box, and with every dot the same size the *direction* of the jump was the part that didn't read.
     /// One segment, not a full path: the trail says "you came from there", it doesn't re-draw the run.
-    /// A slide already has its own arrow, so this yields to `slideCues` on that pairing.
+    ///
+    /// **Slide seams travel this path too** (2026-07-28, amending ADR 0083 S8). The seams used to carry
+    /// a permanently-drawn arrow, which on an extended pentatonic meant a static board full of arrows
+    /// whatever the sequence — the clutter outweighed the cue. A seam now draws the same `SlideCue`
+    /// arrowhead, but *as* the trail: only while it's the step being played, when the instruction
+    /// "slide into this one" is actually actionable. The technique survives outside the walk in the
+    /// accessibility summary, which reads it per note.
     @ViewBuilder
     private func walkTrail(width: CGFloat, height: CGFloat) -> some View {
         if let activeIndex, activeIndex > 0,
            drill.notes.indices.contains(activeIndex),
            let to = drill.notes[activeIndex], let from = drill.notes[activeIndex - 1],
-           from != to, to.technique != .slide, isVisible(from), isVisible(to) {
-            Path { path in
-                path.move(to: CGPoint(x: noteX(from.fret, in: width), y: rowY(from.string, in: height)))
-                path.addLine(to: CGPoint(x: noteX(to.fret, in: width), y: rowY(to.string, in: height)))
+           from != to, isVisible(from), isVisible(to) {
+            let fromPoint = CGPoint(x: noteX(from.fret, in: width), y: rowY(from.string, in: height))
+            let toPoint = CGPoint(x: noteX(to.fret, in: width), y: rowY(to.string, in: height))
+            // A slide is a real move along one string, so it keeps its arrowhead and reads brighter;
+            // an ordinary jump between notes is just a faint direction hint.
+            let isSlide = to.technique == .slide && from.string == to.string
+            Group {
+                if isSlide {
+                    SlideCue(fromX: fromPoint.x, toX: toPoint.x, midY: toPoint.y)
+                        .stroke(tint.opacity(0.95),
+                                style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                } else {
+                    Path { path in
+                        path.move(to: fromPoint)
+                        path.addLine(to: toPoint)
+                    }
+                    .stroke(tint.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                }
             }
-            .stroke(tint.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
             .allowsHitTesting(false)
         }
     }
@@ -338,57 +356,5 @@ struct FretboardGrid: View {
             let root = isRoot(note) ? ", root" : ""
             return "\(name) \(position)\(root)\(how)"
         }.joined(separator: "; ")
-    }
-}
-
-// MARK: - Slide cues (ADR 0083 S8)
-
-/// The slide-teaching arrows, split into an extension so the main type stays under the body-length
-/// ceiling. One arrow per distinct **seam** — deduped for the same reason the note dots are
-/// (`FretboardDrill.plottedPositions`): a sequenced run re-plays a seam several times, and one
-/// translucent arrow per played slot stacked into a solid line.
-extension FretboardGrid {
-    func slideCues(width: CGFloat, height: CGFloat) -> some View {
-        ForEach(slideSegments, id: \.self) { segment in
-            SlideCue(fromX: noteX(segment.fromFret, in: width),
-                     toX: noteX(segment.toFret, in: width),
-                     midY: rowY(segment.string, in: height))
-                .stroke(tint.opacity(activeIndex.map(segment.indices.contains) == true ? 0.95 : 0.55),
-                        style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-        }
-    }
-
-    /// One slide arrow per distinct **seam**, with the played slots that land on it. Deduped for the
-    /// same reason the note dots are (`FretboardDrill.plottedPositions`): a sequenced run re-plays a
-    /// seam several times, and one translucent arrow per slot stacked into a solid line.
-    struct SlideSegment: Hashable {
-        let string: Int
-        let fromFret: Int
-        let toFret: Int
-        var indices: [Int] = []
-
-        static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.string == rhs.string && lhs.fromFret == rhs.fromFret && lhs.toFret == rhs.toFret
-        }
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(string); hasher.combine(fromFret); hasher.combine(toFret)
-        }
-    }
-
-    var slideSegments: [SlideSegment] {
-        var order: [SlideSegment] = []
-        for (index, entry) in drill.notes.enumerated() {
-            guard let note = entry, note.technique == .slide, index > 0, isVisible(note),
-                  let previous = drill.notes[index - 1], previous.string == note.string
-            else { continue }
-            let segment = SlideSegment(string: note.string, fromFret: previous.fret, toFret: note.fret)
-            if let existing = order.firstIndex(of: segment) {
-                order[existing].indices.append(index)
-            } else {
-                order.append(SlideSegment(string: note.string, fromFret: previous.fret,
-                                          toFret: note.fret, indices: [index]))
-            }
-        }
-        return order
     }
 }
