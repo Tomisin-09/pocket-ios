@@ -55,7 +55,7 @@ struct ArpeggioRunEditor: View {
     /// note. There is no Sequence axis on arpeggios. The collapsed summary carries the deviations.
     private var advanced: some View {
         EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
-                         summary: advancedSummary, tint: tint) {
+                         summaryParts: advancedSummary, tint: tint) {
             RhythmRow(notesPerBeat: subdivisionBinding, accessibilityLabel: "Arpeggio rhythm", tint: tint)
             octavesRow
             Toggle("Up and back", isOn: roundTripBinding)
@@ -78,12 +78,12 @@ struct ArpeggioRunEditor: View {
     }
 
     /// The rhythm, then only what differs from the defaults — see `ScaleRunEditor.advancedSummary`.
-    private var advancedSummary: String {
+    private var advancedSummary: [String] {
         var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
         if run.octaves == 1 { parts.append("1 octave") }
         if !run.roundTrip { parts.append("One way") }
         if !run.startsFromLowestRoot { parts.append("From lowest note") }
-        return parts.joined(separator: " · ")
+        return parts
     }
 
     // MARK: - Title

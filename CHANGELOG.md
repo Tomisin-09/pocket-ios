@@ -49,7 +49,8 @@ All notable changes to Pocket are documented here. Format loosely follows
   the picking editor's Finger pattern · Starts on fret · Across) stay above the fold; everything that
   shapes how the box is *played* — Rhythm, Octaves, Sequence, Up-and-back, and the new starting-note
   toggle — sits in a single Advanced disclosure, which now carries a one-line summary of whatever
-  differs from the defaults so a run stays legible closed. **Subdivision is renamed *Rhythm*** and is a
+  differs from the defaults so a run stays legible closed (the first two spelled out, the rest as a
+  `+N` count, so the row always fits rather than truncating mid-word). **Subdivision is renamed *Rhythm*** and is a
   dropdown rather than a four-segment control. The picking editor's *Movement* group keeps its own name
   rather than becoming a second thing called "Advanced", and both disclosure titles now match the
   weight and colour of the setting labels around them.

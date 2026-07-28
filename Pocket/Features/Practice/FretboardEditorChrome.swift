@@ -240,8 +240,12 @@ struct MostCommonBadge: View {
 struct EditorDisclosure<Content: View>: View {
     let title: String
     @Binding var isExpanded: Bool
-    /// The collapsed row's right-hand read — what's on, in a few words.
-    let summary: String
+    /// What's on inside, one item per setting that deviates from its default — spelled out for the
+    /// first couple and counted after that (see `EditorSummary.line`).
+    let summaryParts: [String]
+    /// What the row reads when nothing deviates ("Off" for Movement; blank for Advanced, whose Rhythm
+    /// item is always present).
+    var emptyLabel: String = ""
     var tint: Color = PocketColor.practice
     @ViewBuilder let content: Content
 
@@ -253,12 +257,29 @@ struct EditorDisclosure<Content: View>: View {
             HStack {
                 EditorFieldLabel(title)
                 Spacer()
-                Text(summary).font(.futura(.caption))
+                Text(summaryParts.isEmpty ? emptyLabel : EditorSummary.line(summaryParts))
+                    .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                     .lineLimit(1)
+                    // VoiceOver gets the whole list — the "+N" is a *visual* budget, not a decision to
+                    // withhold the settings from someone who can't open the row to look.
+                    .accessibilityLabel(summaryParts.isEmpty
+                                        ? emptyLabel : summaryParts.joined(separator: ", "))
             }
         }
         .tint(tint)
+    }
+}
+
+/// The collapsed-disclosure summary line. Spells out the first `limit` items and counts the rest as
+/// `+N`, so the row stays one line and legible however many settings deviate — the alternative, letting
+/// it truncate mid-word, hid *that* there was more as well as what (2026-07-28). The count is the
+/// affordance: it says the row is holding something without pretending to list it.
+enum EditorSummary {
+    static func line(_ parts: [String], showing limit: Int = 2) -> String {
+        guard limit > 0 else { return parts.isEmpty ? "" : "+\(parts.count)" }
+        guard parts.count > limit else { return parts.joined(separator: " · ") }
+        return parts.prefix(limit).joined(separator: " · ") + " +\(parts.count - limit)"
     }
 }
 

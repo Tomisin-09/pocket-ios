@@ -76,7 +76,7 @@ struct FretboardRunEditor: View {
     /// rather than a second thing called "Advanced".
     private var advanced: some View {
         EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
-                         summary: advancedSummary, tint: tint) {
+                         summaryParts: advancedSummary, tint: tint) {
             RhythmRow(notesPerBeat: $run.notesPerBeat, accessibilityLabel: "Fretboard rhythm", tint: tint)
             Toggle("Up and back", isOn: $run.roundTrip)
                 .font(.futura(.subheadline, weight: .semibold))
@@ -84,10 +84,10 @@ struct FretboardRunEditor: View {
         }
     }
 
-    private var advancedSummary: String {
+    private var advancedSummary: [String] {
         var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
         if !run.roundTrip { parts.append("One way") }
-        return parts.joined(separator: " · ")
+        return parts
     }
 
     // MARK: - Finger pattern
@@ -209,7 +209,7 @@ struct FretboardRunEditor: View {
 extension FretboardRunEditor {
     var movement: some View {
         EditorDisclosure(title: "Movement", isExpanded: $showsMovement,
-                         summary: movementSummary, tint: tint) {
+                         summaryParts: movementSummary, emptyLabel: "Off", tint: tint) {
             shiftPerPassField
             if run.fretShiftPerPass != 0 { passCountField }
             staggerPerStringField
@@ -221,14 +221,14 @@ extension FretboardRunEditor {
     }
 
     /// A terse "what's on" read for the collapsed row, so a run's movement is legible without opening.
-    private var movementSummary: String {
+    private var movementSummary: [String] {
         var parts: [String] = []
         if run.fretShiftPerPass != 0 {
             parts.append("↑\(run.fretShiftPerPass)/run × \(run.passCount)")
         }
         if run.fretShiftPerString != 0 { parts.append("diag \(signed(run.fretShiftPerString))") }
         if run.roundTrip, run.returnStyle == .restate { parts.append("restate") }
-        return parts.isEmpty ? "Off" : parts.joined(separator: " · ")
+        return parts
     }
 
     private var shiftPerPassField: some View {

@@ -59,7 +59,7 @@ struct ScaleRunEditor: View {
     /// deviates from the defaults, so a run stays legible without opening it.
     private var advanced: some View {
         EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
-                         summary: advancedSummary, tint: tint) {
+                         summaryParts: advancedSummary, tint: tint) {
             RhythmRow(notesPerBeat: subdivisionBinding, accessibilityLabel: "Scale rhythm", tint: tint)
             if run.layout.usesOctaves { octavesRow }
             sequenceRow
@@ -86,13 +86,14 @@ struct ScaleRunEditor: View {
 
     /// A terse read of what's inside the closed disclosure: the rhythm always, then only what *differs*
     /// from the defaults — showing "Up and back" when it's on (the default) would be pure noise.
-    private var advancedSummary: String {
+    /// `EditorDisclosure` spells out the first couple and counts the rest, so this can grow safely.
+    private var advancedSummary: [String] {
         var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
         if run.layout.usesOctaves, run.octaves == 1 { parts.append("1 octave") }
         if run.sequencePattern != .straight { parts.append(run.sequencePattern.displayName) }
         if !run.roundTrip { parts.append("One way") }
         if run.layout == .box, !run.startsFromLowestRoot { parts.append("From lowest note") }
-        return parts.joined(separator: " · ")
+        return parts
     }
 
     // MARK: - Title

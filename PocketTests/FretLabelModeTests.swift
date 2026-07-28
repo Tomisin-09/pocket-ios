@@ -53,3 +53,46 @@ final class FretLabelModeTests: XCTestCase {
         }
     }
 }
+
+/// `EditorSummary.line` — the collapsed-disclosure summary budget (2026-07-28). The row sits beside its
+/// title on one line, so a run with several non-default settings has to be summarised rather than
+/// listed; the `+N` count keeps "there is more in here" visible, which a mid-word ellipsis did not.
+final class EditorSummaryTests: XCTestCase {
+
+    func testEmptyPartsSummariseToNothing() {
+        XCTAssertEqual(EditorSummary.line([]), "")
+    }
+
+    func testShortListIsSpelledOutInFull() {
+        XCTAssertEqual(EditorSummary.line(["Quarters"]), "Quarters")
+        XCTAssertEqual(EditorSummary.line(["Quarters", "1 octave"]), "Quarters · 1 octave")
+    }
+
+    /// The case that motivated it: five deviations on one scale run.
+    func testLongListKeepsTwoAndCountsTheRest() {
+        let parts = ["Quarters", "1 octave", "Groups of 4", "One way", "From lowest note"]
+        XCTAssertEqual(EditorSummary.line(parts), "Quarters · 1 octave +3")
+    }
+
+    /// Exactly one over the limit still counts rather than spelling the last one out — otherwise the
+    /// row's width would jump about as settings cross the boundary.
+    func testOneOverTheLimitCounts() {
+        XCTAssertEqual(EditorSummary.line(["a", "b", "c"]), "a · b +1")
+    }
+
+    /// The count is always the number actually withheld, at any limit.
+    func testCountMatchesWhatIsWithheld() {
+        for count in 1...8 {
+            let parts = (1...count).map { "item \($0)" }
+            for limit in 1...4 {
+                let line = EditorSummary.line(parts, showing: limit)
+                if count <= limit {
+                    XCTAssertFalse(line.contains("+"), "\(count) items at limit \(limit) fits")
+                } else {
+                    XCTAssertTrue(line.hasSuffix("+\(count - limit)"),
+                                  "\(count) items at limit \(limit) → \(line)")
+                }
+            }
+        }
+    }
+}
