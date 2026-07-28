@@ -138,13 +138,15 @@ creation. Plus a **"universally applicable"** flag meaning the exercise is tied 
 therefore always eligible for the planner / collection generator. **Confirm the flag's semantics
 before building.**
 
-**Needs a device repro before it can be actioned:**
+**Fixed on the Slice 1 branch (was: needs a device repro):**
 
-- **Dots grey out when a sequence is picked.** The obvious suspect is wrong: ADR 0083's pass-focus
-  ghosting (off-pass notes → 0.2 opacity) only fires for multi-pass runs, and a **Box** layout carries
-  no note-groups — `SequencePattern.apply` passes `nil` straight through. The reported case is a Box.
-  Something else is doing it; capture a before/after on the same drill (Straight → Groups of 3) before
-  changing any rendering code.
+- **Dots grey out when a sequence is picked — FIXED 2026-07-28.** The device repro (A minor pentatonic,
+  Box, Straight vs Groups of 4) found it: not pass focus, and not *greying* either — **alpha stacking**.
+  `SequencePattern.byGroup` emits each note up to four times, and `FretboardGrid.notes()` drew one
+  translucent dot per *played slot*, so a position the rolling window hit four times reached ~0.79
+  opacity (near-white) while one it hit twice stayed at 0.32 (grey). The bright dots were the anomaly,
+  not the dim ones. Fixed by plotting distinct **positions** via the pure `FretboardDrill.plottedPositions`;
+  slide cues were stacking identically and are deduped with it.
 
 **Parked pending a clearer product story:**
 

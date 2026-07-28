@@ -112,23 +112,6 @@ struct FretboardGrid: View {
         }
     }
 
-    /// The slide-teaching cues (ADR 0083 S8): for every note that slides in on the **same string**
-    /// from the one before it, a static arrow from the departed fret to the landed fret. Brightened
-    /// while its target note is active so the walk and the arrow read together; always drawn, so it
-    /// is the static "slide" badge when motion is off.
-    private func slideCues(width: CGFloat, height: CGFloat) -> some View {
-        ForEach(Array(drill.notes.enumerated()), id: \.offset) { index, note in
-            if let note, note.technique == .slide, index > 0, isVisible(note),
-               let previous = drill.notes[index - 1], previous.string == note.string {
-                SlideCue(fromX: noteX(previous.fret, in: width),
-                         toX: noteX(note.fret, in: width),
-                         midY: rowY(note.string, in: height))
-                    .stroke(tint.opacity(index == activeIndex ? 0.95 : 0.55),
-                            style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-            }
-        }
-    }
-
     /// A faint **connector trail** from the note just played to the one lit now, drawn only while the
     /// board is walking (2026-07-28). Sequenced runs — thirds, fourths, rolling groups — jump around a
     /// box, and with every dot the same size the *direction* of the jump was the part that didn't read.
@@ -187,19 +170,23 @@ struct FretboardGrid: View {
     /// is identifiable at rest, in the preview, and as the run walks over it.
     private func notes(width: CGFloat, height: CGFloat) -> some View {
         let active = activeIndex.flatMap { drill.note(at: $0) }
-        return ForEach(Array(drill.notes.enumerated()), id: \.offset) { index, note in
-            if let note, isVisible(note) {
-                let isActive = index == activeIndex
-                let isRoot = isRoot(note)
+        // One dot per distinct **position**, not per played slot: a sequenced run sounds the same fret
+        // several times, and a dot per slot stacked its own translucency into a solid white blob while
+        // the least-repeated notes stayed grey (see `FretboardDrill.plottedPositions`).
+        return ForEach(drill.plottedPositions, id: \.note) { entry in
+            if isVisible(entry.note) {
+                let isActive = activeIndex.map { entry.indices.contains($0) } ?? false
+                let isRoot = isRoot(entry.note)
                 let diameter = dotDiameter(isActive: isActive, isRoot: isRoot)
-                let focus = passFocusOpacity(noteIndex: index)
+                let focus = passFocusOpacity(noteIndices: entry.indices)
                 Circle()
                     .fill(fill(isActive: isActive, isRoot: isRoot))
                     .frame(width: diameter, height: diameter)
                     .overlay(rootRing(isRoot: isRoot, isActive: isActive))
-                    .overlay(noteLabel(note, isActive: isActive, isRoot: isRoot))
+                    .overlay(noteLabel(entry.note, isActive: isActive, isRoot: isRoot))
                     .opacity(focus)
-                    .position(x: noteX(note.fret, in: width), y: rowY(note.string, in: height))
+                    .position(x: noteX(entry.note.fret, in: width),
+                              y: rowY(entry.note.string, in: height))
                     .animation(.easeOut(duration: 0.07), value: isActive)
                     .animation(.easeOut(duration: 0.14), value: focus)
             }
@@ -219,15 +206,21 @@ struct FretboardGrid: View {
         return Set(groups).count > 1
     }
 
-    /// The opacity for a note under **pass focus** (ADR 0083 S2b): while a multi-pass run walks, notes
-    /// outside the active note's pass drop to a ghost so the eye locks onto the position being played;
-    /// the active pass, a single-pass run, and the static board (no `activeIndex`) render fully. The
-    /// reusable substrate slice 3's box focus will read the same way.
-    private func passFocusOpacity(noteIndex: Int) -> Double {
+    /// The opacity for a position under **pass focus** (ADR 0083 S2b): while a multi-pass run walks,
+    /// notes outside the active note's pass drop to a ghost so the eye locks onto the position being
+    /// played; the active pass, a single-pass run, and the static board (no `activeIndex`) render fully.
+    ///
+    /// Takes **every** slot that plays this position and keeps it lit if *any* of them belongs to the
+    /// active pass — a position the run revisits across passes is genuinely part of the pass being
+    /// played, so ghosting it because one of its other slots sits elsewhere would fade a note under the
+    /// hand right now.
+    private func passFocusOpacity(noteIndices: [Int]) -> Double {
         guard isMultiPass, let activeIndex, let groups = drill.noteGroups,
-              groups.indices.contains(noteIndex), groups.indices.contains(activeIndex)
+              groups.indices.contains(activeIndex)
         else { return 1 }
-        return groups[noteIndex] == groups[activeIndex] ? 1 : Self.offPassGhostOpacity
+        let activeGroup = groups[activeIndex]
+        let sharesPass = noteIndices.contains { groups.indices.contains($0) && groups[$0] == activeGroup }
+        return sharesPass ? 1 : Self.offPassGhostOpacity
     }
 
     /// Dot size — enlarged when captions are on so a "♭7" fits, and enlarged again when lit.
@@ -345,5 +338,57 @@ struct FretboardGrid: View {
             let root = isRoot(note) ? ", root" : ""
             return "\(name) \(position)\(root)\(how)"
         }.joined(separator: "; ")
+    }
+}
+
+// MARK: - Slide cues (ADR 0083 S8)
+
+/// The slide-teaching arrows, split into an extension so the main type stays under the body-length
+/// ceiling. One arrow per distinct **seam** — deduped for the same reason the note dots are
+/// (`FretboardDrill.plottedPositions`): a sequenced run re-plays a seam several times, and one
+/// translucent arrow per played slot stacked into a solid line.
+extension FretboardGrid {
+    func slideCues(width: CGFloat, height: CGFloat) -> some View {
+        ForEach(slideSegments, id: \.self) { segment in
+            SlideCue(fromX: noteX(segment.fromFret, in: width),
+                     toX: noteX(segment.toFret, in: width),
+                     midY: rowY(segment.string, in: height))
+                .stroke(tint.opacity(activeIndex.map(segment.indices.contains) == true ? 0.95 : 0.55),
+                        style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+        }
+    }
+
+    /// One slide arrow per distinct **seam**, with the played slots that land on it. Deduped for the
+    /// same reason the note dots are (`FretboardDrill.plottedPositions`): a sequenced run re-plays a
+    /// seam several times, and one translucent arrow per slot stacked into a solid line.
+    struct SlideSegment: Hashable {
+        let string: Int
+        let fromFret: Int
+        let toFret: Int
+        var indices: [Int] = []
+
+        static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.string == rhs.string && lhs.fromFret == rhs.fromFret && lhs.toFret == rhs.toFret
+        }
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(string); hasher.combine(fromFret); hasher.combine(toFret)
+        }
+    }
+
+    var slideSegments: [SlideSegment] {
+        var order: [SlideSegment] = []
+        for (index, entry) in drill.notes.enumerated() {
+            guard let note = entry, note.technique == .slide, index > 0, isVisible(note),
+                  let previous = drill.notes[index - 1], previous.string == note.string
+            else { continue }
+            let segment = SlideSegment(string: note.string, fromFret: previous.fret, toFret: note.fret)
+            if let existing = order.firstIndex(of: segment) {
+                order[existing].indices.append(index)
+            } else {
+                order.append(SlideSegment(string: note.string, fromFret: previous.fret,
+                                          toFret: note.fret, indices: [index]))
+            }
+        }
+        return order
     }
 }

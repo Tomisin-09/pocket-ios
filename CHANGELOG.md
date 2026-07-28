@@ -20,6 +20,16 @@ All notable changes to Pocket are documented here. Format loosely follows
   run's jumps read as direction rather than as dots blinking in an arbitrary order. Dot sizes are
   unchanged.
 
+### Fixed
+- **Picking a sequence no longer greys out some dots on the board.** A sequenced run (thirds, fourths,
+  groups of 3/4) plays the same fretboard position several times, and the board was drawing one
+  translucent dot **per played note** — so the alpha stacked. A position the rolling window happened to
+  include four times reached near-solid white while one it included twice stayed grey, which read as
+  arbitrary notes being dimmed. The board now plots each distinct **position** once, so brightness
+  stops tracking how often the sequence revisits a note. Slide arrows were stacking the same way and
+  are deduped with it. ADR 0083's pass focus is unchanged — a position stays lit if *any* of its slots
+  belongs to the pass being played.
+
 ### Changed
 - **The draw-your-own board and the chord placer now reach fret 24** (both stopped at 15). The models
   already allowed it; only the editors capped it. Both boards already scrolled, and both now carry the
