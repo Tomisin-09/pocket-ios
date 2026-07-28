@@ -12,6 +12,7 @@ excluded:
   - .build
   - build               # stray local xcodebuild output (gitignored); holds generated sources
   - build-device        # local device-build output (gitignored); holds generated sources
+  - build-sim           # local simulator-build output (gitignored); holds generated sources
   - DerivedData
   - Pocket.xcodeproj
   - fastlane

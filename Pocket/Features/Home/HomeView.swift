@@ -144,13 +144,12 @@ struct HomeView: View {
                              onDismiss: { artistIntakeSeen = true },
                              content: { ArtistIntakeView() })
             .onAppear(perform: maybeOfferProfileMoment)
-            // Seed the curated Practice presets once, ever (ADR 0046). The app root is the right
-            // place — they exist before the user opens Practice — and the seeder's own
-            // `UserDefaults` guard makes this idempotent across launches. Routines seed **after**
-            // exercises (ADR 0071) so their by-name blocks resolve against the just-seeded drills.
-            // Yield between the two so the exercise library can paint before routine seeding's
-            // fetch+insert+save runs — chaining both synchronously delays first render on a cold
-            // install (the run-screen "freeze" that once looked like a regression was this latency).
+            // Seed the curated first-run content once, ever (ADR 0046/0112) — the app root is the
+            // right place, and each seeder's own `UserDefaults` guard makes this idempotent.
+            // Routines seed **after** exercises (ADR 0071) so their by-name blocks resolve against
+            // the just-seeded drills, and the demo song comes last (it decodes off-main). Yield
+            // between steps so each surface can paint: chaining them synchronously delays first
+            // render on a cold install (the "freeze" that once looked like a regression was this).
             .task {
                 PracticePresets.seedIfNeeded(into: context)
                 // Stamp provenance onto drills seeded before the slug existed, so the free-taste
@@ -160,6 +159,7 @@ struct HomeView: View {
                 RoutinePresets.seedIfNeeded(into: context)
                 await Task.yield()
                 RoutinePresets.backfillPresetSlugsIfNeeded(into: context)
+                await SongPresets.seedIfNeeded(into: context)
                 #if DEBUG
                 ScreenshotSeed.seedIfNeeded(into: context)
                 #endif

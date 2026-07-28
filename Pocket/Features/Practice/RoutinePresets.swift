@@ -31,39 +31,33 @@ enum RoutinePresets {
         let blocks: [Block]
     }
 
-    // Preset exercise names — must match `PracticePresets` exactly (that's the reference key).
+    // Preset exercise names — must match `PracticePresets` exactly (that's the reference key), and
+    // every one must be in `PracticePresets.firstRunSlugs` or the block won't resolve on a fresh
+    // install. `RoutinePresetsTests` pins that.
     private static let spiderWalk = "Spider Walk"
     private static let alternatePicking = "Alternate Picking"
-    private static let stringSkipping = "String Skipping"
-    private static let legato = "Legato"
-    private static let chordChanges = "Chord Changes"
     private static let chromaticWarmup = "Chromatic Warm-up"
-    private static let popChanges = "Pop Changes — G · D · Em · C"
-    private static let groovePopChanges = "Groove — Pop Changes"
     private static let aMinorPentatonic = "A Minor Pentatonic"
 
-    /// The shipped set — three routines, enough to show what a routine *is* (mixed drills with rests,
-    /// one focus per routine) without crowding an empty space.
+    /// The shipped set — **one** routine, seeded on a fresh install.
     ///
-    /// **Morning Routine is the free taste** (ADR 0112): every one of its blocks is already either a
+    /// **Morning Routine is the free taste** (ADR 0112): every one of its blocks is either a
     /// free-tier template (`.warmup`) or a free-taste exercise slug (`alternate-picking`,
     /// `a-minor-pentatonic`), so a free player running it reaches no Pro content — the routine is
     /// clean *by construction*, and must stay that way. It closes on the pentatonic box so the free
-    /// taste covers **lead** playing too, not only warm-ups and picking. The other two deliberately
-    /// are not clean: Picking Builder pulls in `string-skipping` (`.picking`) and Rhythm & Changes
-    /// pulls in `chord-changes` (`.chords`) plus a `.strumChords` groove, so they read as the shop
-    /// window for what Pro unlocks.
+    /// taste covers **lead** playing too, not only warm-ups and picking.
+    ///
+    /// It ships alone because it is the *demo*: one routine, shown whole, rather than a library to
+    /// wade through. The retired Picking Builder and Rhythm & Changes recipes leaned on drills a new
+    /// install no longer seeds (`string-skipping`, `chord-changes`, the `.strumChords` groove — see
+    /// `PracticePresets.firstRunSlugs`), so they would have seeded half-resolved anyway. An existing
+    /// player keeps the ones they were already given: the seed flag on their device is set, so none
+    /// of this re-runs and nothing is removed.
     static let specs: [Spec] = [
         Spec(name: "Morning Routine", slug: freeTasteSlug,
              blocks: [.exercise(spiderWalk), .exercise(chromaticWarmup),
                       .rest, .exercise(alternatePicking),
-                      .rest, .exercise(aMinorPentatonic)]),
-        Spec(name: "Picking Builder", slug: "picking-builder",
-             blocks: [.exercise(alternatePicking), .exercise(stringSkipping),
-                      .rest, .exercise(legato)]),
-        Spec(name: "Rhythm & Changes", slug: "rhythm-and-changes",
-             blocks: [.exercise(chordChanges), .exercise(popChanges),
-                      .rest, .exercise(groovePopChanges)])
+                      .rest, .exercise(aMinorPentatonic)])
     ]
 
     /// The slug of the one curated routine a free player may **run** forever (ADR 0112). Frozen —

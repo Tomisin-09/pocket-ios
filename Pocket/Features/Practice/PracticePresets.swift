@@ -241,6 +241,37 @@ enum PracticePresets {
         allSpecs.first { $0.name == name && $0.template == template }?.slug
     }
 
+    // MARK: - The first-run set
+
+    /// The exercises a **fresh install** seeds — deliberately six, not the whole catalog.
+    ///
+    /// Chosen as the *union* of two sets that only half overlap: the four **free-taste** slugs a free
+    /// player may run forever (ADR 0112), and the four exercises **`RoutinePresets`' Morning Routine
+    /// strings together**. Routine blocks resolve *by name at seed time*, so seeding only the free
+    /// taste would have shipped the demo routine with two blocks silently missing. The union is the
+    /// smallest set where both stay whole — and, happily, every one of the six is runnable by a free
+    /// player (two free-tier warm-ups plus the four freebies), so a new install has nothing locked in
+    /// it and nothing broken.
+    ///
+    /// The **rest of the catalog is retired from seeding, not deleted**: `allSpecs` still lists every
+    /// shipped spec, because it's the table the provenance backfill matches an older install's
+    /// exercises against. An existing player keeps everything they were seeded — the batch flags below
+    /// are already set on their device, so none of this re-runs and nothing is removed.
+    static let firstRunSlugs: [String] = [
+        "spider-walk",          // .warmup — free tier
+        "chromatic-warmup",     // .warmup — free tier
+        "alternate-picking",    // .picking — free taste
+        "a-minor-pentatonic",   // .scales  — free taste
+        "pop-changes",          // .chords  — free taste
+        "legato"                // .legato  — free taste
+    ]
+
+    /// The first-run specs, resolved from `allSpecs` in `firstRunSlugs` order (which is also seed
+    /// order). Built by lookup rather than re-declared, so a spec can never drift between the catalog
+    /// and the set we actually ship.
+    static let firstRunSpecs: [Spec] =
+        firstRunSlugs.compactMap { slug in allSpecs.first { $0.slug == slug } }
+
     /// `UserDefaults` keys recording that each one-time seed batch has run. Versioned so a new
     /// curated batch seeds under its own key without disturbing (or re-seeding) an earlier one.
     static let seededDefaultsKey = "practicePresetsSeeded.v1"
@@ -255,25 +286,19 @@ enum PracticePresets {
     static let seededStrumExpansionDefaultsKey = "practicePresetsSeeded.v10"
     static let seededScaleSequenceDefaultsKey = "practicePresetsSeeded.v11"
 
-    /// Seed the curated presets **once each, ever**: the v1 technique drills, the v2 strumming batch,
-    /// the v3 fretboard warm-up, the v4 scale-library batch, the v5 arpeggio batch, the v6 chords
-    /// batch, the v7 accent/mute strumming batch, the v8 strum & chords batch, the v9 scale-layout
-    /// batch (extended + 3-notes-per-string), the v10 strumming-expansion batch (down-up eighths,
-    /// reggae off-beat, boom-chick), then the v11 scale-sequencing batch (G major in 3rds), each guarded
-    /// by its own key so a deleted preset never returns and an existing user picks up each newer batch
-    /// additively. Safe to call on every launch.
+    /// Seed the curated presets **once, ever**, guarded by the v1 key.
+    ///
+    /// A fresh install gets `firstRunSpecs` — the six-exercise first-run set (see above), not the
+    /// whole catalog. The later batch keys (v2…v11) are **no longer seeded**: on an existing device
+    /// they are already `true`, so that player keeps every drill they were given and nothing is
+    /// removed; on a new device they simply never run, which is how the library arrives at six.
+    /// Reusing the v1 key rather than minting a v12 is deliberate — a new key would re-seed the six
+    /// onto existing installs that already have them, duplicating rows.
+    ///
+    /// Safe to call on every launch. The keys are retained below so the flags stay documented and a
+    /// future curated batch can seed under its own new key without disturbing this one.
     static func seedIfNeeded(into context: ModelContext, defaults: UserDefaults = .standard) {
-        seedBatch(specs, key: seededDefaultsKey, into: context, defaults: defaults)
-        seedBatch(templateSpecs, key: seededTemplateDefaultsKey, into: context, defaults: defaults)
-        seedBatch(fretboardSpecs, key: seededFretboardDefaultsKey, into: context, defaults: defaults)
-        seedBatch(scaleSpecs, key: seededScaleDefaultsKey, into: context, defaults: defaults)
-        seedBatch(arpeggioSpecs, key: seededArpeggioDefaultsKey, into: context, defaults: defaults)
-        seedBatch(chordSpecs, key: seededChordDefaultsKey, into: context, defaults: defaults)
-        seedBatch(syncopatedMuteSpecs, key: seededSyncopatedMuteDefaultsKey, into: context, defaults: defaults)
-        seedBatch(strumChordsSpecs, key: seededStrumChordsDefaultsKey, into: context, defaults: defaults)
-        seedBatch(scaleLayoutSpecs, key: seededScaleLayoutDefaultsKey, into: context, defaults: defaults)
-        seedBatch(strumExpansionSpecs, key: seededStrumExpansionDefaultsKey, into: context, defaults: defaults)
-        seedBatch(scaleSequenceSpecs, key: seededScaleSequenceDefaultsKey, into: context, defaults: defaults)
+        seedBatch(firstRunSpecs, key: seededDefaultsKey, into: context, defaults: defaults)
     }
 
     /// `UserDefaults` key guarding the one-time provenance backfill (ADR 0112).

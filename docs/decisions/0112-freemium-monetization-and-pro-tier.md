@@ -179,6 +179,18 @@ app capabilities). The design:
   routine whose blocks are free-tier or free-taste by construction**, closes that by construction:
   the only routine a free player can ever play is one we control. `RoutinePresetsTests` pins that
   cleanliness so a future edit to the curated recipe can't silently reopen the hole.
+- **The first-run set is the free tier made concrete** (added 2026-07-28). A fresh install seeds six
+  exercises, one routine and one song — not the whole catalog. The six are the *union* of the free-taste
+  freebies and the drills Morning Routine needs; routine blocks resolve by name at seed time, so seeding
+  only the freebies would have shipped the demo routine short two blocks. Every seeded item is runnable
+  free, so a new install has nothing locked in it. The trade-off accepted: the exercise library no longer
+  doubles as a Pro shop window (a free player used to see ~19 drills, most PRO-badged). Merchandising
+  now rests on the paywall and the gated surfaces rather than on a catalog of locked rows.
+- **One bundled third-party track** ships as the demo song (*Binta*, Jack Trader, cleared by the rights
+  holder). This is a deliberate exception to "never ship someone else's material" — that rule is about
+  *pedagogy* (encoding methods, not lifting lessons), not about a licensed demo. It has a compliance
+  consequence: the App Store Connect **Content Rights** answer changes from "no third-party content",
+  and must be updated before the next submission.
 - Routines have **five** producers, all of which must gate: the routines library `+`, its
   Quick-session wand, the planner's "Today's session", the Library's collection→session builder
   (ADR 0118), and a song's "Build a routine for this song" (ADR 0111). Two of those live outside the

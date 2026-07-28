@@ -5,6 +5,25 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **A fresh install now opens with six exercises, one routine and one song.** Previously a new player
+  landed in a library of 19 seeded drills and 3 curated routines. The first-run set is now the *union*
+  of the four free-taste freebies and the four exercises **Morning Routine** needs — Spider Walk,
+  Chromatic Warm-up, Alternate Picking, A Minor Pentatonic, Pop Changes, Legato — which is the smallest
+  set where both stay whole (routine blocks resolve **by name at seed time**, so seeding only the
+  freebies would have shipped the demo routine with two blocks silently missing). Every one of the six
+  is runnable by a free player, so a new install has nothing locked in it and nothing broken. The rest
+  of the catalog is **retired from seeding, not deleted**: it still backs the provenance back-fill, and
+  an existing player keeps every drill and routine they were already given — the seed flags on their
+  device are set, so nothing re-runs and nothing is removed.
+- **One demo song ships with the app: *Binta* by Jack Trader**, used with the rights holder's
+  permission, so a new install has real audio to loop against before importing anything. Copied out of
+  the bundle into `Documents/` on first launch (a bookmark into the bundle would dangle after an app
+  update, since the bundle path carries a per-install UUID) and decoded off the main actor so first
+  paint never waits on it. One-time flag, so a deleted demo stays deleted.
+  ⚠️ **This is the app's first bundled third-party content — the App Store Connect *Content Rights*
+  answer must change from "no third-party content" before the next submission.**
+
 ### Internal
 - **Groundwork for Red Moon Pro (ADR 0112).** Added a pure, unit-tested entitlement axis —
   `ExerciseTemplate.authoringTier` (free = Basic/Strumming/Warm-up; Pro = the structured technique

@@ -74,7 +74,7 @@ final class RoutinePresetsTests: XCTestCase {
     // MARK: - Shipped set integrity
 
     func testShippedRoutinesAreNamedAndNonEmpty() {
-        XCTAssertEqual(RoutinePresets.specs.count, 3)
+        XCTAssertEqual(RoutinePresets.specs.count, 1, "one curated routine ships: the demo")
         for spec in RoutinePresets.specs {
             XCTAssertFalse(spec.name.isEmpty)
             XCTAssertFalse(spec.blocks.isEmpty)
@@ -97,8 +97,10 @@ final class RoutinePresetsTests: XCTestCase {
 
     func testBackfillSlugLookupMatchesByNameOnly() {
         XCTAssertEqual(RoutinePresets.slug(forName: "Morning Routine"), RoutinePresets.freeTasteSlug)
-        XCTAssertEqual(RoutinePresets.slug(forName: "Picking Builder"), "picking-builder")
         XCTAssertNil(RoutinePresets.slug(forName: "My own routine"))
+        // A retired curated routine is no longer recognised — an existing player's copy stays
+        // unslugged and therefore Pro, which is right: only the demo is free.
+        XCTAssertNil(RoutinePresets.slug(forName: "Picking Builder"))
     }
 
     /// The rename trap: an install seeded before "Morning Warm-up" became "Morning Routine" still
@@ -149,23 +151,18 @@ final class RoutinePresetsTests: XCTestCase {
         }
     }
 
-    /// The other two curated routines are the shop window — they are *expected* to contain Pro
-    /// content. Pins that expectation so the free/paid contrast isn't lost by accident.
-    func testTheOtherCuratedRoutinesDoReachProContent() throws {
-        let others = RoutinePresets.specs.filter { $0.slug != RoutinePresets.freeTasteSlug }
-        XCTAssertEqual(others.count, 2)
-        for spec in others {
-            let names: [String] = spec.blocks.compactMap { block in
-                if case .exercise(let name) = block { return name }
-                return nil
+    /// Every block in the shipped routine must name an exercise a **fresh install actually seeds**.
+    /// Blocks resolve by name at seed time, so a drill missing from `firstRunSlugs` doesn't error —
+    /// it's silently skipped, and the demo arrives with holes in it. This is the guard for that.
+    func testEveryRoutineBlockIsSeededOnAFreshInstall() throws {
+        let firstRunNames = Set(PracticePresets.firstRunSpecs.map(\.name))
+        for spec in RoutinePresets.specs {
+            for block in spec.blocks {
+                guard case .exercise(let name) = block else { continue }
+                XCTAssertTrue(firstRunNames.contains(name),
+                              "\(spec.name) block \"\(name)\" is not in the first-run seed set — "
+                              + "it would be skipped, leaving the routine short a block")
             }
-            let reachesPro = names.contains { name in
-                guard let preset = PracticePresets.allSpecs.first(where: { $0.name == name })
-                else { return false }
-                return !AccessPolicy.canRun(preset.template, isPro: false,
-                                            isFreeTastePreset: AccessPolicy.isFreeTaste(slug: preset.slug))
-            }
-            XCTAssertTrue(reachesPro, "\(spec.name) should hold Pro content — it's the shop window")
         }
     }
 }
