@@ -92,14 +92,14 @@ final class ArpeggioRunTests: XCTestCase {
         let seed = ArpeggioRun.aMinorSeventh
         XCTAssertEqual(seed.position, seed.flagshipPosition)
         XCTAssertTrue(seed.isMostCommon)
-        XCTAssertTrue(seed.rootAnchor.hasPrefix("root on low E"), seed.rootAnchor)
+        XCTAssertTrue(seed.rootAnchor.hasPrefix("Root on low E"), seed.rootAnchor)
     }
 
     func testPositionLabelReadsAsARootAnchor() {
         // The primary label is where the hand goes, not a CAGED letter or box number (ADR 0091).
         let label = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9, position: 3).positionLabel
-        XCTAssertTrue(label.hasPrefix("root on ") || label.hasPrefix("root: open ")
-                      || label.hasPrefix("from fret "), label)
+        XCTAssertTrue(label.hasPrefix("Root on ") || label.hasPrefix("Root: open ")
+                      || label.hasPrefix("From fret "), label)
     }
 
     // MARK: - Codable + content
@@ -113,6 +113,50 @@ final class ArpeggioRunTests: XCTestCase {
 
     func testUnknownQualityRawFallsBackToMinorSeventh() {
         XCTAssertEqual(ArpeggioQuality(storage: "diminished"), .minorSeventh)
+    }
+
+    // MARK: - Start from the lowest root note (2026-07-28)
+
+    /// The arpeggio sibling of the scale toggle: the run opens on the tonic the chord is named for
+    /// rather than on whichever chord tone sits lowest in the box.
+    func testLowestRootStartOpensTheRunOnTheTonic() {
+        let run = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9, position: 1,
+                              octaves: 2, roundTrip: false, startsFromLowestRoot: true)
+        let first = run.ascendingNotes.first
+        XCTAssertEqual(first.map { GuitarScale.pitchClass(string: $0.string, fret: $0.fret) }, 9)
+        let midi = run.ascendingNotes.map { CAGEDShape.midi($0) }
+        XCTAssertEqual(midi, midi.sorted(), "the run must still climb strictly")
+    }
+
+    /// Off, the run is what it always was — the guarantee behind the decode-time default of false.
+    func testLowestRootStartOffLeavesTheRunUnchanged() {
+        let off = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9, position: 1,
+                              octaves: 2, roundTrip: false, startsFromLowestRoot: false)
+        XCTAssertEqual(off.ascendingNotes, CAGEDShape.trimmed(off.boxNotes, toOctaves: 2))
+    }
+
+    /// A blob written before the axis existed decodes to `false`, so a saved arpeggio keeps the note
+    /// order it was authored with even though one created now starts on the root.
+    func testBlobMissingStartFlagDecodesToOff() throws {
+        let legacy = """
+        {"version":1,"qualityRaw":"minorSeventh","rootPitchClass":9,"position":1,\
+        "octaves":2,"roundTrip":true,"notesPerBeat":2}
+        """
+        let run = try JSONDecoder().decode(ArpeggioRun.self, from: Data(legacy.utf8))
+        XCTAssertFalse(run.startsFromLowestRoot)
+        XCTAssertEqual(run.ascendingNotes,
+                       ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9, position: 1, octaves: 2,
+                                   startsFromLowestRoot: false).ascendingNotes)
+    }
+
+    /// The position label describes where the hand sits, so the starting note must not move it.
+    func testLowestRootStartLeavesThePositionLabelAlone() {
+        let started = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9, position: 3,
+                                  startsFromLowestRoot: true)
+        let plain = ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9, position: 3,
+                                startsFromLowestRoot: false)
+        XCTAssertEqual(started.positionLabel, plain.positionLabel)
+        XCTAssertEqual(started.anchorFret, plain.anchorFret)
     }
 
     func testContentArpeggioExpandsAndRoundTrips() throws {

@@ -18,11 +18,14 @@ struct ChordBoardEditor: View {
     var tint: Color = PocketColor.practice
 
     /// The whole reachable window, top of neck down. The board scrolls; five rows are visible at once.
-    private static let totalFretCount = 15
+    /// **24, not 15** (2026-07-28): `ChordVoicing` never capped the fret, only this board did, and a
+    /// voicing placed above the 15th had nowhere to go. 24 also gives the octave double-inlay a partner.
+    private static let totalFretCount = 24
     private static let visibleFretCount = 5
-    /// Inlay reference marks — the standard single dots, with a double at the octave (fret 12).
-    private static let singleInlayFrets: Set<Int> = [3, 5, 7, 9, 15]
-    private static let doubleInlayFret = 12
+    /// Inlay reference marks — read from `FretboardGrid` so the chord board marks the same frets as the
+    /// drill boards rather than keeping a second, shorter list that stopped at 15.
+    private static let singleInlayFrets = FretboardGrid.singleInlayFrets
+    private static let doubleInlayFrets = FretboardGrid.doubleInlayFrets
 
     private let cellSize: CGFloat = 44
     private let markerHeight: CGFloat = 30
@@ -134,11 +137,12 @@ struct ChordBoardEditor: View {
         }
     }
 
-    /// Faint inlay markers — single dots at 3·5·7·9·15, a double at the octave (12) — for orientation.
+    /// Faint inlay markers — single dots at 3·5·7·9·15·17·19·21, doubles at the octaves (12 and 24) —
+    /// for orientation, which matters more now the neck runs the full 24 frets.
     private var inlays: some View {
         ForEach(1...Self.totalFretCount, id: \.self) { fret in
             let posY = rowCenter(fret - 1)
-            if fret == Self.doubleInlayFret {
+            if Self.doubleInlayFrets.contains(fret) {
                 inlayDot.position(x: gridWidth / 2 - cellSize * 0.8, y: posY)
                 inlayDot.position(x: gridWidth / 2 + cellSize * 0.8, y: posY)
             } else if Self.singleInlayFrets.contains(fret) {

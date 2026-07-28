@@ -4,6 +4,199 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## Device-testing pass — plan of attack (2026-07-28)
+
+Several days of on-device testing produced ~34 notes across four annotated screenshot sheets,
+reviewed against the code and triaged 2026-07-28. **v1.0 is already approved and ready for
+distribution — none of this chases that submission; all of it is 1.0.1 / v2 fast-follow.**
+Sequenced cheapest-and-safest first so each slice is device-testable on its own.
+
+**Decisions taken at triage — settled, don't re-litigate:**
+
+- **Transport when loops are off** — the two sheets contradicted each other (−10/+10 seconds vs.
+  jump-between-markers). **Resolved: seconds only.** Marker navigation is dropped; moving freely
+  *within* the waveform matters more than one-tap restart, so rewind's single-tap "restart" is
+  deliberately sacrificed.
+- **"Advanced" means one thing** — a single Advanced disclosure holding **Rhythm** (the renamed
+  quarters/eighths/triplets/sixteenths control, now a dropdown), Octaves, Sequence, Up-and-back and
+  Start-from-lowest-root. Scale · Root · Layout · Position stay visible above the fold.
+- **Enharmonics** — spell by key wherever a tonal centre exists (F major always reads B♭); the user's
+  sharp/flat preference is a **tiebreaker only** where there is no key context (custom chords, the
+  tuner, rootless drills). Not a global override.
+- **"Start from the lowest root note"** — applies to **new runs only**, default on. There are no
+  users yet, so no migration is owed, but the flag must not be read at render time or every saved
+  run silently changes its note order.
+- **Collection generated routines** — an **entry point to the generator** surfaced in Practice, not a
+  second list of routines. Generated routines already save as ordinary routines; a parallel list
+  would double them.
+- **Fret range → 24, not 22.** The models already allow 24 (`ScaleLayout`, `FretboardRun`,
+  `BassNeckLayout`); only the editors cap at 15. 24 also lets the octave double-inlay at fret 12 have
+  its partner. Confirmed: **this does not create new scale/arpeggio shapes** — positions come from the
+  shape catalogue and repeat at the 12th fret; a longer neck just reaches them higher up.
+
+**Scrapped at triage (recorded so they don't come back):**
+
+- **5-song import cap on free.** The slow-downer is the strongest acquisition hook, and there is
+  currently no song axis in `AccessPolicy` at all — songs, loops and the slow-downer are entirely
+  free. Adding a cap would have amended ADR 0112 to weaken the funnel. Dropped.
+- **Two-line numbered dots on the picking board.** Loses to the 24-fret neck (they compete for the
+  same pixels). Replaced by the slot-strip linkage in Slice 1.
+- **Marker navigation on the transport** — see above.
+
+**Slice 1 — fretboard authoring polish — DONE (branch `pocket-199-fretboard-authoring-polish`,
+2026-07-28).** No ADR; all nine items landed. Notes worth carrying forward:
+
+- **Start-from-lowest-root is a *trim*, not a rotation.** The run drops the box notes below the lowest
+  root, so it still climbs strictly (the invariant the generator is built and property-tested on) and a
+  one-octave run spans a true root-to-root octave. The alternative — rotating the sub-root notes to the
+  end — would have kept every note on the board at the cost of a downward leap mid-run. **If the trim
+  reads wrong on device, that rotation is the other option; the flag and its plumbing don't change.**
+- **The flag is stored on the recipe with split defaults** — `true` from `init` (new runs), `false`
+  from `decodeIfPresent` (saved runs) — so nothing already authored reorders itself.
+- `ScaleRun.positionNotes` was split out for this: the position label and anchor fret describe the
+  shape the **hand** covers, so the run's starting note can move without renaming the box.
+- **"Enlarge the Movement/Advanced row labels" was really a *colour* difference** — the fonts were
+  already identical (`.futura(.subheadline, .semibold)`); the hand-rolled disclosure titles just
+  weren't setting `textPrimary`. Both now use `EditorFieldLabel` via the shared `EditorDisclosure`.
+- The chevrons and the Futura position label land in **all four** fretboard editors, as flagged — the
+  stepper is shared and the change was accepted everywhere rather than gated.
+- `FretboardDrillEditor` was split (`+Board.swift`) to stay under the 400-line ceiling.
+
+**Slice 2 — small player fixes (no ADR):**
+
+- **Train your ear must pause playback on open**, and closing it must leave the transport showing
+  **Play**, not Pause. Entry point is `LoopEditSheet+Fields` → `EarTrainingSheet`; nothing currently
+  stops the main engine.
+- **Zoom/playhead-focus toggle** surfaced on the row above the playhead (by the (i) Loop controls, or
+  left of Fit). The underlying setting already exists from ADR 0098 — this is surfacing it.
+- **Open on create** — creating an exercise opens that exercise; selecting a single song opens its
+  waveform screen.
+
+**Slice 3 — list-component uniformity (no ADR; the highest-leverage item):**
+
+Answering the "is there a way to ensure uniform adoption for list-like components?" question with a
+yes: a single `.pocketRowActions(...)` modifier packaging long-press menu (view info / delete) +
+swipe actions + an undo toast, adopted by exercises, loops, routines and songs. Today only
+`LibraryView` has the full pattern; `ExerciseLibraryView` has only a leading favourite swipe.
+Fold **duplicate routine / duplicate templated exercise** in here.
+
+**Slice 4 — chord content (small ADR 0084/0106 amendment):**
+
+- **Unmute the high e on the A-shape family** — major, minor, min7, maj7 and dom7 all gain the 5th on
+  the top string (`offsets[0] = 0` in `ChordGrip`). Note `aShapeMinor` currently byte-matches
+  `ChordVoicing.bMinorBarre`, so that equivalence test needs updating with it.
+- **All 12 tier-1 grips in the Insert tab** (Power/Major/Minor/Maj7/Min7/Dom7 × E-shape/A-shape) —
+  `ChordPicker.insertMovableGrips` currently shows 6 of the 12 that already exist as
+  `ChordGrip.tier1`. Doubling the grid height is accepted; the section is collapsible.
+- **Enharmonic preference** in Settings, per the tiebreaker rule above.
+
+**Slice 5 — transport redesign (ADR; changes shipped behaviour):**
+
+- **−10 / +10 skip buttons** with circular-arrow glyphs, replacing ⏪/⏩ **when no loop is active**;
+  hold either to change the increment (5 · 10 · 15 · 30 · 1 min). Clamps to song bounds. With a loop
+  armed the buttons keep their current previous/next-loop behaviour.
+- **REPEAT replaces "Set BPM"** on the speed bar (repeats the song); Set BPM moves to a long-press on
+  the metronome icon. **Keep a visible affordance while the tempo is unknown** — a fresh import has no
+  grid and no snap until BPM is set, so a badge/hint on the metronome is required for discoverability.
+- **Speed cap 0.25–1.5** (currently 0.25–2.0 in `SpeedBar`) plus custom numeric entry, rejecting
+  out-of-range with an inline message. Confirmed no existing loops or automator ramps exceed 1.5×, so
+  no clamping migration is needed — but the clamp on read should still exist.
+
+**Slice 6 — loops & markers multi-select (own ADR; largest UI change):**
+
+Hold the Loop or Marker header title → the play button becomes an empty circle; tapping selects the
+row with standard Apple selection UI + haptic; Automator and loop-edit buttons hide so they can't be
+hit by accident. Play buttons take the loop's identity colour, filling on selection. The collapse
+chevron's position becomes an edit button for loop practice categories (type, focus, tags).
+**Open question to settle in the ADR: where does collapse go once the chevron is reassigned?**
+
+**Slice 7 — routine building (ADR):**
+
+Multi-select when adding exercises to a routine; hold Insert rest to enter a bulk rest mode where
+tapping between two blocks inserts a rest; tapping between a rest and a block shows a "rest already
+here" popup. The same guard applies to the standard single-rest path.
+
+**Slice 8 — analytics, privacy & off-the-grid (ADR 0120, largely writing):**
+
+The shape is already decided (2026-07-28): Tier-1 anonymous product analytics + Tier-2
+AdAttributionKit / Apple Search Ads attribution; **Tier-3 IDFA/ATT/ad-SDKs ruled out**. Outstanding:
+write ADR 0120; add an **off-the-grid mode** (a full no-telemetry toggle — note UK/EU rules make
+non-essential analytics opt-*in*, so pick the default deliberately); cookie policy for the marketing
+site; and revise the privacy copy — the durable claim is "your playing never leaves your device", not
+"we collect nothing". See the existing *Analytics* section below.
+
+**Slice 9 — artist name generator + onboarding copy (small):**
+
+New copy — "Every artist earns their name. / You've put in the work. Sign your stage name — or spin
+one up." Expand `ArtistNameGenerator` and curate it from the ADR 0113 profile signals (genre, sound,
+goals) as generation variables.
+
+**Slice 10 — song links on creation sheets (small ADR 0111 follow-up):**
+
+Offer the exercise↔song link on the *new exercise* sheets for every template, not only after
+creation. Plus a **"universally applicable"** flag meaning the exercise is tied to no song and is
+therefore always eligible for the planner / collection generator. **Confirm the flag's semantics
+before building.**
+
+**Needs a device repro before it can be actioned:**
+
+- **Dots grey out when a sequence is picked.** The obvious suspect is wrong: ADR 0083's pass-focus
+  ghosting (off-pass notes → 0.2 opacity) only fires for multi-pass runs, and a **Box** layout carries
+  no note-groups — `SequencePattern.apply` passes `nil` straight through. The reported case is a Box.
+  Something else is doing it; capture a before/after on the same drill (Straight → Groups of 3) before
+  changing any rendering code.
+
+**Parked pending a clearer product story:**
+
+- **Image attachments on exercises** (reference photos). Parked until we can articulate what the user
+  gains. When picked up, the open design questions are: how the user uploads (photo picker? camera?
+  files?) and how they view them mid-practice — plus `@Attribute(.externalStorage)`, downscale on
+  import, a per-exercise cap, and an alt-text field for VoiceOver. Read
+  `docs/swiftdata-gotchas.md` first: binary blobs on a `@Model` are exactly the class of thing that
+  behaves in the simulator and bites on device.
+
+**Branding — SVG logo swap (small, do alongside any slice):**
+
+New Pixelmator-authored SVGs exist for light background, dark background and a blood-moon variant.
+Xcode asset catalogs accept SVG with vector data preserved, so `RedMoonLogo`, `RedMoonMark` and
+`RedMoonWordmark` swap PNG → SVG in place. Because the mark is **two-tone** (crescent vs. everything
+else) it can't be a single template asset tinted in code — keep the existing light/dark appearance
+pair. The supplied file is a full lockup, so the mark-only and wordmark-only assets are derived from
+it by cropping the viewBox and dropping groups. The **App Icon stays PNG** (opaque 1024², no alpha) —
+the flat cream-background lockup is a suitable source.
+
+**Colour tokens: no work needed.** The palette already sits on the logo — `TealCTA` light is
+`18698B` against the logo's `17698A`, and `Terracotta` light is `C24A2C`, an *exact* match for the
+blood-moon outer colour. Decision: **logos stay their own thing**; the per-space accent families
+(Teal / Terracotta / Plum / Gold / Indigo) are what tell you which space you're in and must not be
+flattened to brand blue. Optional insurance: add `BrandBlue` / `BrandBlueLight` colorsets used only by
+logo-adjacent chrome, so retuning a space accent later can't desync the mark. The blood-moon pair
+(`C24A2C` / `E3694A`) is the natural accent for the parked *Blood Moon theme* section below.
+
+## StoreKit purchase path — sandbox validation (ADR 0112, parked 2026-07-28)
+
+**Full checklist: [`docs/plans/storekit-sandbox-validation.md`](plans/storekit-sandbox-validation.md).**
+To be folded into a larger work item rather than run as its own branch.
+
+ADR 0112 merged (PR #178, `47fbd83`) with the paywall, the gates and the entitlement layer all built
+— but **the purchase itself has never run**, in any environment. Every test used the local
+`.storekit` config or the DEBUG `isPro` toggle; neither contacts Apple. The untested chain is
+Apple confirms → `Transaction.currentEntitlements` → `isPro` → gates open.
+
+Blocking facts to carry in cold:
+
+- ASC subscriptions are still **drafts**; sandbox won't vend them until "Ready to Submit"
+  (Apple's *approval* isn't needed — completed metadata is).
+- Two switches fail **silently** and make fake results look real: the run scheme's local StoreKit
+  config (`project.yml`), and the DEBUG override — which *replaces* the real entitlement rather than
+  influencing it.
+- **Trial lapse re-locking is the likeliest breakage** — least-travelled path, never exercised, and it
+  has to re-lock all five routine surfaces as well as the exercise gates.
+- **Don't ship a paywall build before the ASC products are live**, or `isPro` is permanently false and
+  everything Pro-locks with no way to buy.
+- Same submission, separate task: the ASC **Content Rights** answer must change from "no third-party
+  content" now that *Binta* ships bundled.
+
 ## Collection session builder — follow-ups (ADR 0118, parked 2026-07-25)
 
 The `CollectionSessionBuilder` + `CollectionSessionSheet` shipped (branch

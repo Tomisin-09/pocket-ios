@@ -48,9 +48,21 @@ struct FretboardDisplayOptionsBar: View {
     /// The shared one-shot token — Hear and Watch both set it to restart the synced walk from note 0.
     @Binding var playToken: Date?
     var tint: Color = PocketColor.practice
+    /// Whether this surface's drill names a tonal centre. `false` hides the **Interval** caption mode,
+    /// which needs `FretboardDrill.rootPitchClass` and silently draws nothing without one — conditioned
+    /// here, once, so a future rootless editor is covered without touching it (device feedback 2026-07-28).
+    var hasRoot: Bool = true
 
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
-    private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
+    private var labelMode: FretLabelMode {
+        (FretLabelMode(rawValue: storedLabelMode) ?? .none).resolved(hasRoot: hasRoot)
+    }
+
+    /// Reads the *resolved* mode so the picker never selects a hidden row (an inherited `.interval` on a
+    /// rootless board shows as Off), but writes the raw choice straight to the global preference.
+    private var labelModeBinding: Binding<String> {
+        Binding(get: { labelMode.rawValue }, set: { storedLabelMode = $0 })
+    }
 
     var body: some View {
         HStack(spacing: 16) {
@@ -59,8 +71,8 @@ struct FretboardDisplayOptionsBar: View {
             FretboardPlayOnceButton(playToken: $playToken, tint: tint)
             Spacer()
             Menu {
-                Picker("Labels", selection: $storedLabelMode) {
-                    ForEach(FretLabelMode.allCases) { mode in
+                Picker("Labels", selection: labelModeBinding) {
+                    ForEach(FretLabelMode.available(hasRoot: hasRoot)) { mode in
                         Text(mode.pickerLabel).tag(mode.rawValue)
                     }
                 }
@@ -109,10 +121,15 @@ struct LabeledMenuRow<Trailing: View>: View {
 
 // MARK: - Stepper
 
-/// A ∓ stepper row shared by the run editors. `.expanding` centres a long value between the controls
-/// (the scale/arpeggio root-anchor label, "root on low E · fret 5", ADR 0091); `.compact` keeps a
+/// A ‹ › stepper row shared by the run editors. `.expanding` centres a long value between the controls
+/// (the scale/arpeggio root-anchor label, "Root on low E · Fret 5", ADR 0091); `.compact` keeps a
 /// short numeric value snug against them (the picking-run's base fret / shift counts). Both fire a
 /// light haptic on each step.
+///
+/// The arrows are **chevrons**, not ∓: minus/plus read as "remove/add a thing" rather than "move
+/// through a list of positions", which is what these actually do (device feedback 2026-07-28). Note the
+/// stepper is shared by all four fretboard editors, so this lands on every one of them — deliberately,
+/// since the same misreading applies to the base-fret and shift counts.
 struct EditorStepper: View {
     enum Width { case expanding, compact }
 
@@ -124,26 +141,39 @@ struct EditorStepper: View {
     let stepDown: () -> Void
     let stepUp: () -> Void
 
+    /// Tap target for the bare chevrons — the glyph itself is far smaller than the old filled circles,
+    /// so the hit area is set explicitly rather than left to the glyph's bounds.
+    private static let arrowHitSize: CGFloat = 30
+
     var body: some View {
         HStack(spacing: 14) {
-            Button { stepDown(); haptic(.light) } label: { Image(systemName: "minus.circle") }
-                .buttonStyle(.borderless)
-                .disabled(!canGoDown)
+            arrow("chevron.left", enabled: canGoDown, action: stepDown)
             if width == .expanding { Spacer(minLength: 12) }
             valueText
             if width == .expanding { Spacer(minLength: 12) }
-            Button { stepUp(); haptic(.light) } label: { Image(systemName: "plus.circle") }
-                .buttonStyle(.borderless)
-                .disabled(!canGoUp)
+            arrow("chevron.right", enabled: canGoUp, action: stepUp)
         }
         .font(.title3)
         .tint(tint)
     }
 
+    private func arrow(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button { action(); haptic(.light) } label: {
+            Image(systemName: symbol)
+                .fontWeight(.semibold)
+                .frame(width: Self.arrowHitSize, height: Self.arrowHitSize)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .disabled(!enabled)
+    }
+
     @ViewBuilder private var valueText: some View {
         switch width {
         case .expanding:
-            Text(value).font(.pocketMono(.body))
+            // Futura, not the monospace used for numeric readouts: this slot carries prose ("Root on
+            // low E · Fret 10"), and mono made it read like code rather than a place on the neck.
+            Text(value).font(.futura(.body, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .multilineTextAlignment(.center)
         case .compact:
@@ -197,36 +227,64 @@ struct MostCommonBadge: View {
     }
 }
 
-// MARK: - Advanced subdivision disclosure
+// MARK: - Disclosure (Advanced / Movement)
 
-/// The demoted "Advanced" disclosure holding the subdivision segmented picker — collapsed by default,
-/// since eighths suit nearly every run (the ADR 0065 feedback that the picker was confusing up front).
-/// Shared by the scale, arpeggio and picking-run editors; the custom-drill editor shows its
-/// resolution picker inline instead (re-gridding on change), so it uses only the table above.
-struct AdvancedSubdivisionRow: View {
+/// A named, collapsed-by-default disclosure carrying a terse summary of what's inside, so a run's
+/// settings are legible without opening it. Its title is an `EditorFieldLabel` — the same component
+/// every other setting row uses — because the hand-rolled title it replaced rendered a shade lighter
+/// and read as secondary chrome next to the controls it governs (device feedback 2026-07-28).
+///
+/// **"Advanced" means one thing** (triage decision, 2026-07-28): each editor has at most one
+/// disclosure by that name. The picking editor's second group is named **Movement** and uses this
+/// same shell, so the two read as siblings rather than as two flavours of "advanced".
+struct EditorDisclosure<Content: View>: View {
+    let title: String
     @Binding var isExpanded: Bool
+    /// The collapsed row's right-hand read — what's on, in a few words.
+    let summary: String
+    var tint: Color = PocketColor.practice
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            VStack(alignment: .leading, spacing: 16) { content }
+                .padding(.top, 10)
+        } label: {
+            HStack {
+                EditorFieldLabel(title)
+                Spacer()
+                Text(summary).font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .lineLimit(1)
+            }
+        }
+        .tint(tint)
+    }
+}
+
+// MARK: - Rhythm
+
+/// The note-density control, **renamed from "Subdivision" to "Rhythm"** and demoted from a segmented
+/// control to a dropdown (2026-07-28): "subdivision" is engine vocabulary, and four segments ate a
+/// full row inside a disclosure that now holds several settings. Lives inside `EditorDisclosure`;
+/// the custom-drill editor keeps its own inline picker, because changing it there re-grids the drill.
+struct RhythmRow: View {
     @Binding var notesPerBeat: Int
     let accessibilityLabel: String
     var tint: Color = PocketColor.practice
 
     var body: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            Picker("Subdivision", selection: $notesPerBeat) {
+        LabeledMenuRow(label: "Rhythm") {
+            Picker("Rhythm", selection: $notesPerBeat) {
                 ForEach(FretboardSubdivisions.options, id: \.perBeat) { option in
                     Text(option.label).tag(option.perBeat)
                 }
             }
-            .pickerStyle(.segmented)
-            .padding(.top, 6)
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .tint(tint)
             .accessibilityLabel(accessibilityLabel)
-        } label: {
-            HStack {
-                Text("Advanced").font(.futura(.subheadline, weight: .semibold))
-                Spacer()
-                Text(FretboardSubdivisions.label(forPerBeat: notesPerBeat)).font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
+            .accessibilityValue(FretboardSubdivisions.label(forPerBeat: notesPerBeat))
         }
-        .tint(tint)
     }
 }

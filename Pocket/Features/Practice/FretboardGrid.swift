@@ -87,6 +87,7 @@ struct FretboardGrid: View {
                 nut(height: height)
                 inlayDots(width: width, height: height)
                 slideCues(width: width, height: height)
+                walkTrail(width: width, height: height)
                 notes(width: width, height: height)
             }
         }
@@ -94,9 +95,10 @@ struct FretboardGrid: View {
 
     /// The standard guitar position markers (single dot at 3·5·7·9·15·17·19·21, double at 12·24) that
     /// fall within the visible fret window — a faint orientation cue, same as the wood inlays on a
-    /// real neck, so "which position is this" reads at a glance without counting fret lines.
-    private static let singleInlayFrets: Set<Int> = [3, 5, 7, 9, 15, 17, 19, 21]
-    private static let doubleInlayFrets: Set<Int> = [12, 24]
+    /// real neck, so "which position is this" reads at a glance without counting fret lines. Internal
+    /// so the authoring boards mark the same frets from the same list rather than a second copy of it.
+    static let singleInlayFrets: Set<Int> = [3, 5, 7, 9, 15, 17, 19, 21]
+    static let doubleInlayFrets: Set<Int> = [12, 24]
 
     private func inlayDots(width: CGFloat, height: CGFloat) -> some View {
         let visible = lowestFret..<(lowestFret + span)
@@ -124,6 +126,26 @@ struct FretboardGrid: View {
                     .stroke(tint.opacity(index == activeIndex ? 0.95 : 0.55),
                             style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
             }
+        }
+    }
+
+    /// A faint **connector trail** from the note just played to the one lit now, drawn only while the
+    /// board is walking (2026-07-28). Sequenced runs — thirds, fourths, rolling groups — jump around a
+    /// box, and with every dot the same size the *direction* of the jump was the part that didn't read.
+    /// One segment, not a full path: the trail says "you came from there", it doesn't re-draw the run.
+    /// A slide already has its own arrow, so this yields to `slideCues` on that pairing.
+    @ViewBuilder
+    private func walkTrail(width: CGFloat, height: CGFloat) -> some View {
+        if let activeIndex, activeIndex > 0,
+           drill.notes.indices.contains(activeIndex),
+           let to = drill.notes[activeIndex], let from = drill.notes[activeIndex - 1],
+           from != to, to.technique != .slide, isVisible(from), isVisible(to) {
+            Path { path in
+                path.move(to: CGPoint(x: noteX(from.fret, in: width), y: rowY(from.string, in: height)))
+                path.addLine(to: CGPoint(x: noteX(to.fret, in: width), y: rowY(to.string, in: height)))
+            }
+            .stroke(tint.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            .allowsHitTesting(false)
         }
     }
 

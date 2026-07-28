@@ -5,7 +5,52 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Scales and arpeggios can start on the root note.** A new *Start from the lowest root note* toggle
+  (Advanced) opens the run on the tonic the box is named for, instead of on whichever note happens to
+  sit lowest in the shape — the way the box is normally practised. On by default for runs created from
+  now on; **anything already saved keeps the order it was authored with**, since the setting lives on
+  the run rather than being applied at render time. Box layouts only — the diagonal and
+  3-notes-per-string patterns are defined by their string-by-string fingering. The position label still
+  reports where the *hand* sits, so turning this on never renames the box.
+- **The step strip and the neck are now linked in the draw-your-own editor.** Tapping a step scrolls its
+  fret into view *and* pulses the dot itself, so it's clear which of the dots on screen that step meant.
+  A note the run hits more than once carries a small count pip **outside** the circle, and while a run
+  walks (Watch / Hear) a faint trail connects the note just played to the one lit now — so a sequenced
+  run's jumps read as direction rather than as dots blinking in an arbitrary order. Dot sizes are
+  unchanged.
+
 ### Changed
+- **The draw-your-own board and the chord placer now reach fret 24** (both stopped at 15). The models
+  already allowed it; only the editors capped it. Both boards already scrolled, and both now carry the
+  standard neck inlays — singles at 3·5·7·9·15·17·19·21 and doubles at 12 **and** 24, so the octave
+  marker finally has the partner that tells the two apart. No new scale or arpeggio shapes come with
+  this: positions come from the shape catalogue and repeat at the 12th fret, so a longer neck simply
+  reaches the same shapes higher up.
+- **"Advanced" now means one thing in every fretboard editor.** Scale · Root · Layout · Position (and
+  the picking editor's Finger pattern · Starts on fret · Across) stay above the fold; everything that
+  shapes how the box is *played* — Rhythm, Octaves, Sequence, Up-and-back, and the new starting-note
+  toggle — sits in a single Advanced disclosure, which now carries a one-line summary of whatever
+  differs from the defaults so a run stays legible closed. **Subdivision is renamed *Rhythm*** and is a
+  dropdown rather than a four-segment control. The picking editor's *Movement* group keeps its own name
+  rather than becoming a second thing called "Advanced", and both disclosure titles now match the
+  weight and colour of the setting labels around them.
+- **The position stepper reads as ‹ › chevrons, not − / +** — it moves through neck positions rather
+  than adding and removing anything. The position itself is now set in Futura, sentence-capitalised
+  ("Root on low E · Fret 10"); it was rendering in monospace, which made a place on the neck read like
+  code. Shared by all four fretboard editors, so the base-fret and shift counts change with it.
+- **Interval captions are hidden where they can't work.** The Display menu's *Interval* mode needs a
+  tonal centre, which generated scale and arpeggio runs carry but hand-drawn drills, warm-ups and
+  picking runs don't — so it silently drew nothing on those. It's now dropped from the menu there, and a
+  preference inherited from a scale editor reads as *Off* rather than as a mode that does nothing. The
+  stored preference is untouched: going back to a scale restores Interval.
+- **Guide tones read as a shape again.** With the tracing guide on, notes *outside* the chosen scale or
+  chord now fade back further instead of sitting at the same weight as the tones being traced, and the
+  guide's root wears the same amber ring the practice board gives roots.
+- **Undo in the draw-your-own editor wears the ⌫ backspace glyph** (the u-turn arrow read as "revert
+  everything") and **puts the cursor back on the step that changed** — usually the box to the left.
+  Placing a note auto-advances, so undo used to restore the note but leave the cursor one box past it,
+  and the next tap landed in the wrong step.
 - **A fresh install now opens with six exercises, one routine and one song.** Previously a new player
   landed in a library of 19 seeded drills and 3 curated routines. The first-run set is now the *union*
   of the four free-taste freebies and the four exercises **Morning Routine** needs — Spider Walk,

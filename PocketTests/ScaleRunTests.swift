@@ -54,11 +54,12 @@ final class ScaleRunTests: XCTestCase {
     }
 
     /// Locks the flagship shape: A minor pentatonic, position 1 is the CAGED E-shape box (the
-    /// relative-C major box filtered to the pentatonic), sitting at frets 7–10.
+    /// relative-C major box filtered to the pentatonic), sitting at frets 7–10. Asserts `positionNotes`
+    /// — the shape the hand covers — which is independent of where `startsFromLowestRoot` begins the run.
     func testMinorPentatonicPositionOneIsTheEShapeBox() {
         let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9,
                            position: 1, octaves: 2, roundTrip: false)
-        XCTAssertEqual(run.ascendingNotes, [
+        XCTAssertEqual(run.positionNotes, [
             FretNote(string: 5, fret: 8), FretNote(string: 5, fret: 10),
             FretNote(string: 4, fret: 7), FretNote(string: 4, fret: 10),
             FretNote(string: 3, fret: 7), FretNote(string: 3, fret: 10),
@@ -70,10 +71,11 @@ final class ScaleRunTests: XCTestCase {
 
     /// Regression lock for the D-shape fix: A minor pentatonic, position 2 is the classic box-3
     /// shape, so the fifth (E) must land on the **G string** (string 2, fret 9), never the D string.
+    /// Geometry, so it reads `positionNotes` rather than the played order.
     func testMinorPentatonicPositionTwoPutsTheFifthOnTheGString() {
         let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9,
                            position: 2, octaves: 2, roundTrip: false)
-        XCTAssertEqual(run.ascendingNotes, [
+        XCTAssertEqual(run.positionNotes, [
             FretNote(string: 5, fret: 10), FretNote(string: 5, fret: 12),
             FretNote(string: 4, fret: 10), FretNote(string: 4, fret: 12),
             FretNote(string: 3, fret: 10), FretNote(string: 3, fret: 12),
@@ -82,7 +84,7 @@ final class ScaleRunTests: XCTestCase {
             FretNote(string: 0, fret: 10), FretNote(string: 0, fret: 12)
         ])
         // The E on the D string (the old bug) must be gone.
-        XCTAssertFalse(run.ascendingNotes.contains { $0.string == 3
+        XCTAssertFalse(run.positionNotes.contains { $0.string == 3
             && GuitarScale.pitchClass(string: $0.string, fret: $0.fret) == 4 },
             "the fifth must not sit on the D string")
     }
@@ -103,11 +105,12 @@ final class ScaleRunTests: XCTestCase {
     }
 
     /// Locks the E-shape major-scale box: A major, position 1, two octaves — the full CAGED box the
-    /// reference sheet shows (△7 R △2 on the outer strings), not a flat count.
+    /// reference sheet shows (△7 R △2 on the outer strings), not a flat count. Geometry, so it reads
+    /// `positionNotes`.
     func testMajorPositionOneIsTheEShapeBox() {
         let run = ScaleRun(scale: .major, rootPitchClass: 9,
                            position: 1, octaves: 2, roundTrip: false)
-        XCTAssertEqual(run.ascendingNotes, [
+        XCTAssertEqual(run.positionNotes, [
             FretNote(string: 5, fret: 4), FretNote(string: 5, fret: 5), FretNote(string: 5, fret: 7),
             FretNote(string: 4, fret: 4), FretNote(string: 4, fret: 5), FretNote(string: 4, fret: 7),
             FretNote(string: 3, fret: 4), FretNote(string: 3, fret: 6), FretNote(string: 3, fret: 7),
@@ -122,11 +125,12 @@ final class ScaleRunTests: XCTestCase {
     /// A mode is its **parent major's** CAGED boxes seen from a different tonic: D Dorian is the C-major
     /// boxes, so its neck geometry is identical to C major at every position — only the highlighted
     /// tonic differs. Proves the `relativeMajorSemitones` offset lands each mode on the right box.
+    /// Compares `positionNotes`: the two runs *start* on different tonics, but cover the same shape.
     func testDorianIsTheParentMajorBoxWithItsOwnTonic() {
         for position in 1...5 {
             let dorian = ScaleRun(scale: .dorian, rootPitchClass: 2, position: position, roundTrip: false)
             let parentMajor = ScaleRun(scale: .major, rootPitchClass: 0, position: position, roundTrip: false)
-            XCTAssertEqual(dorian.ascendingNotes, parentMajor.ascendingNotes,
+            XCTAssertEqual(dorian.positionNotes, parentMajor.positionNotes,
                            "D Dorian position \(position) is the C major box")
             XCTAssertEqual(dorian.rootPitchClass, 2, "but the tonic that lights up is D, not C")
         }
@@ -187,20 +191,20 @@ final class ScaleRunTests: XCTestCase {
     func testRootAnchorNamesTheLowestRootStringAndFretForTheFamousBox() {
         // The famous A-minor-pentatonic box (root on the low E, 5th fret) is the G-shape / position 5.
         let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 5, octaves: 2)
-        XCTAssertEqual(run.rootAnchor, "root on low E · fret 5")
+        XCTAssertEqual(run.rootAnchor, "Root on low E · Fret 5")
     }
 
     func testRootAnchorNamesTheActualStringWhenTheLowestRootIsNotOnTheLowE() {
         // Position 1 (the E-shape box at frets 7–10) anchors its lowest root on the D string, fret 7 —
         // proof the anchor reads the real notes rather than assuming the low E.
         let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1, octaves: 2)
-        XCTAssertEqual(run.rootAnchor, "root on D · fret 7")
+        XCTAssertEqual(run.rootAnchor, "Root on D · Fret 7")
     }
 
     func testRootAnchorFollowsTheKey() {
         // Slide the flagship box up two frets by moving A → B: the anchor fret moves with it.
         let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 11, position: 5, octaves: 2)
-        XCTAssertEqual(run.rootAnchor, "root on low E · fret 7")
+        XCTAssertEqual(run.rootAnchor, "Root on low E · Fret 7")
     }
 
     func testFlagshipIsTheLowERootBoxAndOnlyItIsFlaggedMostCommon() {
@@ -277,6 +281,73 @@ final class ScaleRunTests: XCTestCase {
         let roots = drill.notes.compactMap { $0 }
             .filter { GuitarScale.pitchClass(string: $0.string, fret: $0.fret) == 9 }
         XCTAssertGreaterThanOrEqual(roots.count, 2, "a two-octave run should mark at least two tonics")
+    }
+
+    // MARK: - Start from the lowest root note (2026-07-28)
+
+    /// The toggle's whole promise: the run opens on the tonic. A minor pentatonic position 1 is the
+    /// box whose lowest note (low E, fret 8 = C) is *not* the root, so it's the case that proves it —
+    /// the C and its neighbour below the root are dropped, and the run starts on the A at fret 7.
+    func testLowestRootStartOpensTheRunOnTheTonic() {
+        let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1,
+                           octaves: 2, roundTrip: false, startsFromLowestRoot: true)
+        let first = try? XCTUnwrap(run.ascendingNotes.first)
+        XCTAssertEqual(first.map { GuitarScale.pitchClass(string: $0.string, fret: $0.fret) }, 9)
+        // It trims from the front only — every remaining note is one the untrimmed box already had.
+        XCTAssertTrue(run.ascendingNotes.allSatisfy { run.positionNotes.contains($0) })
+        XCTAssertLessThan(run.ascendingNotes.count, run.positionNotes.count)
+    }
+
+    /// Off, the run is byte-identical to what it was before the axis existed — the guarantee that lets
+    /// the field decode-default to false without a store migration.
+    func testLowestRootStartOffLeavesTheRunUnchanged() {
+        let off = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1,
+                           octaves: 2, roundTrip: false, startsFromLowestRoot: false)
+        XCTAssertEqual(off.ascendingNotes, off.positionNotes)
+    }
+
+    /// The run still climbs strictly with the toggle on — the invariant the generator is built on, and
+    /// the reason the start is *trimmed* rather than rotated.
+    func testLowestRootStartStillAscends() {
+        for position in 1...5 {
+            let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: position,
+                               octaves: 2, roundTrip: false, startsFromLowestRoot: true)
+            let midi = run.ascendingNotes.map { CAGEDShape.midi($0) }
+            XCTAssertEqual(midi, midi.sorted(), "position \(position) must keep climbing")
+        }
+    }
+
+    /// A one-octave run measures its octave **from the root it starts on**, so it spans a true
+    /// root-to-root octave rather than a partial one left over above a dropped low note.
+    func testLowestRootStartMeasuresOneOctaveFromTheRoot() {
+        let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1,
+                           octaves: 1, roundTrip: false, startsFromLowestRoot: true)
+        let midi = run.ascendingNotes.map { CAGEDShape.midi($0) }
+        XCTAssertEqual(midi.first.map { $0 % 12 }, midi.last.map { $0 % 12 },
+                       "a one-octave root-started run ends on the tonic it began on")
+        XCTAssertEqual((midi.last ?? 0) - (midi.first ?? 0), 12)
+    }
+
+    /// Box-only, like `octaves`: the neck-spanning layouts are defined by their string-by-string
+    /// fingering, so the flag must not reach into them even when it's set.
+    func testLowestRootStartIsBoxOnly() {
+        let extended = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1,
+                                layout: .extended, startsFromLowestRoot: true)
+        XCTAssertFalse(extended.appliesLowestRootStart)
+        let plain = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1,
+                             layout: .extended, startsFromLowestRoot: false)
+        XCTAssertEqual(extended.ascendingNotes, plain.ascendingNotes)
+    }
+
+    /// The position label describes where the **hand** sits, so it must not move when the run's
+    /// starting note does — that was the reason for splitting `positionNotes` off in the first place.
+    func testLowestRootStartLeavesThePositionLabelAlone() {
+        let started = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1,
+                               startsFromLowestRoot: true)
+        let plain = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1,
+                             startsFromLowestRoot: false)
+        XCTAssertEqual(started.positionLabel, plain.positionLabel)
+        XCTAssertEqual(started.anchorFret, plain.anchorFret)
     }
 
     // MARK: - FretboardContent .scale case

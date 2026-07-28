@@ -204,9 +204,9 @@ final class ScaleLayoutTests: XCTestCase {
         // Box: the root anchor is the primary label (ADR 0091) — the famous fret-5 box reads by where
         // the hand goes, not "E shape"; the CAGED letter is demoted to a caption elsewhere.
         XCTAssertEqual(ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 5).positionLabel,
-                       "root on low E · fret 5")
+                       "Root on low E · Fret 5")
         XCTAssertEqual(ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1).positionLabel,
-                       "root on D · fret 7")
+                       "Root on D · Fret 7")
         // Extended: the two fingerings carry their own mnemonic.
         XCTAssertEqual(ScaleRun(scale: .majorPentatonic, rootPitchClass: 9, position: 1,
                                 layout: .extended).positionLabel, "A shape")
@@ -265,10 +265,13 @@ final class ScaleLayoutTests: XCTestCase {
         """
         let run = try JSONDecoder().decode(ScaleRun.self, from: Data(legacy.utf8))
         XCTAssertEqual(run.layout, .box)
+        // The blob also predates `startsFromLowestRoot`, which must decode to false — a saved run keeps
+        // the note order it was authored with, even though a run created *now* starts on the root.
+        XCTAssertFalse(run.startsFromLowestRoot)
         // The blob pins position 1, so compare against an explicit position-1 box (the default seed now
         // opens on the flagship position 5 — ADR 0091 — so it's no longer the right yardstick here).
         XCTAssertEqual(run.ascendingNotes,
-                       ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1, octaves: 2)
-                           .ascendingNotes)
+                       ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 1, octaves: 2,
+                                startsFromLowestRoot: false).ascendingNotes)
     }
 }

@@ -119,19 +119,23 @@ extension CAGEDShape {
     }
 
     /// A **plain-language anchor** for a box (ADR 0091): where its lowest root note sits, e.g.
-    /// "root on low E · fret 5" — the concrete location shown in place of a CAGED letter, so a player
+    /// "Root on low E · Fret 5" — the concrete location shown in place of a CAGED letter, so a player
     /// reads a box by where their hand goes rather than by a shape name they may not know. Reads the
     /// generated notes, so it stays true for every scale, quality and key. Falls back to the lowest
     /// fretted note when a run holds no root (a one-octave box trim can omit it).
+    ///
+    /// Sentence-capitalised because it is displayed as a **label**, not as running prose (2026-07-28).
+    /// The string names stay as they are read — "low E", "high e" — so the case still carries the
+    /// thick-string/thin-string distinction a player relies on.
     static func rootAnchor(in notes: [FretNote], root: Int) -> String {
         guard let anchor = notes.filter({ degree(of: $0, root: root) == 0 })
             .min(by: { midi($0) < midi($1) }) else {
             let fret = notes.map(\.fret).filter { $0 > 0 }.min() ?? notes.map(\.fret).min() ?? 1
-            return "from fret \(fret)"
+            return "From fret \(fret)"
         }
         return anchor.fret == 0
-            ? "root: open \(stringName(anchor.string))"
-            : "root on \(stringName(anchor.string)) · fret \(anchor.fret)"
+            ? "Root: open \(stringName(anchor.string))"
+            : "Root on \(stringName(anchor.string)) · Fret \(anchor.fret)"
     }
 
     /// Place the `position` box for a run whose tonic is `root`, borrowing the CAGED boxes of the
@@ -157,6 +161,16 @@ extension CAGEDShape {
     static func trimmed(_ notes: [FretNote], toOctaves octaves: Int) -> [FretNote] {
         guard octaves < 2, let low = notes.first.map(midi) else { return notes }
         return notes.filter { midi($0) <= low + 12 }
+    }
+
+    /// Drop the notes below a run's **lowest root**, so an ascent begins on the tonic rather than on
+    /// whichever box tone happens to be lowest (2026-07-28). Standard practice for learning a box — the
+    /// run then starts and ends on the note the shape is named for — and pure: `notes` ascend, so the
+    /// first root found *is* the lowest one, and the result still climbs strictly. A run holding no root
+    /// (a one-octave trim can omit it) is returned untouched.
+    static func startingAtLowestRoot(_ notes: [FretNote], root: Int) -> [FretNote] {
+        guard let start = notes.firstIndex(where: { degree(of: $0, root: root) == 0 }) else { return notes }
+        return Array(notes[start...])
     }
 
     /// Slide a transposed box down whole octaves until its lowest note sits within the first twelve
