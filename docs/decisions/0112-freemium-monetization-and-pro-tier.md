@@ -30,8 +30,16 @@ access is safe to sell flat.
 Metronome, songs/library, loops, journal, **takes/recording**, and **all strumming exercises**.
 Plus a **permanent taste** of the paid layer: a curated set of **seeded preset exercises** a free
 user can *run* — the low-E minor-pentatonic box, an open-chord set, **picking warm-up, and legato** —
-and the ability to build **one** manual routine from free exercises. The taste is the hook — a free
-user *experiences* the structured layer, hits its edge, and converts. It never expires with the trial.
+and **one curated starter routine** they can run forever (**Morning Warm-up**). The taste is the hook
+— a free user *experiences* the structured layer, hits its edge, and converts. It never expires with
+the trial.
+
+> **Amended 2026-07-28 (`pocket-191`).** This previously read "the ability to build **one** manual
+> routine from free exercises". **Routines are now Pro outright**, with a single curated routine
+> runnable (not editable) for free. The count-based allowance was dropped as unbuildable-without-
+> ambiguity: it needed a rule for *which* routine was the free one, and an answer for what happens to
+> the other nine when a trial lapses. A flat rule needs neither. The run-only allowance also **closes
+> a bypass** — see §Consequences.
 
 **The free line is running, not authoring.** Free users can *run* the curated presets (including
 picking warm-up and legato), but **authoring is Pro** — both *creating a new exercise from a Pro
@@ -148,9 +156,21 @@ app capabilities). The design:
 
 - Free is a genuinely useful app on its own (a serious practice companion), which protects
   App-Store standing and word-of-mouth; Pro is the structured layer that directs practice.
-- Entitlement gating is **template-scoped**: a template carries a free/Pro flag, and every exercise
-  or routine inherits its access from the templates it uses. This is the single mechanism the app
-  must enforce (and re-enforce at trial lapse).
+- Entitlement gating is **template-scoped** for exercises: a template carries a free/Pro flag, and
+  every exercise inherits its access from it. This is the single mechanism the app must enforce (and
+  re-enforce at trial lapse).
+- **Routines are gated as a whole, not by inheritance** (amended 2026-07-28). Inheritance was the
+  original idea — "a routine inherits its access from the templates it uses" — but it is *unsound* on
+  the run side: the routine player embeds the real `ExerciseRunView` per block with no per-block
+  check, so a free player could add a Pro drill to a hand-built routine and run it there, bypassing
+  the library's per-row lock in three taps. Making routines Pro, with the **one curated free-taste
+  routine whose blocks are free-tier or free-taste by construction**, closes that by construction:
+  the only routine a free player can ever play is one we control. `RoutinePresetsTests` pins that
+  cleanliness so a future edit to the curated recipe can't silently reopen the hole.
+- Routines have **five** producers, all of which must gate: the routines library `+`, its
+  Quick-session wand, the planner's "Today's session", the Library's collection→session builder
+  (ADR 0118), and a song's "Build a routine for this song" (ADR 0111). Two of those live outside the
+  Practice space, which is exactly how a gate gets missed — any *new* producer must gate too.
 - Recording is now unambiguously **Free**, formally reversing the parked ADR-0069 monetization idea.
 - Pro price is set (£5.99/mo · £49.99/yr); only the **Oracle** price stays open — it needs a
   unit-economics model (Claude API cost per call × caps, net of Apple's cut) before it is set.

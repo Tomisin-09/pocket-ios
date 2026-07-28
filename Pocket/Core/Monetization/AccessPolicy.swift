@@ -96,4 +96,44 @@ enum AccessPolicy {
         guard let slug else { return false }
         return freeTasteSlugs.contains(slug)
     }
+
+    // MARK: - Routines
+
+    /// May the player **author** routines at all — build a new one, edit an existing one, or accept a
+    /// generated session from the planner / a collection / a song (ADR 0112)? **Routines are Pro**,
+    /// full stop.
+    ///
+    /// This replaced an earlier "one free manual routine" allowance, which needed a count, a rule for
+    /// *which* routine was the free one, and an answer for what happens to the other nine when a trial
+    /// lapses. A flat rule needs none of that. Note there is no free-tier escape hatch here (unlike
+    /// `canAuthor`, where free templates exist) — a routine has no template axis of its own; it
+    /// inherits from the units it strings together, and composing *is* the authoring act.
+    static func canAuthorRoutine(isPro: Bool) -> Bool { isPro }
+
+    /// May the player **run** this routine? Pro unlocks everything; a free player may run exactly the
+    /// curated free-taste routine (`isFreeTasteRoutine`) and nothing else.
+    ///
+    /// The narrow run allowance is what closes the **routine bypass**: because a free player can only
+    /// ever play a routine we curated — one whose blocks are all free-tier or free-taste by
+    /// construction — there is no way to smuggle a Pro drill into a routine and run it there, which
+    /// the per-row library gate alone could not prevent.
+    static func canRunRoutine(isPro: Bool, isFreeTasteRoutine: Bool = false) -> Bool {
+        isPro || isFreeTasteRoutine
+    }
+
+    /// The **permanent free taste** on the routine axis (ADR 0112): the single curated starter routine
+    /// a free player may *run* forever — Morning Warm-up, whose every block is a free-tier template or
+    /// a free-taste exercise slug. A **run** allowance only; it never grants authoring, so a free
+    /// player can practise it but not edit it (the same run-not-author line the exercise freebies
+    /// draw). A frozen identifier matching the `presetSlug` the seeder stamps.
+    static let freeTasteRoutineSlugs: Set<String> = [
+        "morning-warm-up"       // warm-ups + picking + the pentatonic box (see `RoutinePresets`)
+    ]
+
+    /// Whether `slug` (a `Routine.presetSlug`) is the curated free-taste routine. `nil` (a user-built
+    /// routine) is never free taste.
+    static func isFreeTasteRoutine(slug: String?) -> Bool {
+        guard let slug else { return false }
+        return freeTasteRoutineSlugs.contains(slug)
+    }
 }

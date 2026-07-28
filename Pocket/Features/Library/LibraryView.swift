@@ -8,6 +8,10 @@ import UniformTypeIdentifiers
 /// than owning one, so its toolbar and row pushes land in the home's navigation.
 struct LibraryView: View {
     @Environment(\.modelContext) private var context
+    /// Entitlement + the shared paywall (ADR 0112) — the collection-session banner builds a routine,
+    /// which is Pro.
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
     @Query(sort: \Song.title) private var songs: [Song]
     @State private var importing = false
     @State private var importError: String?
@@ -106,8 +110,15 @@ struct LibraryView: View {
     private var collectionSessionBar: some View {
         if selectedCollections.count == 1, let collection = selectedCollections.first,
            CollectionSessionBuilder.canBuild(for: collection, in: songs) {
-            Button { sessionCollection = collection } label: {
-                Label("Build a session from “\(collection)”", systemImage: "wand.and.stars")
+            Button {
+                // A generated collection session is a real `Routine` — authoring, so Pro (ADR 0112).
+                guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
+                    return presentPaywall(.routine)
+                }
+                sessionCollection = collection
+            } label: {
+                Label("Build a session from “\(collection)”",
+                      systemImage: isPro ? "wand.and.stars" : "lock.fill")
                     .font(.futura(.subheadline, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)

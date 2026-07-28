@@ -12,6 +12,9 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     case proExercise
     /// The deterministic "Today's session" planner.
     case planner
+    /// Any routine surface — running a Pro routine, building one by hand, or accepting a session
+    /// generated from a collection or a song. Routines are Pro apart from the curated free taste.
+    case routine
     /// A generic entry point (e.g. a "Go Pro" affordance) with no specific locked intent.
     case general
 
@@ -24,6 +27,7 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .newExercise: return "Build your own exercises with Red Moon Pro"
         case .proExercise: return "This exercise is part of Red Moon Pro"
         case .planner: return "Today's session is part of Red Moon Pro"
+        case .routine: return "Routines are part of Red Moon Pro"
         case .general: return "Unlock the full practice workbench"
         }
     }

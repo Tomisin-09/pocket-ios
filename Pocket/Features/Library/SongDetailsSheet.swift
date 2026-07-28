@@ -15,6 +15,10 @@ struct SongDetailsSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    /// Entitlement + the shared paywall (ADR 0112) — "Build a routine for this song" produces a real
+    /// `Routine`, which is Pro. Linking exercises to a song stays free (it's not authoring content).
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
     /// Every exercise, to offer in the link picker (ADR 0111). Sorted by name, like the library.
     @Query(sort: \Exercise.name) private var allExercises: [Exercise]
     @State private var showingExercisePicker = false
@@ -229,11 +233,7 @@ struct SongDetailsSheet: View {
                 Label("Link exercises", systemImage: "plus.circle")
                     .foregroundStyle(PocketColor.practice)
             }
-            Button { buildingRoutine = true } label: {
-                Label("Build a routine for this song", systemImage: "wand.and.stars")
-                    .foregroundStyle(canBuildRoutine ? PocketColor.practice : PocketColor.textSecondary)
-            }
-            .disabled(!canBuildRoutine)
+            buildRoutineButton
         } header: {
             Text("Exercises for this song")
         } footer: {
@@ -308,6 +308,26 @@ struct SongDetailsSheet: View {
 
     private var tempoText: String {
         song.bpm.map { "\($0) BPM" } ?? "—"
+    }
+}
+
+extension SongDetailsSheet {
+    /// "Build a routine for this song" (ADR 0111) — a **Pro** action, since it materialises a real
+    /// `Routine` (ADR 0112). A free player keeps the row tappable so it can open the paywall; only a
+    /// song with nothing linked disables it. In an extension to keep the view under the body cap.
+    @ViewBuilder
+    var buildRoutineButton: some View {
+        Button {
+            guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
+                return presentPaywall(.routine)
+            }
+            buildingRoutine = true
+        } label: {
+            Label("Build a routine for this song",
+                  systemImage: isPro ? "wand.and.stars" : "lock.fill")
+                .foregroundStyle(canBuildRoutine ? PocketColor.practice : PocketColor.textSecondary)
+        }
+        .disabled(isPro && !canBuildRoutine)
     }
 }
 

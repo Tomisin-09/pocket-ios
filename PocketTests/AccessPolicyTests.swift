@@ -108,4 +108,44 @@ final class AccessPolicyTests: XCTestCase {
     func testExactlyFourFreeTasteSlugs() {
         XCTAssertEqual(AccessPolicy.freeTasteSlugs.count, 4)
     }
+
+    // MARK: - Routines (ADR 0112 — routines are Pro, one curated free taste)
+
+    func testAuthoringARoutineAlwaysNeedsPro() {
+        XCTAssertTrue(AccessPolicy.canAuthorRoutine(isPro: true))
+        XCTAssertFalse(AccessPolicy.canAuthorRoutine(isPro: false))
+    }
+
+    func testProRunsAnyRoutine() {
+        XCTAssertTrue(AccessPolicy.canRunRoutine(isPro: true))
+        XCTAssertTrue(AccessPolicy.canRunRoutine(isPro: true, isFreeTasteRoutine: false))
+    }
+
+    func testFreePlayerRunsOnlyTheFreeTasteRoutine() {
+        XCTAssertTrue(AccessPolicy.canRunRoutine(isPro: false, isFreeTasteRoutine: true))
+        XCTAssertFalse(AccessPolicy.canRunRoutine(isPro: false, isFreeTasteRoutine: false))
+    }
+
+    /// The default matters: a caller that forgets to pass provenance must fail **closed**, not open.
+    func testRunRoutineDefaultsToLockedForAFreePlayer() {
+        XCTAssertFalse(AccessPolicy.canRunRoutine(isPro: false))
+    }
+
+    func testIsFreeTasteRoutineRecognisesOnlyMorningWarmUp() {
+        XCTAssertTrue(AccessPolicy.isFreeTasteRoutine(slug: "morning-warm-up"))
+        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: "picking-builder"))
+        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: "rhythm-and-changes"))
+        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: nil))   // a user-built routine
+    }
+
+    func testExactlyOneFreeTasteRoutine() {
+        XCTAssertEqual(AccessPolicy.freeTasteRoutineSlugs.count, 1)
+    }
+
+    /// The slug the policy allows must be the one the seeder actually stamps — otherwise the free
+    /// routine silently Pro-locks. Pins the two constants together.
+    func testFreeTasteRoutineSlugMatchesTheSeededSpec() {
+        XCTAssertTrue(AccessPolicy.freeTasteRoutineSlugs.contains(RoutinePresets.freeTasteSlug))
+        XCTAssertEqual(RoutinePresets.specs.first?.slug, RoutinePresets.freeTasteSlug)
+    }
 }

@@ -21,9 +21,13 @@ enum RoutinePresets {
         case rest
     }
 
-    /// The seed spec for one routine: a name and its ordered blocks.
+    /// The seed spec for one routine: a name, a stable provenance slug, and its ordered blocks.
     struct Spec {
         let name: String
+        /// Stable provenance identifier stamped onto the seeded `Routine.presetSlug` (ADR 0112). The
+        /// free-taste run allowance and the one-time backfill both key off it, so it must never
+        /// change even if `name` is reworded.
+        let slug: String
         let blocks: [Block]
     }
 
@@ -36,20 +40,35 @@ enum RoutinePresets {
     private static let chromaticWarmup = "Chromatic Warm-up"
     private static let popChanges = "Pop Changes — G · D · Em · C"
     private static let groovePopChanges = "Groove — Pop Changes"
+    private static let aMinorPentatonic = "A Minor Pentatonic"
 
     /// The shipped set — three routines, enough to show what a routine *is* (mixed drills with rests,
     /// one focus per routine) without crowding an empty space.
+    ///
+    /// **Morning Warm-up is the free taste** (ADR 0112): every one of its blocks is already either a
+    /// free-tier template (`.warmup`) or a free-taste exercise slug (`alternate-picking`,
+    /// `a-minor-pentatonic`), so a free player running it reaches no Pro content — the routine is
+    /// clean *by construction*, and must stay that way. It closes on the pentatonic box so the free
+    /// taste covers **lead** playing too, not only warm-ups and picking. The other two deliberately
+    /// are not clean: Picking Builder pulls in `string-skipping` (`.picking`) and Rhythm & Changes
+    /// pulls in `chord-changes` (`.chords`) plus a `.strumChords` groove, so they read as the shop
+    /// window for what Pro unlocks.
     static let specs: [Spec] = [
-        Spec(name: "Morning Warm-up",
+        Spec(name: "Morning Warm-up", slug: freeTasteSlug,
              blocks: [.exercise(spiderWalk), .exercise(chromaticWarmup),
-                      .rest, .exercise(alternatePicking)]),
-        Spec(name: "Picking Builder",
+                      .rest, .exercise(alternatePicking),
+                      .rest, .exercise(aMinorPentatonic)]),
+        Spec(name: "Picking Builder", slug: "picking-builder",
              blocks: [.exercise(alternatePicking), .exercise(stringSkipping),
                       .rest, .exercise(legato)]),
-        Spec(name: "Rhythm & Changes",
+        Spec(name: "Rhythm & Changes", slug: "rhythm-and-changes",
              blocks: [.exercise(chordChanges), .exercise(popChanges),
                       .rest, .exercise(groovePopChanges)])
     ]
+
+    /// The slug of the one curated routine a free player may **run** forever (ADR 0112). Frozen —
+    /// `AccessPolicy.freeTasteRoutineSlugs` matches on it.
+    static let freeTasteSlug = "morning-warm-up"
 
     /// Build one preset routine (un-inserted) from a name→exercise lookup, resolving each exercise
     /// block by name. Unresolved exercise blocks are skipped; a routine that resolves **no** exercise
@@ -69,9 +88,38 @@ enum RoutinePresets {
         }
         guard resolvedAnExercise else { return nil }
         let routine = Routine(name: spec.name)
+        routine.presetSlug = spec.slug
         for item in items { item.routine = routine }
         routine.items = items
         return routine
+    }
+
+    /// Pure lookup: the stable `slug` of the shipped spec whose `name` exactly matches, or `nil` if
+    /// none does. The unit-testable core of `backfillPresetSlugsIfNeeded` — no store, so a renamed
+    /// routine simply doesn't match and stays user-built. Name alone is the key here (unlike the
+    /// exercise backfill's name + template) because a `Routine` carries no template axis.
+    static func slug(forName name: String) -> String? {
+        specs.first { $0.name == name }?.slug
+    }
+
+    /// `UserDefaults` key guarding the one-time provenance backfill (ADR 0112).
+    static let presetSlugBackfillKey = "routinePresetSlugBackfill.v1"
+
+    /// **One-time provenance backfill** (ADR 0112): stamp `presetSlug` onto curated routines seeded on
+    /// an earlier build, before the slug field existed — without it, a player who already had the app
+    /// would find their Morning Warm-up Pro-locked, since the free-taste allowance keys off the slug.
+    /// Fetches **all** routines (never an optional `#Predicate` — `presetSlug != nil` starves the main
+    /// thread) and stamps any unslugged one whose name matches a shipped spec. Guarded so it runs at
+    /// most once; safe to call on every launch after `seedIfNeeded`.
+    static func backfillPresetSlugsIfNeeded(into context: ModelContext,
+                                            defaults: UserDefaults = .standard) {
+        guard !defaults.bool(forKey: presetSlugBackfillKey) else { return }
+        let existing = (try? context.fetch(FetchDescriptor<Routine>())) ?? []
+        for routine in existing where routine.presetSlug == nil {
+            if let match = slug(forName: routine.name) { routine.presetSlug = match }
+        }
+        try? context.save()
+        defaults.set(true, forKey: presetSlugBackfillKey)
     }
 
     /// `UserDefaults` key recording that the one-time seed has run. Versioned like `PracticePresets`

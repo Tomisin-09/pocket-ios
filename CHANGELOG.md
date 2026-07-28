@@ -39,6 +39,18 @@ All notable changes to Pocket are documented here. Format loosely follows
   in-app billing UI), free players an **Upgrade** entry into the paywall, and **Restore Purchases** either
   way. A DEBUG Settings control flips Free/Pro to exercise it all. Ships in the paywall build, **not v1**
   (v1 stays free).
+- **Routines are Red Moon Pro, with one curated routine free forever (ADR 0112, amended).** Replaces the
+  ADR's original "build one manual routine free" allowance — a count needed a rule for *which* routine
+  was free and an answer for the rest at trial lapse. Now: authoring any routine is Pro, and a free
+  player may **run** (never edit) the curated **Morning Warm-up**, whose every block is a free-tier
+  template or a free-taste preset — warm-ups, alternate picking, and the A-minor-pentatonic box. This
+  also **closes a bypass**: the routine player embeds the real exercise run screen per block with no
+  per-block check, so a free player could previously add a Pro drill to a routine and run it there,
+  around the library's per-row lock. All five routine producers now gate — the library `+`, the
+  Quick-session wand, "Today's session", the collection→session builder, and "Build a routine for this
+  song" — and locked routines stay **visible but badged**, the free one unbadged and playable. Adds
+  `Routine.presetSlug` provenance (additive optional, non-lossy migration, one-time back-fill by name so
+  an existing install's Morning Warm-up isn't locked).
 
 ### Changed
 - **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the
