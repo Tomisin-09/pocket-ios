@@ -43,14 +43,47 @@ struct ArpeggioRunEditor: View {
                 RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName)
             }
             if run.positionCount(for: instrument) > 1 { positionRow }
+            advanced
+        }
+        .hearStopsOnDisappear()
+    }
+
+    // MARK: - Advanced
+
+    /// **Arpeggio · Root · Position stay above the fold**; everything that shapes how the box is *played*
+    /// drops into one Advanced disclosure (2026-07-28) — Rhythm, Octaves, Up-and-back and the starting
+    /// note. There is no Sequence axis on arpeggios. The collapsed summary carries the deviations.
+    private var advanced: some View {
+        EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
+                         summaryParts: advancedSummary, tint: tint) {
+            RhythmRow(notesPerBeat: subdivisionBinding, accessibilityLabel: "Arpeggio rhythm", tint: tint)
             octavesRow
             Toggle("Up and back", isOn: roundTripBinding)
                 .font(.futura(.subheadline, weight: .semibold))
                 .tint(tint)
-            AdvancedSubdivisionRow(isExpanded: $showsAdvanced, notesPerBeat: subdivisionBinding,
-                                   accessibilityLabel: "Arpeggio subdivision", tint: tint)
+            lowestRootToggle
         }
-        .hearStopsOnDisappear()
+    }
+
+    private var lowestRootToggle: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Toggle("Start from the lowest root note", isOn: lowestRootBinding)
+                .font(.futura(.subheadline, weight: .semibold))
+                .tint(tint)
+            Text("Begin on \(run.rootName) instead of the box's lowest chord tone.")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// The rhythm, then only what differs from the defaults — see `ScaleRunEditor.advancedSummary`.
+    private var advancedSummary: [String] {
+        var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
+        if run.octaves == 1 { parts.append("1 octave") }
+        if !run.roundTrip { parts.append("One way") }
+        if !run.startsFromLowestRoot { parts.append("From lowest note") }
+        return parts
     }
 
     // MARK: - Title
@@ -117,13 +150,20 @@ struct ArpeggioRunEditor: View {
 
     private func rebuilt(quality: ArpeggioQuality? = nil, rootPitchClass: Int? = nil,
                          position: Int? = nil, octaves: Int? = nil,
-                         roundTrip: Bool? = nil, notesPerBeat: Int? = nil) -> ArpeggioRun {
+                         roundTrip: Bool? = nil, notesPerBeat: Int? = nil,
+                         startsFromLowestRoot: Bool? = nil) -> ArpeggioRun {
         ArpeggioRun(quality: quality ?? run.quality,
                     rootPitchClass: rootPitchClass ?? run.rootPitchClass,
                     position: position ?? run.position,
                     octaves: octaves ?? run.octaves,
                     roundTrip: roundTrip ?? run.roundTrip,
-                    notesPerBeat: notesPerBeat ?? run.notesPerBeat)
+                    notesPerBeat: notesPerBeat ?? run.notesPerBeat,
+                    startsFromLowestRoot: startsFromLowestRoot ?? run.startsFromLowestRoot)
+    }
+
+    private var lowestRootBinding: Binding<Bool> {
+        Binding(get: { run.startsFromLowestRoot },
+                set: { run = rebuilt(startsFromLowestRoot: $0); haptic(.light) })
     }
 
     private var qualityBinding: Binding<ArpeggioQuality> {

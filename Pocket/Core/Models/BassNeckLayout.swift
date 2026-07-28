@@ -90,17 +90,18 @@ enum BassNeckLayout {
     }
 
     /// A plain-language anchor for the box (mirrors `CAGEDShape.rootAnchor`, ADR 0091): where its lowest
-    /// root note sits — "root on E · fret 3", or "root: open E" for an open-string tonic — read from the
-    /// generated notes so it stays true for every key.
+    /// root note sits — "Root on E · Fret 3", or "Root: open E" for an open-string tonic — read from the
+    /// generated notes so it stays true for every key. Sentence-capitalised in step with the guitar
+    /// anchor, since the two share the same position-label slot (2026-07-28).
     static func rootAnchor(in notes: [FretNote], root: Int, openMidi: [Int]) -> String {
         let count = openMidi.count
         guard let anchor = notes.filter({ degree(of: $0, root: root, openMidi: openMidi) == 0 })
             .min(by: { midi($0, openMidi: openMidi) < midi($1, openMidi: openMidi) }) else {
             let fret = notes.map(\.fret).filter { $0 > 0 }.min() ?? notes.map(\.fret).min() ?? 1
-            return "from fret \(fret)"
+            return "From fret \(fret)"
         }
         return anchor.fret == 0
-            ? "root: open \(stringName(anchor.string, of: count))"
-            : "root on \(stringName(anchor.string, of: count)) · fret \(anchor.fret)"
+            ? "Root: open \(stringName(anchor.string, of: count))"
+            : "Root on \(stringName(anchor.string, of: count)) · Fret \(anchor.fret)"
     }
 }

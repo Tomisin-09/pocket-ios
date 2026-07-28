@@ -46,15 +46,54 @@ struct ScaleRunEditor: View {
             // Bass is box-only (the diagonal / 3-notes-per-string layouts are guitar techniques, ADR 0116).
             if instrument == .guitar, run.scale.supportedLayouts.count > 1 { layoutRow }
             if run.positionCount(for: instrument) > 1 { positionRow }
+            advanced
+        }
+        .hearStopsOnDisappear()
+    }
+
+    // MARK: - Advanced
+
+    /// **Scale · Root · Layout · Position stay above the fold**; everything that shapes how the box is
+    /// *played* rather than which box it is drops into one Advanced disclosure (2026-07-28) — Rhythm,
+    /// Octaves, Sequence, Up-and-back and the starting note. The collapsed summary carries whatever
+    /// deviates from the defaults, so a run stays legible without opening it.
+    private var advanced: some View {
+        EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
+                         summaryParts: advancedSummary, tint: tint) {
+            RhythmRow(notesPerBeat: subdivisionBinding, accessibilityLabel: "Scale rhythm", tint: tint)
             if run.layout.usesOctaves { octavesRow }
             sequenceRow
             Toggle("Up and back", isOn: roundTripBinding)
                 .font(.futura(.subheadline, weight: .semibold))
                 .tint(tint)
-            AdvancedSubdivisionRow(isExpanded: $showsAdvanced, notesPerBeat: subdivisionBinding,
-                                   accessibilityLabel: "Scale subdivision", tint: tint)
+            // Box-only: the diagonal and 3-notes-per-string patterns are defined by their string-by-string
+            // fingering, so starting one part-way through would break the pattern being taught.
+            if run.layout == .box { lowestRootToggle }
         }
-        .hearStopsOnDisappear()
+    }
+
+    private var lowestRootToggle: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Toggle("Start from the lowest root note", isOn: lowestRootBinding)
+                .font(.futura(.subheadline, weight: .semibold))
+                .tint(tint)
+            Text("Begin on \(run.rootName) instead of the box's lowest note.")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// A terse read of what's inside the closed disclosure: the rhythm always, then only what *differs*
+    /// from the defaults — showing "Up and back" when it's on (the default) would be pure noise.
+    /// `EditorDisclosure` spells out the first couple and counts the rest, so this can grow safely.
+    private var advancedSummary: [String] {
+        var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
+        if run.layout.usesOctaves, run.octaves == 1 { parts.append("1 octave") }
+        if run.sequencePattern != .straight { parts.append(run.sequencePattern.displayName) }
+        if !run.roundTrip { parts.append("One way") }
+        if run.layout == .box, !run.startsFromLowestRoot { parts.append("From lowest note") }
+        return parts
     }
 
     // MARK: - Title
@@ -168,7 +207,8 @@ struct ScaleRunEditor: View {
     private func rebuilt(scale: GuitarScale? = nil, rootPitchClass: Int? = nil,
                          position: Int? = nil, octaves: Int? = nil,
                          roundTrip: Bool? = nil, notesPerBeat: Int? = nil,
-                         layout: ScaleLayout? = nil, sequence: SequencePattern? = nil) -> ScaleRun {
+                         layout: ScaleLayout? = nil, sequence: SequencePattern? = nil,
+                         startsFromLowestRoot: Bool? = nil) -> ScaleRun {
         ScaleRun(scale: scale ?? run.scale,
                  rootPitchClass: rootPitchClass ?? run.rootPitchClass,
                  position: position ?? run.position,
@@ -176,7 +216,13 @@ struct ScaleRunEditor: View {
                  roundTrip: roundTrip ?? run.roundTrip,
                  notesPerBeat: notesPerBeat ?? run.notesPerBeat,
                  layout: layout ?? run.layout,
-                 sequence: sequence ?? run.sequencePattern)
+                 sequence: sequence ?? run.sequencePattern,
+                 startsFromLowestRoot: startsFromLowestRoot ?? run.startsFromLowestRoot)
+    }
+
+    private var lowestRootBinding: Binding<Bool> {
+        Binding(get: { run.startsFromLowestRoot },
+                set: { run = rebuilt(startsFromLowestRoot: $0); haptic(.light) })
     }
 
     private var layoutBinding: Binding<ScaleLayout> {

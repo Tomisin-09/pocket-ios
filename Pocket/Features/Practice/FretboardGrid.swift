@@ -86,7 +86,7 @@ struct FretboardGrid: View {
                 fretSeparators(width: width, height: height)
                 nut(height: height)
                 inlayDots(width: width, height: height)
-                slideCues(width: width, height: height)
+                walkTrail(width: width, height: height)
                 notes(width: width, height: height)
             }
         }
@@ -94,9 +94,10 @@ struct FretboardGrid: View {
 
     /// The standard guitar position markers (single dot at 3·5·7·9·15·17·19·21, double at 12·24) that
     /// fall within the visible fret window — a faint orientation cue, same as the wood inlays on a
-    /// real neck, so "which position is this" reads at a glance without counting fret lines.
-    private static let singleInlayFrets: Set<Int> = [3, 5, 7, 9, 15, 17, 19, 21]
-    private static let doubleInlayFrets: Set<Int> = [12, 24]
+    /// real neck, so "which position is this" reads at a glance without counting fret lines. Internal
+    /// so the authoring boards mark the same frets from the same list rather than a second copy of it.
+    static let singleInlayFrets: Set<Int> = [3, 5, 7, 9, 15, 17, 19, 21]
+    static let doubleInlayFrets: Set<Int> = [12, 24]
 
     private func inlayDots(width: CGFloat, height: CGFloat) -> some View {
         let visible = lowestFret..<(lowestFret + span)
@@ -110,20 +111,42 @@ struct FretboardGrid: View {
         }
     }
 
-    /// The slide-teaching cues (ADR 0083 S8): for every note that slides in on the **same string**
-    /// from the one before it, a static arrow from the departed fret to the landed fret. Brightened
-    /// while its target note is active so the walk and the arrow read together; always drawn, so it
-    /// is the static "slide" badge when motion is off.
-    private func slideCues(width: CGFloat, height: CGFloat) -> some View {
-        ForEach(Array(drill.notes.enumerated()), id: \.offset) { index, note in
-            if let note, note.technique == .slide, index > 0, isVisible(note),
-               let previous = drill.notes[index - 1], previous.string == note.string {
-                SlideCue(fromX: noteX(previous.fret, in: width),
-                         toX: noteX(note.fret, in: width),
-                         midY: rowY(note.string, in: height))
-                    .stroke(tint.opacity(index == activeIndex ? 0.95 : 0.55),
-                            style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+    /// A faint **connector trail** from the note just played to the one lit now, drawn only while the
+    /// board is walking (2026-07-28). Sequenced runs — thirds, fourths, rolling groups — jump around a
+    /// box, and with every dot the same size the *direction* of the jump was the part that didn't read.
+    /// One segment, not a full path: the trail says "you came from there", it doesn't re-draw the run.
+    ///
+    /// **Slide seams travel this path too** (2026-07-28, amending ADR 0083 S8). The seams used to carry
+    /// a permanently-drawn arrow, which on an extended pentatonic meant a static board full of arrows
+    /// whatever the sequence — the clutter outweighed the cue. A seam now draws the same `SlideCue`
+    /// arrowhead, but *as* the trail: only while it's the step being played, when the instruction
+    /// "slide into this one" is actually actionable. The technique survives outside the walk in the
+    /// accessibility summary, which reads it per note.
+    @ViewBuilder
+    private func walkTrail(width: CGFloat, height: CGFloat) -> some View {
+        if let activeIndex, activeIndex > 0,
+           drill.notes.indices.contains(activeIndex),
+           let to = drill.notes[activeIndex], let from = drill.notes[activeIndex - 1],
+           from != to, isVisible(from), isVisible(to) {
+            let fromPoint = CGPoint(x: noteX(from.fret, in: width), y: rowY(from.string, in: height))
+            let toPoint = CGPoint(x: noteX(to.fret, in: width), y: rowY(to.string, in: height))
+            // A slide is a real move along one string, so it keeps its arrowhead and reads brighter;
+            // an ordinary jump between notes is just a faint direction hint.
+            let isSlide = to.technique == .slide && from.string == to.string
+            Group {
+                if isSlide {
+                    SlideCue(fromX: fromPoint.x, toX: toPoint.x, midY: toPoint.y)
+                        .stroke(tint.opacity(0.95),
+                                style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                } else {
+                    Path { path in
+                        path.move(to: fromPoint)
+                        path.addLine(to: toPoint)
+                    }
+                    .stroke(tint.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                }
             }
+            .allowsHitTesting(false)
         }
     }
 
@@ -165,19 +188,23 @@ struct FretboardGrid: View {
     /// is identifiable at rest, in the preview, and as the run walks over it.
     private func notes(width: CGFloat, height: CGFloat) -> some View {
         let active = activeIndex.flatMap { drill.note(at: $0) }
-        return ForEach(Array(drill.notes.enumerated()), id: \.offset) { index, note in
-            if let note, isVisible(note) {
-                let isActive = index == activeIndex
-                let isRoot = isRoot(note)
+        // One dot per distinct **position**, not per played slot: a sequenced run sounds the same fret
+        // several times, and a dot per slot stacked its own translucency into a solid white blob while
+        // the least-repeated notes stayed grey (see `FretboardDrill.plottedPositions`).
+        return ForEach(drill.plottedPositions, id: \.note) { entry in
+            if isVisible(entry.note) {
+                let isActive = activeIndex.map { entry.indices.contains($0) } ?? false
+                let isRoot = isRoot(entry.note)
                 let diameter = dotDiameter(isActive: isActive, isRoot: isRoot)
-                let focus = passFocusOpacity(noteIndex: index)
+                let focus = passFocusOpacity(noteIndices: entry.indices)
                 Circle()
                     .fill(fill(isActive: isActive, isRoot: isRoot))
                     .frame(width: diameter, height: diameter)
                     .overlay(rootRing(isRoot: isRoot, isActive: isActive))
-                    .overlay(noteLabel(note, isActive: isActive, isRoot: isRoot))
+                    .overlay(noteLabel(entry.note, isActive: isActive, isRoot: isRoot))
                     .opacity(focus)
-                    .position(x: noteX(note.fret, in: width), y: rowY(note.string, in: height))
+                    .position(x: noteX(entry.note.fret, in: width),
+                              y: rowY(entry.note.string, in: height))
                     .animation(.easeOut(duration: 0.07), value: isActive)
                     .animation(.easeOut(duration: 0.14), value: focus)
             }
@@ -197,15 +224,21 @@ struct FretboardGrid: View {
         return Set(groups).count > 1
     }
 
-    /// The opacity for a note under **pass focus** (ADR 0083 S2b): while a multi-pass run walks, notes
-    /// outside the active note's pass drop to a ghost so the eye locks onto the position being played;
-    /// the active pass, a single-pass run, and the static board (no `activeIndex`) render fully. The
-    /// reusable substrate slice 3's box focus will read the same way.
-    private func passFocusOpacity(noteIndex: Int) -> Double {
+    /// The opacity for a position under **pass focus** (ADR 0083 S2b): while a multi-pass run walks,
+    /// notes outside the active note's pass drop to a ghost so the eye locks onto the position being
+    /// played; the active pass, a single-pass run, and the static board (no `activeIndex`) render fully.
+    ///
+    /// Takes **every** slot that plays this position and keeps it lit if *any* of them belongs to the
+    /// active pass — a position the run revisits across passes is genuinely part of the pass being
+    /// played, so ghosting it because one of its other slots sits elsewhere would fade a note under the
+    /// hand right now.
+    private func passFocusOpacity(noteIndices: [Int]) -> Double {
         guard isMultiPass, let activeIndex, let groups = drill.noteGroups,
-              groups.indices.contains(noteIndex), groups.indices.contains(activeIndex)
+              groups.indices.contains(activeIndex)
         else { return 1 }
-        return groups[noteIndex] == groups[activeIndex] ? 1 : Self.offPassGhostOpacity
+        let activeGroup = groups[activeIndex]
+        let sharesPass = noteIndices.contains { groups.indices.contains($0) && groups[$0] == activeGroup }
+        return sharesPass ? 1 : Self.offPassGhostOpacity
     }
 
     /// Dot size — enlarged when captions are on so a "♭7" fits, and enlarged again when lit.

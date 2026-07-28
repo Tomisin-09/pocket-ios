@@ -76,7 +76,7 @@ final class BassNeckLayoutTests: XCTestCase {
         let offsets = ScaleNeckLayout.toneOffsets(.minorPentatonic)
         let notes = BassNeckLayout.box(offsets: offsets, root: 4, openMidi: bassOpenMidi)   // E
         XCTAssertEqual(BassNeckLayout.rootAnchor(in: notes, root: 4, openMidi: bassOpenMidi),
-                       "root: open E")
+                       "Root: open E")
     }
 
     func testStringNamesAreBassStandard() {

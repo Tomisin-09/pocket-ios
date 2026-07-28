@@ -78,6 +78,11 @@ struct ArpeggioRun: Codable, Equatable {
     var roundTrip: Bool
     /// Evenly-spaced notes per beat (default eighths). Clamped to at least 1.
     var notesPerBeat: Int
+    /// Whether the run begins on the box's **lowest root** — the tonic the arpeggio is named for —
+    /// rather than on whichever chord tone sits lowest in the box (2026-07-28). Stored on the recipe and
+    /// never read at render time, with split defaults: `true` for a run created now, decode-defaulting
+    /// to `false` so nothing already saved reorders itself. Mirrors `ScaleRun.startsFromLowestRoot`.
+    var startsFromLowestRoot: Bool
 
     /// The decoded quality — unknown raw falls back to the minor seventh.
     var quality: ArpeggioQuality { ArpeggioQuality(storage: qualityRaw) }
@@ -88,6 +93,7 @@ struct ArpeggioRun: Codable, Equatable {
          octaves: Int = 2,
          roundTrip: Bool = true,
          notesPerBeat: Int = 2,
+         startsFromLowestRoot: Bool = true,
          version: Int = ArpeggioRun.currentVersion) {
         self.version = version
         self.qualityRaw = quality.rawValue
@@ -96,6 +102,26 @@ struct ArpeggioRun: Codable, Equatable {
         self.octaves = min(2, max(1, octaves))
         self.roundTrip = roundTrip
         self.notesPerBeat = max(1, notesPerBeat)
+        self.startsFromLowestRoot = startsFromLowestRoot
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case version, qualityRaw, rootPitchClass, position, octaves, roundTrip, notesPerBeat
+        case startsFromLowestRoot
+    }
+
+    /// Custom decode so `startsFromLowestRoot` defaults when absent (T4 — decode-time default, no store
+    /// migration); an older blob missing it plays in exactly the order it always did.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        version = try container.decode(Int.self, forKey: .version)
+        qualityRaw = try container.decode(String.self, forKey: .qualityRaw)
+        rootPitchClass = (((try container.decode(Int.self, forKey: .rootPitchClass) % 12) + 12) % 12)
+        position = min(max(1, try container.decode(Int.self, forKey: .position)), CAGEDShape.allCases.count)
+        octaves = min(2, max(1, try container.decode(Int.self, forKey: .octaves)))
+        roundTrip = try container.decode(Bool.self, forKey: .roundTrip)
+        notesPerBeat = max(1, try container.decode(Int.self, forKey: .notesPerBeat))
+        startsFromLowestRoot = try container.decodeIfPresent(Bool.self, forKey: .startsFromLowestRoot) ?? false
     }
 }
 
@@ -111,7 +137,9 @@ extension ArpeggioRun {
     /// The number of CAGED positions offered — always the five boxes.
     var positionCount: Int { CAGEDShape.allCases.count }
 
-    /// The lowest fret the current position's box occupies — shown as "Anchored at fret N".
+    /// The lowest fret the current position's box occupies — shown as "Anchored at fret N". Reads the
+    /// whole box, so "start from the lowest root" moves where the run *begins* without relabelling where
+    /// the hand *sits*.
     var anchorFret: Int { boxNotes.map(\.fret).min() ?? 1 }
 
     /// The player-facing name for the current position — the box's **root anchor** (ADR 0091), "root on
@@ -125,7 +153,7 @@ extension ArpeggioRun {
 
     /// A plain-language location for the current box (ADR 0091), e.g. "root on low E · fret 5" — where
     /// the box's lowest root note actually sits, shown under the box number in place of the CAGED letter.
-    var rootAnchor: String { CAGEDShape.rootAnchor(in: ascendingNotes, root: rootPitchClass) }
+    var rootAnchor: String { CAGEDShape.rootAnchor(in: boxNotes, root: rootPitchClass) }
 
     /// The flagship box for this quality/key — the root-position 6th-string box a player learns first
     /// (ADR 0091), computed per quality so it tracks the famous box whatever the CAGED offset.
@@ -149,8 +177,15 @@ extension ArpeggioRun {
                                degrees: quality.degrees)
     }
 
-    /// The ascending run: the full box for two octaves, or its lower octave for one.
-    var ascendingNotes: [FretNote] { CAGEDShape.trimmed(boxNotes, toOctaves: octaves) }
+    /// The ascending run: the full box for two octaves, or its lower octave for one — begun on the box's
+    /// lowest root when the run asks for it. Aligned *before* the octave trim, so a one-octave run spans a
+    /// true root-to-root octave instead of a partial one above a dropped low chord tone.
+    var ascendingNotes: [FretNote] {
+        let placed = startsFromLowestRoot
+            ? CAGEDShape.startingAtLowestRoot(boxNotes, root: rootPitchClass)
+            : boxNotes
+        return CAGEDShape.trimmed(placed, toOctaves: octaves)
+    }
 
     /// One cycle of notes: the ascending run, then (when `roundTrip`) a descent that omits the shared
     /// peak and start so a looping cycle never double-hits a note.

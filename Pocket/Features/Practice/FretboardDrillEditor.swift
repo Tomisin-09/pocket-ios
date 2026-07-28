@@ -25,15 +25,28 @@ struct FretboardDrillEditor: View {
     var guideCatalog: [ScaleReference] = ScaleReference.all
 
     /// The slot the next placed note lands in — highlighted in the strip and reflected on the board.
-    @State private var selectedSlot = 0
+    /// Non-private so the board half of this editor (`+Board.swift`) can read it.
+    @State var selectedSlot = 0
     /// The fret the horizontally-scrollable neck should scroll into view — set when a placed slot is
     /// selected so its note comes into view, consumed by the board's `ScrollViewReader`.
-    @State private var scrollTargetFret: Int?
+    @State var scrollTargetFret: Int?
+    /// The board cell currently **pulsing** — set when a slot carrying that note is selected, cleared
+    /// shortly after, so the eye is led from the strip to the dot (2026-07-28). `pulseToken` retriggers
+    /// the clear-after task when the *same* cell is tapped twice, which `pulsingCell` alone wouldn't.
+    @State var pulsingCell: FretNote?
+    @State private var pulseToken = 0
     /// The global note-caption preference — shown on the preview strip above (not on the placement
     /// board below, which stays focused on *where*, not *what*). Shared with every other fretboard
     /// editor and the live practice run (ADR 0065 T10).
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
-    private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
+    /// A hand-placed drill usually names no root, so an Interval mode inherited from a scale editor
+    /// resolves to Off here rather than silently drawing no captions at all (2026-07-28).
+    private var labelMode: FretLabelMode {
+        (FretLabelMode(rawValue: storedLabelMode) ?? .none).resolved(hasRoot: hasRoot)
+    }
+    /// Whether this drill names a tonal centre — a hand-drawn board doesn't; one promoted from a
+    /// generated run can.
+    private var hasRoot: Bool { drill.rootPitchClass != nil }
     /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
     /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
     /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
@@ -49,9 +62,9 @@ struct FretboardDrillEditor: View {
     private static let maxHistory = 100
 
     /// Whether the guide is on and a scale is chosen.
-    private var referenceActive: Bool { referenceEnabled && referenceScale != nil }
+    var referenceActive: Bool { referenceEnabled && referenceScale != nil }
     /// The pitch classes the guide ghosts, for the chosen scale + key.
-    private var referencePitchClasses: Set<Int> {
+    var referencePitchClasses: Set<Int> {
         referenceScale?.pitchClasses(root: referenceRoot) ?? []
     }
     /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S4).
@@ -64,7 +77,9 @@ struct FretboardDrillEditor: View {
 
     /// The full neck the scrollable board draws — frets 0…`maxFret`. Wide enough for any hand position;
     /// the board scrolls horizontally rather than paging a 5-fret window (device feedback 2026-07-23).
-    private static let maxFret = 15
+    /// **24, not 22** (2026-07-28): `FretboardDrill` already accepted the full range and only this editor
+    /// capped it, and 24 gives the octave double-inlay at 12 the partner that tells the two apart.
+    static let maxFret = 24
     /// Ceiling on the Bars stepper — a custom drill can span up to this many bars of the exercise meter.
     private static let maxBars = 8
     private var barCount: Int { drill.barCount(beatsPerBar: beatsPerBar) }
@@ -72,7 +87,7 @@ struct FretboardDrillEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
-                                       playToken: $playOnceToken, tint: tint)
+                                       playToken: $playOnceToken, tint: tint, hasRoot: hasRoot)
             FretboardDrillPreview(drill: drill, tint: tint, labelMode: labelMode,
                                   playOnceToken: playOnceToken)
             resolutionPicker
@@ -87,6 +102,11 @@ struct FretboardDrillEditor: View {
                 .foregroundStyle(PocketColor.textSecondary)
         }
         .hearStopsOnDisappear()
+        .task(id: pulseToken) {
+            guard pulsingCell != nil else { return }
+            try? await Task.sleep(for: .seconds(Self.pulseSeconds))
+            pulsingCell = nil
+        }
     }
 
     // MARK: - Subdivision
@@ -166,9 +186,7 @@ struct FretboardDrillEditor: View {
         let note = drill.notes.indices.contains(index) ? drill.notes[index] : nil
         let isSelected = index == selectedSlot
         return Button {
-            selectedSlot = index
-            if let note { scrollTargetFret = note.fret }
-            haptic(.light)
+            select(index, note: note)
         } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 7)
@@ -184,6 +202,23 @@ struct FretboardDrillEditor: View {
         .accessibilityLabel("Slot \(index + 1): \(slotAccessibility(note))")
         .accessibilityHint("Tap to select")
     }
+
+    /// Select a slot and **link it to the board**: scroll its note into view (as before) and pulse the
+    /// dot itself (2026-07-28). Sequenced runs reuse the same frets at several steps, and the strip
+    /// used to leave you hunting for which dot the selected step meant — scrolling alone didn't say
+    /// *which* of the dots now on screen it was. Dot sizes stay as they are; only the link is new.
+    private func select(_ index: Int, note: FretNote?) {
+        selectedSlot = index
+        if let note {
+            scrollTargetFret = note.fret
+            pulsingCell = note
+            pulseToken += 1
+        }
+        haptic(.light)
+    }
+
+    /// How long a tapped dot stays enlarged before easing back.
+    private static let pulseSeconds: Double = 0.45
 
     @ViewBuilder
     private func slotGlyph(_ note: FretNote?) -> some View {
@@ -203,101 +238,12 @@ struct FretboardDrillEditor: View {
         }
     }
 
-    // MARK: - Fretboard
-
-    /// The placement neck: pinned string labels on the left, then a **horizontally-scrollable** full
-    /// board (frets 0…`maxFret`) so any hand position is reachable without paging a window. Selecting a
-    /// placed slot scrolls its fret into view via the `ScrollViewReader` (keyed on the fret-number row).
-    private var board: some View {
-        HStack(alignment: .center, spacing: 8) {
-            VStack(spacing: 4) {
-                ForEach(0..<drill.stringCount, id: \.self) { row in
-                    Text(FretboardGrid.stringName(row, of: drill.stringCount))
-                        .font(.futura(.caption2, weight: .semibold))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .frame(height: 30)
-                }
-                Color.clear.frame(width: 1, height: 14)   // aligns labels against the fret-number row
-            }
-            .frame(width: 16)   // fixed gutter — matches FretboardGrid so the two boards line up
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    VStack(spacing: 4) {
-                        ForEach(0..<drill.stringCount, id: \.self) { row in
-                            HStack(spacing: 4) {
-                                ForEach(0...Self.maxFret, id: \.self) { fret in
-                                    boardCell(string: row, fret: fret)
-                                }
-                            }
-                        }
-                        fretNumbers
-                    }
-                }
-                .onChange(of: scrollTargetFret) { _, fret in
-                    guard let fret else { return }
-                    withAnimation(.easeInOut(duration: 0.2)) { proxy.scrollTo(fret, anchor: .center) }
-                }
-            }
-        }
-    }
-
-    private func boardCell(string: Int, fret: Int) -> some View {
-        let cell = FretNote(string: string, fret: fret)
-        let isSelected = drill.note(at: selectedSlot) == cell
-        let isUsed = drill.notes.contains(cell)
-        // Resolve in the drill's own tuning so the guide overlay ghosts a scale's notes on the right
-        // frets for bass, not guitar's (ADR 0116 S5). Scale pitch classes are tuning-independent.
-        let pitchClass = drill.pitchClass(of: cell)
-        let inGuide = referenceActive && referencePitchClasses.contains(pitchClass)
-        let isGuideRoot = inGuide && pitchClass == referenceRoot
-        return Button {
-            placeOrClear(cell)
-        } label: {
-            Circle()
-                .fill(fill(isSelected: isSelected, isUsed: isUsed,
-                           inGuide: inGuide, isGuideRoot: isGuideRoot))
-                .frame(width: 24, height: 24)
-                .overlay(Circle().stroke(PocketColor.surfaceBorder, lineWidth: isSelected ? 0 : 1))
-                .frame(width: 30, height: 30)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(FretboardGrid.stringName(string, of: drill.stringCount)) "
-                            + (fret == 0 ? "open" : "fret \(fret)")
-                            + (inGuide ? ", in guide" : ""))
-        .accessibilityHint(isSelected ? "Placed here — tap to clear" : "Tap to place")
-    }
-
-    /// Cell colour by role (T10): selected slot in the tint, notes used by other slots a faint ink,
-    /// empty cells near-clear. With the guide on, a cell in the ghosted scale is faintly tinted (its
-    /// **root** stronger) so the shape reads through the board — a tracing aid, no snapping.
-    private func fill(isSelected: Bool, isUsed: Bool, inGuide: Bool, isGuideRoot: Bool) -> Color {
-        if isSelected { return tint }
-        if isUsed { return PocketColor.textPrimary.opacity(0.18) }
-        if isGuideRoot { return tint.opacity(0.45) }
-        if inGuide { return tint.opacity(0.20) }
-        return PocketColor.surfaceSubtle.opacity(0.5)
-    }
-
-    /// The fret-number ruler under the board — one label per fret across the full neck. Each carries its
-    /// fret as a scroll `.id` so the `ScrollViewReader` can bring a selected note's fret into view.
-    private var fretNumbers: some View {
-        HStack(spacing: 4) {
-            ForEach(0...Self.maxFret, id: \.self) { fret in
-                Text("\(fret)")
-                    .font(.futura(.caption2))
-                    .foregroundStyle(PocketColor.textSecondary.opacity(0.7))
-                    .frame(width: 30)
-                    .id(fret)
-            }
-        }
-    }
-
     // MARK: - Edits (map a tap to a pure op)
 
     /// Place `cell` into the selected slot and advance; tapping the slot's own note (or "Rest" with
-    /// `nil`) clears it instead. Auto-advance wraps so a run can be tapped in quickly.
-    private func placeOrClear(_ cell: FretNote?) {
+    /// `nil`) clears it instead. Auto-advance wraps so a run can be tapped in quickly. Non-private so
+    /// the board half of this editor (`+Board.swift`) can call it.
+    func placeOrClear(_ cell: FretNote?) {
         if let cell, drill.note(at: selectedSlot) != cell {
             mutate { $0.replacingNote(at: selectedSlot, with: cell) }
             selectedSlot = (selectedSlot + 1) % max(1, drill.notes.count)
@@ -319,12 +265,24 @@ struct FretboardDrillEditor: View {
         drill = after
     }
 
-    /// Step back one edit — pop the last snapshot and keep the selection in range.
+    /// Step back one edit — pop the last snapshot, then **move the cursor to the slot that changed**
+    /// (2026-07-28). Placing a note auto-advances, so an undo used to restore the note while leaving the
+    /// cursor a box to its right, and the next tap landed in the wrong slot. Selecting the changed slot
+    /// puts it back where the eye already is, which for the common case (undo the last placement) is the
+    /// box to the left. Falls back to clamping when the edit changed the grid rather than one note.
     private func undo() {
         guard let previous = history.popLast() else { return }
+        let changed = firstDifferingSlot(from: drill, to: previous)
         drill = previous
-        selectedSlot = min(selectedSlot, max(0, drill.notes.count - 1))
+        selectedSlot = min(changed ?? selectedSlot, max(0, drill.notes.count - 1))
         haptic(.light)
+    }
+
+    /// The first slot whose note differs between two drills, or `nil` when they're the same length and
+    /// content or the change was structural (a re-grid / bar count change moves every slot).
+    private func firstDifferingSlot(from current: FretboardDrill, to restored: FretboardDrill) -> Int? {
+        guard current.notes.count == restored.notes.count else { return nil }
+        return current.notes.indices.first { current.notes[$0] != restored.notes[$0] }
     }
 
     /// Wipe every placed note via `cleared()` — grid, subdivision, and guide stay put — and reset the
@@ -348,9 +306,13 @@ private extension FretboardDrillEditor {
     /// **Undo** the last tap, **Clear** every placed note, and set the selected slot to a **Rest**. Undo
     /// and Clear leave a scale guide untouched (it isn't in the undo snapshot). Undo disables on an empty
     /// history; Clear disables on an empty board.
+    ///
+    /// Undo wears the **⌫ backspace glyph** rather than the u-turn arrow (2026-07-28): what it does here
+    /// is take back the last thing you typed onto the board, and the finger-pattern field above already
+    /// uses `delete.left` for exactly that gesture. The u-turn read as "revert everything".
     var editControls: some View {
         HStack(spacing: 20) {
-            Button { undo() } label: { Label("Undo", systemImage: "arrow.uturn.backward") }
+            Button { undo() } label: { Label("Undo", systemImage: "delete.left") }
                 .disabled(history.isEmpty)
             Button(role: .destructive) { clearTaps() } label: {
                 Label("Clear taps", systemImage: "xmark.circle")

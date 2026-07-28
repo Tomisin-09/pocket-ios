@@ -24,8 +24,12 @@ struct FretboardRunEditor: View {
     /// warm-up stays four taps and the power controls are one tap away.
     @State private var showsMovement = false
     /// The global note-caption preference, so this preview matches the scale editor and practice board.
+    /// A warm-up run is a pure finger pattern with no tonal centre, so an inherited Interval mode
+    /// resolves to Off here rather than drawing nothing at all (2026-07-28).
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
-    private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
+    private var labelMode: FretLabelMode {
+        (FretLabelMode(rawValue: storedLabelMode) ?? .none).resolved(hasRoot: false)
+    }
     /// A one-shot "watch it" request (ADR 0065) — set by `FretboardPlayOnceButton`, read by the
     /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
     /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
@@ -48,24 +52,42 @@ struct FretboardRunEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
-                                       playToken: $playOnceToken, tint: tint)
+                                       playToken: $playOnceToken, tint: tint, hasRoot: false)
             FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
                                   labelMode: labelMode, playOnceToken: playOnceToken)
             patternField
             baseFretField
             spanField
-            Toggle("Up and back", isOn: $run.roundTrip)
-                .font(.futura(.subheadline, weight: .semibold))
-                .tint(tint)
             movement
-            AdvancedSubdivisionRow(isExpanded: $showsAdvanced, notesPerBeat: $run.notesPerBeat,
-                                   accessibilityLabel: "Fretboard subdivision", tint: tint)
+            advanced
             Text("Set the finger pattern, then where it sits and how far it travels — the run builds "
                  + "itself. Watch it walk above before you save.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
         .hearStopsOnDisappear()
+    }
+
+    // MARK: - Advanced
+
+    /// **Finger pattern · Starts on fret · Across stay above the fold**; how the run is *played* drops
+    /// into the single Advanced disclosure (2026-07-28) — Rhythm and Up-and-back. This editor has no
+    /// root, so no octaves, sequence or starting-note axis; **Movement** stays its own named group
+    /// rather than a second thing called "Advanced".
+    private var advanced: some View {
+        EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
+                         summaryParts: advancedSummary, tint: tint) {
+            RhythmRow(notesPerBeat: $run.notesPerBeat, accessibilityLabel: "Fretboard rhythm", tint: tint)
+            Toggle("Up and back", isOn: $run.roundTrip)
+                .font(.futura(.subheadline, weight: .semibold))
+                .tint(tint)
+        }
+    }
+
+    private var advancedSummary: [String] {
+        var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
+        if !run.roundTrip { parts.append("One way") }
+        return parts
     }
 
     // MARK: - Finger pattern
@@ -186,37 +208,27 @@ struct FretboardRunEditor: View {
 /// disclosure so the common path stays calm (S3, the ADR 0065 over-busy-editor caution).
 extension FretboardRunEditor {
     var movement: some View {
-        DisclosureGroup(isExpanded: $showsMovement) {
-            VStack(alignment: .leading, spacing: 16) {
-                shiftPerPassField
-                if run.fretShiftPerPass != 0 { passCountField }
-                staggerPerStringField
-                if run.roundTrip { returnStyleField }
-            }
-            .padding(.top, 10)
-        } label: {
-            HStack {
-                Text("Movement").font(.futura(.subheadline, weight: .semibold))
-                Spacer()
-                Text(movementSummary).font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
+        EditorDisclosure(title: "Movement", isExpanded: $showsMovement,
+                         summaryParts: movementSummary, emptyLabel: "Off", tint: tint) {
+            shiftPerPassField
+            if run.fretShiftPerPass != 0 { passCountField }
+            staggerPerStringField
+            if run.roundTrip { returnStyleField }
         }
-        .tint(tint)
         .onChange(of: run.baseFret) { _, _ in clampPassCount() }
         .onChange(of: run.fretShiftPerPass) { _, _ in clampPassCount() }
         .onChange(of: run.fretShiftPerString) { _, _ in clampPassCount() }
     }
 
     /// A terse "what's on" read for the collapsed row, so a run's movement is legible without opening.
-    private var movementSummary: String {
+    private var movementSummary: [String] {
         var parts: [String] = []
         if run.fretShiftPerPass != 0 {
             parts.append("↑\(run.fretShiftPerPass)/run × \(run.passCount)")
         }
         if run.fretShiftPerString != 0 { parts.append("diag \(signed(run.fretShiftPerString))") }
         if run.roundTrip, run.returnStyle == .restate { parts.append("restate") }
-        return parts.isEmpty ? "Off" : parts.joined(separator: " · ")
+        return parts
     }
 
     private var shiftPerPassField: some View {

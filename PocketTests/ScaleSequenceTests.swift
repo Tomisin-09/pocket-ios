@@ -107,4 +107,57 @@ final class ScaleSequenceTests: XCTestCase {
     func testCuratedThirdsPresetIsSequenced() {
         XCTAssertEqual(ScaleRun.gMajorInThirds.sequencePattern, .thirds)
     }
+
+    // MARK: - The board plots positions, not events (device repro 2026-07-28)
+
+    /// The bug behind "dots grey out when a sequence is picked": `byGroup` emits each note up to four
+    /// times, and the renderer drew one translucent dot **per played slot**, so a position's brightness
+    /// tracked how often the rolling window happened to include it — solid white at four hits, still
+    /// grey at one. Proves the premise (a sequenced run really does repeat positions) and the fix
+    /// (`plottedPositions` collapses them to one entry each).
+    func testSequencedRunRepeatsPositionsButPlotsThemOnce() {
+        let run = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 5,
+                           roundTrip: false, sequence: .groupsOfFour)
+        let drill = run.expanded()
+        let played = drill.notes.compactMap { $0 }
+        let plotted = drill.plottedPositions
+
+        XCTAssertGreaterThan(played.count, plotted.count,
+                             "groups of four must repeat positions, or there is nothing to dedupe")
+        XCTAssertEqual(plotted.count, Set(played).count, "one entry per distinct position")
+        XCTAssertEqual(plotted.map(\.note).count, Set(plotted.map(\.note)).count, "no duplicates")
+    }
+
+    /// Every played slot is accounted for exactly once across the entries, so nothing is dropped and
+    /// the renderer's per-index concerns (which position is lit, ADR 0083 pass focus) stay answerable.
+    func testPlottedPositionsPartitionEveryPlayedSlot() {
+        let drill = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 5,
+                             sequence: .groupsOfFour).expanded()
+        let covered = drill.plottedPositions.flatMap(\.indices).sorted()
+        let expected = drill.notes.indices.filter { drill.notes[$0] != nil }
+        XCTAssertEqual(covered, expected)
+        for entry in drill.plottedPositions {
+            for index in entry.indices {
+                XCTAssertEqual(drill.notes[index], entry.note, "index \(index) filed under the wrong position")
+            }
+        }
+    }
+
+    /// A straight run has nothing to collapse beyond its own up-and-back overlap, so the fix can't have
+    /// changed what an unsequenced board draws.
+    func testStraightRunPlotsItsDistinctPositions() {
+        let drill = ScaleRun(scale: .minorPentatonic, rootPitchClass: 9, position: 5,
+                             roundTrip: false, sequence: .straight).expanded()
+        XCTAssertEqual(drill.plottedPositions.map(\.note), drill.notes.compactMap { $0 },
+                       "a straight one-way run already visits each position once")
+    }
+
+    /// Rests hold a slot in the grid but aren't positions, so they must not become an entry.
+    func testPlottedPositionsSkipRests() {
+        let drill = FretboardDrill(notesPerBeat: 2,
+                                   notes: [FretNote(string: 5, fret: 5), nil,
+                                           FretNote(string: 5, fret: 5), nil])
+        XCTAssertEqual(drill.plottedPositions.count, 1)
+        XCTAssertEqual(drill.plottedPositions.first?.indices, [0, 2])
+    }
 }

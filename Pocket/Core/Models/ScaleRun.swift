@@ -37,6 +37,12 @@ struct ScaleRun: Codable, Equatable {
     /// String-backed (ADR 0036) — read via `sequencePattern`. Additive, decode-time-defaulting to
     /// `.straight`, so every scale authored before this axis existed plays unchanged.
     var sequenceRaw: String
+    /// Whether the run begins on the box's **lowest root** rather than on its lowest note (2026-07-28).
+    /// Stored on the recipe, never read at render time: it changes the played note order, so a saved run
+    /// must keep whatever it was authored with. Hence the split defaults — `true` for a run created now,
+    /// but decode-defaulting to `false`, so nothing already in the store silently reorders itself.
+    /// Box-only, like `octaves`: the neck-spanning layouts define their own start.
+    var startsFromLowestRoot: Bool
 
     /// The decoded scale — unknown raw falls back to the minor pentatonic.
     var scale: GuitarScale { GuitarScale(storage: scaleRaw) }
@@ -59,6 +65,7 @@ struct ScaleRun: Codable, Equatable {
          notesPerBeat: Int = 2,
          layout: ScaleLayout = .box,
          sequence: SequencePattern = .straight,
+         startsFromLowestRoot: Bool = true,
          version: Int = ScaleRun.currentVersion) {
         self.version = version
         self.scaleRaw = scale.rawValue
@@ -66,6 +73,7 @@ struct ScaleRun: Codable, Equatable {
         let resolvedLayout = scale.supports(layout) ? layout : .box
         self.layoutRaw = resolvedLayout.rawValue
         self.sequenceRaw = sequence.rawValue
+        self.startsFromLowestRoot = startsFromLowestRoot
         self.position = min(max(1, position), Self.positionCount(for: resolvedLayout, scale: scale))
         self.octaves = min(2, max(1, octaves))
         self.roundTrip = roundTrip
@@ -74,7 +82,7 @@ struct ScaleRun: Codable, Equatable {
 
     private enum CodingKeys: String, CodingKey {
         case version, scaleRaw, rootPitchClass, position, octaves, roundTrip, notesPerBeat, layoutRaw
-        case sequenceRaw
+        case sequenceRaw, startsFromLowestRoot
     }
 
     /// Custom decode so the ADR 0083 `layoutRaw` defaults when absent (T4 — decode-time default, no
@@ -89,6 +97,9 @@ struct ScaleRun: Codable, Equatable {
         layoutRaw = decodedRaw
         sequenceRaw = try container.decodeIfPresent(String.self, forKey: .sequenceRaw)
             ?? SequencePattern.straight.rawValue
+        // Absent means "authored before the axis existed" — those runs keep starting on the box's
+        // lowest note, so an already-saved exercise never reorders itself under the player.
+        startsFromLowestRoot = try container.decodeIfPresent(Bool.self, forKey: .startsFromLowestRoot) ?? false
         let decodedLayout = decodedScale.supports(ScaleLayout(storage: decodedRaw))
             ? ScaleLayout(storage: decodedRaw) : .box
         position = min(max(1, try container.decode(Int.self, forKey: .position)),
@@ -108,9 +119,17 @@ extension ScaleRun {
     /// The full run title, e.g. "A Minor Pentatonic".
     var title: String { "\(rootName) \(scale.displayName)" }
 
-    /// The lowest fretted fret the current run occupies — shown as "fret N". Derived from the actual
-    /// generated run so it reads correctly for every layout, not just the box.
-    var anchorFret: Int { ascendingNotes.map(\.fret).filter { $0 > 0 }.min() ?? 1 }
+    /// The lowest fretted fret the current run occupies — shown as "fret N". Derived from the shape the
+    /// hand covers (`positionNotes`), not the played order, so "start from the lowest root" moves where
+    /// the run *begins* without relabelling where the hand *sits*.
+    var anchorFret: Int { positionNotes.map(\.fret).filter { $0 > 0 }.min() ?? 1 }
+
+    /// The notes a **position label** describes: the box as the hand covers it, before `startsFromLowestRoot`
+    /// picks a starting note within it. The neck-spanning layouts have no separate shape, so they report
+    /// their run directly.
+    var positionNotes: [FretNote] {
+        layout == .box ? CAGEDShape.trimmed(boxNotes, toOctaves: octaves) : ascendingLayout.notes
+    }
 
     /// The CAGED reference letter for the current position (E/D/C/A/G). Demoted to a secondary caption
     /// (ADR 0091): it's the letter of the box in the *reference/relative-major* key, so for a
@@ -122,7 +141,7 @@ extension ScaleRun {
     /// where the box's lowest root note actually sits, shown under the box number in place of the CAGED
     /// letter. Reads the generated notes, so it's honest for every scale and key. Only the box layout
     /// carries a single anchoring root; the neck-spanning layouts report their own start instead.
-    var rootAnchor: String { CAGEDShape.rootAnchor(in: ascendingNotes, root: rootPitchClass) }
+    var rootAnchor: String { CAGEDShape.rootAnchor(in: positionNotes, root: rootPitchClass) }
 
     /// The flagship box for this scale/key — the root-position 6th-string box a player learns first
     /// (position 5 for the minor pentatonic, not 1; ADR 0091). Computed per scale, so it tracks the
@@ -181,10 +200,20 @@ extension ScaleRun {
     /// The ascending run for the current **layout** (S4), paired with an optional per-note **group**
     /// index the renderer focuses (box index for `.extended`, `nil` otherwise). Correct by construction
     /// — every note belongs to the scale and the run climbs strictly, in every layout.
+    /// **Box-only**, like `octaves`: the diagonal and 3-notes-per-string layouts are defined by their
+    /// string-by-string fingering, so starting one part-way through would break the pattern being taught.
+    /// The editor hides the toggle for them on the same condition.
+    var appliesLowestRootStart: Bool { startsFromLowestRoot && layout == .box }
+
     var ascendingLayout: (notes: [FretNote], groups: [Int]?) {
         switch layout {
         case .box:
-            return (CAGEDShape.trimmed(boxNotes, toOctaves: octaves), nil)
+            // Align *before* the octave trim, so a one-octave run measures its octave from the root it
+            // starts on rather than keeping a partial octave above a dropped low note.
+            let placed = appliesLowestRootStart
+                ? CAGEDShape.startingAtLowestRoot(boxNotes, root: rootPitchClass)
+                : boxNotes
+            return (CAGEDShape.trimmed(placed, toOctaves: octaves), nil)
         case .threePerString:
             return (ScaleNeckLayout.threePerString(scale: scale, root: rootPitchClass, position: position), nil)
         case .extended:
