@@ -129,9 +129,8 @@ struct RoutineLibraryView: View {
     /// author it, exactly as the free-taste exercises behave). A routine a free player can neither run
     /// nor edit stays **visible but badged** — "locked, not hidden".
     private func row(for routine: Routine) -> some View {
-        let runnable = AccessPolicy.canRunRoutine(
-            isPro: isPro,
-            isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug))
+        let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
+        let runnable = AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo)
         return HStack(spacing: 14) {
             Button {
                 guard runnable else { return presentPaywall(.routine) }
@@ -148,13 +147,15 @@ struct RoutineLibraryView: View {
                                 : "Locked — Red Moon Pro")
 
             Button {
-                guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
+                // The demo exception (ADR 0112): the curated free-taste routine opens for a free
+                // player too — read-only, then rearrange-only under Edit. Adding stays Pro.
+                guard AccessPolicy.canEditRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
                     return presentPaywall(.routine)
                 }
                 editing = routine
                 haptic(.light)
             } label: {
-                rowBody(for: routine, runnable: runnable)
+                rowBody(for: routine, openable: runnable)
             }
             .buttonStyle(.plain)
         }
@@ -162,10 +163,10 @@ struct RoutineLibraryView: View {
     }
 
     /// The tappable half of a row: name (+ favourite star), block summary, and the trailing
-    /// entitlement affordances. The capsule marks a routine that can't even be *run* — so the curated
-    /// free-taste routine never wears one — while the trailing glyph tracks this half's own action
-    /// (edit), which is Pro for every routine, freebie included.
-    private func rowBody(for routine: Routine, runnable: Bool) -> some View {
+    /// entitlement affordances. `openable` means the row leads somewhere for this player — true for
+    /// any routine when Pro, and for the curated demo when free. The PRO capsule and the padlock both
+    /// mark the rows that don't, so the demo reads as ordinary and the rest read as locked.
+    private func rowBody(for routine: Routine, openable: Bool) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -184,8 +185,8 @@ struct RoutineLibraryView: View {
                     .foregroundStyle(PocketColor.practice)
             }
             Spacer(minLength: 8)
-            if !runnable { proBadge }
-            Image(systemName: isPro ? "chevron.right" : "lock.fill")
+            if !openable { proBadge }
+            Image(systemName: openable ? "chevron.right" : "lock.fill")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }

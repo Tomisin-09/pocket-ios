@@ -148,4 +148,35 @@ final class AccessPolicyTests: XCTestCase {
         XCTAssertTrue(AccessPolicy.freeTasteRoutineSlugs.contains(RoutinePresets.freeTasteSlug))
         XCTAssertEqual(RoutinePresets.specs.first?.slug, RoutinePresets.freeTasteSlug)
     }
+
+    // MARK: - The demo exception (view + rearrange the curated routine)
+
+    func testFreePlayerCanOpenOnlyTheDemoRoutine() {
+        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: false, isFreeTasteRoutine: true))
+        XCTAssertFalse(AccessPolicy.canEditRoutine(isPro: false, isFreeTasteRoutine: false))
+    }
+
+    func testProOpensAnyRoutine() {
+        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: true))
+        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: true, isFreeTasteRoutine: false))
+    }
+
+    /// Fails closed when provenance is omitted, like `canRunRoutine`.
+    func testEditRoutineDefaultsToLockedForAFreePlayer() {
+        XCTAssertFalse(AccessPolicy.canEditRoutine(isPro: false))
+    }
+
+    /// **The seam that keeps the demo from reopening the bypass.** A free player may rearrange the
+    /// demo, but adding is Pro *even inside it* — so the demo's blocks stay the curated, verified-free
+    /// set and can never become a way to assemble and run Pro drills.
+    func testAddingBlocksIsProEvenInsideTheDemo() {
+        XCTAssertFalse(AccessPolicy.canAddRoutineUnits(isPro: false))
+        XCTAssertTrue(AccessPolicy.canAddRoutineUnits(isPro: true))
+    }
+
+    /// The demo is openable but never *authorable* — the two questions must not collapse into one.
+    func testOpeningTheDemoIsNotAuthoring() {
+        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: false, isFreeTasteRoutine: true))
+        XCTAssertFalse(AccessPolicy.canAuthorRoutine(isPro: false))
+    }
 }

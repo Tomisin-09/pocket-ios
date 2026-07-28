@@ -110,6 +110,25 @@ enum AccessPolicy {
     /// inherits from the units it strings together, and composing *is* the authoring act.
     static func canAuthorRoutine(isPro: Bool) -> Bool { isPro }
 
+    /// May the player **open the routine editor** for this routine? Pro unlocks everything; a free
+    /// player may open exactly the curated free-taste routine — the **demo exception**.
+    ///
+    /// Viewing and rearranging the demo is deliberately *more* than the exercise freebies allow
+    /// (there, editing is flatly Pro). The reasoning differs: an exercise's editor authors new
+    /// *content*, while reordering a fixed set of blocks authors nothing — it only shows what a
+    /// routine is for. Adding blocks is the authoring act, and that stays Pro via
+    /// `canAddRoutineUnits`, which is also what keeps the free routine's contents ours and therefore
+    /// free of Pro drills.
+    static func canEditRoutine(isPro: Bool, isFreeTasteRoutine: Bool = false) -> Bool {
+        isPro || isFreeTasteRoutine
+    }
+
+    /// May the player **add blocks** to a routine (a unit or a rest)? Pro, always — including inside
+    /// the free demo, where reordering is allowed but adding is not. This is the seam that keeps the
+    /// demo exception from reopening the routine bypass: a free player editing the demo can shuffle
+    /// our curated blocks but can never introduce a Pro drill to run.
+    static func canAddRoutineUnits(isPro: Bool) -> Bool { isPro }
+
     /// May the player **run** this routine? Pro unlocks everything; a free player may run exactly the
     /// curated free-taste routine (`isFreeTasteRoutine`) and nothing else.
     ///
@@ -122,7 +141,7 @@ enum AccessPolicy {
     }
 
     /// The **permanent free taste** on the routine axis (ADR 0112): the single curated starter routine
-    /// a free player may *run* forever — Morning Warm-up, whose every block is a free-tier template or
+    /// a free player may *run* forever — Morning Routine, whose every block is a free-tier template or
     /// a free-taste exercise slug. A **run** allowance only; it never grants authoring, so a free
     /// player can practise it but not edit it (the same run-not-author line the exercise freebies
     /// draw). A frozen identifier matching the `presetSlug` the seeder stamps.

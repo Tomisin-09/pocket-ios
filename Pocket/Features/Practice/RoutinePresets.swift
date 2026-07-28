@@ -45,7 +45,7 @@ enum RoutinePresets {
     /// The shipped set — three routines, enough to show what a routine *is* (mixed drills with rests,
     /// one focus per routine) without crowding an empty space.
     ///
-    /// **Morning Warm-up is the free taste** (ADR 0112): every one of its blocks is already either a
+    /// **Morning Routine is the free taste** (ADR 0112): every one of its blocks is already either a
     /// free-tier template (`.warmup`) or a free-taste exercise slug (`alternate-picking`,
     /// `a-minor-pentatonic`), so a free player running it reaches no Pro content — the routine is
     /// clean *by construction*, and must stay that way. It closes on the pentatonic box so the free
@@ -54,7 +54,7 @@ enum RoutinePresets {
     /// pulls in `chord-changes` (`.chords`) plus a `.strumChords` groove, so they read as the shop
     /// window for what Pro unlocks.
     static let specs: [Spec] = [
-        Spec(name: "Morning Warm-up", slug: freeTasteSlug,
+        Spec(name: "Morning Routine", slug: freeTasteSlug,
              blocks: [.exercise(spiderWalk), .exercise(chromaticWarmup),
                       .rest, .exercise(alternatePicking),
                       .rest, .exercise(aMinorPentatonic)]),
@@ -94,12 +94,24 @@ enum RoutinePresets {
         return routine
     }
 
-    /// Pure lookup: the stable `slug` of the shipped spec whose `name` exactly matches, or `nil` if
-    /// none does. The unit-testable core of `backfillPresetSlugsIfNeeded` — no store, so a renamed
-    /// routine simply doesn't match and stays user-built. Name alone is the key here (unlike the
-    /// exercise backfill's name + template) because a `Routine` carries no template axis.
+    /// Names a shipped routine used to carry, mapped to its (unchanged) slug — the backfill's memory.
+    ///
+    /// Renaming a spec would otherwise **Pro-lock the demo on every existing install**: the backfill
+    /// matches by name, so an install seeded as "Morning Warm-up" would stop matching the moment the
+    /// spec became "Morning Routine", never get stamped, and fail `isFreeTasteRoutine`. The slug is
+    /// frozen precisely so a rename is cosmetic; this table is what makes that true for rows seeded
+    /// before the rename. Any future rename must add its old name here.
+    static let legacyNameSlugs: [String: String] = [
+        "Morning Warm-up": freeTasteSlug     // renamed to "Morning Routine", 2026-07-28
+    ]
+
+    /// Pure lookup: the stable `slug` of the shipped spec whose `name` exactly matches — falling back
+    /// to `legacyNameSlugs` for a spec that has since been renamed — or `nil` if none does. The
+    /// unit-testable core of `backfillPresetSlugsIfNeeded`; no store, so a *user*-renamed routine
+    /// simply doesn't match and stays user-built. Name alone is the key here (unlike the exercise
+    /// backfill's name + template) because a `Routine` carries no template axis.
     static func slug(forName name: String) -> String? {
-        specs.first { $0.name == name }?.slug
+        specs.first { $0.name == name }?.slug ?? legacyNameSlugs[name]
     }
 
     /// `UserDefaults` key guarding the one-time provenance backfill (ADR 0112).
@@ -116,7 +128,14 @@ enum RoutinePresets {
         guard !defaults.bool(forKey: presetSlugBackfillKey) else { return }
         let existing = (try? context.fetch(FetchDescriptor<Routine>())) ?? []
         for routine in existing where routine.presetSlug == nil {
-            if let match = slug(forName: routine.name) { routine.presetSlug = match }
+            guard let match = slug(forName: routine.name) else { continue }
+            routine.presetSlug = match
+            // Carry a *cosmetic* rename through too, but only while the row still holds the old
+            // shipped name — a player who renamed their copy keeps their name, untouched.
+            if legacyNameSlugs[routine.name] != nil,
+               let current = specs.first(where: { $0.slug == match })?.name {
+                routine.name = current
+            }
         }
         try? context.save()
         defaults.set(true, forKey: presetSlugBackfillKey)

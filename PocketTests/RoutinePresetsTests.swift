@@ -96,14 +96,36 @@ final class RoutinePresetsTests: XCTestCase {
     }
 
     func testBackfillSlugLookupMatchesByNameOnly() {
-        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Warm-up"), RoutinePresets.freeTasteSlug)
+        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Routine"), RoutinePresets.freeTasteSlug)
         XCTAssertEqual(RoutinePresets.slug(forName: "Picking Builder"), "picking-builder")
         XCTAssertNil(RoutinePresets.slug(forName: "My own routine"))
     }
 
+    /// The rename trap: an install seeded before "Morning Warm-up" became "Morning Routine" still
+    /// holds the old name, and the backfill matches by name. Without the legacy table it would never
+    /// be stamped and the demo would **Pro-lock on every existing install**.
+    func testBackfillStillRecognisesTheOldNameAfterARename() {
+        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Warm-up"), RoutinePresets.freeTasteSlug)
+    }
+
+    /// Every legacy name must map to a slug some shipped spec actually uses — otherwise the table has
+    /// drifted and is stamping provenance nothing recognises.
+    func testEveryLegacyNameMapsToALiveSlug() {
+        let live = Set(RoutinePresets.specs.map(\.slug))
+        for (name, slug) in RoutinePresets.legacyNameSlugs {
+            XCTAssertTrue(live.contains(slug), "legacy name \(name) maps to dead slug \(slug)")
+        }
+    }
+
+    /// The slug is frozen across the rename — that's the whole point of having one.
+    func testFreeTasteSlugIsUnchangedByTheRename() {
+        XCTAssertEqual(RoutinePresets.freeTasteSlug, "morning-warm-up")
+        XCTAssertEqual(RoutinePresets.specs.first?.name, "Morning Routine")
+    }
+
     // MARK: - The free routine must stay clean
 
-    /// **The invariant that keeps the paywall honest.** A free player may run Morning Warm-up, and the
+    /// **The invariant that keeps the paywall honest.** A free player may run Morning Routine, and the
     /// routine player embeds the *real* `ExerciseRunView` per block with no per-block entitlement
     /// check — so if a Pro-only drill ever lands in this routine, running it becomes a way to reach
     /// Pro content for free. Every exercise block must therefore be free-tier by template **or** one

@@ -30,7 +30,8 @@ access is safe to sell flat.
 Metronome, songs/library, loops, journal, **takes/recording**, and **all strumming exercises**.
 Plus a **permanent taste** of the paid layer: a curated set of **seeded preset exercises** a free
 user can *run* — the low-E minor-pentatonic box, an open-chord set, **picking warm-up, and legato** —
-and **one curated starter routine** they can run forever (**Morning Warm-up**). The taste is the hook
+and **one curated starter routine** they can run forever (**Morning Routine**), which they may also
+open and **rearrange** — a demo of what a routine is — but never add to. The taste is the hook
 — a free user *experiences* the structured layer, hits its edge, and converts. It never expires with
 the trial.
 
@@ -40,6 +41,17 @@ the trial.
 > ambiguity: it needed a rule for *which* routine was the free one, and an answer for what happens to
 > the other nine when a trial lapses. A flat rule needs neither. The run-only allowance also **closes
 > a bypass** — see §Consequences.
+>
+> **Refined the same day:** the free routine is a *demo*, not a museum piece. A free player can open
+> it and **drag its blocks into a different order**; what they cannot do is **add** blocks. The split
+> is `canEditRoutine` (Pro, or the curated routine) vs `canAddRoutineUnits` (Pro, always — including
+> inside the demo). Reordering a fixed curated set authors nothing, and forbidding *adding* is what
+> keeps the demo's contents ours and therefore verified free of Pro drills. **Deletion is barred in
+> the demo too** — not for entitlement reasons but because the curated routines seed exactly once
+> ever, so a free player who emptied it could never rebuild it. Also renamed "Morning Warm-up" →
+> "Morning Routine"; the slug stays `morning-warm-up` (frozen), and `RoutinePresets.legacyNameSlugs`
+> keeps the by-name backfill matching installs seeded under the old name — without it the rename
+> would have silently Pro-locked the demo on every existing install.
 
 **The free line is running, not authoring.** Free users can *run* the curated presets (including
 picking warm-up and legato), but **authoring is Pro** — both *creating a new exercise from a Pro

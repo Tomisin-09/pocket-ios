@@ -50,7 +50,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   Quick-session wand, "Today's session", the collection→session builder, and "Build a routine for this
   song" — and locked routines stay **visible but badged**, the free one unbadged and playable. Adds
   `Routine.presetSlug` provenance (additive optional, non-lossy migration, one-time back-fill by name so
-  an existing install's Morning Warm-up isn't locked).
+  an existing install's copy isn't locked).
+- **The free routine is a demo you can rearrange (ADR 0112).** Renamed **Morning Warm-up → Morning
+  Routine** (the slug is frozen, so the rename is cosmetic; a legacy-name table keeps the back-fill
+  matching installs seeded under the old name). A free player can now **open** it and **drag its blocks
+  into a new order** — seeing how a routine fits together — while **adding** blocks stays Pro, which is
+  also what keeps the demo's contents curated and verified free of Pro drills. Deleting blocks is barred
+  inside the demo: the curated routines seed once ever, so an emptied demo could never be rebuilt. A
+  footer names the limit rather than leaving a missing Add button unexplained.
 
 ### Changed
 - **Collection-session length tabs now show an estimated time, and each preset is a real cap.** On the
