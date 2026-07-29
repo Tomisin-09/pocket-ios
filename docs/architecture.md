@@ -19,6 +19,17 @@
 │   Theory   — ChordNamer (ADR 0093 reverse-lookup: pitch-class set + optional bass → ranked [ChordCandidate] over the ChordQuality.catalog common-practice table; root-position preferred, inversions get slash names, symmetric chords return every root, keyless — so it spells by the accidental preference the caller passes, ADR 0123; pure) — the shared harmonic-analysis core the chord identifier + ear-training space (ADR 0094) consume · ScaleReference (ADR 0107 — scale as name + interval formula → pitch classes, reusing GuitarScale + the symmetric whole-tone/diminished scales; drives the custom-scale canvas guide, pure) · NoteSpelling (ADR 0123 — the app's single note-name table, `sharps`/`flats` with ♯/♭ glyphs; `keySpelling(root:relativeMajorSemitones:)` reads the circle of fifths through the parent major `relativeMajorSemitones` already encodes for the CAGED boxes and returns **nil** at the two positions nothing decides — C and F♯/G♭ — so a key context and a keyless one share one fallback: `AppSettings.accidentalPreference`. Scale/arpeggio runs stamp their answer onto the generated drill as a **transient** `FretboardDrill.keySpelling` (excluded from `CodingKeys`, like `noteGroups`/`openMidi` — no persisted-shape change); pure, preference arrives as a parameter)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
+│   Analytics — ADR 0120. `AnalyticsEvent` is the complete closed vocabulary (13 events): an enum whose
+│              associated values are only other enums/Int/Bool, so no `String` parameter exists and
+│              user-authored text (song titles, file names, journal notes, the artist name) cannot be
+│              emitted by construction — pinned by `AnalyticsEventTests` + the repo's only SwiftLint
+│              `custom_rule`. `Analytics` is the @MainActor dispatcher holding one `AnalyticsSink`, with
+│              the opt-in consent gate as a single early return re-read per send (so Settings ▸ Privacy
+│              takes effect on the next event, no relaunch) plus `-uiTesting`/preview suppression;
+│              `AnalyticsPolicy.shouldEmit` is the pure rule. `NoOpSink` ships by default, `RecordingSink`
+│              backs tests, `AptabaseSink` is the vendor — main-actor confined because the SDK is not
+│              concurrency-safe, started lazily on its first *delivered* event so it can only ever begin
+│              after consent, and inert on an empty/unresolved app key
 ├─────────────────────────────────────────────────────────┤
 │ Apple: MusicKit · AVFoundation · SwiftData · CloudKit · Sign in with Apple
 ├─────────────────────────────────────────────────────────┤

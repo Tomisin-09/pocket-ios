@@ -104,9 +104,27 @@ in-app link.
 - **To deploy standalone:** [docs/site/redmoon-privacy.html](site/redmoon-privacy.html)
   is deploy-ready. When it's live on the company site, repoint both the Settings
   link and the App Store Connect privacy URL at its dedicated URL.
-- **Keep it true:** the policy promises zero data collection. The first analytics
-  SDK, crash reporter, Sign in with Apple, or the AI proxy breaks that — update
-  the policy **and** the App Privacy label *before* such a feature ships.
+- **Keep it true:** the policy no longer promises zero collection — ADR 0120
+  replaced that with **"your playing never leaves your device"** plus opt-in,
+  off-by-default anonymous usage counts. A crash reporter, Sign in with Apple, or
+  the AI proxy would each break the revised wording too — update the policy **and**
+  the App Privacy label *before* such a feature ships.
+
+### Aptabase Swift SDK — MIT
+**Triggered by:** the analytics pipeline (ADR 0120). The project's only
+third-party dependency, pinned to an exact version in `project.yml`.
+
+- MIT requires the copyright notice and permission text be included with
+  "substantial portions" of the software. Swift Package Manager vendors the
+  licence file into the build, which satisfies this for a binary distribution;
+  no in-app acknowledgements screen is required.
+- The SDK ships **its own `PrivacyInfo.xcprivacy`** (Product Interaction, not
+  linked, not tracking, purpose Analytics). Our app manifest mirrors it exactly —
+  if theirs changes on an upgrade, ours must be re-checked, which is one reason
+  the version is pinned rather than ranged.
+
+**Pocket's line:** an exact-version pin, because this is the only component that
+can send data off-device; an upgrade is a deliberate reviewed act.
 
 ## Standing risks (not feature-gated)
 - **Indemnification is broad (§10)** — including third-party IP and harmful-content

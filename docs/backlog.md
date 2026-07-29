@@ -434,14 +434,35 @@ Notes worth carrying forward:
   `AddRoutineUnitLists.swift` off the picker. `editContext` / `insert` / `nextOrder` went internal —
   a cross-file extension on a `View` can't see `private` members.
 
-**Slice 8 — analytics, privacy & off-the-grid (ADR 0120, largely writing):**
+**Slice 8 — analytics & privacy — DONE (branch `pocket-207-slice8-analytics`, 2026-07-29).**
+ADR 0120 written and accepted; Aptabase Cloud (EU), opt-in and off by default. Notes worth carrying
+forward:
 
-The shape is already decided (2026-07-28): Tier-1 anonymous product analytics + Tier-2
-AdAttributionKit / Apple Search Ads attribution; **Tier-3 IDFA/ATT/ad-SDKs ruled out**. Outstanding:
-write ADR 0120; add an **off-the-grid mode** (a full no-telemetry toggle — note UK/EU rules make
-non-essential analytics opt-*in*, so pick the default deliberately); cookie policy for the marketing
-site; and revise the privacy copy — the durable claim is "your playing never leaves your device", not
-"we collect nothing". See the existing *Analytics* section below.
+- **The legal driver is ePrivacy Art 5(3) / PECR, not GDPR.** Aptabase's irreversible anonymisation
+  genuinely does take the data outside GDPR — but Art 5(3) governs *accessing information on a
+  device* regardless of whether it's personal, analytics never qualifies as "strictly necessary",
+  and the ICO says so. Hence opt-in. The exemption *does* cover the app's existing UserDefaults
+  preferences and the consent flag itself. There are no cookies in a native app.
+- **"Off-the-grid mode" was dropped, deliberately** — see ADR 0120 §7. It was conceived while the
+  plan was still opt-out, where a master switch would have been needed; opt-in makes off-the-grid
+  the default state, and with no other network calls in the app the "mode" would govern exactly one
+  flag while implying far more. The withdrawal **toggle** stays (Settings ▸ Privacy). Don't rebuild
+  it as a mode.
+- **The ask sits after a first practice, not in the intake** — putting it in the activation flow
+  would tax the metric it exists to measure. The cost, accepted: the intake and the first session
+  are permanently unmeasurable, recovered only as the `since_install` bucket on later runs.
+- **Aptabase cannot do cross-session user metrics** (no identifier ⇒ no retention curve, no
+  funnel/path tooling — the dashboard is counts with breakdowns). Every question must therefore be a
+  **ratio between two event counts**. ASC App Analytics + StoreKit own retention and revenue.
+- **Its queue is in-memory only** — events are lost if the app is killed while offline, so offline
+  sessions are under-counted. Real bias for an app built to work with no network.
+- **No kill switch** (no backend), which is why the vocabulary is 13 events and why every event
+  whose host can re-appear carries a fire-once latch.
+- **Still outstanding:** create the Aptabase EU app and set `APTABASE_APP_KEY` (the build ships
+  inert until then, asserted by a test that says to delete itself in that same commit); answer the
+  ASC App Privacy nutrition label; paste the revised Red Moon section into
+  `decooperations.co.uk/privacy`; and **Tier 2** (AdAttributionKit / Apple Search Ads) plus the
+  **marketing-site cookie policy**, both separate slices with no code overlap here.
 
 **Slice 9 — artist name generator + onboarding copy (small):**
 
@@ -1627,6 +1648,13 @@ A coherent vision, captured for V1's creation experience:
   expression, a single hard change can be unmastered at full tempo, and a slow
   passage can be perfectly owned. Considered collapsing mastery into a
   derivative of command tempo (2026-06-25) and rejected it for this reason.
+
+## Analytics — SUPERSEDED by ADR 0120 (kept for the reasoning)
+
+> **Resolved 2026-07-29.** The "designated later path" below was taken: Aptabase, opt-in, EU region.
+> The "v1 ships no SDK" position was overtaken by the decision to instrument *before* distribution —
+> launch week is the only cohort that can show whether a cold install reaches a first practice, and
+> it is unrepeatable. See `docs/decisions/0120-anonymous-product-analytics-opt-in.md`.
 
 ## Analytics — decision made 2026-07-16 (v1 = Apple-only)
 

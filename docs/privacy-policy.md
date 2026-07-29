@@ -14,13 +14,22 @@ Deco Operations company privacy policy at
 
 ## The short version
 
-**Red Moon Practice does not collect, transmit, or share any personal data.**
-The app has no user accounts, no analytics, no advertising, and no third-party
-trackers. It does not connect to any server. Everything you create stays on your
-device and, if you use iCloud, in your own private iCloud storage.
+**Your playing never leaves your device.** Red Moon Practice has no user
+accounts, no advertising and no third-party trackers, and it never transmits your
+audio, your recordings, your journal notes, your song names or your artist name.
+Everything you create stays on your device and, if you use iCloud, in your own
+private iCloud storage.
 
-Because the app collects no personal data, there is no data for Deco Operations
-Ltd, as data controller, to access, store, or process on its own systems.
+The one exception is **anonymous usage counts, which are off unless you turn them
+on.** If you opt in, the app reports which features get used — that a loop was
+made, that an exercise was created — so we know what to improve. These counts
+carry no account, no device identifier, no advertising ID and nothing that could
+identify you, and they are not joined up across sessions. You can turn them off
+at any time in Settings ▸ Privacy.
+
+Because the counts are irreversibly anonymous, there is no record tied to you for
+Deco Operations Ltd, as data controller, to access, correct or delete — a request
+to erase your data has nothing to find.
 
 ## What stays on your device
 
@@ -40,10 +49,13 @@ Ltd, as data controller, to access, store, or process on its own systems.
 ## What we do not do
 
 - We do **not** collect names, email addresses, contacts, or location.
-- We do **not** use analytics or crash-reporting SDKs.
+- We do **not** send your audio, recordings, journal notes, song names or artist
+  name anywhere, ever — with or without analytics turned on.
 - We do **not** show ads or use advertising identifiers.
-- We do **not** track you across apps or websites.
-- We do **not** send any data to us or to any third party.
+- We do **not** use the IDFA, the App Tracking Transparency prompt, or any
+  advertising SDK. We never will; this is a permanent product boundary.
+- We do **not** track you across apps or websites, or build a profile of you.
+- We do **not** turn analytics on for you. It is off until you choose otherwise.
 
 ## Device permissions
 
