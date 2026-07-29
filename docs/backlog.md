@@ -390,11 +390,49 @@ didn't cover were taken at kickoff. Notes worth carrying forward:
   `isFavorite` so save-undo covers it.
 - `WaveformPanels.swift` split — `WaveformPanels+Markers.swift` — to stay under the 400-line ceiling.
 
-**Slice 7 — routine building (ADR):**
+**Slice 7 — routine building — DONE, device-verified (branch `pocket-206-slice7-routine-building`,
+2026-07-29).**
+Landed under **ADR 0127**. All three items in, plus two kickoff decisions the note didn't cover.
+Notes worth carrying forward:
 
-Multi-select when adding exercises to a routine; hold Insert rest to enter a bulk rest mode where
-tapping between two blocks inserts a rest; tapping between a rest and a block shows a "rest already
-here" popup. The same guard applies to the standard single-rest path.
+- **"Multi-select" became "the picker doesn't close".** A tap adds the unit immediately and leaves
+  the sheet open (checked row · running tally · second tap un-adds); **Done** closes. The two
+  alternatives were weighed and rejected: **hold-to-select** (the ADR 0125 grammar) hides the whole
+  feature behind a gesture nobody will find in a *transient* sheet — 0125's hold works because a
+  panel header is a fixture you return to daily — and **checkboxes committed by "Add 3"** puts a
+  confirm step in front of an action that is already provisional (every edit here is sandboxed and
+  reversible by Cancel, ADR 0071; it would be the only place in the app you confirm a change twice).
+  The accepted cost: a **single** add now needs a Done tap where it used to dismiss itself.
+- **Every grouped level gained an "All …" row** (device feedback, 2026-07-29). Grouping assumes you
+  remember which template/song a unit landed under, and you often don't. It sits in its own section
+  *above* the groups — not a ninth group, the way *past* them — so the groups stay the default path;
+  hidden at one group; and the flat exercise rows carry the **template** as context, since the
+  section header no longer does. Songs was already flat.
+- **The picker holds no state.** The editor keeps `pickID → RoutineItem.uid` for the open session and
+  hands the id set back each render, so a checkmark is drawn *because a block exists*. The toggle is
+  **session-scoped** — it removes only the block this sheet created, never one added earlier, so a
+  routine can still hold the same drill twice (warm-up pass + focused pass is a real shape).
+- **The rest guard is one rule and it is authoring-only:** a rest may not sit next to a rest
+  (`RoutineBudget.allowsRest(at:in:)`, unit-tested). Head and tail rests stay legal — the append path
+  has always produced the trailing one. Nothing in the model changed, so no migration is owed and an
+  existing routine holding adjacent rests still loads and runs; we refuse to *create* the shape, not
+  to display one.
+- **A refused gap still takes the tap** and answers with an anchored popover. Inert and silent would
+  leave the user tapping a row that does nothing with no reason given.
+- **Rest-insert mode borrows the whole list:** drag and swipe are suspended (`editMode` goes inactive
+  *without* leaving edit mode) and block rows go inert in both directions, since every tap on that
+  screen is a placement. Leaving edit mode via Save/Cancel leaves rest mode with it — otherwise its
+  only exit is an affordance the add section has just hidden.
+- **A rest is spliced into the *displayed* order before the insert, not read back after it.** A new
+  item sharing an `order` with the block it displaces gets ordered against it by the `uid` tiebreak
+  in `RoutineItem.ordered` — a coin flip over which side of the tapped block it lands on.
+- **The `Button`-plus-hold trap, third time.** *Insert rest* is a plain shape with separate
+  `.onTapGesture`/`.onLongPressGesture`; as a `Button` the hold would enter the mode **and** append a
+  stray rest on release (ADRs 0124, 0125). It carries a visible **"Hold to place"** hint — a gesture
+  with no affordance is a feature nobody uses.
+- Splits to stay under the 400-line cap: `RoutineDetailView+Units.swift` / `+Rests.swift`, and
+  `AddRoutineUnitLists.swift` off the picker. `editContext` / `insert` / `nextOrder` went internal —
+  a cross-file extension on a `View` can't see `private` members.
 
 **Slice 8 — analytics, privacy & off-the-grid (ADR 0120, largely writing):**
 

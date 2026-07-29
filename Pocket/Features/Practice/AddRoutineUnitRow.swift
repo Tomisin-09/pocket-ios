@@ -10,6 +10,10 @@ import SwiftUI
 /// an independent `.borderless` hit-target (the pattern for a second control inside a List row —
 /// `JournalSheet`'s composer is the precedent). Rows with no `previewLoop` (exercises/songs) render
 /// just the pick button.
+///
+/// **The tap is a toggle (ADR 0127).** The picker stays open across adds, so the row has to say
+/// which way its next tap goes: a faint `plus.circle` before, a filled check after. Both states are
+/// drawn (rather than only the check) so the row reads as a switch, not a row that grew a badge.
 struct AddRoutineUnitRow: View {
     let row: PickRow
     @Binding var playingID: String?
@@ -17,12 +21,25 @@ struct AddRoutineUnitRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Button { row.pick() } label: {
-                PracticeUnitRow(title: row.title, context: row.context, progress: row.progress)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
+            Button {
+                haptic(row.isAdded ? .light : .medium)
+                row.pick()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: row.isAdded ? "checkmark.circle.fill" : "plus.circle")
+                        .font(.futura(.title3))
+                        .foregroundStyle(row.isAdded ? PocketColor.practice
+                                                     : PocketColor.textSecondary.opacity(0.55))
+                    PracticeUnitRow(title: row.title, context: row.context, progress: row.progress)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(row.title)
+            .accessibilityValue(row.isAdded ? "Added" : "")
+            .accessibilityHint(row.isAdded ? "Removes it from the routine"
+                                           : "Adds it to the routine")
 
             if let loop = row.previewLoop {
                 previewButton(loop)

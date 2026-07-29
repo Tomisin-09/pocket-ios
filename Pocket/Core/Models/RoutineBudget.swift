@@ -84,6 +84,37 @@ enum RoutineBudget {
         return result
     }
 
+    // MARK: Authoring guard — no two rests in a row (ADR 0127)
+
+    /// The number of **insertion slots** in a block list: one before every block plus one at the
+    /// end, so a list of `n` blocks has `n + 1` places a rest could go.
+    static func restSlotCount(_ kinds: [RoutineItemKind]) -> Int { kinds.count + 1 }
+
+    /// Whether a rest may be inserted at `index` — the slot *before* `kinds[index]`, with
+    /// `kinds.count` meaning the end of the list (ADR 0127).
+    ///
+    /// One rule, and only one: **a rest may not sit next to a rest.** Two rests in a row are just
+    /// one longer break wearing two rows — they add nothing the existing rest's own length doesn't
+    /// already say, and they read as a bug in the player, which would announce two breaks back to
+    /// back. Every other position is fair game, including the head and tail of the list (a routine
+    /// that opens or closes on a breather is a legitimate shape, and the append path has always
+    /// allowed the trailing one).
+    ///
+    /// Out-of-range indices clamp rather than trap: this backs a tappable UI, and a stale index
+    /// from a list that changed underneath should decline politely, not crash.
+    static func allowsRest(at index: Int, in kinds: [RoutineItemKind]) -> Bool {
+        let slot = min(max(index, 0), kinds.count)
+        let before = slot > 0 ? kinds[slot - 1] : nil
+        let after = slot < kinds.count ? kinds[slot] : nil
+        return before != .rest && after != .rest
+    }
+
+    /// Every slot's verdict in one pass — `restSlotCount` entries, index-aligned with the slots the
+    /// rest-insert UI draws. Convenience over `allowsRest(at:in:)` for rendering a whole list.
+    static func restSlots(_ kinds: [RoutineItemKind]) -> [Bool] {
+        (0...kinds.count).map { allowsRest(at: $0, in: kinds) }
+    }
+
     // MARK: Orphan rule (ADR 0066 R5)
 
     /// A unit-bearing block whose referenced unit has gone missing is **orphaned** — the

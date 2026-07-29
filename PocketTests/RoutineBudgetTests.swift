@@ -83,6 +83,43 @@ final class RoutineBudgetTests: XCTestCase {
         XCTAssertEqual(RoutineBudget.withProposedRests([.focused]), [.focused])
     }
 
+    // MARK: - Authoring guard: no two rests in a row (ADR 0127)
+
+    func testEveryGapInAnAllUnitListTakesARest() {
+        let kinds: [RoutineItemKind] = [.warmup, .focused, .play]
+        // One slot before each block plus one at the end; none of them neighbours a rest.
+        XCTAssertEqual(RoutineBudget.restSlotCount(kinds), 4)
+        XCTAssertEqual(RoutineBudget.restSlots(kinds), [true, true, true, true])
+    }
+
+    func testSlotsEitherSideOfAnExistingRestAreRefused() {
+        let kinds: [RoutineItemKind] = [.focused, .rest, .focused]
+        // Slot 1 (before the rest) and slot 2 (after it) would make two rests adjacent.
+        XCTAssertEqual(RoutineBudget.restSlots(kinds), [true, false, false, true])
+    }
+
+    func testTheHeadAndTailSlotsFollowTheSameRule() {
+        XCTAssertFalse(RoutineBudget.allowsRest(at: 0, in: [.rest, .focused]))
+        XCTAssertTrue(RoutineBudget.allowsRest(at: 2, in: [.rest, .focused]))
+        XCTAssertFalse(RoutineBudget.allowsRest(at: 2, in: [.focused, .rest]))
+        XCTAssertTrue(RoutineBudget.allowsRest(at: 0, in: [.focused, .rest]))
+    }
+
+    func testAnEmptyRoutineTakesARest() {
+        XCTAssertEqual(RoutineBudget.restSlotCount([]), 1)
+        XCTAssertTrue(RoutineBudget.allowsRest(at: 0, in: []))
+    }
+
+    func testASoleRestRefusesBothOfItsSlots() {
+        XCTAssertEqual(RoutineBudget.restSlots([.rest]), [false, false])
+    }
+
+    func testOutOfRangeSlotsClampInsteadOfTrapping() {
+        XCTAssertFalse(RoutineBudget.allowsRest(at: 99, in: [.focused, .rest]))
+        XCTAssertTrue(RoutineBudget.allowsRest(at: 99, in: [.rest, .focused]))
+        XCTAssertFalse(RoutineBudget.allowsRest(at: -3, in: [.rest, .focused]))
+    }
+
     // MARK: - Orphan rule (ADR 0066 R5 — skip a block whose unit went missing)
 
     func testUnitBlockWithoutAResolvableUnitIsOrphaned() {

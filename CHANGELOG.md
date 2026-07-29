@@ -6,6 +6,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Adding to a routine no longer closes the picker.** Tap a drill and it goes in there and then —
+  the row ticks, a count appears at the bottom, and you can carry on browsing and add five more
+  without reopening the sheet and walking back down to where you were. Tap a ticked row to take it
+  back out again. **Done** closes when you're finished.
+- **"All exercises" when you don't remember the template.** Exercises, Loops and Ear training in the
+  add-to-routine picker still open grouped — by template, by song — but each now offers **All …** at
+  the top, every unit in one flat A–Z list. Exercises there show their template on the row, so you
+  can still tell two similarly-named drills apart. Songs already worked this way.
+- **Rests go where you want them.** **Insert rest** still adds one at the end, but **hold** it and
+  the block list opens up: a tappable gap appears between every block, so you can drop rests exactly
+  where they belong instead of adding one at the bottom and dragging it up. If a rest is already
+  there, the gap says so rather than giving you two breaks in a row.
 - **The practice libraries' titles sit straight.** "Exercises" used to sit right of centre and shift
   sideways whenever you changed the sort order. Sort, sort direction and the favourites filter now
   live together under one **⋯** button at the top right of Exercises, Routines and Loops, so the
