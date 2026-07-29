@@ -390,7 +390,8 @@ didn't cover were taken at kickoff. Notes worth carrying forward:
   `isFavorite` so save-undo covers it.
 - `WaveformPanels.swift` split — `WaveformPanels+Markers.swift` — to stay under the 400-line ceiling.
 
-**Slice 7 — routine building — DONE (branch `pocket-206-slice7-routine-building`, 2026-07-29).**
+**Slice 7 — routine building — DONE, device-verified (branch `pocket-206-slice7-routine-building`,
+2026-07-29).**
 Landed under **ADR 0127**. All three items in, plus two kickoff decisions the note didn't cover.
 Notes worth carrying forward:
 
