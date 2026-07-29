@@ -190,7 +190,7 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] support.html deployed to decooperations.click/redmoon/support
 - [ ] Support URL + Privacy Policy URL pasted into the form
 - [ ] App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120); everything else "not collected"
-- [ ] `APTABASE_APP_KEY` set in `project.yml` from the real EU-region app key, and `AptabaseSinkTests.testTheAppShipsWithNoKeyConfigured` deleted in the same commit
+- [x] `APTABASE_APP_KEY` set in `project.yml` from the real EU-region app key (done 2026-07-29; `AptabaseSinkTests` pins that it resolves and is EU-region)
 - [ ] Category: Music (primary) / Education (secondary)
 - [ ] Age rating questionnaire → 4+
 - [ ] Price: Free · Availability set

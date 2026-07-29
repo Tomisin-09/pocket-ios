@@ -65,8 +65,10 @@ targets:
         # that never leaves the backend. Empty here until an Aptabase app exists; the sink stays
         # inert on an empty key, so the app ships collecting nothing either way. One key, not one
         # per config: the SDK's TrackingMode.readFromEnvironment stamps `isDebug` from #if DEBUG
-        # and the dashboard separates debug traffic on its own.
-        APTABASE_APP_KEY: ""
+        # and the dashboard separates debug traffic on its own. The `A-EU-` prefix is
+        # load-bearing — the SDK derives the ingest host from it, so a US key would silently
+        # send EU users' events to the wrong region. AptabaseSinkTests pins that.
+        APTABASE_APP_KEY: "A-EU-2959015188"
       # Backend base URL is injected per-config in Phase 4 (when the proxy
       # exists). Note: '//' in an Xcode build setting is treated as a comment,
       # so the URL is supplied via an .xcconfig using the `$()//` escape, not

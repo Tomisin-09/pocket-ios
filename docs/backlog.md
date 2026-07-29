@@ -458,11 +458,13 @@ forward:
   sessions are under-counted. Real bias for an app built to work with no network.
 - **No kill switch** (no backend), which is why the vocabulary is 13 events and why every event
   whose host can re-appear carries a fire-once latch.
-- **Still outstanding:** create the Aptabase EU app and set `APTABASE_APP_KEY` (the build ships
-  inert until then, asserted by a test that says to delete itself in that same commit); answer the
-  ASC App Privacy nutrition label; paste the revised Red Moon section into
-  `decooperations.co.uk/privacy`; and **Tier 2** (AdAttributionKit / Apple Search Ads) plus the
-  **marketing-site cookie policy**, both separate slices with no code overlap here.
+- **Aptabase EU app created and `APTABASE_APP_KEY` set** (2026-07-29), so the pipeline is live for
+  anyone who opts in. Debug builds flush every 2s and land in the dashboard's separate debug bucket,
+  which is the quickest way to watch the pipeline end-to-end without touching release numbers.
+- **Still outstanding:** answer the ASC App Privacy nutrition label (Product Interaction → Analytics
+  → not linked, not tracking); paste the revised Red Moon section into `decooperations.co.uk/privacy`;
+  and **Tier 2** (AdAttributionKit / Apple Search Ads) plus the **marketing-site cookie policy**,
+  both separate slices with no code overlap here.
 
 **Slice 9 — artist name generator + onboarding copy (small):**
 

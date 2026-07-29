@@ -212,9 +212,12 @@ rebuilt as one.
   `practiceCompleted` because a stop arrives by three different paths and an explicit "manual" event
   would double-fire or miss depending on the route. Abandonment is read as the gap between started
   and completed — a ratio of two counts, which is what the dashboard can actually answer.
-- **The app still collects nothing as shipped.** No Aptabase app exists yet, so `APTABASE_APP_KEY` is
-  empty and the sink stays inert. `AptabaseSinkTests.testTheAppShipsWithNoKeyConfigured` asserts
-  this and instructs that it be deleted in the same commit that sets the key.
+- **The pipeline is live.** The EU app key is configured, so an opted-in player's events reach
+  `eu.aptabase.com`. `AptabaseSinkTests.testTheBundledKeyIsPresentAndEURegion` pins both halves: that
+  the key resolves out of the Info.plist at all (a blanked one would make analytics silently inert
+  for everyone who consented) and that it is **EU-region** — the SDK derives its ingest host from
+  that segment, so a US key would quietly route EU users' events to the wrong region and break the
+  data-residency claim the privacy policy makes.
 - **Unaffected:** ADR 0070 (no grading) — the vocabulary is deliberately free of mastery, tempo and
   accuracy. ADR 0092's audio boundary — no audio, no recording, no waveform data is ever sent.
   ADR 0112's entitlement logic — `AccessPolicy` is untouched; only the reporting axis changed.

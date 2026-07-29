@@ -25,10 +25,15 @@ final class AptabaseSinkTests: XCTestCase {
                        "A key pasted with stray whitespace should still work.")
     }
 
-    func testTheAppShipsWithNoKeyConfigured() {
-        XCTAssertNil(AptabaseSink.bundledAppKey,
-                     "No Aptabase app exists yet, so the build must collect nothing. Delete this "
-                     + "assertion in the same commit that sets APTABASE_APP_KEY.")
+    func testTheBundledKeyIsPresentAndEURegion() {
+        guard let key = AptabaseSink.bundledAppKey else {
+            return XCTFail("APTABASE_APP_KEY is not resolving from the Info.plist. Analytics would "
+                           + "be silently inert for everyone who opted in.")
+        }
+        XCTAssertTrue(key.hasPrefix("A-EU-"),
+                      "The SDK derives its ingest host from the region segment of the key, so a "
+                      + "non-EU key would send EU users' events to the wrong region — a data "
+                      + "residency claim we make in the privacy policy (ADR 0120).")
     }
 
     // MARK: - Property mapping
