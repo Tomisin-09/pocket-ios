@@ -26,7 +26,7 @@ extension HomeView {
         // The analytics consent ask (ADR 0120) sits **last** on the ladder so it never competes with
         // a profile moment, and is gated on a completed practice rather than on launch — the ask is
         // deliberately kept out of the activation flow it exists to measure.
-        guard !analyticsPromptSeen, AppSettings.firstPracticeCompleted else { return }
+        guard !analyticsPromptSeen, AppSettings.hasPracticed else { return }
         showingAnalyticsConsent = true
     }
 

@@ -117,8 +117,12 @@ final class StoreManager {
     /// Restore purchases — re-sync with the App Store, then re-scan entitlements. Backs the paywall's
     /// **Restore Purchases** control (required by App Review).
     func restore() async {
+        let wasPro = isPro
         try? await AppStore.sync()
         await refreshEntitlements()
+        // Whether the restore actually found anything (ADR 0120) — the difference between "restore
+        // works" and "restore keeps being tried and failing", which look identical in ASC.
+        Analytics.send(.restoreCompleted(restored: !wasPro && isPro))
     }
 
     private func handle(_ result: VerificationResult<Transaction>) async {

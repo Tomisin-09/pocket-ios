@@ -277,6 +277,10 @@ struct RoutineDetailView: View {
         routine.name = QuickSessionNaming.uniqued(base, existing: others)
         try? editContext.save()
         existsInStore = true
+        // A generated session being *kept* is the moment a routine exists (ADR 0120). Not the
+        // `context.insert` in `init` — that fires into the sandbox for every "New routine" tap,
+        // including the ones abandoned without saving.
+        Analytics.send(.routineCreated(items: routine.items.count, generated: true))
         isEditing = false
         haptic(.medium)
     }
@@ -320,8 +324,12 @@ struct RoutineDetailView: View {
             dismiss()
             return
         }
+        let isNew = !existsInStore
         try? editContext.save()
         existsInStore = true
+        if isNew {
+            Analytics.send(.routineCreated(items: routine.items.count, generated: false))
+        }
         isEditing = false
         insertingRests = false
         haptic(.medium)

@@ -29,9 +29,14 @@ enum AnalyticsEvent: Equatable {
     /// install is the only way to see engagement decay over time.
     case practiceStarted(kind: PracticeKind, source: PracticeSource, sinceInstall: LatencyBucket)
 
-    /// A practice run ended. `ending` separates a ramp that finished naturally from one the player
-    /// stopped — the completion-vs-abandonment signal.
-    case practiceFinished(kind: PracticeKind, ending: RunEnding)
+    /// A practice run reached its natural end (the ramp ran its full course), never a manual stop.
+    ///
+    /// There is deliberately no `ending:` axis. A stop can arrive by three different paths — the
+    /// stop button, `onDisappear`, and leaving the screen mid-ramp — so an explicit "manual" event
+    /// would double-fire or miss depending on the route. Abandonment is instead read as the gap
+    /// between `practice_started` and `practice_completed`, which is a ratio of two counts and so
+    /// exactly the shape the dashboard can answer.
+    case practiceCompleted(kind: PracticeKind)
 
     // MARK: - Acquisition hook
 
@@ -88,7 +93,7 @@ extension AnalyticsEvent {
     var name: String {
         switch self {
         case .practiceStarted: return "practice_started"
-        case .practiceFinished: return "practice_finished"
+        case .practiceCompleted: return "practice_completed"
         case .songImported: return "song_imported"
         case .toolOpened: return "tool_opened"
         case .loopCreated: return "loop_created"
@@ -112,9 +117,8 @@ extension AnalyticsEvent {
                     "source": .text(source.rawValue),
                     "since_install": .text(sinceInstall.rawValue)]
 
-        case let .practiceFinished(kind, ending):
-            return ["kind": .text(kind.rawValue),
-                    "ending": .text(ending.rawValue)]
+        case let .practiceCompleted(kind):
+            return ["kind": .text(kind.rawValue)]
 
         case let .songImported(count, failed):
             return ["count": .number(count),
@@ -184,18 +188,15 @@ enum PracticeKind: String, CaseIterable {
     case song
 }
 
-/// Where the run was started from — a standalone tap, inside a routine, or from the planner's
-/// "Today's session". Distinguishes the deliberate practice path from the guided one.
+/// Where the run was started from — a standalone tap, or as a block inside a routine.
+///
+/// There is no `planner` case: a planner session materialises an ordinary `Routine` and plays
+/// through `RoutinePlayerView` like any other, so nothing at the run site could distinguish it and
+/// the case could never be emitted. Planner interest is already legible from
+/// `routine_created(generated: true)` and `paywall_shown(trigger: planner)`.
 enum PracticeSource: String, CaseIterable {
     case standalone
     case routine
-    case planner
-}
-
-/// How a run ended: the ramp reached its natural end, or the player stopped it.
-enum RunEnding: String, CaseIterable {
-    case natural
-    case manual
 }
 
 /// The age of the install when something happened, bucketed. Never a raw date or duration.

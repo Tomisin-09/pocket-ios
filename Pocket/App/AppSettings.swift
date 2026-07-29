@@ -57,7 +57,7 @@ enum AppSettings {
         static let analyticsEnabled = "analyticsEnabled"
         static let analyticsPromptSeen = "analyticsPromptSeen"
         static let installDate = "installDate"
-        static let firstPracticeCompleted = "firstPracticeCompleted"
+        static let hasPracticed = "hasPracticed"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -245,9 +245,18 @@ enum AppSettings {
     /// not tax the activation flow it exists to measure.
     static var analyticsPromptSeen: Bool { bool(Key.analyticsPromptSeen, default: false) }
 
-    /// Whether a practice run has ever been completed on this install. Purely local bookkeeping that
-    /// decides when the consent ask is due; written whether or not consent exists.
-    static var firstPracticeCompleted: Bool { bool(Key.firstPracticeCompleted, default: false) }
+    /// Whether a practice run has ever been *started* on this install. Purely local bookkeeping
+    /// that decides when the analytics consent ask is due; written whether or not consent exists.
+    ///
+    /// Deliberately keyed on starting rather than finishing: a player who always stops a ramp early
+    /// would otherwise never be asked at all.
+    static var hasPracticed: Bool { bool(Key.hasPracticed, default: false) }
+
+    /// Record that practice has happened. Idempotent.
+    static func recordPracticed(store: UserDefaults = .standard) {
+        guard !store.bool(forKey: Key.hasPracticed) else { return }
+        store.set(true, forKey: Key.hasPracticed)
+    }
 
     /// When the app was first launched, used only to bucket an install's age (`LatencyBucket`) —
     /// never sent as a date. Written on first launch regardless of consent: it is the user's own

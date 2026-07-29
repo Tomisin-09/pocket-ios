@@ -291,6 +291,7 @@ struct ExerciseLibraryView: View {
         // once the payload is on (ADR 0121).
         exercise.bindCommandRhythmToContent()
         context.insert(exercise)
+        Analytics.send(.exerciseCreated(template: plan.template, instrument: plan.instrument))
         haptic(.medium)
         justCreated = exercise
     }

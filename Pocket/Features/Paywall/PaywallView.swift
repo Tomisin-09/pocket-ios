@@ -266,7 +266,13 @@ struct PaywallView: View {
         purchasing = true
         defer { purchasing = false }
         do {
-            if try await store.purchase(product) { dismiss() }
+            if try await store.purchase(product) {
+                // Reported here rather than in `StoreManager` because trial eligibility is only
+                // known on this screen (ADR 0120) — and trial-vs-outright is the interesting half.
+                Analytics.send(.purchaseCompleted(product: plan == .annual ? .annual : .monthly,
+                                                  trial: eligibleForTrial))
+                dismiss()
+            }
         } catch {
             purchaseError = error.localizedDescription
         }

@@ -16,7 +16,7 @@ final class AnalyticsEventTests: XCTestCase {
     /// One of every case in the vocabulary.
     private let everyEvent: [AnalyticsEvent] = [
         .practiceStarted(kind: .exercise, source: .standalone, sinceInstall: .day1),
-        .practiceFinished(kind: .loop, ending: .natural),
+        .practiceCompleted(kind: .loop),
         .songImported(count: 3, failed: 1),
         .toolOpened(tool: .tuner),
         .loopCreated,
@@ -41,7 +41,7 @@ final class AnalyticsEventTests: XCTestCase {
     func testEventNamesAreFrozen() {
         XCTAssertEqual(everyEvent.map(\.name),
                        ["practice_started",
-                        "practice_finished",
+                        "practice_completed",
                         "song_imported",
                         "tool_opened",
                         "loop_created",
@@ -66,7 +66,7 @@ final class AnalyticsEventTests: XCTestCase {
         let keys = everyEvent.map { Set($0.payload.keys).sorted() }
         XCTAssertEqual(keys, [
             ["kind", "since_install", "source"],
-            ["ending", "kind"],
+            ["kind"],
             ["count", "failed"],
             ["tool"],
             [],
@@ -89,7 +89,6 @@ final class AnalyticsEventTests: XCTestCase {
         var permitted = Set<String>(["none"])   // the explicit "no template chosen" sentinel
         permitted.formUnion(PracticeKind.allCases.map(\.rawValue))
         permitted.formUnion(PracticeSource.allCases.map(\.rawValue))
-        permitted.formUnion(RunEnding.allCases.map(\.rawValue))
         permitted.formUnion(LatencyBucket.allCases.map(\.rawValue))
         permitted.formUnion(Tool.allCases.map(\.rawValue))
         permitted.formUnion(SubscriptionProduct.allCases.map(\.rawValue))

@@ -102,6 +102,10 @@ extension LoopRunView {
         // The count-in has already run, so the take is the playing only, not the lead-in.
         recorder.beginArmedTake()
         model.start(ramp: routine)
+        AppSettings.recordPracticed()
+        Analytics.send(.practiceStarted(kind: .loop,
+                                        source: routineContext == nil ? .standalone : .routine,
+                                        sinceInstall: AppSettings.installAgeBucket))
         haptic(.medium)
     }
 
@@ -113,6 +117,7 @@ extension LoopRunView {
         let summitedReach = reach
         let summitedCommand = command
         model.onFinished = {
+            Analytics.send(.practiceCompleted(kind: .loop))
             completion = RunCompletion(reach: summitedReach, command: summitedCommand)
         }
     }

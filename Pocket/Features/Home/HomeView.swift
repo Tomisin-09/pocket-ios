@@ -271,7 +271,10 @@ struct HomeView: View {
     /// The standalone metronome (plum, `PocketColor.metronome` — the one theme-invariant home
     /// hue), presented full-screen (it owns its own navigation + dismiss, ADR 0043).
     private var metronomeCard: some View {
-        Button { showingMetronome = true } label: {
+        Button {
+            showingMetronome = true
+            Analytics.send(.toolOpened(tool: .metronome))
+        } label: {
             HomeNavCard(icon: "metronome.fill", title: "Metronome",
                         subtitle: "Standalone click & tempo trainer",
                         tint: PocketColor.metronome,

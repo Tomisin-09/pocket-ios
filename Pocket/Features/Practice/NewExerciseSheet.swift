@@ -47,6 +47,11 @@ struct NewExerciseSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var chosen: ExerciseTemplate?
+    /// Whether this sheet actually produced a drill. Drives the abandonment signal on disappear
+    /// (ADR 0120) — reported from here rather than from each host's `onDismiss` because this is the
+    /// only place that knows *which* template was being configured when the player walked away, and
+    /// one edit covers both hosts (the library's + button and the automator's save seam).
+    @State private var created = false
     /// The Guitar/Bass axis for the drill being created (ADR 0116 S6) — chosen on the picker step, then
     /// handed to the configure form as its fixed instrument. Seeded from the profile's `defaultInstrument`.
     @State private var instrument: Instrument
@@ -87,9 +92,16 @@ struct NewExerciseSheet: View {
                 }
             }
         }
+        // Covers every way out — Cancel, the swipe-down, and a host dismissing the sheet — because
+        // all of them are the same thing to the player: they opened the create flow and got nothing.
+        .onDisappear {
+            guard !created else { return }
+            Analytics.send(.exerciseAuthoringAbandoned(template: chosen ?? fixedTemplate))
+        }
     }
 
     private func create(_ plan: NewExercisePlan) {
+        created = true
         onCreate(plan)
         dismiss()
     }

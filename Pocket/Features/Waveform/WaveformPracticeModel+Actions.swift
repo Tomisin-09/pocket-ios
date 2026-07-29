@@ -197,6 +197,7 @@ extension WaveformPracticeModel {
         let name = AutoName.next(prefix: "Loop", existing: loops.map(\.name))
         let loop = Loop(name: name, start: start, end: end, speed: speed, repeats: 4)
         context.insert(loop)
+        Analytics.send(.loopCreated)
         loop.song = song          // attach → shows in `loops`, persists
         activeLoopID = loop.uid
         applyActiveLoopToEngine()
