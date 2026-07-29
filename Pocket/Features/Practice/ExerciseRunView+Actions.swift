@@ -9,6 +9,16 @@ import SwiftUI
 /// extension can drive it.
 extension ExerciseRunView {
 
+    /// The caption under the live BPM — the tempo marking, plus the **rhythm** the drill is played in
+    /// when it declares one ("BPM · Allegro · 16ths"). The big number stays the BPM the player set;
+    /// this only says what that BPM is counting, which is the fact a bare tempo omits (device pass
+    /// 2026-07-29). Lives here rather than in the view body to keep that file under the 400-line cap.
+    var liveTempoCaption: String {
+        let marking = "BPM · \(engine.tempoMarking.name)"
+        guard let noteRate = exercise.noteRate else { return marking }
+        return "\(marking) · \(noteRate.compactLabel)"
+    }
+
     /// Seed the editor once. With a measured command, load the saved tempos as-is; without one
     /// (first open), default command to the exercise's current tempo and working to a sensible
     /// floor below it — so the two start apart, not equal (ADR 0045).

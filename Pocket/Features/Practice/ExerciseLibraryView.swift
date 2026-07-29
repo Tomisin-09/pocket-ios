@@ -85,6 +85,7 @@ struct ExerciseLibraryView: View {
     private func fields(for exercise: Exercise) -> ExerciseSortFields {
         ExerciseSortFields(name: exercise.name, command: exercise.command,
                            dateAdded: exercise.dateAdded,
+                           notesPerBeat: exercise.noteRate?.perBeat ?? 1,
                            templateName: exercise.template.displayName,
                            instrument: exercise.instrument)
     }
@@ -225,7 +226,7 @@ struct ExerciseLibraryView: View {
         HStack(spacing: 8) {
             PracticeUnitRow(
                 title: exercise.name.isEmpty ? "Untitled" : exercise.name,
-                progress: "Command \(exercise.command) → \(exercise.reachTempo) BPM",
+                progress: exercise.commandProgressLabel,
                 isFavorite: exercise.isFavorite)
             if locked {
                 Spacer(minLength: 8)

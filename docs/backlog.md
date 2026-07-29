@@ -143,12 +143,38 @@ carrying forward:
 tempo is meaningless without its note rate* under **Near-term**; this is only its placement in the
 sequence, and the reasoning for it.
 
-- **3a — display + derived notes-per-minute (no ADR, no migration).** Sequenced *after* Slice 3 on
-  purpose: the "80 BPM · 16ths" label sits on the exercise row and the command-tempo sort is a row-list
-  concern, so landing it before the uniformity pass means writing it into four row implementations and
-  rewriting it during Slice 3. **Slice 3 is now done, so this is unblocked** — note the row *content*
-  was not what Slice 3 unified (that was the actions); the label still lands in `PracticeUnitRow` /
-  `ExerciseLibraryView.row(_:locked:)`, but only once.
+- **3a — display + derived notes-per-minute — DONE (branch `pocket-202-slice3a-command-tempo-note-rate`,
+  2026-07-29).** No ADR, no migration, as planned. Notes worth carrying forward:
+  - **The rate is `nil` when nothing declares one, and that's the whole discipline.** `NoteRate` is
+    resolved content-first (`Exercise.noteRate`: the content's `notesPerBeat` → the metronome
+    `subdivision` → `nil`), and every surface shows a rhythm **only** when it's non-`nil` — a label
+    present means "stated", never "assumed quarters". *Chord Changes* (chords template, `.none`) shows
+    no rhythm; *Spider Walk* (metronome-rendered warm-up whose `.sixteenths` click is its only stated
+    rhythm) shows one. Comparison still counts an undeclared rate as 1, so nothing drops out of the sort.
+  - **"Planner emphasis breaks too" was wrong** — the planner reads mastery and `lastPracticed`
+    (`DueScore`), never a tempo, so there was nothing to route through npm. The library's Command key
+    was the *only* cross-exercise read. Don't go looking for the planner half again.
+  - **The journal was deliberately left alone.** `commandTempoAtEntry` is a snapshot with no rhythm
+    stored beside it, so labelling an old entry with today's rhythm would state a fact we don't have.
+    That gap is exactly what 3b's `commandNotesPerBeat` closes; until then an unlabelled historical
+    BPM is the honest rendering.
+  - `RoutineStairs`' BPM signpost was also left alone: every plateau on one staircase is one
+    exercise at one rhythm, so nothing is being compared there — it was listed as breaking, but it
+    isn't a cross-exercise surface.
+  - **Four hand-built `"Command \(command) → \(reachTempo) BPM"` strings collapsed into
+    `Exercise.commandProgressLabel`** (library row, `AddRoutineUnitSheet`, `RoutineItemRow`,
+    `RoutinePlayerView`'s up-next). Adding the rhythm meant touching all four — the same
+    write-it-once pressure Slice 3 applied to the actions, now applied to the row's *content*.
+  - `FretboardSubdivisions` now delegates its table and labels to `NoteRate`, so the Rhythm dropdown,
+    the rows and the detail sheet can't drift into three vocabularies. Its old "anything unknown reads
+    Eighths" fallback is gone — an out-of-table rate describes itself ("6 per beat") rather than
+    claiming to be one of the four.
+  - The detail sheet's **Feel** section shows **Rhythm** *and* **Subdivision** as two rows on purpose.
+    They are separate axes that can legitimately disagree today; collapsing them into one would hide
+    the disagreement rather than resolve it (3b's job).
+  - `ExerciseRunView` was at 396 lines, so the live readout's caption lives in
+    `ExerciseRunView+Actions.swift` — the file-length ceiling decides where a two-line computed
+    property goes.
 - **3b — `commandNotesPerBeat` + unifying the two note-rate axes (own ADR).** Deliberately pulled
   **forward of Slice 10**, which it lightly collides with (both edit `ConfigureExerciseForm` /
   `NewExerciseSheet`, in different sections). The collision costs a merge; the reason to accept it is
@@ -884,8 +910,10 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
   - **What it does and doesn't break.** The ramp math is **fine and needs no change**: working, reach
     and back-off all derive from command proportionally (`TempoStretch`), so they are note-rate-invariant.
     What breaks is **comparison and edit safety** — the library's command-tempo sort
-    (`PracticeLibrarySort`), the `RoutineStairs` BPM labels, the journal's `commandTempoAtEntry`
-    snapshots, and planner emphasis. The seeded presets show the scale of it: *Spider Walk* (80 @
+    (`PracticeLibrarySort`) and the journal's `commandTempoAtEntry` snapshots. (Corrected while
+    building 3a: **planner emphasis and the `RoutineStairs` BPM labels are not affected** — the
+    planner ranks on mastery + `lastPracticed`, never a tempo, and a staircase is one exercise at one
+    rhythm, so neither compares across rhythms.) The seeded presets show the scale of it: *Spider Walk* (80 @
     sixteenths = 320 notes/min) and *Chord Changes* (70 @ none = 70) sort as near-neighbours — a 4.5×
     difference reading as 14%.
   - **Scope decision — notes-per-minute is a *comparison aid*, never a difficulty score.**
@@ -896,10 +924,12 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
     cross-exercise ranking presented as ability** — that is grading the player, which ADR 0070 rules
     out. It describes, sorts and labels; it never judges. Where npm is shown at all it is secondary to
     the BPM the musician actually sets.
-  - **Slice 1 — display + derived npm (no migration, do first).** Show the rhythm wherever a tempo is
-    shown ("80 BPM · 16ths") and route *cross-exercise* reads (library sort, planner emphasis) through a
-    computed npm, while BPM stays the number you set and see on the run screen. Most of the pedagogical
-    work for none of the risk — a musician reading `80 · 16ths` needs no explanation.
+  - ~~**Slice 1 — display + derived npm (no migration, do first).**~~ **DONE 2026-07-29** (branch
+    `pocket-202-slice3a-command-tempo-note-rate`; see *Slices 3a & 3b* above for the carry-forward
+    notes). Shipped as `NoteRate` + `Exercise.noteRate` / `commandProgressLabel`, the rhythm on the
+    exercise rows, routine blocks, the run screen's live readout and the detail sheet's Feel section,
+    and the library's Command key ranking on `commandNotesPerMinute`. The **planner** half of this
+    bullet was a false alarm — it reads mastery and `lastPracticed`, never a tempo.
   - **Slice 2 — bind the achievement to its rhythm (own ADR; it changes a term ADR 0045 defines).** One
     additive optional, `commandNotesPerBeat: Int?` (nil ⇒ legacy/unmeasured, no wipe — the `commandTempo`
     discipline). A Rhythm change then becomes a real event: offer **keep the same note speed** (80 @

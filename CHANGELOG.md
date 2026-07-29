@@ -6,6 +6,16 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **A tempo now says what it's counting.** Exercise rows, routine blocks and the live BPM on the run
+  screen show the rhythm alongside the tempo — *Command 80 → 96 BPM · 16ths* — because 80 BPM means
+  four different things at quarters, eighths, triplets or sixteenths. Drills that state no rhythm
+  (a chord-changing drill on a plain click) show none, rather than being labelled a guess. The
+  exercise detail sheet's **Feel** section now lists the played **Rhythm** as well as the metronome's
+  **Subdivision**, since they're separate settings and can differ.
+- **Sorting exercises by Command now compares note speed, not just BPM.** A sixteenth-note drill at
+  80 sits above an eighth-note drill at 80 — four notes a beat against two — where before they read
+  as a tie. Two drills at the same note speed still order by the tempo on screen. It's a way to line
+  drills up honestly, not a score: nothing here says which drill is harder, or how well you play it.
 - **Every list works the same way now.** Holding a row — an exercise, a routine, a loop, a song —
   opens the same menu, in the same order: the item's own actions, then Favourite, then Delete.
   Swiping still works too (favourite one way, delete the other). Previously only the song library had

@@ -242,7 +242,7 @@ struct ExerciseRunView: View {
                         .font(.pocketMono(.largeTitle))
                         .foregroundStyle(PocketColor.textPrimary)
                         .contentTransition(.numericText())
-                    Text("BPM · \(engine.tempoMarking.name)")
+                    Text(liveTempoCaption)
                         .font(.futura(.caption))
                         .foregroundStyle(PocketColor.textSecondary)
                 }

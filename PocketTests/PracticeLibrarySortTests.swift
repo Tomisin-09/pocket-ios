@@ -63,9 +63,11 @@ final class PracticeLibrarySortTests: XCTestCase {
 
     private func exercise(_ name: String, command: Int = 100,
                           dateAdded: Date = Date(timeIntervalSince1970: 0),
+                          notesPerBeat: Int = 1,
                           template: String = ExerciseTemplate.basic.displayName,
                           instrument: Instrument = .guitar) -> ExerciseSortFields {
-        ExerciseSortFields(name: name, command: command, dateAdded: dateAdded, templateName: template,
+        ExerciseSortFields(name: name, command: command, dateAdded: dateAdded,
+                           notesPerBeat: notesPerBeat, templateName: template,
                            instrument: instrument)
     }
 
@@ -80,6 +82,33 @@ final class PracticeLibrarySortTests: XCTestCase {
     }
 
     func testExercisesByCommandTempoAscending() {
+        let drills = [exercise("A", command: 120), exercise("B", command: 80), exercise("C", command: 100)]
+        XCTAssertEqual(sortedExercises(drills, by: .commandTempo), ["B", "C", "A"])
+    }
+
+    /// The regression the whole slice exists for: the seeded *Spider Walk* (80 @ sixteenths = 320
+    /// notes/min) and *Chord Changes* (70 @ quarters = 70) are a 4.5× difference that raw BPM read as
+    /// 14%, sorting them as near-neighbours in the wrong order.
+    func testExercisesByCommandTempoRanksOnNotesPerMinuteNotBareBPM() {
+        let drills = [exercise("Spider Walk", command: 80, notesPerBeat: 4),
+                      exercise("Chord Changes", command: 70, notesPerBeat: 1),
+                      exercise("Scale Runs", command: 80, notesPerBeat: 2)]
+        XCTAssertEqual(sortedExercises(drills, by: .commandTempo),
+                       ["Chord Changes", "Scale Runs", "Spider Walk"])
+    }
+
+    /// Equal note speed at different tempos (80 @ eighths and 40 @ sixteenths are both 160 npm) falls
+    /// back to the bare BPM, so the order still matches the numbers on screen rather than being
+    /// resolved alphabetically.
+    func testEqualNotesPerMinuteFallsBackToBareBPM() {
+        let drills = [exercise("Alpha", command: 80, notesPerBeat: 2),
+                      exercise("Beta", command: 40, notesPerBeat: 4)]
+        XCTAssertEqual(sortedExercises(drills, by: .commandTempo), ["Beta", "Alpha"])
+    }
+
+    /// A rhythm-less drill (`notesPerBeat` defaulted to 1) compares as its bare BPM rather than
+    /// dropping out of the ordering.
+    func testExercisesWithNoDeclaredRhythmCompareAsBareBPM() {
         let drills = [exercise("A", command: 120), exercise("B", command: 80), exercise("C", command: 100)]
         XCTAssertEqual(sortedExercises(drills, by: .commandTempo), ["B", "C", "A"])
     }

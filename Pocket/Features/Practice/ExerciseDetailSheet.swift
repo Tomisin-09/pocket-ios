@@ -184,12 +184,25 @@ struct ExerciseDetailSheet: View {
 
     // MARK: - Meter & subdivision (read-only)
 
+    /// Meter, **Rhythm** and the click's **Subdivision** — deliberately two rows, not one. They are
+    /// separate axes today (Rhythm is what you play, editable in the shape editor; Subdivision is what
+    /// the metronome clicks, fixed at creation) and they can legitimately disagree, so collapsing them
+    /// here would hide the difference rather than resolve it. Rhythm is omitted when the drill declares
+    /// none — a chord-changing drill has no note density to state.
     private var feelSection: some View {
-        Section("Feel") {
+        Section {
             LabeledContent("Time signature") {
                 Text(exercise.timeSignatureLabel).font(.pocketMono(.body))
             }
+            if let noteRate = exercise.noteRate {
+                LabeledContent("Rhythm") { Text(noteRate.label) }
+            }
             LabeledContent("Subdivision") { Text(exercise.subdivision.label) }
+        } header: {
+            Text("Feel")
+        } footer: {
+            Text("Rhythm is how many notes you play per beat — what the command tempo is measured in. "
+                 + "Subdivision is how the metronome clicks underneath it.")
         }
     }
 

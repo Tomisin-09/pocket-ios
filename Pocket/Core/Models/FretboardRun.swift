@@ -317,6 +317,19 @@ extension FretboardContent {
         }
     }
 
+    /// The **note rate** this content is authored at — every case carries its own `notesPerBeat`
+    /// (the Rhythm dropdown writes it), so the rate is read straight off the recipe rather than by
+    /// expanding the drill. Read through `Exercise.noteRate`, which resolves it against the
+    /// metronome subdivision.
+    var notesPerBeat: Int {
+        switch self {
+        case .run(let run): run.notesPerBeat
+        case .scale(let scaleRun): scaleRun.notesPerBeat
+        case .arpeggio(let arpeggioRun): arpeggioRun.notesPerBeat
+        case .custom(let drill): drill.notesPerBeat
+        }
+    }
+
     /// The generated finger-pattern run, when this is a `.run`.
     var runValue: FretboardRun? { if case .run(let run) = self { return run }; return nil }
 
