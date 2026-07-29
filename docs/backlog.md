@@ -125,6 +125,16 @@ carrying forward:
   pending-row filter. The context-menu Delete keeps the role, where it just colours the label.
 - Guarded by `RowUndoUITests` — delete a row, tap Undo, assert it's back **without navigating**. Both
   causes were wiring, not logic, so no unit test could have caught either.
+- **That guard then raced its own subject and turned `main` red (2026-07-29, CI run 30441349304 — the
+  post-merge build of PR #188, which touched nothing in this path).** The toast lives for
+  `RowDeletionCoordinator.window` counted from the Delete tap, and the test spent up to five seconds
+  waiting for the row to *vanish* before it went looking for Undo: `waitForExistence` passed, then
+  `tap()` reported "No matches found". **The general lesson: when a UI test's subject is on a timer,
+  every wait placed in front of it is spent out of that timer.** Fixed twice over — the wait order is
+  inverted (grab the timed thing first), and `window` stretches under `-uiTesting`, because the
+  four-second figure is a product decision this test was never asserting. It also mimics a regression
+  perfectly: the first local sighting was a *different* step of the same test under a concurrent
+  device build, which passed in isolation — see [[ui-test-isolation-confound-cold-sim]].
 - **The seam is closures in the environment, not the coordinator object** (the `PaywallTrigger`
   pattern), so a row outside a `.pocketRowUndoHost()` — a preview, a test — deletes immediately
   instead of trapping on a missing `@Observable`.

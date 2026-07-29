@@ -43,8 +43,20 @@ final class RowDeletionCoordinator {
     /// Rows hidden from their list while their delete is pending.
     private(set) var pending: Set<AnyHashable> = []
 
-    /// How long the undo window stays open.
-    static let window: Duration = .seconds(4)
+    /// How long the undo window stays open — four seconds for a player, **stretched under
+    /// `-uiTesting`** (the launch flag `StoreManager` and the profile moment already read).
+    ///
+    /// The UI test that covers this pins the *wiring* — Undo restores the row on the same screen —
+    /// not the toast's lifetime. But XCUITest works in whole seconds: a query, a hit-point
+    /// resolution and a tap are each hundreds of milliseconds, and a loaded CI runner stretches
+    /// them further, so the harness can spend a four-second wall-clock budget before it reaches the
+    /// button it just saw. That is what turned a working feature into a red `main` (CI run
+    /// 30441349304: `undo.waitForExistence` passed, then `undo.tap()` found no matches). Giving the
+    /// harness room removes a race that was never the thing under test. The **real** duration is
+    /// covered by `RowDeletionCoordinatorTests`, which runs without the flag and waits it out.
+    static var window: Duration {
+        CommandLine.arguments.contains("-uiTesting") ? .seconds(120) : .seconds(4)
+    }
 
     private var commits: [AnyHashable: () -> Void] = [:]
     private var expiry: Task<Void, Never>?
