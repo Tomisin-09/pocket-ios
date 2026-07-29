@@ -6,6 +6,20 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Every list works the same way now.** Holding a row — an exercise, a routine, a loop, a song —
+  opens the same menu, in the same order: the item's own actions, then Favourite, then Delete.
+  Swiping still works too (favourite one way, delete the other). Previously only the song library had
+  the full set; exercises, routines and loops each had part of it.
+- **Deleting anything from a list can be undone.** A *Deleted X · Undo* toast appears for a few
+  seconds and the row is only really removed once it goes — so a mis-swiped song doesn't take its
+  loops, markers and notes with it. Undo is instant and complete, because nothing is destroyed until
+  the toast expires.
+- **Duplicate an exercise or a routine.** From the row's hold menu — the copy carries the drill's
+  whole shape (template, content, meter, every tempo and the ramp recipe) or the session's whole
+  block list, and starts fresh on history: unrated, unpractised, unpinned. Named "Spider copy", then
+  "Spider copy 2". Part of Red Moon Pro, like the creation it's a shortcut for.
+- **Details for an exercise without starting a run.** The reference sheet that used to be behind the
+  ⓘ on the run screen is now on the exercise row's hold menu.
 - **Scales and arpeggios can start on the root note.** A new *Start from the lowest root note* toggle
   (Advanced) opens the run on the tonic the box is named for, instead of on whichever note happens to
   sit lowest in the shape — the way the box is normally practised. On by default for runs created from

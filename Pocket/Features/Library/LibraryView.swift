@@ -12,6 +12,10 @@ struct LibraryView: View {
     /// which is Pro.
     @Environment(\.isPro) private var isPro
     @Environment(\.presentPaywall) private var presentPaywall
+    /// Deferred, undoable row deletion (Slice 3). **Owned here, not by the modifier**: this view
+    /// reads `isPending` itself to hide a song while its Undo window is open, and a modifier applied
+    /// inside `body` can only publish to its descendants.
+    @State private var rowDeletion = RowDeletionCoordinator()
     @Query(sort: \Song.title) private var songs: [Song]
     @State private var importing = false
     @State private var importError: String?
@@ -35,9 +39,17 @@ struct LibraryView: View {
     /// Title/artist search query (ADR 0035).
     @State private var searchText = ""
 
+    /// The songs actually on screen — everything except rows whose delete is pending behind the
+    /// Undo toast (Slice 3). Every downstream read (the empty state, the filter menu, the sections)
+    /// starts here, so deleting your last song reads as an empty library rather than as a filter
+    /// that matched nothing — and Undo puts it straight back.
+    private var presentSongs: [Song] {
+        songs.filter { !rowDeletion.isPending($0.persistentModelID) }
+    }
+
     var body: some View {
         Group {
-            if songs.isEmpty {
+            if presentSongs.isEmpty {
                 LibraryEmptyState(onImport: { importing = true }, onTryDemo: addDemo)
             } else {
                 libraryContent
@@ -52,10 +64,12 @@ struct LibraryView: View {
         .readableWidth()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(PocketColor.background.ignoresSafeArea())
+        // Deferred delete + the Undo toast for every row on this screen (Slice 3).
+        .pocketRowUndoHost(rowDeletion)
         .navigationTitle("Library")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                if !songs.isEmpty { sortMenu }
+                if !presentSongs.isEmpty { sortMenu }
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if !availableCollections.isEmpty { filterMenu }
@@ -109,7 +123,7 @@ struct LibraryView: View {
         .sheet(isPresented: Binding(get: { sessionCollection != nil },
                                     set: { if !$0 { sessionCollection = nil } })) {
             if let collection = sessionCollection {
-                CollectionSessionSheet(collection: collection, songs: songs)
+                CollectionSessionSheet(collection: collection, songs: presentSongs)
             }
         }
     }
@@ -121,7 +135,7 @@ struct LibraryView: View {
     @ViewBuilder
     private var collectionSessionBar: some View {
         if selectedCollections.count == 1, let collection = selectedCollections.first,
-           CollectionSessionBuilder.canBuild(for: collection, in: songs) {
+           CollectionSessionBuilder.canBuild(for: collection, in: presentSongs) {
             Button {
                 // A generated collection session is a real `Routine` — authoring, so Pro (ADR 0112).
                 guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
@@ -146,14 +160,14 @@ struct LibraryView: View {
     /// Distinct collection names across the library, canonicalised and sorted — the
     /// filter chips (ADR 0033).
     private var availableCollections: [String] {
-        Labels.normalized(songs.flatMap(\.collections))
+        Labels.normalized(presentSongs.flatMap(\.collections))
             .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
     }
 
     /// Songs narrowed by the active collection filter (AND) and the search query. Order
     /// is the `@Query` title sort, preserved by `filter`.
     private var filteredSongs: [Song] {
-        songs.filter {
+        presentSongs.filter {
             Labels.matches($0.collections, allOf: Array(selectedCollections))
                 && LibrarySectioning.matchesSearch(fields(for: $0), query: searchText)
         }
@@ -260,30 +274,37 @@ struct LibraryView: View {
                             SongCard(song: song)
                         }
                         .listRowBackground(PocketColor.background)
-                        // Hold a card for its actions (Edit opens the metadata sheet); swipe
-                        // still offers a quick Delete. Tap opens the song for practice.
-                        .contextMenu {
-                            Button { detailsSong = song } label: {
-                                Label("Details", systemImage: "info.circle")
-                            }
-                            Button { editingSong = song } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            Button(role: .destructive) { context.delete(song) } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) { context.delete(song) } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
+                        // Hold a card for its actions; swipe still offers a quick Delete. Tap opens
+                        // the song for practice. No favourite — `Song` has no pin (ADR 0119 covers
+                        // exercises, loops and routines), which is exactly why the shared modifier
+                        // takes it as an optional.
+                        .pocketRowActions(displayName(song),
+                                          tint: PocketColor.active,
+                                          menu: menuItems(for: song),
+                                          delete: deletion(for: song))
                     }
                 }
             }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+    }
+
+    private func displayName(_ song: Song) -> String {
+        song.title.isEmpty ? "Untitled song" : song.title
+    }
+
+    /// A song's long-press actions (Slice 3): the read-first overview, and the metadata editor.
+    private func menuItems(for song: Song) -> [PocketRowMenuItem] {
+        [PocketRowMenuItem("Details", systemImage: "info.circle") { detailsSong = song },
+         PocketRowMenuItem("Edit", systemImage: "pencil") { editingSong = song }]
+    }
+
+    /// Deleting a song takes its loops, markers and journal with it (cascade), so the Undo window
+    /// the shared coordinator adds matters more here than anywhere else. Keyed on
+    /// `persistentModelID` — `Song` is the one list model with no business `uid`.
+    private func deletion(for song: Song) -> PocketRowDelete {
+        PocketRowDelete(id: song.persistentModelID, name: displayName(song)) { context.delete(song) }
     }
 
     private var importErrorBinding: Binding<Bool> {

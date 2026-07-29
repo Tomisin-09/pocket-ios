@@ -187,6 +187,11 @@ tokens for everything else.
   popover — Mastery, Command tempo, Focus, loop Type, derived song Mastery. The test is whether a
   musician can infer the meaning from the label alone: standard vocabulary (Key, Genre, BPM) gets
   none, because an ⓘ there is noise. Copy is centralised in `PracticeFieldInfo`.
+- **List rows carry the same affordances everywhere** (`.pocketRowActions`): a long-press menu
+  reading *item actions → Favourite → Delete*, a leading favourite swipe, a trailing delete swipe,
+  and an Undo toast after every delete. Adopt the modifier rather than hand-rolling a row's actions;
+  every parameter is optional, so a list declines what it doesn't own (loops have no Delete — a loop
+  belongs to its song) instead of inventing a variation. Tint is the space's accent.
 
 ---
 

@@ -186,7 +186,29 @@ loops by Song · Name · Command · Mastery, exercises by Name · Command · Rec
 persisted per library). An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
 — both owning their own engine. A **just-created** exercise opens the same way: `ExerciseLibraryView`
 stages it on create and pushes its run screen once the create sheet is gone (skipped for a locked Pro
-template, which stays badged in the list). On the
+template, which stays badged in the list). **Every list row carries the same affordances**
+(`.pocketRowActions`, `UI/PocketRowActions.swift`): hold for a menu reading *item actions →
+Favourite → Delete*, swipe leading to favourite and trailing to delete, with a **Deleted X · Undo**
+toast on every delete. The delete is **deferred**, not snapshot-restored: a screen-scoped
+`RowDeletionCoordinator` (installed by `.pocketRowUndoHost()`, reached through the `\.rowDeletion`
+environment seam) hides the row and only calls `context.delete` when the window closes — on timer
+expiry, a second delete, screen disappearance or backgrounding — so Undo destroys nothing and a
+song's cascade (loops, markers, journal) is never rebuilt by hand. The coordinator is **owned by the
+screen** (`@State`) and passed into `.pocketRowUndoHost(_:)`, because a modifier applied inside a
+view's `body` publishes its environment to that view's *descendants* only — the screen has to read
+`isPending` itself to filter pending rows out of its list, empty state and filter menus, while the
+environment seam is what the rows use. The trailing swipe's Delete is a plain `danger`-tinted button,
+**not** `role: .destructive`, whose built-in row-removal animation would hide the row on a lie and
+defeat Undo. Adopted by the exercise, routine,
+loop and song libraries; every parameter is optional, so `LoopLibraryView` passes no delete (a loop
+belongs to its song) and the song library no favourite (`Song` has no pin). Exercise rows gain
+**Details** (the `ExerciseDetailSheet` previously only reachable from a run) and **Duplicate**;
+routine rows gain **Play · Edit · Duplicate**. Duplication is pure model code
+(`Core/Models/UnitDuplication.swift`): `CopyNaming` ("Spider copy" → "Spider copy 2"),
+`Exercise.duplicated(named:)`, `Routine.duplicated(named:)` + `RoutineItem.copying(_:order:)` —
+carrying shape and blocks, resetting mastery / lastPracticed / favourite / `presetSlug` (so a fork of
+a free-taste preset can't inherit its ADR 0112 run allowance), and gated by the same `canAuthor` /
+`canAuthorRoutine` checks as creation. On the
 exercise run setup the tempos (working/command/reach) and the Steps granularity sit inside a
 collapsible **Practice Settings** panel (`PracticeSettingsPanel`) below the title — collapsed by
 default to a one-line tempo summary, mirroring the nested Steps disclosure. The

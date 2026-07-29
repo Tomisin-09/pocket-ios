@@ -4,13 +4,21 @@ import SwiftUI
 /// The **Routines** library inside Practice (ADR 0066): the list of hand-built practice sessions,
 /// pushed from the Practice hub. Owns routine **creation** (`+` → a new empty routine you drop
 /// straight into the editor), **playing** (the ▶ on each row runs the auto-advancing player, slice
-/// 3), **editing** (tapping the row body), and **deletion** (swipe).
+/// 3), **editing** (tapping the row body), **duplication** and **deletion**.
+///
+/// Holding a row opens the shared menu (Play · Edit · Duplicate · Favourite · Delete) via
+/// `.pocketRowActions`, matching every other list in the app (Slice 3); delete is deferred behind
+/// an Undo toast, so `ordered` filters out rows awaiting their delete.
 ///
 /// Relies on the ambient `NavigationStack` (Practice → Home's stack), like the exercise and
 /// loop libraries. Sorted newest-first in memory so `@Query` stays unsorted and deletion
 /// indexes the displayed order.
 struct RoutineLibraryView: View {
     @Environment(\.modelContext) private var context
+    /// Deferred, undoable row deletion (Slice 3). **Owned here, not by the modifier**: this view
+    /// reads `isPending` itself so `ordered` can hide a row while its Undo window is open, and a
+    /// modifier applied inside `body` can only publish to its descendants.
+    @State private var rowDeletion = RowDeletionCoordinator()
     /// Entitlement + the shared paywall (ADR 0112). **Routines are Pro**, apart from the one curated
     /// free-taste routine a free player may run (but not edit).
     @Environment(\.isPro) private var isPro
@@ -37,21 +45,28 @@ struct RoutineLibraryView: View {
     /// Newest first — the same default sort key as the other libraries (`dateAdded`) — optionally
     /// narrowed to favourites (ADR 0119).
     private var ordered: [Routine] {
-        routines
+        presentRoutines
             .filter { !favoritesOnly || $0.isFavorite }
             .sorted { $0.dateAdded > $1.dateAdded }
     }
 
+    /// The routines actually on screen — everything except rows whose delete is pending behind the
+    /// Undo toast (Slice 3). The empty state reads from here too, so deleting your last routine says
+    /// "no routines yet" rather than "no favourites".
+    private var presentRoutines: [Routine] {
+        routines.filter { !rowDeletion.isPending($0.uid) }
+    }
+
     var body: some View {
         List {
-            if routines.isEmpty {
+            if presentRoutines.isEmpty {
                 Text("No routines yet. Tap + to build one — an ordered run of exercises and "
                      + "loops you work through in a sitting.")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else if ordered.isEmpty {
-                Text("No favourite routines yet. Swipe a routine and tap Favourite to pin it.")
+                Text("No favourite routines yet. Swipe or hold a routine and tap Favourite to pin it.")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
@@ -59,13 +74,18 @@ struct RoutineLibraryView: View {
                 ForEach(ordered) { routine in
                     row(for: routine)
                         .listRowBackground(PocketColor.background)
-                        .swipeActions(edge: .leading) { favoriteButton(for: routine) }
+                        .pocketRowActions(displayName(routine),
+                                          tint: PocketColor.practice,
+                                          menu: menuItems(for: routine),
+                                          favorite: favorite(for: routine),
+                                          delete: deletion(for: routine))
                 }
-                .onDelete(perform: delete)
             }
         }
         .scrollContentBackground(.hidden)
         .background(PocketColor.background.ignoresSafeArea())
+        // Deferred delete + the Undo toast for every row on this screen (Slice 3).
+        .pocketRowUndoHost(rowDeletion)
         .navigationTitle("Routines")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -77,7 +97,7 @@ struct RoutineLibraryView: View {
                 .disabled(isPro && !exercises.contains { $0.template != .warmup })
                 .accessibilityLabel("Generate a quick session")
             }
-            if !routines.isEmpty {
+            if !presentRoutines.isEmpty {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         favoritesOnly.toggle()
@@ -132,11 +152,7 @@ struct RoutineLibraryView: View {
         let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
         let runnable = AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo)
         return HStack(spacing: 14) {
-            Button {
-                guard runnable else { return presentPaywall(.routine) }
-                playing = routine
-                haptic(.light)
-            } label: {
+            Button { play(routine) } label: {
                 Image(systemName: runnable ? "play.circle.fill" : "lock.circle.fill")
                     .font(.futura(.title2))
                     .foregroundStyle(runnable ? PocketColor.practice : PocketColor.textSecondary)
@@ -146,20 +162,35 @@ struct RoutineLibraryView: View {
                                 ? "Play \(routine.name.isEmpty ? "routine" : routine.name)"
                                 : "Locked — Red Moon Pro")
 
-            Button {
-                // The demo exception (ADR 0112): the curated free-taste routine opens for a free
-                // player too — read-only, then rearrange-only under Edit. Adding stays Pro.
-                guard AccessPolicy.canEditRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
-                    return presentPaywall(.routine)
-                }
-                editing = routine
-                haptic(.light)
-            } label: {
+            Button { edit(routine) } label: {
                 rowBody(for: routine, openable: runnable)
             }
             .buttonStyle(.plain)
         }
         .padding(.vertical, 2)
+    }
+
+    /// Run the session — gated on `canRunRoutine`, so the curated free-taste routine plays for a
+    /// free player (ADR 0112). Shared by the ▶ button and the row menu's Play.
+    private func play(_ routine: Routine) {
+        let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
+        guard AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
+            return presentPaywall(.routine)
+        }
+        playing = routine
+        haptic(.light)
+    }
+
+    /// Open the editor. The demo exception (ADR 0112): the curated free-taste routine opens for a
+    /// free player too — read-only, then rearrange-only under Edit. Adding stays Pro. Shared by the
+    /// row-body tap and the row menu's Edit.
+    private func edit(_ routine: Routine) {
+        let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
+        guard AccessPolicy.canEditRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
+            return presentPaywall(.routine)
+        }
+        editing = routine
+        haptic(.light)
     }
 
     /// The tappable half of a row: name (+ favourite star), block summary, and the trailing
@@ -203,16 +234,39 @@ struct RoutineLibraryView: View {
             .background(Capsule().fill(PocketColor.practice))
     }
 
-    /// The leading-swipe favourite toggle for a routine (ADR 0119).
-    private func favoriteButton(for routine: Routine) -> some View {
-        Button {
-            routine.isFavorite.toggle()
-            haptic(.light)
-        } label: {
-            Label(routine.isFavorite ? "Unfavourite" : "Favourite",
-                  systemImage: routine.isFavorite ? "star.slash" : "star")
-        }
-        .tint(PocketColor.practice)
+    private func displayName(_ routine: Routine) -> String {
+        routine.name.isEmpty ? "Untitled routine" : routine.name
+    }
+
+    /// The routine's own long-press actions (Slice 3). Play and Edit mirror the row's two buttons
+    /// — the menu is a discoverable second route to the same gated calls, not a bypass.
+    private func menuItems(for routine: Routine) -> [PocketRowMenuItem] {
+        [PocketRowMenuItem("Play", systemImage: "play.circle") { play(routine) },
+         PocketRowMenuItem("Edit", systemImage: "pencil") { edit(routine) },
+         PocketRowMenuItem("Duplicate", systemImage: "plus.square.on.square") { duplicate(routine) }]
+    }
+
+    private func favorite(for routine: Routine) -> PocketRowFavorite {
+        PocketRowFavorite(isFavorite: routine.isFavorite) { routine.isFavorite.toggle() }
+    }
+
+    private func deletion(for routine: Routine) -> PocketRowDelete {
+        PocketRowDelete(id: routine.uid, name: displayName(routine)) { context.delete(routine) }
+    }
+
+    /// Fork a session into an editable copy — the point of it is variation ("Tuesday, but with the
+    /// legato block"), which otherwise means rebuilding the whole block list by hand (Slice 3).
+    ///
+    /// Duplicating composes a routine, so it takes `canAuthorRoutine` — flat Pro, no demo exception
+    /// (ADR 0112): copying the free demo would otherwise mint an unlocked, editable routine. The
+    /// blocks reference the **same** units; only the session is forked.
+    private func duplicate(_ routine: Routine) {
+        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine) }
+        let name = CopyNaming.copyName(of: routine.name, existing: routines.map(\.name))
+        let (copy, blocks) = routine.duplicated(named: name)
+        context.insert(copy)
+        copy.items = blocks
+        haptic(.medium)
     }
 
     /// "3 units · 1 rest" — the routine's shape at a glance; "Empty" before any blocks.
@@ -244,10 +298,6 @@ struct RoutineLibraryView: View {
         haptic(.light)
     }
 
-    private func delete(_ offsets: IndexSet) {
-        for index in offsets { context.delete(ordered[index]) }
-        haptic(.medium)
-    }
 }
 
 /// A freshly-generated Quick session pending review — the pure `[SessionBlock]` plus its dated

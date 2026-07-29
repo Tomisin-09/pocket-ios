@@ -7,6 +7,10 @@
 │ SwiftUI Features (Home · Library · Waveform · Metronome · Practice · Journal · Toolkit · Repertoire)
 │   UI       — shared components + design tokens (PocketColor) · AdaptiveLayout (ADR 0105 iPad groundwork:
 │              PocketLayout readable-width cap + readableWidth() modifier — dormant while TARGETED_DEVICE_FAMILY=1)
+│              · PocketRowActions — the one row-affordance modifier every list adopts (long-press menu →
+│                Favourite → Delete, plus leading/trailing swipes); RowDeletionCoordinator + the
+│                \.rowDeletion environment seam back its deferred, undoable delete; UndoToastView is shared
+│                with the waveform
 ├─────────────────────────────────────────────────────────┤
 │ Core
 │   Audio    — AVAudioEngine + AVAudioUnitTimePitch, audio tap → waveform,
@@ -380,8 +384,8 @@ and classified by `SessionEstimate.fit` — guidance only, never a gate. `GoalEd
 seeded skills, with no free-text (search only narrows the fixed `TechniqueTaxonomy`). `Exercise` gained self-rated
 **`mastery: Int?`** + **`lastPracticed: Date?`** (mirroring `Loop`/`Song`; the app never grades
 playing — ADR 0070/0072), stamped on run and rated on the detail sheet. `ExerciseLibraryView` owns exercise **create**
-(`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired) and **delete**
-(swipe); tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
+(`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired), **duplicate** and **delete**;
+tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command
 (`commandTempo != nil`, an **in-memory** filter, never a SwiftData optional `#Predicate`, which
 starves the main thread and froze navigation — guarded by `PracticeRunUITests`); tapping one pushes
@@ -389,7 +393,32 @@ starves the main thread and froze navigation — guarded by `PracticeRunUITests`
 `PracticeLibrarySort` orders each list by the persisted key/direction (loops by Song · Name ·
 Command · Mastery; exercises by Name · Command · Recently added) and filters by query, layered
 in-memory over the loop `commandTempo` gate — mirroring the song library's `LibrarySectioning`
-idiom, with the choice remembered per library via `@AppStorage`. `ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
+idiom, with the choice remembered per library via `@AppStorage`.
+
+**Row affordances are one shared modifier, not four implementations.** `.pocketRowActions(…)`
+(`UI/PocketRowActions.swift`) packages a row's long-press menu (item actions → Favourite → Delete),
+its leading favourite swipe and its trailing delete swipe; the exercise, routine, loop and song
+libraries all adopt it, and every parameter is optional so a list declines what it doesn't own
+(`LoopLibraryView` passes no delete — a loop belongs to its song). Delete routes through the
+`\.rowDeletion` environment seam into a screen-scoped `RowDeletionCoordinator`, installed by
+`.pocketRowUndoHost()`: the row is **hidden and the delete deferred** behind a 4-second
+`UndoToastView`, committing when the timer expires, a second delete arrives, the screen disappears or
+the app backgrounds. That is the opposite of the waveform's delete-then-restore-from-snapshot (ADR
+0019) and deliberately so — restoring an `Exercise` or `Song` would have to rebuild routine-block
+links, song links, journal entries and takes that the real delete nullifies or cascades away, whereas
+deferring destroys nothing. The coordinator is **screen-owned** (`@State`, passed into
+`.pocketRowUndoHost(_:)`): a modifier applied inside `body` publishes to that view's descendants
+only, so the screen needs a direct handle to project its `present…` lists, which filter pending rows
+out of the list, the empty state and the filter menus; the environment seam is the rows' route in.
+The trailing swipe's Delete is a plain `danger`-tinted button rather than `role: .destructive` —
+that role animates the row away on tap regardless of the data, which under a deferred delete defeats
+Undo. `RowUndoUITests` guards both (delete → Undo → row back, no navigation).
+Duplication is pure model code (`Core/Models/UnitDuplication.swift`): `CopyNaming` for the
+"X copy 2" rule, `Exercise.duplicated(named:)` and `Routine.duplicated(named:)` +
+`RoutineItem.copying(_:order:)`, all carrying shape and dropping history/provenance (a fork of a
+free-taste preset loses `presetSlug`, so it can't inherit the ADR 0112 run allowance).
+
+`ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
 (independent of the
 metronome screen's): it edits working / command (each **typable** via `EditableTempoRow`, not
 just the −/+ steppers) plus the warm-up / reach / back-up step counts (in the collapsible
