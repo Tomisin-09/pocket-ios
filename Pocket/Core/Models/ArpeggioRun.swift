@@ -129,8 +129,14 @@ struct ArpeggioRun: Codable, Equatable {
 // MARK: - Naming (pure)
 
 extension ArpeggioRun {
-    /// The tonic's note name (sharp-spelled), e.g. "A".
-    var rootName: String { GuitarScale.noteName(forPitchClass: rootPitchClass) }
+    /// The tonic's note name, **spelled by the arpeggio's own key** (ADR 0123), e.g. "A", or "B♭" —
+    /// never "A♯" — for a run rooted there. Like a scale run, an arpeggio is a tonal centre, so the
+    /// key answers and the user's accidental preference is not consulted.
+    var rootName: String { (keySpelling ?? .default).name(pitchClass: rootPitchClass) }
+
+    /// The spelling this run's key implies (ADR 0123), or `nil` at the C and F♯/G♭ positions the
+    /// circle leaves open, where the accidental preference takes over.
+    var keySpelling: NoteSpelling? { NoteSpelling.forArpeggio(quality, root: rootPitchClass) }
 
     /// The full run title, e.g. "A Minor 7".
     var title: String { "\(rootName) \(quality.displayName)" }
@@ -202,7 +208,8 @@ extension ArpeggioRun {
         FretboardDrill(notesPerBeat: notesPerBeat,
                        notes: sequence.map { Optional($0) },
                        stringCount: 6,
-                       rootPitchClass: rootPitchClass)
+                       rootPitchClass: rootPitchClass,
+                       keySpelling: keySpelling)
     }
 }
 
@@ -218,7 +225,8 @@ extension ArpeggioRun {
                               notes: bassSequence(openMidi: instrument.engineOpenMidi).map { Optional($0) },
                               stringCount: instrument.stringCount,
                               rootPitchClass: rootPitchClass,
-                              openMidi: instrument.engineOpenMidi)
+                              openMidi: instrument.engineOpenMidi,
+                              keySpelling: keySpelling)
     }
 
     /// The bass 2-octave chord-tone box for this run's quality + key on `openMidi` — the same

@@ -103,7 +103,10 @@ extension ChordGrip {
     /// offset is added to it (muted strings stay muted). The result's **name derives from its own
     /// content** — the requested root note + the grip's quality suffix (M2) — so a slid shape
     /// auto-names ("G", "B♭7") with no naming table.
-    func voicing(rootPitchClass: Int) -> ChordVoicing {
+    /// - Parameter spelling: how the generated name spells its root (ADR 0123). A movable grip is placed
+    ///   at a bare root with no key around it, so this is the user's accidental preference; the default
+    ///   keeps the property tests and the browse pictures deterministic.
+    func voicing(rootPitchClass: Int, spelling: NoteSpelling = .default) -> ChordVoicing {
         let openRootPitchClass = GuitarScale.pitchClass(string: rootString.rawValue, fret: 0)
         var rootFret = (((rootPitchClass - openRootPitchClass) % 12) + 12) % 12
         // A grip with a **sub-root offset** — the 9ths, whose 9th (or 3rd) idiomatically sits a fret
@@ -118,7 +121,7 @@ extension ChordGrip {
             guard let offset else { return nil }
             return rootFret + offset
         }
-        let name = GuitarScale.noteName(forPitchClass: rootPitchClass) + quality.nameSuffix
+        let name = spelling.name(pitchClass: rootPitchClass) + quality.nameSuffix
         return ChordVoicing(name, frets: frets)
     }
 }
@@ -142,20 +145,24 @@ extension ChordGrip {
     static let eShapeMaj7 = ChordGrip(name: "E-shape", rootString: .eRoot,
                                       offsets: [nil, 0, 1, 1, nil, 0], quality: .maj7)
 
-    // A-shape family — root on the A string, **low E and high e both muted**: the common 4-string
-    // A-D-G-B barre (2026-07-13 review), not the 5-string form — barring cleanly under the high e is
-    // awkward, and it only doubles a tone already sounding. `aShapeMinor` placed at fret 2 (B)
-    // reproduces `ChordVoicing.bMinorBarre` byte-for-byte (M5); both mute the high e.
+    // A-shape family — root on the A string, **low E muted**, high e **sounding**: the standard
+    // 5-string A-D-G-B-e barre. The four Tier-1 triads/7ths and maj7 all put the high e on the *root
+    // fret* (`offsets[0] = 0`), where it sounds the **5th** — the top note of every printed A-shape
+    // chart. This reverses the original 4-string form (2026-07-13 review, "barring under the high e is
+    // awkward and only doubles a tone already sounding"): on device the missing top string made the
+    // shapes read wrong against every chart a player has seen, and the barre already covers that fret
+    // (ADR 0122). `aShapeMinor` placed at fret 2 (B) is the full 5-string Bm barre — which is why
+    // `ChordVoicing.bMinorBarre` gained its high e in step with this change (M5).
     static let aShapeMajor = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                       offsets: [nil, 2, 2, 2, 0, nil], quality: .major)
+                                       offsets: [0, 2, 2, 2, 0, nil], quality: .major)
     static let aShapeMinor = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                       offsets: [nil, 1, 2, 2, 0, nil], quality: .minor)
+                                       offsets: [0, 1, 2, 2, 0, nil], quality: .minor)
     static let aShapeDom7 = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                      offsets: [nil, 2, 0, 2, 0, nil], quality: .dom7)
+                                      offsets: [0, 2, 0, 2, 0, nil], quality: .dom7)
     static let aShapeMin7 = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                      offsets: [nil, 1, 0, 2, 0, nil], quality: .min7)
+                                      offsets: [0, 1, 0, 2, 0, nil], quality: .min7)
     static let aShapeMaj7 = ChordGrip(name: "A-shape", rootString: .aRoot,
-                                      offsets: [nil, 2, 1, 2, 0, nil], quality: .maj7)
+                                      offsets: [0, 2, 1, 2, 0, nil], quality: .maj7)
 
     // Power chords (ADR 0106) — root + 5th + octave root, no 3rd, so neither major nor minor. The two
     // standard three-string movable shapes: the E-shape roots on the low E (5th on A, octave on D) and

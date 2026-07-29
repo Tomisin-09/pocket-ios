@@ -134,7 +134,10 @@ struct Tuning: Equatable, Identifiable {
     /// golden test that proves the refactor changes nothing for guitar.
     var engineOpenMidi: [Int] { Array(midiNotes.reversed()) }
 
-    /// Sharp-spelled open-string names low→high, e.g. `["E","A","D","G","B","E"]`.
+    /// Open-string names low→high, e.g. `["E","A","D","G","B","E"]`. **Always sharp-spelled**, and
+    /// deliberately outside the accidental preference (ADR 0123): an open tuning is named for the chord
+    /// it sounds, so Open D's third string is F♯ — the raised third of D major — for everyone. Spelling
+    /// it G♭ on a preference would be plain wrong, and the preference exists only where nothing decides.
     var noteNames: [String] {
         midiNotes.map { GuitarScale.noteName(forPitchClass: (($0 % 12) + 12) % 12) }
     }

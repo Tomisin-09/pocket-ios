@@ -188,21 +188,26 @@ struct EditorStepper: View {
 
 // MARK: - Root-note picker (scale + arpeggio)
 
-/// The root-note menu shared by the scale and arpeggio editors — pitch classes in menu order from A,
-/// named sharp so the caption agrees with the board (ADR 0086/0091, keyless).
+/// The root-note menu shared by the scale and arpeggio editors — pitch classes in menu order from A.
+/// Each entry is named by `name`, which the editor supplies so a root reads the way the run it would
+/// make reads: the scale/quality already chosen decides the spelling for each candidate root, and only
+/// where that key declines (C, F♯/G♭) does the accidental preference show through (ADR 0123). The
+/// default keeps a caller that supplies nothing on the sharp reading.
 struct RootNotePicker: View {
     @Binding var pitchClass: Int
     var tint: Color = PocketColor.practice
-    /// The current root's name, for VoiceOver ("Root note, C#").
+    /// The current root's name, for VoiceOver ("Root note, C♯").
     let accessibilityValue: String
+    /// How to name a candidate root pitch class.
+    var name: (Int) -> String = { NoteSpelling.default.name(pitchClass: $0) }
 
-    /// Root notes in menu order, starting at A (pitch classes, A = 9 … G# = 8).
+    /// Root notes in menu order, starting at A (pitch classes, A = 9 … G♯ = 8).
     private static let noteOrder = [9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8]
 
     var body: some View {
         Picker("Root", selection: $pitchClass) {
             ForEach(Self.noteOrder, id: \.self) { pitchClass in
-                Text(GuitarScale.noteName(forPitchClass: pitchClass)).tag(pitchClass)
+                Text(name(pitchClass)).tag(pitchClass)
             }
         }
         .pickerStyle(.menu)

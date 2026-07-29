@@ -43,9 +43,9 @@ struct TunerSmoother {
         if let previous = current, previous.midiNote == fresh.midiNote {
             let easedCents = previous.cents * (1 - smoothing) + fresh.cents * smoothing
             current = TunerReading(midiNote: fresh.midiNote,
-                                   noteName: fresh.noteName,
                                    octave: fresh.octave,
-                                   cents: easedCents)
+                                   cents: easedCents,
+                                   spelling: fresh.spelling)
         } else {
             current = fresh                                  // new note → snap, don't lag
         }

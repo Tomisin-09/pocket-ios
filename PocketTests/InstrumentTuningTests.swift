@@ -59,13 +59,15 @@ final class InstrumentTuningTests: XCTestCase {
 
     // MARK: spelling
 
+    /// Open-string names are **always sharp** and deliberately outside the accidental preference
+    /// (ADR 0123): Open D's third string is F♯, the raised third of D major, for everyone.
     func testCompactLabelsMatchExpectedSpelling() {
         let guitar = Dictionary(uniqueKeysWithValues: Instrument.guitar.tunings.map { ($0.name, $0.compactLabel) })
         XCTAssertEqual(guitar["Standard"], "EADGBE")
         XCTAssertEqual(guitar["Drop D"], "DADGBE")
         XCTAssertEqual(guitar["Open G"], "DGDGBD")
-        XCTAssertEqual(guitar["Open D"], "DADF#AD")
-        XCTAssertEqual(guitar["Open E"], "EBEG#BE")
+        XCTAssertEqual(guitar["Open D"], "DADF♯AD")
+        XCTAssertEqual(guitar["Open E"], "EBEG♯BE")
         XCTAssertEqual(guitar["DADGAD"], "DADGAD")
         XCTAssertEqual(guitar["Drop C"], "CGCFAD")
 

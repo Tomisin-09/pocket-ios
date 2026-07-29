@@ -17,10 +17,12 @@ final class ChordGripTests: XCTestCase {
     }
 
     func testAShapeMinorAtBReproducesBMinorBarre() {
-        // B is pitch class 11; the A-shape minor slid there is the Bm barre chord.
+        // B is pitch class 11; the A-shape minor slid there is the Bm barre chord. Both gained the high
+        // e together (ADR 0122) — the equivalence is the reason the library voicing had to move in step.
         let generated = ChordGrip.aShapeMinor.voicing(rootPitchClass: 11)
         XCTAssertEqual(generated.frets, ChordVoicing.bMinorBarre.frets, "A-shape minor @ B must equal bMinorBarre")
         XCTAssertEqual(generated.name, ChordVoicing.bMinorBarre.name, "auto-named 'Bm'")
+        XCTAssertEqual(generated.frets, [2, 3, 4, 4, 2, nil], "the 5-string x-2-4-4-3-2 Bm barre")
     }
 
     // MARK: - Property net: every grip, every root, is a valid voicing with the right root & quality
@@ -117,14 +119,31 @@ final class ChordGripTests: XCTestCase {
         }
     }
 
-    func testAShapeTriadsAndSeventhsMuteHighE() {
-        // The Tier-1/-2 non-9th A-shapes are the 4-string A-D-G-B barre — high e (index 0) muted too.
-        // The 9ths break this: their iconic barre voices the top 5th on the high e (x-3-2-3-3-3), so
-        // they are excluded (maj9 still mutes it for the R-3-7-9 shell — covered below).
-        let nonNinth: Set<ChordGrip.Quality> = [.dom9, .maj9, .min9]
-        for grip in ChordGrip.curated where grip.rootString == .aRoot && !nonNinth.contains(grip.quality) {
-            let voicing = grip.voicing(rootPitchClass: 0)
-            XCTAssertNil(voicing.frets[0], "\(voicing.name): high e should be muted on an A-shape triad/7th")
+    func testAShapeTriadsAndSeventhsSoundTheHighEAsTheFifth() {
+        // ADR 0122 reverses the original 4-string A-D-G-B form for the five Tier-1 A-shapes: the high e
+        // sits on the *root fret*, under the barre the hand is already making, and sounds the 5th — the
+        // top note of every printed A-shape chart.
+        let fiveString: Set<ChordGrip.Quality> = [.major, .minor, .dom7, .min7, .maj7]
+        for grip in ChordGrip.tier1 where grip.rootString == .aRoot && fiveString.contains(grip.quality) {
+            let voicing = grip.voicing(rootPitchClass: 0)                     // C
+            XCTAssertEqual(voicing.frets[0], voicing.frets[4],
+                           "\(voicing.name): high e sits on the root fret, under the barre")
+            XCTAssertEqual(voicing.pitchClasses.contains(7), true,
+                           "\(voicing.name): that string sounds the 5th (G over a C root)")
+            XCTAssertNil(voicing.frets[5], "\(voicing.name): the low E is still muted")
+        }
+    }
+
+    func testAShapeSuspensionsAndPowerChordsStayNarrow() {
+        // Deliberately *not* widened with the five above (ADR 0122): a power chord is a three-string
+        // shape by definition, and the Tier-2 suspensions were not part of the device note. If they read
+        // as an inconsistency on the board, they are the next candidates — not an oversight here.
+        for quality in [ChordGrip.Quality.fifth, .sus2, .sus4] {
+            guard let grip = ChordGrip.curated.first(where: {
+                $0.rootString == .aRoot && $0.quality == quality
+            }) else { continue }
+            XCTAssertNil(grip.voicing(rootPitchClass: 0).frets[0],
+                         "A-shape \(quality) keeps its muted high e")
         }
     }
 

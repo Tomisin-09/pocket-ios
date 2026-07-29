@@ -31,13 +31,52 @@ final class ChordPickerTests: XCTestCase {
 
     // MARK: - Insert movable set
 
-    func testInsertMovableSetIsTheSixEverydayShapes() {
-        XCTAssertEqual(ChordPicker.insertMovableGrips.count, 6)
+    func testInsertMovableSetIsTheWholeOfTierOne() {
+        // ADR 0122: all twelve, not the curated six — the shapes already existed, so showing half of
+        // them read as a gap. Identity with `tier1` is the point: nothing to keep in step by hand.
+        XCTAssertEqual(ChordPicker.insertMovableGrips, ChordGrip.tier1)
+        XCTAssertEqual(ChordPicker.insertMovableGrips.count, 12)
         let qualities = Set(ChordPicker.insertMovableGrips.map(\.quality))
-        XCTAssertEqual(qualities, [.major, .minor, .fifth],
-                       "Insert offers maj/min/power chord (dom7 moved to Build → Movable, ADR 0106)")
+        XCTAssertEqual(qualities, [.major, .minor, .dom7, .min7, .maj7, .fifth])
         let families = Set(ChordPicker.insertMovableGrips.map(\.name))
         XCTAssertEqual(families, ["E-shape", "A-shape"], "both shape families are present")
+        // Tier 2 stays in Build → Movable shape, so the Insert grid doesn't become the whole catalog.
+        XCTAssertTrue(qualities.isDisjoint(with: [.sus2, .sus4, .sixth, .dom9, .maj9, .min9]))
+    }
+
+    func testInsertCarriesTierTwoAsItsOwnSet() {
+        // ADR 0122: the suspensions / 6ths / 9ths moved into Insert as their own section when
+        // `MovableChordSheet` was retired — that sheet was the only door to them, so folding them in is
+        // what makes retiring it lossless rather than a removal.
+        XCTAssertEqual(ChordPicker.insertTier2Grips, ChordGrip.tier2)
+        let qualities = Set(ChordPicker.insertTier2Grips.map(\.quality))
+        XCTAssertEqual(qualities, [.sus2, .sus4, .sixth, .dom9, .maj9, .min9])
+    }
+
+    func testInsertNowOffersTheWholeCuratedMovableVocabulary() {
+        // Tier 1 + Tier 2 = `ChordGrip.curated`, so nothing a player could reach through the old Build
+        // pane is unreachable now. This is the test that would fail if a future grip were added to
+        // `curated` without a home in the picker.
+        let offered = ChordPicker.insertMovableGrips + ChordPicker.insertTier2Grips
+        XCTAssertEqual(Set(offered.map { "\($0.name)-\($0.quality)" }),
+                       Set(ChordGrip.curated.map { "\($0.name)-\($0.quality)" }))
+    }
+
+    func testTierTwoChipsShareTheMovableSubtitleAndSearchText() {
+        // They're barres like their Tier-1 kin, so they reuse the movable chip vocabulary rather than
+        // needing a third label style.
+        XCTAssertEqual(ChordPicker.movableSubtitle(.aShapeSus4), "A-shape barre")
+        let text = ChordPicker.movableSearchText(.aShapeSus4)
+        XCTAssertTrue(ChordPicker.matches(query: "sus4", in: text))
+        XCTAssertTrue(ChordPicker.matches(query: "a-shape", in: text))
+    }
+
+    func testTierOneOrderLaysEachFamilyOutOnWholeRows() {
+        // The grid is three columns; `tier1` runs family-then-quality, so E-shapes fill rows 1–2 and
+        // A-shapes rows 3–4 rather than interleaving mid-row.
+        let families = ChordPicker.insertMovableGrips.map(\.name)
+        XCTAssertEqual(Array(families.prefix(6)), Array(repeating: "E-shape", count: 6))
+        XCTAssertEqual(Array(families.suffix(6)), Array(repeating: "A-shape", count: 6))
     }
 
     func testPowerChordSubtitleIsNotCalledABarre() {

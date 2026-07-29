@@ -28,9 +28,11 @@ extension ChordVoicing {
 
     // MARK: Barre
     static let fBarre = ChordVoicing("F", frets: [1, 1, 2, 3, 3, 1], fingers: [1, 1, 2, 4, 3, 1])
-    // A-shape barre, high e muted — the common 4-string A-D-G-B form (2026-07-13 review); kept in step
-    // with `ChordGrip.aShapeMinor`, which reproduces this byte-for-byte (ADR 0084 M5).
-    static let bMinorBarre = ChordVoicing("Bm", frets: [nil, 3, 4, 4, 2, nil], fingers: [nil, 2, 4, 3, 1, nil])
+    // A-shape barre, **5 strings** — the standard A-D-G-B-e form, the high e sounding the 5th under the
+    // index-finger barre (ADR 0122, reversing the 4-string form of the 2026-07-13 review). Kept in step
+    // with `ChordGrip.aShapeMinor`, which reproduces this byte-for-byte (ADR 0084 M5); the barre finger
+    // (1) already covers fret 2, so the added string costs no new fingering.
+    static let bMinorBarre = ChordVoicing("Bm", frets: [2, 3, 4, 4, 2, nil], fingers: [1, 2, 4, 3, 1, nil])
 
     // MARK: Triads (a triad is just a three-note voicing — folded in, not a separate axis)
     static let cTriad = ChordVoicing("C triad", frets: [3, 5, 5, nil, nil, nil],

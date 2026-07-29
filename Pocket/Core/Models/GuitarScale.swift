@@ -122,9 +122,12 @@ enum GuitarScale: String, CaseIterable, Identifiable, Codable {
         return (((open + fret) % 12) + 12) % 12
     }
 
-    /// The name of a pitch class, sharp-spelled (the app's fretboard is sharp-spelled).
-    static func noteName(forPitchClass pitchClass: Int) -> String {
-        let names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-        return names[(((pitchClass % 12) + 12) % 12)]
+    /// The name of a pitch class in a given spelling (ADR 0123). Defaults to sharps — the reading the
+    /// app shipped with — so a caller with **no** tonal centre and no access to the preference still
+    /// gets a valid name; callers that know a key resolve `NoteSpelling.forKey/forScale` first, and
+    /// callers with no key read `AppSettings.accidentalPreference`.
+    static func noteName(forPitchClass pitchClass: Int,
+                         spelling: NoteSpelling = .default) -> String {
+        spelling.name(pitchClass: pitchClass)
     }
 }

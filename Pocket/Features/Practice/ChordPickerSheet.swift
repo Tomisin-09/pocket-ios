@@ -3,8 +3,9 @@ import SwiftUI
 
 /// The **chord picker** (ADR 0103) — a search-first sheet that replaced the flat insert `Menu` in
 /// `ChordProgressionEditor`. A live search field filters an **Insert** grid of mini chord diagrams,
-/// grouped **My chords → Movable shapes → Open shapes**; a **Build** segment carries the two authoring
-/// actions (`MovableChordSheet` / `CustomChordSheet`) as cards. Additive over the shipped substrates —
+/// grouped **My chords → Movable shapes → Triads → Open shapes → Sus, 6ths & 9ths**; the **Build**
+/// segment is a single action that opens `CustomChordSheet` directly (ADR 0122 — every movable shape is
+/// now browsable under Insert, so the old two-card Build pane had one card left). Additive over the shipped substrates —
 /// it reads `ChordVoicing.library`, the `SavedChord` `@Query`, and generated `ChordGrip`s (browse
 /// pictures via `ChordGrip.browseVoicing`); no new model, renderer untouched.
 ///
@@ -26,21 +27,39 @@ struct ChordPickerSheet: View {
     @Query(sort: \SavedChord.createdAt, order: .reverse) private var savedChords: [SavedChord]
 
     @State private var query = ""
-    @State private var mode: Mode = .insert
-    @State private var showMovableBuilder = false
     @State private var showCustomBuilder = false
     /// Insert section headers the player has collapsed (ADR 0109) — tapping a header toggles it. Ignored
     /// while searching (a query force-expands every section so a match can't hide in a collapsed one).
-    @State private var collapsedSections: Set<String> = []
+    /// Seeded with the Tier-2 section so the advanced shapes start folded away (ADR 0122).
+    @State private var collapsedSections: Set<String> = [ChordPickerSheet.tier2Title]
 
+    /// The segmented control's two positions. **Insert** is the only state the sheet ever rests in;
+    /// **Build** is a spring-loaded action (see `modeSelection`), which is why nothing stores a `Mode`.
     private enum Mode: String, CaseIterable, Identifiable {
         case insert, build
         var id: String { rawValue }
-        var label: String { self == .insert ? "Insert" : "Build" }
+        var label: String { self == .insert ? "Insert" : "Build a chord" }
     }
 
+    /// The Tier-2 section's title — needed as a constant because it seeds `collapsedSections`.
+    private static let tier2Title = "Sus, 6ths & 9ths"
+
+    /// **Build** is an action, not a tab (ADR 0122): selecting it opens the custom placer and leaves the
+    /// segment on Insert, so dismissing the placer returns to the grid rather than to an empty pane.
+    private var modeSelection: Binding<Mode> {
+        Binding(get: { .insert },
+                set: { picked in if picked == .build { showCustomBuilder = true } })
+    }
+
+    /// A bare root menu has nothing to spell against, so it follows the accidental preference
+    /// (ADR 0123) — replacing the hand-mixed sharps-and-flats list this shipped with.
+    @AppStorage(AppSettings.Key.accidentalPreference)
+    private var accidentalRaw = NoteSpelling.default.rawValue
+
+    private var spelling: NoteSpelling { NoteSpelling(rawValue: accidentalRaw) ?? .default }
+
     /// Root menu order C … B (pitch class 0 … 11), the way a key is spoken.
-    private let rootNames = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]
+    private var rootNames: [String] { (0..<12).map { spelling.name(pitchClass: $0) } }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 9), count: 3)
 
@@ -54,6 +73,11 @@ struct ChordPickerSheet: View {
             ChordPicker.matches(query: query, in: ChordPicker.movableSearchText($0))
         }
     }
+    private var filteredTier2: [ChordGrip] {
+        ChordPicker.insertTier2Grips.filter {
+            ChordPicker.matches(query: query, in: ChordPicker.movableSearchText($0))
+        }
+    }
     private var filteredTriads: [ChordGrip] {
         ChordPicker.insertTriadGrips.filter {
             ChordPicker.matches(query: query, in: ChordPicker.triadSearchText($0))
@@ -63,8 +87,8 @@ struct ChordPickerSheet: View {
         ChordVoicing.library.filter { ChordPicker.matches(query: query, in: $0.name) }
     }
     private var insertIsEmpty: Bool {
-        filteredSaved.isEmpty && filteredMovable.isEmpty
-            && filteredTriads.isEmpty && filteredOpen.isEmpty
+        filteredSaved.isEmpty && filteredMovable.isEmpty && filteredTriads.isEmpty
+            && filteredOpen.isEmpty && filteredTier2.isEmpty
     }
 
     // MARK: - Body
@@ -72,12 +96,10 @@ struct ChordPickerSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                if mode == .insert { searchField }
+                searchField
                 modePicker
                 Divider().overlay(PocketColor.surfaceBorder)
-                Group {
-                    if mode == .insert { insertPane } else { buildPane }
-                }
+                insertPane
             }
             .background(PocketColor.background.ignoresSafeArea())
             .navigationTitle(title)
@@ -90,9 +112,6 @@ struct ChordPickerSheet: View {
         }
         .tint(PocketColor.practice)
         .presentationDetents([.large])
-        .sheet(isPresented: $showMovableBuilder) {
-            MovableChordSheet { insert($0) }
-        }
         .fullScreenCover(isPresented: $showCustomBuilder) {
             CustomChordSheet(onInsert: { insert($0) }, onSave: onSave)
         }
@@ -135,12 +154,11 @@ struct ChordPickerSheet: View {
     }
 
     private var modePicker: some View {
-        Picker("Chord source", selection: $mode) {
+        Picker("Chord source", selection: modeSelection) {
             ForEach(Mode.allCases) { Text($0.label).tag($0) }
         }
         .pickerStyle(.segmented)
         .padding(.horizontal, 16)
-        .padding(.top, mode == .insert ? 0 : 12)
         .padding(.bottom, 12)
     }
 
@@ -178,6 +196,13 @@ struct ChordPickerSheet: View {
                             chip(voicing: voicing, title: voicing.name, subtitle: nil, saved: false) {
                                 insert(voicing)
                             }
+                        }
+                    }
+                }
+                if !filteredTier2.isEmpty {
+                    group(title: Self.tier2Title, count: filteredTier2.count, slide: true) {
+                        ForEach(Array(filteredTier2.enumerated()), id: \.offset) { _, grip in
+                            movableChip(grip)
                         }
                     }
                 }
@@ -243,7 +268,7 @@ struct ChordPickerSheet: View {
             Text("No chords match")
                 .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
-            Button("Build one instead") { mode = .build }
+            Button("Build one instead") { showCustomBuilder = true }
                 .font(.futura(.subheadline, weight: .semibold))
                 .tint(PocketColor.practice)
         }
@@ -251,12 +276,6 @@ struct ChordPickerSheet: View {
         .padding(.vertical, 44)
     }
 
-    // MARK: - Build pane
-
-    private var buildPane: some View {
-        ChordBuildPane(onMovable: { showMovableBuilder = true },
-                       onCustom: { showCustomBuilder = true })
-    }
 }
 
 // MARK: - Chips (split out to keep the picker's struct body within bounds)
@@ -276,7 +295,8 @@ private extension ChordPickerSheet {
     /// quality + family, so the chip stays honestly root-agnostic.
     func movableChip(_ grip: ChordGrip) -> some View {
         gripChip(grip, subtitle: ChordPicker.movableSubtitle(grip),
-                 accessibility: "\(grip.quality.displayName) \(grip.name) barre, choose a root")
+                 accessibility: "\(grip.quality.displayName) \(ChordPicker.movableSubtitle(grip)), "
+                     + "choose a root")
     }
 
     /// A triad grip's chip (ADR 0109) — same root-menu interaction as a movable shape; subtitle is the
@@ -291,7 +311,7 @@ private extension ChordPickerSheet {
     func gripChip(_ grip: ChordGrip, subtitle: String, accessibility: String) -> some View {
         Menu {
             ForEach(rootNames.indices, id: \.self) { pitchClass in
-                Button(rootNames[pitchClass]) { insert(grip.voicing(rootPitchClass: pitchClass)) }
+                Button(rootNames[pitchClass]) { insert(grip.voicing(rootPitchClass: pitchClass, spelling: spelling)) }
             }
         } label: {
             chipBody(voicing: grip.browseVoicing, title: grip.quality.displayName,
@@ -324,70 +344,4 @@ private extension ChordPickerSheet {
             saved ? PocketColor.practice.opacity(0.35) : PocketColor.surfaceBorder, lineWidth: 1))
         .contentShape(Rectangle())
     }
-}
-
-/// The **Build** segment (ADR 0103 D2) — the two authoring actions as description cards. Split out so the
-/// picker's own struct body stays within bounds; it's pure presentation over two callbacks.
-private struct ChordBuildPane: View {
-    let onMovable: () -> Void
-    let onCustom: () -> Void
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                card(icon: "arrow.left.and.right", title: "Movable shape",
-                     subtitle: "Any grip to any root, auto-named. "
-                     + "Common barre shapes also live under Insert.", action: onMovable)
-                card(icon: "square.and.pencil", title: "Custom chord",
-                     subtitle: "Place each string yourself, then name it.", action: onCustom)
-            }
-            .padding(16)
-        }
-    }
-
-    private func card(icon: String, title: String, subtitle: String,
-                      action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 13) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundStyle(PocketColor.practice)
-                    .frame(width: 40, height: 40)
-                    .background(RoundedRectangle(cornerRadius: 11).fill(PocketColor.practiceCardWash))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(title)
-                        .font(.futura(.body, weight: .semibold))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text(subtitle)
-                        .font(.futura(.footnote))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .multilineTextAlignment(.leading)
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(15)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.surfaceSubtle))
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-#Preview("Chord picker — populated") {
-    // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: SavedChord.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
-    for chord in [ChordVoicing("Aadd9", frets: [0, 0, 2, 4, 2, nil]),
-                  ChordVoicing("Cm9", frets: [3, 4, 3, 5, 6, nil])] {
-        container.mainContext.insert(SavedChord(chord))
-    }
-    return Color.clear
-        .sheet(isPresented: .constant(true)) {
-            ChordPickerSheet(onInsert: { _ in }, onSave: { _ in })
-                .modelContainer(container)
-                .preferredColorScheme(.dark)
-        }
 }

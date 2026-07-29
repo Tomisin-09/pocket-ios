@@ -68,7 +68,7 @@ final class ChordNamerTests: XCTestCase {
     func testSecondInversionTriadIsTagged() {
         // {F♯, B, D♯} with F♯ (the 5th of B) in the bass ⇒ B/F♯, a 2nd-inversion B major.
         let best = ChordNamer.candidates(pitchClasses: [6, 11, 3], bassPitchClass: 6).first
-        XCTAssertEqual(best?.displayName, "B/F#")
+        XCTAssertEqual(best?.displayName, "B/F♯")
         XCTAssertEqual(best?.name, "B")            // the plain triad name the panel also offers
         XCTAssertEqual(best?.inversion, 2)
         XCTAssertEqual(best?.inversionLabel, "2nd inv")
@@ -106,9 +106,14 @@ final class ChordNamerTests: XCTestCase {
         XCTAssertEqual(Set(asC.map(\.name)), ["Csus2", "Gsus4"])   // both readings returned either way
     }
 
-    func testRootsAreSharpSpelled() {
-        // {F♯, A♯, C♯} ⇒ "F♯" spelled with a sharp (no key ⇒ sharp table, agrees with the board).
-        XCTAssertEqual(ChordNamer.candidates(pitchClasses: [6, 10, 1], bassPitchClass: 6).first?.displayName, "F#")
+    func testRootsFollowTheSpellingTheyAreGiven() {
+        // {F♯, A♯, C♯} names one chord and two ways to write it. The namer is keyless (N6), so the
+        // caller's accidental preference decides and the default stays sharp (ADR 0123).
+        let notes: Set<Int> = [6, 10, 1]
+        XCTAssertEqual(ChordNamer.candidates(pitchClasses: notes, bassPitchClass: 6).first?.displayName,
+                       "F♯", "default spelling, typographic glyph — never ASCII '#'")
+        XCTAssertEqual(ChordNamer.candidates(pitchClasses: notes, bassPitchClass: 6,
+                                             spelling: .flats).first?.displayName, "G♭")
     }
 
     // MARK: - Honest fallbacks

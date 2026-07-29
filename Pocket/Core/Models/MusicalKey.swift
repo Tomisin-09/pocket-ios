@@ -46,10 +46,15 @@ enum MusicalKey: String, CaseIterable, Identifiable, Comparable {
         return Self.sharpRoots.firstIndex(of: root)
     }
 
-    /// Human label: `"C major"`, `"A minor"`; empty for `.unknown`.
+    /// Human label: `"C major"`, `"A minor"`, `"B♭ major"`; empty for `.unknown`. A key is the one
+    /// thing that always knows how to spell itself (ADR 0123), so this reads the circle of fifths
+    /// rather than the stored sharp root — `rawValue` stays `"A#"` for the store, the label reads
+    /// "B♭ major". No preference is consulted: the key decides, and where the circle ties (F♯/G♭
+    /// major, D♯/E♭ minor) the enum's own canonical sharp spelling stands.
     var displayName: String {
         guard let pitchClass, let quality else { return "" }
-        return "\(Self.sharpRoots[pitchClass]) \(quality == .major ? "major" : "minor")"
+        let spelling = NoteSpelling.forMusicalKey(self) ?? .default
+        return "\(spelling.name(pitchClass: pitchClass)) \(quality == .major ? "major" : "minor")"
     }
 
     /// Picker/menu label — like `displayName` but spells `.unknown` out as "Unknown".

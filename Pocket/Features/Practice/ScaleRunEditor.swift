@@ -21,6 +21,16 @@ struct ScaleRunEditor: View {
     /// in the live practice run; the Display menu that sets it lives in the shared options bar.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
+    /// Rootless fallback for the root menu — the run's own key names each candidate root, and only
+    /// where that key declines (C, F♯/G♭) does this preference decide (ADR 0123).
+    @AppStorage(AppSettings.Key.accidentalPreference)
+    private var accidentalRaw = NoteSpelling.default.rawValue
+
+    /// How a candidate root reads if it were chosen: spelled by the key it would make.
+    private func rootName(pitchClass: Int) -> String {
+        let preference = NoteSpelling(rawValue: accidentalRaw) ?? .default
+        return (NoteSpelling.forScale(run.scale, root: pitchClass) ?? preference).name(pitchClass: pitchClass)
+    }
     /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S3).
     private var secondsPerNote: Double {
         60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
@@ -41,7 +51,8 @@ struct ScaleRunEditor: View {
             titleField
             LabeledMenuRow(label: "Scale") { scalePicker }
             LabeledMenuRow(label: "Root") {
-                RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName)
+                RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName,
+                               name: { rootName(pitchClass: $0) })
             }
             // Bass is box-only (the diagonal / 3-notes-per-string layouts are guitar techniques, ADR 0116).
             if instrument == .guitar, run.scale.supportedLayouts.count > 1 { layoutRow }

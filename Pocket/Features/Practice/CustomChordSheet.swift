@@ -33,6 +33,12 @@ struct CustomChordSheet: View {
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     private var labelMode: FretLabelMode { FretLabelMode(rawValue: storedLabelMode) ?? .none }
 
+    /// A hand-built shape declares no key, so its note captions and its suggested names follow the
+    /// accidental preference (ADR 0123).
+    @AppStorage(AppSettings.Key.accidentalPreference)
+    private var accidentalRaw = NoteSpelling.default.rawValue
+    private var spelling: NoteSpelling { NoteSpelling(rawValue: accidentalRaw) ?? .default }
+
     private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var voicing: ChordVoicing { ChordVoicing(trimmedName, frets: frets) }
     private var canInsert: Bool { voicing.isValid && !trimmedName.isEmpty }
@@ -41,7 +47,7 @@ struct CustomChordSheet: View {
     private var labels: [String?] {
         switch labelMode {
         case .none: return Array(repeating: nil, count: frets.count)
-        case .note: return voicing.noteLabels
+        case .note: return voicing.noteLabels(spelling: spelling)
         case .interval: return voicing.degreeLabels(relativeTo: chordCandidates.first?.rootPitchClass)
         }
     }
@@ -155,7 +161,7 @@ private extension CustomChordSheet {
 
     /// Live reverse-lookup readings of the shape (ADR 0093 N7), ranked best first — reads geometry only.
     var chordCandidates: [ChordCandidate] {
-        ChordNamer.candidates(for: ChordVoicing("", frets: frets))
+        ChordNamer.candidates(for: ChordVoicing("", frets: frets), spelling: spelling)
     }
 
     /// Under the board: the `ChordIdentifierPanel`; tapping a suggestion fills the name field (overridable).

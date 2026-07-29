@@ -18,7 +18,15 @@ struct ChordIdentityCaption: View {
     /// confirmation use).
     var suppressIfMatches: String?
 
-    private var candidate: ChordCandidate? { ChordNamer.candidates(for: voicing).first }
+    /// A named shape is keyless (ADR 0086 — chord surfaces carry no key), so the reading spells its
+    /// accidentals by the user's preference (ADR 0123).
+    @AppStorage(AppSettings.Key.accidentalPreference)
+    private var accidentalRaw = NoteSpelling.default.rawValue
+
+    private var candidate: ChordCandidate? {
+        ChordNamer.candidates(for: voicing,
+                              spelling: NoteSpelling(rawValue: accidentalRaw) ?? .default).first
+    }
 
     var body: some View {
         if let candidate, shouldShow(candidate) {

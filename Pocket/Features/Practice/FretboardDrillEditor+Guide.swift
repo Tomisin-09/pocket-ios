@@ -25,12 +25,12 @@ extension FretboardDrillEditor {
             if referenceScale != nil {
                 Menu {
                     ForEach(0..<12, id: \.self) { pitchClass in
-                        Button(GuitarScale.noteName(forPitchClass: pitchClass)) {
+                        Button(guideSpelling.name(pitchClass: pitchClass)) {
                             referenceRoot = pitchClass
                         }
                     }
                 } label: {
-                    guideMenuLabel("Key: \(GuitarScale.noteName(forPitchClass: referenceRoot))")
+                    guideMenuLabel("Key: \(guideSpelling.name(pitchClass: referenceRoot))")
                 }
             }
             Spacer()

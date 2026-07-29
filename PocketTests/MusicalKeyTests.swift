@@ -50,7 +50,10 @@ final class MusicalKeyTests: XCTestCase {
 
     func testDisplayNameAndPickerLabel() {
         XCTAssertEqual(MusicalKey.aMinor.displayName, "A minor")
-        XCTAssertEqual(MusicalKey.cSharpMajor.displayName, "C# major")
+        // The label spells by the key itself (ADR 0123): C♯ major is written D♭ major (5 flats, not 7
+        // sharps). Only the *label* moves — the stored `rawValue` is still the canonical "C#".
+        XCTAssertEqual(MusicalKey.cSharpMajor.displayName, "D♭ major")
+        XCTAssertEqual(MusicalKey.cSharpMajor.rawValue, "C#")
         XCTAssertEqual(MusicalKey.unknown.displayName, "")
         XCTAssertEqual(MusicalKey.unknown.pickerLabel, "Unknown")
     }
