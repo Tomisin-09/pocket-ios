@@ -27,6 +27,10 @@ struct HomeView: View {
     @AppStorage(AppSettings.Key.artistNamePromptSeen) var artistNamePromptSeen = false
     /// One-time gate for the first-launch curation intake (ADR 0113 S2), so it's offered once.
     @AppStorage(AppSettings.Key.artistIntakeSeen) var artistIntakeSeen = false
+    /// One-time gate for the analytics consent ask (ADR 0120), so it's asked once and never nags.
+    @AppStorage(AppSettings.Key.analyticsPromptSeen) var analyticsPromptSeen = false
+    /// Drives the after-first-practice analytics consent cover.
+    @State var showingAnalyticsConsent = false
     /// Drives the after-first-session artist-name sheet.
     @State var showingNamePrompt = false
     /// Drives the first-launch curation intake sheet.
@@ -157,6 +161,13 @@ struct HomeView: View {
             .fullScreenCover(isPresented: $showingIntake,
                              onDismiss: { artistIntakeSeen = true },
                              content: { ArtistIntakeView() })
+            // The analytics consent ask (ADR 0120). Asked once, after a first completed practice,
+            // and last on the ladder so it never competes with a profile moment. Marking it seen on
+            // dismiss — rather than on answer — means every exit closes the question; consent itself
+            // defaults to off, so only an explicit "Count me in" turns anything on.
+            .fullScreenCover(isPresented: $showingAnalyticsConsent,
+                             onDismiss: { analyticsPromptSeen = true },
+                             content: { AnalyticsConsentSheet() })
             .onAppear(perform: maybeOfferProfileMoment)
             // Seed the curated first-run content once, ever (ADR 0046/0112) — the app root is the
             // right place, and each seeder's own `UserDefaults` guard makes this idempotent.

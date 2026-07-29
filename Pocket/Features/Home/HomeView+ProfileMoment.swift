@@ -19,10 +19,15 @@ extension HomeView {
             showingIntake = true
             return
         }
-        guard !artistNamePromptSeen,
-              profiles.first?.artistName == nil,
-              hasEarnedAName else { return }
-        showingNamePrompt = true
+        if !artistNamePromptSeen, profiles.first?.artistName == nil, hasEarnedAName {
+            showingNamePrompt = true
+            return
+        }
+        // The analytics consent ask (ADR 0120) sits **last** on the ladder so it never competes with
+        // a profile moment, and is gated on a completed practice rather than on launch — the ask is
+        // deliberately kept out of the activation flow it exists to measure.
+        guard !analyticsPromptSeen, AppSettings.firstPracticeCompleted else { return }
+        showingAnalyticsConsent = true
     }
 
     /// Whether the player has done something that earns the naming invitation: they've **completed at
