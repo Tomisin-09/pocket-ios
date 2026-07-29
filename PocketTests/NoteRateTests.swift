@@ -52,17 +52,17 @@ final class NoteRateTests: XCTestCase {
 
     /// The content's rate wins over the click: the Rhythm dropdown is what the player moves, and it's
     /// what the notes are actually played at.
-    func testContentRateWinsOverTheClickSubdivision() {
-        let exercise = Exercise(subdivision: .none, template: .scales)
+    func testContentRateWinsOverTheDrillsOwnRate() {
+        let exercise = Exercise(notesPerBeat: 1, template: .scales)
         exercise.setFretboardContent(.custom(FretboardDrill(notesPerBeat: 4, notes: [nil, nil, nil, nil])))
         XCTAssertEqual(exercise.noteRate, .sixteenths)
         XCTAssertEqual(exercise.commandNotesPerMinute, exercise.command * 4)
     }
 
-    /// The seeded *Spider Walk* shape: a metronome-rendered warm-up whose only stated rhythm is the
-    /// click subdivision.
-    func testClickSubdivisionIsTheFallbackWhenContentDeclaresNoRate() {
-        let exercise = Exercise(commandTempo: 80, subdivision: .sixteenths, template: .warmup)
+    /// The seeded *Spider Walk* shape: a metronome-rendered warm-up whose rhythm is stated by the
+    /// drill itself, because its template renders no content that could state one.
+    func testTheDrillsOwnRateIsTheFallbackWhenContentDeclaresNoRate() {
+        let exercise = Exercise(commandTempo: 80, notesPerBeat: 4, template: .warmup)
         XCTAssertNil(exercise.contentNoteRate)
         XCTAssertEqual(exercise.noteRate, .sixteenths)
         XCTAssertEqual(exercise.commandNotesPerMinute, 320)
@@ -71,7 +71,7 @@ final class NoteRateTests: XCTestCase {
     /// The seeded *Chord Changes* shape: nothing declares a rhythm, so the rate is unknown rather
     /// than silently "quarters" — that's what keeps the row from labelling a fact it doesn't have.
     func testNoDeclaredRhythmResolvesToNil() {
-        let exercise = Exercise(commandTempo: 70, subdivision: .none, template: .chords)
+        let exercise = Exercise(commandTempo: 70, template: .chords)
         XCTAssertNil(exercise.noteRate)
         XCTAssertEqual(exercise.commandNotesPerMinute, 70, "an unknown rhythm still compares as bare BPM")
     }
@@ -89,24 +89,38 @@ final class NoteRateTests: XCTestCase {
                        NoteRate(perBeat: StrumChordSheet.popGroove.strumPattern.slotsPerBeat))
     }
 
-    /// A fretboard-template exercise carrying no payload falls all the way through to the click, the
-    /// same as any other rhythm-less drill — the payload accessors return `nil`, not a default rate.
-    func testFretboardTemplateWithNoPayloadFallsBackToTheClick() {
-        let exercise = Exercise(subdivision: .triplets, template: .scales)
+    /// A fretboard-template exercise carrying no payload falls through to the drill's own rate, the
+    /// same as any other content-less drill — the payload accessors return `nil`, not a default rate.
+    func testFretboardTemplateWithNoPayloadFallsBackToTheDrillsOwnRate() {
+        let exercise = Exercise(notesPerBeat: 3, template: .scales)
         XCTAssertNil(exercise.contentNoteRate)
         XCTAssertEqual(exercise.noteRate, .triplets)
+    }
+
+    // MARK: - Seeded presets
+
+    /// Every shipped preset arrives with its command already bound to the rhythm it's measured in
+    /// (ADR 0121) — including the payload-carrying batches, whose rhythm is only knowable *after*
+    /// the content is applied. A batch that bound to `nil` here would ship a command that the very
+    /// next rhythm change silently revalues.
+    func testEverySeededPresetBindsItsCommandToItsRhythm() {
+        for exercise in PracticePresets.makeExercises(PracticePresets.allSpecs) {
+            XCTAssertEqual(exercise.commandNotesPerBeat, exercise.noteRate?.perBeat,
+                           "\(exercise.name) should bind its command to the rhythm it plays")
+        }
     }
 
     // MARK: - The shared row label
 
     func testCommandProgressLabelCarriesTheRhythm() {
-        let exercise = Exercise(commandTempo: 80, subdivision: .sixteenths, template: .warmup)
+        let exercise = Exercise(commandTempo: 80, notesPerBeat: 4,
+                                commandNotesPerBeat: 4, template: .warmup)
         XCTAssertEqual(exercise.commandProgressLabel,
                        "Command 80 → \(exercise.reachTempo) BPM · 16ths")
     }
 
     func testCommandProgressLabelOmitsAnUndeclaredRhythm() {
-        let exercise = Exercise(commandTempo: 70, subdivision: .none, template: .chords)
+        let exercise = Exercise(commandTempo: 70, template: .chords)
         XCTAssertEqual(exercise.commandProgressLabel, "Command 70 → \(exercise.reachTempo) BPM")
     }
 }

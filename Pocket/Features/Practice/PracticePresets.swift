@@ -12,9 +12,9 @@ import SwiftData
 /// fixtures.
 enum PracticePresets {
     /// The seed spec for one preset: name, a **seed** command tempo (modest on purpose — the player
-    /// re-anchors to their own command on the first run), the subdivision "feel", tags, a one-line
-    /// how-to note, the meter, and an optional **content template** payload (ADR 0065 T9 — a
-    /// strumming preset ships a real pattern).
+    /// re-anchors to their own command on the first run), the **rhythm** it's measured in, tags, a
+    /// one-line how-to note, the meter, and an optional **content template** payload (ADR 0065 T9 —
+    /// a strumming preset ships a real pattern).
     struct Spec {
         let name: String
         /// Stable provenance identifier stamped onto the seeded `Exercise.presetSlug` (ADR 0112). A
@@ -22,7 +22,10 @@ enum PracticePresets {
         /// one-time backfill both key off it, so it must never change even if `name` is reworded.
         let slug: String
         let command: Int
-        let subdivision: Subdivision
+        /// The drill's own rhythm — notes per beat — for a preset whose **content** declares none
+        /// (ADR 0121). `nil` for every batch that ships a payload: there the payload states it, and a
+        /// second copy here could only drift from it.
+        var noteRate: Int?
         let tags: [String]
         let notes: String
         var template: ExerciseTemplate = .basic
@@ -36,31 +39,31 @@ enum PracticePresets {
     /// The shipped set — small enough not to crowd an empty space, broad enough to cover the core
     /// fretting / picking / rhythm skills.
     static let specs: [Spec] = [
-        Spec(name: "Spider Walk", slug: "spider-walk", command: 80, subdivision: .sixteenths,
+        Spec(name: "Spider Walk", slug: "spider-walk", command: 80, noteRate: 4,
              tags: ["warmup", "synchronization"],
              notes: "One finger per fret, 1-2-3-4 up the strings and back. Keep both hands locked "
                   + "to the click.",
              template: .warmup),
-        Spec(name: "Alternate Picking", slug: "alternate-picking", command: 90, subdivision: .sixteenths,
+        Spec(name: "Alternate Picking", slug: "alternate-picking", command: 90, noteRate: 4,
              tags: ["picking", "technique"],
              notes: "Strict down-up on one string. Even volume, even spacing — let the click "
                   + "expose any rushing.",
              template: .picking),
-        Spec(name: "Chord Changes", slug: "chord-changes", command: 70, subdivision: .none,
+        Spec(name: "Chord Changes", slug: "chord-changes", command: 70, noteRate: nil,
              tags: ["rhythm", "fretting"],
              notes: "Change chord cleanly on beat 1 — G, C, D, repeat. Land all fingers together.",
              template: .chords),
-        Spec(name: "Scale Runs", slug: "scale-runs", command: 80, subdivision: .eighths,
+        Spec(name: "Scale Runs", slug: "scale-runs", command: 80, noteRate: 2,
              tags: ["scales", "coordination"],
              notes: "One octave up and down. Pick hand and fret hand land exactly together on each "
                   + "click.",
              template: .scales),
-        Spec(name: "String Skipping", slug: "string-skipping", command: 75, subdivision: .eighths,
+        Spec(name: "String Skipping", slug: "string-skipping", command: 75, noteRate: 2,
              tags: ["picking", "accuracy"],
              notes: "Skip a string between each note. Accuracy over speed — every note clean before "
                   + "you push the tempo.",
              template: .picking),
-        Spec(name: "Legato", slug: "legato", command: 85, subdivision: .sixteenths,
+        Spec(name: "Legato", slug: "legato", command: 85, noteRate: 4,
              tags: ["legato", "fretting"],
              notes: "Pick only the first note; hammer and pull the rest. Keep all four notes even "
                   + "in volume.",
@@ -71,7 +74,7 @@ enum PracticePresets {
     /// user who already has the v1 set above gains these on the next launch without disturbing
     /// (or re-seeding) their v1 presets. Each ships a real template payload.
     static let templateSpecs: [Spec] = [
-        Spec(name: "Strumming — D DU UDU", slug: "strumming-folk", command: 80, subdivision: .eighths,
+        Spec(name: "Strumming — D DU UDU", slug: "strumming-folk", command: 80,
              tags: ["rhythm", "strumming"],
              notes: "The folk pattern: down, then down-up, then up-down-up. Keep the strumming hand "
                   + "swinging in steady eighths — the rests are ghost strokes you feel but don't "
@@ -84,7 +87,7 @@ enum PracticePresets {
     /// has the v1/v2 sets gains it on the next launch without disturbing them. Ships a real generated
     /// run so the animated board renderer *and* the generative authoring are exercised by content.
     static let fretboardSpecs: [Spec] = [
-        Spec(name: "Chromatic Warm-up", slug: "chromatic-warmup", command: 80, subdivision: .eighths,
+        Spec(name: "Chromatic Warm-up", slug: "chromatic-warmup", command: 80,
              tags: ["warmup", "synchronization"],
              notes: "One finger per fret — 1-2-3-4 up every string from the low E to the high e and "
                   + "back. Watch the note walk the board and land both hands exactly on the click.",
@@ -96,7 +99,7 @@ enum PracticePresets {
     /// who already has the v1–v3 sets gains it on the next launch. Ships a real preprogrammed scale run
     /// so the scale-library editor and renderer are exercised by content.
     static let scaleSpecs: [Spec] = [
-        Spec(name: "A Minor Pentatonic", slug: "a-minor-pentatonic", command: 80, subdivision: .eighths,
+        Spec(name: "A Minor Pentatonic", slug: "a-minor-pentatonic", command: 80,
              tags: ["scales", "lead"],
              notes: "The box-1 minor pentatonic from the low E's 5th fret, two octaves up and back. "
                   + "Pick and fret hands land together on every click.",
@@ -110,13 +113,13 @@ enum PracticePresets {
     /// content, and so the following viewport and box focus (S5/S2b) have a climbing shape to show.
     static let scaleLayoutSpecs: [Spec] = [
         Spec(name: "A Minor Pentatonic — Extended", slug: "a-minor-pentatonic-extended",
-             command: 80, subdivision: .eighths,
+             command: 80,
              tags: ["scales", "lead"],
              notes: "One diagonal run linking three pentatonic boxes up the neck — slide up on the A "
                   + "and G strings to shift into the next box. Watch the board follow the climb.",
              template: .scales,
              fretboard: .scale(.aMinorPentatonicExtended)),
-        Spec(name: "G Major — 3 Notes Per String", slug: "g-major-three-per-string", command: 80, subdivision: .eighths,
+        Spec(name: "G Major — 3 Notes Per String", slug: "g-major-three-per-string", command: 80,
              tags: ["scales", "technique"],
              notes: "Three tones on every string, low E to high e — the even, alternate-picking-friendly "
                   + "shape that spans the neck. Keep the picking hand relaxed and the notes even.",
@@ -127,7 +130,7 @@ enum PracticePresets {
     /// The **arpeggio library** batch (ADR 0065 build 2, Slice 3) — seeded under a *fifth* key. Ships a
     /// real preprogrammed arpeggio run so the arpeggio editor and renderer are exercised by content.
     static let arpeggioSpecs: [Spec] = [
-        Spec(name: "A Minor 7 Arpeggio", slug: "a-minor-7-arpeggio", command: 80, subdivision: .eighths,
+        Spec(name: "A Minor 7 Arpeggio", slug: "a-minor-7-arpeggio", command: 80,
              tags: ["arpeggios", "lead"],
              notes: "The A minor 7 chord tones (R ♭3 5 ♭7) in the CAGED E-shape box, two octaves up "
                   + "and back. Target the chord tones cleanly on every click.",
@@ -139,7 +142,7 @@ enum PracticePresets {
     /// chord progression so the chord-diagram renderer and the progression editor are exercised by
     /// content. (The v1 "Chord Changes" drill predates the renderer and stays a plain tempo drill.)
     static let chordSpecs: [Spec] = [
-        Spec(name: "Pop Changes — G · D · Em · C", slug: "pop-changes", command: 70, subdivision: .none,
+        Spec(name: "Pop Changes — G · D · Em · C", slug: "pop-changes", command: 70,
              tags: ["chords", "rhythm"],
              notes: "The I–V–vi–IV turnaround, one bar each. Land every finger of the next shape "
                   + "together, right on beat 1 — let the click expose any late changes.",
@@ -151,7 +154,7 @@ enum PracticePresets {
     /// key. Ships a real pattern using the muted-chuck and accent vocabulary so the upgraded editor
     /// and lane are exercised by content, not just the plain folk pattern from v2.
     static let syncopatedMuteSpecs: [Spec] = [
-        Spec(name: "Strumming — Syncopated Mute", slug: "strumming-syncopated-mute", command: 78, subdivision: .eighths,
+        Spec(name: "Strumming — Syncopated Mute", slug: "strumming-syncopated-mute", command: 78,
              tags: ["rhythm", "strumming"],
              notes: "Down, rest, down, muted chuck, rest, accented up, down, up. Keep the chuck short "
                   + "and percussive, and dig in on the accent — everything else stays even.",
@@ -163,7 +166,7 @@ enum PracticePresets {
     /// key. Ships the folk groove under the pop turnaround so the composed renderer and its editor are
     /// exercised by content: one groove cycle per chord, by construction, since both hold one bar.
     static let strumChordsSpecs: [Spec] = [
-        Spec(name: "Groove — Pop Changes", slug: "groove-pop-changes", command: 76, subdivision: .eighths,
+        Spec(name: "Groove — Pop Changes", slug: "groove-pop-changes", command: 76,
              tags: ["rhythm", "strumming", "chords"],
              notes: "The folk D-DU-UDU groove under the G-D-Em-C turnaround — one full pattern cycle "
                   + "per chord. Keep the strumming hand swinging steady through every change.",
@@ -176,19 +179,19 @@ enum PracticePresets {
     /// (continuous down-up eighths, the reggae off-beat "skank", and a boom-chick mute), so the
     /// strumming lane and its editor ship with a fuller starter set. In-house patterns (T8).
     static let strumExpansionSpecs: [Spec] = [
-        Spec(name: "Strumming — Down-Up Eighths", slug: "strumming-down-up-eighths", command: 84, subdivision: .eighths,
+        Spec(name: "Strumming — Down-Up Eighths", slug: "strumming-down-up-eighths", command: 84,
              tags: ["rhythm", "strumming"],
              notes: "A stroke on every eighth, down-up-down-up. Keep the strumming hand swinging evenly "
                   + "from the elbow — the click exposes any stroke that rushes or drags.",
              template: .strumming,
              strum: .downUpEighths),
-        Spec(name: "Strumming — Reggae Offbeat", slug: "strumming-reggae-offbeat", command: 76, subdivision: .eighths,
+        Spec(name: "Strumming — Reggae Offbeat", slug: "strumming-reggae-offbeat", command: 76,
              tags: ["rhythm", "strumming"],
              notes: "Upstrokes on the off-beats only — the reggae 'skank'. Keep the hand moving down on "
                   + "each beat but sound only on the way back up, so the accents land between the clicks.",
              template: .strumming,
              strum: .offbeatUps),
-        Spec(name: "Strumming — Boom-Chick", slug: "strumming-boom-chick", command: 80, subdivision: .eighths,
+        Spec(name: "Strumming — Boom-Chick", slug: "strumming-boom-chick", command: 80,
              tags: ["rhythm", "strumming"],
              notes: "A downstroke on the beat answered by a muted chuck on the off-beat — the boom-chick "
                   + "of a country accompaniment. Keep the chuck short and percussive, the down full.",
@@ -200,7 +203,7 @@ enum PracticePresets {
     /// G major scale reordered into melodic thirds so the new sequence axis and its editor are exercised
     /// by content, not just the straight box run.
     static let scaleSequenceSpecs: [Spec] = [
-        Spec(name: "G Major — in 3rds", slug: "g-major-in-thirds", command: 76, subdivision: .eighths,
+        Spec(name: "G Major — in 3rds", slug: "g-major-in-thirds", command: 76,
              tags: ["scales", "technique"],
              notes: "The G major box played in thirds — 1-3-2-4-3-5 up and back. A classic pattern drill: "
                   + "keep the picking even and let the click expose any note that rushes.",
@@ -217,13 +220,17 @@ enum PracticePresets {
             let exercise = Exercise.commandAnchored(
                 name: spec.name, command: spec.command,
                 beatsPerBar: spec.beatsPerBar,
-                subdivision: spec.subdivision, template: spec.template,
+                notesPerBeat: spec.noteRate, template: spec.template,
                 tags: spec.tags, notes: spec.notes)
             exercise.presetSlug = spec.slug
             if let strum = spec.strum { exercise.setStrumPattern(strum) }
             if let fretboard = spec.fretboard { exercise.setFretboardContent(fretboard) }
             if let chords = spec.chords { exercise.setChordProgression(chords) }
             if let strumChords = spec.strumChords { exercise.setStrumChordSheet(strumChords) }
+            // Bind the seeded command to the rhythm the drill actually resolves to — which for a
+            // payload-carrying preset is the content's, and is only knowable *after* it's applied
+            // (ADR 0121).
+            exercise.bindCommandRhythmToContent()
             return exercise
         }
     }

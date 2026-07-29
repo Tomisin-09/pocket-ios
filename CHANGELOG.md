@@ -6,6 +6,17 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Change a drill's rhythm and it asks what should happen to your command tempo.** Moving eighths →
+  sixteenths doubles what every beat asks of you, so the tempo you earned no longer means what it
+  meant. Rather than quietly leaving the number (inflating what you own) or quietly halving it
+  (rewriting it), you choose: **keep the same note speed** — 80 BPM in eighths becomes 40 in
+  sixteenths, the same 160 notes a minute, with your warm-up floor and goals moved to match — or
+  **re-measure**, which clears the command so you can earn it again at the new rhythm. Journal
+  entries now record the rhythm alongside the tempo, so an old note stays readable after the drill
+  changes.
+- **One word for rhythm.** The exercise "Subdivision" setting is gone. It was never connected to the
+  metronome — it stated a rhythm the drill didn't play, and could contradict the Rhythm you'd
+  actually set. Drills that used it keep their rhythm; nothing you hear changes.
 - **A tempo now says what it's counting.** Exercise rows, routine blocks and the live BPM on the run
   screen show the rhythm alongside the tempo — *Command 80 → 96 BPM · 16ths* — because 80 BPM means
   four different things at quarters, eighths, triplets or sixteenths. Drills that state no rhythm

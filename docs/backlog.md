@@ -175,12 +175,35 @@ sequence, and the reasoning for it.
   - `ExerciseRunView` was at 396 lines, so the live readout's caption lives in
     `ExerciseRunView+Actions.swift` — the file-length ceiling decides where a two-line computed
     property goes.
-- **3b — `commandNotesPerBeat` + unifying the two note-rate axes (own ADR).** Deliberately pulled
-  **forward of Slice 10**, which it lightly collides with (both edit `ConfigureExerciseForm` /
-  `NewExerciseSheet`, in different sections). The collision costs a merge; the reason to accept it is
-  the **no-users window**. Build it as **one unit** — schema *and* the keep-note-speed / re-measure UX
-  — with the simple shape: every exercise **backfilled** from its content's `notesPerBeat`, no
-  nil-means-legacy state, no unknown-provenance branch anywhere.
+- **3b — `commandNotesPerBeat` + unifying the two note-rate axes — DONE (ADR 0121, branch
+  `pocket-203-slice3b-command-note-rate-binding`, 2026-07-29).** Built as one unit as planned, on the
+  no-users window. Notes worth carrying forward:
+  - **`Exercise.subdivision` was never wired to anything.** `setSubdivision` is called only from the
+    standalone metronome screen, so an exercise's subdivision never reached the click — it stated a
+    rhythm the drill didn't play, which is *why* the two axes could disagree with nothing noticing.
+    That turned "unify the axes" from a merge into a **retirement**: the attribute stays in the
+    schema (dropping one isn't additive), nothing writes it, and only the one-time backfill reads it.
+    **The strumming exception is real** — the run arms `engine.setStrumPattern`, so those slots do
+    sound; don't "tidy" that away.
+  - **The user chose retirement over wiring the click up.** Making a sixteenth-note drill actually
+    click sixteenths is 480 clicks/min at a command of 120, and would need its own on/off + volume
+    control — a metronome feature, not this one. Recorded in the ADR as the rejected alternative.
+  - **`nil` means "not stated", and that discipline is what makes every label honest.** The backfill
+    deliberately leaves `.none` unstated rather than minting a defaulted "quarters" that every
+    surface would then start claiming. Same reason the journal back-stamps nothing.
+  - **No new authoring control, deliberately.** Rhythm stays editable exactly where it already was
+    (the content editors' dropdown), which is also what keeps the change event to **one interception
+    point** — `ExerciseShapeSheet.done()`. Giving Basic/Chords their own Rhythm control is a small
+    follow-up if wanted; it would let a drill state a rhythm it renders nothing for.
+  - **The Slice 10 collision never happened** — `ConfigureExerciseForm` / `NewExerciseSheet` were not
+    touched, because creation states no rhythm and there is nothing to revalue before a command
+    exists. Slice 10 is clean.
+  - **`keepNoteSpeed` has to move the drill's own rate too, not just the binding** — otherwise a
+    content-less drill ends up with a rescaled command bound to a rhythm its `noteRate` doesn't
+    report. Caught by a test asserting notes-per-minute held, not by the build.
+  - **Both answers rescale the working floor.** A warm-up floor left at the old rhythm is the wrong
+    speed to warm up at even when you chose to re-measure the command.
+  - `Exercise.swift` crossed 400 lines; the tempo model moved to `Exercise+Tempo.swift`.
 - **No interaction with the rest.** Slices 2, 4, 5, 6, 8 and 9 are clean. In particular Slice 5's speed
   cap (0.25–1.5) is a *song playback multiplier*, not exercise BPM — a different axis, easily confused.
 
@@ -930,12 +953,12 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
     exercise rows, routine blocks, the run screen's live readout and the detail sheet's Feel section,
     and the library's Command key ranking on `commandNotesPerMinute`. The **planner** half of this
     bullet was a false alarm — it reads mastery and `lastPracticed`, never a tempo.
-  - **Slice 2 — bind the achievement to its rhythm (own ADR; it changes a term ADR 0045 defines).** One
-    additive optional, `commandNotesPerBeat: Int?` (nil ⇒ legacy/unmeasured, no wipe — the `commandTempo`
-    discipline). A Rhythm change then becomes a real event: offer **keep the same note speed** (80 @
-    eighths → 40 @ sixteenths, preserving npm) or **re-measure** (clear command to nil). Fold in
-    unifying the two axes — one source of truth, `subdivision` following the content's `notesPerBeat`
-    or the reverse — since they can disagree today and nothing notices.
+  - ~~**Slice 2 — bind the achievement to its rhythm (own ADR).**~~ **DONE 2026-07-29 as ADR 0121**
+    (see *Slices 3a & 3b* above). Shipped `commandNotesPerBeat` + the keep-note-speed / re-measure
+    prompt, the journal's `commandNotesPerBeatAtEntry`, and the axes unified by **retiring**
+    `subdivision` — it was never wired to the click at all, so there was no second axis to follow.
+    `nil` means "nothing bound", never "legacy": the one-time backfill stamps every existing
+    measured command.
   - **Rejected:** a *stored* `notesPerMinute` field (derivable — a denormalisation that can go stale);
     silently rescaling command on a Rhythm change without telling the user (an unannounced rewrite of a
     measured achievement); and any global difficulty ordering (see the scope decision).

@@ -184,11 +184,10 @@ struct ExerciseDetailSheet: View {
 
     // MARK: - Meter & subdivision (read-only)
 
-    /// Meter, **Rhythm** and the click's **Subdivision** — deliberately two rows, not one. They are
-    /// separate axes today (Rhythm is what you play, editable in the shape editor; Subdivision is what
-    /// the metronome clicks, fixed at creation) and they can legitimately disagree, so collapsing them
-    /// here would hide the difference rather than resolve it. Rhythm is omitted when the drill declares
-    /// none — a chord-changing drill has no note density to state.
+    /// Meter and **Rhythm** — one rhythm row, not two. The old "Subdivision" row is gone with the
+    /// field behind it (ADR 0121): it never reached the metronome, so it stated a rhythm the drill
+    /// didn't play. Rhythm is omitted when the drill states none — a chord-changing drill has no note
+    /// density to report, and an absent row means "not stated", never a defaulted "quarters".
     private var feelSection: some View {
         Section {
             LabeledContent("Time signature") {
@@ -197,12 +196,11 @@ struct ExerciseDetailSheet: View {
             if let noteRate = exercise.noteRate {
                 LabeledContent("Rhythm") { Text(noteRate.label) }
             }
-            LabeledContent("Subdivision") { Text(exercise.subdivision.label) }
         } header: {
             Text("Feel")
         } footer: {
-            Text("Rhythm is how many notes you play per beat — what the command tempo is measured in. "
-                 + "Subdivision is how the metronome clicks underneath it.")
+            Text("Rhythm is how many notes you play per beat — what the command tempo is measured "
+                 + "in. Change it in Edit shape and you'll be asked what should happen to that tempo.")
         }
     }
 

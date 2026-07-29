@@ -317,6 +317,9 @@ struct ExerciseLibraryView: View {
         if let fretboard = plan.fretboard { exercise.setFretboardContent(fretboard) }
         if let chords = plan.chords { exercise.setChordProgression(chords) }
         if let strumChords = plan.strumChords { exercise.setStrumChordSheet(strumChords) }
+        // The rhythm is whatever the authored content states, so the command can only be bound to it
+        // once the payload is on (ADR 0121).
+        exercise.bindCommandRhythmToContent()
         context.insert(exercise)
         haptic(.medium)
         justCreated = exercise
