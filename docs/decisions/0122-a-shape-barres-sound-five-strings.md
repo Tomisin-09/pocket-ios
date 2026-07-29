@@ -72,13 +72,15 @@ two-pane arrangement made possible.
 
 ### What we deliberately did **not** widen
 
-- **A-shape sus2 / sus4 keep their muted high e.** Their standard five-string barres would take the
-  same treatment on the same argument, but the device note named five shapes and these are Tier 2.
-  **Decision 3 sharpens this rather than settling it**: the suspensions are now chips in the same grid,
-  in the same picture style, a couple of sections below the widened five — so the four-string/five-string
-  difference is directly comparable in a way it never was inside the Movable sheet. Recording it here
-  so the next reader knows it was considered, not missed; it is the obvious next change if it reads
-  wrong on device.
+- **A-shape sus2 / sus4 keep their muted high e — settled on device, 2026-07-29.** Their standard
+  five-string barres would take the same treatment on the same argument, and decision 3 put the
+  question under a microscope: the suspensions are now chips in the same grid, in the same picture
+  style, a couple of sections below the widened five, so the four-string/five-string difference is
+  directly comparable in a way it never was inside the Movable sheet. Looked at that way on device,
+  it reads fine. **This is closed, not parked** — a suspension is a colour chord whose voice is the
+  2nd or 4th, and the four-string form keeps that voice on top instead of burying it under a doubled
+  5th. `testAShapeSuspensionsAndPowerChordsStayNarrow` holds it, so reopening it means editing a
+  named test on purpose.
 - **The power chords stay three strings.** A "5" is root + 5th + octave root by definition; adding a
   string would make it a different chord, not a fuller voicing of the same one.
 - **The 9ths are untouched.** ADR 0101 already decided each of those individually (`dom9`/`min9`

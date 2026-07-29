@@ -275,9 +275,11 @@ sharp/flat override) and deserved its own record. Notes worth carrying forward:
   setter opens `CustomChordSheet`, so nothing stores a `Mode` and dismissing never lands on an empty
   pane. `testInsertNowOffersTheWholeCuratedMovableVocabulary` pins the lossless claim: Insert's two
   movable sets must together equal `ChordGrip.curated`.
-- **The sus2/sus4 question got sharper, not settled.** They're now chips in the same grid and picture
-  style as the widened five, a couple of sections below them, so the 4-string/5-string difference is
-  directly comparable in a way it never was inside the Movable sheet.
+- **The sus2/sus4 question is CLOSED (user, on device, 2026-07-29): they keep the muted high e.**
+  Folding Tier 2 into the same grid put it under a microscope — same chip style, a couple of sections
+  below the widened five — and it reads fine. Don't reopen it: a suspension's voice *is* its 2nd or
+  4th, and the four-string form keeps that on top rather than under a doubled 5th.
+  `testAShapeSuspensionsAndPowerChordsStayNarrow` holds the line.
 - **"Enharmonic preference" was the smaller half of the spelling job.** The rule ("key first,
   preference as tiebreaker") needed a key-aware speller before the toggle meant anything. `NoteSpelling`
   reads the circle of fifths through the **parent major** each scale/arpeggio already declares
