@@ -59,3 +59,6 @@ infrastructure/**/*.tfvars
 
 # graphify knowledge-graph output (local tooling, not part of the app)
 graphify-out/
+
+# Byte-cache from the Python build scripts in scripts/
+__pycache__/

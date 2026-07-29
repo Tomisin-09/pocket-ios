@@ -50,10 +50,12 @@ struct ArtistNamePromptSheet: View {
                 // The Red Moon crescent as the seal over the moment — the symbol alone (no
                 // wordmark, `RedMoonMark`), so it reads as an emblem, not a logo lockup.
                 // Theme-aware artwork (ADR 0061/0062), so it sits right in either appearance.
+                // Sized by **height**: the vector mark is a tall crescent (roughly 2:3), where the
+                // raster it replaced was wider than tall, so a width cap would grow it vertically.
                 Image("RedMoonMark")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 132)
+                    .frame(maxHeight: 140)
                     .opacity(0.9)
                     .padding(.bottom, 36)
                     .accessibilityHidden(true)
