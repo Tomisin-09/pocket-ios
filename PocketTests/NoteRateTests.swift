@@ -97,6 +97,32 @@ final class NoteRateTests: XCTestCase {
         XCTAssertEqual(exercise.noteRate, .triplets)
     }
 
+    // MARK: - The authoring default
+
+    /// A newly-authored run starts at **quarters** (2026-07-29), not eighths: the plainest rhythm is
+    /// the honest starting claim, and raising it should be the player's deliberate act. Pinned across
+    /// all four generators because nothing failed when the default was flipped — the old value was
+    /// asserted nowhere, so the next change to it would have been silent too.
+    func testNewlyAuthoredRunsDefaultToQuarters() {
+        XCTAssertEqual(ScaleRun(scale: .minorPentatonic, rootPitchClass: 9).notesPerBeat, 1)
+        XCTAssertEqual(ArpeggioRun(quality: .minorSeventh, rootPitchClass: 9).notesPerBeat, 1)
+        XCTAssertEqual(FretboardRun(fingers: [1, 2, 3, 4], baseFret: 1,
+                                    fromString: 5, toString: 0).notesPerBeat, 1)
+        XCTAssertEqual(FretboardDrill.emptyBar(beatsPerBar: 4).notesPerBeat, 1)
+    }
+
+    /// The blank canvas is one slot per beat, so a 4/4 bar opens with four slots rather than eight.
+    func testTheBlankCanvasIsOneSlotPerBeat() {
+        XCTAssertEqual(FretboardDrill.emptyBar(beatsPerBar: 4).notes.count, 4)
+    }
+
+    /// The curated starters a fresh drill opens on follow the default — they *are* the default
+    /// content, so pinning them to eighths would have left the change cosmetic.
+    func testTheCuratedStartersFollowTheDefault() {
+        XCTAssertEqual(ScaleRun.aMinorPentatonic.notesPerBeat, 1)
+        XCTAssertEqual(ArpeggioRun.aMinorSeventh.notesPerBeat, 1)
+    }
+
     // MARK: - Seeded presets
 
     /// Every shipped preset arrives with its command already bound to the rhythm it's measured in

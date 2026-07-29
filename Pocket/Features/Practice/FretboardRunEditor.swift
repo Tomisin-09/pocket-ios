@@ -4,7 +4,7 @@ import SwiftUI
 /// every note by hand, the player declares the *shape* of a warm-up / picking / legato run and the
 /// app expands it: a **finger pattern** (e.g. 1-3-2-4) anchored to a **base fret**, travelling a
 /// **string span**, optionally **back**. A live preview walks the resulting run so the shape is
-/// visible before it's saved; the subdivision is demoted to an "Advanced" row (default eighths) so
+/// visible before it's saved; the rhythm is demoted to an "Advanced" row (default quarters) so
 /// the common controls stay uncluttered.
 ///
 /// A thin skin over `FretboardRun` — every control mutates one field of the bound recipe, and the

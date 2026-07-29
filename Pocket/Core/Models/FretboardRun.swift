@@ -74,7 +74,7 @@ struct FretboardRun: Codable, Equatable {
     var toString: Int
     /// Whether the run descends back after the ascent — the "up and back" of a warm-up.
     var roundTrip: Bool
-    /// Evenly-spaced notes per beat — 1 = quarters, 2 = eighths (the default), 3 = triplets,
+    /// Evenly-spaced notes per beat — 1 = quarters (the default), 2 = eighths, 3 = triplets,
     /// 4 = sixteenths. Clamped to at least 1.
     var notesPerBeat: Int
     /// **Horizontal climb (S1):** frets the anchor moves up after each completed pass. `0` (default)
@@ -95,7 +95,7 @@ struct FretboardRun: Codable, Equatable {
          fromString: Int,
          toString: Int,
          roundTrip: Bool = true,
-         notesPerBeat: Int = 2,
+         notesPerBeat: Int = 1,
          fretShiftPerPass: Int = 0,
          passCount: Int = 1,
          fretShiftPerString: Int = 0,

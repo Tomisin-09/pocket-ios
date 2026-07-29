@@ -27,7 +27,8 @@ struct ScaleRun: Codable, Equatable {
     var octaves: Int
     /// Whether the run descends back after the ascent.
     var roundTrip: Bool
-    /// Evenly-spaced notes per beat (default eighths). Clamped to at least 1.
+    /// Evenly-spaced notes per beat — **quarters by default**, so a new run states the plainest
+    /// rhythm and the player raises it deliberately. Clamped to at least 1.
     var notesPerBeat: Int
     /// **How the scale is laid on the neck** (ADR 0083 S4), String-backed for forward-compatible decode
     /// (ADR 0036) — read via `layout`. Additive, decode-time-defaulting to `.box`, so every scale
@@ -62,7 +63,7 @@ struct ScaleRun: Codable, Equatable {
          position: Int = 1,
          octaves: Int = 2,
          roundTrip: Bool = true,
-         notesPerBeat: Int = 2,
+         notesPerBeat: Int = 1,
          layout: ScaleLayout = .box,
          sequence: SequencePattern = .straight,
          startsFromLowestRoot: Bool = true,

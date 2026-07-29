@@ -204,6 +204,13 @@ sequence, and the reasoning for it.
   - **Both answers rescale the working floor.** A warm-up floor left at the old rhythm is the wrong
     speed to warm up at even when you chose to re-measure the command.
   - `Exercise.swift` crossed 400 lines; the tempo model moved to `Exercise+Tempo.swift`.
+  - **Follow-up the same day: the authoring default moved from eighths to quarters** (user call). The
+    curated starters (`ScaleRun.aMinorPentatonic`, `ArpeggioRun.aMinorSeventh`, …) **follow** the
+    default rather than being pinned — they *are* what a fresh drill opens on, so pinning them would
+    have made the change cosmetic. Content that states its rhythm explicitly (`FretboardRun
+    .chromaticWarmup`, `FretboardDrill.spiderWalk`, every `PracticePresets` `noteRate`) keeps it:
+    **a default becomes quarters, authored content keeps what it declared.** Nothing failed when the
+    default was flipped — the old value was asserted nowhere — so a test now pins it.
 - **No interaction with the rest.** Slices 2, 4, 5, 6, 8 and 9 are clean. In particular Slice 5's speed
   cap (0.25–1.5) is a *song playback multiplier*, not exercise BPM — a different axis, easily confused.
 

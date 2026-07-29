@@ -14,6 +14,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   **re-measure**, which clears the command so you can earn it again at the new rhythm. Journal
   entries now record the rhythm alongside the tempo, so an old note stays readable after the drill
   changes.
+- **New drills start at quarter notes.** Scales, arpeggios, picking runs and the draw-your-own canvas
+  all used to open at eighths, which assumed a rhythm you hadn't chosen. They now open at quarters —
+  the plainest reading of a beat — and you raise it deliberately in Advanced → Rhythm. Drills you've
+  already saved keep the rhythm they were authored with.
 - **One word for rhythm.** The exercise "Subdivision" setting is gone. It was never connected to the
   metronome — it stated a rhythm the drill didn't play, and could contradict the Rhythm you'd
   actually set. Drills that used it keep their rhythm; nothing you hear changes.
