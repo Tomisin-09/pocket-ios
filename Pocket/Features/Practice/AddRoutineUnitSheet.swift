@@ -10,8 +10,14 @@ import SwiftUI
 /// Exercises come first (the exercises-first direction — technique mode, audio-free, works with an
 /// empty library).
 ///
-/// Picking a unit fires the matching callback; the editor both creates the `RoutineItem` and
-/// closes this sheet (by flipping its presentation flag), so a pick from any depth dismisses.
+/// **Multi-add (ADR 0127):** a tap adds the unit to the routine *there and then* and leaves the
+/// sheet open, so you can add a scale drill, back out, drill into Loops and add two more without
+/// reopening the picker each time. An added row shows a check and a second tap takes it back out
+/// again; **Done** closes. Blocks land in tap order, and — like every other edit in this screen —
+/// only reach the store when the routine is Saved.
+///
+/// The picker keeps **no selection state of its own**: the editor owns the ids it has added and
+/// hands them back each render (`addedIDs`), so the checkmarks can't disagree with the block list.
 struct AddRoutineUnitSheet: View {
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
     @Query(sort: \Loop.name) private var loops: [Loop]
@@ -21,12 +27,11 @@ struct AddRoutineUnitSheet: View {
     /// The row auditioning on the root screen (recently-added / search results) — one loop at a time.
     @State private var rootPlayingID: String?
 
-    let onPickExercise: (Exercise) -> Void
-    let onPickLoop: (Loop) -> Void
-    let onPickSong: (Song) -> Void
-    /// Add a loop as an **ear-training** block (ADR 0104 Slice 2) — same loops, run ears-only. A
-    /// no-op default keeps existing callers (and previews) compiling.
-    var onPickEarLoop: (Loop) -> Void = { _ in }
+    /// `RoutineUnitPick.pickID`s this sheet session has added, owned by the editor.
+    var addedIDs: Set<String> = []
+    /// Add the unit, or remove the block this session added for it. A no-op default keeps
+    /// previews compiling.
+    var onToggle: (RoutineUnitPick) -> Void = { _ in }
 
     /// Only loops with a measured command tempo are trainable in a routine (the same gate as the
     /// loop library — an unmeasured loop has no ramp for the player to run).
@@ -62,11 +67,29 @@ struct AddRoutineUnitSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
+                        .font(.futura(.body, weight: addedIDs.isEmpty ? nil : .bold))
                         .tint(PocketColor.practice)
                 }
             }
         }
+        // On the stack, not a level's list, so the running tally follows you into every drill-in.
+        .safeAreaInset(edge: .bottom) { addedTally }
         .presentationDetents([.large])
+    }
+
+    /// The running tally of what this sheet session has put in the routine — the receipt for a
+    /// picker that no longer dismisses on a pick, so "did that land?" is answered without closing.
+    /// Absent at zero, so the sheet opens exactly as it always did.
+    @ViewBuilder private var addedTally: some View {
+        if !addedIDs.isEmpty {
+            Text(addedIDs.count == 1 ? "1 block added" : "\(addedIDs.count) blocks added")
+                .font(.futura(.footnote))
+                .foregroundStyle(PocketColor.practice)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial)
+                .accessibilityAddTraits(.updatesFrequently)
+        }
     }
 
     /// The default browse view — the four typed buckets (ADR 0104 Slice 2 adds Ear training).
@@ -229,130 +252,36 @@ struct AddRoutineUnitSheet: View {
     }
 
     private func exerciseRow(_ exercise: Exercise) -> PickRow {
-        PickRow(id: exercise.uid.uuidString, title: exercise.name.isEmpty ? "Untitled" : exercise.name,
-                context: nil,
-                progress: exercise.commandProgressLabel,
-                pick: { onPickExercise(exercise) })
+        row(.exercise(exercise), title: exercise.name.isEmpty ? "Untitled" : exercise.name,
+            context: nil, progress: exercise.commandProgressLabel)
     }
 
     private func loopRow(_ loop: Loop) -> PickRow {
-        PickRow(id: loop.uid.uuidString, title: loop.name.isEmpty ? "Untitled loop" : loop.name,
-                context: loop.song?.title,
-                progress: "Command \(Int((loop.command * 100).rounded()))%",
-                pick: { onPickLoop(loop) }, previewLoop: loop)
+        row(.loop(loop), title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+            context: loop.song?.title,
+            progress: "Command \(Int((loop.command * 100).rounded()))%", previewLoop: loop)
     }
 
     /// The ear-training variant of `loopRow` — same loop, but the pick adds an ears-only block
-    /// (ADR 0104). A prefixed id keeps it distinct from the trainer row in the shared grouping.
+    /// (ADR 0104). The prefixed `pickID` keeps it distinct from the trainer row in the shared
+    /// grouping, and lets one routine hold both blocks for the same loop.
     private func earLoopRow(_ loop: Loop) -> PickRow {
-        PickRow(id: "ear-" + loop.uid.uuidString,
-                title: loop.name.isEmpty ? "Untitled loop" : loop.name,
-                context: loop.song?.title, progress: "Ear training",
-                pick: { onPickEarLoop(loop) }, previewLoop: loop)
+        row(.earLoop(loop), title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+            context: loop.song?.title, progress: "Ear training", previewLoop: loop)
     }
 
     private func songRow(_ song: Song) -> PickRow {
-        // A `Song` has no business `uid`; its import `sourceID` (a UUID string for local files) is a
-        // stable per-row identity.
-        PickRow(id: song.sourceID,
-                title: song.title.isEmpty ? "Untitled song" : song.title,
-                context: song.artist.isEmpty ? nil : song.artist,
-                progress: "Play-along", pick: { onPickSong(song) })
+        row(.song(song), title: song.title.isEmpty ? "Untitled song" : song.title,
+            context: song.artist.isEmpty ? nil : song.artist, progress: "Play-along")
     }
-}
 
-/// A list of **sub-buckets** — the middle level of the picker (Exercises→templates,
-/// Loops→songs). Each row is a group that drills into its `UnitPickList`. Kept dumb (a rendered
-/// array of `PickGroup`) so the sheet owns all querying.
-private struct GroupPickList: View {
-    let title: String
-    let groups: [PickGroup]
-
-    var body: some View {
-        List {
-            if groups.isEmpty {
-                Text("Nothing here yet.")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .listRowBackground(PocketColor.background)
-            } else {
-                ForEach(groups) { group in
-                    NavigationLink {
-                        UnitPickList(title: group.title, rows: group.rows)
-                    } label: {
-                        HStack(spacing: 14) {
-                            Image(systemName: group.icon)
-                                .font(.futura(.body))
-                                .foregroundStyle(PocketColor.practice)
-                                .frame(width: 28)
-                            Text(group.title)
-                                .font(.futura(.body))
-                                .foregroundStyle(PocketColor.textPrimary)
-                            Spacer(minLength: 8)
-                            Text("\(group.rows.count)")
-                                .font(.pocketMono(.body))
-                                .foregroundStyle(PocketColor.textSecondary)
-                        }
-                        .accessibilityLabel("\(group.title), \(group.rows.count)")
-                    }
-                    .listRowBackground(PocketColor.background)
-                }
-            }
-        }
-        .scrollContentBackground(.hidden)
-        .background(PocketColor.background.ignoresSafeArea())
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
+    /// The one place a `PickRow` is built — so every bucket's row derives its id, its added state
+    /// and its toggle from the same `RoutineUnitPick`, and none of the four can drift from the
+    /// others (a row whose id didn't match its pick would check the wrong row on add).
+    private func row(_ pick: RoutineUnitPick, title: String, context: String?,
+                     progress: String, previewLoop: Loop? = nil) -> PickRow {
+        PickRow(id: pick.pickID, title: title, context: context, progress: progress,
+                pick: { onToggle(pick) }, previewLoop: previewLoop,
+                isAdded: addedIDs.contains(pick.pickID))
     }
-}
-
-/// A flat, tappable list of pickable units — the leaf destination for a sub-bucket. Kept dumb
-/// (a rendered array of `PickRow`) so the sheet owns all querying.
-private struct UnitPickList: View {
-    let title: String
-    let rows: [PickRow]
-    /// The row currently auditioning (loops/ear), so only one plays at a time on this screen.
-    @State private var playingID: String?
-
-    var body: some View {
-        List {
-            if rows.isEmpty {
-                Text("Nothing here yet.")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .listRowBackground(PocketColor.background)
-            } else {
-                ForEach(rows) { row in
-                    AddRoutineUnitRow(row: row, playingID: $playingID)
-                        .listRowBackground(PocketColor.background)
-                }
-            }
-        }
-        .scrollContentBackground(.hidden)
-        .background(PocketColor.background.ignoresSafeArea())
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-/// A sub-bucket projected for display — a named, counted group of units that drills into its own
-/// `UnitPickList`. Decouples the middle-level UI from `ExerciseTemplate`/`Song`.
-private struct PickGroup: Identifiable {
-    let id: String
-    let title: String
-    let icon: String
-    let rows: [PickRow]
-}
-
-/// A single pickable unit projected for display — the row's text plus the action that adds it
-/// to the routine. Decouples the list UI from `Exercise`/`Loop` so both flow through one row.
-/// `previewLoop` (loops/ear rows only) carries the loop to **audition** in the row (ADR 0104 Slice 2
-/// follow-up) so indistinctly-named loops can be told apart by ear; `nil` = no preview affordance.
-struct PickRow: Identifiable {
-    let id: String
-    let title: String
-    let context: String?
-    let progress: String
-    let pick: () -> Void
-    var previewLoop: Loop?
 }

@@ -11,9 +11,12 @@ extension RoutineDetailView {
     /// carrying an always-visible tappable **`×N` chip** as the affordance (the chip *is* the value and
     /// the control — clearer than a bare chevron). A real Button, not a row tap gesture, so it fires
     /// reliably alongside the drag/delete affordances; a rest can't repeat, so it stays plain.
+    ///
+    /// In **rest-insert mode** (ADR 0127) a block row is inert in both directions: every tap on that
+    /// screen belongs to a gap, so a mis-aimed one must not open a reps editor or push a preview.
     @ViewBuilder
     func blockRow(_ item: RoutineItem, number: Int) -> some View {
-        if isEditing && item.kind.carriesUnit && !item.isOrphaned {
+        if isEditing && !insertingRests && item.kind.carriesUnit && !item.isOrphaned {
             Button {
                 repsEditorItem = StableRef(value: item)
                 haptic(.light)
@@ -28,7 +31,7 @@ extension RoutineDetailView {
             .accessibilityLabel("Repeat, ×\(item.effectiveReps)")
             .accessibilityHint("Set how many times this block repeats")
         } else {
-            let inspectable = !isEditing && !item.isOrphaned
+            let inspectable = !isEditing && !insertingRests && !item.isOrphaned
                 && (item.exercise != nil || item.loop != nil)
             HStack(spacing: 8) {
                 RoutineItemRow(item: item, number: number)

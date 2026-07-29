@@ -21,8 +21,9 @@ struct RoutineDetailView: View {
     /// The shared store — kept so Cancel can rebuild a clean sandbox that drops in-flight edits.
     private let container: ModelContainer
     /// Private editing scope over the shared store — never autosaves, so nothing persists until
-    /// `saveEdits()` calls `save()` on it explicitly.
-    @State private var editContext: ModelContext
+    /// `saveEdits()` calls `save()` on it explicitly. Internal so the same-type extensions in
+    /// `+Units` / `+Rests` can insert into it.
+    @State var editContext: ModelContext
     /// The routine under edit, resolved into (or created in) `editContext`. Internal (not private) so
     /// the length-readout extension (`RoutineDetailView+Length`) can read it.
     @State var routine: Routine
@@ -39,6 +40,18 @@ struct RoutineDetailView: View {
     @Environment(\.isPro) var isPro
 
     @State private var addingUnit = false
+    /// What the open picker has added, keyed by `RoutineUnitPick.pickID` → the `RoutineItem.uid` it
+    /// created (ADR 0127). The editor owns this, not the picker: it drives the picker's checkmarks
+    /// *and* finds the exact block to remove on a second tap, so the two can't disagree. Cleared
+    /// when the sheet closes — it describes one picking session, never the routine's contents.
+    @State var addedPickIDs: [String: UUID] = [:]
+    /// Whether the block list is in **rest-insert mode** (ADR 0127) — entered by holding *Insert
+    /// rest*, it replaces the list with tappable gaps between the blocks. Internal so the block-row
+    /// and rest extensions can read it.
+    @State var insertingRests = false
+    /// The gap slot whose "rest already here" popover is showing, or `nil`. `restSlotCount` is the
+    /// append row's own slot, so the same guard explains itself on both paths.
+    @State var restGuardSlot: Int?
     /// The routine to run, resolved into the main context — drives the full-screen player. `nil`
     /// when not playing.
     @State private var playingRoutine: Routine?
@@ -106,7 +119,7 @@ struct RoutineDetailView: View {
 
     /// The next explicit order value — one past the current maximum, so appends land last
     /// regardless of prior deletions (never trust the item count, which drifts from `order`).
-    private var nextOrder: Int { (routine.items.map(\.order).max() ?? -1) + 1 }
+    var nextOrder: Int { (routine.items.map(\.order).max() ?? -1) + 1 }
 
     /// Whether the routine has at least one runnable block — a unit block whose unit still resolves.
     /// Gates the Start button (an empty or all-orphaned routine has nothing to play). Internal for
@@ -151,6 +164,11 @@ struct RoutineDetailView: View {
                         .font(.futura(.footnote))
                         .foregroundStyle(PocketColor.textSecondary)
                         .listRowBackground(PocketColor.background)
+                } else if insertingRests {
+                    // Rest-insert mode interleaves gap rows between the blocks, so it can't share
+                    // the plain ForEach: `onMove`/`onDelete` offsets index the rows, and every
+                    // other row here is a gap. Reordering is off for the duration.
+                    restInsertRows
                 } else {
                     ForEach(Array(routine.orderedItems.enumerated()), id: \.element.uid) { pair in
                         blockRow(pair.element, number: pair.offset + 1)
@@ -160,7 +178,7 @@ struct RoutineDetailView: View {
                     .onDelete(perform: blockDeleteAction)
                 }
             } header: {
-                Text("Blocks")
+                Text(insertingRests ? "Tap where a rest goes" : "Blocks")
             } footer: {
                 demoFooter
             }
@@ -169,24 +187,21 @@ struct RoutineDetailView: View {
 
             if canAddBlocks {
                 Section {
-                    Button {
-                        addingUnit = true
-                        haptic(.light)
-                    } label: {
-                        Label("Add exercise, loop or song", systemImage: "plus.circle.fill")
-                            .font(.futura(.body))
-                            .foregroundStyle(PocketColor.practice)
-                    }
-                    .listRowBackground(PocketColor.background)
+                    if insertingRests {
+                        doneInsertingRestsRow
+                    } else {
+                        Button {
+                            addingUnit = true
+                            haptic(.light)
+                        } label: {
+                            Label("Add exercise, loop or song", systemImage: "plus.circle.fill")
+                                .font(.futura(.body))
+                                .foregroundStyle(PocketColor.practice)
+                        }
+                        .listRowBackground(PocketColor.background)
 
-                    Button {
-                        addRest()
-                    } label: {
-                        Label("Insert rest", systemImage: "pause.circle")
-                            .font(.futura(.body))
-                            .foregroundStyle(PocketColor.textSecondary)
+                        insertRestRow
                     }
-                    .listRowBackground(PocketColor.background)
                 }
             }
         }
@@ -195,17 +210,16 @@ struct RoutineDetailView: View {
         .navigationTitle(routine.name.isEmpty ? "Routine" : routine.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(isEditing)
-        .environment(\.editMode, .constant(isEditing ? .active : .inactive))
+        // Rest-insert mode borrows the list: drag handles and swipe-delete would fight the gap
+        // taps, so edit mode is suspended (not exited) for its duration.
+        .environment(\.editMode, .constant(isEditing && !insertingRests ? .active : .inactive))
         .toolbar { toolbarContent }
         .safeAreaInset(edge: .bottom) { startBar }
-        .sheet(isPresented: $addingUnit) {
-            // Closing the sheet from the parent (not from inside the picker) means a pick from
-            // any drill-in depth dismisses cleanly — a child's own dismiss would only pop.
-            AddRoutineUnitSheet(onPickExercise: { addExercise($0); addingUnit = false },
-                                onPickLoop: { addLoop($0); addingUnit = false },
-                                onPickSong: { addSong($0); addingUnit = false },
-                                onPickEarLoop: { addEarLoop($0); addingUnit = false })
-        }
+        // The picker no longer dismisses on a pick (ADR 0127) — it adds and stays open, so the
+        // session's adds are tracked here and forgotten when it closes.
+        .sheet(isPresented: $addingUnit, onDismiss: { addedPickIDs.removeAll() },
+               content: { AddRoutineUnitSheet(addedIDs: Set(addedPickIDs.keys),
+                                              onToggle: toggleUnit) })
         .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
         .sheet(item: $repsEditorItem) { repsEditorSheet($0.value) }
         .navigationDestination(item: $previewTarget) { target in
@@ -309,12 +323,17 @@ struct RoutineDetailView: View {
         try? editContext.save()
         existsInStore = true
         isEditing = false
+        insertingRests = false
         haptic(.medium)
     }
 
     /// Discard in-flight edits. A new routine has nothing to return to, so it dismisses; an existing
     /// one rebuilds a clean sandbox from the store and returns to the read-only view.
     private func cancelEdits() {
+        // Leaving edit mode must leave rest-insert mode with it — the gap rows are an editing
+        // affordance, and their only way out is hidden once the add section goes.
+        insertingRests = false
+        restGuardSlot = nil
         guard existsInStore else { dismiss(); return }
         let context = ModelContext(container)
         context.autosaveEnabled = false
@@ -328,18 +347,20 @@ struct RoutineDetailView: View {
 
     // MARK: - Mutations (sandbox only — provisional until Save)
     //
-    // The unit-adders live in a same-file extension below (they only touch private members, still
-    // in-file-accessible), keeping the primary struct body under the type-length cap.
+    // The unit-adders live in `RoutineDetailView+Units.swift` and the rest-insert mode in
+    // `+Rests.swift`, keeping this file under the 400-line cap; both reach `insert`/`nextOrder`
+    // here, which is why those are internal rather than private.
 
-    private func addRest() {
-        insert(.rest(order: nextOrder))
-        haptic(.light)
-    }
-
-    private func insert(_ item: RoutineItem) {
+    func insert(_ item: RoutineItem) {
         item.routine = routine
         editContext.insert(item)
         haptic(.medium)
+    }
+
+    /// Renumber the blocks so `order` stays contiguous after an insert or a delete. The play order
+    /// is the explicit `order` (ADR 0066 R2), so every structural change re-lays it.
+    func renumberBlocks() {
+        for (index, item) in routine.orderedItems.enumerated() { item.order = index }
     }
 
     /// Drag-reorder writes the explicit `order` (ADR 0066 R2) so play order survives a fetch.
@@ -355,35 +376,7 @@ struct RoutineDetailView: View {
     func delete(_ offsets: IndexSet) {
         let ordered = routine.orderedItems
         for index in offsets { editContext.delete(ordered[index]) }
-        for (index, item) in routine.orderedItems.enumerated() { item.order = index }
+        renumberBlocks()
         haptic(.medium)
-    }
-}
-
-// MARK: - Unit adders (same-file extension — keeps the struct body under the type-length cap)
-
-extension RoutineDetailView {
-    /// Add a picked exercise as a block. The picker hands back the unit from the app's main
-    /// context, so it's re-resolved into the sandbox by id before it's referenced (never mix
-    /// objects across contexts).
-    func addExercise(_ picked: Exercise) {
-        guard let local = editContext.model(for: picked.persistentModelID) as? Exercise else { return }
-        insert(.item(local, order: nextOrder))
-    }
-
-    func addLoop(_ picked: Loop) {
-        guard let local = editContext.model(for: picked.persistentModelID) as? Loop else { return }
-        insert(.item(local, order: nextOrder))
-    }
-
-    /// Add a loop as an **ear-training** block (ADR 0104 Slice 2) — same loop, ears-only mode.
-    func addEarLoop(_ picked: Loop) {
-        guard let local = editContext.model(for: picked.persistentModelID) as? Loop else { return }
-        insert(.earLoopItem(local, order: nextOrder))
-    }
-
-    func addSong(_ picked: Song) {
-        guard let local = editContext.model(for: picked.persistentModelID) as? Song else { return }
-        insert(.item(local, order: nextOrder))
     }
 }

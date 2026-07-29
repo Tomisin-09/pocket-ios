@@ -313,8 +313,17 @@ via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orp
 rather than deleting the routine). An additive optional `Routine.lastPracticed: Date?` is stamped
 when a session starts (safe SwiftData lightweight migration) and drives the home hub's "recent
 routines" rail. Its pacing rules (only focused work budgeted; block caps;
-proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`. Authoring is a
-sandboxed editor (`RoutineDetailView`, child `ModelContext` committed only on Save), and the
+proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`, which also holds the
+**authoring** guard added by ADR 0127 (`allowsRest(at:in:)` / `restSlots` — a rest may never sit next
+to a rest; authoring-only, so the model is untouched and an existing routine with adjacent rests
+still loads and runs). Authoring is a
+sandboxed editor (`RoutineDetailView`, child `ModelContext` committed only on Save) whose two
+build actions are both ADR 0127 shapes: the picker **adds without closing** (tap = add, checked row,
+running tally, second tap un-adds — session-scoped, keyed on one `RoutineUnitPick.pickID` that the
+editor maps to the `RoutineItem.uid` it created), and *Insert rest* **held** turns the block list into
+`blocks + 1` tappable gap rows, with the guard above refusing the slots either side of an existing rest
+and explaining itself in a popover anchored to the tap. Rest-insert mode suspends drag/swipe and makes
+block rows inert, so every tap on that screen is a placement. And the
 **player** (ADR 0071) is a *thin* session conductor — `RoutineSessionPlayer` (`@Observable`, owns no
 engine) over a pure `RoutineSessionCursor` — that **embeds the real `ExerciseRunView` / `LoopRunView` /
 `SongPlayAlongView` per block** (so every training aid — previews, staircase, journal — is
