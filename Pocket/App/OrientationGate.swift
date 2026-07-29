@@ -21,6 +21,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         // Install the global Futura navigation-title appearance once, before any bar is built
         // (ADR 0110). Isolated here so the whole feature is this call plus `NavigationBarStyle`.
         NavigationBarStyle.apply()
+        // Stamp the install date once (ADR 0120). Local bookkeeping, written regardless of
+        // analytics consent — it is the user's own state, and only ever leaves the device as a
+        // coarse age bucket, and only then if consent is later given.
+        AppSettings.recordInstallDateIfNeeded()
         return true
     }
 

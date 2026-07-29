@@ -38,3 +38,20 @@ inclusive_language:
 force_cast: error
 force_try: error
 force_unwrapping: warning
+
+# ADR 0120. The analytics vocabulary's privacy guarantee is that no `AnalyticsEvent` case can
+# carry caller-supplied text — every associated value is another enum, an Int or a Bool, so
+# leaking a song title, file name, artist name or journal note is impossible by construction
+# rather than by review. The type system enforces that today; this rule stops it being quietly
+# dissolved later by someone adding "just one" String parameter.
+#
+# Scoped to the vocabulary file, and deliberately narrow: it matches a *labelled* associated
+# value typed `String` on a `case`, so `AnalyticsValue.text(String)` — the one legitimate,
+# enum-raw-values-only carrier in that file — is untouched.
+custom_rules:
+  analytics_event_no_free_strings:
+    name: "Analytics events carry no free strings"
+    included: ".*/Pocket/Core/Analytics/AnalyticsEvent\\.swift"
+    regex: '^\s*case\s+\w+\([^)]*:\s*String'
+    message: "An AnalyticsEvent case must not take a String (ADR 0120). Pass a closed enum instead — this is what makes it impossible to leak user-authored text into telemetry."
+    severity: error
