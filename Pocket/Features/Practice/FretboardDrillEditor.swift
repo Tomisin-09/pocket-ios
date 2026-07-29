@@ -56,10 +56,18 @@ struct FretboardDrillEditor: View {
     /// guide controls in `FretboardDrillEditor+Guide.swift` can bind them (same-module split).
     @State var referenceScale: ScaleReference?
     @State var referenceRoot = 0   // C
+    /// A guide reference is a bare formula — the symmetric scales that motivated the canvas belong to no
+    /// key signature at all — so its key menu spells by the accidental preference (ADR 0123). Non-private
+    /// for the same-module split, like the guide bindings above.
+    @AppStorage(AppSettings.Key.accidentalPreference)
+    var accidentalRaw = NoteSpelling.default.rawValue
     /// Undo stack of drill snapshots — one per note edit, so **Undo** steps back a tap and **Clear** is
     /// reversible (2026-07-23). Holds only the *drill*, never the guide; capped to stay bounded.
     @State private var history: [FretboardDrill] = []
     private static let maxHistory = 100
+
+    /// How the guide's key menu spells its roots — the preference, since a bare formula names no key.
+    var guideSpelling: NoteSpelling { NoteSpelling(rawValue: accidentalRaw) ?? .default }
 
     /// Whether the guide is on and a scale is chosen.
     var referenceActive: Bool { referenceEnabled && referenceScale != nil }
@@ -382,16 +390,4 @@ private extension FretboardDrillEditor {
         .buttonStyle(.borderless)
         .tint(PocketColor.practice)
     }
-}
-
-#Preview("Fretboard editor") {
-    struct Harness: View {
-        @State private var drill = FretboardDrill.spiderWalk
-        var body: some View {
-            FretboardDrillEditor(beatsPerBar: 4, drill: $drill)
-                .padding()
-                .background(PocketColor.background)
-        }
-    }
-    return Harness().preferredColorScheme(.dark)
 }

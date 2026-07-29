@@ -127,17 +127,14 @@ extension ChordVoicing {
         }
     }
 
-    /// Sharp-spelled pitch-class names (a plain, unambiguous reading — the placer's note labels are a
-    /// reference, not a key-aware spelling).
-    private static let pitchClassNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
-
     /// The note name each sounded string plays, high-e first (index 0 … 5 low E); `nil` for a muted
-    /// string. Feeds the custom placer's Display → Note mode.
-    var noteLabels: [String?] {
+    /// string. Feeds the custom placer's Display → Note mode. A hand-built voicing declares **no key**
+    /// — that's the whole point of the placer — so this is one of the surfaces the accidental
+    /// preference decides (ADR 0123); the view passes it in and pure callers take the sharp default.
+    func noteLabels(spelling: NoteSpelling = .default) -> [String?] {
         frets.indices.map { index in
             guard let fret = frets[index] else { return nil }
-            let pitchClass = (((ChordVoicing.openMidi[index] + fret) % 12) + 12) % 12
-            return ChordVoicing.pitchClassNames[pitchClass]
+            return spelling.name(pitchClass: ChordVoicing.openMidi[index] + fret)
         }
     }
 }

@@ -29,7 +29,12 @@ struct TunerView: View {
     @AppStorage(AppSettings.Key.tunerTuning) private var tuningName = Instrument.default.standardTuning.name
     @AppStorage(AppSettings.Key.tunerReferenceA) private var referenceA = AppSettings.tunerReferenceDefault
     @AppStorage(AppSettings.Key.tunerChimeEnabled) private var chimeEnabled = true
+    /// The rootless-surface accidental preference (ADR 0123) — observed here so the chromatic target
+    /// caption redraws the moment it changes in Settings.
+    @AppStorage(AppSettings.Key.accidentalPreference)
+    private var accidentalRaw = NoteSpelling.default.rawValue
 
+    private var accidentalPreference: NoteSpelling { NoteSpelling(rawValue: accidentalRaw) ?? .default }
     private var instrument: Instrument { Instrument(rawValue: instrumentRaw) ?? .default }
     private var mode: TunerMode { TunerMode(rawValue: modeRaw) ?? .default }
     private var isGuided: Bool { mode == .guided }
@@ -281,8 +286,11 @@ private extension TunerView {
 
     private var targetLabel: String {
         guard let midi = targetMIDI else { return "" }
-        let name = GuitarScale.noteName(forPitchClass: ((midi % 12) + 12) % 12)
-        return "\(name)\(midi / 12 - 1)"
+        // In guided mode the target is an open string, whose name comes from the tuning (always sharp
+        // — an open tuning is named for its own chord); in chromatic mode it's the detected note, which
+        // has no key and so follows the accidental preference like the big readout (ADR 0123).
+        let spelling = isGuided ? NoteSpelling.default : accidentalPreference
+        return "\(spelling.name(pitchClass: midi))\(midi / 12 - 1)"
     }
 
     private var isConfirmed: Bool { engine.isConfirmed }

@@ -6,6 +6,16 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Notes are spelled the way the music writes them.** A scale, an arpeggio or a song in a flat key
+  now reads "B♭" instead of "A♯" — on the board, in the title, in the position label and in the song
+  key picker. Where nothing states a key — the tuner, a chord you build by hand, a drill with no
+  root — a new **Settings → Note names** picker chooses sharps or flats. It's a tiebreaker, not an
+  override: the fourth degree of F major reads B♭ whichever way you set it.
+- **Every movable shape is now in the chord picker's Insert tab.** All twelve barres — major, minor,
+  dominant 7, minor 7, major 7 and the power chord on both the E-shape and A-shape roots — plus a new
+  **Sus, 6ths & 9ths** section at the bottom for the rest. Half of these used to be hidden behind
+  Build → Movable shape even though they were already there. Both sections collapse if you want the
+  grid short, and searching opens whichever one holds a match.
 - **Change a drill's rhythm and it asks what should happen to your command tempo.** Moving eighths →
   sixteenths doubles what every beat asks of you, so the tempo you earned no longer means what it
   meant. Rather than quietly leaving the number (inflating what you own) or quietly halving it
@@ -72,6 +82,14 @@ All notable changes to Pocket are documented here. Format loosely follows
   rather than something you set once and forget. The Settings toggle is the same switch, in sync.
 
 ### Changed
+- **Build is one button now: it goes straight to placing a chord by hand.** It used to offer a choice
+  between "Movable shape" and "Custom chord" — and with every movable shape now browsable under Insert
+  (in two taps rather than four), that choice had one real option left. The movable builder is gone;
+  nothing it could make is out of reach.
+- **The A-shape barres now sound their top string.** Major, minor, dominant 7, minor 7 and major 7 on
+  the A-shape root were drawn with the high e muted; that string sits on the fret your index finger is
+  already barring, and it sounds the 5th — the top note of every chart you've seen. All five now play
+  it, and the library's Bm barre moves with them.
 - **New exercises and single-song imports open straight away.** Creating an exercise now pushes its run
   screen when the create sheet closes, and importing **one** song opens its waveform instead of leaving
   you to find it in the list — creating and playing are one move. A multi-file import still lands in the

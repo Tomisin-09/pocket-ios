@@ -129,12 +129,12 @@ final class ChordVoicingTests: XCTestCase {
 
     func testNoteLabelsNameEachSoundedString() {
         // E dom7 (020100): high-e first — e E, B B, G♯ (G string fret 1), D, B (A string fret 2), E.
-        XCTAssertEqual(ChordVoicing.eDom7.noteLabels, ["E", "B", "G♯", "D", "B", "E"])
+        XCTAssertEqual(ChordVoicing.eDom7.noteLabels(), ["E", "B", "G♯", "D", "B", "E"])
     }
 
     func testNoteLabelsAreNilForMutedStrings() {
         // D major (xx0232): the two muted low strings carry no note name.
-        let labels = ChordVoicing.dMajor.noteLabels
+        let labels = ChordVoicing.dMajor.noteLabels()
         XCTAssertNil(labels[5], "muted low E has no note")
         XCTAssertNil(labels[4], "muted A has no note")
         XCTAssertEqual(labels[3], "D", "the open D string sounds D")

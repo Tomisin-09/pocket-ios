@@ -98,6 +98,13 @@ struct FretboardDrill: Codable, Equatable {
     /// `FretboardContent.drill(instrument:)` stamp on, so no persisted-shape change; a decoded `.custom`
     /// bass drill is re-stamped from its exercise's instrument at render time.
     var openMidi: [Int]?
+    /// The spelling this drill's **key** demands (ADR 0123) — a scale or arpeggio run stamps it from its
+    /// own tonal centre, so a B♭-rooted board labels "B♭", never "A♯". `nil` means the key doesn't decide
+    /// (a rootless spider walk or picking pattern, or the C / F♯-G♭ positions the circle leaves open) and
+    /// the renderer falls back to the user's accidental preference. **Transient — never encoded**
+    /// (omitted from `CodingKeys`, like `noteGroups` and `openMidi`): a pure render concern re-derived on
+    /// each `expanded()`, so there is no persisted-shape change and no store migration.
+    var keySpelling: NoteSpelling?
 
     init(notesPerBeat: Int,
          notes: [FretNote?],
@@ -105,6 +112,7 @@ struct FretboardDrill: Codable, Equatable {
          rootPitchClass: Int? = nil,
          noteGroups: [Int]? = nil,
          openMidi: [Int]? = nil,
+         keySpelling: NoteSpelling? = nil,
          version: Int = FretboardDrill.currentVersion) {
         self.version = version
         self.notesPerBeat = max(1, notesPerBeat)
@@ -113,12 +121,13 @@ struct FretboardDrill: Codable, Equatable {
         self.rootPitchClass = rootPitchClass.map { (($0 % 12) + 12) % 12 }
         self.noteGroups = noteGroups
         self.openMidi = openMidi
+        self.keySpelling = keySpelling
     }
 
-    /// Explicit keys so `noteGroups` and `openMidi` (transient render artifacts) are **excluded** from
-    /// the encoded shape — no persisted-blob change, no migration. Every other field codes and decodes
-    /// exactly as the synthesized conformance did before; the two transients decode to their `nil`
-    /// default.
+    /// Explicit keys so `noteGroups`, `openMidi` and `keySpelling` (transient render artifacts) are
+    /// **excluded** from the encoded shape — no persisted-blob change, no migration. Every other field
+    /// codes and decodes exactly as the synthesized conformance did before; the three transients decode
+    /// to their `nil` default.
     private enum CodingKeys: String, CodingKey {
         case version, notesPerBeat, notes, stringCount, rootPitchClass
     }
@@ -130,6 +139,11 @@ struct FretboardDrill: Codable, Equatable {
 
     /// The tuning this drill's labels resolve against — its stamped `openMidi`, or guitar standard.
     var resolvedOpenMidi: [Int] { openMidi ?? Self.guitarOpenMidi }
+
+    /// How a note name on this board is spelled: the key's answer when the drill has one, else the
+    /// caller's preference (ADR 0123). The renderer passes what Settings holds; a pure caller passes
+    /// nothing and gets the sharp default.
+    func spelling(preference: NoteSpelling = .default) -> NoteSpelling { keySpelling ?? preference }
 
     /// The pitch class (0…11) a note sounds on this drill's tuning — the tuning-aware replacement for the
     /// guitar-hardcoded `GuitarScale.pitchClass(string:fret:)` the renderer used, so bass note names,

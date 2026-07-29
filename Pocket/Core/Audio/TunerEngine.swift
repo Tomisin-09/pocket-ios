@@ -125,7 +125,12 @@ final class TunerEngine {
         // The display stays locked on the note you just nailed for the length of the chime.
         guard now >= suppressUntil else { return }
 
-        let fresh = frequency.flatMap { TunerReading.nearest(toFrequency: $0, referenceA: referenceA) }
+        // A detected pitch has no key, so the readout spells by the user's preference (ADR 0123) —
+        // read per buffer so flipping the Settings picker takes effect without restarting the tuner.
+        let spelling = AppSettings.accidentalPreference
+        let fresh = frequency.flatMap {
+            TunerReading.nearest(toFrequency: $0, referenceA: referenceA, spelling: spelling)
+        }
         reading = smoother.ingest(fresh)
         if hold.update(reading: reading, now: now) {
             confirmationID &+= 1

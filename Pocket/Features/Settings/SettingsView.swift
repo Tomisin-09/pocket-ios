@@ -128,6 +128,10 @@ struct SettingsView: View {
             // reads as a row with a play button, rather than crowding the Practice toggles.
             MetronomeSoundSection()
 
+            // Sharps vs flats where nothing else decides (ADR 0123). Its own section for the footer
+            // that says what it does *not* override.
+            NoteSpellingSection()
+
             Section("Routines") {
                 Toggle(isOn: $routineAutoStart) {
                     FieldInfoLabel(title: "Auto-start blocks", info: SettingsInfo.routineAutoStart)

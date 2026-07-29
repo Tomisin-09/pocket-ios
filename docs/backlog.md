@@ -238,15 +238,61 @@ decides to release, not on Apple's clock. Two consequences worth acting on:
   more expensive. **Confirm the schema is where you want it before hitting release** — and record here
   the date it goes live, so the next reader knows the window shut.
 
-**Slice 4 — chord content (small ADR 0084/0106 amendment):**
+**Slice 4 — chord content — DONE (branch `pocket-203-slice4-chord-content`, 2026-07-29).** All three
+items landed, under **two** ADRs rather than the one amendment planned: 0122 for the chord vocabulary,
+0123 for note spelling — the spelling half turned out to close off a real alternative (a global
+sharp/flat override) and deserved its own record. Notes worth carrying forward:
 
-- **Unmute the high e on the A-shape family** — major, minor, min7, maj7 and dom7 all gain the 5th on
-  the top string (`offsets[0] = 0` in `ChordGrip`). Note `aShapeMinor` currently byte-matches
-  `ChordVoicing.bMinorBarre`, so that equivalence test needs updating with it.
-- **All 12 tier-1 grips in the Insert tab** (Power/Major/Minor/Maj7/Min7/Dom7 × E-shape/A-shape) —
-  `ChordPicker.insertMovableGrips` currently shows 6 of the 12 that already exist as
-  `ChordGrip.tier1`. Doubling the grid height is accepted; the section is collapsible.
-- **Enharmonic preference** in Settings, per the tiebreaker rule above.
+- **The A-shape's muted high e was argued from two premises, and both were weak.** ADR 0084's reason
+  was "barring under the high e is awkward, and it only doubles a tone already sounding". But the
+  string sits on the **root fret** — the fret the index finger is already barring, no extra stretch —
+  and it sounds the **5th**, the printed top note of every A-shape chart. `ChordVoicing.bMinorBarre`
+  had to move with the grips: ADR 0084 M5 makes `aShapeMinor` reproduce it byte-for-byte, so fixing
+  one without the other would have broken the invariant that equivalence exists to protect.
+- **Deliberately narrow: A-shape sus2/sus4 keep their 4-string form.** Their standard barres would
+  take the same treatment on the same argument, but they're Tier 2 (Build-only) and the device note
+  named five shapes. `testAShapeSuspensionsAndPowerChordsStayNarrow` pins that, so widening them later
+  is an edit to a named test rather than a silent drift. **If they read as inconsistent on device,
+  they're the obvious next change.**
+- **`insertMovableGrips` is now an *identity* with `ChordGrip.tier1`**, not a copied list — a future
+  Tier-1 grip appears in Insert for free. The six-of-twelve curation read on device as a *gap*, not a
+  curation: the shapes already existed, so wanting a movable m7 meant leaving Insert for Build.
+- **Widening Insert collapsed the Build pane, so Build became an action (device call, same day).**
+  Once Insert carried all of Tier 1, `MovableChordSheet` existed only for the ten Tier-2 shapes — which
+  the chip grid reaches in **two** taps against the sheet's four. Tier 2 folded into Insert as a last,
+  initially-collapsed *Sus, 6ths & 9ths* section; the sheet was **deleted** (161 lines), and the
+  segmented **Build a chord** segment is now spring-loaded — its binding always reads `.insert` and its
+  setter opens `CustomChordSheet`, so nothing stores a `Mode` and dismissing never lands on an empty
+  pane. `testInsertNowOffersTheWholeCuratedMovableVocabulary` pins the lossless claim: Insert's two
+  movable sets must together equal `ChordGrip.curated`.
+- **The sus2/sus4 question got sharper, not settled.** They're now chips in the same grid and picture
+  style as the widened five, a couple of sections below them, so the 4-string/5-string difference is
+  directly comparable in a way it never was inside the Movable sheet.
+- **"Enharmonic preference" was the smaller half of the spelling job.** The rule ("key first,
+  preference as tiebreaker") needed a key-aware speller before the toggle meant anything. `NoteSpelling`
+  reads the circle of fifths through the **parent major** each scale/arpeggio already declares
+  (`relativeMajorSemitones`, reused from the CAGED boxes). Reading a root as its *own* major is the
+  trap: C♯ minor's parent is E (a sharp key) but D♭ major is a flat one, so the root-only shortcut
+  gets the whole minor family backwards.
+- **`keySpelling` returns `nil`, not sharps, where the key doesn't decide** — C (no accidentals) and
+  F♯/G♭ (six of each). That single distinction is what lets a key context and a *keyless* one share
+  one fallback, and it's what makes the preference a genuine tiebreaker instead of an override.
+- **The board learns its key through a transient `FretboardDrill.keySpelling`**, stamped by
+  `expanded()` and excluded from `CodingKeys` — the same contract as `noteGroups`/`openMidi`, so no
+  persisted-shape change and no migration. The alternative (resolve inside `FretboardGrid` from
+  `drill.rootPitchClass` alone, as if it were a major key) needs no new field and is wrong for every
+  minor-family drill.
+- **Open tunings stay sharp and sit outside the preference.** Open D's third string is F♯, the raised
+  third of D major, for everyone — spelling it G♭ on a preference would be plain wrong. That's the
+  key-first rule, not an exception to it.
+- Two collateral cleanups the spelling work forced: the app had **two glyph conventions** (`C#` on the
+  board, `C♯` in the placer, `♭3` in degrees — now uniformly ♯/♭), and **two hand-rolled "friendly"
+  root menus** duplicating an unexplained per-note mix in `ChordPickerSheet` and `MovableChordSheet`.
+- `MusicalKey.displayName` now spells by key ("D♭ major" for the case stored as `"C#"`); the
+  **`rawValue` is schema and stays sharp**, and `parse` already folded both glyphs, so a label still
+  round-trips to its own case (pinned by a test over every case).
+- `ChordPickerSheet` and `FretboardDrillEditor` each went one line over the 400 ceiling; both had
+  their `#Preview` blocks split into `…Previews.swift`, matching `LibraryView`/`RoutineDetailView`.
 
 **Slice 5 — transport redesign (ADR; changes shipped behaviour):**
 

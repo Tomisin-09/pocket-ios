@@ -6,7 +6,7 @@ import XCTest
 final class TuneHoldTests: XCTestCase {
 
     private func reading(midi: Int, cents: Double) -> TunerReading {
-        TunerReading(midiNote: midi, noteName: "E", octave: 2, cents: cents)
+        TunerReading(midiNote: midi, octave: 2, cents: cents, spelling: .default)
     }
 
     func testConfirmsAfterRequiredHoldAndFiresOnce() {

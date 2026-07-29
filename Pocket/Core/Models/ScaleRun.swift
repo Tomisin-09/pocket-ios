@@ -114,8 +114,15 @@ struct ScaleRun: Codable, Equatable {
 // MARK: - Naming (pure)
 
 extension ScaleRun {
-    /// The tonic's note name (sharp-spelled), e.g. "A".
-    var rootName: String { GuitarScale.noteName(forPitchClass: rootPitchClass) }
+    /// The tonic's note name, **spelled by the run's own key** (ADR 0123), e.g. "A", or "B♭" — never
+    /// "A♯" — for a run rooted there. A scale run is a tonal centre, so nothing here consults the
+    /// user's accidental preference; the key answers.
+    var rootName: String { (keySpelling ?? .default).name(pitchClass: rootPitchClass) }
+
+    /// The spelling this run's key implies (ADR 0123), or `nil` at the two positions the circle of
+    /// fifths leaves open — C and F♯/G♭ — where the user's accidental preference takes over. Pure
+    /// callers (titles, auto-names) resolve `nil` to the sharp default and stay deterministic.
+    var keySpelling: NoteSpelling? { NoteSpelling.forScale(scale, root: rootPitchClass) }
 
     /// The full run title, e.g. "A Minor Pentatonic".
     var title: String { "\(rootName) \(scale.displayName)" }
@@ -270,7 +277,8 @@ extension ScaleRun {
                               notes: notes.map { Optional($0) },
                               stringCount: 6,
                               rootPitchClass: rootPitchClass,
-                              noteGroups: groups)
+                              noteGroups: groups,
+                              keySpelling: keySpelling)
     }
 }
 
@@ -287,7 +295,8 @@ extension ScaleRun {
                               notes: bassSequence(openMidi: instrument.engineOpenMidi).map { Optional($0) },
                               stringCount: instrument.stringCount,
                               rootPitchClass: rootPitchClass,
-                              openMidi: instrument.engineOpenMidi)
+                              openMidi: instrument.engineOpenMidi,
+                              keySpelling: keySpelling)
     }
 
     /// The bass 2-octave box for this run's scale + key on `openMidi`, box layout only (bass declares the

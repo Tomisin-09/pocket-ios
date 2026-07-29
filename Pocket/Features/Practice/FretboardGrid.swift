@@ -17,6 +17,16 @@ struct FretboardGrid: View {
     /// How to caption each note (note name / interval / nothing).
     var labelMode: FretLabelMode = .none
 
+    /// The **rootless** fallback spelling (ADR 0123). A drill that carries a key spells by that key;
+    /// one that doesn't — a spider walk, a picking pattern, or a key the circle of fifths leaves open —
+    /// follows the accidental preference read here, so a flats player never sees "A♯" on the board.
+    @AppStorage(AppSettings.Key.accidentalPreference)
+    private var accidentalRaw = NoteSpelling.default.rawValue
+
+    private var spelling: NoteSpelling {
+        drill.spelling(preference: NoteSpelling(rawValue: accidentalRaw) ?? .default)
+    }
+
     private var stringCount: Int { max(1, drill.stringCount) }
     /// The visible neck window (ADR 0083 S5). At rest it is the drill's full static span; while a long
     /// climb walks it follows the active note, so `span`/`lowestFret` here are window-relative.
@@ -284,7 +294,7 @@ struct FretboardGrid: View {
         let pitchClass = drill.pitchClass(of: note)
         switch labelMode {
         case .none: return nil
-        case .note: return GuitarScale.noteName(forPitchClass: pitchClass)
+        case .note: return spelling.name(pitchClass: pitchClass)
         case .interval:
             guard let root = drill.rootPitchClass else { return nil }
             return Self.intervalNames[(((pitchClass - root) % 12) + 12) % 12]

@@ -6,7 +6,7 @@ import XCTest
 final class TunerSmootherTests: XCTestCase {
 
     private func reading(midi: Int, cents: Double) -> TunerReading {
-        TunerReading(midiNote: midi, noteName: "A", octave: 4, cents: cents)
+        TunerReading(midiNote: midi, octave: 4, cents: cents, spelling: .default)
     }
 
     func testFirstReadingPassesThrough() {

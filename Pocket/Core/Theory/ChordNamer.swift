@@ -52,22 +52,23 @@ struct ChordQuality: Equatable {
 
 /// One reverse-lookup reading of a set of notes — a root, the quality it spells, and the actual bass
 /// pitch class (which may differ from the root, i.e. an inversion). Names are rendered from these fields
-/// so the caller can show the root-position name, the slash-bass name, or both (ADR 0093 N5). Sharp-
-/// spelled with no key assumed (N6), sharing `GuitarScale.noteName` so it agrees with the board.
+/// so the caller can show the root-position name, the slash-bass name, or both (ADR 0093 N5). **No key
+/// is assumed** (N6) — the namer is fed notes, not a tonal centre — so its spelling is one the user's
+/// accidental preference decides (ADR 0123); the caller stamps it and the default stays sharp.
 struct ChordCandidate: Equatable, Identifiable {
     let rootPitchClass: Int
     let quality: ChordQuality
     /// The lowest sounding pitch class, when known. `nil` when the engine was given a bare pitch-class
     /// set with no bass information — then no inversion can be detected.
     let bassPitchClass: Int?
+    /// How this candidate spells its root and bass. Keyless surface ⇒ the accidental preference.
+    var spelling: NoteSpelling = .default
 
     /// A candidate is uniquely identified by its root + quality (one reading of the notes).
     var id: String { "\(rootPitchClass)-\(quality.suffix)" }
 
     /// The root-position name — root note + quality suffix, e.g. `"C"`, `"Am7"`, `"Fdim7"`.
-    var name: String {
-        GuitarScale.noteName(forPitchClass: rootPitchClass) + quality.suffix
-    }
+    var name: String { spelling.name(pitchClass: rootPitchClass) + quality.suffix }
 
     /// True when the bass note is known and is **not** the root — the notes are an inversion.
     var isInversion: Bool {
@@ -98,7 +99,7 @@ struct ChordCandidate: Equatable, Identifiable {
     /// the bass note is what the player actually fingered.
     var displayName: String {
         guard isInversion, let bass = bassPitchClass else { return name }
-        return name + "/" + GuitarScale.noteName(forPitchClass: bass)
+        return name + "/" + spelling.name(pitchClass: bass)
     }
 }
 
@@ -116,7 +117,10 @@ enum ChordNamer {
     ///   - pitchClasses: the distinct sounded pitch classes (0…11). Octave doublings collapse here.
     ///   - bassPitchClass: the lowest sounding pitch class, if known — enables root-position preference
     ///     and inversion (slash) naming. `nil` ranks purely by commonness.
-    static func candidates(pitchClasses: Set<Int>, bassPitchClass: Int? = nil) -> [ChordCandidate] {
+    ///   - spelling: how the resulting names spell their accidentals (ADR 0123). Keyless, so this is
+    ///     the user's preference; the default keeps pure callers sharp-spelled and deterministic.
+    static func candidates(pitchClasses: Set<Int>, bassPitchClass: Int? = nil,
+                           spelling: NoteSpelling = .default) -> [ChordCandidate] {
         let notes = Set(pitchClasses.map { normalise($0) })
         // Three notes name any chord in the catalog; two notes name only the **power chord** (root + 5th,
         // ADR 0106) — every other dyad is a bare interval, not a chord. The `[0, 7]` quality below matches
@@ -131,7 +135,8 @@ enum ChordNamer {
         for root in notes {
             let intervals = Set(notes.map { normalise($0 - root) })
             for quality in ChordQuality.catalog where quality.intervals == intervals {
-                found.append(ChordCandidate(rootPitchClass: root, quality: quality, bassPitchClass: bass))
+                found.append(ChordCandidate(rootPitchClass: root, quality: quality,
+                                            bassPitchClass: bass, spelling: spelling))
             }
         }
 
@@ -140,14 +145,15 @@ enum ChordNamer {
 
     /// Convenience adapter for a `ChordVoicing` (ADR 0093 N2) — feeds the core the voicing's pitch classes
     /// and the pitch class of its lowest-sounding string as the bass, so inversions are detected.
-    static func candidates(for voicing: ChordVoicing) -> [ChordCandidate] {
+    static func candidates(for voicing: ChordVoicing,
+                           spelling: NoteSpelling = .default) -> [ChordCandidate] {
         let bass = voicing.midiNotes.min().map { normalise($0) }
-        return candidates(pitchClasses: voicing.pitchClasses, bassPitchClass: bass)
+        return candidates(pitchClasses: voicing.pitchClasses, bassPitchClass: bass, spelling: spelling)
     }
 
     /// The single best chord name for a voicing, or `nil` if it spells no common chord ("No common name").
-    static func bestName(for voicing: ChordVoicing) -> String? {
-        candidates(for: voicing).first?.displayName
+    static func bestName(for voicing: ChordVoicing, spelling: NoteSpelling = .default) -> String? {
+        candidates(for: voicing, spelling: spelling).first?.displayName
     }
 
     // MARK: - Ranking

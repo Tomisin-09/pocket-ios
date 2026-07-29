@@ -52,6 +52,7 @@ enum AppSettings {
         static let tunerTuning = "tunerTuning"
         static let tunerReferenceA = "tunerReferenceA"
         static let tunerChimeEnabled = "tunerChimeEnabled"
+        static let accidentalPreference = "accidentalPreference"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -201,6 +202,21 @@ enum AppSettings {
     /// Whether the tuner sounds a short chime when a string settles in tune (ADR 0115). Default on.
     /// Rewarding an *objective* pitch target — not performance feedback (ADR 0070 intact).
     static var tunerChimeEnabled: Bool { bool(Key.tunerChimeEnabled, default: true) }
+
+    /// How the player prefers to read accidentals — sharps or flats (ADR 0123). A **tiebreaker**, not a
+    /// global override: anywhere a tonal centre exists the key spells the note (F major reads B♭ for
+    /// everyone), and this decides only where there is nothing to spell against — the tuner, a custom
+    /// chord, a rootless drill, a bare root menu. Default `.sharps`, the fretboard the app shipped with.
+    static var accidentalPreference: NoteSpelling {
+        resolvedSpelling(storedValue: UserDefaults.standard.string(forKey: Key.accidentalPreference))
+    }
+
+    /// Pure default-resolution: a missing or unrecognised stored value falls back to `.sharps` rather
+    /// than crashing on a bad raw value (mirrors `resolvedAppearance`).
+    static func resolvedSpelling(storedValue: String?) -> NoteSpelling {
+        guard let storedValue else { return .default }
+        return NoteSpelling(rawValue: storedValue) ?? .default
+    }
 
     private static func bool(_ key: String, default fallback: Bool = true,
                              store: UserDefaults = .standard) -> Bool {
