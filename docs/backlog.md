@@ -344,13 +344,51 @@ All three items landed under **ADR 0124**. Notes worth carrying forward:
 - **The skip increment lives in `@AppStorage` on `TransportBar` itself**, not on the model — it's a
   standing habit, not per-song state, the same reasoning as `transportLoopOnLeft` already there.
 
-**Slice 6 — loops & markers multi-select (own ADR; largest UI change):**
+**Slice 6 — loops & markers multi-select — DONE (branch `pocket-205-slice6-loop-marker-multiselect`,
+2026-07-29).** Landed under **ADR 0125**. The open question is settled and three decisions the note
+didn't cover were taken at kickoff. Notes worth carrying forward:
 
-Hold the Loop or Marker header title → the play button becomes an empty circle; tapping selects the
-row with standard Apple selection UI + haptic; Automator and loop-edit buttons hide so they can't be
-hit by accident. Play buttons take the loop's identity colour, filling on selection. The collapse
-chevron's position becomes an edit button for loop practice categories (type, focus, tags).
-**Open question to settle in the ADR: where does collapse go once the chevron is reassigned?**
+- **Where collapse goes: nowhere.** The chevron's slot is reassigned **only while selecting**, so
+  browse mode is byte-for-byte unchanged and the whole slice is additive. The alternatives (chevron
+  moves leading; chevron dropped, header-tap collapses) both spend a permanently visible affordance
+  on a control used rarely, and change the panel grammar for every user to serve the selecting one.
+- **Bulk actions are delete · favourite · categories. Bulk *colour* was considered and rejected** —
+  the identity colour is identity (ADR 0023 derives it from start-order), so it's the one bulk edit
+  that makes rows *less* distinguishable, and it collides with the row-colour change below.
+- **The identity colour is on the row all the time (user call), not just while selecting.** Green
+  already meant "armed", so the rule is **hue = identity, saturation = state**: the glyph is muted
+  (55%) unless armed. Consequence: the **leading bar stays green** as the sole armed marker — tint it
+  to the loop's hue as well and nothing says which loop is live. **Verified on device in both
+  appearances (2026-07-29)** — 55% reads clearly in light too, and the armed loop is unambiguous.
+- **The way *in* is the header hold, not a row hold** — a row's hold already opens the edit sheet
+  (ADR 0028), which is how people rename a loop. So the mode opens with nothing selected, and
+  select-all is the row circle one level up, in the header (its filled/empty state says which way a
+  tap goes, so there's no "Select All"/"Deselect All" text button). Only one panel selects at a time.
+- **Bulk delete forced the ADR 0019 undo to change shape, and that's the most consequential part of
+  the slice.** The toast rebuilt a deleted loop from a snapshot of its scalars — which silently lost
+  its cascade-owned journal (ADR 0038) and takes (ADR 0069) and its nullified routine links (ADR
+  0066). Bulk would have multiplied that by the selection size. Deletes here are now **deferred**
+  (hide the row, `context.delete` on window close), the same trade Slice 3 took for the practice
+  libraries. Slice 3's "every list must filter its own pending rows" applies with one simplification:
+  this screen has **one** reader, `WaveformPracticeModel.loops`/`.markers`, so the filter there
+  clears the list, the lanes and the minimap at once.
+- **The partial editor needed a three-state field.** `focus` is already `Int?` where `nil` means
+  "never triaged" (ADR 0039) — a real value — so "leave unchanged" is a *third* state, hence
+  `LoopBulkEdit.FieldEdit`. Tags add and remove, never replace; removal only offers tags **every**
+  selected loop has, so Remove can't look like it did nothing.
+- **Two device findings, both fixed on the branch (2026-07-29):**
+  - **The selection bar is pinned above the scroll view**, not inside the panel header. In the header
+    it scrolled away, so selecting a row far down the list meant scrolling back up to reach Delete.
+    The selecting panel therefore shows no header of its own — the pinned bar names the list.
+  - **A `Button` fires its action on the release of a long press too**, so holding an *already open*
+    panel entered selection mode **and collapsed it**. This is Slice 5's metronome trap again, and
+    `.simultaneousGesture` did **not** avoid it — the fix is not to use a `Button` at all: a plain
+    shape with separate `.onTapGesture` / `.onLongPressGesture`, the loop row's idiom. **Treat "a
+    `Button` that also needs a hold" as a smell anywhere in this codebase.**
+- **Also added on request:** a **Favourite** toggle on the loop edit sheet. Bulk could star a
+  selection while the single loop you had open couldn't be starred at all; `LoopEditSnapshot` carries
+  `isFavorite` so save-undo covers it.
+- `WaveformPanels.swift` split — `WaveformPanels+Markers.swift` — to stay under the 400-line ceiling.
 
 **Slice 7 — routine building (ADR):**
 

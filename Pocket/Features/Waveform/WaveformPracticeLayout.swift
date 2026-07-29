@@ -158,21 +158,39 @@ struct PracticeReference: View {
     var compact: Bool = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
-                           activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
-                           onActivate: model.activate, onEdit: { model.editingLoop = StableRef(value: $0) },
-                           onDelete: model.deleteLoop,
-                           onAdjustRange: { model.startRangeEdit($0) },
-                           onAutomator: { model.editingAutomatorLoop = StableRef(value: $0) },
-                           compact: compact)
-                MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
-                             onSeek: model.seekToMarker, onEdit: { model.editingMarker = StableRef(value: $0) },
-                             onDelete: model.deleteMarker)
+        VStack(spacing: 0) {
+            // The selection bar is pinned **outside** the scroll view (ADR 0125): select a
+            // row near the bottom of a long list and Delete must still be where it was, not
+            // a scroll away back at the top.
+            if model.loopSelection.isActive {
+                LoopSelectionBar(model: model)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            } else if model.markerSelection.isActive {
+                MarkerSelectionBar(model: model)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            ScrollView {
+                VStack(spacing: 16) {
+                    LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
+                               activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
+                               onActivate: model.activate, onEdit: { model.editingLoop = StableRef(value: $0) },
+                               onDelete: model.deleteLoop,
+                               onAdjustRange: { model.startRangeEdit($0) },
+                               onAutomator: { model.editingAutomatorLoop = StableRef(value: $0) },
+                               selection: model.loopSelectionSeam,               // ADR 0125
+                               compact: compact)
+                    MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
+                                 onSeek: model.seekToMarker, onEdit: { model.editingMarker = StableRef(value: $0) },
+                                 onDelete: model.deleteMarker,
+                                 selection: model.markerSelectionSeam)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
         }
         .opacity(model.isRangeEditing ? 0.25 : 1)
         .disabled(model.isRangeEditing)

@@ -144,9 +144,33 @@ final class WaveformPracticeModel {
         self.speed = song.resumeSpeed
     }
 
-    /// The song's loops/markers in a stable display order (SwiftData relationships).
-    var loops: [Loop] { song.loopsByStart }
-    var markers: [Marker] { song.markersByTime }
+    /// The song's loops/markers in a stable display order (SwiftData relationships),
+    /// **minus anything inside an open undo window**. A delete here is deferred — the row
+    /// hides now, the object is destroyed when the window closes (ADR 0125) — so this one
+    /// filter is what makes a pending delete disappear from the list, the waveform lanes
+    /// and the minimap at once. Everything on this screen reads the loops through here.
+    var loops: [Loop] {
+        pendingDeletedLoopUIDs.isEmpty ? song.loopsByStart
+            : song.loopsByStart.filter { !pendingDeletedLoopUIDs.contains($0.uid) }
+    }
+    var markers: [Marker] {
+        pendingDeletedMarkerUIDs.isEmpty ? song.markersByTime
+            : song.markersByTime.filter { !pendingDeletedMarkerUIDs.contains($0.uid) }
+    }
+
+    /// Rows hidden by a deferred delete, keyed by stable `uid` (ADR 0125). Cleared by Undo;
+    /// drained by the commit that finalises the delete.
+    var pendingDeletedLoopUIDs: Set<UUID> = []
+    var pendingDeletedMarkerUIDs: Set<UUID> = []
+
+    /// Multi-select state for the two reference panels (ADR 0125) — entered by holding a
+    /// panel header, exited by Done. Session-only, like every other practice-screen mode.
+    var loopSelection = PanelSelection()
+    var markerSelection = PanelSelection()
+    /// Drives the bulk practice-categories sheet. A `Bool`, not the selected loops: a
+    /// just-created loop's `persistentModelID` flips on first autosave and would dismiss an
+    /// `item:`-bound sheet mid-edit (ADR 0090). The sheet reads `selectedLoops` on demand.
+    var showingLoopBulkEdit = false
 
     /// The ephemeral **A/B span** (ADR 0041) — the live, gate-free creation region set by
     /// playing along; `abEditingLoop` holds a *saved* loop lifted in for a range edit (Save
@@ -292,6 +316,10 @@ final class WaveformPracticeModel {
         nowPlaying.teardown()
         engine.onReachedEnd = nil       // the repeat hook must not outlive the screen (ADR 0124)
         engine.stop()
+        // Finalise a delete still sitting in its undo window (ADR 0125) — leaving the
+        // screen closes the window, rather than carrying a hidden-but-alive row into the
+        // next visit. Nothing is lost if this is missed; the delete simply doesn't happen.
+        commitDeferredDeletes()
         wipeTransientState()
     }
 
@@ -312,6 +340,8 @@ final class WaveformPracticeModel {
         repeatsSong = false
         abSpan = .idle
         abEditingLoop = nil
+        loopSelection.end()             // selection is a session mode too (ADR 0125)
+        markerSelection.end()
     }
 
     // MARK: - Derived transport state

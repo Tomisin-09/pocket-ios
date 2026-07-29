@@ -512,8 +512,21 @@ strip all honour it from one place; a low-contrast custom colour gets an advisor
 warning via the pure `ColorContrast` (`HexColor` bridges `Color` ⇄ hex). ADR 0031. New loops are created
 **instantly** on confirm — auto-named ("Loop 3", pure `AutoName`), activated, and
 **looping immediately** (seek to start + play), no naming sheet (markers keep theirs);
-deleting a loop/marker shows an **Undo** toast
-that restores it from a snapshot with its original `uid`. ADR 0019.
+deleting a loop/marker shows an **Undo** toast (ADR 0019). That delete is **deferred**,
+not delete-then-restore (ADR 0125): the row's `uid` goes into
+`pendingDeleted{Loop,Marker}UIDs`, `WaveformPracticeModel.loops` / `.markers` filter it —
+one choke point, so the row leaves the list, the lanes and the minimap together — and
+`context.delete` runs only when the window closes (expiry, a superseding delete, or screen
+exit). Rebuilding from a snapshot restored a loop's *numbers* while its cascade-owned
+journal and takes and its nullified routine links stayed gone.
+
+The two reference panels **multi-select** (ADR 0125): holding a panel header swaps that
+header — mode-scoped, so browse keeps its chevron — for a selection bar carrying select-all,
+delete, favourite and, in the chevron's old slot, a bulk practice-categories sheet
+(`LoopBulkEditSheet`). The selection rules (`PanelSelection`) and the partial edit
+(`LoopBulkEdit` / `LoopSelectionSummary`, a three-state `FieldEdit` so "leave unchanged" is
+distinct from `focus == nil`) are pure and unit-tested; `PanelSelectionSeam` is the closure
+bundle the panels bind to. Selections key on `uid`, never `persistentModelID` (ADR 0090).
 
 The practice screen's state and handlers live in an `@Observable`
 `WaveformPracticeModel` (not the view); `WaveformPracticeView` is the thin body
