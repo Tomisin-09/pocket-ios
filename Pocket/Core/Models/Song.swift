@@ -144,7 +144,8 @@ final class Song {
 
     /// The full-song speed to resume at on reopen (ADR 0044): the speed you last practised the
     /// song at, or 1× when never practised (`nil`). Mirrors `Loop.resumeSpeed` at the song level.
-    var resumeSpeed: Double { lastPracticedSpeed ?? 1.0 }
+    /// Clamped to the speed axis on read (ADR 0124) — see `Loop.resumeSpeed`.
+    var resumeSpeed: Double { TempoMath.clamped(speed: lastPracticedSpeed ?? 1.0) }
 
     /// Derived practice mastery (0–5): the rounded average of this song's loops'
     /// `mastery`, or `nil` when the song has no loops (shown as "unrated"). A loop-centric

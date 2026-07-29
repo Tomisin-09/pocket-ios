@@ -27,6 +27,9 @@ struct PracticeCockpit<Header: View>: View {
                      metronomeOn: model.metronomeOn,
                      canUseMetronome: model.canUseMetronome,
                      onToggleMetronome: model.toggleMetronome,
+                     repeatsSong: model.repeatsSong,
+                     canRepeat: model.canRepeatSong,
+                     onToggleRepeat: model.toggleRepeatsSong,
                      compact: landscape)
             // 4. Mode instructions — replaced by the AB / downbeat bar while active.
             statusLine
@@ -132,6 +135,7 @@ struct PracticeCockpit<Header: View>: View {
                      onNext: model.transportNext,
                      hasPrevious: model.hasPreviousTarget,
                      hasNext: model.hasNextTarget,
+                     onSkip: model.transportSkip(bySeconds:),
                      loop: model.activeLoop,
                      loopColor: model.activeLoopColor,
                      onClearLoop: model.clearActiveLoop,

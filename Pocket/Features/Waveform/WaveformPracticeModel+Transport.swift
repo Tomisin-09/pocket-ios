@@ -9,7 +9,12 @@ import SwiftUI
 //   • no loop       — rewind 1× restarts the song; previous/next *song* is
 //                     reserved for cross-song navigation (a later branch) and is
 //                     a no-op for now, so those buttons read disabled.
-// Pure neighbour-finding lives in `TransportNav`; this file is the engine wiring.
+//
+// ADR 0124 changed what the glyphs *are* when no loop is armed: rewind/forward become **timed
+// skips** (−N / +N seconds), because moving freely inside the waveform beats a one-tap restart you
+// can also get by tapping the start of the wave. With a loop armed they keep the behaviour above.
+// Pure neighbour-finding lives in `TransportNav`, the skip maths in `TransportSkip`; this file is
+// the engine wiring.
 
 extension WaveformPracticeModel {
 
@@ -65,6 +70,37 @@ extension WaveformPracticeModel {
         engine.seek(toSeconds: loop.startSeconds)
         if wasPlaying { engine.play() }
         haptic(.light)
+    }
+
+    // MARK: Timed skip + whole-song repeat (ADR 0124)
+
+    /// Skip `delta` seconds from the playhead (negative rewinds), clamped to the song. Seek only —
+    /// the play/pause state is left alone, so skipping while paused stays paused.
+    func transportSkip(bySeconds delta: TimeInterval) {
+        engine.seek(toSeconds: TransportSkip.target(from: engine.currentTime, by: delta,
+                                                    duration: duration))
+        haptic(.light)
+    }
+
+    /// Whether whole-song repeat is offered right now. An armed loop is *already* repeating its own
+    /// region — the engine never reaches the file's end — so the control reads disabled rather than
+    /// silently doing nothing.
+    var canRepeatSong: Bool { activeLoop == nil }
+
+    /// Toggle whole-song repeat (ADR 0124).
+    func toggleRepeatsSong() {
+        guard canRepeatSong else { return }
+        repeatsSong.toggle()
+        haptic(.light)
+    }
+
+    /// The engine hit the file's natural end. With repeat on, wrap to the top and keep playing;
+    /// otherwise leave the engine's own stop-and-rewind alone. Straight-through playback only —
+    /// this never fires while a loop is armed.
+    func handleReachedEnd() {
+        guard repeatsSong else { return }
+        engine.seek(toSeconds: 0)
+        engine.play()
     }
 
     // MARK: Waveform-touch bracket (swipe-back guard)

@@ -129,6 +129,11 @@ final class WaveformPracticeModel {
     /// song has a grid (both tempo and downbeat set).
     var metronomeOn = false
 
+    /// Whole-song repeat (ADR 0124): playback wraps to the top instead of stopping at the file's
+    /// end. **Session state, not persisted** — it's a "keep going while I work this passage" mode,
+    /// like the armed loop it complements, and ADR 0029 wipes the session knobs on exit.
+    var repeatsSong = false
+
     init(song: Song, context: ModelContext) {
         self.song = song
         self.context = context
@@ -285,6 +290,7 @@ final class WaveformPracticeModel {
     /// the global command center would otherwise keep the engine alive).
     func endPlaybackSession() {
         nowPlaying.teardown()
+        engine.onReachedEnd = nil       // the repeat hook must not outlive the screen (ADR 0124)
         engine.stop()
         wipeTransientState()
     }
@@ -303,6 +309,7 @@ final class WaveformPracticeModel {
         activeLoopID = nil
         speed = 1.0
         if metronomeOn { metronomeOn = false }
+        repeatsSong = false
         abSpan = .idle
         abEditingLoop = nil
     }

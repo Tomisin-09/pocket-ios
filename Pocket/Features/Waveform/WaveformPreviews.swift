@@ -17,19 +17,33 @@ import SwiftUI
 
 #Preview("Speed bar") {
     @Previewable @State var speed = 0.90
+    @Previewable @State var repeats = false
     ZStack {
         PocketColor.background.ignoresSafeArea()
         SpeedBar(speed: $speed, displayedBPM: Int((76 * speed).rounded()),
                  onSetBPM: {}, metronomeOn: true,
-                 canUseMetronome: true, onToggleMetronome: {}).padding()
+                 canUseMetronome: true, onToggleMetronome: {},
+                 repeatsSong: repeats, onToggleRepeat: { repeats.toggle() }).padding()
     }
 }
 
+/// The fresh-import state (ADR 0124): no tempo, so no BPM readout, no click and no grid — the
+/// metronome badges itself and takes a plain tap into the tempo editor.
 #Preview("Speed bar — no BPM") {
     @Previewable @State var speed = 0.90
     ZStack {
         PocketColor.background.ignoresSafeArea()
         SpeedBar(speed: $speed, displayedBPM: nil, onSetBPM: {}).padding()
+    }
+}
+
+/// Repeat is disabled while a loop is armed — that loop is already repeating its own region.
+#Preview("Speed bar — loop armed") {
+    @Previewable @State var speed = 1.0
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        SpeedBar(speed: $speed, displayedBPM: 76, onSetBPM: {},
+                 canUseMetronome: true, canRepeat: false).padding()
     }
 }
 
@@ -189,12 +203,14 @@ import SwiftUI
     }
 }
 
+/// Idle: the centre glyphs are the timed skips (ADR 0124), holding either to change the increment.
 #Preview("Transport bar — no loop") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: true, onPlayPause: {},
                      onRestart: {}, onPrevious: {}, onNext: {},
                      hasPrevious: false, hasNext: false,
+                     onSkip: { _ in },
                      loop: nil, loopColor: nil,
                      onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
     }

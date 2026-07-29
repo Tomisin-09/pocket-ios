@@ -15,6 +15,12 @@ import SwiftUI
 // The centre cluster is the header over rewind · pause · forward; the header reserves a fixed height
 // and reads the loop's name when active, else stays empty — the live playhead time renders as the
 // `TimeBubble` on the waveform canvas, so the redundant idle timecode was dropped (ADR 0075).
+//
+// The centre glyphs themselves change with the same two states (ADR 0124):
+// • **Idle** — **−N / +N second skips** in circular-arrow glyphs, holding either to change the
+//   increment. Rewind's single-tap "restart" is deliberately given up: moving freely inside the
+//   waveform is the thing you do constantly, and restarting is a tap on the start of the wave.
+// • **Active** — unchanged: rewind restarts the loop (double-tap → previous), forward → next loop.
 
 // MARK: - 8. Transport bar
 
@@ -30,6 +36,9 @@ struct TransportBar: View {
     /// Whether previous / next have a target right now (else the affordance dims).
     let hasPrevious: Bool
     let hasNext: Bool
+    /// Seek by a signed number of seconds — the idle skip buttons (ADR 0124). The caller clamps to
+    /// the song. Defaulted to a no-op for previews and standalone use.
+    var onSkip: (TimeInterval) -> Void = { _ in }
 
     let loop: Loop?
     /// The active loop's identity colour, for the right strip. `nil` ⇒ no active loop.
@@ -53,6 +62,9 @@ struct TransportBar: View {
     /// Settings. Applies to the **idle** flanking controls only — while a loop is active the compact
     /// column + colour strip keep their sides (the strip must stay where the loop identity reads).
     @AppStorage(AppSettings.Key.transportLoopOnLeft) private var loopOnLeft = false
+    /// How far the idle skip buttons move, in seconds (ADR 0124). Lives here rather than on the
+    /// model because it's a standing habit, not per-song state — the same reasoning as `loopOnLeft`.
+    @AppStorage(AppSettings.Key.transportSkipSeconds) private var skipSeconds = Int(TransportSkip.defaultIncrement)
 
     private var glyphSize: CGFloat { compact ? 24 : 25 }
     /// The big flanking identity circles (idle only) — sized to "take up space" (feedback #1),
@@ -159,12 +171,51 @@ struct TransportBar: View {
 
     private var transportRow: some View {
         HStack(spacing: compact ? 32 : 40) {
-            RewindButton(onRestart: onRestart, onPrevious: onPrevious,
-                         hasPrevious: hasPrevious, size: glyphSize)
+            if loopActive {
+                RewindButton(onRestart: onRestart, onPrevious: onPrevious,
+                             hasPrevious: hasPrevious, size: glyphSize)
+            } else {
+                skipButton(forward: false)
+            }
             TransportGlyph(icon: isPlaying ? "pause.fill" : "play.fill",
                            label: isPlaying ? "Pause" : "Play", size: glyphSize, action: onPlayPause)
-            TransportGlyph(icon: "forward.fill", label: "Next loop",
-                           isEnabled: hasNext, size: glyphSize, action: onNext)
+            if loopActive {
+                TransportGlyph(icon: "forward.fill", label: "Next loop",
+                               isEnabled: hasNext, size: glyphSize, action: onNext)
+            } else {
+                skipButton(forward: true)
+            }
+        }
+    }
+
+    /// A timed skip (ADR 0124). The glyph *is* the amount (`gobackward.10`), so nothing needs
+    /// captioning; a context menu on the same button re-picks the increment for both sides at once.
+    private func skipButton(forward: Bool) -> some View {
+        let increment = TransportSkip.resolved(seconds: skipSeconds)
+        let label = TransportSkip.label(increment: increment)
+        return TransportGlyph(icon: TransportSkip.symbol(increment: increment, forward: forward),
+                              label: forward ? "Forward \(label)" : "Back \(label)",
+                              size: glyphSize) {
+            onSkip(forward ? increment : -increment)
+        }
+        .contextMenu { skipMenu }
+        .transition(.opacity)
+    }
+
+    @ViewBuilder private var skipMenu: some View {
+        ForEach(TransportSkip.increments, id: \.self) { increment in
+            Button {
+                skipSeconds = Int(increment)
+                haptic(.light)
+            } label: {
+                // A checkmark on the current choice; the others carry no glyph, so the menu reads
+                // as a picker rather than five identical commands.
+                if Int(increment) == skipSeconds {
+                    Label(TransportSkip.label(increment: increment), systemImage: "checkmark")
+                } else {
+                    Text(TransportSkip.label(increment: increment))
+                }
+            }
         }
     }
 }

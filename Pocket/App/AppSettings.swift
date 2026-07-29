@@ -41,6 +41,7 @@ enum AppSettings {
         static let routineRestSeconds = "routineRestSeconds"
         static let routineSongLoop = "routineSongLoop"
         static let transportLoopOnLeft = "transportLoopOnLeft"
+        static let transportSkipSeconds = "transportSkipSeconds"
         static let waveformMinimapVisible = "waveformMinimapVisible"
         static let waveformMarkerLabels = "waveformMarkerLabels"
         static let zoomFollowsPlayhead = "zoomFollowsPlayhead"
@@ -126,6 +127,15 @@ enum AppSettings {
     /// takes the other side. Default **off** ⇒ Marker-left / Loop-right (the shipped arrangement);
     /// on ⇒ swapped. Applies to the idle flanking controls only.
     static var transportLoopOnLeft: Bool { bool(Key.transportLoopOnLeft, default: false) }
+
+    /// How far the practice transport's −/+ skip buttons move, in seconds (ADR 0124). Set by holding
+    /// either button; sticky across songs because how far you jump is a habit, not a per-song choice.
+    /// Resolution is `TransportSkip`'s, so an unrecognised stored value falls back to its default.
+    static var transportSkipSeconds: TimeInterval {
+        TransportSkip.resolved(seconds: resolvedInt(
+            storedValue: UserDefaults.standard.object(forKey: Key.transportSkipSeconds),
+            default: Int(TransportSkip.defaultIncrement)))
+    }
 
     /// Whether the full-song **minimap** strip shows under the detail waveform on the practice
     /// screen (P1c). Default **on** — it's the whole-song overview + scrub; off ⇒ hidden to give

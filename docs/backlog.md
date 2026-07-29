@@ -231,6 +231,8 @@ sequence, and the reasoning for it.
     growth share one `mutate`, so undo takes back both.
 - **No interaction with the rest.** Slices 2, 4, 5, 6, 8 and 9 are clean. In particular Slice 5's speed
   cap (0.25–1.5) is a *song playback multiplier*, not exercise BPM — a different axis, easily confused.
+  (Shipped as ADR 0124, and it does reach loop-practice **percent** — still a playback multiplier, still
+  not BPM.)
 
 **The no-users window is deliberate, and it applies to every model change in this plan (2026-07-29).**
 v1.0 is approved but **distribution is being held on purpose**, so the window closes when the user
@@ -306,17 +308,41 @@ sharp/flat override) and deserved its own record. Notes worth carrying forward:
 - `ChordPickerSheet` and `FretboardDrillEditor` each went one line over the 400 ceiling; both had
   their `#Preview` blocks split into `…Previews.swift`, matching `LibraryView`/`RoutineDetailView`.
 
-**Slice 5 — transport redesign (ADR; changes shipped behaviour):**
+**Slice 5 — transport redesign — DONE (branch `pocket-204-slice5-transport-redesign`, 2026-07-29).**
+All three items landed under **ADR 0124**. Notes worth carrying forward:
 
-- **−10 / +10 skip buttons** with circular-arrow glyphs, replacing ⏪/⏩ **when no loop is active**;
-  hold either to change the increment (5 · 10 · 15 · 30 · 1 min). Clamps to song bounds. With a loop
-  armed the buttons keep their current previous/next-loop behaviour.
-- **REPEAT replaces "Set BPM"** on the speed bar (repeats the song); Set BPM moves to a long-press on
-  the metronome icon. **Keep a visible affordance while the tempo is unknown** — a fresh import has no
-  grid and no snap until BPM is set, so a badge/hint on the metronome is required for discoverability.
-- **Speed cap 0.25–1.5** (currently 0.25–2.0 in `SpeedBar`) plus custom numeric entry, rejecting
-  out-of-range with an inline message. Confirmed no existing loops or automator ramps exceed 1.5×, so
-  no clamping migration is needed — but the clamp on read should still exist.
+- **The speed cap is now the *only* speed cap (user call at kickoff).** The item said "0.25–2.0 in
+  `SpeedBar`", but `SpeedBar` was quoting a **literal** `0.25...2.0` while three other surfaces —
+  the automator ramp clamp, the loop-run percent field and song play-along — derived theirs from
+  `TempoMath`. So "the cap" was never one number. `TempoMath.maxSpeed` moved 2.0 → 1.5 and the slider
+  now reads it, taking loop practice from 25–200% to **25–150%** with it. Deliberate: the slow-downer
+  must not be able to outrun the ramp it drives. **If loop speed-training ever wants headroom back,
+  that's a second bound and it needs its own argument.**
+- **Out-of-range is *named*, not clamped** (`TempoMath.parse(speedEntry:)` returns `.outOfRange`
+  rather than a clamped value). Silently substituting 1.5 for a typed 2 is indistinguishable from a
+  field that ate the keystrokes. The read-side clamp asked for is separate and does exist —
+  `TempoMath.clamped(speed:)` on `Loop.resumeSpeed`/`armingSpeed` and `Song.resumeSpeed`.
+- **Tests that spelled `200` were the real risk of the cap change,** not the app code.
+  `PromoteOfferTests` pinned a `ceiling: 200` literal that still *passed* while describing a ceiling
+  that no longer exists; they now read `LoopRunView.percentRange.upperBound`. Worth a look wherever a
+  bound is asserted as a number rather than as the constant.
+- **A `Button` with `.onLongPressGesture` bolted on fires both on a hold.** The metronome now carries
+  the tempo editor on its hold *and* a tap action, so it uses the loop row's proven idiom instead —
+  `.contentShape(Rectangle())` + `.onTapGesture` + `.onLongPressGesture` on a plain shape. **Device
+  check this one specifically:** a hold that also toggles the click is the failure mode.
+- **The metronome has three states, and none of them is a dead button** — grid exists (tap toggles
+  the click), tempo known but no 1 (greyed, tap opens the tempo editor), tempo unknown (accent +
+  `plus` badge, tap opens it). The badge is the discoverability the retired "Set BPM" capsule was
+  carrying; the greyed middle state is Slice 2's **Set the 1** prompt's problem to announce, and this
+  is only the second door.
+- **Repeat rides `engine.onReachedEnd`, not a full-song `loopRegion`.** The loop path pre-renders and
+  crossfades its whole region into memory — fine for four bars, not for a five-minute song. Cost: one
+  schedule gap at the wrap seam. Repeat is **session state** (wiped on exit with the other knobs, ADR
+  0029) and **disabled while a loop is armed**, since an armed loop never reaches the file's end.
+- **`SpeedBar` moved to `WaveformSpeedBar.swift`** — three more jobs took `WaveformSections.swift`
+  past 400 lines. Same split as section 8's `WaveformTransportBar.swift`.
+- **The skip increment lives in `@AppStorage` on `TransportBar` itself**, not on the model — it's a
+  standing habit, not per-song state, the same reasoning as `transportLoopOnLeft` already there.
 
 **Slice 6 — loops & markers multi-select (own ADR; largest UI change):**
 

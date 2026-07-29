@@ -66,162 +66,7 @@ struct SongStrip: View {
     }
 }
 
-// MARK: - 3. Speed / BPM bar (always visible)
-
-struct SpeedBar: View {
-    @Binding var speed: Double
-    /// `nil` when the song's tempo is unknown — shows a "Set BPM" affordance.
-    let displayedBPM: Int?
-    let onSetBPM: () -> Void
-    /// Fired when the user grabs the slider, so a running loop automator can stand down
-    /// (manual control wins). Defaults to a no-op for previews/standalone use.
-    var onUserAdjust: () -> Void = {}
-    /// In-song metronome click (ADR 0027 — relocated here from the transport bar, where
-    /// it sat next to play/loop and read as another transport control). The click is
-    /// tempo context, so it lives by the BPM readout. On/off, whether a grid exists to
-    /// click against (tempo + downbeat set), and the toggle. Defaulted off/disabled for
-    /// previews and standalone use.
-    var metronomeOn: Bool = false
-    var canUseMetronome: Bool = false
-    var onToggleMetronome: () -> Void = {}
-    /// Compact form (landscape, ADR 0042): drops the preset-pill row to reclaim vertical
-    /// space — the slider still covers the full range, presets are a portrait convenience.
-    var compact: Bool = false
-
-    private let presets: [Double] = [0.25, 0.50, 0.75]
-
-    var body: some View {
-        VStack(spacing: 6) {
-            // Readout + slider share one row to keep this (the heaviest fixed
-            // element) compact in the pinned cockpit.
-            HStack(spacing: 12) {
-                Text(String(format: "%.2f×", speed))
-                    .font(.pocketMono(.title3))
-                    .foregroundStyle(PocketColor.textPrimary)
-
-                // NOTE: brief §4.1 wants an asymmetric scale (0.25–1.0 occupies
-                // ~54% of the track). That custom track mapping is a later
-                // single-axis iteration; a linear slider stands in for now.
-                Slider(value: $speed, in: 0.25...2.0,
-                       onEditingChanged: { editing in if editing { onUserAdjust() } })
-                    .tint(PocketColor.waveformAccent)
-                    .accessibilityLabel("Playback speed")
-
-                if let displayedBPM {
-                    // Long-press to re-open the tempo editor (Tap/Manual) so a wrong
-                    // tempo or downbeat can be corrected — the readout otherwise
-                    // replaces the "Set BPM" entry point once a tempo is known (ADR 0024).
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text("\(displayedBPM)")
-                            .font(.pocketMono(.headline))
-                            .foregroundStyle(PocketColor.textPrimary)
-                        Text("BPM")
-                            .font(.futura(.caption2))
-                            .foregroundStyle(PocketColor.textSecondary)
-                    }
-                    .contentShape(Rectangle())
-                    .onLongPressGesture(minimumDuration: 0.4) {
-                        haptic(.medium)     // confirm the hold landed before the editor opens
-                        onSetBPM()
-                    }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(displayedBPM) beats per minute")
-                    .accessibilityHint("Long press to change the tempo")
-                    .accessibilityAction(named: "Change tempo") { onSetBPM() }
-                } else {
-                    // Unknown tempo — speed (×) still works; offer to set it.
-                    Button(action: onSetBPM) {
-                        Text("Set BPM")
-                            .font(.pocketMono(.footnote))
-                            .foregroundStyle(PocketColor.waveformAccent)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Capsule().fill(PocketColor.surfaceStandard))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Set tempo")
-                }
-
-                // In-song click (ADR 0027). Compact, icon-only — it's a tempo tool, so
-                // it rides next to the BPM. Greyed until the song has a grid (tempo + 1).
-                MetronomeToggle(isOn: metronomeOn,
-                                isEnabled: canUseMetronome || metronomeOn,
-                                action: onToggleMetronome)
-            }
-
-            if !compact {
-                HStack(spacing: 8) {
-                    ForEach(presets, id: \.self) { value in
-                        PresetPill(label: String(format: "%.2f×", value),
-                                   isSelected: abs(speed - value) < 0.001) {
-                            speed = value
-                        }
-                    }
-                    Spacer()
-                    PresetPill(label: "Reset", isSelected: abs(speed - 1.0) < 0.001) {
-                        speed = 1.0
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, compact ? 6 : 8)
-        .background(panelBackground)
-    }
-}
-
-/// In-song metronome click toggle on the speed bar (ADR 0027). Icon-only, in the song's
-/// teal accent (`waveformAccent`, ADR 0081) so it sits with the waveform cockpit and doesn't
-/// read as a transport control; greys out until
-/// the song has a beat grid (tempo + downbeat). A 44pt target around a 30pt badge.
-private struct MetronomeToggle: View {
-    let isOn: Bool
-    let isEnabled: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "metronome")
-                .font(.futura(size: 15, weight: .semibold))
-                .foregroundStyle(foreground)
-                .frame(width: 30, height: 30)
-                .background(Circle().fill(isOn ? PocketColor.waveformAccent : PocketColor.surfaceStandard))
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(!isEnabled)
-        .accessibilityLabel("Metronome click")
-        .accessibilityValue(isOn ? "On" : "Off")
-        .accessibilityHint("Plays a click on the beat while the song plays")
-    }
-
-    private var foreground: Color {
-        if !isEnabled { return PocketColor.textSecondary.opacity(0.4) }
-        return isOn ? PocketColor.background : PocketColor.waveformAccent
-    }
-}
-
-private struct PresetPill: View {
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(.pocketMono(.caption))
-                .lineLimit(1)
-                .fixedSize()
-                .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(
-                    Capsule().fill(isSelected ? PocketColor.active : PocketColor.surfaceStandard)
-                )
-        }
-        .buttonStyle(.plain)
-    }
-}
+// Section 3 (speed / BPM bar) lives in `WaveformSpeedBar.swift`.
 
 // MARK: - 4. Interaction hint line
 
@@ -310,7 +155,9 @@ private struct LoopControlsInfo: View {
             row("…or draw it", "Hold and drag across the waveform")
             row("Fine-tune", "Drag the A / B handles to move the ends")
             row("Re-edit later", "Drag a saved loop's edge on the waveform")
-            row("Move around", "Tap or drag to seek · pinch to zoom")
+            row("Move around", "Tap or drag to seek · pinch to zoom · skip with − / +")
+            row("Change the skip", "Hold either skip button to pick 5s · 10s · 15s · 30s · 1 min")
+            row("Set the tempo", "Hold the metronome to open tap-tempo or type a BPM")
             row("Follow", "Off: zoom holds the spot under your fingers · On: it tracks the playhead")
         }
         .padding(16)
