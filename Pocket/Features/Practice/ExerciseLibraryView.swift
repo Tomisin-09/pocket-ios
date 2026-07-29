@@ -3,8 +3,11 @@ import SwiftUI
 
 /// The **Exercises** library inside Practice (ADR 0046): the focused list of click-only,
 /// command-anchored drills — your own plus the seeded starters — pushed from the Practice hub.
-/// Owns exercise **creation** (the `+` → `NewExerciseSheet`) and **deletion** (swipe), since
-/// exercises live here and nowhere else. Tapping one opens its `ExerciseRunView`.
+/// Owns exercise **creation** (the `+` → `NewExerciseSheet`) and **deletion**, since exercises live
+/// here and nowhere else. Tapping one opens its `ExerciseRunView`; holding one opens the shared row
+/// menu (Details · Duplicate · Favourite · Delete) via `.pocketRowActions` — the same affordances,
+/// in the same order, as every other list in the app (Slice 3). Delete is deferred behind an Undo
+/// toast, so the list filters out rows the `rowDeletion` seam reports as pending.
 ///
 /// Relies on an ambient `NavigationStack` (Practice → Home's stack), like the hub. Sort key +
 /// direction and the search query narrow the list in memory (ADR 0056) via the pure
@@ -14,6 +17,10 @@ struct ExerciseLibraryView: View {
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
     @Environment(\.isPro) private var isPro
     @Environment(\.presentPaywall) private var presentPaywall
+    /// Deferred, undoable row deletion (Slice 3). **Owned here, not by the modifier**: this view
+    /// reads `isPending` itself to filter out a row awaiting its delete, and a modifier applied
+    /// inside `body` can only publish to its descendants.
+    @State private var rowDeletion = RowDeletionCoordinator()
     @Query private var exercises: [Exercise]
     /// The local profile (ADR 0113 S2): its self-rated experience seeds a new exercise's default
     /// command tempo, so a beginner starts near the floor and a seasoned player higher up.
@@ -25,6 +32,9 @@ struct ExerciseLibraryView: View {
     /// sheet drops the push.
     @State private var justCreated: Exercise?
     @State private var opening: Exercise?
+    /// The drill whose read-only reference sheet is open (Slice 3's "view info" row action) — the
+    /// same `ExerciseDetailSheet` the run screen's ⓘ opens, now reachable without starting a run.
+    @State private var detailExercise: Exercise?
     /// Sort key + direction, persisted across launches (ADR 0056).
     @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
     @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
@@ -36,11 +46,18 @@ struct ExerciseLibraryView: View {
     /// resets whenever that stops being true (`showsInstrumentFilter`).
     @State private var instrumentFilter: Instrument?
 
+    /// The drills actually on screen — everything except rows whose delete is pending behind the
+    /// Undo toast (Slice 3). The empty state reads from here too, so deleting your last drill says
+    /// "no exercises yet" rather than "nothing matches your search".
+    private var presentExercises: [Exercise] {
+        exercises.filter { !rowDeletion.isPending($0.uid) }
+    }
+
     /// The exercises narrowed by search **and** the active instrument filter, then grouped into
     /// **template sections** (ADR 0068), each ordered by the current sort — the sectioned list the
     /// user sees, and what deletion indexes into (per section).
     private var sections: [LibrarySection<Exercise>] {
-        let matched = exercises.filter {
+        let matched = presentExercises.filter {
             (!favoritesOnly || $0.isFavorite)
                 && PracticeLibrarySort.exerciseMatches(fields(for: $0), query: searchText,
                                                        instrument: activeInstrumentFilter)
@@ -54,7 +71,7 @@ struct ExerciseLibraryView: View {
 
     /// The distinct instruments present in the library, canonical order (ADR 0116 S4).
     private var presentInstruments: [Instrument] {
-        PracticeLibrarySort.instrumentsPresent(exercises.map(\.instrument))
+        PracticeLibrarySort.instrumentsPresent(presentExercises.map(\.instrument))
     }
 
     /// Progressive disclosure: the instrument filter surfaces only once the library holds more than
@@ -74,7 +91,7 @@ struct ExerciseLibraryView: View {
 
     var body: some View {
         List {
-            if exercises.isEmpty {
+            if presentExercises.isEmpty {
                 Text("No exercises yet. Tap + to create one — a named drill you push faster "
                      + "over time.")
                     .font(.futura(.footnote))
@@ -91,17 +108,24 @@ struct ExerciseLibraryView: View {
                         ForEach(section.items) { exercise in
                             exerciseRow(exercise)
                                 .listRowBackground(PocketColor.background)
-                                .swipeActions(edge: .leading) { favoriteButton(for: exercise) }
+                                .pocketRowActions(displayName(exercise),
+                                                  tint: PocketColor.practice,
+                                                  menu: menuItems(for: exercise),
+                                                  favorite: favorite(for: exercise),
+                                                  delete: deletion(for: exercise))
                         }
-                        .onDelete { delete($0, in: section.items) }
                     }
                 }
             }
         }
         .scrollContentBackground(.hidden)
         .background(PocketColor.background.ignoresSafeArea())
+        // Deferred delete + the Undo toast for every row on this screen (Slice 3).
+        .pocketRowUndoHost(rowDeletion)
         .safeAreaInset(edge: .top) {
-            if showsInstrumentFilter { instrumentFilterBar }
+            if showsInstrumentFilter {
+                InstrumentFilterBar(instruments: presentInstruments, selection: $instrumentFilter)
+            }
         }
         .onChange(of: showsInstrumentFilter) { _, shows in
             // Once the library drops back to a single instrument, forget any selection so it can't
@@ -112,7 +136,7 @@ struct ExerciseLibraryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Exercises")
         .toolbar {
-            if !exercises.isEmpty {
+            if !presentExercises.isEmpty {
                 ToolbarItem(placement: .topBarLeading) { sortMenu }
                 ToolbarItem(placement: .topBarLeading) { favoritesFilterToggle }
             }
@@ -137,6 +161,47 @@ struct ExerciseLibraryView: View {
                                                     set: { if !$0 { opening = nil } })) {
             if let exercise = opening { ExerciseRunView(exercise: exercise) }
         }
+        // Details, from the row's long-press menu. Bool-bound rather than `.sheet(item:)` for the
+        // ADR 0090 reason the whole app now follows: a model's `persistentModelID` can flip on a
+        // save mid-edit and dismiss an item-based sheet.
+        .sheet(isPresented: Binding(get: { detailExercise != nil },
+                                    set: { if !$0 { detailExercise = nil } })) {
+            if let exercise = detailExercise { ExerciseDetailSheet(exercise: exercise) }
+        }
+    }
+
+    private func displayName(_ exercise: Exercise) -> String {
+        exercise.name.isEmpty ? "Untitled" : exercise.name
+    }
+
+    /// The drill's own long-press actions: read what it is, or fork it (Slice 3).
+    private func menuItems(for exercise: Exercise) -> [PocketRowMenuItem] {
+        [PocketRowMenuItem("Details", systemImage: "info.circle") { detailExercise = exercise },
+         PocketRowMenuItem("Duplicate", systemImage: "plus.square.on.square") { duplicate(exercise) }]
+    }
+
+    private func favorite(for exercise: Exercise) -> PocketRowFavorite {
+        PocketRowFavorite(isFavorite: exercise.isFavorite) { exercise.isFavorite.toggle() }
+    }
+
+    private func deletion(for exercise: Exercise) -> PocketRowDelete {
+        PocketRowDelete(id: exercise.uid, name: displayName(exercise)) { context.delete(exercise) }
+    }
+
+    /// Fork a drill into an editable copy — the cheapest way to make a variant of a template you've
+    /// already tuned (Slice 3). Copying is **authoring**, so it takes the same `canAuthor` gate as
+    /// creation (ADR 0112): a free player can run the seeded Pro-template freebies but can't fork
+    /// one into a drill of their own. The copy is inserted before its song links are assigned —
+    /// a relationship can't be set on an un-inserted model.
+    private func duplicate(_ exercise: Exercise) {
+        guard AccessPolicy.canAuthor(exercise.template, isPro: isPro) else {
+            return presentPaywall(.newExercise)
+        }
+        let name = CopyNaming.copyName(of: exercise.name, existing: exercises.map(\.name))
+        let copy = exercise.duplicated(named: name)
+        context.insert(copy)
+        copy.linkedSongs = exercise.linkedSongs
+        haptic(.medium)
     }
 
     /// One library row, entitlement-aware (ADR 0112): a runnable drill (free-tier template, a
@@ -191,46 +256,6 @@ struct ExerciseLibraryView: View {
         profiles.first?.preferredInstrument ?? .guitar
     }
 
-    /// The progressive-disclosure instrument filter (ADR 0116 S4) — an "All" chip plus one per
-    /// instrument present, pinned above the list. Shown only when the library holds more than one
-    /// instrument (`showsInstrumentFilter`); tapping a chip narrows the sections to that instrument.
-    private var instrumentFilterBar: some View {
-        HStack(spacing: 8) {
-            instrumentChip(title: "All", isSelected: instrumentFilter == nil) { instrumentFilter = nil }
-            ForEach(presentInstruments) { instrument in
-                instrumentChip(title: instrument.displayName,
-                               isSelected: instrumentFilter == instrument) {
-                    instrumentFilter = instrument
-                }
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(PocketColor.background)
-    }
-
-    /// One filter chip — a pill that fills with the Practice tint when selected.
-    private func instrumentChip(title: String, isSelected: Bool,
-                                action: @escaping () -> Void) -> some View {
-        Button {
-            action()
-            haptic(.light)
-        } label: {
-            Text(title)
-                .font(.futura(.subheadline))
-                .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(
-                    Capsule().fill(isSelected ? PocketColor.practice : PocketColor.surfaceStandard)
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(title) exercises")
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-    }
-
     /// The favourites filter (ADR 0119) — a star that fills when the list is narrowed to favourited
     /// drills. Mirrors the loop / routine libraries so the three read consistently.
     private var favoritesFilterToggle: some View {
@@ -247,20 +272,8 @@ struct ExerciseLibraryView: View {
     /// The message shown when nothing matches — favourites-aware so an empty favourites view reads
     /// as a prompt to pin something, not a false "no search matches".
     private var noMatchMessage: String {
-        favoritesOnly ? "No favourite exercises yet. Swipe a drill and tap Favourite to pin it."
+        favoritesOnly ? "No favourite exercises yet. Swipe or hold a drill and tap Favourite to pin it."
                       : "No exercises match “\(searchText)”."
-    }
-
-    /// The leading-swipe favourite toggle for a drill (ADR 0119).
-    private func favoriteButton(for exercise: Exercise) -> some View {
-        Button {
-            exercise.isFavorite.toggle()
-            haptic(.light)
-        } label: {
-            Label(exercise.isFavorite ? "Unfavourite" : "Favourite",
-                  systemImage: exercise.isFavorite ? "star.slash" : "star")
-        }
-        .tint(PocketColor.practice)
     }
 
     /// The sort control — a menu whose label spells out the active key with a direction arrow
@@ -320,12 +333,6 @@ struct ExerciseLibraryView: View {
         opening = exercise
     }
 
-    /// Delete indexes into the *displayed* section's items — the offsets `onDelete` reports are
-    /// section-relative, so the section's own array is the one to index (ADR 0056 pattern).
-    private func delete(_ offsets: IndexSet, in items: [Exercise]) {
-        for index in offsets { context.delete(items[index]) }
-        haptic(.medium)
-    }
 }
 
 #Preview("Exercises — with units") {

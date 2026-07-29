@@ -123,36 +123,5 @@ struct ZoomResetButton: View {
     }
 }
 
-/// Transient "Deleted X · Undo" toast after a destructive action (ADR 0019). A
-/// floating pill at the bottom of the cockpit: the message, then an Undo action.
-/// Auto-dismisses on a timer (owned by the model); this view just renders + acts.
-struct UndoToastView: View {
-    let message: String
-    let onUndo: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Text(message)
-                .font(.futura(.footnote))
-                .foregroundStyle(PocketColor.textPrimary)
-                .lineLimit(1)
-            Spacer(minLength: 8)
-            Button(action: onUndo) {
-                Text("Undo")
-                    .font(.futura(.footnote, weight: .semibold))
-                    .foregroundStyle(PocketColor.active)
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint("Restores the deleted item")
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            Capsule()
-                .fill(PocketColor.background.opacity(0.92))
-                .overlay(Capsule().strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
-                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
-        )
-        .accessibilityElement(children: .combine)
-    }
-}
+// `UndoToastView` moved to `UI/UndoToastView.swift` — the waveform's loop/marker deletes and
+// every list row's delete (`.pocketRowActions`) now render the same pill.

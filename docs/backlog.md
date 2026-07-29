@@ -95,13 +95,49 @@ three items landed; no ADR. Notes worth carrying forward:
   running metronome session is the opposite of what that seam is for.
 - `HomeView` was split (`HomeView+Actions.swift`) to stay under the 400-line ceiling.
 
-**Slice 3 — list-component uniformity (no ADR; the highest-leverage item):**
+**Slice 3 — list-component uniformity — DONE (branch `pocket-201-slice3-row-actions`, 2026-07-29).**
+The `.pocketRowActions(...)` modifier landed as planned (long-press menu → swipes → undo toast),
+adopted by exercises, routines, loops and songs, with duplicate folded in. No ADR. Notes worth
+carrying forward:
 
-Answering the "is there a way to ensure uniform adoption for list-like components?" question with a
-yes: a single `.pocketRowActions(...)` modifier packaging long-press menu (view info / delete) +
-swipe actions + an undo toast, adopted by exercises, loops, routines and songs. Today only
-`LibraryView` has the full pattern; `ExerciseLibraryView` has only a leading favourite swipe.
-Fold **duplicate routine / duplicate templated exercise** in here.
+- **Undo is a *deferred delete*, not delete-then-restore.** The waveform's ADR 0019 toast rebuilds a
+  loop from a snapshot, which works because a loop is a handful of scalars with one owner. It does
+  not generalise: restoring an `Exercise` or `Song` would have to rebuild routine-block links, song
+  links, journal entries and takes that the real delete has already nullified or cascaded away. So
+  `RowDeletionCoordinator` hides the row and defers `context.delete` until the window closes — on
+  timer expiry, a second delete, `onDisappear`, or leaving the foreground. Nothing is ever lost by a
+  missed commit; the worst case is a delete that didn't happen.
+- **The consequence is that every list must filter its own pending rows** — the modifier can't do it.
+  Each screen reads `isPending` itself and projects a `presentExercises` / `presentRoutines` /
+  `presentSongs`, which then feeds the **empty state and the filter menus too**, not just the rows.
+  Miss that and deleting your last item reads as "nothing matches your search".
+- **The screen must therefore *own* the coordinator** (`@State`), passed into
+  `.pocketRowUndoHost(_:)`. The first cut had the modifier own it and publish it via the environment,
+  which fails silently: **a modifier applied inside a view's `body` publishes to that view's
+  descendants only** — the screen's own `@Environment` resolves from its *parent*. The rows saw the
+  real coordinator, the screen saw the default no-op seam, and every filter did nothing. The
+  environment seam is still how the **rows** reach it; only the screen half needs the direct handle.
+- **A destructive swipe button lies about deletion.** `Button(role: .destructive)` inside
+  `.swipeActions` plays SwiftUI's own row-removal animation the moment it's tapped, whatever the data
+  does. Under a *deferred* delete that made the row look deleted — which is why the broken filter
+  above went unnoticed until Undo failed to bring it back (device pass, 2026-07-29). The swipe uses a
+  plain `PocketColor.danger`-tinted button so the row's disappearance is driven **only** by the
+  pending-row filter. The context-menu Delete keeps the role, where it just colours the label.
+- Guarded by `RowUndoUITests` — delete a row, tap Undo, assert it's back **without navigating**. Both
+  causes were wiring, not logic, so no unit test could have caught either.
+- **The seam is closures in the environment, not the coordinator object** (the `PaywallTrigger`
+  pattern), so a row outside a `.pocketRowUndoHost()` — a preview, a test — deletes immediately
+  instead of trapping on a missing `@Observable`.
+- **Optional parameters are what make adoption honest.** `LoopLibraryView` passes no delete (a loop
+  belongs to its song; the library is a read-through) and the song library passes no favourite
+  (`Song` has no pin). Declining an affordance is the uniformity working, not a gap in it.
+- **A fork drops `presetSlug`**, which is what stops duplicate becoming a paywall bypass: the copy is
+  judged by its template alone, so a free player's fork of a Pro-template freebie is locked. Same
+  reasoning for routines — a copy of the free demo is a user-authored routine, not a second freebie.
+- **`ExerciseLibraryView` went over the type-length budget**; the split extracted `InstrumentFilterBar`
+  as a real component rather than an `+Rows` extension. Extensions in a second file can't see the
+  screen's `private` state, so a row-half split would have meant loosening five declarations to
+  internal — the wrong trade for a length limit.
 
 **Slices 3a & 3b — command tempo × note rate (inserted 2026-07-29).** The full write-up is *A command
 tempo is meaningless without its note rate* under **Near-term**; this is only its placement in the
@@ -110,7 +146,9 @@ sequence, and the reasoning for it.
 - **3a — display + derived notes-per-minute (no ADR, no migration).** Sequenced *after* Slice 3 on
   purpose: the "80 BPM · 16ths" label sits on the exercise row and the command-tempo sort is a row-list
   concern, so landing it before the uniformity pass means writing it into four row implementations and
-  rewriting it during Slice 3. After Slice 3 it is one edit.
+  rewriting it during Slice 3. **Slice 3 is now done, so this is unblocked** — note the row *content*
+  was not what Slice 3 unified (that was the actions); the label still lands in `PracticeUnitRow` /
+  `ExerciseLibraryView.row(_:locked:)`, but only once.
 - **3b — `commandNotesPerBeat` + unifying the two note-rate axes (own ADR).** Deliberately pulled
   **forward of Slice 10**, which it lightly collides with (both edit `ConfigureExerciseForm` /
   `NewExerciseSheet`, in different sections). The collision costs a merge; the reason to accept it is

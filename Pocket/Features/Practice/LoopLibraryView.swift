@@ -67,7 +67,7 @@ struct LoopLibraryView: View {
                     .listRowBackground(PocketColor.background)
             } else if visibleLoops.isEmpty {
                 Text(favoritesOnly
-                     ? "No favourite loops yet. Swipe a loop and tap Favourite to pin it."
+                     ? "No favourite loops yet. Swipe or hold a loop and tap Favourite to pin it."
                      : "No loops match “\(searchText)”.")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
@@ -76,7 +76,10 @@ struct LoopLibraryView: View {
                 ForEach(visibleLoops) { loop in
                     loopRow(loop)
                         .listRowBackground(PocketColor.background)
-                        .swipeActions(edge: .leading) { favoriteButton(for: loop) }
+                        .pocketRowActions(displayName(loop),
+                                          tint: PocketColor.practice,
+                                          menu: menuItems(for: loop),
+                                          favorite: favorite(for: loop))
                 }
             }
         }
@@ -150,17 +153,26 @@ struct LoopLibraryView: View {
         }
     }
 
-    /// The leading-swipe favourite toggle for a loop (ADR 0119) — the pin that surfaces this passage
-    /// in the Home favourites rail's cross-song "my key passages" view.
-    private func favoriteButton(for loop: Loop) -> some View {
-        Button {
-            loop.isFavorite.toggle()
-            haptic(.light)
-        } label: {
-            Label(loop.isFavorite ? "Unfavourite" : "Favourite",
-                  systemImage: loop.isFavorite ? "star.slash" : "star")
-        }
-        .tint(PocketColor.practice)
+    private func displayName(_ loop: Loop) -> String {
+        loop.name.isEmpty ? "Untitled loop" : loop.name
+    }
+
+    /// A loop's long-press actions (Slice 3): its two practice modes, so both are reachable from the
+    /// menu as well as from the row's two tap targets.
+    ///
+    /// **No Delete here, deliberately** — a loop belongs to its song and is removed on the waveform
+    /// where it was drawn (this library is a read-through, see the type doc). The shared modifier
+    /// takes an optional delete precisely so a list can decline it rather than inventing a second
+    /// owner for the same object.
+    private func menuItems(for loop: Loop) -> [PocketRowMenuItem] {
+        [PocketRowMenuItem("Practice", systemImage: "play.circle") { launch = .trainer(loop) },
+         PocketRowMenuItem("Train your ear", systemImage: "ear") { launch = .ear(loop) }]
+    }
+
+    /// The favourite pin (ADR 0119) — what surfaces this passage in the cross-song "my key
+    /// passages" view.
+    private func favorite(for loop: Loop) -> PocketRowFavorite {
+        PocketRowFavorite(isFavorite: loop.isFavorite) { loop.isFavorite.toggle() }
     }
 
     /// The sort control — a menu whose label spells out the active key with a direction arrow, and
