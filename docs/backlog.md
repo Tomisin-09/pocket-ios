@@ -232,6 +232,23 @@ creation. Plus a **"universally applicable"** flag meaning the exercise is tied 
 therefore always eligible for the planner / collection generator. **Confirm the flag's semantics
 before building.**
 
+**Found during the Slice 3 device pass (2026-07-29) — deferred by the user until the other slices
+are done:**
+
+- **The inline nav title sits off-centre in the practice libraries.** On Exercises, "Exercises" is
+  pushed right of centre. Cause: **two** `ToolbarItem(placement: .topBarLeading)` — the sort menu,
+  which renders as a wide `↑ Name` pill whose width *varies with the sort key*, plus the favourites
+  star — against a single `+` trailing. With `.navigationBarTitleDisplayMode(.inline)` iOS centres
+  the title in the space left over, so a fat leading group shoves it across, and it **moves again**
+  when the sort key changes ("Recently added" is wider than "Name").
+  - **Check Routines too before fixing** — it has the same shape (wand + star leading, `+`
+    trailing), so this is very likely not one screen's bug. Loops is leading-star / trailing-sort and
+    may be fine.
+  - **It's a shared-chrome decision, not a layout tweak.** The honest fixes are moving the sort menu
+    to trailing, or collapsing sort + favourites into one menu — both change the toolbar grammar of
+    every practice library, so this wants doing **once, across all three**, not patched per screen.
+    That's why it's deferred rather than folded into Slice 3.
+
 **Fixed on the Slice 1 branch (was: needs a device repro):**
 
 - **Dots grey out when a sequence is picked — FIXED 2026-07-28.** The device repro (A minor pentatonic,
