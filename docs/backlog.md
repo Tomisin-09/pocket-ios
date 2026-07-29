@@ -211,6 +211,14 @@ sequence, and the reasoning for it.
     .chromaticWarmup`, `FretboardDrill.spiderWalk`, every `PracticePresets` `noteRate`) keeps it:
     **a default becomes quarters, authored content keeps what it declared.** Nothing failed when the
     default was flipped — the old value was asserted nowhere — so a test now pins it.
+  - **Two device-pass fixes fell out of the quarters default** (2026-07-29): the slot strip's 12pt
+    beat gap missed fitting two bars of quarters on one row **by a single cell**, and the placement
+    cursor wrapped to slot 1 at the end of a run, silently overwriting the notes just tapped. The
+    strip now draws **bar lines** between bars at a 4pt gap (beat groups stay the wrapping unit — a
+    bar of sixteenths is 16 cells and would overflow as one unsplittable item), and filling the last
+    slot **appends a bar** (`DrillPlacement`, pure + tested). Growth is the recoverable direction: a
+    spare empty bar is visible and one stepper tap away, an overwritten note is gone. Placement and
+    growth share one `mutate`, so undo takes back both.
 - **No interaction with the rest.** Slices 2, 4, 5, 6, 8 and 9 are clean. In particular Slice 5's speed
   cap (0.25–1.5) is a *song playback multiplier*, not exercise BPM — a different axis, easily confused.
 
