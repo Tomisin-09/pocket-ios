@@ -19,6 +19,12 @@ struct SongImportSummary: Equatable {
     /// Whether there's anything worth surfacing to the user.
     var isReportable: Bool { imported > 0 || !failedNames.isEmpty }
 
+    /// One song picked, one song imported, nothing skipped — the case that "opens on create": the
+    /// caller pushes that song's waveform instead of leaving the user on a list to find it. A batch
+    /// never opens (which of the five?), and neither does a run with skipped files, whose summary
+    /// alert has something to say first.
+    var isSingleCleanImport: Bool { imported == 1 && failedNames.isEmpty }
+
     /// Alert title — celebratory on a clean import, cautionary when files were
     /// skipped (whether or not any succeeded).
     var title: String {
@@ -55,14 +61,19 @@ final class SongImportModel {
     private(set) var progress: SongImportProgress?
     /// Set when a batch finishes with something worth telling the user (failures).
     var summary: SongImportSummary?
+    /// The songs this batch actually created, in pick order. Kept off `SongImportSummary` so that
+    /// stays a pure, unit-testable value type; it exists so a caller can **open** what it just
+    /// imported when a single file was picked. Reset at the start of every run.
+    private(set) var importedSongs: [Song] = []
 
     /// Import `urls` into `context`. Good files still import when others fail; the
     /// failures are collected into `summary`. Extraction is off-main so the UI stays
     /// responsive and the progress overlay can animate. Returns the outcome so a
     /// caller can react (e.g. the home hub navigates to the library when something
-    /// actually imported).
+    /// actually imported), with `importedSongs` naming what it created.
     @discardableResult
     func run(urls: [URL], into context: ModelContext) async -> SongImportSummary {
+        importedSongs = []
         guard !urls.isEmpty else { return SongImportSummary(imported: 0, failedNames: []) }
         progress = SongImportProgress(completed: 0, total: urls.count)
         var imported = 0
@@ -73,7 +84,7 @@ final class SongImportModel {
                 let prepared = try await Task.detached(priority: .userInitiated) {
                     try SongImporter.prepare(from: url)
                 }.value
-                SongImporter.persist(prepared, into: context)
+                importedSongs.append(SongImporter.persist(prepared, into: context))
                 imported += 1
             } catch {
                 failedNames.append(SongImporter.title(for: url))
@@ -85,5 +96,15 @@ final class SongImportModel {
         let outcome = SongImportSummary(imported: imported, failedNames: failedNames)
         if outcome.isReportable { summary = outcome }
         return outcome
+    }
+
+    /// The song to **open** after a finished import, or `nil` when the batch shouldn't open one
+    /// (`SongImportSummary.isSingleCleanImport`). Consuming it also drops the completion alert: the
+    /// waveform screen appearing *is* the confirmation, so "Imported 1 song." over the top of it is
+    /// noise. Nothing is dropped when files were skipped — that summary still has news.
+    func takeSongToOpen(after outcome: SongImportSummary) -> Song? {
+        guard outcome.isSingleCleanImport, let song = importedSongs.first else { return nil }
+        summary = nil
+        return song
     }
 }

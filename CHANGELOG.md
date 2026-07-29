@@ -20,7 +20,16 @@ All notable changes to Pocket are documented here. Format loosely follows
   run's jumps read as direction rather than as dots blinking in an arbitrary order. Dot sizes are
   unchanged.
 
+- **A "Follow" toggle on the waveform, above the playhead.** What pinch-zoom anchors to (the spot under
+  your fingers, or the playhead) was already a setting; it now sits on the same row as the ⓘ and the
+  Grid toggle, since it's a per-moment choice — inspecting a spot, or chasing a moving playhead —
+  rather than something you set once and forget. The Settings toggle is the same switch, in sync.
+
 ### Changed
+- **New exercises and single-song imports open straight away.** Creating an exercise now pushes its run
+  screen when the create sheet closes, and importing **one** song opens its waveform instead of leaving
+  you to find it in the list — creating and playing are one move. A multi-file import still lands in the
+  library, and a run with skipped files still shows its summary first.
 - **Slide arrows on extended shapes are no longer drawn permanently.** The extended pentatonic's seams
   carried an arrow at all times, so a static board showed a full set of them whatever the sequence —
   clutter on a diagram, which is the opposite of what the cue was for. A seam now draws its arrowhead
@@ -29,6 +38,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   still read per note by VoiceOver when nothing is moving.
 
 ### Fixed
+- **Train your ear no longer plays over the song.** Opening ear training from a loop's settings left the
+  waveform playing underneath its own looping audio — two streams at once. The waveform now pauses as
+  the sheet opens, so closing it leaves the transport showing **Play**, which is the state the screen
+  was actually left in.
 - **Picking a sequence no longer greys out some dots on the board.** A sequenced run (thirds, fourths,
   groups of 3/4) plays the same fretboard position several times, and the board was drawing one
   translucent dot **per played note** — so the alpha stacked. A position the rolling window happened to

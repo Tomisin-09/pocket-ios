@@ -19,6 +19,8 @@ struct LibraryView: View {
     @State private var importModel = SongImportModel()
     @State private var editingSong: Song?
     @State private var detailsSong: Song?
+    /// The song a single-file import just created — pushed to its waveform ("open on create").
+    @State private var openingSong: Song?
     /// The collection to build a practice session from (ADR 0118) — set by the filtered-Library
     /// banner, drives the `CollectionSessionSheet` configurator.
     @State private var sessionCollection: String?
@@ -70,6 +72,16 @@ struct LibraryView: View {
             Text(importError ?? "")
         }
         .songImportFeedback(importModel)
+        // Open on create: a lone imported song goes straight to its waveform. Bool-bound for the same
+        // identity-flip reason as the sheets below — a just-inserted `Song`'s `persistentModelID`
+        // changes on the first autosave, which item-based presentation would read as "different
+        // screen" and pop.
+        .navigationDestination(isPresented: Binding(get: { openingSong != nil },
+                                                    set: { if !$0 { openingSong = nil } })) {
+            if let song = openingSong {
+                WaveformPracticeView(song: song, context: context)
+            }
+        }
         // Present by a Bool, not `.sheet(item:)` on the `Song`: a session-new song's
         // `persistentModelID` (its default Identifiable id) flips temporary→permanent on the
         // first autosave, and item-based presentation reads that as an identity change and
@@ -284,7 +296,12 @@ struct LibraryView: View {
     private func handleImport(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
-            Task { await importModel.run(urls: urls, into: context) }
+            Task {
+                let outcome = await importModel.run(urls: urls, into: context)
+                // Import one song and you meant to play it — open its waveform rather than leaving it
+                // to be found in the list. A batch (or a run with skipped files) stays put.
+                openingSong = importModel.takeSongToOpen(after: outcome)
+            }
         case .failure(let error):
             importError = error.localizedDescription
         }

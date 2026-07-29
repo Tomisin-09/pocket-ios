@@ -236,6 +236,11 @@ struct ModeDescriptionLine: View {
     var gridOn = true
     var onToggleGrid: () -> Void = {}
     @State private var showingInfo = false
+    /// What pinch-zoom anchors to (ADR 0098) — off (the default) holds the spot under your fingers,
+    /// on re-centres the window on the playhead. The setting already existed in Settings; this is the
+    /// same `UserDefaults` key surfaced where the gesture is, since it's a per-moment choice (are you
+    /// inspecting a spot, or chasing a moving playhead?) rather than a set-once preference.
+    @AppStorage(AppSettings.Key.zoomFollowsPlayhead) private var zoomFollowsPlayhead = false
 
     var body: some View {
         HStack {
@@ -249,6 +254,20 @@ struct ModeDescriptionLine: View {
                 LoopControlsInfo().presentationCompactAdaptation(.popover)
             }
             Spacer()
+            Button {
+                zoomFollowsPlayhead.toggle()
+                haptic(.light)
+            } label: {
+                Label("Follow", systemImage: "scope")
+                    .font(.futura(.footnote, weight: .medium))
+                    .foregroundStyle(zoomFollowsPlayhead ? PocketColor.textPrimary
+                                                         : PocketColor.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(zoomFollowsPlayhead ? "Zoom follows the playhead"
+                                                    : "Zoom stays where you pinch")
+            .accessibilityHint("Changes what pinch-to-zoom anchors to")
+            .padding(.trailing, gridAvailable ? 14 : 0)
             if gridAvailable {
                 Button(action: onToggleGrid) {
                     Label("Grid", systemImage: "grid")
@@ -275,6 +294,8 @@ private struct LoopControlsInfo: View {
             row("Fine-tune", "Drag the A / B handles to move the ends")
             row("Re-edit later", "Drag a saved loop's edge on the waveform")
             row("Move around", "Tap or drag to seek · pinch to zoom")
+            row("Follow", "Off: zoom holds the spot under your fingers · On: it re-centres on the "
+                + "playhead")
         }
         .padding(16)
         .frame(maxWidth: 290)

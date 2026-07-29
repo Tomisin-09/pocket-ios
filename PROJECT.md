@@ -118,7 +118,10 @@ unit-tested `BeatGrid`, grouped by the song's **time signature** (`beatsPerBar`,
 default 4/4). A **scrub** seek deliberately drops the beat grid and catches only the sparse
 landmarks (markers + loop edges), the same set the minimap uses, so a free scrub between beats
 lands where the finger lifts instead of magnetizing to the pulse (ADR 0080). A per-song **Grid** toggle on the "Loop controls" row shows/hides it, appearing
-only once a grid exists. The **"Set BPM"** affordance opens a tempo
+only once a grid exists. The same row carries a **Follow** toggle — the ADR-0098 "zoom follows
+playhead" preference surfaced where the gesture is (it reads/writes the Settings key, so the two stay
+one switch), since anchoring the pinch to the playhead rather than to your fingers is a per-moment
+choice. The **"Set BPM"** affordance opens a tempo
 editor (`BPMSheet`): **tap-tempo** (each tap captures song-time, so in-loop / slowed tapping
 still reads the true tempo — pure `TempoMath.bpm(fromTapTimes:)`) or **manual** entry, plus
 **the 1** placed by dragging a waveform handle that **snaps to the loudest transient**
@@ -178,7 +181,9 @@ space** (`PracticeView`, ADR 0046 — a **hub** over two unit libraries: `Exerci
 row pushing its own list — each with a **sort menu + search** (`PracticeLibrarySort`, ADR 0056:
 loops by Song · Name · Command · Mastery, exercises by Name · Command · Recently added; choice
 persisted per library). An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
-— both owning their own engine. On the
+— both owning their own engine. A **just-created** exercise opens the same way: `ExerciseLibraryView`
+stages it on create and pushes its run screen once the create sheet is gone (skipped for a locked Pro
+template, which stays badged in the list). On the
 exercise run setup the tempos (working/command/reach) and the Steps granularity sit inside a
 collapsible **Practice Settings** panel (`PracticeSettingsPanel`) below the title — collapsed by
 default to a one-line tempo summary, mirroring the nested Steps disclosure. The
@@ -223,7 +228,8 @@ pinned `targetSpeedOverride`, ADR 0075) and the staircase reuses `CommandRamp` v
 door rather than the root. Importing a DRM-free local/iCloud **audio file** takes a
 security-scoped bookmark and extracts its real waveform (`WaveformExtractor`),
 persisting a `Song` to practice, while an empty state offers import or a bundled
-demo. **Holding a song card** → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
+demo. Importing a **single** file (cleanly — `SongImportSummary.isSingleCleanImport`) pushes that
+song's waveform straight away from either **+**; a batch lands in the library instead. **Holding a song card** → **Edit** opens a **song metadata sheet** (`SongEditSheet`)
 (a context menu — swipe still offers a quick Delete, a tap opens the song for practice)
 for title/artist/album/**genre** (canonicalised on write through `Labels.canonicalSingle`
 and converged onto an existing library genre's spelling, ADR 0036)/year/**key** (a closed
@@ -286,7 +292,9 @@ reversing 0058's waveform read-only): the same `JournalSheet` + `JournalWriter` 
 can be journalled without launching a run. The loop settings sheet also carries a **Train your ear**
 button (ADR 0104) — ear training as "the loops, re-surfaced", an *away-from-the-guitar* exercise: an
 `EarTrainingSheet` that plays the loop's own audio cycling continuously (via an `EarTrainingPlayer`
-wrapping a `LoopRunModel`, no auto-stop — distinct from the routine-preview `LoopAudioPreviewPlayer`) so
+wrapping a `LoopRunModel`, no auto-stop — distinct from the routine-preview `LoopAudioPreviewPlayer`;
+opening it **pauses the waveform** through `onOpenEarTraining` → `pauseForNestedAudio`, the same
+double-audio guard "Practice now" uses, so the transport reads Play on return) so
 you **hum or sing it back**, with a live **−/+ tempo control** (25–150% of original, `LoopRunModel.
 setAuditionPercent` pushing the rate mid-listen) to slow the phrase down. The loop's identity (name +
 song prominent, type/tempo/range caption) is shown up top — no reveal toggle; "what you hear" notes save

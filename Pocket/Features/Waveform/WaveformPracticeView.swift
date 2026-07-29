@@ -85,7 +85,8 @@ struct WaveformPracticeView: View {
                           onDelete: { model.deleteLoop(loop) },
                           onAdjustRange: { model.startRangeEdit(loop) },
                           onSaved: { restore in model.presentUndo("Saved changes", undo: restore) },
-                          onPracticeNow: { model.pendingPracticeLoop = loop })
+                          onPracticeNow: { model.pendingPracticeLoop = loop },
+                          onOpenEarTraining: model.pauseForNestedAudio)
         }
         .fullScreenCover(item: $model.practiceLoop) { loop in
             // "Practice now" from the edit sheet (ADR 0082): the loop trainer full-screen. The back

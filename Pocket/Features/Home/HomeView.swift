@@ -11,8 +11,9 @@ struct HomeView: View {
     @Environment(\.modelContext) private var context
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112). Both carry safe preview defaults
     /// (free / no-op), so `HomeView` previews render without a `StoreManager` in the environment.
-    @Environment(\.isPro) private var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
+    /// Non-private (like the `@Query`s below) so the `HomeView+Cards` extension can gate its CTA.
+    @Environment(\.isPro) var isPro
+    @Environment(\.presentPaywall) var presentPaywall
     @Query(sort: \Song.title) private var songs: [Song]
     @Query private var routines: [Routine]
     // Non-private so the `HomeView+ProfileMoment` extension (a separate file, for the length cap) can
@@ -30,7 +31,8 @@ struct HomeView: View {
     @State var showingNamePrompt = false
     /// Drives the first-launch curation intake sheet.
     @State var showingIntake = false
-    @State private var importing = false
+    /// Drives the file importer — non-private for the add-song button in `HomeView+Cards`.
+    @State var importing = false
     @State private var importError: String?
     /// Drives multi-select import: progress overlay + partial-failure summary (shared
     /// behaviour with the library's + button).
@@ -38,6 +40,9 @@ struct HomeView: View {
     /// Pushes the library after a home-screen import lands songs, so the user sees
     /// where they went (from the library itself there's nowhere to go).
     @State private var showingLibrary = false
+    /// The song a single-file import just created — pushed straight to its waveform instead of the
+    /// library ("open on create"). A batch still lands in the library.
+    @State private var openingSong: Song?
     @State private var showingMetronome = false
 
     /// How many routines the "recent routines" rail shows.
@@ -127,6 +132,15 @@ struct HomeView: View {
             }
             .songImportFeedback(importModel)
             .navigationDestination(isPresented: $showingLibrary) { LibraryView() }
+            // Import a single song from the hub and it opens for practice. Bool-bound, not
+            // `item:`-bound: a just-inserted `Song`'s `persistentModelID` flips on the first autosave
+            // and would pop an item-based destination (ADR 0090; `docs/swiftdata-gotchas.md`).
+            .navigationDestination(isPresented: Binding(get: { openingSong != nil },
+                                                        set: { if !$0 { openingSong = nil } })) {
+                if let song = openingSong {
+                    WaveformPracticeView(song: song, context: context)
+                }
+            }
             .fullScreenCover(isPresented: $showingMetronome) {
                 MetronomeView()
             }
@@ -329,72 +343,17 @@ struct HomeView: View {
         case .success(let urls):
             Task {
                 let outcome = await importModel.run(urls: urls, into: context)
-                // Land the user in the library so they see the songs they just added;
+                // One song: open it — importing a single file is the start of practising it.
+                if let song = importModel.takeSongToOpen(after: outcome) {
+                    openingSong = song
+                    return
+                }
+                // Otherwise land the user in the library so they see the songs they just added;
                 // if nothing imported (all skipped), stay put — the summary alert explains.
                 if outcome.imported > 0 { showingLibrary = true }
             }
         case .failure(let error):
             importError = error.localizedDescription
         }
-    }
-}
-
-/// The add-song toolbar button, split into an extension so `HomeView`'s body stays within
-/// SwiftLint's `type_body_length`.
-private extension HomeView {
-    /// Solid green disc with a bold dark plus — mirrors the app's dark-content-on-filled-colour
-    /// convention (e.g. the teal CTA). Its enclosing `ToolbarItem` drops the iOS 26 shared glass
-    /// background so the disc reads as a flat fill.
-    var addSongButton: some View {
-        Button { importing = true } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(PocketColor.background)
-                .frame(width: 34, height: 34)
-                .background(Circle().fill(PocketColor.active))
-        }
-        .accessibilityLabel("Add a song")
-    }
-
-    /// The **primary** home action (planner, ADR 0046/0015): a filled teal CTA that pushes
-    /// `PlannerView`, where goals (set once) drive a freshly-generated, goal-adaptive session each
-    /// run. Today's session is a **Pro** feature (ADR 0112): Pro pushes the planner; a free player
-    /// gets the paywall instead, with a small lock so the card reads as inviting-but-locked, not
-    /// broken. In its own extension so `HomeView`'s body stays within `type_body_length`.
-    var startTodaySessionCard: some View {
-        Group {
-            if isPro {
-                NavigationLink { PlannerView() } label: { startTodaySessionLabel }
-            } else {
-                Button { presentPaywall(.planner) } label: { startTodaySessionLabel }
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Start today's session")
-        .accessibilityHint("A fresh session generated from your goals and practice history")
-    }
-
-    var startTodaySessionLabel: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "sparkles")
-                .font(.futura(.title2))
-                .foregroundStyle(PocketColor.background)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Start today's session")
-                    .font(.futura(.headline))
-                    .foregroundStyle(PocketColor.background)
-                Text("A fresh session from your goals and history")
-                    .font(.futura(.subheadline))
-                    .foregroundStyle(PocketColor.background.opacity(0.85))
-            }
-            Spacer(minLength: 8)
-            // Free players see a lock (a Pro gate); Pro sees the usual chevron.
-            Image(systemName: isPro ? "chevron.right" : "lock.fill")
-                .font(.futura(.footnote, weight: .semibold))
-                .foregroundStyle(PocketColor.background.opacity(0.85))
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCTA))
     }
 }
