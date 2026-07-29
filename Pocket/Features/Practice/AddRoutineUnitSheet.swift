@@ -8,7 +8,8 @@ import SwiftUI
 /// — Exercises group by their **template** (Strumming, Scales …), Loops group by their **song** —
 /// and one more tap opens that group's units; **Songs** is a flat list (a song is the top entity).
 /// Exercises come first (the exercises-first direction — technique mode, audio-free, works with an
-/// empty library).
+/// empty library). Each grouped level also offers **All …** at its top, the same units flat and
+/// A→Z, for when you know the unit's name but not the group it landed in (ADR 0127).
 ///
 /// **Multi-add (ADR 0127):** a tap adds the unit to the routine *there and then* and leaves the
 /// sheet open, so you can add a scale drill, back out, drill into Loops and add two more without
@@ -96,7 +97,8 @@ struct AddRoutineUnitSheet: View {
     @ViewBuilder private var bucketsSection: some View {
         Section {
             NavigationLink {
-                GroupPickList(title: "Exercises", groups: exerciseGroups)
+                GroupPickList(title: "Exercises", groups: exerciseGroups,
+                              allRows: allExerciseRows)
             } label: {
                 bucketRow(title: "Exercises", subtitle: "By template",
                           icon: "metronome", count: exercises.count)
@@ -104,7 +106,7 @@ struct AddRoutineUnitSheet: View {
             .listRowBackground(PocketColor.background)
 
             NavigationLink {
-                GroupPickList(title: "Loops", groups: loopGroups)
+                GroupPickList(title: "Loops", groups: loopGroups, allRows: allLoopRows)
             } label: {
                 bucketRow(title: "Loops", subtitle: "By song",
                           icon: "repeat", count: trainableLoops.count)
@@ -123,7 +125,8 @@ struct AddRoutineUnitSheet: View {
             // hum/sing a loop inside the routine. Kept a peer bucket so it's discoverable
             // without burying a mode toggle under Loops.
             NavigationLink {
-                GroupPickList(title: "Ear training", groups: earLoopGroups)
+                GroupPickList(title: "Ear training", groups: earLoopGroups,
+                              allRows: allEarLoopRows)
             } label: {
                 bucketRow(title: "Ear training", subtitle: "Hum & sing a loop",
                           icon: "ear", count: trainableLoops.count)
@@ -160,7 +163,7 @@ struct AddRoutineUnitSheet: View {
                 .foregroundStyle(PocketColor.textSecondary)
                 .listRowBackground(PocketColor.background)
         } else {
-            resultSection("Exercises", rows: matchingExercises.map(exerciseRow))
+            resultSection("Exercises", rows: matchingExercises.map { exerciseRow($0) })
             resultSection("Loops", rows: matchingLoops.map(loopRow))
             // Loops appear again as ear-training picks — the same units, a different block (ADR 0104).
             resultSection("Ear training", rows: matchingLoops.map(earLoopRow))
@@ -216,7 +219,7 @@ struct AddRoutineUnitSheet: View {
         return ExerciseTemplate.displayOrder.compactMap { template in
             guard let members = byTemplate[template], !members.isEmpty else { return nil }
             return PickGroup(id: template.rawValue, title: template.displayName,
-                             icon: template.iconName, rows: members.map(exerciseRow))
+                             icon: template.iconName, rows: members.map { exerciseRow($0) })
         }
     }
 
@@ -226,6 +229,19 @@ struct AddRoutineUnitSheet: View {
     /// ears-only pick action (ADR 0104 Slice 2), so both stay one implementation.
     private var loopGroups: [PickGroup] { loopGroups(makeRow: loopRow) }
     private var earLoopGroups: [PickGroup] { loopGroups(makeRow: earLoopRow) }
+
+    /// Every unit in a bucket, flat and A→Z (the `@Query` order) — the **All** escape hatch each
+    /// grouped level offers (ADR 0127). The grouping is still the way in; this is for the times you
+    /// know the drill's name but not which template it was made under.
+    ///
+    /// The exercise rows take the **template** as their context line, because in the grouped list
+    /// that fact was carried by the section you had to walk through to get there. Loop and ear rows
+    /// already show their song, so they're the same rows the groups render.
+    private var allExerciseRows: [PickRow] {
+        exercises.map { exerciseRow($0, showsTemplate: true) }
+    }
+    private var allLoopRows: [PickRow] { trainableLoops.map(loopRow) }
+    private var allEarLoopRows: [PickRow] { trainableLoops.map(earLoopRow) }
 
     private func loopGroups(makeRow: (Loop) -> PickRow) -> [PickGroup] {
         let bySong = Dictionary(grouping: trainableLoops) { $0.song?.title ?? "" }
@@ -251,9 +267,12 @@ struct AddRoutineUnitSheet: View {
         return dated.sorted { $0.date > $1.date }.prefix(6).map(\.row)
     }
 
-    private func exerciseRow(_ exercise: Exercise) -> PickRow {
+    /// An exercise row. `showsTemplate` is on only in the flat **All exercises** list, where the
+    /// template has to move onto the row — in the grouped list it's the section you walked through.
+    private func exerciseRow(_ exercise: Exercise, showsTemplate: Bool = false) -> PickRow {
         row(.exercise(exercise), title: exercise.name.isEmpty ? "Untitled" : exercise.name,
-            context: nil, progress: exercise.commandProgressLabel)
+            context: showsTemplate ? exercise.template.displayName : nil,
+            progress: exercise.commandProgressLabel)
     }
 
     private func loopRow(_ loop: Loop) -> PickRow {

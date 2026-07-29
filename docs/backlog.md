@@ -402,6 +402,11 @@ Notes worth carrying forward:
   confirm step in front of an action that is already provisional (every edit here is sandboxed and
   reversible by Cancel, ADR 0071; it would be the only place in the app you confirm a change twice).
   The accepted cost: a **single** add now needs a Done tap where it used to dismiss itself.
+- **Every grouped level gained an "All …" row** (device feedback, 2026-07-29). Grouping assumes you
+  remember which template/song a unit landed under, and you often don't. It sits in its own section
+  *above* the groups — not a ninth group, the way *past* them — so the groups stay the default path;
+  hidden at one group; and the flat exercise rows carry the **template** as context, since the
+  section header no longer does. Songs was already flat.
 - **The picker holds no state.** The editor keeps `pickID → RoutineItem.uid` for the open session and
   hands the id set back each render, so a checkmark is drawn *because a block exists*. The toggle is
   **session-scoped** — it removes only the block this sheet created, never one added earlier, so a

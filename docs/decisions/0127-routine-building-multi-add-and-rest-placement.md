@@ -106,6 +106,27 @@ is untouched, no migration is owed, and a routine that already contains adjacent
 session, a hand-built one) still loads, still runs, and can still be dragged around. We refuse to
 *create* the shape; we don't police one that exists.
 
+### 5. Every grouped level offers "All …", but grouping stays the way in
+
+Exercises → templates and Loops/Ear training → songs both assume you know which group a unit landed
+in. You often don't: a drill you named "Sweep 4s" is findable by name and not by remembering it was
+made under Arpeggios. So each grouped level carries an **All exercises / All loops / All ear
+training** row — the same units, flat and A→Z.
+
+It sits in a **section of its own above the groups**, not as a ninth group: it isn't a peer of the
+groups, it's the way *past* them, and a section break says that without a word of copy. The groups
+keep the bulk of the screen and stay the default path, which is what makes this an escape hatch
+rather than a replacement. It's hidden when there's only one group, where it would just be that
+group again under another name.
+
+**Songs are untouched** — a song is a top-level entity with nothing to group by, so that bucket is
+already the flat list this row produces.
+
+In the flat exercise list the **template moves onto the row** as its context line. In the grouped
+list that fact is carried by the section you walked through to get there; drop the walk and it has to
+be carried by the row, or an "All" list of similarly-named drills is unreadable. Loop and ear rows
+already show their song, so they are the same rows the groups render.
+
 ## Consequences
 
 - **The picker's callback surface collapses from four to one.** `onPickExercise`/`onPickLoop`/

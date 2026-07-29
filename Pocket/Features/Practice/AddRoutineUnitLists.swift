@@ -30,12 +30,47 @@ enum RoutineUnitPick {
 /// A list of **sub-buckets** — the middle level of the picker (Exercises→templates,
 /// Loops→songs). Each row is a group that drills into its `UnitPickList`. Kept dumb (a rendered
 /// array of `PickGroup`) so the sheet owns all querying.
+///
+/// The grouping stays the **primary** way in, but it assumes you know which template a drill was
+/// made under — so a first section offers **All …**, the same units flat and A→Z (ADR 0127). It's a
+/// section of its own rather than a ninth group: it isn't a peer of the groups, it's the way past
+/// them. Hidden when there's only one group, where it would just be that group again.
 struct GroupPickList: View {
     let title: String
     let groups: [PickGroup]
+    /// Every unit in this bucket, flat. Empty = no **All** row (the Songs bucket, already flat,
+    /// never renders this level at all).
+    var allRows: [PickRow] = []
+
+    /// "Exercises" → "All exercises". The bucket already names itself; this only has to say *all*.
+    private var allTitle: String { "All " + title.lowercased() }
 
     var body: some View {
         List {
+            if groups.count > 1 && !allRows.isEmpty {
+                Section {
+                    NavigationLink {
+                        UnitPickList(title: allTitle, rows: allRows)
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "list.bullet")
+                                .font(.futura(.body))
+                                .foregroundStyle(PocketColor.practice)
+                                .frame(width: 28)
+                            Text(allTitle)
+                                .font(.futura(.body))
+                                .foregroundStyle(PocketColor.textPrimary)
+                            Spacer(minLength: 8)
+                            Text("\(allRows.count)")
+                                .font(.pocketMono(.body))
+                                .foregroundStyle(PocketColor.textSecondary)
+                        }
+                        .accessibilityLabel("\(allTitle), \(allRows.count)")
+                    }
+                    .listRowBackground(PocketColor.background)
+                }
+            }
+
             if groups.isEmpty {
                 Text("Nothing here yet.")
                     .font(.futura(.footnote))
