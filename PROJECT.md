@@ -118,7 +118,10 @@ unit-tested `BeatGrid`, grouped by the song's **time signature** (`beatsPerBar`,
 default 4/4). A **scrub** seek deliberately drops the beat grid and catches only the sparse
 landmarks (markers + loop edges), the same set the minimap uses, so a free scrub between beats
 lands where the finger lifts instead of magnetizing to the pulse (ADR 0080). A per-song **Grid** toggle on the "Loop controls" row shows/hides it, appearing
-only once a grid exists. The same row carries a **Follow** toggle — the ADR-0098 "zoom follows
+only once a grid exists; when a **tempo is set but the 1 isn't** (`needsDownbeat` — a BPM-only commit,
+since ADR 0022 won't guess the phase) that slot shows **Set the 1** instead, entering downbeat
+placement, so the half-set state explains itself rather than reading as a broken grid. The same row
+carries a **Follow** toggle — the ADR-0098 "zoom follows
 playhead" preference surfaced where the gesture is (it reads/writes the Settings key, so the two stay
 one switch), since anchoring the pinch to the playhead rather than to your fingers is a per-moment
 choice. The **"Set BPM"** affordance opens a tempo

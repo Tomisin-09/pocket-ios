@@ -42,7 +42,9 @@ import SwiftUI
         VStack(spacing: 24) {
             ModeDescriptionLine(gridAvailable: true, gridOn: gridOn,
                                 onToggleGrid: { gridOn.toggle() })
-            ModeDescriptionLine(gridAvailable: false)   // no tempo set yet — Grid absent
+            // Tempo set, the 1 not placed: the Grid slot offers the missing step.
+            ModeDescriptionLine(needsDownbeat: true)
+            ModeDescriptionLine()   // no tempo at all — neither control
         }
         .padding()
     }

@@ -206,6 +206,13 @@ final class WaveformPracticeModel {
     /// toggle's visibility (ADR 0051), the same condition that makes `beatGrid` non-empty.
     var gridAvailable: Bool { !beatGrid.isEmpty }
 
+    /// Tempo set, but no **1** placed — so `beatGrid` is empty and there are no gridlines, no bar
+    /// lines and no beat snapping. It's the state a BPM-only commit leaves behind (`commitTempo`
+    /// deliberately won't guess the phase, ADR 0022), and on device it reads as "I set the BPM, where's
+    /// my grid?" because *nothing* appears in the Grid toggle's place. Drives a **Set the 1** prompt
+    /// there instead of silence.
+    var needsDownbeat: Bool { song.tempoBPM != nil && song.downbeatSeconds == nil }
+
     /// Toggle this song's gridlines (ADR 0051). Mutating the `@Model` persists the per-song
     /// preference; the grid still feeds snap candidates when hidden.
     func toggleGridlines() {

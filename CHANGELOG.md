@@ -38,6 +38,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   still read per note by VoiceOver when nothing is moving.
 
 ### Fixed
+- **Setting a BPM but no "1" no longer looks like a broken grid.** The beat grid needs both a tempo
+  *and* a downbeat — the tempo fixes the spacing, the 1 fixes where the bars fall, and Pocket won't
+  guess the second one. Committing a BPM alone therefore drew no gridlines and showed no Grid toggle,
+  with nothing explaining the gap. That slot now offers **Set the 1**, which drops you straight into
+  placing the downbeat on the waveform.
 - **Train your ear no longer plays over the song.** Opening ear training from a loop's settings left the
   waveform playing underneath its own looping audio — two streams at once. The waveform now pauses as
   the sheet opens, so closing it leaves the transport showing **Play**, which is the state the screen

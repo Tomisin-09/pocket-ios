@@ -84,6 +84,12 @@ three items landed; no ADR. Notes worth carrying forward:
   the first autosave and pops an item-based destination (ADR 0090). The predicate lives on
   `SongImportSummary.isSingleCleanImport` (pure, unit-tested); auto-opening also consumes the
   "Imported 1 song." alert, since the screen *is* the confirmation.
+- **Device pass found a pre-existing gap: a BPM with no 1 reads as a broken grid.** `commitTempo`
+  won't guess the phase (ADR 0022), so a BPM-only commit leaves `beatGrid` empty — no gridlines *and*
+  no Grid toggle, unexplained. The toggle's slot now shows **Set the 1** (`model.needsDownbeat` →
+  `beginSetDownbeat()`). Related to, but smaller than, Slice 5's "keep a visible affordance while the
+  tempo is unknown" — that one is about discovering *Set BPM* on a fresh import; this is about the
+  half-set state after it.
 - **Deliberately not included:** the metronome automator's "Save as exercise" seam still just saves. It
   fires mid-climb inside a full-screen cover with no stack to push onto, and yanking the user out of a
   running metronome session is the opposite of what that seam is for.

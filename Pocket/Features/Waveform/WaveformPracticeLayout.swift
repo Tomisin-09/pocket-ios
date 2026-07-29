@@ -68,7 +68,9 @@ struct PracticeCockpit<Header: View>: View {
             } else {
                 ModeDescriptionLine(gridAvailable: model.gridAvailable,
                                     gridOn: model.song.showsGridlines,
-                                    onToggleGrid: model.toggleGridlines)
+                                    onToggleGrid: model.toggleGridlines,
+                                    needsDownbeat: model.needsDownbeat,
+                                    onSetDownbeat: { model.beginSetDownbeat() })
                     .transition(.opacity)
             }
         }
