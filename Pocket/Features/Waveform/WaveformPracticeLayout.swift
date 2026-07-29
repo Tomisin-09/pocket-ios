@@ -166,10 +166,15 @@ struct PracticeReference: View {
                            onDelete: model.deleteLoop,
                            onAdjustRange: { model.startRangeEdit($0) },
                            onAutomator: { model.editingAutomatorLoop = StableRef(value: $0) },
+                           selection: model.loopSelectionSeam,               // ADR 0125
+                           favoriteAdds: model.bulkFavoriteAdds,
+                           onBulkFavorite: model.favoriteSelectedLoops,
+                           onBulkCategories: { model.showingLoopBulkEdit = true },
                            compact: compact)
                 MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
                              onSeek: model.seekToMarker, onEdit: { model.editingMarker = StableRef(value: $0) },
-                             onDelete: model.deleteMarker)
+                             onDelete: model.deleteMarker,
+                             selection: model.markerSelectionSeam)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)

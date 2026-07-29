@@ -117,6 +117,11 @@ struct WaveformPracticeView: View {
         .sheet(isPresented: $model.showingSongDetails) {
             SongDetailsSheet(song: model.song)
         }
+        // Bulk practice categories across the selected loops (ADR 0125), from the selection
+        // header's slider button — the chevron's old slot.
+        .sheet(isPresented: $model.showingLoopBulkEdit) {
+            LoopBulkEditSheet(loops: model.selectedLoops, onApply: model.applyBulkEdit)
+        }
         .sheet(isPresented: $model.settingBPM) {
             BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,
                      currentDownbeat: model.song.downbeatSeconds,

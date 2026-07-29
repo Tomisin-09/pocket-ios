@@ -167,7 +167,19 @@ on `#2a6796`) sits on the near-black background (ADR 0023). New loops are create
 play tap), no naming sheet — and **markers now drop the same way**: instantly,
 auto-named ("Marker 3", same `AutoName`), no naming step, renamed later from the row
 (ADR 0037, amending 0019's marker-naming exception); deleting a loop or marker offers an
-**Undo** toast that restores it with its original identity (ADR 0019). Practice
+**Undo** toast that restores it with its original identity (ADR 0019) — and since ADR 0125
+that delete is **deferred** (the row hides; the object is destroyed when the window closes),
+so Undo brings back the loop itself along with its journal, takes and routine links rather
+than a rebuilt copy of its numbers. Holding the **Loops** or **Markers** panel header enters
+**multi-select** (ADR 0125): the row's play glyph becomes a selection circle, the per-row
+adjust/automator controls hide, and the header becomes a bar that bulk-deletes under one
+undo, bulk-favourites (ADR 0119), and — in the collapse chevron's slot, reassigned only while
+selecting — opens a **partial** editor for type · focus · tags across the selection
+(fields the selection disagrees on read "Multiple" and stay unwritten; tags add, never
+replace). Markers select the same way with delete only. The loop row's play glyph now also
+carries the loop's ADR 0023 **identity colour** at all times — muted unless armed, so hue
+reads as identity and saturation as state, with the green leading bar left as the sole
+armed marker. Practice
 opens on the **full song** — no loop is armed until you pick one — and leaving the
 screen **wipes** the transient session knobs (active loop, speed, click, mode) while
 persisted song data is left untouched (ADR 0029). Arming a loop is now **command-anchored** (ADR 0089):

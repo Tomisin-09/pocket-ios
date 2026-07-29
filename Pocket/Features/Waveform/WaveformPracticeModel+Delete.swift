@@ -1,56 +1,87 @@
 import SwiftUI
 
-/// Loop / marker **deletion with undo** (ADR 0019), split out of `+Actions.swift` to keep
-/// each file under the length budget. Both deletes snapshot enough to rebuild the item
-/// (same `uid`) so the Undo toast restores it exactly — including, for a loop, its
-/// automator config and last-practiced speed (ADR 0040).
+/// Loop / marker **deletion with undo** (ADR 0019), one row or a whole selection
+/// (ADR 0125). Split out of `+Actions.swift` to keep each file under the length budget.
+///
+/// **Deferred, not delete-then-restore.** The original implementation snapshotted a loop's
+/// scalars and rebuilt it on undo. That worked for a loop's *numbers* and quietly lost
+/// everything hanging off it: `Loop` cascade-owns its journal entries and its recorded
+/// takes, and nullifies the routine blocks that reference it (ADR 0066). A rebuilt loop
+/// came back with an empty journal. So the delete now **hides** the row and destroys the
+/// object only when the undo window closes — the same trade Slice 3 settled on for the
+/// practice libraries: nothing can be lost by a missed commit, and the worst case is a
+/// delete that didn't happen. Bulk delete would have made the old lossiness N times worse.
 extension WaveformPracticeModel {
 
-    /// Delete a loop, with an Undo toast (ADR 0019). Edits to an existing loop are
-    /// written straight to the @Model by its edit sheet (auto-persisting), so there's
-    /// no `updateLoop`. Undo re-creates the loop from a snapshot (same uid + automator +
-    /// last-practiced speed) and restores it as active if it was.
-    func deleteLoop(_ loop: Loop) {
-        let wasActive = activeLoopID == loop.uid
+    // MARK: Loops
+
+    /// Delete one loop, with an Undo toast.
+    func deleteLoop(_ loop: Loop) { deleteLoops([loop]) }
+
+    /// Delete every selected loop under a **single** toast — one action, one undo.
+    func deleteSelectedLoops() {
+        deleteLoops(selectedLoops)
+        loopSelection.reconcile(with: loops.map(\.uid))
+    }
+
+    private func deleteLoops(_ targets: [Loop]) {
+        guard !targets.isEmpty else { return }
+        let uids = Set(targets.map(\.uid))
+        let wasActive = activeLoopID.map(uids.contains) ?? false
+        let previouslyActive = activeLoopID
         if wasActive {
             // Clean state (ADR 0029): deleting the loop you're hearing plays through
             // the song rather than silently arming a different saved region. Cleared
-            // *before* the delete so the `activeLoopID` didSet (ADR 0040) persists this
-            // loop's last-practiced speed while it's still live, not on a deleted object.
+            // *before* hiding it so the `activeLoopID` didSet (ADR 0040) persists this
+            // loop's last-practiced speed while the loop is still in `loops`.
             activeLoopID = nil
             applyActiveLoopToEngine()
         }
-        let (uid, name) = (loop.uid, loop.name)
-        let (start, end, lspeed, repeats) = (loop.start, loop.end, loop.speed, loop.repeats)
-        let lastPracticed = loop.lastPracticedSpeed
-        let automator = loop.automator
-        context.delete(loop)
-        presentUndo("Deleted \(name)") { [weak self] in
+        withAnimation(.easeOut(duration: 0.2)) { pendingDeletedLoopUIDs.formUnion(uids) }
+
+        let message = targets.count == 1
+            ? "Deleted \(targets[0].name)"
+            : "Deleted \(targets.count) loops"
+        presentUndo(message) { [weak self] in
             guard let self else { return }
-            let restored = Loop(name: name, start: start, end: end, speed: lspeed, repeats: repeats)
-            restored.uid = uid
-            restored.lastPracticedSpeed = lastPracticed
-            restored.automator = automator
-            self.context.insert(restored)
-            restored.song = self.song
+            withAnimation(.easeOut(duration: 0.2)) { self.pendingDeletedLoopUIDs.subtract(uids) }
             if wasActive {
-                self.activeLoopID = restored.uid
+                self.activeLoopID = previouslyActive
                 self.applyActiveLoopToEngine()
             }
+        } commit: { [weak self] in
+            guard let self else { return }
+            for loop in self.song.loops where uids.contains(loop.uid) { self.context.delete(loop) }
+            self.pendingDeletedLoopUIDs.subtract(uids)
         }
     }
 
-    /// Delete a marker, with an Undo toast (ADR 0019). Undo re-creates it from a
-    /// snapshot (same uid).
-    func deleteMarker(_ marker: Marker) {
-        let (uid, seconds, label) = (marker.uid, marker.seconds, marker.label)
-        context.delete(marker)
-        presentUndo("Deleted \(label)") { [weak self] in
+    // MARK: Markers
+
+    /// Delete one marker, with an Undo toast.
+    func deleteMarker(_ marker: Marker) { deleteMarkers([marker]) }
+
+    /// Delete every selected marker under a single toast.
+    func deleteSelectedMarkers() {
+        deleteMarkers(selectedMarkers)
+        markerSelection.reconcile(with: markers.map(\.uid))
+    }
+
+    private func deleteMarkers(_ targets: [Marker]) {
+        guard !targets.isEmpty else { return }
+        let uids = Set(targets.map(\.uid))
+        withAnimation(.easeOut(duration: 0.2)) { pendingDeletedMarkerUIDs.formUnion(uids) }
+
+        let message = targets.count == 1
+            ? "Deleted \(targets[0].label)"
+            : "Deleted \(targets.count) markers"
+        presentUndo(message) { [weak self] in
             guard let self else { return }
-            let restored = Marker(seconds: seconds, label: label)
-            restored.uid = uid
-            self.context.insert(restored)
-            restored.song = self.song
+            withAnimation(.easeOut(duration: 0.2)) { self.pendingDeletedMarkerUIDs.subtract(uids) }
+        } commit: { [weak self] in
+            guard let self else { return }
+            for marker in self.song.markers where uids.contains(marker.uid) { self.context.delete(marker) }
+            self.pendingDeletedMarkerUIDs.subtract(uids)
         }
     }
 }

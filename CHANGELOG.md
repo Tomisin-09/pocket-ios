@@ -6,6 +6,16 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Hold the Loops or Markers heading to select several at once.** The rows grow selection circles,
+  the per-row Automator and adjust controls step aside, and the heading turns into a bar that can
+  delete the lot under one undo, star or unstar them, and — where the collapse chevron sat — set
+  **type, focus and tags across every selected loop in one go**. That editor only writes what you
+  actually change: fields the selection disagrees on read "Multiple" and stay untouched, and tags are
+  added to each loop's own rather than replacing them. Markers select the same way, with delete.
+- **A loop's colour now shows on its row.** The play button carries the same identity colour the loop
+  has on the waveform and the minimap — dimmed for the loops that aren't armed, full strength for the
+  one that is — so five saved loops finally read as five distinct things in the list.
+
 - **Notes are spelled the way the music writes them.** A scale, an arpeggio or a song in a flat key
   now reads "B♭" instead of "A♯" — on the board, in the title, in the position label and in the song
   key picker. Where nothing states a key — the tuner, a chord you build by hand, a drill with no
@@ -82,6 +92,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   rather than something you set once and forget. The Settings toggle is the same switch, in sync.
 
 ### Changed
+- **Undoing a deleted loop now brings back everything that was attached to it.** Its journal entries,
+  recorded takes and routine links used to be gone for good even when you tapped Undo, because the
+  loop was rebuilt from a copy of its numbers. Deleting now hides the row and only destroys it once
+  the undo window closes, so Undo restores the loop itself.
 - **The transport's outer buttons skip through the song.** With no loop armed, rewind and forward
   are now **−10 / +10 seconds** — the nudge back to take the run-in again, without hunting for the
   spot on a zoomed waveform. Hold either one to change the jump: 5s, 10s, 15s, 30s or a minute, and
