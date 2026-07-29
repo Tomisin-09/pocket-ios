@@ -4,14 +4,36 @@
 <dict>
 	<!-- Required as of 2024. Keep this in sync with what the app actually does.
 	     EXPAND BEFORE PHASE 4: when the AI planner sends practice history to the
-	     Claude proxy, declare the relevant NSPrivacyCollectedDataTypes; until then
-	     no off-device data collection occurs. -->
+	     Claude proxy, declare the relevant NSPrivacyCollectedDataTypes.
+
+	     ADR 0120: anonymous product analytics (Aptabase) are declared below. They
+	     are opt-in and off by default, and the vocabulary is a closed Swift enum
+	     that cannot carry audio, recordings, journal notes, song titles or the
+	     artist name — see Pocket/Core/Analytics/AnalyticsEvent.swift.
+
+	     NSPrivacyTracking stays false: no IDFA, no ATT prompt, no ad SDK, and no
+	     data is ever linked to identity or shared with a data broker. Tier 3 is
+	     ruled out permanently, so this flag should never need to change. -->
 	<key>NSPrivacyTracking</key>
 	<false/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
-	<array/>
+	<array>
+		<!-- Mirrors the manifest the Aptabase SDK ships, which we inherit. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeProductInteraction</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>

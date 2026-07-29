@@ -13,6 +13,13 @@ struct PocketApp: App {
     // and is read by every paywall gate through the environment. Owned here for the app's lifetime.
     @State private var store = StoreManager()
 
+    init() {
+        // The composition root, and the only place that knows a vendor exists (ADR 0120). Installing
+        // the sink does **not** start the SDK — `AptabaseSink` initialises on its first *delivered*
+        // event, and the consent gate means that can only happen after an explicit opt-in.
+        Analytics.install(AptabaseSink())
+    }
+
     var body: some Scene {
         WindowGroup {
             HomeView()

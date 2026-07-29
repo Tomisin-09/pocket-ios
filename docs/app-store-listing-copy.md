@@ -56,8 +56,9 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 > • Chain loops, songs and exercises into a routine and press play
 > • Keep a private journal of how a passage is coming along
 >
-> Everything stays on your device and your iCloud. No account, no ads, no
-> tracking, nothing sent anywhere.
+> Your playing never leaves your device. No account, no ads, no tracking — your
+> audio, recordings, notes and song names stay with you, on your device and your
+> own iCloud. Anonymous usage counts are opt-in, and off unless you say yes.
 >
 > Named after the Tom Misch track that started it all.
 
@@ -72,6 +73,21 @@ Leave blank for v1, or point at the same host's landing page.
 ## Privacy Policy URL — REQUIRED
 Host `docs/privacy-policy.md` (rendered) somewhere public and paste the URL.
 GitHub Pages renders Markdown directly, which is the zero-effort option.
+
+## App Privacy (nutrition label) — CHANGED by ADR 0120
+No longer "Data Not Collected". Declare exactly one type, matching
+`Pocket/Resources/PrivacyInfo.xcprivacy` and the manifest the Aptabase SDK ships:
+
+- **Product Interaction** → used for **Analytics** → **not linked to the user's
+  identity** → **not used for tracking**.
+- Everything else stays *not collected*. No contact info, no identifiers, no user
+  content, no diagnostics.
+- **"Do you or your third-party partners use data for tracking?" → No.** There is
+  no IDFA, no ATT prompt and no ad SDK, permanently (ADR 0120 §1), so no ATT
+  purpose string is needed and `NSPrivacyTracking` stays `false`.
+
+Note for App Review, if asked: collection is **opt-in and off by default**; the
+app is fully functional with it declined.
 
 ## Category
 - **Primary:** Music
@@ -95,8 +111,10 @@ Auto-skipped — `ITSAppUsesNonExemptEncryption = false` is already set.
 **Privacy Policy — reuse the existing company policy.** Add a "Red Moon Practice
 (iOS app)" section to the existing per-service policy at
 `decooperations.co.uk/privacy` (Vercel), matching the Docket/website section style
-— see the paste-ready section text in chat / commit. It must state the app collects
-nothing (no accounts, no analytics, no networking, local + own-iCloud only). Give
+— see the paste-ready section text in chat / commit. It must match
+`docs/privacy-policy.md` as revised by ADR 0120: no accounts, local + own-iCloud
+only, your playing never transmitted, and **opt-in anonymous usage counts that are
+off by default**. The older "collects nothing" wording is no longer accurate. Give
 Apple the anchored URL so the reviewer lands on the relevant section:
 - **Privacy Policy URL** → `https://decooperations.co.uk/privacy#red-moon-practice`
   (verify the heading slugifies to that anchor).
@@ -171,6 +189,8 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] "Red Moon Practice" section added to decooperations.co.uk/privacy; `#red-moon-practice` anchor resolves
 - [ ] support.html deployed to decooperations.click/redmoon/support
 - [ ] Support URL + Privacy Policy URL pasted into the form
+- [ ] App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120); everything else "not collected"
+- [x] `APTABASE_APP_KEY` set in `project.yml` from the real EU-region app key (done 2026-07-29; `AptabaseSinkTests` pins that it resolves and is EU-region)
 - [ ] Category: Music (primary) / Education (secondary)
 - [ ] Age rating questionnaire → 4+
 - [ ] Price: Free · Availability set

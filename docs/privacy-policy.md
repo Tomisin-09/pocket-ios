@@ -1,6 +1,6 @@
 # Privacy Policy — Red Moon Practice
 
-_Last updated: 23 July 2026_
+_Last updated: 29 July 2026_
 
 Red Moon Practice ("the app") is a guitar-practice tool published by **Deco
 Operations Ltd** (registered in England and Wales, company number **17032490**;
@@ -14,13 +14,22 @@ Deco Operations company privacy policy at
 
 ## The short version
 
-**Red Moon Practice does not collect, transmit, or share any personal data.**
-The app has no user accounts, no analytics, no advertising, and no third-party
-trackers. It does not connect to any server. Everything you create stays on your
-device and, if you use iCloud, in your own private iCloud storage.
+**Your playing never leaves your device.** Red Moon Practice has no user
+accounts, no advertising and no third-party trackers, and it never transmits your
+audio, your recordings, your journal notes, your song names or your artist name.
+Everything you create stays on your device and, if you use iCloud, in your own
+private iCloud storage.
 
-Because the app collects no personal data, there is no data for Deco Operations
-Ltd, as data controller, to access, store, or process on its own systems.
+The one exception is **anonymous usage counts, which are off unless you turn them
+on.** If you opt in, the app reports which features get used — that a loop was
+made, that an exercise was created — so we know what to improve. These counts
+carry no account, no device identifier, no advertising ID and nothing that could
+identify you, and they are not joined up across sessions. You can turn them off
+at any time in Settings ▸ Privacy.
+
+Because the counts are irreversibly anonymous, there is no record tied to you for
+Deco Operations Ltd, as data controller, to access, correct or delete — a request
+to erase your data has nothing to find.
 
 ## What stays on your device
 
@@ -34,16 +43,54 @@ Ltd, as data controller, to access, store, or process on its own systems.
   or shared. The app only accesses files you explicitly select.
 - **Your recordings** — practice takes you record with the microphone are saved
   locally on your device. They are not uploaded or shared.
-- **App settings** — preferences (such as tempo defaults) are stored on-device
-  using standard system settings storage.
+- **App settings** — preferences (such as tempo defaults, and your answer to the
+  analytics question below) are stored on-device using standard system settings
+  storage.
+
+## Anonymous usage counts (off by default)
+
+If — and only if — you turn them on, the app sends a small, fixed set of counts
+about **which features get used**: that a practice run started, that a loop was
+made, that an exercise was created from a particular template, that a Red Moon Pro
+prompt was shown. That list is fixed in the app's code and cannot be extended
+without a new release.
+
+**What these counts can never contain.** Not your audio. Not your recordings. Not
+your journal notes, your song names, your file names, your artist name, or
+anything else you have typed or chosen. This is not a policy promise alone — the
+app is built so that the values it is *capable* of sending are a fixed set of
+predefined options, with no way to attach free text to them.
+
+**Nothing identifies you.** There is no account, no device identifier, no
+advertising identifier, no cookie and no fingerprint. The counts are not joined up
+across sessions or across apps, so they cannot be traced back to you or assembled
+into a profile — not by us, and not by anyone else.
+
+**Who processes them.** Our analytics provider is **Aptabase**, and your counts are
+processed in the **European Union**. They are used only to tell us which parts of
+the app are used and which are not. They are not sold, shared, or used for
+advertising.
+
+**Our lawful basis.** Your consent. Storing or reading information on your device
+for analytics requires consent under the Privacy and Electronic Communications
+Regulations (PECR reg. 6 / ePrivacy Directive Art. 5(3)), so we ask, and the answer
+is "no" until you say otherwise. Because the resulting counts are irreversibly
+anonymous, they are not personal data and the UK GDPR does not apply to them.
+
+**Withdrawing consent.** Settings ▸ Privacy, at any time. It takes effect
+immediately — the app checks your choice before every single count it would
+otherwise send.
 
 ## What we do not do
 
 - We do **not** collect names, email addresses, contacts, or location.
-- We do **not** use analytics or crash-reporting SDKs.
+- We do **not** send your audio, recordings, journal notes, song names or artist
+  name anywhere, ever — with or without analytics turned on.
 - We do **not** show ads or use advertising identifiers.
-- We do **not** track you across apps or websites.
-- We do **not** send any data to us or to any third party.
+- We do **not** use the IDFA, the App Tracking Transparency prompt, or any
+  advertising SDK. We never will; this is a permanent product boundary.
+- We do **not** track you across apps or websites, or build a profile of you.
+- We do **not** turn analytics on for you. It is off until you choose otherwise.
 
 ## Device permissions
 
@@ -67,16 +114,24 @@ information never leaves your device and is not stored between launches.
 Under the UK GDPR and the Data Protection Act 2018 you have rights over any
 personal data a company holds about you, including the rights to access, correct,
 erase, restrict, or object to its processing, to data portability, and to lodge a
-complaint with the Information Commissioner's Office (ICO). Because Red Moon
-Practice holds no personal data about you on our systems, there is nothing for us
-to retrieve or erase; any content you create lives on your own device and in your
-own iCloud account, under your control, and is removed when you delete it or
-remove the app.
+complaint with the Information Commissioner's Office (ICO).
+
+Red Moon Practice holds no personal data about you on our systems. Everything you
+create lives on your own device and in your own iCloud account, under your
+control, and is removed when you delete it or remove the app. The optional usage
+counts described above are irreversibly anonymous and carry no identifier, so
+there is no record tied to you for us to find — meaning a request to access,
+correct or erase your data has nothing to act on. That is a consequence of how the
+counts are built, not a refusal; if you would rather they stopped entirely, turn
+them off in Settings ▸ Privacy.
 
 ## Children's privacy
 
-The app is rated 4+ and does not collect any information from anyone, including
-children under 13.
+The app is rated 4+. It has no accounts, asks for no personal details, and
+collects nothing about anyone by default — including children under 13. The
+optional usage counts are off unless someone deliberately turns them on, and even
+then they contain no personal information and nothing that could identify a child:
+they record that a feature was used, never who used it.
 
 ## Changes to this policy
 

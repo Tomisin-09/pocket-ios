@@ -139,7 +139,7 @@ struct LibraryView: View {
             Button {
                 // A generated collection session is a real `Routine` — authoring, so Pro (ADR 0112).
                 guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                    return presentPaywall(.routine)
+                    return presentPaywall(.routine(.generate))
                 }
                 sessionCollection = collection
             } label: {

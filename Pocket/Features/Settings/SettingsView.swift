@@ -132,6 +132,8 @@ struct SettingsView: View {
             // that says what it does *not* override.
             NoteSpellingSection()
 
+            PrivacySection()
+
             Section("Routines") {
                 Toggle(isOn: $routineAutoStart) {
                     FieldInfoLabel(title: "Auto-start blocks", info: SettingsInfo.routineAutoStart)
@@ -330,6 +332,10 @@ struct SettingsView: View {
 enum SettingsInfo {
     static let haptics =
         "Light taps that confirm gestures like setting a loop or tapping tempo."
+    static let analytics =
+        "Counts of which features get used — how often a loop gets made, which exercises get built. "
+        + "Anonymous and not joined up across sessions, so it can't be traced back to you. Never "
+        + "your audio, notes, song names or artist name."
     static let countIn =
         "A count-in before a tempo climb begins, so you can settle in before playing."
     static let keepScreenAwake =

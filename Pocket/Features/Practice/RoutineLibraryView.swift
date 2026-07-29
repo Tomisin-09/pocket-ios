@@ -107,7 +107,7 @@ struct RoutineLibraryView: View {
                 Button {
                     // Building a routine is authoring — Pro, with no free-tier escape (ADR 0112).
                     guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                        return presentPaywall(.routine)
+                        return presentPaywall(.routine(.new))
                     }
                     creatingNew = true
                     haptic(.light)
@@ -169,7 +169,7 @@ struct RoutineLibraryView: View {
     private func play(_ routine: Routine) {
         let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
         guard AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
-            return presentPaywall(.routine)
+            return presentPaywall(.routine(.play))
         }
         playing = routine
         haptic(.light)
@@ -181,7 +181,7 @@ struct RoutineLibraryView: View {
     private func edit(_ routine: Routine) {
         let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
         guard AccessPolicy.canEditRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
-            return presentPaywall(.routine)
+            return presentPaywall(.routine(.edit))
         }
         editing = routine
         haptic(.light)
@@ -255,7 +255,7 @@ struct RoutineLibraryView: View {
     /// (ADR 0112): copying the free demo would otherwise mint an unlocked, editable routine. The
     /// blocks reference the **same** units; only the session is forked.
     private func duplicate(_ routine: Routine) {
-        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine) }
+        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine(.duplicate)) }
         let name = CopyNaming.copyName(of: routine.name, existing: routines.map(\.name))
         let (copy, blocks) = routine.duplicated(named: name)
         context.insert(copy)
@@ -282,7 +282,7 @@ struct RoutineLibraryView: View {
     /// A **fifth** routine producer, and so gated like the rest (ADR 0112) — it materialises a real
     /// `Routine`, which is authoring.
     private func generateQuickSession() {
-        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine) }
+        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine(.generate)) }
         let blocks = PracticePlanner.planQuickSession(minutes: SessionLength.default.minutes,
                                                       exercises: exercises)
         guard blocks.contains(where: { $0.unit != nil }) else { return }

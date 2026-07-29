@@ -202,7 +202,7 @@ struct ExerciseLibraryView: View {
     /// a relationship can't be set on an un-inserted model.
     private func duplicate(_ exercise: Exercise) {
         guard AccessPolicy.canAuthor(exercise.template, isPro: isPro) else {
-            return presentPaywall(.newExercise)
+            return presentPaywall(.newExercise(exercise.template))
         }
         let name = CopyNaming.copyName(of: exercise.name, existing: exercises.map(\.name))
         let copy = exercise.duplicated(named: name)
@@ -291,6 +291,7 @@ struct ExerciseLibraryView: View {
         // once the payload is on (ADR 0121).
         exercise.bindCommandRhythmToContent()
         context.insert(exercise)
+        Analytics.send(.exerciseCreated(template: plan.template, instrument: plan.instrument))
         haptic(.medium)
         justCreated = exercise
     }

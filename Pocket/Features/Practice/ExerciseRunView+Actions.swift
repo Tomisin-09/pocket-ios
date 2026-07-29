@@ -107,6 +107,12 @@ extension ExerciseRunView {
         // catches a couple of count-in clicks; a headphone take stays clean.
         recorder.beginArmedTake()
         engine.run(ramp: routine)
+        // Emitted from this user-action closure, never from the engine — nothing on the audio path
+        // may reach the analytics seam (ADR 0120).
+        AppSettings.recordPracticed()
+        Analytics.send(.practiceStarted(kind: .exercise,
+                                        source: routineContext == nil ? .standalone : .routine,
+                                        sinceInstall: AppSettings.installAgeBucket))
         haptic(.medium)
     }
 
@@ -117,6 +123,7 @@ extension ExerciseRunView {
         let summitedReach = reach
         let summitedCommand = command
         engine.onRampFinished = {
+            Analytics.send(.practiceCompleted(kind: .exercise))
             completion = RunCompletion(reach: summitedReach, command: summitedCommand)
         }
     }

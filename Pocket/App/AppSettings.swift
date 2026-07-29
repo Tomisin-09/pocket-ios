@@ -54,6 +54,10 @@ enum AppSettings {
         static let tunerReferenceA = "tunerReferenceA"
         static let tunerChimeEnabled = "tunerChimeEnabled"
         static let accidentalPreference = "accidentalPreference"
+        static let analyticsEnabled = "analyticsEnabled"
+        static let analyticsPromptSeen = "analyticsPromptSeen"
+        static let installDate = "installDate"
+        static let hasPracticed = "hasPracticed"
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -226,6 +230,54 @@ enum AppSettings {
     static func resolvedSpelling(storedValue: String?) -> NoteSpelling {
         guard let storedValue else { return .default }
         return NoteSpelling(rawValue: storedValue) ?? .default
+    }
+
+    // MARK: - Analytics (ADR 0120)
+
+    /// Anonymous product analytics on/off. **Default off** — analytics is opt-in, because ePrivacy /
+    /// PECR Art 5(3) covers accessing information on a device regardless of whether it is personal,
+    /// and product analytics is never "strictly necessary". Note `bool`'s own fallback is `true`, so
+    /// the `default: false` here is load-bearing and must not be dropped.
+    static var analyticsEnabled: Bool { bool(Key.analyticsEnabled, default: false) }
+
+    /// Whether the one-time consent ask has been shown. The ask is deliberately deferred until after
+    /// a first completed practice (ADR 0120) rather than placed in the first-run intake, so it does
+    /// not tax the activation flow it exists to measure.
+    static var analyticsPromptSeen: Bool { bool(Key.analyticsPromptSeen, default: false) }
+
+    /// Whether a practice run has ever been *started* on this install. Purely local bookkeeping
+    /// that decides when the analytics consent ask is due; written whether or not consent exists.
+    ///
+    /// Deliberately keyed on starting rather than finishing: a player who always stops a ramp early
+    /// would otherwise never be asked at all.
+    static var hasPracticed: Bool { bool(Key.hasPracticed, default: false) }
+
+    /// Record that practice has happened. Idempotent.
+    static func recordPracticed(store: UserDefaults = .standard) {
+        guard !store.bool(forKey: Key.hasPracticed) else { return }
+        store.set(true, forKey: Key.hasPracticed)
+    }
+
+    /// When the app was first launched, used only to bucket an install's age (`LatencyBucket`) —
+    /// never sent as a date. Written on first launch regardless of consent: it is the user's own
+    /// local state, exempt under Art 5(3) as strictly necessary, and only becomes an analytics input
+    /// if consent later arrives. Returns `nil` before the first launch has recorded it.
+    static var installDate: Date? {
+        UserDefaults.standard.object(forKey: Key.installDate) as? Date
+    }
+
+    /// Record the install date once. A no-op on every launch after the first, so the value can never
+    /// drift forward and quietly reset every install to "day 1".
+    static func recordInstallDateIfNeeded(now: Date = .now, store: UserDefaults = .standard) {
+        guard store.object(forKey: Key.installDate) == nil else { return }
+        store.set(now, forKey: Key.installDate)
+    }
+
+    /// How old this install is, bucketed. Falls back to `.day1` when no install date was recorded —
+    /// the honest reading for a launch that predates the key.
+    static var installAgeBucket: LatencyBucket {
+        guard let installDate else { return .day1 }
+        return LatencyBucket(installAge: Date.now.timeIntervalSince(installDate))
     }
 
     private static func bool(_ key: String, default fallback: Bool = true,

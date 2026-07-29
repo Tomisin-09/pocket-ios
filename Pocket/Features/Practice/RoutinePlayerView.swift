@@ -74,6 +74,11 @@ struct RoutinePlayerView: View {
         guard !player.stages.isEmpty else { return }
         routine.lastPracticed = .now
         try? modelContext.save()
+        // Guarded on a non-empty stage list, so this is "a real session started" rather than
+        // "the player screen appeared" — an all-orphaned routine lands on the summary, not a run.
+        AppSettings.recordPracticed()
+        Analytics.send(.practiceStarted(kind: .routine, source: .standalone,
+                                        sinceInstall: AppSettings.installAgeBucket))
     }
 
     /// A block finished on its own. On a **multi-rep** block with reps left, it runs the next rep

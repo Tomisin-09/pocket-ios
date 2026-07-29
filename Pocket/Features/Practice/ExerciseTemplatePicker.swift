@@ -64,7 +64,7 @@ struct ExerciseTemplatePicker: View {
             onSelect(template)
             haptic(.light)
         } else {
-            presentPaywall(.newExercise)
+            presentPaywall(.newExercise(template))
         }
     }
 

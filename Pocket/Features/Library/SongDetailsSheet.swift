@@ -319,7 +319,7 @@ extension SongDetailsSheet {
     var buildRoutineButton: some View {
         Button {
             guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                return presentPaywall(.routine)
+                return presentPaywall(.routine(.generate))
             }
             buildingRoutine = true
         } label: {

@@ -13,6 +13,9 @@ import SwiftUI
 struct TunerView: View {
     @State private var engine = TunerEngine()
     @State private var permission = MicPermission.status
+    /// Latch for the tool-opened event — `begin()` runs from `.onAppear`, which re-fires on every
+    /// return to the screen (ADR 0120).
+    @State private var reportedOpen = false
     @State private var hearTask: Task<Void, Never>?
     /// Which string's reference tone is currently sounding (its circle lights up), or `nil` when none —
     /// also `nil` for the chromatic Hear button, which has no circle. Drives the "playing" UI signal.
@@ -326,6 +329,13 @@ private extension TunerView {
 
     private func begin() {
         guard !isPreview else { return }
+        // `begin()` runs from `.onAppear`, which re-fires every time the screen comes back — so the
+        // open event needs its own latch or one player would look like a hundred (ADR 0120). There
+        // is no remote kill switch, so a runaway emitter can only be fixed by shipping a build.
+        if !reportedOpen {
+            reportedOpen = true
+            Analytics.send(.toolOpened(tool: .tuner))
+        }
         engine.referenceA = Double(referenceA)   // apply the saved calibration before we start mapping
         switch MicPermission.status {
         case .granted:
@@ -335,6 +345,9 @@ private extension TunerView {
             Task {
                 let granted = await MicPermission.request()
                 permission = MicPermission.status
+                // Only where a prompt actually happened — an already-granted return visit is not a
+                // permission *outcome* and would drown the denial rate we care about.
+                Analytics.send(.micPermission(outcome: granted ? .granted : .denied))
                 if granted { engine.start() }
             }
         case .denied:

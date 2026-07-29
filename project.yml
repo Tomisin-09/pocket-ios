@@ -20,12 +20,26 @@ configs:
   Debug: debug
   Release: release
 
+# The project's only third-party dependency (ADR 0120). Aptabase is MIT-licensed,
+# privacy-first product analytics: no device identifier, no cookie, no fingerprint,
+# and it tracks nothing automatically — every event is one we send deliberately from
+# the closed `AnalyticsEvent` vocabulary. Pinned to an exact version rather than a
+# range: this is the one component that can send data off-device, so an upgrade
+# should be a deliberate, reviewed act, not something a resolve picks up.
+packages:
+  Aptabase:
+    url: https://github.com/aptabase/aptabase-swift
+    exactVersion: 0.3.11
+
 targets:
   Pocket:
     type: application
     platform: iOS
     sources:
       - path: Pocket
+    dependencies:
+      - package: Aptabase
+        product: Aptabase
     # No `info:` block on purpose: the Info.plist is hand-maintained (it carries
     # documented usage strings, background modes and the portrait lock). An
     # `info:` block makes XcodeGen *generate* — i.e. overwrite — that file on
@@ -44,6 +58,17 @@ targets:
         CODE_SIGN_STYLE: Manual
         # App icon lives in Pocket/Resources/Assets.xcassets (AppIcon set).
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # ADR 0120. Aptabase's App Key is a **write-only ingest key**, not a secret: it can
+        # only post events and grants no read access to the dashboard, so it must ship in the
+        # client by design. That is the one carve-out to AGENTS.md's "no API keys in the client,
+        # ever" — which stands unchanged for the Claude proxy key (ADR 0002), a real credential
+        # that never leaves the backend. Empty here until an Aptabase app exists; the sink stays
+        # inert on an empty key, so the app ships collecting nothing either way. One key, not one
+        # per config: the SDK's TrackingMode.readFromEnvironment stamps `isDebug` from #if DEBUG
+        # and the dashboard separates debug traffic on its own. The `A-EU-` prefix is
+        # load-bearing — the SDK derives the ingest host from it, so a US key would silently
+        # send EU users' events to the wrong region. AptabaseSinkTests pins that.
+        APTABASE_APP_KEY: "A-EU-2959015188"
       # Backend base URL is injected per-config in Phase 4 (when the proxy
       # exists). Note: '//' in an Xcode build setting is treated as a comment,
       # so the URL is supplied via an .xcconfig using the `$()//` escape, not
@@ -51,6 +76,15 @@ targets:
       configs:
         Debug:
           POCKET_API_HOST: "localhost:8787"
+          # Warnings are errors for *our* code (AGENTS.md step 2 asks for a warning-free
+          # build anyway). This lives here rather than on the pre-push hook's xcodebuild
+          # command line because a command-line setting applies to every target in the
+          # graph — including SPM dependencies, which Xcode compiles with
+          # `-suppress-warnings`, and the two flags conflict outright ("error: conflicting
+          # options '-warnings-as-errors' and '-suppress-warnings'"). That broke the first
+          # push after Aptabase landed. Debug-only on purpose: an archive should never fail
+          # because a future SDK deprecates something.
+          SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
         Release:
           POCKET_API_HOST: "api.pocket.example.com"
     entitlements:

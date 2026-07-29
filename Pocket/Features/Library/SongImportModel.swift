@@ -94,6 +94,10 @@ final class SongImportModel {
 
         progress = nil
         let outcome = SongImportSummary(imported: imported, failedNames: failedNames)
+        // Counts only (ADR 0120) — `failedNames` are the player's own file names and must never
+        // leave the device. Reported here, the single completion point, rather than at the two
+        // callers (Home and Library), which would double-count.
+        Analytics.send(.songImported(count: outcome.imported, failed: outcome.failedNames.count))
         if outcome.isReportable { summary = outcome }
         return outcome
     }

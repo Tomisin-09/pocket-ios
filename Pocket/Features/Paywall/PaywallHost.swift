@@ -10,17 +10,37 @@ import SwiftUI
 private struct PaywallHost: ViewModifier {
     @Environment(StoreManager.self) private var store
     @State private var trigger: PaywallTrigger?
+    /// The trigger of the presentation now on screen, kept because `onDismiss` runs after
+    /// `$trigger` has already been cleared by `.sheet(item:)`.
+    @State private var presentedTrigger: PaywallTrigger?
+    /// Entitlement as it stood when the sheet went up, so "purchased" means *became* Pro during
+    /// this presentation rather than "is Pro", which an existing subscriber would always satisfy.
+    @State private var wasProAtPresent = false
 
     func body(content: Content) -> some View {
         content
             .environment(\.isPro, store.isPro)
-            .environment(\.presentPaywall, { trigger = $0 })
-            .sheet(item: $trigger) { trigger in
+            // Because every paywall in the app comes up here, this is the one place that has to
+            // report a gate firing (ADR 0120) — no gate call site knows or cares about analytics.
+            .environment(\.presentPaywall, { newTrigger in
+                presentedTrigger = newTrigger
+                wasProAtPresent = store.isPro
+                trigger = newTrigger
+                Analytics.send(.paywallShown(trigger: newTrigger))
+            })
+            .sheet(item: $trigger, onDismiss: reportDismissal) { trigger in
                 // Re-inject the store so the sheet's own environment carries it regardless of how
                 // SwiftUI propagates observables into sheets.
                 PaywallView(trigger: trigger)
                     .environment(store)
             }
+    }
+
+    private func reportDismissal() {
+        guard let presentedTrigger else { return }
+        Analytics.send(.paywallDismissed(trigger: presentedTrigger,
+                                         purchased: !wasProAtPresent && store.isPro))
+        self.presentedTrigger = nil
     }
 }
 

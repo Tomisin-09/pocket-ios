@@ -51,6 +51,11 @@ struct MetronomeAutomatorPanel: View {
                     name: plan.name, command: plan.command,
                     beatsPerBar: plan.signature.beats, noteValue: plan.signature.noteValue,
                     template: plan.template))
+                // The second, non-shared insert path (ADR 0120). The `commandAnchored` factory
+                // itself is *not* a valid choke point — the preset seeder uses it too, and would
+                // report six invented drills on every fresh install.
+                Analytics.send(.exerciseCreated(template: plan.template,
+                                                instrument: plan.instrument))
             }
         }
     }

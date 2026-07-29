@@ -78,10 +78,14 @@ final class RecordingController {
         case .recording: return
         case .armed: state = .idle
         case .idle:
+            let wasUndetermined = MicPermission.status == .undetermined
             guard await MicPermission.request() else {
+                if wasUndetermined { Analytics.send(.micPermission(outcome: .denied)) }
                 micDenied = true
                 return
             }
+            if wasUndetermined { Analytics.send(.micPermission(outcome: .granted)) }
+            Analytics.send(.toolOpened(tool: .recording))
             micDenied = false
             route = RecordingRoute.current()
             state = .armed

@@ -5,6 +5,17 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Red Moon can now learn what to improve — if you let it.** After your first practice, the app
+  asks once whether it can count which features get used. It's **off unless you say yes**, and
+  declining is one tap with no nagging afterwards. There's a switch in **Settings ▸ Privacy** either
+  way, and turning it off takes effect immediately.
+- **What that means in practice.** If you opt in, Red Moon counts things like "a loop was made" or
+  "an exercise was created" — anonymously, with no account, no advertising ID, and nothing that
+  joins your sessions together. Your playing never leaves your device: not your recordings, your
+  notes, your song names, or your artist name. There is no way for it to, by design — the list of
+  what can be sent is a fixed set that has no room for your words in it.
+
 ### Changed
 - **Adding to a routine no longer closes the picker.** Tap a drill and it goes in there and then —
   the row ticks, a count appears at the bottom, and you can carry on browsing and add five more

@@ -348,6 +348,29 @@ The app's front door (ADR 0044), in place of launching straight into the library
 practice screen are reached from it. Nothing is lost — the full library is one tap
 away under "See all".
 
+### 4.3 Analytics consent — the one-time ask
+
+A full-screen cover in the intake's register (ADR 0120), and the **last** of the three
+one-time Home moments — after the curation intake (ADR 0113) and the earned-a-name
+invitation, never competing with either.
+
+**When:** once, on returning Home after a **first practice** — deliberately *not* in the
+first-run intake. Analytics exists to measure whether a cold install reaches a first
+practice, so an extra screen in front of that flow would tax the very metric it observes,
+and would ask for trust before the player has any reason to extend it.
+
+**Layout:** headline → three icon-led points → two stacked full-width actions.
+The three points are the whole design, and their honesty is the point:
+*what we'd count* · *what never leaves this device* · *nothing that identifies you*.
+Written concretely ("your recordings, your notes, your song names, your artist name"),
+never in the abstract — this is the copy the brand claim rests on.
+
+**Weighting:** accept is the filled `PocketColor.practice` capsule and decline is plain
+text, matching the app's primary/secondary grammar — but decline is a **full-width,
+equally reachable target**, not a buried "no thanks", and it is the outcome of every
+other exit from the screen. A consent screen that nudges makes the privacy claim a lie.
+A closing line points at Settings ▸ Privacy, where the same switch lives permanently.
+
 ---
 
 ## 5. What to deliver for every screen

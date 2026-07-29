@@ -18,6 +18,9 @@ struct EarTrainingView: View {
     @State private var draftNote = ""
     /// Ear-notes saved this session — drives a quiet "saved to Journal" confirmation, no tally/score.
     @State private var savedThisSession = 0
+    /// Latch for the tool-opened event (ADR 0120) — this view is embedded by both the loop-settings
+    /// sheet and a routine's ear block, and `.onAppear` re-fires on a return.
+    @State private var reportedOpen = false
 
     init(loop: Loop) {
         self.loop = loop
@@ -34,6 +37,11 @@ struct EarTrainingView: View {
             introSection
             listenSection
             noteSection
+        }
+        .onAppear {
+            guard !reportedOpen else { return }
+            reportedOpen = true
+            Analytics.send(.toolOpened(tool: .earTraining))
         }
         .onDisappear { player.stop() }
     }
