@@ -54,8 +54,9 @@ final class SongPlayAlongModel {
     var currentTime: TimeInterval { engine.currentTime }
     var duration: TimeInterval { engine.duration }
 
-    /// Playback-speed bounds as integer percent (the engine clamps 0.25×–2.0×).
-    static let percentRange = Int(TempoMath.minSpeed * 100)...Int(TempoMath.maxSpeed * 100)
+    /// Playback-speed bounds as integer percent — `TempoMath`'s axis, one ceiling for every speed
+    /// surface (ADR 0124).
+    static let percentRange = TempoMath.percentRange
 
     /// Percent (of original) → time-stretch rate, clamped to the engine's playback bounds.
     static func rate(forPercent percent: Int) -> Double {

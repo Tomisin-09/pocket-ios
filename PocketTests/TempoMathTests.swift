@@ -25,7 +25,10 @@ final class TempoMathTests: XCTestCase {
     }
 
     func testPositionOneIsMaxSpeed() {
-        XCTAssertEqual(TempoMath.speed(forPosition: 1), 2.0, accuracy: 0.0001)
+        // The ceiling came down to 1.5× with ADR 0124 — one axis for the slider, the automator
+        // ramp and every percent field, so this constant is the single place it moves.
+        XCTAssertEqual(TempoMath.speed(forPosition: 1), 1.5, accuracy: 0.0001)
+        XCTAssertEqual(TempoMath.maxSpeed, 1.5, accuracy: 0.0001)
     }
 
     func testSplitPositionIsFullSpeed() {
@@ -36,7 +39,7 @@ final class TempoMathTests: XCTestCase {
     }
 
     func testSpeedAndPositionAreInverse() {
-        for speed in stride(from: 0.25, through: 2.0, by: 0.05) {
+        for speed in stride(from: TempoMath.minSpeed, through: TempoMath.maxSpeed, by: 0.05) {
             let roundTrip = TempoMath.speed(forPosition: TempoMath.position(forSpeed: speed))
             XCTAssertEqual(roundTrip, speed, accuracy: 0.0001)
         }
@@ -44,7 +47,42 @@ final class TempoMathTests: XCTestCase {
 
     func testSpeedClampsOutOfRangePosition() {
         XCTAssertEqual(TempoMath.speed(forPosition: -1), 0.25, accuracy: 0.0001)
-        XCTAssertEqual(TempoMath.speed(forPosition: 2), 2.0, accuracy: 0.0001)
+        XCTAssertEqual(TempoMath.speed(forPosition: 2), 1.5, accuracy: 0.0001)
+    }
+
+    // MARK: speed clamp + custom entry (ADR 0124)
+
+    func testClampedSpeedHoldsTheAxisEnds() {
+        XCTAssertEqual(TempoMath.clamped(speed: 0.9), 0.9, accuracy: 1e-9)
+        XCTAssertEqual(TempoMath.clamped(speed: TempoMath.minSpeed), TempoMath.minSpeed, accuracy: 1e-9)
+        XCTAssertEqual(TempoMath.clamped(speed: TempoMath.maxSpeed), TempoMath.maxSpeed, accuracy: 1e-9)
+    }
+
+    func testClampedSpeedPullsALegacyValueOntoTheAxis() {
+        // A loop authored under the old 2.0× ceiling must not hand the engine a rate the slider
+        // can no longer reach — the read-side guard, since nothing was rewritten in storage.
+        XCTAssertEqual(TempoMath.clamped(speed: 2.0), 1.5, accuracy: 1e-9)
+        XCTAssertEqual(TempoMath.clamped(speed: 0.1), 0.25, accuracy: 1e-9)
+    }
+
+    func testSpeedEntryAcceptsPlainAndDecoratedNumbers() {
+        XCTAssertEqual(TempoMath.parse(speedEntry: "0.85"), .valid(0.85))
+        XCTAssertEqual(TempoMath.parse(speedEntry: " 1.25× "), .valid(1.25))
+        XCTAssertEqual(TempoMath.parse(speedEntry: "1.25x"), .valid(1.25))
+        XCTAssertEqual(TempoMath.parse(speedEntry: "0,75"), .valid(0.75))   // comma decimal separator
+    }
+
+    func testSpeedEntryNamesOutOfRangeRatherThanClamping() {
+        // Silently accepting 1.5 for a typed 2 would read as the field eating the keystrokes.
+        XCTAssertEqual(TempoMath.parse(speedEntry: "2"), .outOfRange)
+        XCTAssertEqual(TempoMath.parse(speedEntry: "0.1"), .outOfRange)
+        XCTAssertEqual(TempoMath.parse(speedEntry: "1.5"), .valid(1.5))     // the boundary is inclusive
+    }
+
+    func testSpeedEntryRejectsNonNumbers() {
+        XCTAssertEqual(TempoMath.parse(speedEntry: ""), .notANumber)
+        XCTAssertEqual(TempoMath.parse(speedEntry: "fast"), .notANumber)
+        XCTAssertEqual(TempoMath.parse(speedEntry: "×"), .notANumber)
     }
 
     // MARK: tap tempo (ADR 0024)

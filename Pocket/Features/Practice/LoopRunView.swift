@@ -84,9 +84,9 @@ struct LoopRunView: View {
     /// up through. A saved speed that's already lower than this is honoured as-is.
     static let defaultWorkingGap = 5
 
-    /// Playback-speed bounds as integer percent (the engine clamps 0.25×–2.0×).
-    static let percentRange =
-        Int(TempoMath.minSpeed * 100)...Int(TempoMath.maxSpeed * 100)
+    /// Playback-speed bounds as integer percent — `TempoMath`'s axis, so this ceiling moves with the
+    /// waveform slider and the automator ramp rather than diverging from them (ADR 0124).
+    static let percentRange = TempoMath.percentRange
 
     init(loop: Loop, routineContext: RoutineRunContext? = nil) {
         self.loop = loop

@@ -173,14 +173,17 @@ final class Loop {
     /// when never practised (`nil`) — its `speed` (creation / automator-start). Still recorded on
     /// leave (the `activeLoopID` `didSet`), but **no longer what a loop arms at** — arming is now
     /// command-anchored via `armingSpeed` (ADR 0089), so this is retained only as the leave record.
-    var resumeSpeed: Double { lastPracticedSpeed ?? speed }
+    /// Clamped to the speed axis on read (ADR 0124) — the ceiling moved to 1.5×, and a value stored
+    /// under the old one must not hand the engine a rate the slider can no longer show.
+    var resumeSpeed: Double { TempoMath.clamped(speed: lastPracticedSpeed ?? speed) }
 
     /// The working speed to **arm** this loop at (ADR 0089): its measured `commandTempo` when set,
     /// else full tempo (`1.0`) — **never** the tempo of the loop you were just on. Arming is
     /// command-anchored: the tempo you own a loop at is the sensible working tempo, so switching to a
     /// loop with no command tempo resets to 100% instead of inheriting the previous loop's rate (the
     /// tempo-bleed bug). Supersedes `resumeSpeed` at every waveform arming site.
-    var armingSpeed: Double { commandTempo ?? 1.0 }
+    /// Clamped on read for the same reason as `resumeSpeed` (ADR 0124).
+    var armingSpeed: Double { TempoMath.clamped(speed: commandTempo ?? 1.0) }
 
     /// The loop's speed-ramp config (pure value type). `speed` is the ramp start; the
     /// rest are the automator-specific fields. Setting it writes them back through.

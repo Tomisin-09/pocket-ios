@@ -100,8 +100,12 @@ again to close an ephemeral **A↔B span** that loops with no ✓/✗ gate; drag
 Dragging a saved loop's **edge knob** lifts it back into A/B for a range edit (**Save
 changes** writes back). **Hold-drag** the waveform is the spatial set (A pins at the
 playhead, the drag sets B; ADR 0005 round 5). The transport
-bar carries a **rewind · pause · forward** playback cluster (restart / prev-loop / next-loop;
-cross-song deferred) plus an **active-loop colour strip** with an ✕ deactivator (ADR 0030);
+bar carries a **rewind · pause · forward** playback cluster whose outer glyphs depend on whether a
+loop is armed (ADR 0124): **armed** → restart / prev-loop / next-loop, as ADR 0030 shipped them;
+**idle** → **−N / +N second skips** (`gobackward.10`/`goforward.10`, clamped to the song by pure
+`TransportSkip`), holding either for the 5 · 10 · 15 · 30 · 1 min increment menu shared by both and
+stored in `AppSettings.Key.transportSkipSeconds`. Idle rewind-to-restart and the never-implemented
+cross-song forward are withdrawn with it. Plus an **active-loop colour strip** with an ✕ deactivator (ADR 0030);
 a left-edge **swipe-back guard** stops a scrub from popping back to the library mid-adjust.
 On **release**, a dragged A/B edge / tap-seek **snaps to a nearby marker or
 saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, light haptic;
@@ -124,8 +128,10 @@ placement, so the half-set state explains itself rather than reading as a broken
 carries a **Follow** toggle — the ADR-0098 "zoom follows
 playhead" preference surfaced where the gesture is (it reads/writes the Settings key, so the two stay
 one switch), since anchoring the pinch to the playhead rather than to your fingers is a per-moment
-choice. The **"Set BPM"** affordance opens a tempo
-editor (`BPMSheet`): **tap-tempo** (each tap captures song-time, so in-loop / slowed tapping
+choice. **Holding the metronome** on the speed bar opens a tempo
+editor (`BPMSheet`) — ADR 0124 retired the "Set BPM" capsule, giving its slot to **repeat**; while
+the song's tempo is **unknown** the metronome also badges itself (`plus`) and takes a plain tap, so
+the state where nothing grids, snaps or clicks doesn't depend on discovering a hold. The editor is: **tap-tempo** (each tap captures song-time, so in-loop / slowed tapping
 still reads the true tempo — pure `TempoMath.bpm(fromTapTimes:)`) or **manual** entry, plus
 **the 1** placed by dragging a waveform handle that **snaps to the loudest transient**
 (pure `TempoPeaks`) or marked at the playhead. Tempo is stored full-precision in
@@ -142,7 +148,14 @@ slowed track): pure unit-tested `MetronomeSchedule` schedules each beat `delay =
 rate` ahead, played by a `ClickVoice` (a second player node on the same engine, straight to the
 mixer so ticks aren't time-stretched, accented downbeat / plain beat). Enabled only when the
 grid exists (BPM + the 1); it **never** alters the song's saved tempo and is silenced on pause /
-screen exit (ADR 0026). Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform shows the **whole** annotation library on its **borders** (off the
+screen exit (ADR 0026). Beside it sits a **repeat-the-song** toggle (ADR 0124) that wraps playback to
+the top on the engine's natural-end callback instead of stopping — session state, wiped on exit,
+and disabled while a loop is armed (that loop already repeats). Playback speed runs on **one axis**:
+`TempoMath.minSpeed...maxSpeed` (0.25×–**1.5×**, lowered from 2.0× by ADR 0124) is quoted by the
+waveform slider, the automator ramp, and the loop-run / song-play-along percent fields alike, with
+stored speeds clamped on read (`TempoMath.clamped(speed:)`) rather than migrated; tapping the speed
+readout opens **numeric entry** (pure `TempoMath.parse(speedEntry:)`), which *names* an out-of-range
+value instead of silently rounding it. Pure gesture/zoom math in unit-tested `WaveformGesture`. The waveform shows the **whole** annotation library on its **borders** (off the
 bars): markers as **purple inverted triangles** along the top, **all** saved loops
 as **per-loop coloured lines** along the bottom; overlapping/nested loops **stack
 into lanes** (pure, unit-tested `LoopLanes`) so overlap reads by position. Colour

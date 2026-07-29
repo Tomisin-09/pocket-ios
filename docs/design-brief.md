@@ -101,7 +101,7 @@ near-invisible on near-black (ADR 0063).
 | `surfaceBorder` | ink @ 15% | ink @ 15% | Capsule/badge stroke outlines |
 | `waveformBar` | `#60A8C7` @ 85% | `#2B6982` @ 85% | Detail-waveform bar, ahead of the playhead (the song) — the brand teal, theme-invariant (ADR 0081) |
 | `waveformBarPlayed` | `#60A8C7` @ 40% | `#2B6982` @ 40% | Detail-waveform bar, behind the playhead (recedes) |
-| `waveformAccent` | `#60A8C7` | `#2B6982` | Full-opacity song accent — the practice-screen speed slider, "Set BPM", and the in-song metronome-click toggle; matches the bars and stays teal in every theme (ADR 0081) |
+| `waveformAccent` | `#60A8C7` | `#2B6982` | Full-opacity song accent — the practice-screen speed slider, the speed bar's repeat + metronome controls (and the metronome's "no tempo yet" badge, ADR 0124), and the custom speed-entry CTA; matches the bars and stays teal in every theme (ADR 0081) |
 | `gridLine` | `#202020` | `#968F88` | Beat-grid downbeat lines — baked flat, not `ink.opacity()` (ADR 0062/0063) |
 | `active` / `confirm` | green | green | Live state / confirm-save (system dynamic colour) |
 | `danger` | red | red | Discard / delete / destructive (system dynamic colour) |

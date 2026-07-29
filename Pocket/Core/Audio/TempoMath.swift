@@ -8,9 +8,13 @@ import Foundation
 /// function of its inputs.
 enum TempoMath {
 
-    /// Playback speed bounds (× of original tempo).
+    /// Playback speed bounds (× of original tempo). **One axis, one ceiling** (ADR 0124): the
+    /// waveform slider, the per-loop automator ramp and the loop / song-play-along percent sliders
+    /// all quote these, so the slow-downer can never outrun the ramp it drives. The ceiling came
+    /// down from 2.0× — above ~1.5× the time-stretch smears the transients practice is listening
+    /// for, so the extra range was resolution spent on speeds nobody could use.
     static let minSpeed = 0.25
-    static let maxSpeed = 2.0
+    static let maxSpeed = 1.5
     static let defaultSpeed = 1.0
 
     /// Fraction of the slider track occupied by the slow segment (0.25×–1.0×).
@@ -45,6 +49,41 @@ enum TempoMath {
         } else {
             return splitPosition + (1 - splitPosition) * (spd - defaultSpeed) / (maxSpeed - defaultSpeed)
         }
+    }
+
+    /// The same axis as **integer percent of original** — the form the loop-run and song-play-along
+    /// tempo fields work in (ADR 0082's "loop tempos are always %"). Lives here, not on either
+    /// screen: it's a bound, not view state, and a copy on a SwiftUI `View` is main-actor isolated,
+    /// so nothing off the main actor (a test, a pure helper) can read it.
+    static let percentRange = Int(minSpeed * 100)...Int(maxSpeed * 100)
+
+    /// Clamp a speed onto the supported axis. The **read-side** guard for the ceiling move (ADR
+    /// 0124): nothing authored under the old 2.0× ceiling needed rewriting, but every stored speed
+    /// (a loop's command tempo, a song's resume speed, an automator's start/target) passes through
+    /// here so a legacy value can't hand the engine a rate the UI can no longer show.
+    static func clamped(speed: Double) -> Double { speed.clamped(to: minSpeed...maxSpeed) }
+
+    /// The outcome of typing a speed into the custom-entry field (ADR 0124). Pure, so the
+    /// rejection message is decided by testable rules rather than by the view.
+    enum SpeedEntry: Equatable {
+        case valid(Double)
+        case notANumber
+        case outOfRange
+    }
+
+    /// Parse a typed speed — a bare multiplier, with an optional `×`/`x` suffix and either decimal
+    /// separator. Out-of-range is its **own** answer, not a silent clamp: typing 2× under a 1.5×
+    /// ceiling is a mistake worth naming, and quietly accepting 1.5 would look like the field
+    /// ignored the keystrokes.
+    static func parse(speedEntry text: String) -> SpeedEntry {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: ",", with: ".")
+            .replacingOccurrences(of: "×", with: "")
+            .replacingOccurrences(of: "x", with: "", options: .caseInsensitive)
+            .trimmingCharacters(in: .whitespaces)
+        guard let value = Double(trimmed), value.isFinite else { return .notANumber }
+        guard (minSpeed...maxSpeed).contains(value) else { return .outOfRange }
+        return .valid(value)
     }
 
     /// Musical bounds for a tapped tempo. A double-tap or a long pause would

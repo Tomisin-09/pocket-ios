@@ -26,6 +26,9 @@ extension WaveformPracticeModel {
             await loadDemoSample()
         }
         engine.setRate(speed)
+        // Whole-song repeat (ADR 0124) rides the engine's natural-end callback: it fires only on a
+        // straight-through finish, never on a manual stop/seek and never while a loop is armed.
+        engine.onReachedEnd = { [weak self] in self?.handleReachedEnd() }
     }
 
     /// Resolve the security-scoped bookmark and load the real file. Access is held

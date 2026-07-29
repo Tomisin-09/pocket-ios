@@ -82,6 +82,24 @@ All notable changes to Pocket are documented here. Format loosely follows
   rather than something you set once and forget. The Settings toggle is the same switch, in sync.
 
 ### Changed
+- **The transport's outer buttons skip through the song.** With no loop armed, rewind and forward
+  are now **−10 / +10 seconds** — the nudge back to take the run-in again, without hunting for the
+  spot on a zoomed waveform. Hold either one to change the jump: 5s, 10s, 15s, 30s or a minute, and
+  it sticks for every song. Forward used to do nothing at all in this state, and rewind restarted the
+  song — which is still a tap on the start of the waveform. With a loop armed the buttons are
+  unchanged: restart the loop, or step to the previous / next one.
+- **Repeat the song.** A new toggle on the speed bar plays the song again instead of stopping at the
+  end. It's off while a loop is armed — that loop is already repeating.
+- **The tempo lives on the metronome now.** Holding the metronome icon opens tap-tempo and manual
+  BPM entry, from any state; the "Set BPM" button that used to sit on the speed bar is gone, and
+  repeat took its place. A song with no tempo yet shows a **+** on the metronome and opens the tempo
+  editor on a plain tap — a fresh import has no gridlines, no beat snapping and no click until you
+  set one, and that shouldn't depend on finding a hidden hold.
+- **Playback tops out at 1.5×, and you can type an exact speed.** Above ~1.5× the time-stretch smears
+  the pick attack you're listening for, so that range was slider travel spent on speeds nobody could
+  use — the same ceiling now applies to loop practice, the speed trainer's ramp and song play-along,
+  which used to reach 200%. Tapping the speed readout lets you type a value; out-of-range says so
+  rather than quietly rounding you down.
 - **Build is one button now: it goes straight to placing a chord by hand.** It used to offer a choice
   between "Movable shape" and "Custom chord" — and with every movable shape now browsable under Insert
   (in two taps rather than four), that choice had one real option left. The movable builder is gone;
