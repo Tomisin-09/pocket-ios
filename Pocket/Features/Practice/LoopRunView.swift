@@ -86,8 +86,7 @@ struct LoopRunView: View {
 
     /// Playback-speed bounds as integer percent — `TempoMath`'s axis, so this ceiling moves with the
     /// waveform slider and the automator ramp rather than diverging from them (ADR 0124).
-    static let percentRange =
-        Int(TempoMath.minSpeed * 100)...Int(TempoMath.maxSpeed * 100)
+    static let percentRange = TempoMath.percentRange
 
     init(loop: Loop, routineContext: RoutineRunContext? = nil) {
         self.loop = loop

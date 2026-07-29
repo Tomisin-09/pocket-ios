@@ -51,6 +51,12 @@ enum TempoMath {
         }
     }
 
+    /// The same axis as **integer percent of original** — the form the loop-run and song-play-along
+    /// tempo fields work in (ADR 0082's "loop tempos are always %"). Lives here, not on either
+    /// screen: it's a bound, not view state, and a copy on a SwiftUI `View` is main-actor isolated,
+    /// so nothing off the main actor (a test, a pure helper) can read it.
+    static let percentRange = Int(minSpeed * 100)...Int(maxSpeed * 100)
+
     /// Clamp a speed onto the supported axis. The **read-side** guard for the ceiling move (ADR
     /// 0124): nothing authored under the old 2.0× ceiling needed rewriting, but every stored speed
     /// (a loop's command tempo, a song's resume speed, an automator's start/target) passes through

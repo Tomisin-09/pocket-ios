@@ -44,9 +44,10 @@ final class PromoteOfferTests: XCTestCase {
 
     // MARK: - Loop units (ADR 0082) — same math, percent-of-original, capped by the speed axis
 
-    /// The playback ceiling a loop run promotes against. Read from the run screen, not written as a
-    /// literal, so the tests move with the speed axis when it does (ADR 0124 took it 200% → 150%).
-    private var loopCeiling: Int { LoopRunView.percentRange.upperBound }
+    /// The playback ceiling a loop run promotes against. Read from the speed axis, not written as a
+    /// literal, so the tests move with it when it does (ADR 0124 took it 200% → 150%). From
+    /// `TempoMath` rather than `LoopRunView`, whose copy is main-actor isolated and unreadable here.
+    private var loopCeiling: Int { TempoMath.percentRange.upperBound }
 
     func testLoopPercentPromoteMovesCommandToReach() {
         // A loop run (Loop 3 in the design): command 85%, summited reach 90% → offer, promote to 90.
