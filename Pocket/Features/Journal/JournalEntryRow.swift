@@ -42,7 +42,8 @@ struct JournalEntryRow: View {
     /// renders (keeping the ADR-0039 "unrated"/"not measured" signal, e.g. `— · 90%`).
     @ViewBuilder private var snapshot: some View {
         if entry.exercise != nil {
-            Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry))
+            Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry,
+                                       notesPerBeat: entry.commandNotesPerBeatAtEntry))
                 .font(.pocketMono(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         } else if entry.masteryAtEntry != nil || entry.commandTempoAtEntry != nil {

@@ -231,7 +231,7 @@ struct AddRoutineUnitSheet: View {
     private func exerciseRow(_ exercise: Exercise) -> PickRow {
         PickRow(id: exercise.uid.uuidString, title: exercise.name.isEmpty ? "Untitled" : exercise.name,
                 context: nil,
-                progress: "Command \(exercise.command) → \(exercise.reachTempo) BPM",
+                progress: exercise.commandProgressLabel,
                 pick: { onPickExercise(exercise) })
     }
 

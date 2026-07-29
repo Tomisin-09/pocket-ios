@@ -76,7 +76,8 @@ struct ArpeggioRun: Codable, Equatable {
     var octaves: Int
     /// Whether the run descends back after the ascent.
     var roundTrip: Bool
-    /// Evenly-spaced notes per beat (default eighths). Clamped to at least 1.
+    /// Evenly-spaced notes per beat — **quarters by default**, so a new run states the plainest
+    /// rhythm and the player raises it deliberately. Clamped to at least 1.
     var notesPerBeat: Int
     /// Whether the run begins on the box's **lowest root** — the tonic the arpeggio is named for —
     /// rather than on whichever chord tone sits lowest in the box (2026-07-28). Stored on the recipe and
@@ -92,7 +93,7 @@ struct ArpeggioRun: Codable, Equatable {
          position: Int = 1,
          octaves: Int = 2,
          roundTrip: Bool = true,
-         notesPerBeat: Int = 2,
+         notesPerBeat: Int = 1,
          startsFromLowestRoot: Bool = true,
          version: Int = ArpeggioRun.currentVersion) {
         self.version = version

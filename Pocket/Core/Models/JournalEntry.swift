@@ -38,6 +38,14 @@ final class JournalEntry {
     /// stays `nil` for them. Additive optional column — pre-0058 loop entries read `nil`.
     var commandBpmAtEntry: Int?
 
+    /// The **rhythm** that BPM was measured in — notes per beat — snapshotted beside it (ADR 0121).
+    /// Without it an old entry's "80 BPM" is unreadable the moment the drill's rhythm moves: the
+    /// number is preserved, but what it counted is not. `nil` for loop entries, for an un-promoted
+    /// exercise, and for entries written before this existed — those genuinely don't know, and are
+    /// rendered as a bare BPM rather than being back-stamped with a rhythm nobody recorded (the
+    /// snapshot is immutable, ADR 0038). Additive optional column.
+    var commandNotesPerBeatAtEntry: Int?
+
     /// Backing storage for `kind` — a plain `String`, **not** the enum itself (the
     /// SwiftData enum-attribute migration rule; see `Loop.loopTypeRaw`). Empty/unknown
     /// reads as `.note`. Declaration default so the column always has a value.
@@ -60,7 +68,8 @@ final class JournalEntry {
     var exercise: Exercise?
 
     init(text: String, kind: EntryKind, masteryAtEntry: Int?, commandTempoAtEntry: Double?,
-         commandBpmAtEntry: Int? = nil, createdAt: Date = Date()) {
+         commandBpmAtEntry: Int? = nil, commandNotesPerBeatAtEntry: Int? = nil,
+         createdAt: Date = Date()) {
         self.uid = UUID()
         self.createdAt = createdAt
         self.text = text
@@ -68,6 +77,7 @@ final class JournalEntry {
         self.masteryAtEntry = masteryAtEntry
         self.commandTempoAtEntry = commandTempoAtEntry
         self.commandBpmAtEntry = commandBpmAtEntry
+        self.commandNotesPerBeatAtEntry = commandNotesPerBeatAtEntry
     }
 
     /// A **loop** entry — snapshots the loop's mastery (dots) and song-fraction command tempo.
@@ -81,8 +91,10 @@ final class JournalEntry {
     /// An **exercise** entry — snapshots the command in absolute BPM. Exercises have no mastery
     /// and no song fraction, so both loop snapshot fields stay `nil` (ADR 0058).
     static func forExercise(text: String, kind: EntryKind, commandBpmAtEntry: Int?,
+                            commandNotesPerBeatAtEntry: Int? = nil,
                             createdAt: Date = Date()) -> JournalEntry {
         JournalEntry(text: text, kind: kind, masteryAtEntry: nil, commandTempoAtEntry: nil,
-                     commandBpmAtEntry: commandBpmAtEntry, createdAt: createdAt)
+                     commandBpmAtEntry: commandBpmAtEntry,
+                     commandNotesPerBeatAtEntry: commandNotesPerBeatAtEntry, createdAt: createdAt)
     }
 }

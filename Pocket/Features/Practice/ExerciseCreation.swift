@@ -10,15 +10,20 @@ extension Exercise {
     /// Returns an **un-inserted** model — the caller inserts into its own `modelContext` — so this
     /// stays a pure factory and the same call works from any screen.
     ///
-    /// `subdivision` / `template` / `tags` / `notes` default to the bare values the two interactive
+    /// `notesPerBeat` / `template` / `tags` / `notes` default to the bare values the two interactive
     /// entry points (Practice's create sheet, the automator seam) use; the **preset seeder** passes
     /// them to give each curated drill its template, feel, and how-to note while still deriving
     /// working/reach identically.
+    ///
+    /// `notesPerBeat` states the drill's **rhythm** (ADR 0121) — `nil` for the interactive paths,
+    /// which state none, and a real value for the presets that do. The seeded command is bound to it
+    /// straight away, so a curated drill's tempo carries its rhythm from the moment it exists rather
+    /// than waiting for the backfill.
     static func commandAnchored(name: String,
                                 command: Int,
                                 beatsPerBar: Int = 4,
                                 noteValue: Int = 4,
-                                subdivision: Subdivision = .none,
+                                notesPerBeat: Int? = nil,
                                 template: ExerciseTemplate = .basic,
                                 instrument: Instrument = .guitar,
                                 tags: [String] = [],
@@ -31,7 +36,8 @@ extension Exercise {
                         targetTempo: TempoStretch.targetBPM(forCommand: command),
                         beatsPerBar: beatsPerBar,
                         noteValue: noteValue,
-                        subdivision: subdivision,
+                        notesPerBeat: notesPerBeat,
+                        commandNotesPerBeat: notesPerBeat,
                         template: template,
                         instrument: instrument,
                         tags: tags,

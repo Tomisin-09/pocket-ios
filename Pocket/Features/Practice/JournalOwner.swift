@@ -52,8 +52,11 @@ enum JournalWriter {
         case .exercise(let exercise):
             // Snapshot the measured command in absolute BPM — `nil` when un-promoted, so the
             // entry records "not yet measured" rather than a defaulted value (ADR 0058/0039).
+            // …and the rhythm it was measured in beside it (ADR 0121), so the number stays readable
+            // after the drill's rhythm moves.
             let entry = JournalEntry.forExercise(text: trimmed, kind: kind,
-                                                 commandBpmAtEntry: exercise.commandTempo)
+                                                 commandBpmAtEntry: exercise.commandTempo,
+                                                 commandNotesPerBeatAtEntry: exercise.commandNotesPerBeat)
             context.insert(entry)
             entry.exercise = exercise
         }

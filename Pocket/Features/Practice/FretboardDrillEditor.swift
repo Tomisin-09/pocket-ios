@@ -97,7 +97,7 @@ struct FretboardDrillEditor: View {
             board
             editControls
             Text("Pick a slot, then tap a fret to place a note. Tap a placed note to clear it. "
-                 + "Swipe the neck to reach any fret; add bars for a longer run.")
+                 + "Swipe the neck to reach any fret; filling the last slot adds a bar.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
@@ -163,23 +163,61 @@ struct FretboardDrillEditor: View {
 
     // MARK: - Slot strip
 
-    /// The bar's slots, grouped by beat and wrapping to new rows (`FlowLayout`) so a denser grid grows
-    /// down rather than off-screen — the same layout the strum editor uses.
+    /// The slots, grouped by beat, with a drawn **bar line** between bars — the way a stave reads, so
+    /// which slot belongs to which bar is visible without counting (device feedback 2026-07-29).
+    ///
+    /// Beat groups stay the wrapping unit rather than whole bars: a bar of sixteenths is 16 cells and
+    /// would overflow the screen as one unsplittable item, where a beat always fits. The gap is tuned
+    /// so **two bars of quarters land on one row** — the common case for a short run — which the old
+    /// 12pt spacing missed by a single cell.
     private var slotStrip: some View {
-        FlowLayout(spacing: 12) {
-            ForEach(Array(beatGroups.enumerated()), id: \.offset) { _, group in
-                HStack(spacing: 5) {
-                    ForEach(group, id: \.self) { index in slotCell(index) }
+        FlowLayout(spacing: Self.groupSpacing) {
+            ForEach(Array(stripItems.enumerated()), id: \.offset) { _, item in
+                switch item {
+                case .beat(let group):
+                    HStack(spacing: 2) {
+                        ForEach(group, id: \.self) { index in slotCell(index) }
+                    }
+                case .barLine:
+                    barLine
                 }
             }
         }
     }
 
-    private var beatGroups: [[Int]] {
+    /// Gap between beat groups (and around a bar line). Deliberately tight: eight quarter-note cells
+    /// plus a bar line have to clear one row on the narrowest phone.
+    private static let groupSpacing: CGFloat = 4
+
+    /// One entry in the strip — a beat's worth of slots, or the line that closes a bar.
+    private enum StripItem {
+        case beat([Int])
+        case barLine
+    }
+
+    /// The strip's items in order: each bar's beat groups, separated by a bar line. The final bar gets
+    /// no trailing line — a run ends, it isn't closed off.
+    private var stripItems: [StripItem] {
         let perBeat = max(1, drill.notesPerBeat)
-        return stride(from: 0, to: drill.notes.count, by: perBeat).map { start in
-            Array(start..<min(start + perBeat, drill.notes.count))
+        let perBar = perBeat * max(1, beatsPerBar)
+        var items: [StripItem] = []
+        for barStart in stride(from: 0, to: drill.notes.count, by: perBar) {
+            if barStart > 0 { items.append(.barLine) }
+            let barEnd = min(barStart + perBar, drill.notes.count)
+            for beatStart in stride(from: barStart, to: barEnd, by: perBeat) {
+                items.append(.beat(Array(beatStart..<min(beatStart + perBeat, barEnd))))
+            }
         }
+        return items
+    }
+
+    /// The bar line itself — drawn rather than a literal "|" glyph so it keeps its weight and height
+    /// against the slot cells at any Dynamic Type size.
+    private var barLine: some View {
+        RoundedRectangle(cornerRadius: 1)
+            .fill(PocketColor.textSecondary.opacity(0.55))
+            .frame(width: 2, height: 34)
+            .accessibilityHidden(true)
     }
 
     private func slotCell(_ index: Int) -> some View {
@@ -241,16 +279,35 @@ struct FretboardDrillEditor: View {
     // MARK: - Edits (map a tap to a pure op)
 
     /// Place `cell` into the selected slot and advance; tapping the slot's own note (or "Rest" with
-    /// `nil`) clears it instead. Auto-advance wraps so a run can be tapped in quickly. Non-private so
-    /// the board half of this editor (`+Board.swift`) can call it.
+    /// `nil`) clears it instead. Non-private so the board half of this editor (`+Board.swift`) can
+    /// call it.
+    ///
+    /// **Filling the last slot appends a bar** rather than wrapping the cursor back to slot 1 (device
+    /// feedback 2026-07-29). Nothing on the board tells you you've reached the end of the run, so the
+    /// wrap silently overwrote the notes you'd just tapped — the drill quietly stayed the same length
+    /// while your run got shorter. Growing is the recoverable direction: an unwanted empty bar is
+    /// visible in the strip and one tap of the stepper away, where an overwritten note is gone.
+    ///
+    /// The growth happens **inside the same `mutate`** as the placement, so both are one undo step —
+    /// taking back the note takes back the bar it grew. A stronger haptic marks the new bar. At
+    /// `maxBars` the cursor holds on the final slot instead of wrapping: still no silent overwrite,
+    /// and the stuck cursor reads as "this run is full".
     func placeOrClear(_ cell: FretNote?) {
         if let cell, drill.note(at: selectedSlot) != cell {
-            mutate { $0.replacingNote(at: selectedSlot, with: cell) }
-            selectedSlot = (selectedSlot + 1) % max(1, drill.notes.count)
+            let advance = DrillPlacement.advance(fromSlot: selectedSlot,
+                                                 slotCount: drill.notes.count,
+                                                 barCount: barCount, maxBars: Self.maxBars)
+            mutate {
+                let placed = $0.replacingNote(at: selectedSlot, with: cell)
+                guard let bars = advance.growToBars else { return placed }
+                return placed.withBarCount(bars, beatsPerBar: beatsPerBar)
+            }
+            selectedSlot = min(advance.cursor, max(0, drill.notes.count - 1))
+            haptic(advance.growToBars == nil ? .light : .medium)
         } else {
             mutate { $0.replacingNote(at: selectedSlot, with: nil) }
+            haptic(.light)
         }
-        haptic(.light)
     }
 
     /// Apply a pure edit, snapshotting the prior drill onto the undo stack first — but only when the edit

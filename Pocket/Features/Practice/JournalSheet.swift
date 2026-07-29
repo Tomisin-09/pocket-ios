@@ -151,7 +151,10 @@ struct JournalSheet: View {
                     MasteryReadout(mastery: loop.mastery)
                     Text("·  Command tempo \(LoopProgressFormat.percentLabel(loop.commandTempo))")
                 case .exercise(let exercise):
-                    Text("Command tempo \(Self.bpmLabel(exercise.commandTempo))")
+                    // Previews exactly what the snapshot will hold, rhythm included (ADR 0121).
+                    Text("Command tempo "
+                         + Self.bpmLabel(exercise.commandTempo,
+                                         notesPerBeat: exercise.commandNotesPerBeat))
                 }
             }
             .foregroundStyle(PocketColor.textPrimary)
@@ -168,9 +171,14 @@ struct JournalSheet: View {
         return day.formatted(date: .abbreviated, time: .omitted)
     }
 
-    /// Absolute-BPM label for an exercise's command snapshot — "not yet measured" when un-promoted.
-    static func bpmLabel(_ bpm: Int?) -> String {
-        bpm.map { "\($0) BPM" } ?? "not yet measured"
+    /// Absolute-BPM label for an exercise's command snapshot — "not yet measured" when un-promoted,
+    /// and carrying the rhythm it was measured in when the entry recorded one (ADR 0121). An entry
+    /// written before that snapshot existed shows the bare BPM: the snapshot is immutable (ADR 0038),
+    /// so an unknown rhythm is left unstated rather than filled in from today's drill.
+    static func bpmLabel(_ bpm: Int?, notesPerBeat: Int? = nil) -> String {
+        guard let bpm else { return "not yet measured" }
+        guard let notesPerBeat else { return "\(bpm) BPM" }
+        return "\(bpm) BPM · \(NoteRate(perBeat: notesPerBeat).compactLabel)"
     }
 }
 
@@ -211,7 +219,9 @@ private struct JournalEntryEditor: View {
             Section {
                 if entry.exercise != nil {
                     LabeledContent("Command tempo") {
-                        Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry)).font(.pocketMono(.body))
+                        Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry,
+                                                   notesPerBeat: entry.commandNotesPerBeatAtEntry))
+                            .font(.pocketMono(.body))
                     }
                 } else {
                     LabeledContent("Mastery") { MasteryReadout(mastery: entry.masteryAtEntry) }

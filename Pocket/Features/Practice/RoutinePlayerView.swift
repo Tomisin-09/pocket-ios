@@ -169,7 +169,7 @@ struct RoutinePlayerView: View {
     /// (song). Mirrors `RoutineItemRow`.
     private func detailLine(for stage: RoutineStage) -> String? {
         if let exercise = stage.exercise {
-            return "Command \(exercise.command) → \(exercise.reachTempo) BPM"
+            return exercise.commandProgressLabel
         }
         if let loop = stage.loop {
             if stage.kind == .earLoop {

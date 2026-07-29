@@ -25,7 +25,7 @@ final class PracticePresetsTests: XCTestCase {
             // as a user-created drill would (the single creation path).
             XCTAssertLessThanOrEqual(exercise.workingTempo, spec.command)
             XCTAssertEqual(exercise.targetTempo, TempoStretch.targetBPM(forCommand: spec.command))
-            XCTAssertEqual(exercise.subdivision, spec.subdivision)
+            XCTAssertEqual(exercise.notesPerBeat, spec.noteRate)
             XCTAssertEqual(exercise.tags, spec.tags)
             XCTAssertFalse(exercise.notes.isEmpty, "\(spec.name) should ship with a how-to note")
             XCTAssertEqual(exercise.template, spec.template, "\(spec.name) should carry its template")

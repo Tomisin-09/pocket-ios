@@ -47,9 +47,11 @@ extension Exercise {
     /// A duplicate of this drill under `name` — the same **shape**, none of the **history**
     /// (Slice 3).
     ///
-    /// Carried: the template, instrument and authored content payload, the meter/accents/
-    /// subdivision, every tempo (working, command, both overrides), the whole ramp recipe, tags and
-    /// notes. In other words everything you'd have re-typed to build the same drill.
+    /// Carried: the template, instrument and authored content payload, the meter/accents/rhythm,
+    /// every tempo (working, command, both overrides) **and the rhythm the command was measured in**
+    /// (ADR 0121 — a copy of the same drill owns the same achievement, so the binding travels with
+    /// it), the whole ramp recipe, tags and notes. In other words everything you'd have re-typed to
+    /// build the same drill.
     ///
     /// Deliberately **not** carried:
     /// - `mastery` / `lastPracticed` — a copy is unrated and unpractised; inheriting a self-rating
@@ -72,6 +74,8 @@ extension Exercise {
                             noteValue: noteValue,
                             accentBeats: accentBeats,
                             subdivision: subdivision,
+                            notesPerBeat: notesPerBeat,
+                            commandNotesPerBeat: commandNotesPerBeat,
                             template: template,
                             instrument: instrument,
                             templatePayload: templatePayload,

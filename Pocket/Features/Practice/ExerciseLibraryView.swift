@@ -85,6 +85,7 @@ struct ExerciseLibraryView: View {
     private func fields(for exercise: Exercise) -> ExerciseSortFields {
         ExerciseSortFields(name: exercise.name, command: exercise.command,
                            dateAdded: exercise.dateAdded,
+                           notesPerBeat: exercise.noteRate?.perBeat ?? 1,
                            templateName: exercise.template.displayName,
                            instrument: exercise.instrument)
     }
@@ -225,7 +226,7 @@ struct ExerciseLibraryView: View {
         HStack(spacing: 8) {
             PracticeUnitRow(
                 title: exercise.name.isEmpty ? "Untitled" : exercise.name,
-                progress: "Command \(exercise.command) → \(exercise.reachTempo) BPM",
+                progress: exercise.commandProgressLabel,
                 isFavorite: exercise.isFavorite)
             if locked {
                 Spacer(minLength: 8)
@@ -316,6 +317,9 @@ struct ExerciseLibraryView: View {
         if let fretboard = plan.fretboard { exercise.setFretboardContent(fretboard) }
         if let chords = plan.chords { exercise.setChordProgression(chords) }
         if let strumChords = plan.strumChords { exercise.setStrumChordSheet(strumChords) }
+        // The rhythm is whatever the authored content states, so the command can only be bound to it
+        // once the payload is on (ADR 0121).
+        exercise.bindCommandRhythmToContent()
         context.insert(exercise)
         haptic(.medium)
         justCreated = exercise

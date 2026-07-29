@@ -6,6 +6,38 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Change a drill's rhythm and it asks what should happen to your command tempo.** Moving eighths →
+  sixteenths doubles what every beat asks of you, so the tempo you earned no longer means what it
+  meant. Rather than quietly leaving the number (inflating what you own) or quietly halving it
+  (rewriting it), you choose: **keep the same note speed** — 80 BPM in eighths becomes 40 in
+  sixteenths, the same 160 notes a minute, with your warm-up floor and goals moved to match — or
+  **re-measure**, which clears the command so you can earn it again at the new rhythm. Journal
+  entries now record the rhythm alongside the tempo, so an old note stays readable after the drill
+  changes.
+- **Drawing a run past the end of the last bar adds a bar instead of writing over the start.**
+  Nothing on the fretboard told you you'd reached the end, so the cursor used to loop back to slot 1
+  and your next taps quietly replaced the notes you'd just placed. Now the run grows (up to 8 bars),
+  with a firmer tap to tell you it happened — and undo takes back the note and the bar together.
+- **The slot strip shows bar lines, and fits two bars of quarter notes on one row.** Bars are
+  separated by a drawn bar line the way a stave reads, so you can see which slot belongs to which
+  bar without counting. Denser rhythms still wrap onto more rows, but never mid-beat.
+- **New drills start at quarter notes.** Scales, arpeggios, picking runs and the draw-your-own canvas
+  all used to open at eighths, which assumed a rhythm you hadn't chosen. They now open at quarters —
+  the plainest reading of a beat — and you raise it deliberately in Advanced → Rhythm. Drills you've
+  already saved keep the rhythm they were authored with.
+- **One word for rhythm.** The exercise "Subdivision" setting is gone. It was never connected to the
+  metronome — it stated a rhythm the drill didn't play, and could contradict the Rhythm you'd
+  actually set. Drills that used it keep their rhythm; nothing you hear changes.
+- **A tempo now says what it's counting.** Exercise rows, routine blocks and the live BPM on the run
+  screen show the rhythm alongside the tempo — *Command 80 → 96 BPM · 16ths* — because 80 BPM means
+  four different things at quarters, eighths, triplets or sixteenths. Drills that state no rhythm
+  (a chord-changing drill on a plain click) show none, rather than being labelled a guess. The
+  exercise detail sheet's **Feel** section now lists the played **Rhythm** as well as the metronome's
+  **Subdivision**, since they're separate settings and can differ.
+- **Sorting exercises by Command now compares note speed, not just BPM.** A sixteenth-note drill at
+  80 sits above an eighth-note drill at 80 — four notes a beat against two — where before they read
+  as a tie. Two drills at the same note speed still order by the tempo on screen. It's a way to line
+  drills up honestly, not a score: nothing here says which drill is harder, or how well you play it.
 - **Every list works the same way now.** Holding a row — an exercise, a routine, a loop, a song —
   opens the same menu, in the same order: the item's own actions, then Favourite, then Delete.
   Swiping still works too (favourite one way, delete the other). Previously only the song library had

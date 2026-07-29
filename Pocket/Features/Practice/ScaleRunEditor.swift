@@ -3,7 +3,7 @@ import SwiftUI
 /// The **scale library editor** (ADR 0065 build 2, Slice 2). Scales are *picked*, not placed: choose
 /// a **scale**, a **root note**, a **position** up the neck, and how many **octaves**, and a
 /// notes-per-string generator lays the box out and walks it. A live preview shows the run before it's
-/// saved; "up and back" and the subdivision (Advanced, default eighths) round it out.
+/// saved; "up and back" and the rhythm (Advanced, default quarters) round it out.
 ///
 /// A thin skin over `ScaleRun` — each control rebuilds the bound recipe (whose init clamps the
 /// position/octaves), and the preview reads `run.expanded()`; no timing logic here (T5). **T10** —

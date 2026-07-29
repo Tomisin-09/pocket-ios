@@ -65,12 +65,22 @@ struct ExerciseSortFields {
     /// The effective command BPM — `Exercise.command`.
     let command: Int
     let dateAdded: Date
+    /// Notes played per beat — `Exercise.noteRate`, defaulted to 1 so sort-only call sites keep
+    /// compiling and an exercise that declares no rhythm compares as its bare BPM. The Command key
+    /// ranks on `notesPerMinute`, not on `command`: 80 BPM at sixteenths and 80 at quarters are a
+    /// 4× difference the raw BPM reads as a tie (device pass 2026-07-29).
+    var notesPerBeat: Int = 1
     /// The exercise template's display name (ADR 0068, revised) — the library **section** key
     /// (Strumming, Scales, Basic, …). Defaulted so sort-only call sites keep compiling.
     var templateName: String = ExerciseTemplate.basic.displayName
     /// The exercise's instrument (ADR 0116 S4) — the axis the Library's progressive-disclosure filter
     /// narrows on. Defaulted to guitar so sort-only call sites keep compiling.
     var instrument: Instrument = .guitar
+
+    /// The command tempo normalised by its rhythm — `command × notesPerBeat`. **A comparison aid, not
+    /// a difficulty score** (see `NoteRate`): it makes two commands rankable, it does not say which
+    /// drill is harder.
+    var commandNotesPerMinute: Int { max(0, command) * max(1, notesPerBeat) }
 }
 
 /// Pure ordering + search for the two Practice unit libraries (ADR 0056). Generic over the item
@@ -182,6 +192,12 @@ enum PracticeLibrarySort {
         case .name:
             return byName(lhs, rhs)
         case .commandTempo:
+            // Ranked on notes-per-minute, so a slower BPM at a denser rhythm sorts above a faster one
+            // at quarters — the raw BPMs are not comparable across rhythms. Bare BPM stays the first
+            // tiebreaker, so two drills at the same note speed still order by the number on screen.
+            if lhs.commandNotesPerMinute != rhs.commandNotesPerMinute {
+                return lhs.commandNotesPerMinute < rhs.commandNotesPerMinute
+            }
             if lhs.command != rhs.command { return lhs.command < rhs.command }
             return byName(lhs, rhs)
         case .recentlyAdded:

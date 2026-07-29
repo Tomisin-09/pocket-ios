@@ -103,7 +103,7 @@ struct RoutineItemRow: View {
         if item.kind == .rest { return "Breather" }
         if item.isOrphaned { return "Skipped — the unit was deleted" }
         if let exercise = item.exercise {
-            return "Command \(exercise.command) → \(exercise.reachTempo) BPM"
+            return exercise.commandProgressLabel
         }
         if let loop = item.loop {
             // Ear-training blocks say so; a standard trainer block just names its song (ADR 0104).

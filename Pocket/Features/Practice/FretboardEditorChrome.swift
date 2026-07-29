@@ -21,15 +21,18 @@ extension View {
 
 /// The note-density options the generative/fretboard editors offer, mapped to notes-per-beat. Distinct
 /// from `Subdivision` (the metronome's sub-beat click model, whose `perBeat == 1` reads "None"); here
-/// `perBeat == 1` reads "Quarters", because a run's density is a musical, not a click-count, choice.
+/// `perBeat == 1` reads "Quarters", because a run's density is a musical, not a click-count, choice —
+/// which is exactly what `NoteRate` models, so the **labels come from there** and the editors' Rhythm
+/// dropdown, the library rows and the detail sheet can't drift into three vocabularies.
 enum FretboardSubdivisions {
+    /// The four authored options, in increasing density — what the Rhythm dropdown lists.
     static let options: [(perBeat: Int, label: String)] =
-        [(1, "Quarters"), (2, "Eighths"), (3, "Triplets"), (4, "Sixteenths")]
+        [NoteRate.quarters, .eighths, .triplets, .sixteenths].map { ($0.perBeat, $0.label) }
 
-    /// The label for a notes-per-beat value, defaulting to "Eighths" (the editors' own default) for any
-    /// value outside the table.
+    /// The label for a notes-per-beat value. A value outside the table (only reachable from a decoded
+    /// blob) describes itself — "6 per beat" — rather than being mislabelled as one of the four.
     static func label(forPerBeat perBeat: Int) -> String {
-        options.first { $0.perBeat == perBeat }?.label ?? "Eighths"
+        NoteRate(perBeat: perBeat).label
     }
 }
 

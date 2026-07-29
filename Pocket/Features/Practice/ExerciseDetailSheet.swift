@@ -184,12 +184,23 @@ struct ExerciseDetailSheet: View {
 
     // MARK: - Meter & subdivision (read-only)
 
+    /// Meter and **Rhythm** — one rhythm row, not two. The old "Subdivision" row is gone with the
+    /// field behind it (ADR 0121): it never reached the metronome, so it stated a rhythm the drill
+    /// didn't play. Rhythm is omitted when the drill states none — a chord-changing drill has no note
+    /// density to report, and an absent row means "not stated", never a defaulted "quarters".
     private var feelSection: some View {
-        Section("Feel") {
+        Section {
             LabeledContent("Time signature") {
                 Text(exercise.timeSignatureLabel).font(.pocketMono(.body))
             }
-            LabeledContent("Subdivision") { Text(exercise.subdivision.label) }
+            if let noteRate = exercise.noteRate {
+                LabeledContent("Rhythm") { Text(noteRate.label) }
+            }
+        } header: {
+            Text("Feel")
+        } footer: {
+            Text("Rhythm is how many notes you play per beat — what the command tempo is measured "
+                 + "in. Change it in Edit shape and you'll be asked what should happen to that tempo.")
         }
     }
 

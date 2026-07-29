@@ -4,7 +4,7 @@ import SwiftUI
 /// `ScaleRunEditor`. Arpeggios are *picked*, not placed: choose a **quality** (major, minor, maj7,
 /// min7, dominant 7), a **root**, a **position** (one of the five CAGED boxes), and **octaves**, and
 /// the generator lays the chord-tone box out and walks it. A live preview shows the run before it's
-/// saved; "up and back" and the subdivision (Advanced, default eighths) round it out.
+/// saved; "up and back" and the rhythm (Advanced, default quarters) round it out.
 ///
 /// A thin skin over `ArpeggioRun` — each control rebuilds the bound recipe (whose init clamps the
 /// position/octaves), and the preview reads `run.expanded()`; no timing logic here (T5). **T10** —

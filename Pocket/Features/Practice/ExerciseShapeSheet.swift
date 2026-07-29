@@ -47,6 +47,9 @@ struct ExerciseShapeSheet: View {
     /// picker or the same hand-drawn canvas (ADR 0107). Seeded from the stored content — an arpeggio
     /// exercise already holding a `.custom` drill opens in draw mode. Only meaningful for `.arpeggio`.
     @State private var arpeggioMode: AuthoringMode
+    /// A rhythm change awaiting the player's answer (ADR 0121) — set on Done, cleared by either
+    /// answer. While it's non-`nil` nothing has been written.
+    @State private var pendingRhythmChange: RhythmChangePrompt?
 
     init(exercise: Exercise) {
         self.exercise = exercise
@@ -92,12 +95,68 @@ struct ExerciseShapeSheet: View {
             .tint(PocketColor.practice)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        commitStrum(); commitFretboard(); commitChords(); commitStrumChords()
-                        dismiss()
-                    }
+                    Button("Done") { done() }
                 }
             }
+            .rhythmChangePrompt($pendingRhythmChange,
+                                onKeep: { resolveRhythmChange(keepingNoteSpeed: true) },
+                                onReMeasure: { resolveRhythmChange(keepingNoteSpeed: false) })
+        }
+    }
+
+    // MARK: - Rhythm changes (ADR 0121)
+
+    /// Commit on Done — unless the edit moves the drill's **rhythm** away from the one the command
+    /// tempo was measured in, in which case the sheet stays up until the player answers for it.
+    /// Nothing is written before the answer: a half-applied change (new shape, unresolved command) is
+    /// exactly the silent revaluation this exists to prevent.
+    private func done() {
+        if let prompt = RhythmChangePrompt(exercise: exercise, movingTo: editedNoteRate ?? 0,
+                                           range: StandaloneMetronomeEngine.bpmRange) {
+            pendingRhythmChange = prompt
+            return
+        }
+        commitAll()
+        dismiss()
+    }
+
+    /// Apply the player's answer, then commit the shape edit itself. The tempo move happens **first**
+    /// so `keepNoteSpeed` reads the old binding while it's still the stored truth; committing the
+    /// content afterwards is what makes the new rhythm current.
+    private func resolveRhythmChange(keepingNoteSpeed keep: Bool) {
+        let newPerBeat = editedNoteRate ?? 0
+        let range = StandaloneMetronomeEngine.bpmRange
+        if keep {
+            exercise.keepNoteSpeed(movingTo: newPerBeat, range: range)
+        } else {
+            exercise.reMeasureCommand(movingTo: newPerBeat, range: range)
+        }
+        pendingRhythmChange = nil
+        commitAll()
+        haptic(.medium)
+        dismiss()
+    }
+
+    private func commitAll() {
+        commitStrum(); commitFretboard(); commitChords(); commitStrumChords()
+        // Re-bind after the content lands: a drill whose rhythm changed without revaluing anything
+        // (no measured command, or none bound) still needs its binding to match what it now plays.
+        exercise.bindCommandRhythmToContent()
+        try? modelContext.save()
+    }
+
+    /// The rhythm the **edited** content states, before it's committed — the value the change is
+    /// detected against. Mirrors `commitFretboard`'s editor switch; a template whose content states
+    /// no rhythm reports the drill's own, so it registers as unchanged.
+    private var editedNoteRate: Int? {
+        switch exercise.template.bespokeEditor {
+        case .strumming?: strum.slotsPerBeat
+        case .strumChords?: strumChords.strumPattern.slotsPerBeat
+        case .run?: runMode == .draw ? customDrill.notesPerBeat : run.notesPerBeat
+        case .scale?: scaleMode == .draw ? customDrill.notesPerBeat : scale.notesPerBeat
+        case .arpeggio?: arpeggioMode == .draw ? customDrill.notesPerBeat : arpeggio.notesPerBeat
+        case .fretboardGrid?: customDrill.notesPerBeat
+        case .chords?, nil: exercise.notesPerBeat
         }
     }
 
