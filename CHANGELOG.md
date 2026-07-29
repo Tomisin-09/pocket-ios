@@ -11,7 +11,10 @@ All notable changes to Pocket are documented here. Format loosely follows
   delete the lot under one undo, star or unstar them, and — where the collapse chevron sat — set
   **type, focus and tags across every selected loop in one go**. That editor only writes what you
   actually change: fields the selection disagrees on read "Multiple" and stay untouched, and tags are
-  added to each loop's own rather than replacing them. Markers select the same way, with delete.
+  added to each loop's own rather than replacing them. Markers select the same way, with delete. The
+  selection bar stays pinned above the list, so the actions don't scroll away from you.
+- **A Favourite toggle on the loop edit sheet.** Starring a loop used to mean going out to the Loops
+  library to do it.
 - **A loop's colour now shows on its row.** The play button carries the same identity colour the loop
   has on the waveform and the minimap — dimmed for the loops that aren't armed, full strength for the
   one that is — so five saved loops finally read as five distinct things in the list.

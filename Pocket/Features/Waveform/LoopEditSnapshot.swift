@@ -14,6 +14,8 @@ struct LoopEditSnapshot: Equatable {
     var tags: [String]
     var colorIndex: Int?
     var customColorHex: String?
+    /// The favourite pin (ADR 0119), editable here since ADR 0125 — so Undo covers it too.
+    var isFavorite: Bool
 
     init(_ loop: Loop) {
         name = loop.name
@@ -24,6 +26,7 @@ struct LoopEditSnapshot: Equatable {
         tags = loop.tags
         colorIndex = loop.colorIndex
         customColorHex = loop.customColorHex
+        isFavorite = loop.isFavorite
     }
 
     func restore(to loop: Loop) {
@@ -35,5 +38,6 @@ struct LoopEditSnapshot: Equatable {
         loop.tags = tags
         loop.colorIndex = colorIndex
         loop.customColorHex = customColorHex
+        loop.isFavorite = isFavorite
     }
 }

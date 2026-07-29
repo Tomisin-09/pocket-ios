@@ -6,75 +6,72 @@ import SwiftUI
 /// Collapsible panel: chevron + a summary line when collapsed, so the user is
 /// never left wondering what's hidden (brief §3.4).
 ///
-/// **Multi-select (ADR 0125):** holding the header swaps it for `selectionHeader` — the
-/// selection title and the bulk actions, with the chevron's slot reassigned to the
-/// categories editor. That swap is *mode-scoped on purpose*: browse mode keeps the
-/// chevron exactly where it has always been, so collapse never has to move house.
-struct CollapsiblePanel<Content: View, SelectionHeader: View>: View {
+/// **Multi-select (ADR 0125):** holding the header enters the mode, and the header then
+/// **stands down entirely** — its selection bar is pinned above the scrolling list by
+/// `PracticeReference`, so the bulk actions stay reachable however far down you scroll.
+/// The mode is scoped: browse keeps the chevron exactly where it has always been.
+struct CollapsiblePanel<Content: View>: View {
     let title: String
     let summary: String
     @Binding var expanded: Bool
     /// Hold the header to enter multi-select. `nil` on panels that don't offer it.
     var onBeginSelection: (() -> Void)?
-    /// True while selecting — the browse header stands down for `selectionHeader`.
+    /// True while this panel is selecting — its header is pinned outside the scroll view.
     var isSelecting: Bool = false
     @ViewBuilder var content: Content
-    @ViewBuilder var selectionHeader: SelectionHeader
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if isSelecting {
-                selectionHeader
-            } else {
-                browseHeader
-            }
-
+            if !isSelecting { browseHeader }
             if expanded { content }
         }
         .padding(14)
         .background(panelBackground)
     }
 
+    /// **Not a `Button`.** A button fires its action on the release of a *long* press too,
+    /// so holding an open panel entered selection mode and collapsed it on the way in
+    /// (device pass, 2026-07-29) — the same trap Slice 5 hit with the metronome. A plain
+    /// shape with an explicit tap gesture and an explicit long-press gesture keeps the two
+    /// apart; it's the loop row's proven idiom.
     private var browseHeader: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
-        } label: {
-            HStack {
-                Text(title)
-                    .font(.futura(.subheadline, weight: .semibold))
-                    .foregroundStyle(PocketColor.textPrimary)
-                Spacer()
-                if !expanded {
-                    Text(summary)
-                        .font(.futura(.footnote))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .lineLimit(1)
-                }
-                Image(systemName: "chevron.right")
-                    .font(.futura(.footnote, weight: .semibold))
+        HStack {
+            Text(title)
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.textPrimary)
+            Spacer()
+            if !expanded {
+                Text(summary)
+                    .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
-                    .rotationEffect(.degrees(expanded ? 90 : 0))
+                    .lineLimit(1)
             }
-            .contentShape(Rectangle())
+            Image(systemName: "chevron.right")
+                .font(.futura(.footnote, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+                .rotationEffect(.degrees(expanded ? 90 : 0))
         }
-        .buttonStyle(.plain)
-        // A `Button` swallows `.onLongPressGesture`, so the hold rides alongside its tap
-        // as a simultaneous gesture — the tap still collapses, the hold still selects.
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.4).onEnded { _ in
-                guard let onBeginSelection else { return }
-                haptic(.medium)     // confirm the hold landed before the header changes
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    // Selecting a **collapsed** panel would otherwise open a selection bar
-                    // over no rows — and the chevron that would expand them has just been
-                    // replaced. Entering the mode expands the panel.
-                    expanded = true
-                    onBeginSelection()
-                }
-            },
-            including: onBeginSelection == nil ? .subviews : .all)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+        }
+        .onLongPressGesture(minimumDuration: 0.4) {
+            guard let onBeginSelection else { return }
+            haptic(.medium)     // confirm the hold landed before the header changes
+            withAnimation(.easeInOut(duration: 0.2)) {
+                // Selecting a **collapsed** panel would otherwise pin a selection bar over
+                // no rows, with the chevron that would expand them gone. Entering the mode
+                // expands the panel.
+                expanded = true
+                onBeginSelection()
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("\(title), \(expanded ? "expanded" : "collapsed")")
+        .accessibilityHint("Double-tap to \(expanded ? "collapse" : "expand")")
         // VoiceOver can't long-press, so the mode needs a spoken way in — expanding the
-        // same way the hold does, or it lands in a selection bar over hidden rows.
+        // same way the hold does, or it pins a selection bar over hidden rows.
         .accessibilityAction(named: "Select") {
             guard let onBeginSelection else { return }
             expanded = true

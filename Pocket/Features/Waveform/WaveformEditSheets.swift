@@ -43,6 +43,10 @@ struct LoopEditSheet: View {
     @State var loopType: LoopType
     // Loop tags (ADR 0034) — local copy, written back on Done.
     @State var tags: [String]
+    // The favourite pin (ADR 0119). It was only settable from the Loops library's star until
+    // ADR 0125 gave the selection bar a bulk star — leaving the *single* loop you're already
+    // editing as the one place you couldn't set it.
+    @State private var isFavorite: Bool
     @State var newTag = ""
     // The loop's journal now lives here in settings (read-only), off the waveform row (ADR 0067).
     @State var showingJournal = false
@@ -73,6 +77,7 @@ struct LoopEditSheet: View {
         _commandTempo = State(initialValue: loop.commandTempo)
         _loopType = State(initialValue: loop.loopType)
         _tags = State(initialValue: loop.tags)
+        _isFavorite = State(initialValue: loop.isFavorite)
     }
 
     /// Map the loop's stored colour fields to a picker choice (custom wins over palette).
@@ -116,6 +121,7 @@ struct LoopEditSheet: View {
         loop.commandTempo = commandTempo
         loop.loopType = loopType
         loop.tags = tags
+        loop.isFavorite = isFavorite
         applyColorChoice()
     }
 
@@ -124,6 +130,15 @@ struct LoopEditSheet: View {
             Form {
                 Section("Name") {
                     ClearableTextField("Loop name", text: $name)
+                    // A pin, not a grade (ADR 0119): it changes where the loop is shown — the
+                    // Loops library's Favourites filter — and feeds nothing. So it sits with
+                    // the name, not in Practice beside mastery and focus.
+                    Toggle(isOn: $isFavorite) {
+                        Label("Favourite", systemImage: isFavorite ? "star.fill" : "star")
+                            .foregroundStyle(isFavorite ? PocketColor.mastery : PocketColor.textPrimary)
+                    }
+                    .tint(PocketColor.active)
+                    .accessibilityLabel("Favourite this loop")
                 }
                 Section("Range") {
                     LabeledContent("Loop") {

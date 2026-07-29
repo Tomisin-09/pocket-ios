@@ -376,9 +376,18 @@ didn't cover were taken at kickoff. Notes worth carrying forward:
   "never triaged" (ADR 0039) — a real value — so "leave unchanged" is a *third* state, hence
   `LoopBulkEdit.FieldEdit`. Tags add and remove, never replace; removal only offers tags **every**
   selected loop has, so Remove can't look like it did nothing.
-- **A `Button` swallows `.onLongPressGesture`** (the panel header is one). The hold rides as a
-  `.simultaneousGesture(LongPressGesture…)` so the tap still collapses. Related to but distinct from
-  Slice 5's finding, where a `Button` + `.onLongPressGesture` fired **both**.
+- **Two device findings, both fixed on the branch (2026-07-29):**
+  - **The selection bar is pinned above the scroll view**, not inside the panel header. In the header
+    it scrolled away, so selecting a row far down the list meant scrolling back up to reach Delete.
+    The selecting panel therefore shows no header of its own — the pinned bar names the list.
+  - **A `Button` fires its action on the release of a long press too**, so holding an *already open*
+    panel entered selection mode **and collapsed it**. This is Slice 5's metronome trap again, and
+    `.simultaneousGesture` did **not** avoid it — the fix is not to use a `Button` at all: a plain
+    shape with separate `.onTapGesture` / `.onLongPressGesture`, the loop row's idiom. **Treat "a
+    `Button` that also needs a hold" as a smell anywhere in this codebase.**
+- **Also added on request:** a **Favourite** toggle on the loop edit sheet. Bulk could star a
+  selection while the single loop you had open couldn't be starred at all; `LoopEditSnapshot` carries
+  `isFavorite` so save-undo covers it.
 - `WaveformPanels.swift` split — `WaveformPanels+Markers.swift` — to stay under the 400-line ceiling.
 
 **Slice 7 — routine building (ADR):**

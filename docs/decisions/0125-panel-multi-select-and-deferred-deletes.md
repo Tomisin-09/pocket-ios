@@ -41,6 +41,13 @@ live — with a selection bar: a select-all circle, the count, the bulk actions,
 chevron's slot is reassigned *inside that bar*. Browse mode is byte-for-byte what it was: the
 chevron sits where it always sat and still collapses the panel.
 
+**The bar is pinned above the scrolling list, not carried inside the panel** (device pass,
+2026-07-29). Built into the panel header it scrolled away with it, so selecting a row near the
+bottom of a long list meant scrolling back up to reach Delete — the bar has to be where it was when
+the mode opened. Pinning it also means the selecting panel shows no header of its own; the pinned
+bar names the list, so nothing is lost. Entering the mode **expands** the panel, since the chevron
+that would have opened it has just stood down.
+
 Rejected: making the categories button permanent and moving the chevron to a leading position, or
 dropping the chevron and leaving collapse as an undocumented "tap the header row". Both spend a
 permanently visible affordance — the open/closed indicator, or the chevron's familiar position — to
@@ -135,6 +142,13 @@ earlier.
 - The selection rules (`PanelSelection`) and the partial edit (`LoopBulkEdit` / `LoopSelectionSummary`)
   are pure and unit-tested; the wiring between them and SwiftData is not, and is what device testing
   has to cover.
-- **First things to check on device:** whether the muted identity colour reads clearly enough in
-  light appearance at 55%, and whether the green leading bar still wins as the "armed" signal now
-  that the glyph beside it is coloured.
+- The panel header is **not a `Button`**. A button fires its action on the release of a *long* press
+  as well, so holding an already-open panel entered the mode **and collapsed it** (device pass,
+  2026-07-29). It's a plain shape with separate tap and long-press gestures — the loop row's idiom,
+  and the same trap Slice 5 hit on the metronome.
+- The loop edit sheet gains a **Favourite** toggle. Giving the selection a bulk star left the single
+  loop you already have open as the one place the pin couldn't be set; `LoopEditSnapshot` carries it
+  so save-undo covers it too.
+- **Still to check on device:** whether the muted identity colour reads clearly enough in light
+  appearance at 55%, and whether the green leading bar still wins as the "armed" signal now that the
+  glyph beside it is coloured.

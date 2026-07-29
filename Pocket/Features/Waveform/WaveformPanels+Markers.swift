@@ -43,17 +43,6 @@ struct MarkersPanel: View {
                     }
                 }
             }
-        } selectionHeader: {
-            PanelSelectionHeader(
-                title: PanelSelection.title(count: selection.selection.count,
-                                            noun: "marker", plural: "markers"),
-                allSelected: selection.selection.allSelected(of: markers.map(\.uid)),
-                onToggleAll: selection.toggleAll,
-                onDone: selection.end) {
-                    PanelActionButton(systemImage: "trash", label: "Delete selected markers",
-                                      isEnabled: !selection.selection.isEmpty,
-                                      tint: PocketColor.danger, action: selection.delete)
-                }
         }
     }
 }

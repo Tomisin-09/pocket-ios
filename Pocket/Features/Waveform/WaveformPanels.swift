@@ -39,14 +39,9 @@ struct LoopsPanel: View {
     let onAdjustRange: (Loop) -> Void
     /// The "A" control — open this loop's automator (speed ramp) sheet.
     let onAutomator: (Loop) -> Void
-    /// Multi-select (ADR 0125).
+    /// Multi-select (ADR 0125). The bar itself is pinned above the scroll view by
+    /// `PracticeReference`; the panel only needs the state and the row intents.
     var selection = PanelSelectionSeam()
-    /// Bulk star. `favoriteAdds` drives the glyph so the control shows what it will *do*:
-    /// a hollow star adds, a filled one takes the star back off an all-favourited selection.
-    var favoriteAdds = true
-    var onBulkFavorite: () -> Void = {}
-    /// The chevron's old slot: bulk practice categories (type · focus · tags).
-    var onBulkCategories: () -> Void = {}
     /// Landscape drawer (ADR 0042): tighten each row (no range, closer icons).
     var compact: Bool = false
 
@@ -82,25 +77,6 @@ struct LoopsPanel: View {
                     }
                 }
             }
-        } selectionHeader: {
-            PanelSelectionHeader(
-                title: PanelSelection.title(count: selection.selection.count,
-                                            noun: "loop", plural: "loops"),
-                allSelected: selection.selection.allSelected(of: loops.map(\.uid)),
-                onToggleAll: selection.toggleAll,
-                onDone: selection.end) {
-                    let any = !selection.selection.isEmpty
-                    PanelActionButton(systemImage: "trash", label: "Delete selected loops",
-                                      isEnabled: any, tint: PocketColor.danger,
-                                      action: selection.delete)
-                    PanelActionButton(systemImage: favoriteAdds ? "star" : "star.slash",
-                                      label: favoriteAdds ? "Favourite selected loops"
-                                                          : "Remove selected loops from favourites",
-                                      isEnabled: any, action: onBulkFavorite)
-                    PanelActionButton(systemImage: "slider.horizontal.3",
-                                      label: "Edit practice categories for the selected loops",
-                                      isEnabled: any, action: onBulkCategories)
-                }
         }
     }
 }
