@@ -193,6 +193,13 @@ rebuilt as one.
 - **There is no kill switch.** With no backend, a runaway emitter can only be fixed by shipping a
   build. This is why the vocabulary is small and why every event whose host can re-appear
   (`TunerView.begin()` from `.onAppear`, `EarTrainingView`) carries a fire-once latch.
+- **Delivery is flushed explicitly, per event, and must stay that way.** The SDK's `initialize` only
+  *registers* an observer for `willEnterForegroundNotification` — it never calls `startPolling()`.
+  Because we initialise lazily, with the app already in the foreground, that transition never
+  arrives and the flush timer is never created; events would queue in memory until the app was
+  backgrounded. Found on device (consent given, events emitted, dashboard empty until backgrounding).
+  The fix is an explicit `flush()` after each `trackEvent`, which is an acceptable trade at a handful
+  of events per session. Anyone removing it "to restore batching" re-introduces the bug.
 - **Withdrawal is immediate for new events, but at most one already-queued batch may still flush.**
   Those events were collected while consent was live. The SDK offers no runtime disable.
 - **A new binary means a new App Review.** v1.0 was approved as an app that collects nothing;

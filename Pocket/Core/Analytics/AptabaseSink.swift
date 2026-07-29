@@ -62,6 +62,18 @@ final class AptabaseSink: AnalyticsSink {
             Aptabase.shared.initialize(appKey: appKey)
         }
         Aptabase.shared.trackEvent(event.name, with: Self.props(for: event))
+        // Delivery is driven explicitly, because the SDK's own flush timer never starts for us.
+        // `initialize` only *registers* an observer for `willEnterForegroundNotification`; it never
+        // calls `startPolling()` itself. Since we initialise lazily — on the first delivered event,
+        // with the app already foregrounded — that transition never arrives, so without this the
+        // queue would sit in memory until the app was backgrounded. (Found on device: consent given,
+        // events emitted, dashboard empty until the app was backgrounded.)
+        //
+        // Flushing per event rather than batching is a deliberate trade at this volume: a handful of
+        // events per session, none of them per-beat or per-tap. It also makes delivery prompt enough
+        // to debug. `flush()` is non-blocking (it spawns its own Task) and a no-op on an empty queue,
+        // and a failed send re-enqueues, so the next event retries it.
+        Aptabase.shared.flush()
     }
 
     /// Map the closed vocabulary onto the SDK's supported property types. Numbers stay numeric so
