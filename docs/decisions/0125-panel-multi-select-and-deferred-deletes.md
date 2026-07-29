@@ -149,6 +149,7 @@ earlier.
 - The loop edit sheet gains a **Favourite** toggle. Giving the selection a bulk star left the single
   loop you already have open as the one place the pin couldn't be set; `LoopEditSnapshot` carries it
   so save-undo covers it too.
-- **Still to check on device:** whether the muted identity colour reads clearly enough in light
-  appearance at 55%, and whether the green leading bar still wins as the "armed" signal now that the
-  glyph beside it is coloured.
+- **Device-verified in both appearances (2026-07-29), including the risk this ADR flagged:** the
+  muted glyph at 55% reads clearly in **light** appearance — where the loop palette had only ever
+  been tuned for waveform lanes on near-black — and the armed loop is unambiguous against the muted
+  ones. The hue-is-identity / saturation-is-state split holds; no palette change is owed.

@@ -358,8 +358,8 @@ didn't cover were taken at kickoff. Notes worth carrying forward:
 - **The identity colour is on the row all the time (user call), not just while selecting.** Green
   already meant "armed", so the rule is **hue = identity, saturation = state**: the glyph is muted
   (55%) unless armed. Consequence: the **leading bar stays green** as the sole armed marker — tint it
-  to the loop's hue as well and nothing says which loop is live. **First device check:** whether 55%
-  reads clearly in light appearance, and whether the green bar still wins.
+  to the loop's hue as well and nothing says which loop is live. **Verified on device in both
+  appearances (2026-07-29)** — 55% reads clearly in light too, and the armed loop is unambiguous.
 - **The way *in* is the header hold, not a row hold** — a row's hold already opens the edit sheet
   (ADR 0028), which is how people rename a loop. So the mode opens with nothing selected, and
   select-all is the row circle one level up, in the header (its filled/empty state says which way a
