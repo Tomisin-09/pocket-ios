@@ -202,7 +202,7 @@ struct ExerciseLibraryView: View {
     /// a relationship can't be set on an un-inserted model.
     private func duplicate(_ exercise: Exercise) {
         guard AccessPolicy.canAuthor(exercise.template, isPro: isPro) else {
-            return presentPaywall(.newExercise)
+            return presentPaywall(.newExercise(exercise.template))
         }
         let name = CopyNaming.copyName(of: exercise.name, existing: exercises.map(\.name))
         let copy = exercise.duplicated(named: name)

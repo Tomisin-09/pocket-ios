@@ -23,8 +23,8 @@ final class AnalyticsEventTests: XCTestCase {
         .exerciseCreated(template: .scales, instrument: .guitar),
         .exerciseAuthoringAbandoned(template: .chords),
         .routineCreated(items: 5, generated: false),
-        .paywallShown(trigger: .newExercise),
-        .paywallDismissed(trigger: .routine, purchased: true),
+        .paywallShown(trigger: .newExercise(.scales)),
+        .paywallDismissed(trigger: .routine(.play), purchased: true),
         .purchaseCompleted(product: .annual, trial: true),
         .restoreCompleted(restored: false),
         .micPermission(outcome: .granted)
@@ -73,8 +73,8 @@ final class AnalyticsEventTests: XCTestCase {
             ["instrument", "template"],
             ["template"],
             ["generated", "items"],
-            ["trigger"],
-            ["purchased", "trigger"],
+            ["detail", "trigger"],
+            ["detail", "purchased", "trigger"],
             ["product", "trial"],
             ["restored"],
             ["outcome"]
@@ -96,7 +96,11 @@ final class AnalyticsEventTests: XCTestCase {
         permitted.formUnion(MicOutcome.allCases.map(\.rawValue))
         permitted.formUnion(ExerciseTemplate.allCases.map(\.rawValue))
         permitted.formUnion(Instrument.allCases.map(\.rawValue))
-        permitted.formUnion(PaywallTrigger.allCases.map(\.rawValue))
+        // `PaywallTrigger` gained associated values (ADR 0120) so it is no longer `CaseIterable`;
+        // its reporting axes are enumerated explicitly instead.
+        permitted.formUnion(["draw_your_own", "new_exercise", "pro_exercise",
+                             "planner", "routine", "general"])
+        permitted.formUnion(RoutineGate.allCases.map(\.rawValue))
 
         for event in everyEvent {
             for (key, value) in event.payload {

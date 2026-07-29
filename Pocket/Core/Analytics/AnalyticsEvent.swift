@@ -138,11 +138,16 @@ extension AnalyticsEvent {
             return ["items": .number(items),
                     "generated": .flag(generated)]
 
+        // Two axes, not one composite string: `trigger` stays the coarse six-way "which capability
+        // was locked" and `detail` narrows it to the template or routine action, so the dashboard
+        // can break down at either level.
         case let .paywallShown(trigger):
-            return ["trigger": .text(trigger.rawValue)]
+            return ["trigger": .text(trigger.reportingName),
+                    "detail": .text(trigger.reportingDetail ?? "none")]
 
         case let .paywallDismissed(trigger, purchased):
-            return ["trigger": .text(trigger.rawValue),
+            return ["trigger": .text(trigger.reportingName),
+                    "detail": .text(trigger.reportingDetail ?? "none"),
                     "purchased": .flag(purchased)]
 
         case let .purchaseCompleted(product, trial):

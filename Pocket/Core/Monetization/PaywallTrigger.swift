@@ -3,24 +3,46 @@ import SwiftUI
 /// What the player was reaching for when a Pro gate presented the paywall (ADR 0112). Carried by the
 /// shared `.presentPaywall` action so the paywall can show a **contextual** headline — the reason
 /// this surface is locked — and so a future "resume the intent after purchase" hook has the intent.
-enum PaywallTrigger: String, Identifiable, CaseIterable {
+/// Which routine surface a `.routine` gate fired from. Five distinct actions previously collapsed
+/// into one trigger, which made "routines are hitting the wall" legible but not *why* — building one
+/// and merely playing one are very different pieces of evidence about where the free line belongs.
+enum RoutineGate: String, CaseIterable, Equatable {
+    case new
+    case play
+    case edit
+    case duplicate
+    /// Accepting a session generated from a collection, a song, or the quick-session wand.
+    case generate
+}
+
+enum PaywallTrigger: Identifiable, Equatable {
     /// The "draw your own" custom fretboard canvas — Pro even on a free-template family (ADR 0112).
     case drawYourOwn
-    /// Creating a new exercise from a Pro template.
-    case newExercise
+    /// Creating a new exercise from a Pro template. Carries **which** template was reached for where
+    /// the gate knows it (the template picker); `nil` from gates that don't, like forking a drill.
+    case newExercise(ExerciseTemplate?)
     /// Opening a Pro-authored library exercise to edit it.
     case proExercise
     /// The deterministic "Today's session" planner.
     case planner
     /// Any routine surface — running a Pro routine, building one by hand, or accepting a session
     /// generated from a collection or a song. Routines are Pro apart from the curated free taste.
-    case routine
+    case routine(RoutineGate)
     /// A generic entry point (e.g. a "Go Pro" affordance) with no specific locked intent.
     case general
 
-    var id: String { rawValue }
+    /// Distinguishes sheets so a gate for a different intent re-presents rather than being treated
+    /// as the same item. Detail is part of identity for that reason.
+    var id: String {
+        guard let detail = reportingDetail else { return reportingName }
+        return "\(reportingName).\(detail)"
+    }
 
     /// The contextual line at the top of the paywall — names *why* this surface is locked.
+    ///
+    /// Deliberately unchanged by the new detail: the copy speaks to the *capability* being sold, and
+    /// "Build your own scales exercises" would be a narrower promise than Pro actually makes. The
+    /// detail exists for reporting, not for the pitch.
     var headline: String {
         switch self {
         case .drawYourOwn: return "Draw your own is part of Red Moon Pro"
@@ -29,6 +51,33 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .planner: return "Today's session is part of Red Moon Pro"
         case .routine: return "Routines are part of Red Moon Pro"
         case .general: return "Unlock the full practice workbench"
+        }
+    }
+
+    // MARK: - Reporting (ADR 0120)
+    //
+    // Two axes rather than one composite string, so the dashboard can break down at either level:
+    // `trigger` stays the coarse six-way answer to "which capability was locked", and `detail`
+    // narrows it to the template or routine action. Both are closed vocabularies.
+
+    /// The coarse trigger name. Frozen wire format — see `AnalyticsEvent`.
+    var reportingName: String {
+        switch self {
+        case .drawYourOwn: return "draw_your_own"
+        case .newExercise: return "new_exercise"
+        case .proExercise: return "pro_exercise"
+        case .planner: return "planner"
+        case .routine: return "routine"
+        case .general: return "general"
+        }
+    }
+
+    /// What specifically was reached for, where the gate knows it.
+    var reportingDetail: String? {
+        switch self {
+        case let .newExercise(template): return template?.rawValue
+        case let .routine(gate): return gate.rawValue
+        case .drawYourOwn, .proExercise, .planner, .general: return nil
         }
     }
 }
