@@ -132,13 +132,26 @@ struct LoopEditSheet: View {
                     ClearableTextField("Loop name", text: $name)
                     // A pin, not a grade (ADR 0119): it changes where the loop is shown — the
                     // Loops library's Favourites filter — and feeds nothing. So it sits with
-                    // the name, not in Practice beside mastery and focus.
-                    Toggle(isOn: $isFavorite) {
-                        Label("Favourite", systemImage: isFavorite ? "star.fill" : "star")
-                            .foregroundStyle(isFavorite ? PocketColor.mastery : PocketColor.textPrimary)
+                    // the name, not in Practice beside mastery and focus. **The star is the
+                    // control**, tapped on and off: a switch is the wrong weight for a
+                    // one-bit pin, and the filled star is the same glyph the libraries
+                    // already use to mean "favourited."
+                    LabeledContent("Favourite") {
+                        Button {
+                            isFavorite.toggle()
+                            haptic(.light)
+                        } label: {
+                            Image(systemName: isFavorite ? "star.fill" : "star")
+                                .font(.futura(.title3))
+                                .foregroundStyle(isFavorite ? PocketColor.practice
+                                                            : PocketColor.textSecondary)
+                                .frame(width: 44, height: 34)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(isFavorite ? "Remove from favourites" : "Add to favourites")
+                        .accessibilityAddTraits(isFavorite ? .isSelected : [])
                     }
-                    .tint(PocketColor.active)
-                    .accessibilityLabel("Favourite this loop")
                 }
                 Section("Range") {
                     LabeledContent("Loop") {
