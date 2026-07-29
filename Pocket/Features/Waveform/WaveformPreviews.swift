@@ -33,6 +33,23 @@ import SwiftUI
     }
 }
 
+/// The row above the waveform: ⓘ Loop controls · **Follow** (what pinch-zoom anchors to, ADR 0098) ·
+/// Grid. Tapping Follow writes the shared Settings key, so the canvas shows both states.
+#Preview("Mode line — Follow + Grid") {
+    @Previewable @State var gridOn = true
+    ZStack {
+        PocketColor.background.ignoresSafeArea()
+        VStack(spacing: 24) {
+            ModeDescriptionLine(gridAvailable: true, gridOn: gridOn,
+                                onToggleGrid: { gridOn.toggle() })
+            // Tempo set, the 1 not placed: the Grid slot offers the missing step.
+            ModeDescriptionLine(needsDownbeat: true)
+            ModeDescriptionLine()   // no tempo at all — neither control
+        }
+        .padding()
+    }
+}
+
 #Preview("BPM sheet — tap-tempo (ADR 0024)") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: nil, currentDownbeat: nil,
              onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })

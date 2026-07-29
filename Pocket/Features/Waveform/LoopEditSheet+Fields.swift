@@ -66,6 +66,9 @@ extension LoopEditSheet {
 
     private var earTrainingButton: some View {
         Button {
+            // Ear training brings its own engine, so hand the host a chance to stop what it was
+            // playing first (the waveform pauses) — two streams over each other is the alternative.
+            onOpenEarTraining()
             showingEarTraining = true
         } label: {
             Label("Train your ear", systemImage: "ear")

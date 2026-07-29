@@ -61,16 +61,39 @@ Sequenced cheapest-and-safest first so each slice is device-testable on its own.
 - The chevrons and the Futura position label land in **all four** fretboard editors, as flagged — the
   stepper is shared and the change was accepted everywhere rather than gated.
 - `FretboardDrillEditor` was split (`+Board.swift`) to stay under the 400-line ceiling.
+- **Renaming the control surfaced a model gap: Rhythm is editable after creation, and the command
+  tempo it was earned at isn't recorded anywhere.** Not a Slice 1 regression — it predates the rename —
+  but the Rhythm dropdown is now the most reachable way to trigger it. See *A command tempo is
+  meaningless without its note rate* under **Near-term**.
 
-**Slice 2 — small player fixes (no ADR):**
+**Slice 2 — small player fixes — DONE (branch `pocket-200-slice2-player-fixes`, 2026-07-29).** All
+three items landed; no ADR. Notes worth carrying forward:
 
-- **Train your ear must pause playback on open**, and closing it must leave the transport showing
-  **Play**, not Pause. Entry point is `LoopEditSheet+Fields` → `EarTrainingSheet`; nothing currently
-  stops the main engine.
-- **Zoom/playhead-focus toggle** surfaced on the row above the playhead (by the (i) Loop controls, or
-  left of Fit). The underlying setting already exists from ADR 0098 — this is surfacing it.
-- **Open on create** — creating an exercise opens that exercise; selecting a single song opens its
-  waveform screen.
+- **Train your ear pauses the waveform** via a new `onOpenEarTraining` callback on `LoopEditSheet` →
+  `model.pauseForNestedAudio()` — the same double-audio guard `launchPendingPractice` already applies
+  for "Practice now" (ADR 0082), since `EarTrainingPlayer` wraps its own `LoopRunModel` engine. Pause,
+  not stop, is what makes the transport read **Play** on return.
+- **The "Follow" toggle** (zoom anchors to the playhead vs. the pinch, ADR 0098) sits on
+  `ModeDescriptionLine` between the ⓘ and Grid, reading/writing the *same* `AppStorage` key as the
+  Settings toggle — no new setting, no plumbing, since `setZoom` already reads `AppSettings` at gesture
+  time. The ⓘ popover gained a line explaining it.
+- **Open on create** — a created exercise pushes `ExerciseRunView` from the create sheet's
+  `onDismiss` (pushing *into* a dismissing sheet drops the push, hence the two-state stage-then-promote),
+  and a **single clean** import pushes the song's waveform from both Home and Library. Both use
+  Bool-bound `navigationDestination`, not `item:` — a just-inserted model's `persistentModelID` flips on
+  the first autosave and pops an item-based destination (ADR 0090). The predicate lives on
+  `SongImportSummary.isSingleCleanImport` (pure, unit-tested); auto-opening also consumes the
+  "Imported 1 song." alert, since the screen *is* the confirmation.
+- **Device pass found a pre-existing gap: a BPM with no 1 reads as a broken grid.** `commitTempo`
+  won't guess the phase (ADR 0022), so a BPM-only commit leaves `beatGrid` empty — no gridlines *and*
+  no Grid toggle, unexplained. The toggle's slot now shows **Set the 1** (`model.needsDownbeat` →
+  `beginSetDownbeat()`). Related to, but smaller than, Slice 5's "keep a visible affordance while the
+  tempo is unknown" — that one is about discovering *Set BPM* on a fresh import; this is about the
+  half-set state after it.
+- **Deliberately not included:** the metronome automator's "Save as exercise" seam still just saves. It
+  fires mid-climb inside a full-screen cover with no stack to push onto, and yanking the user out of a
+  running metronome session is the opposite of what that seam is for.
+- `HomeView` was split (`HomeView+Actions.swift`) to stay under the 400-line ceiling.
 
 **Slice 3 — list-component uniformity (no ADR; the highest-leverage item):**
 
@@ -79,6 +102,39 @@ yes: a single `.pocketRowActions(...)` modifier packaging long-press menu (view 
 swipe actions + an undo toast, adopted by exercises, loops, routines and songs. Today only
 `LibraryView` has the full pattern; `ExerciseLibraryView` has only a leading favourite swipe.
 Fold **duplicate routine / duplicate templated exercise** in here.
+
+**Slices 3a & 3b — command tempo × note rate (inserted 2026-07-29).** The full write-up is *A command
+tempo is meaningless without its note rate* under **Near-term**; this is only its placement in the
+sequence, and the reasoning for it.
+
+- **3a — display + derived notes-per-minute (no ADR, no migration).** Sequenced *after* Slice 3 on
+  purpose: the "80 BPM · 16ths" label sits on the exercise row and the command-tempo sort is a row-list
+  concern, so landing it before the uniformity pass means writing it into four row implementations and
+  rewriting it during Slice 3. After Slice 3 it is one edit.
+- **3b — `commandNotesPerBeat` + unifying the two note-rate axes (own ADR).** Deliberately pulled
+  **forward of Slice 10**, which it lightly collides with (both edit `ConfigureExerciseForm` /
+  `NewExerciseSheet`, in different sections). The collision costs a merge; the reason to accept it is
+  the **no-users window**. Build it as **one unit** — schema *and* the keep-note-speed / re-measure UX
+  — with the simple shape: every exercise **backfilled** from its content's `notesPerBeat`, no
+  nil-means-legacy state, no unknown-provenance branch anywhere.
+- **No interaction with the rest.** Slices 2, 4, 5, 6, 8 and 9 are clean. In particular Slice 5's speed
+  cap (0.25–1.5) is a *song playback multiplier*, not exercise BPM — a different axis, easily confused.
+
+**The no-users window is deliberate, and it applies to every model change in this plan (2026-07-29).**
+v1.0 is approved but **distribution is being held on purpose**, so the window closes when the user
+decides to release, not on Apple's clock. Two consequences worth acting on:
+
+- **No `@Model` change in the remaining slices owes a migration.** Additive-optional gymnastics, split
+  decode defaults and nil-means-legacy states are all unnecessary while this holds — backfill and move
+  on. This covers 3b and **Slice 10's "universally applicable" flag**, which is another new `Exercise`
+  field riding the same window; batch the schema thinking across both rather than designing each in
+  isolation. Contrast Slice 1's `startsFromLowestRoot`, which took the split-defaults route
+  (`true` from `init`, `false` from `decodeIfPresent`) — under a held release that ceremony buys
+  nothing and should not be copied by reflex.
+- **This is the one thing to re-check before distributing.** Once v1.0 ships, every open model change in
+  this plan reverts to the additive-optional shape described in the Near-term entry and gets materially
+  more expensive. **Confirm the schema is where you want it before hitting release** — and record here
+  the date it goes live, so the next reader knows the window shut.
 
 **Slice 4 — chord content (small ADR 0084/0106 amendment):**
 
@@ -758,6 +814,46 @@ data foundation (`Instrument` enum + `Tuning` value in `Core/Theory/InstrumentTu
 ## Near-term (active, not parked)
 
 These are scheduled to be picked up shortly — listed here so they're not lost.
+
+- **A command tempo is meaningless without its note rate (logged 2026-07-29).** 80 BPM means four
+  different things at quarters / eighths / triplets / sixteenths, and nothing in the model records
+  which one a command tempo was earned at. Two independent note-rate axes exist today and **nothing
+  syncs them**: `Exercise.subdivision` (the *click* — `Subdivision`, set only at creation, read-only on
+  `ExerciseDetailSheet`; both interactive creation paths take the `.none` default and only
+  `PracticePresets` passes a real value) and the content's own `notesPerBeat` (`ScaleRun`,
+  `ArpeggioRun`, `FretboardDrill`), which **is** editable after creation via the Advanced → **Rhythm**
+  dropdown. So a hand-authored sixteenth-note scale run carries `subdivision == .none` alongside
+  `notesPerBeat == 4`, and moving Rhythm eighths → sixteenths quadruples the demand while the stored
+  command tempo sits at 80 — a *measured* achievement (ADR 0045, not an aspiration) silently revalued
+  with no event marking it.
+  - **What it does and doesn't break.** The ramp math is **fine and needs no change**: working, reach
+    and back-off all derive from command proportionally (`TempoStretch`), so they are note-rate-invariant.
+    What breaks is **comparison and edit safety** — the library's command-tempo sort
+    (`PracticeLibrarySort`), the `RoutineStairs` BPM labels, the journal's `commandTempoAtEntry`
+    snapshots, and planner emphasis. The seeded presets show the scale of it: *Spider Walk* (80 @
+    sixteenths = 320 notes/min) and *Chord Changes* (70 @ none = 70) sort as near-neighbours — a 4.5×
+    difference reading as 14%.
+  - **Scope decision — notes-per-minute is a *comparison aid*, never a difficulty score.**
+    `npm = BPM × notesPerBeat` normalises **one** variable so two exercises can be ranked honestly. It
+    is not a measure of how hard something is: triplets at 80 and sixteenths at 60 are both 240 npm and
+    are not equally demanding for a picking hand, and a strumming pattern's difficulty has nothing to do
+    with its click density. **Do not grow this into a derived difficulty index, a "level", or a
+    cross-exercise ranking presented as ability** — that is grading the player, which ADR 0070 rules
+    out. It describes, sorts and labels; it never judges. Where npm is shown at all it is secondary to
+    the BPM the musician actually sets.
+  - **Slice 1 — display + derived npm (no migration, do first).** Show the rhythm wherever a tempo is
+    shown ("80 BPM · 16ths") and route *cross-exercise* reads (library sort, planner emphasis) through a
+    computed npm, while BPM stays the number you set and see on the run screen. Most of the pedagogical
+    work for none of the risk — a musician reading `80 · 16ths` needs no explanation.
+  - **Slice 2 — bind the achievement to its rhythm (own ADR; it changes a term ADR 0045 defines).** One
+    additive optional, `commandNotesPerBeat: Int?` (nil ⇒ legacy/unmeasured, no wipe — the `commandTempo`
+    discipline). A Rhythm change then becomes a real event: offer **keep the same note speed** (80 @
+    eighths → 40 @ sixteenths, preserving npm) or **re-measure** (clear command to nil). Fold in
+    unifying the two axes — one source of truth, `subdivision` following the content's `notesPerBeat`
+    or the reverse — since they can disagree today and nothing notices.
+  - **Rejected:** a *stored* `notesPerMinute` field (derivable — a denormalisation that can go stale);
+    silently rescaling command on a Rhythm change without telling the user (an unannounced rewrite of a
+    measured achievement); and any global difficulty ordering (see the scope decision).
 
 - ~~**Extend "draw your own" to the technique templates (parked 2026-07-23).**~~ **DONE (pocket-180,
   2026-07-23).** The generate-or-draw toggle + hand-drawn `FretboardDrillEditor` canvas with the scale

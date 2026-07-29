@@ -41,4 +41,24 @@ final class SongImportSummaryTests: XCTestCase {
         let summary = SongImportSummary(imported: 1, failedNames: ["a", "b"])
         XCTAssertEqual(summary.message, "Imported 1 song. 2 files couldn’t be read: a, b.")
     }
+
+    // MARK: - Open on create (Slice 2)
+
+    func testLoneCleanImportOpensOnCreate() {
+        XCTAssertTrue(SongImportSummary(imported: 1, failedNames: []).isSingleCleanImport)
+    }
+
+    func testBatchDoesNotOpenOnCreate() {
+        XCTAssertFalse(SongImportSummary(imported: 2, failedNames: []).isSingleCleanImport)
+    }
+
+    /// One song in, one file skipped: the summary alert has something to say, so nothing opens.
+    func testSingleImportWithSkippedFileDoesNotOpen() {
+        XCTAssertFalse(SongImportSummary(imported: 1, failedNames: ["broken"]).isSingleCleanImport)
+    }
+
+    func testNothingImportedDoesNotOpen() {
+        XCTAssertFalse(SongImportSummary(imported: 0, failedNames: []).isSingleCleanImport)
+        XCTAssertFalse(SongImportSummary(imported: 0, failedNames: ["broken"]).isSingleCleanImport)
+    }
 }

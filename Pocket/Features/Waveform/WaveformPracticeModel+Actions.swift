@@ -228,6 +228,15 @@ extension WaveformPracticeModel {
         practiceLoop = loop
     }
 
+    /// "Train your ear" from the loop edit sheet — stop the waveform before the ear-training sheet
+    /// takes over. `EarTrainingPlayer` wraps its own `LoopRunModel` engine, so a waveform left playing
+    /// underneath doubles up exactly as `launchPendingPractice` guards against (ADR 0082/0104). Pausing
+    /// (not stopping) also means the transport reads **Play** when the sheet closes, which is the state
+    /// the screen was actually left in.
+    func pauseForNestedAudio() {
+        if engine.isPlaying { engine.pause() }
+    }
+
     /// Tap a loop row: make it the active looping region, seek to start + play (active+playing → pause).
     /// Arming a *different* loop sets its command-anchored speed (ADR 0089); re-tapping the
     /// already-active loop only toggles play/pause, keeping the speed you're sitting at.

@@ -19,6 +19,12 @@ struct ExerciseLibraryView: View {
     /// command tempo, so a beginner starts near the floor and a seasoned player higher up.
     @Query private var profiles: [Profile]
     @State private var creating = false
+    /// The exercise just created by the sheet, staged for its run screen. Two states rather than one
+    /// because the push has to wait for the sheet to leave: `justCreated` is written by `create` while
+    /// the sheet is still up, then promoted to `opening` in `onDismiss` — presenting into a dismissing
+    /// sheet drops the push.
+    @State private var justCreated: Exercise?
+    @State private var opening: Exercise?
     /// Sort key + direction, persisted across launches (ADR 0056).
     @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
     @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
@@ -118,9 +124,18 @@ struct ExerciseLibraryView: View {
                 .accessibilityLabel("New exercise")
             }
         }
-        .sheet(isPresented: $creating) {
+        .sheet(isPresented: $creating, onDismiss: openJustCreated) {
             NewExerciseSheet(initialCommand: defaultCommand, defaultInstrument: defaultInstrument,
                              onCreate: create)
+        }
+        // Open on create: a drill you just authored pushes straight to its run screen, so creating and
+        // playing are one move instead of "create, find it in the list, tap it". Presented by a Bool
+        // rather than `.navigationDestination(item:)` — a just-inserted model's `persistentModelID`
+        // flips temporary→permanent on the first autosave, and item-based presentation reads that as
+        // an identity change and pops the screen (ADR 0090; `docs/swiftdata-gotchas.md`).
+        .navigationDestination(isPresented: Binding(get: { opening != nil },
+                                                    set: { if !$0 { opening = nil } })) {
+            if let exercise = opening { ExerciseRunView(exercise: exercise) }
         }
     }
 
@@ -290,6 +305,19 @@ struct ExerciseLibraryView: View {
         if let strumChords = plan.strumChords { exercise.setStrumChordSheet(strumChords) }
         context.insert(exercise)
         haptic(.medium)
+        justCreated = exercise
+    }
+
+    /// Promote the just-created drill into a push, once the create sheet is actually gone. Locked Pro
+    /// templates never open (the same `canRun` gate the rows use) — authoring one shouldn't be a way
+    /// past the paywall; the drill is still there in the list, badged.
+    private func openJustCreated() {
+        guard let exercise = justCreated else { return }
+        justCreated = nil
+        guard AccessPolicy.canRun(exercise.template, isPro: isPro,
+                                  isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug))
+        else { return }
+        opening = exercise
     }
 
     /// Delete indexes into the *displayed* section's items — the offsets `onDelete` reports are

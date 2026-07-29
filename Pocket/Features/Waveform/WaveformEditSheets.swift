@@ -19,6 +19,9 @@ struct LoopEditSheet: View {
     /// "Practice now" (ADR 0082): the parent stages this loop for a full-screen training run,
     /// launched once the sheet dismisses. Shown only when a command tempo is set.
     var onPracticeNow: () -> Void = {}
+    /// "Train your ear" (ADR 0104): the ear-training sheet brings its own engine, so the parent stops
+    /// whatever it was playing before it opens — otherwise both stream at once.
+    var onOpenEarTraining: () -> Void = {}
 
     // The field-editing sections live in `LoopEditSheet+Fields.swift` (one type, split to stay under
     // the 400-line cap), so the state they read is `internal`, not `private` — Swift has no
@@ -54,13 +57,15 @@ struct LoopEditSheet: View {
     init(loop: Loop, autoColor: Color,
          onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void,
          onSaved: @escaping (@escaping () -> Void) -> Void,
-         onPracticeNow: @escaping () -> Void = {}) {
+         onPracticeNow: @escaping () -> Void = {},
+         onOpenEarTraining: @escaping () -> Void = {}) {
         self.loop = loop
         self.autoColor = autoColor
         self.onDelete = onDelete
         self.onAdjustRange = onAdjustRange
         self.onSaved = onSaved
         self.onPracticeNow = onPracticeNow
+        self.onOpenEarTraining = onOpenEarTraining
         _name = State(initialValue: loop.name)
         _colorChoice = State(initialValue: Self.choice(for: loop))
         _mastery = State(initialValue: loop.mastery)
