@@ -246,11 +246,10 @@ struct SettingsView: View {
             } header: {
                 Text("About")
             } footer: {
-                // Brand mark. The RedMoonLogo asset carries both light (cream-outlined) and
-                // dark (near-black-outlined) artwork (ADR 0061) with the surrounding card
-                // background keyed out to transparent (ADR 0062 follow-up) — it sits
-                // directly on `PocketColor.background` with no seam, in either appearance,
-                // rather than floating a slightly-mismatched solid-colour rectangle on top.
+                // Brand mark. `RedMoonLogo` is a **vector** (SVG) asset carrying a light and a
+                // dark appearance (ADR 0061) — the two-tone crescent means it can't be a single
+                // template image tinted in code, so the pair stays. Genuinely transparent, so it
+                // sits directly on `PocketColor.background` with no seam in either appearance.
                 // The app follows the system appearance (ADR 0062), so no colour-scheme pin
                 // is needed here.
                 Image("RedMoonLogo")

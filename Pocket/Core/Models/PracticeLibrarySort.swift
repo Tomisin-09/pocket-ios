@@ -1,8 +1,16 @@
 import Foundation
 
+/// A library's sort axis — the key enum each practice library persists in `AppStorage`. Generalised
+/// so the shared `LibrarySortPickers` can render any of them without knowing the concrete key.
+/// Deliberately Foundation-only, like the rest of this file (AGENTS.md: pure logic stays pure).
+protocol LibrarySortKey: CaseIterable, Identifiable, Hashable {
+    /// The human label shown in the sort menu.
+    var label: String { get }
+}
+
 /// How the **Loops** library inside Practice is ordered (ADR 0056). The user picks one key;
 /// the same rows re-sort under it. The raw value persists the choice across launches.
-enum LoopSortKey: String, CaseIterable, Identifiable {
+enum LoopSortKey: String, CaseIterable, Identifiable, LibrarySortKey {
     /// The loop's song title, then loop name — the default, so a song's loops read together.
     case song
     /// Loop name, A→Z.
@@ -27,7 +35,7 @@ enum LoopSortKey: String, CaseIterable, Identifiable {
 
 /// How the **Exercises** library inside Practice is ordered (ADR 0056). Exercises are
 /// audio-free command drills — no song, no mastery — so the keys differ from loops.
-enum ExerciseSortKey: String, CaseIterable, Identifiable {
+enum ExerciseSortKey: String, CaseIterable, Identifiable, LibrarySortKey {
     /// Exercise name, A→Z — the default.
     case name
     /// The command BPM — your highest/lowest drills.

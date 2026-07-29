@@ -143,14 +143,17 @@ line instead of a grabbable knob.
 No gradients **except** the tempo-automator progress bar (to signal progression
 from comfortable to target speed).
 
-**The brand mark stays distinct from product chrome.** The "Red Moon" brand mark (app
-icon + Settings/About logo, ADR 0061; background keyed transparent in ADR 0063) keeps
-its original, dustier slate-teal artwork — the same teal *hue family* as the brand hero
-(`practice`) but not a pixel match, so the static mark stays quiet while the UI accent
-carries its own visual weight. (The planned **Blood Moon** theme re-tints the wordmark
-and this logo terracotta — Slice 2, ADR 0081.) Don't reach for a literal hex directly
-in views; go through `PocketColor.practice`/`.metronome`/`.library`, and use the other
-tokens for everything else.
+**The brand mark stays its own thing.** The "Red Moon" mark (app icon + the in-app
+logo/mark/wordmark, ADR 0061) is **vector** artwork, two-tone: a `#17698a` crescent with a
+`#90b3cb` inner face on light, inverted on dark. That is now within a hair of `TealCTA`
+(`18698B`) — a coincidence of the same palette, not a binding. **Don't flatten them
+together.** The per-space accent families (Teal / Terracotta / Plum / Gold / Indigo) are
+what tell you which space you're in; retuning one must never be able to desync the mark, so
+logo-adjacent chrome takes its colour from the artwork, not from `PocketColor.practice`.
+(The **Blood Moon** theme's variant already exists as artwork — `#c24a2c` / `#e3694a` — and
+is one `scripts/derive-brand-svgs.py --variants blood` away when Slice 2 / ADR 0081 lands.)
+Elsewhere, don't reach for a literal hex in views; go through
+`PocketColor.practice`/`.metronome`/`.library`, and use the other tokens for the rest.
 
 ### 3.2 Typography
 
@@ -192,6 +195,12 @@ tokens for everything else.
   and an Undo toast after every delete. Adopt the modifier rather than hand-rolling a row's actions;
   every parameter is optional, so a list declines what it doesn't own (loops have no Delete — a loop
   belongs to its song) instead of inventing a variation. Tint is the space's accent.
+- **Navigation bars read leading = where you came from, trailing = what you can do here** (ADR 0126).
+  A pushed list screen leaves the leading side to the back button alone; sort key, sort direction and
+  filters collapse into one icon-only **⋯** menu (`LibraryOptionsMenu`) on the trailing side, ahead of
+  the screen's primary action. **Nothing in a bar-button group may change width at runtime** — a
+  control that spells out its state in text (`↑ Recently Added`) drags the inline title off-centre and
+  makes it jump as the state changes. State shows as a filled icon variant, never as a wider one.
 
 ---
 

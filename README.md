@@ -53,6 +53,23 @@ scripts/run-device.sh -n     # skip build; just install + launch the existing .a
 First launch needs a one-time Trust: Settings → General → VPN & Device
 Management → Developer App → Trust.
 
+### Refreshing the brand artwork
+
+The designer ships one SVG lockup per appearance; the app needs three different
+crops of it (full lockup, crescent-only mark, wordmark-only). Those are
+generated, not hand-cropped — after a new logo revision:
+
+```sh
+scripts/derive-brand-svgs.py                     # light + dark → the asset catalog
+scripts/derive-brand-svgs.py --app-icon          # …and re-render the 1024² App Icon
+scripts/derive-brand-svgs.py --out /tmp/preview  # preview crops, catalog untouched
+```
+
+Point `--source` at the revision's folder if it moves. The App Icon is the same
+mark composited on an opaque near-black square and rasterised via QuickLook — it
+has to stay PNG, because App Store icons must be opaque 1024² with no alpha
+channel, which the script asserts before writing.
+
 ## Pre-push checks
 
 See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild test`

@@ -5,6 +5,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **The practice libraries' titles sit straight.** "Exercises" used to sit right of centre and shift
+  sideways whenever you changed the sort order. Sort, sort direction and the favourites filter now
+  live together under one **⋯** button at the top right of Exercises, Routines and Loops, so the
+  heading stays put. On Routines, the wand that builds a quick session moved into that menu too,
+  where it finally has a name instead of being an unlabelled icon.
+- **The Red Moon logo is now drawn, not photographed.** The mark on the Settings screen, the wordmark
+  at the top of Home, and the crescent on the paywall and the artist-name prompt are all vector
+  artwork now — crisp at any size, in light and dark.
+- **A new app icon**: the same simplified crescent and stars on the same near-black square, so it
+  matches the mark inside the app. Same size and position on the home screen as before.
+
 ### Added
 - **Hold the Loops or Markers heading to select several at once.** The rows grow selection circles,
   the per-row Automator and adjust controls step aside, and the heading turns into a bar that can

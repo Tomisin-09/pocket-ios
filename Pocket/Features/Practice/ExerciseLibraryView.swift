@@ -136,10 +136,16 @@ struct ExerciseLibraryView: View {
         .navigationTitle("Exercises")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Exercises")
+        // Leading is the back button alone; sort + favourites collapse into one fixed-width
+        // trailing control so the inline title sits centred and stops moving with the sort key.
+        // See `LibraryOptionsMenu`.
         .toolbar {
             if !presentExercises.isEmpty {
-                ToolbarItem(placement: .topBarLeading) { sortMenu }
-                ToolbarItem(placement: .topBarLeading) { favoritesFilterToggle }
+                ToolbarItem(placement: .topBarTrailing) {
+                    LibraryOptionsMenu(favoritesOnly: $favoritesOnly, sortControls: {
+                        LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
+                    })
+                }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { creating = true; haptic(.light) } label: {
@@ -257,47 +263,11 @@ struct ExerciseLibraryView: View {
         profiles.first?.preferredInstrument ?? .guitar
     }
 
-    /// The favourites filter (ADR 0119) — a star that fills when the list is narrowed to favourited
-    /// drills. Mirrors the loop / routine libraries so the three read consistently.
-    private var favoritesFilterToggle: some View {
-        Button {
-            favoritesOnly.toggle()
-            haptic(.light)
-        } label: {
-            Image(systemName: favoritesOnly ? "star.fill" : "star")
-        }
-        .tint(PocketColor.practice)
-        .accessibilityLabel(favoritesOnly ? "Showing favourites only" : "Show favourites only")
-    }
-
     /// The message shown when nothing matches — favourites-aware so an empty favourites view reads
     /// as a prompt to pin something, not a false "no search matches".
     private var noMatchMessage: String {
         favoritesOnly ? "No favourite exercises yet. Swipe or hold a drill and tap Favourite to pin it."
                       : "No exercises match “\(searchText)”."
-    }
-
-    /// The sort control — a menu whose label spells out the active key with a direction arrow
-    /// (ADR 0056, mirroring the song library and the loop library).
-    private var sortMenu: some View {
-        Menu {
-            Picker("Sort by", selection: $sortKey) {
-                ForEach(ExerciseSortKey.allCases) { key in
-                    Text(key.label).tag(key)
-                }
-            }
-            Picker("Order", selection: $sortAscending) {
-                Label("Ascending", systemImage: "arrow.up").tag(true)
-                Label("Descending", systemImage: "arrow.down").tag(false)
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
-                Text(sortKey.label)
-            }
-            .tint(PocketColor.practice)
-        }
-        .accessibilityLabel("Sort by \(sortKey.label), \(sortAscending ? "ascending" : "descending")")
     }
 
     /// Create an exercise from a confirmed `NewExercisePlan` (ADR 0046 / 0068): anchored on the

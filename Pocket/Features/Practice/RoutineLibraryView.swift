@@ -88,26 +88,20 @@ struct RoutineLibraryView: View {
         .pocketRowUndoHost(rowDeletion)
         .navigationTitle("Routines")
         .navigationBarTitleDisplayMode(.inline)
+        // Leading is the back button alone. The session generator moves off the bar and into the
+        // shared options menu — as a *labelled* row rather than a bare wand, which also gives its
+        // disabled and locked states somewhere to read (`LibraryOptionsMenu`). Routines have a
+        // fixed order (newest first), so the menu carries no sort pickers.
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button(action: generateQuickSession) {
-                    Image(systemName: isPro ? "wand.and.stars" : "lock.fill")
-                }
-                .tint(PocketColor.practice)
-                .disabled(isPro && !exercises.contains { $0.template != .warmup })
-                .accessibilityLabel("Generate a quick session")
-            }
-            if !presentRoutines.isEmpty {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        favoritesOnly.toggle()
-                        haptic(.light)
-                    } label: {
-                        Image(systemName: favoritesOnly ? "star.fill" : "star")
+            ToolbarItem(placement: .topBarTrailing) {
+                LibraryOptionsMenu(favoritesOnly: $favoritesOnly,
+                                   showsFavoritesFilter: !presentRoutines.isEmpty, actions: {
+                    Button(action: generateQuickSession) {
+                        Label("Generate a quick session",
+                              systemImage: isPro ? "wand.and.stars" : "lock.fill")
                     }
-                    .tint(PocketColor.practice)
-                    .accessibilityLabel(favoritesOnly ? "Showing favourites only" : "Show favourites only")
-                }
+                    .disabled(isPro && !exercises.contains { $0.template != .warmup })
+                })
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

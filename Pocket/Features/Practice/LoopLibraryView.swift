@@ -88,19 +88,15 @@ struct LoopLibraryView: View {
         .navigationTitle("Loops")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Loops and songs")
+        // One fixed-width trailing control for sort + favourites, matching the exercise and routine
+        // libraries so the inline title centres against the back button alone (`LibraryOptionsMenu`).
         .toolbar {
             if hasMeasuredLoops {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        favoritesOnly.toggle()
-                        haptic(.light)
-                    } label: {
-                        Image(systemName: favoritesOnly ? "star.fill" : "star")
-                    }
-                    .tint(PocketColor.practice)
-                    .accessibilityLabel(favoritesOnly ? "Showing favourites only" : "Show favourites only")
+                ToolbarItem(placement: .topBarTrailing) {
+                    LibraryOptionsMenu(favoritesOnly: $favoritesOnly, sortControls: {
+                        LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
+                    })
                 }
-                ToolbarItem(placement: .topBarTrailing) { sortMenu }
             }
         }
         .navigationDestination(item: $launch) { launch in
@@ -173,29 +169,6 @@ struct LoopLibraryView: View {
     /// passages" view.
     private func favorite(for loop: Loop) -> PocketRowFavorite {
         PocketRowFavorite(isFavorite: loop.isFavorite) { loop.isFavorite.toggle() }
-    }
-
-    /// The sort control — a menu whose label spells out the active key with a direction arrow, and
-    /// whose contents pick the key and flip ascending/descending (ADR 0056, mirroring the library).
-    private var sortMenu: some View {
-        Menu {
-            Picker("Sort by", selection: $sortKey) {
-                ForEach(LoopSortKey.allCases) { key in
-                    Text(key.label).tag(key)
-                }
-            }
-            Picker("Order", selection: $sortAscending) {
-                Label("Ascending", systemImage: "arrow.up").tag(true)
-                Label("Descending", systemImage: "arrow.down").tag(false)
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
-                Text(sortKey.label)
-            }
-            .tint(PocketColor.practice)
-        }
-        .accessibilityLabel("Sort by \(sortKey.label), \(sortAscending ? "ascending" : "descending")")
     }
 }
 

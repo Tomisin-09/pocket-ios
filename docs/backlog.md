@@ -418,22 +418,18 @@ creation. Plus a **"universally applicable"** flag meaning the exercise is tied 
 therefore always eligible for the planner / collection generator. **Confirm the flag's semantics
 before building.**
 
-**Found during the Slice 3 device pass (2026-07-29) — deferred by the user until the other slices
-are done:**
+**Found during the Slice 3 device pass (2026-07-29) — DONE 2026-07-29 (ADR 0126):**
 
-- **The inline nav title sits off-centre in the practice libraries.** On Exercises, "Exercises" is
-  pushed right of centre. Cause: **two** `ToolbarItem(placement: .topBarLeading)` — the sort menu,
-  which renders as a wide `↑ Name` pill whose width *varies with the sort key*, plus the favourites
-  star — against a single `+` trailing. With `.navigationBarTitleDisplayMode(.inline)` iOS centres
-  the title in the space left over, so a fat leading group shoves it across, and it **moves again**
-  when the sort key changes ("Recently added" is wider than "Name").
-  - **Check Routines too before fixing** — it has the same shape (wand + star leading, `+`
-    trailing), so this is very likely not one screen's bug. Loops is leading-star / trailing-sort and
-    may be fine.
-  - **It's a shared-chrome decision, not a layout tweak.** The honest fixes are moving the sort menu
-    to trailing, or collapsing sort + favourites into one menu — both change the toolbar grammar of
-    every practice library, so this wants doing **once, across all three**, not patched per screen.
-    That's why it's deferred rather than folded into Slice 3.
+- **The inline nav title sat off-centre in the practice libraries — FIXED.** Confirmed at triage: not
+  one screen's bug. Exercises carried two `.topBarLeading` items (a sort menu rendering as a
+  variable-width `↑ Recently Added` pill, plus the favourites star) against a lone trailing `+`;
+  Routines had the same shape with a wand in place of the sort; Loops carried the same pill on the
+  trailing side. Fixed by the second of the two options recorded here — **collapse sort + favourites
+  into one icon-only menu** (`LibraryOptionsMenu`), and put it **trailing**, leaving the back button
+  alone on the leading side. Moving the pill to trailing was rejected: it rebalances the groups but
+  the width still varies, so the title would still drift, just the other way. On Routines the wand
+  moved into the menu as a labelled row. See ADR 0126 for the grammar and the costs (the active sort
+  key is no longer legible from the bar; favourites is one tap deeper).
 
 **Fixed on the Slice 1 branch (was: needs a device repro):**
 
@@ -454,15 +450,33 @@ are done:**
   `docs/swiftdata-gotchas.md` first: binary blobs on a `@Model` are exactly the class of thing that
   behaves in the simulator and bites on device.
 
-**Branding — SVG logo swap (small, do alongside any slice):**
+**Branding — SVG logo swap — DONE 2026-07-29.**
 
-New Pixelmator-authored SVGs exist for light background, dark background and a blood-moon variant.
-Xcode asset catalogs accept SVG with vector data preserved, so `RedMoonLogo`, `RedMoonMark` and
-`RedMoonWordmark` swap PNG → SVG in place. Because the mark is **two-tone** (crescent vs. everything
-else) it can't be a single template asset tinted in code — keep the existing light/dark appearance
-pair. The supplied file is a full lockup, so the mark-only and wordmark-only assets are derived from
-it by cropping the viewBox and dropping groups. The **App Icon stays PNG** (opaque 1024², no alpha) —
-the flat cream-background lockup is a suitable source.
+`RedMoonLogo`, `RedMoonMark` and `RedMoonWordmark` are now SVG with
+`preserves-vector-representation`, from the **v5** Pixelmator set. The light/dark appearance pair
+stayed, as flagged (the mark is two-tone, so it can't be one template asset tinted in code), and the
+**App Icon stayed PNG** — but it was re-cut from the same v5 art (the dark-background mark, no
+wordmark) rather than left on the old textured raster. ADR 0061's icon decision is unchanged: same
+crescent + stars, same near-black, no text. Notes worth carrying forward:
+
+- **The three assets are generated, not hand-cropped** — `scripts/derive-brand-svgs.py` keeps the
+  chosen `<path>` layers from the one supplied lockup and rewrites the viewBox to their exact
+  bounding box (true cubic-bezier extrema). A new logo revision is one command, not three crops per
+  appearance. The generated files carry a do-not-hand-edit banner.
+- **The App Icon is generated too** (`--app-icon`): the mark composited on opaque `#0F0F0F` and
+  rasterised through **QuickLook** (`qlmanage`), so there's no librsvg/ImageMagick to install. Both
+  the background hex and the 66.8%-of-canvas mark height were **measured off the icon it replaced**,
+  so the swap is like-for-like on the home screen. QuickLook hands back RGBA, so the script asserts
+  every pixel is opaque and then re-encodes without the alpha channel — a partly-transparent icon is
+  an App Store rejection, and the renderer is the one part of the pipeline we don't control.
+- **The blood-moon variant is deliberately not in the catalog** — the Blood Moon theme has no
+  consumer yet, so it would be a dead asset. `--variants blood` produces it when Slice 2 / ADR 0081
+  lands; that's the whole cost.
+- **The simplified v5 art changes the aspect ratios**, which the sizing had baked in: the mark went
+  from wider-than-tall (raster) to roughly 2:3 (vector), so `ArtistNamePromptSheet` had to cap its
+  **height** rather than its width or the crescent would have grown ~80% taller. The lockup likewise
+  went from 0.87 to 1.14 — Settings' `maxWidth: 160` now yields a shorter block. Check every consumer
+  when the art changes shape, not just that it still renders.
 
 **Colour tokens: no work needed.** The palette already sits on the logo — `TealCTA` light is
 `18698B` against the logo's `17698A`, and `Terracotta` light is `C24A2C`, an *exact* match for the

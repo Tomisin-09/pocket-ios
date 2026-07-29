@@ -1,22 +1,25 @@
 {
-  "images" : [
+  "images": [
     {
-      "filename" : "wordmark-light.png",
-      "idiom" : "universal"
+      "filename": "wordmark-light.svg",
+      "idiom": "universal"
     },
     {
-      "appearances" : [
+      "filename": "wordmark-dark.svg",
+      "idiom": "universal",
+      "appearances": [
         {
-          "appearance" : "luminosity",
-          "value" : "dark"
+          "appearance": "luminosity",
+          "value": "dark"
         }
-      ],
-      "filename" : "wordmark-dark.png",
-      "idiom" : "universal"
+      ]
     }
   ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
+  "info": {
+    "author": "xcode",
+    "version": 1
+  },
+  "properties": {
+    "preserves-vector-representation": true
   }
 }
