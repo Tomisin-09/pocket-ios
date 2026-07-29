@@ -76,6 +76,15 @@ targets:
       configs:
         Debug:
           POCKET_API_HOST: "localhost:8787"
+          # Warnings are errors for *our* code (AGENTS.md step 2 asks for a warning-free
+          # build anyway). This lives here rather than on the pre-push hook's xcodebuild
+          # command line because a command-line setting applies to every target in the
+          # graph — including SPM dependencies, which Xcode compiles with
+          # `-suppress-warnings`, and the two flags conflict outright ("error: conflicting
+          # options '-warnings-as-errors' and '-suppress-warnings'"). That broke the first
+          # push after Aptabase landed. Debug-only on purpose: an archive should never fail
+          # because a future SDK deprecates something.
+          SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
         Release:
           POCKET_API_HOST: "api.pocket.example.com"
     entitlements:

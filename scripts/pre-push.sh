@@ -101,6 +101,10 @@ if [ "$MODE" = "full" ]; then
 else
   # Fast tier: build only, but with complete concurrency checking so main-actor
   # isolation errors that CI's older compiler flags surface here too.
+  # Warnings-as-errors is NOT passed here: a command-line build setting applies to every
+  # target in the graph, and SPM dependencies are compiled with `-suppress-warnings`, which
+  # conflicts with it. It lives on the Pocket target in project.yml (Debug) instead, so our
+  # code is still held to it while package sources are left alone.
   echo "pre-push: xcodebuild build (strict concurrency)…"
   set -o pipefail 2>/dev/null || true
   xcodebuild build \
@@ -108,7 +112,6 @@ else
     -destination 'generic/platform=iOS Simulator' \
     CODE_SIGNING_ALLOWED=NO \
     SWIFT_STRICT_CONCURRENCY=complete \
-    SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
     | $PRETTY
 fi
 
