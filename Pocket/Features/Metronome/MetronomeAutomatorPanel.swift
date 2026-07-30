@@ -47,10 +47,14 @@ struct MetronomeAutomatorPanel: View {
             NewExerciseSheet(initialCommand: engine.bpm,
                              initialSignature: engine.timeSignature,
                              fixedTemplate: .basic) { plan in
-                modelContext.insert(Exercise.commandAnchored(
+                let exercise = Exercise.commandAnchored(
                     name: plan.name, command: plan.command,
                     beatsPerBar: plan.signature.beats, noteValue: plan.signature.noteValue,
-                    template: plan.template))
+                    template: plan.template)
+                modelContext.insert(exercise)
+                // This seam has to attach the picked songs too, or a link made on the create sheet
+                // would silently vanish here (ADR 0111) — the price of a second insert path.
+                if !plan.songs.isEmpty { exercise.linkedSongs = plan.songs }
                 // The second, non-shared insert path (ADR 0120). The `commandAnchored` factory
                 // itself is *not* a valid choke point — the preset seeder uses it too, and would
                 // report six invented drills on every fresh install.

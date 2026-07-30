@@ -1,8 +1,10 @@
+import SwiftData
 import SwiftUI
 
-/// Step two of `NewExerciseSheet`: name the drill, set its command tempo and meter, and — for a
-/// template with a bespoke editor — author its content. A thin form; each editor is the same one the
-/// library's Edit-shape sheet uses, seeded from the template's default payload.
+/// Step two of `NewExerciseSheet`: name the drill, set its command tempo and meter, link the songs
+/// it's *for*, and — for a template with a bespoke editor — author its content. A thin form; each
+/// editor is the same one the library's Edit-shape sheet uses, seeded from the template's default
+/// payload.
 ///
 /// Fretboard-family templates that can be either **generated or hand-drawn** (Scales and the run
 /// families — warm-up/picking/legato/fingerstyle) carry a generate-or-draw toggle (ADR 0107); draw
@@ -55,6 +57,16 @@ struct ConfigureExerciseForm: View {
     /// default. Its strum pattern is re-gridded on a meter change like `strum` above; its progression
     /// is not meter-bound, same as `chords`.
     @State var strumChords: StrumChordSheet
+
+    /// Every song in the library, offered as link candidates (ADR 0111) — sorted by title to match
+    /// the Library and `ExerciseDetailSheet`'s picker.
+    @Query(sort: \Song.title) var allSongs: [Song]
+    /// The songs picked *so far* on this step. Held locally and carried onto the plan rather than
+    /// written through: nothing exists to link to until Create, and abandoning the sheet must leave
+    /// the library untouched. (Contrast `ExerciseDetailSheet`, where the drill already exists and each
+    /// toggle persists immediately.)
+    @State var pickedSongs: [Song] = []
+    @State var showingSongPicker = false
 
     /// The instrument this drill draws and generates for — fixed at the create sheet (S6), so it's just
     /// the seed value the editors and the plan read. Not `@State`: nothing on this step changes it.
@@ -141,6 +153,7 @@ struct ConfigureExerciseForm: View {
             } footer: {
                 Text("Sets the run's accents and count-in length. Defaults to 4/4.")
             }
+            songsSection
             templateSection
         }
         .scrollDismissesKeyboard(.interactively)
@@ -152,6 +165,18 @@ struct ConfigureExerciseForm: View {
                                               beatsPerBar: meter.beats)
             strumChords.strumPattern = strumChords.strumPattern.resized(
                 slotsPerBeat: strumChords.strumPattern.slotsPerBeat, beatsPerBar: meter.beats)
+        }
+        .sheet(isPresented: $showingSongPicker) {
+            LinkPickerSheet(
+                title: "Link songs",
+                prompt: "Search songs",
+                emptyCatalog: "No songs in your library yet.",
+                candidates: allSongs,
+                label: { $0.title.isEmpty ? "Untitled song" : $0.title },
+                subtitle: { $0.artist.isEmpty ? nil : $0.artist },
+                isLinked: { isPicked($0) },
+                toggle: { togglePick($0) },
+                accent: PocketColor.practice)
         }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -190,7 +215,8 @@ private extension ConfigureExerciseForm {
                         strum: template.bespokeEditor == .strumming ? strum : nil,
                         fretboard: fretboardContent,
                         chords: template.bespokeEditor == .chords ? chords : nil,
-                        strumChords: template.bespokeEditor == .strumChords ? strumChords : nil)
+                        strumChords: template.bespokeEditor == .strumChords ? strumChords : nil,
+                        songs: pickedSongs)
     }
 
     /// The generated seed for a fresh run/scale/arpeggio at a given instrument — the template's guitar
@@ -238,10 +264,17 @@ private extension ConfigureExerciseForm {
 }
 
 #Preview("Configure — warm-up (draw toggle)") {
-    NavigationStack {
+    // A container is required now that the form queries songs for the link picker; seeding one song
+    // is also what makes the Songs section appear (it hides itself on an empty library).
+    // swiftlint:disable:next force_try
+    let container = try! ModelContainer(for: Song.self, Exercise.self, Loop.self,
+                                        configurations: .init(isStoredInMemoryOnly: true))
+    container.mainContext.insert(Song.sample())
+    return NavigationStack {
         ConfigureExerciseForm(template: .warmup,
                               initialCommand: StandaloneMetronomeEngine.defaultCommandBPM,
                               initialSignature: .standard) { _ in }
     }
     .tint(PocketColor.practice)
+    .modelContainer(container)
 }

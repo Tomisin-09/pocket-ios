@@ -43,6 +43,28 @@ final class ExerciseSongLinkTests: XCTestCase {
         XCTAssertEqual(b.linkedExercises.map(\.name), ["Picking"])
     }
 
+    /// The **creation-sheet** ordering (ADR 0111 follow-up): the songs come from a `@Query`, so they
+    /// are already stored, while the drill is brand new. Both hosts therefore `insert` the exercise
+    /// *first* and assign `linkedSongs` after — the reverse of the tests above, which link two
+    /// not-yet-inserted objects. Pins that the inverse still populates in this direction, since a
+    /// silent no-op here would look exactly like "the picker didn't save".
+    func testAttachingStoredSongsAfterInsertingTheExerciseLinksBothWays() throws {
+        let context = try makeContext()
+        let song = makeSong("Little Wing")
+        context.insert(song)
+        try context.save()
+
+        let drill = Exercise(name: "Thumb-over changes")
+        context.insert(drill)
+        drill.linkedSongs = [song]
+        try context.save()
+
+        let fetchedDrill = try XCTUnwrap(context.fetch(FetchDescriptor<Exercise>()).first)
+        XCTAssertEqual(fetchedDrill.linkedSongs.map(\.title), ["Little Wing"])
+        let fetchedSong = try fetchSong("Little Wing", in: context)
+        XCTAssertEqual(fetchedSong.linkedExercises.map(\.name), ["Thumb-over changes"])
+    }
+
     func testDeletingASongNullifiesTheEdgeNotTheExercise() throws {
         let context = try makeContext()
         let drill = Exercise(name: "Spider")

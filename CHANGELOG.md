@@ -16,6 +16,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   notes, your song names, or your artist name. There is no way for it to, by design — the list of
   what can be sent is a fixed set that has no room for your words in it.
 
+- **Say which songs a drill is for while you're making it.** New exercises now offer a **Songs**
+  section on the create sheet, so a drill you're building for a particular song gets tied to it there
+  and then instead of after the fact from the drill's ⓘ sheet. Optional, and you can still change it
+  later. The section only appears once you have songs in your library.
+
 ### Changed
 - **Adding to a routine no longer closes the picker.** Tap a drill and it goes in there and then —
   the row ticks, a count appears at the bottom, and you can carry on browsing and add five more

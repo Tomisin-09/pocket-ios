@@ -466,18 +466,23 @@ forward:
   and **Tier 2** (AdAttributionKit / Apple Search Ads) plus the **marketing-site cookie policy**,
   both separate slices with no code overlap here.
 
-**Slice 9 — artist name generator + onboarding copy (small):**
+**Slices 9 and 10 — PARKED (user, 2026-07-30). This closes the device-testing plan at eight shipped
+slices.** Both are self-contained tails: nothing in Slices 1–8 depends on either, and neither depends
+on the other. Their full entries moved to the standing sections that own the subject matter, so
+they're found by someone working on that area rather than by re-reading a finished plan:
 
-New copy — "Every artist earns their name. / You've put in the work. Sign your stage name — or spin
-one up." Expand `ArtistNameGenerator` and curate it from the ADR 0113 profile signals (genre, sound,
-goals) as generation variables.
+- **Slice 9 — artist name generator + onboarding copy** → *Onboarding — "the art of creating loops" +
+  musician voice*.
+- **Slice 10 — song links on creation sheets + the "universally applicable" flag** → the **ADR 0111
+  exercise↔song** entry under *Near-term*, as a fourth sub-bullet beside Model / Authoring UI /
+  Generator. It **split in two on 2026-07-30**: the creation-sheet link **shipped** (branch
+  `pocket-208-song-links-on-create`), and the **flag stays parked**, unanswered — the groundwork
+  recorded there explains why it's a bigger decision than "small follow-up" suggested.
 
-**Slice 10 — song links on creation sheets (small ADR 0111 follow-up):**
-
-Offer the exercise↔song link on the *new exercise* sheets for every template, not only after
-creation. Plus a **"universally applicable"** flag meaning the exercise is tied to no song and is
-therefore always eligible for the planner / collection generator. **Confirm the flag's semantics
-before building.**
+**One consequence of parking Slice 10: the no-users schema window (above) no longer has an open
+model change riding it.** The batch-the-schema-thinking-across-3b-and-10 advice is spent — 3b shipped,
+10 is parked. If Slice 10 is picked up *after* distribution, its flag pays the full additive-optional
+cost, and that cost should be weighed against the flag's value at that point rather than assumed.
 
 **Found during the Slice 3 device pass (2026-07-29) — DONE 2026-07-29 (ADR 0126):**
 
@@ -1212,6 +1217,51 @@ These are scheduled to be picked up shortly — listed here so they're not lost.
     point: **Build a routine for this song** in the *Exercises for this song* section on
     `SongDetailsSheet`, disabled unless there's ≥1 linked exercise or loop. No schema change — reads
     the 0111 edge. **This completes the exercise↔song feature** (schema + authoring UI + generator).
+  - **Links at creation + a "universally applicable" flag — PARKED 2026-07-30 (was the device-testing
+    pass's Slice 10).** Two items that arrived as one small follow-up and are really one small piece
+    and one open design question:
+    1. **Offer the link on the *new exercise* sheet, every template — ✅ DONE (branch
+       `pocket-208-song-links-on-create`, 2026-07-30).** A **Songs** section on
+       `ConfigureExerciseForm` over the existing `LinkPickerSheet` (presentation-only, so it took no
+       changes), picks staged in local `@State` → `NewExercisePlan.songs` → attached by each host
+       **after** `context.insert`, because a relationship assigned to a not-yet-inserted model doesn't
+       stick (the constraint `UnitDuplication` documents). Notes:
+       - **There are two insert paths, not one.** `ExerciseLibraryView.create` *and* the metronome
+         automator's "Save as exercise" seam in `MetronomeAutomatorPanel`, which builds and inserts
+         its own `Exercise` inline. Both had to attach the links or a link made on the automator's
+         sheet would vanish with no error — the same second-path trap ADR 0120 hit with
+         `exerciseCreated` analytics.
+       - **The existing link tests all linked two *uninserted* models**, which works; the creation
+         path links an already-stored song onto a fresh drill, which is the ordering that actually
+         constrains it. Pinned by `testAttachingStoredSongsAfterInsertingTheExerciseLinksBothWays`.
+       - **The section hides itself on an empty song library** rather than offering a row that opens
+         an empty picker on an already-long form. It reappears once a song is imported.
+       - **Adding a `@Query` to a form breaks its previews.** `ConfigureExerciseForm` and both
+         `NewExerciseSheet` previews needed a `.modelContainer`; without one a `@Query` traps. Cheap
+         to fix, easy to miss, and it only shows up in the canvas — not in a build.
+    2. **The flag is not small, and this is why it was parked rather than built.** The original note
+       read *"a flag meaning the exercise is tied to no song"* — but **nothing in the app filters by
+       song links today**, so the flag has no existing behaviour to label. It would *create* one.
+       `CandidateDeriver.techniqueCandidates` (Path A) resolves a goal skill to **every** library
+       exercise whose template serves it, song-tied or not; `CollectionSessionBuilder` is purely
+       link-driven in the other direction (`pool`/`canBuild` count only `song.linkedExercises` +
+       `song.loops`). Three questions have to be answered before any code, and each changes the work:
+       - **Stored or derived?** Derived (`linkedSongs.isEmpty`) is free but can't express "linked to
+         Binta *and* generally useful", and linking a song would silently drop the drill from the
+         universal pool. A stored `Bool` independent of the links can express it, at the cost of a
+         field the user has to understand.
+       - **Hard filter or soft down-weight in Path A?** A hard filter gives "always eligible" a real
+         complement (song-tied drills reach a session only via Path B, a repertoire goal for their
+         song) but **can empty the pool** — a player whose drills are all song-linked would derive
+         nothing for a technique goal. A soft multiplier on `priority` matches the house precedent
+         (`prereqPenalty`/`prereqFloor`, the ADR 0016↔0071 "never refuse what the player asked for"
+         shape) and can't empty anything.
+       - **Do universal drills top up a thin collection session?** If yes, `pool` and `canBuild` stop
+         describing the collection and a Binta session can contain drills unrelated to Binta; if no,
+         ADR 0118's deliberate "a thinly-linked collection yields a thinner session" stands.
+       Item 1 shipped on its own without answering any of this (user call, 2026-07-30 — *"we'll
+       revisit the universal applicable flag another time"*), which is what the original note should
+       have said. **The flag remains parked and unanswered.**
 
 - ~~**Futura navigation titles app-wide (spotted in the v1 screenshot shoot, 2026-07-23).**~~ **DONE
   (pocket-181, ADR 0110, 2026-07-23).** Shipped exactly as the decision below: one global
@@ -1628,6 +1678,14 @@ A coherent vision, captured for V1's creation experience:
   3. **Create loops** — with the song signposted by markers, build loops from
      those positions (author suggests 50% tempo, playback starting at 50%,
      zoomed in to a set level).
+- **Artist name generator + naming copy (parked 2026-07-30 — was the device pass's Slice 9).** New
+  copy for the naming step: *"Every artist earns their name. / You've put in the work. Sign your
+  stage name — or spin one up."* Expand `ArtistNameGenerator` and curate it from the ADR 0113 profile
+  signals (genre, sound, goals) as generation variables, so a spun name reads like it came from the
+  musician's own scene rather than a generic word bag. Small and self-contained: copy plus generator
+  logic, no model change, no dependency on the rest of the device-testing plan. Sits naturally with
+  the **musician voice** principle below — the naming moment is one of the rituals that bullet
+  describes.
 - **Musician voice / ritual (cross-cutting design principle).** Address users
   as *musicians* throughout; use language that helps them internalise the
   identity. Frame **completing the first loop** as a small ritual — the moment
