@@ -1,11 +1,15 @@
+import SwiftData
 import XCTest
 @testable import Pocket
 
 /// Pure curation logic for the local artist profile (ADR 0113, Slice 2): the intake enums, their
 /// consumer mappings (fresh-exercise tempo default, planner session length), and the primitive-backed
-/// computed accessors on `Profile`. Property logic only — `Profile` objects are built **uninserted**
-/// (no `ModelContext`), which is the safe shape for @Model property tests in the XCTest host
-/// (swiftdata-insert-test-host-trap).
+/// computed accessors on `Profile`. Property logic is tested on **uninserted** `Profile` objects (no
+/// `ModelContext`), the safe shape for @Model property tests in the XCTest host.
+///
+/// The one exception is the **writer** section at the bottom, which needs a real in-memory container
+/// because what it tests is the singleton fetch-or-create and the field independence between the two
+/// writers — neither of which exists off a context.
 final class ProfileCurationTests: XCTestCase {
 
     // MARK: - Experience → default command tempo (consumer)
@@ -114,6 +118,50 @@ final class ProfileCurationTests: XCTestCase {
         // A future/renamed instrument value decodes back to guitar rather than crashing.
         profile.preferredInstrumentRaw = "sitar"
         XCTAssertEqual(profile.preferredInstrument, .guitar)
+    }
+
+    // MARK: - Writers (ADR 0116 — the Settings control's path to the store)
+
+    /// `setPreferredInstrument` had **no caller at all** until the Settings row landed: the field, its
+    /// accessor and this writer all existed while nothing in the app could reach them, so every
+    /// consumer read the guitar fallback forever. Pins the writer end-to-end so the readers in
+    /// `ExerciseLibraryView` / `MetronomeAutomatorPanel` have something real to read.
+    func testSetPreferredInstrumentCreatesTheSingletonAndPersists() throws {
+        let context = try makeContext()
+
+        Profile.setPreferredInstrument(.bass, in: context)
+
+        let rows = try context.fetch(FetchDescriptor<Profile>())
+        XCTAssertEqual(rows.count, 1, "the writer creates the singleton row rather than needing one")
+        XCTAssertEqual(rows.first?.preferredInstrument, .bass)
+    }
+
+    /// The two writers touch disjoint fields. `setCuration` overwrites its four as a *set* (a skipped
+    /// question clears its field), so folding the instrument into it would let picking Bass wipe the
+    /// answers — which is why Settings commits it separately.
+    func testTheTwoWritersDoNotClobberEachOther() throws {
+        let context = try makeContext()
+
+        Profile.setCuration(experience: .comfortable, genres: [.blues], dream: .writeMusic,
+                            minutesPerDay: .long, in: context)
+        Profile.setPreferredInstrument(.bass, in: context)
+
+        let profile = try XCTUnwrap(try context.fetch(FetchDescriptor<Profile>()).first)
+        XCTAssertEqual(profile.preferredInstrument, .bass)
+        XCTAssertEqual(profile.experience, .comfortable, "the curation answers survive an instrument change")
+        XCTAssertEqual(profile.genres, [.blues])
+        XCTAssertEqual(profile.dream, .writeMusic)
+        XCTAssertEqual(profile.minutesPerDay, .long)
+
+        // And the reverse order: editing "Your sound" must not reset the instrument to guitar.
+        Profile.setCuration(experience: .aWhile, genres: [.jazz], dream: nil,
+                            minutesPerDay: nil, in: context)
+        XCTAssertEqual(profile.preferredInstrument, .bass)
+    }
+
+    private func makeContext() throws -> ModelContext {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        return ModelContext(try ModelContainer(for: Profile.self, configurations: config))
     }
 }
 

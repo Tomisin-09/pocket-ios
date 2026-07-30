@@ -16,9 +16,19 @@ struct MetronomeAutomatorPanel: View {
     let engine: StandaloneMetronomeEngine
 
     @Environment(\.modelContext) private var modelContext
+    /// The local profile (ADR 0113 S2), read for the same reason the exercise library reads it: a
+    /// drill saved out of the automator should open on the instrument you actually play.
+    @Query private var profiles: [Profile]
     @State private var saving = false
 
     private typealias Mode = StandaloneMetronomeEngine.AutomatorMode
+
+    /// The instrument a drill saved from here picks up (ADR 0116) — the profile's preferred
+    /// instrument when declared, else guitar. Mirrors `ExerciseLibraryView`: before this, the seam
+    /// passed nothing, so a bass player's breakdown was silently saved as a guitar drill.
+    private var defaultInstrument: Instrument {
+        profiles.first?.preferredInstrument ?? .guitar
+    }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -42,24 +52,14 @@ struct MetronomeAutomatorPanel: View {
         .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronomeCardWash))
         .sheet(isPresented: $saving) {
             // Captures the tempo live at the moment of the tap (the breakdown point), prefilled as
-            // the new exercise's command. Funnels through the same `commandAnchored` factory as
-            // Practice's own create flow — one creation path (ADR 0046).
+            // the new exercise's command. Funnels through `plan.finalise(in:)` — the same insert
+            // Practice's own `+` runs, so creation behaviour added there lands here too rather than
+            // needing a second edit in this file (ADR 0046's "single creation path").
             NewExerciseSheet(initialCommand: engine.bpm,
                              initialSignature: engine.timeSignature,
-                             fixedTemplate: .basic) { plan in
-                let exercise = Exercise.commandAnchored(
-                    name: plan.name, command: plan.command,
-                    beatsPerBar: plan.signature.beats, noteValue: plan.signature.noteValue,
-                    template: plan.template)
-                modelContext.insert(exercise)
-                // This seam has to attach the picked songs too, or a link made on the create sheet
-                // would silently vanish here (ADR 0111) — the price of a second insert path.
-                if !plan.songs.isEmpty { exercise.linkedSongs = plan.songs }
-                // The second, non-shared insert path (ADR 0120). The `commandAnchored` factory
-                // itself is *not* a valid choke point — the preset seeder uses it too, and would
-                // report six invented drills on every fresh install.
-                Analytics.send(.exerciseCreated(template: plan.template,
-                                                instrument: plan.instrument))
+                             fixedTemplate: .basic,
+                             defaultInstrument: defaultInstrument) { plan in
+                plan.finalise(in: modelContext)
             }
         }
     }
