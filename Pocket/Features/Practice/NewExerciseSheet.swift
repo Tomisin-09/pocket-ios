@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// What a confirmed create produces — passed to `onCreate` so the caller inserts the model through
@@ -20,6 +21,12 @@ struct NewExercisePlan {
     let chords: ChordProgression?
     /// The authored strum-chord sheet for a Strum & Chords template; `nil` for every other template.
     let strumChords: StrumChordSheet?
+    /// The songs this drill is *for* (ADR 0111), picked on the configure step. Carried on the plan
+    /// rather than assigned during authoring because `linkedSongs` is a **relationship**: it can only
+    /// be set once the `Exercise` is in a context, so every host attaches these *after* its
+    /// `insert` (the same ordering constraint `UnitDuplication` documents). Empty for a drill that
+    /// isn't tied to any song, which is the common case.
+    let songs: [Song]
 }
 
 /// Create a new exercise from within **Practice** (ADR 0046 / 0068 revised). Two steps: **pick a
@@ -109,8 +116,22 @@ struct NewExerciseSheet: View {
 
 #Preview("New exercise — picker") {
     NewExerciseSheet { _ in }
+        .modelContainer(NewExerciseSheet.previewContainer())
 }
 
 #Preview("New exercise — fixed basic") {
     NewExerciseSheet(fixedTemplate: .basic) { _ in }
+        .modelContainer(NewExerciseSheet.previewContainer())
+}
+
+private extension NewExerciseSheet {
+    /// The configure step queries songs for its link picker (ADR 0111), so both previews need a
+    /// container — the picker preview too, since navigating to the second step would otherwise trap.
+    static func previewContainer() -> ModelContainer {
+        // swiftlint:disable:next force_try
+        let container = try! ModelContainer(for: Song.self, Exercise.self, Loop.self,
+                                           configurations: .init(isStoredInMemoryOnly: true))
+        container.mainContext.insert(Song.sample())
+        return container
+    }
 }

@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 // MARK: - Per-template content sections (split from ConfigureExerciseForm for the 400-line cap)
@@ -16,6 +17,70 @@ extension ConfigureExerciseForm {
             .foregroundStyle(PocketColor.practice)
         } footer: {
             Text("Set for this drill and fixed after creation.")
+        }
+    }
+
+    // MARK: - Linked songs (ADR 0111)
+
+    /// The songs this drill is *for*, pickable **at creation** rather than only afterwards on
+    /// `ExerciseDetailSheet` — the same edge, the same `LinkPickerSheet`, just staged in `pickedSongs`
+    /// until Create attaches it.
+    ///
+    /// Hidden entirely when the library holds no songs: with nothing to pick, the row would open an
+    /// empty picker and only lengthen an already-long form. It reappears by itself once a song is
+    /// imported, and the link is always authorable later from the drill's detail sheet.
+    @ViewBuilder
+    var songsSection: some View {
+        if !allSongs.isEmpty {
+            Section {
+                ForEach(pickedSongsByTitle, id: \.persistentModelID) { song in
+                    HStack(spacing: 8) {
+                        Text(song.title.isEmpty ? "Untitled song" : song.title)
+                            .foregroundStyle(PocketColor.textPrimary)
+                        if !song.artist.isEmpty {
+                            Text(song.artist)
+                                .font(.futura(.caption))
+                                .foregroundStyle(PocketColor.textSecondary)
+                        }
+                    }
+                }
+                .onDelete(perform: unpickSongs)
+                Button { showingSongPicker = true } label: {
+                    Label(pickedSongs.isEmpty ? "Link songs" : "Link more songs",
+                          systemImage: "plus.circle")
+                        .foregroundStyle(PocketColor.practice)
+                }
+            } header: {
+                Text("Songs")
+            } footer: {
+                Text("Optional — the songs this drill is for. Links show on the song too, and seed a "
+                     + "one-tap practice routine for it. You can change them later.")
+            }
+        }
+    }
+
+    var pickedSongsByTitle: [Song] {
+        pickedSongs.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
+    func isPicked(_ song: Song) -> Bool {
+        pickedSongs.contains { $0.persistentModelID == song.persistentModelID }
+    }
+
+    /// Toggle a song's link in the *staged* selection — no `save()` here, unlike the detail sheet's
+    /// equivalent: nothing is persisted until Create.
+    func togglePick(_ song: Song) {
+        if let index = pickedSongs.firstIndex(where: { $0.persistentModelID == song.persistentModelID }) {
+            pickedSongs.remove(at: index)
+        } else {
+            pickedSongs.append(song)
+        }
+    }
+
+    func unpickSongs(at offsets: IndexSet) {
+        let targets = offsets.map { pickedSongsByTitle[$0] }
+        for song in targets {
+            pickedSongs.removeAll { $0.persistentModelID == song.persistentModelID }
         }
     }
 

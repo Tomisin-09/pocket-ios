@@ -291,6 +291,9 @@ struct ExerciseLibraryView: View {
         // once the payload is on (ADR 0121).
         exercise.bindCommandRhythmToContent()
         context.insert(exercise)
+        // Songs picked on the create sheet (ADR 0111) attach only *after* the insert — assigning a
+        // relationship on a model that isn't in a context yet doesn't stick.
+        if !plan.songs.isEmpty { exercise.linkedSongs = plan.songs }
         Analytics.send(.exerciseCreated(template: plan.template, instrument: plan.instrument))
         haptic(.medium)
         justCreated = exercise
