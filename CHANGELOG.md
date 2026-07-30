@@ -177,6 +177,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   still read per note by VoiceOver when nothing is moving.
 
 ### Fixed
+- **A drill saved out of the metronome is a bass drill if you play bass.** Saving your breakdown
+  tempo as an exercise always made a *guitar* drill, whatever instrument your profile says you play.
+  It now picks your instrument up the same way the Exercises **+** does.
 - **Setting a BPM but no "1" no longer looks like a broken grid.** The beat grid needs both a tempo
   *and* a downbeat — the tempo fixes the spacing, the 1 fixes where the bars fall, and Pocket won't
   guess the second one. Committing a BPM alone therefore drew no gridlines and showed no Grid toggle,

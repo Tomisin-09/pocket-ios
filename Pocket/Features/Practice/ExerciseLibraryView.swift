@@ -270,31 +270,12 @@ struct ExerciseLibraryView: View {
                       : "No exercises match “\(searchText)”."
     }
 
-    /// Create an exercise from a confirmed `NewExercisePlan` (ADR 0046 / 0068): anchored on the
-    /// entered **command** tempo (the warm-up working floor and the reach derive from it via pure
-    /// `TempoStretch`, so the typed number is the command shown on the run screen), carrying the
-    /// chosen **template** (which groups the library and picks the run surface) and meter (so the run
-    /// metronome accents + count-in match, ADR 0052). A strumming or fretboard template's authored
-    /// payload (pattern / drill) is encoded onto the exercise.
+    /// Create an exercise from a confirmed `NewExercisePlan` (ADR 0046 / 0068) and stage it for its
+    /// run screen. The insert itself is `plan.finalise(in:)` — **shared with the metronome
+    /// automator's save seam**, the other host of this same sheet — so creation behaviour is written
+    /// once. Everything left here is this host's own: the confirmation haptic and the push.
     private func create(_ plan: NewExercisePlan) {
-        guard !plan.name.isEmpty else { return }
-        let exercise = Exercise.commandAnchored(name: plan.name, command: plan.command,
-                                                beatsPerBar: plan.signature.beats,
-                                                noteValue: plan.signature.noteValue,
-                                                template: plan.template,
-                                                instrument: plan.instrument)
-        if let strum = plan.strum { exercise.setStrumPattern(strum) }
-        if let fretboard = plan.fretboard { exercise.setFretboardContent(fretboard) }
-        if let chords = plan.chords { exercise.setChordProgression(chords) }
-        if let strumChords = plan.strumChords { exercise.setStrumChordSheet(strumChords) }
-        // The rhythm is whatever the authored content states, so the command can only be bound to it
-        // once the payload is on (ADR 0121).
-        exercise.bindCommandRhythmToContent()
-        context.insert(exercise)
-        // Songs picked on the create sheet (ADR 0111) attach only *after* the insert — assigning a
-        // relationship on a model that isn't in a context yet doesn't stick.
-        if !plan.songs.isEmpty { exercise.linkedSongs = plan.songs }
-        Analytics.send(.exerciseCreated(template: plan.template, instrument: plan.instrument))
+        guard let exercise = plan.finalise(in: context) else { return }
         haptic(.medium)
         justCreated = exercise
     }

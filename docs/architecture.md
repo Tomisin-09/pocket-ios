@@ -208,8 +208,14 @@ still ends the session). Its job is *discovery* — ramp until your hands break 
 armed automator offers a one-directional **"Save as exercise"** seam (a compact bookmark) that
 captures the current (breakdown) tempo and presents Practice's
 `NewExerciseSheet` prefilled with it as the command. Both that seam and Practice's own create flow
-funnel through the single `Exercise.commandAnchored(name:command:)` factory, so the two entry
-points can't drift. **Command-anchored progress** (ADR
+funnel through the single `Exercise.commandAnchored(name:command:)` factory **and the single
+`NewExercisePlan.finalise(in:)` insert** (ADR 0128), so the two entry points can't drift. The insert
+is deliberately hung off the *plan* rather than the factory: only the two interactive entry points
+build a plan, whereas the preset seeder calls the factory too, so a hook there would also fire for
+every drill a fresh install seeds (the trap ADR 0120 recorded). It owns the payload encode, the ADR
+0121 rhythm bind, the `insert`, the ADR 0111 song attach and the ADR 0120 event — before it existed
+each host wrote its own, and a plan field left unread on one of them compiled clean and failed
+silently (Swift checks a struct's writers, not its readers). **Command-anchored progress** (ADR
 0045) — reach = command + ~6%, clamped — is the pure `TempoStretch`, now exercised from Practice.
 The reach can also be **manually pinned** (ADR 0075): optional `Exercise.targetTempoOverride` /
 `Loop.targetSpeedOverride` fields, read through the effective `reachTempo` / `targetSpeed`
@@ -404,7 +410,9 @@ and classified by `SessionEstimate.fit` — guidance only, never a gate. `GoalEd
 seeded skills, with no free-text (search only narrows the fixed `TechniqueTaxonomy`). `Exercise` gained self-rated
 **`mastery: Int?`** + **`lastPracticed: Date?`** (mirroring `Loop`/`Song`; the app never grades
 playing — ADR 0070/0072), stamped on run and rated on the detail sheet. `ExerciseLibraryView` owns exercise **create**
-(`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired), **duplicate** and **delete**;
+(`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired — note the automator's
+"Save as exercise" seam is still a **second host** of that sheet, sharing its insert via
+`NewExercisePlan.finalise(in:)`, ADR 0128), **duplicate** and **delete**;
 tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command
 (`commandTempo != nil`, an **in-memory** filter, never a SwiftData optional `#Predicate`, which
