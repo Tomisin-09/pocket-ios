@@ -18,10 +18,22 @@ struct ProfileCurationSection: View {
     @State private var genres: Set<MusicGenre> = []
     @State private var dream: MusicalDream?
     @State private var minutes: PracticeMinutes?
+    /// What you play (ADR 0116). Unlike the four curation fields this has **no "Not set"** — the
+    /// exercise model's instrument axis is non-optional and falls back to guitar, so an unanswered
+    /// question and an answer of "guitar" are the same state. Written through its own
+    /// `setPreferredInstrument`, not `setCuration`: it drives what a fresh drill *is*, not what the
+    /// planner suggests.
+    @State private var instrument: Instrument = .guitar
     @State private var seeded = false
 
     var body: some View {
         Section {
+            Picker("Instrument", selection: $instrument) {
+                ForEach(Instrument.allCases) { option in
+                    Text(option.displayName).tag(option)
+                }
+            }
+
             Picker("Experience", selection: $experience) {
                 Text("Not set").tag(ArtistExperience?.none)
                 ForEach(ArtistExperience.allCases) { option in
@@ -59,12 +71,15 @@ struct ProfileCurationSection: View {
             Text("Your sound")
         } footer: {
             Text("Shapes what the app suggests — starting tempo, session length, and what surfaces "
-                 + "first. Optional, and it stays on this device.")
+                 + "first. Optional, and it stays on this device. New exercises open on your "
+                 + "instrument; each drill keeps its own, so changing this never rewrites one you "
+                 + "already made.")
         }
         .onAppear(perform: seedFromProfile)
         .onChange(of: experience) { commit() }
         .onChange(of: dream) { commit() }
         .onChange(of: minutes) { commit() }
+        .onChange(of: instrument) { commitInstrument() }
     }
 
     /// A one-line summary of the chosen genres for the row's trailing value.
@@ -84,6 +99,7 @@ struct ProfileCurationSection: View {
         genres = Set(profile?.genres ?? [])
         dream = profile?.dream
         minutes = profile?.minutesPerDay
+        instrument = profile?.preferredInstrument ?? .guitar
         seeded = true
     }
 
@@ -92,6 +108,13 @@ struct ProfileCurationSection: View {
         guard seeded else { return } // ignore the initial programmatic seeding
         Profile.setCuration(experience: experience, genres: Array(genres),
                             dream: dream, minutesPerDay: minutes, in: context)
+    }
+
+    /// Persist the instrument on its own — `setCuration` overwrites the four curation fields as a
+    /// set, so folding this into it would make an instrument change able to clear them.
+    private func commitInstrument() {
+        guard seeded else { return }
+        Profile.setPreferredInstrument(instrument, in: context)
     }
 }
 

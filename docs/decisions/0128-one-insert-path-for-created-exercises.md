@@ -60,10 +60,21 @@ condition creation behaviour wants, so the plan is where such behaviour belongs.
   has one place to go, and no second insert to remember. `finalise` says so in its doc comment,
   including why the compiler won't catch a lapse.
 - **An ADR 0116 bug is fixed as a side effect.** The automator passed neither `defaultInstrument:` to
-  the sheet nor `plan.instrument` to the factory, so a bass player's breakdown was silently saved as
-  a guitar drill — while the analytics event on the same path read `plan.instrument` and reported the
-  instrument correctly. That is precisely the "field read on one path, dropped on the other" shape.
-  The automator now reads the profile, as the library does.
+  the sheet nor `plan.instrument` to the factory, while the analytics event on that same path read
+  `plan.instrument` and reported it correctly — precisely the "field read on one path, dropped on the
+  other" shape. The automator now reads the profile, as the library does.
+- **That fix needed a third thing to be visible at all**, which is the more uncomfortable finding.
+  `Profile.setPreferredInstrument` had **no caller anywhere in the app**: ADR 0116 shipped the field,
+  its accessor, its writer and two readers, and never wired a control, so `preferredInstrument`
+  returned the guitar fallback on every install that has ever run. A Settings ▸ Your sound
+  **Instrument** row now writes it. The same silence is at work here as in the main decision — a
+  value nothing writes reads exactly like a value that happens to be guitar — except this time it was
+  a missing *writer*, which the compiler equally does not flag, since a default-returning accessor is
+  a legal, total function. Worth noting the effect is modest: the automator only makes `.basic`
+  drills, which ignore instrument for rendering, so what actually changes is which instrument the
+  drill files under in the library's ADR-0116-S4 filter.
+- **The automator's sheet still has no instrument control**, because `fixedTemplate: .basic` skips the
+  template picker that hosts it. The profile is the only input on that path, which is now a real one.
 - **The automator gains the ADR 0121 rhythm bind** it never called. Benign until now — a `.basic`
   drill has no payload to state a rhythm — but it was a bug waiting on that seam ever producing a
   non-`.basic` drill.

@@ -685,7 +685,14 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   earned). Collected by the **first-launch intake** (`ArtistIntakeView`, a four-card skippable
   full-screen flow gated once by `artistIntakeSeen`; Home shows the intake *or* the naming prompt,
   never both, via `maybeOfferProfileMoment`) and editable any time in **Settings → Your sound**
-  (`ProfileCurationSection`). Two consumers exist today, both pure and both *defaults only*:
+  (`ProfileCurationSection`). That section also holds the ADR-0116 **Instrument** row (Guitar/Bass,
+  no "Not set" — the exercise axis is non-optional and falls back to guitar, so an unanswered
+  question and "guitar" are the same state). It commits through `setPreferredInstrument`, *not*
+  `setCuration`, because that writer overwrites its four fields as a set and would let an instrument
+  change clear them. The row is what makes `Profile.preferredInstrument` reachable at all: the field,
+  accessor and writer shipped with ADR 0116 while nothing in the app could write it, so both readers
+  (`ExerciseLibraryView`, and `MetronomeAutomatorPanel` since ADR 0128) saw the guitar fallback
+  unconditionally. Two more consumers exist, both pure and both *defaults only*:
   `ArtistExperience.defaultCommandTempo` seeds a new exercise's command tempo (`ExerciseLibraryView`
   → `NewExerciseSheet.initialCommand`), and `PracticeMinutes.preferredSessionLength` seeds the
   planner's initial `SessionLength` (`PlannerView`). A third consumer lands with **Slice 3** (ADR 0113,

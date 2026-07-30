@@ -16,6 +16,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   notes, your song names, or your artist name. There is no way for it to, by design — the list of
   what can be sent is a fixed set that has no room for your words in it.
 
+- **Tell Red Moon what you play.** **Settings ▸ Your sound** now has an **Instrument** row — Guitar or
+  Bass. New exercises open on it, so a bass player stops flipping the Guitar/Bass control on every
+  drill they make, and a drill saved out of the metronome (which has no such control) follows it too.
+  Each exercise still keeps its own instrument, fixed when you create it, so changing this never
+  rewrites anything you've already made.
+
 - **Say which songs a drill is for while you're making it.** New exercises now offer a **Songs**
   section on the create sheet, so a drill you're building for a particular song gets tied to it there
   and then instead of after the fact from the drill's ⓘ sheet. Optional, and you can still change it
@@ -177,9 +183,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   still read per note by VoiceOver when nothing is moving.
 
 ### Fixed
-- **A drill saved out of the metronome is a bass drill if you play bass.** Saving your breakdown
-  tempo as an exercise always made a *guitar* drill, whatever instrument your profile says you play.
-  It now picks your instrument up the same way the Exercises **+** does.
+- **A drill saved out of the metronome is filed under the instrument you play.** Saving your
+  breakdown tempo as an exercise always filed it as *guitar*, so it went missing when a bass player
+  narrowed the library to Bass. It now follows your instrument the way the Exercises **+** does. (A
+  drill saved this way is a plain tempo drill, so this is about where it files, not how it draws —
+  only scale, arpeggio and fretboard drills render a neck.)
 - **Setting a BPM but no "1" no longer looks like a broken grid.** The beat grid needs both a tempo
   *and* a downbeat — the tempo fixes the spacing, the 1 fixes where the bars fall, and Pocket won't
   guess the second one. Committing a BPM alone therefore drew no gridlines and showed no Grid toggle,
