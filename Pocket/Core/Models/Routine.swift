@@ -105,6 +105,39 @@ final class RoutineItem {
     /// on a unit-bearing block — a `rest` carries no run to repeat. Read via `effectiveReps`.
     var reps: Int = 1
 
+    /// The minutes a **generated** session allotted this block (ADR 0129), or `nil` for a
+    /// hand-authored one that was never sized by a planner.
+    ///
+    /// The block model computes a share — a 15-minute block divided among the items it holds — and
+    /// until now that number died at materialisation: `PracticePlanner.item(for:)` read a block's
+    /// `unit` and `kind` and dropped its `minutes`. Persisting it is what lets a run **fit its ramp to
+    /// its slot** (`SessionEstimate.fitted`) instead of playing whatever length the exercise happens
+    /// to imply. It is a property of *this block in this routine*, never of the exercise — which is
+    /// exactly why it lives here and not on `Exercise` (ADR 0129 sub-decision 3: generating a session
+    /// must not rewrite an authored recipe).
+    ///
+    /// Optional with **no declaration default**, the migration-exempt shape used by
+    /// `Exercise.targetTempoOverride` — pre-existing items migrate to `nil` and keep their natural
+    /// length.
+    var plannedMinutes: Int?
+
+    /// Whether this block **declines the session's fit** and runs its unit's own authored recipe
+    /// (ADR 0130). `false` — the default — leaves ADR 0129's behaviour exactly as it was.
+    ///
+    /// A flag rather than a cleared `plannedMinutes`, deliberately. Clearing the minutes would say the
+    /// same thing to every consumer (they all read `nil` as "run as authored"), but it is a **one-way
+    /// door**: the allotment is the only record of what the session asked for, so discarding it means
+    /// the toggle can never come back and the block preview can no longer name both numbers. Keeping
+    /// both makes the control reversible.
+    ///
+    /// Declaration default `false` → additive lightweight migration, no store wipe (CoreData 134110).
+    var usesAuthoredLength: Bool = false
+
+    /// The minutes that actually govern this block — the allotment unless the player declined it
+    /// (ADR 0130). **The one expression** the run, the block preview and the session estimate read, so
+    /// a decline cannot take effect on one surface and not another.
+    var effectivePlannedMinutes: Int? { usesAuthoredLength ? nil : plannedMinutes }
+
     /// Backing storage for `loopRunMode` — a plain `String`, **not** the enum (the SwiftData
     /// enum-attribute migration rule; see `kindRaw`). Only meaningful on a **loop** block; ignored
     /// elsewhere. Declaration default = `.trainer` so every loop block saved before ADR 0104 Slice 2

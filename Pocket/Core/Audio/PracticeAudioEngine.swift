@@ -44,6 +44,8 @@ final class PracticeAudioEngine {
     private var totalFrames: AVAudioFramePosition = 0
     private var seekFrame: AVAudioFramePosition = 0
     private var scheduled = false
+    /// This instance's claim on the shared audio session — paired across repeated `load`/`stop` calls.
+    private var sessionClaim = AudioSessionClaim()
     /// Invalidates the in-flight straight-through segment's completion across
     /// stop/seek/loop changes so a stale "reached end" can't reset state.
     private var generation = 0
@@ -132,7 +134,7 @@ final class PracticeAudioEngine {
         player.stop()
         engine.stop()
         scheduled = false
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        sessionClaim.give(label: "practice")
     }
 
     /// Move the play position; resumes from `seconds` if it was playing. A seek inside
@@ -352,6 +354,7 @@ final class PracticeAudioEngine {
 
     private func configureSession() {
         AudioPlumbing.configurePlaybackSession(label: "practice")
+        sessionClaim.take()   // so `stop()` can't deactivate a session another producer is using
     }
 
     private func startTimer() {

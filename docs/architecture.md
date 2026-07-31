@@ -244,6 +244,16 @@ now drives it** — block-chord Hear on My Chords / the movable & custom chord s
 scale, arpeggio, picking-run and custom-drill editors — through the shared `ChordHearButton` and the
 `FretboardDisplayOptionsBar` in `FretboardEditorChrome`.
 
+**Deactivating the shared session is reference-counted** (`AudioPlumbing.retainSession` /
+`releaseSession` over the pure `AudioSessionLease`, plus the paired-by-construction
+`AudioSessionClaim`). `AVAudioSession.setActive(false)` is process-global, and two producers
+legitimately overlap for a moment when one run screen hands over to the next — SwiftUI builds and
+*starts* the incoming block's engine before it tears down the outgoing one. An unconditional
+deactivate in the outgoing `stop()` therefore silenced the engine that had just started: its player
+node never rendered, `renderSampleTime()` stayed `nil`, `tick()` bailed before advancing the beat, and
+a routine **Skip** left the next block reading "Counting in 4" forever with a live UI and no click
+(ADR 0129 device pass). Only the last producer out deactivates; an unbalanced release is inert.
+
 **Practice-take recording foundations** (`Core/Audio/`, ADR 0069, slice 0) — the substrate
 for a mic-only "audio journal," not yet a feature. Recording needs `.playAndRecord`, which
 changes routing app-wide, so it is a *separate* session config (`AudioPlumbing.configureRecordSession`)
@@ -374,8 +384,32 @@ exercises **by name**; exercise-only, since loops/songs need user audio at cold 
 (ADR 0072, V2 Slice 1) is now a live producer of this same `Routine`: a pure two-stage pipeline in
 `Pocket/Core/Planner/` — `DueScore` ranks candidates (`goalWeight × dueness(lastPracticed) ×
 (1 − mastery/5)`, ADR 0015 S5) and `SessionBuilder.buildSession` lays the ranked `PlannerCandidate`s
-into `[SessionBlock]` honouring the ADR 0014 pacing (60-min cap, ≤20-min blocks, rests between
-focused work, U-shape with the top-due drill last, warm-up LRU-picked / unbudgeted). Both import
+into `[SessionBlock]` honouring the ADR 0014 pacing (≤20-min blocks, U-shape with the top-due drill
+last, warm-up LRU-picked / unbudgeted). **A preset denominates focused *blocks*, not minutes
+(ADR 0129):** `SessionLength` is `blocks × itemsPerBlock` — Quick 1×3, Focused 2×3, Full 4×3 — each
+block 15 minutes shared among the items it actually holds, with a rest **between blocks** rather than
+between every item, and R7's hour reached exactly by `.full` rather than clamped. A candidate's own
+`estimatedMinutes` no longer sizes its slot; the block's share does, and the run fits its ramp to that
+share via `SessionEstimate.fitted` (dwell-only stretch), carried to the run screen as
+`RoutineItem.plannedMinutes` → `RoutineStage` → `RoutineRunContext`. That inversion is what stopped a
+one-minute-estimating drill from flooding a "Quick 15" with fifteen items and fourteen rests. **The fit
+is bounded** (device pass 2026-07-31): `SessionEstimate.clampedDwell` holds it within 0.5…2.5× of the
+authored dwell, and where the clamp bites the block's *estimate* gives way — `effectiveMinutes` prices
+the ramp that will actually play, so the readout never promises time the run won't spend. **Loops go
+through the same door** via `LoopEstimate`, a separate estimator because a loop ramp's plateaus are
+percent-of-original over `regionSeconds` passes, not BPM over bars — feeding `LoopRunView.routine`, the
+routine block preview, and `PracticePlanner.estimatedMinutes(for:mode:plannedMinutes:)` (ear-training
+blocks have no ramp and keep region × repeats). **A block may decline the fit** (ADR 0130):
+`RoutineItem.usesAuthoredLength` is a per-block opt-out — a *flag*, not a cleared `plannedMinutes`,
+because the allotment is the only record of what the session asked for and clearing it would make the
+control one-way — and `RoutineItem.effectivePlannedMinutes` is the single expression the run
+(`RoutineSessionPlayer.stage`), the block preview and `estimatedMinutes(forRoutine:)` all read, so a
+decline cannot take on one surface and not another. The block preview states both numbers where they
+differ (`BlockLengthControl`) and carries the toggle; the routine's estimate re-flows on the spot,
+which is what makes the opt-out a knowing spend rather than a hole in the preset's promise. Selection
+**deals across goals** rather than skimming
+the top N (`SessionBuilder.ranked` → `roundRobin`, keyed by `PlannerCandidate.goalUID`): at three items
+a straight top-N gave every slot to one goal. Both import
 Foundation only (no SwiftData/SwiftUI), so they're unit-tested and reusable by a future AI producer
 (ADR 0002). The **front-half** (ADR 0073, V2 Slice 2) sits ahead of `buildSession`: a `Goal` (title,
 `weight`, `skillIDs` indexing the pure `TechniqueTaxonomy` table, optional `targetSong`) is expanded
@@ -402,7 +436,11 @@ selector (`SessionLength`), a list of `Goal`s, and **Generate** → a provisiona
 **Estimated length** readout + soft over/under-budget hint vs. the chosen length (R3, `RoutineDetailView+Length`):
 pure `SessionEstimate` turns each exercise's ramp staircase into minutes (per-plateau tempo × meter, not
 a flat default), times each block's additive `RoutineItem.reps`, summed by `PracticePlanner.estimatedMinutes(forRoutine:)`
-and classified by `SessionEstimate.fit` — guidance only, never a gate. `GoalEditorView`
+and classified by `SessionEstimate.fit` — guidance only, never a gate. A **generated** block states its
+own allotted minutes (`plannedMinutes`), and the estimate prices the *fitted* run rather than reading the
+allotment back as fact — the allotment is the block's ask, and a bounded fit may not reach it; the hint names the **preset** rather than quoting a minute
+budget, because under ADR 0129 the player picked a block count and a freshly generated session is
+on-target by construction — so it only speaks up once blocks are added or removed. `GoalEditorView`
 (template picker → name → priority → skill-trim → optional target song → met/delete), with the pure
 `GoalPriority` mapping Low/Normal/High ↔ the stored `weight`. Its **Add skills** button (R2) opens
 `SkillPickerSheet`, a `.searchable` family-grouped picker over the whole catalog backed by the pure

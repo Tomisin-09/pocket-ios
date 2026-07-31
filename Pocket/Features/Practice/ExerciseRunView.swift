@@ -87,27 +87,6 @@ struct ExerciseRunView: View {
     /// the run-setup extension to snapshot the reach for the post-run promote offer (ADR 0079).
     var reach: Int { targetOverride ?? autoReach }
 
-    /// The **auto** backoff floor for the current tempos — the reset-to-auto fallback (note 6).
-    var autoBackoff: Int { TempoStretch.backoffBPM(command: command, target: reach, floor: working) }
-
-    /// The **effective** backoff floor: a pinned override when set, else the auto value (note 6).
-    var backoff: Int { backoffOverride ?? autoBackoff }
-
-    /// The warm-up step size the chosen number of intermediate stops implies.
-    var stepBPM: Int {
-        CommandRamp.warmupStepBPM(working: working, command: command, intermediateSteps: steps)
-    }
-
-    /// The routine the current edits describe — the staircase preview and the exact
-    /// `CommandRamp` handed to `engine.run(ramp:)` on Start.
-    var routine: CommandRamp {
-        CommandRamp(working: working, command: command, target: reach,
-                    stepBPM: stepBPM, intervalCount: StandaloneMetronomeEngine.automatorDefaultBars,
-                    unit: .bars, dwellIntervals: max(1, dwell),
-                    includeBackoff: includeBackoff, reachSteps: reachSteps, backoffSteps: backoffSteps,
-                    backoffOverride: backoffOverride)
-    }
-
     /// Whether there's a climb above command to put intermediate reach stops on.
     private var hasReach: Bool { reach > command }
 
@@ -294,9 +273,11 @@ struct ExerciseRunView: View {
     }
 
     /// The dwell row's caption — each interval is `automatorDefaultBars` bars at command, so N
-    /// intervals ≈ N×that many bars (ADR 0078).
+    /// intervals ≈ N×that many bars (ADR 0078). Reads the **effective** dwell off `routine`, not the
+    /// `dwell` edit state, so inside a generated session it describes the ramp fitted to the block
+    /// rather than the stored recipe (ADR 0129) — the caption can't claim a hold the run won't play.
     private var dwellCaption: String {
-        "≈ \(max(1, dwell) * StandaloneMetronomeEngine.automatorDefaultBars) bars"
+        "≈ \(routine.dwellIntervals * StandaloneMetronomeEngine.automatorDefaultBars) bars"
     }
 
     /// The "Edit shape" action handed to the template preview cards (ADR 0077) — opens the

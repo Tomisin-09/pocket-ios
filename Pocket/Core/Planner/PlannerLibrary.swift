@@ -56,15 +56,21 @@ struct PlannerLibrary: Equatable {
 /// A pure projection of a `Goal` (Slice 2) — the deriver reads goals as values, never the `@Model`.
 /// `targetSongUID` is the target song's derived `plannerUID`, routed by the goal's repertoire skills.
 struct PlannerGoal: Equatable {
+    /// Which goal this is — carried onto every candidate it produces so the back-half can give each
+    /// active goal a share of the session (ADR 0129 as amended; `SessionBuilder.select`). Defaulted so
+    /// existing construction sites (and tests) are unchanged.
+    var uid: UUID
     var weight: Double
     var skillIDs: [String]
     var targetSongUID: UUID?
     var isMet: Bool
 
-    init(weight: Double = 1.0,
+    init(uid: UUID = UUID(),
+         weight: Double = 1.0,
          skillIDs: [String],
          targetSongUID: UUID? = nil,
          isMet: Bool = false) {
+        self.uid = uid
         self.weight = weight
         self.skillIDs = skillIDs
         self.targetSongUID = targetSongUID

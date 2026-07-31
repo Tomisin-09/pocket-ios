@@ -27,7 +27,59 @@ All notable changes to Pocket are documented here. Format loosely follows
   and then instead of after the fact from the drill's ⓘ sheet. Optional, and you can still change it
   later. The section only appears once you have songs in your library.
 
+- **A session block tells you when it changed your exercise's length — and you can say no.** Open a
+  block in a generated session and, where the session has resized it, it now says so in a line:
+  *"Runs ~3 min in this session · your saved setting is ~2 min."* Next to it is **Keep my length** —
+  turn it on and that block runs exactly as you set it up, fit ignored. The routine's estimated
+  length updates on the spot, so you can see what the choice costs before you start. It's per block,
+  it's reversible, and it changes nothing about the exercise itself. Blocks the session didn't resize
+  say nothing at all.
+
+- **Loop blocks now have Practice Settings, like exercise blocks do.** Tap a loop in a routine and you
+  can set its working and command speeds, its reach, its back-off and its steps — in % of original,
+  the units a loop trains in — instead of having to leave and open the loop on its own. Ear-training
+  blocks don't have this: there's no ramp there to tune.
+
+### Fixed
+- **Skipping a block no longer leaves the next one stuck on "Counting in".** Skip past an exercise
+  mid-session and the block that came up would sit on its count-in forever — silent, but with the
+  screen still responding, so it looked like it was about to start and never did. Two blocks briefly
+  overlap during a hand-over, and the one on its way out was switching the audio off underneath the
+  one just starting. This was there before generated sessions and affects any routine, not just a
+  generated one.
+- **Every goal you've set gets a look in.** With two goals, a Quick session could be drawn entirely
+  from one of them and never touch the other — it only became obvious once Quick came down to three
+  exercises. Goals now take turns, with the one you most need still going first and taking the odd
+  slot. A goal with little material in it is skipped rather than holding a place, so you never lose an
+  exercise to it.
+- **A session block no longer rewrites how long your exercise is meant to run.** Fitting an exercise
+  to its block could stretch the time at your command tempo to five times what you'd set, which is not
+  an adjustment — it's an override. A block may now stretch it a little (or shorten it a little), and
+  when your exercise simply won't fill the slot, the session says so: the estimate drops to what will
+  really be played instead of promising minutes you'd never spend.
+- **The block preview and the run agree.** Tapping a block in a generated session showed one staircase
+  and then played a different one. It now shows exactly what you're about to practise.
+- **Loops belong to a generated session properly now.** A loop dropped into a session was given a
+  slot and ignored it, and its staircase was missing its warm-up and its wind-down — it went straight
+  in at your command speed. Loops now warm up, fit their block, and read the same as exercises do.
+- **The staircase labels stop landing on top of each other** when one part of the ramp is much longer
+  than the rest.
+
 ### Changed
+- **Generated sessions are the right size now.** Asking for a Quick session used to hand you a wall of
+  one-minute drills with a three-minute break wedged between every one of them — a "Quick 15" could
+  run past an hour, and it got worse the more exercises you'd made. Sessions are now built from proper
+  practice blocks: **Quick** is three exercises in one block, **Focused** six across two, **Full**
+  twelve across four, with a break between blocks rather than between every item. The three exercises
+  inside a block run back to back on purpose — moving between related things beats grinding one.
+- **The length on the picker means one thing now.** It used to be a budget for the drilling only in
+  one place and a cap on the whole sitting in another. Everywhere you see it, it's now an estimate of
+  how long the whole session will take you, marked with a **~**. A Quick session also stops scheduling
+  a full play-through at the end — the one length you pick *because* you're short on time shouldn't be
+  the longest thing on the list. Nothing stops you playing for as long as you like.
+- **Length estimates for routines are honest about exercises you haven't measured yet.** A drill with
+  no command tempo set was counted as about a minute, however long it actually takes to run — so a
+  routine full of new exercises looked far shorter than it was. The estimate now matches the run.
 - **Adding to a routine no longer closes the picker.** Tap a drill and it goes in there and then —
   the row ticks, a count appears at the bottom, and you can carry on browsing and add five more
   without reopening the sheet and walking back down to where you were. Tap a ticked row to take it

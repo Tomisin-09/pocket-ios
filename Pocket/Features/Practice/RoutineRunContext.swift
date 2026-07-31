@@ -20,6 +20,13 @@ struct RoutineRunContext {
     let canGoBack: Bool
     /// "Rep 2 of 3" while a multi-rep block is in play, else empty (ADR 0076) — shown on the progress strip.
     var repLabel: String = ""
+    /// Minutes this block was allotted by a **generated** session (ADR 0129), or `nil` for a
+    /// hand-authored routine. The run screen fits its ramp to this rather than playing whatever length
+    /// the exercise's own recipe implies, which is what makes a "5-minute block" actually take five
+    /// minutes. Deliberately a *run-time* input, never written back: the stored recipe stays the
+    /// player's (sub-decision 3), and `persist()` writes the edit state, not the fitted ramp.
+    /// Defaulted so every other call site is unchanged.
+    var plannedMinutes: Int?
     /// Step back to the previous block (user-initiated).
     let onBack: () -> Void
     /// Jump to the next block now (user-initiated).

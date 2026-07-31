@@ -1,19 +1,27 @@
 import SwiftData
 import SwiftUI
 
-/// What a tapped routine block previews — an exercise or a loop, resolved into the app context.
-/// Identifiable so `RoutineDetailView` can drive a `navigationDestination(item:)` push.
+/// What a tapped routine block previews — an exercise or a loop, resolved into the app context,
+/// together with **the block itself**. Identifiable so `RoutineDetailView` can drive a
+/// `navigationDestination(item:)` push.
+///
+/// The block rides along because the preview is where its *length* is both stated and decided: a
+/// generated block's ramp is fitted to its allotted minutes at run time (ADR 0129 as amended) —
+/// without them the preview drew the *authored* staircase while the run played the *fitted* one — and
+/// ADR 0130 puts the opt-out from that fit on this same screen, next to the numbers it changes. The
+/// unit is resolved into the app context; the block stays the editor's, which is the context that
+/// owns writing it back.
 enum RoutineBlockPreviewTarget: Identifiable, Hashable {
-    case exercise(Exercise)
-    case loop(Loop)
+    case exercise(Exercise, block: RoutineItem)
+    case loop(Loop, block: RoutineItem)
     /// A loop block in **ear-training** mode (ADR 0104 Slice 2) — previews the ears-only surface,
-    /// not the trainer ramp.
+    /// not the trainer ramp, so it has no ramp to fit and nothing to decline.
     case earLoop(Loop)
 
     var id: PersistentIdentifier {
         switch self {
-        case .exercise(let exercise): return exercise.persistentModelID
-        case .loop(let loop), .earLoop(let loop): return loop.persistentModelID
+        case .exercise(let exercise, _): return exercise.persistentModelID
+        case .loop(let loop, _), .earLoop(let loop): return loop.persistentModelID
         }
     }
 }
@@ -26,6 +34,13 @@ enum RoutineBlockPreviewTarget: Identifiable, Hashable {
 /// run screen uses. Deeper tuning stays behind the **Details** button (`ExerciseDetailSheet`).
 struct ExerciseBlockPreview: View {
     let exercise: Exercise
+    /// Minutes a generated session allotted this block, or `nil` when hand-authored (ADR 0129) — the
+    /// staircase and dwell caption below describe the ramp fitted to it, which is the one the run
+    /// will play.
+    var plannedMinutes: Int?
+    /// The block's opt-out from that fit (ADR 0130). Bound to the `RoutineItem`, so toggling it
+    /// re-draws the staircase here and re-flows the routine's estimate behind this screen.
+    @Binding var usesAuthoredLength: Bool
     @Environment(\.modelContext) private var modelContext
     @State private var preview = CommandTempoPreviewPlayer()
     @State private var strumPreview = StrumPatternPreviewPlayer()
@@ -68,9 +83,14 @@ struct ExerciseBlockPreview: View {
                     dwell: dwellBinding, dwellCaption: dwellCaption,
                     warmupStepBPM: warmupStepBPM, hasReach: hasReach,
                     tint: PocketColor.practice, onToggle: { haptic(.light) })
-                RoutineStairs(plateaus: exercise.ramp.plateaus, command: exercise.ramp.command,
+                RoutineStairs(plateaus: effectiveRamp.plateaus, command: effectiveRamp.command,
                               tint: PocketColor.practice)
                     .frame(height: 120)
+                if plannedMinutes != nil {
+                    BlockLengthControl(usesAuthoredLength: $usesAuthoredLength,
+                                       runMinutes: runMinutes, authoredMinutes: authoredMinutes,
+                                       tint: PocketColor.practice)
+                }
                 if let strumPattern {
                     PreviewAudioButton(isPlaying: strumPreview.isPlaying,
                                        idleTitle: "Hear the strum") {
@@ -105,6 +125,27 @@ struct ExerciseBlockPreview: View {
     private var signature: TimeSignature {
         TimeSignature.forStored(beats: exercise.beatsPerBar, noteValue: exercise.noteValue,
                                 accentBeats: exercise.accentBeats)
+    }
+
+    /// The staircase this block will actually run — the stored recipe, fitted to the block's allotted
+    /// minutes when it has any (ADR 0129) and the player hasn't declined the fit (ADR 0130). The same
+    /// expression `ExerciseRunView` hands the engine, so the preview and the run cannot disagree.
+    /// Never written back.
+    private var effectiveRamp: CommandRamp {
+        guard !usesAuthoredLength, let plannedMinutes else { return exercise.ramp }
+        return SessionEstimate.fitted(exercise.ramp, toMinutes: plannedMinutes,
+                                      beatsPerBar: exercise.beatsPerBar)
+    }
+
+    /// Minutes this block takes as things stand — priced off the staircase above, so the note can
+    /// never quote a length the drawing contradicts (ADR 0130).
+    private var runMinutes: Int {
+        SessionEstimate.minutes(forRamp: effectiveRamp, beatsPerBar: exercise.beatsPerBar)
+    }
+
+    /// Minutes the exercise's own stored recipe takes — the "your saved setting" half of the note.
+    private var authoredMinutes: Int {
+        SessionEstimate.minutes(forRamp: exercise.ramp, beatsPerBar: exercise.beatsPerBar)
     }
 
     // MARK: - Tempo + step edits (ADR 0077)
@@ -196,10 +237,10 @@ struct ExerciseBlockPreview: View {
                 set: { newValue in commit { exercise.dwellIntervals = max(1, newValue) } })
     }
 
-    /// Each dwell interval is `automatorDefaultBars` bars at command — the row's caption (ADR 0078).
+    /// Each dwell interval is `automatorDefaultBars` bars at command — the row's caption (ADR 0078),
+    /// read off the **effective** ramp so it states the hold the run will play (ADR 0129).
     private var dwellCaption: String {
-        "≈ \(max(1, exercise.dwellIntervals) * StandaloneMetronomeEngine.automatorDefaultBars) "
-            + "bars"
+        "≈ \(effectiveRamp.dwellIntervals * StandaloneMetronomeEngine.automatorDefaultBars) bars"
     }
 
     /// Pin the reach strictly above command; landing back on the auto derivation clears the pin.
@@ -223,118 +264,12 @@ struct ExerciseBlockPreview: View {
     }
 }
 
-/// A **read-only, pre-start preview** of a loop block (ADR 0071 R4b): its source song, the speed
-/// anchors + staircase, and a short **audio audition of the loop's actual audio** (the looping region
-/// at command speed) — the loop analogue of the exercise preview. Read-only; no engine setup, no run.
-struct LoopBlockPreview: View {
-    let loop: Loop
-    @State private var preview: LoopAudioPreviewPlayer
-
-    init(loop: Loop) {
-        self.loop = loop
-        _preview = State(initialValue: LoopAudioPreviewPlayer(loop: loop))
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 22) {
-                if let song = loop.song {
-                    VStack(spacing: 4) {
-                        Text(song.title.isEmpty ? "Untitled song" : song.title)
-                            .font(.futura(.title3, weight: .semibold))
-                            .foregroundStyle(PocketColor.textPrimary)
-                        if !song.artist.isEmpty {
-                            Text(song.artist)
-                                .font(.futura(.subheadline))
-                                .foregroundStyle(PocketColor.textSecondary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 8)
-                }
-
-                PreviewTempoReadout(anchors: "\(loop.ramp.working)% → \(loop.ramp.command)%",
-                                    reach: "\(loop.ramp.target)%", unit: "of original")
-                RoutineStairs(plateaus: loop.ramp.plateaus, command: loop.ramp.command,
-                              tint: PocketColor.practice, unit: .percent)
-                    .frame(height: 120)
-                if preview.isUnavailable {
-                    Text("Audio unavailable — the song file couldn't be found.")
-                        .font(.futura(.footnote))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .multilineTextAlignment(.center)
-                } else {
-                    PreviewAudioButton(isPlaying: preview.isPlaying,
-                                       idleTitle: "Hear the loop") { preview.toggle() }
-                }
-            }
-            .padding(24)
-        }
-        .background(PocketColor.background.ignoresSafeArea())
-        .navigationTitle(loop.name.isEmpty ? "Loop" : loop.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .onDisappear { preview.stop() }
-    }
-}
-
-/// The pre-start preview of an **ear-training** loop block (ADR 0104 Slice 2). Unlike `LoopBlockPreview`
-/// there's no ramp/staircase — ear mode plays at a self-chosen tempo with no climb — so it shows the
-/// loop + song, an "Ear training" label, and the same real-audio audition, so a player can confirm the
-/// block before starting the routine.
-struct EarLoopBlockPreview: View {
-    let loop: Loop
-    @State private var preview: LoopAudioPreviewPlayer
-
-    init(loop: Loop) {
-        self.loop = loop
-        _preview = State(initialValue: LoopAudioPreviewPlayer(loop: loop))
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 22) {
-                VStack(spacing: 4) {
-                    Text(loop.name.isEmpty ? "Untitled loop" : loop.name)
-                        .font(.futura(.title3, weight: .semibold))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    if let song = loop.song {
-                        Text(song.artist.isEmpty ? "from \(song.title)"
-                                                 : "from \(song.title) · \(song.artist)")
-                            .font(.futura(.subheadline))
-                            .foregroundStyle(PocketColor.textSecondary)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 8)
-
-                Label("Ear training — hum or sing it back", systemImage: "ear")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.journal)
-
-                if preview.isUnavailable {
-                    Text("Audio unavailable — the song file couldn't be found.")
-                        .font(.futura(.footnote))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .multilineTextAlignment(.center)
-                } else {
-                    PreviewAudioButton(isPlaying: preview.isPlaying,
-                                       idleTitle: "Hear the loop") { preview.toggle() }
-                }
-            }
-            .padding(24)
-        }
-        .background(PocketColor.background.ignoresSafeArea())
-        .navigationTitle(loop.name.isEmpty ? "Ear training" : loop.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .onDisappear { preview.stop() }
-    }
-}
-
 // MARK: - Shared preview pieces
 
 /// The tempo/speed anchor line shared by both previews: "working → command · reach", in the unit the
-/// block trains in (BPM for exercises, % of original for loops).
-private struct PreviewTempoReadout: View {
+/// block trains in (BPM for exercises, % of original for loops). Internal, not private, because the
+/// loop previews live in the `+Loop` split.
+struct PreviewTempoReadout: View {
     let anchors: String
     let reach: String
     let unit: String
@@ -353,7 +288,8 @@ private struct PreviewTempoReadout: View {
 }
 
 /// The pill audio-preview button shared by both previews — an audition, not a run (ADR 0070).
-private struct PreviewAudioButton: View {
+/// Internal for the same reason as `PreviewTempoReadout`.
+struct PreviewAudioButton: View {
     let isPlaying: Bool
     let idleTitle: String
     let action: () -> Void

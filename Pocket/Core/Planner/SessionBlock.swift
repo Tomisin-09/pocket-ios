@@ -55,9 +55,14 @@ enum SessionBlock: Equatable {
 }
 
 /// The session-length presets the planner offers (ADR 0014 R8): a short default, a focused
-/// middle, and a full sitting. The number is the **focused** budget in minutes (warm-up and
-/// play sit outside it, R1). Pure — the UI (Slice 3) renders these; the builder consumes the
-/// raw minutes.
+/// middle, and a full sitting.
+///
+/// **A preset denominates focused *blocks*, not minutes (ADR 0129).** It used to be a minute budget
+/// the builder spent, which produced two failures: nothing enforced R2's *floor*, so a pool of
+/// short-estimating exercises filled a "Quick 15" with fifteen one-minute items and fourteen rests;
+/// and the number meant two different things in the two builders (a focused budget here, a total cap
+/// in `CollectionSessionBuilder`). Counting blocks fixes both — the count is what the builder fills,
+/// and minutes become a derived total-time *estimate* with one meaning everywhere.
 enum SessionLength: Int, CaseIterable, Identifiable {
     case quick = 15
     case focused = 30
@@ -65,8 +70,33 @@ enum SessionLength: Int, CaseIterable, Identifiable {
 
     var id: Int { rawValue }
 
-    /// The focused-minutes budget this preset allots.
+    /// One R2-sized focused block, in minutes. The **top** of R2's 10–15 default range, picked so the
+    /// presets land exactly on R8's 15 / 30 / 60 focused minutes and R7's hour is the largest preset
+    /// rather than a separate clamp.
+    static let blockMinutes = 15
+
+    /// Items rotated **inside** one block (ADR 0129) — one pass each, in sequence. Three items per
+    /// R2-sized block is what reconciles interleaving (which wants several short exposures) with R2
+    /// (which wants a 10–15 minute container): the rotation happens inside the block, so neither rule
+    /// is traded off against the other.
+    static let itemsPerBlock = 3
+
+    /// The **focused** minutes this preset targets (ADR 0014 R8). No longer a budget the builder
+    /// spends — it is the nominal span the soft `SessionEstimate.fit` hint compares an *edited*
+    /// session against. A freshly generated session is on-target by construction.
     var minutes: Int { rawValue }
+
+    /// Focused blocks this preset builds — 1 · 2 · 4.
+    var blocks: Int { max(1, rawValue / Self.blockMinutes) }
+
+    /// Focus items this preset schedules — 3 · 6 · 12. **This is the budget the builder fills.**
+    var items: Int { blocks * Self.itemsPerBlock }
+
+    /// Whether this preset schedules a trailing play-through (ADR 0129 sub-decision 2). A Quick
+    /// sitting does not: a nominal 10-minute play block would be two-thirds of it again, so the one
+    /// preset chosen *because* time is short would read as the longest. ADR 0014 R1 is untouched —
+    /// play is never *capped*, it is simply not *scheduled* here.
+    var includesPlay: Bool { self != .quick }
 
     /// The default preset — the short one (ADR 0014 R8: "default short").
     static let `default`: SessionLength = .quick

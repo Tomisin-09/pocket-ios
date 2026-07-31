@@ -60,7 +60,8 @@ final class Goal {
     /// The pure projection the deriver reads (`PlannerGoal`) — resolves the target song to its
     /// deterministic planner id so the pure layer never holds the `@Model`.
     var plannerProjection: PlannerGoal {
-        PlannerGoal(weight: weight,
+        PlannerGoal(uid: uid,
+                    weight: weight,
                     skillIDs: skillIDs,
                     targetSongUID: targetSong.map { PlannerID.uid(from: $0.sourceID) },
                     isMet: isMet)

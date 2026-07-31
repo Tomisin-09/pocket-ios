@@ -283,8 +283,7 @@ struct RoutineLibraryView: View {
     /// `Routine`, which is authoring.
     private func generateQuickSession() {
         guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine(.generate)) }
-        let blocks = PracticePlanner.planQuickSession(minutes: SessionLength.default.minutes,
-                                                      exercises: exercises)
+        let blocks = PracticePlanner.planQuickSession(length: .default, exercises: exercises)
         guard blocks.contains(where: { $0.unit != nil }) else { return }
         let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now)
         quickDraft = QuickSessionDraft(blocks: blocks, name: name,

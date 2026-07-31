@@ -215,14 +215,18 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(ramp.backoffSteps, 0)
     }
 
-    /// An un-promoted exercise (no measured command) still produces a usable ramp: command
-    /// falls back to the working tempo, so the routine reads as a flat hold-and-stretch.
+    /// An un-promoted exercise (no measured command) still produces a usable ramp: **command** falls
+    /// back to the working tempo, but the floor the ramp climbs *from* is now derived rather than equal
+    /// to it — so the staircase keeps a real warm-up and backoff instead of collapsing to a flat
+    /// hold-and-stretch (ADR 0129 sub-decision 1; the plateau sequence is pinned in `RampFloorTests`).
     func testRampFallsBackToWorkingWhenUnpromoted() {
         let exercise = Exercise(currentTempo: 90)   // commandTempo nil
         let ramp = exercise.ramp
-        XCTAssertEqual(ramp.working, 90)
         XCTAssertEqual(ramp.command, 90)
         XCTAssertEqual(ramp.target, TempoStretch.targetBPM(forCommand: 90))
+        // 15% of 90 = 13.5 → 14, inside the 5…20 clamp ⇒ floor 76, strictly below command.
+        XCTAssertEqual(ramp.working, 76)
+        XCTAssertLessThan(ramp.working, ramp.command)
     }
 
     /// Step, interval, and dwell are clamped to at least 1 so the ramp always advances and the

@@ -4,6 +4,44 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## ADR 0129 device-test findings — ALL FIVE FIXED (2026-07-31, branch `pocket-209-session-block-model`)
+
+Device-tested on the iPhone 16 Pro after ADR 0129 landed (5 commits, `5b1dc10`…`19aca0d`).
+**Confirmed working:** the store migrated with the library intact, Quick and Focused both generated as
+expected (Quick = warm-up + 3 focus items, no rests, "~15m"; block model correct). Five problems and
+one feature request came out of it; the five are **fixed on this branch**, ADR 0129 amended in place.
+Kept here as the record of what was found and how it was resolved — **not** outstanding work.
+
+1. **An exercise didn't start after a Skip.** Cause found by inspection and **pre-existing on `main`,
+   not an ADR 0129 regression**: `StandaloneMetronomeEngine.stop()` ended with a process-global
+   `AVAudioSession.setActive(false)`. SwiftUI starts the incoming block's engine *before* tearing down
+   the outgoing one, so the outgoing `stop()` deactivated the session the new run had just activated —
+   its player node never rendered, `renderSampleTime()` stayed `nil`, `tick()` bailed before advancing
+   the beat, and the count-in froze at 4 with a live UI and a silent click. Fixed by reference-counting
+   the session (`AudioSessionLease` / `AudioSessionClaim` in `AudioPlumbing`): last producer out
+   deactivates. **Not device-verified yet** — the diagnosis is from the code, so confirm on the phone.
+2. **The fit overrode the authored dwell (and the preview disagreed with the run).** Settled as a
+   design decision with the user: **bound the fit and let the estimate give way.** `clampedDwell` holds
+   the fit to 0.5…2.5× the authored dwell, and `effectiveMinutes` prices the ramp that will actually
+   play, so a slot the fit can't reach reads as what it really takes. The block preview now carries
+   `plannedMinutes` and draws the fitted staircase. Rejected: block-follows-authored-length (preset
+   minutes stop being predictable), opt-in fit (the model's promise off by default).
+3. **Loops were left out of the block model.** Both gaps closed — `Loop.rampFloor` mirrors
+   `Exercise.rampFloor` in `×` units (the run screen now reads it rather than re-deriving its own), and
+   the new `LoopEstimate` fits a loop block by its dwell (passes at command) with the same clamp. Ear
+   blocks have no ramp and keep region × repeats.
+4. **One goal crowded out the others.** `PlannerCandidate.goalUID` + `SessionBuilder.roundRobin` —
+   goals take turns, most-due goal leads and takes the odd slot, an exhausted goal is skipped rather
+   than holding a place.
+5. **Staircase labels overlapped.** `RoutineStairs` captions are now bounded by their own group's
+   width (scaling down, or dropping below `minCaptionWidth`) instead of being free-sized, so they can
+   abut but never collide — independent of how lopsided the ramp is.
+
+**Still open — feature request: warn before the tempo changes.** An indicator that a change is coming,
+so the player can *anticipate* rather than react, configurable in Settings. Pairs naturally with the
+metronome-fade idea (both are the click telling you something ahead of time) and stays clear of
+ADR 0070 — anticipation is preparation, not grading. **Its own ADR, not part of 0129.**
+
 ## Device-testing pass — plan of attack (2026-07-28)
 
 Several days of on-device testing produced ~34 notes across four annotated screenshot sheets,

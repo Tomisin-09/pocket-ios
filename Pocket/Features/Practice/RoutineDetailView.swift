@@ -222,13 +222,7 @@ struct RoutineDetailView: View {
                                               onToggle: toggleUnit) })
         .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
         .sheet(item: $repsEditorItem) { repsEditorSheet($0.value) }
-        .navigationDestination(item: $previewTarget) { target in
-            switch target {
-            case .exercise(let exercise): ExerciseBlockPreview(exercise: exercise)
-            case .loop(let loop): LoopBlockPreview(loop: loop)
-            case .earLoop(let loop): EarLoopBlockPreview(loop: loop)
-            }
-        }
+        .navigationDestination(item: $previewTarget) { blockPreview($0) }
     }
 
     /// The bottom **Start** button that launches the player — the primary action once a routine is

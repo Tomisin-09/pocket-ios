@@ -78,12 +78,6 @@ struct LoopRunView: View {
 
     static let repsRange = 1...8
 
-    /// How far below command the warm-up **working** floor seeds by default, in percentage points
-    /// (loops train in % of original, so this is the loop analogue of a few BPM). A gap so the ramp
-    /// actually climbs — device feedback 2026-07-17: seeding working *at* command left nothing to warm
-    /// up through. A saved speed that's already lower than this is honoured as-is.
-    static let defaultWorkingGap = 5
-
     /// Playback-speed bounds as integer percent — `TempoMath`'s axis, so this ceiling moves with the
     /// waveform slider and the automator ramp rather than diverging from them (ADR 0124).
     static let percentRange = TempoMath.percentRange
@@ -119,19 +113,31 @@ struct LoopRunView: View {
 
     /// The routine the current edits describe — the staircase preview and the exact `CommandRamp`
     /// (percent units) handed to the run on Start.
+    ///
+    /// Inside a **generated** session the block's allotted minutes win: the ramp is fitted to the slot
+    /// by stretching the dwell — for a loop, more passes at command — bounded against the authored
+    /// dwell (ADR 0129 as amended). Loops were left out of the block model entirely at first: a loop
+    /// block was allotted a slot and ignored it. Nothing is written back; `persist()` saves the edit
+    /// state, never the fitted value.
     var routine: CommandRamp {
-        CommandRamp(working: working, command: command, target: reach, stepBPM: stepPercent,
-                    intervalCount: max(1, repsPerStep), unit: .bars,
-                    dwellIntervals: max(1, dwell), includeBackoff: includeBackoff,
-                    reachSteps: reachSteps, backoffSteps: backoffSteps, backoffOverride: backoffOverride)
+        let authored = CommandRamp(working: working, command: command, target: reach,
+                                   stepBPM: stepPercent, intervalCount: max(1, repsPerStep),
+                                   unit: .bars, dwellIntervals: max(1, dwell),
+                                   includeBackoff: includeBackoff, reachSteps: reachSteps,
+                                   backoffSteps: backoffSteps, backoffOverride: backoffOverride)
+        guard let planned = routineContext?.plannedMinutes else { return authored }
+        return LoopEstimate.fitted(authored, toMinutes: planned,
+                                   regionSeconds: loop.regionSeconds)
     }
 
     private var hasReach: Bool { reach > command }
 
     /// The dwell row's caption — each interval holds `repsPerStep` loop passes, so N intervals ≈
-    /// N×reps passes at command (ADR 0078). Tracks the live reps value.
+    /// N×reps passes at command (ADR 0078). Reads the **effective** dwell off `routine`, so inside a
+    /// generated session it describes the fitted ramp rather than the stored recipe (ADR 0129) — the
+    /// caption can't claim a hold the run won't play.
     private var dwellCaption: String {
-        "≈ \(max(1, dwell) * max(1, repsPerStep)) passes"
+        "≈ \(routine.dwellIntervals * max(1, repsPerStep)) passes"
     }
 
     var isRunning: Bool { model.isRunning }

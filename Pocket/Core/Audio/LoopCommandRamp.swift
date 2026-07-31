@@ -51,14 +51,18 @@ enum LoopCommandRamp {
                            backoffOverride: backoffOverride.map(percent))
     }
 
-    /// Convenience: build the ramp directly from a `Loop`'s measured progression — `speed` is the
+    /// Convenience: build the ramp directly from a `Loop`'s measured progression — `rampFloor` is the
     /// warm-up floor, `command` the owned tempo, `targetSpeed` the reach (a pinned override or the auto).
+    ///
+    /// Takes `rampFloor` rather than the raw `speed`: on an un-measured loop `command` *is* `speed`, so
+    /// passing `speed` collapsed the staircase to dwell-plus-summit — no warm-up, no back off (ADR 0129
+    /// sub-decision 1, extended to loops).
     static func make(loop: Loop, warmupSteps: Int,
                      dwellIntervals: Int = defaultDwellIntervals,
                      reachSteps: Int = 0, backoffSteps: Int = 0,
                      includeBackoff: Bool = true, backoffOverride: Double? = nil,
                      repsPerStep: Int = defaultRepsPerStep) -> CommandRamp {
-        make(working: loop.speed, command: loop.command, target: loop.targetSpeed,
+        make(working: loop.rampFloor, command: loop.command, target: loop.targetSpeed,
              warmupSteps: warmupSteps, dwellIntervals: dwellIntervals,
              reachSteps: reachSteps, backoffSteps: backoffSteps,
              includeBackoff: includeBackoff, backoffOverride: backoffOverride, repsPerStep: repsPerStep)

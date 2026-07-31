@@ -218,6 +218,35 @@ final class Loop {
     /// a loop appearing as a trainable Practice unit (ADR 0046, Phase B).
     var hasMeasuredCommand: Bool { commandTempo != nil }
 
+    /// How far below command an **un-measured** loop's warm-up floor sits, in × of original.
+    static let unmeasuredWarmupGap = 0.15
+    /// How far below command a **measured** loop's floor is held when its stored `speed` hasn't
+    /// already dropped further — a gap so the ramp actually climbs (device feedback 2026-07-17).
+    static let measuredWarmupGap = 0.05
+
+    /// The floor the ramp actually climbs **from** — the loop counterpart of `Exercise.rampFloor`
+    /// (ADR 0129 sub-decision 1, extended to loops after the device pass).
+    ///
+    /// The same disagreement, in `×` units: `command` falls back to `speed` when nothing has been
+    /// promoted, so an un-measured loop has **working == command** and `CommandRamp` then emits
+    /// neither a warm-up (`command > working` is false) nor a back off (the derived backoff lands
+    /// *on* command). `LoopRunView.seedIfNeeded` has always seeded a floor below command, so a *run*
+    /// climbed correctly — but `Loop.ramp`, the model-level staircase the planner estimates from and
+    /// the routine's block preview draws, collapsed to dwell-plus-summit. This is that seeding rule,
+    /// moved onto the model so the two cannot drift; the run screen now reads it rather than
+    /// re-deriving it.
+    ///
+    /// **Derived, never stored** — no field, no migration.
+    var rampFloor: Double {
+        let raw = hasMeasuredCommand ? min(command - Self.measuredWarmupGap, speed)
+                                     : command - Self.unmeasuredWarmupGap
+        return max(TempoMath.minSpeed, raw)
+    }
+
+    /// The loop region's length in seconds — what one pass costs at full speed, and the basis of every
+    /// loop duration estimate (`LoopEstimate`). Zero when the region is empty or the song unresolved.
+    var regionSeconds: TimeInterval { max(0, endSeconds - startSeconds) }
+
     /// The reach (×) derived from the current `command` — proportional + clamped to `+0.02…+0.10×`
     /// (pure `TempoStretch`). The loop analogue of `Exercise.derivedTarget`; the **auto** value, kept
     /// pure so a reset-to-auto affordance can fall back to it. Read `targetSpeed` for the effective reach.
@@ -242,6 +271,8 @@ final class Loop {
     /// The command-anchored **training ramp** this loop prescribes (ADR 0046 Phase B) — warm up →
     /// dwell at command → summit at the reach → back off, in percent units, from the saved ramp-shape
     /// fields so the routine player (ADR 0066) runs a stored recipe with no setup UI. Pure/UI-free.
+    /// Built from `rampFloor`, not the raw `speed`, so the staircase the model describes is the one a
+    /// run performs (ADR 0129 sub-decision 1).
     var ramp: CommandRamp {
         LoopCommandRamp.make(loop: self, warmupSteps: rampWarmupSteps,
                              dwellIntervals: max(1, rampDwellIntervals),

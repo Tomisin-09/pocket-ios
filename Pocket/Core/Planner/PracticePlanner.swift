@@ -17,7 +17,7 @@ enum PracticePlanner {
     /// yet, so every focused candidate carries `priority = 1` and ranks by dueness alone; warm-up is
     /// LRU-picked from `template == .warmup` exercises. Returns the pure block layout; pass it to
     /// `materialise` to persist and run.
-    static func planQuickSession(minutes: Int,
+    static func planQuickSession(length: SessionLength,
                                  exercises: [Exercise],
                                  now: Date = .now) -> [SessionBlock] {
         let focused = exercises
@@ -27,7 +27,7 @@ enum PracticePlanner {
             .filter { $0.template == .warmup }
             .map { candidate(for: $0) }
         let warmUp = SessionBuilder.warmUpPick(warmUps)
-        return SessionBuilder.buildSession(minutes: minutes, candidates: focused,
+        return SessionBuilder.buildSession(length: length, candidates: focused,
                                            warmUp: warmUp, now: now)
     }
 
@@ -38,7 +38,7 @@ enum PracticePlanner {
     /// **emphasis mix** (declared genres + dream), a lift-only tilt on candidate priority; omit it (or
     /// pass a curation-free profile) for the pre-S3 due/goal-only ranking. Returns the pure block
     /// layout; pass it to `materialise` with the same model arrays to persist and run.
-    static func planGoalSession(minutes: Int,
+    static func planGoalSession(length: SessionLength,
                                 goals: [Goal],
                                 exercises: [Exercise],
                                 loops: [Loop] = [],
@@ -51,7 +51,7 @@ enum PracticePlanner {
                                                            library: library, emphasis: emphasis)
         let warmUps = exercises.filter { $0.template == .warmup }.map { candidate(for: $0) }
         let warmUp = SessionBuilder.warmUpPick(warmUps)
-        return SessionBuilder.buildSession(minutes: minutes, candidates: candidates,
+        return SessionBuilder.buildSession(length: length, candidates: candidates,
                                            warmUp: warmUp, now: now)
     }
 
@@ -107,7 +107,7 @@ enum PracticePlanner {
 
     /// A loop's rough minutes — its region length × its repeat count (Path B), floored at 1.
     static func estimatedMinutes(for loop: Loop) -> Int {
-        let seconds = max(0, loop.endSeconds - loop.startSeconds) * Double(max(1, loop.repeats))
+        let seconds = loop.regionSeconds * Double(max(1, loop.repeats))
         return max(1, Int((seconds / 60).rounded()))
     }
 
@@ -123,18 +123,46 @@ enum PracticePlanner {
     static func estimatedMinutes(forRoutine routine: Routine) -> Int {
         routine.orderedItems.reduce(0) { total, item in
             guard !item.isOrphaned else { return total }
+            // A generated block states the minutes the session allotted it, but the fit is *bounded*
+            // (ADR 0129 as amended) — so the allotment is the block's ask, not necessarily its length.
+            // Each unit is therefore priced from the run it will actually perform: an exercise's
+            // fitted ramp, a loop's fitted repeats, a song's own duration. A block that **declined**
+            // the fit (ADR 0130) prices as hand-authored, which is what makes the cost of declining
+            // show up in the routine's estimate on the same screen as the toggle.
+            let planned = item.effectivePlannedMinutes
             let perRun: Int
             if let exercise = item.exercise {
-                perRun = estimatedMinutes(for: exercise)
+                perRun = estimatedMinutes(for: exercise, plannedMinutes: planned)
             } else if let loop = item.loop {
-                perRun = estimatedMinutes(for: loop)
+                perRun = estimatedMinutes(for: loop, mode: item.loopRunMode, plannedMinutes: planned)
             } else if let song = item.song {
-                perRun = estimatedMinutes(for: song)
+                perRun = planned ?? estimatedMinutes(for: song)
             } else {
                 return total // a rest carries no unit
             }
             return total + SessionEstimate.minutes(perRun: perRun, reps: item.effectiveReps)
         }
+    }
+
+    /// An exercise's minutes **in a block** — its ramp fitted to the block's allotment (ADR 0129), or
+    /// its own natural length when the block was hand-authored.
+    static func estimatedMinutes(for exercise: Exercise, plannedMinutes: Int?) -> Int {
+        SessionEstimate.effectiveMinutes(forRamp: exercise.ramp, plannedMinutes: plannedMinutes,
+                                         beatsPerBar: exercise.beatsPerBar)
+    }
+
+    /// A loop's minutes **in a block** — the passes its command-anchored ramp actually plays, fitted
+    /// to the block's allotment where there is one (ADR 0129 as amended).
+    ///
+    /// Note this is the *ramp's* length, not the library's `region × repeats`: a loop block in a
+    /// routine runs `LoopRunView`'s staircase, so its ramp is what the player's time is spent on.
+    /// `region × repeats` still prices a loop as a **candidate** (`estimatedMinutes(for:)`), where
+    /// there is no ramp context yet. An **ear-training** block has no ramp at all (ADR 0104) and keeps
+    /// the region × repeats figure.
+    static func estimatedMinutes(for loop: Loop, mode: LoopRunMode, plannedMinutes: Int?) -> Int {
+        guard mode != .ear else { return estimatedMinutes(for: loop) }
+        return LoopEstimate.effectiveMinutes(forRamp: loop.ramp, plannedMinutes: plannedMinutes,
+                                             regionSeconds: loop.regionSeconds)
     }
 
     /// Materialise a planned `[SessionBlock]` into a persisted `Routine` of ordered `RoutineItem`s
@@ -177,20 +205,28 @@ enum PracticePlanner {
 
     /// Build one `RoutineItem` from a block, resolving its unit ref by kind — or `nil` when the ref
     /// no longer resolves (skipped by the caller, R5). A rest carries no unit.
+    ///
+    /// A **focused** block's allotted minutes are carried through to `plannedMinutes` (ADR 0129) so the
+    /// run can fit its ramp to the slot the session gave it. Only focused blocks: a warm-up or
+    /// play-through is unbudgeted by R1 and runs as long as the player likes, so pinning it to a
+    /// nominal figure would be the opposite of what that rule says.
     nonisolated private static func item(for block: SessionBlock,
                                          order: Int,
                                          exercises: [UUID: Exercise],
                                          loops: [UUID: Loop],
                                          songs: [UUID: Song]) -> RoutineItem? {
-        switch block.unit {
+        let planned: Int? = block.kind == .focused ? block.minutes : nil
+        let built: RoutineItem? = switch block.unit {
         case .none:
-            return RoutineItem.rest(order: order)
+            RoutineItem.rest(order: order)
         case let ref? where ref.kind == .exercise:
-            return exercises[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
+            exercises[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
         case let ref? where ref.kind == .loop:
-            return loops[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
+            loops[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
         case let ref?:
-            return songs[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
+            songs[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
         }
+        built?.plannedMinutes = planned
+        return built
     }
 }

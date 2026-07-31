@@ -13,16 +13,11 @@ extension LoopRunView {
     /// apart, not equal), mirroring `ExerciseRunView`.
     func seedIfNeeded() {
         guard !seeded else { return }
-        if loop.hasMeasuredCommand {
-            command = clampPercent(LoopCommandRamp.percent(loop.command))
-            // Seed the warm-up floor a step below command (not *at* it) so the ramp has room to climb;
-            // a saved speed that's already lower wins (device feedback 2026-07-17).
-            working = clampPercent(min(command - Self.defaultWorkingGap,
-                                       LoopCommandRamp.percent(loop.speed)))
-        } else {
-            command = clampPercent(LoopCommandRamp.percent(loop.speed))
-            working = max(Self.percentRange.lowerBound, command - 15)
-        }
+        command = clampPercent(LoopCommandRamp.percent(loop.command))
+        // The warm-up floor sits a step below command (not *at* it) so the ramp has room to climb;
+        // a saved speed that's already lower wins (device feedback 2026-07-17). The rule itself lives
+        // on `Loop.rampFloor` so the model-level staircase and this one cannot disagree (ADR 0129).
+        working = clampPercent(LoopCommandRamp.percent(loop.rampFloor))
         // Restore the saved ramp shape (ADR 0057 follow-up); migrated/new loops read the
         // declaration defaults (no intermediate stops, single drop, one rep per step).
         steps = loop.rampWarmupSteps

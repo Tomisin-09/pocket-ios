@@ -211,7 +211,7 @@ final class StandaloneMetronomeEngine {
         accumulatedSession = 0
         elapsed = 0
         currentBeat = -1
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        AudioPlumbing.releaseSession(label: "metronome")
     }
 
     /// Enter (or re-enter) the playing state: anchor a fresh play stretch and beat phase and
