@@ -71,10 +71,30 @@ Still open, in the ADR and deliberately unbuilt:
   costs a strum drill its pattern for a bar. All audio-path work needing device verification. Worth
   revisiting after practising with the visual half: it exists for the plain metronome exercise and
   loop practice, where the eyes are on the hands rather than the screen.
+  **§5 is now ADR 0132's to build** — the click withdrawal needs the identical captured origin, so
+  whichever ships first pays for it and `sound` is left holding only §6.
 - **§7's loop warning.** Currently quiet rather than broken (a one-pass plateau's clamped window can't
   be reached by an integer rep count). Needs a fractional rep position on `LoopRunModel`.
-- **The metronome fade** still has no ADR. ADR 0131 §6 fixes the precedence rule it must obey — a
-  warning bar is never silenced — but nothing else about it is decided.
+
+## The click withdrawal (ADR 0132, Proposed — unbuilt)
+
+Silent bars: the click thins to the downbeat and then out on a fixed eight-bar cycle, so the player
+carries the pulse and hears their own drift when it returns. **Decided but not built** — the ADR is
+written, no code exists. Two slices, deliberately:
+
+- **Slice 1 — the feature, no stored model change.** Pure `ClickWithdrawal` cycle math, the
+  `drillOriginTick` capture and its re-anchor invalidation (ADR 0131 §5's state), the
+  `scheduledLevel` branch, the Settings row, and `BeatIndicator` reading the voiced level so the dots
+  go dark with the click. Device-testable without touching persistence — and the §2 bar
+  distributions can only be judged by playing against them.
+- **Slice 2 — the per-exercise override.** The Optional `clickWithdrawalRaw` field (`nil` = inherit,
+  which is what keeps the Settings row from becoming a new-exercises-only preference) and its
+  `ConfigureExerciseForm` row. The only part that can break an existing install, so it waits until a
+  week of practice says which drills want to differ.
+
+Open question the ADR names rather than settles: on fretboard/chord drills the content advances on
+the beat, so the eyes keep a pulse the ear has lost and the withdrawal is partial there by
+construction (§7a). Whether that is worth a further answer is a device-testing question.
 
 ## Device-testing pass — plan of attack (2026-07-28)
 
