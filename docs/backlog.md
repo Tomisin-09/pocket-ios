@@ -96,6 +96,28 @@ Open question the ADR names rather than settles: on fretboard/chord drills the c
 the beat, so the eyes keep a pulse the ear has lost and the withdrawal is partial there by
 construction (§7a). Whether that is worth a further answer is a device-testing question.
 
+## Command moves both ways (ADR 0134, Proposed — unbuilt)
+
+The post-run offer can only ever raise `command`, so a run that fell apart still lands on a Done
+screen reading "you summited it — bump the drill up". The ramp completes on a timer (the app never
+listens), so a bad run reaches that screen exactly as a good one does. **Decided but not built** —
+the ADR is written, no code exists.
+
+- **Slice 1 — the symmetric offer.** `PromoteOffer` → `CommandOffer` with a direction chosen by the
+  mastery tap already on that screen (1–2 settle · 3 nothing · 4–5 / unrated raise, so the unrated
+  path is byte-identical to today). Settle defaults to the backoff the run just played, ranges down
+  to the instrument's floor, and commits through `Exercise.settleCommand` / `Loop.settleCommand` so
+  the working-floor pull-down and the backoff-pin clear can't be forgotten at a call site. Adds a
+  derived `Loop.backoffSpeed` (§3). No stored field, no migration.
+- **Slice 2 — mid-run settling, needs its own ADR.** A transport action that drops the live run to
+  its backoff plateau and keeps playing, instead of forcing a stop. Touches `CommandRamp` in flight,
+  re-anchors the grid, and owes ADR 0131 a warning (a settle *is* a tempo change). Audio-engine work,
+  not completion-screen work.
+
+The copy is load-bearing and named as such in §5 — the settle row has to read as technique, not
+concession, and the mastery caption is the only place the player learns that rating honestly buys
+them anything. Not decoration to trim at build time.
+
 ## Device-testing pass — plan of attack (2026-07-28)
 
 Several days of on-device testing produced ~34 notes across four annotated screenshot sheets,
