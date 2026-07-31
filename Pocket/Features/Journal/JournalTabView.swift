@@ -58,6 +58,18 @@ struct JournalTabView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .searchable(text: $query, prompt: "Search by song, exercise, template or date")
         .toolbar {
+            // Progress lives behind the same door as the timeline: both are read-only practice
+            // history, so ADR 0117's screen is reached from here rather than from a new Home card —
+            // which keeps Home's grouped layout (ADR 0102) unchanged until the deferred year tier and
+            // card evolution land together. A fixed-width glyph, per the toolbar grammar (ADR 0126).
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    PracticeProgressView()
+                } label: {
+                    Image(systemName: "chart.bar.xaxis")
+                }
+                .accessibilityLabel("Progress")
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Picker("Sort", selection: $sortOrder) {
@@ -240,6 +252,7 @@ private enum JournalTabPreview {
         // swiftlint:disable:next force_try
         let container = try! ModelContainer(
             for: Song.self, Loop.self, Exercise.self, JournalEntry.self, Recording.self,
+            PracticeRun.self,
             configurations: .init(isStoredInMemoryOnly: true))
         let context = container.mainContext
         let now = Date()

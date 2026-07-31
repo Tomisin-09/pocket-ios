@@ -6,6 +6,22 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Red Moon now remembers your practice.** Every drill you finish is recorded — when it was, how long
+  it ran, and the tempo it ran at. It happens quietly in the background; there is nothing to turn on and
+  nothing to fill in. A run you stop part-way isn't recorded, because it has no honest length to claim.
+  This stays on your device like everything else.
+- **A Progress screen.** Open **Journal** and tap the chart icon. **This week** draws seven bars, so you
+  see the shape of it — four short days looks different from one long one, and no total can tell you
+  that. **This month** is a calendar that darkens on the days you played, with your longest day and any
+  tempos you took past where they'd been. **All-time** is hours, sessions, the date you started, and a
+  quiet wall of hour marks. There is no goal, no streak, no "4 of 7", and nothing compares you to
+  anyone else. On a fresh install it says so plainly rather than showing you a screen of zeroes.
+- **Your drills now show where their tempo has been.** Open an exercise's details and, once you've
+  finished it twice, there's a line under Progress: where it started, where it is now, and the shape
+  between — "76 → 104 BPM · 16ths". It counts only runs at the same rhythm, so switching from eighths to
+  sixteenths never reads as a sudden collapse, and it says how many runs it set aside. A line that goes
+  down is drawn exactly as calmly as one that goes up. It's a record of what you played, not a mark for
+  how you played it.
 - **The ramp tells you before it changes tempo.** A climbing exercise used to just speed up, and you
   found out by being a beat behind. Now the last part of each step warns you: the caption under the
   tempo names what's coming ("Speeding up to 96", "Backing off to 84", "Last bar"), the staircase

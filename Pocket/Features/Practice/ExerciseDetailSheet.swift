@@ -22,12 +22,21 @@ struct ExerciseDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     /// Every song, to offer in the link picker (ADR 0111). Sorted by title, matching the library.
     @Query(sort: \Song.title) private var allSongs: [Song]
+    /// The whole practice log, oldest first (ADR 0117) — filtered to *this* drill in memory rather
+    /// than by a `#Predicate` on the optional `unitUID`, which is the documented way to starve the
+    /// main thread (`docs/swiftdata-gotchas.md`). The log grows a handful of rows per session, so the
+    /// full fetch is cheap; it becomes worth revisiting when a Progress screen queries it per render.
+    @Query(sort: \PracticeRun.startedAt) private var practiceRuns: [PracticeRun]
     @State private var showingSongPicker = false
     @State private var notes: String
     /// The exercise's self-rated mastery (0–5, `nil` = unrated), held locally and committed on
     /// Done — the planner's dueScore *need* signal (V2 planner Slice 1, ADR 0070: self-set, never
     /// measured). Mirrors the loop editor's mastery dots.
     @State private var mastery: Int?
+
+    /// The log as plain values — every stat is computed over `[SessionRecord]`, never over `@Model`s,
+    /// so the trajectory math stays SwiftData-free and unit-tested (ADR 0117).
+    private var sessionRecords: [SessionRecord] { practiceRuns.map(\.record) }
 
     init(exercise: Exercise) {
         self.exercise = exercise
@@ -39,7 +48,12 @@ struct ExerciseDetailSheet: View {
         NavigationStack {
             Form {
                 descriptionSection
-                ExerciseProgressSection(mastery: $mastery, lastPracticed: exercise.lastPracticed)
+                ExerciseProgressSection(mastery: $mastery,
+                                        lastPracticed: exercise.lastPracticed,
+                                        trajectory: TempoTrajectory.reading(for: exercise.uid,
+                                                                            in: sessionRecords),
+                                        runCount: TempoTrajectory.runCount(for: exercise.uid,
+                                                                           in: sessionRecords))
                 linkedSongsSection
                 feelSection
                 templateSection

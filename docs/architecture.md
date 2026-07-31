@@ -4,7 +4,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ SwiftUI Features (Home · Library · Waveform · Metronome · Practice · Journal · Toolkit · Repertoire)
+│ SwiftUI Features (Home · Library · Waveform · Metronome · Practice · Journal · Progress · Toolkit · Repertoire)
 │   UI       — shared components + design tokens (PocketColor) · AdaptiveLayout (ADR 0105 iPad groundwork:
 │              PocketLayout readable-width cap + readableWidth() modifier — dormant while TARGETED_DEVICE_FAMILY=1)
 │              · PocketRowActions — the one row-affordance modifier every list adopts (long-press menu →
@@ -17,6 +17,20 @@
 │              TempoMath (the one speed axis 0.25×–1.5× every surface quotes, + the custom-entry parser · ADR 0124) · TransportSkip (timed-skip clamp + increment set, ADR 0124) · TempoPeaks · TempoEstimator · AudioMath · WaveformGesture · WaveformAmplitude · BeatGrid · MetronomeBeats · MetronomeGrid · TempoMarking · TempoSliderScale · LoopLanes (pure)
 │   Models   — Song, Loop, Marker, Routine/RoutineItem, Goal (planner input, ADR 0073) · Profile (local account-free artist profile — singleton, drives the home greeting; + ADR-0113 curation fields via pure `ProfileCuration` enums, feeding new-exercise tempo + planner-length defaults (S2) and the planner emphasis mix (S3), ADR 0113; ADR-0113-S4 `ArtistNameGenerator` — pure seed→name over curated Red Moon pools + blocklist, powering the offered name in the naming ceremony) · RoutineBudget · RoutineSessionCursor (pure player stepping, ADR 0071) · Planner: PlannerCandidate/SessionBlock/DueScore/SessionBuilder (back-half) + TechniqueTaxonomy/SkillCatalog/SkillFamilyMap/CandidateDeriver/GoalTemplate/PlannerLibrary/PlannerID/SessionEstimate/GenreSkillMap/PracticeEmphasis (front-half, pure; the last two = ADR-0113-S3 profile emphasis mix) + PracticePlanner (impure projector/materialiser, ADR 0072/0073), Session, SongRef, AutoName · Labels · LibrarySectioning · PracticeLibrarySort · NoteRate (notes-per-beat + its label and `notesPerMinute`; `Exercise.noteRate` resolves the content's own `notesPerBeat` first, then `Exercise.notesPerBeat`, else `nil` = **no rhythm stated**, which is a real answer and never a defaulted "quarters") · RhythmChange (ADR 0121 — the pure rescale behind *keep the same note speed*, clamped to the engine range with the ramp invariants restored; `Exercise.commandNotesPerBeat` binds a measured command to the rhythm it was earned at, `RhythmChangePrompt` asks the player, `ExerciseNoteRateBackfill` retires the never-wired `subdivision` into `notesPerBeat` once at launch) · MasteryRollup · LoopProgressFormat · JournalGrouping (day-bucketing) · JournalTimeline (ADR 0100 — pure merge of notes + takes into one newest-first feed + scope filter + owner-label, feeding the read-only Journal space) · MusicalKey · ExerciseTemplate (closed axis, ADR 0068) · Instrument (per-exercise axis, ADR 0116 — guitar/bass, `instrumentRaw`-backed on `Exercise` defaulting from `Profile.preferredInstrument`; the tuner's lowest-first `Tuning` crosses into the highest-first fretboard engine through the single pure `Tuning.engineOpenMidi` reversal, golden-tested guitar-byte-identical; ADR-0116 S3 renders bass via `expanded(instrument:)` on the run generators + a dedicated `BassNeckLayout` 2-octave 4-string box reusing the shared `ScaleNeckLayout.ascendingTones` ladder, guitar path unchanged) · ExerciseKind (derived renderer) · StrumPattern · FretboardDrill · FretboardRun (movable finger-pattern run, with ADR-0083 position-shifting: per-pass climb + per-string diagonal + retrace/restate come-back + slide seams; a climb wider than the comfortable board (~8 frets) drives the ADR-0083 S5 **following viewport** — the pure `FretboardDrill.displayWindow(activeIndex:)` holds an 8-fret window static and scrolls it only when the active note reaches the edge (hysteresis), landing the note near the trailing edge to prioritise the runway ahead so it reframes only ~twice over a whole climb and never while the note is visible; a gentler climb or short run keeps the static full window; plus ADR-0083 S2b **pass focus** — a transient parallel `FretboardDrill.noteGroups` (filled at generation, not encoded) lets the renderer fade off-pass notes while a multi-pass climb walks)/ScaleRun (with ADR-0083 S4 `ScaleLayout` axis — `.box` default + pure `ScaleNeckLayout` `.extended` pentatonic diagonal with `.slide` seams (two canonical `ExtendedPentatonicShape` fingerings: A-G or D-B slide, whole-step seams) + `.threePerString` diatonic drill, gated by `GuitarScale.supportedLayouts`; plus an orthogonal ADR-0108 sequence axis — `SequencePattern` (straight/thirds/fourths/groups-of-3-4), a pure permutation of the played run leaving `ascendingNotes` untouched; boxes labelled by root anchor with the CAGED letter demoted, opening on the flagship root-position box, ADR 0091; plus a `startsFromLowestRoot` axis (2026-07-28) trimming the box notes below the lowest root so a run opens on the tonic — applied before the octave trim, box-layout-only, and split-defaulted (`true` from `init`, `false` from `decodeIfPresent`) so new runs start on the root while saved ones keep their authored order; `positionNotes` splits the hand's shape off from the played order so the position label doesn't move with it)/ArpeggioRun (same axis)/GuitarScale (ADR 0085 catalog: pentatonics + major + all seven modes borrowing their parent-major box + blues/bebop threading a chromatic passing tone above `passingToneAnchorDegree`; symmetric diminished/whole-tone are drawn on the custom-scale canvas instead of box-generated, ADR 0107)/ArpeggioQuality/CAGEDShape/FretboardContent (generative payload — shared CAGED box engine, ADR 0065) · ChordVoicing/ChordProgression (chord-diagram payload — triads fold in, ADR 0065) · ChordGrip (ADR 0084 movable-shape recipe — pure relative geometry + root string + quality, placed at a root note to generate a `ChordVoicing`; curated Tier 1–2 = E/A-shape triads + 7ths + sus2/sus4/6ths + 9ths (ADR 0101) + power chords (root+5th, ADR 0106), reproducing the `fBarre`/`bMinorBarre` barres byte-for-byte (the A-shape triads/7ths sound the high e on the root fret as the 5th — the standard 5-string barre, ADR 0122, which is why `bMinorBarre` moved with them); browsed as Insert chips in `ChordPickerSheet` — Tier 1 as *Movable shapes*, Tier 2 as a last, initially-collapsed *Sus, 6ths & 9ths* section (ADR 0122, which retired `MovableChordSheet` and made **Build** a single spring-loaded action onto the custom placer) — mixed inline with the open-shape library; no slide *animation* since a progression never physically slides between chords, the movable idea is a static shape-family + fret label) · ExerciseAudioEngine (silent-default audio seam)
 │   Theory   — ChordNamer (ADR 0093 reverse-lookup: pitch-class set + optional bass → ranked [ChordCandidate] over the ChordQuality.catalog common-practice table; root-position preferred, inversions get slash names, symmetric chords return every root, keyless — so it spells by the accidental preference the caller passes, ADR 0123; pure) — the shared harmonic-analysis core the chord identifier + ear-training space (ADR 0094) consume · ScaleReference (ADR 0107 — scale as name + interval formula → pitch classes, reusing GuitarScale + the symmetric whole-tone/diminished scales; drives the custom-scale canvas guide, pure) · NoteSpelling (ADR 0123 — the app's single note-name table, `sharps`/`flats` with ♯/♭ glyphs; `keySpelling(root:relativeMajorSemitones:)` reads the circle of fifths through the parent major `relativeMajorSemitones` already encodes for the CAGED boxes and returns **nil** at the two positions nothing decides — C and F♯/G♭ — so a key context and a keyless one share one fallback: `AppSettings.accidentalPreference`. Scale/arpeggio runs stamp their answer onto the generated drill as a **transient** `FretboardDrill.keySpelling` (excluded from `CodingKeys`, like `noteGroups`/`openMidi` — no persisted-shape change); pure, preference arrives as a parameter)
+│   Stats    — the practice log's read side (ADR 0117). SessionRecord is the plain value every stat is computed
+│              over — no aggregation ever touches a @Model. PracticeLog: week/month/day windows on the calendar's
+│              own firstWeekday · dailyBuckets that emit empty days too (the chart keeps its shape on a quiet week)
+│              · daysActive as a bare count (the "4 of 7" denominator travels with the deferred streaks) · sittings
+│              derived by grouping runs on time (30-min gap measured from the previous run's *end*, so six routine
+│              blocks are one sit) · lifetime with truncated hours and no invented start date. Two invariants: a run
+│              is attributed wholly to the day it *started* on, and minutes round once from summed seconds.
+│              TempoTrajectory plots one drill's history grouped by notesPerBeat, so only the most recently
+│              practised rhythm forms a line and the rest are counted and admitted (ADR 0121); a single run is not a
+│              trajectory, and a downward line is stated as plainly as an upward one (ADR 0070).
+│              Slice 2 adds TempoRecord (runs that beat that drill's own ceiling — per rhythm, and measured
+│              against all history, not the window on screen) and PracticeProgress, which computes the whole
+│              Progress screen in one pure pass so the view does no arithmetic; now/calendar are parameters,
+│              never .now/.current. There is no year tier and no placeholder for one (ADR 0117 defers it)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
 │   Analytics — ADR 0120. `AnalyticsEvent` is the complete closed vocabulary (13 events): an enum whose
@@ -711,6 +725,42 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   existing migrates). Surfaced as the **My chords** group in the chord picker's Insert grid (ADR 0103,
   tap-to-insert); saved from the placer's **Save to My chords**; and **managed** on the Toolkit hub's
   `MyChordsView` (grid + rename/delete, ADR 0096 — see above).
+- **`PracticeRun`** (ADR 0117, Slice 1) is the **practice log** — the app's only record of *when* you
+  practised, and the substrate every time-windowed stat needs. Append-only, **one row per completed
+  unit-run** rather than per practice sit: a routine of six exercises at six tempos writes six rows, and
+  *sittings are recovered by grouping rows on time* (`PracticeLog.sittings`), which is what keeps the
+  per-exercise tempo trajectory derivable. Going the other way — per-sit rows migrated to per-unit later —
+  would cost testers their history, which is why the schema lands before the first external cohort.
+  Additive new table; nothing existing migrates. It follows the two documented SwiftData rules head-on:
+  `kind` is a raw `String` with a computed accessor (a stored custom enum passes in-memory tests and traps
+  on device migration), and what was practised is held as **loose id copies** (`unitUID`, `routineUID`),
+  never a relationship — deleting an exercise must not delete the minutes spent on it, the deliberate
+  opposite of the inventory counts in `PracticeStats`, which can go down. Tempo is logged as a **fact, not
+  a grade** (ADR 0070): `tempoBPM` for exercises, `tempoPercent` for loops (percent-of-original, ADR 0082),
+  and `notesPerBeat` beside it because a BPM without its rhythm is only half a fact (ADR 0121).
+  Writes go through one path, `PracticeLogWriter`, called from the run screens' **natural-completion
+  hooks** (`engine.onRampFinished` / `model.onFinished`) — one seam that serves a standalone run *and* a
+  routine block, since a block is the same run screen with a `RoutineRunContext`. That is deliberately not
+  the Done screen: writing there would lose every run where auto-advance skips it, where the block is
+  ear-training (no Done gate at all), or where the player backs out. A run **stopped by hand** logs
+  nothing — the log records completed runs, and an aborted one has no honest length to claim.
+  Read today by `ExerciseDetailSheet`, which queries the whole log and filters in memory (a `#Predicate`
+  on the optional `unitUID` is the documented way to starve the main thread) and hands values to
+  `TempoTrajectory`. The Progress screen is Slice 2.
+- **Reading the log** (ADR 0117, Slice 2). `PracticeProgressView` is reached from the **Journal**
+  toolbar, not Home. The ADR specified "make the existing `PracticeStatsCard` tappable", but that card
+  was dropped from Home in the 2026-07-09 hub rework (`a0c754e1`) and has been dead code since; Journal
+  is already the read-only practice-history destination (ADR 0100), so Progress lives behind the same
+  door and Home's grouped layout (ADR 0102) stays untouched until the deferred year tier and card
+  evolution land together. The screen queries the log unfiltered, maps to `[SessionRecord]`, and calls
+  `PracticeProgress.summarize` once — three horizons of boundary maths stay inside the tested pure
+  layer instead of being scattered across three section views. Charts follow the same discipline as the
+  rest of the design system: one series ⇒ no legend, empty days **drawn** rather than skipped, one
+  direct label rather than a number on every bar, and a **single-hue four-step** sequential ramp for the
+  month heatmap with unpractised days a distinct neutral (never step zero). The ramp is relative to the
+  month's own busiest day — an absolute scale would need a number to be absolute against, and picking
+  one would be setting a daily goal by the back door.
+
 - **`Profile`** (ADR 0113 Slice 1) is the local, account-free artist profile — a **singleton** `@Model`
   (`uid` + optional `artistName` + `createdAt`), added as an additive new table (nothing existing
   migrates). It is created **lazily**: `Profile.setArtistName` is a fetch-or-create that inserts a row

@@ -18,6 +18,11 @@ struct RoutineRunContext {
     let autoStart: Bool
     /// Whether there's a previous block to step back to (disables the ‹ control at the first block).
     let canGoBack: Bool
+    /// The `uid` of the routine being played — copied into each logged unit-run so the practice log
+    /// can attribute minutes to the routine they happened inside (ADR 0117). A loose id, never a
+    /// relationship: deleting the routine must not erase the practice done in it. Defaulted so
+    /// existing call sites are unchanged.
+    var routineUID: UUID?
     /// "Rep 2 of 3" while a multi-rep block is in play, else empty (ADR 0076) — shown on the progress strip.
     var repLabel: String = ""
     /// Minutes this block was allotted by a **generated** session (ADR 0129), or `nil` for a

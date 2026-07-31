@@ -43,9 +43,16 @@ extension ExerciseRunView {
         signature = TimeSignature.forStored(beats: exercise.beatsPerBar,
                                             noteValue: exercise.noteValue,
                                             accentBeats: exercise.accentBeats)
-        // In a routine, a naturally-finished ramp auto-advances the session (ADR 0071). Fires only
-        // on the ramp's own completion, never on a manual stop.
-        engine.onRampFinished = routineContext?.onFinished
+        // In a routine, a naturally-finished ramp auto-advances the session (ADR 0071) — and logs the
+        // block as a completed unit-run first (ADR 0117), *before* advancing, since advancing tears
+        // this screen down. Fires only on the ramp's own completion, never on a manual stop. The
+        // standalone path replaces this hook in `armCompletionOffer`, which logs the same way.
+        if let routineContext {
+            engine.onRampFinished = {
+                logCompletedRun()
+                routineContext.onFinished()
+            }
+        }
         seeded = true
         baseline = current
     }
@@ -93,6 +100,8 @@ extension ExerciseRunView {
         // (V2 planner Slice 1). Persist() already saved; this rides the next context save.
         exercise.markPracticed()
         try? modelContext.save()
+        // Start the practice log's clock (ADR 0117) — consumed by whichever completion hook fires.
+        runStartedAt = .now
         // Standalone: arm the post-run completion offer (ADR 0079), capturing the reach being run so
         // the screen's copy/target stay stable even if the returned setup is edited afterward. In a
         // routine the hook is the player's advance (set in `seedIfNeeded`), so leave it untouched.
@@ -124,8 +133,33 @@ extension ExerciseRunView {
         let summitedCommand = command
         engine.onRampFinished = {
             Analytics.send(.practiceCompleted(kind: .exercise))
+            logCompletedRun()
             completion = RunCompletion(reach: summitedReach, command: summitedCommand)
         }
+    }
+
+    /// Append this run to the **practice log** (ADR 0117) — one row per completed unit-run, at the
+    /// natural-completion seam shared by a standalone run and a routine block.
+    ///
+    /// The logged tempo is **command**, not the summited reach: command is the tempo the drill is
+    /// consolidated at and the one a promote moves, so it is what the per-exercise trajectory should
+    /// trace. It is read before the Done screen's optional promote lands, so the row records the tempo
+    /// that was actually played rather than the one the player agreed to next.
+    ///
+    /// The rhythm comes from the **command's** note rate where the exercise binds one (ADR 0121) —
+    /// the label describes the measurement — falling back to the drill's current rate. Without it a
+    /// trajectory would read a rhythm change as progress that never happened. Purely factual: no part
+    /// of this says how well anything was played (ADR 0070).
+    func logCompletedRun() {
+        guard let startedAt = runStartedAt else { return }
+        runStartedAt = nil
+        PracticeLogWriter.log(kind: .exercise,
+                              startedAt: startedAt,
+                              unitUID: exercise.uid,
+                              routineUID: routineContext?.routineUID,
+                              tempoBPM: command,
+                              notesPerBeat: (exercise.commandNoteRate ?? exercise.noteRate)?.perBeat,
+                              into: modelContext)
     }
 
     /// The promote offer for the standalone completion screen (ADR 0079) — `nil` when the
