@@ -14,6 +14,10 @@ import SwiftUI
 struct EarLoopRunView: View {
     let loop: Loop
     var routineContext: RoutineRunContext?
+    @Environment(\.modelContext) private var modelContext
+    /// When this block began (ADR 0117). An ear block has no Start — the loop plays from arrival — so
+    /// the clock starts on appearance rather than on a transport action.
+    @State private var startedAt: Date?
 
     var body: some View {
         EarTrainingView(loop: loop)
@@ -21,6 +25,25 @@ struct EarLoopRunView: View {
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
             .toolbar { doneButton }
+            .onAppear { if startedAt == nil { startedAt = .now } }
+    }
+
+    /// Log the block as a completed unit-run (ADR 0117). **Done is a genuine completion here**, not a
+    /// hand-stop: an ear block has no ramp to run its course, so the player deciding they've
+    /// internalised it *is* the end of the run (ADR 0104). Skip and exit bypass this and log nothing,
+    /// exactly as they do for an exercise.
+    ///
+    /// Logged as `.earLoop` rather than `.loop`: it's the same material doing a different job, so it
+    /// counts towards minutes and days without muddying a loop's tempo trajectory. No tempo is
+    /// recorded — ear training isn't practised *at* a tempo.
+    private func logCompletedRun() {
+        guard let startedAt else { return }
+        self.startedAt = nil
+        PracticeLogWriter.log(kind: .earLoop,
+                              startedAt: startedAt,
+                              unitUID: loop.uid,
+                              routineUID: routineContext?.routineUID,
+                              into: modelContext)
     }
 
     /// The completion action as a **nav-bar button**, not a bottom pill — an ear block has nothing to
@@ -32,6 +55,7 @@ struct EarLoopRunView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(context.stageIndex >= context.stageCount - 1 ? "Finish" : "Done") {
                     haptic(.light)
+                    logCompletedRun()   // before advancing — advancing tears this screen down
                     context.onFinished()
                 }
                 .font(.futura(.body, weight: .semibold))

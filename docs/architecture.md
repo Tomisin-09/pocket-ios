@@ -738,12 +738,18 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   opposite of the inventory counts in `PracticeStats`, which can go down. Tempo is logged as a **fact, not
   a grade** (ADR 0070): `tempoBPM` for exercises, `tempoPercent` for loops (percent-of-original, ADR 0082),
   and `notesPerBeat` beside it because a BPM without its rhythm is only half a fact (ADR 0121).
-  Writes go through one path, `PracticeLogWriter`, called from the run screens' **natural-completion
-  hooks** (`engine.onRampFinished` / `model.onFinished`) — one seam that serves a standalone run *and* a
-  routine block, since a block is the same run screen with a `RoutineRunContext`. That is deliberately not
-  the Done screen: writing there would lose every run where auto-advance skips it, where the block is
-  ear-training (no Done gate at all), or where the player backs out. A run **stopped by hand** logs
-  nothing — the log records completed runs, and an aborted one has no honest length to claim.
+  Writes go through one path, `PracticeLogWriter`, called from each run screen's **natural-completion
+  hook** — one seam that serves a standalone run *and* a routine block, since a block is the same run
+  screen with a `RoutineRunContext`. That is deliberately not the Done screen: writing there would lose
+  every run where auto-advance skips it, where the block is ear-training (no Done gate at all), or where
+  the player backs out. All four practice surfaces write: exercise and loop ramps on
+  `engine.onRampFinished` / `model.onFinished`, an ear-training block on its **Done** (which *is* its
+  completion — an ear block has no ramp, ADR 0104), and a song play-along when the track ends. A run
+  **stopped by hand** logs nothing — the log records completed runs, and an aborted one has no honest
+  length to claim; a *looping* play-along and standalone `EarTrainingSheet` stay unlogged under the same
+  rule, being open-ended. There is deliberately **no `recording` kind** despite ADR 0117 listing one: a
+  take is always captured during an exercise or loop run that already logs, so a second row would
+  double-count the same minutes.
   Read today by `ExerciseDetailSheet`, which queries the whole log and filters in memory (a `#Predicate`
   on the optional `unitUID` is the documented way to starve the main thread) and hands values to
   `TempoTrajectory`. The Progress screen is Slice 2.

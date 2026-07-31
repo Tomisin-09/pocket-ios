@@ -85,8 +85,8 @@ one — so the horizons are judged on when they become legible to a new installe
   below),
 - the **per-exercise tempo trajectory** in `ExerciseProgressSection`, beside the mastery dots and "last
   practised" that already live there,
-- a **Progress screen** carrying **This week**, **This month** and **All-time**, reached by making the
-  existing `PracticeStatsCard` tappable.
+- a **Progress screen** carrying **This week**, **This month** and **All-time**, reached from the
+  **Journal** toolbar rather than from the home card this ADR originally named (see the correction below).
 
 **The entry point is a destination, not the card evolution.** The deferred evolution is re-leading a home
 summary with a live number and restructuring the tiles around it — a change to Home's grouped layout
@@ -183,6 +183,31 @@ The same hook fires only when a ramp runs its full course, which settles a quest
 left open: **a run stopped by hand logs nothing.** The log records completed unit-runs, and an aborted run
 has no honest length or tempo to claim. A multi-rep block logs one row per rep, which is correct — a rep
 is a run.
+
+**Every kind of practice logs, not just the two ramp screens.** The first pass wired only exercise and
+loop runs, which quietly under-counted anyone who does ear training or plays along. Both now write at
+their own completion:
+
+- **Ear-training blocks** (ADR 0104) log on **Done**. An ear block has no ramp, so the player deciding
+  they've internalised it *is* the end of the run — Done is a genuine completion here, not a hand-stop.
+  Logged as `.earLoop` so it earns its minutes and its day without muddying a loop's tempo trajectory.
+- **Song play-alongs** log when the track reaches its end. Neither carries a tempo: a play-along runs at
+  the song's own speed, and ear training isn't practised *at* a tempo at all.
+
+Two surfaces stay unlogged, by the same rule rather than by omission: a **looping** play-along and
+**standalone ear training** (`EarTrainingSheet`) are open-ended — they have no end, so there is no
+completed run. "However long the screen was open" is not an honest length, and inventing one would put
+minutes in the log that nobody practised.
+
+**There is no `recording` kind, though this ADR listed one.** That list predates the per-unit-run
+correction. A practice take is always captured *during* an exercise or loop run (ADR 0069), and that run
+already writes its own row — a second row for the take would double-count the same minutes and inflate
+the session count. Takes stay first-class in the Journal timeline; they are simply not separate practice.
+
+A song row carries no `unitUID`, because `Song` is the one model with no business `uid` (it is identified
+by its `SongRef`). The row's job is the minutes and the day, which every window stat reads without
+knowing which song it was. Giving `Song` a `uid` is the follow-up if per-song history is ever wanted; it
+touches the store's aggregate root, so it is not worth doing speculatively.
 
 Design rules for the log:
 

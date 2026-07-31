@@ -22,6 +22,10 @@ struct SongPlayAlongView: View {
     /// Whether the routine count-in overlay is showing (routine mode only) — gates playback start.
     @State private var showCountIn = false
     @State private var wired = false
+    /// When the current play-through started, or `nil` when nothing is playing — the practice log's
+    /// clock (ADR 0117). Consumed by the natural-completion hook, so a play-along stopped by hand logs
+    /// nothing, exactly as a hand-stopped ramp does.
+    @State private var runStartedAt: Date?
 
     init(song: Song, routineContext: RoutineRunContext? = nil) {
         self.song = song
@@ -180,11 +184,41 @@ struct SongPlayAlongView: View {
 
     // MARK: - Start
 
-    /// Wire the natural-completion hook once (routine mode only — a looping song never fires it).
+    /// Wire the natural-completion hook once (routine mode only — a looping song never fires it), and
+    /// log the play-through first (ADR 0117), before advancing tears this screen down.
     private func wireIfNeeded() {
         guard !wired else { return }
-        model.onFinished = routineContext?.onFinished
+        if let routineContext {
+            model.onFinished = {
+                logCompletedRun()
+                routineContext.onFinished()
+            }
+        }
         wired = true
+    }
+
+    /// Append this play-through to the **practice log** (ADR 0117). Playing along with the record is
+    /// practice, so it earns its minutes and its day on the calendar; no tempo is recorded, because a
+    /// play-along is played at the song's own speed rather than at a tempo you own.
+    ///
+    /// **A looping play-along never reaches here** — it has no end, so there is no completed run to
+    /// log. That is the same rule the ramp screens follow (a run stopped by hand logs nothing) rather
+    /// than a gap: the log records runs with an honest length, and "however long the screen was open"
+    /// isn't one.
+    ///
+    /// `unitUID` is deliberately `nil`: `Song` is the one model with no business `uid` — it is
+    /// identified by its `SongRef` — and the row's job here is to carry the **minutes and the day**,
+    /// which every window stat reads without needing to know which song it was. Giving `Song` a `uid`
+    /// is the follow-up if per-song history is ever wanted; it would touch the store's aggregate root,
+    /// so it isn't worth doing speculatively for a surface that doesn't exist.
+    private func logCompletedRun() {
+        guard let startedAt = runStartedAt else { return }
+        runStartedAt = nil
+        PracticeLogWriter.log(kind: .song,
+                              startedAt: startedAt,
+                              unitUID: nil,
+                              routineUID: routineContext?.routineUID,
+                              into: modelContext)
     }
 
     /// Start tapped: in a routine, run the visual count-in first (ADR 0071); standalone, start now.
@@ -211,6 +245,7 @@ struct SongPlayAlongView: View {
         song.lastPracticedSpeed = SongPlayAlongModel.rate(forPercent: model.percent)
         song.lastPracticed = .now
         try? modelContext.save()
+        runStartedAt = .now     // the practice log's clock (ADR 0117)
         model.start(percent: model.percent, loopWholeSong: AppSettings.routineSongLoop)
         haptic(.medium)
     }

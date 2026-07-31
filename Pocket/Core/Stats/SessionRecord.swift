@@ -12,11 +12,19 @@ enum PracticeRunKind: String, CaseIterable, Equatable, Sendable {
     /// Ear-training on a loop (ADR 0104) — the same material, a different job, so it windows with
     /// practice but doesn't muddy a loop's tempo trajectory.
     case earLoop
+    /// A play-along with the record (ADR 0071). Carries minutes and a day but no tempo — a play-along
+    /// runs at the song's own speed, not at a tempo you own.
     case song
-    case recording
     /// A row written by a newer build than the one reading it. Counts towards time totals; claims
     /// nothing about what it was.
     case other
+
+    // Deliberately **no `recording` case**, though ADR 0117 listed one. That list predates the
+    // per-unit-run correction: a practice take is always captured *during* an exercise or loop run
+    // (ADR 0069 — `RecordingController` is only ever owned by those two screens), and that run already
+    // writes its own row. A second row for the take would double-count the same minutes and inflate
+    // the session count, which is exactly the kind of quiet inaccuracy an append-only log can't undo.
+    // Takes remain first-class in the Journal timeline; they are simply not separate practice.
 
     /// How the kind reads in a stats surface. Sentence-case, no exclamation — the Progress register
     /// is a mirror, not an arcade (ADR 0113).
@@ -26,7 +34,6 @@ enum PracticeRunKind: String, CaseIterable, Equatable, Sendable {
         case .loop: "Loop"
         case .earLoop: "Ear training"
         case .song: "Song"
-        case .recording: "Recording"
         case .other: "Practice"
         }
     }

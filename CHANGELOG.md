@@ -16,6 +16,7 @@ All notable changes to Pocket are documented here. Format loosely follows
   tempos you took past where they'd been. **All-time** is hours, sessions, the date you started, and a
   quiet wall of hour marks. There is no goal, no streak, no "4 of 7", and nothing compares you to
   anyone else. On a fresh install it says so plainly rather than showing you a screen of zeroes.
+- **Ear training and play-alongs count too.** Finishing an ear-training block or playing a song all the way through earns its minutes and its day on the calendar, the same as a drill. A play-along set to loop doesn't — it has no end, and the app would rather log nothing than guess how long you were really playing.
 - **Your drills now show where their tempo has been.** Open an exercise's details and, once you've
   finished it twice, there's a line under Progress: where it started, where it is now, and the shape
   between — "76 → 104 BPM · 16ths". It counts only runs at the same rhythm, so switching from eighths to

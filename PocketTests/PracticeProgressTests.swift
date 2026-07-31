@@ -83,6 +83,28 @@ final class PracticeProgressTests: XCTestCase {
         XCTAssertEqual(week.peakMinutes, 42)
     }
 
+    func testEveryKindOfPracticeCountsTowardsTimeAndDays() {
+        // Ear training and a play-along are practice: they earn their minutes and their day, even
+        // though neither carries a tempo. This is what the ear/song write seams exist for.
+        let records = [run(6, 8, minutes: 20),
+                       SessionRecord(startedAt: date(6, 9), durationSeconds: 15 * 60, kind: .earLoop),
+                       SessionRecord(startedAt: date(6, 10), durationSeconds: 25 * 60, kind: .song)]
+        let week = summarize(records).week
+        XCTAssertEqual(week.minutes, 60)
+        XCTAssertEqual(week.daysActive, 3)
+    }
+
+    func testEarAndSongRunsNeverEnterTheTempoCount() {
+        // They carry no tempo, so they can neither set a new one nor mask an exercise's.
+        let records = [SessionRecord(startedAt: date(6, 8), durationSeconds: 600, kind: .earLoop,
+                                     unitUID: drill, tempoBPM: 200, notesPerBeat: 4),
+                       SessionRecord(startedAt: date(6, 9), durationSeconds: 600, kind: .song,
+                                     tempoBPM: 300, notesPerBeat: 4),
+                       run(6, 10, minutes: 10, bpm: 76),
+                       run(6, 11, minutes: 10, bpm: 84)]
+        XCTAssertEqual(summarize(records).month.newTempos, 1, "only the exercise pair can set one")
+    }
+
     // MARK: - This month
 
     func testTheMonthWindowIsTheCalendarMonthContainingNow() {
