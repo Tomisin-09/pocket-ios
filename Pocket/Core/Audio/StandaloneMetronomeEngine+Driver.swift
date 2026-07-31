@@ -38,6 +38,11 @@ extension StandaloneMetronomeEngine {
     }
 
     func configureSession() {
+        // Claim the shared session for this run — released by `stop()`, and paired by the transport
+        // guards on both (one lease per run). The lease is what stops an *outgoing* run screen
+        // deactivating the session an incoming one has just activated (ADR 0129 device pass, bug 1);
+        // it is taken before the guard below because the claim holds whatever the category is.
+        AudioPlumbing.retainSession()
         // Don't stomp a record-capable session an armed take set up (ADR 0069): the metronome plays
         // fine under `.playAndRecord`, and forcing `.playback` here mid-run would kill the in-flight
         // recording. Unlike `PracticeAudioEngine` (which configures once at load), this engine

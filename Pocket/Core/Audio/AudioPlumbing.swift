@@ -65,4 +65,75 @@ enum AudioPlumbing {
             log.error("\(label): engine failed to start: \(error.localizedDescription)")
         }
     }
+
+    // MARK: - Session lease (who is allowed to deactivate)
+
+    /// Live lease count for the shared session. `@MainActor` because every audio producer in the app
+    /// is main-actor isolated, so the counter needs no lock.
+    @MainActor private static var lease = AudioSessionLease()
+
+    /// Register that a producer has begun rendering and needs the shared session **active**. Paired
+    /// with exactly one `releaseSession` when it stops.
+    @MainActor static func retainSession() { lease.retain() }
+
+    /// Give up this producer's claim on the shared session, deactivating it only once **nobody else**
+    /// holds one — `.notifyOthersOnDeactivation` so another app's music can resume.
+    ///
+    /// The counting is the whole point (ADR 0129 device pass, bug 1). `setActive(false)` is
+    /// process-global, and two producers legitimately overlap for a moment when one run screen hands
+    /// over to the next: SwiftUI builds and *starts* the incoming block's engine before it tears down
+    /// the outgoing one, so an unconditional deactivate in the outgoing `stop()` silenced the engine
+    /// that had just started. Its `AVAudioPlayerNode` then never rendered, `renderSampleTime()` stayed
+    /// `nil`, and the run sat on "Counting in 4" forever with a perfectly responsive UI.
+    @MainActor static func releaseSession(label: StaticString) {
+        guard lease.release() else { return }
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            log.error("\(label): audio session deactivation failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Test seam — how many producers currently hold the session.
+    @MainActor static var sessionHolders: Int { lease.holders }
+}
+
+/// A **reference count** over the shared audio session's active state: how many producers currently
+/// need it. Pure and Foundation-only so the "last one out deactivates" rule is unit-tested per
+/// AGENTS.md — it is exactly the kind of bookkeeping that breaks silently (the failure mode is
+/// no sound, with no error anywhere).
+struct AudioSessionLease {
+    private(set) var holders = 0
+
+    mutating func retain() { holders += 1 }
+
+    /// Release one holder. Returns `true` only when that was the **last** one, i.e. the session may
+    /// now be deactivated. An unbalanced extra release is a no-op rather than a deactivation — a
+    /// double-`stop()` must never pull the session out from under a producer that is still playing.
+    @discardableResult
+    mutating func release() -> Bool {
+        guard holders > 0 else { return false }
+        holders -= 1
+        return holders == 0
+    }
+}
+
+/// **One producer's** claim on the shared session, idempotent in both directions — for an engine
+/// whose start and stop aren't already paired by a transport state (`PracticeAudioEngine` can be
+/// loaded repeatedly and stopped repeatedly). Taking twice leases once; giving twice releases once.
+@MainActor
+struct AudioSessionClaim {
+    private var held = false
+
+    mutating func take() {
+        guard !held else { return }
+        held = true
+        AudioPlumbing.retainSession()
+    }
+
+    mutating func give(label: StaticString) {
+        guard held else { return }
+        held = false
+        AudioPlumbing.releaseSession(label: label)
+    }
 }
