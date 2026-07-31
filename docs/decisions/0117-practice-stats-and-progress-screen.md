@@ -1,6 +1,8 @@
 # 0117 — Practice stats & the Progress screen: measure effort, never performance; streaks are opt-in
 
-- **Status:** Proposed
+- **Status:** Accepted — **rescoped 2026-07-31** (`pocket-209-session-block-model`). The log is built now, at a
+  corrected granularity, behind **one** surface; the Progress screen, streaks and the Home evolution are
+  deferred. See **Scope (rescoped)** below — the rest of this ADR stands as the design they resume from.
 - **Date:** 2026-07-24 (`pocket-195-practice-stats-adr`)
 - **Builds on:** ADR 0070 (Pocket never grades the player — no scoring, pitch, timing, or pass/fail). ADR 0102 (Home is grouped sections with a strict "don't add a sixth same-weight peer" rule). ADR 0113 (local, account-free `Profile`; the greeting's tone rules — "no streak guilt"). ADR 0112 (freemium; where a stat might sit behind Pro is called out below). ADR 0092 (a future Oracle may read aggregated effort as context, never as a grade).
 - **Supersedes:** nothing. Extends the existing derived `PracticeStats.Summary` / `PracticeStatsCard` (cumulative counts, no persistence) into a full stats surface.
@@ -47,21 +49,64 @@ Add a **timestamped practice-session log** and build a dedicated **Progress scre
 
 All stats measure effort, never performance (ADR 0070). Everything is local; nothing leaves the device.
 
+### Scope (rescoped 2026-07-31)
+
+The original scope bundled a persistence project with a five-horizon presentation project. Splitting them
+lets the **schema** land before the first external cohort — which is the part that is expensive to change
+later, because schema churn costs testers their accumulated history — while the presentation lands when
+there is usage to shape it.
+
+**Slice 1 — in scope now:**
+
+- the log `@Model` at the granularity corrected below,
+- the pure aggregation layer over `[SessionRecord]` value structs,
+- writes at the two seams that already exist: the standalone run's post-run completion offer (ADR 0079)
+  and the routine player's per-block Done screen,
+- **one surface: the per-exercise tempo trajectory** in `ExerciseProgressSection`, beside the mastery dots
+  and "last practised" that already live there.
+
+**Deferred (design below stands; build later):** the Progress screen in full — week bar chart, month
+heatmap, year hours, the year-in-review "wrapped" card, the all-time milestone wall — and the
+`PracticeStatsCard` evolution. Home is **unchanged** by this slice.
+
+**Deferred entirely — streaks**, including the opt-in switch, the weekly-goal framing and the streak
+freeze. Those mitigations exist to contain a retention lever whose effect cannot be observed with no
+users; building them now would be guessing at a problem we have no signal on. The reasoning below is kept
+because it is the decision we will resume from, not because it ships in this slice.
+
+**Why one surface and not zero.** A log with no visible payoff is invisible to testers and yields no
+product signal from the cohort. The tempo trajectory is the cheapest surface that pays the log off, and it
+is a *unit-level* read the original ADR did not have — everything below windows at the **session** level.
+"I played this at 76 in June and I'm at 104 now" is the motivating artefact, and it needs the corrected
+granularity to exist at all.
+
 ### The session log — the foundation everything time-windowed needs
 
-A new append-only SwiftData `@Model`, one row per completed practice sit:
+A new append-only SwiftData `@Model`, **one row per unit-run** — not, as originally specified, one row per
+completed practice sit:
 
 - `startedAt: Date`, `durationSeconds: Double` (or `endedAt: Date`) — the spine of every time window.
 - `kind` — exercise · routine · loop · recording — stored as a **primitive raw `String`**, not a stored
   enum, with a computed accessor. (Heed the enum-attr migration crash: in-memory tests pass with stored
   enums; the device traps on migration. `docs/swiftdata-gotchas.md`.)
-- Optional loose references (exercise / routine identifier as a primitive) so a session can attribute
+- Optional loose references (exercise / routine identifier as a primitive) so a run can attribute
   minutes to *what* was practiced without a hard relationship that complicates migration or deletion.
 - Optional `tempoBPM: Int?` — the factual tempo log, for tempo-record surfacing. Not a grade.
+- Optional `notesPerBeat: Int?` — the rhythm the tempo was measured in (ADR 0121). A tempo without its
+  rhythm is not comparable to another tempo, so a trajectory that ignores it would plot 90 BPM in
+  sixteenths against 90 BPM in quarters as "no progress".
+
+**Why per-unit-run.** A sitting is not the thing a player improves at — a *unit* is. One row per sit with a
+single `tempoBPM` cannot express a routine of six exercises practised at six different tempos: it collapses
+to one row and one number, and the trajectory that motivates the whole feature becomes underivable. One row
+per unit-run is strictly more information at the same write cost, and **sittings are derived by grouping
+rows on time**, so every session-level stat below still works. Going the other way — starting per-sit and
+migrating to per-unit later — would mean asking testers to give up their history.
 
 Design rules for the log:
 
-- **Append-only and cheap.** One insert per completed session. No mutation, no per-tick writes.
+- **Append-only and cheap.** One insert per completed unit-run. No mutation, no per-tick writes. A routine
+  of six blocks writes six rows at its six existing Done seams, not one row at the end.
 - **Deletion-safe.** Deleting an exercise must **not** delete its history — the minutes were still
   practised. References are loose (id copies), not cascading relationships, so a stat like "lifetime
   hours" never silently drops when the library is pruned. This is the deliberate opposite of the
@@ -72,7 +117,7 @@ Design rules for the log:
   exactly what breaks silently and so exactly what must be tested. The view runs its `@Query`, maps to
   values, and hands them to the aggregator — mirroring how `PracticeStats.summarize` already works.
 
-### Two tiers of presentation
+### Two tiers of presentation — *deferred, per Scope above*
 
 **Home — one row, no sprawl.** ADR 0102's "don't add a sixth same-weight peer" rule holds: we do **not**
 spread five time horizons across the hub. The existing `PracticeStatsCard` evolves to:
@@ -103,7 +148,7 @@ Home stays a *promise*; it never becomes the ledger.
 entries *written*, tempo PRs) only ever go up, so they carry the motivation. Inventory counts (how many
 loops exist) are secondary texture on the All-time wall, never the headline.
 
-### Streaks are opt-in — off by default
+### Streaks are opt-in — off by default — *deferred entirely, per Scope above*
 
 Streaks are a double-edged lever: a broken daily streak triggers loss-aversion guilt and is a known
 churn driver, and it clashes head-on with ADR 0113's greeting rule ("no streak guilt"). So:
@@ -131,6 +176,11 @@ should never be gated. The **year-in-review "wrapped"** card and any richer anal
 **Pro** candidates if we want a paywall touchpoint, but this ADR does not gate anything by default;
 the gating line is a monetization decision deferred to when the paywall actually ships.
 
+**Settled 2026-07-31, now that the paywall has shipped (ADR 0112):** the log and Slice 1's tempo trajectory
+are **free**. Gating a player's own practice history would put the retention payoff behind the purchase it
+is supposed to motivate, and ADR 0112's line is *run, don't author* — history is neither. The "wrapped"
+card remains the Pro candidate when it is built.
+
 ## Consequences
 
 - The app gains a durable, append-only record of practice effort — the substrate not just for stats but
@@ -147,6 +197,19 @@ the gating line is a monetization decision deferred to when the paywall actually
   go backwards when a user prunes their library.
 - A one-per-device, no-sync limitation (no backend, no account) applies to history as it does to the
   profile; revisitable only if accounts ever return.
+
+**From the 2026-07-31 rescope:**
+
+- The schema lands before the first external cohort, so testers' history survives the presentation work
+  that follows. This is the whole reason for splitting the slice.
+- Per-unit-run rows are more numerous than per-sit rows — a 6-block routine writes 6. Still trivial
+  (one insert per completed block, no per-tick writes), and every session-level stat is recoverable by
+  grouping on time. Aggregation must do that grouping rather than assuming one row per sitting.
+- Streaks being deferred means the app ships to the cohort with **no** habit-pressure mechanic at all.
+  That is the honest baseline to measure return rate against: if people come back without a streak, the
+  streak was never what brought them.
+- Home not evolving means the log is invisible outside the exercise sheet during the cohort. Accepted —
+  the trajectory is where the payoff is, and Home's grouped layout (ADR 0102) is not worth churning twice.
 
 ## Alternatives considered
 
@@ -165,3 +228,17 @@ the gating line is a monetization decision deferred to when the paywall actually
   ADR 0070. The player is the judge; the app counts effort, not quality.
 - **Store `kind` as a stored SwiftData enum.** Rejected — the documented enum-attr migration crash;
   primitive raw value + computed accessor instead.
+
+**From the 2026-07-31 rescope:**
+
+- **One row per practice sit (the original spec).** Rejected — a routine of six exercises at six tempos
+  collapses to one row and one `tempoBPM`, making the per-exercise trajectory underivable. Per-unit-run
+  costs the same per write and derives sittings by grouping on time.
+- **Ship the log with no surface at all.** Rejected — invisible to the cohort, so it generates no product
+  signal during exactly the window it was sequenced to serve, and an unread schema is an untested one.
+- **Ship the whole ADR as originally scoped before the cohort.** Rejected — the Progress screen, heatmaps,
+  wrapped card and streak machinery are weeks of presentation work whose shape should be informed by usage
+  data that does not exist yet. The schema is the only part that must precede the cohort.
+- **Log the tempo without its rhythm.** Rejected — ADR 0121 bound a command tempo to the rhythm it was
+  measured in for exactly this reason; a trajectory that ignores `notesPerBeat` reads a rhythm change as
+  progress or regression that never happened.
