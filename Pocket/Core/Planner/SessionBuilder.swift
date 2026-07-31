@@ -84,12 +84,26 @@ enum SessionBuilder {
         var score: Double
     }
 
-    /// Rank the goal-affiliated pool by dueScore (desc; ties → older-practised first, then `uid`)
-    /// and take the preset's `items` (ADR 0129). Candidates with no goal (`priority ≤ 0`, ADR 0015
-    /// S4) are excluded.
+    /// Rank the goal-affiliated pool and take the preset's `items`, **dealing across the active
+    /// goals** rather than skimming the top N (ADR 0129 as amended). Candidates with no goal
+    /// (`priority ≤ 0`, ADR 0015 S4) are excluded.
+    ///
+    /// The straight top-N was fine while a session held ~15 items — every goal got in by brute force —
+    /// and broke the moment ADR 0129 cut Quick to **three**, where the top-ranked goal simply took
+    /// every slot and the player's second goal never appeared. Round-robin is the smallest fix that
+    /// restores the guarantee: each goal is represented while it has candidates left, and a goal with
+    /// more due material still wins the later slots.
     static func select(_ candidates: [PlannerCandidate], items: Int, now: Date) -> [Selected] {
         guard items > 0 else { return [] }
-        return candidates
+        return roundRobin(ranked(candidates, now: now), items: items)
+            .map { Selected(candidate: $0, score: DueScore.score($0, now: now)) }
+    }
+
+    /// The eligible pool in strict dueScore order (desc; ties → older-practised first, then `uid`) —
+    /// a total order, so everything downstream of it is deterministic despite `deriveCandidates`
+    /// returning an unordered dictionary's values.
+    static func ranked(_ candidates: [PlannerCandidate], now: Date) -> [PlannerCandidate] {
+        candidates
             .filter { $0.priority > 0 }
             .sorted { lhs, rhs in
                 let lhsScore = DueScore.score(lhs, now: now)
@@ -100,8 +114,34 @@ enum SessionBuilder {
                 if lhsDate != rhsDate { return lhsDate < rhsDate }
                 return lhs.unit.uid.uuidString < rhs.unit.uid.uuidString
             }
-            .prefix(items)
-            .map { Selected(candidate: $0, score: DueScore.score($0, now: now)) }
+    }
+
+    /// Deal `items` from an already-`ranked` pool, one per goal per pass. Goals are visited in the
+    /// order their **best** candidate ranks, so the most-due goal still leads and still gets the extra
+    /// slot when the count doesn't divide evenly. A goal that runs out is skipped rather than holding
+    /// a place, so a thin second goal never costs the session an item. With one goal — or none, the
+    /// goal-less Quick path where every candidate carries `priority = 1` — this is exactly the old
+    /// top-N.
+    static func roundRobin(_ ranked: [PlannerCandidate], items: Int) -> [PlannerCandidate] {
+        var order: [UUID?] = []
+        var byGoal: [UUID?: [PlannerCandidate]] = [:]
+        for candidate in ranked {
+            if byGoal[candidate.goalUID] == nil { order.append(candidate.goalUID) }
+            byGoal[candidate.goalUID, default: []].append(candidate)
+        }
+
+        var picked: [PlannerCandidate] = []
+        var pass = 0
+        while picked.count < items {
+            let before = picked.count
+            for goal in order where picked.count < items {
+                guard let pool = byGoal[goal], pass < pool.count else { continue }
+                picked.append(pool[pass])
+            }
+            if picked.count == before { break }   // every goal exhausted
+            pass += 1
+        }
+        return picked
     }
 
     /// Arrange selected blocks into the **U-shape** (ADR 0014 R5): the single highest-due item goes

@@ -90,6 +90,10 @@ struct RoutineStairs: View {
         }
     }
 
+    /// Narrowest group that still gets a caption. Below this the label would be unreadable however
+    /// far it scaled down, so the phase goes unnamed rather than adding noise — the bars still show it.
+    private static let minCaptionWidth: CGFloat = 26
+
     /// The phase captions, each **centred under the bars it names** — `warm-up` over the climb, `dwell`
     /// over the command bar (sharing the BPM signpost's x), then `reach` over the ascent to the summit
     /// and `back off` over the descent as two **separate** labels (they name distinct phases, so they
@@ -97,38 +101,37 @@ struct RoutineStairs: View {
     /// split, which floated them off their unequal-width bars) keeps each lined up with its step. A
     /// caption is omitted when its phase has no bars — no warm-up climb, no reach above command, or no
     /// backoff tail.
+    ///
+    /// Each label is **bounded by its own group's width** rather than sized to its text. Free-sized
+    /// labels overlapped whenever one phase dominated the staircase: a fitted ramp gave the command
+    /// plateau most of the width and printed "reach" and "back off" on top of each other. Constrained,
+    /// two captions can abut but can never collide; a tight-but-legible one scales down, and one with
+    /// no room at all (`minCaptionWidth`) is dropped.
     private var captionRow: some View {
         GeometryReader { geo in
             let totalIntervals = max(1, plateaus.reduce(0) { $0 + $1.intervals })
             let spacing: CGFloat = 4
             let usableWidth = geo.size.width - spacing * CGFloat(plateaus.count - 1)
+            let metrics = CaptionMetrics(usableWidth: usableWidth, spacing: spacing,
+                                         totalIntervals: totalIntervals, midY: geo.size.height / 2)
             ZStack {
                 if let dwell = dwellIndex {
-                    let midY = geo.size.height / 2
                     let summit = summitIndex ?? dwell
                     if dwell > 0 {
-                        caption("warm-up", PocketColor.textSecondary, weight: .regular)
-                            .position(x: centerX(of: 0..<dwell, usableWidth: usableWidth,
-                                                 spacing: spacing, totalIntervals: totalIntervals),
-                                      y: midY)
+                        caption("warm-up", PocketColor.textSecondary, weight: .regular,
+                                over: 0..<dwell, metrics: metrics)
                     }
-                    caption("command", tint, weight: .semibold)
-                        .position(x: centerX(of: dwell..<(dwell + 1), usableWidth: usableWidth,
-                                             spacing: spacing, totalIntervals: totalIntervals),
-                                  y: midY)
+                    caption("command", tint, weight: .semibold,
+                            over: dwell..<(dwell + 1), metrics: metrics)
                     // reach: the climb above command through the summit (only when there is one)
                     if summit > dwell {
-                        caption("reach", PocketColor.textSecondary, weight: .regular)
-                            .position(x: centerX(of: (dwell + 1)..<(summit + 1), usableWidth: usableWidth,
-                                                 spacing: spacing, totalIntervals: totalIntervals),
-                                      y: midY)
+                        caption("reach", PocketColor.textSecondary, weight: .regular,
+                                over: (dwell + 1)..<(summit + 1), metrics: metrics)
                     }
                     // back off: the descent after the summit (only when there is a tail)
                     if summit < plateaus.count - 1 {
-                        caption("back off", PocketColor.textSecondary, weight: .regular)
-                            .position(x: centerX(of: (summit + 1)..<plateaus.count, usableWidth: usableWidth,
-                                                 spacing: spacing, totalIntervals: totalIntervals),
-                                      y: midY)
+                        caption("back off", PocketColor.textSecondary, weight: .regular,
+                                over: (summit + 1)..<plateaus.count, metrics: metrics)
                     }
                 }
             }
@@ -137,8 +140,41 @@ struct RoutineStairs: View {
         .frame(height: Self.captionHeight)
     }
 
-    private func caption(_ text: String, _ color: Color, weight: Font.Weight) -> some View {
-        Text(text).font(.futura(.caption2, weight: weight)).foregroundStyle(color).fixedSize()
+    /// The bar-layout figures every caption placement needs — grouped so each caption call site takes
+    /// one parameter instead of three.
+    private struct CaptionMetrics {
+        let usableWidth: CGFloat
+        let spacing: CGFloat
+        let totalIntervals: Int
+        /// Vertical centre of the caption row — the same for every label.
+        let midY: CGFloat
+    }
+
+    /// One phase caption, centred on and bounded by the bars it names.
+    @ViewBuilder
+    private func caption(_ text: String, _ color: Color, weight: Font.Weight,
+                         over range: Range<Int>, metrics: CaptionMetrics) -> some View {
+        let width = groupWidth(of: range, metrics: metrics)
+        if width >= Self.minCaptionWidth {
+            Text(text)
+                .font(.futura(.caption2, weight: weight))
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(width: width)
+                .position(x: centerX(of: range, usableWidth: metrics.usableWidth,
+                                     spacing: metrics.spacing, totalIntervals: metrics.totalIntervals),
+                          y: metrics.midY)
+        }
+    }
+
+    /// The on-screen width of a contiguous group of bars, including the spacing between them.
+    private func groupWidth(of range: Range<Int>, metrics: CaptionMetrics) -> CGFloat {
+        let bars = range.reduce(CGFloat(0)) { total, index in
+            total + metrics.usableWidth * CGFloat(plateaus[index].intervals)
+                / CGFloat(metrics.totalIntervals)
+        }
+        return bars + metrics.spacing * CGFloat(max(0, range.count - 1))
     }
 
     private func heightFraction(_ bpm: Int, _ low: Int, _ span: Int) -> Double {

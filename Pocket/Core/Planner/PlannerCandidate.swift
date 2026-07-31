@@ -52,17 +52,28 @@ struct PlannerCandidate: Equatable {
     /// The skill this candidate satisfies, for display only (`nil` in Slice 1 before goals).
     var skillID: String?
 
+    /// Which **goal** surfaced this candidate — the strongest claim's goal, where several compete
+    /// (`CandidateDeriver`). `nil` on the goal-less Quick path, where every candidate is equal.
+    ///
+    /// `SessionBuilder.select` deals across goals rather than taking the top-ranked N, so this is
+    /// what keeps a session from being drawn entirely from one goal. It was invisible before ADR 0129:
+    /// at ~15 items both goals were represented by brute force; at **three** the top goal took every
+    /// slot.
+    var goalUID: UUID?
+
     init(unit: PlannerUnitRef,
          priority: Double = 1.0,
          mastery: Int? = nil,
          lastPracticed: Date? = nil,
          estimatedMinutes: Int,
-         skillID: String? = nil) {
+         skillID: String? = nil,
+         goalUID: UUID? = nil) {
         self.unit = unit
         self.priority = priority
         self.mastery = mastery
         self.lastPracticed = lastPracticed
         self.estimatedMinutes = estimatedMinutes
         self.skillID = skillID
+        self.goalUID = goalUID
     }
 }

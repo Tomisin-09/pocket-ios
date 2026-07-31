@@ -120,21 +120,21 @@ final class SessionEstimateTests: XCTestCase {
                        12.0, accuracy: 0.001)
     }
 
-    func testFittedRampHitsItsTargetLength() {
-        // (240s − 63.670s fixed) / 12s = 14.694 → 15 dwell intervals.
-        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 4, beatsPerBar: 4)
-        XCTAssertEqual(fit.dwellIntervals, 15)
-        // 63.670 + 15 × 12 = 243.670s = 4.06 min.
-        XCTAssertEqual(SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4), 243.670, accuracy: 0.01)
-        XCTAssertEqual(SessionEstimate.minutes(forRamp: fit, beatsPerBar: 4), 4)
+    func testFittedRampHitsATargetItCanReach() {
+        // (180s − 63.670s fixed) / 12s = 9.69 → 10 dwell intervals, just inside the 2.5× bound.
+        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 3, beatsPerBar: 4)
+        XCTAssertEqual(fit.dwellIntervals, 10)
+        // 63.670 + 10 × 12 = 183.670s = 3.06 min.
+        XCTAssertEqual(SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4), 183.670, accuracy: 0.01)
+        XCTAssertEqual(SessionEstimate.minutes(forRamp: fit, beatsPerBar: 4), 3)
     }
 
     func testFittedRampMovesTheDwellAndNothingElse() {
         let ramp = freshRamp()
-        let fit = SessionEstimate.fitted(ramp, toMinutes: 4, beatsPerBar: 4)
+        let fit = SessionEstimate.fitted(ramp, toMinutes: 3, beatsPerBar: 4)
         // Same staircase shape — only the command plateau's hold changes.
         XCTAssertEqual(fit.plateaus.map(\.bpm), ramp.plateaus.map(\.bpm))
-        XCTAssertEqual(fit.plateaus.map(\.intervals), [1, 1, 1, 15, 1, 1])
+        XCTAssertEqual(fit.plateaus.map(\.intervals), [1, 1, 1, 10, 1, 1])
         XCTAssertEqual(fit.working, ramp.working)
         XCTAssertEqual(fit.command, ramp.command)
         XCTAssertEqual(fit.target, ramp.target)
@@ -144,7 +144,7 @@ final class SessionEstimateTests: XCTestCase {
     }
 
     func testTheDwellShareDominatesTheFittedBlock() {
-        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 4, beatsPerBar: 4)
+        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 3, beatsPerBar: 4)
         let total = SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4)
         let dwell = Double(fit.dwellIntervals) * SessionEstimate.dwellIntervalSeconds(fit, beatsPerBar: 4)
         // Emergent, not enforced (ADR 0129) — but consolidation must own the bulk of the block.
@@ -152,20 +152,68 @@ final class SessionEstimateTests: XCTestCase {
         XCTAssertLessThan(dwell / total, 0.80)
     }
 
-    func testFittedDwellFloorsAtOneWhenTheSlotCannotHoldTheStaircase() {
-        // 60s target against 63.670s of fixed plateaus ⇒ the arithmetic wants a negative dwell.
+    // MARK: - The fit is bounded by the authored recipe (device pass, 2026-07-31)
+
+    /// The defect: an authored 4-interval dwell in a 5-minute block was stretched to ~19 intervals —
+    /// **5×** the recipe. ADR 0129 sub-decision 3 stopped the fit *writing* the exercise and treated
+    /// that as enough; it wasn't, because the run overrode it anyway.
+    func testTheFitWillNotStretchTheAuthoredDwellWithoutLimit() {
+        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 5, beatsPerBar: 4)
+        XCTAssertEqual(fit.dwellIntervals, 10)   // 2.5 × 4 authored, not the 19 the budget wanted
+    }
+
+    func testClampedDwellHoldsWithinReachOfTheAuthoredRecipe() {
+        XCTAssertEqual(SessionEstimate.clampedDwell(19, authored: 4), 10)  // 2.5× ceiling
+        XCTAssertEqual(SessionEstimate.clampedDwell(1, authored: 4), 2)    // 0.5× floor
+        XCTAssertEqual(SessionEstimate.clampedDwell(6, authored: 4), 6)    // inside the band, untouched
+        XCTAssertEqual(SessionEstimate.clampedDwell(-3, authored: 4), 2)
+    }
+
+    /// A one-interval recipe has a degenerate band (0.5 rounds to 1, 2.5 rounds to 3) — the range must
+    /// still be non-empty and never admit a zero-interval dwell, since the command plateau must hold.
+    func testClampedDwellStaysLegalForAShortAuthoredDwell() {
+        XCTAssertEqual(SessionEstimate.clampedDwell(99, authored: 1), 3)
+        XCTAssertEqual(SessionEstimate.clampedDwell(0, authored: 1), 1)
+        XCTAssertEqual(SessionEstimate.clampedDwell(5, authored: 0), 3)
+    }
+
+    func testFittedDwellShrinksNoFurtherThanHalfWhenTheSlotIsTooShort() {
+        // 60s target against 63.670s of fixed plateaus ⇒ the arithmetic wants a negative dwell; the
+        // recipe's own floor wins instead of collapsing the hold to a single interval.
         let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 1, beatsPerBar: 4)
-        XCTAssertEqual(fit.dwellIntervals, 1)
+        XCTAssertEqual(fit.dwellIntervals, 2)
+    }
+
+    // MARK: - What a block actually takes
+
+    func testEffectiveMinutesReportTheAskWhenTheFitCanReachIt() {
+        XCTAssertEqual(SessionEstimate.effectiveMinutes(forRamp: freshRamp(), plannedMinutes: 3,
+                                                        beatsPerBar: 4), 3)
+    }
+
+    /// Where the clamp bites, the *estimate* gives way — not the recipe. A 5-minute allotment that
+    /// buys 3 minutes of ramp must read as 3, or the session promises time it never spends.
+    func testEffectiveMinutesReportWhatPlaysNotWhatWasAllotted() {
+        XCTAssertEqual(SessionEstimate.effectiveMinutes(forRamp: freshRamp(), plannedMinutes: 5,
+                                                        beatsPerBar: 4), 3)
+    }
+
+    func testEffectiveMinutesOfAnUnplannedBlockIsItsNaturalLength() {
+        let ramp = freshRamp()
+        XCTAssertEqual(SessionEstimate.effectiveMinutes(forRamp: ramp, plannedMinutes: nil,
+                                                        beatsPerBar: 4),
+                       SessionEstimate.minutes(forRamp: ramp, beatsPerBar: 4))
     }
 
     func testFittedSecondsRampCountsIntervalsDirectly() {
-        // No warm-up, no summit, no backoff → the dwell is the whole ramp: 120s / 6s = 20 intervals.
+        // No warm-up, no summit, no backoff → the dwell is the whole ramp. 120s / 6s wants 20
+        // intervals; the authored 5 bounds it to 2.5× = 13 (78s).
         let ramp = CommandRamp(working: 120, command: 120, target: 120, stepBPM: 0,
                                intervalCount: 6, unit: .seconds, dwellIntervals: 5,
                                includeBackoff: false)
         let fit = SessionEstimate.fitted(ramp, toMinutes: 2, beatsPerBar: 4)
-        XCTAssertEqual(fit.dwellIntervals, 20)
-        XCTAssertEqual(SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4), 120, accuracy: 0.001)
+        XCTAssertEqual(fit.dwellIntervals, 13)
+        XCTAssertEqual(SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4), 78, accuracy: 0.001)
     }
 
     func testNonPositiveMinutesLeavesTheRampUntouched() {

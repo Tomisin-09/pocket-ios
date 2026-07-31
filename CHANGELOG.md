@@ -27,6 +27,31 @@ All notable changes to Pocket are documented here. Format loosely follows
   and then instead of after the fact from the drill's ⓘ sheet. Optional, and you can still change it
   later. The section only appears once you have songs in your library.
 
+### Fixed
+- **Skipping a block no longer leaves the next one stuck on "Counting in".** Skip past an exercise
+  mid-session and the block that came up would sit on its count-in forever — silent, but with the
+  screen still responding, so it looked like it was about to start and never did. Two blocks briefly
+  overlap during a hand-over, and the one on its way out was switching the audio off underneath the
+  one just starting. This was there before generated sessions and affects any routine, not just a
+  generated one.
+- **Every goal you've set gets a look in.** With two goals, a Quick session could be drawn entirely
+  from one of them and never touch the other — it only became obvious once Quick came down to three
+  exercises. Goals now take turns, with the one you most need still going first and taking the odd
+  slot. A goal with little material in it is skipped rather than holding a place, so you never lose an
+  exercise to it.
+- **A session block no longer rewrites how long your exercise is meant to run.** Fitting an exercise
+  to its block could stretch the time at your command tempo to five times what you'd set, which is not
+  an adjustment — it's an override. A block may now stretch it a little (or shorten it a little), and
+  when your exercise simply won't fill the slot, the session says so: the estimate drops to what will
+  really be played instead of promising minutes you'd never spend.
+- **The block preview and the run agree.** Tapping a block in a generated session showed one staircase
+  and then played a different one. It now shows exactly what you're about to practise.
+- **Loops belong to a generated session properly now.** A loop dropped into a session was given a
+  slot and ignored it, and its staircase was missing its warm-up and its wind-down — it went straight
+  in at your command speed. Loops now warm up, fit their block, and read the same as exercises do.
+- **The staircase labels stop landing on top of each other** when one part of the ramp is much longer
+  than the rest.
+
 ### Changed
 - **Generated sessions are the right size now.** Asking for a Quick session used to hand you a wall of
   one-minute drills with a three-minute break wedged between every one of them — a "Quick 15" could

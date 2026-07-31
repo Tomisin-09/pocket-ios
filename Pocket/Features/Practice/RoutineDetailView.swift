@@ -224,8 +224,10 @@ struct RoutineDetailView: View {
         .sheet(item: $repsEditorItem) { repsEditorSheet($0.value) }
         .navigationDestination(item: $previewTarget) { target in
             switch target {
-            case .exercise(let exercise): ExerciseBlockPreview(exercise: exercise)
-            case .loop(let loop): LoopBlockPreview(loop: loop)
+            case .exercise(let exercise, let planned):
+                ExerciseBlockPreview(exercise: exercise, plannedMinutes: planned)
+            case .loop(let loop, let planned):
+                LoopBlockPreview(loop: loop, plannedMinutes: planned)
             case .earLoop(let loop): EarLoopBlockPreview(loop: loop)
             }
         }

@@ -75,7 +75,7 @@ final class PlannedMinutesTests: XCTestCase {
     }
 
     @MainActor
-    func testARoutineEstimatePrefersThePlanOverTheUnitsOwnLength() throws {
+    func testARoutineEstimatePricesTheRunThatWillActuallyPlay() throws {
         let context = try makeContext()
         let first = drill("Spider", into: context)
         let second = drill("Legato", into: context)
@@ -89,11 +89,24 @@ final class PlannedMinutesTests: XCTestCase {
                                                   exercises: try context.fetch(FetchDescriptor<Exercise>()),
                                                   loops: [], songs: [], into: context)
 
-        // Each default drill's own ramp estimates 2 minutes, but the run is fitted to the 5 the block
-        // allotted — so re-deriving from the unit would under-report a generated session by more than
-        // half. 5 + 5.
+        // Three numbers, all different, and the estimate must be the third. The drill's own ramp is
+        // 2 minutes; the block *asked* for 5; the fit will only stretch the authored dwell 2.5×, so
+        // what plays is 3. Reading the allotment back as fact would over-promise by two minutes a
+        // block — the failure mode that made the preview and the run disagree on device.
         XCTAssertEqual(PracticePlanner.estimatedMinutes(for: first), 2)
-        XCTAssertEqual(PracticePlanner.estimatedMinutes(forRoutine: routine), 10)
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(for: first, plannedMinutes: 5), 3)
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(forRoutine: routine), 6)
+    }
+
+    @MainActor
+    func testAnAllottedSlotTheFitCanReachIsReportedAsAsked() throws {
+        let context = try makeContext()
+        let exercise = drill("Spider", into: context)
+        try context.save()
+
+        // 3 minutes is inside the 2.5× bound for a default 4-interval dwell, so the plan and the
+        // performance agree exactly — the clamp only speaks up when the ask is out of reach.
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(for: exercise, plannedMinutes: 3), 3)
     }
 
     @MainActor
@@ -112,14 +125,24 @@ final class PlannedMinutesTests: XCTestCase {
     }
 
     func testAFittedRampFillsThePlannedSlot() {
-        // The end of the chain: a five-minute slot really does buy ~five minutes of ramp, by stretching
-        // the dwell rather than the climb.
+        // The end of the chain: a three-minute slot really does buy ~three minutes of ramp, by
+        // stretching the dwell rather than the climb.
         let exercise = Exercise(currentTempo: 80)
-        let fitted = SessionEstimate.fitted(exercise.ramp, toMinutes: 5,
+        let fitted = SessionEstimate.fitted(exercise.ramp, toMinutes: 3,
                                             beatsPerBar: exercise.beatsPerBar)
-        XCTAssertEqual(SessionEstimate.minutes(forRamp: fitted, beatsPerBar: exercise.beatsPerBar), 5)
+        XCTAssertEqual(SessionEstimate.minutes(forRamp: fitted, beatsPerBar: exercise.beatsPerBar), 3)
         XCTAssertGreaterThan(fitted.dwellIntervals, exercise.ramp.dwellIntervals)
         // The staircase either side of the dwell is untouched.
         XCTAssertEqual(fitted.plateaus.map(\.bpm), exercise.ramp.plateaus.map(\.bpm))
+    }
+
+    /// The device-pass finding: an authored 4-interval dwell given a 5-minute block was stretched to
+    /// ~19 intervals — five times the recipe, and enough to crush the staircase's other bars.
+    func testTheFitCannotRunAwayWithTheAuthoredDwell() {
+        let exercise = Exercise(currentTempo: 80)
+        let fitted = SessionEstimate.fitted(exercise.ramp, toMinutes: 5,
+                                            beatsPerBar: exercise.beatsPerBar)
+        XCTAssertEqual(exercise.ramp.dwellIntervals, 4)
+        XCTAssertEqual(fitted.dwellIntervals, 10)   // 2.5 × 4, not the 19 the raw arithmetic wanted
     }
 }

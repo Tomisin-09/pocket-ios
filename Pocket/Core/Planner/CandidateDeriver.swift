@@ -79,7 +79,7 @@ enum CandidateDeriver {
                                  mastery: exercise.mastery,
                                  lastPracticed: exercise.lastPracticed,
                                  estimatedMinutes: exercise.estimatedMinutes,
-                                 skillID: info.id)
+                                 skillID: info.id, goalUID: goal.uid)
             }
         let loops = library.loops
             .filter { loop in loop.templates.contains { SkillFamilyMap.template($0, serves: info.id) } }
@@ -89,7 +89,7 @@ enum CandidateDeriver {
                                  mastery: loop.mastery,
                                  lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes,
-                                 skillID: info.id)
+                                 skillID: info.id, goalUID: goal.uid)
             }
         return exercises + loops
     }
@@ -111,7 +111,7 @@ enum CandidateDeriver {
                                  mastery: loop.mastery,
                                  lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes,
-                                 skillID: skillID)
+                                 skillID: skillID, goalUID: goal.uid)
             }
         if let song = library.songs.first(where: { $0.uid == songUID }) {
             result.append(PlannerCandidate(unit: PlannerUnitRef(song.uid, .song),
@@ -119,7 +119,7 @@ enum CandidateDeriver {
                                            mastery: nil,  // song mastery is derived; treat run as max-due
                                            lastPracticed: song.lastPracticed,
                                            estimatedMinutes: song.estimatedMinutes,
-                                           skillID: skillID))
+                                           skillID: skillID, goalUID: goal.uid))
         }
         return result
     }

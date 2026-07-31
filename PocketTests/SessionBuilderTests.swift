@@ -12,9 +12,11 @@ final class SessionBuilderTests: XCTestCase {
                            mastery: Int? = nil,
                            lastPracticed: Date? = nil,
                            priority: Double = 1.0,
-                           uid: UUID = UUID()) -> PlannerCandidate {
+                           uid: UUID = UUID(),
+                           goalUID: UUID? = nil) -> PlannerCandidate {
         PlannerCandidate(unit: PlannerUnitRef(uid, .exercise), priority: priority,
-                         mastery: mastery, lastPracticed: lastPracticed, estimatedMinutes: minutes)
+                         mastery: mastery, lastPracticed: lastPracticed, estimatedMinutes: minutes,
+                         goalUID: goalUID)
     }
 
     private func focusMinutes(_ blocks: [SessionBlock]) -> Int {
@@ -213,6 +215,62 @@ final class SessionBuilderTests: XCTestCase {
 
     func testEmptyCandidatesYieldEmptySession() {
         XCTAssertTrue(SessionBuilder.buildSession(length: .focused, candidates: [], now: now).isEmpty)
+    }
+
+    // MARK: - Every goal gets a share (device pass, 2026-07-31)
+
+    /// The defect: with two equally-weighted goals, a **Quick** session drew all three items from the
+    /// top-ranked one and the player's second goal never appeared. Invisible before ADR 0129 — at ~15
+    /// items both goals got in by brute force; at three, top-N takes everything.
+    func testASecondGoalIsNeverCrowdedOutOfAQuickSession() {
+        let strong = UUID(), weak = UUID()
+        // Every `strong` candidate out-ranks every `weak` one on dueScore, so a straight top-N
+        // takes three from `strong` and nothing from `weak`.
+        let candidates = (0..<4).map { _ in candidate(mastery: nil, goalUID: strong) }
+            + (0..<4).map { _ in candidate(mastery: 5, lastPracticed: now, goalUID: weak) }
+
+        let goals = SessionBuilder.select(candidates, items: 3, now: now)
+            .compactMap(\.candidate.goalUID)
+        XCTAssertEqual(goals.filter { $0 == strong }.count, 2)
+        XCTAssertEqual(goals.filter { $0 == weak }.count, 1)
+    }
+
+    /// The most-due goal still leads and still takes the odd slot — this is a share, not an equal split.
+    func testTheMostDueGoalStillLeadsTheDeal() {
+        let strong = UUID(), weak = UUID()
+        let candidates = (0..<3).map { _ in candidate(mastery: nil, goalUID: strong) }
+            + (0..<3).map { _ in candidate(mastery: 5, lastPracticed: now, goalUID: weak) }
+        let picked = SessionBuilder.select(candidates, items: 5, now: now)
+        XCTAssertEqual(picked.first?.candidate.goalUID, strong)
+        XCTAssertEqual(picked.compactMap(\.candidate.goalUID).filter { $0 == strong }.count, 3)
+        XCTAssertEqual(picked.compactMap(\.candidate.goalUID).filter { $0 == weak }.count, 2)
+    }
+
+    /// A thin goal must not hold a place it can't fill — the session still gets its full item count.
+    func testAGoalThatRunsOutDoesNotCostTheSessionItems() {
+        let deep = UUID(), thin = UUID()
+        let candidates = (0..<5).map { _ in candidate(mastery: nil, goalUID: deep) }
+            + [candidate(mastery: 5, lastPracticed: now, goalUID: thin)]
+        let picked = SessionBuilder.select(candidates, items: 4, now: now)
+        XCTAssertEqual(picked.count, 4)
+        XCTAssertEqual(picked.compactMap(\.candidate.goalUID).filter { $0 == thin }.count, 1)
+    }
+
+    /// The goal-less Quick path (every candidate `priority = 1`, no goal) must behave exactly as the
+    /// old top-N — one group is one deal.
+    func testGoallessSelectionIsStillStraightDueOrder() {
+        let due = candidate(mastery: nil)
+        let middling = candidate(mastery: 2)
+        let settled = candidate(mastery: 5, lastPracticed: now)
+        let picked = SessionBuilder.select([settled, middling, due], items: 2, now: now)
+        XCTAssertEqual(picked.map(\.candidate.unit), [due.unit, middling.unit])
+    }
+
+    func testSelectionNeverExceedsTheItemCount() {
+        let goals = (0..<4).map { _ in UUID() }
+        let candidates = goals.flatMap { goal in (0..<5).map { _ in candidate(goalUID: goal) } }
+        XCTAssertEqual(SessionBuilder.select(candidates, items: 3, now: now).count, 3)
+        XCTAssertEqual(SessionBuilder.select(candidates, items: 12, now: now).count, 12)
     }
 
     // MARK: - Warm-up LRU (Decision 3)

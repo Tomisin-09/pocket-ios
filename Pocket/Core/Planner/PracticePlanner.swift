@@ -107,7 +107,7 @@ enum PracticePlanner {
 
     /// A loop's rough minutes — its region length × its repeat count (Path B), floored at 1.
     static func estimatedMinutes(for loop: Loop) -> Int {
-        let seconds = max(0, loop.endSeconds - loop.startSeconds) * Double(max(1, loop.repeats))
+        let seconds = loop.regionSeconds * Double(max(1, loop.repeats))
         return max(1, Int((seconds / 60).rounded()))
     }
 
@@ -123,24 +123,44 @@ enum PracticePlanner {
     static func estimatedMinutes(forRoutine routine: Routine) -> Int {
         routine.orderedItems.reduce(0) { total, item in
             guard !item.isOrphaned else { return total }
-            // A generated block states the minutes the session allotted it, and its ramp is fitted to
-            // exactly that (ADR 0129) — so the plan is the better estimate than re-deriving from the
-            // unit's own natural length, which is what the run has been told to override.
-            if let planned = item.plannedMinutes {
-                return total + SessionEstimate.minutes(perRun: planned, reps: item.effectiveReps)
-            }
+            // A generated block states the minutes the session allotted it, but the fit is *bounded*
+            // (ADR 0129 as amended) — so the allotment is the block's ask, not necessarily its length.
+            // Each unit is therefore priced from the run it will actually perform: an exercise's
+            // fitted ramp, a loop's fitted repeats, a song's own duration.
             let perRun: Int
             if let exercise = item.exercise {
-                perRun = estimatedMinutes(for: exercise)
+                perRun = estimatedMinutes(for: exercise, plannedMinutes: item.plannedMinutes)
             } else if let loop = item.loop {
-                perRun = estimatedMinutes(for: loop)
+                perRun = estimatedMinutes(for: loop, mode: item.loopRunMode,
+                                          plannedMinutes: item.plannedMinutes)
             } else if let song = item.song {
-                perRun = estimatedMinutes(for: song)
+                perRun = item.plannedMinutes ?? estimatedMinutes(for: song)
             } else {
                 return total // a rest carries no unit
             }
             return total + SessionEstimate.minutes(perRun: perRun, reps: item.effectiveReps)
         }
+    }
+
+    /// An exercise's minutes **in a block** — its ramp fitted to the block's allotment (ADR 0129), or
+    /// its own natural length when the block was hand-authored.
+    static func estimatedMinutes(for exercise: Exercise, plannedMinutes: Int?) -> Int {
+        SessionEstimate.effectiveMinutes(forRamp: exercise.ramp, plannedMinutes: plannedMinutes,
+                                         beatsPerBar: exercise.beatsPerBar)
+    }
+
+    /// A loop's minutes **in a block** — the passes its command-anchored ramp actually plays, fitted
+    /// to the block's allotment where there is one (ADR 0129 as amended).
+    ///
+    /// Note this is the *ramp's* length, not the library's `region × repeats`: a loop block in a
+    /// routine runs `LoopRunView`'s staircase, so its ramp is what the player's time is spent on.
+    /// `region × repeats` still prices a loop as a **candidate** (`estimatedMinutes(for:)`), where
+    /// there is no ramp context yet. An **ear-training** block has no ramp at all (ADR 0104) and keeps
+    /// the region × repeats figure.
+    static func estimatedMinutes(for loop: Loop, mode: LoopRunMode, plannedMinutes: Int?) -> Int {
+        guard mode != .ear else { return estimatedMinutes(for: loop) }
+        return LoopEstimate.effectiveMinutes(forRamp: loop.ramp, plannedMinutes: plannedMinutes,
+                                             regionSeconds: loop.regionSeconds)
     }
 
     /// Materialise a planned `[SessionBlock]` into a persisted `Routine` of ordered `RoutineItem`s

@@ -93,7 +93,31 @@ R1 is untouched: play is still never *capped*. It is merely *included in the est
 - `microRestEvery` — plumbed on `SessionBlock.focus` since ADR 0014 R4 and passed `nil` at all four
   construction sites ever since — is finally populated, carrying the in-block rotation cue.
 
-### 4. The ramp fits its block, dwell-dominant
+### 4. The ramp fits its block, dwell-dominant — **within reach of the authored recipe**
+
+> **Amended 2026-07-31 after device testing.** The fit as first shipped was unbounded, which made it an
+> *override* rather than an adjustment: an exercise authored 64→75 / reach 80 with a **4-interval dwell**,
+> given a 5-minute block, was fitted to **~19 intervals (~76 bars at command)** — five times what its
+> author asked for, and wide enough that `RoutineStairs` printed "reach" and "back off" on top of each
+> other. Sub-decision 3 below protected the stored recipe from being *written* and treated that as
+> sufficient. It wasn't, because the run ignored the recipe anyway.
+>
+> **The fit is now clamped to 0.5…2.5× the authored dwell** (`SessionEstimate.clampedDwell`), and —
+> this is the half that matters — **where the clamp bites, the block's estimate gives way, not the
+> recipe.** `SessionEstimate.effectiveMinutes` prices the ramp that will actually play, and
+> `PracticePlanner.estimatedMinutes(forRoutine:)` sums *that* rather than reading each block's
+> allotment back as fact. So a 5-minute slot holding a short staircase reads as the ~3 minutes it
+> takes. The allotment is the block's **ask**; the fitted ramp is the **answer**; the readout reports
+> the answer. Rejected alternatives: letting the block's share follow the authored length (a preset's
+> minutes stop being predictable at all), and making the fit opt-in (the block model's central promise
+> would then be off by default).
+>
+> The device pass also found the fit applied to **exercises only** — `LoopRunView` never read
+> `plannedMinutes`, so a loop block was allotted a slot and ignored it. Loops now fit the same way,
+> through a separate `LoopEstimate`: a loop ramp reuses `CommandRamp` with intervals meaning *passes*
+> and plateau values meaning *percent of original*, so one interval costs `regionSeconds ÷ (percent/100)`
+> and the exercise estimator's bars-against-a-meter arithmetic would have produced a number in the
+> wrong units. Same dwell quantum, same clamp, same "report what plays" rule.
 
 `CommandRamp` gains a **fit-to-minutes** construction: warm-up, summit and backoff hold roughly fixed, and
 the remainder goes into the **dwell**. Consolidation happens at the tempo you own, so the dwell is the only
@@ -108,6 +132,17 @@ Pure arithmetic on a pure type; no schema change; unit-tested per AGENTS.md.
 
 ### 5. The five sub-decisions
 
+0. **Selection deals across goals; it does not skim the top N.** *(Added 2026-07-31 after device
+   testing.)* `SessionBuilder.select` ranked purely by `DueScore` and there was no per-goal quota
+   anywhere, so with two equally-weighted goals a generated **Quick** session drew all three items
+   from the first and the second goal never appeared. This is a consequence of this ADR that the ADR
+   did not anticipate: at ~15 items both goals were represented by brute force; at **three**, top-N
+   takes everything. `PlannerCandidate` gains a `goalUID` (the strongest claim's goal, set by
+   `CandidateDeriver`) and `select` deals one item per goal per pass, goals visited in the order their
+   best candidate ranks. The most-due goal still leads and still takes the odd slot — a share, not an
+   equal split — and a goal that runs out is skipped rather than holding a place, so a thin second goal
+   never costs the session an item. With one goal, or none (the goal-less Quick path), it is exactly
+   the old top-N.
 1. **A never-promoted exercise gets a derived warm-up floor.** `workingTempo` is a straight alias over
    `currentTempo`, so working cannot sit below command without a promote — fitting alone will not conjure a
    staircase. When `commandTempo == nil`, `Exercise.ramp` derives its floor from
@@ -126,6 +161,14 @@ Pure arithmetic on a pure type; no schema change; unit-tested per AGENTS.md.
    `SessionEstimate` floored to one minute, and one minute is what let `SessionBuilder` pack fifteen
    items into a Quick session. The user-visible bug was the flooded session; the ramp disagreement was
    its cause.
+
+   **Extended to loops 2026-07-31 after device testing.** `Loop` has the identical collapse in `×`
+   units — `Loop.command` falls back to `speed` when nothing is promoted, so an un-measured loop had
+   working == command and its staircase showed only *command* and *reach*, no warm-up and no back off.
+   `LoopRunView.seedIfNeeded` had always seeded a floor below command, so a *run* climbed correctly;
+   `Loop.ramp` — what the planner estimates from and what the routine's block preview draws — did not.
+   That seeding rule now lives on the model as **`Loop.rampFloor`** and the run screen reads it, so the
+   two cannot drift. Derived, never stored; no migration.
 2. **Book-ends scale with the preset.** Quick gets a warm-up and **no play block**; Focused and Full get
    both. Precedent: `CollectionSessionBuilder.playCap(for:)` already scales play-throughs 1/2/3 by preset.
    Under a total-minutes readout, a 5-min warm-up and 10-min play would otherwise make "Quick" read ~28
@@ -145,6 +188,13 @@ Pure arithmetic on a pure type; no schema change; unit-tested per AGENTS.md.
    property of *this block in this routine*, which is precisely why they belong on `RoutineItem` and not
    on `Exercise`. Only **focused** blocks carry it — pinning a warm-up or play-through to a nominal
    figure would contradict R1, which says those run as long as the player likes.
+   **Amended 2026-07-31 — the preview has to show the fitted ramp, not the authored one.** Keeping the
+   recipe unwritten is necessary but not sufficient: the routine sheet's block preview drew the
+   *authored* staircase while the run played the *fitted* one, so the two surfaces contradicted each
+   other on device. `RoutineBlockPreviewTarget` now carries the block's `plannedMinutes` and both
+   previews draw the effective ramp — the same expression the run screen hands the engine. Making the
+   surfaces agree only makes the override *visible*, which is why it is paired with bounding the fit
+   (sub-decision 4 above); on its own it would have been a prettier lie.
 4. **`ExerciseTempoSection` shows the derived floor** on an unmeasured exercise, so the sheet cannot say
    "Working 80" while the ramp runs from 72. The section's own footer already calls working "the warm-up
    floor"; it should show the floor the warm-up uses.

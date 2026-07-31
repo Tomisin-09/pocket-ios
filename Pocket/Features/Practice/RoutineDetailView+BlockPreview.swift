@@ -73,11 +73,15 @@ extension RoutineDetailView {
     func inspect(_ item: RoutineItem) {
         if let exercise = item.exercise,
            let appExercise = appContext.model(for: exercise.persistentModelID) as? Exercise {
-            previewTarget = .exercise(appExercise)
+            // The block's allotted minutes travel with it (ADR 0129) — a generated block's ramp is
+            // fitted to them, so a preview without them would draw a staircase the run won't play.
+            previewTarget = .exercise(appExercise, plannedMinutes: item.plannedMinutes)
         } else if let loop = item.loop,
                   let appLoop = appContext.model(for: loop.persistentModelID) as? Loop {
             // A loop block carries a mode (ADR 0104 Slice 2): ear blocks preview the ears-only surface.
-            previewTarget = item.loopRunMode == .ear ? .earLoop(appLoop) : .loop(appLoop)
+            previewTarget = item.loopRunMode == .ear
+                ? .earLoop(appLoop)
+                : .loop(appLoop, plannedMinutes: item.plannedMinutes)
         } else {
             return
         }
