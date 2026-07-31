@@ -1,17 +1,21 @@
 import SwiftData
 import SwiftUI
 
-/// What a tapped routine block previews — an exercise or a loop, resolved into the app context.
-/// Identifiable so `RoutineDetailView` can drive a `navigationDestination(item:)` push.
-/// The **allotted minutes** ride along (ADR 0129 as amended) because a generated block's ramp is
-/// fitted to its slot at run time: without them the preview drew the *authored* staircase while the
-/// run played the *fitted* one, so the two surfaces contradicted each other. `nil` for a
-/// hand-authored block, which plays its recipe as written.
+/// What a tapped routine block previews — an exercise or a loop, resolved into the app context,
+/// together with **the block itself**. Identifiable so `RoutineDetailView` can drive a
+/// `navigationDestination(item:)` push.
+///
+/// The block rides along because the preview is where its *length* is both stated and decided: a
+/// generated block's ramp is fitted to its allotted minutes at run time (ADR 0129 as amended) —
+/// without them the preview drew the *authored* staircase while the run played the *fitted* one — and
+/// ADR 0130 puts the opt-out from that fit on this same screen, next to the numbers it changes. The
+/// unit is resolved into the app context; the block stays the editor's, which is the context that
+/// owns writing it back.
 enum RoutineBlockPreviewTarget: Identifiable, Hashable {
-    case exercise(Exercise, plannedMinutes: Int?)
-    case loop(Loop, plannedMinutes: Int?)
+    case exercise(Exercise, block: RoutineItem)
+    case loop(Loop, block: RoutineItem)
     /// A loop block in **ear-training** mode (ADR 0104 Slice 2) — previews the ears-only surface,
-    /// not the trainer ramp, so it has no ramp to fit.
+    /// not the trainer ramp, so it has no ramp to fit and nothing to decline.
     case earLoop(Loop)
 
     var id: PersistentIdentifier {
@@ -34,6 +38,9 @@ struct ExerciseBlockPreview: View {
     /// staircase and dwell caption below describe the ramp fitted to it, which is the one the run
     /// will play.
     var plannedMinutes: Int?
+    /// The block's opt-out from that fit (ADR 0130). Bound to the `RoutineItem`, so toggling it
+    /// re-draws the staircase here and re-flows the routine's estimate behind this screen.
+    @Binding var usesAuthoredLength: Bool
     @Environment(\.modelContext) private var modelContext
     @State private var preview = CommandTempoPreviewPlayer()
     @State private var strumPreview = StrumPatternPreviewPlayer()
@@ -79,6 +86,11 @@ struct ExerciseBlockPreview: View {
                 RoutineStairs(plateaus: effectiveRamp.plateaus, command: effectiveRamp.command,
                               tint: PocketColor.practice)
                     .frame(height: 120)
+                if plannedMinutes != nil {
+                    BlockLengthControl(usesAuthoredLength: $usesAuthoredLength,
+                                       runMinutes: runMinutes, authoredMinutes: authoredMinutes,
+                                       tint: PocketColor.practice)
+                }
                 if let strumPattern {
                     PreviewAudioButton(isPlaying: strumPreview.isPlaying,
                                        idleTitle: "Hear the strum") {
@@ -116,12 +128,24 @@ struct ExerciseBlockPreview: View {
     }
 
     /// The staircase this block will actually run — the stored recipe, fitted to the block's allotted
-    /// minutes when it has any (ADR 0129). The same expression `ExerciseRunView` hands the engine, so
-    /// the preview and the run cannot disagree. Never written back.
+    /// minutes when it has any (ADR 0129) and the player hasn't declined the fit (ADR 0130). The same
+    /// expression `ExerciseRunView` hands the engine, so the preview and the run cannot disagree.
+    /// Never written back.
     private var effectiveRamp: CommandRamp {
-        guard let plannedMinutes else { return exercise.ramp }
+        guard !usesAuthoredLength, let plannedMinutes else { return exercise.ramp }
         return SessionEstimate.fitted(exercise.ramp, toMinutes: plannedMinutes,
                                       beatsPerBar: exercise.beatsPerBar)
+    }
+
+    /// Minutes this block takes as things stand — priced off the staircase above, so the note can
+    /// never quote a length the drawing contradicts (ADR 0130).
+    private var runMinutes: Int {
+        SessionEstimate.minutes(forRamp: effectiveRamp, beatsPerBar: exercise.beatsPerBar)
+    }
+
+    /// Minutes the exercise's own stored recipe takes — the "your saved setting" half of the note.
+    private var authoredMinutes: Int {
+        SessionEstimate.minutes(forRamp: exercise.ramp, beatsPerBar: exercise.beatsPerBar)
     }
 
     // MARK: - Tempo + step edits (ADR 0077)

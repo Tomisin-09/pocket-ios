@@ -399,7 +399,15 @@ the ramp that will actually play, so the readout never promises time the run won
 through the same door** via `LoopEstimate`, a separate estimator because a loop ramp's plateaus are
 percent-of-original over `regionSeconds` passes, not BPM over bars — feeding `LoopRunView.routine`, the
 routine block preview, and `PracticePlanner.estimatedMinutes(for:mode:plannedMinutes:)` (ear-training
-blocks have no ramp and keep region × repeats). Selection **deals across goals** rather than skimming
+blocks have no ramp and keep region × repeats). **A block may decline the fit** (ADR 0130):
+`RoutineItem.usesAuthoredLength` is a per-block opt-out — a *flag*, not a cleared `plannedMinutes`,
+because the allotment is the only record of what the session asked for and clearing it would make the
+control one-way — and `RoutineItem.effectivePlannedMinutes` is the single expression the run
+(`RoutineSessionPlayer.stage`), the block preview and `estimatedMinutes(forRoutine:)` all read, so a
+decline cannot take on one surface and not another. The block preview states both numbers where they
+differ (`BlockLengthControl`) and carries the toggle; the routine's estimate re-flows on the spot,
+which is what makes the opt-out a knowing spend rather than a hole in the preset's promise. Selection
+**deals across goals** rather than skimming
 the top N (`SessionBuilder.ranked` → `roundRobin`, keyed by `PlannerCandidate.goalUID`): at three items
 a straight top-N gave every slot to one goal. Both import
 Foundation only (no SwiftData/SwiftUI), so they're unit-tested and reusable by a future AI producer

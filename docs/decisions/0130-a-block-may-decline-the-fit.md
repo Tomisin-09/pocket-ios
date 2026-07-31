@@ -1,6 +1,6 @@
 # ADR 0130 — A block may decline the fit, and says so; loops join the routine-presentation rule
 
-- **Status:** Proposed — decisions locked, **no code yet** (branch `pocket-210-block-length-override`)
+- **Status:** Accepted — built on `pocket-210-block-length-override`
 - **Date:** 2026-07-31 (`pocket-210-block-length-override`)
 - **Extends:** **ADR 0129** — its bounded fit stays exactly as amended; this adds a *per-block* opt-out
   and makes the override legible where it happens. **ADR 0077** — closes §7 ("loops are out of scope …
@@ -82,9 +82,12 @@ it — the preset stops being a guarantee and becomes a default the player can k
 
 ### 4. Loop blocks get the same tempo panel exercise blocks have (closes ADR 0077 §7)
 
-`LoopBlockPreview` gains the `PracticeSettingsPanel` its exercise counterpart has carried since
-ADR 0077 §3, in percent-of-original units, writing straight to the model as that ADR specified for a
-surface with no Start to defer to. ADR 0077's rule — *the library is the only full editor; in a
+`LoopBlockPreview` gains the Practice Settings panel its exercise counterpart has carried since
+ADR 0077 §3 — concretely `LoopSettingsPanel`, the percent-of-original sibling the loop *run* screen
+already uses, not `PracticeSettingsPanel` itself, whose labels and captions are BPM — writing
+straight to the model as that ADR specified for a surface with no Start to defer to. The panel's
+values are read off `Loop.rampFloor` / `command` / `targetSpeed`, the same derivations `Loop.ramp`
+and `LoopRunView.seedIfNeeded` use, so the controls and the staircase beneath them cannot disagree. ADR 0077's rule — *the library is the only full editor; in a
 routine the only editable knob is tempo* — now reads the same for both unit kinds.
 
 Ear-training blocks are excluded: they have no ramp and no command (ADR 0104 Slice 2), so there is

@@ -132,7 +132,9 @@ final class RoutineSessionPlayer {
 
     private static func stage(for item: RoutineItem) -> RoutineStage {
         let reps = item.effectiveReps
-        let planned = item.plannedMinutes
+        // The allotment, unless this block declined the fit (ADR 0130) — then the run plays the
+        // exercise's or loop's own recipe, exactly as a hand-authored block does.
+        let planned = item.effectivePlannedMinutes
         if let exercise = item.exercise {
             let title = exercise.name.isEmpty ? "Exercise" : exercise.name
             return RoutineStage(id: item.uid, title: title, reps: reps,

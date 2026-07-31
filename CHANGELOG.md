@@ -27,6 +27,19 @@ All notable changes to Pocket are documented here. Format loosely follows
   and then instead of after the fact from the drill's ⓘ sheet. Optional, and you can still change it
   later. The section only appears once you have songs in your library.
 
+- **A session block tells you when it changed your exercise's length — and you can say no.** Open a
+  block in a generated session and, where the session has resized it, it now says so in a line:
+  *"Runs ~3 min in this session · your saved setting is ~2 min."* Next to it is **Keep my length** —
+  turn it on and that block runs exactly as you set it up, fit ignored. The routine's estimated
+  length updates on the spot, so you can see what the choice costs before you start. It's per block,
+  it's reversible, and it changes nothing about the exercise itself. Blocks the session didn't resize
+  say nothing at all.
+
+- **Loop blocks now have Practice Settings, like exercise blocks do.** Tap a loop in a routine and you
+  can set its working and command speeds, its reach, its back-off and its steps — in % of original,
+  the units a loop trains in — instead of having to leave and open the loop on its own. Ear-training
+  blocks don't have this: there's no ramp there to tune.
+
 ### Fixed
 - **Skipping a block no longer leaves the next one stuck on "Counting in".** Skip past an exercise
   mid-session and the block that came up would sit on its count-in forever — silent, but with the

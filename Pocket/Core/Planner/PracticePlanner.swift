@@ -126,15 +126,17 @@ enum PracticePlanner {
             // A generated block states the minutes the session allotted it, but the fit is *bounded*
             // (ADR 0129 as amended) — so the allotment is the block's ask, not necessarily its length.
             // Each unit is therefore priced from the run it will actually perform: an exercise's
-            // fitted ramp, a loop's fitted repeats, a song's own duration.
+            // fitted ramp, a loop's fitted repeats, a song's own duration. A block that **declined**
+            // the fit (ADR 0130) prices as hand-authored, which is what makes the cost of declining
+            // show up in the routine's estimate on the same screen as the toggle.
+            let planned = item.effectivePlannedMinutes
             let perRun: Int
             if let exercise = item.exercise {
-                perRun = estimatedMinutes(for: exercise, plannedMinutes: item.plannedMinutes)
+                perRun = estimatedMinutes(for: exercise, plannedMinutes: planned)
             } else if let loop = item.loop {
-                perRun = estimatedMinutes(for: loop, mode: item.loopRunMode,
-                                          plannedMinutes: item.plannedMinutes)
+                perRun = estimatedMinutes(for: loop, mode: item.loopRunMode, plannedMinutes: planned)
             } else if let song = item.song {
-                perRun = item.plannedMinutes ?? estimatedMinutes(for: song)
+                perRun = planned ?? estimatedMinutes(for: song)
             } else {
                 return total // a rest carries no unit
             }

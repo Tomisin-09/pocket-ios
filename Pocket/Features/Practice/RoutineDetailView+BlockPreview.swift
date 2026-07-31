@@ -73,19 +73,55 @@ extension RoutineDetailView {
     func inspect(_ item: RoutineItem) {
         if let exercise = item.exercise,
            let appExercise = appContext.model(for: exercise.persistentModelID) as? Exercise {
-            // The block's allotted minutes travel with it (ADR 0129) — a generated block's ramp is
-            // fitted to them, so a preview without them would draw a staircase the run won't play.
-            previewTarget = .exercise(appExercise, plannedMinutes: item.plannedMinutes)
+            // The block travels with its unit (ADR 0129/0130) — a generated block's ramp is fitted to
+            // its allotted minutes, so a preview without them would draw a staircase the run won't
+            // play, and the opt-out from that fit lives on the same screen.
+            previewTarget = .exercise(appExercise, block: item)
         } else if let loop = item.loop,
                   let appLoop = appContext.model(for: loop.persistentModelID) as? Loop {
             // A loop block carries a mode (ADR 0104 Slice 2): ear blocks preview the ears-only surface.
             previewTarget = item.loopRunMode == .ear
                 ? .earLoop(appLoop)
-                : .loop(appLoop, plannedMinutes: item.plannedMinutes)
+                : .loop(appLoop, block: item)
         } else {
             return
         }
         haptic(.light)
+    }
+}
+
+extension RoutineDetailView {
+    /// The pushed preview for a tapped block — the exercise or loop surface, handed the block's
+    /// allotted minutes (ADR 0129) and a binding onto its opt-out from the fit (ADR 0130).
+    @ViewBuilder
+    func blockPreview(_ target: RoutineBlockPreviewTarget) -> some View {
+        switch target {
+        case .exercise(let exercise, let block):
+            ExerciseBlockPreview(exercise: exercise, plannedMinutes: block.plannedMinutes,
+                                 usesAuthoredLength: authoredLength(of: block))
+        case .loop(let loop, let block):
+            LoopBlockPreview(loop: loop, plannedMinutes: block.plannedMinutes,
+                             usesAuthoredLength: authoredLength(of: block))
+        case .earLoop(let loop):
+            EarLoopBlockPreview(loop: loop)
+        }
+    }
+
+    /// A binding onto a block's **decline the fit** flag (ADR 0130), carrying the editor's save
+    /// discipline with it.
+    ///
+    /// The preview is only reachable in read-only mode, so a **stored** routine's sandbox holds no
+    /// other in-flight edits and the toggle can commit immediately — there is no Save button on this
+    /// path to commit it later. A **provisional** generated session must not save: the only thing
+    /// keeping it out of the library is that nothing has written it yet, so the flag rides along with
+    /// the rest of the session and lands on Save or Start. Either way the routine's estimate re-flows
+    /// live, because the length section reads the same sandbox.
+    private func authoredLength(of item: RoutineItem) -> Binding<Bool> {
+        Binding(get: { item.usesAuthoredLength },
+                set: { newValue in
+                    item.usesAuthoredLength = newValue
+                    if existsInStore { try? editContext.save() }
+                })
     }
 }
 
