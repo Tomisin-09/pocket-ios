@@ -27,10 +27,14 @@ extension Exercise {
     ///
     /// `workingTempo` is a straight alias over `currentTempo`, so an exercise with no promoted command
     /// has **working == command** — and `CommandRamp` then emits neither a warm-up (`command > working`
-    /// is false) nor a backoff (the derived backoff lands *on* command, which isn't below it). That is
-    /// why an un-promoted drill runs as a bare dwell plus summit, three of the four documented phases
-    /// missing. With no measured command, derive the floor instead: `TempoStretch.warmupFloorBPM` is the
-    /// helper ADR 0045 wrote for exactly this case and which nothing ever called.
+    /// is false) nor a backoff (the derived backoff lands *on* command, which isn't below it).
+    ///
+    /// The bug this fixes is a **disagreement**, not an absence. `ExerciseRunView.seedIfNeeded` already
+    /// seeds its editor from `TempoStretch.warmupFloorBPM` "so the two start apart, not equal (ADR
+    /// 0045)", so a *run* has always climbed properly. This property — the model-level ramp the planner
+    /// estimates from — did not, so `SessionEstimate` priced a 59-second flat hold where the screen
+    /// actually plays a ~112-second staircase. Deriving the same floor here makes the model describe
+    /// what the run performs.
     ///
     /// **Derived, never stored** — it vanishes the moment a real command is promoted, so nothing already
     /// authored is rewritten and there is no migration to owe.

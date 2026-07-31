@@ -111,16 +111,21 @@ Pure arithmetic on a pure type; no schema change; unit-tested per AGENTS.md.
 1. **A never-promoted exercise gets a derived warm-up floor.** `workingTempo` is a straight alias over
    `currentTempo`, so working cannot sit below command without a promote — fitting alone will not conjure a
    staircase. When `commandTempo == nil`, `Exercise.ramp` derives its floor from
-   **`TempoStretch.warmupFloorBPM(forCommand:)`** — a 15% drop clamped to 5…20 BPM. That helper already
-   exists, and its own doc comment says it is "the default working tempo the first time Training Mode is
-   opened for an exercise with no measured command yet (so working starts below command rather than equal
-   to it)" — **it has never been called from anywhere.** ADR 0045 intended this; the wiring was simply
-   never done, which is the whole reason an un-promoted drill runs as a bare dwell plus summit. Derived,
-   never stored: it disappears the moment a real command is promoted. `derivedBackoff` takes the same floor,
-   so the displayed backoff cannot disagree with the one the ramp plays.
+   **`TempoStretch.warmupFloorBPM(forCommand:)`** — a 15% drop clamped to 5…20 BPM.
 
-   Worked example, `currentTempo = 80`: floor 68 ⇒ warm-up 68 · 73 · 78, dwell at 80, summit 85, backoff 75
-   — 36 bars ≈ 1 min 52 s, where today it is 20 bars ≈ 59 s with no warm-up and no backoff at all.
+   **The precise defect is a disagreement, not an absence.** `ExerciseRunView.seedIfNeeded` *already*
+   calls that helper for an un-measured exercise, explicitly "so the two start apart, not equal (ADR
+   0045)" — so a **run** has always warmed up correctly. But `Exercise.ramp`, the model-level staircase
+   the *planner* estimates from, took `workingTempo` raw and therefore collapsed to dwell-plus-summit.
+   Two ramps for one exercise, disagreeing: the screen played 68 → 80 → 85 → 75 while the model
+   described a flat hold at 80. `Exercise.ramp` now derives the same floor the run screen does, so the
+   model describes what actually plays. `derivedBackoff` takes it too, for the same reason.
+
+   Worked example, `currentTempo = 80`: floor 68 ⇒ warm-up 68 · 73 · 78, dwell at 80, summit 85, backoff
+   75 — 36 bars ≈ 1 min 52 s, where the *model* previously said 20 bars ≈ 59 s. That 59 s is what
+   `SessionEstimate` floored to one minute, and one minute is what let `SessionBuilder` pack fifteen
+   items into a Quick session. The user-visible bug was the flooded session; the ramp disagreement was
+   its cause.
 2. **Book-ends scale with the preset.** Quick gets a warm-up and **no play block**; Focused and Full get
    both. Precedent: `CollectionSessionBuilder.playCap(for:)` already scales play-throughs 1/2/3 by preset.
    Under a total-minutes readout, a 5-min warm-up and 10-min play would otherwise make "Quick" read ~28
@@ -130,6 +135,16 @@ Pure arithmetic on a pure type; no schema change; unit-tested per AGENTS.md.
    session must never silently rewrite an exercise the player authored. `RoutineStepsControls`' dwell
    stepper keeps its meaning everywhere it exists today; its caption reads the *effective* dwell when a
    routine context is present.
+
+   **Amended during implementation — the share has to be persisted, so this needs one schema field.**
+   `PracticePlanner.item(for:)` read a block's `unit` and `kind` and dropped its `minutes`, so a
+   generated session's allotted times died at materialisation and the run had no idea what slot it was
+   filling. `RoutineItem` gains **`plannedMinutes: Int?`** — Optional with no declaration default, the
+   migration-exempt shape `Exercise.targetTempoOverride` already uses, so hand-authored items migrate to
+   `nil` and keep their natural length. Note this does **not** weaken the sub-decision: the minutes are a
+   property of *this block in this routine*, which is precisely why they belong on `RoutineItem` and not
+   on `Exercise`. Only **focused** blocks carry it — pinning a warm-up or play-through to a nominal
+   figure would contradict R1, which says those run as long as the player likes.
 4. **`ExerciseTempoSection` shows the derived floor** on an unmeasured exercise, so the sheet cannot say
    "Working 80" while the ramp runs from 72. The section's own footer already calls working "the warm-up
    floor"; it should show the floor the warm-up uses.

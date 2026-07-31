@@ -216,6 +216,7 @@ struct RoutinePlayerView: View {
                           autoStart: player.shouldAutoStart(at: player.currentIndex),
                           canGoBack: player.canGoBack,
                           repLabel: player.repLabel,
+                          plannedMinutes: player.current?.plannedMinutes,
                           onBack: { player.back(); haptic(.light) },
                           onSkip: { player.skip(); haptic(.light) },
                           onFinished: { finishedBlock() },

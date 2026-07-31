@@ -10,6 +10,9 @@ struct RoutineStage: Identifiable {
     /// How many times this block runs back-to-back before the session advances (ADR 0076) — the
     /// block's `RoutineItem.effectiveReps`. `1` for a single run and always for a rest.
     let reps: Int
+    /// Minutes a generated session allotted this block (ADR 0129), or `nil` when it was hand-authored.
+    /// Handed to the run screen so it can fit its ramp to the slot.
+    let plannedMinutes: Int?
     let payload: Payload
 
     enum Payload { case exercise(Exercise), loop(Loop), earLoop(Loop), song(Song), rest }
@@ -129,9 +132,11 @@ final class RoutineSessionPlayer {
 
     private static func stage(for item: RoutineItem) -> RoutineStage {
         let reps = item.effectiveReps
+        let planned = item.plannedMinutes
         if let exercise = item.exercise {
             let title = exercise.name.isEmpty ? "Exercise" : exercise.name
-            return RoutineStage(id: item.uid, title: title, reps: reps, payload: .exercise(exercise))
+            return RoutineStage(id: item.uid, title: title, reps: reps,
+                                plannedMinutes: planned, payload: .exercise(exercise))
         }
         if let loop = item.loop {
             let title = loop.name.isEmpty ? "Loop" : loop.name
@@ -139,13 +144,14 @@ final class RoutineSessionPlayer {
             // surface, everything else the standard command-anchored trainer.
             let payload: RoutineStage.Payload =
                 item.loopRunMode == .ear ? .earLoop(loop) : .loop(loop)
-            return RoutineStage(id: item.uid, title: title, reps: reps, payload: payload)
+            return RoutineStage(id: item.uid, title: title, reps: reps,
+                                plannedMinutes: planned, payload: payload)
         }
         if let song = item.song {
             return RoutineStage(id: item.uid, title: song.title.isEmpty ? "Song" : song.title,
-                                reps: reps, payload: .song(song))
+                                reps: reps, plannedMinutes: planned, payload: .song(song))
         }
-        return RoutineStage(id: item.uid, title: "Rest", reps: 1, payload: .rest)
+        return RoutineStage(id: item.uid, title: "Rest", reps: 1, plannedMinutes: nil, payload: .rest)
     }
 
     // MARK: - Lifecycle

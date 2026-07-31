@@ -39,10 +39,9 @@ All notable changes to Pocket are documented here. Format loosely follows
   how long the whole session will take you, marked with a **~**. A Quick session also stops scheduling
   a full play-through at the end — the one length you pick *because* you're short on time shouldn't be
   the longest thing on the list. Nothing stops you playing for as long as you like.
-- **Exercises you haven't measured a command tempo for now warm up and cool down.** A drill you'd
-  never promoted started flat at its working tempo and stopped after about a minute — no climb in, no
-  backing off at the end, even though the app describes all four stages. It now eases in from below
-  and settles down after the stretch, the way it always should have.
+- **Length estimates for routines are honest about exercises you haven't measured yet.** A drill with
+  no command tempo set was counted as about a minute, however long it actually takes to run — so a
+  routine full of new exercises looked far shorter than it was. The estimate now matches the run.
 - **Adding to a routine no longer closes the picker.** Tap a drill and it goes in there and then —
   the row ticks, a count appears at the bottom, and you can carry on browsing and add five more
   without reopening the sheet and walking back down to where you were. Tap a ticked row to take it

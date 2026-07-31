@@ -177,20 +177,28 @@ enum PracticePlanner {
 
     /// Build one `RoutineItem` from a block, resolving its unit ref by kind — or `nil` when the ref
     /// no longer resolves (skipped by the caller, R5). A rest carries no unit.
+    ///
+    /// A **focused** block's allotted minutes are carried through to `plannedMinutes` (ADR 0129) so the
+    /// run can fit its ramp to the slot the session gave it. Only focused blocks: a warm-up or
+    /// play-through is unbudgeted by R1 and runs as long as the player likes, so pinning it to a
+    /// nominal figure would be the opposite of what that rule says.
     nonisolated private static func item(for block: SessionBlock,
                                          order: Int,
                                          exercises: [UUID: Exercise],
                                          loops: [UUID: Loop],
                                          songs: [UUID: Song]) -> RoutineItem? {
-        switch block.unit {
+        let planned: Int? = block.kind == .focused ? block.minutes : nil
+        let built: RoutineItem? = switch block.unit {
         case .none:
-            return RoutineItem.rest(order: order)
+            RoutineItem.rest(order: order)
         case let ref? where ref.kind == .exercise:
-            return exercises[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
+            exercises[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
         case let ref? where ref.kind == .loop:
-            return loops[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
+            loops[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
         case let ref?:
-            return songs[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
+            songs[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
         }
+        built?.plannedMinutes = planned
+        return built
     }
 }

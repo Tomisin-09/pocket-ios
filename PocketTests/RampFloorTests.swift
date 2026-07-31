@@ -5,8 +5,12 @@ import XCTest
 ///
 /// `workingTempo` is a straight alias over `currentTempo`, so before a command is promoted the two are
 /// the same number — and `CommandRamp` then emits neither a warm-up (`command > working` is false) nor a
-/// backoff (the derived backoff lands *on* command, not below it). Three of the four documented phases
-/// were missing from every exercise a player had not yet promoted. Exercised as plain uninserted
+/// backoff (the derived backoff lands *on* command, not below it).
+///
+/// Note what was **not** broken: `ExerciseRunView.seedIfNeeded` has always seeded its editor from
+/// `TempoStretch.warmupFloorBPM`, so a run climbed correctly. It was this model-level ramp — the one
+/// `SessionEstimate` prices for the planner — that collapsed, so the estimate described a flat hold the
+/// screen never played. These tests pin the two back into agreement. Exercised as plain uninserted
 /// `@Model` objects, like `TargetOverrideTests` — pure accessors, no context, no container.
 final class RampFloorTests: XCTestCase {
 

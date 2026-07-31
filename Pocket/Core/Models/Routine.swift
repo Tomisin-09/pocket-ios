@@ -105,6 +105,22 @@ final class RoutineItem {
     /// on a unit-bearing block — a `rest` carries no run to repeat. Read via `effectiveReps`.
     var reps: Int = 1
 
+    /// The minutes a **generated** session allotted this block (ADR 0129), or `nil` for a
+    /// hand-authored one that was never sized by a planner.
+    ///
+    /// The block model computes a share — a 15-minute block divided among the items it holds — and
+    /// until now that number died at materialisation: `PracticePlanner.item(for:)` read a block's
+    /// `unit` and `kind` and dropped its `minutes`. Persisting it is what lets a run **fit its ramp to
+    /// its slot** (`SessionEstimate.fitted`) instead of playing whatever length the exercise happens
+    /// to imply. It is a property of *this block in this routine*, never of the exercise — which is
+    /// exactly why it lives here and not on `Exercise` (ADR 0129 sub-decision 3: generating a session
+    /// must not rewrite an authored recipe).
+    ///
+    /// Optional with **no declaration default**, the migration-exempt shape used by
+    /// `Exercise.targetTempoOverride` — pre-existing items migrate to `nil` and keep their natural
+    /// length.
+    var plannedMinutes: Int?
+
     /// Backing storage for `loopRunMode` — a plain `String`, **not** the enum (the SwiftData
     /// enum-attribute migration rule; see `kindRaw`). Only meaningful on a **loop** block; ignored
     /// elsewhere. Declaration default = `.trainer` so every loop block saved before ADR 0104 Slice 2
