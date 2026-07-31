@@ -98,5 +98,9 @@ docs/          architecture.md, decisions/ (ADRs), practice-techniques.md, resea
 ## CI/CD
 
 - **On PR:** SwiftLint + build + test — full `PocketAll` plan (`.github/workflows/ci.yml`).
+  A documentation-only change (`**/*.md`, `docs/**`, `LICENSE`) skips all three and finishes in
+  ~20s on a Linux runner — the required check still reports, it just has nothing to do. The rule
+  lives in `scripts/docs-only.sh` and is shared with the pre-push hook. See `docs/decisions/0133`;
+  note in particular why the workflow must *not* grow a `paths-ignore` filter.
 - **On merge to `main`:** TestFlight via Fastlane (`.github/workflows/testflight.yml`).
 - Backend prod is AWS (Lambda + API Gateway); dev runs locally / off-AWS.

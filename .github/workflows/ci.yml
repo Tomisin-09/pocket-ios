@@ -10,29 +10,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-build-test:
-    name: Lint · Build · Test
-    runs-on: macos-15
-    timeout-minutes: 30
+  # Decide whether this change can skip the expensive checks. Kept as a separate
+  # job so the answer can pick the runner: a docs-only PR never claims a macOS
+  # runner, which is where the queue time lives.
+  scope:
+    name: Scope
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.check.outputs.docs_only }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # docs-only.sh diffs against the base commit
+      - id: check
+        shell: bash
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          RESULT=$(scripts/docs-only.sh "$BASE" "${{ github.sha }}")
+          echo "docs_only=$RESULT" >> "$GITHUB_OUTPUT"
+          echo "Docs-only: $RESULT"
+          git diff --name-only "$BASE" "${{ github.sha }}" 2>/dev/null || true
+
+  lint-build-test:
+    # NOTE: this name is the required status check on `main` — branch protection
+    # matches it verbatim, so renaming the job blocks every PR until the
+    # protection rule is updated to match. The job therefore always runs (and
+    # always reports); it is the STEPS that are skipped for a docs-only change.
+    # Putting a paths filter on `on:` instead would stop the check reporting at
+    # all, and a required check that never reports can never be satisfied.
+    name: Lint · Build · Test
+    needs: scope
+    runs-on: ${{ needs.scope.outputs.docs_only == 'true' && 'ubuntu-latest' || 'macos-15' }}
+    timeout-minutes: 30
+    steps:
+      - name: Docs-only change
+        if: needs.scope.outputs.docs_only == 'true'
+        run: echo "Documentation-only change — lint, build and test skipped."
+
+      - uses: actions/checkout@v4
+        if: needs.scope.outputs.docs_only != 'true'
 
       # Use the runner's default Xcode — it has iOS simulator runtimes
       # pre-installed. Pinning a specific Xcode_*.app can select a version whose
       # simulator runtime isn't installed (the "iOS NN.0 is not installed" error).
       - name: Show Xcode
+        if: needs.scope.outputs.docs_only != 'true'
         run: xcodebuild -version
 
       - name: Install tools
+        if: needs.scope.outputs.docs_only != 'true'
         run: brew install xcodegen swiftlint xcbeautify
 
       - name: Generate Xcode project
+        if: needs.scope.outputs.docs_only != 'true'
         run: xcodegen generate
 
       - name: SwiftLint
+        if: needs.scope.outputs.docs_only != 'true'
         run: swiftlint --strict
 
       - name: Build & test
+        if: needs.scope.outputs.docs_only != 'true'
         shell: bash
         run: |
           set -euo pipefail   # without pipefail, '| xcbeautify' masks xcodebuild failures

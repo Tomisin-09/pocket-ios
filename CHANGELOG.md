@@ -110,6 +110,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **A new app icon**: the same simplified crescent and stars on the same near-black square, so it
   matches the mark inside the app. Same size and position on the home screen as before.
 
+### Internal
+- **Documentation-only changes no longer pay for a build** (ADR 0133). A push or PR touching only
+  `**/*.md`, `docs/**` or `LICENSE` skips lint, build and test — ~20s on a Linux runner instead of
+  ~7min on a macOS one, with the required check still reporting so branch protection is satisfied
+  honestly. The rule lives in `scripts/docs-only.sh` and is shared by CI and the pre-push hook, which
+  previously disagreed: the hook's old denylist also skipped the build for `.xctestplan` and asset-
+  catalog edits, which it should not have. No app behaviour changed.
+
 ### Added
 - **Hold the Loops or Markers heading to select several at once.** The rows grow selection circles,
   the per-row Automator and adjust controls step aside, and the heading turns into a bar that can
