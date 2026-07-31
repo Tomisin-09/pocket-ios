@@ -96,9 +96,13 @@ R1 is untouched: play is still never *capped*. It is merely *included in the est
 ### 4. The ramp fits its block, dwell-dominant
 
 `CommandRamp` gains a **fit-to-minutes** construction: warm-up, summit and backoff hold roughly fixed, and
-the remainder goes into the **dwell**, which should land around **65% of the item's slot**. Consolidation
-happens at the tempo you own, so the dwell is the only phase that absorbs added time. For a ~4–5 minute
-slot that is roughly 45 s warm-up, 3 min at command, 30 s summit, 20 s backoff.
+the remainder goes into the **dwell**. Consolidation happens at the tempo you own, so the dwell is the only
+phase that absorbs added time. For a ~4–5 minute slot that is roughly 45 s warm-up, 3 min at command,
+30 s summit, 20 s backoff.
+
+The dwell share is **emergent, not enforced** — an exercise with a long staircase keeps more of its slot in
+the climb, one with a short staircase spends nearly all of it at command. It lands around **65–75%**.
+Enforcing a fixed share would mean padding the other plateaus, which just makes the climb languid.
 
 Pure arithmetic on a pure type; no schema change; unit-tested per AGENTS.md.
 
@@ -106,9 +110,17 @@ Pure arithmetic on a pure type; no schema change; unit-tested per AGENTS.md.
 
 1. **A never-promoted exercise gets a derived warm-up floor.** `workingTempo` is a straight alias over
    `currentTempo`, so working cannot sit below command without a promote — fitting alone will not conjure a
-   staircase. When `commandTempo == nil`, `Exercise.ramp` derives its floor at **~90% of `currentTempo`**.
-   Derived, not stored: it disappears the moment a real command is promoted. Run one then matches the
-   four-phase design ADR 0045 describes.
+   staircase. When `commandTempo == nil`, `Exercise.ramp` derives its floor from
+   **`TempoStretch.warmupFloorBPM(forCommand:)`** — a 15% drop clamped to 5…20 BPM. That helper already
+   exists, and its own doc comment says it is "the default working tempo the first time Training Mode is
+   opened for an exercise with no measured command yet (so working starts below command rather than equal
+   to it)" — **it has never been called from anywhere.** ADR 0045 intended this; the wiring was simply
+   never done, which is the whole reason an un-promoted drill runs as a bare dwell plus summit. Derived,
+   never stored: it disappears the moment a real command is promoted. `derivedBackoff` takes the same floor,
+   so the displayed backoff cannot disagree with the one the ramp plays.
+
+   Worked example, `currentTempo = 80`: floor 68 ⇒ warm-up 68 · 73 · 78, dwell at 80, summit 85, backoff 75
+   — 36 bars ≈ 1 min 52 s, where today it is 20 bars ≈ 59 s with no warm-up and no backoff at all.
 2. **Book-ends scale with the preset.** Quick gets a warm-up and **no play block**; Focused and Full get
    both. Precedent: `CollectionSessionBuilder.playCap(for:)` already scales play-throughs 1/2/3 by preset.
    Under a total-minutes readout, a 5-min warm-up and 10-min play would otherwise make "Quick" read ~28

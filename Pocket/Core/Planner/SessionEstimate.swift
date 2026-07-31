@@ -42,6 +42,51 @@ enum SessionEstimate {
         max(1, perRun * max(1, reps))
     }
 
+    // MARK: - Fitting a ramp to a block (ADR 0129)
+
+    /// Seconds one **dwell interval** costs — `intervalCount` units held at the command tempo. The
+    /// quantum the fit adds and removes.
+    static func dwellIntervalSeconds(_ ramp: CommandRamp, beatsPerBar: Int) -> Double {
+        let intervalCount = Double(max(1, ramp.intervalCount))
+        switch ramp.unit {
+        case .seconds:
+            return intervalCount
+        case .bars:
+            let beats = Double(max(1, beatsPerBar))
+            return intervalCount * beats * 60.0 / Double(max(1, ramp.command))
+        }
+    }
+
+    /// `ramp` resized to fill roughly `minutes`, by **moving the dwell only** (ADR 0129).
+    ///
+    /// The exact inverse of `seconds(forRamp:beatsPerBar:)`: hold the warm-up, summit and backoff
+    /// plateaus fixed — they are the staircase's shape, and stretching them would just make the climb
+    /// languid — and pour the remaining budget into the command plateau, where consolidation actually
+    /// happens. The resulting dwell share is therefore *emergent*, not enforced: an exercise with a
+    /// long staircase keeps more of its slot in the climb, one with a short staircase spends almost
+    /// all of it at command. In practice it lands around 65–75%.
+    ///
+    /// The dwell floors at 1 — the command plateau must hold — so a slot too short to contain even the
+    /// fixed plateaus yields the shortest legal ramp rather than a truncated or empty one. A
+    /// non-positive `minutes` returns the ramp untouched.
+    ///
+    /// Pure, and deliberately **not** a mutation of the stored recipe: the caller hands the result to a
+    /// run, it never writes back to the `Exercise` (ADR 0129 sub-decision 3).
+    static func fitted(_ ramp: CommandRamp, toMinutes minutes: Int, beatsPerBar: Int) -> CommandRamp {
+        guard minutes > 0 else { return ramp }
+        let perInterval = dwellIntervalSeconds(ramp, beatsPerBar: beatsPerBar)
+        guard perInterval > 0 else { return ramp }
+
+        // Everything that isn't dwell, measured by pricing a one-interval dwell and removing it.
+        var probe = ramp
+        probe.dwellIntervals = 1
+        let fixed = seconds(forRamp: probe, beatsPerBar: beatsPerBar) - perInterval
+
+        var fit = ramp
+        fit.dwellIntervals = max(1, Int(((Double(minutes) * 60 - fixed) / perInterval).rounded()))
+        return fit
+    }
+
     /// How a session's estimate sits against the chosen length — a **soft** budget (R3). Within
     /// ±`tolerance` of the target reads on-target; below/above reads under/over. Never a hard gate:
     /// the planner always generates a session, this only *labels* the fit on the review screen.

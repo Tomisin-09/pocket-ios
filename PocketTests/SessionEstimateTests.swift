@@ -102,4 +102,75 @@ final class SessionEstimateTests: XCTestCase {
     func testFitWithNoTargetReadsOnTarget() {
         XCTAssertEqual(SessionEstimate.fit(estimateMinutes: 99, targetMinutes: 0), .onTarget)
     }
+
+    // MARK: - Fitting a ramp to a block (ADR 0129)
+
+    /// The staircase a default, never-promoted exercise now runs: floor 68 → command 80, reach 85,
+    /// backoff 75, stepping every 4 bars in 4/4. Priced per plateau at 240/bpm seconds a bar:
+    /// 14.118 + 13.151 + 12.308 + [12.0 per dwell interval] + 11.294 + 12.8 — so everything that
+    /// isn't dwell costs **63.670s**, and one dwell interval costs **12.0s**.
+    private func freshRamp() -> CommandRamp {
+        CommandRamp(working: 68, command: 80, target: 85, stepBPM: 5, intervalCount: 4,
+                    unit: .bars, dwellIntervals: 4, includeBackoff: true)
+    }
+
+    func testDwellIntervalIsPricedAtTheCommandTempo() {
+        // 4 bars × 4 beats × 60 / 80 BPM = 12s.
+        XCTAssertEqual(SessionEstimate.dwellIntervalSeconds(freshRamp(), beatsPerBar: 4),
+                       12.0, accuracy: 0.001)
+    }
+
+    func testFittedRampHitsItsTargetLength() {
+        // (240s − 63.670s fixed) / 12s = 14.694 → 15 dwell intervals.
+        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 4, beatsPerBar: 4)
+        XCTAssertEqual(fit.dwellIntervals, 15)
+        // 63.670 + 15 × 12 = 243.670s = 4.06 min.
+        XCTAssertEqual(SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4), 243.670, accuracy: 0.01)
+        XCTAssertEqual(SessionEstimate.minutes(forRamp: fit, beatsPerBar: 4), 4)
+    }
+
+    func testFittedRampMovesTheDwellAndNothingElse() {
+        let ramp = freshRamp()
+        let fit = SessionEstimate.fitted(ramp, toMinutes: 4, beatsPerBar: 4)
+        // Same staircase shape — only the command plateau's hold changes.
+        XCTAssertEqual(fit.plateaus.map(\.bpm), ramp.plateaus.map(\.bpm))
+        XCTAssertEqual(fit.plateaus.map(\.intervals), [1, 1, 1, 15, 1, 1])
+        XCTAssertEqual(fit.working, ramp.working)
+        XCTAssertEqual(fit.command, ramp.command)
+        XCTAssertEqual(fit.target, ramp.target)
+        XCTAssertEqual(fit.stepBPM, ramp.stepBPM)
+        XCTAssertEqual(fit.intervalCount, ramp.intervalCount)
+        XCTAssertEqual(fit.includeBackoff, ramp.includeBackoff)
+    }
+
+    func testTheDwellShareDominatesTheFittedBlock() {
+        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 4, beatsPerBar: 4)
+        let total = SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4)
+        let dwell = Double(fit.dwellIntervals) * SessionEstimate.dwellIntervalSeconds(fit, beatsPerBar: 4)
+        // Emergent, not enforced (ADR 0129) — but consolidation must own the bulk of the block.
+        XCTAssertGreaterThan(dwell / total, 0.65)
+        XCTAssertLessThan(dwell / total, 0.80)
+    }
+
+    func testFittedDwellFloorsAtOneWhenTheSlotCannotHoldTheStaircase() {
+        // 60s target against 63.670s of fixed plateaus ⇒ the arithmetic wants a negative dwell.
+        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 1, beatsPerBar: 4)
+        XCTAssertEqual(fit.dwellIntervals, 1)
+    }
+
+    func testFittedSecondsRampCountsIntervalsDirectly() {
+        // No warm-up, no summit, no backoff → the dwell is the whole ramp: 120s / 6s = 20 intervals.
+        let ramp = CommandRamp(working: 120, command: 120, target: 120, stepBPM: 0,
+                               intervalCount: 6, unit: .seconds, dwellIntervals: 5,
+                               includeBackoff: false)
+        let fit = SessionEstimate.fitted(ramp, toMinutes: 2, beatsPerBar: 4)
+        XCTAssertEqual(fit.dwellIntervals, 20)
+        XCTAssertEqual(SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4), 120, accuracy: 0.001)
+    }
+
+    func testNonPositiveMinutesLeavesTheRampUntouched() {
+        let ramp = freshRamp()
+        XCTAssertEqual(SessionEstimate.fitted(ramp, toMinutes: 0, beatsPerBar: 4), ramp)
+        XCTAssertEqual(SessionEstimate.fitted(ramp, toMinutes: -5, beatsPerBar: 4), ramp)
+    }
 }

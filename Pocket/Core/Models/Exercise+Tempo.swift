@@ -23,6 +23,21 @@ extension Exercise {
     /// Whether a command tempo has been measured/promoted yet (vs falling back to working).
     var hasMeasuredCommand: Bool { commandTempo != nil }
 
+    /// The floor the ramp actually climbs **from** (ADR 0129 sub-decision 1).
+    ///
+    /// `workingTempo` is a straight alias over `currentTempo`, so an exercise with no promoted command
+    /// has **working == command** — and `CommandRamp` then emits neither a warm-up (`command > working`
+    /// is false) nor a backoff (the derived backoff lands *on* command, which isn't below it). That is
+    /// why an un-promoted drill runs as a bare dwell plus summit, three of the four documented phases
+    /// missing. With no measured command, derive the floor instead: `TempoStretch.warmupFloorBPM` is the
+    /// helper ADR 0045 wrote for exactly this case and which nothing ever called.
+    ///
+    /// **Derived, never stored** — it vanishes the moment a real command is promoted, so nothing already
+    /// authored is rewritten and there is no migration to owe.
+    var rampFloor: Int {
+        hasMeasuredCommand ? workingTempo : TempoStretch.warmupFloorBPM(forCommand: command)
+    }
+
     /// The reach derived from the current `command` (ADR 0045): proportional + clamped. The
     /// **auto** value, kept pure so a reset-to-auto affordance can fall back to it. Read
     /// `reachTempo` for the effective reach.
@@ -38,8 +53,10 @@ extension Exercise {
 
     /// The **auto** backoff floor derived from the current command / reach / working (user-testing
     /// note 6) — the fallback for reset-to-auto. Read `backoffTempo` for the effective value.
+    /// Takes `rampFloor`, not `workingTempo`, so the backoff shown on a surface can never disagree with
+    /// the one `ramp` actually plays (ADR 0129 sub-decision 1).
     var derivedBackoff: Int {
-        TempoStretch.backoffBPM(command: command, target: reachTempo, floor: workingTempo)
+        TempoStretch.backoffBPM(command: command, target: reachTempo, floor: rampFloor)
     }
 
     /// The **effective** backoff floor (BPM): the pinned `backoffTempoOverride` when set, else the
@@ -57,7 +74,7 @@ extension Exercise {
     /// interval / unit / `dwellIntervals` / `includeBackoff`). Pure and UI-free, so the plateau
     /// math stays unit-tested per AGENTS.md.
     var ramp: CommandRamp {
-        CommandRamp(working: workingTempo, command: command, target: reachTempo,
+        CommandRamp(working: rampFloor, command: command, target: reachTempo,
                     stepBPM: max(1, rampStepBPM), intervalCount: max(1, rampIntervalCount),
                     unit: rampIntervalUnit, dwellIntervals: max(1, dwellIntervals),
                     includeBackoff: includeBackoff,
