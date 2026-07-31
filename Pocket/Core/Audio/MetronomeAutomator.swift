@@ -36,10 +36,34 @@ struct MetronomeAutomator: Equatable, TempoRamp {
     func bpm(elapsedBars: Int, elapsedSeconds: TimeInterval) -> Int {
         guard enabled, stepBPM > 0, intervalCount > 0, ceilingBPM != startBPM else { return startBPM }
         let elapsed: Double = unit == .bars ? Double(max(0, elapsedBars)) : max(0, elapsedSeconds)
-        let steps = Int(elapsed / Double(intervalCount))
+        return tempo(atStep: Int(elapsed / Double(intervalCount)))
+    }
+
+    /// The tempo on plateau `step` of the climb, clamped so it never overshoots the ceiling in
+    /// either direction. Shared by `bpm(…)` and `pendingChange(…)` so the tempo the ramp *will*
+    /// step to is computed the same way as the tempo it steps to.
+    private func tempo(atStep step: Int) -> Int {
         let direction = ceilingBPM > startBPM ? 1 : -1
-        let raw = startBPM + direction * steps * stepBPM
+        let raw = startBPM + direction * max(0, step) * stepBPM
         return min(max(raw, min(startBPM, ceilingBPM)), max(startBPM, ceilingBPM))
+    }
+
+    /// The next step of the climb and its distance (ADR 0131). Unlike `CommandRamp` the plateaus here
+    /// are uniform — one `intervalCount` each, `stepsToCeiling` of them plus the ceiling's own hold —
+    /// so the boundary is arithmetic rather than a walk. `nil` for a flat or disabled ramp (nothing is
+    /// coming) and once the ceiling plateau has elapsed (the ramp is finished).
+    func pendingChange(elapsedBars: Double, elapsedSeconds: TimeInterval) -> PendingTempoChange? {
+        guard enabled, stepBPM > 0, intervalCount > 0, ceilingBPM != startBPM else { return nil }
+        let elapsed: Double = unit == .bars ? max(0, elapsedBars) : max(0, elapsedSeconds)
+        let interval = Double(intervalCount)
+        let step = Int(elapsed / interval)
+        guard step <= stepsToCeiling else { return nil }
+        return PendingTempoChange(
+            from: tempo(atStep: step),
+            to: step < stepsToCeiling ? tempo(atStep: step + 1) : nil,
+            unitsRemaining: Double(step + 1) * interval - elapsed,
+            plateauUnits: interval,
+            unit: unit)
     }
 
     /// Steps needed to reach the ceiling — for a "ramps to {ceiling} over {n} steps" readout.

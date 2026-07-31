@@ -186,7 +186,20 @@ the ramp engaged, hands them to `activeRamp` (`trainingRamp` first) each tick, a
 resolved BPM **phase-continuously** (ADR 0047): unlike a manual change — which hard re-anchors
 to a fresh accented beat 0 — a ramp step keeps the tick counter and re-origins the grid (pure
 `MetronomeGrid.reanchoredOrigin`) so the heard click splices seamlessly at the new spacing and
-the downbeat stays a downbeat, instead of lurching mid-bar on every step. The two per-tick SwiftUI views (dots, session readout) are
+the downbeat stays a downbeat, instead of lurching mid-bar on every step.
+
+**Warning before a step** (ADR 0131): both ramps also answer
+`pendingChange(elapsedBars:elapsedSeconds:)`, returning a pure `PendingTempoChange` — the plateau now
+holding, the one after it (`nil` at the ramp's end), and how far the boundary is in the ramp's own
+unit. It takes *fractional* bars, unlike the rest of `TempoRamp`, because the warning lives inside the
+final interval. The ramp reports distance only; `PendingTempoChange.window(bpm:beatsPerBar:)` decides
+what counts as *soon* — at most one bar, clamped to half the plateau so a one-interval plateau can't
+sit permanently lit. `StandaloneMetronomeEngine+Warning` gates it on the setting, a live ramp, and not
+counting in. Carriers are visual only for now (caption, staircase pre-light, and a static edge on
+`ExerciseTemplateSurface`, the one view every run configuration passes through); the audible mode and
+its scheduled-beat boundary are deferred.
+
+The per-tick SwiftUI views (dots, session readout, warning caption and edge) are
 isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss
 the time-signature menu mid-play). Tap-tempo reuses `TempoMath.bpm(fromTapTimes:)`; the
 Italian tempo marking is the pure `TempoMarking` lookup. The slider's position↔BPM binding goes

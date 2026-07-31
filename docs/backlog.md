@@ -37,10 +37,44 @@ Kept here as the record of what was found and how it was resolved — **not** ou
    width (scaling down, or dropping below `minCaptionWidth`) instead of being free-sized, so they can
    abut but never collide — independent of how lopsided the ramp is.
 
-**Still open — feature request: warn before the tempo changes.** An indicator that a change is coming,
-so the player can *anticipate* rather than react, configurable in Settings. Pairs naturally with the
-metronome-fade idea (both are the click telling you something ahead of time) and stays clear of
-ADR 0070 — anticipation is preparation, not grading. **Its own ADR, not part of 0129.**
+**Warn before the tempo changes — visual half BUILT, audible half deferred.**
+**[ADR 0131](decisions/0131-warn-before-the-tempo-changes.md)**, branch
+`pocket-211-tempo-change-warning`. Shipped: a pure `pendingChange(…)` on both ramps, a one-bar window
+clamped to half a plateau, `Settings ▸ Tempo changes` (Off/Show), and three visual carriers — the run
+caption, the staircase pre-light, and a static edge on the drill surface. Not device-tested yet.
+
+**Device-verified 2026-07-31** on an untemplated exercise: all three carriers fire together and the
+caption reads clearly ("Backing off to 75", staircase `reach` lit with `back off` pre-lit).
+
+**Parked — visual redesign.** Functionally right, but the presentation wants another pass. Two things
+seen on device, neither critical:
+
+- **The edge around the beat dots is the weak spot — probably the wrong idea there, not just the
+  wrong styling.** On an exercise with no template the drill surface *is* `BeatIndicator`, so the
+  outline draws as a pill around four small dots and reads as a selected segmented control. Don't
+  start from "tune the stroke": ask what would actually indicate an imminent tempo change on a
+  *dots-only* screen, where the dots themselves are already the beat. ADR 0131 §3a reasoned the
+  static-edge decision about a **board**, and may be right there and wrong here — in which case the
+  fix is a per-surface treatment, and the "one modifier on `ExerciseTemplateSurface` covers all five
+  configurations" argument (§3a's second bullet) is the thing that has to give.
+- **Only 1 of 5 run configurations has been seen.** Fretboard, strumming, chords and strum-chords all
+  route through the same modifier but have very different bounds; the edge's geometry (12pt radius,
+  2pt stroke) is unverified against any of them.
+
+Revisit as a design task, not a bug. The teal-vs-plum question from ADR 0131 §3a is still open and
+should be settled in the same pass.
+
+Still open, in the ADR and deliberately unbuilt:
+
+- **The `sound` mode** (§3) and what it needs — §5's scheduled-beat boundary (new engine state, plus a
+  stale-origin path on mid-run signature changes) and §6's `scheduledLevel` precedence change, which
+  costs a strum drill its pattern for a bar. All audio-path work needing device verification. Worth
+  revisiting after practising with the visual half: it exists for the plain metronome exercise and
+  loop practice, where the eyes are on the hands rather than the screen.
+- **§7's loop warning.** Currently quiet rather than broken (a one-pass plateau's clamped window can't
+  be reached by an integer rep count). Needs a fractional rep position on `LoopRunModel`.
+- **The metronome fade** still has no ADR. ADR 0131 §6 fixes the precedence rule it must obey — a
+  warning bar is never silenced — but nothing else about it is decided.
 
 ## Device-testing pass — plan of attack (2026-07-28)
 

@@ -19,6 +19,35 @@ enum AppearancePreference: String, CaseIterable {
     }
 }
 
+/// Whether a running ramp announces its next tempo change before making it, and how insistently
+/// (ADR 0131). A ramp that steps silently is found out by being wrong about it, so the default is to
+/// show the change coming; `off` restores the pre-0131 behaviour for a player who wants the ramp to
+/// test them.
+///
+/// The ADR also specifies a `sound` mode — the warning window voiced as accents on the click — which
+/// is **deferred**: it needs the engine's scheduled-beat boundary (§5) and a precedence change that
+/// costs a strum drill its pattern for a bar (§6), neither of which the visual carriers require. The
+/// raw values here are stable, so `sound` can be added as a third case without disturbing anything
+/// already stored.
+enum TempoChangeWarning: String, CaseIterable, Identifiable {
+    /// No warning. The ramp steps exactly as it did before ADR 0131.
+    case off
+    /// Show it: the run caption names the incoming tempo, the staircase pre-lights the next plateau,
+    /// and the drill surface takes an edge for the duration of the window.
+    case show
+
+    static let `default` = TempoChangeWarning.show
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .off: return "Off"
+        case .show: return "Show"
+        }
+    }
+}
+
 /// Persisted user preferences (Settings V1, ADR 0050). A thin `UserDefaults` wrapper so both
 /// SwiftUI (`@AppStorage` on the same key) and plain engine code (the metronome, the haptic
 /// helper) can read a setting without sharing an object. Keys default to **on** when never set —
@@ -32,6 +61,7 @@ enum AppSettings {
         static let hapticsEnabled = "hapticsEnabled"
         static let countInEnabled = "countInEnabled"
         static let countInBars = "countInBars"
+        static let tempoChangeWarning = "tempoChangeWarning"
         static let keepScreenAwake = "keepScreenAwake"
         static let appearance = "appearance"
         static let exerciseAnimates = "exerciseAnimates"
@@ -85,6 +115,20 @@ enum AppSettings {
         let resolved = resolvedInt(storedValue: UserDefaults.standard.object(forKey: Key.countInBars),
                                    default: countInBarsRange.lowerBound)
         return min(countInBarsRange.upperBound, max(countInBarsRange.lowerBound, resolved))
+    }
+
+    /// Whether a running ramp warns before it changes tempo (ADR 0131). Default `.show`.
+    static var tempoChangeWarning: TempoChangeWarning {
+        resolvedTempoWarning(storedValue: UserDefaults.standard.string(forKey: Key.tempoChangeWarning))
+    }
+
+    /// Pure default-resolution: a missing or unrecognised stored value falls back to `.show` rather
+    /// than crashing on a bad raw value (mirrors `resolvedAppearance`). Unrecognised covers the
+    /// deferred `sound` mode, so a value written by a later build degrades to showing the warning
+    /// rather than silencing it.
+    static func resolvedTempoWarning(storedValue: String?) -> TempoChangeWarning {
+        guard let storedValue else { return .default }
+        return TempoChangeWarning(rawValue: storedValue) ?? .default
     }
 
     /// Keep the screen awake on the practice/metronome surfaces. Default on — you play
