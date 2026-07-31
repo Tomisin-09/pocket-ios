@@ -60,6 +60,10 @@ struct LoopRunView: View {
     /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
     /// of them arms Save Changes.
     @State var baseline: LoopSetupState?
+    /// When the current run started, or `nil` when nothing is running — the practice log's clock
+    /// (ADR 0117). Stamped on Start and consumed by the natural-completion hook, so a run stopped by
+    /// hand never logs: the log records *completed* unit-runs.
+    @State var runStartedAt: Date?
     /// Set from `model.onFinished` on natural completion of a standalone run; drives the post-run
     /// completion screen (ADR 0082, loop parity with ADR 0079). Never set in a routine — there the
     /// ramp's completion advances the session instead.

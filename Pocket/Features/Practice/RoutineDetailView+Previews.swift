@@ -12,7 +12,7 @@ import SwiftUI
 #Preview("Routine detail — Pro") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
-        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self,
+        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self, PracticeRun.self,
         configurations: .init(isStoredInMemoryOnly: true))
     let drill = Exercise(name: "Alternating picking", currentTempo: 70, commandTempo: 96)
     container.mainContext.insert(drill)
@@ -30,7 +30,7 @@ import SwiftUI
 #Preview("Routine detail — free demo") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
-        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self,
+        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self, PracticeRun.self,
         configurations: .init(isStoredInMemoryOnly: true))
     let drill = Exercise(name: "Spider Walk", currentTempo: 70, commandTempo: 96)
     container.mainContext.insert(drill)

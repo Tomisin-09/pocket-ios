@@ -296,7 +296,7 @@ struct ExerciseLibraryView: View {
 
 #Preview("Exercises — with units") {
     // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Exercise.self,
+    let container = try! ModelContainer(for: Exercise.self, PracticeRun.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
     container.mainContext.insert(Exercise(name: "Alternating picking",
                                           currentTempo: 70, commandTempo: 96, template: .picking))

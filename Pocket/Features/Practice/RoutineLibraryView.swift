@@ -310,7 +310,7 @@ struct QuickSessionDraft: Identifiable, Hashable {
 #Preview("Routines — with sessions") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
-        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self,
+        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self, PracticeRun.self,
         configurations: .init(isStoredInMemoryOnly: true))
     let drill = Exercise(name: "Spider", currentTempo: 60)
     container.mainContext.insert(drill)

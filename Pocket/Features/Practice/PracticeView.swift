@@ -136,7 +136,7 @@ struct PracticeView: View {
 
 #Preview("Practice hub") {
     // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Exercise.self, Song.self, Routine.self,
+    let container = try! ModelContainer(for: Exercise.self, Song.self, Routine.self, PracticeRun.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
     container.mainContext.insert(Exercise(name: "Alternating picking",
                                           currentTempo: 70, commandTempo: 96))
@@ -149,7 +149,7 @@ struct PracticeView: View {
 // Regular-width variant (ADR 0105): caps to a centred column at iPad / landscape width.
 #Preview("Practice hub — regular width (iPad groundwork)") {
     // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Exercise.self, Song.self, Routine.self,
+    let container = try! ModelContainer(for: Exercise.self, Song.self, Routine.self, PracticeRun.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
     container.mainContext.insert(Exercise(name: "Alternating picking",
                                           currentTempo: 70, commandTempo: 96))

@@ -28,8 +28,16 @@ extension LoopRunView {
         targetOverride = loop.targetSpeedOverride.map { LoopCommandRamp.percent($0) }
         includeBackoff = loop.includeBackoff
         backoffOverride = loop.backoffSpeedOverride.map { LoopCommandRamp.percent($0) }
-        // In a routine, a naturally-finished ramp auto-advances the session (never a manual stop).
-        model.onFinished = routineContext?.onFinished
+        // In a routine, a naturally-finished ramp auto-advances the session (never a manual stop) —
+        // and logs the block as a completed unit-run first (ADR 0117), before advancing tears this
+        // screen down. The standalone path replaces this hook in `armCompletionOffer`, which logs
+        // the same way.
+        if let routineContext {
+            model.onFinished = {
+                logCompletedRun()
+                routineContext.onFinished()
+            }
+        }
         seeded = true
         baseline = current
     }
@@ -92,6 +100,8 @@ extension LoopRunView {
         // reach being run so the screen's copy/target stay stable even if the setup is edited after. In
         // a routine the hook is the player's advance (set in `seedIfNeeded`), so leave it untouched.
         if routineContext == nil { armCompletionOffer() }
+        // Start the practice log's clock (ADR 0117) — consumed by whichever completion hook fires.
+        runStartedAt = .now
         // If a take is armed, begin capture **before** playback starts, so the session flips to
         // `.playAndRecord` with no audio in flight (no mid-play glitch — device feedback 2026-07-17).
         // The count-in has already run, so the take is the playing only, not the lead-in.
@@ -113,8 +123,27 @@ extension LoopRunView {
         let summitedCommand = command
         model.onFinished = {
             Analytics.send(.practiceCompleted(kind: .loop))
+            logCompletedRun()
             completion = RunCompletion(reach: summitedReach, command: summitedCommand)
         }
+    }
+
+    /// Append this run to the **practice log** (ADR 0117) — one row per completed unit-run, at the
+    /// natural-completion seam shared by a standalone run and a routine block.
+    ///
+    /// A loop's tempo is a **percent of original** (ADR 0082), never a BPM, so it lands in
+    /// `tempoPercent` and the BPM field stays empty; the two are never both set. As on the exercise
+    /// side the logged value is **command** — the speed the loop is owned at — read before the Done
+    /// screen's optional promote, so the row records what was played, not what was agreed to next.
+    func logCompletedRun() {
+        guard let startedAt = runStartedAt else { return }
+        runStartedAt = nil
+        PracticeLogWriter.log(kind: .loop,
+                              startedAt: startedAt,
+                              unitUID: loop.uid,
+                              routineUID: routineContext?.routineUID,
+                              tempoPercent: command,
+                              into: modelContext)
     }
 
     /// The promote offer for the standalone completion screen (ADR 0082) — `nil` when the

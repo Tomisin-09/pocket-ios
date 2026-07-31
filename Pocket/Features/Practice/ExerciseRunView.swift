@@ -63,6 +63,11 @@ struct ExerciseRunView: View {
     /// The setup as it was last persisted — captured on seed and after each Save, so the Save
     /// Changes button shows only while the current edits differ from what's stored (ADR 0057).
     @State var baseline: ExerciseSetupState?
+    /// When the current run started, or `nil` when nothing is running — the practice log's clock
+    /// (ADR 0117). Stamped on Start and consumed by the natural-completion hook, so a run stopped by
+    /// hand simply never logs: the log records *completed* unit-runs, and an aborted one has no honest
+    /// length to claim.
+    @State var runStartedAt: Date?
     /// A just-finished **standalone** run awaiting the post-run promote offer (ADR 0079), or `nil`.
     /// Set from `onRampFinished` on natural completion; drives the completion screen. Never set in a
     /// routine — there the player's Done screen carries the offer instead (ADR 0079 §7).

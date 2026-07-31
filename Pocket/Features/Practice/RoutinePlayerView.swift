@@ -214,7 +214,7 @@ struct RoutinePlayerView: View {
         RoutineRunContext(stageIndex: player.currentIndex,
                           stageCount: player.stageCount,
                           autoStart: player.shouldAutoStart(at: player.currentIndex),
-                          canGoBack: player.canGoBack,
+                          canGoBack: player.canGoBack, routineUID: routine.uid,
                           repLabel: player.repLabel,
                           plannedMinutes: player.current?.plannedMinutes,
                           onBack: { player.back(); haptic(.light) },
@@ -366,7 +366,7 @@ extension RoutinePlayerView {
 #Preview("Routine player") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
-        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self,
+        for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self, PracticeRun.self,
         configurations: .init(isStoredInMemoryOnly: true))
     let drill = Exercise(name: "Alternating picking", currentTempo: 70, commandTempo: 96)
     container.mainContext.insert(drill)

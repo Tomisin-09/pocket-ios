@@ -242,7 +242,7 @@ struct PlannerView: View {
 #Preview("Planner — with goals") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
-        for: Goal.self, Exercise.self, Song.self, Loop.self, Routine.self,
+        for: Goal.self, Exercise.self, Song.self, Loop.self, Routine.self, PracticeRun.self,
         configurations: .init(isStoredInMemoryOnly: true))
     let context = container.mainContext
     context.insert(Exercise(name: "Alternate picking", currentTempo: 70, commandTempo: 96))
