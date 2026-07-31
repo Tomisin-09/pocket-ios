@@ -273,9 +273,11 @@ struct ExerciseRunView: View {
     }
 
     /// The dwell row's caption — each interval is `automatorDefaultBars` bars at command, so N
-    /// intervals ≈ N×that many bars (ADR 0078).
+    /// intervals ≈ N×that many bars (ADR 0078). Reads the **effective** dwell off `routine`, not the
+    /// `dwell` edit state, so inside a generated session it describes the ramp fitted to the block
+    /// rather than the stored recipe (ADR 0129) — the caption can't claim a hold the run won't play.
     private var dwellCaption: String {
-        "≈ \(max(1, dwell) * StandaloneMetronomeEngine.automatorDefaultBars) bars"
+        "≈ \(routine.dwellIntervals * StandaloneMetronomeEngine.automatorDefaultBars) bars"
     }
 
     /// The "Edit shape" action handed to the template preview cards (ADR 0077) — opens the

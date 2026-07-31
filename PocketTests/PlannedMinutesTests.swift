@@ -74,6 +74,43 @@ final class PlannedMinutesTests: XCTestCase {
         XCTAssertNil(item.plannedMinutes)
     }
 
+    @MainActor
+    func testARoutineEstimatePrefersThePlanOverTheUnitsOwnLength() throws {
+        let context = try makeContext()
+        let first = drill("Spider", into: context)
+        let second = drill("Legato", into: context)
+        try context.save()
+
+        let blocks: [SessionBlock] = [
+            .focus(PlannerUnitRef(first.uid, .exercise), minutes: 5, microRestEvery: 2),
+            .focus(PlannerUnitRef(second.uid, .exercise), minutes: 5, microRestEvery: 2)
+        ]
+        let routine = PracticePlanner.materialise(blocks, name: "Session",
+                                                  exercises: try context.fetch(FetchDescriptor<Exercise>()),
+                                                  loops: [], songs: [], into: context)
+
+        // Each default drill's own ramp estimates 2 minutes, but the run is fitted to the 5 the block
+        // allotted — so re-deriving from the unit would under-report a generated session by more than
+        // half. 5 + 5.
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(for: first), 2)
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(forRoutine: routine), 10)
+    }
+
+    @MainActor
+    func testAHandAuthoredRoutineStillEstimatesFromItsUnits() throws {
+        let context = try makeContext()
+        let exercise = drill("Hand-made", into: context)
+        let routine = Routine(name: "Mine")
+        let item = RoutineItem.item(exercise, order: 0)
+        context.insert(routine)
+        context.insert(item)
+        item.routine = routine
+        try context.save()
+
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(forRoutine: routine),
+                       PracticePlanner.estimatedMinutes(for: exercise))
+    }
+
     func testAFittedRampFillsThePlannedSlot() {
         // The end of the chain: a five-minute slot really does buy ~five minutes of ramp, by stretching
         // the dwell rather than the climb.

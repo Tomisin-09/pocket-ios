@@ -37,7 +37,10 @@ struct ExerciseTempoSection: View {
 
     var body: some View {
         Section {
-            LabeledContent("Working") { bpmText(exercise.workingTempo) }
+            // `rampFloor`, not `workingTempo`: before a command is measured the two are the same
+            // stored number, and the ramp climbs from a derived floor below it (ADR 0129). Showing the
+            // raw value here would label 80 as "the warm-up floor" while the run starts at 68.
+            LabeledContent("Working") { bpmText(exercise.rampFloor) }
             if exercise.hasMeasuredCommand {
                 Stepper(value: $command, in: StandaloneMetronomeEngine.bpmRange) {
                     LabeledContent("Command") { bpmText(command) }

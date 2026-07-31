@@ -374,8 +374,15 @@ exercises **by name**; exercise-only, since loops/songs need user audio at cold 
 (ADR 0072, V2 Slice 1) is now a live producer of this same `Routine`: a pure two-stage pipeline in
 `Pocket/Core/Planner/` — `DueScore` ranks candidates (`goalWeight × dueness(lastPracticed) ×
 (1 − mastery/5)`, ADR 0015 S5) and `SessionBuilder.buildSession` lays the ranked `PlannerCandidate`s
-into `[SessionBlock]` honouring the ADR 0014 pacing (60-min cap, ≤20-min blocks, rests between
-focused work, U-shape with the top-due drill last, warm-up LRU-picked / unbudgeted). Both import
+into `[SessionBlock]` honouring the ADR 0014 pacing (≤20-min blocks, U-shape with the top-due drill
+last, warm-up LRU-picked / unbudgeted). **A preset denominates focused *blocks*, not minutes
+(ADR 0129):** `SessionLength` is `blocks × itemsPerBlock` — Quick 1×3, Focused 2×3, Full 4×3 — each
+block 15 minutes shared among the items it actually holds, with a rest **between blocks** rather than
+between every item, and R7's hour reached exactly by `.full` rather than clamped. A candidate's own
+`estimatedMinutes` no longer sizes its slot; the block's share does, and the run fits its ramp to that
+share via `SessionEstimate.fitted` (dwell-only stretch), carried to the run screen as
+`RoutineItem.plannedMinutes` → `RoutineStage` → `RoutineRunContext`. That inversion is what stopped a
+one-minute-estimating drill from flooding a "Quick 15" with fifteen items and fourteen rests. Both import
 Foundation only (no SwiftData/SwiftUI), so they're unit-tested and reusable by a future AI producer
 (ADR 0002). The **front-half** (ADR 0073, V2 Slice 2) sits ahead of `buildSession`: a `Goal` (title,
 `weight`, `skillIDs` indexing the pure `TechniqueTaxonomy` table, optional `targetSong`) is expanded
@@ -402,7 +409,11 @@ selector (`SessionLength`), a list of `Goal`s, and **Generate** → a provisiona
 **Estimated length** readout + soft over/under-budget hint vs. the chosen length (R3, `RoutineDetailView+Length`):
 pure `SessionEstimate` turns each exercise's ramp staircase into minutes (per-plateau tempo × meter, not
 a flat default), times each block's additive `RoutineItem.reps`, summed by `PracticePlanner.estimatedMinutes(forRoutine:)`
-and classified by `SessionEstimate.fit` — guidance only, never a gate. `GoalEditorView`
+and classified by `SessionEstimate.fit` — guidance only, never a gate. A **generated** block states its
+own allotted minutes (`plannedMinutes`) and the estimate prefers them, since the run is fitted to exactly
+that rather than to the unit's natural length; the hint names the **preset** rather than quoting a minute
+budget, because under ADR 0129 the player picked a block count and a freshly generated session is
+on-target by construction — so it only speaks up once blocks are added or removed. `GoalEditorView`
 (template picker → name → priority → skill-trim → optional target song → met/delete), with the pure
 `GoalPriority` mapping Low/Normal/High ↔ the stored `weight`. Its **Add skills** button (R2) opens
 `SkillPickerSheet`, a `.searchable` family-grouped picker over the whole catalog backed by the pure

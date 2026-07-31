@@ -123,6 +123,12 @@ enum PracticePlanner {
     static func estimatedMinutes(forRoutine routine: Routine) -> Int {
         routine.orderedItems.reduce(0) { total, item in
             guard !item.isOrphaned else { return total }
+            // A generated block states the minutes the session allotted it, and its ramp is fitted to
+            // exactly that (ADR 0129) — so the plan is the better estimate than re-deriving from the
+            // unit's own natural length, which is what the run has been told to override.
+            if let planned = item.plannedMinutes {
+                return total + SessionEstimate.minutes(perRun: planned, reps: item.effectiveReps)
+            }
             let perRun: Int
             if let exercise = item.exercise {
                 perRun = estimatedMinutes(for: exercise)

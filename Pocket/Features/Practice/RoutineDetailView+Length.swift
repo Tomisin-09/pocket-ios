@@ -11,12 +11,18 @@ extension RoutineDetailView {
 
     /// A soft over/under-budget line vs. the requested length, or `nil` when there's no target (a
     /// normal routine, not a generated session). Never blocks anything — guidance only.
+    /// Names the **preset** rather than quoting a minute budget, because the player never set one — a
+    /// preset is a count of blocks now and the minutes are an estimate (ADR 0129). A freshly generated
+    /// session is on-target by construction, so in practice this only speaks up once blocks have been
+    /// added or removed on the review screen.
     var budgetHint: String? {
         guard let target = targetMinutes else { return nil }
+        let asked = SessionLength(rawValue: target).map { "a \($0.displayName) session" }
+            ?? "about \(target) min"
         switch SessionEstimate.fit(estimateMinutes: estimatedMinutes, targetMinutes: target) {
-        case .under: return "Room to spare — under your \(target) min. Add a goal for more."
-        case .onTarget: return "About right for your \(target) min."
-        case .over: return "A touch over your \(target) min — trim a block if you're short on time."
+        case .under: return "Room to spare for \(asked). Add a goal for more."
+        case .onTarget: return "About right for \(asked)."
+        case .over: return "A touch over \(asked) — trim a block if you're short on time."
         }
     }
 
