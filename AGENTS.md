@@ -33,6 +33,14 @@ Run these before every commit that touches app code. Do not push until all pass.
 > manual equivalent. Note CI runs an **older** toolchain (Xcode 16 / macOS-15)
 > that is stricter than local Xcode 26.5 — the hook narrows but can't fully
 > close that gap.
+>
+> **Docs-only changes are free.** If a push touches only `**/*.md`, `docs/**` or
+> `LICENSE`, the hook exits immediately and CI skips lint/build/test (~20s
+> instead of ~7min). One rule, `scripts/docs-only.sh`, serves both — change it
+> there or not at all. Anything else, including `.github/workflows/**` and
+> `*.xctestplan`, runs the full set. **Never add `paths-ignore` to `ci.yml`**:
+> the required check would stop reporting and every docs PR would become
+> unmergeable (ADR 0133).
 
 1. **Lint** — `swiftlint`. Fix all errors. Suppress only with
    `// swiftlint:disable:next <rule>` on the exact line, never file-wide.
