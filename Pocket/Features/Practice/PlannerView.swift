@@ -80,7 +80,10 @@ struct PlannerView: View {
         Section {
             Picker("How long?", selection: $length) {
                 ForEach(SessionLength.allCases) { option in
-                    Text("\(option.displayName) · \(option.minutes)m").tag(option)
+                    // "~" because the preset is a count of blocks now, not a minute budget — the
+                    // number is an estimate of the whole sitting (ADR 0129). Matches the grammar
+                    // `CollectionSessionSheet` already uses for its Length tabs.
+                    Text("\(option.displayName) · ~\(option.minutes)m").tag(option)
                 }
             }
             .pickerStyle(.segmented)
@@ -221,8 +224,8 @@ struct PlannerView: View {
     private func generate() {
         let active = activeGoals
         let blocks: [SessionBlock] = active.isEmpty
-            ? PracticePlanner.planQuickSession(minutes: length.minutes, exercises: exercises)
-            : PracticePlanner.planGoalSession(minutes: length.minutes, goals: active,
+            ? PracticePlanner.planQuickSession(length: length, exercises: exercises)
+            : PracticePlanner.planGoalSession(length: length, goals: active,
                                               exercises: exercises, loops: loops, songs: songs,
                                               profile: profiles.first)
         guard blocks.contains(where: { $0.unit != nil }) else {

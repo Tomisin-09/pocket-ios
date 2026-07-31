@@ -17,7 +17,7 @@ enum PracticePlanner {
     /// yet, so every focused candidate carries `priority = 1` and ranks by dueness alone; warm-up is
     /// LRU-picked from `template == .warmup` exercises. Returns the pure block layout; pass it to
     /// `materialise` to persist and run.
-    static func planQuickSession(minutes: Int,
+    static func planQuickSession(length: SessionLength,
                                  exercises: [Exercise],
                                  now: Date = .now) -> [SessionBlock] {
         let focused = exercises
@@ -27,7 +27,7 @@ enum PracticePlanner {
             .filter { $0.template == .warmup }
             .map { candidate(for: $0) }
         let warmUp = SessionBuilder.warmUpPick(warmUps)
-        return SessionBuilder.buildSession(minutes: minutes, candidates: focused,
+        return SessionBuilder.buildSession(length: length, candidates: focused,
                                            warmUp: warmUp, now: now)
     }
 
@@ -38,7 +38,7 @@ enum PracticePlanner {
     /// **emphasis mix** (declared genres + dream), a lift-only tilt on candidate priority; omit it (or
     /// pass a curation-free profile) for the pre-S3 due/goal-only ranking. Returns the pure block
     /// layout; pass it to `materialise` with the same model arrays to persist and run.
-    static func planGoalSession(minutes: Int,
+    static func planGoalSession(length: SessionLength,
                                 goals: [Goal],
                                 exercises: [Exercise],
                                 loops: [Loop] = [],
@@ -51,7 +51,7 @@ enum PracticePlanner {
                                                            library: library, emphasis: emphasis)
         let warmUps = exercises.filter { $0.template == .warmup }.map { candidate(for: $0) }
         let warmUp = SessionBuilder.warmUpPick(warmUps)
-        return SessionBuilder.buildSession(minutes: minutes, candidates: candidates,
+        return SessionBuilder.buildSession(length: length, candidates: candidates,
                                            warmUp: warmUp, now: now)
     }
 

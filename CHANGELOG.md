@@ -28,6 +28,21 @@ All notable changes to Pocket are documented here. Format loosely follows
   later. The section only appears once you have songs in your library.
 
 ### Changed
+- **Generated sessions are the right size now.** Asking for a Quick session used to hand you a wall of
+  one-minute drills with a three-minute break wedged between every one of them — a "Quick 15" could
+  run past an hour, and it got worse the more exercises you'd made. Sessions are now built from proper
+  practice blocks: **Quick** is three exercises in one block, **Focused** six across two, **Full**
+  twelve across four, with a break between blocks rather than between every item. The three exercises
+  inside a block run back to back on purpose — moving between related things beats grinding one.
+- **The length on the picker means one thing now.** It used to be a budget for the drilling only in
+  one place and a cap on the whole sitting in another. Everywhere you see it, it's now an estimate of
+  how long the whole session will take you, marked with a **~**. A Quick session also stops scheduling
+  a full play-through at the end — the one length you pick *because* you're short on time shouldn't be
+  the longest thing on the list. Nothing stops you playing for as long as you like.
+- **Exercises you haven't measured a command tempo for now warm up and cool down.** A drill you'd
+  never promoted started flat at its working tempo and stopped after about a minute — no climb in, no
+  backing off at the end, even though the app describes all four stages. It now eases in from below
+  and settles down after the stretch, the way it always should have.
 - **Adding to a routine no longer closes the picker.** Tap a drill and it goes in there and then —
   the row ticks, a count appears at the bottom, and you can carry on browsing and add five more
   without reopening the sheet and walking back down to where you were. Tap a ticked row to take it

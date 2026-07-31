@@ -12,7 +12,9 @@ import Foundation
 enum SessionBuilder {
 
     /// Hard ceiling on total focused minutes in one session (ADR 0014 R7) — no sitting runs past
-    /// an hour of deliberate work, whatever preset or budget is asked for.
+    /// an hour of deliberate work. Under the block model (ADR 0129) `.full` lands on it exactly
+    /// (4 blocks × 15 min), so it is now a structural property rather than a clamp applied after
+    /// the fact; kept as the invariant a test pins.
     static let maxSessionMinutes = 60
 
     /// Nominal unbudgeted lengths for the structural book-ends (ADR 0014 R1). Warm-up and play are
@@ -21,27 +23,38 @@ enum SessionBuilder {
     static let warmUpDefaultMinutes = 5
     static let playDefaultMinutes = 10
 
-    /// Lay `candidates` out into a timed session for a `minutes` **focused** budget (ADR 0014).
-    /// Warm-up (LRU-picked, unbudgeted) leads; play (a target run, unbudgeted) trails — each
-    /// included only when provided. Steps: rank by dueScore → greedily fill the budget under the
-    /// 60-min cap → order U-shape (top-due LAST) → split blocks over the cap → rest between adjacent
-    /// focused blocks.
-    static func buildSession(minutes: Int,
+    /// In-block micro-rest cue cadence, minutes (ADR 0014 R4 — "~10 s every 1–2 min"). Emitted on
+    /// every focused block; **no consumer reads it yet** — the field has been plumbed on
+    /// `SessionBlock.focus` since R4 and passed `nil` at every construction site since, so this at
+    /// least makes the planner state the cadence it was always specified to state.
+    static let microRestEveryMinutes = 2
+
+    /// Lay `candidates` out into a session of `length`'s **focused blocks** (ADR 0129).
+    ///
+    /// Warm-up (LRU-picked, unbudgeted) leads; play (a target run, unbudgeted) trails — each included
+    /// only when provided, and play only when the preset schedules one. Steps: rank by dueScore →
+    /// take the preset's item count → order U-shape (top-due LAST) → chunk into R2-sized blocks with
+    /// a rest between blocks.
+    ///
+    /// Note what is *no longer* consulted: a candidate's own `estimatedMinutes`. A block's share sets
+    /// each item's minutes, and the ramp is fitted to that share
+    /// (`SessionEstimate.fitted(_:toMinutes:beatsPerBar:)`) rather than the item's natural length
+    /// setting the block. That inversion is the point — it is why an exercise estimating one minute
+    /// can no longer drag a whole session into fifteen stubs.
+    static func buildSession(length: SessionLength,
                              candidates: [PlannerCandidate],
                              warmUp: PlannerCandidate? = nil,
                              play: PlannerCandidate? = nil,
                              now: Date) -> [SessionBlock] {
-        let budget = min(max(0, minutes), maxSessionMinutes)
-        let selected = select(candidates, budget: budget, now: now)
-        let ordered = uShape(selected)
-        let focused = interleaveRests(timeBox(ordered))
+        let selected = select(candidates, items: length.items, now: now)
+        let focused = blocked(uShape(selected))
 
         var blocks: [SessionBlock] = []
         if let warmUp {
             blocks.append(.warmUp(warmUp.unit, minutes: unbudgeted(warmUp, fallback: warmUpDefaultMinutes)))
         }
         blocks.append(contentsOf: focused)
-        if let play {
+        if let play, length.includesPlay {
             blocks.append(.play(play.unit, minutes: unbudgeted(play, fallback: playDefaultMinutes)))
         }
         return blocks
@@ -63,19 +76,20 @@ enum SessionBuilder {
 
     // MARK: - Stages (internal, but each independently testable)
 
-    /// A chosen candidate with its allotted minutes and its dueScore (kept for U-shape ordering).
+    /// A chosen candidate with its dueScore (kept for U-shape ordering). Minutes are **not** held
+    /// here: a block's share decides them, so they are assigned in `blocked` once the chunking is
+    /// known and the number of items actually sharing a block is settled.
     struct Selected: Equatable {
         var candidate: PlannerCandidate
-        var minutes: Int
         var score: Double
     }
 
     /// Rank the goal-affiliated pool by dueScore (desc; ties → older-practised first, then `uid`)
-    /// and greedily fill the budget, trimming the final block to fit exactly (ADR 0014 R1/R7).
-    /// Candidates with no goal (`priority ≤ 0`, ADR 0015 S4) are excluded.
-    static func select(_ candidates: [PlannerCandidate], budget: Int, now: Date) -> [Selected] {
-        guard budget > 0 else { return [] }
-        let ranked = candidates
+    /// and take the preset's `items` (ADR 0129). Candidates with no goal (`priority ≤ 0`, ADR 0015
+    /// S4) are excluded.
+    static func select(_ candidates: [PlannerCandidate], items: Int, now: Date) -> [Selected] {
+        guard items > 0 else { return [] }
+        return candidates
             .filter { $0.priority > 0 }
             .sorted { lhs, rhs in
                 let lhsScore = DueScore.score(lhs, now: now)
@@ -86,18 +100,8 @@ enum SessionBuilder {
                 if lhsDate != rhsDate { return lhsDate < rhsDate }
                 return lhs.unit.uid.uuidString < rhs.unit.uid.uuidString
             }
-
-        var selected: [Selected] = []
-        var used = 0
-        for candidate in ranked {
-            guard used < budget else { break }
-            let want = max(1, candidate.estimatedMinutes)
-            let take = min(want, budget - used)
-            selected.append(Selected(candidate: candidate, minutes: take,
-                                     score: DueScore.score(candidate, now: now)))
-            used += take
-        }
-        return selected
+            .prefix(items)
+            .map { Selected(candidate: $0, score: DueScore.score($0, now: now)) }
     }
 
     /// Arrange selected blocks into the **U-shape** (ADR 0014 R5): the single highest-due item goes
@@ -120,28 +124,29 @@ enum SessionBuilder {
         return front + back.reversed() + [peak]
     }
 
-    /// Split any selection whose minutes exceed the block cap into several focused blocks, none over
-    /// `RoutineBudget.maxFocusedMinutes` (ADR 0014 R2), preserving each block's unit. The split
-    /// halves stay adjacent (a rest is threaded between them by `interleaveRests`).
-    static func timeBox(_ items: [Selected]) -> [SessionBlock] {
+    /// Chunk the ordered items into R2-sized focused blocks, threading a rest **between blocks**
+    /// (ADR 0129, amending R3's "between every pair of focused blocks").
+    ///
+    /// Each block holds up to `SessionLength.itemsPerBlock` items — one pass each, adjacent, which
+    /// *is* the rotation — and its `blockMinutes` are shared among the items it **actually** holds,
+    /// so a library too thin to fill the last block yields fewer, longer items rather than a stub.
+    /// The share is clamped to R2's ceiling: unreachable with the current constants, but a future
+    /// `blockMinutes` could exceed it and the clamp is one comparison.
+    ///
+    /// Moving rests from between *items* to between *blocks* is what takes a "Quick 15" from fourteen
+    /// rests to none.
+    static func blocked(_ items: [Selected]) -> [SessionBlock] {
+        guard !items.isEmpty else { return [] }
         var result: [SessionBlock] = []
-        for item in items {
-            for chunk in RoutineBudget.splitFocused(item.minutes) {
-                result.append(.focus(item.candidate.unit, minutes: chunk, microRestEvery: nil))
+        for start in stride(from: 0, to: items.count, by: SessionLength.itemsPerBlock) {
+            let chunk = items[start..<min(start + SessionLength.itemsPerBlock, items.count)]
+            if start > 0 { result.append(.rest(minutes: RoutineBudget.defaultRestMinutes)) }
+            let share = min(RoutineBudget.maxFocusedMinutes,
+                            max(1, SessionLength.blockMinutes / chunk.count))
+            for item in chunk {
+                result.append(.focus(item.candidate.unit, minutes: share,
+                                     microRestEvery: microRestEveryMinutes))
             }
-        }
-        return result
-    }
-
-    /// Thread a rest between every pair of directly-adjacent focused blocks (ADR 0014 R3) — a break
-    /// resets attention between deliberate work. Nothing is added before the first block (the
-    /// warm-up already separates it) or after the last.
-    static func interleaveRests(_ focused: [SessionBlock]) -> [SessionBlock] {
-        guard !focused.isEmpty else { return [] }
-        var result: [SessionBlock] = []
-        for (index, block) in focused.enumerated() {
-            if index > 0 { result.append(.rest(minutes: RoutineBudget.defaultRestMinutes)) }
-            result.append(block)
         }
         return result
     }
