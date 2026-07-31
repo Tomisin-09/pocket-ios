@@ -7,6 +7,13 @@ import Foundation
 protocol TempoRamp {
     func bpm(elapsedBars: Int, elapsedSeconds: TimeInterval) -> Int
     func isFinished(elapsedBars: Int, elapsedSeconds: TimeInterval) -> Bool
+    /// The next tempo boundary and its distance (ADR 0131), or `nil` when nothing is coming — a flat
+    /// or disabled ramp, or one that has already finished.
+    ///
+    /// Takes **fractional** bars, unlike the rest of this protocol. The warning lives inside the final
+    /// interval of a plateau, so whole-bar resolution cannot express it: on a one-interval plateau the
+    /// half-plateau clamp asks for half a bar's notice, which integer bars would round away to never.
+    func pendingChange(elapsedBars: Double, elapsedSeconds: TimeInterval) -> PendingTempoChange?
 }
 
 /// A **command-anchored** practice ramp (ADR 0045): the staircase an exercise climbs once it
@@ -154,6 +161,31 @@ struct CommandRamp: Equatable, TempoRamp {
             if intervalsElapsed < cumulative { return index }
         }
         return steps.count - 1
+    }
+
+    /// The boundary the ramp is approaching (ADR 0131): the plateau now holding, the one after it
+    /// (`nil` at the ramp's end), and how far the boundary is in `unit`s.
+    ///
+    /// The same cumulative walk as `bpm(…)` and `currentPlateauIndex(…)`, deliberately — the warning
+    /// and the change it warns about read one source, so they cannot disagree. Returns `nil` once the
+    /// ramp has run out, where there is nothing left to approach.
+    func pendingChange(elapsedBars: Double, elapsedSeconds: TimeInterval) -> PendingTempoChange? {
+        let steps = plateaus
+        guard intervalCount > 0, !steps.isEmpty else { return nil }
+        let elapsed: Double = unit == .bars ? max(0, elapsedBars) : max(0, elapsedSeconds)
+        var cumulative = 0
+        for (index, plateau) in steps.enumerated() {
+            cumulative += plateau.intervals
+            let boundary = Double(cumulative * intervalCount)
+            guard elapsed < boundary else { continue }
+            return PendingTempoChange(
+                from: plateau.bpm,
+                to: index + 1 < steps.count ? steps[index + 1].bpm : nil,
+                unitsRemaining: boundary - elapsed,
+                plateauUnits: Double(plateau.intervals * intervalCount),
+                unit: unit)
+        }
+        return nil
     }
 
     /// Total intervals across all plateaus — the ramp's length in interval units.

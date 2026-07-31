@@ -124,6 +124,10 @@ struct SettingsView: View {
                 }
             }
 
+            // Whether a ramp announces its next step before taking it (ADR 0131). Sits under Practice
+            // because it belongs with Count-in — both are the run telling you what happens next.
+            TempoWarningSection()
+
             // Metronome timbre picker with inline audition (ADR 0114). Its own section so each preset
             // reads as a row with a play button, rather than crowding the Practice toggles.
             MetronomeSoundSection()

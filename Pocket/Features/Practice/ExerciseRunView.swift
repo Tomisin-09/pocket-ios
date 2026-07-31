@@ -120,7 +120,8 @@ struct ExerciseRunView: View {
                     practiceSettings
                 }
                 RoutineStairs(plateaus: routine.plateaus, command: command, tint: PocketColor.practice,
-                              currentIndex: isRunning ? engine.currentRampPlateau : nil)
+                              currentIndex: isRunning ? engine.currentRampPlateau : nil,
+                              nextIndex: isRunning ? engine.warningNextPlateau : nil)
                 if !isRunning, routineContext == nil, isDirty { saveChangesButton }
                 if !isRunning, routineContext == nil {
                     PracticeReviewBar(journalCount: exercise.journal.count,
@@ -221,9 +222,9 @@ struct ExerciseRunView: View {
                         .font(.pocketMono(.largeTitle))
                         .foregroundStyle(PocketColor.textPrimary)
                         .contentTransition(.numericText())
-                    Text(liveTempoCaption)
-                        .font(.futura(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
+                    // Becomes the tempo-change warning while one is showing (ADR 0131). Its own view
+                    // so the per-tick read doesn't re-render the drill surface below.
+                    TempoWarningCaption(engine: engine, fallback: liveTempoCaption)
                 }
             }
             ExerciseTemplateSurface(engine: engine, exercise: exercise, labelMode: labelMode)

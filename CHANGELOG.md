@@ -6,6 +6,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **The ramp tells you before it changes tempo.** A climbing exercise used to just speed up, and you
+  found out by being a beat behind. Now the last part of each step warns you: the caption under the
+  tempo names what's coming ("Speeding up to 96", "Backing off to 84", "Last bar"), the staircase
+  lights the step you're about to move to, and the drill itself takes a soft outline. It's notice, not
+  a verdict — nothing is being measured. **Settings ▸ Tempo changes** turns it off if you'd rather the
+  ramp kept you honest.
+
 - **Red Moon can now learn what to improve — if you let it.** After your first practice, the app
   asks once whether it can count which features get used. It's **off unless you say yes**, and
   declining is one tap with no nagging afterwards. There's a switch in **Settings ▸ Privacy** either

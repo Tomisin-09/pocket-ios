@@ -21,6 +21,10 @@ struct RoutineStairs: View {
     /// stopped setup preview, where every bar reads at one even weight (the dwell is conveyed by
     /// its width, not a permanent highlight).
     var currentIndex: Int?
+    /// The plateau the ramp is **about to** move to, pre-lit while a tempo-change warning is showing
+    /// (ADR 0131). `nil` the rest of the time, including at the end of the ramp where there is no next
+    /// bar to light.
+    var nextIndex: Int?
 
     /// Fixed height of the bar region; the `<bpm> BPM` signpost sits in a reserved strip above it
     /// so it never clips the tallest bar.
@@ -31,10 +35,13 @@ struct RoutineStairs: View {
     private static let captionHeight: CGFloat = 18
 
     /// How bright a given bar reads: the live plateau is lit, its neighbours dim while running;
-    /// in the stopped preview every bar sits at one even weight.
+    /// in the stopped preview every bar sits at one even weight. While a tempo-change warning is
+    /// showing, the plateau being warned about pre-lights to a middle weight (ADR 0131) — brighter
+    /// than dim so it reads as *coming*, dimmer than the cursor so it can't be mistaken for *here*.
     private func fill(forIndex index: Int) -> Double {
         guard let currentIndex else { return 0.55 }
-        return index == currentIndex ? 0.95 : 0.25
+        if index == currentIndex { return 0.95 }
+        return index == nextIndex ? 0.55 : 0.25
     }
 
     /// The **command dwell** plateau — the one held *at command*, signposted with its BPM so the

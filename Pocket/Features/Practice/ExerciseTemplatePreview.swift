@@ -101,8 +101,15 @@ struct ExerciseTemplateSurface: View {
     let exercise: Exercise
     var labelMode: FretLabelMode = .none
 
-    @ViewBuilder
     var body: some View {
+        // The tempo-change warning edge lands here, on the one view every run configuration passes
+        // through, so all five branches below are covered by a single modifier and none of the drill
+        // views has to know the feature exists (ADR 0131 §3a).
+        surface.overlay { TempoWarningEdge(engine: engine) }
+    }
+
+    @ViewBuilder
+    private var surface: some View {
         if exercise.kind == .fretboard, let drill = exercise.fretboardDrill {
             FretboardView(engine: engine, drill: drill, tint: PocketColor.practice,
                          labelMode: labelMode)
