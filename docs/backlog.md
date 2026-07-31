@@ -4,6 +4,60 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## ADR 0129 device-test findings — NEXT UP (2026-07-31, branch `pocket-209-session-block-model`)
+
+Device-tested on the iPhone 16 Pro after ADR 0129 landed (5 commits, `5b1dc10`…`19aca0d`; full
+`PocketAll` green). **Confirmed working:** the store migrated with the library intact, Quick and
+Focused both generated as expected (Quick = warm-up + 3 focus items, no rests, "~15m"; block model
+correct). Five problems and one feature request came out of it. **Fix these before the branch merges** —
+the first three are all things a tester would hit in their first session.
+
+**1 — An exercise doesn't start after a Skip. (Highest priority; cause unknown.)**
+Skip the warm-up to jump straight to the next block and the run screen sits on "Counting in 4" forever.
+**Not a freeze** — the UI stays responsive, you can navigate between blocks and exit normally. The
+count-in advances on *audio beat callbacks*, so a stuck counter with a live UI means the engine never
+advanced. Suspicion: each `ExerciseRunView` owns its own engine, and a Skip tears down the previous
+block's view while its engine may still hold the audio session, so the new `start()` fails quietly.
+Nothing in ADR 0129 touches engine lifecycle (the fit only changes `dwellIntervals`), **but this was
+not ruled out.** First step: reproduce the same skip on `main`. If it stalls there, it is pre-existing
+and belongs in its own branch. Also worth capturing: was the click *audible* when it stuck? Silent ⇒
+the engine never started; clicking ⇒ only the display stalled.
+
+**2 — The fit overrides the player's authored dwell, and the preview disagrees with the run.**
+An exercise authored 64→75 / reach 80 with a 4-interval dwell, given a 5-minute block, is fitted to
+**~19 intervals (~76 bars at command)** — roughly 5× what was authored. The routine sheet's block
+preview shows the *authored* staircase while the run plays the *fitted* one, so the two surfaces
+contradict each other. Making the preview match is trivial, but that only makes the override visible,
+not right: ADR 0129 sub-decision 3 protected the stored recipe from being *written* and treated that as
+sufficient — it isn't, because the run ignores it anyway. **This is a design decision, not a patch.**
+Options: (a) bound the fit to a range around the authored dwell; (b) let the block's share adapt to the
+authored length instead of the reverse; (c) make the fit opt-in. Needs the user's call before code.
+
+**3 — Loops are left out of the block model entirely.** Two gaps:
+- `LoopRunView` never reads `plannedMinutes` (no hits at all). A loop block in a generated session is
+  allotted a slot and ignores it. Loops are sized by *region × repeats*, not a dwell, so fitting a loop
+  means adjusting **repeats** — a calculation that does not exist yet.
+- A loop's staircase shows the **same working == command collapse** `Exercise.rampFloor` fixed: only
+  *command* and *reach* render, no warm-up and no back off. `LoopCommandRamp.make` builds a
+  `CommandRamp` in percent-of-original units, so it shares the type but not the fix. Needs a `Loop`
+  equivalent of `rampFloor` — check `Loop`'s working/current-speed field first.
+
+**4 — One goal crowds out the others.** With two equally-weighted goals ("Improvise in a style",
+"Play a specific song" → Red Moon), the generated Quick session drew *only* from the first; nothing
+from the song goal appeared. Not positional — `SessionBuilder.select` ranks purely by `DueScore` and
+there is **no per-goal quota anywhere**. This is a consequence of ADR 0129 that the ADR did not
+anticipate: at ~15 items both goals were represented by brute force; at **3 items** the top-ranked
+goal takes every slot. Fix is round-robin across goals, or a per-goal minimum, in `select`.
+
+**5 — Staircase labels overlap on a fitted ramp.** With a 19-interval dwell the command bar takes ~83%
+of `RoutineStairs`' width and crushes the bars right of it — "reach" and "back off" render on top of
+each other. A symptom of (2); may resolve if the override is bounded.
+
+**Feature request — warn before the tempo changes.** An indicator that a change is coming, so the
+player can *anticipate* rather than react, configurable in Settings. Pairs naturally with the
+metronome-fade idea (both are the click telling you something ahead of time) and stays clear of
+ADR 0070 — anticipation is preparation, not grading. **Its own ADR, not part of 0129.**
+
 ## Device-testing pass — plan of attack (2026-07-28)
 
 Several days of on-device testing produced ~34 notes across four annotated screenshot sheets,
