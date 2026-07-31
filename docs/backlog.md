@@ -49,11 +49,14 @@ caption reads clearly ("Backing off to 75", staircase `reach` lit with `back off
 **Parked — visual redesign.** Functionally right, but the presentation wants another pass. Two things
 seen on device, neither critical:
 
-- **The edge reads as selection chrome, not as a warning.** On an exercise with no template the drill
-  surface *is* `BeatIndicator`, so the outline draws as a pill around four small dots and looks like a
-  selected segmented control. The static-edge decision (ADR 0131 §3a) was reasoned about a *board* —
-  it may well be right there and wrong here, in which case the fix is a per-surface treatment rather
-  than one modifier on `ExerciseTemplateSurface`.
+- **The edge around the beat dots is the weak spot — probably the wrong idea there, not just the
+  wrong styling.** On an exercise with no template the drill surface *is* `BeatIndicator`, so the
+  outline draws as a pill around four small dots and reads as a selected segmented control. Don't
+  start from "tune the stroke": ask what would actually indicate an imminent tempo change on a
+  *dots-only* screen, where the dots themselves are already the beat. ADR 0131 §3a reasoned the
+  static-edge decision about a **board**, and may be right there and wrong here — in which case the
+  fix is a per-surface treatment, and the "one modifier on `ExerciseTemplateSurface` covers all five
+  configurations" argument (§3a's second bullet) is the thing that has to give.
 - **Only 1 of 5 run configurations has been seen.** Fretboard, strumming, chords and strum-chords all
   route through the same modifier but have very different bounds; the edge's geometry (12pt radius,
   2pt stroke) is unverified against any of them.
