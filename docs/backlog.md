@@ -167,6 +167,41 @@ Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` thr
 `.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
 bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
 
+## A block for the practice we don't model (ADR 0136, Proposed — unbuilt)
+
+Pocket can't model every exercise a guitarist will ever do, and trying is a content treadmill. The
+practice done *outside* the app is still practice, so the log and the mastery picture are both
+quietly incomplete — and the more serious the player, the bigger the missing fraction. A freeform
+block is the container for it.
+
+Cheap because the progress spine is already content-agnostic: `PracticeRun` never asks what a unit
+renders, `mastery` is pure player input, `Exercise.lastPracticed` + `markPracticed()` supply dueness.
+And the payload field already exists — `Exercise.notes` (`String = ""`) is on the model and surfaced
+**nowhere**: no editor, no reader, dead storage since it was added. So there is no migration.
+
+- **Slice 1 — the template, its payload, its run.** A new `ExerciseTemplate.freeform` case — *not*
+  ADR 0104's mode pattern (a mode needs existing material to re-run; a freeform block has none), and
+  *not* `.basic` (which is click-first and doubles as the unknown-template fallback). `notes` becomes
+  the instructions field with its own `BespokeEditor` branch. No tempo, no ramp. The run copies
+  `EarLoopRunView` — clock on appearance, explicit Done as a genuine completion — **plus** the
+  `RoutineBlockDoneView` ear blocks skip, because the rating is the whole tracking payoff. Logs
+  `PracticeRunKind.exercise` with `tempoBPM: nil`; no new kind.
+- **Slice 2 — routine and planner, mostly verification.** Goal-invisible falls out of the existing
+  rule (`SkillFamilyMap.skillsByTemplate` omits a template ⇒ it never resolves a technique goal, as
+  `.basic`/`.warmup` already do). Due-scored needs only that `.freeform` is **not** added to
+  `PracticePlanner.library`'s `.filter { $0.template != .warmup }` exclusion. Both are silent-break
+  claims, so they want unit tests.
+
+The line the ADR rings off (§F1b): a **closed case with a free-text payload** is not a reopened
+taxonomy. Free prose *inside* one curated case is not the old free-text `category` axis, and pressure
+to let players name their own templates is a different ADR this one doesn't license. Also decided:
+Pro (authoring, ADR 0112); user-facing name is "freeform", never "empty" — a block labelled empty
+reads as broken, and it's about to hold the most personal practice the player has.
+
+Watch items: `UnitDuplication` / presets / bulk import must carry `notes` now that it means
+something (a duplicate that drops the instructions drops the exercise); and the library section can
+grow unboundedly, since freeform blocks are cheap to make and invisible to goal resolution.
+
 ## Device-testing pass — plan of attack (2026-07-28)
 
 Several days of on-device testing produced ~34 notes across four annotated screenshot sheets,
