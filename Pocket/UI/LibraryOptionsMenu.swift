@@ -22,11 +22,28 @@ struct LibraryOptionsMenu<Actions: View, SortControls: View>: View {
     @Binding var favoritesOnly: Bool
     /// Hidden when the list has nothing to filter, matching the old per-screen gate.
     var showsFavoritesFilter = true
+    /// An optional filter that **widens** the list past its default gate, rather than narrowing it
+    /// like Favourites — the Loops library's "Show all loops" (ADR 0138 G4), the deliberate way to
+    /// reach an unmeasured loop. `nil` on libraries whose default list already shows everything, and
+    /// it sits beside Favourites because it is a filter, not one of the screen's actions.
+    var widenFilter: Binding<Bool>?
+    var widenFilterLabel = "Show all"
     var tint: Color = PocketColor.practice
     /// The screen's secondary actions, shown in their own section above the list options.
     @ViewBuilder var actions: Actions
     /// The sort pickers — `LibrarySortPickers`, or nothing on a library with a fixed order.
     @ViewBuilder var sortControls: SortControls
+
+    /// Whether the list is showing something other than its default — the bar icon fills so an active
+    /// filter is legible without the menu open, and without the icon changing width (the whole point
+    /// of this control). Either filter counts: both change what the list is showing.
+    private var isFiltered: Bool { favoritesOnly || widenFilter?.wrappedValue == true }
+
+    private var accessibilityLabel: String {
+        if favoritesOnly { return "List options, showing favourites only" }
+        if widenFilter?.wrappedValue == true { return "List options, \(widenFilterLabel.lowercased())" }
+        return "List options"
+    }
 
     var body: some View {
         Menu {
@@ -38,12 +55,19 @@ struct LibraryOptionsMenu<Actions: View, SortControls: View>: View {
                         Label("Favourites only", systemImage: favoritesOnly ? "star.fill" : "star")
                     }
                 }
+                if let widenFilter {
+                    Toggle(isOn: widenFilter) {
+                        Label(widenFilterLabel,
+                              systemImage: widenFilter.wrappedValue ? "line.3.horizontal.decrease.circle.fill"
+                                                                    : "line.3.horizontal.decrease.circle")
+                    }
+                }
             }
         } label: {
-            Image(systemName: favoritesOnly ? "ellipsis.circle.fill" : "ellipsis.circle")
+            Image(systemName: isFiltered ? "ellipsis.circle.fill" : "ellipsis.circle")
         }
         .tint(tint)
-        .accessibilityLabel(favoritesOnly ? "List options, showing favourites only" : "List options")
+        .accessibilityLabel(accessibilityLabel)
     }
 }
 
@@ -51,9 +75,12 @@ extension LibraryOptionsMenu where Actions == EmptyView {
     /// A library whose menu holds only list options (Exercises, Loops).
     init(favoritesOnly: Binding<Bool>,
          showsFavoritesFilter: Bool = true,
+         widenFilter: Binding<Bool>? = nil,
+         widenFilterLabel: String = "Show all",
          tint: Color = PocketColor.practice,
          @ViewBuilder sortControls: () -> SortControls) {
         self.init(favoritesOnly: favoritesOnly, showsFavoritesFilter: showsFavoritesFilter,
+                  widenFilter: widenFilter, widenFilterLabel: widenFilterLabel,
                   tint: tint, actions: { EmptyView() }, sortControls: sortControls)
     }
 }
@@ -65,6 +92,7 @@ extension LibraryOptionsMenu where SortControls == EmptyView {
          tint: Color = PocketColor.practice,
          @ViewBuilder actions: () -> Actions) {
         self.init(favoritesOnly: favoritesOnly, showsFavoritesFilter: showsFavoritesFilter,
+                  widenFilter: nil, widenFilterLabel: "Show all",
                   tint: tint, actions: actions, sortControls: { EmptyView() })
     }
 }

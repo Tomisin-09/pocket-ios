@@ -24,10 +24,13 @@ a routine* contribute dueness.
    `PracticePlanner.library` and `planGoalSession`, and **one** call site querying the log — not two:
    `RoutineLibraryView` and the goal-less fallback both use `planQuickSession`, which is
    exercises-only and never projects a loop. No UI, no schema, no migration.
-2. **ADR 0138 — per-mode gates (ear arm).** Split `trainableLoops` three ways, drop the gate on the
-   Ear bucket, add the all-loops filter and per-mode row affordances, rewrite the empty state. Ships a
-   standalone win — ear training reachable without a command tempo — worth device-testing alone before
-   more lands on those screens.
+2. **ADR 0138 — per-mode gates (ear arm). ✅ BUILT 2026-08-02** (`pocket-219-per-mode-gates`).
+   Preconditions extracted to a pure `LoopModeAccess` (trainer + ear arms; **improvise deliberately
+   absent** until `isBackingTrack` exists — its `switch` has no `default`, so step 3 won't compile
+   until it states the third gate). Ear bucket ungated, all-loops filter added to `LibraryOptionsMenu`
+   as an optional *widening* filter, per-mode row affordances, empty state rewritten.
+   **Device-verified 2026-08-02** — the flagged noise risk did not materialise: Ear reads 46 against
+   Loops' 38 on a real library, 8 rows longer rather than the "several times" the ADR feared.
 3. **ADR 0135 slice 1.** The flag, `ImproviseSheet`, `EntryKind.improvise`, the library filter, the
    Improvise bucket, and the improvise arm of step 2's gate. This is why 0138 goes first: the gate
    refactor lands once and this extends it, rather than a flag arriving with nowhere to show.
@@ -45,8 +48,10 @@ with Track A, so it can run in parallel or go first if a visible feature is want
 slice 2** (freeform blocks declaring themselves off-guitar) comes after it.
 
 **Watch items to carry into the branches:**
-- `AddRoutineUnitSheet.swift` is **306 lines**; step 2 splits its gates and step 3 adds a bucket. The
-  400-line cap plus CI `--strict` will bite — plan the split rather than discovering it.
+- `AddRoutineUnitSheet.swift` is now **324 lines** after step 2; step 3 adds the Improvise bucket. The
+  400-line cap plus CI `--strict` will bite. The split is planned, not to be discovered: extract the
+  `// MARK: - Search` block (~50 lines) into `AddRoutineUnitSheet+Search.swift` if step 3 takes it
+  past ~370. It holds no state beyond `searchText`.
 - `UnitDuplication`, the preset seeder and bulk import must carry `Exercise.notes` once ADR 0136 makes
   it mean something. A duplicate that drops the instructions drops the exercise.
 - Two **silent-break** claims in ADR 0136: `SkillFamilyMap` omitting `.freeform`, and

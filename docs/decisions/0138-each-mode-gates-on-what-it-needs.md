@@ -1,6 +1,9 @@
 # 0138 — Each mode gates on what it needs (ear training is not a trainer feature)
 
-- **Status:** Proposed (2026-08-01)
+- **Status:** Accepted — **built and device-verified** 2026-08-02 (`pocket-219-per-mode-gates`),
+  Slice 1 whole. The
+  preconditions live in a new pure `LoopModeAccess`; see §Build notes for the two arms built now vs.
+  the third left for ADR 0135, and for what the `LoopLibraryView` half turned out to require.
 - **Date:** 2026-08-01
 - **Closes:** ADR 0135 §B9a, which recorded that ear-training blocks are gated behind a measurement
   ear training does not use, and left it unresolved.
@@ -120,6 +123,40 @@ the trainer, was inherited by every mode that came after it.
   properly.
 - **Require a command tempo for ear training (today's behaviour).** Rejected — G5's inversion: it
   makes the away-from-the-instrument mode conditional on having played the passage.
+
+## Build notes (2026-08-02)
+
+- **The preconditions are a pure type, `LoopModeAccess`.** `allows(_ mode:_ facts:)` over a small
+  `Facts` value (`hasCommandTempo`, `audioResolves`), with a `Loop` convenience and a
+  `modes(for:)` list. Two arms are built — trainer and ear. **Improvise is deliberately absent**:
+  `isBackingTrack` doesn't exist until ADR 0135 B1, so stating its gate here would be a predicate over
+  a field no loop has. The `switch` is exhaustive **with no `default`**, so adding `.improvise` to
+  `LoopRunMode` will *fail to compile* until its precondition is written — the mechanical version of
+  G1, and specifically the thing that would have prevented this ADR's bug.
+- **`hasMeasuredLoops` could not keep gating the toolbar.** The "Show all loops" filter lives in
+  ADR 0126's trailing menu, and that menu was shown only when measured loops existed — so a library
+  holding *only* unmeasured loops would have hidden the very control that reveals them. The menu now
+  appears whenever there are loops at all; the empty state gains the filter's name so the route is
+  discoverable before the menu is.
+- **An unmeasured row has no trainer target at all**, rather than a tap that opens a ramp with nothing
+  to anchor. Its summary becomes inert text — "No command tempo yet — ear training only" — instead of
+  rendering `Command 0% → 0%`, which would read as a measurement that had been taken. The row's menu
+  is built from `modes(for:)` rather than a hand-written list, so the menu and the buttons cannot
+  disagree, and ADR 0135's Improvise appears in both the moment its gate is stated.
+- **`LibraryOptionsMenu` gained an optional *widening* filter.** Favourites narrows; this widens, and
+  it sits in the same section because both change what the list shows. `nil` on every other library.
+  The bar icon fills for either, so an active filter stays legible without changing the item's width —
+  ADR 0126's rule that nothing on a nav bar may vary in width.
+- **Device-verified 2026-08-02**, which the ADR asked for specifically because of the noise risk
+  below. The add-sheet's two counts read **Ear training 46** against **Loops 38** on a real library
+  (46 loops, all on local files, 38 measured) — so the wider bucket is **8 rows longer, not a
+  multiple**. Grouped by song it reads as the honest difference between "captured" and "measured"
+  rather than as noise, and the Consequences section's "could be several times the trainer's" did not
+  materialise here. Worth re-checking on a library with many more unmeasured regions.
+- **`AddRoutineUnitSheet` is now 324 lines** against the 400-line cap. ADR 0135's Improvise bucket
+  lands on this file next; if it takes it past ~370, the clean extraction is the `// MARK: - Search`
+  block (~50 lines) into `AddRoutineUnitSheet+Search.swift`, which has no state of its own beyond
+  `searchText`.
 
 ## Slices
 

@@ -331,6 +331,22 @@ not the Hear synth (ADR 0097). **Slice 2** makes it a **routine block**: a loop 
 routine chrome + a manual **Done**, no completion screen — nothing to grade), authored from a peer **Ear
 training** bucket in `AddRoutineUnitSheet`. Same `Loop` unit, no new schema — just a mode.
 
+**Each mode gates on what it needs** (ADR 0138). Both surfaces that decide which loops a player can
+reach — `LoopLibraryView` and `AddRoutineUnitSheet` — applied one test, `commandTempo != nil`, written
+for the *trainer* and inherited by every mode after it. That put ear training, the one mode you can do
+with no instrument in hand, behind a measurement you can only make **by playing the passage on your
+instrument**. The preconditions now live in the pure **`LoopModeAccess`** — `allows(_ mode:_ facts:)`
+over a small `Facts` value (`hasCommandTempo`, `audioResolves`): the **trainer** needs a command tempo
+(its ramp is anchored on one), **ear** needs only audio it can play (the same `source != .appleMusic`
+condition `playableSongs` already expresses), and ADR 0135's **improvise** will need `isBackingTrack`.
+The `switch` is exhaustive with **no `default`**, so a new `LoopRunMode` cannot compile until its gate
+is stated — the mechanical guard against exactly the inheritance that caused this. Consequently the
+add-sheet's Ear bucket count now *exceeds* the Loops count (the honest difference between "captured"
+and "measured"), and `LoopLibraryView` keeps the trainer gate as its default listing but adds a
+**widening** "Show all loops" filter to `LibraryOptionsMenu` (Favourites narrows; this widens) with
+per-row affordances built from `modes(for:)`, so an unmeasured row offers Ear and has no trainer target
+at all rather than a tap into a ramp with nothing to anchor.
+
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
 from the metronome at the product level. `PracticeView` is a **hub**: the live "Build today's
