@@ -4,6 +4,57 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## Build order — ADRs 0135–0139 (decided 2026-08-01, nothing built)
+
+Five ADRs landed as **decisions only, no Swift**: 0135–0138 on main (squash `0187282`, PR #203) and
+0139 on `pocket-217-off-guitar-session`. Each ADR carries its own slices; this is the sequence
+*across* them, which lives nowhere else. Two tracks that barely touch — Track A is loops/planner,
+Track B is the freeform block.
+
+**A0 — verify ADR 0117's write path on device. Not a branch; do it first.** Practise an exercise, a
+loop and an ear block, then confirm the rows are in the store. ADR 0137 makes candidate ranking depend
+on that path, and it has never been store-verified end-to-end; a seam that silently fails to log makes
+its unit read **max-due forever** (0137 §D7). Fail-safe in direction, silent in practice, miserable to
+find later.
+
+1. **ADR 0137 — dueness from the log.** Smallest and highest leverage: a pure
+   `PracticeLog.lastPracticedByUnit` + tests, a defaulted `lastPracticed:` param on
+   `PracticePlanner.library`, two call sites querying the log. No UI, no schema, no migration. Every
+   planner claim downstream becomes meaningful the moment it lands. Verify with a planner test ranking
+   two equal-mastery loops of different recency.
+2. **ADR 0138 — per-mode gates (ear arm).** Split `trainableLoops` three ways, drop the gate on the
+   Ear bucket, add the all-loops filter and per-mode row affordances, rewrite the empty state. Ships a
+   standalone win — ear training reachable without a command tempo — worth device-testing alone before
+   more lands on those screens.
+3. **ADR 0135 slice 1.** The flag, `ImproviseSheet`, `EntryKind.improvise`, the library filter, the
+   Improvise bucket, and the improvise arm of step 2's gate. This is why 0138 goes first: the gate
+   refactor lands once and this extends it, rather than a flag arriving with nowhere to show.
+4. **ADR 0135 slice 2.** `LoopRunMode.improvise` + `ImproviseLoopRunView` in the routine player.
+   Mirrors ADR 0104 slice 2.
+5. **ADR 0135 slice 3 + ADR 0139 slice 1 — build adjacently.** Both need the same structural change:
+   `PlannerCandidate`/`SessionBlock` carrying a `LoopRunMode` through to the materialised
+   `RoutineItem`. Doing them apart means doing it twice. Also here: `improv.vocabulary` resolution,
+   `play`-kind placement, the `ear.*` capability contribution, the `constraint` parameter, and the
+   "Away from your instrument" option.
+
+**Track B — ADR 0136 (freeform blocks), independent of all of the above.** Touches
+`ExerciseTemplate`, `NewExerciseSheet`, a run screen and two planner assertions; near-zero overlap
+with Track A, so it can run in parallel or go first if a visible feature is wanted sooner. **ADR 0139
+slice 2** (freeform blocks declaring themselves off-guitar) comes after it.
+
+**Watch items to carry into the branches:**
+- `AddRoutineUnitSheet.swift` is **306 lines**; step 2 splits its gates and step 3 adds a bucket. The
+  400-line cap plus CI `--strict` will bite — plan the split rather than discovering it.
+- `UnitDuplication`, the preset seeder and bulk import must carry `Exercise.notes` once ADR 0136 makes
+  it mean something. A duplicate that drops the instructions drops the exercise.
+- Two **silent-break** claims in ADR 0136: `SkillFamilyMap` omitting `.freeform`, and
+  `PracticePlanner.library` *not* extending its `.warmup` exclusion to it. Nothing crashes if either is
+  wrong; the planner just quietly misbehaves. Unit tests, not manual checks.
+- ADR 0139 §O2b: dedup stays keyed on the unit, **not** unit-plus-mode, or one loop lands in a session
+  twice — once to train, once to sing back.
+- Per branch as usual: `swiftlint --strict`, the generic-simulator build, `-testPlan PocketAll`,
+  `CHANGELOG.md` for the user-visible ones, and device verification before calling anything done.
+
 ## ADR 0129 device-test findings — ALL FIVE FIXED (2026-07-31, branch `pocket-209-session-block-model`)
 
 Device-tested on the iPhone 16 Pro after ADR 0129 landed (5 commits, `5b1dc10`…`19aca0d`).
@@ -163,6 +214,40 @@ Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` thr
 `LoopType.chords` or a free-text tag rather than a typed flag; retyping `improv.vocabulary` to
 `.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
 bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
+
+## Practice you can do without your instrument (ADR 0139, Proposed — unbuilt)
+
+Closes ADR 0138 §G6, both halves. Two facts that had never been introduced: the three `ear.*` skills
+map to `ExerciseTemplate.earTraining`, which isn't in `creatable`, so they resolve to **zero
+candidates** permanently — the mode shipped and the planner was never told. And `SkillMode.offGuitar`
+sits on eight skills (`ear.*`, `know.*`, songwriting) with nothing branching on it. Between them is
+*"I have fifteen minutes and no guitar"* — a real, frequent situation no practice app answers,
+because they all assume the instrument is in your hands.
+
+- **Slice 1 — ear becomes plannable, and the session type exists.** Off-guitar is a property of the
+  **mode**, not the material (ADR 0138 §G1 again): `LoopRunMode.ear` is off-guitar, `.trainer` and
+  `.improvise` aren't, and no flag lands on `Loop`. Audible loops serve the `ear.*` skills **by
+  capability** — no tag — which makes three routes now deliberate: by tag (ADR 0074), by flag (0135),
+  by capability (here). The session type is a `constraint` parameter on the existing entry points,
+  defaulted to none; same weighting, dueness and packing, smaller pool. Sizing already works —
+  `estimatedMinutes(for:mode:plannedMinutes:)` opens with `guard mode != .ear`, written mode-aware and
+  never yet exercised.
+- **Slice 2 — freeform blocks (ADR 0136) may declare themselves off-guitar.** Player-declared, never
+  inferred (§F8 holds). This is what makes the session more than three ear blocks, and it's the
+  general route for transcription / note-names / songwriting.
+
+**Shares its one structural change with ADR 0135 §B6a:** `PlannerCandidate` and `SessionBlock` carry
+no `LoopRunMode`, so an ear-resolved loop would build as a trainer block and hand the player a ramp
+they can't run. Whichever ADR is built first owns it. Dedup must stay keyed on the unit, not
+unit-plus-mode, or one loop appears twice in a session (once to train, once to sing back).
+
+Decided too: user-facing name is **"Away from your instrument"**, never "off-guitar" — ADR 0116 made
+this multi-instrument and a bassist shouldn't be offered a guitar-named session; the taxonomy case
+keeps its name in code. Not fixed (§O7): `know.*` and `create.songwriting` have the same
+zero-candidate hole, but unlike ear there's no shipped mode behind them — fixing that means a theory
+surface (ADR 0094 T1, still deferred), and the honest interim is a freeform block the player writes.
+Honest limitation: the session is only as good as the loop library, so it lands better for
+established users than new ones, and the empty state has to say something useful.
 
 ## Each mode gates on what it needs (ADR 0138, Proposed — unbuilt)
 

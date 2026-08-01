@@ -72,7 +72,9 @@ the trainer, was inherited by every mode that came after it.
   no session type. ADR 0094 T1's dedicated theory/ear space stays deferred exactly as ADR 0104 E1
   left it.
 
-- **G6 — Two related holes are named and deliberately not fixed here.** Both are real, both are
+- **G6 — Two related holes are named and deliberately not fixed here.** *(Both closed by ADR 0139,
+  which makes audible loops serve the `ear.*` skills and gives `SkillMode.offGuitar` its first
+  consumer as the "Away from your instrument" session.)* Both are real, both are
   planner-side, and neither is a gate:
   - `SkillFamilyMap` maps the three `ear.*` skills to `ExerciseTemplate.earTraining`, which is not in
     `creatable` — so no player can own a unit that serves them and they resolve to **zero candidates**,
