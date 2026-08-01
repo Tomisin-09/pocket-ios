@@ -153,19 +153,44 @@ but not every loop is jammable.
   ADR 0014 R1). Needs `SessionBlock` to carry a `LoopRunMode`, which it doesn't today — the only
   non-mechanical piece.
 
-**Loop dueness is inert — found while tracing §B6, not caused by it.** `Loop` has no `lastPracticed`
-field, and `PracticePlanner.library` hard-codes `lastPracticed: nil` for every loop, which
-`DueScore.dueness` reads as *max-due*. So `goalWeight × dueness × (1 − mastery/5)` collapses to
-mastery alone for **every** loop candidate: the time-driven resurfacing half does nothing, and a loop
-practised this morning ranks level with one untouched for a year. Exercises get the real formula via
-`Exercise.lastPracticed` + `markPracticed()`. ADR 0117's per-unit-run rows are timestamped, so the
-data to fix this exists for the first time — nothing reads it back. Parked as its own decision.
+**Loop dueness is inert — found while tracing §B6, not caused by it. Now ADR 0137 (below).** `Loop`
+has no `lastPracticed` field, and `PracticePlanner.library` hard-codes `lastPracticed: nil` for every
+loop, which `DueScore.dueness` reads as *max-due*. So `goalWeight × dueness × (1 − mastery/5)`
+collapses to mastery alone for **every** loop candidate.
 
 Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` through the Hear engine
 (re-loses ADR 0104 E5 — the point is real music, and the sampler tone isn't a bed); overloading
 `LoopType.chords` or a free-text tag rather than a typed flag; retyping `improv.vocabulary` to
 `.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
 bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
+
+## Dueness comes from the log (ADR 0137, Proposed — unbuilt)
+
+Closes ADR 0135 §B10. `DueScore` is `goalWeight × dueness(lastPracticed) × (1 − mastery/5)`, but
+`Loop` has no `lastPracticed` and `PracticePlanner.library` hard-codes `nil`, which `dueness` reads as
+*max-due*. Every loop candidate therefore ranks on mastery alone, forever — a loop practised this
+morning sits level with one untouched for a year. Cosmetic until loops started resolving goals; ADR
+0135 §B6 and ADR 0104's ear blocks both make it load-bearing.
+
+**Decided: derive it from the practice log, don't store it.** A pure
+`PracticeLog.lastPracticedByUnit([SessionRecord]) -> [UUID: Date]` (group by `unitUID`, max
+`startedAt`) feeding a defaulted `lastPracticed:` parameter on `PracticePlanner.library`; the two call
+sites (`PlannerView`, `RoutineLibraryView`) `@Query` the log and pass the map. `SessionRecord` already
+carries both fields, and `PracticeLog` is already the pure SwiftData-free aggregation layer, so it
+lands where the unit tests can reach it. No field, no migration, and **retroactive** — existing
+`.loop`/`.earLoop` rows give real dueness on day one. Every future mode counts for free, since
+everything goes through the one `PracticeLogWriter` seam.
+
+Two things it changes rather than merely fixes. Derived means **completed**, not started — unlike
+`Exercise.lastPracticed`, which `markPracticed()` stamps from `commitAndStart()`. A hand-stopped run
+logs nothing, so it doesn't reset dueness, which is the intended reading (opening a drill and bailing
+isn't practice). And **exercises are deliberately not switched over** (§D5): they work today, and
+moving them started→completed is a live ranking change for existing installs that deserves its own
+argument. Until then the two axes answer slightly different questions — documented, not invisible.
+
+Watch item (§D7): a completion seam that fails to log now makes its unit read *max due*, so ADR 0117's
+write path — still not store-verified end-to-end — is a ranking concern as well as a stats one. The
+failure direction is fail-safe (surfaces more, not less), but silent.
 
 ## A block for the practice we don't model (ADR 0136, Proposed — unbuilt)
 

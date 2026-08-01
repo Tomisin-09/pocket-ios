@@ -215,7 +215,9 @@ follow ear training's placement exactly; the third item is a defect the placemen
   to be overruled. Widening the gate per B9 does not fix ear training's case; whether ear training
   should also escape the measured gate is a separate question this ADR does not settle.
 
-- **B10 — Known limitation on B6: loop dueness is inert.** `Loop` has no `lastPracticed` field, and
+- **B10 — Known limitation on B6: loop dueness is inert.** *(Closed by ADR 0137, which derives
+  dueness from the practice log rather than a stored field — the fix is planner-wide, so it was
+  argued there rather than folded in here.)* `Loop` has no `lastPracticed` field, and
   `PracticePlanner.library` hard-codes `lastPracticed: nil` for every loop, which `DueScore.dueness`
   treats as **max-due**. So a backing loop resolved for the improv goal ranks on `goalWeight ×
   mastery` alone — the time-driven resurfacing half of the formula does nothing for any loop, not
