@@ -116,6 +116,144 @@ The copy is load-bearing and named as such in §5 — the settle row has to read
 concession, and the mastery caption is the only place the player learns that rating honestly buys
 them anything. Not decoration to trim at build time.
 
+## A loop can be a backing track (ADR 0135, Proposed — unbuilt)
+
+Looping a chord section of a song and playing over it already works; the app just doesn't know it's
+happening. The section is indistinguishable from the four-bar lick being ground at 60%, so it can't
+be found later, run in a mode that suits it, or reached by the planner. The answer is ADR 0104's
+shape again — a mode on a loop the player already owns, playing the real audio (0104 E5), notes into
+the Journal — plus one thing ear training didn't need: a **flag**, because any loop can be sung back
+but not every loop is jammable.
+
+- **Slice 1 — the flag, the surface, the shelf.** `Loop.isBackingTrack` (a `Bool` with a declaration
+  default, `isFavorite`'s pattern exactly) staged through `LoopEditSnapshot`; a toggle whose caption
+  is guidance the app does not verify — *whole number of bars, no vocal*, aimed at the **musical**
+  seam, since `PracticeAudioEngine` already crossfades the audio one. `ImproviseSheet` off the loop
+  edit sheet: continuous playback, live percent (`setAuditionPercent`, no ramp), Journal note under a
+  new `EntryKind.improvise`. Backing filter beside Favourites in the loops library — in-memory, not a
+  `#Predicate`.
+  The run follows `EarLoopRunView`'s shape: clock starts on appearance, an explicit **Done** is a
+  genuine completion, no `RoutineBlockDoneView` (nothing to grade), logs a new
+  `PracticeRunKind.improvise` with no tempo.
+- **Slice 2 — the routine block.** `LoopRunMode.improvise` + `ImproviseLoopRunView`, mirroring ADR
+  0104 Slice 2's `.ear` wiring. Access points decided (§B8/B8a): a fifth `bucketRow` in
+  `AddRoutineUnitSheet`, and a per-row button in `LoopLibraryView` beside Ear but **only on flagged
+  rows** — the Improvise count diverging from Ear's is the flag explaining itself.
+- **Blocker on both access points (§B9):** `LoopLibraryView.visibleLoops` and
+  `AddRoutineUnitSheet.trainableLoops` both gate on `commandTempo != nil`, and a backing track has
+  none by design — so a flagged, unmeasured loop is invisible on the two screens the flag exists to
+  populate. Gate becomes `commandTempo != nil || isBackingTrack`; the "no measured loops yet" copy
+  has to admit the second route. The same tension already exists for ear-training blocks and stays
+  unresolved (§B9a).
+- **Slice 3 — the planner.** Closes a hole worth naming on its own: `improv.vocabulary` is
+  `.repertoire` mode, `repertoireCandidates` returns `[]` without a target song, and the "Improvise in
+  a style" goal template sets `requiresTargetSong: false` — so that goal's improv-specific skill
+  produces **zero candidates today** and has since it shipped. It looks fine because its two scale
+  skills still resolve. Backing loops become that skill's unit, planned as `play` blocks (unbudgeted,
+  ADR 0014 R1). Needs `SessionBlock` to carry a `LoopRunMode`, which it doesn't today — the only
+  non-mechanical piece.
+
+**Loop dueness is inert — found while tracing §B6, not caused by it. Now ADR 0137 (below).** `Loop`
+has no `lastPracticed` field, and `PracticePlanner.library` hard-codes `lastPracticed: nil` for every
+loop, which `DueScore.dueness` reads as *max-due*. So `goalWeight × dueness × (1 − mastery/5)`
+collapses to mastery alone for **every** loop candidate.
+
+Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` through the Hear engine
+(re-loses ADR 0104 E5 — the point is real music, and the sampler tone isn't a bed); overloading
+`LoopType.chords` or a free-text tag rather than a typed flag; retyping `improv.vocabulary` to
+`.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
+bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
+
+## Each mode gates on what it needs (ADR 0138, Proposed — unbuilt)
+
+Closes ADR 0135 §B9a and refines §B9. `LoopLibraryView.visibleLoops` and
+`AddRoutineUnitSheet.trainableLoops` both test `commandTempo != nil`, and the add-sheet applies it to
+**two** buckets — which is why Loops and Ear training show the same count. The rule is real for the
+trainer (the command tempo anchors the ramp) and irrelevant to every other mode.
+
+For ear training it's worse than irrelevant, it's inverted: `commandTempo` is *"the fastest tempo the
+player owns this loop at"* — a measurement you can only make by playing the passage. Ear training is
+the one mode that needs no instrument in hand, and it's the mode gated behind having already played
+the thing. The one practice available when you can't practise is hidden until you have.
+
+**Decided: the gate moves from the loop to the mode.** Trainer keeps `commandTempo != nil`; ear needs
+only resolvable audio (the shape `playableSongs` already uses for the Songs bucket — that precedent
+exists, loops just never got it); improvise needs `isBackingTrack`. The Ear bucket's count will exceed
+the Loops count, and that's the message rather than a defect. `LoopLibraryView`'s default list stays
+trainer-gated (admitting every scratch region would drown the practice library) and gains an all-loops
+filter in ADR 0126's trailing menu, with per-row affordances gated per mode. Empty-state copy has to
+admit all three routes.
+
+Explicitly out of scope (§G5): no new destination, no Home card, no session type — ADR 0094 T1's
+dedicated ear space stays deferred where ADR 0104 E1 left it. Named but **not** fixed (§G6), both
+planner-side and neither a gate: the three `ear.*` skills map to `ExerciseTemplate.earTraining`, which
+isn't in `creatable`, so they resolve to **zero candidates** permanently (mirror of the
+`improv.vocabulary` hole); and `SkillMode.offGuitar` sits on eight skills with **nothing branching on
+it** — the vocabulary for "practice without your instrument" exists with no consumer.
+
+## Dueness comes from the log (ADR 0137, Proposed — unbuilt)
+
+Closes ADR 0135 §B10. `DueScore` is `goalWeight × dueness(lastPracticed) × (1 − mastery/5)`, but
+`Loop` has no `lastPracticed` and `PracticePlanner.library` hard-codes `nil`, which `dueness` reads as
+*max-due*. Every loop candidate therefore ranks on mastery alone, forever — a loop practised this
+morning sits level with one untouched for a year. Cosmetic until loops started resolving goals; ADR
+0135 §B6 and ADR 0104's ear blocks both make it load-bearing.
+
+**Decided: derive it from the practice log, don't store it.** A pure
+`PracticeLog.lastPracticedByUnit([SessionRecord]) -> [UUID: Date]` (group by `unitUID`, max
+`startedAt`) feeding a defaulted `lastPracticed:` parameter on `PracticePlanner.library`; the two call
+sites (`PlannerView`, `RoutineLibraryView`) `@Query` the log and pass the map. `SessionRecord` already
+carries both fields, and `PracticeLog` is already the pure SwiftData-free aggregation layer, so it
+lands where the unit tests can reach it. No field, no migration, and **retroactive** — existing
+`.loop`/`.earLoop` rows give real dueness on day one. Every future mode counts for free, since
+everything goes through the one `PracticeLogWriter` seam.
+
+Two things it changes rather than merely fixes. Derived means **completed**, not started — unlike
+`Exercise.lastPracticed`, which `markPracticed()` stamps from `commitAndStart()`. A hand-stopped run
+logs nothing, so it doesn't reset dueness, which is the intended reading (opening a drill and bailing
+isn't practice). And **exercises are deliberately not switched over** (§D5): they work today, and
+moving them started→completed is a live ranking change for existing installs that deserves its own
+argument. Until then the two axes answer slightly different questions — documented, not invisible.
+
+Watch item (§D7): a completion seam that fails to log now makes its unit read *max due*, so ADR 0117's
+write path — still not store-verified end-to-end — is a ranking concern as well as a stats one. The
+failure direction is fail-safe (surfaces more, not less), but silent.
+
+## A block for the practice we don't model (ADR 0136, Proposed — unbuilt)
+
+Pocket can't model every exercise a guitarist will ever do, and trying is a content treadmill. The
+practice done *outside* the app is still practice, so the log and the mastery picture are both
+quietly incomplete — and the more serious the player, the bigger the missing fraction. A freeform
+block is the container for it.
+
+Cheap because the progress spine is already content-agnostic: `PracticeRun` never asks what a unit
+renders, `mastery` is pure player input, `Exercise.lastPracticed` + `markPracticed()` supply dueness.
+And the payload field already exists — `Exercise.notes` (`String = ""`) is on the model and surfaced
+**nowhere**: no editor, no reader, dead storage since it was added. So there is no migration.
+
+- **Slice 1 — the template, its payload, its run.** A new `ExerciseTemplate.freeform` case — *not*
+  ADR 0104's mode pattern (a mode needs existing material to re-run; a freeform block has none), and
+  *not* `.basic` (which is click-first and doubles as the unknown-template fallback). `notes` becomes
+  the instructions field with its own `BespokeEditor` branch. No tempo, no ramp. The run copies
+  `EarLoopRunView` — clock on appearance, explicit Done as a genuine completion — **plus** the
+  `RoutineBlockDoneView` ear blocks skip, because the rating is the whole tracking payoff. Logs
+  `PracticeRunKind.exercise` with `tempoBPM: nil`; no new kind.
+- **Slice 2 — routine and planner, mostly verification.** Goal-invisible falls out of the existing
+  rule (`SkillFamilyMap.skillsByTemplate` omits a template ⇒ it never resolves a technique goal, as
+  `.basic`/`.warmup` already do). Due-scored needs only that `.freeform` is **not** added to
+  `PracticePlanner.library`'s `.filter { $0.template != .warmup }` exclusion. Both are silent-break
+  claims, so they want unit tests.
+
+The line the ADR rings off (§F1b): a **closed case with a free-text payload** is not a reopened
+taxonomy. Free prose *inside* one curated case is not the old free-text `category` axis, and pressure
+to let players name their own templates is a different ADR this one doesn't license. Also decided:
+Pro (authoring, ADR 0112); user-facing name is "freeform", never "empty" — a block labelled empty
+reads as broken, and it's about to hold the most personal practice the player has.
+
+Watch items: `UnitDuplication` / presets / bulk import must carry `notes` now that it means
+something (a duplicate that drops the instructions drops the exercise); and the library section can
+grow unboundedly, since freeform blocks are cheap to make and invisible to goal resolution.
+
 ## Device-testing pass — plan of attack (2026-07-28)
 
 Several days of on-device testing produced ~34 notes across four annotated screenshot sheets,
@@ -1085,11 +1223,14 @@ docs so this stays a pointer list:
   arpeggio runs, open/barre/triad progression changes) is largely covered by the shipped ADR 0065
   template batches (fretboard/scales/arpeggios/chords/strum); remaining curation is incremental. Per the
   content strategy: encode the *methods*, all copy and exercises authored in-house.
-- **Backing tracks:** a content-production decision before a code one —
-  outsource vs self-record (start tiny: 3–5 first-party tracks, common keys /
-  I–IV–V / 12-bar, recorded as owned work product). Technically trivial:
-  bundled or downloadable DRM-free files ride the existing engine unchanged;
-  needs only a "first-party content" bucket distinct from user imports.
+- **Backing tracks:** **narrowed by ADR 0135, not resolved.** The first build takes the free route —
+  the player's own song sections, flagged as backing tracks and jammed over in place (see "A loop can
+  be a backing track", above). *First-party recorded* beds remain the answer for a player whose own
+  library has no suitable section (a beginner with three loops, all licks), and remain a
+  content-production decision before a code one — outsource vs self-record (start tiny: 3–5
+  first-party tracks, common keys / I–IV–V / 12-bar, recorded as owned work product). Technically
+  trivial: bundled or downloadable DRM-free files ride the existing engine unchanged; needs only a
+  "first-party content" bucket distinct from user imports.
 - **Desktop bulk metadata/artwork editing:** door held open by ADR 0064 §7
   (keep metadata logic pure/portable); otherwise deliberately unplanned.
 
