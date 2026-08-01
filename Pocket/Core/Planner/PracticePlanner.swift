@@ -36,16 +36,20 @@ enum PracticePlanner {
     /// back-half (`SessionBuilder`) lays it out — warm-up still LRU-picked from `template == .warmup`
     /// exercises (structural, never due-scored). The optional `profile` supplies the ADR 0113 S3
     /// **emphasis mix** (declared genres + dream), a lift-only tilt on candidate priority; omit it (or
-    /// pass a curation-free profile) for the pre-S3 due/goal-only ranking. Returns the pure block
-    /// layout; pass it to `materialise` with the same model arrays to persist and run.
+    /// pass a curation-free profile) for the pre-S3 due/goal-only ranking. `lastPracticed` is the
+    /// practice log's recency map — see `library(exercises:loops:songs:lastPracticed:)` for why loops
+    /// need it and exercises don't (ADR 0137). Returns the pure block layout; pass it to `materialise`
+    /// with the same model arrays to persist and run.
     static func planGoalSession(length: SessionLength,
                                 goals: [Goal],
                                 exercises: [Exercise],
                                 loops: [Loop] = [],
                                 songs: [Song] = [],
                                 profile: Profile? = nil,
+                                lastPracticed: [UUID: Date] = [:],
                                 now: Date = .now) -> [SessionBlock] {
-        let library = library(exercises: exercises, loops: loops, songs: songs)
+        let library = library(exercises: exercises, loops: loops, songs: songs,
+                              lastPracticed: lastPracticed)
         let emphasis = profile.map { PracticeEmphasis(genres: $0.genres, dream: $0.dream) } ?? .neutral
         let candidates = CandidateDeriver.deriveCandidates(goals: goals.map(\.plannerProjection),
                                                            library: library, emphasis: emphasis)
@@ -58,7 +62,20 @@ enum PracticePlanner {
     /// Project the live library into the pure value types the deriver reasons over — the impure
     /// seam that owns the time estimates (they need audio durations). Warm-up exercises are excluded
     /// from the focused-selection projection (they're placed structurally, not ranked).
-    static func library(exercises: [Exercise], loops: [Loop] = [], songs: [Song] = []) -> PlannerLibrary {
+    ///
+    /// `lastPracticed` is the practice log's recency map (`PracticeLog.lastPracticedByUnit`), and it
+    /// is what gives a **loop** a time axis at all (ADR 0137): `Loop` has no stored `lastPracticed`,
+    /// so before this it projected as `nil` — permanently max-due — and `DueScore` collapsed to
+    /// mastery alone for every loop candidate. Defaulted to empty so a caller that has no log to hand
+    /// (and every existing test) behaves exactly as before: an absent entry is `nil`, which is
+    /// cold-start max-due, which is the correct answer for something never practised.
+    ///
+    /// **Exercises and songs deliberately keep their stored value** (D5). Theirs means "a run
+    /// *started*"; the log's means "a run *completed*". Moving them is a live ranking change for
+    /// every install, in the opposite direction from this repair, and it belongs in its own decision
+    /// rather than smuggled in here.
+    static func library(exercises: [Exercise], loops: [Loop] = [], songs: [Song] = [],
+                        lastPracticed: [UUID: Date] = [:]) -> PlannerLibrary {
         PlannerLibrary(
             exercises: exercises
                 .filter { $0.template != .warmup }
@@ -66,7 +83,7 @@ enum PracticePlanner {
                                        lastPracticed: $0.lastPracticed,
                                        estimatedMinutes: estimatedMinutes(for: $0)) },
             loops: loops.map { PlannerLoop(uid: $0.uid, songUID: $0.song.map { PlannerID.uid(from: $0.sourceID) },
-                                           mastery: $0.mastery, lastPracticed: nil,
+                                           mastery: $0.mastery, lastPracticed: lastPracticed[$0.uid],
                                            estimatedMinutes: estimatedMinutes(for: $0),
                                            templates: recognizedTemplates(for: $0)) },
             songs: songs.map { PlannerSong(uid: PlannerID.uid(from: $0.sourceID),

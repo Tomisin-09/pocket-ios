@@ -149,4 +149,61 @@ final class PracticeLogTests: XCTestCase {
         XCTAssertEqual(record.durationSeconds, 0)
         XCTAssertEqual(record.endedAt, record.startedAt)
     }
+
+    // MARK: - Recency (ADR 0137)
+
+    func testLastPracticedByUnitTakesTheLatestRunPerUnit() {
+        let unit = UUID()
+        let other = UUID()
+        let map = PracticeLog.lastPracticedByUnit([
+            run(date(10), minutes: 5, unit: unit),
+            run(date(14), minutes: 5, unit: unit),   // latest for `unit`
+            run(date(12), minutes: 5, unit: unit),
+            run(date(11), minutes: 5, unit: other)
+        ])
+        XCTAssertEqual(map[unit], date(14))
+        XCTAssertEqual(map[other], date(11))
+    }
+
+    func testLastPracticedByUnitIsIndependentOfInputOrder() {
+        // Built in one pass, not by sorting — so an unordered log must give the same answer.
+        let unit = UUID()
+        let ordered = PracticeLog.lastPracticedByUnit([
+            run(date(10), minutes: 5, unit: unit), run(date(16), minutes: 5, unit: unit)
+        ])
+        let reversed = PracticeLog.lastPracticedByUnit([
+            run(date(16), minutes: 5, unit: unit), run(date(10), minutes: 5, unit: unit)
+        ])
+        XCTAssertEqual(ordered[unit], date(16))
+        XCTAssertEqual(reversed[unit], date(16))
+    }
+
+    func testLastPracticedByUnitCountsEveryKindOfRunOnTheSameUnit() {
+        // ADR 0137 D2a — a loop sung back in ear training is not "untouched" as a trainer. The mode
+        // is deliberately not distinguished; the question is when you last worked on the material.
+        let loop = UUID()
+        let map = PracticeLog.lastPracticedByUnit([
+            run(date(10), minutes: 5, kind: .loop, unit: loop),
+            run(date(15), minutes: 5, kind: .earLoop, unit: loop)
+        ])
+        XCTAssertEqual(map[loop], date(15))
+    }
+
+    func testLastPracticedByUnitSkipsRowsWithNoUnit() {
+        // A play-along logs `unitUID: nil` — Song has no business `uid` (ADR 0117). Such a row can
+        // say nothing about any unit and must not become a key.
+        let unit = UUID()
+        let map = PracticeLog.lastPracticedByUnit([
+            run(date(10), minutes: 30, kind: .song, unit: nil),
+            run(date(11), minutes: 5, unit: unit)
+        ])
+        XCTAssertEqual(map.count, 1)
+        XCTAssertEqual(map[unit], date(11))
+    }
+
+    func testLastPracticedByUnitOnAnEmptyLogIsEmpty() {
+        // Which reads back as `nil` per unit — cold-start max-due, the correct answer for a fresh
+        // install where nothing has been practised yet.
+        XCTAssertTrue(PracticeLog.lastPracticedByUnit([]).isEmpty)
+    }
 }

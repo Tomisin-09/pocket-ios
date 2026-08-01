@@ -22,7 +22,10 @@
 │              own firstWeekday · dailyBuckets that emit empty days too (the chart keeps its shape on a quiet week)
 │              · daysActive as a bare count (the "4 of 7" denominator travels with the deferred streaks) · sittings
 │              derived by grouping runs on time (30-min gap measured from the previous run's *end*, so six routine
-│              blocks are one sit) · lifetime with truncated hours and no invented start date. Two invariants: a run
+│              blocks are one sit) · lifetime with truncated hours and no invented start date · lastPracticedByUnit,
+│              the latest startedAt per unitUID — the planner's recency map, and the log's one non-stats consumer
+│              (ADR 0137; rows with no unitUID are skipped, and the run *kind* is deliberately not distinguished).
+│              Two invariants: a run
 │              is attributed wholly to the day it *started* on, and minutes round once from summed seconds.
 │              TempoTrajectory plots one drill's history grouped by notesPerBeat, so only the most recently
 │              practised rhythm forms a line and the rest are counted and admitted (ADR 0121); a single run is not a
@@ -753,6 +756,18 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   Read today by `ExerciseDetailSheet`, which queries the whole log and filters in memory (a `#Predicate`
   on the optional `unitUID` is the documented way to starve the main thread) and hands values to
   `TempoTrajectory`. The Progress screen is Slice 2.
+  **The log is also the planner's time axis** (ADR 0137). `PracticeLog.lastPracticedByUnit` groups the
+  rows by `unitUID` and takes the latest `startedAt`; `PracticePlanner.library` fills
+  `PlannerLoop.lastPracticed` from that map instead of the `nil` it used to hard-code. `Loop` has no
+  stored `lastPracticed`, so before this every loop projected as never-practised and `DueScore`'s time
+  term sat pinned at 1.0 — a loop played this morning ranked level with one untouched for a year. No
+  new field and no migration, so it is **retroactive**: existing rows start contributing immediately.
+  The mode is deliberately not distinguished — an `.earLoop` row is the loop's recency for trainer
+  ranking too, because the question is *when did you last work on this material*. **Exercises and songs
+  keep their stored value**: theirs means "a run started", the log's means "a run completed", and moving
+  them is a live ranking change owed its own decision. This makes the write path above a *ranking*
+  concern as well as a stats one — a seam that silently failed to log would leave its unit max-due
+  forever — which is why all three seams were verified against the on-device store before it shipped.
 - **Reading the log** (ADR 0117, Slice 2). `PracticeProgressView` is reached from the **Journal**
   toolbar, not Home. The ADR specified "make the existing `PracticeStatsCard` tappable", but that card
   was dropped from Home in the 2026-07-09 hub rework (`a0c754e1`) and has been dead code since; Journal

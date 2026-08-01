@@ -77,6 +77,16 @@ All notable changes to Pocket are documented here. Format loosely follows
   blocks don't have this: there's no ramp there to tune.
 
 ### Fixed
+- **Generated sessions now notice when you last played a loop.** A loop you worked on this morning
+  was being treated exactly like one you hadn't touched in a year: loops were the only thing in the
+  library with no sense of time, so a generated session ranked them on your own mastery rating alone
+  and nothing you practised ever changed the order. They now take their recency from your practice
+  history, so a loop you've just played steps back and lets a neglected one come round.
+
+  It reads what's already recorded, so it works from your existing history straight away — no
+  waiting, nothing to switch on. Ear-training counts too: a passage you sang back yesterday isn't
+  "untouched". A loop you've rated 5 stays retired regardless; this changes only the timing half,
+  never a rating you set.
 - **Skipping a block no longer leaves the next one stuck on "Counting in".** Skip past an exercise
   mid-session and the block that came up would sit on its count-in forever — silent, but with the
   screen still responding, so it looked like it was about to start and never did. Two blocks briefly

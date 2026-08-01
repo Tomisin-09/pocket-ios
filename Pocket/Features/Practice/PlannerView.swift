@@ -19,6 +19,10 @@ struct PlannerView: View {
     /// The local profile (ADR 0113): its minutes-per-day seeds the initial session length (S2) and its
     /// genres + dream drive the goal-session emphasis mix (S3).
     @Query private var profiles: [Profile]
+    /// The practice log (ADR 0117), read here for one thing only: **how recently each unit was
+    /// practised** (ADR 0137). It is what gives a loop candidate a time axis — loops carry no stored
+    /// `lastPracticed`, so without this every one of them ranks as never-practised.
+    @Query private var practiceRuns: [PracticeRun]
 
     @State private var length: SessionLength = .default
     /// Seed the length from the profile only once, so revisiting the planner doesn't overwrite a
@@ -223,11 +227,15 @@ struct PlannerView: View {
 
     private func generate() {
         let active = activeGoals
+        // Only the goal session projects loops, so only it needs the log's recency map (ADR 0137);
+        // a Quick session ranks exercises alone, and those keep their own stored `lastPracticed`.
         let blocks: [SessionBlock] = active.isEmpty
             ? PracticePlanner.planQuickSession(length: length, exercises: exercises)
             : PracticePlanner.planGoalSession(length: length, goals: active,
                                               exercises: exercises, loops: loops, songs: songs,
-                                              profile: profiles.first)
+                                              profile: profiles.first,
+                                              lastPracticed: PracticeLog.lastPracticedByUnit(
+                                                practiceRuns.map(\.record)))
         guard blocks.contains(where: { $0.unit != nil }) else {
             showingEmptyNotice = true
             haptic(.medium)
