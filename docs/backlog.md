@@ -116,6 +116,38 @@ The copy is load-bearing and named as such in §5 — the settle row has to read
 concession, and the mastery caption is the only place the player learns that rating honestly buys
 them anything. Not decoration to trim at build time.
 
+## A loop can be a backing track (ADR 0135, Proposed — unbuilt)
+
+Looping a chord section of a song and playing over it already works; the app just doesn't know it's
+happening. The section is indistinguishable from the four-bar lick being ground at 60%, so it can't
+be found later, run in a mode that suits it, or reached by the planner. The answer is ADR 0104's
+shape again — a mode on a loop the player already owns, playing the real audio (0104 E5), notes into
+the Journal — plus one thing ear training didn't need: a **flag**, because any loop can be sung back
+but not every loop is jammable.
+
+- **Slice 1 — the flag, the surface, the shelf.** `Loop.isBackingTrack` (a `Bool` with a declaration
+  default, `isFavorite`'s pattern exactly) staged through `LoopEditSnapshot`; a toggle whose caption
+  is guidance the app does not verify — *whole number of bars, no vocal*, aimed at the **musical**
+  seam, since `PracticeAudioEngine` already crossfades the audio one. `ImproviseSheet` off the loop
+  edit sheet: continuous playback, live percent (`setAuditionPercent`, no ramp), Journal note under a
+  new `EntryKind.improvise`. Backing filter beside Favourites in the loops library — in-memory, not a
+  `#Predicate`.
+- **Slice 2 — the routine block.** `LoopRunMode.improvise` + `ImproviseLoopRunView`, mirroring ADR
+  0104 Slice 2's `.ear` wiring.
+- **Slice 3 — the planner.** Closes a hole worth naming on its own: `improv.vocabulary` is
+  `.repertoire` mode, `repertoireCandidates` returns `[]` without a target song, and the "Improvise in
+  a style" goal template sets `requiresTargetSong: false` — so that goal's improv-specific skill
+  produces **zero candidates today** and has since it shipped. It looks fine because its two scale
+  skills still resolve. Backing loops become that skill's unit, planned as `play` blocks (unbudgeted,
+  ADR 0014 R1). Needs `SessionBlock` to carry a `LoopRunMode`, which it doesn't today — the only
+  non-mechanical piece.
+
+Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` through the Hear engine
+(re-loses ADR 0104 E5 — the point is real music, and the sampler tone isn't a bed); overloading
+`LoopType.chords` or a free-text tag rather than a typed flag; retyping `improv.vocabulary` to
+`.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
+bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
+
 ## Device-testing pass — plan of attack (2026-07-28)
 
 Several days of on-device testing produced ~34 notes across four annotated screenshot sheets,
@@ -1085,11 +1117,14 @@ docs so this stays a pointer list:
   arpeggio runs, open/barre/triad progression changes) is largely covered by the shipped ADR 0065
   template batches (fretboard/scales/arpeggios/chords/strum); remaining curation is incremental. Per the
   content strategy: encode the *methods*, all copy and exercises authored in-house.
-- **Backing tracks:** a content-production decision before a code one —
-  outsource vs self-record (start tiny: 3–5 first-party tracks, common keys /
-  I–IV–V / 12-bar, recorded as owned work product). Technically trivial:
-  bundled or downloadable DRM-free files ride the existing engine unchanged;
-  needs only a "first-party content" bucket distinct from user imports.
+- **Backing tracks:** **narrowed by ADR 0135, not resolved.** The first build takes the free route —
+  the player's own song sections, flagged as backing tracks and jammed over in place (see "A loop can
+  be a backing track", above). *First-party recorded* beds remain the answer for a player whose own
+  library has no suitable section (a beginner with three loops, all licks), and remain a
+  content-production decision before a code one — outsource vs self-record (start tiny: 3–5
+  first-party tracks, common keys / I–IV–V / 12-bar, recorded as owned work product). Technically
+  trivial: bundled or downloadable DRM-free files ride the existing engine unchanged; needs only a
+  "first-party content" bucket distinct from user imports.
 - **Desktop bulk metadata/artwork editing:** door held open by ADR 0064 §7
   (keep metadata logic pure/portable); otherwise deliberately unplanned.
 
