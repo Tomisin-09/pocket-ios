@@ -40,10 +40,15 @@ struct RoutineBlockDoneView: View {
     /// The unit's current self-rated mastery (0–5, `nil` = unrated), pre-filled so a tap *adjusts*
     /// rather than starts from blank.
     let initialMastery: Int?
-    /// The promote offer (ADR 0079 §7), or `nil` for no promote row — set only for an exercise unit
-    /// whose reach sits above command; `nil` for loops/songs and when there's nothing to promote. When
-    /// present, the row's target is **editable** (custom command value), defaulting to the reach.
-    let promote: PromoteConfig?
+    /// The **raise** offer (ADR 0079 §7) — `nil` when there's no headroom above command, or for a unit
+    /// that carries no offer at all. When present the row's target is editable, defaulting to the reach.
+    let raise: CommandConfig?
+    /// The **settle** offer (ADR 0134) — `nil` when command is already at the instrument's floor, or
+    /// for a unit that carries no offer at all. Defaults to the backoff the run's tail just played.
+    ///
+    /// Both are passed because neither depends on the rating, while *which one shows* does: the
+    /// player picks the direction by tapping the mastery dots on this screen, after it was built.
+    let settle: CommandConfig?
     /// Whether this is the last block — the primary reads **Finish** (→ end-of-routine summary)
     /// instead of **Continue** (→ next block / rest).
     let isLast: Bool
@@ -51,15 +56,19 @@ struct RoutineBlockDoneView: View {
     /// (ADR 0071 R4b). `nil` when nothing playable remains.
     let upNext: UpNext?
     /// Commit the optional mastery (unchanged ⇒ pass through), the optional note **and its kind tag**
-    /// (🎯/⚡️/🧗/📝/🎬 — defaults to `.note`, ADR 0100), and the command to promote to — `nil` when
-    /// the promote toggle is off, else the chosen (possibly custom) value (ADR 0079 §7) — then advance.
-    let onContinue: (_ mastery: Int?, _ note: String, _ kind: EntryKind, _ promoteTo: Int?) -> Void
+    /// (🎯/⚡️/🧗/📝/🎬 — defaults to `.note`, ADR 0100), and the accepted command revision — `nil`
+    /// when the toggle is off, else a `.raise`/`.settle` carrying the chosen (possibly custom) value
+    /// (ADR 0079 §7, ADR 0134) — then advance.
+    let onContinue: (_ mastery: Int?, _ note: String, _ kind: EntryKind,
+                     _ revision: CommandOffer.Revision?) -> Void
 
-    /// The bounds of the promote row's editable command value: where it defaults (the reach, clamped
-    /// to the ceiling), and the range the ±/typed value may take — from just above the current command
-    /// up to the ceiling — plus how that value **reads** (ADR 0082). Kept value-only so the view stays
+    /// The bounds of one direction's editable command value: where it defaults, the range the ±/typed
+    /// value may take, and how that value **reads** (ADR 0082). Kept value-only so the view stays
     /// SwiftData-free.
-    struct PromoteConfig: Equatable {
+    struct CommandConfig: Equatable {
+        /// Which way this config moves command. Carried so the row's copy and the committed
+        /// `Revision` read one source rather than inferring a direction from the numbers.
+        let direction: CommandOffer.Direction
         let defaultTarget: Int
         let minValue: Int
         let maxValue: Int
@@ -75,26 +84,33 @@ struct RoutineBlockDoneView: View {
         let symbol: String
     }
 
-    @State private var mastery: Int?
+    @State var mastery: Int?
     @State private var note = ""
     /// The note's kind tag (ADR 0100) — defaults to a plain `.note`, so an untagged completion note
     /// behaves exactly as before; a tap upgrades it to a goal/breakthrough/struggle/session.
     @State private var kind: EntryKind = .note
-    /// Whether to promote command on Continue — opt-in, default off (ADR 0079 §7).
-    @State private var promoteOn = false
-    /// The command value to promote to — defaults to the reach, editable within the config's bounds.
-    @State private var promoteValue: Int
+    /// Whether to commit the revision on Continue — opt-in, default off (ADR 0079 §7, ADR 0134 §5).
+    @State var revisionOn = false
+    /// The command value to revise to — the active config's default, editable within its bounds.
+    @State var revisionValue: Int
 
-    init(title: String, initialMastery: Int?, promote: PromoteConfig? = nil, isLast: Bool, upNext: UpNext?,
-         onContinue: @escaping (_ mastery: Int?, _ note: String, _ kind: EntryKind, _ promoteTo: Int?) -> Void) {
+    init(title: String, initialMastery: Int?,
+         raise: CommandConfig? = nil, settle: CommandConfig? = nil,
+         isLast: Bool, upNext: UpNext?,
+         onContinue: @escaping (_ mastery: Int?, _ note: String, _ kind: EntryKind,
+                                _ revision: CommandOffer.Revision?) -> Void) {
         self.title = title
         self.initialMastery = initialMastery
-        self.promote = promote
+        self.raise = raise
+        self.settle = settle
         self.isLast = isLast
         self.upNext = upNext
         self.onContinue = onContinue
         _mastery = State(initialValue: initialMastery)
-        _promoteValue = State(initialValue: promote?.defaultTarget ?? 0)
+        // Seeded from whichever direction the *pre-filled* rating asks for, so the row opens on a
+        // sensible number before any tap; `.onChange(of: activeConfig)` re-seeds it after one.
+        let initial = Self.config(raise: raise, settle: settle, mastery: initialMastery)
+        _revisionValue = State(initialValue: initial?.defaultTarget ?? 0)
     }
 
     var body: some View {
@@ -104,13 +120,21 @@ struct RoutineBlockDoneView: View {
                 masteryTap
                 tagSelector
                 noteField
-                if let promote { promoteRow(promote) }
+                if let activeConfig { revisionRow(activeConfig) }
                 if let upNext { upNextCard(upNext) }
             }
             .padding(.horizontal, 24)
             .padding(.top, 48)
             .padding(.bottom, 24)
         }
+        // A rating tap can swap the row's direction (ADR 0134 §2), so the editable value has to be
+        // re-seeded — otherwise a player who taps 5 and then 2 carries a raise target into a settle
+        // row. Flipping the toggle off with it means a direction change is never committed unseen.
+        .onChange(of: activeConfig) { _, updated in
+            revisionValue = updated?.defaultTarget ?? 0
+            revisionOn = false
+        }
+        .animation(.easeInOut(duration: 0.2), value: activeConfig)
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) { continueBar }
         .background(PocketColor.background.ignoresSafeArea())
@@ -153,7 +177,10 @@ struct RoutineBlockDoneView: View {
                         .accessibilityLabel("Set mastery to \(value)")
                 }
             }
-            Text("Optional — the planner resurfaces well-learned drills on its own.")
+            // The invitation lives here because this is the only place the player learns that rating
+            // honestly does anything for them beyond scheduling (ADR 0134 §5). Stated once, quietly.
+            Text("Optional — an honest low rating brings the drill back sooner, and can settle it "
+                 + "to a tempo you own.")
                 .font(.futura(.caption2))
                 .foregroundStyle(PocketColor.textSecondary.opacity(0.8))
                 .multilineTextAlignment(.center)
@@ -219,56 +246,6 @@ struct RoutineBlockDoneView: View {
         }
     }
 
-    /// The opt-in **promote** row (ADR 0079 §7) — offered only for an exercise that summited a reach
-    /// above command. Default off; flipping it on commits the bump atomically with Continue, so the
-    /// single primary stays the only action (no competing CTA). The target defaults to the reach but is
-    /// **editable** via a ±/typed stepper once on, so the player can set a custom command they feel they
-    /// own. Neutral framing — an offer, never a verdict (ADR 0070).
-    private func promoteRow(_ config: PromoteConfig) -> some View {
-        VStack(spacing: 12) {
-            Toggle(isOn: $promoteOn) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Move command to \(config.unit.inline(promoteValue))")
-                        .font(.futura(.body))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text("You summited it this run — bump the drill up.")
-                        .font(.futura(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-            }
-            .tint(PocketColor.practice)
-            if promoteOn { promoteStepper(config) }
-        }
-        .padding(12)
-        .background(PocketColor.surfaceStandard, in: RoundedRectangle(cornerRadius: 12))
-        .animation(.easeInOut(duration: 0.2), value: promoteOn)
-        .onChange(of: promoteOn) { _, _ in haptic(.light) }
-    }
-
-    /// The custom-command adjuster shown when promote is on — nudge the target within the config's
-    /// range (just above the current command, up to the BPM ceiling). `StepperButton` owns its own
-    /// press/hold haptics, so the clamp closures stay pure.
-    private func promoteStepper(_ config: PromoteConfig) -> some View {
-        HStack(spacing: 16) {
-            Text("New command")
-                .font(.futura(.footnote, weight: .semibold))
-                .foregroundStyle(PocketColor.textSecondary)
-            Spacer()
-            StepperButton(symbol: "minus", label: "Lower new command", tint: PocketColor.practice) {
-                promoteValue = max(config.minValue, promoteValue - 1)
-            }
-            Text(config.unit.inline(promoteValue))
-                .font(.pocketMono(.title3))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(minWidth: 52)
-                .contentTransition(.numericText())
-            StepperButton(symbol: "plus", label: "Raise new command", tint: PocketColor.practice) {
-                promoteValue = min(config.maxValue, promoteValue + 1)
-            }
-        }
-        .transition(.opacity.combined(with: .move(edge: .top)))
-    }
-
     private func upNextCard(_ next: UpNext) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Up next")
@@ -302,7 +279,7 @@ struct RoutineBlockDoneView: View {
 
     private var continueBar: some View {
         Button {
-            onContinue(mastery, note, kind, promoteOn ? promoteValue : nil)
+            onContinue(mastery, note, kind, acceptedRevision)
         } label: {
             Label(isLast ? "Finish" : "Continue",
                   systemImage: isLast ? "flag.checkered" : "arrow.right")
@@ -314,12 +291,41 @@ struct RoutineBlockDoneView: View {
     }
 }
 
-#Preview("Block done") {
+/// Both offers, on a drill rated 4 — the row opens on the **raise**. Tapping down to 2 flips it to
+/// the settle in place, which is the interaction worth watching in the canvas (ADR 0134 §2).
+#Preview("Block done · rated 4, raise") {
     RoutineBlockDoneView(title: "Alternate picking · 8ths",
-                         initialMastery: 2,
-                         promote: .init(defaultTarget: 106, minValue: 93, maxValue: 300),
+                         initialMastery: 4,
+                         raise: .init(direction: .raise, defaultTarget: 106,
+                                      minValue: 93, maxValue: 300),
+                         settle: .init(direction: .settle, defaultTarget: 86,
+                                       minValue: 30, maxValue: 91),
                          isLast: false,
                          upNext: .init(title: "A Minor Pentatonic",
                                        detail: "Command 92 → 98 BPM",
                                        symbol: "point.topleft.down.curvedto.point.bottomright.up")) { _, _, _, _ in }
+}
+
+/// The same screen pre-filled at 2 — opens on the settle, so the copy can be read at rest.
+#Preview("Block done · rated 2, settle") {
+    RoutineBlockDoneView(title: "Alternate picking · 8ths",
+                         initialMastery: 2,
+                         raise: .init(direction: .raise, defaultTarget: 106,
+                                      minValue: 93, maxValue: 300),
+                         settle: .init(direction: .settle, defaultTarget: 86,
+                                       minValue: 30, maxValue: 91),
+                         isLast: true,
+                         upNext: nil) { _, _, _, _ in }
+}
+
+/// A loop finish — percent units throughout (ADR 0082), rated low so the settle reads in `%`.
+#Preview("Block done · loop settle") {
+    RoutineBlockDoneView(title: "Chorus · bars 33–40",
+                         initialMastery: 1,
+                         raise: .init(direction: .raise, defaultTarget: 90,
+                                      minValue: 86, maxValue: 150, unit: .percent),
+                         settle: .init(direction: .settle, defaultTarget: 80,
+                                       minValue: 25, maxValue: 84, unit: .percent),
+                         isLast: true,
+                         upNext: nil) { _, _, _, _ in }
 }

@@ -150,13 +150,27 @@ extension LoopRunView {
     /// (ceiling-clamped) reach isn't above command, so the row is omitted. Percent-of-original units;
     /// the ceiling is the playback percent range's upper bound. The target defaults to the reach and
     /// is editable from just above the summited command up to that ceiling.
-    func completionPromoteConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.PromoteConfig? {
+    func completionRaiseConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.CommandConfig? {
         let ceiling = Self.percentRange.upperBound
-        guard PromoteOffer.canPromote(reach: finished.reach, command: finished.command, ceiling: ceiling)
+        guard CommandOffer.canRaise(command: finished.command, reach: finished.reach, ceiling: ceiling)
         else { return nil }
         // A loop's command is a percent of original, so the nudge reads "90%" (ADR 0082), never a BPM.
-        return .init(defaultTarget: PromoteOffer.promotedCommand(reach: finished.reach, ceiling: ceiling),
+        return .init(direction: .raise,
+                     defaultTarget: CommandOffer.raisedCommand(reach: finished.reach, ceiling: ceiling),
                      minValue: finished.command + 1, maxValue: ceiling, unit: .percent)
+    }
+
+    /// The **settle** offer for the standalone completion screen (ADR 0134) — `nil` when command is
+    /// already at the playback floor. Defaults to `loop.backoffPercent`, the tempo this run's own tail
+    /// played, and ranges down to the floor rather than stopping there (§4). Percent throughout.
+    func completionSettleConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.CommandConfig? {
+        let floor = Self.percentRange.lowerBound
+        guard CommandOffer.canSettle(command: finished.command, floor: floor) else { return nil }
+        return .init(direction: .settle,
+                     defaultTarget: CommandOffer.settledCommand(backoff: loop.backoffPercent,
+                                                                floor: floor,
+                                                                command: finished.command),
+                     minValue: floor, maxValue: finished.command - 1, unit: .percent)
     }
 
     /// Commit the post-run completion screen (ADR 0082) — the same `RoutineBlockDoneView` a routine
@@ -166,12 +180,24 @@ extension LoopRunView {
     /// (possibly custom) command percent — already clamped by the screen's stepper — so command moves
     /// there and a caught-up reach pin drops. Everything lands through the single write path
     /// (`persist`, ADR 0057); there's no following Start, so this *is* the commit.
-    func commitCompletion(mastery: Int?, note: String, kind: EntryKind, promoteTo: Int?) {
+    func commitCompletion(mastery: Int?, note: String, kind: EntryKind,
+                          revision: CommandOffer.Revision?) {
         loop.mastery = mastery
         _ = JournalWriter.add(to: .loop(loop), text: note, kind: kind, into: modelContext)
-        if let promoteTo {
-            command = promoteTo
+        switch revision {
+        case .raise(let percent):
+            command = percent
             clearOverrideIfCaughtUp()
+        case .settle(let percent):
+            // Through the local setup state, as on the exercise screen: `persist()` re-derives the
+            // model from these `@State` percents (ADR 0057). A loop needs no floor pull-down —
+            // `Loop.rampFloor` forces its own gap below command — but `working` is held here as a raw
+            // percent that `adjustWorking` keeps at or below command, so it comes down with it.
+            working = min(working, percent)
+            command = percent
+            backoffOverride = CommandOffer.survivingBackoffPin(backoffOverride, command: percent)
+        case .none:
+            break
         }
         persist()
         haptic(.light)

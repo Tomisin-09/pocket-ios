@@ -187,13 +187,15 @@ struct ExerciseRunView: View {
         }
         .fullScreenCover(item: $completion) { finished in
             // Reuse the routine block's Done screen for a standalone finish (ADR 0079) — the same
-            // completion beat + optional mastery + note + editable promote, minus the "Up next" card
-            // (nothing follows a solo run). One integrated surface, not a bespoke second one.
+            // completion beat + optional mastery + note + the editable command revision, minus the
+            // "Up next" card (nothing follows a solo run). One integrated surface, not a bespoke
+            // second one. Both directions are passed; the mastery tap picks between them (ADR 0134).
             RoutineBlockDoneView(title: exercise.name.isEmpty ? "Exercise" : exercise.name,
                                  initialMastery: exercise.mastery,
-                                 promote: completionPromoteConfig(finished),
-                                 isLast: true, upNext: nil) { mastery, note, kind, promoteTo in
-                commitCompletion(mastery: mastery, note: note, kind: kind, promoteTo: promoteTo)
+                                 raise: completionRaiseConfig(finished),
+                                 settle: completionSettleConfig(finished),
+                                 isLast: true, upNext: nil) { mastery, note, kind, revision in
+                commitCompletion(mastery: mastery, note: note, kind: kind, revision: revision)
             }
         }
     }

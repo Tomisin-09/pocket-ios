@@ -1,6 +1,7 @@
 # ADR 0134 — Command moves both ways: the offer after a run can settle lower
 
-- **Status:** Proposed.
+- **Status:** Accepted — **slice 1 built** 2026-08-01. Two things were decided at build that the ADR
+  didn't anticipate; both are recorded in §6 and §10. Slice 2 (mid-run settling) remains parked.
 - **Date:** 2026-08-01
 - **Builds on:** ADR 0045/0046 (the command / working / reach / backoff anchors and the `CommandRamp`
   built from them) · **ADR 0079** (the post-run promote and the completion screen it lives on — this
@@ -262,6 +263,34 @@ differently.
 - **Auto-advance in a routine still skips the Done screen**, so it offers neither direction. Same
   asymmetry, same reasoning as ADR 0079 §7: auto-advance means "don't stop me."
 - **Mid-run settling is out of scope** and gets its own ADR — see Build slicing.
+
+### 10. Recorded at build: the model setter cannot be the only home for §6's rules
+
+§6 said to put the settle's invariants in a model setter "so no call site can forget them". That is
+right for the routine player, which writes the model directly — and **impossible** for the two run
+screens, which the build revealed hold their entire setup in `@State` and commit through `persist()`
+(ADR 0057). `persist()` ends with `exercise.workingTempo = working` and
+`exercise.promoteCommand(to: command)`, both read from local state. A settle written straight to the
+model would therefore be silently overwritten one line later — the floor pull-down undone by the
+first, the command by the second.
+
+So the rules live in **`CommandOffer` as pure functions** — `settledFloor(command:working:)` and
+`survivingBackoffPin(_:command:)` — and have two callers each: the model setters
+(`Exercise.settleCommand`, `Loop.settleCommand`) for the routine player, and the run screens applying
+the same functions to their local state before `persist()`. One rule, two application sites, both
+tested. `survivingBackoffPin` is generic over the tempo unit so an exercise's BPM `Int` pin and a
+loop's `×` `Double` pin are genuinely the same code rather than two implementations that agree today.
+
+This does not weaken §6's argument, it relocates it: the thing that must not be duplicated is the
+*rule*, and a shared pure function protects it better than a setter one of the three call sites
+cannot reach.
+
+**Two files were split at the caps §Build slicing predicted**, both exactly where it said:
+`RoutinePlayerView.swift` (382 → 321 lines) into `RoutinePlayerView+Done.swift`, and
+`RoutineBlockDoneView.swift` (breached at 430 lines and a 264-line type body) into
+`RoutineBlockDoneView+CommandRow.swift`. The second split required widening a handful of `private`
+members to internal — the ordinary cost of a file split in this codebase, and preferable to
+compressing the copy §5 calls load-bearing.
 
 ## Build slicing
 

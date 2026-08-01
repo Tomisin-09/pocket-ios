@@ -6,6 +6,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Command can now move down, not just up.** Finishing a drill has always offered to bump its command
+  tempo — but the ramp finishes on a timer whether or not you played it clean, so that offer turned up
+  after bad runs too, right under the question "how clean did that feel?". Now the answer you give
+  decides which way the offer points: rate it low and it offers to **settle** command at the tempo the
+  run's own back-off just played, rather than push it higher. Rate it high, or don't rate it at all,
+  and nothing changes from before. It's opt-in either way, it never moves a tempo on its own, and the
+  step back can be as big as you need — all the way down, not just one notch. Progress isn't a straight
+  line, and dropping back to a tempo you actually own is the technique, not a setback.
 - **Red Moon now remembers your practice.** Every drill you finish is recorded — when it was, how long
   it ran, and the tempo it ran at. It happens quietly in the background; there is nothing to turn on and
   nothing to fill in. A run you stop part-way isn't recorded, because it has no honest length to claim.

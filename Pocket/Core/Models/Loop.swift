@@ -268,6 +268,43 @@ final class Loop {
         if let pinned = targetSpeedOverride, pinned <= command { targetSpeedOverride = nil }
     }
 
+    /// The **backoff floor** the ramp's tail settles to, in *integer percent* (ADR 0134 §3) — the
+    /// loop counterpart of `Exercise.derivedBackoff`, and the default the post-run settle offer
+    /// proposes.
+    ///
+    /// **Percent, not `×`, on purpose.** `CommandRamp.plateaus` derives the tail *after*
+    /// `LoopCommandRamp` has converted every anchor to whole percent, so deriving here in `×` and
+    /// converting afterwards would round twice and could disagree with the tempo the run actually
+    /// played by a percent. Returning the same integer the ramp computes means the offer and the tail
+    /// cannot drift — the argument `rampFloor` already makes for the warm-up floor (ADR 0129
+    /// sub-decision 1).
+    ///
+    /// Derived, never stored: no field, no migration. Honours a pinned `backoffSpeedOverride` so the
+    /// offer proposes what the tail will actually play.
+    var backoffPercent: Int {
+        if let pinned = backoffSpeedOverride { return LoopCommandRamp.percent(pinned) }
+        return TempoStretch.backoffBPM(command: LoopCommandRamp.percent(command),
+                                       target: LoopCommandRamp.percent(targetSpeed),
+                                       floor: LoopCommandRamp.percent(rampFloor))
+    }
+
+    /// **Settle** command down to a speed the player owns cleanly (ADR 0134) — the mirror of
+    /// `promoteCommand`.
+    ///
+    /// Shorter than `Exercise.settleCommand` by two steps, both for structural reasons rather than
+    /// oversight: `rampFloor` is `min(command - measuredWarmupGap, speed)`, so it *forces* a gap below
+    /// command and the warm-up can never invert the way an exercise's can; and a loop carries no
+    /// rhythm binding to re-bind — `commandNotesPerBeat` is exercise-only (ADR 0121), because a loop's
+    /// tempo is a percent of a recording whose rhythm is whatever the recording plays.
+    ///
+    /// What remains is the **backoff pin**: `CommandRamp.plateaus` appends the tail only while
+    /// `backoff < command`, so a pin at or above the settled command deletes it outright. A pinned
+    /// *reach* is left alone — still above command, so the invariant holds.
+    func settleCommand(to speed: Double) {
+        commandTempo = speed
+        backoffSpeedOverride = CommandOffer.survivingBackoffPin(backoffSpeedOverride, command: speed)
+    }
+
     /// The command-anchored **training ramp** this loop prescribes (ADR 0046 Phase B) — warm up →
     /// dwell at command → summit at the reach → back off, in percent units, from the saved ramp-shape
     /// fields so the routine player (ADR 0066) runs a stored recipe with no setup UI. Pure/UI-free.
