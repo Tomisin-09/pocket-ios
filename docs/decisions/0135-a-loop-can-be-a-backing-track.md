@@ -209,7 +209,9 @@ follow ear training's placement exactly; the third item is a defect the placemen
   `commandTempo != nil || isBackingTrack` in both places, and the "no measured loops yet" empty-state
   copy — which today instructs the player to set a command tempo — has to admit the second route in.
 
-- **B9a — The same tension already exists for ear training, unresolved.** ADR 0104 ungated the
+- **B9a — The same tension already exists for ear training, unresolved.** *(Resolved by ADR 0138,
+  which recasts B9's widened gate as a per-mode precondition — same outcome for backing tracks,
+  stated so it answers ear training too.)* ADR 0104 ungated the
   edit-sheet launch but its routine bucket kept `trainableLoops`, so an unmeasured loop cannot be
   added to a routine as an ear block either. Nobody hit it because ear training has no flag of its own
   to be overruled. Widening the gate per B9 does not fix ear training's case; whether ear training

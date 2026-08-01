@@ -164,6 +164,33 @@ Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` thr
 `.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
 bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
 
+## Each mode gates on what it needs (ADR 0138, Proposed — unbuilt)
+
+Closes ADR 0135 §B9a and refines §B9. `LoopLibraryView.visibleLoops` and
+`AddRoutineUnitSheet.trainableLoops` both test `commandTempo != nil`, and the add-sheet applies it to
+**two** buckets — which is why Loops and Ear training show the same count. The rule is real for the
+trainer (the command tempo anchors the ramp) and irrelevant to every other mode.
+
+For ear training it's worse than irrelevant, it's inverted: `commandTempo` is *"the fastest tempo the
+player owns this loop at"* — a measurement you can only make by playing the passage. Ear training is
+the one mode that needs no instrument in hand, and it's the mode gated behind having already played
+the thing. The one practice available when you can't practise is hidden until you have.
+
+**Decided: the gate moves from the loop to the mode.** Trainer keeps `commandTempo != nil`; ear needs
+only resolvable audio (the shape `playableSongs` already uses for the Songs bucket — that precedent
+exists, loops just never got it); improvise needs `isBackingTrack`. The Ear bucket's count will exceed
+the Loops count, and that's the message rather than a defect. `LoopLibraryView`'s default list stays
+trainer-gated (admitting every scratch region would drown the practice library) and gains an all-loops
+filter in ADR 0126's trailing menu, with per-row affordances gated per mode. Empty-state copy has to
+admit all three routes.
+
+Explicitly out of scope (§G5): no new destination, no Home card, no session type — ADR 0094 T1's
+dedicated ear space stays deferred where ADR 0104 E1 left it. Named but **not** fixed (§G6), both
+planner-side and neither a gate: the three `ear.*` skills map to `ExerciseTemplate.earTraining`, which
+isn't in `creatable`, so they resolve to **zero candidates** permanently (mirror of the
+`improv.vocabulary` hole); and `SkillMode.offGuitar` sits on eight skills with **nothing branching on
+it** — the vocabulary for "practice without your instrument" exists with no consumer.
+
 ## Dueness comes from the log (ADR 0137, Proposed — unbuilt)
 
 Closes ADR 0135 §B10. `DueScore` is `goalWeight × dueness(lastPracticed) × (1 − mastery/5)`, but
