@@ -164,6 +164,40 @@ Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` thr
 `.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
 bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
 
+## Practice you can do without your instrument (ADR 0139, Proposed — unbuilt)
+
+Closes ADR 0138 §G6, both halves. Two facts that had never been introduced: the three `ear.*` skills
+map to `ExerciseTemplate.earTraining`, which isn't in `creatable`, so they resolve to **zero
+candidates** permanently — the mode shipped and the planner was never told. And `SkillMode.offGuitar`
+sits on eight skills (`ear.*`, `know.*`, songwriting) with nothing branching on it. Between them is
+*"I have fifteen minutes and no guitar"* — a real, frequent situation no practice app answers,
+because they all assume the instrument is in your hands.
+
+- **Slice 1 — ear becomes plannable, and the session type exists.** Off-guitar is a property of the
+  **mode**, not the material (ADR 0138 §G1 again): `LoopRunMode.ear` is off-guitar, `.trainer` and
+  `.improvise` aren't, and no flag lands on `Loop`. Audible loops serve the `ear.*` skills **by
+  capability** — no tag — which makes three routes now deliberate: by tag (ADR 0074), by flag (0135),
+  by capability (here). The session type is a `constraint` parameter on the existing entry points,
+  defaulted to none; same weighting, dueness and packing, smaller pool. Sizing already works —
+  `estimatedMinutes(for:mode:plannedMinutes:)` opens with `guard mode != .ear`, written mode-aware and
+  never yet exercised.
+- **Slice 2 — freeform blocks (ADR 0136) may declare themselves off-guitar.** Player-declared, never
+  inferred (§F8 holds). This is what makes the session more than three ear blocks, and it's the
+  general route for transcription / note-names / songwriting.
+
+**Shares its one structural change with ADR 0135 §B6a:** `PlannerCandidate` and `SessionBlock` carry
+no `LoopRunMode`, so an ear-resolved loop would build as a trainer block and hand the player a ramp
+they can't run. Whichever ADR is built first owns it. Dedup must stay keyed on the unit, not
+unit-plus-mode, or one loop appears twice in a session (once to train, once to sing back).
+
+Decided too: user-facing name is **"Away from your instrument"**, never "off-guitar" — ADR 0116 made
+this multi-instrument and a bassist shouldn't be offered a guitar-named session; the taxonomy case
+keeps its name in code. Not fixed (§O7): `know.*` and `create.songwriting` have the same
+zero-candidate hole, but unlike ear there's no shipped mode behind them — fixing that means a theory
+surface (ADR 0094 T1, still deferred), and the honest interim is a freeform block the player writes.
+Honest limitation: the session is only as good as the loop library, so it lands better for
+established users than new ones, and the empty state has to say something useful.
+
 ## Each mode gates on what it needs (ADR 0138, Proposed — unbuilt)
 
 Closes ADR 0135 §B9a and refines §B9. `LoopLibraryView.visibleLoops` and
