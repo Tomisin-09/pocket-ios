@@ -212,4 +212,36 @@ enum PracticeLog {
     static func minutes(_ seconds: Double) -> Int {
         Int((max(0, seconds) / 60).rounded())
     }
+
+    // MARK: - Recency
+
+    /// When each **unit** was last practised — the map the planner ranks recency on (ADR 0137).
+    ///
+    /// This is the log's second job. Every stat above describes *how much*; this one answers *how long
+    /// ago*, for one unit at a time, because `Loop` carries no `lastPracticed` field of its own and the
+    /// planner would otherwise rank every loop as never-practised forever.
+    ///
+    /// **Rows with no `unitUID` are skipped.** A play-along logs `nil` — `Song` is identified by its
+    /// `SongRef`, not a business `uid` (ADR 0117) — and a row that names no unit can say nothing about
+    /// one. Songs keep their own stored `lastPracticed`; nothing here is needed for them.
+    ///
+    /// **Every kind counts, and the mode is not distinguished** (ADR 0137 D2a): an `.earLoop` row makes
+    /// its loop less due as a trainer, and an `.improvise` row will too. The question is *when did you
+    /// last work on this material*, not *in which mode* — per-kind recency would let a loop you sang
+    /// back yesterday claim to be untouched and resurface it against one you genuinely haven't seen.
+    ///
+    /// **Completed runs only**, which is the whole log: a hand-stopped run writes no row
+    /// (`PracticeLogWriter`), so this measures work done rather than screens opened (D4). Opening a
+    /// drill and bailing does not reset its dueness.
+    ///
+    /// Latest wins. Built in one pass rather than by sorting — the caller hands over the entire log.
+    static func lastPracticedByUnit(_ records: [SessionRecord]) -> [UUID: Date] {
+        var result: [UUID: Date] = [:]
+        for record in records {
+            guard let unitUID = record.unitUID else { continue }
+            if let seen = result[unitUID], seen >= record.startedAt { continue }
+            result[unitUID] = record.startedAt
+        }
+        return result
+    }
 }

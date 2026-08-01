@@ -11,17 +11,19 @@ Five ADRs landed as **decisions only, no Swift**: 0135–0138 on main (squash `0
 *across* them, which lives nowhere else. Two tracks that barely touch — Track A is loops/planner,
 Track B is the freeform block.
 
-**A0 — verify ADR 0117's write path on device. Not a branch; do it first.** Practise an exercise, a
-loop and an ear block, then confirm the rows are in the store. ADR 0137 makes candidate ranking depend
-on that path, and it has never been store-verified end-to-end; a seam that silently fails to log makes
-its unit read **max-due forever** (0137 §D7). Fail-safe in direction, silent in practice, miserable to
-find later.
+**A0 — verify ADR 0117's write path on device. ✅ DONE 2026-08-01.** All three seams exercised on the
+iPhone and the store read directly (`devicectl … --domain-type appDataContainer`, then SQL over
+`ZPRACTICERUN`): `.exercise`, `.loop` and `.earLoop` rows all present, every `unitUID` resolving to a
+real named exercise or loop, `routineUID` set for routine blocks, tempo fields populated per kind. No
+seam silently fails to log. One thing surfaced that ADR 0138 should decide: **standalone ear training
+(`EarTrainingSheet`) writes no row at all** — ADR 0117 rules it open-ended — so only ear blocks *inside
+a routine* contribute dueness.
 
-1. **ADR 0137 — dueness from the log.** Smallest and highest leverage: a pure
+1. **ADR 0137 — dueness from the log. ✅ BUILT 2026-08-01** (`pocket-218-dueness-from-the-log`).
    `PracticeLog.lastPracticedByUnit` + tests, a defaulted `lastPracticed:` param on
-   `PracticePlanner.library`, two call sites querying the log. No UI, no schema, no migration. Every
-   planner claim downstream becomes meaningful the moment it lands. Verify with a planner test ranking
-   two equal-mastery loops of different recency.
+   `PracticePlanner.library` and `planGoalSession`, and **one** call site querying the log — not two:
+   `RoutineLibraryView` and the goal-less fallback both use `planQuickSession`, which is
+   exercises-only and never projects a loop. No UI, no schema, no migration.
 2. **ADR 0138 — per-mode gates (ear arm).** Split `trainableLoops` three ways, drop the gate on the
    Ear bucket, add the all-loops filter and per-mode row affordances, rewrite the empty state. Ships a
    standalone win — ear training reachable without a command tempo — worth device-testing alone before

@@ -1,6 +1,8 @@
 # 0137 — Dueness comes from the log (so a loop can finally be due)
 
-- **Status:** Proposed (2026-08-01)
+- **Status:** Accepted — **built** 2026-08-01 (`pocket-218-dueness-from-the-log`), as one slice. Two
+  corrections found at build, recorded in §Build notes: there is **one** live call site needing the
+  map, not two, and D7's device verification was carried out first and passed.
 - **Date:** 2026-08-01
 - **Closes:** ADR 0135 §B10, which recorded this as a limitation of the backing-track planner slice
   rather than fixing it there — the defect is planner-wide, not specific to backing loops.
@@ -127,6 +129,29 @@ second one.
   tests (including: multiple kinds for one unit, `nil` `unitUID` skipped, latest-wins), the defaulted
   `lastPracticed:` parameter on `PracticePlanner.library`, and the two call sites querying the log.
   Verifiable by a planner test that ranks two loops of equal mastery and different recency.
+
+## Build notes (2026-08-01)
+
+- **One live call site, not two.** D3 named `PlannerView` and `RoutineLibraryView`. Only
+  `PlannerView`'s goal-session path projects loops at all: `RoutineLibraryView.generateQuickSession`
+  and `PlannerView`'s own goal-less fallback both call `planQuickSession`, which is **exercises-only**
+  and never builds a `PlannerLoop`. It therefore takes no map and needed no change. Nothing else
+  constructs a `PlannerLoop` — `PracticePlanner.library` is the single projection site, and
+  `CollectionSessionBuilder` orders by name or shuffle rather than by `DueScore`, so it is untouched.
+  `planGoalSession` gained the defaulted parameter too, since it builds the library internally.
+- **D7's device verification was done first and passed.** All three seams were exercised on the
+  iPhone and the store read directly (`devicectl … --domain-type appDataContainer`, then SQL over
+  `ZPRACTICERUN`): `.exercise`, `.loop` and — for the first time — `.earLoop` rows were all present,
+  each `unitUID` resolving to a real named exercise or loop, with `routineUID` set for routine
+  blocks and the tempo fields populated per kind. The silent-failure mode this ADR worried about
+  (a seam that writes nothing, leaving its unit max-due forever) is not present on any of them.
+- **A gap D2a inherits from ADR 0117, worth stating before ADR 0138.** Ear training run from
+  `EarTrainingSheet` (standalone) writes **no row at all** — ADR 0117 rules it open-ended, so it has
+  no completed run to log. Only ear *blocks inside a routine* (`EarLoopRunView`) log. So a loop
+  ear-trained standalone contributes nothing to its own dueness, while the same work inside a routine
+  does. That is consistent today, but ADR 0138 exists to widen access to ear training; whether that
+  widening should also make standalone ear runs loggable is a question for **that** ADR, not a defect
+  in this one.
 
 ## Follow-ups (not in scope)
 
