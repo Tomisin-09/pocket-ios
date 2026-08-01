@@ -132,8 +132,19 @@ but not every loop is jammable.
   edit sheet: continuous playback, live percent (`setAuditionPercent`, no ramp), Journal note under a
   new `EntryKind.improvise`. Backing filter beside Favourites in the loops library — in-memory, not a
   `#Predicate`.
+  The run follows `EarLoopRunView`'s shape: clock starts on appearance, an explicit **Done** is a
+  genuine completion, no `RoutineBlockDoneView` (nothing to grade), logs a new
+  `PracticeRunKind.improvise` with no tempo.
 - **Slice 2 — the routine block.** `LoopRunMode.improvise` + `ImproviseLoopRunView`, mirroring ADR
-  0104 Slice 2's `.ear` wiring.
+  0104 Slice 2's `.ear` wiring. Access points decided (§B8/B8a): a fifth `bucketRow` in
+  `AddRoutineUnitSheet`, and a per-row button in `LoopLibraryView` beside Ear but **only on flagged
+  rows** — the Improvise count diverging from Ear's is the flag explaining itself.
+- **Blocker on both access points (§B9):** `LoopLibraryView.visibleLoops` and
+  `AddRoutineUnitSheet.trainableLoops` both gate on `commandTempo != nil`, and a backing track has
+  none by design — so a flagged, unmeasured loop is invisible on the two screens the flag exists to
+  populate. Gate becomes `commandTempo != nil || isBackingTrack`; the "no measured loops yet" copy
+  has to admit the second route. The same tension already exists for ear-training blocks and stays
+  unresolved (§B9a).
 - **Slice 3 — the planner.** Closes a hole worth naming on its own: `improv.vocabulary` is
   `.repertoire` mode, `repertoireCandidates` returns `[]` without a target song, and the "Improvise in
   a style" goal template sets `requiresTargetSong: false` — so that goal's improv-specific skill
@@ -141,6 +152,14 @@ but not every loop is jammable.
   skills still resolve. Backing loops become that skill's unit, planned as `play` blocks (unbudgeted,
   ADR 0014 R1). Needs `SessionBlock` to carry a `LoopRunMode`, which it doesn't today — the only
   non-mechanical piece.
+
+**Loop dueness is inert — found while tracing §B6, not caused by it.** `Loop` has no `lastPracticed`
+field, and `PracticePlanner.library` hard-codes `lastPracticed: nil` for every loop, which
+`DueScore.dueness` reads as *max-due*. So `goalWeight × dueness × (1 − mastery/5)` collapses to
+mastery alone for **every** loop candidate: the time-driven resurfacing half does nothing, and a loop
+practised this morning ranks level with one untouched for a year. Exercises get the real formula via
+`Exercise.lastPracticed` + `markPracticed()`. ADR 0117's per-unit-run rows are timestamped, so the
+data to fix this exists for the first time — nothing reads it back. Parked as its own decision.
 
 Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` through the Hear engine
 (re-loses ADR 0104 E5 — the point is real music, and the sampler tone isn't a bed); overloading

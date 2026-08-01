@@ -75,6 +75,16 @@ Improvising has no unit in the library that can serve it. A backing loop is exac
   the established safe way, a new case on the `String`-raw enum with a computed glyph/label, never a
   raw enum attribute on the `@Model`. Unknown raws still fold to `.note`, so no migration.
 
+- **B3b — The run ends when the player says so, and that counts (ADR 0104's shape).** A jam has no
+  ramp and no natural end, so — exactly as `EarLoopRunView` does — the clock starts on appearance
+  rather than on a transport action, and an explicit **Done** is treated as a *genuine completion*,
+  not a hand-stop: the player deciding they're finished **is** the end of the run. Skip and exit log
+  nothing. It writes a `PracticeRunKind.improvise` row (a new case beside `.earLoop`, on the same
+  reasoning — the same material doing a different job, so it earns minutes and days without muddying
+  a loop's tempo trajectory) with **no tempo**: a jam isn't practised *at* a tempo you own, and the
+  live percent is a comfort setting, not an achievement. Like an ear block and unlike a trainer
+  block, it shows **no `RoutineBlockDoneView`** — there is nothing to grade or promote (B5).
+
 - **B4 — The flag's job is a filtered collection.** The Loops library gains a backing-tracks filter
   beside the existing Favourites one, which across every song's loops gives the player a *jam over
   something* shelf the per-song browse can't. Implemented as an **in-memory** filter on the fetched
@@ -171,6 +181,48 @@ Improvising has no unit in the library that can serve it. A backing loop is exac
 - **Slice 3 — the planner.** B6/B6a: `PlannerLoop.isBackingTrack`, the `improv.vocabulary` resolution,
   the `play`-kind placement, and carrying `LoopRunMode` through `SessionBlock` into the materialised
   `RoutineItem`. Closes the empty-goal hole.
+
+## Amendment — access points, and the gate that would have hidden them (2026-08-01)
+
+Where the mode is reached from, decided against the two screens rather than in the abstract. Both
+follow ear training's placement exactly; the third item is a defect the placement exposed.
+
+- **B8 — A fifth bucket in the add-to-routine sheet.** `AddRoutineUnitSheet` already carries "the four
+  typed buckets (ADR 0104 Slice 2 adds Ear training)"; **Improvise** joins them as one more
+  `bucketRow`. Note what its **count** says that Ear training's cannot: the Ear bucket shows every
+  library loop, because any loop can be sung back; the Improvise bucket shows only flagged ones. The
+  two counts diverging on screen is B1's distinction made visible, and is the cheapest possible
+  explanation of what the flag is for.
+
+- **B8a — A per-row button in the loops library, on flagged rows only.** `LoopLibraryView`'s rows
+  carry a trailing **Ear** button; Improvise sits beside it — but **only when `isBackingTrack`**,
+  unlike Ear which is on every row. The asymmetry is deliberate and is the same asymmetry as B8: the
+  button's presence *is* the flag's payoff, and a row that isn't a backing track shouldn't offer an
+  affordance that leads to a bad bed.
+
+- **B9 — The measured-loop gate has to widen, or B8/B8a surface nothing.** Both screens filter on
+  `commandTempo != nil` (`LoopLibraryView.visibleLoops`; `AddRoutineUnitSheet.trainableLoops`) —
+  setting a command tempo is what promotes a loop into Practice → Loops at all. **A backing track has
+  no command tempo and must not need one**: it is a bed, not a measured target, which is exactly why
+  B2 ungates its launch from the edit sheet. Without this, a loop the player flags and never measures
+  is invisible on both screens the flag exists to populate. The gate becomes
+  `commandTempo != nil || isBackingTrack` in both places, and the "no measured loops yet" empty-state
+  copy — which today instructs the player to set a command tempo — has to admit the second route in.
+
+- **B9a — The same tension already exists for ear training, unresolved.** ADR 0104 ungated the
+  edit-sheet launch but its routine bucket kept `trainableLoops`, so an unmeasured loop cannot be
+  added to a routine as an ear block either. Nobody hit it because ear training has no flag of its own
+  to be overruled. Widening the gate per B9 does not fix ear training's case; whether ear training
+  should also escape the measured gate is a separate question this ADR does not settle.
+
+- **B10 — Known limitation on B6: loop dueness is inert.** `Loop` has no `lastPracticed` field, and
+  `PracticePlanner.library` hard-codes `lastPracticed: nil` for every loop, which `DueScore.dueness`
+  treats as **max-due**. So a backing loop resolved for the improv goal ranks on `goalWeight ×
+  mastery` alone — the time-driven resurfacing half of the formula does nothing for any loop, not
+  just these. Not caused by this ADR and not fixed by it. Worth naming because ADR 0117 now writes
+  timestamped per-unit-run rows (`.loop`, `.earLoop`, and `.improvise` when it lands), so the data to
+  make loop dueness real exists for the first time — nothing reads it back yet. Parked as its own
+  decision.
 
 ## Parked follow-ups (not sliced)
 
