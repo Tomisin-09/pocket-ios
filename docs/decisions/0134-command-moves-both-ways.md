@@ -214,8 +214,10 @@ which does three things beyond the assignment:
 the new one, so the invariant holds and there is nothing to fix. Clearing it would throw away a goal
 the player set for no reason.
 
-The loop mirror (`Loop.settleCommand(to:)`) is the backoff-pin clear and the rhythm rebind only, per
-the note above. It is worth observing that `LoopRunView+Actions` already clamps
+The loop mirror (`Loop.settleCommand(to:)`) is the **backoff-pin clear alone**: the floor pull-down
+is unnecessary per the note above, and a loop carries no rhythm binding at all — `commandNotesPerBeat`
+is exercise-only (ADR 0121), because a loop's tempo is a percent of a recording whose rhythm is
+whatever the recording plays. It is worth observing that `LoopRunView+Actions` already clamps
 `working = min(command, …)` in its manual nudges: the working-below-command invariant is real, is
 currently enforced at a screen rather than on a model, and `commitCompletion` writes `command`
 straight past it. Putting the settle in the model is what keeps that from becoming a second bug.
