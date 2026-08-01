@@ -146,31 +146,16 @@ extension LoopRunView {
                               into: modelContext)
     }
 
-    /// The promote offer for the standalone completion screen (ADR 0082) — `nil` when the
-    /// (ceiling-clamped) reach isn't above command, so the row is omitted. Percent-of-original units;
-    /// the ceiling is the playback percent range's upper bound. The target defaults to the reach and
-    /// is editable from just above the summited command up to that ceiling.
-    func completionRaiseConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.CommandConfig? {
-        let ceiling = Self.percentRange.upperBound
-        guard CommandOffer.canRaise(command: finished.command, reach: finished.reach, ceiling: ceiling)
-        else { return nil }
-        // A loop's command is a percent of original, so the nudge reads "90%" (ADR 0082), never a BPM.
-        return .init(direction: .raise,
-                     defaultTarget: CommandOffer.raisedCommand(reach: finished.reach, ceiling: ceiling),
-                     minValue: finished.command + 1, maxValue: ceiling, unit: .percent)
-    }
-
-    /// The **settle** offer for the standalone completion screen (ADR 0134) — `nil` when command is
-    /// already at the playback floor. Defaults to `loop.backoffPercent`, the tempo this run's own tail
-    /// played, and ranges down to the floor rather than stopping there (§4). Percent throughout.
-    func completionSettleConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.CommandConfig? {
-        let floor = Self.percentRange.lowerBound
-        guard CommandOffer.canSettle(command: finished.command, floor: floor) else { return nil }
-        return .init(direction: .settle,
-                     defaultTarget: CommandOffer.settledCommand(backoff: loop.backoffPercent,
-                                                                floor: floor,
-                                                                command: finished.command),
-                     minValue: floor, maxValue: finished.command - 1, unit: .percent)
+    /// The tempo anchors the standalone completion screen sizes its revision offer from (ADR 0082,
+    /// mirroring ADR 0079 / 0134). Percent-of-original throughout — a loop's command is a percent, so
+    /// every value here reads "90%", never a BPM. The settle target is `loop.backoffPercent`, derived
+    /// in the same percent domain `CommandRamp` works in so the offer and the tail cannot disagree.
+    func completionAnchors(_ finished: RunCompletion) -> CommandOffer.Anchors {
+        .init(command: finished.command,
+              floor: Self.percentRange.lowerBound, ceiling: Self.percentRange.upperBound,
+              raiseTarget: CommandOffer.raisedCommand(reach: finished.reach,
+                                                      ceiling: Self.percentRange.upperBound),
+              settleTarget: loop.backoffPercent)
     }
 
     /// Commit the post-run completion screen (ADR 0082) — the same `RoutineBlockDoneView` a routine

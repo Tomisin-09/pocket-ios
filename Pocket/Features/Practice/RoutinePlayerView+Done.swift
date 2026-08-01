@@ -44,8 +44,7 @@ extension RoutinePlayerView {
     func doneView(for stage: RoutineStage) -> some View {
         RoutineBlockDoneView(title: stage.title,
                              initialMastery: mastery(for: stage),
-                             raise: raiseConfig(for: stage),
-                             settle: settleConfig(for: stage),
+                             anchors: revisionAnchors(for: stage),
                              isLast: player.upNext == nil,
                              upNext: upNextDescriptor()) { mastery, note, kind, revision in
             commitDone(stage, mastery: mastery, note: note, kind: kind, revision: revision)
@@ -63,34 +62,17 @@ extension RoutinePlayerView {
         }
     }
 
-    /// The **raise** offer for the Done screen (ADR 0079 §7), or `nil` for no row — only for an
-    /// **exercise** unit whose (ceiling-clamped) reach sits above command (nothing to raise to
-    /// otherwise, and a routine's loop blocks carry no revision offer at all, ADR 0079 §Scope). The
-    /// target defaults to the reach and is editable from just above command up to the BPM ceiling.
-    func raiseConfig(for stage: RoutineStage) -> RoutineBlockDoneView.CommandConfig? {
-        let ceiling = StandaloneMetronomeEngine.bpmRange.upperBound
-        guard let exercise = stage.exercise,
-              CommandOffer.canRaise(command: exercise.command, reach: exercise.reachTempo,
-                                    ceiling: ceiling)
-        else { return nil }
-        return .init(direction: .raise,
-                     defaultTarget: CommandOffer.raisedCommand(reach: exercise.reachTempo,
-                                                               ceiling: ceiling),
-                     minValue: exercise.command + 1, maxValue: ceiling)
-    }
-
-    /// The **settle** offer for the Done screen (ADR 0134), or `nil` when command is already at the
-    /// device floor. Exercises only, matching the raise. The target defaults to `derivedBackoff` — the
-    /// tempo this block's own tail just played — and ranges down to the floor (§3, §4).
-    func settleConfig(for stage: RoutineStage) -> RoutineBlockDoneView.CommandConfig? {
-        let floor = StandaloneMetronomeEngine.bpmRange.lowerBound
-        guard let exercise = stage.exercise,
-              CommandOffer.canSettle(command: exercise.command, floor: floor)
-        else { return nil }
-        return .init(direction: .settle,
-                     defaultTarget: CommandOffer.settledCommand(backoff: exercise.derivedBackoff,
-                                                                floor: floor,
-                                                                command: exercise.command),
-                     minValue: floor, maxValue: exercise.command - 1)
+    /// The tempo anchors the Done screen sizes its revision offer from (ADR 0079 §7, ADR 0134), or
+    /// `nil` for a unit that carries no offer — a routine's **loop** blocks and songs, unchanged by
+    /// 0134. Read live from the model rather than snapshotted: unlike a standalone run there is no
+    /// completion value to preserve, and the block has already finished.
+    func revisionAnchors(for stage: RoutineStage) -> CommandOffer.Anchors? {
+        guard let exercise = stage.exercise else { return nil }
+        let range = StandaloneMetronomeEngine.bpmRange
+        return .init(command: exercise.command,
+                     floor: range.lowerBound, ceiling: range.upperBound,
+                     raiseTarget: CommandOffer.raisedCommand(reach: exercise.reachTempo,
+                                                             ceiling: range.upperBound),
+                     settleTarget: exercise.derivedBackoff)
     }
 }

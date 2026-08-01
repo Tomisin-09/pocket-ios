@@ -162,33 +162,17 @@ extension ExerciseRunView {
                               into: modelContext)
     }
 
-    /// The **raise** offer for the standalone completion screen (ADR 0079) — `nil` when the
-    /// (ceiling-clamped) reach isn't above command. The target defaults to the reach and is editable
-    /// from just above the summited command up to the BPM ceiling.
-    func completionRaiseConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.CommandConfig? {
-        let ceiling = StandaloneMetronomeEngine.bpmRange.upperBound
-        guard CommandOffer.canRaise(command: finished.command, reach: finished.reach, ceiling: ceiling)
-        else { return nil }
-        return .init(direction: .raise,
-                     defaultTarget: CommandOffer.raisedCommand(reach: finished.reach, ceiling: ceiling),
-                     minValue: finished.command + 1, maxValue: ceiling)
-    }
-
-    /// The **settle** offer for the standalone completion screen (ADR 0134) — `nil` when command is
-    /// already at the device floor, where there is nowhere to settle to.
-    ///
-    /// The default is `derivedBackoff`: the tempo this run's own tail played, minutes ago (§3). The
-    /// range runs all the way down to the device floor rather than stopping at that backoff — the case
-    /// this exists for is sometimes a drop of twenty BPM, not four, and capping the retreat at one
-    /// reach-width would encode the idea that only small steps back are legitimate (§4).
-    func completionSettleConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.CommandConfig? {
-        let floor = StandaloneMetronomeEngine.bpmRange.lowerBound
-        guard CommandOffer.canSettle(command: finished.command, floor: floor) else { return nil }
-        return .init(direction: .settle,
-                     defaultTarget: CommandOffer.settledCommand(backoff: exercise.derivedBackoff,
-                                                                floor: floor,
-                                                                command: finished.command),
-                     minValue: floor, maxValue: finished.command - 1)
+    /// The tempo anchors the standalone completion screen sizes its revision offer from (ADR 0079,
+    /// widened by ADR 0134). The reach/command are the run's own snapshot, so later edits can't
+    /// retroactively change what was offered; the settle target is `derivedBackoff` — the tempo this
+    /// run's tail actually played, minutes ago (§3).
+    func completionAnchors(_ finished: RunCompletion) -> CommandOffer.Anchors {
+        let range = StandaloneMetronomeEngine.bpmRange
+        return .init(command: finished.command,
+                     floor: range.lowerBound, ceiling: range.upperBound,
+                     raiseTarget: CommandOffer.raisedCommand(reach: finished.reach,
+                                                             ceiling: range.upperBound),
+                     settleTarget: exercise.derivedBackoff)
     }
 
     /// Commit the post-run completion screen (ADR 0079, ADR 0134) — the same `RoutineBlockDoneView` a

@@ -207,8 +207,7 @@ struct LoopRunView: View {
             // directions are passed; the mastery tap picks between them (ADR 0134).
             RoutineBlockDoneView(title: title,
                                  initialMastery: loop.mastery,
-                                 raise: completionRaiseConfig(finished),
-                                 settle: completionSettleConfig(finished),
+                                 anchors: completionAnchors(finished), unit: .percent,
                                  isLast: true, upNext: nil) { mastery, note, kind, revision in
                 commitCompletion(mastery: mastery, note: note, kind: kind, revision: revision)
             }

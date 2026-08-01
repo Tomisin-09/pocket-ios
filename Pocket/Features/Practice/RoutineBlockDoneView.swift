@@ -25,30 +25,31 @@ enum TempoUnit: Equatable {
 /// on (the default — ADR 0071 R4) — **and reused for a standalone exercise finish** (`upNext: nil`,
 /// ADR 0079 §2), so a solo run and a routine block share one completion surface. It **collapses** the
 /// earlier separate two-option reflection sheet into one surface: a completion beat, an *optional*
-/// mastery tap, an *optional* inline journal note, an *optional* post-run promote toggle (exercises,
-/// ADR 0079 §7), and a single primary **Continue / Finish** that commits them in one action (the P3
+/// mastery tap, an *optional* inline journal note, an *optional* post-run command-revision toggle
+/// (exercises, ADR 0079 §7 / ADR 0134), and a single primary **Continue / Finish** that commits them in one action (the P3
 /// lesson — no competing "Add entry" button). In a routine a deliberate Skip bypasses this gate, and
 /// auto-advance skips it entirely; it appears only for units that carry a journal (exercise/loop),
 /// never a song/rest.
 ///
 /// No evaluation (ADR 0070): mastery is the player's own self-rating, never a score the app measured,
-/// and the promote is an opt-in offer, never an automatic bump. The host commits — this view only
-/// gathers `(mastery, note, promote)` and hands them back — so it stays SwiftData-free and previewable.
+/// and the revision is an opt-in offer, never an automatic bump — the app opens a range, the player
+/// picks the number. The host commits; this view only gathers `(mastery, note, revision)` and hands
+/// them back, so it stays SwiftData-free and previewable.
 struct RoutineBlockDoneView: View {
     /// The just-finished block's title (the drill name) — the completion line names what you did.
     let title: String
     /// The unit's current self-rated mastery (0–5, `nil` = unrated), pre-filled so a tap *adjusts*
     /// rather than starts from blank.
     let initialMastery: Int?
-    /// The **raise** offer (ADR 0079 §7) — `nil` when there's no headroom above command, or for a unit
-    /// that carries no offer at all. When present the row's target is editable, defaulting to the reach.
-    let raise: CommandConfig?
-    /// The **settle** offer (ADR 0134) — `nil` when command is already at the instrument's floor, or
-    /// for a unit that carries no offer at all. Defaults to the backoff the run's tail just played.
+    /// The tempo anchors the revision offer is sized from (ADR 0134), or `nil` for a unit that
+    /// carries no offer at all (a routine's loop blocks, songs, rests).
     ///
-    /// Both are passed because neither depends on the rating, while *which one shows* does: the
-    /// player picks the direction by tapping the mastery dots on this screen, after it was built.
-    let settle: CommandConfig?
+    /// One value rather than a per-direction config, because none of it depends on the rating while
+    /// *how the offer leans* does: the player chooses the lean by tapping the mastery dots on this
+    /// screen, after it was built. `CommandOffer.bounds(for:anchors:)` turns a lean into a range.
+    let anchors: CommandOffer.Anchors?
+    /// How the revision value reads — bare BPM for an exercise, `%` for a loop (ADR 0082).
+    let unit: TempoUnit
     /// Whether this is the last block — the primary reads **Finish** (→ end-of-routine summary)
     /// instead of **Continue** (→ next block / rest).
     let isLast: Bool
@@ -61,20 +62,6 @@ struct RoutineBlockDoneView: View {
     /// (ADR 0079 §7, ADR 0134) — then advance.
     let onContinue: (_ mastery: Int?, _ note: String, _ kind: EntryKind,
                      _ revision: CommandOffer.Revision?) -> Void
-
-    /// The bounds of one direction's editable command value: where it defaults, the range the ±/typed
-    /// value may take, and how that value **reads** (ADR 0082). Kept value-only so the view stays
-    /// SwiftData-free.
-    struct CommandConfig: Equatable {
-        /// Which way this config moves command. Carried so the row's copy and the committed
-        /// `Revision` read one source rather than inferring a direction from the numbers.
-        let direction: CommandOffer.Direction
-        let defaultTarget: Int
-        let minValue: Int
-        let maxValue: Int
-        /// How the value is unit-labelled. Defaults to bare BPM (exercises); loops set `.percent`.
-        var unit: TempoUnit = .bpm
-    }
 
     /// A plain descriptor of the upcoming unit — kept value-only so this view stays SwiftData-free
     /// (the host builds it from the next stage).
@@ -95,21 +82,24 @@ struct RoutineBlockDoneView: View {
     @State var revisionValue: Int
 
     init(title: String, initialMastery: Int?,
-         raise: CommandConfig? = nil, settle: CommandConfig? = nil,
+         anchors: CommandOffer.Anchors? = nil, unit: TempoUnit = .bpm,
          isLast: Bool, upNext: UpNext?,
          onContinue: @escaping (_ mastery: Int?, _ note: String, _ kind: EntryKind,
                                 _ revision: CommandOffer.Revision?) -> Void) {
         self.title = title
         self.initialMastery = initialMastery
-        self.raise = raise
-        self.settle = settle
+        self.anchors = anchors
+        self.unit = unit
         self.isLast = isLast
         self.upNext = upNext
         self.onContinue = onContinue
         _mastery = State(initialValue: initialMastery)
-        // Seeded from whichever direction the *pre-filled* rating asks for, so the row opens on a
-        // sensible number before any tap; `.onChange(of: activeConfig)` re-seeds it after one.
-        let initial = Self.config(raise: raise, settle: settle, mastery: initialMastery)
+        // Seeded from whatever the *pre-filled* rating leans toward, so the stepper opens on a
+        // sensible number before any tap; `.onChange(of: activeBounds)` re-seeds it after one.
+        let initial = anchors.flatMap { anchors in
+            CommandOffer.stance(mastery: initialMastery, anchors: anchors)
+                .flatMap { CommandOffer.bounds(for: $0, anchors: anchors) }
+        }
         _revisionValue = State(initialValue: initial?.defaultTarget ?? 0)
     }
 
@@ -120,21 +110,21 @@ struct RoutineBlockDoneView: View {
                 masteryTap
                 tagSelector
                 noteField
-                if let activeConfig { revisionRow(activeConfig) }
+                if let activeStance, let activeBounds { revisionRow(activeStance, activeBounds) }
                 if let upNext { upNextCard(upNext) }
             }
             .padding(.horizontal, 24)
             .padding(.top, 48)
             .padding(.bottom, 24)
         }
-        // A rating tap can swap the row's direction (ADR 0134 §2), so the editable value has to be
-        // re-seeded — otherwise a player who taps 5 and then 2 carries a raise target into a settle
-        // row. Flipping the toggle off with it means a direction change is never committed unseen.
-        .onChange(of: activeConfig) { _, updated in
+        // A rating tap can re-lean the row (ADR 0134 §2), so the editable value has to be re-seeded —
+        // otherwise a player who taps 5 and then 2 carries a raise target into a settle row. Flipping
+        // the toggle off with it means a re-lean is never committed unseen.
+        .onChange(of: activeBounds) { _, updated in
             revisionValue = updated?.defaultTarget ?? 0
             revisionOn = false
         }
-        .animation(.easeInOut(duration: 0.2), value: activeConfig)
+        .animation(.easeInOut(duration: 0.2), value: activeStance)
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) { continueBar }
         .background(PocketColor.background.ignoresSafeArea())
@@ -293,27 +283,37 @@ struct RoutineBlockDoneView: View {
 
 /// Both offers, on a drill rated 4 — the row opens on the **raise**. Tapping down to 2 flips it to
 /// the settle in place, which is the interaction worth watching in the canvas (ADR 0134 §2).
-#Preview("Block done · rated 4, raise") {
+/// An exercise at command 100 with plenty of room either way. Rated 4, so the row opens leaning
+/// **raise** — tapping down to 2 re-leans it to settle, and to 3 removes it. That live re-lean is the
+/// interaction worth watching in the canvas (ADR 0134 §2).
+#Preview("Block done · rated 4, leans raise") {
     RoutineBlockDoneView(title: "Alternate picking · 8ths",
                          initialMastery: 4,
-                         raise: .init(direction: .raise, defaultTarget: 106,
-                                      minValue: 93, maxValue: 300),
-                         settle: .init(direction: .settle, defaultTarget: 86,
-                                       minValue: 30, maxValue: 91),
+                         anchors: .init(command: 100, floor: 30, ceiling: 300,
+                                        raiseTarget: 106, settleTarget: 94),
                          isLast: false,
                          upNext: .init(title: "A Minor Pentatonic",
                                        detail: "Command 92 → 98 BPM",
                                        symbol: "point.topleft.down.curvedto.point.bottomright.up")) { _, _, _, _ in }
 }
 
-/// The same screen pre-filled at 2 — opens on the settle, so the copy can be read at rest.
-#Preview("Block done · rated 2, settle") {
+/// The same drill rated 2 — opens leaning **settle**, so that copy can be read at rest.
+#Preview("Block done · rated 2, leans settle") {
     RoutineBlockDoneView(title: "Alternate picking · 8ths",
                          initialMastery: 2,
-                         raise: .init(direction: .raise, defaultTarget: 106,
-                                      minValue: 93, maxValue: 300),
-                         settle: .init(direction: .settle, defaultTarget: 86,
-                                       minValue: 30, maxValue: 91),
+                         anchors: .init(command: 100, floor: 30, ceiling: 300,
+                                        raiseTarget: 106, settleTarget: 94),
+                         isLast: true,
+                         upNext: nil) { _, _, _, _ in }
+}
+
+/// **Unrated** — the neutral prompt, spanning the whole instrument and opening on the command it
+/// already sits at, so committing without moving the stepper changes nothing.
+#Preview("Block done · unrated, neutral") {
+    RoutineBlockDoneView(title: "Alternate picking · 8ths",
+                         initialMastery: nil,
+                         anchors: .init(command: 100, floor: 30, ceiling: 300,
+                                        raiseTarget: 106, settleTarget: 94),
                          isLast: true,
                          upNext: nil) { _, _, _, _ in }
 }
@@ -322,10 +322,9 @@ struct RoutineBlockDoneView: View {
 #Preview("Block done · loop settle") {
     RoutineBlockDoneView(title: "Chorus · bars 33–40",
                          initialMastery: 1,
-                         raise: .init(direction: .raise, defaultTarget: 90,
-                                      minValue: 86, maxValue: 150, unit: .percent),
-                         settle: .init(direction: .settle, defaultTarget: 80,
-                                       minValue: 25, maxValue: 84, unit: .percent),
+                         anchors: .init(command: 85, floor: 25, ceiling: 150,
+                                        raiseTarget: 90, settleTarget: 80),
+                         unit: .percent,
                          isLast: true,
                          upNext: nil) { _, _, _, _ in }
 }

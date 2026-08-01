@@ -10,70 +10,128 @@ final class CommandOfferTests: XCTestCase {
     private let ceiling = StandaloneMetronomeEngine.bpmRange.upperBound
     private let floor = StandaloneMetronomeEngine.bpmRange.lowerBound
 
-    // MARK: - Direction: the rating chooses (ADR 0134 §2)
-
-    func testUnratedOffersARaise() {
-        // The pre-0134 behaviour, preserved exactly: a player who ignores the dots sees the screen
-        // they already know.
-        XCTAssertEqual(CommandOffer.direction(mastery: nil, command: 100, reach: 106,
-                                              floor: floor, ceiling: ceiling), .raise)
+    /// A drill at command 100 with room in both directions.
+    private func anchors(command: Int = 100, raise: Int = 106, settle: Int = 94,
+                         floor: Int? = nil, ceiling: Int? = nil) -> CommandOffer.Anchors {
+        .init(command: command, floor: floor ?? self.floor, ceiling: ceiling ?? self.ceiling,
+              raiseTarget: raise, settleTarget: settle)
     }
 
-    func testLowRatingsOfferASettle() {
+    // MARK: - Stance: the rating chooses the lean (ADR 0134 §2)
+
+    func testUnratedLeansNeitherWay() {
+        // The app has been told nothing, so it presumes nothing — a neutral prompt over a range that
+        // spans both directions.
+        XCTAssertEqual(CommandOffer.preferredStance(mastery: nil), .open)
+        XCTAssertEqual(CommandOffer.stance(mastery: nil, anchors: anchors()), .open)
+    }
+
+    func testLowRatingsLeanSettle() {
         for rating in 0...2 {
-            XCTAssertEqual(CommandOffer.direction(mastery: rating, command: 100, reach: 106,
-                                                  floor: floor, ceiling: ceiling), .settle,
-                           "mastery \(rating) should offer a settle")
+            XCTAssertEqual(CommandOffer.stance(mastery: rating, anchors: anchors()), .settle,
+                           "mastery \(rating) should lean settle")
         }
     }
 
     func testMiddleRatingOffersNothing() {
         // The deliberate dead band — "fine" is not a request to change anything (§2).
-        XCTAssertNil(CommandOffer.direction(mastery: 3, command: 100, reach: 106,
-                                            floor: floor, ceiling: ceiling))
+        XCTAssertNil(CommandOffer.preferredStance(mastery: 3))
+        XCTAssertNil(CommandOffer.stance(mastery: 3, anchors: anchors()))
     }
 
-    func testHighRatingsOfferARaise() {
+    func testHighRatingsLeanRaise() {
         for rating in 4...5 {
-            XCTAssertEqual(CommandOffer.direction(mastery: rating, command: 100, reach: 106,
-                                                  floor: floor, ceiling: ceiling), .raise,
-                           "mastery \(rating) should offer a raise")
+            XCTAssertEqual(CommandOffer.stance(mastery: rating, anchors: anchors()), .raise,
+                           "mastery \(rating) should lean raise")
         }
     }
 
-    // MARK: - Direction: the room decides whether it survives
+    // MARK: - Stance: the room decides whether it survives
 
     func testRaiseIsWithheldWhenTheReachIsNotAboveCommand() {
         // Command has caught up to the reach — nothing to raise to, so no row (ADR 0079 §5).
-        XCTAssertNil(CommandOffer.direction(mastery: 5, command: 100, reach: 100,
-                                            floor: floor, ceiling: ceiling))
-        XCTAssertNil(CommandOffer.direction(mastery: nil, command: 100, reach: 98,
-                                            floor: floor, ceiling: ceiling))
+        XCTAssertNil(CommandOffer.stance(mastery: 5, anchors: anchors(raise: 100)))
+        XCTAssertNil(CommandOffer.stance(mastery: 5, anchors: anchors(raise: 98)))
     }
 
     func testRaiseIsWithheldAtTheCeilingEvenWithAnOvershootingReach() {
         // Command at the ceiling, auto-reach past it (300 × 1.06 = 318): the clamped raise equals
         // command, so the offer would be a no-op.
-        XCTAssertNil(CommandOffer.direction(mastery: 5, command: ceiling, reach: 318,
-                                            floor: floor, ceiling: ceiling))
+        XCTAssertNil(CommandOffer.stance(mastery: 5, anchors: anchors(command: ceiling, raise: 318)))
     }
 
     func testSettleIsWithheldAtTheFloor() {
-        // Already as low as the instrument goes — there is nowhere to settle to.
-        XCTAssertNil(CommandOffer.direction(mastery: 1, command: floor, reach: 40,
-                                            floor: floor, ceiling: ceiling))
+        // Already as low as the instrument goes — nowhere to settle to.
+        XCTAssertNil(CommandOffer.stance(mastery: 1, anchors: anchors(command: floor, settle: 30)))
     }
 
     func testSettleSurvivesOneStepAboveTheFloor() {
-        XCTAssertEqual(CommandOffer.direction(mastery: 1, command: floor + 1, reach: 40,
-                                              floor: floor, ceiling: ceiling), .settle)
+        XCTAssertEqual(CommandOffer.stance(mastery: 1, anchors: anchors(command: floor + 1)), .settle)
     }
 
     func testSettleIsOfferedEvenWithHeadroomAbove() {
-        // A drill with plenty of room to grow still offers the settle when the player rates it low —
-        // the rating leads, not the headroom.
-        XCTAssertEqual(CommandOffer.direction(mastery: 2, command: 100, reach: 106,
-                                              floor: floor, ceiling: ceiling), .settle)
+        // A drill with plenty of room to grow still leans settle when rated low — the rating leads,
+        // not the headroom.
+        XCTAssertEqual(CommandOffer.stance(mastery: 2, anchors: anchors()), .settle)
+    }
+
+    func testOpenSurvivesAtTheCeilingBecauseItCanStillGoDown() {
+        // A neutral offer needs only *an* axis, not headroom in particular.
+        XCTAssertEqual(CommandOffer.stance(mastery: nil, anchors: anchors(command: ceiling,
+                                                                          raise: 318)), .open)
+    }
+
+    // MARK: - Bounds: what each lean opens on and how far it reaches
+
+    func testOpenSpansTheInstrumentAndOpensOnCommandItself() {
+        // The honest neutral: toggling it on and committing without moving the stepper changes
+        // nothing, because the app has proposed no tempo at all.
+        let bounds = CommandOffer.bounds(for: .open, anchors: anchors())
+        XCTAssertEqual(bounds?.defaultTarget, 100)
+        XCTAssertEqual(bounds?.minValue, floor)
+        XCTAssertEqual(bounds?.maxValue, ceiling)
+    }
+
+    func testRaiseOpensOnTheReachAndStaysAboveCommand() {
+        let bounds = CommandOffer.bounds(for: .raise, anchors: anchors())
+        XCTAssertEqual(bounds?.defaultTarget, 106)
+        XCTAssertEqual(bounds?.minValue, 101)
+        XCTAssertEqual(bounds?.maxValue, ceiling)
+    }
+
+    func testSettleOpensOnTheBackoffAndReachesTheFloor() {
+        // Opens on the tempo the tail played, but ranges the whole way down — the step back is
+        // sometimes twenty, not four (§4).
+        let bounds = CommandOffer.bounds(for: .settle, anchors: anchors())
+        XCTAssertEqual(bounds?.defaultTarget, 94)
+        XCTAssertEqual(bounds?.minValue, floor)
+        XCTAssertEqual(bounds?.maxValue, 99)
+    }
+
+    func testSettleBoundsClampADefaultThatIsNotBelowCommand() {
+        // `includeBackoff` off, or a stale pin: the derived value can land on or above command.
+        let bounds = CommandOffer.bounds(for: .settle, anchors: anchors(settle: 120))
+        XCTAssertEqual(bounds?.defaultTarget, 99)
+    }
+
+    func testBoundsAreNilWhenTheLeanHasNowhereToGo() {
+        XCTAssertNil(CommandOffer.bounds(for: .raise, anchors: anchors(raise: 100)))
+        XCTAssertNil(CommandOffer.bounds(for: .settle, anchors: anchors(command: floor)))
+    }
+
+    // MARK: - The committed revision follows the value, not the lean
+
+    func testValueAboveCommandCommitsARaise() {
+        XCTAssertEqual(CommandOffer.revision(value: 108, command: 100), .raise(108))
+    }
+
+    func testValueBelowCommandCommitsASettle() {
+        XCTAssertEqual(CommandOffer.revision(value: 88, command: 100), .settle(88))
+    }
+
+    func testValueEqualToCommandCommitsNothing() {
+        // Reachable from an `open` offer, and must write nothing rather than a no-op.
+        XCTAssertNil(CommandOffer.revision(value: 100, command: 100))
     }
 
     // MARK: - Raised-command target (min(ceiling, reach))
@@ -121,29 +179,34 @@ final class CommandOfferTests: XCTestCase {
     private var loopCeiling: Int { TempoMath.percentRange.upperBound }
     private var loopFloor: Int { TempoMath.percentRange.lowerBound }
 
+    private func loopAnchors(command: Int = 85, raise: Int = 90,
+                             settle: Int = 80) -> CommandOffer.Anchors {
+        .init(command: command, floor: loopFloor, ceiling: loopCeiling,
+              raiseTarget: raise, settleTarget: settle)
+    }
+
     func testLoopPercentRaiseMovesCommandToReach() {
-        // A loop run (Loop 3 in the design): command 85%, summited reach 90% → offer, raise to 90.
-        XCTAssertEqual(CommandOffer.direction(mastery: 5, command: 85, reach: 90,
-                                              floor: loopFloor, ceiling: loopCeiling), .raise)
-        XCTAssertEqual(CommandOffer.raisedCommand(reach: 90, ceiling: loopCeiling), 90)
+        // A loop run (Loop 3 in the design): command 85%, summited reach 90% → lean raise, open on 90.
+        XCTAssertEqual(CommandOffer.stance(mastery: 5, anchors: loopAnchors()), .raise)
+        XCTAssertEqual(CommandOffer.bounds(for: .raise, anchors: loopAnchors())?.defaultTarget, 90)
     }
 
     func testLoopPercentRaiseClampsToThePlaybackCeiling() {
-        // A reach past the ceiling raises only to the ceiling.
         XCTAssertEqual(CommandOffer.raisedCommand(reach: loopCeiling + 10, ceiling: loopCeiling),
                        loopCeiling)
     }
 
     func testLoopPercentSettleDropsTowardTheBackoffPercent() {
-        // The same loop rated 2: settle from 85% toward the 80% its tail played.
-        XCTAssertEqual(CommandOffer.direction(mastery: 2, command: 85, reach: 90,
-                                              floor: loopFloor, ceiling: loopCeiling), .settle)
-        XCTAssertEqual(CommandOffer.settledCommand(backoff: 80, floor: loopFloor, command: 85), 80)
+        // The same loop rated 2: lean settle, opening on the 80% its tail played.
+        XCTAssertEqual(CommandOffer.stance(mastery: 2, anchors: loopAnchors()), .settle)
+        let bounds = CommandOffer.bounds(for: .settle, anchors: loopAnchors())
+        XCTAssertEqual(bounds?.defaultTarget, 80)
+        XCTAssertEqual(bounds?.minValue, loopFloor)
     }
 
     func testLoopPercentSettleIsFlooredAtThePlaybackFloor() {
-        XCTAssertEqual(CommandOffer.settledCommand(backoff: loopFloor - 10, floor: loopFloor,
-                                                   command: 85), loopFloor)
+        let bounds = CommandOffer.bounds(for: .settle, anchors: loopAnchors(settle: loopFloor - 10))
+        XCTAssertEqual(bounds?.defaultTarget, loopFloor)
     }
 
     // MARK: - Tempo unit labels (ADR 0082)

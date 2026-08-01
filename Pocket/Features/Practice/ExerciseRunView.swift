@@ -192,8 +192,7 @@ struct ExerciseRunView: View {
             // second one. Both directions are passed; the mastery tap picks between them (ADR 0134).
             RoutineBlockDoneView(title: exercise.name.isEmpty ? "Exercise" : exercise.name,
                                  initialMastery: exercise.mastery,
-                                 raise: completionRaiseConfig(finished),
-                                 settle: completionSettleConfig(finished),
+                                 anchors: completionAnchors(finished),
                                  isLast: true, upNext: nil) { mastery, note, kind, revision in
                 commitCompletion(mastery: mastery, note: note, kind: kind, revision: revision)
             }

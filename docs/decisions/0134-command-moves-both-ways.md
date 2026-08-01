@@ -1,7 +1,9 @@
 # ADR 0134 — Command moves both ways: the offer after a run can settle lower
 
-- **Status:** Accepted — **slice 1 built** 2026-08-01. Two things were decided at build that the ADR
-  didn't anticipate; both are recorded in §6 and §10. Slice 2 (mid-run settling) remains parked.
+- **Status:** Accepted — **slice 1 built** 2026-08-01, then revised the same day after a device
+  pass: §2 (unrated leans neither way) and §2a (the prompt never carries a tempo) replace the
+  first build's raise-by-default row. Two further things were decided at build that the ADR didn't
+  anticipate, recorded in §6 and §10. Slice 2 (mid-run settling) remains parked.
 - **Date:** 2026-08-01
 - **Builds on:** ADR 0045/0046 (the command / working / reach / backoff anchors and the `CommandRamp`
   built from them) · **ADR 0079** (the post-run promote and the completion screen it lives on — this
@@ -77,48 +79,88 @@ be — see Alternatives.
 
 ### 1. The row is a **command revision**, not a promotion
 
-`PromoteOffer` becomes `CommandOffer`, with the same two questions asked in both directions:
+`PromoteOffer` becomes `CommandOffer`, asking the same questions of every direction:
 
 ```swift
 enum CommandOffer {
-    enum Direction { case raise, settle }
-    static func direction(mastery: Int?, command: Int, reach: Int,
-                          floor: Int, ceiling: Int) -> Direction?
-    static func raisedCommand(reach: Int, ceiling: Int) -> Int     // today's promotedCommand
-    static func settledCommand(backoff: Int, floor: Int) -> Int
+    enum Stance { case open, raise, settle }        // how the offer leans
+    enum Revision { case raise(Int), settle(Int) }  // what was accepted, and at what
+    struct Anchors { let command, floor, ceiling, raiseTarget, settleTarget: Int }
+    struct Bounds  { let defaultTarget, minValue, maxValue: Int }
+
+    static func preferredStance(mastery: Int?) -> Stance?               // §2's table, alone
+    static func stance(mastery: Int?, anchors: Anchors) -> Stance?      // …plus its room check
+    static func bounds(for: Stance, anchors: Anchors) -> Bounds?        // §2's range columns
+    static func revision(value: Int, command: Int) -> Revision?         // nil when unchanged
 }
 ```
 
-`RoutineBlockDoneView.PromoteConfig` becomes `CommandConfig`, gaining a `direction` and widening its
-`minValue`/`maxValue` (§4). The stepper, the toggle, and the single-`Continue` commit are otherwise
-the surface that already ships — this is one row changing what it can say, not a new screen.
+`RoutineBlockDoneView.PromoteConfig` is replaced by a single `Anchors` plus a `TempoUnit` — one value
+per unit rather than one per direction, since none of it depends on the rating while the *lean* does.
+The stepper, the toggle, and the single-`Continue` commit are otherwise the surface that already
+ships: this is one row changing what it can say, not a new screen.
+
+**The `Stance`/`Revision` split is the load-bearing part.** A stance is how the offer is *framed*
+(three cases, including neutral); a revision is what was *accepted* (two, since a committed change
+has a direction). Deriving the second from where the chosen value landed — rather than from the
+framing — is what lets a neutral offer commit either way, and makes "the value equals command" mean
+*write nothing* instead of a no-op write.
 
 **Renaming is not cosmetic.** `promoteTo:` runs through `commitCompletion` on both run screens and
 `RoutinePlayerView`; leaving the name in place would mean a parameter called `promoteTo` carrying a
 demotion, which is precisely the kind of thing that reads as correct for a year.
 
-### 2. The mastery tap chooses the direction, live, on the same screen
+**Renaming is not cosmetic.** `promoteTo:` runs through `commitCompletion` on both run screens and
+`RoutinePlayerView`; leaving the name in place would mean a parameter called `promoteTo` carrying a
+demotion, which is precisely the kind of thing that reads as correct for a year.
 
-`RoutineBlockDoneView` already holds the rating in `@State private var mastery`, so the row can
-respond to the dots as they are tapped — no new question, no new control:
+### 2. The mastery tap chooses how the offer **leans**, live, on the same screen
 
-| Rating | Row |
-|---|---|
-| **1–2** | *Settle* — offers to move command **down** (§3). |
-| **3** | **No row.** |
-| **4–5** | *Raise* — today's promote, unchanged, when there is headroom. |
-| **unrated (`nil`)** | *Raise* when there is headroom — **exactly today's behaviour**. |
+`RoutineBlockDoneView` already holds the rating in `@State`, so the row can respond to the dots as
+they are tapped — no new question, no new control:
 
-Three properties of this table are load-bearing:
+| Rating | Row | Range | Opens on |
+|---|---|---|---|
+| **unrated (`nil`)** | *Open* — neutral prompt | floor … ceiling | **command itself** |
+| **1–2** | *Settle* | floor … command−1 | the backoff (§3) |
+| **3** | **No row.** | — | — |
+| **4–5** | *Raise* | command+1 … ceiling | the reach |
 
-- **Unrated behaves as it does today.** A player who ignores the dots — every existing user — sees
-  the screen they already know. This ADR adds a path; it removes none.
-- **3 is a dead band, deliberately.** "Fine" is not a request to change anything. Offering both
-  directions at once would turn a completion beat into a quiz, and offering *either* would put the
-  app's thumb on a scale the player just declined to tip.
+Four properties of this table are load-bearing:
+
+- **Unrated leans neither way, and this is a revision made at device-test.** The ADR first shipped
+  `nil ⇒ raise`, on the reasoning that it preserved the pre-0134 screen exactly. On the phone that
+  turned out to be the wrong instinct: the app has been told *nothing*, and defaulting to "bump it
+  up" is the same unearned presumption this ADR exists to remove — just pointed the other way. So an
+  unrated run gets a neutral prompt over the whole axis, opening on the command it already sits at.
+  The cost is real and accepted: existing users' unrated path is **no longer identical** to what they
+  had. The gain is that the app never leans on a run nobody rated.
+- **`open` opening on `command` is what makes the neutral honest.** A neutral prompt over a range
+  pre-set to the reach would be leaning while claiming not to. Opening on the current tempo means
+  accepting without touching the stepper writes nothing at all.
+- **3 is a dead band, deliberately.** "Fine" is not a request to change anything. Leaning either way
+  would put the app's thumb on a scale the player just declined to tip — and a neutral row here would
+  be noise, since they *did* answer.
 - **The rating read is the one just entered, not the stored one.** `initialMastery` pre-fills from
-  the model, so a drill rated 5 months ago would otherwise offer to raise after a run the player has
-  just rated 1. The live `@State` is the honest read and it is already there.
+  the model, so a drill rated 5 months ago would otherwise lean raise after a run the player has just
+  rated 1. The live `@State` is the honest read and it is already there.
+
+### 2a. The prompt never carries a tempo; the stepper always does
+
+No headline states a number. The row names the *move* — "Change the command tempo", "Increase the
+command tempo", "Settle or reduce the command tempo" — and the value is the player's to choose below
+it.
+
+This is not phrasing preference, it is the same principle as §5 applied to the sentence itself. A
+headline reading "Move command to 106" presents the app's arithmetic *as* the offer: the player is
+accepting a number the app picked, and declining it means declining the whole idea rather than
+choosing a different tempo. Naming the move and leaving the number open makes the stepper the
+decision rather than a fine-adjustment on the app's proposal — which is what "the app never grades"
+means when the app is the one holding the pen (ADR 0070).
+
+The consequence, stated: with the toggle off, no target tempo is visible at all. Flipping it on
+reveals the stepper at the stance's opening value. That is the intended shape — opt in to changing
+it, *then* decide to what — not an oversight.
 
 ### 3. The settle default is the backoff — the tempo the run **already ended on**
 
@@ -317,8 +359,10 @@ compressed to fit.
 
 - **No stored field, no migration owed.** Every value involved — `commandTempo`, `currentTempo`,
   `backoffTempoOverride`, `commandNotesPerBeat`, `mastery` — already exists and keeps its meaning.
-- **A shipped surface changes behaviour**, which is the risk here. Anyone who taps 1–2 dots now sees a
-  different row than they did yesterday. The unrated path is byte-identical, which bounds it.
+- **A shipped surface changes behaviour**, which is the risk here — and after §2's device-test
+  revision it changes for *everyone*, not only the players who tap 1–2 dots: an unrated finish now
+  shows a neutral prompt where it used to show the promote. Deliberate, and the reason the copy in
+  §2a and §5 is treated as decided rather than incidental.
 - **New pure surface that must be exhaustively tested** (AGENTS.md — this is the logic that breaks
   silently): the direction table across `nil` and 0–5, at a command with no headroom and at the range
   floor; `settledCommand` when `includeBackoff` is off; both range bounds in BPM and `%`; the
