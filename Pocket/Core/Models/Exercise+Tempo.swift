@@ -99,6 +99,39 @@ extension Exercise {
         if let pinned = targetTempoOverride, pinned <= command { targetTempoOverride = nil }
     }
 
+    /// **Settle** command down to a tempo the player owns cleanly (ADR 0134) — the mirror of
+    /// `promoteCommand`, and the reason both live on the model rather than at a call site.
+    ///
+    /// Three things have to happen alongside the assignment, and each fails *silently* if a caller
+    /// forgets it:
+    ///
+    /// 1. **The warm-up floor comes down too.** `rampFloor` returns `workingTempo` raw once a command
+    ///    is measured, and `CommandRamp.plateaus` emits a warm-up only while `command > working`. A
+    ///    command settled to at or below working therefore yields a ramp that opens *at* command with
+    ///    no climb at all — the exact opposite of what the player just asked for, and no error. So the
+    ///    floor is re-derived below the new command. (`Loop` needs no such step: its `rampFloor`
+    ///    forces its own gap and cannot invert.)
+    /// 2. **A caught-up backoff pin is cleared.** `plateaus` appends the tail only while
+    ///    `backoff < command`, so a pin at or above the new command deletes the backoff outright.
+    ///    Clearing reverts to the derived value — the same shape, and the same reason, as
+    ///    `promoteCommand`'s reach-pin clear (ADR 0075).
+    /// 3. **The rhythm is re-bound.** A settled command is still a measurement, taken in this run's
+    ///    rhythm (ADR 0121). `nil` when the drill states no rhythm — the honest record of "measured,
+    ///    rhythm unstated".
+    ///
+    /// A pinned **reach** is deliberately left alone: it was above the old command and is still above
+    /// the new one, so the invariant holds and clearing it would throw away a goal the player set.
+    /// The two invariant steps are `CommandOffer`'s, not this method's: the run screens hold their
+    /// setup in `@State` and commit through `persist()` (ADR 0057), so they cannot route a settle
+    /// through here — they apply the same two rules to their local state instead. Sharing the pure
+    /// helpers is what keeps the two paths from drifting.
+    func settleCommand(to tempo: Int) {
+        commandTempo = tempo
+        workingTempo = CommandOffer.settledFloor(command: tempo, working: workingTempo)
+        backoffTempoOverride = CommandOffer.survivingBackoffPin(backoffTempoOverride, command: tempo)
+        commandNotesPerBeat = noteRate?.perBeat
+    }
+
     /// The Italian tempo marking for the current working tempo (ADR 0043, slice 1) —
     /// "Andante", "Allegro", … Pure derived from `currentTempo`.
     var tempoMarking: TempoMarking { TempoMarking.marking(forBPM: Double(currentTempo)) }

@@ -13,8 +13,8 @@ import SwiftUI
 /// Deliberately **judgement-free (ADR 0070)**: it shows what's playing and how far along the session
 /// is, and nothing about *how well*. The player is the judge.
 struct RoutinePlayerView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.modelContext) var modelContext
     /// Entitlement (ADR 0112) — read here purely as **defence in depth**. The library row already
     /// refuses to present a routine a free player can't run; this second check means a future entry
     /// point that forgets the gate can't turn the player into a way to run Pro exercises (which embed
@@ -23,10 +23,10 @@ struct RoutinePlayerView: View {
     /// The routine being run — held so we can stamp `lastPracticed` when the session starts (the
     /// home hub's "recent routines" rail reads it). The player itself is a pure conductor over stages.
     private let routine: Routine
-    @State private var player: RoutineSessionPlayer
+    @State var player: RoutineSessionPlayer
     /// The just-finished unit block sitting on its **Done screen** (ADR 0071 R4), or `nil`. Set when a
     /// block completes with manual advance (the default); Continue/Finish commits and advances.
-    @State private var doneStage: RoutineStage?
+    @State var doneStage: RoutineStage?
 
     init(routine: Routine) {
         self.routine = routine
@@ -100,70 +100,9 @@ struct RoutinePlayerView: View {
         }
     }
 
-    /// Commit the Done screen's optional mastery self-rating, inline note, and opt-in promote in
-    /// **one** action (the P3 lesson — no competing "Add entry" button), then advance. Mastery writes
-    /// to the unit; the note writes a `JournalWriter` entry (which snapshots the unit's context); an
-    /// accepted promote moves an exercise's command up to its reach (ADR 0079 §7). Each may be a no-op
-    /// — an unchanged rating, an empty note, and an un-flipped toggle all commit nothing.
-    private func commitDone(_ stage: RoutineStage, mastery: Int?, note: String, kind: EntryKind,
-                            promoteTo: Int?) {
-        if let owner = owner(for: stage) {
-            switch owner {
-            case .exercise(let exercise):
-                exercise.mastery = mastery
-                // Promote is exercises-only (ADR 0079 §Scope/§7); the chosen value is already clamped
-                // by the Done screen's stepper, and `promoteCommand` also drops a caught-up reach pin.
-                if let promoteTo { exercise.promoteCommand(to: promoteTo) }
-            case .loop(let loop): loop.mastery = mastery
-            }
-            _ = JournalWriter.add(to: owner, text: note, kind: kind, into: modelContext)
-            try? modelContext.save()
-        }
-        doneStage = nil
-        haptic(.light)
-        player.advance()
-    }
-
-    @ViewBuilder
-    private func doneView(for stage: RoutineStage) -> some View {
-        RoutineBlockDoneView(title: stage.title,
-                             initialMastery: mastery(for: stage),
-                             promote: promoteConfig(for: stage),
-                             isLast: player.upNext == nil,
-                             upNext: upNextDescriptor()) { mastery, note, kind, promoteTo in
-            commitDone(stage, mastery: mastery, note: note, kind: kind, promoteTo: promoteTo)
-        }
-        // The Done screen sits outside the per-block session chrome, so give it its own way out —
-        // Continue advances, but a player mid-routine needs to be able to leave from here too.
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                }
-                .tint(PocketColor.textSecondary)
-                .accessibilityLabel("Exit routine")
-            }
-        }
-    }
-
-    /// The promote offer for the Done screen (ADR 0079 §7), or `nil` for no row — only for an
-    /// **exercise** unit whose (ceiling-clamped) reach sits above command (nothing to promote
-    /// otherwise, and loops keep their own promote behaviour, ADR 0079 §Scope). The target defaults to
-    /// the reach and is editable from just above command up to the BPM ceiling.
-    private func promoteConfig(for stage: RoutineStage) -> RoutineBlockDoneView.PromoteConfig? {
-        let ceiling = StandaloneMetronomeEngine.bpmRange.upperBound
-        guard let exercise = stage.exercise,
-              PromoteOffer.canPromote(reach: exercise.reachTempo, command: exercise.command,
-                                      ceiling: ceiling)
-        else { return nil }
-        return .init(defaultTarget: PromoteOffer.promotedCommand(reach: exercise.reachTempo,
-                                                                 ceiling: ceiling),
-                     minValue: exercise.command + 1, maxValue: ceiling)
-    }
-
     /// Build the "Up next" descriptor from the next **unit** stage (rests skipped), or `nil` when only
     /// rests / nothing remain. Keeps `RoutineBlockDoneView` SwiftData-free.
-    private func upNextDescriptor() -> RoutineBlockDoneView.UpNext? {
+    func upNextDescriptor() -> RoutineBlockDoneView.UpNext? {
         guard let next = player.nextUnitStage(after: player.currentIndex) else { return nil }
         return RoutineBlockDoneView.UpNext(title: next.title,
                                            detail: detailLine(for: next),
@@ -195,13 +134,13 @@ struct RoutinePlayerView: View {
         return "questionmark"
     }
 
-    private func owner(for stage: RoutineStage) -> JournalOwner? {
+    func owner(for stage: RoutineStage) -> JournalOwner? {
         if let exercise = stage.exercise { return .exercise(exercise) }
         if let loop = stage.loop { return .loop(loop) }
         return nil
     }
 
-    private func mastery(for stage: RoutineStage) -> Int? {
+    func mastery(for stage: RoutineStage) -> Int? {
         if let exercise = stage.exercise { return exercise.mastery }
         if let loop = stage.loop { return loop.mastery }
         return nil

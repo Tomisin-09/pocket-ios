@@ -96,6 +96,26 @@ Open question the ADR names rather than settles: on fretboard/chord drills the c
 the beat, so the eyes keep a pulse the ear has lost and the withdrawal is partial there by
 construction (§7a). Whether that is worth a further answer is a device-testing question.
 
+## Command moves both ways (ADR 0134 — **slice 1 SHIPPED**, slice 2 parked)
+
+The post-run offer can only ever raise `command`, so a run that fell apart still lands on a Done
+screen reading "you summited it — bump the drill up". The ramp completes on a timer (the app never
+listens), so a bad run reaches that screen exactly as a good one does. - **Slice 1 — the symmetric offer. BUILT 2026-08-01.** `PromoteOffer` → `CommandOffer` with a
+  direction chosen by the mastery tap already on that screen (1–2 settle · 3 nothing · 4–5 / unrated
+  raise, so the unrated path is unchanged). Settle defaults to the backoff the run just played and
+  ranges down to the instrument's floor. The working-floor pull-down and the backoff-pin clear are
+  pure `CommandOffer` helpers with two callers each — the model setters *and* the run screens' local
+  `@State`, because `persist()` would clobber a direct model write (ADR 0134 §10). Adds a derived
+  `Loop.backoffPercent`. No stored field, no migration. **Not yet device-tested.**
+- **Slice 2 — mid-run settling, needs its own ADR.** A transport action that drops the live run to
+  its backoff plateau and keeps playing, instead of forcing a stop. Touches `CommandRamp` in flight,
+  re-anchors the grid, and owes ADR 0131 a warning (a settle *is* a tempo change). Audio-engine work,
+  not completion-screen work.
+
+The copy is load-bearing and named as such in §5 — the settle row has to read as technique, not
+concession, and the mastery caption is the only place the player learns that rating honestly buys
+them anything. Not decoration to trim at build time.
+
 ## Device-testing pass — plan of attack (2026-07-28)
 
 Several days of on-device testing produced ~34 notes across four annotated screenshot sheets,

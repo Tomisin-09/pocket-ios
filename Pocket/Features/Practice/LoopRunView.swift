@@ -202,13 +202,14 @@ struct LoopRunView: View {
         }
         .fullScreenCover(item: $completion) { finished in
             // Reuse the routine block's Done screen for a standalone loop finish (ADR 0082, mirroring
-            // ADR 0079 for exercises) — completion beat + optional mastery + note + editable promote,
-            // minus the "Up next" card (nothing follows a solo run).
+            // ADR 0079 for exercises) — completion beat + optional mastery + note + the editable
+            // command revision, minus the "Up next" card (nothing follows a solo run). Both
+            // directions are passed; the mastery tap picks between them (ADR 0134).
             RoutineBlockDoneView(title: title,
                                  initialMastery: loop.mastery,
-                                 promote: completionPromoteConfig(finished),
-                                 isLast: true, upNext: nil) { mastery, note, kind, promoteTo in
-                commitCompletion(mastery: mastery, note: note, kind: kind, promoteTo: promoteTo)
+                                 anchors: completionAnchors(finished), unit: .percent,
+                                 isLast: true, upNext: nil) { mastery, note, kind, revision in
+                commitCompletion(mastery: mastery, note: note, kind: kind, revision: revision)
             }
         }
     }

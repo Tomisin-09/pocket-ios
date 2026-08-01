@@ -162,30 +162,45 @@ extension ExerciseRunView {
                               into: modelContext)
     }
 
-    /// The promote offer for the standalone completion screen (ADR 0079) — `nil` when the
-    /// (ceiling-clamped) reach isn't above command. The target defaults to the reach and is editable
-    /// from just above the summited command up to the BPM ceiling.
-    func completionPromoteConfig(_ finished: RunCompletion) -> RoutineBlockDoneView.PromoteConfig? {
-        let ceiling = StandaloneMetronomeEngine.bpmRange.upperBound
-        guard PromoteOffer.canPromote(reach: finished.reach, command: finished.command, ceiling: ceiling)
-        else { return nil }
-        return .init(defaultTarget: PromoteOffer.promotedCommand(reach: finished.reach, ceiling: ceiling),
-                     minValue: finished.command + 1, maxValue: ceiling)
+    /// The tempo anchors the standalone completion screen sizes its revision offer from (ADR 0079,
+    /// widened by ADR 0134). The reach/command are the run's own snapshot, so later edits can't
+    /// retroactively change what was offered; the settle target is `derivedBackoff` — the tempo this
+    /// run's tail actually played, minutes ago (§3).
+    func completionAnchors(_ finished: RunCompletion) -> CommandOffer.Anchors {
+        let range = StandaloneMetronomeEngine.bpmRange
+        return .init(command: finished.command,
+                     floor: range.lowerBound, ceiling: range.upperBound,
+                     raiseTarget: CommandOffer.raisedCommand(reach: finished.reach,
+                                                             ceiling: range.upperBound),
+                     settleTarget: exercise.derivedBackoff)
     }
 
-    /// Commit the post-run completion screen (ADR 0079) — the same `RoutineBlockDoneView` a routine
-    /// block finishes on, reused for a standalone run: an optional mastery self-rating, an optional
-    /// journal note, and the opt-in promote, committed together in the one Finish. Each may be a no-op
-    /// (unchanged rating, empty note, toggle off). When on, `promoteTo` is the chosen (possibly custom)
-    /// command — already clamped by the screen's stepper — so command moves there and a caught-up reach
-    /// pin drops; everything lands through the single write path (`persist`, ADR 0057) — there's no
-    /// following Start, so this *is* the commit.
-    func commitCompletion(mastery: Int?, note: String, kind: EntryKind, promoteTo: Int?) {
+    /// Commit the post-run completion screen (ADR 0079, ADR 0134) — the same `RoutineBlockDoneView` a
+    /// routine block finishes on, reused for a standalone run: an optional mastery self-rating, an
+    /// optional journal note, and the opt-in command revision, committed together in the one Finish.
+    /// Each may be a no-op (unchanged rating, empty note, toggle off). When accepted, `revision`
+    /// carries the chosen (possibly custom) command *and* its direction — already clamped by the
+    /// screen's stepper — so the write lands through the matching model setter; everything goes through
+    /// the single write path (`persist`, ADR 0057) — there's no following Start, so this *is* the commit.
+    func commitCompletion(mastery: Int?, note: String, kind: EntryKind,
+                          revision: CommandOffer.Revision?) {
         exercise.mastery = mastery
         _ = JournalWriter.add(to: .exercise(exercise), text: note, kind: kind, into: modelContext)
-        if let promoteTo {
-            command = promoteTo
+        switch revision {
+        case .raise(let tempo):
+            command = tempo
             clearOverrideIfCaughtUp()
+        case .settle(let tempo):
+            // Through the **local** setup state, not `exercise.settleCommand`: `persist()` rewrites
+            // `workingTempo` and re-promotes from these `@State` values (ADR 0057), so a direct model
+            // write would be clobbered a line later. The two invariant rules are the shared pure ones
+            // either way (ADR 0134 §6) — the floor comes down with command, and a caught-up backoff
+            // pin drops, or `CommandRamp` silently loses its warm-up and its tail.
+            working = CommandOffer.settledFloor(command: tempo, working: working)
+            command = tempo
+            backoffOverride = CommandOffer.survivingBackoffPin(backoffOverride, command: tempo)
+        case .none:
+            break
         }
         persist()
         haptic(.light)
