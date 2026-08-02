@@ -16,6 +16,8 @@ final class LoopEditSnapshotTests: XCTestCase {
         loop.tags = ["solo"]
         loop.colorIndex = 1
         loop.customColorHex = nil
+        loop.isFavorite = true
+        loop.isBackingTrack = true
         return loop
     }
 
@@ -43,9 +45,15 @@ final class LoopEditSnapshotTests: XCTestCase {
         loop.colorIndex = 2;              XCTAssertNotEqual(LoopEditSnapshot(loop), before)
         loop.colorIndex = 1
         loop.customColorHex = "FF0000";   XCTAssertNotEqual(LoopEditSnapshot(loop), before)
+        loop.customColorHex = nil
+        loop.isFavorite = false;          XCTAssertNotEqual(LoopEditSnapshot(loop), before)
+        loop.isFavorite = true
+        // ADR 0135: the backing-track flag is set on this sheet, so an Undo that claimed to revert
+        // "Saved changes" while leaving it flagged would be a lie.
+        loop.isBackingTrack = false;      XCTAssertNotEqual(LoopEditSnapshot(loop), before)
 
         // Back to the original state — equal again.
-        loop.customColorHex = nil
+        loop.isBackingTrack = true
         XCTAssertEqual(LoopEditSnapshot(loop), before)
     }
 
@@ -61,6 +69,8 @@ final class LoopEditSnapshotTests: XCTestCase {
         loop.tags = []
         loop.colorIndex = nil
         loop.customColorHex = "00FF00"
+        loop.isFavorite = false
+        loop.isBackingTrack = false
 
         before.restore(to: loop)
 
@@ -72,5 +82,7 @@ final class LoopEditSnapshotTests: XCTestCase {
         XCTAssertEqual(loop.tags, ["solo"])
         XCTAssertEqual(loop.colorIndex, 1)
         XCTAssertNil(loop.customColorHex)
+        XCTAssertTrue(loop.isFavorite)
+        XCTAssertTrue(loop.isBackingTrack)
     }
 }

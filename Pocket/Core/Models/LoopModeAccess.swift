@@ -23,20 +23,28 @@ enum LoopModeAccess {
         /// Music catalog item (ADR 0001: catalog audio is browse/metadata only). The same condition
         /// `AddRoutineUnitSheet.playableSongs` already applies to the Songs bucket.
         var audioResolves: Bool
+        /// The player has flagged this section as a bed to solo over (ADR 0135 B1). Unlike the other
+        /// two facts this one is a **claim**, not a measurement — which is exactly why it can serve
+        /// as a precondition without the app having to verify anything about the audio.
+        var isBackingTrack: Bool = false
     }
 
     /// Whether `mode` can run against a loop with these facts (G2).
     ///
-    /// The `switch` is deliberately **exhaustive with no `default`**: when ADR 0135 adds
-    /// `.improvise`, this stops compiling until its precondition (`isBackingTrack` — the flag *is*
-    /// the requirement) is stated here. A `default` would silently hand the new mode whichever rule
-    /// happened to be nearest, which is precisely how the trainer's gate ended up on ear training.
+    /// The `switch` is deliberately **exhaustive with no `default`**: ADR 0135's `.improvise` could
+    /// not compile until its precondition was stated here, which is the property this design exists
+    /// to hold. A `default` would silently hand a new mode whichever rule happened to be nearest,
+    /// which is precisely how the trainer's gate ended up on ear training.
     static func allows(_ mode: LoopRunMode, _ facts: Facts) -> Bool {
         switch mode {
         // The ramp is built around the command tempo; without one there is no staircase to run.
         case .trainer: facts.hasCommandTempo
         // No tempo, no flag. If it can be heard, it can be sung back.
         case .ear: facts.audioResolves
+        // The flag *is* the requirement (ADR 0135 B1) — no measured tempo, because a bed is not a
+        // measured target. It still has to make a sound: the flag is a claim about *suitability*,
+        // and a claim over audio that doesn't resolve leaves nothing to solo over.
+        case .improvise: facts.isBackingTrack && facts.audioResolves
         }
     }
 }
@@ -46,7 +54,8 @@ extension LoopModeAccess.Facts {
     /// for no mode that needs sound — correct, and the reason this isn't just a `song != nil` check.
     init(_ loop: Loop) {
         self.init(hasCommandTempo: loop.commandTempo != nil,
-                  audioResolves: loop.song.map { $0.ref.source != .appleMusic } ?? false)
+                  audioResolves: loop.song.map { $0.ref.source != .appleMusic } ?? false,
+                  isBackingTrack: loop.isBackingTrack)
     }
 }
 

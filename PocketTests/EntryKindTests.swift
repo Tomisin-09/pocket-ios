@@ -14,6 +14,7 @@ final class EntryKindTests: XCTestCase {
         XCTAssertEqual(EntryKind.note.rawValue, "note")
         XCTAssertEqual(EntryKind.session.rawValue, "session")
         XCTAssertEqual(EntryKind.ear.rawValue, "ear")   // ADR 0104 — ear-training note tag
+        XCTAssertEqual(EntryKind.improvise.rawValue, "improvise")   // ADR 0135 — jam note tag
     }
 
     func testEarKindDecodesAndHasGlyph() {
@@ -22,6 +23,16 @@ final class EntryKindTests: XCTestCase {
         XCTAssertEqual(EntryKind.ear.emoji, "👂")
         XCTAssertEqual(EntryKind.ear.label, "Ear")
         XCTAssertTrue(EntryKind.pickerOrder.contains(.ear))
+    }
+
+    func testImproviseKindDecodesAndHasGlyph() {
+        // The ADR 0135 addition: 🎸 "Improv", what came out of a jam over a backing-track loop.
+        // Added the established safe way — a new case on the `String`-raw enum, never a stored enum
+        // attribute — so an older build reading a newer store folds it to `.note` rather than faulting.
+        XCTAssertEqual(EntryKind(raw: "improvise"), .improvise)
+        XCTAssertEqual(EntryKind.improvise.emoji, "🎸")
+        XCTAssertEqual(EntryKind.improvise.label, "Improv")
+        XCTAssertTrue(EntryKind.pickerOrder.contains(.improvise))
     }
 
     func testRawValueRoundTrips() {

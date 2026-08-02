@@ -14,14 +14,15 @@ import SwiftUI
 enum RoutineBlockPreviewTarget: Identifiable, Hashable {
     case exercise(Exercise, block: RoutineItem)
     case loop(Loop, block: RoutineItem)
-    /// A loop block in **ear-training** mode (ADR 0104 Slice 2) — previews the ears-only surface,
-    /// not the trainer ramp, so it has no ramp to fit and nothing to decline.
-    case earLoop(Loop)
+    /// A loop block in one of its **ramp-less** modes — ear training (ADR 0104) or improvise (ADR
+    /// 0135). No staircase to fit and none to decline, but since ADR 0141 it does carry a length, so
+    /// it travels with its block like the other two.
+    case rampLess(Loop, mode: LoopRunMode, block: RoutineItem)
 
     var id: PersistentIdentifier {
         switch self {
         case .exercise(let exercise, _): return exercise.persistentModelID
-        case .loop(let loop, _), .earLoop(let loop): return loop.persistentModelID
+        case .loop(let loop, _), .rampLess(let loop, _, _): return loop.persistentModelID
         }
     }
 }

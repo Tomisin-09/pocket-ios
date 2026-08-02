@@ -20,13 +20,13 @@ import SwiftUI
 /// The picker keeps **no selection state of its own**: the editor owns the ids it has added and
 /// hands them back each render (`addedIDs`), so the checkmarks can't disagree with the block list.
 struct AddRoutineUnitSheet: View {
-    @Query(sort: \Exercise.name) private var exercises: [Exercise]
-    @Query(sort: \Loop.name) private var loops: [Loop]
-    @Query(sort: \Song.title) private var songs: [Song]
+    @Query(sort: \Exercise.name) var exercises: [Exercise]
+    @Query(sort: \Loop.name) var loops: [Loop]
+    @Query(sort: \Song.title) var songs: [Song]
     @Environment(\.dismiss) private var dismiss
-    @State private var searchText = ""
+    @State var searchText = ""
     /// The row auditioning on the root screen (recently-added / search results) — one loop at a time.
-    @State private var rootPlayingID: String?
+    @State var rootPlayingID: String?
 
     /// `RoutineUnitPick.pickID`s this sheet session has added, owned by the editor.
     var addedIDs: Set<String> = []
@@ -42,14 +42,19 @@ struct AddRoutineUnitSheet: View {
     /// The Ear count will usually **exceed** the Loops count, and that divergence is the point rather
     /// than a defect to hide: ear training works on anything you've captured, the trainer on what
     /// you've measured.
-    private var trainerLoops: [Loop] { loops.filter { LoopModeAccess.allows(.trainer, $0) } }
-    private var earLoops: [Loop] { loops.filter { LoopModeAccess.allows(.ear, $0) } }
+    var trainerLoops: [Loop] { loops.filter { LoopModeAccess.allows(.trainer, $0) } }
+    var earLoops: [Loop] { loops.filter { LoopModeAccess.allows(.ear, $0) } }
+    /// Only loops **flagged as backing tracks** (ADR 0135 B8). This count will usually be the
+    /// smallest of the three, and that is the point rather than a defect to hide: Ear shows every
+    /// loop you've captured, Improvise only the sections you said were beds. The two counts diverging
+    /// on screen is the cheapest possible explanation of what the flag is for.
+    var improviseLoops: [Loop] { loops.filter { LoopModeAccess.allows(.improvise, $0) } }
 
     /// Only songs whose audio the play-along can actually run — local/iCloud files (and the demo);
     /// Apple Music catalog items are browse/metadata only and can't be time-stretched (ADR 0001), so
     /// they'd be dead blocks and are excluded. The same condition `LoopModeAccess` applies to a loop's
     /// audio, which is where the per-mode gating idea came from in the first place.
-    private var playableSongs: [Song] { songs.filter { $0.ref.source != .appleMusic } }
+    var playableSongs: [Song] { songs.filter { $0.ref.source != .appleMusic } }
 
     var body: some View {
         NavigationStack {
@@ -137,63 +142,20 @@ struct AddRoutineUnitSheet: View {
                               allRows: allEarLoopRows)
             } label: {
                 bucketRow(title: "Ear training", subtitle: "Hum & sing a loop",
-                          icon: "ear", count: earLoops.count)
+                          icon: LoopRunMode.ear.symbolName, count: earLoops.count)
             }
             .listRowBackground(PocketColor.background)
-        }
-    }
 
-    // MARK: - Search (ADR 0104 Slice 2 follow-up)
-    //
-    // A `.searchable` field flattens the buckets into typed result sections across **every** add-routine
-    // element — exercises, loops, songs, and ear training (the same loops, ears-only). Matches on the
-    // unit name plus a loop/song's song title, case/diacritic-insensitive.
-
-    private var query: String { searchText.trimmingCharacters(in: .whitespacesAndNewlines) }
-
-    private func matches(_ text: String?) -> Bool {
-        guard let text, !query.isEmpty else { return false }
-        return text.localizedCaseInsensitiveContains(query)
-    }
-
-    private var matchingExercises: [Exercise] { exercises.filter { matches($0.name) } }
-    /// Search narrows each mode's own population (ADR 0138), so a result section can never offer a
-    /// block that mode can't run — the Ear section can surface an unmeasured loop the Loops section
-    /// correctly withholds.
-    private func matchingLoops(in source: [Loop]) -> [Loop] {
-        source.filter { matches($0.name) || matches($0.song?.title) }
-    }
-    private var matchingTrainerLoops: [Loop] { matchingLoops(in: trainerLoops) }
-    private var matchingEarLoops: [Loop] { matchingLoops(in: earLoops) }
-    private var matchingSongs: [Song] {
-        playableSongs.filter { matches($0.title) || matches($0.artist) }
-    }
-
-    @ViewBuilder private var searchResults: some View {
-        if matchingExercises.isEmpty && matchingTrainerLoops.isEmpty
-            && matchingEarLoops.isEmpty && matchingSongs.isEmpty {
-            Text("No matches.")
-                .font(.futura(.footnote))
-                .foregroundStyle(PocketColor.textSecondary)
-                .listRowBackground(PocketColor.background)
-        } else {
-            resultSection("Exercises", rows: matchingExercises.map { exerciseRow($0) })
-            resultSection("Loops", rows: matchingTrainerLoops.map(loopRow))
-            // Loops appear again as ear-training picks — the same units, a different block (ADR 0104),
-            // and a wider set of them (ADR 0138): ear needs audio, not a measured tempo.
-            resultSection("Ear training", rows: matchingEarLoops.map(earLoopRow))
-            resultSection("Songs", rows: matchingSongs.map(songRow))
-        }
-    }
-
-    @ViewBuilder private func resultSection(_ title: String, rows: [PickRow]) -> some View {
-        if !rows.isEmpty {
-            Section(title) {
-                ForEach(rows) { row in
-                    AddRoutineUnitRow(row: row, playingID: $rootPlayingID)
-                        .listRowBackground(PocketColor.background)
-                }
+            // Improvise (ADR 0135 Slice 2): the same loops again, added as a backing track to solo
+            // over — but only the **flagged** ones, unlike Ear training.
+            NavigationLink {
+                GroupPickList(title: "Improvise", groups: improviseLoopGroups,
+                              allRows: allImproviseLoopRows)
+            } label: {
+                bucketRow(title: "Improvise", subtitle: "Jam over a backing track",
+                          icon: LoopRunMode.improvise.symbolName, count: improviseLoops.count)
             }
+            .listRowBackground(PocketColor.background)
         }
     }
 
@@ -247,6 +209,9 @@ struct AddRoutineUnitSheet: View {
     /// the implementation is fine; sharing the *gate* was the bug.
     private var loopGroups: [PickGroup] { loopGroups(trainerLoops, makeRow: loopRow) }
     private var earLoopGroups: [PickGroup] { loopGroups(earLoops, makeRow: earLoopRow) }
+    private var improviseLoopGroups: [PickGroup] {
+        loopGroups(improviseLoops, makeRow: improviseLoopRow)
+    }
 
     /// Every unit in a bucket, flat and A→Z (the `@Query` order) — the **All** escape hatch each
     /// grouped level offers (ADR 0127). The grouping is still the way in; this is for the times you
@@ -260,6 +225,7 @@ struct AddRoutineUnitSheet: View {
     }
     private var allLoopRows: [PickRow] { trainerLoops.map(loopRow) }
     private var allEarLoopRows: [PickRow] { earLoops.map(earLoopRow) }
+    private var allImproviseLoopRows: [PickRow] { improviseLoops.map(improviseLoopRow) }
 
     private func loopGroups(_ source: [Loop], makeRow: (Loop) -> PickRow) -> [PickGroup] {
         let bySong = Dictionary(grouping: source) { $0.song?.title ?? "" }
@@ -287,13 +253,13 @@ struct AddRoutineUnitSheet: View {
 
     /// An exercise row. `showsTemplate` is on only in the flat **All exercises** list, where the
     /// template has to move onto the row — in the grouped list it's the section you walked through.
-    private func exerciseRow(_ exercise: Exercise, showsTemplate: Bool = false) -> PickRow {
+    func exerciseRow(_ exercise: Exercise, showsTemplate: Bool = false) -> PickRow {
         row(.exercise(exercise), title: exercise.name.isEmpty ? "Untitled" : exercise.name,
             context: showsTemplate ? exercise.template.displayName : nil,
             progress: exercise.commandProgressLabel)
     }
 
-    private func loopRow(_ loop: Loop) -> PickRow {
+    func loopRow(_ loop: Loop) -> PickRow {
         row(.loop(loop), title: loop.name.isEmpty ? "Untitled loop" : loop.name,
             context: loop.song?.title,
             progress: "Command \(Int((loop.command * 100).rounded()))%", previewLoop: loop)
@@ -302,12 +268,19 @@ struct AddRoutineUnitSheet: View {
     /// The ear-training variant of `loopRow` — same loop, but the pick adds an ears-only block
     /// (ADR 0104). The prefixed `pickID` keeps it distinct from the trainer row in the shared
     /// grouping, and lets one routine hold both blocks for the same loop.
-    private func earLoopRow(_ loop: Loop) -> PickRow {
+    func earLoopRow(_ loop: Loop) -> PickRow {
         row(.earLoop(loop), title: loop.name.isEmpty ? "Untitled loop" : loop.name,
-            context: loop.song?.title, progress: "Ear training", previewLoop: loop)
+            context: loop.song?.title, progress: LoopRunMode.ear.label, previewLoop: loop)
     }
 
-    private func songRow(_ song: Song) -> PickRow {
+    /// The improvise variant — the same loop again as a backing-track block (ADR 0135 Slice 2), with
+    /// its own `pickID` prefix so one routine can hold all three blocks for one loop.
+    func improviseLoopRow(_ loop: Loop) -> PickRow {
+        row(.improviseLoop(loop), title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+            context: loop.song?.title, progress: LoopRunMode.improvise.label, previewLoop: loop)
+    }
+
+    func songRow(_ song: Song) -> PickRow {
         row(.song(song), title: song.title.isEmpty ? "Untitled song" : song.title,
             context: song.artist.isEmpty ? nil : song.artist, progress: "Play-along")
     }
@@ -315,8 +288,8 @@ struct AddRoutineUnitSheet: View {
     /// The one place a `PickRow` is built — so every bucket's row derives its id, its added state
     /// and its toggle from the same `RoutineUnitPick`, and none of the four can drift from the
     /// others (a row whose id didn't match its pick would check the wrong row on add).
-    private func row(_ pick: RoutineUnitPick, title: String, context: String?,
-                     progress: String, previewLoop: Loop? = nil) -> PickRow {
+    func row(_ pick: RoutineUnitPick, title: String, context: String?,
+             progress: String, previewLoop: Loop? = nil) -> PickRow {
         PickRow(id: pick.pickID, title: title, context: context, progress: progress,
                 pick: { onToggle(pick) }, previewLoop: previewLoop,
                 isAdded: addedIDs.contains(pick.pickID))

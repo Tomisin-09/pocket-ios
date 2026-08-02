@@ -317,7 +317,7 @@ count pills → each opens its sheet), keeping the review aids bounded as histor
 
 **Ear training — "the loops, re-surfaced"** (ADR 0104): a loop's settings sheet carries a **Train your
 ear** button opening `EarTrainingSheet`, an *away-from-the-guitar* mode that plays the loop's own audio
-cycling continuously (an `EarTrainingPlayer` wrapping a `LoopRunModel`, with **no** auto-stop — the
+cycling continuously (a `ContinuousLoopPlayer` wrapping a `LoopRunModel`, with **no** auto-stop — the
 difference from the routine-preview `LoopAudioPreviewPlayer`) so the player can **hum or sing it back**,
 with a live **−/+ tempo control** (25–150% of original in 5% steps, `LoopRunModel.setAuditionPercent`
 pushing the rate to the engine mid-listen) to slow the phrase down. The loop's identity (name + song
@@ -338,7 +338,9 @@ with no instrument in hand, behind a measurement you can only make **by playing 
 instrument**. The preconditions now live in the pure **`LoopModeAccess`** — `allows(_ mode:_ facts:)`
 over a small `Facts` value (`hasCommandTempo`, `audioResolves`): the **trainer** needs a command tempo
 (its ramp is anchored on one), **ear** needs only audio it can play (the same `source != .appleMusic`
-condition `playableSongs` already expresses), and ADR 0135's **improvise** will need `isBackingTrack`.
+condition `playableSongs` already expresses), and ADR 0135's **improvise** needs `isBackingTrack`
+**and** audio (the flag is a claim about suitability; a claim over audio that won't resolve leaves
+nothing to solo over).
 The `switch` is exhaustive with **no `default`**, so a new `LoopRunMode` cannot compile until its gate
 is stated — the mechanical guard against exactly the inheritance that caused this. Consequently the
 add-sheet's Ear bucket count now *exceeds* the Loops count (the honest difference between "captured"
@@ -346,6 +348,61 @@ and "measured"), and `LoopLibraryView` keeps the trainer gate as its default lis
 **widening** "Show all loops" filter to `LibraryOptionsMenu` (Favourites narrows; this widens) with
 per-row affordances built from `modes(for:)`, so an unmeasured row offers Ear and has no trainer target
 at all rather than a tap into a ramp with nothing to anchor.
+
+**A loop can be a backing track** (ADR 0135, Slice 1). A section of the player's own song, looping with
+no vocal over it, *is* a backing track — what was missing was classification and resurfacing, not
+audio. `Loop.isBackingTrack` (a plain `Bool` with a declaration default, additive migration, the
+`isFavorite` precedent) is a **player claim**, deliberately not `LoopType` (single-select, answers
+*what material is this*) and not a `tags` string (open free text, string-matched — this drives a
+filter, a surface and, at Slice 3, planner resolution, so it has to be exact). It is set on the loop
+settings sheet under its own **Backing track** section, whose footer is guidance and not a check: the
+app verifies nothing about bar boundaries, which is why the copy is musical ("a whole number of bars,
+no vocal") rather than technical — the audio seam already crossfades, so there is no click to warn
+about. `LoopEditSnapshot` carries the flag so the sheet's Undo covers it.
+
+The mode is `LoopRunMode.improvise` — continuous playback of the loop's own audio at **one**
+live-adjustable tempo, no ramp and no rep clock (a song block's rule, not the trainer's; ADR 0014 R1
+— the app never tells you to stop playing), with notes to the same `JournalWriter` path tagged 🎸
+(`EntryKind.improvise`). **Nothing listens** (ADR 0070 / 0094): no mic, no analysis, no verdict on
+what was played over it. `ImproviseView` and `EarTrainingView` are the same three `LoopModeSections`
+— identity header, `ContinuousLoopControls`, note capture — differing only in copy and the note's
+`EntryKind`; they were extracted when the second mode arrived rather than copied. The one behavioural
+difference is the seed: improvise opens at the loop's `armingSpeed` (command tempo, else **full**
+tempo), because a section drawn at 70% to pick a lick off it is a poor jam tempo by default.
+
+**Slice 2** makes it a **routine block**, mirroring ADR 0104's wiring for `.ear`: an `.improvise`
+loop block resolves to `RoutineStageKind.improviseLoop` and the player embeds `ImproviseLoopRunView`
+(the shared `ImproviseView` core + routine chrome + a manual **Done**, no completion screen — nothing
+to grade), authored from a peer **Improvise** bucket in `AddRoutineUnitSheet` whose count sits *below*
+Ear training's, since only flagged loops qualify. The Done-screen skip is now stated for the family
+(`RoutineStageKind.isRampLess`) rather than testing `.earLoop` by hand.
+
+**A block without a ramp still has a length** (ADR 0141). Ear, improvise and (once built) freeform
+blocks had no defined end, so a routine containing one could not honestly state its own length — and
+`PracticePlanner.estimatedMinutes(for:mode:plannedMinutes:)` discarded `plannedMinutes` for every
+non-trainer mode, so it already misreported it. They now carry a planned length through the existing
+ADR 0129/0130 fields, with **no new stored property**. The resolution is three-way and lives in one
+place — `RoutineItem.resolvedBlockMinutes` over the pure `RampLessBlockLength` — because
+`effectivePlannedMinutes` folds "the player **declined** a length" and "no session ever **sized** this
+block" into the same `nil`, which are opposite intentions: the first runs open-ended, the second takes
+the mode's default (ear 5 min, improvise 10). It is a **budget, not a buzzer**: `RampLessBlockChrome`
+never cuts audio, never disables Done, and rounds the end **up to the next loop-region boundary**
+(`finishTime`) so a phrase is never severed — which is also why such a block can overshoot its
+allotment by up to one region, and why its length should be read as a floor. `RampLessBlockLengthControl`
+offers **No time limit**, restoring ADR 0104 / 0135's open-ended behaviour exactly, as a choice rather
+than as the only option. Reconciled with ADR 0014 R1 by separating two claims that shared one word:
+R1 forbids *the app* deciding you've played enough, and the length here is the player's own — so
+`RoutineBudget` still counts only `focused` blocks, and a backing loop still plans as `play` (ADR 0135
+§B6a's placement stands; only its "has no defined length" rationale is amended).
+
+Resurfacing is the flag's whole job: `LoopLibraryView` gains a **Backing tracks only** narrowing
+filter beside Favourites, and the shelf reads from *every* loop rather than filtering the measured
+listing — a backing track needs no command tempo, so the other way round would hide exactly the loops
+a player flags and never measures. Rows carry an **Improv** button only when flagged, where **Ear**
+appears on anything audible; that asymmetry is the flag's payoff. Row buttons, the long-press menu and
+the pushed destination are now all driven by `LoopModeAccess.modes(for:)` over a mode + loop
+`LoopLaunch` pair, so a fourth mode reaches all three at once. Slice 2 (the routine block and its
+`AddRoutineUnitSheet` bucket) and Slice 3 (the planner) are not built.
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
@@ -766,7 +823,8 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   completion — an ear block has no ramp, ADR 0104), and a song play-along when the track ends. A run
   **stopped by hand** logs nothing — the log records completed runs, and an aborted one has no honest
   length to claim; a *looping* play-along and standalone `EarTrainingSheet` stay unlogged under the same
-  rule, being open-ended. There is deliberately **no `recording` kind** despite ADR 0117 listing one: a
+  rule, being open-ended — as does the standalone `ImproviseSheet`, which inherits that open question
+  along with the shape (ADR 0135 B3b's logged run is the *routine block*, which Slice 2 builds). There is deliberately **no `recording` kind** despite ADR 0117 listing one: a
   take is always captured during an exercise or loop run that already logs, so a second row would
   double-count the same minutes.
   Read today by `ExerciseDetailSheet`, which queries the whole log and filters in memory (a `#Predicate`

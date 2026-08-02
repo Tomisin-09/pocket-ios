@@ -91,9 +91,10 @@ struct RoutinePlayerView: View {
         if player.hasMoreReps {
             player.advance()      // next rep of the same block — the run screen restarts on its new id
         } else if !AppSettings.routineAutoAdvance, let stage = player.current,
-                  stage.kind != .earLoop, owner(for: stage) != nil {
-            // Ear-training blocks never show a Done screen — there's nothing to grade or promote
-            // (ADR 0104 Slice 2); their own Done button is the completion, so advance straight on.
+                  !stage.kind.isRampLess, owner(for: stage) != nil {
+            // A ramp-less block never shows a Done screen — there's nothing to grade or promote on an
+            // ear (ADR 0104) or improvise (ADR 0135) block; its own Done button, or its planned length
+            // running out (ADR 0141), *is* the completion, so advance straight on.
             doneStage = stage
         } else {
             player.advance()
@@ -176,6 +177,8 @@ struct RoutinePlayerView: View {
             LoopRunView(loop: loop, routineContext: context).id(runID)
         case .earLoop(let loop):
             EarLoopRunView(loop: loop, routineContext: context).id(runID)
+        case .improviseLoop(let loop):
+            ImproviseLoopRunView(loop: loop, routineContext: context).id(runID)
         case .song(let song):
             SongPlayAlongView(song: song, routineContext: context).id(runID)
         case .rest:

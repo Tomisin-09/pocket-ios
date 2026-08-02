@@ -15,17 +15,28 @@ struct EarLoopRunView: View {
     let loop: Loop
     var routineContext: RoutineRunContext?
     @Environment(\.modelContext) private var modelContext
+    @State private var player: ContinuousLoopPlayer
     /// When this block began (ADR 0117). An ear block has no Start — the loop plays from arrival — so
     /// the clock starts on appearance rather than on a transport action.
     @State private var startedAt: Date?
 
+    init(loop: Loop, routineContext: RoutineRunContext? = nil) {
+        self.loop = loop
+        self.routineContext = routineContext
+        _player = State(initialValue: ContinuousLoopPlayer(loop: loop))
+    }
+
     var body: some View {
-        EarTrainingView(loop: loop)
-            .navigationTitle(loop.name.isEmpty ? "Train your ear" : loop.name)
+        EarTrainingView(loop: loop, player: player)
+            .navigationTitle(loop.name.isEmpty ? LoopRunMode.ear.label : loop.name)
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
             .toolbar { doneButton }
             .onAppear { if startedAt == nil { startedAt = .now } }
+            .rampLessBlockLength(plannedMinutes: routineContext?.plannedMinutes,
+                                 cycleSeconds: { player.cycleSeconds(for: loop) },
+                                 isPlaying: { player.isPlaying },
+                                 onFinish: finish)
     }
 
     /// Log the block as a completed unit-run (ADR 0117). **Done is a genuine completion here**, not a
@@ -46,6 +57,13 @@ struct EarLoopRunView: View {
                               into: modelContext)
     }
 
+    /// The one completion seam, shared by the Done button and the block running its planned length
+    /// (ADR 0141) — so a block that timed out logs and advances exactly like one finished by hand.
+    private func finish() {
+        logCompletedRun()   // before advancing — advancing tears this screen down
+        routineContext?.onFinished()
+    }
+
     /// The completion action as a **nav-bar button**, not a bottom pill — an ear block has nothing to
     /// grade, so advancing is a quiet "Done" (or "Finish" on the last block), never a big call-to-action
     /// that reads like something's wrong. It leaves the screen's own **Save to Journal** as the only
@@ -55,8 +73,7 @@ struct EarLoopRunView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(context.stageIndex >= context.stageCount - 1 ? "Finish" : "Done") {
                     haptic(.light)
-                    logCompletedRun()   // before advancing — advancing tears this screen down
-                    context.onFinished()
+                    finish()
                 }
                 .font(.futura(.body, weight: .semibold))
                 .tint(PocketColor.practice)

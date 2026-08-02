@@ -16,6 +16,9 @@ struct LoopEditSnapshot: Equatable {
     var customColorHex: String?
     /// The favourite pin (ADR 0119), editable here since ADR 0125 — so Undo covers it too.
     var isFavorite: Bool
+    /// The backing-track flag (ADR 0135 B1) — set on this sheet, so Undo has to cover it or a
+    /// mis-tapped toggle would survive the "Saved changes" undo that appears to have reverted it.
+    var isBackingTrack: Bool
 
     init(_ loop: Loop) {
         name = loop.name
@@ -27,6 +30,7 @@ struct LoopEditSnapshot: Equatable {
         colorIndex = loop.colorIndex
         customColorHex = loop.customColorHex
         isFavorite = loop.isFavorite
+        isBackingTrack = loop.isBackingTrack
     }
 
     func restore(to loop: Loop) {
@@ -39,5 +43,6 @@ struct LoopEditSnapshot: Equatable {
         loop.colorIndex = colorIndex
         loop.customColorHex = customColorHex
         loop.isFavorite = isFavorite
+        loop.isBackingTrack = isBackingTrack
     }
 }

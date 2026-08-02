@@ -81,6 +81,7 @@ struct KindChip: View {
         case .note: return PocketColor.textSecondary
         case .session: return .purple
         case .ear: return PocketColor.journal   // 👂 ear-training note (ADR 0104)
+        case .improvise: return PocketColor.practice   // 🎸 jam note over a backing loop (ADR 0135)
         }
     }
 }

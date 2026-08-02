@@ -225,6 +225,9 @@ enum Tool: String, CaseIterable {
     case metronome
     case earTraining = "ear_training"
     case recording
+    /// Improvising over a backing-track loop (ADR 0135) — a tool open, like ear training. Nothing
+    /// about what was played is captured or sent (B5); this counts that the surface was reached.
+    case improvise
 }
 
 /// Which Red Moon Pro product was bought.

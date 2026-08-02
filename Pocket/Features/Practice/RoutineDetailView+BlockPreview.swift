@@ -79,10 +79,11 @@ extension RoutineDetailView {
             previewTarget = .exercise(appExercise, block: item)
         } else if let loop = item.loop,
                   let appLoop = appContext.model(for: loop.persistentModelID) as? Loop {
-            // A loop block carries a mode (ADR 0104 Slice 2): ear blocks preview the ears-only surface.
-            previewTarget = item.loopRunMode == .ear
-                ? .earLoop(appLoop)
-                : .loop(appLoop, block: item)
+            // A loop block carries a mode (ADR 0104 / 0135): the ramp-less ones preview their own
+            // surface rather than a staircase they never run.
+            previewTarget = item.loopRunMode == .trainer
+                ? .loop(appLoop, block: item)
+                : .rampLess(appLoop, mode: item.loopRunMode, block: item)
         } else {
             return
         }
@@ -102,8 +103,9 @@ extension RoutineDetailView {
         case .loop(let loop, let block):
             LoopBlockPreview(loop: loop, plannedMinutes: block.plannedMinutes,
                              usesAuthoredLength: authoredLength(of: block))
-        case .earLoop(let loop):
-            EarLoopBlockPreview(loop: loop)
+        case .rampLess(let loop, let mode, let block):
+            RampLessBlockPreview(loop: loop, mode: mode, block: block,
+                                 runsOpenEnded: authoredLength(of: block))
         }
     }
 

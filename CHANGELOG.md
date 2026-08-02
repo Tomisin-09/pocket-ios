@@ -6,6 +6,31 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Improvise and ear training can be blocks in a routine — with a length.** Both used to run until
+  you tapped Done, which is right on their own but makes a nonsense of a routine: a four-block session
+  whose third block has no end isn't a 40-minute session. Now they take a length like every other
+  block — whatever the session gave them, or a sensible default when you built the routine yourself.
+
+  It's a budget, not a buzzer. The audio is never cut mid-phrase — the block waits for the loop to
+  come round and *then* moves on — Done is live the whole time so you can finish early, and there's a
+  quiet countdown if you want it. And if you'd rather it didn't end at all, **No time limit** in the
+  block's settings gives you exactly the old behaviour back.
+- **Any loop can be a backing track.** You've probably already done this: loop the intro or the outro,
+  no vocal over it, and play something over the top. The app just didn't know that's what you were
+  doing. Open a loop's settings and turn on **Backing track** — it's a note to yourself about what the
+  section is good for, and nothing checks it. Sections that sit over a whole number of bars, with no
+  vocal, make the best beds.
+
+  Flagged loops get an **Improvise** button on their row and a **Backing tracks only** filter in the
+  loops menu, so "what can I jam over?" is one shelf instead of a hunt through every song. Improvise
+  plays the section on repeat at one tempo you can move while it's going — no ramp, no rep count, no
+  end. It doesn't tell you to stop, and nothing is listening: no mic, no analysis, no verdict on what
+  you played. Anything worth keeping goes in the loop's Journal, tagged 🎸.
+
+  **Improvise** also sits in every loop's settings next to **Train your ear**, flag or no flag — the
+  flag decides where a loop *turns up*, not whether you're allowed to play over the one in front of
+  you. Neither needs a command tempo. And a backing track can go **in a routine**: there's an
+  Improvise bucket when you add blocks, listing your flagged loops.
 - **Command tempo can now move down, not just up.** Finishing a drill has always offered to bump its
   command tempo — but the ramp finishes on a timer whether or not you played it clean, so that offer
   turned up after bad runs too, right under the question "how clean did that feel?". Now your answer

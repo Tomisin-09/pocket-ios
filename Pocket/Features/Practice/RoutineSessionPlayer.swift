@@ -15,22 +15,25 @@ struct RoutineStage: Identifiable {
     let plannedMinutes: Int?
     let payload: Payload
 
-    enum Payload { case exercise(Exercise), loop(Loop), earLoop(Loop), song(Song), rest }
+    enum Payload {
+        case exercise(Exercise), loop(Loop), earLoop(Loop), improviseLoop(Loop), song(Song), rest
+    }
 
     var kind: RoutineStageKind {
         switch payload {
         case .exercise: return .exercise
         case .loop: return .loop
         case .earLoop: return .earLoop
+        case .improviseLoop: return .improviseLoop
         case .song: return .song
         case .rest: return .rest
         }
     }
     var exercise: Exercise? { if case .exercise(let value) = payload { return value }; return nil }
-    /// The loop unit for **either** loop mode — standard trainer (`.loop`) or ear (`.earLoop`).
+    /// The loop unit for **any** loop mode — trainer, ear (ADR 0104) or improvise (ADR 0135).
     var loop: Loop? {
         switch payload {
-        case .loop(let value), .earLoop(let value): return value
+        case .loop(let value), .earLoop(let value), .improviseLoop(let value): return value
         default: return nil
         }
     }
@@ -144,10 +147,17 @@ final class RoutineSessionPlayer {
             let title = loop.name.isEmpty ? "Loop" : loop.name
             // A loop block carries a mode (ADR 0104 Slice 2): ear training embeds the ears-only
             // surface, everything else the standard command-anchored trainer.
-            let payload: RoutineStage.Payload =
-                item.loopRunMode == .ear ? .earLoop(loop) : .loop(loop)
+            let payload: RoutineStage.Payload
+            switch item.loopRunMode {
+            case .trainer: payload = .loop(loop)
+            case .ear: payload = .earLoop(loop)
+            case .improvise: payload = .improviseLoop(loop)
+            }
+            // `resolvedBlockMinutes`, not `planned`: a ramp-less block has to tell "the player
+            // declined a length" (open-ended) from "no session ever sized this block" (the mode's
+            // default), and `effectivePlannedMinutes` folds those together (ADR 0141).
             return RoutineStage(id: item.uid, title: title, reps: reps,
-                                plannedMinutes: planned, payload: payload)
+                                plannedMinutes: item.resolvedBlockMinutes, payload: payload)
         }
         if let song = item.song {
             return RoutineStage(id: item.uid, title: song.title.isEmpty ? "Song" : song.title,

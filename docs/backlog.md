@@ -31,11 +31,24 @@ a routine* contribute dueness.
    as an optional *widening* filter, per-mode row affordances, empty state rewritten.
    **Device-verified 2026-08-02** — the flagged noise risk did not materialise: Ear reads 46 against
    Loops' 38 on a real library, 8 rows longer rather than the "several times" the ADR feared.
-3. **ADR 0135 slice 1.** The flag, `ImproviseSheet`, `EntryKind.improvise`, the library filter, the
-   Improvise bucket, and the improvise arm of step 2's gate. This is why 0138 goes first: the gate
-   refactor lands once and this extends it, rather than a flag arriving with nowhere to show.
-4. **ADR 0135 slice 2.** `LoopRunMode.improvise` + `ImproviseLoopRunView` in the routine player.
-   Mirrors ADR 0104 slice 2.
+3. **ADR 0135 slice 1. ✅ BUILT 2026-08-02** (`pocket-220-backing-track-loops`). `Loop.isBackingTrack`
+   (+ `LoopEditSnapshot` staging and the settings-sheet toggle with its guidance footer),
+   `ImproviseSheet`/`ImproviseView`, `EntryKind.improvise` 🎸, `PracticeRunKind.improvise`, the
+   Loops-library **Backing tracks only** filter and per-row **Improv** button, and the improvise arm
+   of step 2's gate. `LoopRunMode.improvise` landed **here** rather than in step 4 — `LoopModeAccess`'s
+   `switch` has no `default`, so the gate can't be stated without the case. Two boundaries moved,
+   both recorded in the ADR's build notes: the **Improvise bucket went to step 4** (a bucket authors a
+   routine block, which is all of slice 2 — shipped alone it would author blocks that fall back to the
+   trainer), and the shelf filter **replaces** the trainer gate instead of composing with it (composing
+   hides the unmeasured flagged loops B9 exists to admit). **Device-verified 2026-08-02**, including
+   the two-button row (Ear + Improv side by side), both filters, and the unmeasured-flagged case the
+   shelf-vs-gate decision exists for.
+4. **ADR 0135 slice 2 + ADR 0141 slice 1. ✅ BUILT 2026-08-02**
+   (`pocket-223-improvise-block-and-lengths`, stacked on `pocket-220`). Improvise is a real routine
+   block (stage, pick, run view, bucket, previews), and both ramp-less block types now carry a planned
+   length. **Device-verified 2026-08-02** — the countdown, the loop-boundary end and "No time limit"
+   all confirmed on the iPhone. ADR 0141 was written for this: `docs/decisions/0141-…`. Note `AddRoutineUnitSheet` split its search layer into
+   `AddRoutineUnitSheet+Search.swift` as planned below.
 5. **ADR 0135 slice 3 + ADR 0139 slice 1 — build adjacently.** Both need the same structural change:
    `PlannerCandidate`/`SessionBlock` carrying a `LoopRunMode` through to the materialised
    `RoutineItem`. Doing them apart means doing it twice. Also here: `improv.vocabulary` resolution,
@@ -48,10 +61,13 @@ with Track A, so it can run in parallel or go first if a visible feature is want
 slice 2** (freeform blocks declaring themselves off-guitar) comes after it.
 
 **Watch items to carry into the branches:**
-- `AddRoutineUnitSheet.swift` is now **324 lines** after step 2; step 3 adds the Improvise bucket. The
-  400-line cap plus CI `--strict` will bite. The split is planned, not to be discovered: extract the
-  `// MARK: - Search` block (~50 lines) into `AddRoutineUnitSheet+Search.swift` if step 3 takes it
-  past ~370. It holds no state beyond `searchText`.
+- ~~`AddRoutineUnitSheet.swift` needs its search layer split out before the Improvise bucket.~~ ✅
+  **DONE 2026-08-02** — `AddRoutineUnitSheet+Search.swift`, sheet back to 271 lines. Note the split
+  forced several `private` members to internal: Swift has no cross-file-private for one type, the
+  same tax `LoopEditSheet+Fields` already pays.
+- ~~Standalone sheets log no `PracticeRun` row — undecided.~~ **DECIDED by ADR 0141 §L7**: they stay
+  unlogged *by rule*, because a routine block has a planned length and therefore an honest duration
+  while an open sheet does not. No longer an open question.
 - `UnitDuplication`, the preset seeder and bulk import must carry `Exercise.notes` once ADR 0136 makes
   it mean something. A duplicate that drops the instructions drops the exercise.
 - Two **silent-break** claims in ADR 0136: `SkillFamilyMap` omitting `.freeform`, and

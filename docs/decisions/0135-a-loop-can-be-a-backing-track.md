@@ -1,6 +1,9 @@
 # 0135 — A loop can be a backing track (improvise over your own music)
 
-- **Status:** Proposed (2026-08-01)
+- **Status:** Accepted — **Slices 1 and 2 built and device-verified** 2026-08-02 (S1 on
+  `pocket-220-backing-track-loops`, S2 on `pocket-223-improvise-block-and-lengths`, which supersedes
+  it). Slice 3 (the planner) outstanding. See §Build notes for what landed, the one slice boundary that moved, and the question
+  Slice 1 inherits rather than answers.
 - **Date:** 2026-08-01
 - **Builds on:** ADR 0104 (ear training as "loops, re-surfaced" — the mode-on-a-loop pattern this ADR
   copies almost verbatim), ADR 0070 (Pocket never grades the player), ADR 0094 (the no-grading line
@@ -175,9 +178,10 @@ Improvising has no unit in the library that can serve it. A backing loop is exac
   toggle with B4a's caption; `ImproviseSheet` hosted from the loop edit sheet (continuous playback,
   live percent, Journal note); `EntryKind.improvise`; the Loops-library filter. Independently useful:
   the player can flag sections and jam over them.
-- **Slice 2 — the routine block.** `LoopRunMode.improvise` and `ImproviseLoopRunView` inside the
-  routine player, mirroring ADR 0104 Slice 2's wiring for `.ear`. A backing loop becomes something a
-  routine can end on.
+- **Slice 2 — the routine block. ✅ BUILT.** `ImproviseLoopRunView` inside the routine player,
+  mirroring ADR 0104 Slice 2's wiring for `.ear`, plus B8's Improvise bucket (carried here from Slice
+  1 — a bucket authors a block, so it needs the block). A backing loop becomes something a routine can
+  end on. Built with **ADR 0141 Slice 1**, which gives it a length.
 - **Slice 3 — the planner.** B6/B6a: `PlannerLoop.isBackingTrack`, the `improv.vocabulary` resolution,
   the `play`-kind placement, and carrying `LoopRunMode` through `SessionBlock` into the materialised
   `RoutineItem`. Closes the empty-goal hole.
@@ -227,6 +231,45 @@ follow ear training's placement exactly; the third item is a defect the placemen
   timestamped per-unit-run rows (`.loop`, `.earLoop`, and `.improvise` when it lands), so the data to
   make loop dueness real exists for the first time — nothing reads it back yet. Parked as its own
   decision.
+
+## Build notes — Slice 1 (2026-08-02)
+
+- **`LoopRunMode.improvise` landed here, not in Slice 2.** ADR 0138's `LoopModeAccess` switches over
+  `LoopRunMode` with no `default`, so the third gate could not be stated without the third case. The
+  enum case is Slice 1; the *routine block* it eventually tags is still Slice 2.
+
+- **B8's Improvise bucket moved to Slice 2.** The amendment listed the `AddRoutineUnitSheet` bucket
+  under Slice 1, but a bucket adds a **routine block** — which needs the pick case, the player's
+  stage dispatch and `ImproviseLoopRunView`, i.e. all of Slice 2. Shipping the bucket first would have
+  authored blocks that fall back to running the *trainer* against a loop with no command tempo. B8a's
+  per-row button, which needs none of that, is built.
+
+- **The shelf reads from every loop, not from the measured listing.** `LoopLibraryView`'s
+  "Backing tracks only" filter replaces the trainer gate rather than composing with it. Composing
+  would have hidden exactly the loops B9 exists to admit: a section flagged as a bed and never
+  measured. Same argument as B9, one screen further in.
+
+- **The improvise precondition is `isBackingTrack` *and* `audioResolves`**, not the flag alone. The
+  flag is a claim about *suitability*; a claim over audio that won't resolve (no song, or an Apple
+  Music catalog item — ADR 0001) leaves nothing to solo over.
+
+- **The two ramp-less modes now share their sections.** `LoopModeSections` holds the identity header,
+  `ContinuousLoopControls` and the Journal note capture; `EarTrainingView` and `ImproviseView` differ
+  only in copy and the note's `EntryKind`. `EarTrainingPlayer` was renamed `ContinuousLoopPlayer` for
+  the same reason — a shared engine named for one of its two callers is how the next reader concludes
+  that improvising *is* ear training.
+
+- **One behavioural difference between them, and it is deliberate:** improvise seeds its tempo from
+  the loop's `armingSpeed` (command tempo, else **full** tempo — ADR 0089's rule) rather than ear
+  training's `ramp.command`, which falls back to the loop's stored practice `speed`. A section drawn
+  at 70% to pick a lick off it would otherwise open a jam at 70%; a bed's honest default is the tempo
+  the record plays at.
+
+- **The standalone `ImproviseSheet` writes no practice-log row.** B3b's logged run is the *routine
+  block*, which Slice 2 builds. This inherits the shape standalone `EarTrainingSheet` already has —
+  and with it the open question ADR 0117's device verification raised and ADR 0138 did not settle:
+  whether an open-ended standalone mode should log at all. It is now **two** surfaces, not one, which
+  is the argument for deciding it rather than a reason to decide it here.
 
 ## Parked follow-ups (not sliced)
 

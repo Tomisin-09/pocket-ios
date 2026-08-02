@@ -88,6 +88,23 @@ final class Loop {
     /// migration fills pre-0119 loops with `false` — additive, no store wipe (CoreData 134110 rule).
     var isFavorite: Bool = false
 
+    /// This section is a **backing track** — a bed to solo over rather than a passage to master
+    /// (ADR 0135 B1). Player-set, never derived, and never a grade: it drives *resurfacing* — the
+    /// Loops library's backing-tracks filter, the per-row Improvise affordance, and (Slice 3) the
+    /// planner resolving the "Improvise in a style" goal — not permission to run the mode.
+    ///
+    /// **Not `loopType` and not a tag** (B1a): `LoopType` answers *what material is this* and is
+    /// single-select, so a backing-suitable section could be any of its cases; `tags` are open,
+    /// canonicalised free text recognised by string match, and this drives a filter and a planner
+    /// resolution, so it has to be typed and exact. `isFavorite` is the precedent in every other
+    /// respect — a plain `Bool` with a **declaration** default so SwiftData lightweight migration
+    /// fills pre-0135 loops with `false`: additive, no store wipe (the CoreData 134110 rule, ADR 0012).
+    ///
+    /// The app verifies nothing about the claim (B4a). What makes a good bed — a whole number of
+    /// bars, no vocal — is guidance on the toggle, not a check; bar-boundary detection is analysis
+    /// this app has no appetite for.
+    var isBackingTrack: Bool = false
+
     // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
     // SwiftData lightweight migration fills them for loops saved before this — see the
     // ADR 0012 migration note (init-only defaults fail with CoreData 134110). The loop's
