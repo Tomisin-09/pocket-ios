@@ -43,10 +43,13 @@ a routine* contribute dueness.
    hides the unmeasured flagged loops B9 exists to admit). **Device-verified 2026-08-02**, including
    the two-button row (Ear + Improv side by side), both filters, and the unmeasured-flagged case the
    shelf-vs-gate decision exists for.
-4. **ADR 0135 slice 2.** `ImproviseLoopRunView` in the routine player + the **Improvise bucket** in
-   `AddRoutineUnitSheet` (carried from step 3), the `RoutineUnitPick` case, the stage dispatch, and the
-   Done-screen skip. Mirrors ADR 0104 slice 2. The mode case and its presentation strings
-   (`label`/`rowLabel`/`symbolName`) already exist.
+4. **ADR 0135 slice 2 + ADR 0141 slice 1. ✅ BUILT 2026-08-02**
+   (`pocket-223-improvise-block-and-lengths`, stacked on `pocket-220`). Improvise is a real routine
+   block (stage, pick, run view, bucket, previews), and both ramp-less block types now carry a planned
+   length. **Not device-verified yet** — check the countdown readout, that a block ends on a loop
+   boundary rather than mid-phrase, and that "No time limit" restores open-ended. ADR 0141 was written
+   for this: `docs/decisions/0141-…`. Note `AddRoutineUnitSheet` split its search layer into
+   `AddRoutineUnitSheet+Search.swift` as planned below.
 5. **ADR 0135 slice 3 + ADR 0139 slice 1 — build adjacently.** Both need the same structural change:
    `PlannerCandidate`/`SessionBlock` carrying a `LoopRunMode` through to the materialised
    `RoutineItem`. Doing them apart means doing it twice. Also here: `improv.vocabulary` resolution,
@@ -59,14 +62,13 @@ with Track A, so it can run in parallel or go first if a visible feature is want
 slice 2** (freeform blocks declaring themselves off-guitar) comes after it.
 
 **Watch items to carry into the branches:**
-- `AddRoutineUnitSheet.swift` is **324 lines** and step 3 left it untouched, so the Improvise bucket
-  now lands in **step 4**. The 400-line cap plus CI `--strict` will bite. The split is planned, not to
-  be discovered: extract the `// MARK: - Search` block (~50 lines) into
-  `AddRoutineUnitSheet+Search.swift` if the bucket takes it past ~370. It holds no state beyond
-  `searchText`.
-- **Standalone `ImproviseSheet` logs no `PracticeRun` row**, matching standalone `EarTrainingSheet`.
-  The A0 finding above is therefore now **two** open-ended surfaces contributing no dueness, not one.
-  Still undecided; decide it before ADR 0139's off-instrument work leans on loop dueness.
+- ~~`AddRoutineUnitSheet.swift` needs its search layer split out before the Improvise bucket.~~ ✅
+  **DONE 2026-08-02** — `AddRoutineUnitSheet+Search.swift`, sheet back to 271 lines. Note the split
+  forced several `private` members to internal: Swift has no cross-file-private for one type, the
+  same tax `LoopEditSheet+Fields` already pays.
+- ~~Standalone sheets log no `PracticeRun` row — undecided.~~ **DECIDED by ADR 0141 §L7**: they stay
+  unlogged *by rule*, because a routine block has a planned length and therefore an honest duration
+  while an open sheet does not. No longer an open question.
 - `UnitDuplication`, the preset seeder and bulk import must carry `Exercise.notes` once ADR 0136 makes
   it mean something. A duplicate that drops the instructions drops the exercise.
 - Two **silent-break** claims in ADR 0136: `SkillFamilyMap` omitting `.freeform`, and

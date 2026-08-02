@@ -1,7 +1,8 @@
 # 0135 — A loop can be a backing track (improvise over your own music)
 
-- **Status:** Accepted — **Slice 1 built and device-verified** 2026-08-02
-  (`pocket-220-backing-track-loops`); Slices 2 and 3 outstanding. See §Build notes for what landed, the one slice boundary that moved, and the question
+- **Status:** Accepted — **Slices 1 and 2 built** (S1 device-verified 2026-08-02,
+  `pocket-220-backing-track-loops`; S2 on `pocket-223-improvise-block-and-lengths`, not yet
+  device-verified). Slice 3 (the planner) outstanding. See §Build notes for what landed, the one slice boundary that moved, and the question
   Slice 1 inherits rather than answers.
 - **Date:** 2026-08-01
 - **Builds on:** ADR 0104 (ear training as "loops, re-surfaced" — the mode-on-a-loop pattern this ADR
@@ -177,9 +178,10 @@ Improvising has no unit in the library that can serve it. A backing loop is exac
   toggle with B4a's caption; `ImproviseSheet` hosted from the loop edit sheet (continuous playback,
   live percent, Journal note); `EntryKind.improvise`; the Loops-library filter. Independently useful:
   the player can flag sections and jam over them.
-- **Slice 2 — the routine block.** `LoopRunMode.improvise` and `ImproviseLoopRunView` inside the
-  routine player, mirroring ADR 0104 Slice 2's wiring for `.ear`. A backing loop becomes something a
-  routine can end on.
+- **Slice 2 — the routine block. ✅ BUILT.** `ImproviseLoopRunView` inside the routine player,
+  mirroring ADR 0104 Slice 2's wiring for `.ear`, plus B8's Improvise bucket (carried here from Slice
+  1 — a bucket authors a block, so it needs the block). A backing loop becomes something a routine can
+  end on. Built with **ADR 0141 Slice 1**, which gives it a length.
 - **Slice 3 — the planner.** B6/B6a: `PlannerLoop.isBackingTrack`, the `improv.vocabulary` resolution,
   the `play`-kind placement, and carrying `LoopRunMode` through `SessionBlock` into the materialised
   `RoutineItem`. Closes the empty-goal hole.

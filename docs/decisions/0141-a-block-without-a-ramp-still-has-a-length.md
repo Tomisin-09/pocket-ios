@@ -1,6 +1,7 @@
 # 0141 — A block without a ramp still has a length
 
-- **Status:** Proposed (2026-08-02)
+- **Status:** Accepted — **Slice 1 built** 2026-08-02 (`pocket-223-improvise-block-and-lengths`),
+  alongside ADR 0135 Slice 2. Not yet device-verified. Slice 2 (freeform) waits on ADR 0136.
 - **Date:** 2026-08-02
 - **Builds on:** ADR 0129 (a session is sized in blocks; a block's allotment fits the unit's ramp),
   ADR 0130 (`plannedMinutes` / `usesAuthoredLength` / `effectivePlannedMinutes`, and a block's right to
@@ -135,7 +136,11 @@ honest about its own shape — without the app severing anything.
 
 ## Slices
 
-- **Slice 1 — ear + improvise.** Build alongside ADR 0135 Slice 2, since that slice writes
+- **Slice 1 — ear + improvise. ✅ BUILT.** One thing the build settled that the decision left
+  implicit: `effectivePlannedMinutes` cannot express the rule, because it folds "declined the fit"
+  and "never sized by a session" into the same `nil` — so the three-way resolution lives in
+  `RoutineItem.resolvedBlockMinutes` over the pure `RampLessBlockLength`, read by both the session
+  player and the routine estimate. Build alongside ADR 0135 Slice 2, since that slice writes
   `ImproviseLoopRunView` and touches `EarLoopRunView`'s neighbourhood anyway. Covers: the
   `estimatedMinutes(for:mode:plannedMinutes:)` fix, the shared remaining-time readout and
   end-of-cycle advance, `BlockLengthControl` on both block previews, the L6 constants, and unit tests
