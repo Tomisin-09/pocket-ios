@@ -193,6 +193,31 @@ enum AudioMath {
         return loopStart + (pos < 0 ? pos + loopLength : pos)
     }
 
+    /// Pull a **rendered** playback position back to the one the ear is actually hearing (ADR 0140 §3).
+    ///
+    /// The player's render position runs ahead of the speakers by the time-stretcher's latency: the
+    /// song goes player → stretcher → mixer, and `playerTime` is read *upstream* of the stretcher. So
+    /// at any instant the listener is hearing material the player pushed `latency` real-seconds ago.
+    ///
+    /// **Why the rate multiply.** `latency` is in real (output) seconds, but a playback position is in
+    /// *source* seconds, and during those real seconds the player advanced only `latency × rate` of
+    /// source material. At 0.5× a 139 ms latency is 70 ms of song. Getting this backwards would
+    /// over-correct by `1/rate` — inaudible at 1× and grossly wrong at 0.25×, which is exactly why the
+    /// A/B for this fix is judged at the slowest rate.
+    ///
+    /// The stretcher's own measurements corroborate the units: latency is 0.0929 s at 1× and 0.1393 s
+    /// at 0.5×, which fits `0.0464/rate + 0.0465` almost exactly — a fixed *source*-side buffer of
+    /// ~46 ms expressed in real time, plus a fixed ~46 ms of real output buffering. Both halves are
+    /// real seconds at the output, as assumed here.
+    ///
+    /// Clamped at zero: for the first `latency` of playback the ear has heard nothing yet, and a
+    /// negative playhead is meaningless to every consumer.
+    static func heardPlayhead(rendered: TimeInterval, latency: TimeInterval,
+                              rate: Double) -> TimeInterval {
+        guard latency > 0, rate > 0 else { return max(0, rendered) }
+        return max(0, rendered - latency * rate)
+    }
+
     /// Whether `playhead` (seconds) still falls inside the half-open loop region
     /// `[start, end)`. Drives the offset-preserving re-arm when a loop's bounds change
     /// while it plays (ADR 0067): inside → keep playing from here; outside → restart from

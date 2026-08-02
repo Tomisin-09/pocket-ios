@@ -120,6 +120,16 @@ All notable changes to Pocket are documented here. Format loosely follows
   blocks don't have this: there's no ramp there to tune.
 
 ### Fixed
+- **The click no longer runs ahead of the song.** Slowing a track down puts it through a processor
+  that takes a moment to do its work — about 90 milliseconds at full speed, growing to around 140 as
+  you slow down. The metronome deliberately skips that processing so it stays crisp, and nothing was
+  accounting for the difference, so the click was firing *before* the beat it was marking, and the
+  gap widened the more you slowed down: at 120 BPM that's most of a sixteenth note, arriving exactly
+  when you're listening hardest for it. The playhead had the same lean — the cursor sat slightly
+  ahead of what your ears were getting. Both now report where the music *is*, not where it's been
+  sent. Tapping in a tempo or a downbeat is measured from the same corrected position, so grids you
+  tap from now on land where you meant them; a tempo you tapped in previously may sit a hair late,
+  and re-tapping it will settle it.
 - **Ear training no longer waits until you've played the passage.** Training your ear with a loop
   needed a command tempo first — and a command tempo is a measurement you can only make by playing
   the thing on your instrument. So the one practice you can do *away* from the guitar — on a bus, in
@@ -167,6 +177,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   than the rest.
 
 ### Changed
+- **Slowed-down audio sounds better.** The speed control was set up to favour attack over smoothness,
+  on the reasoning that a practising guitarist wants the pick to cut through. The setting it used to do
+  that turned out to be the wrong one — it was pinned to the value that produces the *most* artifacts,
+  while the thing that actually preserves attacks was already switched on and doing its job. Slowing
+  down now brings in as much smoothing as the stretch needs and no more: none at all at full speed,
+  progressively more the further you slow, and most at 25% where the audio is worked hardest. Sustained
+  material — vocals, ringing chords, cymbals — should sound noticeably less watery when slowed.
 - **Generated sessions are the right size now.** Asking for a Quick session used to hand you a wall of
   one-minute drills with a three-minute break wedged between every one of them — a "Quick 15" could
   run past an hour, and it got worse the more exercises you'd made. Sessions are now built from proper

@@ -195,6 +195,46 @@ final class AudioMathTests: XCTestCase {
         XCTAssertEqual(AudioMath.loopedPlayhead(elapsed: 5, loopStart: 1.25, loopLength: 0), 1.25, accuracy: 1e-9)
     }
 
+    // MARK: heardPlayhead (ADR 0140 §3 — the click that led the song)
+
+    func testHeardPlayheadSubtractsTheLatencyItselfAtFullSpeed() {
+        // 1× is the one rate where the rate multiply is invisible: 93 ms of latency is 93 ms of song.
+        XCTAssertEqual(AudioMath.heardPlayhead(rendered: 10, latency: 0.0929, rate: 1.0),
+                       9.9071, accuracy: 1e-9)
+    }
+
+    func testHeardPlayheadScalesTheOffsetByTheRate() {
+        // The correction is in *source* seconds: during 139 ms of real time at half speed the player
+        // advanced only ~70 ms of song. Subtracting the raw latency here would double the correction.
+        XCTAssertEqual(AudioMath.heardPlayhead(rendered: 10, latency: 0.1393, rate: 0.5),
+                       10 - 0.06965, accuracy: 1e-9)
+    }
+
+    func testHeardPlayheadCorrectionShrinksAsPlaybackSlows() {
+        // Guards the direction of the rate term. The *real-time* lead grows as you slow down, but the
+        // amount of song it corresponds to shrinks — invert this and 0.25× is corrected 4× too far.
+        let atFullSpeed = 10 - AudioMath.heardPlayhead(rendered: 10, latency: 0.1, rate: 1.0)
+        let atQuarterSpeed = 10 - AudioMath.heardPlayhead(rendered: 10, latency: 0.1, rate: 0.25)
+        XCTAssertLessThan(atQuarterSpeed, atFullSpeed)
+    }
+
+    func testHeardPlayheadClampsAtZeroForTheFirstMomentOfPlayback() {
+        // Before the stretcher's first output reaches the speakers the ear has heard nothing; every
+        // consumer (waveform cursor, timecode, skip target) would misread a negative position.
+        XCTAssertEqual(AudioMath.heardPlayhead(rendered: 0.02, latency: 0.0929, rate: 1.0), 0)
+    }
+
+    func testHeardPlayheadIsIdentityWithoutALatencyToCompensate() {
+        // A stretcher reporting no latency, and the degenerate rates the engine never produces.
+        XCTAssertEqual(AudioMath.heardPlayhead(rendered: 4, latency: 0, rate: 1.0), 4, accuracy: 1e-9)
+        XCTAssertEqual(AudioMath.heardPlayhead(rendered: 4, latency: 0.09, rate: 0), 4, accuracy: 1e-9)
+        XCTAssertEqual(AudioMath.heardPlayhead(rendered: 4, latency: -1, rate: 1.0), 4, accuracy: 1e-9)
+    }
+
+    func testHeardPlayheadNeverReportsNegativeEvenOnDegenerateInput() {
+        XCTAssertEqual(AudioMath.heardPlayhead(rendered: -5, latency: 0, rate: 1.0), 0)
+    }
+
     // MARK: playheadInsideLoop (ADR 0067 — offset-preserving re-arm)
 
     func testPlayheadInsideLoopWithinBounds() {
