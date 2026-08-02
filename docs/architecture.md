@@ -370,6 +370,31 @@ what was played over it. `ImproviseView` and `EarTrainingView` are the same thre
 difference is the seed: improvise opens at the loop's `armingSpeed` (command tempo, else **full**
 tempo), because a section drawn at 70% to pick a lick off it is a poor jam tempo by default.
 
+**Slice 2** makes it a **routine block**, mirroring ADR 0104's wiring for `.ear`: an `.improvise`
+loop block resolves to `RoutineStageKind.improviseLoop` and the player embeds `ImproviseLoopRunView`
+(the shared `ImproviseView` core + routine chrome + a manual **Done**, no completion screen — nothing
+to grade), authored from a peer **Improvise** bucket in `AddRoutineUnitSheet` whose count sits *below*
+Ear training's, since only flagged loops qualify. The Done-screen skip is now stated for the family
+(`RoutineStageKind.isRampLess`) rather than testing `.earLoop` by hand.
+
+**A block without a ramp still has a length** (ADR 0141). Ear, improvise and (once built) freeform
+blocks had no defined end, so a routine containing one could not honestly state its own length — and
+`PracticePlanner.estimatedMinutes(for:mode:plannedMinutes:)` discarded `plannedMinutes` for every
+non-trainer mode, so it already misreported it. They now carry a planned length through the existing
+ADR 0129/0130 fields, with **no new stored property**. The resolution is three-way and lives in one
+place — `RoutineItem.resolvedBlockMinutes` over the pure `RampLessBlockLength` — because
+`effectivePlannedMinutes` folds "the player **declined** a length" and "no session ever **sized** this
+block" into the same `nil`, which are opposite intentions: the first runs open-ended, the second takes
+the mode's default (ear 5 min, improvise 10). It is a **budget, not a buzzer**: `RampLessBlockChrome`
+never cuts audio, never disables Done, and rounds the end **up to the next loop-region boundary**
+(`finishTime`) so a phrase is never severed — which is also why such a block can overshoot its
+allotment by up to one region, and why its length should be read as a floor. `RampLessBlockLengthControl`
+offers **No time limit**, restoring ADR 0104 / 0135's open-ended behaviour exactly, as a choice rather
+than as the only option. Reconciled with ADR 0014 R1 by separating two claims that shared one word:
+R1 forbids *the app* deciding you've played enough, and the length here is the player's own — so
+`RoutineBudget` still counts only `focused` blocks, and a backing loop still plans as `play` (ADR 0135
+§B6a's placement stands; only its "has no defined length" rationale is amended).
+
 Resurfacing is the flag's whole job: `LoopLibraryView` gains a **Backing tracks only** narrowing
 filter beside Favourites, and the shelf reads from *every* loop rather than filtering the measured
 listing — a backing track needs no command tempo, so the other way round would hide exactly the loops
