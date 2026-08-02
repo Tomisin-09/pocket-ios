@@ -1,7 +1,8 @@
 # ADR 0140 — Slowing down shouldn't cost the sound: the stretcher, its settings, and the click that leads it
 
-- **Status:** Accepted. **Slice 1 built 2026-08-02** (`pocket-221-time-stretch-quality`); slices 2–3
-  outstanding. Build notes at the end.
+- **Status:** Accepted. **Slice 1 built and device-confirmed 2026-08-02** (`pocket-221-time-stretch-quality`);
+  **slice 2 built, awaiting the device A/B**; slice 3 outstanding — and slice 1's device pass makes the
+  case for it stronger, since 0.25× is still rough with the curve fixed. Build notes at the end.
 - **Date:** 2026-08-02
 - **Builds on:** ADR 0001 (local files are the audio source — the only reason we own a stretcher at
   all) · ADR 0006 / 0008 (region looping, gapless wrap) · ADR 0013 (the per-loop speed ramp) ·
@@ -306,3 +307,46 @@ device trip.
 pass** on the `PocketAll` plan including 8 new `StretchQualityTests`. The sound itself is a listening
 claim and is device-only. Incidentally, extracting the stretcher took `PracticeAudioEngine.swift` from
 397 lines to 395, off the 400-line cap it was about to hit.
+
+## Build notes — slice 2 (2026-08-02, same branch)
+
+Built as **one offset, per build note 4** — `MetronomeSchedule` is untouched. `updateCurrentTime`
+publishes `currentTime` in *heard* time via a new pure `AudioMath.heardPlayhead(rendered:latency:rate:)`,
+and because `refreshMetronome` measures every beat from `currentTime`, the click and the waveform
+cursor are corrected by the same subtraction.
+
+**Slice 1's device pass, first.** The smoothness change is confirmed by ear on the iPhone: *"the
+overall quality is much better"*. **0.25× still sounds rough** — which is the case §4 exists for. The
+curve is not the ceiling at a 4× stretch; the AU is. That is a point *for* trying `'tmpt'` in slice 3,
+and it is now a listening observation rather than a spec-sheet argument.
+
+**The units question the ADR never pinned down.** The correction is `latency × rate`, in *source*
+seconds — `latency` is real seconds at the output, but a playhead is a position in the song, and during
+those real seconds the player advanced only `rate` as much source material. Getting this backwards
+over-corrects by `1/rate`: identical at 1×, four times too far at 0.25×. The measurements corroborate
+the reading — 0.0929 s at 1× and 0.1393 s at 0.5× fit `0.0464/rate + 0.0465` almost exactly, i.e. a
+fixed ~46 ms *source*-side buffer expressed in real time plus ~46 ms of fixed real output buffering.
+Both halves are real seconds at the output, as assumed.
+
+**`loopIteration` is deliberately left on the rendered clock**, per §3's watch item: it drives the
+per-loop ramp (ADR 0013), and pulling it back across a wrap would re-fire a pass and step the ramp on
+every lap. The consequence is that a ramp's tempo change still lands ~90–140 ms before you hear the
+wrap. That is the pre-existing behaviour, it is an order of magnitude below the ramp's own dwell, and
+it is not worth risking the loop maths to chase.
+
+Also: the reported time is clamped at zero, so the playhead can't read negative during the first
+~93 ms of playback.
+
+**Two files split for the 400-line cap**, both mechanical: `PracticeAudioEngine+LoopBuffer.swift` takes
+the region read and seam crossfade (costing `file` / `sampleRate` / `crossfadeSeconds` /
+`loopAnchorFrame` / `loopBufferFrames` / `currentLoopSegment` their `private` — the usual
+cross-file-private tax), and `DebugAudioSection.swift` takes the new Debug toggle out of
+`SettingsView`.
+
+**Status: not yet confirmed on device.** The A/B toggle is *Settings → Audio (Debug) → Compensate
+stretch latency*, default on. Judge at 0.25× against a song whose BPM was **typed**, not tapped — build
+note 5. If the corrected build is not tighter, this slice reverts and §3 is struck from the ADR.
+
+**Verification (slice 2):** `swiftlint --strict` clean, generic-simulator build clean, **1796 tests
+pass** on `PocketAll` including 6 new `heardPlayhead` cases covering the rate scaling, its direction,
+the zero clamp and the degenerate inputs.

@@ -20,14 +20,19 @@ Three slices, in [ADR 0140](decisions/0140-slowing-down-shouldnt-cost-the-sound.
    tests. Note `overlap` turned out **not** to be deprecated at the Swift level; the rename is at the
    AudioToolbox constant only, and the SDK header states the "higher = fewer artifacts" semantics
    outright. Sound itself still to be confirmed on device.
-2. **Latency compensation — the actual defect.** The click bypasses the stretcher by design, but the
-   stretcher has **93 ms latency at 1×, 139 ms at 0.5×**, and nothing compensates, so the click leads
-   the song by a rate-dependent flam (a 16th note at 120 BPM is 125 ms) — and the visual playhead
-   leads too. Measured + code-path confirmed, **not yet ear-confirmed**: the slice starts by proving it
-   on device, and is dropped if it isn't real.
+2. **Latency compensation — the actual defect. ⏳ BUILT 2026-08-02, AWAITING THE DEVICE A/B.** The
+   click bypasses the stretcher by design, but the stretcher has **93 ms latency at 1×, 139 ms at
+   0.5×**, and nothing compensated, so the click led the song by a rate-dependent flam (a 16th note at
+   120 BPM is 125 ms) — the visual playhead too. `currentTime` is now published in *heard* time via the
+   pure `AudioMath.heardPlayhead`, which corrects the click and the cursor in one subtraction and
+   leaves `MetronomeSchedule` alone. **A/B it at *Settings → Audio (Debug) → Compensate stretch
+   latency*** (default on) at 0.25×, against a **typed**-BPM song. If the corrected build isn't
+   tighter, revert the slice and strike §3.
 3. **The `'tmpt'` A/B.** Apple's *high quality* stretcher is verified present on iOS, instantiates,
    renders, covers `0.25…1.5` exactly, and measured **lower** latency than what we use (79 ms vs
-   139 ms). Adopt only on the ADR's four-part device rule; delete the toggle otherwise.
+   139 ms). Adopt only on the ADR's four-part device rule; delete the toggle otherwise. **Slice 1's
+   device pass strengthened the case:** with the smoothness curve fixed, the overall quality is much
+   better but **0.25× is still rough** — at a 4× stretch the ceiling is the AU, not the setting.
 
 **Watch items:**
 - Slice 2 touches `updateCurrentTime`'s loop-wrap maths. Offsetting reported time near the seam can

@@ -88,6 +88,10 @@ enum AppSettings {
         static let analyticsPromptSeen = "analyticsPromptSeen"
         static let installDate = "installDate"
         static let hasPracticed = "hasPracticed"
+        #if DEBUG
+        /// DEBUG-only A/B for ADR 0140 §3. Never read in Release, which always compensates.
+        static let compensateStretchLatency = "compensateStretchLatency"
+        #endif
     }
 
     /// Count-in length is offered as whole bars in this range.
@@ -189,6 +193,15 @@ enum AppSettings {
     /// screen (P1c). Default **on** — it's the whole-song overview + scrub; off ⇒ hidden to give
     /// the waveform + loops a little more vertical room.
     static var waveformMinimapVisible: Bool { bool(Key.waveformMinimapVisible, default: true) }
+
+    #if DEBUG
+    /// DEBUG-only: whether the playhead (and therefore the in-song click) is pulled back through the
+    /// time-stretcher's latency, ADR 0140 §3. Default on — the shipping behaviour. Off reproduces the
+    /// uncorrected build so the correction can be A/B'd by ear, which is the only way to settle
+    /// whether `AVAudioEngine` was already compensating internally. Not a player-facing setting: the
+    /// ADR closes off exposing the stretcher, and Release ignores this key entirely.
+    static var compensateStretchLatency: Bool { bool(Key.compensateStretchLatency, default: true) }
+    #endif
 
     /// Whether a marker's **label** floats over the timeline as the playhead passes near it (P2).
     /// Default **on**. Off ⇒ markers still show as triangles / count chips, but you read their

@@ -67,7 +67,11 @@
    `StretchQuality` curve — more smoothing the further the audio is stretched, none at all at 1×.
 4. Generate the waveform from an offline read / audio tap (mirrored bars).
 5. Playhead, loops, and markers are all positions in seconds, independent of
-   speed.
+   speed. The published `currentTime` is **heard** time, not rendered time: the stretcher's
+   rate-dependent latency is subtracted once, in `updateCurrentTime`, via the pure
+   `AudioMath.heardPlayhead` (ADR 0140). Because the in-song click measures each beat from that same
+   value, one subtraction corrects both the metronome and the waveform cursor — the loop *iteration*
+   count is deliberately left on the rendered clock so a wrap can't step the ADR-0013 ramp early.
 
 **Current status:** stages 3–5 exist as `PracticeAudioEngine` (player →
 `TimeStretcher` → mixer; play/pause/seek/rate + a published `currentTime`) with pure

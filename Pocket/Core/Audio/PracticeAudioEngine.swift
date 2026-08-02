@@ -41,8 +41,9 @@ final class PracticeAudioEngine {
     /// How far ahead (real seconds) clicks are scheduled; refreshed each timer tick.
     let metronomeHorizon: TimeInterval = 1.0
 
-    private var file: AVAudioFile?
-    private var sampleRate: Double = 44_100
+    /// Internal (not `private`) so the `+LoopBuffer` split can read the region — see that file.
+    var file: AVAudioFile?
+    var sampleRate: Double = 44_100
     private var totalFrames: AVAudioFramePosition = 0
     private var seekFrame: AVAudioFramePosition = 0
     private var scheduled = false
@@ -63,11 +64,11 @@ final class PracticeAudioEngine {
     var loopRegion: (start: TimeInterval, end: TimeInterval)?
     /// Loop-buffer bookkeeping for the playhead: the region's start frame, the looped length (region
     /// minus crossfade), and the player sampleTime at which the current loop buffer began.
-    private var loopAnchorFrame = 0
-    private var loopBufferFrames = 0
+    var loopAnchorFrame = 0
+    var loopBufferFrames = 0
     private var loopBaseSampleTime: AVAudioFramePosition = 0
     /// Equal-power crossfade length folded into the loop seam.
-    private let crossfadeSeconds: TimeInterval = 0.015
+    let crossfadeSeconds: TimeInterval = 0.015
 
     init() {
         engine.attach(player)
@@ -189,7 +190,7 @@ final class PracticeAudioEngine {
 
     /// The active loop as concrete frames, or `nil` when not looping (or the
     /// region is degenerate). Pure math in `AudioMath.loopSegment`.
-    private func currentLoopSegment() -> (startFrame: Int, frameCount: Int)? {
+    func currentLoopSegment() -> (startFrame: Int, frameCount: Int)? {
         guard let loopRegion else { return nil }
         let seg = AudioMath.loopSegment(start: loopRegion.start, end: loopRegion.end,
                                         sampleRate: sampleRate, totalFrames: Int(totalFrames))
@@ -239,57 +240,6 @@ final class PracticeAudioEngine {
         return true
     }
 
-    /// Copy frames `[fromFrame, end)` of `buffer` into a fresh one — the partial first
-    /// pass when seeking into an active loop. Same PCM format, so it queues seamlessly
-    /// ahead of the full looping buffer.
-    private func makeSubBuffer(of buffer: AVAudioPCMBuffer, fromFrame: Int) -> AVAudioPCMBuffer? {
-        let count = Int(buffer.frameLength) - fromFrame
-        guard count > 0,
-              let out = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: AVAudioFrameCount(count)),
-              let src = buffer.floatChannelData, let dst = out.floatChannelData else { return nil }
-        out.frameLength = AVAudioFrameCount(count)
-        for channel in 0..<Int(buffer.format.channelCount) {
-            for frame in 0..<count { dst[channel][frame] = src[channel][fromFrame + frame] }
-        }
-        return out
-    }
-
-    /// Read the loop region into a buffer and crossfade its seam: fold the last
-    /// `fade` frames into the first `fade` with equal-power gains, looping `R − fade`
-    /// frames so the wrap is sample-continuous and click-free
-    /// (`AudioMath.crossfadeGains`).
-    private func makeLoopBuffer() -> AVAudioPCMBuffer? {
-        guard let file, let loop = currentLoopSegment() else { return nil }
-        let format = file.processingFormat
-        guard let region = AVAudioPCMBuffer(pcmFormat: format,
-                                            frameCapacity: AVAudioFrameCount(loop.frameCount)) else { return nil }
-        do {
-            file.framePosition = AVAudioFramePosition(loop.startFrame)
-            try file.read(into: region, frameCount: AVAudioFrameCount(loop.frameCount))
-        } catch { return nil }
-
-        let regionFrames = Int(region.frameLength)
-        let fade = min(Int(crossfadeSeconds * sampleRate), regionFrames / 2)
-        let loopFrames = regionFrames - fade
-        guard loopFrames > 0,
-              let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(loopFrames)),
-              let src = region.floatChannelData, let dst = out.floatChannelData else { return nil }
-        out.frameLength = AVAudioFrameCount(loopFrames)
-
-        for channel in 0..<Int(format.channelCount) {
-            for frame in 0..<loopFrames { dst[channel][frame] = src[channel][frame] }  // body + head
-            for frame in 0..<fade {                                  // crossfade head with the folded tail
-                let gains = AudioMath.crossfadeGains(position: frame, length: fade)
-                dst[channel][frame] = src[channel][frame] * gains.fadeIn
-                                    + src[channel][loopFrames + frame] * gains.fadeOut
-            }
-        }
-
-        loopAnchorFrame = loop.startFrame
-        loopBufferFrames = loopFrames
-        return out
-    }
-
     /// Schedule a straight-through segment `[fromFrame, toFrame)` that stops at the
     /// file end (`.dataPlayedBack`, after the tail has played out).
     private func scheduleSegment(_ file: AVAudioFile, fromFrame: Int, toFrame: Int) {
@@ -333,17 +283,42 @@ final class PracticeAudioEngine {
             // in lockstep with the audio.
             let elapsedFrames = max(0, Double(playerTime.sampleTime - loopBaseSampleTime))
             // Wrap count is in *source* frames (the buffer's own length), so it's stable
-            // even as the automator changes playback rate mid-loop.
+            // even as the automator changes playback rate mid-loop. Deliberately counted from
+            // the *rendered* position, not the heard one: the iteration drives the per-loop ramp
+            // (ADR 0013), and pulling it back across a wrap boundary would re-fire a pass and
+            // step the ramp on every lap (ADR 0140 §3).
             let iteration = Int(elapsedFrames / Double(loopBufferFrames))
             if iteration != loopIteration { loopIteration = iteration }
-            let elapsed = elapsedFrames / playerTime.sampleRate
+            let elapsed = heard(elapsedFrames / playerTime.sampleRate)
             currentTime = AudioMath.loopedPlayhead(elapsed: elapsed,
                                                    loopStart: Double(loopAnchorFrame) / sampleRate,
                                                    loopLength: Double(loopBufferFrames) / sampleRate)
         } else {
-            let played = max(0, Double(playerTime.sampleTime) / playerTime.sampleRate)
+            let played = heard(Double(playerTime.sampleTime) / playerTime.sampleRate)
             currentTime = min(duration, Double(seekFrame) / sampleRate + played)
         }
+    }
+
+    /// Pull a rendered position back to what the ear is hearing, through the stretcher's
+    /// rate-dependent latency (ADR 0140 §3). `currentTime` is published in *heard* time, which is why
+    /// the metronome needs no offset of its own: `MetronomeSchedule` measures each beat from this
+    /// value, so the click and the visual playhead are corrected by the same single subtraction.
+    private func heard(_ rendered: TimeInterval) -> TimeInterval {
+        guard compensatesStretcherLatency else { return max(0, rendered) }
+        return AudioMath.heardPlayhead(rendered: rendered, latency: stretcher.latency,
+                                       rate: stretcher.rate)
+    }
+
+    /// Release always compensates — ADR 0140 closes off exposing the stretcher to the player. The
+    /// DEBUG toggle exists only to A/B the correction by ear against the uncorrected build, which is
+    /// a far easier judgment than deciding in the absolute whether a click is 93 ms early. Read live
+    /// rather than cached so flipping it in Settings takes effect on the next frame.
+    private var compensatesStretcherLatency: Bool {
+        #if DEBUG
+        return AppSettings.compensateStretchLatency
+        #else
+        return true
+        #endif
     }
 
     private func startEngineIfNeeded() {

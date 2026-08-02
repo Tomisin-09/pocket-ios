@@ -214,6 +214,9 @@ struct SettingsView: View {
                      + "before StoreKit sandbox exists. “Default” uses the real StoreKit entitlement.")
             }
 
+            // DEBUG-only scaffold (never ships): A/B the stretcher-latency correction (ADR 0140 §3).
+            DebugAudioSection()
+
             // DEBUG-only scaffold (never ships): re-arm the one-time artist-name prompt so the
             // ceremony can be re-tested on a real install without a data-wiping reinstall.
             Section {
