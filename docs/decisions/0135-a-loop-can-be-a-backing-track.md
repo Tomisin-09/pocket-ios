@@ -1,9 +1,10 @@
 # 0135 — A loop can be a backing track (improvise over your own music)
 
-- **Status:** Accepted — **Slices 1 and 2 built and device-verified** 2026-08-02 (S1 on
+- **Status:** Accepted — **fully built. Slices 1 and 2 device-verified** 2026-08-02 (S1 on
   `pocket-220-backing-track-loops`, S2 on `pocket-223-improvise-block-and-lengths`, which supersedes
-  it). Slice 3 (the planner) outstanding. See §Build notes for what landed, the one slice boundary that moved, and the question
-  Slice 1 inherits rather than answers.
+  it); **Slice 3 built** 2026-08-02 on `pocket-224-improvise-planner-and-off-guitar`, alongside ADR
+  0139 Slice 1, which shares its one structural change. See §Build notes for what landed, the one
+  slice boundary that moved, and the question Slice 1 inherits rather than answers.
 - **Date:** 2026-08-01
 - **Builds on:** ADR 0104 (ear training as "loops, re-surfaced" — the mode-on-a-loop pattern this ADR
   copies almost verbatim), ADR 0070 (Pocket never grades the player), ADR 0094 (the no-grading line
@@ -182,9 +183,10 @@ Improvising has no unit in the library that can serve it. A backing loop is exac
   mirroring ADR 0104 Slice 2's wiring for `.ear`, plus B8's Improvise bucket (carried here from Slice
   1 — a bucket authors a block, so it needs the block). A backing loop becomes something a routine can
   end on. Built with **ADR 0141 Slice 1**, which gives it a length.
-- **Slice 3 — the planner.** B6/B6a: `PlannerLoop.isBackingTrack`, the `improv.vocabulary` resolution,
-  the `play`-kind placement, and carrying `LoopRunMode` through `SessionBlock` into the materialised
-  `RoutineItem`. Closes the empty-goal hole.
+- **Slice 3 — the planner. ✅ BUILT.** B6/B6a: the loop's mode facts on `PlannerLoop`, the
+  `improv.vocabulary` resolution, the `play`-kind placement, and carrying `LoopRunMode` through
+  `SessionBlock` into the materialised `RoutineItem`. Closes the empty-goal hole. Built with **ADR
+  0139 Slice 1**, which needs the same mode-carrying change.
 
 ## Amendment — access points, and the gate that would have hidden them (2026-08-01)
 
@@ -270,6 +272,34 @@ follow ear training's placement exactly; the third item is a defect the placemen
   and with it the open question ADR 0117's device verification raised and ADR 0138 did not settle:
   whether an open-ended standalone mode should log at all. It is now **two** surfaces, not one, which
   is the argument for deciding it rather than a reason to decide it here.
+
+## Build notes — Slice 3 (2026-08-02)
+
+- **`PlannerLoop` carries the whole `LoopModeAccess.Facts`, not a bare `isBackingTrack`.** B6 asked
+  for the flag; the flag alone would have let the planner schedule a jam over audio that doesn't
+  resolve, which Slice 1's build notes already had to rule out at the *surface*. Projecting the same
+  `Facts` the run screens gate on means the planner asks the identical question rather than a
+  lookalike, and the guarantee — the planner can never schedule a mode a run screen would refuse —
+  holds for the fourth mode automatically. `LoopModeAccess` is ADR 0138's whole point; the planner is
+  simply another caller.
+
+- **The jam is partitioned out *before* selection, not after.** B6a says a backing loop plans as
+  `play`, never `focused`; it doesn't say whether it costs a focus slot. It must not — a jam that
+  consumed one of ADR 0129's preset items would take a drill away from the player to schedule
+  something the preset never budgeted for. Exactly **one** jam is taken (R1's structure has a single
+  finale; a session ending in three would be a jam session), and only when the preset schedules a
+  play-through at all, which is the rule ADR 0129 already applies to the target-song block for the
+  same reason: ten unbudgeted minutes on top of a Quick fifteen makes the short preset the long one.
+
+- **A jam block's stated minutes come from ADR 0141, not from `region × repeats`.** The materialiser
+  writes `plannedMinutes` for focused blocks only (R1), so a play block resolves to its mode default
+  — 10 minutes for improvise. The candidate's own estimate would have had the review screen promise a
+  length the player wasn't going to get.
+
+- **B6's "when the goal names no target song" is read as either/or.** A goal *with* a target song
+  resolves through Path B exactly as before, and does **not** also gain the library's other backing
+  loops. That is the narrowest reading of "Path B's existing behaviour is untouched where it already
+  works", and it keeps a song-targeted session about that song.
 
 ## Parked follow-ups (not sliced)
 

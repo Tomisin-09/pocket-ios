@@ -17,9 +17,30 @@ enum PracticePlanner {
     /// yet, so every focused candidate carries `priority = 1` and ranks by dueness alone; warm-up is
     /// LRU-picked from `template == .warmup` exercises. Returns the pure block layout; pass it to
     /// `materialise` to persist and run.
+    ///
+    /// Under an **off-guitar** constraint (ADR 0139 O3) the pool is the player's audible loops run as
+    /// ear work instead — the goal-less path needs the constraint too, because *"I have fifteen
+    /// minutes and no guitar"* is not a situation that waits for you to have written a goal. Loops
+    /// are ignored entirely when unconstrained, so the ordinary Quick session is unchanged.
     static func planQuickSession(length: SessionLength,
                                  exercises: [Exercise],
+                                 loops: [Loop] = [],
+                                 constraint: SessionConstraint = .none,
+                                 lastPracticed: [UUID: Date] = [:],
                                  now: Date = .now) -> [SessionBlock] {
+        guard !constraint.isRestricted else {
+            let library = library(exercises: [], loops: loops, lastPracticed: lastPracticed)
+            let pool = library.loops.map { loop in
+                PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
+                                 mastery: loop.mastery, lastPracticed: loop.lastPracticed,
+                                 estimatedMinutes: loop.estimatedMinutes)
+            }
+            // No warm-up: the warm-up pool is exercises, and every one of them wants the instrument.
+            return SessionBuilder.buildSession(
+                length: length,
+                candidates: CandidateDeriver.constrained(pool, to: constraint, library: library),
+                now: now)
+        }
         let focused = exercises
             .filter { $0.template != .warmup }
             .map { candidate(for: $0) }
@@ -47,13 +68,19 @@ enum PracticePlanner {
                                 songs: [Song] = [],
                                 profile: Profile? = nil,
                                 lastPracticed: [UUID: Date] = [:],
+                                constraint: SessionConstraint = .none,
                                 now: Date = .now) -> [SessionBlock] {
         let library = library(exercises: exercises, loops: loops, songs: songs,
                               lastPracticed: lastPracticed)
         let emphasis = profile.map { PracticeEmphasis(genres: $0.genres, dream: $0.dream) } ?? .neutral
         let candidates = CandidateDeriver.deriveCandidates(goals: goals.map(\.plannerProjection),
-                                                           library: library, emphasis: emphasis)
-        let warmUps = exercises.filter { $0.template == .warmup }.map { candidate(for: $0) }
+                                                           library: library, emphasis: emphasis,
+                                                           constraint: constraint)
+        // A warm-up wants the instrument, so a constrained session leads with the work itself
+        // (ADR 0139 O3 — the structure is unchanged, the pool it draws from is smaller).
+        let warmUps = constraint.isRestricted
+            ? []
+            : exercises.filter { $0.template == .warmup }.map { candidate(for: $0) }
         let warmUp = SessionBuilder.warmUpPick(warmUps)
         return SessionBuilder.buildSession(length: length, candidates: candidates,
                                            warmUp: warmUp, now: now)
@@ -85,7 +112,8 @@ enum PracticePlanner {
             loops: loops.map { PlannerLoop(uid: $0.uid, songUID: $0.song.map { PlannerID.uid(from: $0.sourceID) },
                                            mastery: $0.mastery, lastPracticed: lastPracticed[$0.uid],
                                            estimatedMinutes: estimatedMinutes(for: $0),
-                                           templates: recognizedTemplates(for: $0)) },
+                                           templates: recognizedTemplates(for: $0),
+                                           modeFacts: LoopModeAccess.Facts($0)) },
             songs: songs.map { PlannerSong(uid: PlannerID.uid(from: $0.sourceID),
                                            lastPracticed: $0.lastPracticed,
                                            estimatedMinutes: estimatedMinutes(for: $0)) })
@@ -234,7 +262,13 @@ enum PracticePlanner {
     /// A **focused** block's allotted minutes are carried through to `plannedMinutes` (ADR 0129) so the
     /// run can fit its ramp to the slot the session gave it. Only focused blocks: a warm-up or
     /// play-through is unbudgeted by R1 and runs as long as the player likes, so pinning it to a
-    /// nominal figure would be the opposite of what that rule says.
+    /// nominal figure would be the opposite of what that rule says. A ramp-less play block still gets
+    /// a length — ADR 0141's mode default, resolved by `RoutineItem.resolvedBlockMinutes` from the
+    /// `nil` allotment rather than written here.
+    ///
+    /// A **loop** block carries its planned run mode down (ADR 0135 B6a / 0139 O2a). Set only for
+    /// loops: `loopRunModeRaw` is meaningless elsewhere, and writing to it on an exercise block would
+    /// put a value in the store that reads as a claim.
     nonisolated private static func item(for block: SessionBlock,
                                          order: Int,
                                          exercises: [UUID: Exercise],
@@ -247,7 +281,11 @@ enum PracticePlanner {
         case let ref? where ref.kind == .exercise:
             exercises[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
         case let ref? where ref.kind == .loop:
-            loops[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
+            loops[ref.uid].map { loop in
+                let item = RoutineItem.item(loop, kind: block.kind, order: order)
+                item.loopRunMode = block.loopRunMode
+                return item
+            }
         case let ref?:
             songs[ref.uid].map { RoutineItem.item($0, kind: block.kind, order: order) }
         }

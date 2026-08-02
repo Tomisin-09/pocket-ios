@@ -56,6 +56,35 @@ enum SkillFamilyMap {
     /// the recogniser round-trips.
     static let suggestedLoopTags: [String] = taggableTemplates.map(\.displayName)
 
+    // MARK: - Loops that serve a skill by what they *are* (ADR 0135 B6 / 0139 O2)
+
+    /// The mode a loop must be run in to serve a skill **directly** — with no tag, no template, and
+    /// no bookkeeping from the player.
+    ///
+    /// Loops now reach skills three ways, and the third is this one: by **tag** (ADR 0074, above),
+    /// by **flag** (`isBackingTrack`, ADR 0135), and by **capability** (any loop you can hear can be
+    /// sung back, ADR 0139). The pattern was arrived at twice by accident before it was named; this
+    /// table is it stated once. Which loops actually qualify is not decided here — that is
+    /// `LoopModeAccess`, the same predicate the run screens gate on.
+    ///
+    /// Both entries close a **zero-candidate hole**, and both holes were invisible for the same
+    /// reason: a goal whose other skills resolve still looks like it works. `ear.*` mapped to
+    /// `ExerciseTemplate.earTraining`, which left `creatable` when ear training shipped as a loop
+    /// mode instead (ADR 0104); `improv.vocabulary` is `.repertoire`, so it resolved to nothing at
+    /// all unless the goal named a target song — which "Improvise in a style" deliberately doesn't.
+    static let directLoopModes: [String: LoopRunMode] = [
+        "ear.relative-pitch": .ear,
+        "ear.transcribe": .ear,
+        "ear.active-listening": .ear,
+        "improv.vocabulary": .improvise
+    ]
+
+    /// The mode a loop must run in to serve `skillID` directly, or `nil` when the skill has no such
+    /// route (every skill that resolves through exercises or a target song).
+    static func directLoopMode(forSkill skillID: String) -> LoopRunMode? {
+        directLoopModes[skillID]
+    }
+
     /// Recognise a free-form loop tag as one of the skill buckets, or `nil` when it isn't one.
     /// Case-insensitive match against a taggable template's `displayName` (the form the tag editor
     /// suggests), so "Picking" / "picking" both resolve to `.picking` but arbitrary tags

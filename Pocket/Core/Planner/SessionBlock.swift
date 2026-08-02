@@ -12,19 +12,21 @@ import Foundation
 /// `RoutineBudget.maxFocusedMinutes` (R2) — a longer selection is split into several.
 enum SessionBlock: Equatable {
     /// The unbudgeted warm-up that leads the session (ADR 0014 R1), sourced by LRU rotation
-    /// from `template == .warmup` exercises. Placed by rule, never due-scored.
+    /// from `template == .warmup` exercises. Placed by rule, never due-scored. Carries no run mode:
+    /// the warm-up pool is `template == .warmup` **exercises** only, so there is no loop to mode.
     case warmUp(PlannerUnitRef, minutes: Int)
 
     /// A budgeted focused block drilling one unit (ADR 0014 R1). `microRestEvery` is an
     /// optional in-block micro-rest cue cadence in minutes (R4); `nil` = no cue.
-    case focus(PlannerUnitRef, minutes: Int, microRestEvery: Int?)
+    case focus(PlannerUnitRef, minutes: Int, microRestEvery: Int?, mode: LoopRunMode)
 
     /// A between-blocks rest (ADR 0014 R3). Carries no unit.
     case rest(minutes: Int)
 
     /// The unbudgeted play-through that trails the session (ADR 0014 R1) — a full run / jam,
-    /// typically the goal's target song (Path B, Slice 2). Omitted when there is none.
-    case play(PlannerUnitRef, minutes: Int)
+    /// typically the goal's target song (Path B, Slice 2), or a backing loop to solo over
+    /// (ADR 0135 B6a). Omitted when there is none.
+    case play(PlannerUnitRef, minutes: Int, mode: LoopRunMode)
 
     /// The structural role this block maps to on materialisation — the bridge to
     /// `RoutineItemKind`. Keeps the pure enum and the persisted enum in lockstep.
@@ -40,7 +42,7 @@ enum SessionBlock: Equatable {
     /// The unit this block references, or `nil` for a rest — what the materialiser resolves.
     var unit: PlannerUnitRef? {
         switch self {
-        case let .warmUp(ref, _), let .focus(ref, _, _), let .play(ref, _): return ref
+        case let .warmUp(ref, _), let .focus(ref, _, _, _), let .play(ref, _, _): return ref
         case .rest: return nil
         }
     }
@@ -48,8 +50,23 @@ enum SessionBlock: Equatable {
     /// This block's minutes (a rest's break length, else the unit's allotted time).
     var minutes: Int {
         switch self {
-        case let .warmUp(_, min), let .focus(_, min, _), let .rest(min), let .play(_, min):
+        case let .warmUp(_, min), let .focus(_, min, _, _), let .rest(min), let .play(_, min, _):
             return min
+        }
+    }
+
+    /// **Which mode a loop block runs in** (ADR 0135 B6a / 0139 O2a) — the third leg of the trip a
+    /// planned mode has to survive: candidate → block → `RoutineItem.loopRunMode`. Without it a
+    /// planned ear or improvise block materialises as the *trainer*, handing the player a ramp
+    /// against a loop that may have no command tempo to build one from.
+    ///
+    /// Meaningless on an exercise or song block, exactly as `RoutineItem.loopRunModeRaw` is — both
+    /// answer `.trainer` there, and the neutral value is deliberately the same one so the pure block
+    /// and the persisted item can't disagree about what "no mode stated" means.
+    var loopRunMode: LoopRunMode {
+        switch self {
+        case let .focus(_, _, _, mode), let .play(_, _, mode): return mode
+        case .warmUp, .rest: return .trainer
         }
     }
 }

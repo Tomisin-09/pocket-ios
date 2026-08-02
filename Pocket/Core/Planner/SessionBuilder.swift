@@ -46,7 +46,8 @@ enum SessionBuilder {
                              warmUp: PlannerCandidate? = nil,
                              play: PlannerCandidate? = nil,
                              now: Date) -> [SessionBlock] {
-        let selected = select(candidates, items: length.items, now: now)
+        let (jams, drills) = partitionJams(candidates)
+        let selected = select(drills, items: length.items, now: now)
         let focused = blocked(uShape(selected))
 
         var blocks: [SessionBlock] = []
@@ -54,10 +55,49 @@ enum SessionBuilder {
             blocks.append(.warmUp(warmUp.unit, minutes: unbudgeted(warmUp, fallback: warmUpDefaultMinutes)))
         }
         blocks.append(contentsOf: focused)
-        if let play, length.includesPlay {
-            blocks.append(.play(play.unit, minutes: unbudgeted(play, fallback: playDefaultMinutes)))
+        if length.includesPlay, let trailer = playBlock(explicit: play, jams: jams, now: now) {
+            blocks.append(trailer)
         }
         return blocks
+    }
+
+    /// Split the pool into backing-track **jams** and everything else (ADR 0135 B6a). A jam is placed
+    /// as the session's trailing `play` block, never as a `focus` one: `RoutineItemKind.play` is
+    /// precisely a full run-through — surfaced but unbudgeted (ADR 0014 R1) — and a jam charged
+    /// against a focused budget would be miscounted work dragging session sizing (ADR 0129) around.
+    ///
+    /// Partitioning **before** selection rather than after is the point: a jam that consumed one of
+    /// the preset's focus items would cost the player a drill to schedule something the preset never
+    /// budgeted for.
+    static func partitionJams(_ candidates: [PlannerCandidate]) -> (jams: [PlannerCandidate],
+                                                                    drills: [PlannerCandidate]) {
+        var jams: [PlannerCandidate] = []
+        var drills: [PlannerCandidate] = []
+        for candidate in candidates where candidate.priority > 0 {
+            if candidate.runMode == .improvise { jams.append(candidate) } else { drills.append(candidate) }
+        }
+        return (jams, drills)
+    }
+
+    /// The single trailing play-through. An explicitly-passed `play` (a goal's target song) wins;
+    /// otherwise the **top-ranked** jam takes the slot. Exactly one, because R1's structure has one
+    /// finale — a session ending in three jams would be a jam session, which is not what was asked
+    /// for.
+    ///
+    /// A jam's minutes come from `RampLessBlockLength`, not from the candidate's `region × repeats`
+    /// estimate: the materialised block carries no `plannedMinutes` (play is unbudgeted, so
+    /// `PracticePlanner.item` leaves it `nil`), which means ADR 0141's mode default is what it will
+    /// actually run for. Displaying anything else would be the review screen promising a length the
+    /// player won't get.
+    private static func playBlock(explicit: PlannerCandidate?, jams: [PlannerCandidate],
+                                  now: Date) -> SessionBlock? {
+        if let explicit {
+            return .play(explicit.unit, minutes: unbudgeted(explicit, fallback: playDefaultMinutes),
+                         mode: explicit.runMode)
+        }
+        guard let jam = ranked(jams, now: now).first else { return nil }
+        let minutes = RampLessBlockLength.defaultMinutes(for: .improvise) ?? playDefaultMinutes
+        return .play(jam.unit, minutes: minutes, mode: .improvise)
     }
 
     /// LRU pick for the structural warm-up (ADR 0014 R1 / Decision 3): the **least-recently
@@ -185,7 +225,8 @@ enum SessionBuilder {
                             max(1, SessionLength.blockMinutes / chunk.count))
             for item in chunk {
                 result.append(.focus(item.candidate.unit, minutes: share,
-                                     microRestEvery: microRestEveryMinutes))
+                                     microRestEvery: microRestEveryMinutes,
+                                     mode: item.candidate.runMode))
             }
         }
         return result

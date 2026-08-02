@@ -6,6 +6,24 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **A session for when you're away from your instrument.** A commute, a lunch break, a hotel room, a
+  flat that's gone to sleep — fifteen minutes where practising is possible but playing isn't. Flip
+  **Away from your instrument** on the session screen and Generate builds one out of listening work
+  on your own loops: no warm-up, no drills, nothing to hold. It's the same planner with a smaller
+  pool, so your goals still steer it — a "learn this song" goal contributes that song's sections,
+  handed to you as ear work instead of as a tempo ramp you can't run on a train.
+
+  It's only as good as your loops, and it says so: with none set, it tells you to loop a section of
+  a song rather than sending you off to write an exercise it can't use.
+- **Ear training can be planned now.** It has been runnable since it shipped, but the planner could
+  never hand it to you — the three ear skills quietly resolved to nothing, so a goal built on them
+  looked like it worked and produced no ear practice. Any loop you can hear now counts as material
+  for them, no tagging required.
+- **"Improvise in a style" goals actually produce something to improvise over.** That goal's
+  improv-specific skill had never once surfaced a unit; it worked only through its two scale skills,
+  which is why nobody noticed. Your backing tracks are what it was missing. A generated session can
+  now end on a jam over one — placed as a play-through, so it doesn't eat one of the session's
+  focused blocks or stretch the time you asked for.
 - **Improvise and ear training can be blocks in a routine — with a length.** Both used to run until
   you tapped Done, which is right on their own but makes a nonsense of a routine: a four-block session
   whose third block has no end isn't a 40-minute session. Now they take a length like every other
