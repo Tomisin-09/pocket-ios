@@ -19,21 +19,12 @@ import SwiftUI
 /// and for the same reason (ADR 0070 / 0094).
 struct ImproviseView: View {
     let loop: Loop
-
-    @State private var player: ContinuousLoopPlayer
+    /// Owned by the **host** (ADR 0141) — see `EarTrainingView`. Build it with
+    /// `ContinuousLoopPlayer.improvising(over:)` so both hosts seed the tempo the same way.
+    let player: ContinuousLoopPlayer
     /// Latch for the tool-opened event (ADR 0120) — `.onAppear` re-fires on a return from a
-    /// pushed screen, and this view will have two hosts.
+    /// pushed screen, and this view has two hosts.
     @State private var reportedOpen = false
-
-    /// Opens at the loop's `armingSpeed` — its measured command tempo when there is one, else **full
-    /// tempo** (ADR 0089's rule, reused). Deliberately *not* the ear-training seed (`ramp.command`,
-    /// which falls back to the loop's stored practice `speed`): a section drawn at 70% to pick a lick
-    /// off it would then open a jam at 70%, and a bed's honest default is the tempo the record plays.
-    init(loop: Loop) {
-        self.loop = loop
-        _player = State(initialValue: ContinuousLoopPlayer(
-            loop: loop, startPercent: LoopCommandRamp.percent(loop.armingSpeed)))
-    }
 
     var body: some View {
         Form {
@@ -79,10 +70,16 @@ struct ImproviseView: View {
 struct ImproviseSheet: View {
     let loop: Loop
     @Environment(\.dismiss) private var dismiss
+    @State private var player: ContinuousLoopPlayer
+
+    init(loop: Loop) {
+        self.loop = loop
+        _player = State(initialValue: .improvising(over: loop))
+    }
 
     var body: some View {
         NavigationStack {
-            ImproviseView(loop: loop)
+            ImproviseView(loop: loop, player: player)
                 .navigationTitle("Improvise")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -92,6 +89,24 @@ struct ImproviseSheet: View {
                 }
         }
         .presentationDetents([.large])
+    }
+}
+
+/// The **pushed** improvise host — what the Loops library navigates to from a flagged row's Improv
+/// button (ADR 0135 B8a). The sheet's twin, without the modal chrome.
+struct ImproviseScreen: View {
+    let loop: Loop
+    @State private var player: ContinuousLoopPlayer
+
+    init(loop: Loop) {
+        self.loop = loop
+        _player = State(initialValue: .improvising(over: loop))
+    }
+
+    var body: some View {
+        ImproviseView(loop: loop, player: player)
+            .navigationTitle(LoopRunMode.improvise.label)
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 

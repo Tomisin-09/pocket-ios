@@ -14,6 +14,15 @@ enum RoutineStageKind: Equatable {
     /// the player embeds `EarLoopRunView` (continuous playback + hum/sing + note) instead of the
     /// command-anchored trainer. Manual-advance, no ramp; treated as a unit block (never a rest).
     case earLoop
+    /// A loop run as a **backing track** to improvise over (ADR 0135 Slice 2) — same loop unit again,
+    /// but the player embeds `ImproviseLoopRunView`. Like `.earLoop`: no ramp, no Done screen, and a
+    /// planned length rather than an open end inside a routine (ADR 0141).
+    case improviseLoop
+
+    /// Whether this stage runs **without a ramp** — the three-way family ADR 0141 gives a length to.
+    /// Stated once here so the run screens, the player's Done-screen skip and the estimate can't
+    /// disagree about which blocks are in it.
+    var isRampLess: Bool { self == .earLoop || self == .improviseLoop }
 }
 
 /// A pure cursor over a routine's playable blocks (ADR 0066, slice 3): position and advancement

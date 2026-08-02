@@ -146,7 +146,7 @@ enum PracticePlanner {
             // fitted ramp, a loop's fitted repeats, a song's own duration. A block that **declined**
             // the fit (ADR 0130) prices as hand-authored, which is what makes the cost of declining
             // show up in the routine's estimate on the same screen as the toggle.
-            let planned = item.effectivePlannedMinutes
+            let planned = item.resolvedBlockMinutes
             let perRun: Int
             if let exercise = item.exercise {
                 perRun = estimatedMinutes(for: exercise, plannedMinutes: planned)
@@ -175,11 +175,17 @@ enum PracticePlanner {
     /// routine runs `LoopRunView`'s staircase, so its ramp is what the player's time is spent on.
     /// `region × repeats` still prices a loop as a **candidate** (`estimatedMinutes(for:)`), where
     /// there is no ramp context yet. The **trainer** is the only mode that runs a ramp: ear training
-    /// (ADR 0104) and improvising (ADR 0135) are both continuous playback, so they keep the region ×
-    /// repeats figure. Stated as `mode == .trainer` rather than `!= .ear` so a fourth mode can't
-    /// quietly inherit a staircase it doesn't run.
+    /// (ADR 0104) and improvising (ADR 0135) are both continuous playback. Stated as `mode ==
+    /// .trainer` rather than `!= .ear` so a fourth mode can't quietly inherit a staircase it doesn't
+    /// run.
+    ///
+    /// A ramp-less block is priced at **its planned length** (ADR 0141) — it runs for the time it was
+    /// given, not for however long `region × repeats` implies. Before this, `plannedMinutes` was
+    /// discarded for every non-trainer mode, so a routine holding an ear block misreported its own
+    /// length. `region × repeats` remains the fallback for a block running open-ended, where a rough
+    /// figure beats no figure.
     static func estimatedMinutes(for loop: Loop, mode: LoopRunMode, plannedMinutes: Int?) -> Int {
-        guard mode == .trainer else { return estimatedMinutes(for: loop) }
+        guard mode == .trainer else { return plannedMinutes ?? estimatedMinutes(for: loop) }
         return LoopEstimate.effectiveMinutes(forRamp: loop.ramp, plannedMinutes: plannedMinutes,
                                              regionSeconds: loop.regionSeconds)
     }

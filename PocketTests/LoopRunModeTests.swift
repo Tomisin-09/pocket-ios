@@ -58,6 +58,17 @@ final class LoopRunModeTests: XCTestCase {
         XCTAssertEqual(symbols.count, LoopRunMode.allCases.count)
     }
 
+    func testEveryModeIsPlaceableInARoutineBlock() {
+        // The mode is stored on `RoutineItem.loopRunModeRaw`, so a mode that can't round-trip through
+        // a block is a mode a routine silently forgets.
+        for mode in LoopRunMode.allCases {
+            let item = RoutineItem(kind: .focused, order: 0)
+            item.loopRunMode = mode
+            XCTAssertEqual(item.loopRunMode, mode)
+            XCTAssertEqual(item.loopRunModeRaw, mode.rawValue)
+        }
+    }
+
     func testTheRowLabelIsNoLongerThanTheActionLabel() {
         // `rowLabel` exists because "Train your ear" doesn't fit under an icon. If one ever grew past
         // its action label, the compact form has stopped being compact.

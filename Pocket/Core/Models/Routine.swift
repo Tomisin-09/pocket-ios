@@ -138,6 +138,23 @@ final class RoutineItem {
     /// a decline cannot take effect on one surface and not another.
     var effectivePlannedMinutes: Int? { usesAuthoredLength ? nil : plannedMinutes }
 
+    /// The minutes this block **actually runs for** — `effectivePlannedMinutes` for anything with a
+    /// ramp, and ADR 0141's three-way rule for a block without one (ear, improvise).
+    ///
+    /// The two rules differ in what a `nil` allotment means. For a ramp block it means "play the
+    /// unit's own recipe", which is a real length. For a ramp-less block there is no recipe to fall
+    /// back on, so `nil` has to be split: a block that **declined** the fit runs open-ended, while a
+    /// block no session ever sized takes its mode's default. `effectivePlannedMinutes` folds those
+    /// together, which is why the resolution lives here rather than at each reader — the session
+    /// player and the routine's own length estimate must not answer this differently.
+    var resolvedBlockMinutes: Int? {
+        guard loop != nil, loopRunMode != .trainer else { return effectivePlannedMinutes }
+        return RampLessBlockLength.minutes(
+            plannedMinutes: plannedMinutes,
+            usesAuthoredLength: usesAuthoredLength,
+            fallback: RampLessBlockLength.defaultMinutes(for: loopRunMode))
+    }
+
     /// Backing storage for `loopRunMode` — a plain `String`, **not** the enum (the SwiftData
     /// enum-attribute migration rule; see `kindRaw`). Only meaningful on a **loop** block; ignored
     /// elsewhere. Declaration default = `.trainer` so every loop block saved before ADR 0104 Slice 2
@@ -191,13 +208,30 @@ final class RoutineItem {
     }
 
     /// An **ear-training** block on a loop (ADR 0104 Slice 2) — the same `Loop`, run ears-only.
-    /// Defaults to `warmup`: unbudgeted and self-paced, since ear internalisation has no ramp length
-    /// and advances manually (there's nothing to time or drill against a budget).
+    ///
+    /// Defaults to `warmup`, which claims it is not deliberate drilling and so doesn't count against
+    /// the budget (ADR 0014 R1). It no longer claims the block has no *length*: ADR 0141 gives every
+    /// ramp-less block a planned length, and the two are different questions — the kind is about
+    /// intent, the length is about time.
     static func earLoopItem(_ loop: Loop, kind: RoutineItemKind = .warmup,
                             order: Int = 0) -> RoutineItem {
         let routineItem = RoutineItem(kind: kind, order: order)
         routineItem.loop = loop
         routineItem.loopRunMode = .ear
+        return routineItem
+    }
+
+    /// An **improvise** block on a loop (ADR 0135 Slice 2) — the same `Loop`, run as a backing track
+    /// to solo over.
+    ///
+    /// Defaults to `play`, per ADR 0135 B6a: a jam is a run-through, not deliberate drilling, so it is
+    /// surfaced and unbudgeted. B6a's *rationale* — that it has no defined length — is amended by ADR
+    /// 0141; its placement stands.
+    static func improviseLoopItem(_ loop: Loop, kind: RoutineItemKind = .play,
+                                  order: Int = 0) -> RoutineItem {
+        let routineItem = RoutineItem(kind: kind, order: order)
+        routineItem.loop = loop
+        routineItem.loopRunMode = .improvise
         return routineItem
     }
 

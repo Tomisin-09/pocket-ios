@@ -77,7 +77,10 @@ struct RoutineItemRow: View {
         if item.isOrphaned { return "questionmark" }
         if let exercise = item.exercise { return exercise.template.iconName }
         // A loop block carries a mode (ADR 0104 Slice 2): ear training reads with the ear glyph.
-        if item.loop != nil { return item.loopRunMode == .ear ? "ear" : "repeat" }
+        // A loop block carries a mode (ADR 0104 / 0135): each draws its own glyph, from the mode.
+        if item.loop != nil {
+            return item.loopRunMode == .trainer ? "repeat" : item.loopRunMode.symbolName
+        }
         if item.song != nil { return "music.note" }
         return "questionmark"
     }
@@ -106,9 +109,11 @@ struct RoutineItemRow: View {
             return exercise.commandProgressLabel
         }
         if let loop = item.loop {
-            // Ear-training blocks say so; a standard trainer block just names its song (ADR 0104).
-            if item.loopRunMode == .ear {
-                return loop.song.map { "Ear training · \($0.title)" } ?? "Ear training"
+            // A non-trainer block names its mode; a standard trainer block just names its song
+            // (ADR 0104 / 0135), since the trainer is what a loop block has always meant.
+            guard item.loopRunMode == .trainer else {
+                let mode = item.loopRunMode.label
+                return loop.song.map { "\(mode) · \($0.title)" } ?? mode
             }
             return loop.song?.title
         }

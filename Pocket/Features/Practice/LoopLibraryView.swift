@@ -148,13 +148,9 @@ struct LoopLibraryView: View {
             case .trainer:
                 LoopRunView(loop: launch.loop)
             case .ear:
-                EarTrainingView(loop: launch.loop)
-                    .navigationTitle(LoopRunMode.ear.label)
-                    .navigationBarTitleDisplayMode(.inline)
+                EarTrainingScreen(loop: launch.loop)
             case .improvise:
-                ImproviseView(loop: launch.loop)
-                    .navigationTitle(LoopRunMode.improvise.label)
-                    .navigationBarTitleDisplayMode(.inline)
+                ImproviseScreen(loop: launch.loop)
             }
         }
     }

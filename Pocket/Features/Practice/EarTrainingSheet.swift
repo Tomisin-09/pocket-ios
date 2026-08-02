@@ -15,16 +15,13 @@ import SwiftUI
 /// the sibling ramp-less mode: only the copy and the note's `EntryKind` differ between them.
 struct EarTrainingView: View {
     let loop: Loop
-
-    @State private var player: ContinuousLoopPlayer
+    /// Owned by the **host**, not by this view (ADR 0141): a routine block has to read what the audio
+    /// is doing to end on a region boundary rather than mid-phrase, and it can't reach a `@State`
+    /// declared here. The standalone sheet holds one just the same, so the two hosts stay symmetric.
+    let player: ContinuousLoopPlayer
     /// Latch for the tool-opened event (ADR 0120) — this view is embedded by both the loop-settings
     /// sheet and a routine's ear block, and `.onAppear` re-fires on a return.
     @State private var reportedOpen = false
-
-    init(loop: Loop) {
-        self.loop = loop
-        _player = State(initialValue: ContinuousLoopPlayer(loop: loop))
-    }
 
     var body: some View {
         Form {
@@ -65,10 +62,16 @@ struct EarTrainingView: View {
 struct EarTrainingSheet: View {
     let loop: Loop
     @Environment(\.dismiss) private var dismiss
+    @State private var player: ContinuousLoopPlayer
+
+    init(loop: Loop) {
+        self.loop = loop
+        _player = State(initialValue: ContinuousLoopPlayer(loop: loop))
+    }
 
     var body: some View {
         NavigationStack {
-            EarTrainingView(loop: loop)
+            EarTrainingView(loop: loop, player: player)
                 .navigationTitle("Train your ear")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -78,6 +81,25 @@ struct EarTrainingSheet: View {
                 }
         }
         .presentationDetents([.large])
+    }
+}
+
+/// The **pushed** ear-training host — what the Loops library navigates to (ADR 0138 G4). Same core
+/// view, same owned player; it differs from `EarTrainingSheet` only in having no modal chrome, since
+/// a pushed screen already has a back button.
+struct EarTrainingScreen: View {
+    let loop: Loop
+    @State private var player: ContinuousLoopPlayer
+
+    init(loop: Loop) {
+        self.loop = loop
+        _player = State(initialValue: ContinuousLoopPlayer(loop: loop))
+    }
+
+    var body: some View {
+        EarTrainingView(loop: loop, player: player)
+            .navigationTitle(LoopRunMode.ear.label)
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 

@@ -13,6 +13,9 @@ enum RoutineUnitPick {
     /// The same `Loop`, added as an ears-only block (ADR 0104 Slice 2) — a *different* pick from
     /// `.loop`, hence the prefixed id: both may sit in one routine.
     case earLoop(Loop)
+    /// The same `Loop` again, added as an **improvise** block over it as a backing track (ADR 0135
+    /// Slice 2). A third distinct pick on one unit, for the same reason as `.earLoop`.
+    case improviseLoop(Loop)
     case song(Song)
 
     /// Stable per-row identity. A `Song` has no business `uid`; its import `sourceID` (a UUID
@@ -22,6 +25,7 @@ enum RoutineUnitPick {
         case .exercise(let exercise): return exercise.uid.uuidString
         case .loop(let loop): return loop.uid.uuidString
         case .earLoop(let loop): return "ear-" + loop.uid.uuidString
+        case .improviseLoop(let loop): return "improv-" + loop.uid.uuidString
         case .song(let song): return song.sourceID
         }
     }

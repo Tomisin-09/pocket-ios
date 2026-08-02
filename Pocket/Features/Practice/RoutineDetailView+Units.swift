@@ -42,6 +42,10 @@ extension RoutineDetailView {
             // The same loop, run ears-only (ADR 0104 Slice 2).
             guard let local = local(picked) else { return nil }
             return .earLoopItem(local, order: nextOrder)
+        case .improviseLoop(let picked):
+            // The same loop again, run as a backing track to solo over (ADR 0135 Slice 2).
+            guard let local = local(picked) else { return nil }
+            return .improviseLoopItem(local, order: nextOrder)
         case .song(let picked):
             guard let local = local(picked) else { return nil }
             return .item(local, order: nextOrder)

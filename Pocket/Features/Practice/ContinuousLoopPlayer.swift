@@ -76,6 +76,23 @@ final class ContinuousLoopPlayer {
         }
     }
 
+    /// A player seeded for **improvising** (ADR 0135 B3): opens at the loop's `armingSpeed` — its
+    /// measured command tempo when there is one, else **full tempo** (ADR 0089's rule, reused).
+    ///
+    /// Deliberately *not* the ear-training seed (`ramp.command`, which falls back to the loop's stored
+    /// practice `speed`): a section drawn at 70% to pick a lick off it would then open a jam at 70%,
+    /// and a bed's honest default is the tempo the record plays at. A factory rather than a rule
+    /// inside `init`, so the two improvise hosts can't drift apart on it.
+    static func improvising(over loop: Loop) -> ContinuousLoopPlayer {
+        ContinuousLoopPlayer(loop: loop, startPercent: LoopCommandRamp.percent(loop.armingSpeed))
+    }
+
+    /// How long one pass of the region takes at the current tempo — what ADR 0141's end-of-block
+    /// rounding needs so a routine block never cuts a phrase.
+    func cycleSeconds(for loop: Loop) -> TimeInterval {
+        RampLessBlockLength.cycleSeconds(regionSeconds: loop.regionSeconds, percent: percent)
+    }
+
     /// Stop playback and cancel any pending load. Idempotent — safe to call on disappear.
     func stop() {
         startTask?.cancel()
