@@ -1,7 +1,10 @@
 # 0141 — A block without a ramp still has a length
 
-- **Status:** Accepted — **Slice 1 built** 2026-08-02 (`pocket-223-improvise-block-and-lengths`),
-  alongside ADR 0135 Slice 2. Not yet device-verified. Slice 2 (freeform) waits on ADR 0136.
+- **Status:** Accepted — **Slice 1 built and device-verified** 2026-08-02
+  (`pocket-223-improvise-block-and-lengths`), alongside ADR 0135 Slice 2. The device pass confirmed
+  the three things the decision could not settle on paper: a block ends at a **loop boundary** rather
+  than mid-phrase (L2), **No time limit** restores open-ended behaviour (L4), and the countdown reads
+  as information rather than pressure (L3). Slice 2 (freeform) waits on ADR 0136.
 - **Date:** 2026-08-02
 - **Builds on:** ADR 0129 (a session is sized in blocks; a block's allotment fits the unit's ramp),
   ADR 0130 (`plannedMinutes` / `usesAuthoredLength` / `effectivePlannedMinutes`, and a block's right to

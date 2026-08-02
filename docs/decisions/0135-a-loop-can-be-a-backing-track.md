@@ -1,8 +1,8 @@
 # 0135 — A loop can be a backing track (improvise over your own music)
 
-- **Status:** Accepted — **Slices 1 and 2 built** (S1 device-verified 2026-08-02,
-  `pocket-220-backing-track-loops`; S2 on `pocket-223-improvise-block-and-lengths`, not yet
-  device-verified). Slice 3 (the planner) outstanding. See §Build notes for what landed, the one slice boundary that moved, and the question
+- **Status:** Accepted — **Slices 1 and 2 built and device-verified** 2026-08-02 (S1 on
+  `pocket-220-backing-track-loops`, S2 on `pocket-223-improvise-block-and-lengths`, which supersedes
+  it). Slice 3 (the planner) outstanding. See §Build notes for what landed, the one slice boundary that moved, and the question
   Slice 1 inherits rather than answers.
 - **Date:** 2026-08-01
 - **Builds on:** ADR 0104 (ear training as "loops, re-surfaced" — the mode-on-a-loop pattern this ADR

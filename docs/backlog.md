@@ -46,9 +46,8 @@ a routine* contribute dueness.
 4. **ADR 0135 slice 2 + ADR 0141 slice 1. ✅ BUILT 2026-08-02**
    (`pocket-223-improvise-block-and-lengths`, stacked on `pocket-220`). Improvise is a real routine
    block (stage, pick, run view, bucket, previews), and both ramp-less block types now carry a planned
-   length. **Not device-verified yet** — check the countdown readout, that a block ends on a loop
-   boundary rather than mid-phrase, and that "No time limit" restores open-ended. ADR 0141 was written
-   for this: `docs/decisions/0141-…`. Note `AddRoutineUnitSheet` split its search layer into
+   length. **Device-verified 2026-08-02** — the countdown, the loop-boundary end and "No time limit"
+   all confirmed on the iPhone. ADR 0141 was written for this: `docs/decisions/0141-…`. Note `AddRoutineUnitSheet` split its search layer into
    `AddRoutineUnitSheet+Search.swift` as planned below.
 5. **ADR 0135 slice 3 + ADR 0139 slice 1 — build adjacently.** Both need the same structural change:
    `PlannerCandidate`/`SessionBlock` carrying a `LoopRunMode` through to the materialised
