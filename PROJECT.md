@@ -208,7 +208,11 @@ in the song-details sheet (hold the title). The app opens to a **home hub** (`Ho
 for the most-recently-practised song, a blue **Song library** nav strip, and — below the metronome —
 a **Practice** card pushing the top-level **Practice
 space** (`PracticeView`, ADR 0046 — a **hub** over two unit libraries: `ExerciseLibraryView`
-(command drills) and `LoopLibraryView` (any measured song **loop**, `commandTempo != nil`), each a
+(command drills) and `LoopLibraryView` (measured song **loops** by default, widened to every loop by
+the **Show all loops** filter — ADR 0138: the gate belongs to the *mode*, so the pure `LoopModeAccess`
+now answers it per mode (trainer needs a command tempo, ear needs only playable audio, ADR 0135's
+improvise will need `isBackingTrack`) and each row offers exactly the modes that loop qualifies for),
+each a
 row pushing its own list — each with a **sort menu + search** (`PracticeLibrarySort`, ADR 0056:
 loops by Song · Name · Command · Mastery, exercises by Name · Command · Recently added; choice
 persisted per library; the exercise **Command** key ranks on notes-per-minute — `command ×

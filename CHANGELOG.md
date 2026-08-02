@@ -77,6 +77,18 @@ All notable changes to Pocket are documented here. Format loosely follows
   blocks don't have this: there's no ramp there to tune.
 
 ### Fixed
+- **Ear training no longer waits until you've played the passage.** Training your ear with a loop
+  needed a command tempo first — and a command tempo is a measurement you can only make by playing
+  the thing on your instrument. So the one practice you can do *away* from the guitar — on a bus, in
+  bed, with no instrument in hand — was the one hidden until you'd already practised it.
+
+  Every mode now asks for what it actually needs. The trainer still wants a command tempo, because
+  its ramp is built around one. Ear training wants audio it can play, and nothing else: if you can
+  hear it, you can sing it back. So the **Ear training** section when building a routine now offers
+  every loop you've captured, not just the measured ones — expect a longer list there than under
+  Loops, which is the honest difference between the two. In the Loops library, **Show all loops** in
+  the options menu reveals the unmeasured ones, and each row offers exactly the modes that loop
+  qualifies for.
 - **Generated sessions now notice when you last played a loop.** A loop you worked on this morning
   was being treated exactly like one you hadn't touched in a year: loops were the only thing in the
   library with no sense of time, so a generated session ranked them on your own mastery rating alone

@@ -34,13 +34,21 @@ struct AddRoutineUnitSheet: View {
     /// previews compiling.
     var onToggle: (RoutineUnitPick) -> Void = { _ in }
 
-    /// Only loops with a measured command tempo are trainable in a routine (the same gate as the
-    /// loop library — an unmeasured loop has no ramp for the player to run).
-    private var trainableLoops: [Loop] { loops.filter { $0.commandTempo != nil } }
+    /// The loops each **mode** can actually run (ADR 0138 G3) — one collection per precondition,
+    /// never one shared "trainable" list. `trainableLoops` used to serve both the Loops and the Ear
+    /// training buckets, which is why their counts always matched: the trainer's gate had been
+    /// inherited by a mode that needs none of it.
+    ///
+    /// The Ear count will usually **exceed** the Loops count, and that divergence is the point rather
+    /// than a defect to hide: ear training works on anything you've captured, the trainer on what
+    /// you've measured.
+    private var trainerLoops: [Loop] { loops.filter { LoopModeAccess.allows(.trainer, $0) } }
+    private var earLoops: [Loop] { loops.filter { LoopModeAccess.allows(.ear, $0) } }
 
     /// Only songs whose audio the play-along can actually run — local/iCloud files (and the demo);
     /// Apple Music catalog items are browse/metadata only and can't be time-stretched (ADR 0001), so
-    /// they'd be dead blocks and are excluded.
+    /// they'd be dead blocks and are excluded. The same condition `LoopModeAccess` applies to a loop's
+    /// audio, which is where the per-mode gating idea came from in the first place.
     private var playableSongs: [Song] { songs.filter { $0.ref.source != .appleMusic } }
 
     var body: some View {
@@ -109,7 +117,7 @@ struct AddRoutineUnitSheet: View {
                 GroupPickList(title: "Loops", groups: loopGroups, allRows: allLoopRows)
             } label: {
                 bucketRow(title: "Loops", subtitle: "By song",
-                          icon: "repeat", count: trainableLoops.count)
+                          icon: "repeat", count: trainerLoops.count)
             }
             .listRowBackground(PocketColor.background)
 
@@ -129,7 +137,7 @@ struct AddRoutineUnitSheet: View {
                               allRows: allEarLoopRows)
             } label: {
                 bucketRow(title: "Ear training", subtitle: "Hum & sing a loop",
-                          icon: "ear", count: trainableLoops.count)
+                          icon: "ear", count: earLoops.count)
             }
             .listRowBackground(PocketColor.background)
         }
@@ -149,24 +157,31 @@ struct AddRoutineUnitSheet: View {
     }
 
     private var matchingExercises: [Exercise] { exercises.filter { matches($0.name) } }
-    private var matchingLoops: [Loop] {
-        trainableLoops.filter { matches($0.name) || matches($0.song?.title) }
+    /// Search narrows each mode's own population (ADR 0138), so a result section can never offer a
+    /// block that mode can't run — the Ear section can surface an unmeasured loop the Loops section
+    /// correctly withholds.
+    private func matchingLoops(in source: [Loop]) -> [Loop] {
+        source.filter { matches($0.name) || matches($0.song?.title) }
     }
+    private var matchingTrainerLoops: [Loop] { matchingLoops(in: trainerLoops) }
+    private var matchingEarLoops: [Loop] { matchingLoops(in: earLoops) }
     private var matchingSongs: [Song] {
         playableSongs.filter { matches($0.title) || matches($0.artist) }
     }
 
     @ViewBuilder private var searchResults: some View {
-        if matchingExercises.isEmpty && matchingLoops.isEmpty && matchingSongs.isEmpty {
+        if matchingExercises.isEmpty && matchingTrainerLoops.isEmpty
+            && matchingEarLoops.isEmpty && matchingSongs.isEmpty {
             Text("No matches.")
                 .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textSecondary)
                 .listRowBackground(PocketColor.background)
         } else {
             resultSection("Exercises", rows: matchingExercises.map { exerciseRow($0) })
-            resultSection("Loops", rows: matchingLoops.map(loopRow))
-            // Loops appear again as ear-training picks — the same units, a different block (ADR 0104).
-            resultSection("Ear training", rows: matchingLoops.map(earLoopRow))
+            resultSection("Loops", rows: matchingTrainerLoops.map(loopRow))
+            // Loops appear again as ear-training picks — the same units, a different block (ADR 0104),
+            // and a wider set of them (ADR 0138): ear needs audio, not a measured tempo.
+            resultSection("Ear training", rows: matchingEarLoops.map(earLoopRow))
             resultSection("Songs", rows: matchingSongs.map(songRow))
         }
     }
@@ -223,12 +238,15 @@ struct AddRoutineUnitSheet: View {
         }
     }
 
-    /// Trainable loops bucketed by their **song**, songs A→Z, loops with no song collected under
-    /// "No song" last. Each group drills into its own unit list. The standard **Loops** bucket adds a
+    /// Loops bucketed by their **song**, songs A→Z, loops with no song collected under "No song"
+    /// last. Each group drills into its own unit list. The standard **Loops** bucket adds a
     /// command-anchored trainer block; the **Ear training** bucket reuses the same grouping with an
     /// ears-only pick action (ADR 0104 Slice 2), so both stay one implementation.
-    private var loopGroups: [PickGroup] { loopGroups(makeRow: loopRow) }
-    private var earLoopGroups: [PickGroup] { loopGroups(makeRow: earLoopRow) }
+    ///
+    /// Each passes **its own mode's** loops (ADR 0138): same grouping, different populations. Sharing
+    /// the implementation is fine; sharing the *gate* was the bug.
+    private var loopGroups: [PickGroup] { loopGroups(trainerLoops, makeRow: loopRow) }
+    private var earLoopGroups: [PickGroup] { loopGroups(earLoops, makeRow: earLoopRow) }
 
     /// Every unit in a bucket, flat and A→Z (the `@Query` order) — the **All** escape hatch each
     /// grouped level offers (ADR 0127). The grouping is still the way in; this is for the times you
@@ -240,11 +258,11 @@ struct AddRoutineUnitSheet: View {
     private var allExerciseRows: [PickRow] {
         exercises.map { exerciseRow($0, showsTemplate: true) }
     }
-    private var allLoopRows: [PickRow] { trainableLoops.map(loopRow) }
-    private var allEarLoopRows: [PickRow] { trainableLoops.map(earLoopRow) }
+    private var allLoopRows: [PickRow] { trainerLoops.map(loopRow) }
+    private var allEarLoopRows: [PickRow] { earLoops.map(earLoopRow) }
 
-    private func loopGroups(makeRow: (Loop) -> PickRow) -> [PickGroup] {
-        let bySong = Dictionary(grouping: trainableLoops) { $0.song?.title ?? "" }
+    private func loopGroups(_ source: [Loop], makeRow: (Loop) -> PickRow) -> [PickGroup] {
+        let bySong = Dictionary(grouping: source) { $0.song?.title ?? "" }
         return bySong.keys.sorted { lhs, rhs in
             if lhs.isEmpty != rhs.isEmpty { return !lhs.isEmpty }  // "No song" sinks to the bottom
             return lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
@@ -262,7 +280,7 @@ struct AddRoutineUnitSheet: View {
     private var recentlyAdded: [PickRow] {
         let dated: [(date: Date, row: PickRow)] =
             exercises.map { ($0.dateAdded, exerciseRow($0)) }
-            + trainableLoops.map { ($0.song?.dateAdded ?? .distantPast, loopRow($0)) }
+            + trainerLoops.map { ($0.song?.dateAdded ?? .distantPast, loopRow($0)) }
             + playableSongs.map { ($0.dateAdded ?? .distantPast, songRow($0)) }
         return dated.sorted { $0.date > $1.date }.prefix(6).map(\.row)
     }
