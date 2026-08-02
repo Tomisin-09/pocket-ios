@@ -4,7 +4,21 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
-## PRIORITY — ADR 0140, slowed-audio quality (decided 2026-08-02, nothing built)
+## Where to pick up (2026-08-02)
+
+Three things are parked, in the order they'd sensibly resume:
+
+1. **ADR 0140 slice 3** — the `'tmpt'` A/B, detailed just below. The reason it's worth doing is now a
+   heard observation, not a spec sheet: with slice 1's curve in, quality is much better overall but
+   **0.25× is still rough**, which says the ceiling at a 4× stretch is the AU itself.
+2. **The improvise fine-tuning pass** — its own section further down. Needs the player's list of
+   refinements captured first; it isn't actionable without them.
+3. **ADR 0139 slice 2** — deferred, and blocked on Track B (ADR 0136) regardless.
+
+Slices 1 and 2 of ADR 0140 are **built, tested and device-confirmed** on
+`pocket-221-time-stretch-quality`, which is **local-only — not pushed, no PR**.
+
+## PRIORITY — ADR 0140, slowed-audio quality (slices 1–2 shipped 2026-08-02, slice 3 deferred)
 
 **Jumps the queue below.** Track A/B are new features; this is the oldest feature in the app sounding
 worse than it needs to, on the surface that gets used every session. Independent of everything in the
@@ -20,15 +34,15 @@ Three slices, in [ADR 0140](decisions/0140-slowing-down-shouldnt-cost-the-sound.
    tests. Note `overlap` turned out **not** to be deprecated at the Swift level; the rename is at the
    AudioToolbox constant only, and the SDK header states the "higher = fewer artifacts" semantics
    outright. Sound itself still to be confirmed on device.
-2. **Latency compensation — the actual defect. ⏳ BUILT 2026-08-02, AWAITING THE DEVICE A/B.** The
-   click bypasses the stretcher by design, but the stretcher has **93 ms latency at 1×, 139 ms at
-   0.5×**, and nothing compensated, so the click led the song by a rate-dependent flam (a 16th note at
-   120 BPM is 125 ms) — the visual playhead too. `currentTime` is now published in *heard* time via the
-   pure `AudioMath.heardPlayhead`, which corrects the click and the cursor in one subtraction and
-   leaves `MetronomeSchedule` alone. **A/B it at *Settings → Audio (Debug) → Compensate stretch
-   latency*** (default on) at 0.25×, against a **typed**-BPM song. If the corrected build isn't
-   tighter, revert the slice and strike §3.
-3. **The `'tmpt'` A/B.** Apple's *high quality* stretcher is verified present on iOS, instantiates,
+2. **Latency compensation — the actual defect. ✅ BUILT + DEVICE-CONFIRMED 2026-08-02.** The click
+   bypassed the stretcher by design, but the stretcher has **93 ms latency at 1×, 139 ms at 0.5×**, and
+   nothing compensated, so the click led the song by a rate-dependent flam (a 16th note at 120 BPM is
+   125 ms) — the visual playhead too. `currentTime` is now published in *heard* time via the pure
+   `AudioMath.heardPlayhead`, which corrects the click and the cursor in one subtraction and leaves
+   `MetronomeSchedule` alone. A/B'd on the iPhone at 0.25×: **"on is definitely tighter"** — so the
+   flam was real and `AVAudioEngine` does not compensate node latency internally. The Debug toggle is
+   kept as the rig for slice 3.
+3. **The `'tmpt'` A/B. ⏸ DEFERRED 2026-08-02** — pick up here. Apple's *high quality* stretcher is verified present on iOS, instantiates,
    renders, covers `0.25…1.5` exactly, and measured **lower** latency than what we use (79 ms vs
    139 ms). Adopt only on the ADR's four-part device rule; delete the toggle otherwise. **Slice 1's
    device pass strengthened the case:** with the smoothness curve fixed, the overall quality is much

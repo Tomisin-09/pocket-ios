@@ -1,8 +1,8 @@
 # ADR 0140 — Slowing down shouldn't cost the sound: the stretcher, its settings, and the click that leads it
 
-- **Status:** Accepted. **Slice 1 built and device-confirmed 2026-08-02** (`pocket-221-time-stretch-quality`);
-  **slice 2 built, awaiting the device A/B**; slice 3 outstanding — and slice 1's device pass makes the
-  case for it stronger, since 0.25× is still rough with the curve fixed. Build notes at the end.
+- **Status:** Accepted. **Slices 1 and 2 built and device-confirmed 2026-08-02**
+  (`pocket-221-time-stretch-quality`). **Slice 3 deferred** — and slice 1's device pass makes the case
+  for it stronger, since 0.25× is still rough with the curve fixed. Build notes at the end.
 - **Date:** 2026-08-02
 - **Builds on:** ADR 0001 (local files are the audio source — the only reason we own a stretcher at
   all) · ADR 0006 / 0008 (region looping, gapless wrap) · ADR 0013 (the per-loop speed ramp) ·
@@ -343,9 +343,15 @@ the region read and seam crossfade (costing `file` / `sampleRate` / `crossfadeSe
 cross-file-private tax), and `DebugAudioSection.swift` takes the new Debug toggle out of
 `SettingsView`.
 
-**Status: not yet confirmed on device.** The A/B toggle is *Settings → Audio (Debug) → Compensate
-stretch latency*, default on. Judge at 0.25× against a song whose BPM was **typed**, not tapped — build
-note 5. If the corrected build is not tighter, this slice reverts and §3 is struck from the ADR.
+**Device-confirmed 2026-08-02: *"on is definitely tighter"*.** A/B'd on the iPhone at 0.25× via
+*Settings → Audio (Debug) → Compensate stretch latency*. So the flam was real, `AVAudioEngine` does
+**not** compensate node latency internally for a player scheduled `at: nil`, and §3's honesty caveat is
+now discharged — the claim moves from *measured and code-path-confirmed* to *heard*.
+
+The Debug toggle is **kept** rather than deleted. It costs nothing in Release (the whole section is
+`#if DEBUG`, and the engine's `compensatesStretcherLatency` is a compile-time `true` there), it is the
+rig slice 3's `'tmpt'` A/B will sit beside, and a latency correction is exactly the kind of thing worth
+being able to disprove again later.
 
 **Verification (slice 2):** `swiftlint --strict` clean, generic-simulator build clean, **1796 tests
 pass** on `PocketAll` including 6 new `heardPlayhead` cases covering the rate scaling, its direction,
