@@ -4,6 +4,39 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## PRIORITY — ADR 0140, slowed-audio quality (decided 2026-08-02, nothing built)
+
+**Jumps the queue below.** Track A/B are new features; this is the oldest feature in the app sounding
+worse than it needs to, on the surface that gets used every session. Independent of everything in the
+0135–0139 order — different subsystem (`Core/Audio`), zero file overlap — so it can run in parallel
+rather than displacing them.
+
+Three slices, in [ADR 0140](decisions/0140-slowing-down-shouldnt-cost-the-sound.md):
+
+1. **Smoothness + the `TimeStretcher` seam.** `PracticeAudioEngine` pins `overlap = 3.0`, which iOS 16
+   renamed *Smoothness* — that is its **minimum, i.e. maximum artifacts**, and the transient-crispness
+   job the line was written for is already done by `EnableTransientPreservation` (measured on by
+   default). Pure `StretchQuality.smoothness(forRate:)`, unit-tested. Measured safe to ship alone:
+   smoothness does not change AU latency.
+2. **Latency compensation — the actual defect.** The click bypasses the stretcher by design, but the
+   stretcher has **93 ms latency at 1×, 139 ms at 0.5×**, and nothing compensates, so the click leads
+   the song by a rate-dependent flam (a 16th note at 120 BPM is 125 ms) — and the visual playhead
+   leads too. Measured + code-path confirmed, **not yet ear-confirmed**: the slice starts by proving it
+   on device, and is dropped if it isn't real.
+3. **The `'tmpt'` A/B.** Apple's *high quality* stretcher is verified present on iOS, instantiates,
+   renders, covers `0.25…1.5` exactly, and measured **lower** latency than what we use (79 ms vs
+   139 ms). Adopt only on the ADR's four-part device rule; delete the toggle otherwise.
+
+**Watch items:**
+- Slice 2 touches `updateCurrentTime`'s loop-wrap maths. Offsetting reported time near the seam can
+  push `loopIteration` early, which would advance the ADR-0013 ramp a beat early **every pass**. Offset
+  the reported time without perturbing the iteration count.
+- `PracticeAudioEngine+Metronome.swift:54` is the only reader of `timePitch.rate`. It must move to a
+  stored rate in slice 1, or slice 3 can't swap the AU without editing the metronome.
+- Do §5's output trim **before** the slice-3 listening test. Clipping sounds like stretch artifacts and
+  would be credited to the wrong thing.
+- Simulator lies about all of this. Every claim here except the two pure functions is device-only.
+
 ## Build order — ADRs 0135–0139 (decided 2026-08-01, nothing built)
 
 Five ADRs landed as **decisions only, no Swift**: 0135–0138 on main (squash `0187282`, PR #203) and
