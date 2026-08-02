@@ -401,8 +401,63 @@ listing — a backing track needs no command tempo, so the other way round would
 a player flags and never measures. Rows carry an **Improv** button only when flagged, where **Ear**
 appears on anything audible; that asymmetry is the flag's payoff. Row buttons, the long-press menu and
 the pushed destination are now all driven by `LoopModeAccess.modes(for:)` over a mode + loop
-`LoopLaunch` pair, so a fourth mode reaches all three at once. Slice 2 (the routine block and its
-`AddRoutineUnitSheet` bucket) and Slice 3 (the planner) are not built.
+`LoopLaunch` pair, so a fourth mode reaches all three at once.
+
+**Slice 3 puts backing loops in the planner**, and closes a hole that had been open since the
+taxonomy was written. `improv.vocabulary` is classed `.repertoire`, so it resolves on Path B — and
+Path B opened with `guard let songUID = goal.targetSongUID else { return [] }`, while the "Improvise
+in a style" goal template sets `requiresTargetSong: false`. That skill therefore produced **zero
+candidates** for every player, invisibly, because the goal's two scale skills still resolved and so
+the goal still looked like it worked. A backing loop is the unit that closes it: a goal naming no
+target song now resolves the skill to the library's flagged, audible loops. Where Path B already
+worked it is untouched — a goal that *does* name a target song still resolves to that song's own
+loops first.
+
+A jam is placed as the trailing **`play`** block, never `focused` (§B6a): `RoutineItemKind.play` is
+precisely a full run-through, surfaced but unbudgeted (ADR 0014 R1), and a jam charged against a
+focused budget would be miscounted work dragging ADR 0129's session sizing around. `SessionBuilder`
+partitions jams out **before** selection rather than after, so scheduling one never costs the player
+one of the preset's focus items; exactly one is taken (R1's structure has a single finale), and only
+when the preset schedules a play-through at all — a ten-minute jam on top of a Quick fifteen would
+make the short preset the long one. Its displayed minutes come from `RampLessBlockLength`, not the
+candidate's `region × repeats`, because a play block carries no `plannedMinutes` and ADR 0141's mode
+default is therefore what it will actually run for.
+
+**Practice you can do without your instrument** (ADR 0139, Slice 1) — built adjacently with the
+above, because both need the same structural change and neither should pay for it twice.
+
+*The structural change.* A `LoopRunMode` now survives the whole trip: `PlannerCandidate.runMode` →
+`SessionBlock.focus/​play(…, mode:)` → `RoutineItem.loopRunMode`, set by the materialiser on loop
+blocks only. Without it a planned ear or improvise block persists as the **trainer** and hands the
+player a ramp built from a command tempo that neither mode requires — a failure that produces a
+running app and a wrong screen. The mode is deliberately **not** part of `PlannerUnitRef`: that is
+the deduplication key, and a mode-bearing key would let one loop appear twice in a session, once to
+train and once to sing back (§O2b).
+
+*The third way a loop reaches a skill.* Loops now serve skills by **tag** (ADR 0074), by **flag**
+(`isBackingTrack`, 0135) and by **capability** — any loop you can hear can be sung back, so audible
+loops serve the three `ear.*` skills with no tag at all. That closes the mirror-image hole to the
+improv one: `SkillFamilyMap` maps `ear.*` to `ExerciseTemplate.earTraining`, which left `creatable`
+when ear training shipped as a loop *mode* instead (ADR 0104), leaving all three permanently
+unresolvable. Both routes are stated once in `SkillFamilyMap.directLoopModes`; which loops actually
+qualify is left to **`LoopModeAccess`** — the same predicate the run screens gate on, projected onto
+`PlannerLoop.modeFacts`, so the planner can never schedule a mode a run screen would refuse.
+
+*The session type.* `SessionConstraint` is a parameter on the planner's entry points, defaulted to
+`.none`, not a second planner: goal weighting, dueness, prerequisite softening and block packing are
+untouched, and only the pool shrinks. Under `.offGuitar` everything needing the instrument is dropped
+(every exercise, every song run) and the surviving loops are **pinned** to `.ear` rather than
+filtered — pinning is what lets a "learn this song" goal contribute at all, its loops arriving as
+trainer work with a ramp you can't run on a train and leaving as ear work on the same material. A
+pinned loop still has to qualify for the pinned mode. The warm-up is dropped with the rest
+(`template == .warmup` exercises all want the instrument), and the **goal-less** Quick path takes the
+constraint too, because *"fifteen minutes and no guitar"* is not a situation that waits for you to
+have written a goal. Off-guitar is a property of the **mode**, never the material (§O1), which is why
+a flagged backing loop is not off-guitar material as a jam but *is* as ear work. In the UI it is a
+toggle on `PlannerView`, unpersisted (a fact about this afternoon, not a preference), and it is never
+called "off-guitar" — ADR 0116 made this a multi-instrument app (§O5). The result names itself a
+**Listening Session**, and the empty notice points at loops rather than exercises, since a session
+built only from loops is exactly as good as the loop library and a brand-new player has none.
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises

@@ -26,6 +26,18 @@ struct PlannerLoop: Equatable {
     var lastPracticed: Date?
     var estimatedMinutes: Int
     var templates: [ExerciseTemplate] = []
+
+    /// **What this loop can be run as** (ADR 0138) — the same `LoopModeAccess.Facts` the run screens
+    /// gate on, projected so the planner asks the *identical* question rather than a lookalike.
+    /// This is what makes a loop resolvable by **capability** as well as by tag: an audible loop
+    /// serves the ear skills because it can be heard (ADR 0139 O2), and a flagged one serves
+    /// `improv.vocabulary` because it is a bed (ADR 0135 B6).
+    ///
+    /// Carrying the whole `Facts` rather than a bare `isBackingTrack` is deliberate: the planner must
+    /// never schedule a mode a run screen would refuse, and a single shared predicate is the only way
+    /// to guarantee that as a fourth mode arrives. Defaults to "nothing qualifies", so a caller that
+    /// doesn't set it can only ever under-offer.
+    var modeFacts = LoopModeAccess.Facts(hasCommandTempo: false, audioResolves: false)
 }
 
 /// A projected song run (Path B). Keyed by the derived `Song.plannerUID` — Song has no stored `uid`

@@ -1,6 +1,9 @@
 # 0139 — Practice you can do without your instrument (the off-guitar session)
 
-- **Status:** Proposed (2026-08-01)
+- **Status:** Accepted — **Slice 1 built** 2026-08-02 on
+  `pocket-224-improvise-planner-and-off-guitar`, alongside ADR 0135 Slice 3, which shares its one
+  structural change. Slice 2 (freeform blocks declare themselves off-guitar) waits on ADR 0136. See
+  §Build notes.
 - **Date:** 2026-08-01
 - **Closes:** ADR 0138 §G6, both halves — the `ear.*` skills resolving to zero candidates, and
   `SkillMode.offGuitar` having no consumer. 0138 named them and fixed neither by design; this is the
@@ -133,13 +136,53 @@ just has no way to ask for a session made of it.
 
 ## Slices
 
-- **Slice 1 — ear training becomes plannable, and the session type exists.** The `ear.*` Path-A
-  contribution from audible loops, the run mode carried candidate → block → `RoutineItem` (shared with
-  ADR 0135 §B6a), the `constraint` parameter, and the "Away from your instrument" option where
-  sessions are chosen. Pure-side unit tests: an ear skill now resolves; a constrained pool excludes
-  trainer-only units; a loop appears once, not twice.
+- **Slice 1 — ear training becomes plannable, and the session type exists. ✅ BUILT.** The `ear.*`
+  Path-A contribution from audible loops, the run mode carried candidate → block → `RoutineItem`
+  (shared with ADR 0135 §B6a), the `constraint` parameter, and the "Away from your instrument" option
+  where sessions are chosen. Pure-side unit tests: an ear skill now resolves; a constrained pool
+  excludes trainer-only units; a loop appears once, not twice.
 - **Slice 2 — freeform blocks can be off-guitar.** Depends on ADR 0136. One player-set declaration on
   the freeform payload and its contribution to the constrained pool.
+
+## Build notes — Slice 1 (2026-08-02)
+
+- **The constraint *pins* surviving loops rather than filtering them, and that is what makes the
+  session reachable.** O3 says the pool "keeps only units runnable in an off-guitar mode" and that
+  loop blocks "are pinned to `.ear`", which reads as two steps but is really one: a repertoire goal's
+  loops arrive as **trainer** candidates, so a filter-first reading would have dropped them and left
+  the constrained pool empty for every player whose goals are about songs and technique — i.e. almost
+  everyone, since the taxonomy has three ear skills and twenty-eight others. Pinning first, then
+  qualifying against `LoopModeAccess`, is what lets "learn Little Wing" contribute its sections as
+  ear work. A pinned loop still has to qualify: a loop with no playable audio survives nothing.
+
+- **The goal-less Quick path takes the constraint too.** O3 says "the session entry points", plural,
+  but the Quick path projects only exercises, so under a constraint it would have produced nothing —
+  and *"I have fifteen minutes and no guitar"*, the ADR's own headline case, is not a situation that
+  waits for the player to have written a goal. `planQuickSession` gains defaulted `loops:` and
+  `constraint:` parameters and, when constrained, builds its pool from the library's loops through
+  the same `CandidateDeriver.constrained` used by the goal path. Unconstrained, it ignores loops
+  entirely and is byte-for-byte the session it was.
+
+- **No warm-up in a constrained session.** Not stated in the ADR, and it follows from O3 rather than
+  extending it: the warm-up pool is `template == .warmup` **exercises**, every one of which wants the
+  instrument in your hands. The structure is unchanged; the pool it draws from is empty.
+
+- **The consequence about the empty state was taken literally.** A constrained session that resolves
+  nothing gets its own notice, pointing at loops. The unconstrained copy tells the player to add an
+  exercise or give a goal a target song — advice that would send an off-guitar player to build
+  something this session cannot use.
+
+- **It names itself.** A generated off-guitar session defaults to "*d MMM* Listening Session" rather
+  than "Quick Session". It lands in the routine library beside the others and will be re-run from
+  there, so a player deciding what to open on a train has to be able to tell them apart. Never
+  "off-guitar" (O5).
+
+- **`SkillMode.offGuitar` still has no direct consumer, and the ADR is satisfied anyway.** The
+  taxonomy column that prompted this decision is *not* what the constraint branches on — the
+  constraint asks `LoopRunMode`, per O1's "off-guitar is a property of the mode, not the material".
+  The column's real payoff is O7's honesty: it is how you can see at a glance that the four `know.*`
+  and `create.*` skills sharing it are still unresolvable, and that Slice 2 is where they get an
+  answer.
 
 ## Dependencies
 

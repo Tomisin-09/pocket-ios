@@ -52,6 +52,17 @@ struct PlannerCandidate: Equatable {
     /// The skill this candidate satisfies, for display only (`nil` in Slice 1 before goals).
     var skillID: String?
 
+    /// **How this unit should be run**, when the unit is a loop (ADR 0135 B6a / 0139 O2a). A loop can
+    /// serve a skill as the trainer's staircase, as ear work, or as a bed to solo over, and *which*
+    /// is decided here — at resolution, by the skill that claimed it — because that is the only place
+    /// the reason is still known. It then rides the block down to `RoutineItem.loopRunMode`.
+    ///
+    /// `.trainer` on every non-loop candidate and on loops surfaced the ordinary way, so nothing that
+    /// predates this changes. Deliberately **not** part of `PlannerUnitRef`: the ref is the
+    /// deduplication key, and a mode-bearing key would let one loop appear twice in a session — once
+    /// to train, once to sing back (ADR 0139 O2b).
+    var runMode: LoopRunMode
+
     /// Which **goal** surfaced this candidate — the strongest claim's goal, where several compete
     /// (`CandidateDeriver`). `nil` on the goal-less Quick path, where every candidate is equal.
     ///
@@ -67,6 +78,7 @@ struct PlannerCandidate: Equatable {
          lastPracticed: Date? = nil,
          estimatedMinutes: Int,
          skillID: String? = nil,
+         runMode: LoopRunMode = .trainer,
          goalUID: UUID? = nil) {
         self.unit = unit
         self.priority = priority
@@ -74,6 +86,7 @@ struct PlannerCandidate: Equatable {
         self.lastPracticed = lastPracticed
         self.estimatedMinutes = estimatedMinutes
         self.skillID = skillID
+        self.runMode = runMode
         self.goalUID = goalUID
     }
 }

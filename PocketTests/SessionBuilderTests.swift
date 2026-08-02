@@ -21,13 +21,13 @@ final class SessionBuilderTests: XCTestCase {
 
     private func focusMinutes(_ blocks: [SessionBlock]) -> Int {
         blocks.reduce(0) { total, block in
-            if case let .focus(_, minutes, _) = block { return total + minutes }
+            if case let .focus(_, minutes, _, _) = block { return total + minutes }
             return total
         }
     }
 
     private func focusRefs(_ blocks: [SessionBlock]) -> [PlannerUnitRef] {
-        blocks.compactMap { if case let .focus(ref, _, _) = $0 { return ref } else { return nil } }
+        blocks.compactMap { if case let .focus(ref, _, _, _) = $0 { return ref } else { return nil } }
     }
 
     private func restCount(_ blocks: [SessionBlock]) -> Int {
@@ -86,7 +86,7 @@ final class SessionBuilderTests: XCTestCase {
             length: .quick,
             candidates: [candidate(minutes: 1), candidate(minutes: 30), candidate(minutes: 12)],
             now: now)
-        let minutes = blocks.compactMap { if case let .focus(_, min, _) = $0 { return min } else { return nil } }
+        let minutes = blocks.compactMap { if case let .focus(_, min, _, _) = $0 { return min } else { return nil } }
         XCTAssertEqual(minutes, [5, 5, 5])
     }
 
@@ -113,7 +113,8 @@ final class SessionBuilderTests: XCTestCase {
                                                  candidates: others + [peak], now: now)
         XCTAssertEqual(focusRefs(blocks).last, peak.unit)
         XCTAssertEqual(blocks.last, .focus(peak.unit, minutes: SessionLength.blockMinutes,
-                                           microRestEvery: SessionBuilder.microRestEveryMinutes))
+                                           microRestEvery: SessionBuilder.microRestEveryMinutes,
+                                           mode: .trainer))
     }
 
     // MARK: - Placement (ADR 0014 R5 — U-shape, top-priority last)
@@ -161,7 +162,7 @@ final class SessionBuilderTests: XCTestCase {
         // ADR 0014 R4 was plumbed and passed `nil` at every site since; it now states its cadence.
         let blocks = SessionBuilder.buildSession(length: .quick, candidates: pool(3), now: now)
         for block in blocks {
-            if case let .focus(_, _, cue) = block {
+            if case let .focus(_, _, cue, _) = block {
                 XCTAssertEqual(cue, SessionBuilder.microRestEveryMinutes)
             }
         }

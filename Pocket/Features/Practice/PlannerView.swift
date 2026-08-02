@@ -25,6 +25,11 @@ struct PlannerView: View {
     @Query private var practiceRuns: [PracticeRun]
 
     @State private var length: SessionLength = .default
+    /// Whether this session is being built for practice **away from the instrument** (ADR 0139) —
+    /// a constraint on the same planner, not a second one. Not persisted: it is a fact about *this
+    /// afternoon*, not a preference, and a player who practised on a train yesterday should not find
+    /// the planner still assuming it today.
+    @State private var constraint: SessionConstraint = .none
     /// Seed the length from the profile only once, so revisiting the planner doesn't overwrite a
     /// duration the player just picked by hand.
     @State private var seededLength = false
@@ -51,6 +56,7 @@ struct PlannerView: View {
     var body: some View {
         List {
             durationSection
+            situationSection
             goalsSection
             if !metGoals.isEmpty { metSection }
         }
@@ -74,7 +80,7 @@ struct PlannerView: View {
         .alert("Nothing to schedule yet", isPresented: $showingEmptyNotice) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("Add an exercise, or give a \"learn a song\" goal a target song, then try again.")
+            Text(emptyNoticeMessage)
         }
     }
 
@@ -94,6 +100,29 @@ struct PlannerView: View {
             .listRowBackground(PocketColor.background)
         } header: {
             Text("How long do you have?")
+        }
+    }
+
+    // MARK: - Situation
+
+    /// **Where you are, not what you own** (ADR 0139 O3). A toggle rather than a third segmented
+    /// control: it is an occasional exception, and the ordinary case shouldn't have to be re-chosen
+    /// every visit.
+    private var situationSection: some View {
+        Section {
+            Toggle(isOn: Binding(get: { constraint == .offGuitar },
+                                 set: { constraint = $0 ? .offGuitar : .none })) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(SessionConstraint.offGuitar.displayName)
+                        .font(.futura(.body))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    Text(SessionConstraint.offGuitar.caption)
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+            }
+            .tint(PocketColor.practice)
+            .listRowBackground(PocketColor.background)
         }
     }
 
@@ -214,6 +243,20 @@ struct PlannerView: View {
         .accessibilityLabel("Generate today's session")
     }
 
+    /// What to do about an empty result — different advice for a different reason. An off-guitar
+    /// session is built **only** from the player's loops (ADR 0139: it is as good as the loop
+    /// library, and a brand-new player gets none at all), so telling them to add an exercise would
+    /// send them off to make something this session can't use.
+    private var emptyNoticeMessage: String {
+        switch constraint {
+        case .offGuitar:
+            return "An away-from-your-instrument session is built from your loops. "
+                 + "Set a loop over a section of one of your songs, then try again."
+        case .none:
+            return "Add an exercise, or give a \"learn a song\" goal a target song, then try again."
+        }
+    }
+
     /// Seed the duration picker from the profile's minutes-per-day once per screen (ADR 0113 S2
     /// consumer). Only a starting point — the player can change it freely, and an unset profile
     /// leaves the planner's own short default in place.
@@ -227,21 +270,25 @@ struct PlannerView: View {
 
     private func generate() {
         let active = activeGoals
-        // Only the goal session projects loops, so only it needs the log's recency map (ADR 0137);
-        // a Quick session ranks exercises alone, and those keep their own stored `lastPracticed`.
+        // The log's recency map is what gives a **loop** a time axis (ADR 0137). Both paths need it
+        // now: an off-guitar Quick session is built entirely from loops, so without it every
+        // candidate in it would rank as never-practised and the session would never rotate.
+        let recency = PracticeLog.lastPracticedByUnit(practiceRuns.map(\.record))
         let blocks: [SessionBlock] = active.isEmpty
-            ? PracticePlanner.planQuickSession(length: length, exercises: exercises)
+            ? PracticePlanner.planQuickSession(length: length, exercises: exercises, loops: loops,
+                                               constraint: constraint, lastPracticed: recency)
             : PracticePlanner.planGoalSession(length: length, goals: active,
                                               exercises: exercises, loops: loops, songs: songs,
                                               profile: profiles.first,
-                                              lastPracticed: PracticeLog.lastPracticedByUnit(
-                                                practiceRuns.map(\.record)))
+                                              lastPracticed: recency,
+                                              constraint: constraint)
         guard blocks.contains(where: { $0.unit != nil }) else {
             showingEmptyNotice = true
             haptic(.medium)
             return
         }
-        let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now)
+        let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now,
+                                                  constraint: constraint)
         draft = QuickSessionDraft(blocks: blocks, name: name, targetMinutes: length.minutes)
         haptic(.light)
     }

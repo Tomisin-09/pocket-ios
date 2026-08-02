@@ -41,14 +41,14 @@ enum SongRoutineBuilder {
         }
         for exercise in exercises {
             blocks.append(.focus(PlannerUnitRef(exercise.uid, .exercise),
-                                 minutes: focusedMinutes, microRestEvery: nil))
+                                 minutes: focusedMinutes, microRestEvery: nil, mode: .trainer))
         }
         for loop in song.loopsByStart {
             blocks.append(.focus(PlannerUnitRef(loop.uid, .loop),
-                                 minutes: focusedMinutes, microRestEvery: nil))
+                                 minutes: focusedMinutes, microRestEvery: nil, mode: .trainer))
         }
         blocks.append(.play(PlannerUnitRef(PlannerID.uid(from: song.sourceID), .song),
-                            minutes: playMinutes(for: song)))
+                            minutes: playMinutes(for: song), mode: .trainer))
         return blocks
     }
 

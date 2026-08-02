@@ -32,8 +32,8 @@ final class PlannedMinutesTests: XCTestCase {
         try context.save()
 
         let blocks: [SessionBlock] = [
-            .focus(PlannerUnitRef(first.uid, .exercise), minutes: 5, microRestEvery: 2),
-            .focus(PlannerUnitRef(second.uid, .exercise), minutes: 7, microRestEvery: 2)
+            .focus(PlannerUnitRef(first.uid, .exercise), minutes: 5, microRestEvery: 2, mode: .trainer),
+            .focus(PlannerUnitRef(second.uid, .exercise), minutes: 7, microRestEvery: 2, mode: .trainer)
         ]
         let routine = PracticePlanner.materialise(blocks, name: "Session",
                                                   exercises: try context.fetch(FetchDescriptor<Exercise>()),
@@ -50,7 +50,7 @@ final class PlannedMinutesTests: XCTestCase {
 
         let blocks: [SessionBlock] = [
             .warmUp(PlannerUnitRef(warm.uid, .exercise), minutes: 5),
-            .focus(PlannerUnitRef(focus.uid, .exercise), minutes: 5, microRestEvery: 2),
+            .focus(PlannerUnitRef(focus.uid, .exercise), minutes: 5, microRestEvery: 2, mode: .trainer),
             .rest(minutes: 3)
         ]
         let routine = PracticePlanner.materialise(blocks, name: "Session",
@@ -82,8 +82,8 @@ final class PlannedMinutesTests: XCTestCase {
         try context.save()
 
         let blocks: [SessionBlock] = [
-            .focus(PlannerUnitRef(first.uid, .exercise), minutes: 5, microRestEvery: 2),
-            .focus(PlannerUnitRef(second.uid, .exercise), minutes: 5, microRestEvery: 2)
+            .focus(PlannerUnitRef(first.uid, .exercise), minutes: 5, microRestEvery: 2, mode: .trainer),
+            .focus(PlannerUnitRef(second.uid, .exercise), minutes: 5, microRestEvery: 2, mode: .trainer)
         ]
         let routine = PracticePlanner.materialise(blocks, name: "Session",
                                                   exercises: try context.fetch(FetchDescriptor<Exercise>()),

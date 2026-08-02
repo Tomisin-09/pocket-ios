@@ -18,9 +18,15 @@ enum QuickSessionNaming {
 
     /// The default name for a new Quick session: the dated stem + "Quick Session", disambiguated
     /// against `existing` names so two sessions the same day never collide.
-    static func defaultName(existing: [String], date: Date,
+    ///
+    /// A session built **away from the instrument** (ADR 0139) is named for what it is instead. It
+    /// lands in the routine library beside the others and will be re-run there, so a player deciding
+    /// what to open on a train needs to be able to tell them apart at a glance. Never "off-guitar"
+    /// (O5) — this is a multi-instrument app.
+    static func defaultName(existing: [String], date: Date, constraint: SessionConstraint = .none,
                             locale: Locale = .current, calendar: Calendar = .current) -> String {
-        let base = "\(dateLabel(for: date, locale: locale, calendar: calendar)) Quick Session"
+        let stem = constraint == .offGuitar ? "Listening Session" : "Quick Session"
+        let base = "\(dateLabel(for: date, locale: locale, calendar: calendar)) \(stem)"
         return uniqued(base, existing: existing)
     }
 

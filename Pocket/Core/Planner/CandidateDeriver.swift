@@ -37,9 +37,11 @@ enum CandidateDeriver {
 
     /// Derive the ranked candidate pool from the active goals over the projected library, tilted by
     /// the profile's `emphasis` (ADR 0113 S3 — a lift-only multiplier on `priority`, defaulting to
-    /// `.neutral` so a profile-less call behaves exactly as before). Pure.
+    /// `.neutral` so a profile-less call behaves exactly as before) and narrowed by `constraint`
+    /// (ADR 0139 O3 — defaulted to `.none`, so every existing caller is untouched). Pure.
     static func deriveCandidates(goals: [PlannerGoal], library: PlannerLibrary,
-                                 emphasis: PracticeEmphasis = .neutral) -> [PlannerCandidate] {
+                                 emphasis: PracticeEmphasis = .neutral,
+                                 constraint: SessionConstraint = .none) -> [PlannerCandidate] {
         var strongest: [PlannerUnitRef: PlannerCandidate] = [:]
 
         for goal in goals where !goal.isMet {
@@ -51,6 +53,9 @@ enum CandidateDeriver {
                     : techniqueCandidates(goal: goal, info: info, library: library,
                                           emphasis: emphasis)
                 for candidate in resolved {
+                    // Keyed on the **unit**, never on unit-plus-mode (ADR 0139 O2b): a loop that both
+                    // a repertoire goal and an ear goal claim must appear once, with the stronger
+                    // claim's mode, rather than twice — once to train and once to sing back.
                     if let existing = strongest[candidate.unit], existing.priority >= candidate.priority {
                         continue  // keep the strongest claim on a unit surfaced by several goals
                     }
@@ -58,12 +63,44 @@ enum CandidateDeriver {
                 }
             }
         }
-        return Array(strongest.values)
+        return constrained(Array(strongest.values), to: constraint, library: library)
+    }
+
+    /// Narrow a derived pool to what can be practised in `constraint`'s situation (ADR 0139 O3).
+    ///
+    /// Two rules, and the second is the one that matters. **Drop** anything that needs the instrument
+    /// — every exercise, every song run — and **pin** the loops that survive to the constraint's mode
+    /// rather than dropping the ones whose resolving skill chose differently. Pinning is what lets a
+    /// "learn Little Wing" goal contribute to an off-guitar session at all: its loops arrive as
+    /// trainer blocks with a ramp you cannot run on a train, and leave as ear work on the same
+    /// material. Filtering instead would have made the constrained session reachable only by players
+    /// who happen to hold an ear goal.
+    ///
+    /// A pinned loop still has to *qualify* for the pinned mode (`LoopModeAccess`) — a loop with no
+    /// audio can't be sung back any more than it can be soloed over.
+    static func constrained(_ candidates: [PlannerCandidate], to constraint: SessionConstraint,
+                            library: PlannerLibrary) -> [PlannerCandidate] {
+        guard constraint.isRestricted else { return candidates }
+        let facts = Dictionary(library.loops.map { ($0.uid, $0.modeFacts) },
+                               uniquingKeysWith: { first, _ in first })
+        return candidates.compactMap { candidate in
+            guard candidate.unit.kind == .loop else { return nil }
+            let mode = constraint.pinnedLoopMode ?? candidate.runMode
+            guard constraint.allows(mode),
+                  let loopFacts = facts[candidate.unit.uid],
+                  LoopModeAccess.allows(mode, loopFacts)
+            else { return nil }
+            var pinned = candidate
+            pinned.runMode = mode
+            return pinned
+        }
     }
 
     /// **Path A** — a technique skill resolves to every library **exercise** whose template can serve
     /// it (`SkillFamilyMap`), plus any **loop** the user has tagged with a skill bucket that serves it
-    /// (Slice 4, Decision 8 — untagged loops carry no template and stay Path-B only). Each candidate
+    /// (Slice 4, Decision 8 — untagged loops carry no template and stay Path-B only), plus any loop
+    /// that serves the skill by **capability** with no tag at all (ADR 0139 O2 — the `ear.*` skills,
+    /// whose exercise template was pulled when ear training shipped as a loop mode). Each candidate
     /// carries the goal weight softened by prerequisite readiness.
     private static func techniqueCandidates(goal: PlannerGoal,
                                             info: SkillInfo,
@@ -91,18 +128,50 @@ enum CandidateDeriver {
                                  estimatedMinutes: loop.estimatedMinutes,
                                  skillID: info.id, goalUID: goal.uid)
             }
-        return exercises + loops
+        return exercises + loops + directLoopCandidates(goal: goal, skillID: info.id,
+                                                        priority: priority, library: library)
+    }
+
+    /// Loops that serve a skill **by what they are** — the ADR 0135 B6 / 0139 O2 route, shared by
+    /// both paths because both needed it and the reasoning is identical: `SkillFamilyMap` says which
+    /// mode the skill wants, `LoopModeAccess` says which loops can run it, and the candidate carries
+    /// that mode down to the block so the player is handed the surface the skill was resolved for.
+    /// Empty for every skill with no direct route, which is all but four of them.
+    private static func directLoopCandidates(goal: PlannerGoal, skillID: String, priority: Double,
+                                             library: PlannerLibrary) -> [PlannerCandidate] {
+        guard let mode = SkillFamilyMap.directLoopMode(forSkill: skillID) else { return [] }
+        return library.loops
+            .filter { LoopModeAccess.allows(mode, $0.modeFacts) }
+            .map { loop in
+                PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
+                                 priority: priority,
+                                 mastery: loop.mastery,
+                                 lastPracticed: loop.lastPracticed,
+                                 estimatedMinutes: loop.estimatedMinutes,
+                                 skillID: skillID, runMode: mode, goalUID: goal.uid)
+            }
     }
 
     /// **Path B** — a repertoire skill resolves to the goal's target song: its loops, then the song
     /// run itself. No prerequisite down-weight (repertoire prereqs are themselves song-routed).
+    ///
+    /// A goal that names **no** target song used to resolve to nothing here, which is where
+    /// `improv.vocabulary` fell down a hole: it is classed `.repertoire`, and the "Improvise in a
+    /// style" template sets `requiresTargetSong: false`, so the goal's one improv-specific skill
+    /// contributed zero candidates and the goal appeared to work only because its two scale skills
+    /// did. Backing loops (ADR 0135 B6) are the unit that closes it. Path B's existing behaviour is
+    /// untouched where it already works: a goal that *does* name a target song still resolves to that
+    /// song's own loops first.
     private static func repertoireCandidates(goal: PlannerGoal,
                                              skillID: String,
                                              library: PlannerLibrary,
                                              emphasis: PracticeEmphasis) -> [PlannerCandidate] {
-        guard let songUID = goal.targetSongUID else { return [] }
         // Repertoire is always the `.repertoire` mode; the emphasis lift applies to the whole path.
         let priority = goal.weight * emphasis.multiplier(forSkillID: skillID, mode: .repertoire)
+        guard let songUID = goal.targetSongUID else {
+            return directLoopCandidates(goal: goal, skillID: skillID, priority: priority,
+                                        library: library)
+        }
         var result: [PlannerCandidate] = library.loops
             .filter { $0.songUID == songUID }
             .map { loop in

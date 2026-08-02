@@ -253,7 +253,7 @@ enum CollectionSessionBuilder {
             let available = focusBudget - used - restCost
             guard available >= minFocusMinutes else { break }
             let take = min(focusedMinutes, available)
-            blocks.append(.focus(unit.ref, minutes: take, microRestEvery: nil))
+            blocks.append(.focus(unit.ref, minutes: take, microRestEvery: nil, mode: .trainer))
             used += restCost + take
         }
         return blocks
@@ -284,7 +284,8 @@ enum CollectionSessionBuilder {
         for song in picked {
             let take = playMinutes(for: song)
             guard used + take <= minutesCap else { continue }
-            blocks.append(.play(PlannerUnitRef(PlannerID.uid(from: song.sourceID), .song), minutes: take))
+            blocks.append(.play(PlannerUnitRef(PlannerID.uid(from: song.sourceID), .song),
+                                minutes: take, mode: .trainer))
             used += take
         }
         return blocks
