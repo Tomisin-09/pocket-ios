@@ -15,26 +15,27 @@ Three things are parked, in the order they'd sensibly resume:
    refinements captured first; it isn't actionable without them.
 3. **ADR 0139 slice 2** — deferred, and blocked on Track B (ADR 0136) regardless.
 
-Slices 1 and 2 of ADR 0140 are **built, tested and device-confirmed** on
-`pocket-221-time-stretch-quality`, which is **local-only — not pushed, no PR**.
+Slices 1 and 2 of ADR 0140 are **on main** — squash `e9688ff`, PR #209, merged 2026-08-02 after a
+device pass and a green CI run. Nothing from that work is outstanding except slice 3.
 
-## PRIORITY — ADR 0140, slowed-audio quality (slices 1–2 shipped 2026-08-02, slice 3 deferred)
+## ADR 0140, slowed-audio quality — slices 1–2 SHIPPED (#209), slice 3 deferred
 
-**Jumps the queue below.** Track A/B are new features; this is the oldest feature in the app sounding
-worse than it needs to, on the surface that gets used every session. Independent of everything in the
-0135–0139 order — different subsystem (`Core/Audio`), zero file overlap — so it can run in parallel
-rather than displacing them.
+**Was the priority ahead of the queue below, and is now largely discharged.** Track A/B are new
+features; this was the oldest feature in the app sounding worse than it needed to, on the surface that
+gets used every session. Independent of everything in the 0135–0139 order — different subsystem
+(`Core/Audio`), zero file overlap — so slice 3 can still run in parallel rather than displacing them.
 
 Three slices, in [ADR 0140](decisions/0140-slowing-down-shouldnt-cost-the-sound.md):
 
-1. ~~**Smoothness + the `TimeStretcher` seam.**~~ **✅ BUILT 2026-08-02** (`pocket-221-time-stretch-quality`).
+1. ~~**Smoothness + the `TimeStretcher` seam.**~~ **✅ SHIPPED 2026-08-02** (#209).
    `TimeStretcher` owns the AU, its clamped rate and its latency; the metronome reads `stretcher.rate`
    instead of the unit. Smoothness now climbs linearly in the **stretch factor** — 4.0 at and above 1×,
    8.67 at 0.5× (past Apple's 8.0 default), 18.0 at 0.25× — frozen in the pure `StretchQuality` with 8
    tests. Note `overlap` turned out **not** to be deprecated at the Swift level; the rename is at the
    AudioToolbox constant only, and the SDK header states the "higher = fewer artifacts" semantics
-   outright. Sound itself still to be confirmed on device.
-2. **Latency compensation — the actual defect. ✅ BUILT + DEVICE-CONFIRMED 2026-08-02.** The click
+   outright. Device verdict: overall quality much better, **0.25× still rough** — which is what makes
+   slice 3 worth doing.
+2. **Latency compensation — the actual defect. ✅ SHIPPED + DEVICE-CONFIRMED 2026-08-02 (#209).** The click
    bypassed the stretcher by design, but the stretcher has **93 ms latency at 1×, 139 ms at 0.5×**, and
    nothing compensated, so the click led the song by a rate-dependent flam (a 16th note at 120 BPM is
    125 ms) — the visual playhead too. `currentTime` is now published in *heard* time via the pure
@@ -48,26 +49,28 @@ Three slices, in [ADR 0140](decisions/0140-slowing-down-shouldnt-cost-the-sound.
    device pass strengthened the case:** with the smoothness curve fixed, the overall quality is much
    better but **0.25× is still rough** — at a 4× stretch the ceiling is the AU, not the setting.
 
-**Watch items:**
-- Slice 2 touches `updateCurrentTime`'s loop-wrap maths. Offsetting reported time near the seam can
-  push `loopIteration` early, which would advance the ADR-0013 ramp a beat early **every pass**. Offset
-  the reported time without perturbing the iteration count.
+**Watch items** (the first three are now settled by the build; kept as the record of *how*):
+- ~~Slice 2 touches `updateCurrentTime`'s loop-wrap maths. Offsetting reported time near the seam can
+  push `loopIteration` early, which would advance the ADR-0013 ramp a beat early **every pass**.~~ ✅
+  handled — `loopIteration` deliberately stays on the **rendered** clock, so only the reported time
+  moves. The correction is **`latency × rate`** (latency is real output seconds, a playhead is source
+  seconds); inverting it over-corrects by `1/rate`.
 - ~~`PracticeAudioEngine+Metronome.swift:54` is the only reader of `timePitch.rate`.~~ ✅ done in
   slice 1 — it reads `stretcher.rate`, and nothing else in the tree names the AU.
-- **Slice 2 is one offset, not two** (ADR build note 4): `refreshMetronome` derives its delay from
-  `currentTime`, so redefining `currentTime` as *what you hear now* fixes the click and the cursor
-  together and leaves `MetronomeSchedule` untouched. Clamp at 0 — the playhead would otherwise read
-  negative for the first ~93 ms.
-- **Hand-tapped beat grids already contain the offset** (ADR build note 5). `WaveformBPMSheet` captures
-  tap-tempo and the downbeat from `currentTime` and you tap to what you *hear*, so a tapped grid
-  self-cancels the flam at 1× and stops cancelling as you slow down. Gives slice 2 a comparison test
-  (typed BPM should flam at 1×, tapped shouldn't) — and means the fix shifts existing tapped songs by
-  ~93 ms. Re-tap them; don't read it as a regression.
+- ~~**Slice 2 is one offset, not two**~~ (ADR build note 4) — ✅ confirmed in the build: `refreshMetronome`
+  derives its delay from `currentTime`, so redefining `currentTime` as *what you hear now* fixed the
+  click and the cursor together and left `MetronomeSchedule` untouched. Clamped at 0 — the playhead
+  would otherwise read negative for the first ~93 ms.
+- **Hand-tapped beat grids already contained the offset** (ADR build note 5), and this **shipped**, so
+  it's live: `WaveformBPMSheet` captures tap-tempo and the downbeat from `currentTime` and you tap to
+  what you *hear*, so a tapped grid self-cancelled the flam at 1× and stopped cancelling as you slowed
+  down. Grids tapped from now on land where you meant them; **tempos tapped before #209 now sit ~93 ms
+  late — re-tap them, don't read it as a regression.** Noted in `CHANGELOG.md`.
 - Do §5's output trim **before** the slice-3 listening test. Clipping sounds like stretch artifacts and
   would be credited to the wrong thing.
 - Simulator lies about all of this. Every claim here except the two pure functions is device-only.
 
-## Build order — ADRs 0135–0139 (decided 2026-08-01, nothing built)
+## Build order — ADRs 0135–0139 (decided 2026-08-01; all shipped except 0139 slice 2)
 
 Five ADRs landed as **decisions only, no Swift**: 0135–0138 on main (squash `0187282`, PR #203) and
 0139 on `pocket-217-off-guitar-session`. Each ADR carries its own slices; this is the sequence
@@ -121,9 +124,10 @@ a routine* contribute dueness.
    defaulted parameter that **pins** surviving loops to `.ear` rather than filtering, surfaced as the
    unpersisted **Away from your instrument** toggle. Device-verified 2026-08-02.
 
-**Track A is paused here.** The remaining Track A work — ADR 0139 slice 2 — is deferred (below), so
-the next build is **ADR 0140**, the priority section at the top of this file: a different subsystem
-(`Core/Audio`), zero file overlap with anything in this order.
+**Track A is paused here.** The remaining Track A work — ADR 0139 slice 2 — is deferred (below), and
+**ADR 0140 slices 1–2 have since shipped** (#209), so what's left is **ADR 0140 slice 3** (a different
+subsystem, `Core/Audio`, zero file overlap with anything in this order) or **Track B / ADR 0136**,
+which is what unblocks 0139 slice 2.
 
 **Track B — ADR 0136 (freeform blocks), independent of all of the above.** Touches
 `ExerciseTemplate`, `NewExerciseSheet`, a run screen and two planner assertions; near-zero overlap
@@ -283,7 +287,12 @@ The copy is load-bearing and named as such in §5 — the settle row has to read
 concession, and the mastery caption is the only place the player learns that rating honestly buys
 them anything. Not decoration to trim at build time.
 
-## A loop can be a backing track (ADR 0135, Proposed — unbuilt)
+## A loop can be a backing track (ADR 0135 — SHIPPED, all three slices; #207/#208)
+
+> Slices 1–3 are built and device-verified. The section below is the **original decision record**, kept
+> for its reasoning and rejected alternatives; the build notes live in the numbered order above. The
+> improvise surfaces still want a fine-tuning pass — its own section further down.
+
 
 Looping a chord section of a song and playing over it already works; the app just doesn't know it's
 happening. The section is indistinguishable from the four-bar lick being ground at 60%, so it can't
@@ -331,7 +340,11 @@ Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` thr
 `.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
 bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
 
-## Practice you can do without your instrument (ADR 0139, Proposed — unbuilt)
+## Practice you can do without your instrument (ADR 0139 — slice 1 SHIPPED #208, slice 2 deferred)
+
+> Slice 1 shipped; **slice 2 is the outstanding half** and is blocked on ADR 0136. Original decision
+> record below.
+
 
 Closes ADR 0138 §G6, both halves. Two facts that had never been introduced: the three `ear.*` skills
 map to `ExerciseTemplate.earTraining`, which isn't in `creatable`, so they resolve to **zero
@@ -365,7 +378,11 @@ surface (ADR 0094 T1, still deferred), and the honest interim is a freeform bloc
 Honest limitation: the session is only as good as the loop library, so it lands better for
 established users than new ones, and the empty state has to say something useful.
 
-## Each mode gates on what it needs (ADR 0138, Proposed — unbuilt)
+## Each mode gates on what it needs (ADR 0138 — SHIPPED, device-verified 2026-08-02)
+
+> Built as `LoopModeAccess` + the all-loops filter; the feared noise didn't materialise (Ear reads 46
+> against Loops' 38 on a real library). Original decision record below.
+
 
 Closes ADR 0135 §B9a and refines §B9. `LoopLibraryView.visibleLoops` and
 `AddRoutineUnitSheet.trainableLoops` both test `commandTempo != nil`, and the add-sheet applies it to
@@ -392,7 +409,12 @@ isn't in `creatable`, so they resolve to **zero candidates** permanently (mirror
 `improv.vocabulary` hole); and `SkillMode.offGuitar` sits on eight skills with **nothing branching on
 it** — the vocabulary for "practice without your instrument" exists with no consumer.
 
-## Dueness comes from the log (ADR 0137, Proposed — unbuilt)
+## Dueness comes from the log (ADR 0137 — SHIPPED 2026-08-01)
+
+> Built as `PracticeLog.lastPracticedByUnit` + a defaulted `lastPracticed:` on the planner. Original
+> decision record below; its §D7 watch item (a completion seam that fails to log makes its unit read
+> *max due*) still stands, and A0's device pass exercised all three seams.
+
 
 Closes ADR 0135 §B10. `DueScore` is `goalWeight × dueness(lastPracticed) × (1 − mastery/5)`, but
 `Loop` has no `lastPracticed` and `PracticePlanner.library` hard-codes `nil`, which `dueness` reads as
