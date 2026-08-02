@@ -16,8 +16,42 @@ enum LoopRunMode: String, CaseIterable, Identifiable, Codable {
     case trainer
     /// Ear training — ears-only playback to internalise the loop by ear (ADR 0104).
     case ear
+    /// Improvising over the loop as a **backing track** (ADR 0135) — continuous playback of the
+    /// section at one live-adjustable tempo, with no ramp and no end the app decides. Reached only by
+    /// a loop the player has flagged `isBackingTrack`; the flag *is* the mode's precondition
+    /// (`LoopModeAccess`).
+    case improvise
 
     var id: String { rawValue }
+
+    /// How the mode reads as an action — a row menu item, a screen title.
+    var label: String {
+        switch self {
+        case .trainer: "Practice"
+        case .ear: "Train your ear"
+        case .improvise: "Improvise"
+        }
+    }
+
+    /// The compact form, for a caption under an icon where "Train your ear" doesn't fit. Matches the
+    /// `EntryKind` label each mode's Journal notes carry, so a row and a journal chip agree.
+    var rowLabel: String {
+        switch self {
+        case .trainer: "Practice"
+        case .ear: "Ear"
+        case .improvise: "Improv"
+        }
+    }
+
+    /// The SF Symbol a surface draws for this mode. A `String` name, so this file stays
+    /// Foundation-only and the pure layer can still reason over the enum.
+    var symbolName: String {
+        switch self {
+        case .trainer: "play.circle"
+        case .ear: "ear"
+        case .improvise: "guitars"
+        }
+    }
 
     /// The neutral fallback: any unrecognised/empty stored raw value reads as the standard trainer.
     static let `default`: LoopRunMode = .trainer

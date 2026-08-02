@@ -12,6 +12,11 @@ enum PracticeRunKind: String, CaseIterable, Equatable, Sendable {
     /// Ear-training on a loop (ADR 0104) — the same material, a different job, so it windows with
     /// practice but doesn't muddy a loop's tempo trajectory.
     case earLoop
+    /// Improvising over a loop flagged as a backing track (ADR 0135 B3b) — again the same material
+    /// doing a different job, so it earns minutes and days on the same reasoning as `.earLoop`.
+    /// Carries **no tempo**: a jam isn't practised *at* a tempo you own, and the live percent the
+    /// player sets is a comfort setting, not an achievement.
+    case improvise
     /// A play-along with the record (ADR 0071). Carries minutes and a day but no tempo — a play-along
     /// runs at the song's own speed, not at a tempo you own.
     case song
@@ -33,6 +38,7 @@ enum PracticeRunKind: String, CaseIterable, Equatable, Sendable {
         case .exercise: "Exercise"
         case .loop: "Loop"
         case .earLoop: "Ear training"
+        case .improvise: "Improvising"
         case .song: "Song"
         case .other: "Practice"
         }

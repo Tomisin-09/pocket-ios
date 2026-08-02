@@ -49,6 +49,35 @@ extension LoopEditSheet {
             // ungated by command tempo (unlike Practice now), since ear training needs only audio,
             // not a measured practice target. Opens in place (not a staged full-screen run).
             earTrainingButton
+            // "Improvise" (ADR 0135 B2): the loop as a backing track to solo over. A sibling row to
+            // ear training in every respect — ungated by command tempo, since a bed needs audio and
+            // not a measured target, and shown on **every** loop: the flag governs where the loop is
+            // *resurfaced*, not permission to jam over the one you're looking at.
+            improviseButton
+        }
+    }
+
+    // MARK: - Backing track (ADR 0135)
+
+    /// The backing-track flag and its guidance. Its **own** section because the caption is advice
+    /// about this one claim — a footer under Practice would read as applying to mastery, focus and
+    /// command tempo as well.
+    ///
+    /// The copy is deliberately *musical*, not technical: the audio seam already crossfades, so there
+    /// is no click to warn about; what ruins a bed is a phrase that lands mid-bar or resolves where
+    /// the next repeat can't follow. And it is **advice** — the app verifies nothing about the claim
+    /// (B4a), so the wording must not imply that it does.
+    var backingTrackSection: some View {
+        Section {
+            Toggle(isOn: $isBackingTrack) {
+                Label("Backing track", systemImage: "guitars")
+            }
+            .tint(PocketColor.practice)
+            .accessibilityHint("Shows this loop on the backing-tracks shelf in your loops library")
+        } footer: {
+            Text("Mark a section you want to solo over. It'll show up under Backing tracks in your "
+                + "loops library, with an Improvise button on its row. Works best over a whole "
+                + "number of bars, with no vocal.")
         }
     }
 
@@ -68,13 +97,25 @@ extension LoopEditSheet {
         Button {
             // Ear training brings its own engine, so hand the host a chance to stop what it was
             // playing first (the waveform pauses) — two streams over each other is the alternative.
-            onOpenEarTraining()
+            onOpenNestedAudio()
             showingEarTraining = true
         } label: {
             Label("Train your ear", systemImage: "ear")
                 .foregroundStyle(PocketColor.journal)
         }
         .accessibilityLabel("Train your ear on this loop")
+    }
+
+    private var improviseButton: some View {
+        Button {
+            // Same engine collision as ear training, same fix.
+            onOpenNestedAudio()
+            showingImprovise = true
+        } label: {
+            Label("Improvise", systemImage: "guitars")
+                .foregroundStyle(PocketColor.practice)
+        }
+        .accessibilityLabel("Improvise over this loop")
     }
 
     /// Loop type. A plain `Button` showing the current value that opens a bottom action sheet — **not**

@@ -174,10 +174,12 @@ enum PracticePlanner {
     /// Note this is the *ramp's* length, not the library's `region × repeats`: a loop block in a
     /// routine runs `LoopRunView`'s staircase, so its ramp is what the player's time is spent on.
     /// `region × repeats` still prices a loop as a **candidate** (`estimatedMinutes(for:)`), where
-    /// there is no ramp context yet. An **ear-training** block has no ramp at all (ADR 0104) and keeps
-    /// the region × repeats figure.
+    /// there is no ramp context yet. The **trainer** is the only mode that runs a ramp: ear training
+    /// (ADR 0104) and improvising (ADR 0135) are both continuous playback, so they keep the region ×
+    /// repeats figure. Stated as `mode == .trainer` rather than `!= .ear` so a fourth mode can't
+    /// quietly inherit a staircase it doesn't run.
     static func estimatedMinutes(for loop: Loop, mode: LoopRunMode, plannedMinutes: Int?) -> Int {
-        guard mode != .ear else { return estimatedMinutes(for: loop) }
+        guard mode == .trainer else { return estimatedMinutes(for: loop) }
         return LoopEstimate.effectiveMinutes(forRamp: loop.ramp, plannedMinutes: plannedMinutes,
                                              regionSeconds: loop.regionSeconds)
     }

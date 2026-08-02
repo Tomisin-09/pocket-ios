@@ -230,7 +230,7 @@ extension WaveformPracticeModel {
     }
 
     /// "Train your ear" from the loop edit sheet — stop the waveform before the ear-training sheet
-    /// takes over. `EarTrainingPlayer` wraps its own `LoopRunModel` engine, so a waveform left playing
+    /// takes over. `ContinuousLoopPlayer` wraps its own `LoopRunModel` engine, so a waveform left playing
     /// underneath doubles up exactly as `launchPendingPractice` guards against (ADR 0082/0104). Pausing
     /// (not stopping) also means the transport reads **Play** when the sheet closes, which is the state
     /// the screen was actually left in.

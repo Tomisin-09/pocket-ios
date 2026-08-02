@@ -19,9 +19,10 @@ struct LoopEditSheet: View {
     /// "Practice now" (ADR 0082): the parent stages this loop for a full-screen training run,
     /// launched once the sheet dismisses. Shown only when a command tempo is set.
     var onPracticeNow: () -> Void = {}
-    /// "Train your ear" (ADR 0104): the ear-training sheet brings its own engine, so the parent stops
-    /// whatever it was playing before it opens — otherwise both stream at once.
-    var onOpenEarTraining: () -> Void = {}
+    /// "Train your ear" (ADR 0104) and "Improvise" (ADR 0135): both nested modes bring their own
+    /// engine, so the parent stops whatever it was playing before either opens — otherwise two
+    /// streams run over each other. One callback serves both; the host's response is identical.
+    var onOpenNestedAudio: () -> Void = {}
 
     // The field-editing sections live in `LoopEditSheet+Fields.swift` (one type, split to stay under
     // the 400-line cap), so the state they read is `internal`, not `private` — Swift has no
@@ -47,11 +48,15 @@ struct LoopEditSheet: View {
     // ADR 0125 gave the selection bar a bulk star — leaving the *single* loop you're already
     // editing as the one place you couldn't set it.
     @State private var isFavorite: Bool
+    // The backing-track flag (ADR 0135) — a local copy like every other field, written on Done.
+    @State var isBackingTrack: Bool
     @State var newTag = ""
     // The loop's journal now lives here in settings (read-only), off the waveform row (ADR 0067).
     @State var showingJournal = false
     // "Train your ear" ear-training mode on this loop (ADR 0104) — ears-only playback + journal capture.
     @State var showingEarTraining = false
+    // "Improvise" over this loop as a backing track (ADR 0135) — continuous playback + journal capture.
+    @State var showingImprovise = false
     // Focus / Type pick via a bottom action sheet off a plain Button — a Menu/Picker in a
     // `LabeledContent` value slot needs several taps to register and won't commit at this sheet's
     // partial detent (device bug 2026-07-10). A Button + confirmationDialog is reliable at any detent.
@@ -62,14 +67,14 @@ struct LoopEditSheet: View {
          onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void,
          onSaved: @escaping (@escaping () -> Void) -> Void,
          onPracticeNow: @escaping () -> Void = {},
-         onOpenEarTraining: @escaping () -> Void = {}) {
+         onOpenNestedAudio: @escaping () -> Void = {}) {
         self.loop = loop
         self.autoColor = autoColor
         self.onDelete = onDelete
         self.onAdjustRange = onAdjustRange
         self.onSaved = onSaved
         self.onPracticeNow = onPracticeNow
-        self.onOpenEarTraining = onOpenEarTraining
+        self.onOpenNestedAudio = onOpenNestedAudio
         _name = State(initialValue: loop.name)
         _colorChoice = State(initialValue: Self.choice(for: loop))
         _mastery = State(initialValue: loop.mastery)
@@ -78,6 +83,7 @@ struct LoopEditSheet: View {
         _loopType = State(initialValue: loop.loopType)
         _tags = State(initialValue: loop.tags)
         _isFavorite = State(initialValue: loop.isFavorite)
+        _isBackingTrack = State(initialValue: loop.isBackingTrack)
     }
 
     /// Map the loop's stored colour fields to a picker choice (custom wins over palette).
@@ -122,6 +128,7 @@ struct LoopEditSheet: View {
         loop.loopType = loopType
         loop.tags = tags
         loop.isFavorite = isFavorite
+        loop.isBackingTrack = isBackingTrack
         applyColorChoice()
     }
 
@@ -166,6 +173,7 @@ struct LoopEditSheet: View {
                     }
                 }
                 practiceSection
+                backingTrackSection
                 journalSection
                 tagsSection
                 Section {
@@ -230,6 +238,11 @@ struct LoopEditSheet: View {
             // Ears-only ear training on this loop (ADR 0104) — plays the loop's real audio and captures
             // "what you heard" notes back through the same `JournalWriter` path, tagged 👂.
             EarTrainingSheet(loop: loop)
+        }
+        .sheet(isPresented: $showingImprovise) {
+            // The loop as a backing track (ADR 0135) — the same real audio on repeat as a bed to solo
+            // over, with "what you played" notes through the same `JournalWriter` path, tagged 🎸.
+            ImproviseSheet(loop: loop)
         }
     }
 }

@@ -12,13 +12,17 @@ import XCTest
 /// here rather than eyeballed on the add sheet.
 final class LoopModeAccessTests: XCTestCase {
 
-    private func facts(measured: Bool, audible: Bool) -> LoopModeAccess.Facts {
-        LoopModeAccess.Facts(hasCommandTempo: measured, audioResolves: audible)
+    private func facts(measured: Bool, audible: Bool,
+                       backing: Bool = false) -> LoopModeAccess.Facts {
+        LoopModeAccess.Facts(hasCommandTempo: measured, audioResolves: audible,
+                             isBackingTrack: backing)
     }
 
-    private func makeLoop(measured: Bool, source: SongRef.Source? = .localFile) -> Loop {
+    private func makeLoop(measured: Bool, source: SongRef.Source? = .localFile,
+                          backing: Bool = false) -> Loop {
         let loop = Loop(name: "Chorus lick", start: 0.1, end: 0.2, speed: 0.8, repeats: 3)
         if measured { loop.commandTempo = 0.8 }
+        loop.isBackingTrack = backing
         if let source {
             loop.song = Song(title: "Test", duration: 120,
                              ref: SongRef(id: "s1", source: source, bookmark: nil))
@@ -60,15 +64,68 @@ final class LoopModeAccessTests: XCTestCase {
         XCTAssertFalse(LoopModeAccess.allows(.ear, makeLoop(measured: true, source: .appleMusic)))
     }
 
+    // MARK: - Improvising, whose precondition is the flag itself (ADR 0135)
+
+    func testImprovisingRequiresTheBackingTrackFlag() {
+        // The flag *is* the requirement (ADR 0135 B1). An unflagged loop is perfectly playable and
+        // still doesn't qualify: the mode is offered where the player said a bed exists, not
+        // wherever audio happens to resolve.
+        XCTAssertTrue(LoopModeAccess.allows(.improvise, facts(measured: false, audible: true,
+                                                             backing: true)))
+        XCTAssertFalse(LoopModeAccess.allows(.improvise, facts(measured: true, audible: true,
+                                                              backing: false)))
+    }
+
+    func testImprovisingDoesNotRequireACommandTempo() {
+        // A bed is not a measured target (B2). Requiring one would hide exactly the loops a player
+        // flags to jam over and never sits down to measure.
+        XCTAssertTrue(LoopModeAccess.allows(.improvise, makeLoop(measured: false, backing: true)))
+    }
+
+    func testImprovisingStillRequiresAudioItCanActuallyPlay() {
+        // The flag is a claim about *suitability*; a claim over audio that doesn't resolve leaves
+        // nothing to solo over. Both halves of the precondition, not just the interesting one.
+        XCTAssertFalse(LoopModeAccess.allows(.improvise, facts(measured: true, audible: false,
+                                                              backing: true)))
+        XCTAssertFalse(LoopModeAccess.allows(.improvise,
+                                             makeLoop(measured: true, source: .appleMusic,
+                                                      backing: true)))
+    }
+
+    func testTheFlagIsReadOffTheLoop() {
+        XCTAssertFalse(LoopModeAccess.Facts(makeLoop(measured: true)).isBackingTrack)
+        XCTAssertTrue(LoopModeAccess.Facts(makeLoop(measured: true, backing: true)).isBackingTrack)
+    }
+
+    func testTheFlagDoesNotWidenTheOtherTwoModes() {
+        // B1's line held in code: the flag drives resurfacing, and must not become a second way past
+        // the trainer's measurement gate.
+        let flagged = facts(measured: false, audible: true, backing: true)
+        XCTAssertFalse(LoopModeAccess.allows(.trainer, flagged))
+        XCTAssertTrue(LoopModeAccess.allows(.ear, flagged))   // audible, as it already was
+    }
+
     // MARK: - What a row offers
 
-    func testAMeasuredLocalLoopOffersBothModes() {
+    func testAMeasuredLocalLoopOffersTheTwoUnflaggedModes() {
         XCTAssertEqual(LoopModeAccess.modes(for: makeLoop(measured: true)), [.trainer, .ear])
     }
 
     func testAnUnmeasuredLocalLoopOffersEarTrainingOnly() {
         // The whole point: this loop is reachable and useful, where before it was hidden entirely.
         XCTAssertEqual(LoopModeAccess.modes(for: makeLoop(measured: false)), [.ear])
+    }
+
+    func testAFlaggedMeasuredLoopOffersAllThree() {
+        XCTAssertEqual(LoopModeAccess.modes(for: makeLoop(measured: true, backing: true)),
+                       [.trainer, .ear, .improvise])
+    }
+
+    func testAFlaggedUnmeasuredLoopOffersEarAndImprovise() {
+        // The row this ADR exists to produce: a section flagged as a bed, never measured, and
+        // reachable in both ramp-less modes.
+        XCTAssertEqual(LoopModeAccess.modes(for: makeLoop(measured: false, backing: true)),
+                       [.ear, .improvise])
     }
 
     func testALoopWithNoSongAndNoTempoOffersNothing() {

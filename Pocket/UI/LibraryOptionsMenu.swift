@@ -28,6 +28,14 @@ struct LibraryOptionsMenu<Actions: View, SortControls: View>: View {
     /// it sits beside Favourites because it is a filter, not one of the screen's actions.
     var widenFilter: Binding<Bool>?
     var widenFilterLabel = "Show all"
+    /// A second **narrowing** filter, beside Favourites — the Loops library's "Backing tracks only"
+    /// (ADR 0135 B4), the cross-song *jam over something* shelf the per-song browse can't give. `nil`
+    /// on libraries with nothing but Favourites to narrow by.
+    var narrowFilter: Binding<Bool>?
+    var narrowFilterLabel = "Backing tracks only"
+    /// The narrow filter's glyph, named without the `.fill` suffix — the active state appends it, the
+    /// same way Favourites' star does.
+    var narrowFilterImage = "guitars"
     var tint: Color = PocketColor.practice
     /// The screen's secondary actions, shown in their own section above the list options.
     @ViewBuilder var actions: Actions
@@ -36,11 +44,14 @@ struct LibraryOptionsMenu<Actions: View, SortControls: View>: View {
 
     /// Whether the list is showing something other than its default — the bar icon fills so an active
     /// filter is legible without the menu open, and without the icon changing width (the whole point
-    /// of this control). Either filter counts: both change what the list is showing.
-    private var isFiltered: Bool { favoritesOnly || widenFilter?.wrappedValue == true }
+    /// of this control). Any filter counts: all of them change what the list is showing.
+    private var isFiltered: Bool {
+        favoritesOnly || widenFilter?.wrappedValue == true || narrowFilter?.wrappedValue == true
+    }
 
     private var accessibilityLabel: String {
         if favoritesOnly { return "List options, showing favourites only" }
+        if narrowFilter?.wrappedValue == true { return "List options, \(narrowFilterLabel.lowercased())" }
         if widenFilter?.wrappedValue == true { return "List options, \(widenFilterLabel.lowercased())" }
         return "List options"
     }
@@ -53,6 +64,13 @@ struct LibraryOptionsMenu<Actions: View, SortControls: View>: View {
                 if showsFavoritesFilter {
                     Toggle(isOn: $favoritesOnly) {
                         Label("Favourites only", systemImage: favoritesOnly ? "star.fill" : "star")
+                    }
+                }
+                if let narrowFilter {
+                    Toggle(isOn: narrowFilter) {
+                        Label(narrowFilterLabel,
+                              systemImage: narrowFilter.wrappedValue ? "\(narrowFilterImage).fill"
+                                                                     : narrowFilterImage)
                     }
                 }
                 if let widenFilter {
@@ -77,10 +95,15 @@ extension LibraryOptionsMenu where Actions == EmptyView {
          showsFavoritesFilter: Bool = true,
          widenFilter: Binding<Bool>? = nil,
          widenFilterLabel: String = "Show all",
+         narrowFilter: Binding<Bool>? = nil,
+         narrowFilterLabel: String = "Backing tracks only",
+         narrowFilterImage: String = "guitars",
          tint: Color = PocketColor.practice,
          @ViewBuilder sortControls: () -> SortControls) {
         self.init(favoritesOnly: favoritesOnly, showsFavoritesFilter: showsFavoritesFilter,
                   widenFilter: widenFilter, widenFilterLabel: widenFilterLabel,
+                  narrowFilter: narrowFilter, narrowFilterLabel: narrowFilterLabel,
+                  narrowFilterImage: narrowFilterImage,
                   tint: tint, actions: { EmptyView() }, sortControls: sortControls)
     }
 }
@@ -92,7 +115,7 @@ extension LibraryOptionsMenu where SortControls == EmptyView {
          tint: Color = PocketColor.practice,
          @ViewBuilder actions: () -> Actions) {
         self.init(favoritesOnly: favoritesOnly, showsFavoritesFilter: showsFavoritesFilter,
-                  widenFilter: nil, widenFilterLabel: "Show all",
+                  widenFilter: nil, widenFilterLabel: "Show all", narrowFilter: nil,
                   tint: tint, actions: actions, sortControls: { EmptyView() })
     }
 }
