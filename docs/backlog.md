@@ -40,7 +40,9 @@ a routine* contribute dueness.
    both recorded in the ADR's build notes: the **Improvise bucket went to step 4** (a bucket authors a
    routine block, which is all of slice 2 — shipped alone it would author blocks that fall back to the
    trainer), and the shelf filter **replaces** the trainer gate instead of composing with it (composing
-   hides the unmeasured flagged loops B9 exists to admit). Not device-verified yet.
+   hides the unmeasured flagged loops B9 exists to admit). **Device-verified 2026-08-02**, including
+   the two-button row (Ear + Improv side by side), both filters, and the unmeasured-flagged case the
+   shelf-vs-gate decision exists for.
 4. **ADR 0135 slice 2.** `ImproviseLoopRunView` in the routine player + the **Improvise bucket** in
    `AddRoutineUnitSheet` (carried from step 3), the `RoutineUnitPick` case, the stage dispatch, and the
    Done-screen skip. Mirrors ADR 0104 slice 2. The mode case and its presentation strings
