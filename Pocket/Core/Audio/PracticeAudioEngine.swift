@@ -24,7 +24,9 @@ final class PracticeAudioEngine {
 
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
-    let timePitch = AVAudioUnitTimePitch()   // read by the metronome split (rate); engine-internal
+    /// Owns the time-stretching unit, its rate and its latency (ADR 0140). Read by the metronome
+    /// split for the rate; engine-internal otherwise.
+    let stretcher = TimeStretcher()
 
     /// Metronome (ADR 0026): a click voice on this same engine, sample-locked to the (possibly
     /// time-stretched) song. `metronomeBeats` is the grid in *source* seconds; the click follows
@@ -69,12 +71,7 @@ final class PracticeAudioEngine {
 
     init() {
         engine.attach(player)
-        engine.attach(timePitch)
-        // Favour transient crispness over smoothness when slowed (practice wants the
-        // pick/hit to cut through, not smear): a low `overlap` sharpens attacks at the
-        // cost of slight warble on sustained tones. Default is 8.0 (range 3–32); 3.0 is
-        // the crispest. `pitch` stays 0 — slowdown is pitch-preserving.
-        timePitch.overlap = 3.0
+        engine.attach(stretcher.node)
         clickVoice.attach(to: engine)
     }
 
@@ -89,8 +86,8 @@ final class PracticeAudioEngine {
         sampleRate = format.sampleRate
         totalFrames = audioFile.length
         duration = AudioMath.framesToSeconds(Int(totalFrames), sampleRate: sampleRate)
-        engine.connect(player, to: timePitch, format: format)
-        engine.connect(timePitch, to: engine.mainMixerNode, format: format)
+        engine.connect(player, to: stretcher.node, format: format)
+        engine.connect(stretcher.node, to: engine.mainMixerNode, format: format)
         configureSession()
     }
 
@@ -154,9 +151,10 @@ final class PracticeAudioEngine {
     }
 
     /// Pitch-preserving playback speed (0.25×–2.0×). Queued clicks were timed at the old
-    /// rate, so flush and let the next tick refill at the new one.
+    /// rate, so flush and let the next tick refill at the new one. The stretcher clamps the
+    /// rate and picks the smoothness that goes with it (ADR 0140).
     func setRate(_ rate: Double) {
-        timePitch.rate = Float(min(2.0, max(0.25, rate)))
+        stretcher.setRate(rate)
         flushMetronome()
     }
 

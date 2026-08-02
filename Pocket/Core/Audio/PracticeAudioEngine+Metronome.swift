@@ -51,7 +51,7 @@ extension PracticeAudioEngine {
         let cutoff = loopRegion?.end ?? .infinity
         let clicks = MetronomeSchedule.upcoming(beats: metronomeBeats,
                                                 currentSourceTime: currentTime,
-                                                rate: Double(timePitch.rate),
+                                                rate: stretcher.rate,
                                                 horizon: metronomeHorizon)
         for click in clicks where click.time > clickWatermark && click.time < cutoff {
             clickVoice.schedule(delay: click.delay, level: click.isDownbeat ? .accent : .beat)

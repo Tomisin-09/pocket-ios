@@ -1,6 +1,7 @@
 # ADR 0140 — Slowing down shouldn't cost the sound: the stretcher, its settings, and the click that leads it
 
-- **Status:** Accepted, **not built**. Slices below.
+- **Status:** Accepted. **Slice 1 built 2026-08-02** (`pocket-221-time-stretch-quality`); slices 2–3
+  outstanding. Build notes at the end.
 - **Date:** 2026-08-02
 - **Builds on:** ADR 0001 (local files are the audio source — the only reason we own a stretcher at
   all) · ADR 0006 / 0008 (region looping, gapless wrap) · ADR 0013 (the per-loop speed ramp) ·
@@ -245,3 +246,63 @@ Everything else here is a **listening** claim and must be verified on the iPhone
 not by preview — sound quality, click alignment and CPU headroom are all things the simulator will
 happily lie about. The material for the A/B is a real backing track with sustained harmonic content and
 clear transients, at 1×, 0.5× and 0.25×, through speakers *and* headphones.
+
+## Build notes — slice 1 (2026-08-02, `pocket-221-time-stretch-quality`)
+
+`TimeStretcher` + `StretchQuality` landed as specified; `PracticeAudioEngine` holds
+`let stretcher = TimeStretcher()` where `timePitch` was, and the metronome's rate read moved onto
+`stretcher.rate`. No other file referenced `timePitch`. Five things worth recording.
+
+**1. `overlap` is not deprecated at the Swift level, so slice 1 keeps using it.** The rename this ADR
+rests on is real but lives at the AudioToolbox *constant* level (`kNewTimePitchParam_Overlap` →
+`…_Smoothness`). `AVAudioUnitTimePitch.overlap` is still the live, undeprecated property, and the iOS
+26.5 SDK header states the semantics this ADR argues from in as many words: *"A higher value results in
+fewer artifacts in the output signal. This parameter also impacts the amount of CPU used. Range: 3.0 →
+32.0, Default: 8.0."* So the property is right and only the reasoning around it was wrong. No
+`AudioUnitSetParameter` call is needed until slice 3 swaps in `'tmpt'`.
+
+**2. The curve, now frozen.** Smoothness climbs linearly in the **stretch factor** (`1/rate`), not in
+the rate — artifacts track how far the audio is being stretched, and 0.25× is a 4× stretch where 0.5×
+is only 2×. Anchored at **4.0 at and above 1×** (nothing is stretched there, and the parameter costs
+CPU for a whole session) rising to **18.0 at 0.25×**, which puts 0.5× at **8.67** — just past Apple's
+8.0 default, matching the ADR's "toward and past". Monotonically non-increasing in rate and clamped to
+the AU's 3…32, both unit-tested.
+
+**3. The rate clamp moved into the stretcher.** `setRate`'s `min(2.0, max(0.25, …))` now lives in
+`TimeStretcher` as `minimumRate`/`maximumRate`, because rate and smoothness must be written together
+from the same clamped value. Note these are the *engine's* bounds and are deliberately wider than
+ADR 0124's 1.5× product ceiling — that cap belongs to `TempoMath` and the UI, not to the graph.
+
+**4. Slice 2 should be one offset, not two.** §3 proposes both a latency parameter on
+`MetronomeSchedule.upcoming` *and* an offset on the visual playhead. They are redundant.
+`refreshMetronome` computes its delay from `currentTime`, so if `currentTime` is redefined as **what
+you hear now** — offset applied once in `updateCurrentTime`, where it is published — then
+`delay = ahead / rate` is already correct and `MetronomeSchedule` needs no change at all. The click and
+the cursor both fall out of one line. This is §3's own stated instinct ("`currentTime` is the single
+place both read from … the offset lands once"), followed further than §3 followed it. The §3 watch item
+stands unchanged: offset the *reported* time without perturbing `loopIteration`, and clamp at 0 so the
+playhead can't read negative during the first ~93 ms of playback.
+
+**5. A consequence §3 missed: hand-tapped beat grids already contain the offset.** `WaveformBPMSheet`
+captures both tap-tempo and the downbeat from `engine.currentTime`, and the player taps to what they
+**hear** — so every hand-tapped grid has `+latency × rate` baked into it. At the 1× they tapped at,
+that offset *cancels* the flam; it stops cancelling as they slow down. Two consequences:
+
+- **A sharper test for slice 2 than listening in the absolute.** A song with a **typed** BPM should
+  flam even at 1×; a **hand-tapped** one should sound tight at 1× and come apart at 0.25×. If that
+  asymmetry is audible, the diagnosis is confirmed by a comparison rather than by an absolute judgment.
+- **Fixing `currentTime` makes future captures correct but shifts existing tapped grids by ~93 ms.**
+  Only the developer's own library is affected (v1 is approved but held, so there are no users), and
+  the honest fix is to re-tap those songs rather than to chase a phantom. Worth stating so it isn't
+  mistaken for a regression introduced by the compensation.
+
+Related: prefer proving the flam **by A/B against the fix** rather than by ear beforehand, as §3's
+slice ordering implies. Humans judge "which is tighter" far better than "is this 93 ms early", and the
+failure case is decisive either way — if `AVAudioEngine` does compensate node latency internally, the
+corrected build puts the click 93–139 ms *late*, which is unmistakable. Same code either way, one
+device trip.
+
+**Verification (slice 1):** `swiftlint --strict` clean, generic-simulator build clean, **1794 tests
+pass** on the `PocketAll` plan including 8 new `StretchQualityTests`. The sound itself is a listening
+claim and is device-only. Incidentally, extracting the stretcher took `PracticeAudioEngine.swift` from
+397 lines to 395, off the 400-line cap it was about to hit.

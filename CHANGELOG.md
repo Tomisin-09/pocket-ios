@@ -167,6 +167,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   than the rest.
 
 ### Changed
+- **Slowed-down audio sounds better.** The speed control was set up to favour attack over smoothness,
+  on the reasoning that a practising guitarist wants the pick to cut through. The setting it used to do
+  that turned out to be the wrong one — it was pinned to the value that produces the *most* artifacts,
+  while the thing that actually preserves attacks was already switched on and doing its job. Slowing
+  down now brings in as much smoothing as the stretch needs and no more: none at all at full speed,
+  progressively more the further you slow, and most at 25% where the audio is worked hardest. Sustained
+  material — vocals, ringing chords, cymbals — should sound noticeably less watery when slowed.
 - **Generated sessions are the right size now.** Asking for a Quick session used to hand you a wall of
   one-minute drills with a three-minute break wedged between every one of them — a "Quick 15" could
   run past an hour, and it got worse the more exercises you'd made. Sessions are now built from proper

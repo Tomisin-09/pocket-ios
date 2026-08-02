@@ -13,11 +13,13 @@ rather than displacing them.
 
 Three slices, in [ADR 0140](decisions/0140-slowing-down-shouldnt-cost-the-sound.md):
 
-1. **Smoothness + the `TimeStretcher` seam.** `PracticeAudioEngine` pins `overlap = 3.0`, which iOS 16
-   renamed *Smoothness* — that is its **minimum, i.e. maximum artifacts**, and the transient-crispness
-   job the line was written for is already done by `EnableTransientPreservation` (measured on by
-   default). Pure `StretchQuality.smoothness(forRate:)`, unit-tested. Measured safe to ship alone:
-   smoothness does not change AU latency.
+1. ~~**Smoothness + the `TimeStretcher` seam.**~~ **✅ BUILT 2026-08-02** (`pocket-221-time-stretch-quality`).
+   `TimeStretcher` owns the AU, its clamped rate and its latency; the metronome reads `stretcher.rate`
+   instead of the unit. Smoothness now climbs linearly in the **stretch factor** — 4.0 at and above 1×,
+   8.67 at 0.5× (past Apple's 8.0 default), 18.0 at 0.25× — frozen in the pure `StretchQuality` with 8
+   tests. Note `overlap` turned out **not** to be deprecated at the Swift level; the rename is at the
+   AudioToolbox constant only, and the SDK header states the "higher = fewer artifacts" semantics
+   outright. Sound itself still to be confirmed on device.
 2. **Latency compensation — the actual defect.** The click bypasses the stretcher by design, but the
    stretcher has **93 ms latency at 1×, 139 ms at 0.5×**, and nothing compensates, so the click leads
    the song by a rate-dependent flam (a 16th note at 120 BPM is 125 ms) — and the visual playhead
@@ -31,8 +33,17 @@ Three slices, in [ADR 0140](decisions/0140-slowing-down-shouldnt-cost-the-sound.
 - Slice 2 touches `updateCurrentTime`'s loop-wrap maths. Offsetting reported time near the seam can
   push `loopIteration` early, which would advance the ADR-0013 ramp a beat early **every pass**. Offset
   the reported time without perturbing the iteration count.
-- `PracticeAudioEngine+Metronome.swift:54` is the only reader of `timePitch.rate`. It must move to a
-  stored rate in slice 1, or slice 3 can't swap the AU without editing the metronome.
+- ~~`PracticeAudioEngine+Metronome.swift:54` is the only reader of `timePitch.rate`.~~ ✅ done in
+  slice 1 — it reads `stretcher.rate`, and nothing else in the tree names the AU.
+- **Slice 2 is one offset, not two** (ADR build note 4): `refreshMetronome` derives its delay from
+  `currentTime`, so redefining `currentTime` as *what you hear now* fixes the click and the cursor
+  together and leaves `MetronomeSchedule` untouched. Clamp at 0 — the playhead would otherwise read
+  negative for the first ~93 ms.
+- **Hand-tapped beat grids already contain the offset** (ADR build note 5). `WaveformBPMSheet` captures
+  tap-tempo and the downbeat from `currentTime` and you tap to what you *hear*, so a tapped grid
+  self-cancels the flam at 1× and stops cancelling as you slow down. Gives slice 2 a comparison test
+  (typed BPM should flam at 1×, tapped shouldn't) — and means the fix shifts existing tapped songs by
+  ~93 ms. Re-tap them; don't read it as a regression.
 - Do §5's output trim **before** the slice-3 listening test. Clipping sounds like stretch artifacts and
   would be credited to the wrong thing.
 - Simulator lies about all of this. Every claim here except the two pure functions is device-only.
@@ -82,16 +93,31 @@ a routine* contribute dueness.
    length. **Device-verified 2026-08-02** — the countdown, the loop-boundary end and "No time limit"
    all confirmed on the iPhone. ADR 0141 was written for this: `docs/decisions/0141-…`. Note `AddRoutineUnitSheet` split its search layer into
    `AddRoutineUnitSheet+Search.swift` as planned below.
-5. **ADR 0135 slice 3 + ADR 0139 slice 1 — build adjacently.** Both need the same structural change:
-   `PlannerCandidate`/`SessionBlock` carrying a `LoopRunMode` through to the materialised
-   `RoutineItem`. Doing them apart means doing it twice. Also here: `improv.vocabulary` resolution,
-   `play`-kind placement, the `ear.*` capability contribution, the `constraint` parameter, and the
-   "Away from your instrument" option.
+5. **ADR 0135 slice 3 + ADR 0139 slice 1. ✅ BUILT 2026-08-02**
+   (`pocket-224-improvise-planner-and-off-guitar`, PR #208). The shared structural change landed as
+   `PlannerCandidate.runMode` → `SessionBlock.focus/play(…, mode:)` → `RoutineItem.loopRunMode`, set by
+   the materialiser on loop blocks only and deliberately kept out of `PlannerUnitRef` (the dedup key).
+   `improv.vocabulary` resolves without a target song and plans as the trailing `play` block;
+   `ear.*` reaches loops by capability via `LoopModeAccess`; `SessionConstraint.offGuitar` is a
+   defaulted parameter that **pins** surviving loops to `.ear` rather than filtering, surfaced as the
+   unpersisted **Away from your instrument** toggle. Device-verified 2026-08-02.
+
+**Track A is paused here.** The remaining Track A work — ADR 0139 slice 2 — is deferred (below), so
+the next build is **ADR 0140**, the priority section at the top of this file: a different subsystem
+(`Core/Audio`), zero file overlap with anything in this order.
 
 **Track B — ADR 0136 (freeform blocks), independent of all of the above.** Touches
 `ExerciseTemplate`, `NewExerciseSheet`, a run screen and two planner assertions; near-zero overlap
-with Track A, so it can run in parallel or go first if a visible feature is wanted sooner. **ADR 0139
-slice 2** (freeform blocks declaring themselves off-guitar) comes after it.
+with Track A, so it can run in parallel or go first if a visible feature is wanted sooner.
+
+**ADR 0139 slice 2 — DEFERRED 2026-08-02.** Freeform blocks declaring themselves off-guitar is
+blocked on Track B in any case (there are no freeform blocks to declare anything yet), and slice 1
+already delivers the headline case — *"fifteen minutes and no guitar"* builds a real session from ear
+work. Slice 2 widens the *material* an off-guitar session can draw on (transcription, note names,
+songwriting); it does not make the session type exist. Pick it up **with or after ADR 0136**, not
+before: building it first would mean inventing a freeform block to hang the flag on. Nothing decays
+in the meantime — the `constraint` parameter and the pin-not-filter rule are shipped and tested, and
+slice 2 only adds a second source of off-guitar-eligible units to a pool that already has one.
 
 **Watch items to carry into the branches:**
 - ~~`AddRoutineUnitSheet.swift` needs its search layer split out before the Improvise bucket.~~ ✅
@@ -110,6 +136,21 @@ slice 2** (freeform blocks declaring themselves off-guitar) comes after it.
   twice — once to train, once to sing back.
 - Per branch as usual: `swiftlint --strict`, the generic-simulator build, `-testPlan PocketAll`,
   `CHANGELOG.md` for the user-visible ones, and device verification before calling anything done.
+
+## Improvise — a fine-tuning pass (parked 2026-08-02, after ADR 0140)
+
+The improvise surfaces shipped across ADR 0135 slices 1–3 (`ImproviseSheet`, `ImproviseLoopRunView`,
+the Improvise bucket, the `improv.vocabulary` resolution and the trailing `play` block) are **a good
+first version, not the finished thing** — flagged at PR #208 and deliberately left for its own change
+rather than widened into the planner branch.
+
+**Sequenced deliberately after ADR 0140**: the sound-quality work comes first, and improv is the mode
+that most depends on the sound being right — it is playing *over* a backing track at whatever speed
+you chose, so a flamming click and a smeared stretch are felt harder here than anywhere else. Tuning
+the experience on top of audio we already know is wrong would mean tuning it twice.
+
+The specific refinements are the player's, gathered from use — **capture them before starting**, since
+"fine-tuning" without the list is not actionable cold.
 
 ## ADR 0129 device-test findings — ALL FIVE FIXED (2026-07-31, branch `pocket-209-session-block-model`)
 
