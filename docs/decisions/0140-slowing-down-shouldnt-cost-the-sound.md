@@ -455,9 +455,8 @@ answered by judgment rather than by measurement and that should not be quietly r
 1. **Preferred by ear** — ✅ met, emphatically, and this is the criterion that mattered. It also
    closes the loop on slice 2's finding that *0.25× is still rough with the curve fixed*: the curve
    was not the ceiling at a 4× stretch, the AU was, exactly as §4 predicted.
-2. **No dropouts under a full graph** — ⚠️ **not tested with a recording take armed.** Carried as a
-   known gap rather than a pass. It is the one remaining way this could be wrong in the field, and it
-   is cheap to check.
+2. **No dropouts under a full graph** — ⚠️ open, and **§4 asked for a graph that does not exist**.
+   See the correction below.
 3. **CPU and battery** — ✅ accepted on the stated basis: *"I can't see any effect on the CPU but I
    don't tend to use it longer than a routine."* That is a real answer for the real usage pattern,
    and it is worth recording that it is a session-length judgment rather than an instrumented one.
@@ -488,3 +487,35 @@ deserves its own ADR rather than riding in on an audio-quality change.
 `TimeStretcherKindTests` — including one that resolves a real `TimeStretcher()` through the same
 `AudioComponentFindNext` path the app uses and asserts the kind comes back `.highQuality`, so a
 future OS that dropped the component would fail a test rather than silently demote every session.
+
+### Correction to §4 criterion 2 — "song + click + a recording take armed" is unreachable
+
+§4 asks for no dropouts *"on the oldest supported device under a full graph (song + click + a
+recording take armed)"*. **That state cannot be produced by the app**, and the criterion was written
+without checking. Recording is mic-only and **excluded from songs** (ADR 0069), so there is no surface
+where a song, the in-song click and an armed take coexist. The criterion appears to have borrowed the
+exercise run screen's click-plus-recording combination — but that screen runs
+`StandaloneMetronomeEngine` and **never touches the stretcher at all**, so it tests nothing here.
+
+What actually exists:
+
+| Surface | Stretcher | In-song click | Recording |
+|---|---|---|---|
+| Song waveform (`WaveformPracticeModel`) | ✅ | ✅ | ❌ |
+| Loop run, standalone (`LoopRunModel`) | ✅ | ❌ | ✅ |
+| Song play-along (`SongPlayAlongModel`) | ✅ | — | ❌ |
+| Exercise run (`ExerciseRunView`) | ❌ | ✅ | ✅ |
+
+**The criterion is therefore replaced by the heaviest graph that does exist: a standalone loop run at
+25% with a take armed.** That is the stretcher's phase vocoder, mic capture and a file write
+concurrently — which is the actual substance of the worry, since a click is one more player node and
+costs nothing next to recording. It also lands on **0.25×**, so it stresses criterion 4's boundary at
+the same time. Arm the take before Start (`routineContext == nil && !isRunning`), then run the ramp
+down at 25%.
+
+The song-plus-click half of the original criterion is separately covered: it is the graph the §4 A/B
+and §5's trim were both judged on.
+
+This does not change the adoption. It changes what remains to be checked, from an impossible test to a
+possible one — and it is worth recording that a decision rule went unexamined for two slices because
+it *sounded* like a description of the app.
