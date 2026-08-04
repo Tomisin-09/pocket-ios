@@ -6,6 +6,29 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Practice we don't cover can now live here too.** Sight-reading, transcribing, working a piece by
+  hand, something your teacher set, singing while you play — real practice that Pocket has no screen
+  for, so as far as the app was concerned it never happened. **Your own practice** is a new kind of
+  exercise: you write the instructions, and that's the whole thing. No tempo, no click, no ramp —
+  most of what belongs in one has no BPM anyway. It runs as a block like any other: your words on
+  screen, a clock, and Done when you're finished, then the usual "how did that go?".
+
+  It counts. Your minutes, your days and your practice history stop describing only the parts we
+  modelled, and the block comes back round on its own like every other exercise — sooner if you rated
+  it low, later once you've got it. What it won't do is claim to serve one of your goals: the app
+  can't read what you wrote and won't pretend otherwise. It also isn't a place to put things that
+  deserve a real screen — if something belongs in Pocket properly, tell us.
+
+  Tap one inside a routine and you get its instructions to edit, not a tempo staircase it was never
+  going to play — and it doesn't claim a "command tempo" anywhere, because it hasn't got one. And if you *do* want a pulse behind it — reading, comping, working a piece in time —
+  there's a **metronome** you can switch on with a tempo and a time signature. That's all it is: a
+  click to work against. Nothing climbs it, nothing grades it, and the block still doesn't record a
+  speed, because you didn't set one as a target.
+
+  And if the practice you wrote down doesn't need the guitar — transcribing, naming notes, writing,
+  a listening assignment — tick **I can do this without my instrument** and it'll turn up in an
+  "Away from your instrument" session. That box is yours to tick: we can't tell from what you wrote,
+  and we're not going to guess.
 - **A session for when you're away from your instrument.** A commute, a lunch break, a hotel room, a
   flat that's gone to sleep — fifteen minutes where practising is possible but playing isn't. Flip
   **Away from your instrument** on the session screen and Generate builds one out of listening work
@@ -119,7 +142,19 @@ All notable changes to Pocket are documented here. Format loosely follows
   the units a loop trains in — instead of having to leave and open the loop on its own. Ear-training
   blocks don't have this: there's no ramp there to tune.
 
+### Changed
+- **Slowed-down audio sounds substantially better.** Apple ships two time-stretchers and we'd always
+  used the cheaper one. The other is genuinely better, so the app now uses it — the difference is
+  most obvious where it matters most, down at quarter speed, which is where the old one struggled.
+  Nothing to turn on and nothing to choose: it's just what slowing down sounds like now.
+
 ### Fixed
+- **A loud track and a loud click can't distort each other any more.** The song and the metronome
+  land in the same place on the way out, and a track mastered near the top of the scale plus an
+  accented click on the same instant had nowhere left to go — the result crackles, and it crackles
+  most when you slow down, which is exactly when it's easiest to blame the slowdown for it. There's
+  now a little room set aside for both. The whole mix sits slightly quieter as a result; the balance
+  between the track and the click is untouched.
 - **The click no longer runs ahead of the song.** Slowing a track down puts it through a processor
   that takes a moment to do its work — about 90 milliseconds at full speed, growing to around 140 as
   you slow down. The metronome deliberately skips that processing so it stays crisp, and nothing was

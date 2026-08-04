@@ -74,6 +74,11 @@ final class PracticeAudioEngine {
         engine.attach(player)
         engine.attach(stretcher.node)
         clickVoice.attach(to: engine)
+        // Headroom for song + click (ADR 0140 §5). Both land on this mixer, and it's their *sum* that
+        // clips — so the trim goes on the sum, which also leaves the voiced song-to-click balance
+        // untouched. Set once: it must not move under the player mid-session.
+        engine.mainMixerNode.outputVolume = AudioMath.headroomTrim(
+            peakClick: ClickTimbre.loudestPeakAmplitude)
     }
 
     /// Open `url` and wire it into the graph. The header read happens off the main
@@ -323,6 +328,10 @@ final class PracticeAudioEngine {
 
     private func startEngineIfNeeded() {
         AudioPlumbing.startIfNeeded(engine, label: "practice")
+        // Starting the engine initialises the stretcher's audio unit, and `'tmpt'`'s rate is a raw
+        // parameter write rather than a retained Swift property (ADR 0140 §4). One write here and the
+        // question of whether it survived initialisation doesn't arise.
+        stretcher.reassertRate()
     }
 
     private func configureSession() {

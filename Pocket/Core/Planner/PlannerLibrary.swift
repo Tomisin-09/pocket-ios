@@ -13,6 +13,10 @@ struct PlannerExercise: Equatable {
     var mastery: Int?
     var lastPracticed: Date?
     var estimatedMinutes: Int
+    /// The player's declaration that this block needs no instrument (ADR 0139 O6) — only ever true
+    /// for a freeform block, and only because the player said so. Defaulted so every existing
+    /// construction site (and every test) is unchanged.
+    var awayFromInstrument: Bool = false
 }
 
 /// A projected loop bound to a song (Path B). `songUID` is the owning song's derived planner id

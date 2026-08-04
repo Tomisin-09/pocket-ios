@@ -114,7 +114,8 @@ struct RoutinePlayerView: View {
     /// (song). Mirrors `RoutineItemRow`.
     private func detailLine(for stage: RoutineStage) -> String? {
         if let exercise = stage.exercise {
-            return exercise.commandProgressLabel
+            let label = exercise.commandProgressLabel
+            return label.isEmpty ? nil : label
         }
         if let loop = stage.loop {
             if stage.kind == .earLoop {
@@ -172,7 +173,7 @@ struct RoutinePlayerView: View {
         let runID = "\(stage.id.uuidString)-rep\(player.currentRep)"
         switch stage.payload {
         case .exercise(let exercise):
-            ExerciseRunView(exercise: exercise, routineContext: context).id(runID)
+            ExerciseRunScreen(exercise: exercise, routineContext: context).id(runID)
         case .loop(let loop):
             LoopRunView(loop: loop, routineContext: context).id(runID)
         case .earLoop(let loop):

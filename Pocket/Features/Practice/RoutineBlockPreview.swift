@@ -18,10 +18,14 @@ enum RoutineBlockPreviewTarget: Identifiable, Hashable {
     /// 0135). No staircase to fit and none to decline, but since ADR 0141 it does carry a length, so
     /// it travels with its block like the other two.
     case rampLess(Loop, mode: LoopRunMode, block: RoutineItem)
+    /// A **freeform** exercise block (ADR 0136). Ramp-less for the same reason as the case above, but
+    /// an exercise rather than a loop — and the only preview that is *editable*, because a freeform
+    /// block's content is the text you'd want to change while looking at it.
+    case freeform(Exercise, block: RoutineItem)
 
     var id: PersistentIdentifier {
         switch self {
-        case .exercise(let exercise, _): return exercise.persistentModelID
+        case .exercise(let exercise, _), .freeform(let exercise, _): return exercise.persistentModelID
         case .loop(let loop, _), .rampLess(let loop, _, _): return loop.persistentModelID
         }
     }

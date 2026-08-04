@@ -74,7 +74,17 @@ final class ExerciseTemplateTests: XCTestCase {
         XCTAssertNil(ExerciseTemplate.strumChords.defaultChordProgression, "sheet isn't a bare progression")
         XCTAssertNil(ExerciseTemplate.strumChords.defaultFretboardContent)
 
-        let editing = runFamily.union([.strumming, .scales, .arpeggios, .chords, .strumChords])
+        // Freeform's editor is a **text field** (ADR 0136 F2a) — the first template whose payload is
+        // prose rather than musical structure, which is why it has a bespoke editor and yet none of
+        // the musical defaults below.
+        XCTAssertEqual(ExerciseTemplate.freeform.bespokeEditor, .freeform)
+        XCTAssertNil(ExerciseTemplate.freeform.defaultFretboardContent)
+        XCTAssertNil(ExerciseTemplate.freeform.defaultChordProgression)
+        XCTAssertNil(ExerciseTemplate.freeform.defaultStrumChordSheet)
+        XCTAssertNil(ExerciseTemplate.freeform.defaultStrumPattern)
+
+        let editing = runFamily.union([.strumming, .scales, .arpeggios, .chords, .strumChords,
+                                       .freeform])
         for template in ExerciseTemplate.allCases where !editing.contains(template) {
             XCTAssertNil(template.bespokeEditor, "\(template) should have no bespoke editor")
             XCTAssertFalse(template.hasBespokeEditor)
@@ -89,9 +99,12 @@ final class ExerciseTemplateTests: XCTestCase {
         // The create picker (ADR 0087): Basic first, then Warm-up, in the agreed order — and it no
         // longer offers the retired Fingerstyle / Rhythm templates, nor the ex-"Coming Soon" Ear
         // Training / Theory rows (removed 2026-07-22; ear training shipped as a loop mode, ADR 0104).
+        // **Freeform is last** (ADR 0136): it is the answer to "my practice isn't in this list", so
+        // it reads best after the list it is the escape from, and putting it earlier would invite it
+        // to become the default for drills that deserve a real surface.
         XCTAssertEqual(ExerciseTemplate.creatable,
                        [.basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
-                        .arpeggios, .legato])
+                        .arpeggios, .legato, .freeform])
         XCTAssertFalse(ExerciseTemplate.creatable.contains(.fingerstyle))
         XCTAssertFalse(ExerciseTemplate.creatable.contains(.rhythm))
         XCTAssertFalse(ExerciseTemplate.creatable.contains(.earTraining))

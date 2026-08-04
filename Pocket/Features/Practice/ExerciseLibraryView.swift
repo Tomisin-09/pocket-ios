@@ -166,7 +166,7 @@ struct ExerciseLibraryView: View {
         // an identity change and pops the screen (ADR 0090; `docs/swiftdata-gotchas.md`).
         .navigationDestination(isPresented: Binding(get: { opening != nil },
                                                     set: { if !$0 { opening = nil } })) {
-            if let exercise = opening { ExerciseRunView(exercise: exercise) }
+            if let exercise = opening { ExerciseRunScreen(exercise: exercise) }
         }
         // Details, from the row's long-press menu. Bool-bound rather than `.sheet(item:)` for the
         // ADR 0090 reason the whole app now follows: a model's `persistentModelID` can flip on a
@@ -221,7 +221,7 @@ struct ExerciseLibraryView: View {
             exercise.template, isPro: isPro,
             isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug))
         if runnable {
-            NavigationLink { ExerciseRunView(exercise: exercise) } label: { row(exercise, locked: false) }
+            NavigationLink { ExerciseRunScreen(exercise: exercise) } label: { row(exercise, locked: false) }
         } else {
             Button { presentPaywall(.proExercise) } label: { row(exercise, locked: true) }
                 .buttonStyle(.plain)

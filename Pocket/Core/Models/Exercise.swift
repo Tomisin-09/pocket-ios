@@ -194,8 +194,40 @@ final class Exercise {
     /// migration additive (CoreData 134110 rule).
     var tags: [String] = []
 
-    /// Optional free-text notes about the exercise.
+    /// Optional free-text notes about the exercise. On a **freeform** block this is not a note
+    /// *about* the drill — it **is** the drill (ADR 0136 F2): the player's own written instructions,
+    /// shown on the run screen and the entire content of the block.
     var notes: String = ""
+
+    /// **The player's statement that this block needs no instrument** (ADR 0139 O6) — what lets an
+    /// "Away from your instrument" session be more than three ear blocks: transcription, note-name
+    /// drilling, songwriting, a teacher's listening assignment.
+    ///
+    /// **Declared, never inferred.** ADR 0136 F8 holds exactly as written — the app knows nothing
+    /// about a freeform block's content and does not guess from its prose, which would be quiet,
+    /// undebuggable and mildly insulting when wrong. A player ticking the box is a statement.
+    ///
+    /// Only a freeform block can carry it (read through `declaresAwayFromInstrument`, never raw): on
+    /// every other template the content *is* modelled, and every one of them wants the instrument in
+    /// your hands. Declaration default keeps the migration additive (CoreData 134110 rule).
+    var awayFromInstrument: Bool = false
+
+    /// **An optional plain click on a freeform block** (ADR 0136 F3's parked follow-up, pulled in
+    /// 2026-08-04). Off by default: most of what belongs in a freeform block — sight-reading,
+    /// transcribing, a teacher's assignment — has no pulse at all, which is why F3 gave the template
+    /// no tempo in the first place.
+    ///
+    /// **`clickBPM` is not a command tempo, and the distinction is the whole reason this is safe.** A
+    /// command tempo (ADR 0046) is an *achievement*: it anchors the ramp, drives the promote offer and
+    /// feeds `DueScore`. This is only "how fast does the click tick". So a freeform block still builds
+    /// no ramp, still offers no promotion, and its runs still log `tempoBPM: nil` (F4a) — nothing here
+    /// claims the player practised *at* a tempo. The block's meter reuses the existing
+    /// `beatsPerBar`/`noteValue` pair, which is already exactly a time signature.
+    ///
+    /// Read only by the freeform surfaces; every other template runs its own engine off the ramp and
+    /// never looks at these. Declaration defaults keep the migration additive (CoreData 134110 rule).
+    var clickEnabled: Bool = false
+    var clickBPM: Int = StandaloneMetronomeEngine.defaultBPM
 
     /// How cleanly the player owns this exercise, 0–5 — or `nil` when never rated. The
     /// **self-rating** the V2 planner's dueScore reads as *need* (ADR 0070 no-grading wall:
@@ -334,6 +366,17 @@ final class Exercise {
     /// (focused axis) and LRU rotation (warm-up axis) both advance. Called from the run path
     /// when a run actually starts; deliberately does *not* touch `mastery` (self-rated only).
     func markPracticed(_ date: Date = .now) { lastPracticed = date }
+
+    /// Whether this unit can honestly be practised with nothing in your hands (ADR 0139 O6). Gated on
+    /// the template as well as the flag, so a value left behind on an exercise whose template somehow
+    /// isn't freeform can never leak into a constrained session — the declaration is meaningful only
+    /// where the app doesn't model the content.
+    var declaresAwayFromInstrument: Bool { template == .freeform && awayFromInstrument }
+
+    /// Whether this block should tick while it runs. Gated on the template for the same reason as
+    /// `declaresAwayFromInstrument`: the click settings are only meaningful where the app models
+    /// nothing, and every other template drives its click from the ramp instead.
+    var playsFreeformClick: Bool { template == .freeform && clickEnabled }
 
     /// The time signature as a display string ("4/4", "6/8").
     var timeSignatureLabel: String { "\(beatsPerBar)/\(noteValue)" }

@@ -65,6 +65,14 @@ extension Exercise {
     /// so they're reported in the rhythm they were measured in. After 0121 the two can only differ
     /// inside an unresolved edit, since every rhythm change resolves the binding.
     var commandProgressLabel: String {
+        // A **freeform** block has no command tempo (ADR 0136 F3). The fields exist — `commandAnchored`
+        // derives them for every template — but nothing reads them here, so printing one states a
+        // target the player never set and the run will never climb. It says what is true of it
+        // instead: the click, if it asked for one.
+        if template == .freeform {
+            guard playsFreeformClick else { return "" }
+            return "Metronome \(clickBPM) BPM · \(timeSignatureLabel)"
+        }
         let tempos = "Command \(command) → \(reachTempo) BPM"
         guard let rate = commandNoteRate ?? noteRate else { return tempos }
         return "\(tempos) · \(rate.compactLabel)"

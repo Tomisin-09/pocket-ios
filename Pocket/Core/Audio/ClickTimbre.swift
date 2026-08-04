@@ -56,6 +56,21 @@ enum ClickTimbre: String, CaseIterable, Identifiable {
         Self.synthesize(spec: spec(for: level), sampleRate: sampleRate)
     }
 
+    /// The loudest sample this timbre can produce, across all three levels. Exact rather than
+    /// estimated: `synthesize` scales a convex tone/noise blend (magnitude ≤ 1) by an envelope that
+    /// starts at 1 and decays, so the first sample of the loudest level *is* its `amplitude`.
+    var peakAmplitude: Double {
+        ClickLevel.allCases.map { spec(for: $0).amplitude }.max() ?? 0
+    }
+
+    /// The loudest sample **any** timbre can produce. This is what the in-song mix has to leave room
+    /// for (ADR 0140 §5): the click sums into the same mixer as the song, the player can switch
+    /// timbre mid-session, and the trim is fixed rather than re-gained per timbre. Derived from the
+    /// voicings rather than pinned to a literal, so retuning a timbre can't silently eat the headroom.
+    static var loudestPeakAmplitude: Double {
+        allCases.map(\.peakAmplitude).max() ?? 0
+    }
+
     // MARK: - Voicing
 
     /// The synthesis recipe for one level of one timbre.

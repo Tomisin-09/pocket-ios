@@ -75,8 +75,12 @@ extension RoutineDetailView {
            let appExercise = appContext.model(for: exercise.persistentModelID) as? Exercise {
             // The block travels with its unit (ADR 0129/0130) — a generated block's ramp is fitted to
             // its allotted minutes, so a preview without them would draw a staircase the run won't
-            // play, and the opt-out from that fit lives on the same screen.
-            previewTarget = .exercise(appExercise, block: item)
+            // play, and the opt-out from that fit lives on the same screen. A **freeform** block has
+            // no ramp and no command tempo to show (ADR 0136 F3), so it gets its own surface rather
+            // than a staircase it will never play.
+            previewTarget = appExercise.template == .freeform
+                ? .freeform(appExercise, block: item)
+                : .exercise(appExercise, block: item)
         } else if let loop = item.loop,
                   let appLoop = appContext.model(for: loop.persistentModelID) as? Loop {
             // A loop block carries a mode (ADR 0104 / 0135): the ramp-less ones preview their own
@@ -105,6 +109,9 @@ extension RoutineDetailView {
                              usesAuthoredLength: authoredLength(of: block))
         case .rampLess(let loop, let mode, let block):
             RampLessBlockPreview(loop: loop, mode: mode, block: block,
+                                 runsOpenEnded: authoredLength(of: block))
+        case .freeform(let exercise, let block):
+            FreeformBlockPreview(exercise: exercise, block: block,
                                  runsOpenEnded: authoredLength(of: block))
         }
     }

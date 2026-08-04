@@ -1,15 +1,13 @@
 #if DEBUG
 import SwiftUI
 
-/// DEBUG-only Settings scaffold (never ships): A/B the time-stretcher latency correction by ear
-/// (ADR 0140 §3).
+/// DEBUG-only Settings scaffold (never ships): the two listening A/Bs ADR 0140 is settled by — the
+/// latency correction (§3, settled) and the high-quality stretcher (§4, open).
 ///
-/// Release always compensates — the ADR closes off exposing the stretcher to the player, so this is
-/// not a preference and has no shipping counterpart. It exists because the claim being tested is a
-/// listening claim: deciding in the absolute whether a click is 93 ms early is hard, while deciding
-/// which of two builds is tighter is easy. It also makes the failure case decisive — if
-/// `AVAudioEngine` were already compensating node latency internally, "on" would put the click
-/// 93–139 ms *late* rather than fixing anything.
+/// Neither is a preference. The ADR closes off exposing the stretcher to the player, so both have a
+/// fixed Release behaviour and no shipping counterpart. They exist because the claims are *listening*
+/// claims, and a human judges "which of these two is better" far more reliably than "is this one
+/// right" — which is also what makes each failure case decisive rather than ambiguous.
 ///
 /// Its own file rather than another block inside `SettingsView`, which is at the 400-line cap.
 struct DebugAudioSection: View {

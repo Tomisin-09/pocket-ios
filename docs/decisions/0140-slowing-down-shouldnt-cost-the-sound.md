@@ -1,8 +1,11 @@
 # ADR 0140 — Slowing down shouldn't cost the sound: the stretcher, its settings, and the click that leads it
 
-- **Status:** Accepted. **Slices 1 and 2 built and device-confirmed 2026-08-02**
-  (`pocket-221-time-stretch-quality`). **Slice 3 deferred** — and slice 1's device pass makes the case
-  for it stronger, since 0.25× is still rough with the curve fixed. Build notes at the end.
+- **Status:** Accepted and **complete**. Slices 1 and 2 built and device-confirmed 2026-08-02
+  (`pocket-221-time-stretch-quality`); slice 3 built 2026-08-04 (`pocket-226-tmpt-ab-and-headroom`).
+  **§4 is settled: `'tmpt'` is ADOPTED** (device A/B 2026-08-04 — *"the sound quality is so much
+  better"*), made the default on `pocket-228-adopt-tmpt-and-freeform-click`, and the Debug toggle is
+  deleted. **All four adoption criteria are satisfied** as of 2026-08-04. Build notes at the end,
+  including which were measured and which were judged.
 - **Date:** 2026-08-02
 - **Builds on:** ADR 0001 (local files are the audio source — the only reason we own a stretcher at
   all) · ADR 0006 / 0008 (region looping, gapless wrap) · ADR 0013 (the per-loop speed ramp) ·
@@ -356,3 +359,167 @@ being able to disprove again later.
 **Verification (slice 2):** `swiftlint --strict` clean, generic-simulator build clean, **1796 tests
 pass** on `PocketAll` including 6 new `heardPlayhead` cases covering the rate scaling, its direction,
 the zero clamp and the degenerate inputs.
+
+## Build notes — slice 3 (2026-08-04, `pocket-226-tmpt-ab-and-headroom`)
+
+§5 first, then §4 — the ordering the slice specifies, for the reason it gives: a clipped peak sounds
+like a smeared one, so a mix that can clip would let the mixer's fault be credited to the stretcher
+in the very test §4 exists to run.
+
+**1. The trim goes on the mixer's *output*, not on the stretcher's.** §5 says "a small fixed trim on
+the stretcher's output", and that turns out to be both impossible and wrong.
+
+Impossible: `AVAudioUnit` does not conform to `AVAudioMixing` — in the iOS 26.5 SDK only
+`AVAudioPlayerNode`, `AVAudioSourceNode`, `AVAudioUnitGenerator`, `AVAudioUnitMIDIInstrument`, the
+mixer and the environment node do. A time-effect node has no `volume` to set.
+
+Wrong, and more interestingly: **it is the *sum* that clips.** Trimming only the song to make the
+guarantee needs a factor of `1 − 0.7 = 0.3`, a 10.5 dB cut, and it would leave the click looming over
+the track. Trimming the mixer's output scales song and click together, which makes the same guarantee
+at `1/(1 + 0.7) ≈ 0.588` (−4.6 dB) and leaves the song-to-click balance exactly as voiced. §5's own
+context paragraph already names the click as half the problem ("the click sums into that same
+mixer"); putting the trim after the sum is following that further than §5 followed it — the same
+move build note 4 of slice 1 made for the latency offset.
+
+The cost is honest and worth stating: **the practice screen is ~4.6 dB quieter**, and the player
+makes it up on the device volume. It is a fixed trim, not one that lifts when the metronome is off —
+a gain that moves under the player is worse than a quiet one, and a constant level is the only thing
+that makes the §4 A/B a fair comparison.
+
+**2. The trim is derived, not pinned.** `AudioMath.headroomTrim(peakClick:)` is pure and unit-tested,
+and its input is `ClickTimbre.loudestPeakAmplitude` — computed across all four timbres' three levels
+rather than written down as `0.7`. The player can change timbre mid-session and the trim is fixed, so
+it has to cover the loudest one; deriving it means retuning a voicing moves the trim instead of
+quietly eating the headroom. `synthesize` scales a convex tone/noise blend (magnitude ≤ 1) by an
+envelope starting at 1, so a level's `amplitude` *is* its peak — the derivation is exact, not an
+estimate. One test asserts the shipping trim stays above 0.5, so meeting the guarantee by gutting the
+song would fail rather than pass quietly.
+
+**3. `'tmpt'` is a second `Backend` case inside `TimeStretcher`, and nothing outside the file
+changed.** This is the payoff §1 was written for, and it held: `PracticeAudioEngine` still says
+`stretcher.node`, `stretcher.rate`, `stretcher.latency`, and the metronome's rate read is untouched.
+The differences are confined to two `switch`es — rate (`unit.rate` vs
+`AudioUnitSetParameter(…, kTimePitchParam_Rate, …)`) and pitch-zero.
+
+**4. `StretchQuality` does not apply to `'tmpt'`, and that is not a gap.** Smoothness is a
+`NewTimePitch` parameter; the high-quality unit has no equivalent knob. So under the toggle the
+slice-1 curve is simply unused, and the A/B is genuinely *curve-corrected `nutp`* against *`tmpt` as
+Apple ships it* — which is the right comparison, since §2 already shipped and is the baseline.
+
+**5. Two robustness details the ADR didn't anticipate.**
+
+- **The component is looked up before it is instantiated.** `AVAudioUnitTimeEffect` has no failable
+  initialiser, so an absent `'tmpt'` would surface as a dead node in the graph — a silent practice
+  screen — rather than as a `nil`. `AudioComponentFindNext` first, fall back to `'nutp'` if it isn't
+  there. The probe found it present, but a Debug toggle must not be able to silence the app.
+- **The rate is re-asserted after `engine.start()`.** `'tmpt'`'s rate is a raw `AudioUnitSetParameter`
+  write rather than a property the object retains, and the engine only initialises the AU when it
+  starts — which happens *after* `TimeStretcher.init`. One extra parameter write in
+  `startEngineIfNeeded` removes the question entirely. Harmless for `'nutp'`.
+
+**6. The toggle takes effect on the next song, not immediately.** The AU is chosen at
+`TimeStretcher.init`, so switching it mid-playback would mean rebuilding the graph under a running
+player. `PracticeAudioEngine` is already recreated per practice-screen visit, so backing out and
+reopening the song is the whole switch procedure — and the Settings footer says so, because a tester
+who doesn't know that will A/B one build against itself and conclude there's no difference.
+
+**Verification (slice 3):** `swiftlint --strict` clean, generic-simulator build clean, **1802 tests
+pass** on the `PocketAll` plan including 6 new `HeadroomTrimTests`. (`AudioMathTests` hit the 250-line
+type-body cap, so the new cases are their own file.)
+
+Everything §4 actually decides is a listening claim and is **not** verified here. What is on the
+device is the *rig*: *Settings → Audio (Debug) → High-quality stretcher*.
+
+**The four-part rule, restated as a device checklist** — all four must hold to adopt:
+
+1. **Preferred by ear** on real material at 0.5× and 0.25×, speakers *and* headphones.
+2. **No dropouts or glitching** on the oldest supported device with a full graph — song + click + a
+   recording take armed.
+3. **CPU and battery** acceptable for a screen that runs for a whole practice session.
+4. **Rate 0.25 behaves at the boundary** — it is the *exact* bottom of `'tmpt'`'s `0.25…4.0` range,
+   not merely near it.
+
+If any fails we stay on `'nutp'` with §2's curve, and the toggle, the `Kind` enum and the
+`highQualityStretcher` key are deleted. §5's trim stays either way — it is shipping behaviour and
+independent of the outcome.
+
+## §4 outcome — `'tmpt'` adopted (2026-08-04, `pocket-228-adopt-tmpt-and-freeform-click`)
+
+**Verdict: adopt.** The device A/B was decisive — *"the `'tmpt'` definitely makes a massive
+difference when I tested it, the sound quality is so much better."* `'tmpt'` is now the default for
+every build, and the Debug toggle, its `AppStorage` key and its Settings block are deleted, per §4's
+own rule that adoption is written into this ADR rather than left as a switch.
+
+**How the four-part rule was actually satisfied** — stated precisely, because two of the four were
+answered by judgment rather than by measurement and that should not be quietly rounded up:
+
+1. **Preferred by ear** — ✅ met, emphatically, and this is the criterion that mattered. It also
+   closes the loop on slice 2's finding that *0.25× is still rough with the curve fixed*: the curve
+   was not the ceiling at a 4× stretch, the AU was, exactly as §4 predicted.
+2. **No dropouts under a full graph** — ✅ met, against a **corrected** graph: §4 asked for one the
+   app cannot produce (see the correction below), so this was verified on a standalone loop run at
+   25% with a recording take armed — the stretcher, mic capture and a file write concurrently, which
+   is the heaviest graph the stretcher is ever in. Clean.
+3. **CPU and battery** — ✅ accepted on the stated basis: *"I can't see any effect on the CPU but I
+   don't tend to use it longer than a routine."* That is a real answer for the real usage pattern,
+   and it is worth recording that it is a session-length judgment rather than an instrumented one.
+4. **Rate 0.25 at the boundary** — ✅ accepted, with the scope deliberately narrowed: 0.25× is the
+   product floor and *"unless there's a case to make it even slower, that won't be changing"*. So
+   `'tmpt'`'s range having **no headroom below our floor** (0.25…4.0 vs `'nutp'`'s 1/32…32) is an
+   accepted limitation rather than an unexamined one. Anything that wants a slower floor reopens this.
+
+**`'nutp'` is kept as a fallback, and the reason is narrow and specific.**
+`AVAudioUnitTimeEffect` has **no failable initialiser**, so an absent `'tmpt'` would surface as a dead
+node — a **silent practice screen**, on the app's most-used feature. `makeHighQualityUnit` already
+looks the component up with `AudioComponentFindNext` and returns `nil`, so retaining the
+`.newTimePitch` arm costs a `switch` case and buys a guarantee that the app always makes sound. That
+is the *only* justification; it is not kept as a quality option, and there is no way for a player or a
+developer to select it.
+
+A consequence worth stating plainly: **`StretchQuality` is now fallback-only code.** Smoothness is a
+`NewTimePitch` parameter and `'tmpt'` has no equivalent, so slice 1's curve — and its 8 unit tests —
+only ever run if the fallback fires. It stays because the fallback stays; if `'nutp'` is ever deleted,
+`StretchQuality` goes with it in the same commit.
+
+**What this reopens.** ADR 0124 capped the speed axis at **1.5× because the stretch smeared
+transients**. That premise has now measurably changed. Re-testing the ceiling is worth doing and is
+**not** done here — it is a product decision about how far a player should be allowed to push, and it
+deserves its own ADR rather than riding in on an audio-quality change.
+
+**Verification:** `swiftlint --strict` clean, generic-simulator build clean, and 5 new
+`TimeStretcherKindTests` — including one that resolves a real `TimeStretcher()` through the same
+`AudioComponentFindNext` path the app uses and asserts the kind comes back `.highQuality`, so a
+future OS that dropped the component would fail a test rather than silently demote every session.
+
+### Correction to §4 criterion 2 — "song + click + a recording take armed" is unreachable
+
+§4 asks for no dropouts *"on the oldest supported device under a full graph (song + click + a
+recording take armed)"*. **That state cannot be produced by the app**, and the criterion was written
+without checking. Recording is mic-only and **excluded from songs** (ADR 0069), so there is no surface
+where a song, the in-song click and an armed take coexist. The criterion appears to have borrowed the
+exercise run screen's click-plus-recording combination — but that screen runs
+`StandaloneMetronomeEngine` and **never touches the stretcher at all**, so it tests nothing here.
+
+What actually exists:
+
+| Surface | Stretcher | In-song click | Recording |
+|---|---|---|---|
+| Song waveform (`WaveformPracticeModel`) | ✅ | ✅ | ❌ |
+| Loop run, standalone (`LoopRunModel`) | ✅ | ❌ | ✅ |
+| Song play-along (`SongPlayAlongModel`) | ✅ | — | ❌ |
+| Exercise run (`ExerciseRunView`) | ❌ | ✅ | ✅ |
+
+**The criterion is therefore replaced by the heaviest graph that does exist: a standalone loop run at
+25% with a take armed — and on that graph, `'tmpt'` is clean (device-verified 2026-08-04).** That is the stretcher's phase vocoder, mic capture and a file write
+concurrently — which is the actual substance of the worry, since a click is one more player node and
+costs nothing next to recording. It also lands on **0.25×**, so it stresses criterion 4's boundary at
+the same time. Arm the take before Start (`routineContext == nil && !isRunning`), then run the ramp
+down at 25%.
+
+The song-plus-click half of the original criterion is separately covered: it is the graph the §4 A/B
+and §5's trim were both judged on.
+
+This did not change the adoption. It changed what remained to be checked, from an impossible test to a
+possible one — and it is worth recording that a decision rule went unexamined for two slices because
+it *sounded* like a description of the app. **All four criteria are now satisfied**, two by measurement
+and two by stated judgment, with the basis for each written above rather than rounded up.

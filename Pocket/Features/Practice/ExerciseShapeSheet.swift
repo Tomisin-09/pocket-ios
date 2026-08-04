@@ -86,7 +86,12 @@ struct ExerciseShapeSheet: View {
                 case .chords?: chordsSection
                 case .strumChords?: strumChordsSection
                 case .fretboardGrid?: fretboardSection
-                case nil: EmptyView()
+                // A freeform block's payload is prose, and prose is edited where it's read — the
+                // detail sheet's Instructions field (ADR 0136 F2a). It has no *shape*, and it never
+                // reaches this sheet in practice: the only door is `ExerciseRunView`, which
+                // `ExerciseRunScreen` never routes a freeform block to. Handled anyway rather than
+                // left to `nil`, so the case is answered where the question is asked.
+                case .freeform?, nil: EmptyView()
                 }
             }
             .scrollDismissesKeyboard(.interactively)
@@ -156,7 +161,9 @@ struct ExerciseShapeSheet: View {
         case .scale?: scaleMode == .draw ? customDrill.notesPerBeat : scale.notesPerBeat
         case .arpeggio?: arpeggioMode == .draw ? customDrill.notesPerBeat : arpeggio.notesPerBeat
         case .fretboardGrid?: customDrill.notesPerBeat
-        case .chords?, nil: exercise.notesPerBeat
+        // Neither chords nor freeform states a rhythm, so both report the drill's own and register
+        // as unchanged.
+        case .chords?, .freeform?, nil: exercise.notesPerBeat
         }
     }
 
@@ -186,7 +193,7 @@ struct ExerciseShapeSheet: View {
         // An Arpeggios drill writes its generated chord-tone box or, in draw mode, the custom drill.
         case .arpeggio: content = arpeggioMode == .draw ? .custom(customDrill) : .arpeggio(arpeggio)
         case .fretboardGrid: content = .custom(customDrill)
-        case .strumming, .chords, .strumChords: return
+        case .strumming, .chords, .strumChords, .freeform: return
         }
         guard content != exercise.fretboardContent else { return }
         exercise.setFretboardContent(content)

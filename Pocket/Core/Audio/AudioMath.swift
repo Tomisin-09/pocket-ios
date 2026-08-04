@@ -218,6 +218,27 @@ enum AudioMath {
         return max(0, rendered - latency * rate)
     }
 
+    /// The master trim that keeps **song + click** inside full scale (ADR 0140 §5).
+    ///
+    /// The song reaches `mainMixerNode` with no trim and the click sums into that same mixer, so a
+    /// master mixed near 0 dBFS plus an accented click can exceed 1.0 — and phase-vocoder resynthesis
+    /// can push peaks *above* the source, so slowing down is when it's likeliest. Clipping sounds like
+    /// smearing, which means it would be credited to the stretcher rather than to the mixer. That is
+    /// exactly the mistake the §4 A/B cannot afford to make, which is why this lands first.
+    ///
+    /// The worst case is a click peak landing on a full-scale song peak, so the guaranteed-safe factor
+    /// is `1 / (1 + peakClick)`. Applied to the mixer's *output* rather than to either input: it is
+    /// the sum that clips, and scaling after the sum is the one place that leaves the song-to-click
+    /// balance exactly as voiced. (Trimming the song alone would need a 0.3 factor — a 10 dB cut — to
+    /// make the same guarantee, and would make the click loom over the track.)
+    ///
+    /// It is a fixed trim, not one that lifts when the metronome is off: a gain that moves under the
+    /// player is worse than a quiet one, and a constant level is what makes an A/B a fair test.
+    static func headroomTrim(peakClick: Double) -> Float {
+        guard peakClick > 0 else { return 1 }
+        return Float(1 / (1 + min(1, peakClick)))
+    }
+
     /// Whether `playhead` (seconds) still falls inside the half-open loop region
     /// `[start, end)`. Drives the offset-preserving re-arm when a loop's bounds change
     /// while it plays (ADR 0067): inside → keep playing from here; outside → restart from

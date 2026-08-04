@@ -47,7 +47,15 @@ struct ExerciseDetailSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                descriptionSection
+                // A freeform block's authoring is its own thing (ADR 0136): its instructions *are* the
+                // exercise, and it carries an optional click instead of a Feel row about a rhythm it
+                // doesn't have. Shared with the routine editor's block surface so the two can't drift.
+                if isFreeform {
+                    FreeformInstructionsSection(exercise: exercise)
+                    FreeformMetronomeSection(exercise: exercise)
+                } else {
+                    descriptionSection
+                }
                 ExerciseProgressSection(mastery: $mastery,
                                         lastPracticed: exercise.lastPracticed,
                                         trajectory: TempoTrajectory.reading(for: exercise.uid,
@@ -55,7 +63,7 @@ struct ExerciseDetailSheet: View {
                                         runCount: TempoTrajectory.runCount(for: exercise.uid,
                                                                            in: sessionRecords))
                 linkedSongsSection
-                feelSection
+                if !isFreeform { feelSection }
                 templateSection
             }
             .scrollDismissesKeyboard(.interactively)
@@ -104,6 +112,11 @@ struct ExerciseDetailSheet: View {
                  + "library and can't be changed.")
         }
     }
+
+    /// A freeform block's `notes` is not a note *about* an exercise — it **is** the exercise
+    /// (ADR 0136 F2), so it gets its own sections rather than a re-worded Description. The storage is
+    /// identical; what changes is what it means to the player, and what belongs beside it.
+    private var isFreeform: Bool { exercise.template == .freeform }
 
     // MARK: - Description (editable) + tags
 

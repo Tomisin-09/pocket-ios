@@ -106,7 +106,9 @@ struct RoutineItemRow: View {
         if item.kind == .rest { return "Breather" }
         if item.isOrphaned { return "Skipped — the unit was deleted" }
         if let exercise = item.exercise {
-            return exercise.commandProgressLabel
+            // Empty for a freeform block with no click — nil so the row drops the line entirely.
+            let label = exercise.commandProgressLabel
+            return label.isEmpty ? nil : label
         }
         if let loop = item.loop {
             // A non-trainer block names its mode; a standard trainer block just names its song

@@ -1,6 +1,7 @@
 # 0136 — A block for the practice we don't model (freeform exercises)
 
-- **Status:** Proposed (2026-08-01)
+- **Status:** Accepted. **Slices 1 and 2 built 2026-08-04** (`pocket-227-freeform-blocks`). Build
+  notes at the end — including one correction to the Context below.
 - **Date:** 2026-08-01
 - **Builds on:** ADR 0068 (revised) / 0065 (`ExerciseTemplate` as the single user-facing axis, closed
   and immutable at creation), ADR 0104 (ear training as a *mode* — the pattern this ADR deliberately
@@ -193,3 +194,177 @@ no reader. It has been dead storage since it was added.
   the session builder (ADR 0129) instead of estimated at a default.
 - **A take against a freeform block** as evidence of the work (ADR 0069 already allows recordings on
   an exercise; nothing extra is needed, so this is a copy/discoverability question).
+
+## Build notes — slices 1 and 2 (2026-08-04, `pocket-227-freeform-blocks`)
+
+**0. A correction to the Context: `Exercise.notes` was not dead storage.** This ADR says the field is
+*"surfaced nowhere in the app — no editor, no reader"* and *"has been dead storage since it was
+added"*. That was wrong at the time of writing: `ExerciseDetailSheet` already read **and wrote** it,
+as an editable **Description** section with its own footer. The reasoning survives intact — F2 still
+holds, there is still no new stored field and still no migration — but two consequences change:
+
+- The *"a dead field wakes up"* consequence is really *"a field changes meaning depending on the
+  template"*. On every other template `notes` is a note **about** an exercise; on a freeform block it
+  **is** the exercise. That is now expressed in the one place it shows: the detail sheet's section is
+  titled *Instructions* with a different prompt and footer for `.freeform`, over identical storage.
+- The `UnitDuplication` worry the same paragraph raises was **already handled** — `duplicated(named:)`
+  has always carried `notes`. So the failure the ADR calls "particularly bad" cannot happen, and no
+  change was needed. A test pins it anyway, because the reason it matters is new.
+
+**1. Everything F1 promised about a case being cheap held, and the compiler proved it.** Adding
+`.freeform` broke exactly **five** exhaustive switches, every one of which had to answer for itself:
+`AccessPolicy.authoringTier` (→ `.pro`, F7), `ConfigureExerciseForm.fretboardContent` (→ `nil`), and
+three in `ExerciseShapeSheet`. No model, no parallel library surface, no fourth unit reference on
+`RoutineItem`, no `PracticeRunKind` case. That is the F1-vs-`@Model` argument, measured.
+
+**2. F5 needed no planner code at all — which is exactly why slice 2 is a test file.** Both halves are
+absences, and absences are invisible to review:
+
+- Goal-invisibility is `.freeform` **not** appearing in `SkillFamilyMap.skillsByTemplate`. Adding a
+  row there later would quietly start claiming skills the app cannot verify.
+- Due-scoring is `.freeform` **not** joining `PracticePlanner.library`'s `template != .warmup` filter.
+  Adding it there would stop blocks resurfacing, with nothing to notice.
+
+`FreeformBlockPlannerTests` asserts the first across the **whole** taxonomy rather than a sample, so a
+future row fails a test rather than shipping a silent claim. It also covers the free consequence F5
+didn't name: `SkillFamilyMap.taggableTemplates` derives from the same map, so *"Your own practice"* is
+never offered as a loop skill tag — which would have been a skill claim by the back door.
+
+**3. One router, because a missing branch is not a compiler error.** A freeform block reaches
+`RoutinePlayerView`'s `.exercise` payload like any exercise, and the library has two more entry points
+into a run. Three call sites, three chances to forget — and forgetting wouldn't crash, it would hand
+the player a tempo ramp for a drill that has no tempo. So `ExerciseRunScreen` is the one place that
+chooses between `ExerciseRunView` and `FreeformRunView`, and all three hosts go through it. This is
+ADR 0128's lesson applied to *running* rather than to creating: same trap, same shape of fix.
+
+**4. Create is gated on non-empty instructions.** Not stated in the ADR, and it follows F2 + F9 rather
+than extending them: the instructions *are* the content, so a block with none is precisely the empty
+block F9 refuses to ship. It reuses the exact rule ADR 0086 set for Chords — a template whose payload
+starts empty gates Create on that payload — so it is a precedent applied, not a new one.
+
+**5. F3 in practice: the create step loses two sections, not one.** The ADR names the command-tempo
+stepper; the **time signature** picker has to go with it, since its own footer says it *"sets the
+run's accents and count-in length"* and a freeform run has neither. Both were lifted into one
+`tempoAndMeterSections` so the exception reads as a single `if` rather than as scattered conditions.
+The values still exist on the model — `commandAnchored` derives them from a command the form never
+shows — and nothing reads them, which is what F3 actually asked for.
+
+**6. A freeform block takes a planned length, via ADR 0141's existing chrome.** Not in this ADR, but
+it is unavoidable once a freeform block can be a routine block: a session sized in blocks (ADR 0129)
+whose third block has no end isn't a session. `rampLessBlockLength` applies unchanged, with
+`cycleSeconds: 0` and `isPlaying: false` — with no audio there is no phrase to protect, so the block
+finishes at the planned moment rather than waiting for a loop to come round. Open-ended standalone, as
+everywhere else. Note this is *not* the parked "duration hints" follow-up, which is about **authoring**
+a suggested length; this is the session's length reaching a block that had none.
+
+**7. F4's Done screen needed no special case, and that is a small vindication of F4a.** The gate in
+`RoutinePlayerView.finishedBlock` is `!stage.kind.isRampLess` — and a freeform block's stage kind is
+`.exercise`, which is not ramp-less. So it lands on `RoutineBlockDoneView` for the rating by the
+ordinary path, while `.earLoop` and `.improviseLoop` skip it by theirs. Had F4a minted a new
+`PracticeRunKind`, this would have been a branch.
+
+**Verification:** `swiftlint --strict` clean, generic-simulator build clean, **1812 tests pass**
+including 10 new `FreeformBlockPlannerTests`. Two existing `ExerciseTemplateTests` cases were updated
+rather than worked around — they asserted the pre-0136 `creatable` list and that every template
+outside the musical families has no bespoke editor, both of which this ADR deliberately changes.
+
+The run screen itself is a **look** claim and wants the Xcode preview (`FreeformRunView` ships one)
+plus a device pass before it is called done.
+
+## Amendment — the routine editor, and the click comes in early (2026-08-04)
+
+Two changes from the first device pass, on `pocket-228-adopt-tmpt-and-freeform-click`.
+
+**1. A gap in the original build: the routine editor still showed a staircase.** F3 was honoured in
+creation and in the run screen, and missed entirely in the routine editor — tapping a freeform block
+there pushed `ExerciseBlockPreview`, which draws **the ramp staircase and the command tempo**. For a
+drill that has neither, that is not merely noise: it is the precise confusion F1c set out to prevent,
+displayed on the surface where a player inspects what a block will do.
+
+The fix is the one the codebase already had a shape for. Ear and improvise loop blocks don't get the
+staircase either — they get `RampLessBlockPreview`. A freeform block now gets `FreeformBlockPreview`
+by the same logic, showing only what is true of it: the instructions, the click, and ADR 0141's
+length control.
+
+Worth recording *why* the miss happened, since it is the same species as the one ADR 0128 documents:
+`RoutineBlockPreviewTarget` had already learned that a **loop** can be ramp-less, and nothing forced
+that question to be re-asked for exercises. Adding a template that breaks an assumption doesn't break
+the code that holds it.
+
+**2. `FreeformBlockPreview` is editable, unlike every other block preview.** The others are read-only
+on purpose (ADR 0071 R4b) — an exercise's content is authored in its own editor and the routine is the
+wrong place to change it. A freeform block inverts that: its content *is* the text, there is no other
+editor, and the moment you want to change it is the moment you're looking at it in the routine you
+built it for. The sections are shared with `ExerciseDetailSheet` (`FreeformSettingsSections.swift`) so
+the two surfaces cannot drift into offering different controls for the same thing.
+
+**3. The parked "optional click" follow-up is built.** F3 deferred it — *"A player who wants a click
+has the standalone metronome; wiring an optional click into this surface is a follow-up, not slice 1."*
+Pulled forward on request. On/off, a tempo, a time signature. Nothing else: no ramp, no reach, no
+promotion, no subdivision.
+
+**The distinction that keeps F3 intact: a click tempo is not a command tempo.** A command tempo
+(ADR 0046) is an *achievement* — it anchors the ramp, drives the promote offer (ADR 0134) and feeds
+`DueScore`. `Exercise.clickBPM` says only how fast the click ticks. So everything F3 and F4a actually
+protect still holds: no `CommandRamp` is built, no promotion is ever offered, and a freeform run still
+logs `tempoBPM: nil`. A test asserts the two tempos move independently, and another asserts that
+turning the click on does not make the block goal-resolvable — a block with a tempo is still not a
+drill, and the click must not quietly buy it planner standing it hasn't earned.
+
+The **meter reuses the existing `beatsPerBar` / `noteValue` pair**, which is already exactly a time
+signature — so this costs two new stored fields (`clickEnabled`, `clickBPM`), both with declaration
+defaults, and still no migration. `clickBPM` deliberately does **not** reuse `currentTempo`: that field
+holds a value `commandAnchored` *derived* from a command the player never chose, so a click seeded
+from it would start at an arbitrary number.
+
+The run screen starts the click on **appearance**, not on a transport action — a freeform block has no
+Start (F4), so if it ticks, it ticks from arrival, the same way an ear block's loop plays from arrival.
+A footnote control silences it mid-block without leaving; the settings themselves live on the
+information sheet.
+
+**Verification:** `swiftlint --strict` clean, generic-simulator build clean, **1828 tests pass**
+including 5 new `FreeformClickTests`. The two new surfaces are **look** claims and want a device pass.
+
+## Amendment — the command tempo was leaking twice (2026-08-04)
+
+Device feedback: freeform rows were still printing *"Command 75 → 80 BPM"* — in the library, the
+routine editor, the add-unit picker and the player's "Up next". Chasing it turned up a second,
+invisible leak from the same root, which is the more serious of the two.
+
+**The root.** `Exercise.commandAnchored` fills the tempo fields for **every** template, so a freeform
+block genuinely *has* a command tempo, a reach and a derived ramp. F3 says they are "never read" —
+but F3 is a statement of intent, and nothing enforces it. Any code that reads those fields without
+first asking what template it is holding gets a **plausible number instead of an error**, which is the
+worst failure mode available: it can't crash and it can't be spotted in review.
+
+**Leak 1 — display.** `commandProgressLabel` is the one string four surfaces read, so the fix lands
+once. A freeform block now returns its **click** if it has one (*"Metronome 96 BPM · 4/4"* — true,
+useful, and unmistakable for a command tempo) and an empty string otherwise, with the row views
+dropping the line rather than rendering a blank one that still claims its vertical space.
+
+**Leak 2 — the planner was pricing a block by a ramp it never runs.** `estimatedMinutes(for:)` fed
+`SessionEstimate.minutes(forRamp:)` a staircase built from a command tempo the player never set, so a
+freeform block's session length moved with a number that has no meaning for it. Nothing surfaced this:
+the estimate was wrong, not absent.
+
+The fix is a rule that already existed on the other side of the app. ADR 0141 established that **a
+ramp-less block is priced at its planned length**, and `estimatedMinutes(for:mode:plannedMinutes:)`
+guards it with `mode == .trainer`. A freeform block is ramp-less in exactly that sense, so it gets the
+same treatment: `plannedMinutes` inside a session, and a flat
+`PracticePlanner.freeformDefaultMinutes` (10) as a **candidate** estimate where nothing has allotted it
+a length yet.
+
+That default is deliberately flat rather than derived, because the app genuinely does not know — the
+content is prose and nothing reads it (F8). It is also what the parked **duration hints** follow-up
+would replace with something the player authored.
+
+**The lesson worth keeping, because it is now the third instance.** Adding a template that breaks a
+long-standing assumption does not break the code holding it. `RoutineBlockPreviewTarget` assumed every
+exercise has a staircase; `estimatedMinutes` assumed every exercise has a ramp; `commandProgressLabel`
+assumed every exercise has a command tempo. All three compiled, all three produced confident wrong
+answers, and only one was visible on screen. The exhaustive `switch`es the enum forced were the *easy*
+half — what needs finding by hand is every place that reads a **field** rather than the template.
+
+**Verification:** `swiftlint --strict` clean, build clean, **1834 tests pass** including 6 new
+`FreeformHasNoTempoTests` — the pricing ones assert a freeform block's estimate does not move between
+command 40 and command 200, which is the property that would have caught leak 2 in the first place.
