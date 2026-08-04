@@ -4,7 +4,8 @@
   (`pocket-221-time-stretch-quality`); slice 3 built 2026-08-04 (`pocket-226-tmpt-ab-and-headroom`).
   **§4 is settled: `'tmpt'` is ADOPTED** (device A/B 2026-08-04 — *"the sound quality is so much
   better"*), made the default on `pocket-228-adopt-tmpt-and-freeform-click`, and the Debug toggle is
-  deleted. Build notes at the end, including what the adoption did and did not verify.
+  deleted. **All four adoption criteria are satisfied** as of 2026-08-04. Build notes at the end,
+  including which were measured and which were judged.
 - **Date:** 2026-08-02
 - **Builds on:** ADR 0001 (local files are the audio source — the only reason we own a stretcher at
   all) · ADR 0006 / 0008 (region looping, gapless wrap) · ADR 0013 (the per-loop speed ramp) ·
@@ -455,8 +456,10 @@ answered by judgment rather than by measurement and that should not be quietly r
 1. **Preferred by ear** — ✅ met, emphatically, and this is the criterion that mattered. It also
    closes the loop on slice 2's finding that *0.25× is still rough with the curve fixed*: the curve
    was not the ceiling at a 4× stretch, the AU was, exactly as §4 predicted.
-2. **No dropouts under a full graph** — ⚠️ open, and **§4 asked for a graph that does not exist**.
-   See the correction below.
+2. **No dropouts under a full graph** — ✅ met, against a **corrected** graph: §4 asked for one the
+   app cannot produce (see the correction below), so this was verified on a standalone loop run at
+   25% with a recording take armed — the stretcher, mic capture and a file write concurrently, which
+   is the heaviest graph the stretcher is ever in. Clean.
 3. **CPU and battery** — ✅ accepted on the stated basis: *"I can't see any effect on the CPU but I
    don't tend to use it longer than a routine."* That is a real answer for the real usage pattern,
    and it is worth recording that it is a session-length judgment rather than an instrumented one.
@@ -507,7 +510,7 @@ What actually exists:
 | Exercise run (`ExerciseRunView`) | ❌ | ✅ | ✅ |
 
 **The criterion is therefore replaced by the heaviest graph that does exist: a standalone loop run at
-25% with a take armed.** That is the stretcher's phase vocoder, mic capture and a file write
+25% with a take armed — and on that graph, `'tmpt'` is clean (device-verified 2026-08-04).** That is the stretcher's phase vocoder, mic capture and a file write
 concurrently — which is the actual substance of the worry, since a click is one more player node and
 costs nothing next to recording. It also lands on **0.25×**, so it stresses criterion 4's boundary at
 the same time. Arm the take before Start (`routineContext == nil && !isRunning`), then run the ramp
@@ -516,6 +519,7 @@ down at 25%.
 The song-plus-click half of the original criterion is separately covered: it is the graph the §4 A/B
 and §5's trim were both judged on.
 
-This does not change the adoption. It changes what remains to be checked, from an impossible test to a
+This did not change the adoption. It changed what remained to be checked, from an impossible test to a
 possible one — and it is worth recording that a decision rule went unexamined for two slices because
-it *sounded* like a description of the app.
+it *sounded* like a description of the app. **All four criteria are now satisfied**, two by measurement
+and two by stated judgment, with the basis for each written above rather than rounded up.
