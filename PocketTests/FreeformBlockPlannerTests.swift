@@ -266,3 +266,69 @@ final class FreeformClickTests: XCTestCase {
         XCTAssertNil(copy.lastPracticed)
     }
 }
+
+/// A freeform block has no command tempo and no ramp (ADR 0136 F3) — and the two places that
+/// forgot it. One was visible on the device (rows printing "Command 75 → 80 BPM" for a drill with
+/// neither), the other was not: the planner was **pricing** the block by a staircase it never climbs,
+/// derived from a command tempo the player never set.
+///
+/// Both come from the same root: `commandAnchored` fills the tempo fields for every template, so a
+/// freeform block *has* the values, and any code that reads them without asking gets a plausible
+/// number rather than an error.
+@MainActor
+final class FreeformHasNoTempoTests: XCTestCase {
+
+    private func block() -> Exercise {
+        Exercise.commandAnchored(name: "Sight-reading", command: 90, template: .freeform,
+                                 notes: "Two pages, first time through only.")
+    }
+
+    func testAFreeformBlockNeverStatesACommandTempo() {
+        // The visible half. The label is the one string every unit row, the routine editor and the
+        // player's "Up next" all read, so fixing it there fixes all four surfaces.
+        XCTAssertFalse(block().commandProgressLabel.contains("Command"))
+        XCTAssertFalse(block().commandProgressLabel.contains("BPM"))
+    }
+
+    func testAFreeformBlockWithAClickStatesTheClickInstead() {
+        // Not blank for the sake of it: if the block has a pulse, saying so is both true and useful —
+        // and "Metronome" can't be misread as the command tempo it deliberately isn't.
+        let freeform = block()
+        freeform.clickEnabled = true
+        freeform.clickBPM = 96
+        XCTAssertEqual(freeform.commandProgressLabel, "Metronome 96 BPM · 4/4")
+    }
+
+    func testAnOrdinaryExerciseStillStatesItsCommandTempo() {
+        // The guard must be template-scoped: every other template's row is unchanged.
+        XCTAssertTrue(Exercise.commandAnchored(name: "Picking", command: 120, template: .picking)
+            .commandProgressLabel.contains("Command"))
+    }
+
+    func testAFreeformBlockIsNotPricedByItsPhantomRamp() {
+        // The invisible half, and the one that would have silently misbuilt sessions. Its estimate
+        // must not move with the tempo fields, because it doesn't run them.
+        let slow = Exercise.commandAnchored(name: "Read", command: 40, template: .freeform)
+        let fast = Exercise.commandAnchored(name: "Read", command: 200, template: .freeform)
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(for: slow),
+                       PracticePlanner.estimatedMinutes(for: fast))
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(for: slow),
+                       PracticePlanner.freeformDefaultMinutes)
+    }
+
+    func testInABlockAFreeformUnitIsPricedAtItsPlannedLength() {
+        // ADR 0141's rule for a ramp-less block, applied to the exercise side: it runs for the time it
+        // was given. Mirrors the loop side's `mode != .trainer` guard.
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(for: block(), plannedMinutes: 7), 7)
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(for: block(), plannedMinutes: nil),
+                       PracticePlanner.freeformDefaultMinutes)
+    }
+
+    func testAnOrdinaryExerciseIsStillFittedToItsBlock() {
+        // The guard must not have disabled ADR 0129's fit for everything else.
+        let picking = Exercise.commandAnchored(name: "Picking", command: 120, template: .picking)
+        XCTAssertEqual(PracticePlanner.estimatedMinutes(for: picking, plannedMinutes: 6),
+                       SessionEstimate.effectiveMinutes(forRamp: picking.ramp, plannedMinutes: 6,
+                                                        beatsPerBar: picking.beatsPerBar))
+    }
+}

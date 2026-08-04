@@ -142,8 +142,23 @@ enum PracticePlanner {
     /// summit→backoff plateaus actually take at their own tempos and meter, not a flat default. The
     /// back-half still splits any over-long block against the focused cap (R2).
     static func estimatedMinutes(for exercise: Exercise) -> Int {
-        SessionEstimate.minutes(forRamp: exercise.ramp, beatsPerBar: exercise.beatsPerBar)
+        guard exercise.template != .freeform else { return freeformDefaultMinutes }
+        return SessionEstimate.minutes(forRamp: exercise.ramp, beatsPerBar: exercise.beatsPerBar)
     }
+
+    /// What a **freeform** block is worth to the session builder before anything has allotted it a
+    /// length (ADR 0136 F3). It has no ramp, so the ramp arithmetic every other exercise is priced by
+    /// would be measuring a staircase it will never climb — a number derived from a command tempo the
+    /// player never set.
+    ///
+    /// A flat, stated default rather than a derived one, because the app genuinely does not know: the
+    /// content is the player's prose and nothing reads it (F8). Ten minutes is "a block of real
+    /// practice" and is only ever used for **candidate** ranking and packing — inside a session the
+    /// block runs for its allotted `plannedMinutes` like any other ramp-less block (ADR 0141).
+    ///
+    /// ADR 0136's parked *duration hints* follow-up is what would replace this with something the
+    /// player authored; until then a default is the honest answer.
+    static let freeformDefaultMinutes = 10
 
     /// The distinct skill buckets recognised from a loop's tags (Slice 4, Decision 8), order-stable —
     /// the Path-A match key. Empty for an untagged loop (Path-B only). Dedupes while preserving the
@@ -201,8 +216,14 @@ enum PracticePlanner {
     /// An exercise's minutes **in a block** — its ramp fitted to the block's allotment (ADR 0129), or
     /// its own natural length when the block was hand-authored.
     static func estimatedMinutes(for exercise: Exercise, plannedMinutes: Int?) -> Int {
-        SessionEstimate.effectiveMinutes(forRamp: exercise.ramp, plannedMinutes: plannedMinutes,
-                                         beatsPerBar: exercise.beatsPerBar)
+        // A freeform block is ramp-less in exactly the sense ADR 0141 means, so it is priced like one:
+        // it runs for the time it was given, not for however long a phantom staircase implies. Mirrors
+        // the `mode != .trainer` guard the loop side already carries.
+        guard exercise.template != .freeform else {
+            return plannedMinutes ?? freeformDefaultMinutes
+        }
+        return SessionEstimate.effectiveMinutes(forRamp: exercise.ramp, plannedMinutes: plannedMinutes,
+                                                beatsPerBar: exercise.beatsPerBar)
     }
 
     /// A loop's minutes **in a block** — the passes its command-anchored ramp actually plays, fitted

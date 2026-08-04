@@ -324,3 +324,47 @@ information sheet.
 
 **Verification:** `swiftlint --strict` clean, generic-simulator build clean, **1828 tests pass**
 including 5 new `FreeformClickTests`. The two new surfaces are **look** claims and want a device pass.
+
+## Amendment — the command tempo was leaking twice (2026-08-04)
+
+Device feedback: freeform rows were still printing *"Command 75 → 80 BPM"* — in the library, the
+routine editor, the add-unit picker and the player's "Up next". Chasing it turned up a second,
+invisible leak from the same root, which is the more serious of the two.
+
+**The root.** `Exercise.commandAnchored` fills the tempo fields for **every** template, so a freeform
+block genuinely *has* a command tempo, a reach and a derived ramp. F3 says they are "never read" —
+but F3 is a statement of intent, and nothing enforces it. Any code that reads those fields without
+first asking what template it is holding gets a **plausible number instead of an error**, which is the
+worst failure mode available: it can't crash and it can't be spotted in review.
+
+**Leak 1 — display.** `commandProgressLabel` is the one string four surfaces read, so the fix lands
+once. A freeform block now returns its **click** if it has one (*"Metronome 96 BPM · 4/4"* — true,
+useful, and unmistakable for a command tempo) and an empty string otherwise, with the row views
+dropping the line rather than rendering a blank one that still claims its vertical space.
+
+**Leak 2 — the planner was pricing a block by a ramp it never runs.** `estimatedMinutes(for:)` fed
+`SessionEstimate.minutes(forRamp:)` a staircase built from a command tempo the player never set, so a
+freeform block's session length moved with a number that has no meaning for it. Nothing surfaced this:
+the estimate was wrong, not absent.
+
+The fix is a rule that already existed on the other side of the app. ADR 0141 established that **a
+ramp-less block is priced at its planned length**, and `estimatedMinutes(for:mode:plannedMinutes:)`
+guards it with `mode == .trainer`. A freeform block is ramp-less in exactly that sense, so it gets the
+same treatment: `plannedMinutes` inside a session, and a flat
+`PracticePlanner.freeformDefaultMinutes` (10) as a **candidate** estimate where nothing has allotted it
+a length yet.
+
+That default is deliberately flat rather than derived, because the app genuinely does not know — the
+content is prose and nothing reads it (F8). It is also what the parked **duration hints** follow-up
+would replace with something the player authored.
+
+**The lesson worth keeping, because it is now the third instance.** Adding a template that breaks a
+long-standing assumption does not break the code holding it. `RoutineBlockPreviewTarget` assumed every
+exercise has a staircase; `estimatedMinutes` assumed every exercise has a ramp; `commandProgressLabel`
+assumed every exercise has a command tempo. All three compiled, all three produced confident wrong
+answers, and only one was visible on screen. The exhaustive `switch`es the enum forced were the *easy*
+half — what needs finding by hand is every place that reads a **field** rather than the template.
+
+**Verification:** `swiftlint --strict` clean, build clean, **1834 tests pass** including 6 new
+`FreeformHasNoTempoTests` — the pricing ones assert a freeform block's estimate does not move between
+command 40 and command 200, which is the property that would have caught leak 2 in the first place.

@@ -30,9 +30,14 @@ struct PracticeUnitRow: View {
                     .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.textSecondary)
             }
-            Text(progress)
-                .font(.futura(.caption))
-                .foregroundStyle(PocketColor.practice)
+            // Empty for a unit with nothing to state — a freeform block with no click (ADR 0136).
+            // Rendered conditionally rather than as an empty `Text`, which would still claim its line
+            // of vertical space and leave the row looking like it lost something.
+            if !progress.isEmpty {
+                Text(progress)
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.practice)
+            }
         }
         .padding(.vertical, 2)
     }
