@@ -25,6 +25,11 @@ struct FreeformRunView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    /// This screen's own click (ADR 0136 F3's parked follow-up). Owned per-screen like every other run
+    /// surface, so a freeform block never disturbs the standalone metronome. It runs **free** — no
+    /// ramp is ever engaged — because the tempo here is a pulse, not a target (see `Exercise.clickBPM`).
+    @State private var metronome = StandaloneMetronomeEngine()
+
     /// When this block began (ADR 0117). No Start to hang it on, so it starts on appearance — the
     /// same clock `EarLoopRunView` keeps.
     @State private var startedAt: Date?
@@ -38,6 +43,7 @@ struct FreeformRunView: View {
             VStack(alignment: .leading, spacing: 20) {
                 instructions
                 elapsedReadout
+                clickToggle
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(20)
@@ -48,7 +54,11 @@ struct FreeformRunView: View {
         .routineSessionChrome(routineContext)
         .safeAreaInset(edge: .bottom) { doneButton }
         .toolbar { toolbarItems }
-        .onAppear { if startedAt == nil { startedAt = .now } }
+        .onAppear {
+            if startedAt == nil { startedAt = .now }
+            startClickIfWanted()
+        }
+        .onDisappear { metronome.stop() }
         // A freeform block takes a planned length like any other ramp-less block (ADR 0141). No audio
         // means no phrase to protect, so it finishes at the planned moment rather than waiting for a
         // cycle to come round; open-ended outside a routine, as everywhere else.
@@ -96,6 +106,36 @@ struct FreeformRunView: View {
     private func elapsedLabel(at now: Date) -> String {
         let seconds = max(0, Int(now.timeIntervalSince(startedAt ?? now)))
         return String(format: "%d:%02d elapsed", seconds / 60, seconds % 60)
+    }
+
+    /// Start the click if this block asked for one. Deliberately *not* a transport the player drives:
+    /// a freeform block has no Start (F4), so if it ticks, it ticks from arrival — same as the loop
+    /// playing from arrival on an ear block.
+    private func startClickIfWanted() {
+        guard exercise.playsFreeformClick else { return }
+        metronome.setBPM(exercise.clickBPM)
+        metronome.setTimeSignature(TimeSignature.forStored(beats: exercise.beatsPerBar,
+                                                           noteValue: exercise.noteValue,
+                                                           accentBeats: exercise.accentBeats))
+        metronome.start()
+    }
+
+    /// The click's on/off while the block runs. The *settings* live on the information sheet — this is
+    /// only a way to silence it without leaving, for the moment it stops helping.
+    @ViewBuilder private var clickToggle: some View {
+        if exercise.playsFreeformClick {
+            Button {
+                haptic(.light)
+                if metronome.transport == .stopped { metronome.start() } else { metronome.stop() }
+            } label: {
+                Label(metronome.transport == .stopped ? "Click off" : "Click on",
+                      systemImage: metronome.transport == .stopped ? "speaker.slash" : "metronome")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            .accessibilityLabel(metronome.transport == .stopped
+                                ? "Metronome off, turn it on" : "Metronome on, turn it off")
+        }
     }
 
     // MARK: - Chrome
@@ -148,6 +188,7 @@ struct FreeformRunView: View {
     /// The one completion seam — the Done button and the block running its planned length both land
     /// here, so a block that timed out logs and advances exactly like one finished by hand.
     private func finish() {
+        metronome.stop()
         logCompletedRun()   // before advancing — advancing tears this screen down
         exercise.markPracticed()
         try? modelContext.save()

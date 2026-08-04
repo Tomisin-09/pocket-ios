@@ -270,3 +270,57 @@ outside the musical families has no bespoke editor, both of which this ADR delib
 
 The run screen itself is a **look** claim and wants the Xcode preview (`FreeformRunView` ships one)
 plus a device pass before it is called done.
+
+## Amendment — the routine editor, and the click comes in early (2026-08-04)
+
+Two changes from the first device pass, on `pocket-228-adopt-tmpt-and-freeform-click`.
+
+**1. A gap in the original build: the routine editor still showed a staircase.** F3 was honoured in
+creation and in the run screen, and missed entirely in the routine editor — tapping a freeform block
+there pushed `ExerciseBlockPreview`, which draws **the ramp staircase and the command tempo**. For a
+drill that has neither, that is not merely noise: it is the precise confusion F1c set out to prevent,
+displayed on the surface where a player inspects what a block will do.
+
+The fix is the one the codebase already had a shape for. Ear and improvise loop blocks don't get the
+staircase either — they get `RampLessBlockPreview`. A freeform block now gets `FreeformBlockPreview`
+by the same logic, showing only what is true of it: the instructions, the click, and ADR 0141's
+length control.
+
+Worth recording *why* the miss happened, since it is the same species as the one ADR 0128 documents:
+`RoutineBlockPreviewTarget` had already learned that a **loop** can be ramp-less, and nothing forced
+that question to be re-asked for exercises. Adding a template that breaks an assumption doesn't break
+the code that holds it.
+
+**2. `FreeformBlockPreview` is editable, unlike every other block preview.** The others are read-only
+on purpose (ADR 0071 R4b) — an exercise's content is authored in its own editor and the routine is the
+wrong place to change it. A freeform block inverts that: its content *is* the text, there is no other
+editor, and the moment you want to change it is the moment you're looking at it in the routine you
+built it for. The sections are shared with `ExerciseDetailSheet` (`FreeformSettingsSections.swift`) so
+the two surfaces cannot drift into offering different controls for the same thing.
+
+**3. The parked "optional click" follow-up is built.** F3 deferred it — *"A player who wants a click
+has the standalone metronome; wiring an optional click into this surface is a follow-up, not slice 1."*
+Pulled forward on request. On/off, a tempo, a time signature. Nothing else: no ramp, no reach, no
+promotion, no subdivision.
+
+**The distinction that keeps F3 intact: a click tempo is not a command tempo.** A command tempo
+(ADR 0046) is an *achievement* — it anchors the ramp, drives the promote offer (ADR 0134) and feeds
+`DueScore`. `Exercise.clickBPM` says only how fast the click ticks. So everything F3 and F4a actually
+protect still holds: no `CommandRamp` is built, no promotion is ever offered, and a freeform run still
+logs `tempoBPM: nil`. A test asserts the two tempos move independently, and another asserts that
+turning the click on does not make the block goal-resolvable — a block with a tempo is still not a
+drill, and the click must not quietly buy it planner standing it hasn't earned.
+
+The **meter reuses the existing `beatsPerBar` / `noteValue` pair**, which is already exactly a time
+signature — so this costs two new stored fields (`clickEnabled`, `clickBPM`), both with declaration
+defaults, and still no migration. `clickBPM` deliberately does **not** reuse `currentTempo`: that field
+holds a value `commandAnchored` *derived* from a command the player never chose, so a click seeded
+from it would start at an arbitrary number.
+
+The run screen starts the click on **appearance**, not on a transport action — a freeform block has no
+Start (F4), so if it ticks, it ticks from arrival, the same way an ear block's loop plays from arrival.
+A footnote control silences it mid-block without leaving; the settings themselves live on the
+information sheet.
+
+**Verification:** `swiftlint --strict` clean, generic-simulator build clean, **1828 tests pass**
+including 5 new `FreeformClickTests`. The two new surfaces are **look** claims and want a device pass.

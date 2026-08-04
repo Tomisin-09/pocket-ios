@@ -47,7 +47,15 @@ struct ExerciseDetailSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                descriptionSection
+                // A freeform block's authoring is its own thing (ADR 0136): its instructions *are* the
+                // exercise, and it carries an optional click instead of a Feel row about a rhythm it
+                // doesn't have. Shared with the routine editor's block surface so the two can't drift.
+                if isFreeform {
+                    FreeformInstructionsSection(exercise: exercise)
+                    FreeformMetronomeSection(exercise: exercise)
+                } else {
+                    descriptionSection
+                }
                 ExerciseProgressSection(mastery: $mastery,
                                         lastPracticed: exercise.lastPracticed,
                                         trajectory: TempoTrajectory.reading(for: exercise.uid,
@@ -55,7 +63,7 @@ struct ExerciseDetailSheet: View {
                                         runCount: TempoTrajectory.runCount(for: exercise.uid,
                                                                            in: sessionRecords))
                 linkedSongsSection
-                feelSection
+                if !isFreeform { feelSection }
                 templateSection
             }
             .scrollDismissesKeyboard(.interactively)
@@ -106,18 +114,16 @@ struct ExerciseDetailSheet: View {
     }
 
     /// A freeform block's `notes` is not a note *about* an exercise — it **is** the exercise
-    /// (ADR 0136 F2), so the same field is titled and prompted differently. The storage is identical;
-    /// only what it means to the player changes.
+    /// (ADR 0136 F2), so it gets its own sections rather than a re-worded Description. The storage is
+    /// identical; what changes is what it means to the player, and what belongs beside it.
     private var isFreeform: Bool { exercise.template == .freeform }
 
     // MARK: - Description (editable) + tags
 
     private var descriptionSection: some View {
         Section {
-            TextField(isFreeform ? "What are you practising?"
-                        : "Technique cues, target feel, where it's from…",
-                      text: $notes, axis: .vertical)
-                .lineLimit(isFreeform ? 4...12 : 3...8)
+            TextField("Technique cues, target feel, where it's from…", text: $notes, axis: .vertical)
+                .lineLimit(3...8)
                 .keyboardDoneButton()
             if !exercise.tags.isEmpty {
                 FlowLayout(spacing: 6) {
@@ -131,23 +137,10 @@ struct ExerciseDetailSheet: View {
                 }
                 .padding(.vertical, 2)
             }
-            // ADR 0139 O6 — player-declared, never inferred. Persisted on the toggle like the
-            // link rows above rather than on the sheet's notes/mastery commit: it is a discrete
-            // statement, not a draft being edited.
-            if isFreeform {
-                Toggle("I can do this without my instrument", isOn: Binding(
-                    get: { exercise.awayFromInstrument },
-                    set: { exercise.awayFromInstrument = $0; try? modelContext.save() }))
-            }
         } header: {
-            Text(isFreeform ? "Instructions" : "Description")
+            Text("Description")
         } footer: {
-            Text(isFreeform
-                 ? "What you told yourself to do. This is the whole exercise, and you'll see it "
-                 + "while you practise — nothing reads it but you.\n\nTick the box and this can "
-                 + "turn up in an \u{201C}Away from your instrument\u{201D} session. We can't tell "
-                 + "from what you wrote, so it's your call."
-                 : "A note to yourself about the drill — saved with the exercise.")
+            Text("A note to yourself about the drill — saved with the exercise.")
         }
     }
 

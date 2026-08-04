@@ -19,6 +19,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   can't read what you wrote and won't pretend otherwise. It also isn't a place to put things that
   deserve a real screen — if something belongs in Pocket properly, tell us.
 
+  Tap one inside a routine and you get its instructions to edit, not a tempo staircase it was never
+  going to play. And if you *do* want a pulse behind it — reading, comping, working a piece in time —
+  there's a **metronome** you can switch on with a tempo and a time signature. That's all it is: a
+  click to work against. Nothing climbs it, nothing grades it, and the block still doesn't record a
+  speed, because you didn't set one as a target.
+
   And if the practice you wrote down doesn't need the guitar — transcribing, naming notes, writing,
   a listening assignment — tick **I can do this without my instrument** and it'll turn up in an
   "Away from your instrument" session. That box is yours to tick: we can't tell from what you wrote,

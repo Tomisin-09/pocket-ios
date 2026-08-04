@@ -199,3 +199,70 @@ final class FreeformOffInstrumentTests: XCTestCase {
                                                     library: library).count, 1)
     }
 }
+
+/// The **optional click** on a freeform block (ADR 0136 F3's parked follow-up, pulled in 2026-08-04).
+/// The tests that matter here are all one claim from different angles: a click tempo is **not** a
+/// command tempo. Command tempo is an achievement that anchors a ramp, drives the promote offer and
+/// feeds the planner; this is only how fast the click ticks. If those two ever merge, a freeform block
+/// starts claiming it was practised *at* a speed — which is exactly what F3 and F4a rule out.
+@MainActor
+final class FreeformClickTests: XCTestCase {
+
+    private func block(name: String = "Sight-reading") -> Exercise {
+        Exercise.commandAnchored(name: name, command: 90, template: .freeform,
+                                 notes: "Two pages, first time through only.")
+    }
+
+    func testAFreeformBlockStartsWithNoClick() {
+        // Off by default: most freeform practice — reading, transcribing, working a piece by hand —
+        // has no pulse at all, which is why F3 gave the template no tempo in the first place.
+        XCTAssertFalse(block().clickEnabled)
+        XCTAssertFalse(block().playsFreeformClick)
+    }
+
+    func testOnlyAFreeformBlockPlaysTheFreeformClick() {
+        // Same template gate as `declaresAwayFromInstrument`: every other template drives its click
+        // from the ramp, and must never pick up this one instead.
+        let freeform = block()
+        freeform.clickEnabled = true
+        XCTAssertTrue(freeform.playsFreeformClick)
+
+        let picking = Exercise.commandAnchored(name: "Alternate picking", command: 120,
+                                               template: .picking)
+        picking.clickEnabled = true
+        XCTAssertFalse(picking.playsFreeformClick)
+    }
+
+    func testTheClickTempoIsIndependentOfTheCommandTempo() {
+        // The load-bearing separation. Setting a click must not touch the tempo fields the ramp and
+        // the planner read — nor the other way round.
+        let freeform = block()
+        let command = freeform.commandTempo
+        let target = freeform.targetTempo
+        freeform.clickEnabled = true
+        freeform.clickBPM = 132
+        XCTAssertEqual(freeform.commandTempo, command)
+        XCTAssertEqual(freeform.targetTempo, target)
+        XCTAssertEqual(freeform.clickBPM, 132)
+    }
+
+    func testTurningTheClickOnDoesNotMakeTheBlockGoalResolvable() {
+        // A block with a tempo still isn't a drill: it must stay invisible to goals (F5) whether or
+        // not it ticks, or the click would quietly buy it planner standing it hasn't earned.
+        for skill in TechniqueTaxonomy.all {
+            XCTAssertFalse(SkillFamilyMap.template(.freeform, serves: skill.id))
+        }
+    }
+
+    func testTheClickDoesNotSurviveDuplicationAsATempoClaim() {
+        // `duplicated(named:)` carries the click settings like any other authored value — what it
+        // must not do is turn them into history. A copy is unrated and unpractised either way.
+        let freeform = block()
+        freeform.clickEnabled = true
+        freeform.clickBPM = 108
+        freeform.mastery = 4
+        let copy = freeform.duplicated(named: "Sight-reading 2")
+        XCTAssertNil(copy.mastery)
+        XCTAssertNil(copy.lastPracticed)
+    }
+}
