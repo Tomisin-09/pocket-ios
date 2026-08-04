@@ -35,6 +35,14 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     case warmup
     case earTraining
     case theory
+    /// **The practice we don't model** (ADR 0136): a duration and the player's own written
+    /// instructions. Sight-reading, transcribing, a teacher's assignment, singing while playing —
+    /// practice that is real but has no surface here. The closed set stays closed: this is one more
+    /// curated case, and the openness is confined to the player's prose inside it, which no code
+    /// branches on. Deliberately **not** `.basic`, which is click-first *and* the unknown-template
+    /// fallback — "the drill we couldn't parse" and "the drill the player defined" must not be the
+    /// same value.
+    case freeform
 
     var id: String { rawValue }
 
@@ -58,6 +66,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .warmup: return "Warm-up"
         case .earTraining: return "Ear Training"
         case .theory: return "Theory"
+        case .freeform: return "Your own practice"
         }
     }
 
@@ -77,6 +86,9 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .warmup: return "Loosen up before the real work."
         case .earTraining: return "Train intervals and recognition."
         case .theory: return "Drill fretboard and theory knowledge."
+        // Names what it is *for*, never what it lacks (F9) — the player is about to put the most
+        // personal practice they have into it.
+        case .freeform: return "Write your own — anything Pocket doesn't cover."
         }
     }
 
@@ -96,6 +108,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .warmup: return "flame"
         case .earTraining: return "ear"
         case .theory: return "book"
+        case .freeform: return "text.alignleft"
         }
     }
 
@@ -111,7 +124,9 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scales, .arpeggios, .picking, .legato, .fingerstyle, .warmup: return .fretboard
         case .chords: return .chords
         case .strumChords: return .strumChords
-        case .basic, .rhythm, .earTraining, .theory: return .metronome
+        // Freeform runs no material at all — no click, no board. Its screen is its own (F3/F4); the
+        // renderer is the honest fallback and is never reached.
+        case .basic, .rhythm, .earTraining, .theory, .freeform: return .metronome
         }
     }
 
@@ -125,7 +140,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// by default today. Chords authors a `ChordProgression` from the voicing library. Strum & Chords
     /// authors a `StrumChordSheet` — both a `StrumPattern` and a `ChordProgression` together. The host
     /// sheet switches on this.
-    enum BespokeEditor { case strumming, run, scale, arpeggio, chords, strumChords, fretboardGrid }
+    enum BespokeEditor { case strumming, run, scale, arpeggio, chords, strumChords, fretboardGrid, freeform }
     var bespokeEditor: BespokeEditor? {
         switch self {
         case .strumming: return .strumming
@@ -134,6 +149,10 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .arpeggios: return .arpeggio
         case .chords: return .chords
         case .strumChords: return .strumChords
+        // A text field is authoring (F2a) — the first template whose payload is prose rather than
+        // musical structure, which is exactly why it needs its own branch instead of falling through
+        // to the plain tempo settings it has no use for.
+        case .freeform: return .freeform
         case .basic, .rhythm, .earTraining, .theory: return nil
         }
     }
@@ -157,7 +176,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .scale: return .scale(.aMinorPentatonic)
         case .arpeggio: return .arpeggio(.aMinorSeventh)
         case .fretboardGrid: return .custom(.spiderWalk)
-        case .strumming, .chords, .strumChords, .none: return nil
+        case .strumming, .chords, .strumChords, .freeform, .none: return nil
         }
     }
 
@@ -182,7 +201,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// section even though the create picker no longer offers them.
     static let displayOrder: [ExerciseTemplate] = [
         .basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
-        .arpeggios, .legato, .fingerstyle, .rhythm, .earTraining, .theory
+        .arpeggios, .legato, .fingerstyle, .rhythm, .earTraining, .theory, .freeform
     ]
 
     /// The templates offered in the **create** picker, in menu order (ADR 0087, 2026-07-13):
@@ -193,8 +212,12 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// a placeholder promising a generic interval trainer would misdescribe the direction. The enum cases
     /// live on for the planner's `SkillFamilyMap`. The full `displayOrder` (above) drives grouping, so
     /// retiring a template from creation never hides drills already made under it.
+    ///
+    /// **Freeform is last** (ADR 0136): it is the answer to "my practice isn't in this list", so it
+    /// reads best after the list it is the escape from — and putting it first would invite it to
+    /// become the default for drills that deserve a real surface.
     static let creatable: [ExerciseTemplate] = [
         .basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
-        .arpeggios, .legato
+        .arpeggios, .legato, .freeform
     ]
 }

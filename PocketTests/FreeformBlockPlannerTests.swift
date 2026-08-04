@@ -1,0 +1,201 @@
+import XCTest
+@testable import Pocket
+
+/// ADR 0136 §F5 — the two planner claims about a **freeform** block. Both are the *existing* rules
+/// applied rather than new ones, which is exactly why they need tests: neither is expressed by code
+/// that mentions `.freeform`, so both would break silently. Goal-invisibility is an **absence** from
+/// `SkillFamilyMap` (add a row and it quietly starts claiming skills it can't serve), and
+/// due-scoring is a **non-membership** of the warm-up filter (add `.freeform` to that filter and
+/// blocks stop resurfacing, with nothing to notice it).
+///
+/// Slice 2 is mostly this file. The net behaviour: a freeform block can be picked up by a goal-less
+/// session and comes back round on time and rating, but never claims to satisfy a stated goal.
+final class FreeformBlockPlannerTests: XCTestCase {
+
+    private let now = Date(timeIntervalSince1970: 1_700_000_000)
+
+    private func freeform(mastery: Int? = nil, lastPracticed: Date? = nil) -> PlannerExercise {
+        PlannerExercise(uid: UUID(), template: .freeform, mastery: mastery,
+                        lastPracticed: lastPracticed, estimatedMinutes: 10)
+    }
+
+    // MARK: - Goal-invisible (F5, first half)
+
+    func testFreeformServesNoSkillAtAll() {
+        // The app knows nothing about the content, so it cannot honestly claim the block serves any
+        // skill. Asserted across the *whole* taxonomy rather than a sample, so a future row added to
+        // `skillsByTemplate` fails here rather than shipping a silent claim.
+        for skill in TechniqueTaxonomy.all {
+            XCTAssertFalse(SkillFamilyMap.template(.freeform, serves: skill.id),
+                           "freeform must not claim \(skill.id)")
+        }
+        XCTAssertNil(SkillFamilyMap.skillsByTemplate[.freeform])
+    }
+
+    func testNoSkillResolvesToAFreeformBlock() {
+        for skill in TechniqueTaxonomy.all {
+            XCTAssertFalse(SkillFamilyMap.templates(forSkill: skill.id).contains(.freeform),
+                           "\(skill.id) must not resolve to a freeform block")
+        }
+    }
+
+    func testAGoalDoesNotSurfaceAFreeformBlock() {
+        // The behaviour the two claims above add up to: a technique goal whose only library unit is a
+        // freeform block gets nothing, rather than a block that merely looks relevant.
+        let library = PlannerLibrary(exercises: [freeform()])
+        let goal = PlannerGoal(weight: 1.0, skillIDs: ["pick.alternate"],
+                               targetSongUID: nil, isMet: false)
+        XCTAssertTrue(CandidateDeriver.deriveCandidates(goals: [goal], library: library).isEmpty)
+    }
+
+    func testFreeformIsNotOfferedAsALoopSkillTag() {
+        // `taggableTemplates` derives from `skillsByTemplate`, so this falls out of the omission —
+        // but a loop tagged "Your own practice" would be a skill claim by the back door.
+        XCTAssertFalse(SkillFamilyMap.taggableTemplates.contains(.freeform))
+        XCTAssertFalse(SkillFamilyMap.suggestedLoopTags.contains(ExerciseTemplate.freeform.displayName))
+    }
+
+    // MARK: - Due-scored like any exercise (F5, second half)
+
+    @MainActor
+    func testFreeformSurvivesTheLibraryProjection() {
+        // The claim that requires *not* extending an exclusion: `PracticePlanner.library` filters
+        // warm-ups out of the candidate pool entirely, and `.freeform` must not join that filter.
+        let block = Exercise.commandAnchored(name: "Sight-reading", command: 90, template: .freeform,
+                                             notes: "Two pages, first time through only.")
+        let warmUp = Exercise.commandAnchored(name: "Loosen up", command: 80, template: .warmup)
+        let library = PracticePlanner.library(exercises: [block, warmUp])
+        XCTAssertEqual(library.exercises.map(\.template), [.freeform],
+                       "freeform must survive the pool; warm-up must not")
+    }
+
+    func testFreeformIsDueScoredOnTimeAndRating() {
+        // `goalWeight × dueness × (1 − mastery/5)` works on it unmodified, which is the whole reason
+        // F5 could be "the existing rules applied" rather than new machinery.
+        let stale = DueScore.dueness(lastPracticed: now.addingTimeInterval(-30 * 86_400), now: now)
+        let fresh = DueScore.dueness(lastPracticed: now, now: now)
+        XCTAssertGreaterThan(stale, fresh)
+
+        XCTAssertGreaterThan(DueScore.masteryTerm(1), DueScore.masteryTerm(5),
+                             "a low self-rating must bring the block back sooner")
+        XCTAssertEqual(DueScore.masteryTerm(nil), 1.0, accuracy: 1e-9,
+                       "an unrated block is max-due, so a fresh one resurfaces rather than hiding")
+    }
+
+    // MARK: - It is an exercise everywhere else (F1 / F4a / F6)
+
+    func testFreeformIsCreatableAndGroupsUnderItsOwnSection() {
+        XCTAssertTrue(ExerciseTemplate.creatable.contains(.freeform))
+        XCTAssertTrue(ExerciseTemplate.displayOrder.contains(.freeform))
+        // Last in the create picker: it is the answer to "my practice isn't in this list", and
+        // putting it first would invite it to become the default for drills that deserve a surface.
+        XCTAssertEqual(ExerciseTemplate.creatable.last, .freeform)
+    }
+
+    func testFreeformIsNotTheUnknownTemplateFallback() {
+        // F1c: `.basic` is what an unrecognised stored template decodes to. If freeform ever became
+        // that, "the drill we couldn't parse" and "the drill the player defined" would be one value.
+        XCTAssertEqual(ExerciseTemplate(storage: "not-a-template"), .basic)
+        XCTAssertEqual(ExerciseTemplate(storage: "freeform"), .freeform)
+    }
+
+    func testAuthoringAFreeformBlockIsPro() {
+        // F7 — creating one is authoring; running an existing one is free, the line every template
+        // sits on.
+        XCTAssertEqual(ExerciseTemplate.freeform.authoringTier, .pro)
+    }
+
+    func testFreeformCarriesItsInstructionsThroughCreation() {
+        // The consequence the ADR flags as the worst possible failure: the instructions *are* the
+        // exercise, so anything that builds one and drops them has lost the drill, not a detail.
+        let block = Exercise.commandAnchored(name: "Transcribe", command: 90, template: .freeform,
+                                             notes: "First eight bars of the solo, by ear only.")
+        XCTAssertEqual(block.notes, "First eight bars of the solo, by ear only.")
+        XCTAssertEqual(block.template, .freeform)
+    }
+}
+
+/// ADR 0139 §O6 — a freeform block that **declares itself** instrument-free, and what that does to a
+/// constrained pool. Separate from the block's own planner rules above because this is the seam
+/// between two ADRs: 0136 supplies the container, 0139 supplies the one thing the player may say
+/// about it. The whole point is that it is a *statement*, so the tests are mostly about what happens
+/// when nobody made one.
+final class FreeformOffInstrumentTests: XCTestCase {
+
+    private func exercise(_ template: ExerciseTemplate, declared: Bool) -> PlannerExercise {
+        PlannerExercise(uid: UUID(), template: template, mastery: nil, lastPracticed: nil,
+                        estimatedMinutes: 10, awayFromInstrument: declared)
+    }
+
+    private func candidate(for projected: PlannerExercise) -> PlannerCandidate {
+        PlannerCandidate(unit: PlannerUnitRef(projected.uid, .exercise), mastery: projected.mastery,
+                         lastPracticed: projected.lastPracticed,
+                         estimatedMinutes: projected.estimatedMinutes)
+    }
+
+    func testADeclaredFreeformBlockSurvivesTheOffGuitarConstraint() {
+        // The slice's whole payoff: an off-guitar session can now be more than three ear blocks.
+        let block = exercise(.freeform, declared: true)
+        let library = PlannerLibrary(exercises: [block])
+        let kept = CandidateDeriver.constrained([candidate(for: block)], to: .offGuitar,
+                                                library: library)
+        XCTAssertEqual(kept.map(\.unit.uid), [block.uid])
+    }
+
+    func testAnUndeclaredFreeformBlockIsDropped() {
+        // Nothing is inferred from the prose (ADR 0136 F8). Silence means "I don't know", and the
+        // honest answer to "I don't know" is to leave it out of a session built for a train.
+        let block = exercise(.freeform, declared: false)
+        let library = PlannerLibrary(exercises: [block])
+        XCTAssertTrue(CandidateDeriver.constrained([candidate(for: block)], to: .offGuitar,
+                                                   library: library).isEmpty)
+    }
+
+    func testAnOrdinaryExerciseIsStillDroppedEvenIfTheFlagIsSomehowSet() {
+        // `declaresAwayFromInstrument` gates on the template, so a stray flag on a modelled drill
+        // can't leak in. This guards the projection: only a freeform block should ever project true.
+        let picking = exercise(.picking, declared: false)
+        let library = PlannerLibrary(exercises: [picking])
+        XCTAssertTrue(CandidateDeriver.constrained([candidate(for: picking)], to: .offGuitar,
+                                                   library: library).isEmpty)
+    }
+
+    @MainActor
+    func testOnlyAFreeformBlockCanDeclareItself() {
+        let block = Exercise.commandAnchored(name: "Note names", command: 90, template: .freeform,
+                                             notes: "Name every note on the E string, out loud.")
+        block.awayFromInstrument = true
+        XCTAssertTrue(block.declaresAwayFromInstrument)
+
+        // The same flag on a modelled drill means nothing: the app knows that content, and all of it
+        // wants the instrument in your hands.
+        let picking = Exercise.commandAnchored(name: "Alternate picking", command: 120,
+                                               template: .picking)
+        picking.awayFromInstrument = true
+        XCTAssertFalse(picking.declaresAwayFromInstrument)
+    }
+
+    @MainActor
+    func testTheProjectionCarriesTheDeclaration() {
+        // The seam that would break silently: `PracticePlanner.library` is the only writer of
+        // `PlannerExercise.awayFromInstrument`, and a dropped field here empties every off-guitar
+        // session of its freeform blocks with nothing to notice.
+        let declared = Exercise.commandAnchored(name: "Transcribe", command: 90, template: .freeform,
+                                                notes: "Eight bars, by ear.")
+        declared.awayFromInstrument = true
+        let quiet = Exercise.commandAnchored(name: "Sight-read", command: 90, template: .freeform,
+                                             notes: "Two pages.")
+        let library = PracticePlanner.library(exercises: [declared, quiet])
+        XCTAssertEqual(library.exercises.first { $0.uid == declared.uid }?.awayFromInstrument, true)
+        XCTAssertEqual(library.exercises.first { $0.uid == quiet.uid }?.awayFromInstrument, false)
+    }
+
+    func testAnUnconstrainedPoolIsUntouched() {
+        // Every existing caller passes `.none`, and the fast path must stay byte-for-byte the session
+        // it was — a freeform block is an ordinary exercise there.
+        let block = exercise(.freeform, declared: false)
+        let library = PlannerLibrary(exercises: [block])
+        XCTAssertEqual(CandidateDeriver.constrained([candidate(for: block)], to: .none,
+                                                    library: library).count, 1)
+    }
+}

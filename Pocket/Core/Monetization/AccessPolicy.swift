@@ -31,8 +31,11 @@ extension ExerciseTemplate {
         switch self {
         case .basic, .strumming, .warmup:
             return .free
+        // **Freeform** is Pro to author (ADR 0136 F7) and free to run, the same line every template
+        // sits on — and it is a strong Pro argument in its own right: your whole practice lives here,
+        // not only the parts we modelled.
         case .scales, .arpeggios, .chords, .strumChords, .picking, .legato,
-             .fingerstyle, .rhythm, .earTraining, .theory:
+             .fingerstyle, .rhythm, .earTraining, .theory, .freeform:
             return .pro
         }
     }

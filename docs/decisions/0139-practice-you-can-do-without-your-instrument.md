@@ -2,8 +2,8 @@
 
 - **Status:** Accepted — **Slice 1 built** 2026-08-02 on
   `pocket-224-improvise-planner-and-off-guitar`, alongside ADR 0135 Slice 3, which shares its one
-  structural change. Slice 2 (freeform blocks declare themselves off-guitar) waits on ADR 0136. See
-  §Build notes.
+  structural change. **Slice 2 built** 2026-08-04 on `pocket-227-freeform-blocks`, immediately after
+  the ADR 0136 slice it waited on. See §Build notes.
 - **Date:** 2026-08-01
 - **Closes:** ADR 0138 §G6, both halves — the `ear.*` skills resolving to zero candidates, and
   `SkillMode.offGuitar` having no consumer. 0138 named them and fixed neither by design; this is the
@@ -141,8 +141,8 @@ just has no way to ask for a session made of it.
   (shared with ADR 0135 §B6a), the `constraint` parameter, and the "Away from your instrument" option
   where sessions are chosen. Pure-side unit tests: an ear skill now resolves; a constrained pool
   excludes trainer-only units; a loop appears once, not twice.
-- **Slice 2 — freeform blocks can be off-guitar.** Depends on ADR 0136. One player-set declaration on
-  the freeform payload and its contribution to the constrained pool.
+- **Slice 2 — freeform blocks can be off-guitar. ✅ BUILT.** Depends on ADR 0136. One player-set
+  declaration on the freeform payload and its contribution to the constrained pool.
 
 ## Build notes — Slice 1 (2026-08-02)
 
@@ -191,3 +191,51 @@ just has no way to ask for a session made of it.
 - Slice 2 needs ADR 0136 slice 1.
 - Neither slice needs ADR 0137, though an off-guitar session ranks better with it (loops are the
   entire candidate pool here, and until 0137 lands every loop is permanently max-due).
+
+## Build notes — Slice 2 (2026-08-04, `pocket-227-freeform-blocks`)
+
+Built on the same branch as the ADR 0136 slice it depends on, and it is genuinely small — one stored
+`Bool`, one projection field, one branch in `constrained`, and a toggle in two places. What took the
+thinking was where it *couldn't* work.
+
+- **`constrained` was the wrong shape by one word, and the fix is an exception rather than a rule.**
+  Its guard read `candidate.unit.kind == .loop`, i.e. *drop every exercise* — which O3 states as
+  "drop anything that needs the instrument". Those are the same sentence only while every exercise
+  does need it. A declared freeform block now survives with **no mode and no pinning**, because it has
+  neither: pinning exists to turn a trainer loop into ear work, and a freeform block has no mode to
+  turn. So it is a genuinely separate branch, not a widened predicate.
+
+- **The declaration is read through a gate, never raw.** `Exercise.awayFromInstrument` is the stored
+  flag; `Exercise.declaresAwayFromInstrument` is `template == .freeform && awayFromInstrument`, and
+  that is what the projection calls. A flag left behind on a modelled drill therefore means nothing —
+  which matters because the toggle only appears on a freeform surface, so any other value could only
+  ever be a leftover or a bug. A test pins both directions.
+
+- **The goal path can't reach this, and that is correct rather than a gap.** ADR 0136 F5 makes a
+  freeform block **goal-invisible**, so `deriveCandidates` never produces one and no amount of work in
+  `constrained` would surface it from a goal. The route is the **goal-less Quick path**, which slice 1
+  had already taught to take the constraint. That path was passing `exercises: []` — deliberately, per
+  slice 1's "no warm-up in a constrained session" note — so slice 2's real change is that it now
+  projects the exercise library and lets `constrained` do the qualifying. The warm-up reasoning is
+  unaffected: warm-ups are `template == .warmup`, `PracticePlanner.library` filters them out of the
+  pool entirely, and none of them could be freeform anyway.
+
+  The consequence worth stating: a declared freeform block reaches an off-guitar session **only**
+  through Quick. A player whose goals are all technique still gets their loops as ear work and their
+  freeform blocks alongside, because Quick is what "I have fifteen minutes and no guitar" actually
+  taps. If that ever feels wrong, the fix is in ADR 0136 F5's goal-invisibility, not here.
+
+- **O7 gets its interim answer.** `know.notes`, `know.intervals`, `know.chord-construction` and
+  `create.songwriting` still resolve to zero candidates, exactly as O7 says they honestly should. What
+  changed is that a player who wants note-name drilling can now write a freeform block for it, tick
+  the box, and have it turn up when they're on a train — without the app claiming the block serves
+  those skills. That is the whole of O7's "honest interim route", and it is now real.
+
+- **Copy: the toggle explains why it is being asked.** *"I can do this without my instrument"*, with a
+  footer that says the app **can't tell from what you wrote, so it's your call**. That sentence is
+  doing O6's work — it is the difference between a preference and a guess, and it pre-empts the
+  reasonable question of why the app is asking something it could seemingly infer.
+
+**Verification (slice 2):** `swiftlint --strict` clean, generic-simulator build clean, **1818 tests
+pass** including 6 new `FreeformOffInstrumentTests` covering the declared/undeclared split, the
+template gate, the projection seam, and the unconstrained fast path.

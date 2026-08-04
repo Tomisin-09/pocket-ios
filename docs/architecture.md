@@ -520,7 +520,11 @@ block rows inert, so every tap on that screen is a placement. And the
 **player** (ADR 0071) is a *thin* session conductor — `RoutineSessionPlayer` (`@Observable`, owns no
 engine) over a pure `RoutineSessionCursor` — that **embeds the real `ExerciseRunView` / `LoopRunView` /
 `SongPlayAlongView` per block** (so every training aid — previews, staircase, journal — is
-kept, not re-implemented), injecting a `RoutineRunContext` (progress · Skip · exit · natural-completion
+kept, not re-implemented), injecting a `RoutineRunContext`. Exercise blocks go through
+**`ExerciseRunScreen`**, the one router that sends a `.freeform` block (ADR 0136) to `FreeformRunView`
+— instructions, a clock, and an explicit Done — instead of to the tempo ramp it has no tempo for; the
+library's two entry points route through the same view, because a missed branch here wouldn't crash,
+it would hand the player a ramp (progress · Skip · exit · natural-completion
 hook). Each run screen keeps its own per-unit engine (`StandaloneMetronomeEngine` / `LoopRunModel` /
 `SongPlayAlongModel`, the last two on a private `PracticeAudioEngine`) and signals **natural completion**
 (one command-ramp pass) through additive `onRampFinished` / `onFinished` / `onReachedEnd` engine

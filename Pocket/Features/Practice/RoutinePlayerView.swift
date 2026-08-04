@@ -172,7 +172,7 @@ struct RoutinePlayerView: View {
         let runID = "\(stage.id.uuidString)-rep\(player.currentRep)"
         switch stage.payload {
         case .exercise(let exercise):
-            ExerciseRunView(exercise: exercise, routineContext: context).id(runID)
+            ExerciseRunScreen(exercise: exercise, routineContext: context).id(runID)
         case .loop(let loop):
             LoopRunView(loop: loop, routineContext: context).id(runID)
         case .earLoop(let loop):

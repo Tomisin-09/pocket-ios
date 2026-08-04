@@ -57,6 +57,14 @@ struct ConfigureExerciseForm: View {
     /// default. Its strum pattern is re-gridded on a meter change like `strum` above; its progression
     /// is not meter-bound, same as `chords`.
     @State var strumChords: StrumChordSheet
+    /// The player's own written instructions — the whole content of a **freeform** block (ADR 0136
+    /// F2). Starts empty; there is nothing to seed it with, and the field's own prompt says more than
+    /// a specimen drill would.
+    @State var instructions = ""
+    /// The player's declaration that this block needs no instrument (ADR 0139 O6). Off by default —
+    /// most practice wants the guitar, and a box that starts ticked is a guess, which is the one
+    /// thing this must never be.
+    @State var awayFromInstrument = false
 
     /// Every song in the library, offered as link candidates (ADR 0111) — sorted by title to match
     /// the Library and `ExerciseDetailSheet`'s picker.
@@ -131,28 +139,13 @@ struct ConfigureExerciseForm: View {
             case .chords?: chordsSection
             case .strumChords?: strumChordsSection
             case .fretboardGrid?: fretboardSection
+            case .freeform?: instructionsSection
             case nil: EmptyView()
             }
-            Section {
-                EditableTempoRow(label: "Command tempo", caption: "fastest you own · BPM",
-                                 value: command, tint: PocketColor.practice,
-                                 onStep: { command = clampCommand(command + $0) },
-                                 onType: { command = clampCommand($0) })
-            } header: {
-                FieldInfoLabel(title: "Your command tempo",
-                               info: PracticeFieldInfo.exerciseCommandTempo)
-            }
-            Section {
-                Picker("Time signature", selection: $signature) {
-                    ForEach(TimeSignature.presets) { preset in
-                        Text("\(preset.name) · \(preset.context)").tag(preset)
-                    }
-                }
-            } header: {
-                Text("Time signature")
-            } footer: {
-                Text("Sets the run's accents and count-in length. Defaults to 4/4.")
-            }
+            // A freeform block has no tempo and no meter (ADR 0136 F3): most of what belongs in one —
+            // sight-reading, transcribing, a teacher's assignment — has no BPM at all, and a stepper
+            // whose value the run screen never reads is a question with no honest answer.
+            if template != .freeform { tempoAndMeterSections }
             songsSection
             templateSection
         }
@@ -187,6 +180,54 @@ struct ConfigureExerciseForm: View {
     }
 }
 
+// MARK: - Sections
+
+private extension ConfigureExerciseForm {
+    /// The command tempo and meter — every template's settings except a freeform block's, which has
+    /// neither (ADR 0136 F3). Lifted out of `body` so the one `if` reads as the exception it is.
+    @ViewBuilder var tempoAndMeterSections: some View {
+        Section {
+            EditableTempoRow(label: "Command tempo", caption: "fastest you own · BPM",
+                             value: command, tint: PocketColor.practice,
+                             onStep: { command = clampCommand(command + $0) },
+                             onType: { command = clampCommand($0) })
+        } header: {
+            FieldInfoLabel(title: "Your command tempo",
+                           info: PracticeFieldInfo.exerciseCommandTempo)
+        }
+        Section {
+            Picker("Time signature", selection: $signature) {
+                ForEach(TimeSignature.presets) { preset in
+                    Text("\(preset.name) · \(preset.context)").tag(preset)
+                }
+            }
+        } header: {
+            Text("Time signature")
+        } footer: {
+            Text("Sets the run's accents and count-in length. Defaults to 4/4.")
+        }
+    }
+
+    /// A freeform block's one authoring surface (ADR 0136 F2a): the player's own words, which *are*
+    /// the exercise. The footer says what the app will and won't do with them — F8's "Pocket holds the
+    /// block; the player fills it", in the one place a player might expect otherwise.
+    var instructionsSection: some View {
+        Section {
+            TextField("What are you practising?", text: $instructions, axis: .vertical)
+                .lineLimit(4...12)
+            Toggle("I can do this without my instrument", isOn: $awayFromInstrument)
+        } header: {
+            Text("Instructions")
+        } footer: {
+            Text("Sight-reading, transcribing, a piece you're working by hand, something your teacher "
+                 + "set — whatever Pocket doesn't cover. You'll see this while you practise. Nothing "
+                 + "reads it but you.\n\nTick the box and this can turn up in an "
+                 + "\u{201C}Away from your instrument\u{201D} session — a commute, a quiet room. "
+                 + "We can't tell from what you wrote, so it's your call.")
+        }
+    }
+}
+
 // MARK: - Derived state
 
 private extension ConfigureExerciseForm {
@@ -194,13 +235,20 @@ private extension ConfigureExerciseForm {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    var trimmedInstructions: String {
+        instructions.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     /// A Chords (or Strum & Chords) drill starts with an empty progression now, so Create also needs at
-    /// least one chord placed — an empty progression has nothing to change through.
+    /// least one chord placed — an empty progression has nothing to change through. A **freeform**
+    /// block is gated the same way and for the same reason: its instructions *are* its content
+    /// (ADR 0136 F2), so one with none is the empty block F9 refuses to ship.
     var canCreate: Bool {
         guard !trimmedName.isEmpty else { return false }
         switch template.bespokeEditor {
         case .chords: return !chords.changes.isEmpty
         case .strumChords: return !strumChords.chordProgression.changes.isEmpty
+        case .freeform: return !trimmedInstructions.isEmpty
         default: return true
         }
     }
@@ -216,6 +264,8 @@ private extension ConfigureExerciseForm {
                         fretboard: fretboardContent,
                         chords: template.bespokeEditor == .chords ? chords : nil,
                         strumChords: template.bespokeEditor == .strumChords ? strumChords : nil,
+                        notes: template == .freeform ? trimmedInstructions : "",
+                        awayFromInstrument: template == .freeform && awayFromInstrument,
                         songs: pickedSongs)
     }
 
@@ -247,7 +297,7 @@ private extension ConfigureExerciseForm {
         // An Arpeggios drill carries its generated chord-tone box or, in draw mode, the custom drill.
         case .arpeggio: return arpeggioMode == .draw ? .custom(customDrill) : .arpeggio(arpeggio)
         case .fretboardGrid: return .custom(customDrill)
-        case .strumming, .chords, .strumChords, .none: return nil
+        case .strumming, .chords, .strumChords, .freeform, .none: return nil
         }
     }
 

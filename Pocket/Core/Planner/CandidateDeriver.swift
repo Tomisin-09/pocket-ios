@@ -69,7 +69,8 @@ enum CandidateDeriver {
     /// Narrow a derived pool to what can be practised in `constraint`'s situation (ADR 0139 O3).
     ///
     /// Two rules, and the second is the one that matters. **Drop** anything that needs the instrument
-    /// — every exercise, every song run — and **pin** the loops that survive to the constraint's mode
+    /// — every song run, and every exercise except the one kind that says otherwise — and **pin** the
+    /// loops that survive to the constraint's mode
     /// rather than dropping the ones whose resolving skill chose differently. Pinning is what lets a
     /// "learn Little Wing" goal contribute to an off-guitar session at all: its loops arrive as
     /// trainer blocks with a ramp you cannot run on a train, and leave as ear work on the same
@@ -78,12 +79,24 @@ enum CandidateDeriver {
     ///
     /// A pinned loop still has to *qualify* for the pinned mode (`LoopModeAccess`) — a loop with no
     /// audio can't be sung back any more than it can be soloed over.
+    ///
+    /// The **exception is a freeform block the player declared instrument-free** (ADR 0139 O6 /
+    /// ADR 0136). It survives with no mode and no pinning, because it has neither: its content is the
+    /// player's own written instructions, and the only thing that can know whether they need a guitar
+    /// is the player. This is what makes an off-guitar session more than three ear blocks —
+    /// transcription, note-name drilling, songwriting, a teacher's listening assignment all arrive
+    /// this way. Nothing is inferred from the prose (ADR 0136 F8); an undeclared block is dropped like
+    /// any other exercise.
     static func constrained(_ candidates: [PlannerCandidate], to constraint: SessionConstraint,
                             library: PlannerLibrary) -> [PlannerCandidate] {
         guard constraint.isRestricted else { return candidates }
         let facts = Dictionary(library.loops.map { ($0.uid, $0.modeFacts) },
                                uniquingKeysWith: { first, _ in first })
+        let declared = Set(library.exercises.filter(\.awayFromInstrument).map(\.uid))
         return candidates.compactMap { candidate in
+            if candidate.unit.kind == .exercise {
+                return declared.contains(candidate.unit.uid) ? candidate : nil
+            }
             guard candidate.unit.kind == .loop else { return nil }
             let mode = constraint.pinnedLoopMode ?? candidate.runMode
             guard constraint.allows(mode),

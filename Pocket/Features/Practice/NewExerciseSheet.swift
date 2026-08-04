@@ -21,6 +21,15 @@ struct NewExercisePlan {
     let chords: ChordProgression?
     /// The authored strum-chord sheet for a Strum & Chords template; `nil` for every other template.
     let strumChords: StrumChordSheet?
+    /// The player's own written instructions — the **entire content** of a freeform block (ADR 0136
+    /// F2), empty for every other template. Unlike the payloads above this is a plain stored attribute
+    /// (`Exercise.notes`, which has existed unread since it was added), so it rides onto the model at
+    /// insert rather than needing a relationship's after-the-insert dance.
+    var notes: String = ""
+    /// The player's declaration that a freeform block needs no instrument (ADR 0139 O6). Always
+    /// `false` for every other template — the app models their content, and all of it wants the
+    /// guitar in your hands.
+    var awayFromInstrument = false
     /// The songs this drill is *for* (ADR 0111), picked on the configure step. Carried on the plan
     /// rather than assigned during authoring because `linkedSongs` is a **relationship**: it can only
     /// be set once the `Exercise` is in a context, so every host attaches these *after* its

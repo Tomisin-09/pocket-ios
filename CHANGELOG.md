@@ -6,6 +6,23 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Practice we don't cover can now live here too.** Sight-reading, transcribing, working a piece by
+  hand, something your teacher set, singing while you play — real practice that Pocket has no screen
+  for, so as far as the app was concerned it never happened. **Your own practice** is a new kind of
+  exercise: you write the instructions, and that's the whole thing. No tempo, no click, no ramp —
+  most of what belongs in one has no BPM anyway. It runs as a block like any other: your words on
+  screen, a clock, and Done when you're finished, then the usual "how did that go?".
+
+  It counts. Your minutes, your days and your practice history stop describing only the parts we
+  modelled, and the block comes back round on its own like every other exercise — sooner if you rated
+  it low, later once you've got it. What it won't do is claim to serve one of your goals: the app
+  can't read what you wrote and won't pretend otherwise. It also isn't a place to put things that
+  deserve a real screen — if something belongs in Pocket properly, tell us.
+
+  And if the practice you wrote down doesn't need the guitar — transcribing, naming notes, writing,
+  a listening assignment — tick **I can do this without my instrument** and it'll turn up in an
+  "Away from your instrument" session. That box is yours to tick: we can't tell from what you wrote,
+  and we're not going to guess.
 - **A session for when you're away from your instrument.** A commute, a lunch break, a hotel room, a
   flat that's gone to sleep — fifteen minutes where practising is possible but playing isn't. Flip
   **Away from your instrument** on the session screen and Generate builds one out of listening work

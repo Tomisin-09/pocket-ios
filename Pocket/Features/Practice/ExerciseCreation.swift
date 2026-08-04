@@ -52,6 +52,11 @@ extension NewExercisePlan {
     /// factory above, encode the authored payload, bind the command to that payload's rhythm
     /// (ADR 0121), insert, attach the picked songs (ADR 0111), and report the creation (ADR 0120).
     ///
+    /// A **freeform** block's payload (ADR 0136) is the plan's `notes`, and it rides through the
+    /// factory rather than being encoded here: it is a plain attribute, so unlike `linkedSongs` it can
+    /// be set before the insert. The tempo fields it carries are the factory's derivations from a
+    /// command the create step never shows and nothing reads (F3).
+    ///
     /// **Both hosts of `NewExerciseSheet` call this**: Practice's `+` (`ExerciseLibraryView`) and the
     /// metronome automator's "Save as exercise" seam (`MetronomeAutomatorPanel`). They share the
     /// sheet, so they must share the insert too — before this existed each wrote its own, and
@@ -79,7 +84,9 @@ extension NewExercisePlan {
                                                 beatsPerBar: signature.beats,
                                                 noteValue: signature.noteValue,
                                                 template: template,
-                                                instrument: instrument)
+                                                instrument: instrument,
+                                                notes: notes)
+        exercise.awayFromInstrument = awayFromInstrument
         if let strum { exercise.setStrumPattern(strum) }
         if let fretboard { exercise.setFretboardContent(fretboard) }
         if let chords { exercise.setChordProgression(chords) }

@@ -29,13 +29,21 @@ enum PracticePlanner {
                                  lastPracticed: [UUID: Date] = [:],
                                  now: Date = .now) -> [SessionBlock] {
         guard !constraint.isRestricted else {
-            let library = library(exercises: [], loops: loops, lastPracticed: lastPracticed)
+            // Exercises are projected too now: a freeform block the player declared instrument-free
+            // (ADR 0139 O6) is the one exercise that belongs here, and it is what makes this session
+            // more than three ear blocks. `constrained` does the qualifying; this only offers.
+            let library = library(exercises: exercises, loops: loops, lastPracticed: lastPracticed)
             let pool = library.loops.map { loop in
                 PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
                                  mastery: loop.mastery, lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes)
+            } + library.exercises.map { exercise in
+                PlannerCandidate(unit: PlannerUnitRef(exercise.uid, .exercise),
+                                 mastery: exercise.mastery, lastPracticed: exercise.lastPracticed,
+                                 estimatedMinutes: exercise.estimatedMinutes)
             }
-            // No warm-up: the warm-up pool is exercises, and every one of them wants the instrument.
+            // No warm-up: the warm-up pool is `template == .warmup` exercises, and every one of them
+            // wants the instrument. The structure is unchanged; the pool it draws from is empty.
             return SessionBuilder.buildSession(
                 length: length,
                 candidates: CandidateDeriver.constrained(pool, to: constraint, library: library),
@@ -108,7 +116,8 @@ enum PracticePlanner {
                 .filter { $0.template != .warmup }
                 .map { PlannerExercise(uid: $0.uid, template: $0.template, mastery: $0.mastery,
                                        lastPracticed: $0.lastPracticed,
-                                       estimatedMinutes: estimatedMinutes(for: $0)) },
+                                       estimatedMinutes: estimatedMinutes(for: $0),
+                                       awayFromInstrument: $0.declaresAwayFromInstrument) },
             loops: loops.map { PlannerLoop(uid: $0.uid, songUID: $0.song.map { PlannerID.uid(from: $0.sourceID) },
                                            mastery: $0.mastery, lastPracticed: lastPracticed[$0.uid],
                                            estimatedMinutes: estimatedMinutes(for: $0),
