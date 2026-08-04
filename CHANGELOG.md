@@ -120,6 +120,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   blocks don't have this: there's no ramp there to tune.
 
 ### Fixed
+- **A loud track and a loud click can't distort each other any more.** The song and the metronome
+  land in the same place on the way out, and a track mastered near the top of the scale plus an
+  accented click on the same instant had nowhere left to go — the result crackles, and it crackles
+  most when you slow down, which is exactly when it's easiest to blame the slowdown for it. There's
+  now a little room set aside for both. The whole mix sits slightly quieter as a result; the balance
+  between the track and the click is untouched.
 - **The click no longer runs ahead of the song.** Slowing a track down puts it through a processor
   that takes a moment to do its work — about 90 milliseconds at full speed, growing to around 140 as
   you slow down. The metronome deliberately skips that processing so it stays crisp, and nothing was

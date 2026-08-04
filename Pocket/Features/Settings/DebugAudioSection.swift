@@ -1,20 +1,19 @@
 #if DEBUG
 import SwiftUI
 
-/// DEBUG-only Settings scaffold (never ships): A/B the time-stretcher latency correction by ear
-/// (ADR 0140 §3).
+/// DEBUG-only Settings scaffold (never ships): the two listening A/Bs ADR 0140 is settled by — the
+/// latency correction (§3, settled) and the high-quality stretcher (§4, open).
 ///
-/// Release always compensates — the ADR closes off exposing the stretcher to the player, so this is
-/// not a preference and has no shipping counterpart. It exists because the claim being tested is a
-/// listening claim: deciding in the absolute whether a click is 93 ms early is hard, while deciding
-/// which of two builds is tighter is easy. It also makes the failure case decisive — if
-/// `AVAudioEngine` were already compensating node latency internally, "on" would put the click
-/// 93–139 ms *late* rather than fixing anything.
+/// Neither is a preference. The ADR closes off exposing the stretcher to the player, so both have a
+/// fixed Release behaviour and no shipping counterpart. They exist because the claims are *listening*
+/// claims, and a human judges "which of these two is better" far more reliably than "is this one
+/// right" — which is also what makes each failure case decisive rather than ambiguous.
 ///
 /// Its own file rather than another block inside `SettingsView`, which is at the 400-line cap.
 struct DebugAudioSection: View {
 
     @AppStorage(AppSettings.Key.compensateStretchLatency) private var compensateStretchLatency = true
+    @AppStorage(AppSettings.Key.highQualityStretcher) private var highQualityStretcher = false
 
     var body: some View {
         Section {
@@ -27,6 +26,15 @@ struct DebugAudioSection: View {
                  + "Turn it off to hear the uncorrected build. Judge it at 0.25×, where the two "
                  + "differ most — and against a song whose BPM you typed rather than tapped, since "
                  + "a tapped grid has the same offset baked into it.")
+        }
+        Section {
+            Toggle("High-quality stretcher", isOn: $highQualityStretcher)
+        } footer: {
+            Text("DEBUG only. Off is the shipping behaviour (AUNewTimePitch). On swaps in Apple's "
+                 + "high-quality stretcher, which is why slowing down might sound better — 0.25× is "
+                 + "a 4× stretch and is still rough on the shipping unit. Takes effect the next time "
+                 + "you open a song. A/B on real material at 0.5× and 0.25×, through speakers and "
+                 + "headphones, and watch for dropouts with a recording take armed.")
         }
     }
 }

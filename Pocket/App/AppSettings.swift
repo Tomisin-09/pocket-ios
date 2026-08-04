@@ -91,6 +91,8 @@ enum AppSettings {
         #if DEBUG
         /// DEBUG-only A/B for ADR 0140 §3. Never read in Release, which always compensates.
         static let compensateStretchLatency = "compensateStretchLatency"
+        /// DEBUG-only A/B for ADR 0140 §4. Never read in Release, which is always `'nutp'`.
+        static let highQualityStretcher = "highQualityStretcher"
         #endif
     }
 
@@ -201,6 +203,12 @@ enum AppSettings {
     /// whether `AVAudioEngine` was already compensating internally. Not a player-facing setting: the
     /// ADR closes off exposing the stretcher, and Release ignores this key entirely.
     static var compensateStretchLatency: Bool { bool(Key.compensateStretchLatency, default: true) }
+
+    /// DEBUG-only: whether the practice graph runs Apple's *high quality* stretcher (`'tmpt'`) instead
+    /// of the shipping `'nutp'`, ADR 0140 §4. Default **off** — the swap is adopted by writing the
+    /// A/B's outcome into the ADR, not by leaving a toggle in the app. Read once when the engine is
+    /// built, so it takes effect on the next song opened rather than mid-playback.
+    static var highQualityStretcher: Bool { bool(Key.highQualityStretcher, default: false) }
     #endif
 
     /// Whether a marker's **label** floats over the timeline as the playhead passes near it (P2).
