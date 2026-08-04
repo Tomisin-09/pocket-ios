@@ -1,10 +1,10 @@
 # ADR 0140 — Slowing down shouldn't cost the sound: the stretcher, its settings, and the click that leads it
 
-- **Status:** Accepted. **Slices 1 and 2 built and device-confirmed 2026-08-02**
-  (`pocket-221-time-stretch-quality`). **Slice 3 built 2026-08-04** (`pocket-226-tmpt-ab-and-headroom`)
-  — §5's trim is shipping behaviour, and §4's `'tmpt'` A/B rig is in place behind a Debug toggle.
-  **The §4 decision is open** and stays open until the four-part device rule is answered by ear; this
-  status line is where the answer gets written. Build notes at the end.
+- **Status:** Accepted and **complete**. Slices 1 and 2 built and device-confirmed 2026-08-02
+  (`pocket-221-time-stretch-quality`); slice 3 built 2026-08-04 (`pocket-226-tmpt-ab-and-headroom`).
+  **§4 is settled: `'tmpt'` is ADOPTED** (device A/B 2026-08-04 — *"the sound quality is so much
+  better"*), made the default on `pocket-228-adopt-tmpt-and-freeform-click`, and the Debug toggle is
+  deleted. Build notes at the end, including what the adoption did and did not verify.
 - **Date:** 2026-08-02
 - **Builds on:** ADR 0001 (local files are the audio source — the only reason we own a stretcher at
   all) · ADR 0006 / 0008 (region looping, gapless wrap) · ADR 0013 (the per-loop speed ramp) ·
@@ -441,3 +441,50 @@ device is the *rig*: *Settings → Audio (Debug) → High-quality stretcher*.
 If any fails we stay on `'nutp'` with §2's curve, and the toggle, the `Kind` enum and the
 `highQualityStretcher` key are deleted. §5's trim stays either way — it is shipping behaviour and
 independent of the outcome.
+
+## §4 outcome — `'tmpt'` adopted (2026-08-04, `pocket-228-adopt-tmpt-and-freeform-click`)
+
+**Verdict: adopt.** The device A/B was decisive — *"the `'tmpt'` definitely makes a massive
+difference when I tested it, the sound quality is so much better."* `'tmpt'` is now the default for
+every build, and the Debug toggle, its `AppStorage` key and its Settings block are deleted, per §4's
+own rule that adoption is written into this ADR rather than left as a switch.
+
+**How the four-part rule was actually satisfied** — stated precisely, because two of the four were
+answered by judgment rather than by measurement and that should not be quietly rounded up:
+
+1. **Preferred by ear** — ✅ met, emphatically, and this is the criterion that mattered. It also
+   closes the loop on slice 2's finding that *0.25× is still rough with the curve fixed*: the curve
+   was not the ceiling at a 4× stretch, the AU was, exactly as §4 predicted.
+2. **No dropouts under a full graph** — ⚠️ **not tested with a recording take armed.** Carried as a
+   known gap rather than a pass. It is the one remaining way this could be wrong in the field, and it
+   is cheap to check.
+3. **CPU and battery** — ✅ accepted on the stated basis: *"I can't see any effect on the CPU but I
+   don't tend to use it longer than a routine."* That is a real answer for the real usage pattern,
+   and it is worth recording that it is a session-length judgment rather than an instrumented one.
+4. **Rate 0.25 at the boundary** — ✅ accepted, with the scope deliberately narrowed: 0.25× is the
+   product floor and *"unless there's a case to make it even slower, that won't be changing"*. So
+   `'tmpt'`'s range having **no headroom below our floor** (0.25…4.0 vs `'nutp'`'s 1/32…32) is an
+   accepted limitation rather than an unexamined one. Anything that wants a slower floor reopens this.
+
+**`'nutp'` is kept as a fallback, and the reason is narrow and specific.**
+`AVAudioUnitTimeEffect` has **no failable initialiser**, so an absent `'tmpt'` would surface as a dead
+node — a **silent practice screen**, on the app's most-used feature. `makeHighQualityUnit` already
+looks the component up with `AudioComponentFindNext` and returns `nil`, so retaining the
+`.newTimePitch` arm costs a `switch` case and buys a guarantee that the app always makes sound. That
+is the *only* justification; it is not kept as a quality option, and there is no way for a player or a
+developer to select it.
+
+A consequence worth stating plainly: **`StretchQuality` is now fallback-only code.** Smoothness is a
+`NewTimePitch` parameter and `'tmpt'` has no equivalent, so slice 1's curve — and its 8 unit tests —
+only ever run if the fallback fires. It stays because the fallback stays; if `'nutp'` is ever deleted,
+`StretchQuality` goes with it in the same commit.
+
+**What this reopens.** ADR 0124 capped the speed axis at **1.5× because the stretch smeared
+transients**. That premise has now measurably changed. Re-testing the ceiling is worth doing and is
+**not** done here — it is a product decision about how far a player should be allowed to push, and it
+deserves its own ADR rather than riding in on an audio-quality change.
+
+**Verification:** `swiftlint --strict` clean, generic-simulator build clean, and 5 new
+`TimeStretcherKindTests` — including one that resolves a real `TimeStretcher()` through the same
+`AudioComponentFindNext` path the app uses and asserts the kind comes back `.highQuality`, so a
+future OS that dropped the component would fail a test rather than silently demote every session.

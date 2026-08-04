@@ -136,6 +136,12 @@ All notable changes to Pocket are documented here. Format loosely follows
   the units a loop trains in — instead of having to leave and open the loop on its own. Ear-training
   blocks don't have this: there's no ramp there to tune.
 
+### Changed
+- **Slowed-down audio sounds substantially better.** Apple ships two time-stretchers and we'd always
+  used the cheaper one. The other is genuinely better, so the app now uses it — the difference is
+  most obvious where it matters most, down at quarter speed, which is where the old one struggled.
+  Nothing to turn on and nothing to choose: it's just what slowing down sounds like now.
+
 ### Fixed
 - **A loud track and a loud click can't distort each other any more.** The song and the metronome
   land in the same place on the way out, and a track mastered near the top of the scale plus an

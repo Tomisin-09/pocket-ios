@@ -13,7 +13,6 @@ import SwiftUI
 struct DebugAudioSection: View {
 
     @AppStorage(AppSettings.Key.compensateStretchLatency) private var compensateStretchLatency = true
-    @AppStorage(AppSettings.Key.highQualityStretcher) private var highQualityStretcher = false
 
     var body: some View {
         Section {
@@ -26,15 +25,6 @@ struct DebugAudioSection: View {
                  + "Turn it off to hear the uncorrected build. Judge it at 0.25×, where the two "
                  + "differ most — and against a song whose BPM you typed rather than tapped, since "
                  + "a tapped grid has the same offset baked into it.")
-        }
-        Section {
-            Toggle("High-quality stretcher", isOn: $highQualityStretcher)
-        } footer: {
-            Text("DEBUG only. Off is the shipping behaviour (AUNewTimePitch). On swaps in Apple's "
-                 + "high-quality stretcher, which is why slowing down might sound better — 0.25× is "
-                 + "a 4× stretch and is still rough on the shipping unit. Takes effect the next time "
-                 + "you open a song. A/B on real material at 0.5× and 0.25×, through speakers and "
-                 + "headphones, and watch for dropouts with a recording take armed.")
         }
     }
 }

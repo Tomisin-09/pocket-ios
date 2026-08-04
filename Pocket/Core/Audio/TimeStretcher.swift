@@ -36,28 +36,26 @@ final class TimeStretcher {
     /// says `NewTimePitch` *"is computationally less expensive"* — cheaper is the only advantage
     /// claimed for the one we have always used.
     ///
-    /// ADR 0140 §4 declines to swap on that basis alone, so the choice is a Debug-only A/B judged by
-    /// ear on device against a four-part rule. `TimeStretcher` is the seam that makes it a one-line
-    /// choice; nothing outside this file knows which unit is running.
-    enum Kind {
-        /// `'nutp'` — `AVAudioUnitTimePitch`. The shipping default. Rate and smoothness are Swift
-        /// properties; smoothness follows `StretchQuality`.
+    /// ADR 0140 §4 declined to swap on that basis alone and put the question behind a device A/B.
+    /// **The A/B was run on 2026-08-04 and `'tmpt'` won** — *"the sound quality is so much better"* —
+    /// so it is now the default and there is no toggle. `.newTimePitch` survives as the **fallback**
+    /// for the one case that would otherwise be catastrophic: see `makeHighQualityUnit`.
+    enum Kind: Equatable {
+        /// `'nutp'` — `AVAudioUnitTimePitch`. No longer the default; retained as the availability
+        /// fallback. Rate and smoothness are Swift properties, and smoothness follows the
+        /// `StretchQuality` curve — which is why that curve is still live code rather than a leftover.
         case newTimePitch
         /// `'tmpt'` — `kAudioUnitSubType_TimePitch`, Apple's high-quality stretcher, as an
-        /// `AVAudioUnitTimeEffect`. Rate goes through `AudioUnitSetParameter`, and it has **no**
-        /// smoothness parameter — that knob is a `NewTimePitch` feature, so `StretchQuality` doesn't
-        /// apply here and its curve is simply unused.
+        /// `AVAudioUnitTimeEffect`. **The shipping stretcher.** Rate goes through
+        /// `AudioUnitSetParameter`, and it has **no** smoothness parameter — that knob is a
+        /// `NewTimePitch` feature, so `StretchQuality` does not apply on this path.
         case highQuality
 
-        /// The kind this build should run. Release is always `.newTimePitch`: ADR 0140 §4 says the
-        /// swap is adopted by writing it into the ADR after the device A/B, not by shipping a toggle.
-        static var configured: Kind {
-            #if DEBUG
-            return AppSettings.highQualityStretcher ? .highQuality : .newTimePitch
-            #else
-            return .newTimePitch
-            #endif
-        }
+        /// The kind every build runs. Not a setting and not a Debug flag: ADR 0140 closes off exposing
+        /// the stretcher to the player, and §4's rule was that the swap is adopted by *writing it into
+        /// the ADR* once the device A/B settles it — which it now has. The only way this resolves to
+        /// `.newTimePitch` is the availability fallback in `init`.
+        static var configured: Kind { .highQuality }
     }
 
     /// The unit itself, in the one shape that differs per kind. Everything else about the two is
@@ -133,8 +131,12 @@ final class TimeStretcher {
 
     /// Instantiate `'tmpt'`. Looked up in the component registry first: it is not a Swift-wrapped AU,
     /// so an absent component would otherwise surface as a dead node in the graph rather than as a
-    /// `nil` here. Returning `nil` lets `init` fall back to the shipping unit — a Debug A/B toggle
-    /// must never be able to leave the practice screen silent.
+    /// `nil` here.
+    ///
+    /// **This is the whole reason `.newTimePitch` still exists.** `AVAudioUnitTimeEffect` has no
+    /// failable initialiser, so without the lookup an absent `'tmpt'` would leave the practice screen
+    /// **silent** — the worst failure this app has, on its most-used feature. The fallback costs a
+    /// handful of lines and a `switch` arm; a silent slowdown costs the session.
     private static func makeHighQualityUnit() -> AVAudioUnitTimeEffect? {
         var description = AudioComponentDescription(componentType: kAudioUnitType_FormatConverter,
                                                     componentSubType: kAudioUnitSubType_TimePitch,
