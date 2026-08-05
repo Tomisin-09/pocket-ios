@@ -1,6 +1,9 @@
 # ADR 0132 — The click withdraws itself: silent bars as the default practice
 
-- **Status:** Proposed.
+- **Status:** Accepted, **§4 amended 2026-08-05 after the device pass** — see *Amendment: the
+  metronome tool, steady click only*. Slice 1 built (2026-08-05) — §1–§5, §7, §7a, §8. Slice 2 (§6,
+  the per-exercise override) remains deferred; it is the last slice of the v2 close-out plan on
+  purpose.
 - **Date:** 2026-07-31
 - **Builds on:** ADR 0043 (the standalone metronome and its sample-clock grid) · ADR 0048/0052 (the
   count-in and its beat boundary) · ADR 0071 R5 (per-slot click voicing — `scheduledLevel` is the one
@@ -105,6 +108,11 @@ interaction is quieter — the withdrawal simply runs its eight-bar cycle throug
 behaviours are acceptable; neither needs a flag.
 
 ### 4. Where it applies, and the one exclusion that has to be enforced properly
+
+> **Amended 2026-08-05.** The scope below was narrowed after playing Slice 1 on a device — to the
+> free-play metronome tool, with a steady click. See *Amendment: the metronome tool, steady click
+> only* at the end of this ADR. The strum exclusion and its reasoning stand and are unchanged; they
+> are simply now unreachable behind the host gate.
 
 **In scope:** every run driven by `StandaloneMetronomeEngine` — the free-play metronome tool, and
 every exercise run including those inside a routine block.
@@ -377,3 +385,63 @@ front rather than under a failing `--strict` lint:
 - **Ship the per-exercise override in the same slice.** Rejected — it is the only part that can break
   an install, and the global default has to prove the distributions first. Deciding it now and
   building it second costs nothing.
+
+## Amendment: the metronome tool, steady click only (2026-08-05)
+
+Slice 1 shipped with §4's scope as written and was played on a device. The judgement afterwards was
+that **a moving tempo and a withdrawing click are two demands at once**, and the combination is worse
+than either — the click leaves exactly as the thing you are measuring yourself against changes, so
+you cannot tell a drift from a step. §3 argued the ramp interaction would distribute itself correctly
+without a rule; on the device, what it distributes is confusion.
+
+So the scope narrows to **the free-play metronome tool, with a steady click**. Three consequences,
+each of which makes something in this ADR smaller rather than more complicated:
+
+- **The control moves out of Settings** onto the metronome screen's meter menu, beside the time
+  signature and the subdivision — the same kind of choice, how the bar is filled. A global Settings
+  row would promise app-wide behaviour the feature deliberately no longer has, which is a worse lie
+  than a slightly less discoverable control.
+- **Withdrawal is opt-in per host, not derived.** `allowsClickWithdrawal` is set by `MetronomeView`
+  and nowhere else. Deriving it — "no training ramp", say — would silently include any future screen
+  that drives this engine, which is precisely the class of mistake §4 was already worried about with
+  `ExerciseTemplate`.
+- **§8's count-in machinery is gone, and the origin rule got better.** With no ramp there is no
+  count-in, so there is no engage boundary to capture. The origin is instead the **next bar downbeat
+  at or after the tick withdrawal became eligible**, which handles a case the count-in version did
+  not: a tier switched on mid-run, or a ramp stopping mid-bar, would otherwise have offset every
+  later silent bar from the music by a fraction of a bar. The origin is also **dropped** whenever
+  withdrawal is excluded, so a cycle suspended by a climb restarts at bars 1–2 full rather than
+  resuming wherever the tick counter reached.
+
+**What this costs.** §3's emergent warm-up/dwell distribution is no longer reachable — it was the
+ADR's most elegant argument and it is now hypothetical. §7a's "plain untemplated metronome exercise"
+also loses the feature, which is a genuine loss: it was one of the two surfaces the ADR said this
+works best on. Both are recoverable by relaxing one guard in `ClickWithdrawal.resolve`, and neither
+should be relaxed without device evidence that the ramp interaction is wanted.
+
+**What it does not cost.** `drillOriginTick` survives, so §8's claim to have paid ADR 0131 §5's bill
+for the deferred audible warning still holds.
+
+## Build notes (Slice 1, 2026-08-05)
+
+Three places where the build differs from the plan above, recorded so the next reader isn't puzzled.
+
+- **The resolver landed whole, in Slice 1.** `resolve(exercise:global:strumArmed:)` ships with its
+  `exercise:` argument now, every caller passing `nil`. §6's *stored field* is still deferred — no
+  `@Model` changed — but the resolution rule is pure, and writing it once with the `nil`-means-inherit
+  case tested is cheaper than shipping a two-argument version and widening it later. Slice 2 only has
+  to supply the argument.
+
+- **The caption is one slot, so one view owns it.** `TempoWarningCaption` became `RunTempoCaption` and
+  resolves warning → withdrawal → ordinary caption in one place. The alternative was a second view
+  with overlapping logic competing for the same line. It also put the caption on the **free-play
+  metronome**, which had none — §7a says that is where this feature lands hardest, so it needed the
+  word most.
+
+- **The core file's line budget was paid for, not waived.** A stored `drillOriginTick` cannot live in
+  an extension, so "never the core file" was impossible to honour exactly.
+  `StandaloneMetronomeEngine.swift` made room by deleting its private `subSample` helper — whose own
+  doc comment said it mirrored `MetronomeGrid.frames` — and calling `MetronomeGrid.frames` directly,
+  removing a duplicated rounding rule. The origin capture is then lazy, inside `withdrawalVerdict`,
+  which already receives the grid resolution it must be measured in, so `tick()` gained nothing. The
+  file ends at 398 lines, one below where it started.

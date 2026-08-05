@@ -48,6 +48,8 @@ struct ExerciseRunView: View {
     /// The top-level "Practice Settings" disclosure — collapsed by default (V1 feedback).
     @State var showSettings = false
     @State var signature: TimeSignature = .standard
+    /// Whether the meter sheet is showing (setup only — the picker is hidden once a run starts).
+    @State private var showingSignaturePicker = false
     @State var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State var showingJournal = false
@@ -228,9 +230,10 @@ struct ExerciseRunView: View {
                         .font(.pocketMono(.largeTitle))
                         .foregroundStyle(PocketColor.textPrimary)
                         .contentTransition(.numericText())
-                    // Becomes the tempo-change warning while one is showing (ADR 0131). Its own view
-                    // so the per-tick read doesn't re-render the drill surface below.
-                    TempoWarningCaption(engine: engine, fallback: liveTempoCaption)
+                    // Becomes the tempo-change warning while one is showing (ADR 0131). The shared
+                    // caption also carries ADR 0132's withdrawal word, which never applies on this
+                    // screen. Its own view so the per-tick read doesn't re-render the drill surface.
+                    RunTempoCaption(engine: engine, fallback: liveTempoCaption)
                 }
             }
             ExerciseTemplateSurface(engine: engine, exercise: exercise, labelMode: labelMode)
@@ -241,21 +244,24 @@ struct ExerciseRunView: View {
 
     // MARK: - Setup (stopped)
 
-    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact nav-bar menu shown only
-    /// while stopped. Drives the click's accents + count-in; committed on Start, so leaving discards it.
+    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact nav-bar control shown
+    /// only while stopped. Drives the click's accents + count-in; committed on Start, so leaving
+    /// discards it.
+    ///
+    /// A sheet rather than a popup menu, sharing `OptionListSection` with the metronome's own settings
+    /// so the two surfaces that choose a time signature read identically. In a menu these labels
+    /// truncated — "12/8 · Slow blues · doo-wop (in 4)" is not a menu-sized string, and the musical
+    /// context is the half that tells you which meter you want.
     private var signaturePicker: some View {
-        Menu {
-            Picker("Time signature", selection: $signature) {
-                ForEach(TimeSignature.presets) { preset in
-                    Text("\(preset.name) · \(preset.context)").tag(preset)
-                }
-            }
-        } label: {
+        Button { showingSignaturePicker = true } label: {
             Text(signature.name)
                 .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(PocketColor.practice)
         }
         .accessibilityLabel("Time signature: \(signature.name)")
+        .sheet(isPresented: $showingSignaturePicker) {
+            MeterPickerSheet(signature: $signature)
+        }
     }
 
     /// The collapsible **Practice Settings** panel (V1 feedback): the three tempos + the nested

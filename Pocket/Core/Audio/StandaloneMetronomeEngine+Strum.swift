@@ -15,6 +15,13 @@ extension StandaloneMetronomeEngine {
         let ticksPerBeat: Int
     }
 
+    /// The live sub-tick grid: an armed strum pattern's slot resolution, else the subdivision's.
+    /// One expression, read by the driver's scheduling loop and by the withdrawal's bar arithmetic,
+    /// so the two can never disagree about how many ticks make a beat.
+    var currentTicksPerBeat: Int {
+        strumSchedule?.ticksPerBeat ?? max(1, subdivision.ticksPerBeat)
+    }
+
     /// Arm (or clear) a strum-pattern preview before `start()`. `nil` restores the normal metronome.
     /// The pattern's cycle is one bar of slots; the scheduler wraps it for the preview's duration.
     func setStrumPattern(_ pattern: StrumPattern?) {
@@ -28,7 +35,21 @@ extension StandaloneMetronomeEngine {
     /// accented per the time signature, the in-between sub-ticks the quieter subdivision. A **count-in**
     /// always uses the meter default (a steady pulse to count in on), so the pattern only sounds once
     /// the drill itself begins (ADR 0071 R5 · ADR 0052).
+    ///
+    /// The precedence chain is `count-in > warning > withdrawal > strum pattern > meter` (ADR 0132 §4;
+    /// the warning's audible half is deferred). **Withdrawal and a strum pattern can never both be
+    /// active** — an armed schedule excludes withdrawal in `activeWithdrawal` — so that edge is
+    /// mutually exclusive rather than ordered, and the order asserted below is what the tests pin.
+    ///
+    /// The count-in is protected by *arithmetic*, not by the `automatorCountingIn` flag: that flag
+    /// flips on a **heard** beat while this runs a look-ahead window ahead of it, so only the tick
+    /// index measured against the captured drill origin places the boundary exactly.
     func scheduledLevel(forTick tickIndex: Int, ticksPerBeat: Int) -> ClickLevel? {
+        switch withdrawalVerdict(forTick: tickIndex, ticksPerBeat: ticksPerBeat) {
+        case .silent: return nil
+        case .downbeat: return .accent
+        case .unchanged: break
+        }
         if let schedule = strumSchedule, !schedule.levels.isEmpty, !automatorCountingIn {
             let count = schedule.levels.count
             return schedule.levels[((tickIndex % count) + count) % count]

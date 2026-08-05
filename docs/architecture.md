@@ -221,8 +221,40 @@ final interval. The ramp reports distance only; `PendingTempoChange.window(bpm:b
 what counts as *soon* — at most one bar, clamped to half the plateau so a one-interval plateau can't
 sit permanently lit. `StandaloneMetronomeEngine+Warning` gates it on the setting, a live ramp, and not
 counting in. Carriers are visual only for now (caption, staircase pre-light, and a static edge on
-`ExerciseTemplateSurface`, the one view every run configuration passes through); the audible mode and
-its scheduled-beat boundary are deferred.
+`ExerciseTemplateSurface`, the one view every run configuration passes through); the audible mode is
+deferred, but its scheduled-beat boundary is no longer missing — ADR 0132 built it (below).
+
+**The click withdraws itself** (ADR 0132, Slice 1): the metronome thins out on a fixed **eight-bar**
+cycle so the player carries the pulse rather than leaning on it. The pure `ClickWithdrawal`
+(`Core/Audio/`) holds three named tiers — `gentle` / `standard` / `deep`, plus `off`, the default —
+each a table of four bar-pairs over `Level` (`full` / `downbeatOnly` / `silent`); `verdict(forTick:…)`
+turns a scheduled tick into `unchanged` / `downbeat` / `silent`. It is a per-bar use of the same
+mechanism a strum pattern's rests already use: the grid keeps running, the phase never moves, and some
+ticks don't sound. `scheduledLevel`'s precedence is now `count-in > warning > withdrawal > strum
+pattern > meter`, asserted in tests rather than left to reading order.
+
+`resolve(exercise:global:onMetronomeTool:rampRunning:strumArmed:)` holds all three exclusions in one
+pure, tested place (§4, **as amended after the device pass**): it applies on the **free-play metronome
+tool only**, and only while the click is **steady** — a running ramp suspends it, because a moving
+tempo and a withdrawing click are two demands at once. The host gate is an explicit opt-in
+(`allowsClickWithdrawal`, set by `MetronomeView` alone) rather than derived, so no future screen
+driving this engine inherits the behaviour by accident; the control lives in that screen's meter menu
+rather than in Settings, since a global row would promise app-wide behaviour the feature no longer
+has. The strum exclusion stands and is now unreachable behind the host gate.
+
+`StandaloneMetronomeEngine+Withdrawal` supplies what the pure type can't know, including
+**`drillOriginTick`** — the tick the cycle counts bar 0 from, which the engine could not previously
+express at all (`tickIndex` counts from `phaseOrigin`, and nothing recorded where a drill's own bars
+began). It is captured lazily as the **next bar downbeat at or after** the tick withdrawal became
+eligible, so a tier switched on mid-run or a ramp stopping mid-bar can't offset the cycle from the
+meter; it is **dropped** whenever withdrawal is excluded, so a suspended cycle restarts at bars 1–2
+full instead of resuming where the tick counter reached; and it is **re-captured, never carried**,
+whenever `reanchorPhase()` restarts the tick counter, so a manual tempo/meter/subdivision change
+restarts the cycle full. This is the same engine state ADR 0131 §5 specified for its deferred audible
+warning, so that feature is still materially cheaper. `BeatIndicator` reads `heardWithdrawalLevel` —
+**the level the click was voiced at**, so the dots cannot diverge from the audio and a visual
+metronome can't take over — and the shared `RunTempoCaption` carries the static word (the VoiceOver
+carrier, since the dots are `accessibilityHidden`), with a tempo warning outranking it.
 
 The per-tick SwiftUI views (dots, session readout, warning caption and edge) are
 isolated structs so the ~50 Hz updates don't re-render the controls (which would dismiss

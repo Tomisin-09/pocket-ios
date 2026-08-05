@@ -19,6 +19,8 @@ struct MetronomeView: View {
     /// Wall-clock times of recent taps for tap-tempo (`TempoMath.bpm(fromTapTimes:)`).
     @State private var taps: [TimeInterval] = []
     @Environment(\.dismiss) private var dismiss
+    /// Whether the meter/withdrawal sheet is showing — everything that shapes how the bar is filled.
+    @State private var showingSettings = false
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
     /// average against a new one.
@@ -78,7 +80,13 @@ struct MetronomeView: View {
             }
         }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
+        // The free-play metronome is the **only** host that offers click withdrawal (ADR 0132 §4, as
+        // amended): opt in explicitly, so no screen inherits it by sharing the engine type.
+        .onAppear { engine.allowsClickWithdrawal = true }
         .onDisappear { engine.stop() }
+        .sheet(isPresented: $showingSettings) {
+            MetronomeSettingsSheet(engine: engine)
+        }
     }
 
     // MARK: - Tempo readout
@@ -94,9 +102,11 @@ struct MetronomeView: View {
                     .font(.pocketMono(.largeTitle))
                     .foregroundStyle(PocketColor.textPrimary)
                     .contentTransition(.numericText())
-                Text("BPM · \(engine.tempoMarking.name)")
-                    .font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
+                // Free play is where the click withdrawal lands hardest (ADR 0132 §7a) — the eyes are
+                // on the hands and the click is the only reference — so the caption carries its word
+                // here too. Its own view, so the per-tick read doesn't rebuild these controls.
+                RunTempoCaption(engine: engine, fallback: "BPM · \(engine.tempoMarking.name)",
+                                tint: PocketColor.metronome)
             }
             Spacer()
             tempoStepper(symbol: "plus", label: "Increase tempo", delta: 1)
@@ -220,45 +230,22 @@ struct MetronomeView: View {
     }
 }
 
-// MARK: - Meter (time signature + subdivision)
+// MARK: - Meter (time signature + subdivision + click withdrawal)
 
 extension MetronomeView {
-    /// One nav-bar menu for both the **time signature** and the **subdivision** — they shape
-    /// the same thing (how the bar and beat are filled), so folding the subdivision into the
-    /// meter menu reclaims a whole content row. The label shows the compact signature, plus
-    /// the subdivision glyph in the accent colour when one is active ("4/4 ♫"). In a same-file
-    /// extension so it doesn't bloat the main view body (SwiftLint type_body_length).
+    /// One nav-bar control for everything that shapes **how the bar is filled** — time signature,
+    /// subdivision, and click withdrawal. The label shows the compact signature plus the subdivision
+    /// glyph in the accent colour when one is active ("4/4 ♫"). In a same-file extension so it doesn't
+    /// bloat the main view body (SwiftLint type_body_length).
+    ///
+    /// It **opens a sheet, not a menu.** As a menu this had reached fifteen rows across three groups:
+    /// it scrolled, so its first row was always clipped and you couldn't tell which group you were in;
+    /// the longer signatures wrapped onto two lines; and click withdrawal, added last, sat at the
+    /// bottom where you had to scroll blind to reach it. `MetronomeSettingsSheet` also has room for
+    /// the footers — which is how click withdrawal got back the explanation it lost on the way out of
+    /// Settings, and it is the one control here that can't do without one.
     var meterMenu: some View {
-        Menu {
-            Section("Time signature") {
-                ForEach(TimeSignature.presets) { signature in
-                    Button {
-                        engine.setTimeSignature(signature)
-                        haptic(.light)
-                    } label: {
-                        if signature == engine.timeSignature {
-                            Label("\(signature.name) · \(signature.context)", systemImage: "checkmark")
-                        } else {
-                            Text("\(signature.name) · \(signature.context)")
-                        }
-                    }
-                }
-            }
-            Section("Subdivision") {
-                ForEach(Subdivision.pickerOrder) { value in
-                    Button {
-                        engine.setSubdivision(value)
-                        haptic(.light)
-                    } label: {
-                        if value == engine.subdivision {
-                            Label(value.label, systemImage: "checkmark")
-                        } else {
-                            Text(value.label)
-                        }
-                    }
-                }
-            }
-        } label: {
+        Button { showingSettings = true } label: {
             HStack(spacing: 4) {
                 Text(engine.timeSignature.name)
                     .font(.pocketMono(.body))
@@ -273,7 +260,7 @@ extension MetronomeView {
                     .foregroundStyle(PocketColor.textSecondary)
             }
         }
-        .accessibilityLabel("Time signature \(engine.timeSignature.name), "
+        .accessibilityLabel("Metronome settings. Time signature \(engine.timeSignature.name), "
                             + "subdivision \(engine.subdivision.label)")
     }
 }
