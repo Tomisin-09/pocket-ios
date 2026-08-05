@@ -9,7 +9,7 @@ import SwiftUI
 /// caret goes with it. The trigger here is therefore a height *increase while focused*, not a
 /// keystroke — scrolling on every character would be worse than the bug it fixes.
 ///
-/// Two pieces because the fields are not all in their hosts. `LoopModeNoteSection` and
+/// Two pieces because the fields are not all in their hosts. `JournalNoteComposer` and
 /// `FreeformInstructionsSection` are reusable `Section`s with two hosts each, so a field cannot reach
 /// its own scroll container: `KeyboardFollowingScroll` publishes the `ScrollViewProxy` into the
 /// environment and `scrollsIntoViewWhenFocused` reads it back out, wherever it happens to be nested.

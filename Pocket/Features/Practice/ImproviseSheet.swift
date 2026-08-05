@@ -36,7 +36,7 @@ struct ImproviseView: View {
                                            playingStatus: "Looping — play over it",
                                            idleStatus: "Tap to start the backing track")
                 }
-                LoopModeNoteSection(loop: loop, kind: .improvise,
+                JournalNoteComposer(owner: .loop(loop), kind: .improvise,
                                     header: "Note what you played",
                                     placeholder: "What came out? "
                                         + "(e.g. the b5 works over the turnaround)")

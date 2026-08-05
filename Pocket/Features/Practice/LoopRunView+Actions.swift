@@ -8,6 +8,16 @@ import SwiftUI
 /// module-internal so this extension can drive it.
 extension LoopRunView {
 
+    /// Write a new entry, snapshotting the loop's current mastery + command tempo (ADR 0058). Serves
+    /// the full `JournalSheet`; the compact capture sheet and the inline run card (ADR 0142) own
+    /// their own writes, since both are reachable where this screen's sheet is not.
+    func addJournalEntry(_ text: String, _ kind: EntryKind) {
+        if JournalWriter.add(to: .loop(loop), text: text, kind: kind, into: modelContext) {
+            try? modelContext.save()
+            haptic(.light)
+        }
+    }
+
     /// Seed the editor once. With a measured command, load the saved speeds as-is; without one,
     /// default command to the loop's start speed and working to a floor below it (so the two start
     /// apart, not equal), mirroring `ExerciseRunView`.

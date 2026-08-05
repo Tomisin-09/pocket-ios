@@ -6,6 +6,9 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Fixed
+- **A freeform block's journal actually saves now.** Its Journal sheet was wired up with nothing
+  behind it, so Add entry, editing an entry and swiping one away all appeared to work and did
+  nothing. It writes through the same path as every other unit.
 - **Finishing a loop inside a routine now offers to move its tempo.** Run a loop on its own and the
   Done screen has always asked whether to raise or settle the speed you own it at. Run the *same*
   loop as a block in a routine and the offer silently wasn't there — you got the rating and the note
@@ -42,6 +45,18 @@ All notable changes to Pocket are documented here. Format loosely follows
   the artist as well as the title, because which one you remember is a coin toss.
 
 ### Added
+- **You can write a journal note without stopping.** The journal used to be reachable only from a
+  stopped run screen, on its own — so there was nowhere to write while the ramp was climbing, and
+  nowhere at all inside a routine, which is where most practice happens. Every run screen now carries
+  a ✎ in the nav bar that opens a small note: one field, a tag, Save. **It doesn't touch the
+  audio** — the drill keeps running behind it. Where a screen has genuine room the field is right
+  there on it: on a freeform block, and under the live readout while a loop trains, alongside the
+  ones ear training and improvise already had.
+- **The Journal now takes you to what you wrote about.** Every note and take in the Journal names its
+  unit — "Little Wing · Verse riff", "Spider · exercise" — and that name was plain text. Tap it and
+  you land on that exercise or loop. A loop opens in the mode it qualifies for, so an unmeasured loop
+  you were training your ear on opens ear training rather than a tempo ramp with nothing to anchor it.
+
 - **The click can now withdraw itself.** A metronome that's there for every beat of every bar is a
   worse practice tool than it looks — you end up correcting against it continuously instead of
   carrying time yourself. So it can now step back on a fixed eight-bar cycle: a couple of bars where

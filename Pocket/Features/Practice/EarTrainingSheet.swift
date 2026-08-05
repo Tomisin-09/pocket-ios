@@ -32,7 +32,7 @@ struct EarTrainingView: View {
                     ContinuousLoopControls(player: player,
                                            playingStatus: "Looping — hum or sing along")
                 }
-                LoopModeNoteSection(loop: loop, kind: .ear,
+                JournalNoteComposer(owner: .loop(loop), kind: .ear,
                                     header: "Note what you hear",
                                     placeholder: "What did you hear? "
                                         + "(e.g. starts on the b3, descending run)")
