@@ -185,8 +185,13 @@ Elsewhere, don't reach for a literal hex in views; go through
   (the user is never left wondering what's hidden). Example collapsed song-info
   header: `G minor · ★★★☆☆ · Groove / lead phrasing`.
 - **A grouped list's sections collapse from their headers** (`CollapsibleLibrarySection`): a leading
-  chevron, the section title, and a trailing **count** — the summary line, shown in both states so
-  the header doesn't grow a number the moment you shut it. Built as a `Section` with a tappable
+  chevron, an **optional icon**, the section title, and a trailing **count** — the summary line,
+  shown in both states so the header doesn't grow a number the moment you shut it. The icon is
+  offered only where the bucket already *means* something that owns a glyph — Exercises groups by
+  template, and a template has one; grouping by initial letter, mastery or song title does not, and
+  inventing a symbol for "#" or "Needs work" would be decoration rather than recognition. It is
+  decorative even where it appears: the header's accessibility label stays title + count. Built as a
+  `Section` with a tappable
   header, never a `DisclosureGroup` inside the list, which would indent the rows out of the row
   grammar (`.pocketRowActions` swipes, full-width taps) every list shares. **Collapse is what
   persists, not expansion**, so a bucket that appears later arrives open; and a **live search forces

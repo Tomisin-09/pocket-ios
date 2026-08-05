@@ -36,6 +36,11 @@ struct SongGroupFields {
 struct LibrarySection<Item> {
     let title: String
     let items: [Item]
+    /// An SF Symbol for the header, or `nil` where the bucket has no natural glyph. The Exercises
+    /// library groups by *template*, which already owns an icon (`ExerciseTemplate.iconName`); the
+    /// Songs library groups by initial letter or mastery and the Loops library by song title, and
+    /// inventing a glyph for "#" or "Needs work" would be decoration rather than meaning.
+    var icon: String?
 }
 
 /// Pure grouping/sorting for the library list (ADR 0035). Generic over the item type

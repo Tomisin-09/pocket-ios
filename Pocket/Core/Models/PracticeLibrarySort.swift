@@ -81,6 +81,9 @@ struct ExerciseSortFields {
     /// The exercise template's display name (ADR 0068, revised) — the library **section** key
     /// (Strumming, Scales, Basic, …). Defaulted so sort-only call sites keep compiling.
     var templateName: String = ExerciseTemplate.basic.displayName
+    /// The template's SF Symbol, drawn on the section header so a bucket is recognisable before it is
+    /// read. Defaulted alongside `templateName` so sort-only call sites keep compiling.
+    var templateIcon: String = ExerciseTemplate.basic.iconName
     /// The exercise's instrument (ADR 0116 S4) — the axis the Library's progressive-disclosure filter
     /// narrows on. Defaulted to guitar so sort-only call sites keep compiling.
     var instrument: Instrument = .guitar
@@ -192,15 +195,21 @@ enum PracticeLibrarySort {
                                        ascending: Bool,
                                        fields: (Item) -> ExerciseSortFields) -> [LibrarySection<Item>] {
         var buckets: [String: [Item]] = [:]
+        // The section's icon rides along with its name, keyed by the same bucket. Carrying it here
+        // beats reverse-mapping a display name back to a template at the view: the bucket key *is* a
+        // display name, so that lookup would break the moment two templates read alike.
+        var icons: [String: String] = [:]
         for item in items {
-            buckets[fields(item).templateName, default: []].append(item)
+            let itemFields = fields(item)
+            buckets[itemFields.templateName, default: []].append(item)
+            icons[itemFields.templateName] = itemFields.templateIcon
         }
         return buckets.keys
             .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
             .map { title in
                 let ordered = sortedExercises(buckets[title] ?? [], by: key,
                                               ascending: ascending, fields: fields)
-                return LibrarySection(title: title, items: ordered)
+                return LibrarySection(title: title, items: ordered, icon: icons[title])
             }
     }
 

@@ -41,6 +41,21 @@ final class AudioSessionLeaseTests: XCTestCase {
         XCTAssertEqual(lease.holders, 0)
     }
 
+    /// A freeform block with its click on, recording: the screen holds the record session **and** the
+    /// take holds its own lease, on top of the metronome's. Silencing the click mid-take must not
+    /// deactivate the session — that is what read a live take's duration as `0` and deleted the file
+    /// (device pass 2026-08-05).
+    func testARecordingTakeKeepsTheSessionAliveWhenTheClickStops() {
+        var lease = AudioSessionLease()
+        lease.retain()                 // the screen holds the record session (`holdRecordSession`)
+        lease.retain()                 // the metronome, started on appearance
+        lease.retain()                 // the take begins
+        XCTAssertFalse(lease.release(), "silencing the click must not deactivate a live recorder")
+        XCTAssertFalse(lease.release(), "the take still holds one")
+        XCTAssertTrue(lease.release(), "…and the last one out deactivates")
+        XCTAssertEqual(lease.holders, 0)
+    }
+
     func testHoldersNeverGoNegative() {
         var lease = AudioSessionLease()
         for _ in 0..<5 { lease.release() }

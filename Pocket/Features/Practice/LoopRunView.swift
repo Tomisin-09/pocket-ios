@@ -197,6 +197,10 @@ struct LoopRunView: View {
         .onAppear(perform: seedIfNeeded)
         .task { await model.loadIfNeeded(); maybeAutoStart() }
         .onChange(of: isRunning) { _, running in
+            // Fires *after* the engine has already stopped and released the shared session, so this
+            // finalises a take on the far side of that release. Safe only because `RecordingController`
+            // holds a lease of its own while recording — don't "fix" it by reordering, there is
+            // nothing here to reorder.
             if !running { finishTakeIfNeeded() }   // run stopped ⇒ never leave a take recording
         }
         .onDisappear { finishTakeIfNeeded(); model.stop() }

@@ -24,6 +24,9 @@ struct ImproviseLoopRunView: View {
     /// When this block began (ADR 0117). An improvise block has no Start — the bed plays from
     /// arrival — so the clock starts on appearance rather than on a transport action.
     @State private var startedAt: Date?
+    /// Takes are on **inside the routine** here (ADR 0069 amendment): an improvise block is
+    /// open-ended by construction, so the take is its only record. Ramped blocks stay gated.
+    @State private var recorder = RecordingController()
 
     init(loop: Loop, routineContext: RoutineRunContext? = nil) {
         self.loop = loop
@@ -32,7 +35,7 @@ struct ImproviseLoopRunView: View {
     }
 
     var body: some View {
-        ImproviseView(loop: loop, player: player)
+        ImproviseView(loop: loop, player: player, recorder: recorder)
             .navigationTitle(loop.name.isEmpty ? LoopRunMode.improvise.label : loop.name)
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
@@ -66,6 +69,9 @@ struct ImproviseLoopRunView: View {
     /// The one completion seam, shared by the Done button and the block running its length — so a
     /// block that timed out logs and advances exactly like one finished by hand.
     private func finish() {
+        // Explicit rather than relying on `ImproviseView`'s teardown to catch it, matching
+        // `FreeformRunView.finish()` — and before the log, since advancing tears this screen down.
+        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
         logCompletedRun()   // before advancing — advancing tears this screen down
         routineContext?.onFinished()
     }

@@ -96,7 +96,11 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     var iconName: String {
         switch self {
         case .basic: return "metronome"
-        case .strumming: return "guitars"
+        // `hand.draw` — the strumming *hand*, not a guitar. It used to be `guitars`, which
+        // `LoopRunMode.improvise` also uses, so the Add-unit sheet showed Strumming and Improvise
+        // wearing the same glyph (device pass 2026-08-05). Improvise keeps `guitars`: jamming over a
+        // backing track is the more literal claim on it.
+        case .strumming: return "hand.draw"
         case .scales: return "stairs"
         case .arpeggios: return "point.topleft.down.to.point.bottomright.curvepath"
         case .chords: return "square.grid.3x3"

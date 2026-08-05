@@ -107,6 +107,9 @@ enum JournalTimeline {
         var parts: [String] = []
         if let owner = ownerLabel(for: item) { parts.append(owner) }
         if let template = templateLabel(for: item) { parts.append(template) }
+        // A named take must be findable by its name — otherwise naming one makes it identifiable
+        // everywhere except the search field that exists to find it.
+        if case .take(let take) = item, let title = take.title { parts.append(title) }
         parts.append(contentsOf: practisedTitles(for: item))
         parts.append(item.date.formatted(date: .abbreviated, time: .omitted))
         parts.append(item.date.formatted(date: .long, time: .omitted))

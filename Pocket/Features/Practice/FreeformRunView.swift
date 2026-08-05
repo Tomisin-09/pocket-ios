@@ -15,6 +15,11 @@ import SwiftUI
 /// ordinary way — a freeform block's stage kind is `.exercise`, which is not ramp-less, so
 /// `RoutinePlayerView` gates it in without a special case.
 ///
+/// **A take is this block's evidence** (ADR 0069 amendment). A freeform block has no ramp, no command
+/// and no tempo trajectory, so a recording is the only record of what was actually played — which is
+/// why the routine gate other run screens keep (`routineContext == nil`) is lifted here. Having no
+/// Start, it records from a **direct toggle** rather than a pre-run arm.
+///
 /// Nothing here grades the playing (F8 / ADR 0070). The app holds the block; the player fills it.
 struct FreeformRunView: View {
     let exercise: Exercise
@@ -33,10 +38,16 @@ struct FreeformRunView: View {
     /// When this block began (ADR 0117). No Start to hang it on, so it starts on appearance — the
     /// same clock `EarLoopRunView` keeps.
     @State private var startedAt: Date?
+    /// Practice takes against this block (ADR 0069 amendment). Driven by a **direct toggle**, not the
+    /// pre-run arm every other surface uses — there is no Start here to arm against.
+    @State private var recorder = RecordingController()
     /// The practice journal sheet (ADR 0058) — a freeform block has a journal like any other exercise.
     @State private var showingJournal = false
     /// The detail sheet, which is also where the instructions are edited after creation.
     @State private var showingDetail = false
+    /// Relisten to this block's takes. A freeform block never opens `ExerciseRunView`, so its
+    /// `PracticeReviewBar` isn't on the path — without this the takes exist only in the Journal tab.
+    @State private var showingTakes = false
 
     var body: some View {
         // The wrapper is what lets the note card scroll clear of the keyboard (N5) — the composer
@@ -46,7 +57,9 @@ struct FreeformRunView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     instructions
                     elapsedReadout
-                    clickToggle
+                    runControls
+                    RecordingStatusView(recorder: recorder)
+                    recordHint
                     noteCard
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -62,9 +75,20 @@ struct FreeformRunView: View {
         .toolbar { toolbarItems }
         .onAppear {
             if startedAt == nil { startedAt = .now }
+            // Before the click, never after: holding the record-capable session open here means the
+            // take toggle changes no category with audio in flight, which is the audible glitch ADR
+            // 0069 slice 2 chose the arm grammar to avoid. Only when this block ticks — with nothing
+            // sounding the flip is free, and the session stays `.playback` as ADR 0069 §3 prefers.
+            if exercise.playsFreeformClick { recorder.holdRecordSession() }
             startClickIfWanted()
         }
-        .onDisappear { metronome.stop() }
+        // The take is the outermost resource: finished first, and its held session released last —
+        // releasing before the click stops would flip the category under a running metronome.
+        .onDisappear {
+            recorder.finishIfRecording(owner: .exercise(exercise), context: modelContext)
+            metronome.stop()
+            recorder.releaseRecordSession()
+        }
         // A freeform block takes a planned length like any other ramp-less block (ADR 0141). No audio
         // means no phrase to protect, so it finishes at the planned moment rather than waiting for a
         // cycle to come round; open-ended outside a routine, as everywhere else.
@@ -95,6 +119,9 @@ struct FreeformRunView: View {
         }
         .sheet(isPresented: $showingDetail) {
             ExerciseDetailSheet(exercise: exercise)
+        }
+        .sheet(isPresented: $showingTakes) {
+            TakesSheet(owner: .exercise(exercise), onDelete: deleteTake)
         }
     }
 
@@ -156,8 +183,38 @@ struct FreeformRunView: View {
         metronome.start()
     }
 
+    /// The two things this screen lets you touch while it runs: the click, and a take. Neither is a
+    /// transport — the block is already running (F4) — so they read as quiet inline controls rather
+    /// than a control bar.
+    private var runControls: some View {
+        HStack(spacing: 18) {
+            clickToggle
+            RecordTakeToggle(recorder: recorder) {
+                Task { await recorder.toggleTake(owner: .exercise(exercise), context: modelContext) }
+            }
+        }
+    }
+
+    /// `RecordSetupHint` is no use here — it speaks the arm grammar this screen doesn't have, and
+    /// `toggleTake` passes through `.armed` synchronously so that state is never even observed. What
+    /// this screen owes instead: a way out of a denied mic, and an acknowledgement that a take was
+    /// kept. Once recording, `RecordingStatusView` carries the timer and the route honesty cue.
+    @ViewBuilder private var recordHint: some View {
+        if recorder.micDenied {
+            Text("Microphone access is off. Enable it in Settings to record practice takes.")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+        } else {
+            TakeSavedNote(recorder: recorder, takeCount: exercise.recordings.count)
+        }
+    }
+
     /// The click's on/off while the block runs. The *settings* live on the information sheet — this is
     /// only a way to silence it without leaving, for the moment it stops helping.
+    ///
+    /// This can stop the metronome **mid-take**, which no ordering can protect against — silencing
+    /// the click while recording is the point of the control. `RecordingController`'s session lease
+    /// is what keeps the take alive when the metronome releases its own.
     @ViewBuilder private var clickToggle: some View {
         if exercise.playsFreeformClick {
             Button {
@@ -211,6 +268,9 @@ struct FreeformRunView: View {
                 Button { showingJournal = true } label: {
                     Label("Journal", systemImage: "text.book.closed")
                 }
+                Button { showingTakes = true } label: {
+                    Label("Takes", systemImage: "waveform")
+                }
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
@@ -224,6 +284,10 @@ struct FreeformRunView: View {
     /// The one completion seam — the Done button and the block running its planned length both land
     /// here, so a block that timed out logs and advances exactly like one finished by hand.
     private func finish() {
+        // Finish the take **before** stopping the click, matching `LoopRunView`. Ordering isn't what
+        // makes this safe — the session lease is — but the two must read the same everywhere, or the
+        // next reader reorders one of them back.
+        recorder.finishIfRecording(owner: .exercise(exercise), context: modelContext)
         metronome.stop()
         logCompletedRun()   // before advancing — advancing tears this screen down
         exercise.markPracticed()
@@ -233,6 +297,14 @@ struct FreeformRunView: View {
         } else {
             dismiss()
         }
+    }
+
+    /// Delete a take from the Takes sheet — remove the file and the model row (ADR 0069 retention).
+    /// The same glue `LoopRunView+Recording` and `ExerciseRunView+Recording` carry for their owners.
+    private func deleteTake(_ take: Recording) {
+        try? RecordingStore.delete(fileName: take.fileName)
+        modelContext.delete(take)
+        try? modelContext.save()
     }
 
     /// Log the block as a completed unit-run (ADR 0117). **Done is a genuine completion here**, not a

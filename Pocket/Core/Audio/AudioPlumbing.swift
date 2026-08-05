@@ -58,6 +58,38 @@ enum AudioPlumbing {
         }
     }
 
+    /// Assert a **playback-capable** session without downgrading a record-capable one — what every
+    /// producer should call on start, rather than `configurePlaybackSession` directly.
+    ///
+    /// The guard is the whole point. Forcing `.playback` while a take is rolling removes input from
+    /// the route, the system stops the `AVAudioRecorder`, and `currentTime` then reports `0` — which
+    /// `RecordingController` reads as an accidental half-second tap and **deletes the file**. That is
+    /// how real playing was destroyed (device pass 2026-08-05); the guard existed in
+    /// `StandaloneMetronomeEngine`, which is the only reason the metronome never caused it.
+    ///
+    /// A `.playAndRecord` session is still made **active**: skipping the call entirely would leave a
+    /// producer rendering into a session somebody else deactivated, which is silence with no error
+    /// anywhere. The restore to `.playback` is done explicitly by whoever armed the take
+    /// (`RecordingController`, `TunerEngine`), never as a side effect here.
+    static func ensurePlaybackSession(label: StaticString) {
+        let session = AVAudioSession.sharedInstance()
+        guard session.category == .playAndRecord else {
+            return configurePlaybackSession(label: label)
+        }
+        do { try session.setActive(true) } catch {
+            log.error("\(label): audio session activation failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// The record-capable mirror: a no-op when `.playAndRecord` is already in force, so it can be
+    /// asserted before **every** take without ever being the mid-flight category flip ADR 0069
+    /// removed. Assert this rather than tracking whether some screen already configured the session —
+    /// a flag can be right while the session has since been downgraded underneath it.
+    static func ensureRecordSession(label: StaticString) {
+        guard AVAudioSession.sharedInstance().category != .playAndRecord else { return }
+        configureRecordSession(label: label)
+    }
+
     /// Start `engine` if it isn't already running, logging on failure.
     static func startIfNeeded(_ engine: AVAudioEngine, label: StaticString) {
         guard !engine.isRunning else { return }

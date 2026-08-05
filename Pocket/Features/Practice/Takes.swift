@@ -13,7 +13,10 @@ struct TakesSheet: View {
     let onDelete: (Recording) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var player = RecordingPlayer()
+    /// The take being named, by stable `uid` — never `persistentModelID` (ADR 0090).
+    @State private var renaming: StableRef<Recording>?
 
     private var takes: [Recording] { owner.recordingsByRecent }
 
@@ -36,6 +39,7 @@ struct TakesSheet: View {
             }
         }
         .onDisappear { player.stop() }
+        .renameTakeAlert($renaming, context: modelContext)
     }
 
     private var list: some View {
@@ -45,6 +49,14 @@ struct TakesSheet: View {
                     player.toggle(take.fileName)
                 }
                 .listRowBackground(PocketColor.background)
+                // Rename leads, because a list of identical "Take" rows is the problem this sheet
+                // has. Not `role: .destructive` — this button changes nothing until you type.
+                .swipeActions(edge: .leading) {
+                    Button { renaming = StableRef(value: take) } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                    .tint(PocketColor.practice)
+                }
             }
             .onDelete { indexSet in
                 indexSet.map { takes[$0] }.forEach(delete)
@@ -94,12 +106,19 @@ private struct TakeRow: View {
             .accessibilityLabel(isPlaying ? "Pause take" : "Play take")
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(take.createdAt.formatted(date: .abbreviated, time: .shortened))
+                // A named take leads with its name; an unnamed one keeps the date it always had, so
+                // nothing about an old list changes until the player names something.
+                Text(take.title ?? take.createdAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textPrimary)
-                Text(take.durationLabel)
-                    .font(.pocketMono(.caption2))
-                    .foregroundStyle(PocketColor.textSecondary)
+                HStack(spacing: 8) {
+                    Text(take.durationLabel)
+                    if take.title != nil {
+                        Text(take.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    }
+                }
+                .font(.pocketMono(.caption2))
+                .foregroundStyle(PocketColor.textSecondary)
             }
             Spacer(minLength: 0)
         }

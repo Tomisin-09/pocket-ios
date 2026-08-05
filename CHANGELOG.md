@@ -5,7 +5,39 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Fixed
+- **Practice takes could be destroyed the moment you stopped them.** Stopping the thing a take was
+  recorded over — silencing a click, stopping a backing track, ending a run — could pull the audio
+  session out from under the recorder. The take then measured as zero seconds long, was treated as an
+  accidental tap, and its file was deleted. Recordings now hold the audio session for as long as
+  they're rolling, and a take whose length can't be measured is read back off the file itself rather
+  than assumed empty. **A recording that holds real playing is never discarded for looking empty.**
+  This affected loop and exercise takes too, not only the new surfaces.
+- **Auditioning a take could break the next one.** Playing a recording back reset the audio session
+  for playback only, so a take started straight afterwards captured nothing.
+
 ### Added
+- **Name your takes.** A recording used to be listed as "Take" and a timestamp, which made a list of
+  them unreadable. Swipe a take — in the Journal or on a unit's Takes list — to give it a name, and
+  search finds it by that name afterwards. Notes and session entries are already in your own words,
+  so this is takes only.
+- **Delete anything in the Journal.** Notes, takes and session entries can all be removed now, with
+  the same Undo you get everywhere else — a deleted take's audio isn't actually removed until the
+  Undo disappears. Editing a note still happens where it always did, on the exercise or loop itself.
+- **The record button says it's recording.** It pulses slowly while a take is rolling instead of
+  going quiet, and tells you when a take was saved and how many that unit now has. On improvise you
+  can end a take without stopping the backing track.
+- **Icons on the Exercises categories.** Each section header carries its template's symbol, so you
+  can find Scales or Warm-up without reading. Strumming has a new symbol — it used to share one with
+  Improvise.
+- **Record the practice that leaves no other trace.** Improvising over a backing track and your own
+  freeform blocks — sight-reading, transcribing, a teacher's assignment — can now be recorded, on
+  their own and inside a routine. Neither has a ramp or a tempo to log, so a take is the only record
+  of what actually came out. On improvise it works the way it always has: arm the red button, and it
+  starts recording when the backing track does. A freeform block has no Start to arm against, so it
+  gets a plain Record a take / Stop recording control you tap while you work, next to the click. Your
+  takes are on the block's ⋯ menu under Takes, and in the Journal tab as always. Nothing listens to
+  them — as ever, the app records, it never grades.
 - **Every library list folds up.** Tap a section header — a template in Exercises, a song in Loops,
   whatever key the song Library is grouped by — and it collapses to a header and a count; tap it
   again to open it. What you closed stays closed after a relaunch, and a section that appears later

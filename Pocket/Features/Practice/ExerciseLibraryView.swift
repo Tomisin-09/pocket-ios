@@ -85,11 +85,26 @@ struct ExerciseLibraryView: View {
     /// hidden, so a stale selection can never silently narrow the list once disclosure retracts.
     private var activeInstrumentFilter: Instrument? { showsInstrumentFilter ? instrumentFilter : nil }
 
+    /// One section's rows. Lifted out of `body` because inlining it put the row modifiers, the
+    /// section header's arguments and the list builder in one expression the type-checker gave up on.
+    @ViewBuilder private func rows(of section: LibrarySection<Exercise>) -> some View {
+        ForEach(section.items) { exercise in
+            exerciseRow(exercise)
+                .listRowBackground(PocketColor.background)
+                .pocketRowActions(displayName(exercise),
+                                  tint: PocketColor.practice,
+                                  menu: menuItems(for: exercise),
+                                  favorite: favorite(for: exercise),
+                                  delete: deletion(for: exercise))
+        }
+    }
+
     private func fields(for exercise: Exercise) -> ExerciseSortFields {
         ExerciseSortFields(name: exercise.name, command: exercise.command,
                            dateAdded: exercise.dateAdded,
                            notesPerBeat: exercise.noteRate?.perBeat ?? 1,
                            templateName: exercise.template.displayName,
+                           templateIcon: exercise.template.iconName,
                            instrument: exercise.instrument)
     }
 
@@ -110,16 +125,9 @@ struct ExerciseLibraryView: View {
                 ForEach(sections, id: \.title) { section in
                     CollapsibleLibrarySection(title: section.title,
                                               count: section.items.count,
-                                              isExpanded: expansion(of: section.title)) {
-                        ForEach(section.items) { exercise in
-                            exerciseRow(exercise)
-                                .listRowBackground(PocketColor.background)
-                                .pocketRowActions(displayName(exercise),
-                                                  tint: PocketColor.practice,
-                                                  menu: menuItems(for: exercise),
-                                                  favorite: favorite(for: exercise),
-                                                  delete: deletion(for: exercise))
-                        }
+                                              isExpanded: expansion(of: section.title),
+                                              icon: section.icon) {
+                        rows(of: section)
                     }
                 }
             }

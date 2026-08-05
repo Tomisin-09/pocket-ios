@@ -355,7 +355,32 @@ files whose model row was cascade-deleted (cascade drops the row, not the on-dis
 (permission + route sampled up front; the take begins *before* playback so the `.playAndRecord` flip
 never happens mid-stream — the fix for an audible glitch), and `RecordingPlayer` plays takes back one
 at a time. Takes surface **beside the journal** via the one-row `PracticeReviewBar` (Journal + Takes
-count pills → each opens its sheet), keeping the review aids bounded as history builds.
+count pills → each opens its sheet), keeping the review aids bounded as history builds. **Open-ended
+blocks record too** (ADR 0069 amendment, 2026-08-05): improvise keeps the arm-then-Start grammar
+unchanged — its play button *is* a Start, so `ContinuousLoopControls` takes an optional `recorder`
+plus an owner-agnostic `onStopped`, and the three hosts own the controller as they already own the
+player. A **freeform block has no Start**, so it gets a direct `RecordTakeToggle` →
+`RecordingController.toggleTake(owner:context:)`, and — when the block ticks — `holdRecordSession()`
+in `.onAppear` *before* the click starts, so the `.playAndRecord` flip still happens with nothing
+sounding and the toggle changes no category mid-stream (`releaseRecordSession()` restores playback on
+exit). The `routineContext == nil` gate lifts for these two block kinds only; ramped blocks stay
+gated, since a ramp already logs a tempo as its evidence.
+
+**`RecordingController` is a session holder** (2026-08-05 — the fix for takes being *destroyed* on
+stop). It was the one audio producer without a lease, so the last other producer stopping — or
+anything asserting `.playback` — deactivated or downgraded the session under a live `AVAudioRecorder`;
+`currentTime` then read `0`, which the `minTakeDuration` rule treated as an accidental tap and deleted
+the file. Three changes: the controller holds two `AudioSessionClaim`s (one per take, one per held
+session; the invariant is stated on the property); the `.playAndRecord` guard moved out of
+`StandaloneMetronomeEngine` into **`AudioPlumbing.ensurePlaybackSession` / `ensureRecordSession`** so
+`PracticeAudioEngine` and `RecordingPlayer` stop stomping a record session (improvise loads its audio
+*after* arming, and auditioning a take broke the next one); and `TakeRecorder.stop()` reads the real
+length back off the written file (`AVAudioFile`, header-only) when `currentTime` reports nothing, so a
+file holding audio is never deleted for looking empty. `LoopRunView`/`ExerciseRunView` finalise takes
+from `.onChange(of: isRunning)` — after their engine released the session — so those seams carry a
+comment naming the lease as what makes them safe. `Recording` also gains an optional `title`: a take
+is the only Journal row with nothing but a timestamp to identify it, so it is the only kind that can
+be renamed (one shared `RenameTakeAlert`, keyed on the stable `uid`, ADR 0090).
 
 **Ear training — "the loops, re-surfaced"** (ADR 0104): a loop's settings sheet carries a **Train your
 ear** button opening `EarTrainingSheet`, an *away-from-the-guitar* mode that plays the loop's own audio

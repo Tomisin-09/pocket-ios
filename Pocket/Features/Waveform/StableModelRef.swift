@@ -23,6 +23,7 @@ extension Loop: UIDIdentified {}
 extension Marker: UIDIdentified {}
 extension Goal: UIDIdentified {}
 extension RoutineItem: UIDIdentified {}
+extension Recording: UIDIdentified {}   // takes are renamed through a `StableRef` (ADR 0069 amendment)
 
 /// `Identifiable` wrapper whose `id` is the wrapped model's stable `uid`.
 struct StableRef<Model: UIDIdentified>: Identifiable {

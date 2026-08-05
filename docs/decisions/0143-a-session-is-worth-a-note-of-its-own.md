@@ -109,6 +109,15 @@ This is the only slice of the v2 close-out that touches the store.
   their sheet. No third editing surface: a session note is written in one breath at the end of a
   session, and the thing you want when it comes out wrong is to remove it, not to curate it.
 
+  **Widened 2026-08-05 (ADR 0100 amendment).** The "session rows only" half did not survive contact
+  with use: the app's own designer went looking for delete on a *unit-owned* note and was surprised it
+  wasn't there. A rule its author forgets while using the app is not a rule a player will hold, and
+  the justification above — that a session note has no other way out — explains why session rows
+  needed it *first*, not why other rows should be denied it. Delete now reaches every row on the feed,
+  takes included. The rest of S7 stands unchanged: still no editing here, and the deletes are the
+  deferred, undoable kind (`RowDeletionCoordinator`), which is also what makes removing a take's audio
+  file safe to offer.
+
 - **S8 — The links honour the same gates the caption does.** A pill routes through
   `JournalOwnerRoute` on the unit's stable `uid` (ADR 0090), opens the mode a loop qualifies for
   (ADR 0142 J5a), and raises the paywall rather than the run screen for a locked Pro drill (ADR 0142

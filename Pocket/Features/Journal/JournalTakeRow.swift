@@ -27,9 +27,12 @@ struct JournalTakeRow: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
-                    Text("Take")
+                    // `displayTitle` falls back to the generic word every take used to be stuck with,
+                    // so an unnamed take renders exactly as it always did (ADR 0069 amendment).
+                    Text(take.displayTitle)
                         .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textPrimary)
+                        .lineLimit(1)
                     Text(take.durationLabel)
                         .font(.pocketMono(.caption))
                         .foregroundStyle(PocketColor.textSecondary)

@@ -87,4 +87,45 @@ final class RecordingTests: XCTestCase {
         XCTAssertTrue(try context.fetch(FetchDescriptor<Recording>()).isEmpty,
                       "cascade delete removes the owner's takes")
     }
+
+    // MARK: - Naming a take (ADR 0069 amendment)
+    //
+    // Uninserted models throughout — inserting a graph SIGTRAPs in the XCTest host, and none of this
+    // needs a store.
+
+    /// An unnamed take renders exactly as it always did, so no existing row changes until the player
+    /// names something.
+    func testAnUnnamedTakeStillReadsAsATake() {
+        XCTAssertNil(Recording(fileName: "x.m4a", duration: 12).title)
+        XCTAssertEqual(Recording(fileName: "x.m4a", duration: 12).displayTitle, "Take")
+    }
+
+    func testRenamingTrimsWhitespace() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.rename(to: "  Bridge, third attempt \n")
+        XCTAssertEqual(take.title, "Bridge, third attempt")
+        XCTAssertEqual(take.displayTitle, "Bridge, third attempt")
+    }
+
+    /// A cleared field must leave the take as it was rather than storing whitespace that would render
+    /// as a blank row with nothing to tap.
+    func testRenamingToNothingIsRefused() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.rename(to: "Solo take")
+        take.rename(to: "   \n ")
+        XCTAssertEqual(take.title, "Solo take")
+
+        let untouched = Recording(fileName: "y.m4a", duration: 12)
+        untouched.rename(to: "")
+        XCTAssertNil(untouched.title)
+    }
+
+    /// Naming a take must make it *findable* by that name — otherwise it is identifiable everywhere
+    /// except the search field that exists to find it.
+    func testANamedTakeIsSearchableByItsName() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.rename(to: "Bridge run")
+        let haystack = JournalTimeline.searchHaystack(for: .take(take))
+        XCTAssertTrue(haystack.contains("bridge run"), "a named take must be searchable by its name")
+    }
 }

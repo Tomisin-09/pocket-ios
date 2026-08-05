@@ -171,6 +171,8 @@ struct ExerciseRunView: View {
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear { seedIfNeeded(); maybeAutoStart() }
         .onChange(of: isRunning) { _, running in
+            // Runs after the engine stopped and released the shared session — see the twin comment in
+            // `LoopRunView`. `RecordingController`'s own lease is what keeps the take alive across it.
             if !running { finishTakeIfNeeded() }   // run stopped ⇒ never leave a take recording
         }
         .onDisappear { finishTakeIfNeeded(); engine.stop() }

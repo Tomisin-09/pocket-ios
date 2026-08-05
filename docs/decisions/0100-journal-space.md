@@ -39,6 +39,8 @@ triad and the indigo reference hub.
 - **Read-only, by design.** Reflection, not authoring — writing/editing entries
   stays in the per-owner `JournalSheet`. The one exception is **takes**, which
   play in place (playing *is* their nature), through the shared `RecordingPlayer`.
+  **Amended 2026-08-05 — see below: every row can now be deleted, and a take
+  renamed. Editing still lives in the per-owner sheet.**
 - **One merged timeline.** Notes + takes are merged newest-first, day-grouped
   (reusing `JournalGrouping.byDay`), with a segmented **All / Notes / Takes**
   filter — the escape valve as the aggregate grows.

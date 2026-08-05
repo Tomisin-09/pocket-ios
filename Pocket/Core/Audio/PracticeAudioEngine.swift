@@ -335,8 +335,15 @@ final class PracticeAudioEngine {
     }
 
     private func configureSession() {
-        AudioPlumbing.configurePlaybackSession(label: "practice")
-        sessionClaim.take()   // so `stop()` can't deactivate a session another producer is using
+        // The claim is taken **first**, exactly as the metronome does: it holds whatever the category
+        // is, and an engine that takes the guarded early return below is still a producer that needs
+        // the session live. (So `stop()` can't deactivate a session another producer is using.)
+        sessionClaim.take()
+        // Guarded, so loading audio can't downgrade a `.playAndRecord` session and kill an in-flight
+        // take. This engine was thought to be exempt because it "configures once at load" — true on
+        // the loop trainer, which preloads in `.task`, but false on improvise, where the first play
+        // tap loads *after* the take was armed (device pass 2026-08-05).
+        AudioPlumbing.ensurePlaybackSession(label: "practice")
     }
 
     private func startTimer() {
