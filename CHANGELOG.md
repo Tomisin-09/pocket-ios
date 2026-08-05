@@ -6,6 +6,15 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Every library list folds up.** Tap a section header — a template in Exercises, a song in Loops,
+  whatever key the song Library is grouped by — and it collapses to a header and a count; tap it
+  again to open it. What you closed stays closed after a relaunch, and a section that appears later
+  (a first scales drill, a song imported tomorrow) always arrives open. Searching temporarily opens
+  everything, so a query can't match rows inside a folded section and look like it found nothing.
+- **The Loops library is grouped by song.** It used to be one flat run of every measured loop
+  regardless of where it came from; loops now sit under their song, as they do everywhere else in
+  the app, with detached loops under "No song" at the bottom. Your chosen sort orders the loops
+  inside each song.
 - **Write a note about the whole session, not just one drill.** Finish a routine and the summary
   screen now has a place to say how the hour actually went — shoulders tight, changes only came good
   at the end, hands cold until the third block. Until now every journal entry belonged to a single

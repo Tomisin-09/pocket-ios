@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 /// the home hub's "See all" (ADR 0044) — it relies on an ambient `NavigationStack` rather
 /// than owning one, so its toolbar and row pushes land in the home's navigation.
 struct LibraryView: View {
-    @Environment(\.modelContext) private var context
+    @Environment(\.modelContext) var context
     /// Entitlement + the shared paywall (ADR 0112) — the collection-session banner builds a routine,
     /// which is Pro.
     @Environment(\.isPro) private var isPro
@@ -21,8 +21,8 @@ struct LibraryView: View {
     @State private var importError: String?
     /// Drives multi-select import: progress overlay + partial-failure summary.
     @State private var importModel = SongImportModel()
-    @State private var editingSong: Song?
-    @State private var detailsSong: Song?
+    @State var editingSong: Song?
+    @State var detailsSong: Song?
     /// The song a single-file import just created — pushed to its waveform ("open on create").
     @State private var openingSong: Song?
     /// The collection to build a practice session from (ADR 0118) — set by the filtered-Library
@@ -32,12 +32,15 @@ struct LibraryView: View {
     /// (intersection/AND semantics — a song matches if it has all selected). ADR 0033.
     @State private var selectedCollections: Set<String> = []
     /// How the list is grouped/ordered (ADR 0035) — persisted across launches.
-    @AppStorage("libraryGrouping") private var grouping: SongGrouping = .title
+    @AppStorage("libraryGrouping") var grouping: SongGrouping = .title
     /// Sort direction within the current grouping — `true` is the natural order (A→Z,
     /// newest-first); `false` flips the whole list. Persisted across launches.
     @AppStorage("librarySortAscending") private var sortAscending = true
     /// Title/artist search query (ADR 0035).
-    @State private var searchText = ""
+    @State var searchText = ""
+    /// Which sections are collapsed, per grouping key, persisted across launches (Slice 5).
+    /// Collapsed is what's stored, so a bucket that appears with a new import arrives open.
+    @AppStorage("libraryCollapsedSections") var collapsedSections = ""
 
     /// The songs actually on screen — everything except rows whose delete is pending behind the
     /// Undo toast (Slice 3). Every downstream read (the empty state, the filter menu, the sections)
@@ -181,7 +184,7 @@ struct LibraryView: View {
     }
 
     /// The filtered songs grouped into ordered sections by the current key and direction (ADR 0035).
-    private var sections: [LibrarySection<Song>] {
+    var sections: [LibrarySection<Song>] {
         LibrarySectioning.sections(filteredSongs, by: grouping, ascending: sortAscending,
                                    fields: fields(for:))
     }
@@ -261,50 +264,6 @@ struct LibraryView: View {
         } else {
             selectedCollections.insert(collection)
         }
-    }
-
-    private var groupedList: some View {
-        List {
-            ForEach(sections, id: \.title) { section in
-                Section(section.title) {
-                    ForEach(section.items) { song in
-                        NavigationLink {
-                            WaveformPracticeView(song: song, context: context)
-                        } label: {
-                            SongCard(song: song)
-                        }
-                        .listRowBackground(PocketColor.background)
-                        // Hold a card for its actions; swipe still offers a quick Delete. Tap opens
-                        // the song for practice. No favourite — `Song` has no pin (ADR 0119 covers
-                        // exercises, loops and routines), which is exactly why the shared modifier
-                        // takes it as an optional.
-                        .pocketRowActions(displayName(song),
-                                          tint: PocketColor.active,
-                                          menu: menuItems(for: song),
-                                          delete: deletion(for: song))
-                    }
-                }
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-    }
-
-    private func displayName(_ song: Song) -> String {
-        song.title.isEmpty ? "Untitled song" : song.title
-    }
-
-    /// A song's long-press actions (Slice 3): the read-first overview, and the metadata editor.
-    private func menuItems(for song: Song) -> [PocketRowMenuItem] {
-        [PocketRowMenuItem("Details", systemImage: "info.circle") { detailsSong = song },
-         PocketRowMenuItem("Edit", systemImage: "pencil") { editingSong = song }]
-    }
-
-    /// Deleting a song takes its loops, markers and journal with it (cascade), so the Undo window
-    /// the shared coordinator adds matters more here than anywhere else. Keyed on
-    /// `persistentModelID` — `Song` is the one list model with no business `uid`.
-    private func deletion(for song: Song) -> PocketRowDelete {
-        PocketRowDelete(id: song.persistentModelID, name: displayName(song)) { context.delete(song) }
     }
 
     private var importErrorBinding: Binding<Bool> {

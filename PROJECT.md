@@ -221,7 +221,14 @@ row pushing its own list — each with a **sort menu + search** (`PracticeLibrar
 loops by Song · Name · Command · Mastery, exercises by Name · Command · Recently added; choice
 persisted per library; the exercise **Command** key ranks on notes-per-minute — `command ×
 notesPerBeat` via `NoteRate` — so tempos at different rhythms compare honestly, and every exercise
-row shows the rhythm with its tempos ("Command 80 → 96 BPM · 16ths")). An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
+row shows the rhythm with its tempos ("Command 80 → 96 BPM · 16ths")). **Both lists are grouped and
+collapsible** (v2 close-out Slice 5): exercises by template as before, loops **by song** — new in
+that slice, replacing a flat list, via `PracticeLibrarySort.loopSections` (songs A→Z, detached loops
+under "No song" last) — with every section folding from its header through the shared
+`CollapsibleLibrarySection` (chevron · title · count), the same component the song library adopts.
+The collapse persists per list in `@AppStorage` through the pure `LibrarySectionExpansion`: it
+stores what's **collapsed**, so a section that appears later arrives open, and a live search forces
+every section open so a query can't match rows inside a folded one. An exercise opens `ExerciseRunView`; a loop opens `LoopRunView` (Phase B)
 — both owning their own engine. A **just-created** exercise opens the same way: `ExerciseLibraryView`
 stages it on create and pushes its run screen once the create sheet is gone (skipped for a locked Pro
 template, which stays badged in the list). **Every list row carries the same affordances**

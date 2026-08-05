@@ -116,6 +116,36 @@ enum PracticeLibrarySort {
         return contains(fields.name, trimmed) || contains(fields.songTitle, trimmed)
     }
 
+    /// Group loops into **song sections** (v2 close-out Slice 5), each section's items ordered by the
+    /// chosen sort `key`/`ascending`. Songs run A→Z with **"No song" last**, matching the
+    /// `AddRoutineUnitSheet` bucket grammar this list is meant to echo — a detached loop is a
+    /// leftover, not a song called nothing, so it sinks rather than sorting under the empty string.
+    ///
+    /// Section order does **not** follow `ascending`: it orders the items inside a section, exactly
+    /// as `exerciseSections` treats its template buckets. Grouping is an axis of its own — the sort
+    /// says how a song's loops read, not which song comes first.
+    static func loopSections<Item>(_ items: [Item], sortedBy key: LoopSortKey, ascending: Bool,
+                                   fields: (Item) -> LoopSortFields) -> [LibrarySection<Item>] {
+        var buckets: [String: [Item]] = [:]
+        for item in items {
+            buckets[fields(item).songTitle, default: []].append(item)
+        }
+        return buckets.keys
+            .sorted { lhs, rhs in
+                if lhs.isEmpty != rhs.isEmpty { return !lhs.isEmpty }
+                return lhs.caseInsensitiveCompare(rhs) == .orderedAscending
+            }
+            .map { title in
+                let ordered = sortedLoops(buckets[title] ?? [], by: key,
+                                          ascending: ascending, fields: fields)
+                return LibrarySection(title: title.isEmpty ? noSongSection : title, items: ordered)
+            }
+    }
+
+    /// The section a loop with no song lands in. Named rather than inlined because it is both the
+    /// header text and the key the collapse state persists under.
+    static let noSongSection = "No song"
+
     /// Ascending comparator for loops; `name` is the tiebreaker on every key so the order is
     /// deterministic (the descending flip then reverses ties too, ADR 0035).
     private static func loopPrecedes(_ lhs: LoopSortFields, _ rhs: LoopSortFields,
