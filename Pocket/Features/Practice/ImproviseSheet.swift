@@ -27,18 +27,20 @@ struct ImproviseView: View {
     @State private var reportedOpen = false
 
     var body: some View {
-        Form {
-            Section { LoopModeIdentityHeader(loop: loop) }
-            introSection
-            Section {
-                ContinuousLoopControls(player: player,
-                                       playingStatus: "Looping — play over it",
-                                       idleStatus: "Tap to start the backing track")
+        KeyboardFollowingScroll {
+            Form {
+                Section { LoopModeIdentityHeader(loop: loop) }
+                introSection
+                Section {
+                    ContinuousLoopControls(player: player,
+                                           playingStatus: "Looping — play over it",
+                                           idleStatus: "Tap to start the backing track")
+                }
+                LoopModeNoteSection(loop: loop, kind: .improvise,
+                                    header: "Note what you played",
+                                    placeholder: "What came out? "
+                                        + "(e.g. the b5 works over the turnaround)")
             }
-            LoopModeNoteSection(loop: loop, kind: .improvise,
-                                header: "Note what you played",
-                                placeholder: "What came out? "
-                                    + "(e.g. the b5 works over the turnaround)")
         }
         .onAppear {
             guard !reportedOpen else { return }

@@ -162,6 +162,7 @@ struct LoopModeNoteSection: View {
     @Environment(\.modelContext) private var modelContext
     @State private var draftNote = ""
     @State private var savedThisSession = 0
+    @FocusState private var noteFocused: Bool
 
     private var canAdd: Bool {
         !draftNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -172,6 +173,9 @@ struct LoopModeNoteSection: View {
             TextField(placeholder, text: $draftNote, axis: .vertical)
                 .lineLimit(2...5)
                 .keyboardDoneButton()
+                // Needs a `KeyboardFollowingScroll` around the host's container — both hosts
+                // (`ImproviseSheet`, `EarTrainingSheet`) have one; inert if a third forgets.
+                .scrollsIntoViewWhenFocused("mode-note", focused: $noteFocused)
 
             Button {
                 addNote()

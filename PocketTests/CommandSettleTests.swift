@@ -183,4 +183,64 @@ final class CommandSettleTests: XCTestCase {
         XCTAssertEqual(loop.backoffPercent, 72)
         XCTAssertEqual(loop.ramp.plateaus.last?.bpm, 72)
     }
+
+    // MARK: - The routine player's loop seam (ADR 0134 §8, wired in the v2 close-out)
+
+    /// The anchors `RoutinePlayerView.revisionOffer(for:)` builds for a **loop block**, assembled here
+    /// from the same expressions. Kept as a helper so the assertions below test the composition rather
+    /// than restating it, and so a change to either side has to be made twice deliberately.
+    private func routineLoopAnchors(_ loop: Loop) -> CommandOffer.Anchors {
+        let range = TempoMath.percentRange
+        return .init(command: LoopCommandRamp.percent(loop.command),
+                     floor: range.lowerBound, ceiling: range.upperBound,
+                     raiseTarget: CommandOffer.raisedCommand(
+                        reach: LoopCommandRamp.percent(loop.targetSpeed),
+                        ceiling: range.upperBound),
+                     settleTarget: loop.backoffPercent)
+    }
+
+    /// The offer a routine's loop block makes has to describe the ramp that block just played. This is
+    /// the assertion the unwired version could not have failed, because it returned `nil`.
+    func testRoutineLoopAnchorsMatchTheRampTheBlockPlayed() {
+        let loop = measuredLoop(speed: 0.8, command: 0.9)
+        let anchors = routineLoopAnchors(loop)
+        XCTAssertEqual(anchors.command, 90)
+        XCTAssertEqual(anchors.settleTarget, loop.ramp.plateaus.last?.bpm)
+        XCTAssertGreaterThan(anchors.raiseTarget, anchors.command)
+    }
+
+    /// Both leans have somewhere to go on an ordinary loop — the same room check the exercise side
+    /// gets, asserted rather than assumed from "it's the same code" (§8).
+    func testRoutineLoopOffersBothDirections() {
+        let anchors = routineLoopAnchors(measuredLoop(speed: 0.8, command: 0.9))
+        XCTAssertEqual(CommandOffer.stance(mastery: 5, anchors: anchors), .raise)
+        XCTAssertEqual(CommandOffer.stance(mastery: 1, anchors: anchors), .settle)
+        XCTAssertEqual(CommandOffer.stance(mastery: nil, anchors: anchors), .open)
+        XCTAssertNil(CommandOffer.stance(mastery: 3, anchors: anchors))
+    }
+
+    /// The screen chooses a whole percent; the model stores `×`. `commitDone` converts with
+    /// `Double(percent) / 100`, and the next offer reads back through `LoopCommandRamp.percent` — so
+    /// the two have to be exact inverses or a settle would drift by a percent every time it was taken.
+    func testRoutineLoopSettleRoundTripsThroughPercent() {
+        for percent in [25, 63, 80, 99, 150] {
+            let loop = measuredLoop(speed: 0.8, command: 1.5)
+            loop.settleCommand(to: Double(percent) / 100)
+            XCTAssertEqual(routineLoopAnchors(loop).command, percent, "settled to \(percent)%")
+        }
+    }
+
+    /// The raise mirror, same conversion.
+    func testRoutineLoopRaiseRoundTripsThroughPercent() {
+        let loop = measuredLoop(speed: 0.8, command: 0.9)
+        loop.promoteCommand(to: Double(112) / 100)
+        XCTAssertEqual(routineLoopAnchors(loop).command, 112)
+    }
+
+    /// A loop's offer must never borrow BPM's bare digits — the value is a percent of a recording,
+    /// and "90" on its own is a number from the exercise axis (ADR 0082).
+    func testRoutineLoopOfferReadsInPercent() {
+        XCTAssertEqual(TempoUnit.percent.inline(90), "90%")
+        XCTAssertEqual(TempoUnit.percent.signpost(90), "90%")
+    }
 }

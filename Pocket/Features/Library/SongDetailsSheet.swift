@@ -33,16 +33,18 @@ struct SongDetailsSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                headerSection
-                // Notes sit directly under the title/artist/album box — the song's
-                // free-text standing facts (tuning, capo…), the song-scope half of the
-                // notes/journal feature (ADR 0038). Always shown so they're discoverable.
-                notesSection
-                detailsSection
-                if !song.collections.isEmpty { collectionsSection }
-                linkedExercisesSection
-                statsSection
+            KeyboardFollowingScroll {
+                Form {
+                    headerSection
+                    // Notes sit directly under the title/artist/album box — the song's
+                    // free-text standing facts (tuning, capo…), the song-scope half of the
+                    // notes/journal feature (ADR 0038). Always shown so they're discoverable.
+                    notesSection
+                    detailsSection
+                    if !song.collections.isEmpty { collectionsSection }
+                    linkedExercisesSection
+                    statsSection
+                }
             }
             .navigationTitle("Song details")
             .navigationBarTitleDisplayMode(.inline)
@@ -140,10 +142,10 @@ struct SongDetailsSheet: View {
                 TextField("Tuning, capo, anything worth remembering…",
                           text: $draftComment, axis: .vertical)
                     .lineLimit(1...8)
-                    .focused($notesFocused)
                     .foregroundStyle(PocketColor.textPrimary)
                     .onAppear { notesFocused = true }   // open the keyboard on entry
                     .keyboardDoneButton(tint: PocketColor.library)
+                    .scrollsIntoViewWhenFocused("notes", focused: $notesFocused)
                 HStack {
                     Button("Cancel", role: .cancel) { endNotesEditing() }
                         .foregroundStyle(PocketColor.textSecondary)

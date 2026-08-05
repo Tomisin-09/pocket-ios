@@ -3,7 +3,8 @@
 - **Status:** Accepted — **slice 1 built** 2026-08-01, then revised the same day after a device
   pass: §2 (unrated leans neither way) and §2a (the prompt never carries a tempo) replace the
   first build's raise-by-default row. Two further things were decided at build that the ADR didn't
-  anticipate, recorded in §6 and §10. Slice 2 (mid-run settling) remains parked.
+  anticipate, recorded in §6 and §10. **§8 was left half-built and completed 2026-08-05** — see §11.
+  Slice 2 (mid-run settling) remains parked.
 - **Date:** 2026-08-01
 - **Builds on:** ADR 0045/0046 (the command / working / reach / backoff anchors and the `CommandRamp`
   built from them) · **ADR 0079** (the post-run promote and the completion screen it lives on — this
@@ -333,6 +334,43 @@ cannot reach.
 `RoutineBlockDoneView+CommandRow.swift`. The second split required widening a handful of `private`
 members to internal — the ordinary cost of a file split in this codebase, and preferable to
 compressing the copy §5 calls load-bearing.
+
+### 11. Recorded later: §8 shipped for standalone loops only, and nobody noticed for four days
+
+Slice 1 built the loop offer everywhere except **a loop block inside a routine**.
+`RoutinePlayerView.revisionAnchors(for:)` returned `nil` for every non-exercise stage, under a comment
+asserting that a routine's loop blocks were "unchanged by 0134" — a rule this ADR never made and §8
+explicitly rejects. Completed 2026-08-05 in the v2 close-out.
+
+It is worth recording *why* this survived a device pass and a full test suite.
+
+- **Nothing was missing.** `CommandOffer`, `TempoUnit.percent`, `Loop.backoffPercent`,
+  `Loop.settleCommand`, `TempoMath.percentRange` — every piece §8 called for was built, tested, and
+  in use by the standalone screen. The routine path simply never asked for them. A half-built
+  decision looks exactly like a finished one from the inside.
+- **The failure was an absence.** No error, no wrong number: the revision row just wasn't on the
+  screen. There is nothing to notice unless you already expected it, and the surface it's missing
+  from is the one you reach after several minutes of practice.
+- **The one comment that could have caught it argued the opposite.** It stated the exclusion as
+  settled, so reading the code confirmed the bug.
+
+Two things came out of the fix, neither anticipated here:
+
+- **The unit travels with the anchors.** `revisionAnchors(for:)` became
+  `revisionOffer(for:) -> (anchors:, unit:)`. Anchors in percent rendered as BPM would offer to move
+  a loop to "85" — a number from the wrong axis — and two separate lookups is exactly the shape that
+  permits it.
+- **The exclusions are named, not inferred.** The new function switches exhaustively on
+  `RoutineStage.Payload` rather than on `stage.loop`, because that accessor also returns the loop for
+  **ear and improvise** blocks (ADRs 0104 / 0135), which post-date this ADR and have no command tempo
+  to move. `finishedBlock` already keeps them off the Done screen via `kind.isRampLess`, so keying on
+  `stage.loop` would work today and offer to raise the tempo of a jam the day that gate moves.
+
+**The `speed` asymmetry is deliberate, and now asserted.** `LoopRunView` pulls its local `working`
+down on a settle; the routine player does not touch `loop.speed`. That is not an omission — `working`
+is `@State` the run screen's own steppers keep at or below command, whereas `Loop.rampFloor` is
+`min(command - measuredWarmupGap, speed)` and forces its own gap, so a loop's warm-up cannot invert
+the way an exercise's can (§8, `Loop.settleCommand`). `CommandSettleTests` now says so out loud.
 
 ## Build slicing
 

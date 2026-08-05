@@ -25,19 +25,21 @@ struct FreeformBlockPreview: View {
     var runsOpenEnded: Binding<Bool>?
 
     var body: some View {
-        Form {
-            FreeformInstructionsSection(exercise: exercise)
-            FreeformMetronomeSection(exercise: exercise)
-            if let block, let runsOpenEnded {
-                // The same control ear and improvise blocks use (ADR 0141 L4) — a freeform block is
-                // ramp-less in exactly the sense that ADR means.
-                Section {
-                    RampLessBlockLengthControl(runsOpenEnded: runsOpenEnded,
-                                               minutes: runsOpenEnded.wrappedValue
-                                                   ? nil : block.plannedMinutes,
-                                               tint: PocketColor.practice)
-                } header: {
-                    Text("Length")
+        KeyboardFollowingScroll {
+            Form {
+                FreeformInstructionsSection(exercise: exercise)
+                FreeformMetronomeSection(exercise: exercise)
+                if let block, let runsOpenEnded {
+                    // The same control ear and improvise blocks use (ADR 0141 L4) — a freeform block
+                    // is ramp-less in exactly the sense that ADR means.
+                    Section {
+                        RampLessBlockLengthControl(runsOpenEnded: runsOpenEnded,
+                                                   minutes: runsOpenEnded.wrappedValue
+                                                       ? nil : block.plannedMinutes,
+                                                   tint: PocketColor.practice)
+                    } header: {
+                        Text("Length")
+                    }
                 }
             }
         }

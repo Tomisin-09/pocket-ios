@@ -76,6 +76,7 @@ struct RoutineBlockDoneView: View {
     /// The note's kind tag (ADR 0100) — defaults to a plain `.note`, so an untagged completion note
     /// behaves exactly as before; a tap upgrades it to a goal/breakthrough/struggle/session.
     @State private var kind: EntryKind = .note
+    @FocusState private var noteFocused: Bool
     /// Whether to commit the revision on Continue — opt-in, default off (ADR 0079 §7, ADR 0134 §5).
     @State var revisionOn = false
     /// The command value to revise to — the active config's default, editable within its bounds.
@@ -104,18 +105,20 @@ struct RoutineBlockDoneView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 28) {
-                completionBeat
-                masteryTap
-                tagSelector
-                noteField
-                if let activeStance, let activeBounds { revisionRow(activeStance, activeBounds) }
-                if let upNext { upNextCard(upNext) }
+        KeyboardFollowingScroll {
+            ScrollView {
+                VStack(spacing: 28) {
+                    completionBeat
+                    masteryTap
+                    tagSelector
+                    noteField
+                    if let activeStance, let activeBounds { revisionRow(activeStance, activeBounds) }
+                    if let upNext { upNextCard(upNext) }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 48)
+                .padding(.bottom, 24)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 48)
-            .padding(.bottom, 24)
         }
         // A rating tap can re-lean the row (ADR 0134 §2), so the editable value has to be re-seeded —
         // otherwise a player who taps 5 and then 2 carries a raise target into a settle row. Flipping
@@ -233,6 +236,7 @@ struct RoutineBlockDoneView: View {
                 // The note grows vertically, so Return inserts a newline — give the keyboard its own
                 // checkmark to dismiss it (there's otherwise no way off the keyboard).
                 .keyboardDoneButton()
+                .scrollsIntoViewWhenFocused("note", focused: $noteFocused)
         }
     }
 

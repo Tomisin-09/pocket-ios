@@ -82,6 +82,11 @@ extension RoutineBlockDoneView {
 
     /// The command adjuster shown once the revision is on — nudge the target within the stance's
     /// range. `StepperButton` owns its own press/hold haptics, so the clamp closures stay pure.
+    ///
+    /// Renders the **move**, not just its destination: `100 → 94`, the old value dimmed. A lone
+    /// number is only meaningful to someone who already remembers what the drill sits at, and on a
+    /// settle that is precisely the thing being reconsidered. Both sides read through `unit`, so a
+    /// loop's row is `85% → 80%` and never borrows BPM's bare digits (ADR 0082).
     func revisionStepper(_ bounds: CommandOffer.Bounds) -> some View {
         HStack(spacing: 16) {
             Text("New command")
@@ -91,11 +96,23 @@ extension RoutineBlockDoneView {
             StepperButton(symbol: "minus", label: "Lower new command", tint: PocketColor.practice) {
                 revisionValue = max(bounds.minValue, revisionValue - 1)
             }
-            Text(unit.inline(revisionValue))
-                .font(.pocketMono(.title3))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(minWidth: 52)
-                .contentTransition(.numericText())
+            HStack(spacing: 6) {
+                if let anchors {
+                    Text(unit.inline(anchors.command))
+                        .foregroundStyle(PocketColor.textSecondary.opacity(0.6))
+                    Image(systemName: "arrow.right")
+                        .font(.futura(.caption2))
+                        .foregroundStyle(PocketColor.textSecondary.opacity(0.6))
+                }
+                Text(unit.inline(revisionValue))
+                    .foregroundStyle(PocketColor.textPrimary)
+                    .contentTransition(.numericText())
+            }
+            .font(.pocketMono(.title3))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(anchors.map {
+                "New command \(unit.signpost(revisionValue)), from \(unit.signpost($0.command))"
+            } ?? "New command \(unit.signpost(revisionValue))")
             StepperButton(symbol: "plus", label: "Raise new command", tint: PocketColor.practice) {
                 revisionValue = min(bounds.maxValue, revisionValue + 1)
             }

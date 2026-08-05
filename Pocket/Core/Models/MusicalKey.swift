@@ -60,6 +60,32 @@ enum MusicalKey: String, CaseIterable, Identifiable, Comparable {
     /// Picker/menu label — like `displayName` but spells `.unknown` out as "Unknown".
     var pickerLabel: String { self == .unknown ? "Unknown" : displayName }
 
+    /// The **root alone**, spelled as this key spells it — "B♭" for `.aSharpMajor`, "C♯" for
+    /// `.cSharpMinor`; empty for `.unknown`. `displayName` minus the quality word, and by the same
+    /// key-first rule (ADR 0123).
+    ///
+    /// Exists for the split key picker, where the root and the quality are chosen separately: the
+    /// twelve root buttons have to be labelled *before* you know which one is selected, so each is
+    /// labelled by the key it would produce. That means the row **re-spells when the quality flips**
+    /// — D♯ minor and E♭ minor are the same pitch and the circle of fifths prefers a different one
+    /// either side of it. That's the rule showing its work, not an inconsistency.
+    var rootLabel: String {
+        guard let pitchClass, quality != nil else { return "" }
+        return (NoteSpelling.forMusicalKey(self) ?? .default).name(pitchClass: pitchClass)
+    }
+
+    /// Compose a key from its two independent halves. `pitchClass` wraps, so callers can pass a raw
+    /// index without clamping; there is no way to reach `.unknown` from here, because "no root" and
+    /// "no quality" aren't things this function can be handed — clearing is the caller's job.
+    ///
+    /// Lives on the enum rather than at the picker because `sharpRoots` is the canonical stored
+    /// spelling and is `private` — and because the round-trip against `parse(_:)` is exactly the kind
+    /// of boundary that needs a test rather than a reading.
+    static func make(pitchClass: Int, quality: Quality) -> MusicalKey {
+        let root = sharpRoots[((pitchClass % 12) + 12) % 12]
+        return MusicalKey(rawValue: root + (quality == .minor ? "m" : "")) ?? .unknown
+    }
+
     /// Sort key: by pitch class, major before minor; `.unknown` sorts last.
     private var sortIndex: Int {
         guard let pitchClass, let quality else { return Int.max }

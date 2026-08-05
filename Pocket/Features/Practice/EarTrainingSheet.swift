@@ -24,17 +24,19 @@ struct EarTrainingView: View {
     @State private var reportedOpen = false
 
     var body: some View {
-        Form {
-            Section { LoopModeIdentityHeader(loop: loop) }
-            introSection
-            Section {
-                ContinuousLoopControls(player: player,
-                                       playingStatus: "Looping — hum or sing along")
+        KeyboardFollowingScroll {
+            Form {
+                Section { LoopModeIdentityHeader(loop: loop) }
+                introSection
+                Section {
+                    ContinuousLoopControls(player: player,
+                                           playingStatus: "Looping — hum or sing along")
+                }
+                LoopModeNoteSection(loop: loop, kind: .ear,
+                                    header: "Note what you hear",
+                                    placeholder: "What did you hear? "
+                                        + "(e.g. starts on the b3, descending run)")
             }
-            LoopModeNoteSection(loop: loop, kind: .ear,
-                                header: "Note what you hear",
-                                placeholder: "What did you hear? "
-                                    + "(e.g. starts on the b3, descending run)")
         }
         .onAppear {
             guard !reportedOpen else { return }

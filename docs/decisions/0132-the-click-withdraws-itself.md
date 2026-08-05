@@ -1,9 +1,10 @@
 # ADR 0132 — The click withdraws itself: silent bars as the default practice
 
 - **Status:** Accepted, **§4 amended 2026-08-05 after the device pass** — see *Amendment: the
-  metronome tool, steady click only*. Slice 1 built (2026-08-05) — §1–§5, §7, §7a, §8. Slice 2 (§6,
-  the per-exercise override) remains deferred; it is the last slice of the v2 close-out plan on
-  purpose.
+  metronome tool, steady click only*. Slice 1 built (2026-08-05) — §1–§5, §7, §7a, §8. **Slice 2 (§6,
+  the per-exercise override) is out of v2, decided 2026-08-05** — not rejected, but it cannot be
+  built as written until §4's narrowing is revisited, and that wants user feedback rather than a
+  second opinion from the same two hands. See *Slice 2 is out of v2* below.
 - **Date:** 2026-07-31
 - **Builds on:** ADR 0043 (the standalone metronome and its sample-clock grid) · ADR 0048/0052 (the
   count-in and its beat boundary) · ADR 0071 R5 (per-slot click voicing — `scheduledLevel` is the one
@@ -306,9 +307,31 @@ distributions in §2 are right is to play against them.
 `ConfigureExerciseForm` row, and the resolver gaining its `exercise:` argument. Deferred not because
 it is hard but because it is the only part that can break an existing install, and because a week of
 practice against the global default is what tells you which drills actually want to differ.
+**Superseded — see below.**
 
 The split mirrors ADR 0131's, and for the same reason: the risky third and the useful two-thirds are
 separable, so separate them.
+
+### Slice 2 is out of v2 (decided 2026-08-05)
+
+The amendment above and Slice 2 were written on the same day and contradict each other, which neither
+noticed at the time. Recorded here so the next reader doesn't try to build it.
+
+**Slice 2 configures something that cannot be read.** Its whole point is letting an individual
+*exercise* differ from the global default. But `ClickWithdrawal.resolve` now returns `.off` unless
+`onMetronomeTool`, and an exercise run never is — so the stored value would be inert. Building it
+would add the close-out's only migration risk in exchange for a settings row with no effect.
+
+**It is not rejected.** §6's design still stands on its own terms, and the resolver already takes its
+`exercise:` argument (Slice 1 shipped the whole rule with the `nil`-means-inherit case tested). What
+it needs first is a decision Slice 2 cannot make for itself: whether withdrawal belongs in exercise
+runs at all. The amendment parked that pending device evidence, and the honest source of that
+evidence is **players other than the two hands that narrowed it** — a scope call made from one
+device's worth of practice should not be reversed from the same device.
+
+So: out of v2, revisit on user feedback. If the answer is that the ramp interaction *is* wanted, the
+guard in `resolve` relaxes first and Slice 2 follows it; if it isn't, §6 retires with §3 and §7a as
+the third recorded cost of the narrowing.
 
 **Where the code goes** — three files are at or near the 400-line cap and the split is decided up
 front rather than under a failing `--strict` lint:
