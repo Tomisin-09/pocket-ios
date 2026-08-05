@@ -21,8 +21,7 @@ extension RoutinePlayerView {
             switch owner {
             case .exercise(let exercise):
                 exercise.mastery = mastery
-                // Revisions are exercises-only in a routine (ADR 0079 §Scope/§7, unchanged by 0134);
-                // the chosen value is already clamped by the Done screen's stepper. Both setters carry
+                // The chosen value is already clamped by the Done screen's stepper. Both setters carry
                 // their own invariants — `promoteCommand` drops a caught-up reach pin, `settleCommand`
                 // pulls the warm-up floor down and drops a caught-up backoff pin (ADR 0134 §6).
                 switch revision {
@@ -30,7 +29,21 @@ extension RoutinePlayerView {
                 case .settle(let tempo): exercise.settleCommand(to: tempo)
                 case .none: break
                 }
-            case .loop(let loop): loop.mastery = mastery
+            case .loop(let loop):
+                loop.mastery = mastery
+                // Loops by symmetry (ADR 0134 §8), differing only in unit: the screen works in whole
+                // percent and the model in `×`, the same conversion the standalone screen makes.
+                //
+                // **No `speed` pull-down on a settle**, unlike the exercise floor. `LoopRunView`
+                // lowers its local `working` because that is `@State` its own steppers keep at or
+                // below command; the *model* needs nothing, because `Loop.rampFloor` is
+                // `min(command - measuredWarmupGap, speed)` and so forces its own gap. A loop's
+                // warm-up cannot invert the way an exercise's can (ADR 0134 §8, `Loop.settleCommand`).
+                switch revision {
+                case .raise(let percent): loop.promoteCommand(to: Double(percent) / 100)
+                case .settle(let percent): loop.settleCommand(to: Double(percent) / 100)
+                case .none: break
+                }
             }
             _ = JournalWriter.add(to: owner, text: note, kind: kind, into: modelContext)
             try? modelContext.save()
@@ -42,9 +55,10 @@ extension RoutinePlayerView {
 
     @ViewBuilder
     func doneView(for stage: RoutineStage) -> some View {
+        let offer = revisionOffer(for: stage)
         RoutineBlockDoneView(title: stage.title,
                              initialMastery: mastery(for: stage),
-                             anchors: revisionAnchors(for: stage),
+                             anchors: offer?.anchors, unit: offer?.unit ?? .bpm,
                              isLast: player.upNext == nil,
                              upNext: upNextDescriptor()) { mastery, note, kind, revision in
             commitDone(stage, mastery: mastery, note: note, kind: kind, revision: revision)
@@ -62,17 +76,44 @@ extension RoutinePlayerView {
         }
     }
 
-    /// The tempo anchors the Done screen sizes its revision offer from (ADR 0079 §7, ADR 0134), or
-    /// `nil` for a unit that carries no offer — a routine's **loop** blocks and songs, unchanged by
-    /// 0134. Read live from the model rather than snapshotted: unlike a standalone run there is no
+    /// The tempo anchors the Done screen sizes its revision offer from **and the unit they read in**
+    /// (ADR 0079 §7, ADR 0134), or `nil` for a unit that carries no offer at all.
+    ///
+    /// One function returning both because they cannot be allowed to disagree: anchors in percent
+    /// rendered as BPM would offer to move a loop to "85", which is a number from a different axis.
+    ///
+    /// Read live from the model rather than snapshotted: unlike a standalone run there is no
     /// completion value to preserve, and the block has already finished.
-    func revisionAnchors(for stage: RoutineStage) -> CommandOffer.Anchors? {
-        guard let exercise = stage.exercise else { return nil }
-        let range = StandaloneMetronomeEngine.bpmRange
-        return .init(command: exercise.command,
-                     floor: range.lowerBound, ceiling: range.upperBound,
-                     raiseTarget: CommandOffer.raisedCommand(reach: exercise.reachTempo,
-                                                             ceiling: range.upperBound),
-                     settleTarget: exercise.derivedBackoff)
+    ///
+    /// **Exhaustive over `payload`, deliberately not keyed on `stage.loop`** — that accessor returns
+    /// the loop for ear and improvise blocks too, and neither has a command tempo to move: they are
+    /// ramp-less, a jam is not run at a speed you own. `finishedBlock` already keeps them off this
+    /// screen via `kind.isRampLess`, but naming them here means the rule survives that gate moving.
+    func revisionOffer(for stage: RoutineStage)
+        -> (anchors: CommandOffer.Anchors, unit: TempoUnit)? {
+        switch stage.payload {
+        case .exercise(let exercise):
+            let range = StandaloneMetronomeEngine.bpmRange
+            return (.init(command: exercise.command,
+                          floor: range.lowerBound, ceiling: range.upperBound,
+                          raiseTarget: CommandOffer.raisedCommand(reach: exercise.reachTempo,
+                                                                  ceiling: range.upperBound),
+                          settleTarget: exercise.derivedBackoff),
+                    .bpm)
+        case .loop(let loop):
+            // Percent-of-original throughout (ADR 0082). `backoffPercent` is already derived in the
+            // integer-percent domain `CommandRamp` computes the tail in, so the offer and the ramp
+            // the run just played cannot drift by a percent (ADR 0134 §3/§8).
+            let range = TempoMath.percentRange
+            let reach = LoopCommandRamp.percent(loop.targetSpeed)
+            return (.init(command: LoopCommandRamp.percent(loop.command),
+                          floor: range.lowerBound, ceiling: range.upperBound,
+                          raiseTarget: CommandOffer.raisedCommand(reach: reach,
+                                                                  ceiling: range.upperBound),
+                          settleTarget: loop.backoffPercent),
+                    .percent)
+        case .earLoop, .improviseLoop, .song, .rest:
+            return nil
+        }
     }
 }

@@ -23,6 +23,7 @@ struct JournalSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var draftText = ""
     @State private var draftKind: EntryKind = .default
+    @FocusState private var draftFocused: Bool
 
     /// Entries bucketed into day-sections, newest day + entry first (pure helper).
     private var sections: [JournalGrouping.DaySection<JournalEntry>] {
@@ -37,15 +38,17 @@ struct JournalSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                composer
-                if owner.isEmpty {
-                    Section { Text(emptyMessage)
-                        .font(.futura(.footnote))
-                        .foregroundStyle(PocketColor.textSecondary) }
-                } else {
-                    ForEach(sections, id: \.day) { section in
-                        daySection(section)
+            KeyboardFollowingScroll {
+                Form {
+                    composer
+                    if owner.isEmpty {
+                        Section { Text(emptyMessage)
+                            .font(.futura(.footnote))
+                            .foregroundStyle(PocketColor.textSecondary) }
+                    } else {
+                        ForEach(sections, id: \.day) { section in
+                            daySection(section)
+                        }
                     }
                 }
             }
@@ -104,6 +107,7 @@ struct JournalSheet: View {
             TextField("What happened?", text: $draftText, axis: .vertical)
                 .lineLimit(2...5)
                 .keyboardDoneButton()
+                .scrollsIntoViewWhenFocused("composer", focused: $draftFocused)
         } header: {
             Text("New entry")
         }
@@ -191,6 +195,7 @@ private struct JournalEntryEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var text: String
     @State private var kind: EntryKind
+    @FocusState private var textFocused: Bool
 
     init(entry: JournalEntry, onUpdate: @escaping (JournalEntry, String, EntryKind) -> Void) {
         self.entry = entry
@@ -200,45 +205,48 @@ private struct JournalEntryEditor: View {
     }
 
     var body: some View {
-        Form {
-            Section("Kind") {
-                Picker("Kind", selection: $kind) {
-                    ForEach(EntryKind.pickerOrder) { option in
-                        Text("\(option.emoji)  \(option.label)").tag(option)
+        KeyboardFollowingScroll {
+            Form {
+                Section("Kind") {
+                    Picker("Kind", selection: $kind) {
+                        ForEach(EntryKind.pickerOrder) { option in
+                            Text("\(option.emoji)  \(option.label)").tag(option)
+                        }
                     }
+                    .pickerStyle(.menu)
+                    .foregroundStyle(PocketColor.textSecondary)
                 }
-                .pickerStyle(.menu)
-                .foregroundStyle(PocketColor.textSecondary)
-            }
-            Section("Entry") {
-                TextField("What happened?", text: $text, axis: .vertical)
-                    .lineLimit(2...8)
-                    .keyboardDoneButton()
-            }
-            // Read-only: the snapshot is fixed at creation (ADR 0038).
-            Section {
-                if entry.exercise != nil {
-                    LabeledContent("Command tempo") {
-                        Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry,
-                                                   notesPerBeat: entry.commandNotesPerBeatAtEntry))
+                Section("Entry") {
+                    TextField("What happened?", text: $text, axis: .vertical)
+                        .lineLimit(2...8)
+                        .keyboardDoneButton()
+                        .scrollsIntoViewWhenFocused("entry", focused: $textFocused)
+                }
+                // Read-only: the snapshot is fixed at creation (ADR 0038).
+                Section {
+                    if entry.exercise != nil {
+                        LabeledContent("Command tempo") {
+                            Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry,
+                                                       notesPerBeat: entry.commandNotesPerBeatAtEntry))
+                                .font(.pocketMono(.body))
+                        }
+                    } else {
+                        LabeledContent("Mastery") { MasteryReadout(mastery: entry.masteryAtEntry) }
+                        LabeledContent("Command tempo") {
+                            Text(LoopProgressFormat.percentLabel(entry.commandTempoAtEntry))
+                                .font(.pocketMono(.body))
+                        }
+                    }
+                    LabeledContent("When") {
+                        Text(entry.createdAt.formatted(date: .abbreviated, time: .shortened))
                             .font(.pocketMono(.body))
                     }
-                } else {
-                    LabeledContent("Mastery") { MasteryReadout(mastery: entry.masteryAtEntry) }
-                    LabeledContent("Command tempo") {
-                        Text(LoopProgressFormat.percentLabel(entry.commandTempoAtEntry))
-                            .font(.pocketMono(.body))
-                    }
+                } header: {
+                    Text("Snapshot")
+                } footer: {
+                    Text("Captured when this entry was written — fixed, so it still reflects where "
+                        + "you were then, not where the unit is now.")
                 }
-                LabeledContent("When") {
-                    Text(entry.createdAt.formatted(date: .abbreviated, time: .shortened))
-                        .font(.pocketMono(.body))
-                }
-            } header: {
-                Text("Snapshot")
-            } footer: {
-                Text("Captured when this entry was written — fixed, so it still reflects where you "
-                    + "were then, not where the unit is now.")
             }
         }
         .navigationTitle("Edit entry")

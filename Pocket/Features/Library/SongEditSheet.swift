@@ -43,6 +43,9 @@ struct SongEditSheet: View {
         NavigationStack {
             Form {
                 detailsSection
+                // Its own section rather than a row in Details: the root grid is two rows of
+                // controls, which a `LabeledContent`-shaped row can't carry (v2 close-out N10).
+                KeyPickerSection(key: $key)
                 collectionsSection
                 notesSection
                 statsSection
@@ -70,12 +73,6 @@ struct SongEditSheet: View {
             ClearableTextField("Album", text: $album)
             ClearableTextField("Genre", text: $genre)
             NumberRow(label: "Year", text: $year)
-            Picker("Key", selection: $key) {
-                ForEach(MusicalKey.pickerOrder) { key in
-                    Text(key.pickerLabel).tag(key)
-                }
-            }
-            .foregroundStyle(PocketColor.textSecondary)
             NumberRow(label: "BPM", text: $bpm)
             // Downbeat phase anchor for the beat grid (ADR 0022) — the seconds at
             // which bar 1 lands. Decimal seconds; empty ⇒ no grid. Needs BPM to do

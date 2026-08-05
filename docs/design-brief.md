@@ -185,7 +185,32 @@ Elsewhere, don't reach for a literal hex in views; go through
   (the user is never left wondering what's hidden). Example collapsed song-info
   header: `G minor · ★★★☆☆ · Groove / lead phrasing`.
 - Mode/selection controls are **pills**.
+- **A toggle whose effect isn't immediately visible carries its state as a filled chip**
+  (`ToggleChip`): capsule fill at 18% of the space's accent, a 1 pt stroke in the accent, and the
+  content in the accent — against `surfaceStandard` / `surfaceBorder` / `textSecondary` when off.
+  Tinted text alone is not enough signal. The waveform's **Follow** control is the case that set the
+  rule: its only cue was `textPrimary` vs `textSecondary`, and because pinch-zoom anchoring doesn't
+  show until your *next* pinch, a working control read as a dead one.
+  **Then the whole row follows.** A toggle whose effect *is* immediate (**Grid**) doesn't need the
+  cue for its own sake, but a toggle sitting next to a chip has to be one too — two controls of the
+  same kind that look like different kinds is its own failure. The rule is per row, not per control.
+  What stays out is anything that isn't a toggle: **Set the 1** is a one-shot action, and a capsule
+  fill would claim a state it doesn't have. Tint follows the surface's existing selected-chip idiom
+  where it has one (the waveform screen's is `active`, set by the speed bar's presets).
+  **Both states must be the same size.** Padding is fixed and the font weight never varies, only
+  fill/stroke/foreground: chips sit beside other controls, and one that grows on selection shoves its
+  neighbour under the player's finger. (Same reasoning as the nav-bar width rule below, for the same
+  reason: nothing that changes state may change layout.)
+- **A growing text field follows the caret** (`KeyboardFollowingScroll` +
+  `.scrollsIntoViewWhenFocused`). Every note field in the app is multi-line and grows as you type;
+  iOS scrolls a newly *focused* field into view but does not follow it as it *grows*, so the first
+  line break hides what you're writing behind the keyboard. Wrap the screen's scroll container and
+  bind the field. The trigger is a height increase while focused — never a keystroke, which would
+  make the view shiver.
 - Numbers that respond to input (BPM, speed) update **live**.
+- **A control that changes a stored value shows the move, not just the destination** — `100 → 94`,
+  the old value dimmed. A lone new number only means something to someone who remembers what it was,
+  and on the post-run settle offer that is precisely what's being reconsidered.
 - **Coined-term fields carry a tappable ⓘ** (`FieldInfoLabel`) with a one-line definition in a
   popover — Mastery, Command tempo, Focus, loop Type, derived song Mastery. The test is whether a
   musician can infer the meaning from the label alone: standard vocabulary (Key, Genre, BPM) gets

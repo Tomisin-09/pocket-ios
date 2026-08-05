@@ -104,32 +104,37 @@ struct ModeDescriptionLine: View {
                 LoopControlsInfo().presentationCompactAdaptation(.popover)
             }
             Spacer()
-            Button {
+            // **Both toggles are chips, in the speed bar's `active` green.** Follow needs the state
+            // cue on its own merits — its effect only shows on the *next* pinch, so a tinted label
+            // read as a dead button (v2 close-out N1). Grid doesn't; it's a chip because the two sit
+            // side by side, and a toggle next to a toggle that look like different kinds of control
+            // is its own kind of wrong. The hue follows `PresetPill` in the speed bar directly above,
+            // which is this screen's existing selected-chip idiom.
+            ToggleChip(isOn: zoomFollowsPlayhead, tint: PocketColor.active) {
                 zoomFollowsPlayhead.toggle()
-                haptic(.light)
-            } label: {
+            } content: {
                 Label("Follow", systemImage: "scope")
                     .font(.futura(.footnote, weight: .medium))
-                    .foregroundStyle(zoomFollowsPlayhead ? PocketColor.textPrimary
-                                                         : PocketColor.textSecondary)
             }
-            .buttonStyle(.plain)
             .accessibilityLabel(zoomFollowsPlayhead ? "Zoom follows the playhead"
                                                     : "Zoom stays where you pinch")
             .accessibilityHint("Changes what pinch-to-zoom anchors to")
-            .padding(.trailing, gridAvailable || needsDownbeat ? 14 : 0)
+            .padding(.trailing, gridAvailable || needsDownbeat ? 8 : 0)
             if gridAvailable {
-                Button(action: onToggleGrid) {
+                ToggleChip(isOn: gridOn, tint: PocketColor.active, action: onToggleGrid) {
                     Label("Grid", systemImage: "grid")
                         .font(.futura(.footnote, weight: .medium))
-                        .foregroundStyle(gridOn ? PocketColor.textPrimary : PocketColor.textSecondary)
                 }
-                .buttonStyle(.plain)
                 .accessibilityLabel(gridOn ? "Hide gridlines" : "Show gridlines")
                 .transition(.opacity)
             } else if needsDownbeat {
                 // The tempo is known but the phase isn't, so there's nothing to draw yet. Say so, and
                 // make the fix one tap — placing the 1 is what turns the BPM into a grid (ADR 0022/0024).
+                //
+                // **Deliberately not a chip**, unlike the Grid it stands in for: it's an action, not a
+                // state, and a capsule fill would claim a "this is on" that a one-shot prompt doesn't
+                // have. It also has to pull the eye — burying it in an unselected chip's grey would
+                // undo the whole reason it exists (device feedback 2026-07-29).
                 Button(action: onSetDownbeat) {
                     Label("Set the 1", systemImage: "1.circle")
                         .font(.futura(.footnote, weight: .medium))

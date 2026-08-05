@@ -20,6 +20,7 @@ struct FreeformInstructionsSection: View {
     /// Held locally and committed on blur/disappear, unlike the toggles: prose *is* a draft, and
     /// saving every keystroke would write to the store on each character.
     @State private var draft: String
+    @FocusState private var draftFocused: Bool
 
     init(exercise: Exercise) {
         self.exercise = exercise
@@ -31,6 +32,9 @@ struct FreeformInstructionsSection: View {
             TextField("What are you practising?", text: $draft, axis: .vertical)
                 .lineLimit(4...12)
                 .keyboardDoneButton()
+                // Needs a `KeyboardFollowingScroll` around the host's container — both hosts
+                // (`ExerciseDetailSheet`, `FreeformBlockPreview`) have one; inert if a third forgets.
+                .scrollsIntoViewWhenFocused("instructions", focused: $draftFocused)
             // ADR 0139 O6 — player-declared, never inferred.
             Toggle("I can do this without my instrument", isOn: Binding(
                 get: { exercise.awayFromInstrument },

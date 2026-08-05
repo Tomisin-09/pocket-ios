@@ -46,25 +46,28 @@ struct ExerciseDetailSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                // A freeform block's authoring is its own thing (ADR 0136): its instructions *are* the
-                // exercise, and it carries an optional click instead of a Feel row about a rhythm it
-                // doesn't have. Shared with the routine editor's block surface so the two can't drift.
-                if isFreeform {
-                    FreeformInstructionsSection(exercise: exercise)
-                    FreeformMetronomeSection(exercise: exercise)
-                } else {
-                    descriptionSection
+            KeyboardFollowingScroll {
+                Form {
+                    // A freeform block's authoring is its own thing (ADR 0136): its instructions *are*
+                    // the exercise, and it carries an optional click instead of a Feel row about a
+                    // rhythm it doesn't have. Shared with the routine editor's block surface so the
+                    // two can't drift.
+                    if isFreeform {
+                        FreeformInstructionsSection(exercise: exercise)
+                        FreeformMetronomeSection(exercise: exercise)
+                    } else {
+                        descriptionSection
+                    }
+                    ExerciseProgressSection(mastery: $mastery,
+                                            lastPracticed: exercise.lastPracticed,
+                                            trajectory: TempoTrajectory.reading(for: exercise.uid,
+                                                                                in: sessionRecords),
+                                            runCount: TempoTrajectory.runCount(for: exercise.uid,
+                                                                               in: sessionRecords))
+                    linkedSongsSection
+                    if !isFreeform { feelSection }
+                    templateSection
                 }
-                ExerciseProgressSection(mastery: $mastery,
-                                        lastPracticed: exercise.lastPracticed,
-                                        trajectory: TempoTrajectory.reading(for: exercise.uid,
-                                                                            in: sessionRecords),
-                                        runCount: TempoTrajectory.runCount(for: exercise.uid,
-                                                                           in: sessionRecords))
-                linkedSongsSection
-                if !isFreeform { feelSection }
-                templateSection
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)

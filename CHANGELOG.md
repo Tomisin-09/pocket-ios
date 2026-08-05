@@ -5,7 +5,30 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Fixed
+- **Finishing a loop inside a routine now offers to move its tempo.** Run a loop on its own and the
+  Done screen has always asked whether to raise or settle the speed you own it at. Run the *same*
+  loop as a block in a routine and the offer silently wasn't there — you got the rating and the note
+  and nothing else. Two completion screens that looked identical and behaved differently. The routine
+  one now carries the offer too, reading in **%** as loop tempos always do.
+- **The note field no longer disappears under the keyboard.** Every note field in the app grows as
+  you type, and the first line break used to push what you were writing down behind the keyboard.
+  They now follow the caret as they grow — on the Done screen, in the Journal, on a song's notes, and
+  in the improvise, ear-training and freeform note fields.
+
 ### Changed
+- **You can see whether Follow is on.** The waveform's Follow button — which decides whether
+  pinch-zoom chases the playhead or holds the spot under your fingers — signalled its state with
+  nothing but slightly brighter text, and its effect doesn't show until your next pinch. It read as a
+  dead button. Follow and **Grid** are now both filled chips when they're on, in the same green as
+  the speed presets above them.
+- **Choosing a song's key is two choices again.** It was one menu of twenty-five entries, so finding
+  E♭ minor meant reading past E♭ major and twenty-two others. Now you pick **major or minor**, then
+  the **root**, from twelve buttons you can see at once. The roots re-spell when you switch tonality —
+  the same pitch is E♭ in major and D♯ in minor — because a note is spelled by the key it's in.
+- **The command-tempo offer shows the move, not just the destination.** The stepper after a run read
+  "New command 94"; it now reads "100 → 94", with where you're coming from dimmed beside it. On a
+  settle, what you're moving away from is exactly the thing being reconsidered.
 - **Pickers that had outgrown their popup menus.** Three places asked you to choose from a list
   crammed into a pop-up: the metronome's meter button, which had reached fifteen options across three
   groups and scrolled — clipping its top row, wrapping "12/8 · Slow blues · doo-wop (in 4)" onto two

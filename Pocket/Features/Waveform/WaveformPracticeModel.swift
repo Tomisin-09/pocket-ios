@@ -244,9 +244,10 @@ final class WaveformPracticeModel {
 
     /// Toggle this song's gridlines (ADR 0051). Mutating the `@Model` persists the per-song
     /// preference; the grid still feeds snap candidates when hidden.
+    /// No haptic here: the control is a `ToggleChip`, which fires its own. Two would stack into one
+    /// heavier-feeling tap that reads as a different gesture.
     func toggleGridlines() {
         song.showsGridlines.toggle()
-        haptic(.light)
     }
 
     // MARK: - Metronome (ADR 0026)
