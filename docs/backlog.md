@@ -247,25 +247,36 @@ Still open, in the ADR and deliberately unbuilt:
 - **§7's loop warning.** Currently quiet rather than broken (a one-pass plateau's clamped window can't
   be reached by an integer rep count). Needs a fractional rep position on `LoopRunModel`.
 
-## The click withdrawal (ADR 0132, Proposed — unbuilt)
+## The click withdrawal (ADR 0132 — **slice 1 SHIPPED**, slice 2 out of v2)
 
 Silent bars: the click thins to the downbeat and then out on a fixed eight-bar cycle, so the player
-carries the pulse and hears their own drift when it returns. **Decided but not built** — the ADR is
-written, no code exists. Two slices, deliberately:
+carries the pulse and hears their own drift when it returns.
 
-- **Slice 1 — the feature, no stored model change.** Pure `ClickWithdrawal` cycle math, the
-  `drillOriginTick` capture and its re-anchor invalidation (ADR 0131 §5's state), the
-  `scheduledLevel` branch, the Settings row, and `BeatIndicator` reading the voiced level so the dots
-  go dark with the click. Device-testable without touching persistence — and the §2 bar
-  distributions can only be judged by playing against them.
-- **Slice 2 — the per-exercise override.** The Optional `clickWithdrawalRaw` field (`nil` = inherit,
-  which is what keeps the Settings row from becoming a new-exercises-only preference) and its
-  `ConfigureExerciseForm` row. The only part that can break an existing install, so it waits until a
-  week of practice says which drills want to differ.
+**Slice 1 shipped** 2026-08-05 (PR #213, `d694c2d`), device-verified — but **§4 narrowed on the
+device**: withdrawal is now the free-play metronome tool only, and only while the click is steady. A
+withdrawing click during a climbing ramp is two demands at once, and the reference leaves exactly as
+the thing you're measuring against changes.
+
+**Slice 2 (the per-exercise override) is out of v2 — parked 2026-08-05, door left open.**
+`Exercise.clickWithdrawalRaw: String?`, `nil` = inherit (never collapse into `off`, or the global
+setting silently becomes a new-exercises-only preference), plus its `ConfigureExerciseForm` row. The
+pure resolver **already takes its `exercise:` argument**, so what remains is the model field and the
+form row.
+
+It is parked rather than scheduled because **the narrowing made it unbuildable as written**: a
+per-*exercise* override for a metronome-only feature configures a value `resolve` cannot read
+(`onMetronomeTool` is false on every exercise run). The prior question is whether withdrawal belongs
+in exercise runs at all — one guard in `ClickWithdrawal.resolve` — and that was parked pending device
+evidence. **Revisit on user feedback**, not on another pass from the same two hands: a scope call
+made from one device's worth of practice shouldn't be reversed from the same device.
+
+Two other costs of the narrowing, recoverable by the same guard: §3's emergent warm-up/dwell
+distribution is now unreachable, and §7a's plain untemplated metronome *exercise* loses the feature.
 
 Open question the ADR names rather than settles: on fretboard/chord drills the content advances on
 the beat, so the eyes keep a pulse the ear has lost and the withdrawal is partial there by
-construction (§7a). Whether that is worth a further answer is a device-testing question.
+construction (§7a). Whether that is worth a further answer is a device-testing question — and it only
+comes back into scope if the guard above is relaxed.
 
 ## Command moves both ways (ADR 0134 — **slice 1 SHIPPED**, slice 2 parked)
 
