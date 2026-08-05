@@ -109,4 +109,60 @@ final class JournalOwnershipTests: XCTestCase {
         XCTAssertEqual(exercise.journal.first?.commandBpmAtEntry, 110)
         XCTAssertNil(exercise.journal.first?.commandTempoAtEntry)
     }
+
+    // MARK: - The discriminator (ADR 0143)
+
+    /// `ownerKind` replaced a hand-written `entry.exercise != nil` at each render site. That test was
+    /// only ever right while there were exactly **two** owners: a session entry sets neither
+    /// relationship, so every one of them would have been rendered with a loop's mastery row. These
+    /// four assertions are what stop that regressing quietly.
+    ///
+    /// Built **uninserted** — property reads only, and inserting a graph SIGTRAPs in the test host.
+    func testOwnerKindNamesEachOfTheFourShapes() {
+        let exerciseEntry = JournalEntry.forExercise(text: "ex", kind: .note, commandBpmAtEntry: 96)
+        exerciseEntry.exercise = Exercise(name: "Spider", currentTempo: 80, commandTempo: 96)
+        XCTAssertEqual(exerciseEntry.ownerKind, .exercise)
+
+        let loopEntry = JournalEntry.forLoop(text: "loop", kind: .note, masteryAtEntry: 3,
+                                             commandTempoAtEntry: 0.9)
+        loopEntry.loop = Loop(name: "Verse", start: 0, end: 0.2, speed: 0.9, repeats: 2)
+        XCTAssertEqual(loopEntry.ownerKind, .loop)
+
+        let sessionEntry = JournalEntry.forSession(text: "good hour", kind: .session,
+                                                   routineUID: UUID(), routineName: "Warm-up",
+                                                   units: [])
+        XCTAssertEqual(sessionEntry.ownerKind, .session)
+
+        let orphan = JournalEntry.forLoop(text: "owner deleted", kind: .note, masteryAtEntry: nil,
+                                          commandTempoAtEntry: nil)
+        XCTAssertEqual(orphan.ownerKind, .orphan,
+                       "a nullified relationship reads as orphan, not as a loop with no snapshot")
+    }
+
+    /// A unit relationship always wins. Otherwise an entry that happened to carry both — a shape
+    /// nothing writes today, but nothing forbids either — could start rendering as a session.
+    func testAUnitOwnerOutranksARoutineIdCopy() {
+        let entry = JournalEntry.forExercise(text: "ex", kind: .note, commandBpmAtEntry: 96)
+        entry.exercise = Exercise(name: "Spider", currentTempo: 80, commandTempo: 96)
+        entry.routineUID = UUID()
+
+        XCTAssertEqual(entry.ownerKind, .exercise)
+    }
+
+    /// The whole reason the session owner uses loose id copies (ADR 0143, following `PracticeRun`):
+    /// there is no relationship, so there is no cascade, so deleting the routine cannot take the
+    /// reflection written about it.
+    func testASessionEntryHoldsNoRelationshipToCascadeFrom() {
+        let entry = JournalEntry.forSession(text: "shoulders tight", kind: .session,
+                                            routineUID: UUID(), routineName: "Morning warm-up",
+                                            units: [SessionUnitRef(uid: UUID(), title: "Spider",
+                                                                   kind: .exercise)])
+
+        XCTAssertNil(entry.loop)
+        XCTAssertNil(entry.exercise)
+        XCTAssertNil(entry.masteryAtEntry, "a session spans several units — no one mastery is true")
+        XCTAssertNil(entry.commandTempoAtEntry)
+        XCTAssertNil(entry.commandBpmAtEntry, "…and no one tempo either")
+        XCTAssertEqual(entry.routineNameAtEntry, "Morning warm-up")
+    }
 }

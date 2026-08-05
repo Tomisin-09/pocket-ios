@@ -5,6 +5,15 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Write a note about the whole session, not just one drill.** Finish a routine and the summary
+  screen now has a place to say how the hour actually went — shoulders tight, changes only came good
+  at the end, hands cold until the third block. Until now every journal entry belonged to a single
+  exercise or loop, so a thought about the *sitting* had to be filed under one of the blocks it
+  wasn't about. Session notes are tagged 🎬 and carry the list of what you practised, and each unit
+  in that list takes you back to it. They survive everything they name: delete the routine, delete
+  the exercises, and the note you wrote about that Tuesday is still there.
+
 ### Fixed
 - **A freeform block's journal actually saves now.** Its Journal sheet was wired up with nothing
   behind it, so Add entry, editing an entry and swiping one away all appeared to work and did

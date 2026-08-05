@@ -89,6 +89,11 @@ struct JournalSheet: View {
         case .exercise:
             return "No entries yet. Log a goal, a breakthrough, or what's fighting back — each "
                 + "entry remembers your command tempo at the time."
+        case .session:
+            // Unreachable — this sheet is presented per *unit*, and a session owner holds no journal
+            // to browse (ADR 0143). Written out rather than defaulted so the string stays true if a
+            // later surface ever does hand one over.
+            return "No entries yet. Log how a session went — each entry remembers what you practised."
         }
     }
 
@@ -159,6 +164,12 @@ struct JournalSheet: View {
                     Text("Command tempo "
                          + Self.bpmLabel(exercise.commandTempo,
                                          notesPerBeat: exercise.commandNotesPerBeat))
+                case .session(let session):
+                    // Unreachable here (see `emptyMessage`), but a session's snapshot is a list of
+                    // units, never a tempo — so it must never fall through to a unit's preview.
+                    Text(session.units.isEmpty
+                         ? "What you practised"
+                         : session.units.map(\.title).joined(separator: ", "))
                 }
             }
             .foregroundStyle(PocketColor.textPrimary)
@@ -222,20 +233,33 @@ private struct JournalEntryEditor: View {
                         .keyboardDoneButton()
                         .scrollsIntoViewWhenFocused("entry", focused: $textFocused)
                 }
-                // Read-only: the snapshot is fixed at creation (ADR 0038).
+                // Read-only: the snapshot is fixed at creation (ADR 0038). Keyed on `ownerKind`, the
+                // single discriminator (ADR 0143) — the hand-written `entry.exercise != nil` this
+                // replaces would have shown a session entry a loop's mastery row.
                 Section {
-                    if entry.exercise != nil {
+                    switch entry.ownerKind {
+                    case .exercise:
                         LabeledContent("Command tempo") {
                             Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry,
                                                        notesPerBeat: entry.commandNotesPerBeatAtEntry))
                                 .font(.pocketMono(.body))
                         }
-                    } else {
+                    case .loop:
                         LabeledContent("Mastery") { MasteryReadout(mastery: entry.masteryAtEntry) }
                         LabeledContent("Command tempo") {
                             Text(LoopProgressFormat.percentLabel(entry.commandTempoAtEntry))
                                 .font(.pocketMono(.body))
                         }
+                    case .session:
+                        // A session spans several units at several tempos, so there is no one number
+                        // to show; what it snapshotted is what was practised.
+                        LabeledContent("Practised") {
+                            Text(entry.practisedUnits.map(\.title).joined(separator: ", "))
+                                .font(.futura(.body))
+                                .multilineTextAlignment(.trailing)
+                        }
+                    case .orphan:
+                        EmptyView()
                     }
                     LabeledContent("When") {
                         Text(entry.createdAt.formatted(date: .abbreviated, time: .shortened))

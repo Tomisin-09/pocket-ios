@@ -1,8 +1,10 @@
 import SwiftUI
 
 /// One journal entry, **self-describing** by owner: a loop entry shows its mastery + command-tempo
-/// percent; an exercise entry shows its command BPM. Keyed off `entry.exercise` so the two snapshots
-/// are never rendered in the wrong units (ADR 0058).
+/// percent; an exercise entry shows its command BPM; a session entry (ADR 0143) shows the units it
+/// was made of. Keyed off `entry.ownerKind` so a snapshot is never rendered in the wrong units — a
+/// hand-written `entry.exercise != nil` used to decide this, which was only ever right while there
+/// were exactly two owners (ADR 0058 / 0143).
 ///
 /// Shared by the per-owner `JournalSheet` (where the owner is implicit, so `ownerLabel` is `nil`) and
 /// the aggregated **Journal space** (`JournalTabView`, which passes an owner caption so an entry in a
@@ -15,6 +17,10 @@ struct JournalEntryRow: View {
     /// Open the owner (ADR 0142). `nil` leaves the caption as plain text — which is what the
     /// per-owner sheet wants, and what an item with nowhere honest to go gets (`JournalOwnerRoute`).
     var onOpenOwner: (() -> Void)?
+    /// The tap action for one of a **session** entry's practised-unit pills (ADR 0143), or `nil` for
+    /// a unit that no longer resolves. The default sends every pill to plain text, which is right for
+    /// the per-owner sheet: it never shows session entries, since they belong to no unit.
+    var openUnit: (SessionUnitRef) -> (() -> Void)? = { _ in nil }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -40,19 +46,30 @@ struct JournalEntryRow: View {
     /// entry with neither a mastery nor a measured command tempo has nothing to show, so its row is
     /// omitted rather than rendered as a dangling `— · —`; when *either* is present the pair still
     /// renders (keeping the ADR-0039 "unrated"/"not measured" signal, e.g. `— · 90%`).
+    ///
+    /// A **session** entry (ADR 0143) has no tempo of its own — it spans several units at several
+    /// tempos — so what it snapshotted is *what was practised*, and that is what renders here. An
+    /// **orphan** (owner deleted, relationship nullified) shows nothing at all.
     @ViewBuilder private var snapshot: some View {
-        if entry.exercise != nil {
+        switch entry.ownerKind {
+        case .exercise:
             Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry,
                                        notesPerBeat: entry.commandNotesPerBeatAtEntry))
                 .font(.pocketMono(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
-        } else if entry.masteryAtEntry != nil || entry.commandTempoAtEntry != nil {
-            HStack(spacing: 8) {
-                MasteryReadout(mastery: entry.masteryAtEntry)
-                Text("· \(LoopProgressFormat.percentLabel(entry.commandTempoAtEntry))")
-                    .font(.pocketMono(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
+        case .loop:
+            if entry.masteryAtEntry != nil || entry.commandTempoAtEntry != nil {
+                HStack(spacing: 8) {
+                    MasteryReadout(mastery: entry.masteryAtEntry)
+                    Text("· \(LoopProgressFormat.percentLabel(entry.commandTempoAtEntry))")
+                        .font(.pocketMono(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
             }
+        case .session:
+            SessionUnitChips(units: entry.practisedUnits, openAction: openUnit)
+        case .orphan:
+            EmptyView()
         }
     }
 }

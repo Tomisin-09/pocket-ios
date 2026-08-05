@@ -143,4 +143,43 @@ final class JournalTimelineTests: XCTestCase {
         XCTAssertEqual(JournalTimeline.filter(items, query: "scales \(dateToken)").count, 1)
         XCTAssertEqual(JournalTimeline.filter(items, query: "scales chords").count, 0)
     }
+
+    // MARK: - Session entries (ADR 0143)
+
+    private func sessionNote(routineName: String, units: [SessionUnitRef]) -> JournalTimeline.Item {
+        .note(JournalEntry.forSession(text: "shoulders tight today", kind: .session,
+                                      routineUID: UUID(), routineName: routineName, units: units,
+                                      createdAt: noon))
+    }
+
+    /// The label comes from the entry's **own snapshot**, never from a lookup through `routineUID` —
+    /// that is the point of storing the name. Nothing here inserts a `Routine` at all, which is the
+    /// assertion: a deleted routine still labels the entries written about it (ADR 0038).
+    func testASessionNoteIsLabelledByItsSnapshottedRoutineName() {
+        let item = sessionNote(routineName: "Morning warm-up", units: [])
+
+        XCTAssertEqual(JournalTimeline.ownerLabel(for: item), "Morning warm-up")
+    }
+
+    func testAnUnnamedRoutineFallsBackRatherThanShowingAnEmptyCaption() {
+        XCTAssertEqual(JournalTimeline.ownerLabel(for: sessionNote(routineName: "", units: [])),
+                       "Routine session")
+    }
+
+    /// A session note's text is about the *sitting*, so searching a drill's name would otherwise
+    /// never surface the session you played it in.
+    func testASessionIsFoundByAUnitPractisedInIt() {
+        let items = [sessionNote(routineName: "Morning warm-up",
+                                 units: [SessionUnitRef(uid: UUID(), title: "Spider", kind: .exercise),
+                                         SessionUnitRef(uid: UUID(), title: "Verse riff", kind: .loop)])]
+
+        XCTAssertEqual(JournalTimeline.filter(items, query: "spider").count, 1)
+        XCTAssertEqual(JournalTimeline.filter(items, query: "morning spider").count, 1,
+                       "the routine name and a unit name AND together")
+        XCTAssertEqual(JournalTimeline.filter(items, query: "arpeggios").count, 0)
+    }
+
+    func testASessionHasNoTemplateLabel() {
+        XCTAssertNil(JournalTimeline.templateLabel(for: sessionNote(routineName: "Warm-up", units: [])))
+    }
 }
