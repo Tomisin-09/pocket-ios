@@ -39,14 +39,20 @@ struct FreeformRunView: View {
     @State private var showingDetail = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                instructions
-                elapsedReadout
-                clickToggle
+        // The wrapper is what lets the note card scroll clear of the keyboard (N5) — the composer
+        // reaches its scroll container through the environment.
+        KeyboardFollowingScroll {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    instructions
+                    elapsedReadout
+                    clickToggle
+                    noteCard
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
+            .scrollDismissesKeyboard(.interactively)
         }
         .background(PocketColor.background)
         .navigationTitle(exercise.name.isEmpty ? "Your own practice" : exercise.name)
@@ -66,8 +72,26 @@ struct FreeformRunView: View {
                              cycleSeconds: { 0 },
                              isPlaying: { false },
                              onFinish: finish)
+        // The three callbacks are not optional decoration: `JournalSheet` defaults them to no-ops, so
+        // presenting it bare — as this screen did — gave a freeform block a journal whose Add, edit and
+        // swipe-delete all silently did nothing. The same write path every other host uses.
         .sheet(isPresented: $showingJournal) {
-            JournalSheet(owner: .exercise(exercise))
+            JournalSheet(owner: .exercise(exercise),
+                         onAdd: { text, kind in
+                             if JournalWriter.add(to: .exercise(exercise), text: text, kind: kind,
+                                                  into: modelContext) {
+                                 try? modelContext.save()
+                                 haptic(.light)
+                             }
+                         },
+                         onUpdate: { entry, text, kind in
+                             JournalWriter.update(entry, text: text, kind: kind)
+                             try? modelContext.save()
+                         },
+                         onDelete: { entry in
+                             JournalWriter.delete(entry, from: modelContext)
+                             try? modelContext.save(); haptic(.light)
+                         })
         }
         .sheet(isPresented: $showingDetail) {
             ExerciseDetailSheet(exercise: exercise)
@@ -106,6 +130,18 @@ struct FreeformRunView: View {
     private func elapsedLabel(at now: Date) -> String {
         let seconds = max(0, Int(now.timeIntervalSince(startedAt ?? now)))
         return String(format: "%d:%02d elapsed", seconds / 60, seconds % 60)
+    }
+
+    /// Inline capture (ADR 0142). A freeform block is prose and a clock, so there is more room here
+    /// than on any other run screen — and the practice it holds (transcribing, sight-reading, a
+    /// teacher's assignment) is the practice most likely to produce something worth writing down.
+    /// The block's own Journal history stays behind the ⋯ menu; this is the write half only.
+    private var noteCard: some View {
+        JournalNoteComposer(owner: .exercise(exercise), kind: .note,
+                            header: "Note what happened",
+                            placeholder: "What did you get through? What stayed hard?",
+                            style: .card)
+            .padding(.top, 4)
     }
 
     /// Start the click if this block asked for one. Deliberately *not* a transport the player drives:

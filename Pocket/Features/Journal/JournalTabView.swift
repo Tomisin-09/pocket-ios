@@ -23,6 +23,13 @@ struct JournalTabView: View {
     @State private var sortOrder: JournalTimeline.SortOrder = .newest
     /// One take plays at a time; stopped on dismiss (mirrors `TakesSheet`).
     @State private var player = RecordingPlayer()
+    /// The unit an owner caption is opening (ADR 0142), or `nil`. Keyed on the unit's stable `uid`
+    /// through `JournalOwnerRoute`, never `persistentModelID` (ADR 0090).
+    @State private var openingOwner: JournalOwnerRoute?
+    /// Red Moon Pro entitlement + the shared paywall (ADR 0112) — the caption link honours the same
+    /// run gate the exercise library's rows do, so a note is never a way past it.
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
 
     /// The scope- then search-filtered feed.
     private var items: [JournalTimeline.Item] {
@@ -82,7 +89,31 @@ struct JournalTabView: View {
                 .accessibilityLabel("Sort order")
             }
         }
+        .navigationDestination(item: $openingOwner) { route in
+            JournalOwnerDestinationView(route: route)
+        }
         .onDisappear { player.stop() }
+    }
+
+    /// Follow an item's owner caption (ADR 0142). A locked Pro drill opens the paywall instead of its
+    /// run screen — the same `canRun` gate `ExerciseLibraryView`'s rows apply, since a player who
+    /// wrote notes while subscribed keeps the notes when the subscription lapses.
+    private func openOwner(of item: JournalTimeline.Item) {
+        guard let route = JournalOwnerRoute.route(for: item) else { return }
+        if case .exercise(let exercise) = route,
+           !AccessPolicy.canRun(exercise.template, isPro: isPro,
+                                isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug)) {
+            presentPaywall(.proExercise)
+            return
+        }
+        openingOwner = route
+    }
+
+    /// The caption's tap action, or `nil` when the item has nowhere to go — a song-owned take, or a
+    /// loop whose audio no longer resolves. `nil` keeps the caption as plain text.
+    private func openAction(for item: JournalTimeline.Item) -> (() -> Void)? {
+        guard JournalOwnerRoute.route(for: item) != nil else { return nil }
+        return { openOwner(of: item) }
     }
 
     // MARK: - Scope filter
@@ -118,10 +149,12 @@ struct JournalTabView: View {
     @ViewBuilder private func row(_ item: JournalTimeline.Item) -> some View {
         switch item {
         case .note(let entry):
-            JournalEntryRow(entry: entry, ownerLabel: JournalTimeline.ownerLabel(for: item))
+            JournalEntryRow(entry: entry, ownerLabel: JournalTimeline.ownerLabel(for: item),
+                            onOpenOwner: openAction(for: item))
         case .take(let take):
             JournalTakeRow(take: take,
                            ownerLabel: JournalTimeline.ownerLabel(for: item),
+                           onOpenOwner: openAction(for: item),
                            isPlaying: player.isPlaying(take.fileName)) {
                 player.toggle(take.fileName)
             }
@@ -193,6 +226,8 @@ struct JournalTabView: View {
 private struct JournalTakeRow: View {
     let take: Recording
     let ownerLabel: String?
+    /// Open the take's owner (ADR 0142); `nil` for a song-owned take, which has no run screen.
+    let onOpenOwner: (() -> Void)?
     let isPlaying: Bool
     let onToggle: () -> Void
 
@@ -220,10 +255,7 @@ private struct JournalTakeRow: View {
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 if let ownerLabel {
-                    Text(ownerLabel)
-                        .font(.futura(.caption))
-                        .foregroundStyle(PocketColor.journal)
-                        .lineLimit(1)
+                    JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner)
                 }
             }
         }

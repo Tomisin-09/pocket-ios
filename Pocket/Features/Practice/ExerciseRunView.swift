@@ -53,6 +53,9 @@ struct ExerciseRunView: View {
     @State var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State var showingJournal = false
+    /// The compact mid-run capture sheet (ADR 0142) — reachable **always**, including while the ramp
+    /// is running and inside a routine, which is exactly where the full journal is not.
+    @State var showingQuickNote = false
     /// The Takes sheet — relisten to practice-take recordings (ADR 0069).
     @State var showingTakes = false
     /// Practice-take recording over this exercise (ADR 0069) — mic-only capture armed before the run.
@@ -150,6 +153,11 @@ struct ExerciseRunView: View {
             if !isRunning, routineContext == nil {
                 ToolbarItem(placement: .topBarTrailing) { signaturePicker }
             }
+            // Capture, in every state (ADR 0142) — a running drill and a routine block are where
+            // most notes are owed, and until now both were places you couldn't write one.
+            ToolbarItem(placement: .topBarTrailing) {
+                QuickJournalButton(isPresented: $showingQuickNote)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingDetail = true; haptic(.light) } label: {
                     Image(systemName: "info.circle")
@@ -178,6 +186,10 @@ struct ExerciseRunView: View {
                              try? modelContext.save(); haptic(.light)
                          })
         }
+        // Presented over a live run on purpose: nothing here pauses the engine (ADR 0142).
+        .sheet(isPresented: $showingQuickNote) {
+            QuickJournalSheet(owner: .exercise(exercise))
+        }
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .exercise(exercise), onDelete: deleteTake)
         }
@@ -198,14 +210,6 @@ struct ExerciseRunView: View {
                                  isLast: true, upNext: nil) { mastery, note, kind, revision in
                 commitCompletion(mastery: mastery, note: note, kind: kind, revision: revision)
             }
-        }
-    }
-
-    /// Write a new entry, snapshotting the exercise's current command tempo in BPM (ADR 0058).
-    private func addJournalEntry(_ text: String, _ kind: EntryKind) {
-        if JournalWriter.add(to: .exercise(exercise), text: text, kind: kind, into: modelContext) {
-            try? modelContext.save()
-            haptic(.light)
         }
     }
 

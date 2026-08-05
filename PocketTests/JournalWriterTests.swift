@@ -91,6 +91,18 @@ final class JournalWriterTests: XCTestCase {
         XCTAssertEqual(entry.kind, .note)
     }
 
+    /// The compact capture sheet names the unit a note is about (ADR 0142) — it can be opened from
+    /// inside a routine, where "which of these am I writing about" is a real question. An unnamed unit
+    /// must still read as a phrase, since the name is dropped into a sentence.
+    func testOwnerDisplayNameFallsBackToThePhraseNotAnEmptyString() {
+        let named = Exercise(name: "Alternating picking", currentTempo: 80, commandTempo: 96)
+        XCTAssertEqual(JournalOwner.exercise(named).displayName, "Alternating picking")
+        let unnamed = Exercise(name: "", currentTempo: 80, commandTempo: 96)
+        XCTAssertEqual(JournalOwner.exercise(unnamed).displayName, "this exercise")
+        let loop = Loop(name: "", start: 0, end: 0.2, speed: 0.9, repeats: 2)
+        XCTAssertEqual(JournalOwner.loop(loop).displayName, "this loop")
+    }
+
     func testDeleteRemovesEntry() throws {
         let context = try makeContext()
         let exercise = Exercise(name: "Spider", currentTempo: 90, commandTempo: 120)

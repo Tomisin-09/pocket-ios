@@ -26,6 +26,16 @@ enum JournalOwner {
     }
 
     var isEmpty: Bool { entries.isEmpty }
+
+    /// What to call the owner in a composer that isn't already on its screen — the compact capture
+    /// sheet says which unit the note lands on (ADR 0142). Falls back to the unit's kind rather than
+    /// an empty string, matching `JournalTimeline.ownerLabel`'s handling of an unnamed unit.
+    var displayName: String {
+        switch self {
+        case .loop(let loop): loop.name.isEmpty ? "this loop" : loop.name
+        case .exercise(let exercise): exercise.name.isEmpty ? "this exercise" : exercise.name
+        }
+    }
 }
 
 /// The single write path for journal entries (ADR 0058), shared by the Practice run screens.

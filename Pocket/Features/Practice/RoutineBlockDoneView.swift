@@ -182,45 +182,11 @@ struct RoutineBlockDoneView: View {
 
     /// The **kind tag** for the note (ADR 0100) — the same 🎯/⚡️/🧗/📝/🎬 vocabulary as the full
     /// journal composer, so the moment right after a run can be captured as a breakthrough or a
-    /// struggle, not just a generic note. A horizontal row of selectable chips; `.note` is preselected,
-    /// so doing nothing keeps the old behaviour. Neutral — a label, never a verdict (ADR 0070).
+    /// struggle, not just a generic note. `.note` is preselected, so doing nothing keeps the old
+    /// behaviour. The row itself is `EntryKindChipRow`, shared with the mid-run capture sheet
+    /// (ADR 0142) so both surfaces tag from one vocabulary.
     private var tagSelector: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Tag this")
-                .font(.futura(.footnote, weight: .semibold))
-                .foregroundStyle(PocketColor.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(EntryKind.pickerOrder) { option in
-                        tagChip(option)
-                    }
-                }
-                .padding(.horizontal, 1)   // keeps selected chips' stroke from clipping at the edges
-            }
-        }
-    }
-
-    /// One selectable kind chip. Selected reads in the kind's own tint (shared `KindChip.tint`);
-    /// unselected stays quiet so the row doesn't shout.
-    private func tagChip(_ option: EntryKind) -> some View {
-        let selected = option == kind
-        let tint = KindChip.tint(for: option)
-        return Button {
-            kind = option
-            haptic(.light)
-        } label: {
-            Text("\(option.emoji)  \(option.label)")
-                .font(.futura(.subheadline, weight: selected ? .semibold : .regular))
-                .foregroundStyle(selected ? tint : PocketColor.textSecondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Capsule().fill(selected ? tint.opacity(0.18) : PocketColor.surfaceStandard))
-                .overlay(Capsule().stroke(selected ? tint : PocketColor.surfaceBorder, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(option.label)
-        .accessibilityAddTraits(selected ? [.isSelected] : [])
+        EntryKindChipRow(selection: $kind)
     }
 
     private var noteField: some View {

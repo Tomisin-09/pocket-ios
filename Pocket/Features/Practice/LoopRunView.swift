@@ -53,6 +53,9 @@ struct LoopRunView: View {
     @State var seeded = false
     /// The practice journal sheet — authoring lives here now (ADR 0058), reachable from the nav bar.
     @State var showingJournal = false
+    /// The compact mid-run capture sheet (ADR 0142) — reachable **always**, including while the audio
+    /// is running and inside a routine, which is exactly where the full journal is not.
+    @State var showingQuickNote = false
     /// The Takes sheet — relisten to practice-take recordings (ADR 0069, slice 3).
     @State var showingTakes = false
     /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
@@ -148,33 +151,45 @@ struct LoopRunView: View {
     private var title: String { loop.name.isEmpty ? "Loop" : loop.name }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 22) {
-                if isRunning {
-                    liveReadout
-                    RecordingStatusView(recorder: recorder)
-                } else {
-                    practiceSettings
+        // The wrapper is what lets the running note card scroll clear of the keyboard (N5) — the
+        // composer is nested two levels down and reaches its scroll container through the environment.
+        KeyboardFollowingScroll {
+            ScrollView {
+                VStack(spacing: 22) {
+                    if isRunning {
+                        liveReadout
+                        RecordingStatusView(recorder: recorder)
+                    } else {
+                        practiceSettings
+                    }
+                    RoutineStairs(plateaus: routine.plateaus, command: routine.command,
+                                  tint: PocketColor.practice, unit: .percent,
+                                  currentIndex: model.currentPlateau(in: routine))
+                    if !isRunning, isDirty { saveChangesButton }
+                    if isRunning { runNoteCard }
+                    if !isRunning, routineContext == nil {
+                        PracticeReviewBar(journalCount: loop.journal.count,
+                                          takesCount: loop.recordings.count,
+                                          onJournal: { showingJournal = true },
+                                          onTakes: { showingTakes = true })
+                            .padding(.top, 4)
+                    }
                 }
-                RoutineStairs(plateaus: routine.plateaus, command: routine.command,
-                              tint: PocketColor.practice, unit: .percent,
-                              currentIndex: model.currentPlateau(in: routine))
-                if !isRunning, isDirty { saveChangesButton }
-                if !isRunning, routineContext == nil {
-                    PracticeReviewBar(journalCount: loop.journal.count,
-                                      takesCount: loop.recordings.count,
-                                      onJournal: { showingJournal = true },
-                                      onTakes: { showingTakes = true })
-                        .padding(.top, 4)
-                }
+                .padding(24)
+                .animation(.easeInOut(duration: 0.2), value: isDirty)
             }
-            .padding(24)
-            .animation(.easeInOut(duration: 0.2), value: isDirty)
+            .scrollDismissesKeyboard(.interactively)
         }
-        .scrollDismissesKeyboard(.interactively)
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // Capture, in every state (ADR 0142) — including inside a routine, where the review bar
+            // below is gated out and there was previously no way to write anything at all.
+            ToolbarItem(placement: .topBarTrailing) {
+                QuickJournalButton(isPresented: $showingQuickNote)
+            }
+        }
         .routineSessionChrome(routineContext)
         .safeAreaInset(edge: .bottom) { transport }
         .overlay { if showCountIn { RoutineCountInOverlay(onComplete: countInFinished) } }
@@ -197,6 +212,10 @@ struct LoopRunView: View {
                              try? modelContext.save(); haptic(.light)
                          })
         }
+        // Presented over a live run on purpose: nothing here pauses the audio (ADR 0142).
+        .sheet(isPresented: $showingQuickNote) {
+            QuickJournalSheet(owner: .loop(loop))
+        }
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop), onDelete: deleteTake)
         }
@@ -211,14 +230,6 @@ struct LoopRunView: View {
                                  isLast: true, upNext: nil) { mastery, note, kind, revision in
                 commitCompletion(mastery: mastery, note: note, kind: kind, revision: revision)
             }
-        }
-    }
-
-    /// Write a new entry, snapshotting the loop's current mastery + command tempo (ADR 0058).
-    private func addJournalEntry(_ text: String, _ kind: EntryKind) {
-        if JournalWriter.add(to: .loop(loop), text: text, kind: kind, into: modelContext) {
-            try? modelContext.save()
-            haptic(.light)
         }
     }
 
@@ -246,6 +257,17 @@ struct LoopRunView: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Playing at \(model.currentPercent) percent of original tempo")
+    }
+
+    /// Inline capture **while the loop is playing** (ADR 0142). The trainer's running screen is one
+    /// number, a caption and a staircase — there is room here, and the note you want is usually the
+    /// one you'd otherwise lose between this pass and the Done screen. The sheet stays available in
+    /// the nav bar for the drills whose running screen has no room (a fretboard board, a chord grid).
+    private var runNoteCard: some View {
+        JournalNoteComposer(owner: .loop(loop), kind: .note,
+                            header: "Note this run",
+                            placeholder: "What's working, what's fighting back?",
+                            style: .card)
     }
 
     // MARK: - Setup (stopped)

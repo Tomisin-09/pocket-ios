@@ -12,6 +12,9 @@ struct JournalEntryRow: View {
     /// Owner attribution shown above the snapshot — set only in the aggregated feed; pass `nil` in
     /// the per-owner sheet, where the owner is already the sheet's subject.
     var ownerLabel: String?
+    /// Open the owner (ADR 0142). `nil` leaves the caption as plain text — which is what the
+    /// per-owner sheet wants, and what an item with nowhere honest to go gets (`JournalOwnerRoute`).
+    var onOpenOwner: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -26,10 +29,7 @@ struct JournalEntryRow: View {
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textPrimary)
             if let ownerLabel {
-                Text(ownerLabel)
-                    .font(.futura(.caption))
-                    .foregroundStyle(PocketColor.journal)
-                    .lineLimit(1)
+                JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner)
             }
             snapshot
         }
@@ -53,6 +53,43 @@ struct JournalEntryRow: View {
                     .font(.pocketMono(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             }
+        }
+    }
+}
+
+/// The **owner attribution** under a feed item — "Little Wing · Verse riff", "Spider · exercise".
+/// A link when the owner has somewhere to go (ADR 0142), plain text otherwise, so the affordance is
+/// never a promise the tap can't keep.
+///
+/// A `Button` rather than a `NavigationLink`: the feed's rows are not themselves links, and the whole
+/// row shouldn't become tappable just because part of it is. The chevron is what tells you the
+/// difference between the two states at a glance.
+struct JournalOwnerCaption: View {
+    let label: String
+    let onOpen: (() -> Void)?
+
+    var body: some View {
+        if let onOpen {
+            Button {
+                onOpen()
+                haptic(.light)
+            } label: {
+                HStack(spacing: 3) {
+                    Text(label).lineLimit(1)
+                    Image(systemName: "chevron.forward")
+                        .font(.futura(.caption2, weight: .semibold))
+                }
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.journal)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open \(label)")
+            .accessibilityAddTraits(.isLink)
+        } else {
+            Text(label)
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.journal)
+                .lineLimit(1)
         }
     }
 }
