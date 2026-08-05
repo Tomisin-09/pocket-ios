@@ -114,4 +114,53 @@ final class JournalWriterTests: XCTestCase {
         try context.save()
         XCTAssertEqual(try context.fetch(FetchDescriptor<JournalEntry>()).count, 0)
     }
+
+    // MARK: - Session entries (ADR 0143)
+
+    private func sessionContext(routineName: String = "Morning warm-up",
+                                units: [SessionUnitRef] = []) -> SessionJournalContext {
+        SessionJournalContext(routineUID: UUID(), routineName: routineName, units: units)
+    }
+
+    func testAddToSessionSnapshotsTheRoutineAndItsUnits() throws {
+        let context = try makeContext()
+        let units = [SessionUnitRef(uid: UUID(), title: "Spider", kind: .exercise),
+                     SessionUnitRef(uid: UUID(), title: "Verse riff", kind: .loop)]
+        let session = sessionContext(units: units)
+
+        XCTAssertTrue(JournalWriter.add(to: .session(session), text: "  a good hour  ",
+                                        kind: .session, into: context))
+
+        let entry = try XCTUnwrap(try context.fetch(FetchDescriptor<JournalEntry>()).first)
+        XCTAssertEqual(entry.text, "a good hour", "text is trimmed, as for any owner")
+        XCTAssertEqual(entry.routineUID, session.routineUID)
+        XCTAssertEqual(entry.routineNameAtEntry, "Morning warm-up")
+        XCTAssertEqual(entry.practisedUnits, units)
+        XCTAssertEqual(entry.ownerKind, .session)
+    }
+
+    /// The honesty guarantee this suite exists for, extended to the third owner: a session spans
+    /// several units at several tempos, so **no** tempo or mastery may be invented for it.
+    func testASessionEntryCarriesNoTempoOrMastery() throws {
+        let context = try makeContext()
+
+        _ = JournalWriter.add(to: .session(sessionContext()), text: "tired today", kind: .session,
+                              into: context)
+
+        let entry = try XCTUnwrap(try context.fetch(FetchDescriptor<JournalEntry>()).first)
+        XCTAssertNil(entry.masteryAtEntry)
+        XCTAssertNil(entry.commandTempoAtEntry)
+        XCTAssertNil(entry.commandBpmAtEntry)
+        XCTAssertNil(entry.commandNotesPerBeatAtEntry)
+        XCTAssertNil(entry.loop, "no relationship — that is what makes it deletion-safe")
+        XCTAssertNil(entry.exercise)
+    }
+
+    func testAnEmptySessionNoteIsIgnored() throws {
+        let context = try makeContext()
+
+        XCTAssertFalse(JournalWriter.add(to: .session(sessionContext()), text: "   \n ",
+                                         kind: .session, into: context))
+        XCTAssertEqual(try context.fetch(FetchDescriptor<JournalEntry>()).count, 0)
+    }
 }

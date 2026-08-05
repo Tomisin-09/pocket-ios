@@ -84,7 +84,7 @@ struct QuickJournalSheet: View {
     /// unit on screen is one of several — "which of these am I writing about" is a real question here
     /// in a way it never is on the per-owner sheet.
     private var destinationLine: some View {
-        Text("Saves to \(owner.displayName)'s Journal, snapshotting where the unit stands right now.")
+        Text("Saves to \(owner.displayName)'s Journal, \(owner.snapshotBlurb).")
             .font(.futura(.caption))
             .foregroundStyle(PocketColor.textSecondary)
     }

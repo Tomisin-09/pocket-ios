@@ -44,6 +44,12 @@ extension RoutinePlayerView {
                 case .settle(let percent): loop.settleCommand(to: Double(percent) / 100)
                 case .none: break
                 }
+            case .session:
+                // Unreachable: `owner(for:)` only ever builds a unit owner from a stage. A session
+                // owner belongs to the whole sitting and is written from the summary screen (ADR
+                // 0143), where there is no mastery or command to revise — so there is nothing here
+                // to do but let the note below be written.
+                break
             }
             _ = JournalWriter.add(to: owner, text: note, kind: kind, into: modelContext)
             try? modelContext.save()

@@ -21,8 +21,9 @@ struct RoutinePlayerView: View {
     /// the real `ExerciseRunView`, itself gated only at the library row).
     @Environment(\.isPro) private var isPro
     /// The routine being run — held so we can stamp `lastPracticed` when the session starts (the
-    /// home hub's "recent routines" rail reads it). The player itself is a pure conductor over stages.
-    private let routine: Routine
+    /// home hub's "recent routines" rail reads it), and so the summary screen can name the session it
+    /// writes a journal entry about (ADR 0143). The player itself is a pure conductor over stages.
+    let routine: Routine
     @State var player: RoutineSessionPlayer
     /// The just-finished unit block sitting on its **Done screen** (ADR 0071 R4), or `nil`. Set when a
     /// block completes with manual advance (the default); Continue/Finish commits and advances.
@@ -226,60 +227,9 @@ struct RoutinePlayerView: View {
     }
 
     // MARK: - Finished
-
-    private var finishedView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: player.stages.isEmpty ? "questionmark.circle" : "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(PocketColor.practice)
-            Text(player.stages.isEmpty ? "Nothing to play" : "Session complete")
-                .font(.futura(.title3))
-                .foregroundStyle(PocketColor.textPrimary)
-            Text(player.stages.isEmpty
-                 ? "This routine has no playable exercises or loops yet."
-                 : "Nice work. Find the music in the mistakes.")
-                .font(.futura(.footnote))
-                .foregroundStyle(PocketColor.textSecondary)
-                .multilineTextAlignment(.center)
-            if !practicedTitles.isEmpty { recap }
-            Button { dismiss() } label: {
-                Label("Done", systemImage: "checkmark").pocketRunButton
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 4)
-        }
-        .padding(.horizontal, 24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .keepAwakeDuringPractice()   // the summary lingers on screen after the last block (ADR 0050)
-    }
-
-    /// A judgement-free recap — just *what* you worked through this session, no scores (ADR 0070).
-    private var recap: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("You practised")
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(PocketColor.textSecondary)
-                .textCase(.uppercase)
-            ForEach(Array(practicedTitles.enumerated()), id: \.offset) { _, title in
-                HStack(spacing: 8) {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 5))
-                        .foregroundStyle(PocketColor.practice)
-                    Text(title)
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textPrimary)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(PocketColor.practiceCircleWash))
-    }
-
-    /// The unit blocks (exercises/loops) in this routine, in order — the recap list; rests omitted.
-    private var practicedTitles: [String] {
-        player.stages.filter { $0.kind != .rest }.map(\.title)
-    }
+    //
+    // The summary screen lives in `RoutinePlayerView+Finished.swift` — it grew a session journal
+    // composer (ADR 0143) and this file is against the 400-line cap.
 }
 
 extension RoutinePlayerView {

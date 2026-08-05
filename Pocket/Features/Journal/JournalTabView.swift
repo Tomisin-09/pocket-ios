@@ -15,6 +15,12 @@ struct JournalTabView: View {
     // scope filter happen in memory via `JournalTimeline`.
     @Query(sort: \JournalEntry.createdAt, order: .reverse) private var entries: [JournalEntry]
     @Query(sort: \Recording.createdAt, order: .reverse) private var takes: [Recording]
+    // The library, for resolving a session entry's practised-unit pills (ADR 0143). Those are loose
+    // **id copies**, not relationships — that is what lets an entry outlive the units it names — so
+    // there is nothing to follow and the uid has to be looked up. Unsorted and unfiltered, like the
+    // two above and for the same reason.
+    @Query private var exercises: [Exercise]
+    @Query private var loops: [Loop]
 
     @State private var scope: JournalTimeline.Scope = .all
     /// Free-text search over song / loop / exercise / template / date (`JournalTimeline.searchHaystack`).
@@ -30,6 +36,8 @@ struct JournalTabView: View {
     /// run gate the exercise library's rows do, so a note is never a way past it.
     @Environment(\.isPro) private var isPro
     @Environment(\.presentPaywall) private var presentPaywall
+    /// For the one write verb this read-only space has — deleting a session entry (ADR 0143).
+    @Environment(\.modelContext) private var modelContext
 
     /// The scope- then search-filtered feed.
     private var items: [JournalTimeline.Item] {
@@ -100,6 +108,28 @@ struct JournalTabView: View {
     /// wrote notes while subscribed keeps the notes when the subscription lapses.
     private func openOwner(of item: JournalTimeline.Item) {
         guard let route = JournalOwnerRoute.route(for: item) else { return }
+        open(route)
+    }
+
+    /// The caption's tap action, or `nil` when the item has nowhere to go — a song-owned take, or a
+    /// loop whose audio no longer resolves. `nil` keeps the caption as plain text.
+    private func openAction(for item: JournalTimeline.Item) -> (() -> Void)? {
+        guard JournalOwnerRoute.route(for: item) != nil else { return nil }
+        return { openOwner(of: item) }
+    }
+
+    /// The tap action for one of a session entry's practised-unit pills (ADR 0143), or `nil` when the
+    /// unit was deleted since the session — the pill then renders dimmed rather than as a promise the
+    /// tap can't keep. Applies the **same paywall gate** as the owner caption: notes written while
+    /// subscribed survive a lapse, and must not become a way around it (ADR 0142 J5c).
+    private func openAction(for ref: SessionUnitRef) -> (() -> Void)? {
+        guard let route = JournalOwnerRoute.route(for: ref, exercises: exercises, loops: loops)
+        else { return nil }
+        return { open(route) }
+    }
+
+    /// Follow a resolved route, honouring the Pro run gate.
+    private func open(_ route: JournalOwnerRoute) {
         if case .exercise(let exercise) = route,
            !AccessPolicy.canRun(exercise.template, isPro: isPro,
                                 isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug)) {
@@ -109,11 +139,14 @@ struct JournalTabView: View {
         openingOwner = route
     }
 
-    /// The caption's tap action, or `nil` when the item has nowhere to go — a song-owned take, or a
-    /// loop whose audio no longer resolves. `nil` keeps the caption as plain text.
-    private func openAction(for item: JournalTimeline.Item) -> (() -> Void)? {
-        guard JournalOwnerRoute.route(for: item) != nil else { return nil }
-        return { openOwner(of: item) }
+    /// Delete a session entry (ADR 0143). The Journal space is otherwise read-only — writing and
+    /// editing live in the per-owner `JournalSheet` — but a session entry **belongs to no unit**, so
+    /// no per-owner sheet can ever reach it. Without this one verb here, a session note would be
+    /// permanent. Unit-owned rows keep their read-only treatment and their sheet.
+    private func delete(_ entry: JournalEntry) {
+        JournalWriter.delete(entry, from: modelContext)
+        try? modelContext.save()
+        haptic(.light)
     }
 
     // MARK: - Scope filter
@@ -150,7 +183,16 @@ struct JournalTabView: View {
         switch item {
         case .note(let entry):
             JournalEntryRow(entry: entry, ownerLabel: JournalTimeline.ownerLabel(for: item),
-                            onOpenOwner: openAction(for: item))
+                            onOpenOwner: openAction(for: item),
+                            openUnit: openAction(for:))
+                // Session entries only — see `delete(_:)` for why this one verb is here at all.
+                .swipeActions(edge: .trailing) {
+                    if case .session = entry.ownerKind {
+                        Button(role: .destructive) { delete(entry) } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
         case .take(let take):
             JournalTakeRow(take: take,
                            ownerLabel: JournalTimeline.ownerLabel(for: item),
@@ -219,50 +261,6 @@ struct JournalTabView: View {
     }
 }
 
-// MARK: - Take row
-
-/// One take on the aggregated feed — a play/pause toggle, its owner caption, duration, and time.
-/// Plays through the shared `RecordingPlayer` (one at a time). Read only bar the play control.
-private struct JournalTakeRow: View {
-    let take: Recording
-    let ownerLabel: String?
-    /// Open the take's owner (ADR 0142); `nil` for a song-owned take, which has no run screen.
-    let onOpenOwner: (() -> Void)?
-    let isPlaying: Bool
-    let onToggle: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Button(action: onToggle) {
-                Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.futura(.title))
-                    .foregroundStyle(PocketColor.journal)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isPlaying ? "Pause take" : "Play take")
-
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 8) {
-                    Text("Take")
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text(take.durationLabel)
-                        .font(.pocketMono(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
-                    Spacer(minLength: 0)
-                    Text(take.createdAt.formatted(date: .omitted, time: .shortened))
-                        .font(.pocketMono(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-                if let ownerLabel {
-                    JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner)
-                }
-            }
-        }
-        .padding(.vertical, 2)
-    }
-}
-
 #Preview("Journal — mixed") {
     NavigationStack { JournalTabView() }
         .modelContainer(JournalTabPreview.container())
@@ -317,6 +315,17 @@ private enum JournalTabPreview {
         let take = Recording(fileName: "demo.m4a", duration: 48,
                              createdAt: now.addingTimeInterval(-7200), loop: loop)
         context.insert(take)
+
+        // A session entry (ADR 0143), with one pill that resolves and one that doesn't — the deleted
+        // unit is the case worth seeing, since it's what an old entry looks like months later.
+        let session = JournalEntry.forSession(
+            text: "Shoulders tight for the first twenty minutes. Chord changes only came good at the end.",
+            kind: .session, routineUID: UUID(), routineName: "Morning warm-up",
+            units: [SessionUnitRef(uid: drill.uid, title: "Chords", kind: .exercise),
+                    SessionUnitRef(uid: loop.uid, title: "Verse riff", kind: .loop),
+                    SessionUnitRef(uid: UUID(), title: "Deleted drill", kind: .exercise)],
+            createdAt: now.addingTimeInterval(-1800))
+        context.insert(session)
 
         try? context.save()
         return container

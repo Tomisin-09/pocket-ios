@@ -1,15 +1,33 @@
 import Foundation
 import SwiftData
 
+/// Which kind of owner an entry belongs to — the **single** discriminator, replacing the
+/// hand-written `entry.exercise != nil` tests that used to decide it at each render site (ADR 0143).
+/// Those tests were only ever right because there were exactly two owners: a session entry sets
+/// *neither* relationship, and every one of them would have been rendered as a loop entry.
+enum JournalEntryOwnerKind {
+    case exercise
+    case loop
+    /// A whole routine session (ADR 0143) — owned by no unit, identified by a loose `routineUID`.
+    case session
+    /// The owner was deleted and the relationship nullified. Nothing to render a snapshot from.
+    case orphan
+}
+
 /// A single dated entry in a practice journal (ADR 0038). It **snapshots its owner's
 /// context** at the moment of writing, so the entry stays a truthful record of where
 /// things stood even as the owner keeps moving. The snapshot and timestamp are immutable;
 /// only `text` and `kind` are editable.
 ///
-/// The owner is polymorphic (ADR 0058): exactly one of `loop`/`exercise` is set. A **loop**
-/// entry snapshots mastery (dots) + `commandTempoAtEntry` (song fraction); an **exercise**
-/// entry snapshots `commandBpmAtEntry` (absolute BPM) and has no mastery. Use the
-/// `forLoop`/`forExercise` factories so each entry's snapshot stays honest to its owner.
+/// The owner is polymorphic (ADR 0058 / 0143), and `ownerKind` is the one place that decides which:
+/// - a **loop** entry snapshots mastery (dots) + `commandTempoAtEntry` (song fraction);
+/// - an **exercise** entry snapshots `commandBpmAtEntry` (absolute BPM) and has no mastery;
+/// - a **session** entry (ADR 0143) belongs to a routine *sitting* rather than a unit, and snapshots
+///   the routine's name and the units practised — it has no single tempo to record, which is exactly
+///   why it needed fields of its own rather than borrowing a unit's.
+///
+/// Use the `forLoop`/`forExercise`/`forSession` factories so each entry's snapshot stays honest to
+/// its owner.
 @Model
 final class JournalEntry {
     /// Stable business id — list diffing / undo, like `Loop`/`Marker`.
@@ -67,6 +85,40 @@ final class JournalEntry {
     /// store wipe, CoreData 134110 rule / ADR 0012). See `loop` for the single-owner rule.
     var exercise: Exercise?
 
+    /// The `uid` of the routine a **session** entry reflects on (ADR 0143); `nil` for a unit-owned
+    /// entry. A **loose copy**, deliberately not a relationship — deleting a routine must not delete
+    /// the reflection written about it, the same rule `PracticeRun.routineUID` states. Additive
+    /// optional with **no declaration default**, so lightweight migration is exempt from the
+    /// CoreData 134110 mandatory-attribute rule.
+    var routineUID: UUID?
+
+    /// The routine's name at write time — a session entry's owner caption. Snapshotted rather than
+    /// looked up through `routineUID`, so a renamed or deleted routine still labels its entries
+    /// truthfully (ADR 0038). `nil` for a unit-owned entry.
+    var routineNameAtEntry: String?
+
+    /// Backing storage for `practisedUnits` — JSON in a plain `String`, **not** a `Codable` array
+    /// attribute (the SwiftData non-primitive-attribute rule; see `kindRaw`). `nil` for a unit-owned
+    /// entry and for a session with nothing playable in it.
+    var practisedUnitsRaw: String?
+
+    /// The units this session was made of (ADR 0143) — the entry's "you practised…" header, and the
+    /// links under it. Reading an unparseable payload yields an empty list, never a trap.
+    var practisedUnits: [SessionUnitRef] {
+        get { SessionUnitRef.decode(practisedUnitsRaw) }
+        set { practisedUnitsRaw = SessionUnitRef.encode(newValue) }
+    }
+
+    /// **The** owner discriminator — read this rather than testing a relationship for `nil` by hand.
+    /// Order matters: the two unit relationships win, so an entry can never be mistaken for a session
+    /// just because a `routineUID` was also stamped on it.
+    var ownerKind: JournalEntryOwnerKind {
+        if exercise != nil { return .exercise }
+        if loop != nil { return .loop }
+        if routineUID != nil { return .session }
+        return .orphan
+    }
+
     init(text: String, kind: EntryKind, masteryAtEntry: Int?, commandTempoAtEntry: Double?,
          commandBpmAtEntry: Int? = nil, commandNotesPerBeatAtEntry: Int? = nil,
          createdAt: Date = Date()) {
@@ -96,5 +148,20 @@ final class JournalEntry {
         JournalEntry(text: text, kind: kind, masteryAtEntry: nil, commandTempoAtEntry: nil,
                      commandBpmAtEntry: commandBpmAtEntry,
                      commandNotesPerBeatAtEntry: commandNotesPerBeatAtEntry, createdAt: createdAt)
+    }
+
+    /// A **session** entry (ADR 0143) — owned by a routine sitting rather than a unit. Every tempo
+    /// and mastery snapshot stays `nil`: a session spans several units at several tempos, so there is
+    /// no one number that would be true, and inventing one would be exactly the defaulted-semantics
+    /// lie ADR 0039 removed. What it snapshots instead is the routine's name and what was practised.
+    static func forSession(text: String, kind: EntryKind, routineUID: UUID,
+                           routineName: String, units: [SessionUnitRef],
+                           createdAt: Date = Date()) -> JournalEntry {
+        let entry = JournalEntry(text: text, kind: kind, masteryAtEntry: nil,
+                                 commandTempoAtEntry: nil, createdAt: createdAt)
+        entry.routineUID = routineUID
+        entry.routineNameAtEntry = routineName
+        entry.practisedUnits = units
+        return entry
     }
 }

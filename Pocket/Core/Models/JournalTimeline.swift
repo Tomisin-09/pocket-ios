@@ -64,12 +64,25 @@ enum JournalTimeline {
     /// A human **owner label** for an item — the aggregated feed's attribution, since (unlike the
     /// per-owner `JournalSheet`) context isn't implicit here. A **loop** reads
     /// `"<song title> · <loop name>"` (bare loop name when it has no song); an **exercise** reads
-    /// `"<name> · exercise"`; a **song**-owned take reads its title. `nil` for an orphaned item
-    /// whose owner was cleared. UI-free.
+    /// `"<name> · exercise"`; a **song**-owned take reads its title; a **session** note (ADR 0143)
+    /// reads the routine's snapshotted name. `nil` for an orphaned item whose owner was cleared.
+    /// UI-free.
+    ///
+    /// A session's name comes from the entry's own `routineNameAtEntry`, never from a lookup through
+    /// `routineUID` — that is the point of snapshotting it. The routine may since have been renamed
+    /// or deleted, and the entry still says what the sitting was called when it happened (ADR 0038).
     static func ownerLabel(for item: Item) -> String? {
         switch item {
-        case .note(let entry): label(loop: entry.loop, exercise: entry.exercise, song: nil)
-        case .take(let take): label(loop: take.loop, exercise: take.exercise, song: take.song)
+        case .note(let entry):
+            switch entry.ownerKind {
+            case .session:
+                let name = entry.routineNameAtEntry ?? ""
+                return name.isEmpty ? "Routine session" : name
+            case .exercise, .loop, .orphan:
+                return label(loop: entry.loop, exercise: entry.exercise, song: nil)
+            }
+        case .take(let take):
+            return label(loop: take.loop, exercise: take.exercise, song: take.song)
         }
     }
 
@@ -82,16 +95,29 @@ enum JournalTimeline {
         }
     }
 
-    /// The lowercased text a search matches against — the item's owner (song / loop / exercise name),
-    /// its exercise template, and its date (abbreviated + long, e.g. "17 jul 2026" / "17 july 2026"),
-    /// so a note can be found by song, exercise, template *or* date. UI-free.
+    /// The lowercased text a search matches against — the item's owner (song / loop / exercise name,
+    /// or a session's routine name), its exercise template, the **units a session was made of**, and
+    /// its date (abbreviated + long, e.g. "17 jul 2026" / "17 july 2026"), so a note can be found by
+    /// song, exercise, template, routine, a unit practised in it, *or* date. UI-free.
+    ///
+    /// The unit titles matter more than they look: a session note is the one entry whose text is
+    /// *about* the sitting rather than about a drill, so searching a drill's name would otherwise
+    /// never surface the session you played it in.
     static func searchHaystack(for item: Item) -> String {
         var parts: [String] = []
         if let owner = ownerLabel(for: item) { parts.append(owner) }
         if let template = templateLabel(for: item) { parts.append(template) }
+        parts.append(contentsOf: practisedTitles(for: item))
         parts.append(item.date.formatted(date: .abbreviated, time: .omitted))
         parts.append(item.date.formatted(date: .long, time: .omitted))
         return parts.joined(separator: " ").lowercased()
+    }
+
+    /// The unit titles a **session** note snapshotted (ADR 0143); empty for every other item — a
+    /// unit-owned entry has no `practisedUnitsRaw`, so this costs nothing on the common path.
+    private static func practisedTitles(for item: Item) -> [String] {
+        guard case .note(let entry) = item else { return [] }
+        return entry.practisedUnits.map(\.title)
     }
 
     /// Keep the items matching a free-text `query` — **every** whitespace-separated token must appear

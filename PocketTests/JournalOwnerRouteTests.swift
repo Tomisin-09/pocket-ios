@@ -132,4 +132,57 @@ final class JournalOwnerRouteTests: XCTestCase {
         let two = JournalOwnerRoute.exercise(Exercise(name: "B", currentTempo: 80, commandTempo: 90))
         XCTAssertNotEqual(one, two)
     }
+
+    // MARK: - Session unit pills (ADR 0143)
+
+    /// These resolve a **loose id copy** rather than following a relationship — the deletion-safety
+    /// trade a session entry makes. So failure is an ordinary outcome here, not an error, and the
+    /// `nil` cases below are the ones that actually happen to a player over time.
+    func testASessionPillResolvesItsExerciseByUID() {
+        let spider = Exercise(name: "Spider", currentTempo: 80, commandTempo: 96)
+        let other = Exercise(name: "Chords", currentTempo: 80, commandTempo: 96)
+        let ref = SessionUnitRef(uid: spider.uid, title: "Spider", kind: .exercise)
+
+        let route = JournalOwnerRoute.route(for: ref, exercises: [other, spider], loops: [])
+
+        XCTAssertEqual(route, .exercise(spider))
+    }
+
+    func testASessionPillOpensTheModeItsLoopQualifiesFor() {
+        let loop = makeLoop(measured: false)   // unmeasured — no staircase to anchor (ADR 0138)
+        let ref = SessionUnitRef(uid: loop.uid, title: "Verse riff", kind: .loop)
+
+        let route = JournalOwnerRoute.route(for: ref, exercises: [], loops: [loop])
+
+        XCTAssertNotNil(route)
+        if case .loop(_, let mode) = route {
+            XCTAssertEqual(mode, LoopModeAccess.modes(for: loop).first,
+                           "the same trainer→ear→improvise precedence the owner caption follows")
+        } else {
+            XCTFail("expected a loop route")
+        }
+    }
+
+    func testADeletedUnitLeavesThePillWithNowhereToGo() {
+        let ref = SessionUnitRef(uid: UUID(), title: "Deleted drill", kind: .exercise)
+
+        XCTAssertNil(JournalOwnerRoute.route(for: ref, exercises: [], loops: []),
+                     "the entry survives the unit; the link does not — the pill renders dimmed")
+    }
+
+    func testALoopThatQualifiesForNoModeHasNoRoute() {
+        let loop = makeLoop(measured: false, source: nil)   // no song, so no audio to run against
+        let ref = SessionUnitRef(uid: loop.uid, title: "Verse riff", kind: .loop)
+
+        XCTAssertNil(JournalOwnerRoute.route(for: ref, exercises: [], loops: [loop]))
+    }
+
+    /// A ref must be matched **against its own kind**: an exercise and a loop that happen to share a
+    /// uid must not cross-resolve.
+    func testAKindIsNotResolvedAgainstTheOtherLibrary() {
+        let spider = Exercise(name: "Spider", currentTempo: 80, commandTempo: 96)
+        let ref = SessionUnitRef(uid: spider.uid, title: "Spider", kind: .loop)
+
+        XCTAssertNil(JournalOwnerRoute.route(for: ref, exercises: [spider], loops: []))
+    }
 }

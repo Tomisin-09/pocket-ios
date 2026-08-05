@@ -43,6 +43,32 @@ enum JournalOwnerRoute: Hashable {
         }
     }
 
+    /// The route one of a **session** entry's practised-unit pills should follow (ADR 0143), or `nil`
+    /// when there is nowhere honest to go.
+    ///
+    /// Unlike the item factory above, this resolves a **loose id copy** rather than following a
+    /// relationship — that is the deletion-safety trade the session entry makes, and it means failure
+    /// is an ordinary outcome, not an error. Three ways to get `nil`, all expected:
+    /// - the unit was **deleted** since the session (the entry survives it; the link does not),
+    /// - the loop qualifies for **no run mode** (its song's audio no longer resolves, ADR 0138), or
+    /// - `kindRaw` names a kind this version doesn't know.
+    ///
+    /// Pass the library the caller already has in hand; this does no fetching of its own, so it stays
+    /// pure and testable with uninserted models.
+    static func route(for ref: SessionUnitRef,
+                      exercises: [Exercise], loops: [Loop]) -> JournalOwnerRoute? {
+        switch ref.kind {
+        case .exercise:
+            guard let exercise = exercises.first(where: { $0.uid == ref.uid }) else { return nil }
+            return .exercise(exercise)
+        case .loop:
+            guard let loop = loops.first(where: { $0.uid == ref.uid }) else { return nil }
+            return route(loop: loop, exercise: nil)
+        case nil:
+            return nil
+        }
+    }
+
     private static func route(loop: Loop?, exercise: Exercise?) -> JournalOwnerRoute? {
         if let exercise { return .exercise(exercise) }
         guard let loop, let mode = LoopModeAccess.modes(for: loop).first else { return nil }
