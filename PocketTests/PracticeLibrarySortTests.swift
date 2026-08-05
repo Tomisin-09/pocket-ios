@@ -59,6 +59,52 @@ final class PracticeLibrarySortTests: XCTestCase {
         XCTAssertTrue(PracticeLibrarySort.loopMatches(loop("Chorus"), query: "   "))
     }
 
+    // MARK: - Song sections (v2 close-out Slice 5)
+
+    private func loopSections(_ items: [LoopSortFields], by key: LoopSortKey = .name,
+                              ascending: Bool = true) -> [(title: String, names: [String])] {
+        PracticeLibrarySort.loopSections(items, sortedBy: key, ascending: ascending) { $0 }
+            .map { ($0.title, $0.items.map(\.name)) }
+    }
+
+    func testLoopSectionsGroupBySongAlphabeticallyWithItemsSortedWithin() {
+        let loops = [loop("Solo", song: "Red Moon"), loop("Intro", song: "Apex"),
+                     loop("Bridge", song: "Red Moon")]
+        let result = loopSections(loops)
+        XCTAssertEqual(result.map(\.title), ["Apex", "Red Moon"])
+        XCTAssertEqual(result[0].names, ["Intro"])
+        XCTAssertEqual(result[1].names, ["Bridge", "Solo"])   // name-sorted within
+    }
+
+    /// A detached loop is a leftover, not a song called nothing — it sinks to the bottom under its
+    /// own header, matching the `AddRoutineUnitSheet` bucket grammar this list echoes.
+    func testLoopsWithNoSongBucketLast() {
+        let loops = [loop("Orphan"), loop("Intro", song: "Zebra"), loop("Verse", song: "Apex")]
+        XCTAssertEqual(loopSections(loops).map(\.title), ["Apex", "Zebra", "No song"])
+        XCTAssertEqual(loopSections(loops).last?.names, ["Orphan"])
+    }
+
+    func testLoopSectionsHonorTheChosenSortKeyWithinSection() {
+        let loops = [loop("Slow", song: "Apex", command: 0.6),
+                     loop("Fast", song: "Apex", command: 1.2)]
+        XCTAssertEqual(loopSections(loops, by: .commandTempo)[0].names, ["Slow", "Fast"])
+    }
+
+    /// The descending flip reverses the loops **inside** a song, not the songs themselves: grouping
+    /// is its own axis, exactly as the exercise library's template sections behave.
+    func testDescendingFlipsItemsNotSectionOrder() {
+        let loops = [loop("Solo", song: "Red Moon"), loop("Bridge", song: "Red Moon"),
+                     loop("Intro", song: "Apex")]
+        let result = loopSections(loops, ascending: false)
+        XCTAssertEqual(result.map(\.title), ["Apex", "Red Moon"])
+        XCTAssertEqual(result[1].names, ["Solo", "Bridge"])
+    }
+
+    func testLoopSectionsSongComparisonIsCaseInsensitive() {
+        let loops = [loop("A", song: "zebra"), loop("B", song: "Apex")]
+        XCTAssertEqual(loopSections(loops).map(\.title), ["Apex", "zebra"])
+    }
+
     // MARK: - Exercises
 
     private func exercise(_ name: String, command: Int = 100,

@@ -39,6 +39,9 @@ struct ExerciseLibraryView: View {
     @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
     @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
     @State private var searchText = ""
+    /// Which template sections are collapsed, persisted across launches (Slice 5). Collapsed is what's
+    /// stored, so a template you first use tomorrow arrives open.
+    @AppStorage("exerciseLibraryCollapsedSections") private var collapsedSections = ""
     /// Whether the list is narrowed to favourited drills (ADR 0119) — a session toggle, not persisted.
     @State private var favoritesOnly = false
     /// The active instrument filter (ADR 0116 S4), `nil` = "All". Purely a session filter — not
@@ -105,7 +108,9 @@ struct ExerciseLibraryView: View {
                     .listRowBackground(PocketColor.background)
             } else {
                 ForEach(sections, id: \.title) { section in
-                    Section(section.title) {
+                    CollapsibleLibrarySection(title: section.title,
+                                              count: section.items.count,
+                                              isExpanded: expansion(of: section.title)) {
                         ForEach(section.items) { exercise in
                             exerciseRow(exercise)
                                 .listRowBackground(PocketColor.background)
@@ -179,6 +184,19 @@ struct ExerciseLibraryView: View {
 
     private func displayName(_ exercise: Exercise) -> String {
         exercise.name.isEmpty ? "Untitled" : exercise.name
+    }
+
+    /// Whether a template section shows its drills, and the write-back that persists a tap. A live
+    /// search forces every section open, so a query can never match a drill inside a collapsed
+    /// bucket and look like it found nothing.
+    private func expansion(of title: String) -> Binding<Bool> {
+        Binding(get: {
+            LibrarySectionExpansion.isExpanded(title, in: collapsedSections,
+                                               searching: !searchText.isEmpty)
+        }, set: {
+            collapsedSections = LibrarySectionExpansion.setting(title, expanded: $0,
+                                                                in: collapsedSections)
+        })
     }
 
     /// The drill's own long-press actions: read what it is, or fork it (Slice 3).

@@ -20,6 +20,9 @@ struct LoopLibraryView: View {
     @AppStorage("loopLibrarySort") private var sortKey: LoopSortKey = .song
     @AppStorage("loopLibrarySortAscending") private var sortAscending = true
     @State private var searchText = ""
+    /// Which song sections are collapsed, persisted across launches (Slice 5). Collapsed is what's
+    /// stored, so a song imported tomorrow brings its loops in open.
+    @AppStorage("loopLibraryCollapsedSections") private var collapsedSections = ""
     /// Whether the list is narrowed to favourited passages (ADR 0119) — a session toggle, not persisted.
     @State private var favoritesOnly = false
     /// Whether the list is **widened** past the trainer gate to every loop (ADR 0138 G4) — the way to
@@ -58,13 +61,23 @@ struct LoopLibraryView: View {
         return showAllLoops ? allLoops : allLoops.filter { LoopModeAccess.allows(.trainer, $0) }
     }
 
-    /// The in-scope loops narrowed by search and ordered by the current sort.
+    /// The in-scope loops narrowed by search and ordered by the current sort. The flat list still
+    /// exists because the empty states ask "is there anything at all here", a question sections
+    /// can't answer more cheaply.
     private var visibleLoops: [Loop] {
         let narrowed = loopsInScope
             .filter { !favoritesOnly || $0.isFavorite }
             .filter { PracticeLibrarySort.loopMatches(fields(for: $0), query: searchText) }
         return PracticeLibrarySort.sortedLoops(narrowed, by: sortKey,
                                                ascending: sortAscending, fields: fields(for:))
+    }
+
+    /// The visible loops grouped into **song sections** (Slice 5, note N8). A loop belongs to its
+    /// song — that's the ownership the whole feature rests on — so the song is the bucket, the same
+    /// one `AddRoutineUnitSheet` drills into. The chosen sort orders the loops *within* a song.
+    private var sections: [LibrarySection<Loop>] {
+        PracticeLibrarySort.loopSections(visibleLoops, sortedBy: sortKey,
+                                         ascending: sortAscending, fields: fields(for:))
     }
 
     /// Are there measured loops at all, before search narrows them? Distinguishes the "none yet"
@@ -113,13 +126,19 @@ struct LoopLibraryView: View {
                            ? "No loops yet. Open a song and draw one on the waveform."
                            : "No loops match “\(searchText)”.")
             } else {
-                ForEach(visibleLoops) { loop in
-                    loopRow(loop)
-                        .listRowBackground(PocketColor.background)
-                        .pocketRowActions(displayName(loop),
-                                          tint: PocketColor.practice,
-                                          menu: menuItems(for: loop),
-                                          favorite: favorite(for: loop))
+                ForEach(sections, id: \.title) { section in
+                    CollapsibleLibrarySection(title: section.title,
+                                              count: section.items.count,
+                                              isExpanded: expansion(of: section.title)) {
+                        ForEach(section.items) { loop in
+                            loopRow(loop)
+                                .listRowBackground(PocketColor.background)
+                                .pocketRowActions(displayName(loop),
+                                                  tint: PocketColor.practice,
+                                                  menu: menuItems(for: loop),
+                                                  favorite: favorite(for: loop))
+                        }
+                    }
                 }
             }
         }
@@ -153,6 +172,19 @@ struct LoopLibraryView: View {
                 ImproviseScreen(loop: launch.loop)
             }
         }
+    }
+
+    /// Whether a song section shows its loops, and the write-back that persists a tap. A live search
+    /// forces every section open, so a query can never match a loop inside a collapsed song and read
+    /// as a search that found nothing.
+    private func expansion(of title: String) -> Binding<Bool> {
+        Binding(get: {
+            LibrarySectionExpansion.isExpanded(title, in: collapsedSections,
+                                               searching: !searchText.isEmpty)
+        }, set: {
+            collapsedSections = LibrarySectionExpansion.setting(title, expanded: $0,
+                                                                in: collapsedSections)
+        })
     }
 
     private func emptyRow(_ message: String) -> some View {
