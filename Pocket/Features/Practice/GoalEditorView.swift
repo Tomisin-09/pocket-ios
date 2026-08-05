@@ -206,13 +206,25 @@ struct GoalEditorView: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else {
-                Picker("Song", selection: $targetSong) {
-                    Text("None").tag(Song?.none)
-                    ForEach(songs) { song in
-                        Text(song.title.isEmpty ? "Untitled" : song.title).tag(Song?.some(song))
+                // A **pushed searchable list**, not a popup picker (v2 close-out N3). The choices
+                // here are the player's own library, so the list is unbounded — a menu works on the
+                // day it holds four songs and is unusable on the day it holds forty. Searching the
+                // artist line matters as much as the title: which one you remember is a coin toss.
+                NavigationLink {
+                    SearchablePickerList(
+                        title: "Target song",
+                        items: songs.map {
+                            PickerItem(value: $0, title: $0.title.isEmpty ? "Untitled" : $0.title,
+                                       context: $0.artist)
+                        },
+                        clearLabel: "None", selection: $targetSong)
+                } label: {
+                    LabeledContent("Song") {
+                        Text(targetSong.map { $0.title.isEmpty ? "Untitled" : $0.title } ?? "None")
+                            .foregroundStyle(PocketColor.textSecondary)
                     }
+                    .font(.futura(.body))
                 }
-                .font(.futura(.body))
                 .tint(PocketColor.practice)
                 .listRowBackground(PocketColor.background)
             }

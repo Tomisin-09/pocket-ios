@@ -1,27 +1,42 @@
 import SwiftUI
 
 /// The two **visual carriers** of the tempo-change warning (ADR 0131 §3 / §3a) — the run caption and
-/// the drill-surface edge.
+/// the drill-surface edge. The caption is shared with ADR 0132's click withdrawal, which needs the same
+/// one line; see `RunTempoCaption` for the precedence between them.
 ///
 /// Both are deliberately tiny standalone views, for the reason `BeatIndicator` is: reading the warning
 /// touches `automatorBarsElapsed`, which the driver advances every ~20 ms, so whichever view reads it
 /// re-renders at tick rate. Kept small, that costs a `Text` and a stroked rectangle; folded into a run
 /// screen's `body` it would re-render the drill surface fifty times a second.
 
-/// The run screen's tempo caption, which becomes the warning while one is showing. This is the
-/// **accessible** carrier — the edge and the staircase pre-light are both silent to VoiceOver — so the
-/// warning is carried as text here, not colour alone.
-struct TempoWarningCaption: View {
+/// The run screen's tempo caption — one line under the BPM, and therefore **one slot with three
+/// possible occupants**, which is why their precedence is resolved here rather than by each feature
+/// deciding separately whether to appear.
+///
+/// This is the **accessible** carrier for both features that use it. ADR 0131's edge and staircase
+/// pre-light are silent to VoiceOver, and ADR 0132's `BeatIndicator` is `accessibilityHidden(true)`,
+/// so without a word here a screen-reader user gets an unannounced tempo change or an unexplained
+/// silence. Text, not colour alone, in both cases.
+///
+/// **The warning outranks the withdrawal** (ADR 0131 §6): a warning bar is never silenced, so when a
+/// change is being announced the caption announces it. Since ADR 0132's amendment the two can no
+/// longer collide — a warning needs a running ramp, and a running ramp suspends the withdrawal — so
+/// the order below is belt-and-braces rather than load-bearing. It is stated anyway, because the thing
+/// keeping them apart is a rule in `ClickWithdrawal.resolve` that a later slice could relax.
+struct RunTempoCaption: View {
     let engine: StandaloneMetronomeEngine
-    /// What the caption reads when nothing is being warned about — the ordinary "BPM · Andante · ♪"
-    /// line the screen shows the rest of the time.
+    /// What the caption reads when neither feature has anything to say — the ordinary
+    /// "BPM · Andante · ♪" line the screen shows the rest of the time.
     let fallback: String
+    /// The colour a *warning* takes; the withdrawal word stays in the ordinary caption colour, being
+    /// a standing state rather than an event to react to.
+    var tint: Color = PocketColor.practice
 
     var body: some View {
         let warning = engine.tempoWarning
-        Text(warning?.caption ?? fallback)
+        Text(warning?.caption ?? engine.heardWithdrawalLevel.caption ?? fallback)
             .font(.futura(.caption))
-            .foregroundStyle(warning == nil ? PocketColor.textSecondary : PocketColor.practice)
+            .foregroundStyle(warning == nil ? PocketColor.textSecondary : tint)
     }
 }
 

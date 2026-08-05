@@ -5,7 +5,39 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **Pickers that had outgrown their popup menus.** Three places asked you to choose from a list
+  crammed into a pop-up: the metronome's meter button, which had reached fifteen options across three
+  groups and scrolled — clipping its top row, wrapping "12/8 · Slow blues · doo-wop (in 4)" onto two
+  lines, and hiding the newest group at the bottom; the run screen's time-signature control, with the
+  same truncation; and a goal's **target song**, which listed your entire library with no search and
+  got worse with every song you added.
+
+  The metronome button now opens a proper **Metronome** sheet — time signature, subdivision and click
+  withdrawal, each with a line under it saying what it does. The run screen's meter opens the same
+  kind of list. And a goal's target song is now a **searchable** list you push into, which searches
+  the artist as well as the title, because which one you remember is a coin toss.
+
 ### Added
+- **The click can now withdraw itself.** A metronome that's there for every beat of every bar is a
+  worse practice tool than it looks — you end up correcting against it continuously instead of
+  carrying time yourself. So it can now step back on a fixed eight-bar cycle: a couple of bars where
+  it keeps only the downbeat, or drops out entirely, and then it comes back. The moment it returns is
+  the whole point. If you drifted, you'll hear it. If you didn't, you'll hear that too.
+
+  Nothing is measured, shown or scored — the app takes its own signal away and then declines to look.
+  Three levels, in the **Metronome** screen's settings sheet next to the time signature: *Gentle* takes
+  the last bar of each eight down to its downbeat; *Standard* thins bars 5–6 and silences 7–8; *Deep* goes
+  furthest. Every cycle starts with a full click, because you can't withdraw a pulse that was never
+  established, and the return always lands in the same place so you can anticipate it rather than
+  being ambushed.
+
+  It's **off by default** — a metronome that stops clicking looks broken if you haven't asked for it.
+  It's also **only** on the metronome, and only while the click is steady: if you set a tempo ramp
+  climbing, the click stays put for the climb. Withdrawing it while the tempo moves takes the
+  reference away exactly as the thing you're measuring against changes, which tells you nothing. The
+  beat dots go dark exactly in step with the click, so it can't quietly become a metronome you read
+  off the screen instead.
 - **Practice we don't cover can now live here too.** Sight-reading, transcribing, working a piece by
   hand, something your teacher set, singing while you play — real practice that Pocket has no screen
   for, so as far as the app was concerned it never happened. **Your own practice** is a new kind of

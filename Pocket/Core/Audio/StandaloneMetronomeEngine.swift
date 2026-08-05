@@ -111,6 +111,11 @@ final class StandaloneMetronomeEngine {
     /// When set (a strum-pattern audio preview, ADR 0071 R5), the click follows this pattern's slots
     /// instead of the meter — cleared on `stop`. Built in the `+Strum` split.
     var strumSchedule: StrumSchedule?
+    // Click withdrawal (ADR 0132), driven by the `+Withdrawal` split: the **host's opt-in** — only the
+    // free-play metronome tool sets it, so no other screen inherits this by sharing the type — and the
+    // tick the cycle counts bar 0 from, re-captured and never carried across a phase re-anchor.
+    var allowsClickWithdrawal = false
+    var drillOriginTick: Int?
 
     /// Active-practice time banked before the current play stretch (grows on each pause).
     private var accumulatedSession: TimeInterval = 0
@@ -223,6 +228,7 @@ final class StandaloneMetronomeEngine {
         phaseOrigin = nil               // placed on the first tick once the node has rendered
         scheduledThrough = -1
         currentBeat = -1
+        drillOriginTick = nil           // the cycle re-origins with the phase (ADR 0132 §8)
         startTimer()
     }
 
@@ -319,16 +325,10 @@ final class StandaloneMetronomeEngine {
         phaseOrigin = nil
         scheduledThrough = -1
         currentBeat = -1
+        drillOriginTick = nil           // a manual disruption restarts the cycle full (ADR 0132 §8)
     }
 
     private var framesPerBeat: Double { 60.0 / Double(bpm) * clickVoice.clockSampleRate }
-
-    /// Absolute sample position of sub-tick `index` (spaced `subInterval` frames from the
-    /// origin). With no subdivision, `subInterval == framesPerBeat` and these are the beats.
-    private func subSample(_ index: Int, subInterval: Double,
-                           origin: AVAudioFramePosition) -> AVAudioFramePosition {
-        origin + AVAudioFramePosition((Double(index) * subInterval).rounded())
-    }
 
     /// One driver step (~every 20 ms while playing): advance the session clock, pin any
     /// beats now inside the look-ahead window to absolute sample positions, and flip the
@@ -372,17 +372,17 @@ final class StandaloneMetronomeEngine {
         }
 
         // Audio: schedule every *sub-tick* whose sample falls within the look-ahead window, locked to
-        // the sample grid so the spacing never drifts. `scheduledLevel` picks the click — meter accents
-        // by default, or the strum pattern's slots in a preview (a `nil` slot is a silent rest).
-        let ticksPerBeat = strumSchedule?.ticksPerBeat ?? max(1, subdivision.ticksPerBeat)
+        // the sample grid so the spacing never drifts. `scheduledLevel` picks the click — a withdrawn
+        // bar (ADR 0132), a strum pattern's slots, or the meter's accents. `nil` schedules nothing.
+        let ticksPerBeat = currentTicksPerBeat
         let subInterval = perBeat / Double(ticksPerBeat)
         let horizonFrames = AVAudioFramePosition(horizon * clickVoice.clockSampleRate)
         var tickIndex = scheduledThrough + 1
-        while subSample(tickIndex, subInterval: subInterval, origin: origin)
+        while origin + MetronomeGrid.frames(tickIndex, interval: subInterval)
                 <= renderSample + horizonFrames {
             if let level = scheduledLevel(forTick: tickIndex, ticksPerBeat: ticksPerBeat) {
-                clickVoice.schedule(atSampleTime: subSample(tickIndex, subInterval: subInterval,
-                                                            origin: origin), level: level)
+                clickVoice.schedule(atSampleTime: origin + MetronomeGrid.frames(
+                    tickIndex, interval: subInterval), level: level)
             }
             scheduledThrough = tickIndex
             tickIndex += 1

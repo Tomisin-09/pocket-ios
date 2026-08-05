@@ -62,6 +62,7 @@ enum AppSettings {
         static let countInEnabled = "countInEnabled"
         static let countInBars = "countInBars"
         static let tempoChangeWarning = "tempoChangeWarning"
+        static let clickWithdrawal = "clickWithdrawal"
         static let keepScreenAwake = "keepScreenAwake"
         static let appearance = "appearance"
         static let exerciseAnimates = "exerciseAnimates"
@@ -133,6 +134,21 @@ enum AppSettings {
     static func resolvedTempoWarning(storedValue: String?) -> TempoChangeWarning {
         guard let storedValue else { return .default }
         return TempoChangeWarning(rawValue: storedValue) ?? .default
+    }
+
+    /// How far the click withdraws itself on its fixed eight-bar cycle (ADR 0132). Default `.off` —
+    /// a metronome that stops clicking looks broken to anyone who hasn't opted into it (§5).
+    static var clickWithdrawal: ClickWithdrawal {
+        resolvedClickWithdrawal(storedValue: UserDefaults.standard.string(forKey: Key.clickWithdrawal))
+    }
+
+    /// Pure default-resolution: a missing or unrecognised stored value falls back to `.off` rather
+    /// than crashing on a bad raw value (mirrors `resolvedTempoWarning`). Unrecognised degrading to
+    /// `.off` is the right direction here — the failure mode of a silent click is worse than the
+    /// failure mode of a click that keeps sounding.
+    static func resolvedClickWithdrawal(storedValue: String?) -> ClickWithdrawal {
+        guard let storedValue else { return .default }
+        return ClickWithdrawal(rawValue: storedValue) ?? .default
     }
 
     /// Keep the screen awake on the practice/metronome surfaces. Default on — you play
