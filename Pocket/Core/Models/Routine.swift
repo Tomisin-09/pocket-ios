@@ -45,11 +45,11 @@ final class Routine {
     /// migration (rows saved before this field decode to `nil` — CoreData 134110 rule, ADR 0012/0036).
     ///
     /// It records *where the routine came from*, never a Pro flag — access stays computed live from
-    /// `isPro` (ADR 0112 "gate at read time"). Its only monetization use is the free-taste **run**
-    /// allowance (`AccessPolicy.isFreeTasteRoutine`): routines are otherwise Pro, and this is the one
-    /// curated routine a free player may run forever. **Never** filter it in a `#Predicate`
-    /// (`presetSlug != nil` starves the main thread — the optional-predicate freeze); read it
-    /// per-object in memory at the gate.
+    /// `isPro` (ADR 0112 "gate at read time"). It has **no monetization use since ADR 0144**: the
+    /// free-taste run allowance it fed (`AccessPolicy.isFreeTasteRoutine`) is retired and its
+    /// allowlist is empty, so the seeded routine is now simply trial content. **Never** filter it in a
+    /// `#Predicate` (`presetSlug != nil` starves the main thread — the optional-predicate freeze);
+    /// read it per-object in memory at the gate.
     var presetSlug: String?
 
     /// The ordered blocks. **Cascade-owned**: deleting the routine deletes its items (but

@@ -9,14 +9,23 @@ import SwiftUI
 struct PaywallView: View {
     let trigger: PaywallTrigger
 
-    @Environment(StoreManager.self) private var store
-    @Environment(\.dismiss) private var dismiss
+    // Non-private (like the `@State`s below) so the `PaywallView+Products` extension — a separate
+    // file, for the 400-line cap — can read the store, the selected plan and the purchase flags.
+    @Environment(StoreManager.self) var store
+    @Environment(TrialReminder.self) var trialReminder
+    @Environment(\.dismiss) var dismiss
 
-    private enum Plan { case annual, monthly }
-    @State private var plan: Plan = .annual
-    @State private var eligibleForTrial = true
-    @State private var purchasing = false
-    @State private var purchaseError: String?
+    enum Plan { case annual, monthly }
+    @State var plan: Plan = .annual
+    /// Intro-offer eligibility, **per product** (ADR 0144 D5). Read for the *selected* plan: the two
+    /// can differ (eligibility is one-shot per subscription *group*, but a product can also simply
+    /// carry no offer), and reading only the annual one is how the CTA ends up promising a trial the
+    /// monthly purchase won't give. Optimistic defaults so the CTA doesn't flicker "Subscribe" →
+    /// "Start … free trial" while products load.
+    @State var annualEligible = true
+    @State var monthlyEligible = true
+    @State var purchasing = false
+    @State var purchaseError: String?
 
     var body: some View {
         ScrollView {
@@ -24,6 +33,7 @@ struct PaywallView: View {
                 header
                 valueProps
                 plans
+                reminderOptIn
                 cta
                 disclosure
             }
@@ -154,6 +164,43 @@ struct PaywallView: View {
             .background(Capsule().fill(PocketColor.practice))
     }
 
+    // MARK: - Trial reminder opt-in (ADR 0144 D6)
+
+    /// "Remind me before the trial ends", shown only when a trial is actually on offer. Permission is
+    /// requested **here, before the purchase**: at this point it is part of the offer being weighed
+    /// and reads as something the player asked for. Requested after the buy, the same prompt reads as
+    /// marketing and is denied once, permanently.
+    @ViewBuilder
+    private var reminderOptIn: some View {
+        if eligibleForTrial {
+            Toggle(isOn: reminderBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Remind me before the trial ends")
+                        .font(.futura(.subheadline, weight: .semibold))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    Text("A single notification, 24 hours before you'd be charged.")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+            }
+            .tint(PocketColor.practice)
+        }
+    }
+
+    /// Turning the toggle on asks the system for permission; a denial turns it straight back off, so
+    /// the control never claims a reminder it can't deliver. The in-app countdown runs either way.
+    private var reminderBinding: Binding<Bool> {
+        Binding(
+            get: { trialReminder.remindersEnabled },
+            set: { wants in
+                guard wants else {
+                    trialReminder.remindersEnabled = false
+                    return
+                }
+                Task { await trialReminder.requestAuthorization() }
+            })
+    }
+
     // MARK: - CTA
 
     private var cta: some View {
@@ -179,11 +226,22 @@ struct PaywallView: View {
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.practice)
                 .disabled(purchasing)
+
+            // The launch wall (ADR 0144 D4) comes to the player rather than being walked into, so it
+            // needs a dismissal that reads as one. The corner ✕ alone is too quiet for a full-screen
+            // cover — and an unmistakable way out is also what keeps App Review 3.1.2 comfortable.
+            if trigger == .launch {
+                Button("Not now") { dismiss() }
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .disabled(purchasing)
+            }
         }
     }
 
     private var ctaTitle: String {
-        eligibleForTrial ? "Start 14-day free trial" : "Subscribe"
+        guard eligibleForTrial, let trialPhrase else { return "Subscribe" }
+        return "Start \(trialPhrase) free trial"
     }
 
     // MARK: - Disclosure (App Review requires this block)
@@ -207,9 +265,9 @@ struct PaywallView: View {
 
     private var disclosureText: String {
         "Red Moon Pro is an auto-renewing subscription. "
-        + (eligibleForTrial
-           ? "Your 14-day free trial converts to the selected plan unless cancelled at least 24 hours "
-             + "before it ends. "
+        + (eligibleForTrial && trialPhrase != nil
+           ? "Your \(trialPhrase ?? "") free trial converts to the selected plan unless cancelled at "
+             + "least 24 hours before it ends. "
            : "")
         + "Payment is charged to your Apple Account at confirmation. It renews automatically unless "
         + "turned off at least 24 hours before the period ends. Manage or cancel anytime in Settings."
@@ -223,66 +281,6 @@ struct PaywallView: View {
                 .padding(16)
         }
         .accessibilityLabel("Close")
-    }
-
-    // MARK: - Pricing text (live, with a safe fallback before products load)
-
-    private var annualProduct: Product? {
-        store.products.first { $0.id == StoreManager.ProductID.annual }
-    }
-    private var monthlyProduct: Product? {
-        store.products.first { $0.id == StoreManager.ProductID.monthly }
-    }
-    private var selectedProduct: Product? {
-        plan == .annual ? annualProduct : monthlyProduct
-    }
-
-    private var annualPriceText: String {
-        annualProduct.map { "\($0.displayPrice)/yr" } ?? "£49.99/yr"
-    }
-    private var monthlyPriceText: String {
-        monthlyProduct.map { "\($0.displayPrice)/mo" } ?? "£5.99/mo"
-    }
-
-    /// The per-month equivalent of the annual plan — the retention lever this category lives on.
-    private var annualCaption: String {
-        guard let annual = annualProduct else { return "≈ £4.17/mo · best value" }
-        let perMonth = annual.price / 12
-        let formatted = perMonth.formatted(annual.priceFormatStyle)
-        return "≈ \(formatted)/mo · best value"
-    }
-
-    // MARK: - Actions
-
-    private func load() async {
-        await store.loadProducts()
-        if let sub = annualProduct?.subscription {
-            eligibleForTrial = await sub.isEligibleForIntroOffer
-        }
-    }
-
-    private func buy() async {
-        guard let product = selectedProduct else { return }
-        purchasing = true
-        defer { purchasing = false }
-        do {
-            if try await store.purchase(product) {
-                // Reported here rather than in `StoreManager` because trial eligibility is only
-                // known on this screen (ADR 0120) — and trial-vs-outright is the interesting half.
-                Analytics.send(.purchaseCompleted(product: plan == .annual ? .annual : .monthly,
-                                                  trial: eligibleForTrial))
-                dismiss()
-            }
-        } catch {
-            purchaseError = error.localizedDescription
-        }
-    }
-
-    private func restore() async {
-        purchasing = true
-        defer { purchasing = false }
-        await store.restore()
-        if store.isPro { dismiss() }
     }
 
     private var showingError: Binding<Bool> {
@@ -301,4 +299,12 @@ struct PaywallView: View {
 #Preview("Paywall — draw your own") {
     PaywallView(trigger: .drawYourOwn)
         .environment(StoreManager())
+        // `notifications: nil` — a preview must not reach for the real notification centre.
+        .environment(TrialReminder(usesSystemNotifications: false))
+}
+
+#Preview("Paywall — launch wall") {
+    PaywallView(trigger: .launch)
+        .environment(StoreManager())
+        .environment(TrialReminder(usesSystemNotifications: false))
 }

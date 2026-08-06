@@ -125,15 +125,19 @@ final class RoutinePresetsTests: XCTestCase {
         XCTAssertEqual(RoutinePresets.specs.first?.name, "Morning Routine")
     }
 
-    // MARK: - The free routine must stay clean
+    // MARK: - The routine-bypass invariant (ADR 0144)
 
-    /// **The invariant that keeps the paywall honest.** A free player may run Morning Routine, and the
-    /// routine player embeds the *real* `ExerciseRunView` per block with no per-block entitlement
-    /// check — so if a Pro-only drill ever lands in this routine, running it becomes a way to reach
-    /// Pro content for free. Every exercise block must therefore be free-tier by template **or** one
-    /// of the free-taste preset slugs. If this fails, either revert the block or add its slug to
-    /// `AccessPolicy.freeTasteSlugs` deliberately.
-    func testFreeTasteRoutineContainsOnlyFreelyRunnableExercises() throws {
+    /// **Retired as a bypass, kept as a seam guard.** Under ADR 0112 this test carried real weight:
+    /// a free player could run Morning Routine, and the routine player embeds the *real*
+    /// `ExerciseRunView` per block with no per-block entitlement check — so a Pro drill landing in
+    /// that routine became a way to reach Pro content for free.
+    ///
+    /// ADR 0144 closed the bypass by closing the door it went through: **no routine runs without
+    /// Pro**, so there is nothing left to leak out of. What's pinned now is the other half — the
+    /// starter routine's blocks are all shipped presets (so they resolve at seed time), and running
+    /// it requires Pro like everything else. Re-open a free routine allowance and the
+    /// `canRun`-per-block loop is what has to come back with it.
+    func testStarterRoutineBlocksAreShippedPresetsAndNeedPro() throws {
         let spec = try XCTUnwrap(RoutinePresets.specs.first { $0.slug == RoutinePresets.freeTasteSlug })
         let names: [String] = spec.blocks.compactMap { block in
             if case .exercise(let name) = block { return name }
@@ -141,13 +145,18 @@ final class RoutinePresetsTests: XCTestCase {
         }
         XCTAssertFalse(names.isEmpty)
 
+        XCTAssertFalse(AccessPolicy.canRunRoutine(
+            isPro: false,
+            isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: spec.slug)),
+            "The starter routine is trial content (ADR 0144 D8), not a free taste")
+
         for name in names {
             let preset = try XCTUnwrap(PracticePresets.allSpecs.first { $0.name == name },
-                                       "\(name) is not a shipped preset — it can't be verified free")
-            XCTAssertTrue(
+                                       "\(name) is not a shipped preset — it would never resolve")
+            XCTAssertFalse(
                 AccessPolicy.canRun(preset.template, isPro: false,
                                     isFreeTastePreset: AccessPolicy.isFreeTaste(slug: preset.slug)),
-                "\(name) (\(preset.template), slug \(preset.slug)) is Pro — it leaks out of the free routine")
+                "\(name) (\(preset.template)) must not run without Pro")
         }
     }
 

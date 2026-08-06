@@ -57,9 +57,15 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     greeting
+                    // Present only while a free trial is running (ADR 0144 D6) — draws nothing
+                    // otherwise, so it costs the ordinary Home nothing.
+                    TrialCountdownRow()
                     startTodaySessionCard
                     if let song = resumeSong {
-                        NavigationLink {
+                        // Gated with the nav strips (ADR 0144 D4): this card is a *second* door into
+                        // the same Pro surface the Song library card leads to, and a lapsed player
+                        // who dismissed the launch wall would otherwise walk straight through it.
+                        proGated(.song) {
                             WaveformPracticeView(song: song, context: context)
                         } label: {
                             JumpBackInCard(song: song)
@@ -219,12 +225,13 @@ struct HomeView: View {
     /// in the brand teal accent (`PocketColor.practice`, the brand hero) so it reads as distinct
     /// from the metronome tool below it.
     private var practiceCard: some View {
-        NavigationLink { PracticeView() } label: {
+        proGated(.practice) { PracticeView() } label: {
             HomeNavCard(icon: "figure.run", title: "Practice",
                         subtitle: "Your exercises & training runs",
                         tint: PocketColor.practice,
                         cardWash: PocketColor.practiceCardWash,
-                        circleWash: PocketColor.practiceCircleWash)
+                        circleWash: PocketColor.practiceCircleWash,
+                        locked: !isPro)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Practice, your exercises and training runs")
@@ -255,6 +262,9 @@ struct HomeView: View {
     /// own warm **gold** identity (`PocketColor.journal`), a fifth home hue kept clear of the
     /// teal · plum · terracotta triad and the indigo reference hub.
     private var journalCard: some View {
+        // **Ungated** (ADR 0144 D2): what you wrote and what you recorded is yours, and a lapsed
+        // subscription doesn't take it back. The doors *out* of the Journal — an entry's caption
+        // opening its exercise or routine — stay gated inside `JournalTabView`.
         NavigationLink { JournalTabView() } label: {
             HomeNavCard(icon: "book.closed.fill", title: "Journal",
                         subtitle: "Your notes & practice takes",
@@ -293,12 +303,13 @@ struct HomeView: View {
     /// toolbar's green button. Together with the teal Practice and plum Metronome strips this forms
     /// the teal · plum · terracotta home triad (content / tool / songs).
     private var songLibraryCard: some View {
-        NavigationLink { LibraryView() } label: {
+        proGated(.library) { LibraryView() } label: {
             HomeNavCard(icon: "music.note.list", title: "Song library",
                         subtitle: librarySubtitle,
                         tint: PocketColor.library,
                         cardWash: PocketColor.libraryCardWash,
-                        circleWash: PocketColor.libraryCircleWash)
+                        circleWash: PocketColor.libraryCircleWash,
+                        locked: !isPro)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Song library, \(librarySubtitle)")
@@ -325,7 +336,9 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(recentRoutines) { routine in
-                        NavigationLink {
+                        // Gated for the same reason as "Jump back in" — a rail card is another door
+                        // into a Pro surface (ADR 0144 D4).
+                        proGated(.routine) {
                             RoutineDetailView(container: context.container, existing: routine)
                         } label: {
                             RecentRoutineCard(routine: routine)

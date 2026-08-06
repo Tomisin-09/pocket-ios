@@ -112,15 +112,19 @@ final class UnitDuplicationTests: XCTestCase {
         XCTAssertNotEqual(copy.uid, source.uid)
     }
 
-    /// Dropping the preset slug is what closes the paywall bypass: the copy is judged by its
-    /// template alone, so a free player's fork of a Pro-template freebie is locked.
-    func testForkOfAFreeTastePresetIsNotItselfFreeTaste() {
+    /// A fork **drops the preset slug**, so the copy is judged by its template alone.
+    ///
+    /// This closed a paywall bypass under ADR 0112 (a free player forking a freebie to keep it).
+    /// ADR 0144 removed the free run allowance entirely, so both sides now read `false` — but the
+    /// property being tested is the one that mattered then and would matter again: **provenance is not
+    /// inherited**. A fork is the player's own drill, not a copy of ours.
+    func testForkDropsPresetProvenance() {
         let source = Exercise(name: "A minor pentatonic", template: .scales)
         source.presetSlug = "a-minor-pentatonic"
-        XCTAssertTrue(AccessPolicy.canRun(source.template, isPro: false,
-                                          isFreeTastePreset: AccessPolicy.isFreeTaste(slug: source.presetSlug)))
 
         let copy = source.duplicated(named: "A minor pentatonic copy")
+        XCTAssertNil(copy.presetSlug)
+        XCTAssertFalse(AccessPolicy.isFreeTaste(slug: copy.presetSlug))
         XCTAssertFalse(AccessPolicy.canRun(copy.template, isPro: false,
                                            isFreeTastePreset: AccessPolicy.isFreeTaste(slug: copy.presetSlug)))
     }

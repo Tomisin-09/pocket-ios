@@ -181,6 +181,8 @@ struct SettingsView: View {
             // Red Moon Pro (ADR 0112): a subscriber manages/cancels via Apple's native sheet; a free
             // player gets a way into the paywall. Restore is always available (App Review requires it).
             Section {
+                // While a trial is running, say so before offering anything else (ADR 0144 D6).
+                TrialCountdownRow(style: .plain)
                 if isPro {
                     Button("Manage Subscription") { showingManageSubscriptions = true }
                 } else {

@@ -1,182 +1,123 @@
 import XCTest
 @testable import Pocket
 
-/// The pure entitlement axis (ADR 0112): `ExerciseTemplate.authoringTier` + `AccessPolicy`. No
-/// StoreKit, no `@Model`, no UI — just the free/Pro rule, exhaustively pinned so a template added
-/// later is a deliberate free-or-Pro decision, not an accidental free unlock.
+/// The pure entitlement axis: `ExerciseTemplate.authoringTier` + `AccessPolicy`. No StoreKit, no
+/// `@Model`, no UI.
+///
+/// **ADR 0144 inverted this file.** Under ADR 0112 most of these assertions proved that a free player
+/// *could* do something — author from three free templates, run four curated presets, open and
+/// rearrange one demo routine. The whole app is now Pro (the Toolkit, which contains no gates at all,
+/// is the free surface), so they prove the opposite. What is pinned here is therefore:
+///
+/// 1. every gate answers plain `isPro`, for every input;
+/// 2. **both free-taste allowlists are empty** — the seam is present but inert;
+/// 3. the seam still *works*, so re-opening a free line stays the one-file change ADR 0144 D3
+///    promises. Those tests pass a `true` provenance flag directly rather than through a slug.
 final class AccessPolicyTests: XCTestCase {
-
-    /// The exact free-authoring set per ADR 0112 ("free = basic/strumming/warm-up; Pro = the rest").
-    private let freeToAuthor: Set<ExerciseTemplate> = [.basic, .strumming, .warmup]
 
     // MARK: - authoringTier
 
-    func testFreeTemplatesAreFreeToAuthor() {
-        for template in freeToAuthor {
-            XCTAssertEqual(template.authoringTier, .free, "\(template) should be free to author")
-        }
-    }
-
-    func testEveryOtherTemplateIsProToAuthor() {
-        for template in ExerciseTemplate.allCases where !freeToAuthor.contains(template) {
+    func testEveryTemplateIsProToAuthor() {
+        for template in ExerciseTemplate.allCases {
             XCTAssertEqual(template.authoringTier, .pro, "\(template) should be Pro to author")
         }
     }
 
-    /// Guards the split itself: exactly three free templates, so adding a case forces a conscious
-    /// choice here rather than silently defaulting into one bucket.
-    func testExactlyThreeFreeAuthoringTemplates() {
-        let free = ExerciseTemplate.allCases.filter { $0.authoringTier == .free }
-        XCTAssertEqual(Set(free), freeToAuthor)
-        XCTAssertEqual(free.count, 3)
+    /// No free-tier family survives (ADR 0144 D1). `authoringTier`'s exhaustive `switch` means adding
+    /// a template won't compile without a decision; this pins which way that decision has to go.
+    func testNoTemplateIsFreeToAuthor() {
+        XCTAssertTrue(ExerciseTemplate.allCases.allSatisfy { $0.authoringTier != .free })
     }
 
-    // MARK: - canAuthor
+    // MARK: - canAuthor / canRun
 
-    func testProUnlocksAuthoringForEveryTemplate() {
+    func testProUnlocksAuthoringAndRunningForEveryTemplate() {
         for template in ExerciseTemplate.allCases {
-            XCTAssertTrue(AccessPolicy.canAuthor(template, isPro: true),
-                          "Pro should author \(template)")
-        }
-    }
-
-    func testFreeUserCanOnlyAuthorFreeTemplates() {
-        for template in ExerciseTemplate.allCases {
-            XCTAssertEqual(AccessPolicy.canAuthor(template, isPro: false),
-                           freeToAuthor.contains(template),
-                           "free authoring of \(template) should match its tier")
-        }
-    }
-
-    // MARK: - canRun
-
-    func testProUnlocksRunningForEveryTemplate() {
-        for template in ExerciseTemplate.allCases {
-            XCTAssertTrue(AccessPolicy.canRun(template, isPro: true),
-                          "Pro should run \(template)")
+            XCTAssertTrue(AccessPolicy.canAuthor(template, isPro: true), "Pro should author \(template)")
+            XCTAssertTrue(AccessPolicy.canRun(template, isPro: true), "Pro should run \(template)")
             XCTAssertTrue(AccessPolicy.canRun(template, isPro: true, isFreeTastePreset: true))
         }
     }
 
-    func testFreeUserRunsFreeTemplatesRegardlessOfPresetFlag() {
-        for template in freeToAuthor {
-            XCTAssertTrue(AccessPolicy.canRun(template, isPro: false))
-            XCTAssertTrue(AccessPolicy.canRun(template, isPro: false, isFreeTastePreset: false))
-        }
-    }
-
-    func testFreeUserCannotRunProTemplateByDefault() {
-        for template in ExerciseTemplate.allCases where !freeToAuthor.contains(template) {
-            XCTAssertFalse(AccessPolicy.canRun(template, isPro: false),
-                           "a plain Pro-template exercise should run-lock for a free user: \(template)")
-        }
-    }
-
-    func testFreeTastePresetRunsEvenOnAProTemplate() {
-        // The curated taste: a free user runs these specific seeded presets even though the family
-        // (scales, chords, picking, legato) is Pro to author.
-        for template: ExerciseTemplate in [.scales, .chords, .picking, .legato] {
-            XCTAssertTrue(AccessPolicy.canRun(template, isPro: false, isFreeTastePreset: true),
-                          "a free-taste \(template) preset should run for a free user")
-        }
-    }
-
-    /// The taste is a *run* allowance only — it never grants authoring, so a free player **cannot
-    /// edit** a freebie (its template is Pro; editing routes through `canAuthor`, which has no taste
-    /// parameter). This is the "can't edit the freebie" guarantee.
-    func testFreeUserCannotEditAnyFreeTastePreset() {
-        for template: ExerciseTemplate in [.scales, .chords, .picking, .legato] {
+    func testWithoutProNothingAuthorsAndNothingRuns() {
+        for template in ExerciseTemplate.allCases {
             XCTAssertFalse(AccessPolicy.canAuthor(template, isPro: false),
-                           "a free user must not be able to edit a \(template) freebie")
+                           "\(template) must not author without Pro")
+            XCTAssertFalse(AccessPolicy.canRun(template, isPro: false),
+                           "\(template) must not run without Pro")
         }
     }
 
-    // MARK: - free-taste allowlist
+    /// The run gate fails **closed** when a caller omits provenance — the default that matters, since
+    /// most call sites rely on it.
+    func testRunDefaultsToLockedWithoutPro() {
+        XCTAssertFalse(AccessPolicy.canRun(.scales, isPro: false))
+    }
 
-    func testIsFreeTasteRecognisesTheFourFreebies() {
+    // MARK: - The seam is inert, but intact (ADR 0144 D3)
+
+    func testBothFreeTasteAllowlistsAreEmpty() {
+        XCTAssertTrue(AccessPolicy.freeTasteSlugs.isEmpty)
+        XCTAssertTrue(AccessPolicy.freeTasteRoutineSlugs.isEmpty)
+    }
+
+    /// Every slug the app actually stamps — including the ones that *used* to be free taste — now
+    /// resolves to "not free taste".
+    func testNoSeededSlugIsFreeTasteAnyMore() {
         for slug in ["a-minor-pentatonic", "pop-changes", "alternate-picking", "legato"] {
-            XCTAssertTrue(AccessPolicy.isFreeTaste(slug: slug), "\(slug) should be free taste")
+            XCTAssertFalse(AccessPolicy.isFreeTaste(slug: slug), "\(slug) is no longer free taste")
+        }
+        XCTAssertFalse(AccessPolicy.isFreeTaste(slug: nil))
+        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: RoutinePresets.freeTasteSlug))
+        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: nil))
+    }
+
+    /// The allowlist ↔ preset contract, moved here from `PracticePresetsTests` when ADR 0144 emptied
+    /// it. Vacuous today, and deliberately kept: whatever is put back must name a preset that actually
+    /// **ships and seeds on a fresh install**, or the allowance points at an exercise that isn't there.
+    func testAnyFreeTasteSlugMustBeAShippedFirstRunPreset() {
+        let shipped = Set(PracticePresets.allSpecs.map(\.slug))
+        let firstRun = Set(PracticePresets.firstRunSlugs)
+        for slug in AccessPolicy.freeTasteSlugs {
+            XCTAssertTrue(shipped.contains(slug), "free-taste slug \(slug) has no shipped preset")
+            XCTAssertTrue(firstRun.contains(slug), "free-taste \(slug) is never seeded")
         }
     }
 
-    func testIsFreeTasteRejectsNilAndOtherPresets() {
-        XCTAssertFalse(AccessPolicy.isFreeTaste(slug: nil))          // a user-authored drill
-        XCTAssertFalse(AccessPolicy.isFreeTaste(slug: "scale-runs")) // a seeded but non-taste preset
-        XCTAssertFalse(AccessPolicy.isFreeTaste(slug: "a-minor-7-arpeggio"))
+    /// **The seam still works.** Passing the provenance flag directly re-opens the run allowance — so
+    /// reintroducing a free line really is a matter of putting slugs back in the allowlists, with no
+    /// call-site change. If this ever fails, the parameters have been quietly neutered and ADR 0144
+    /// D3's promise is gone.
+    func testProvenanceFlagStillOpensTheRunGates() {
+        XCTAssertTrue(AccessPolicy.canRun(.scales, isPro: false, isFreeTastePreset: true))
+        XCTAssertTrue(AccessPolicy.canRunRoutine(isPro: false, isFreeTasteRoutine: true))
+        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: false, isFreeTasteRoutine: true))
     }
 
-    func testExactlyFourFreeTasteSlugs() {
-        XCTAssertEqual(AccessPolicy.freeTasteSlugs.count, 4)
-    }
+    // MARK: - Routines
 
-    // MARK: - Routines (ADR 0112 — routines are Pro, one curated free taste)
-
-    func testAuthoringARoutineAlwaysNeedsPro() {
+    func testEveryRoutineGateAnswersIsPro() {
         XCTAssertTrue(AccessPolicy.canAuthorRoutine(isPro: true))
         XCTAssertFalse(AccessPolicy.canAuthorRoutine(isPro: false))
-    }
-
-    func testProRunsAnyRoutine() {
-        XCTAssertTrue(AccessPolicy.canRunRoutine(isPro: true))
-        XCTAssertTrue(AccessPolicy.canRunRoutine(isPro: true, isFreeTasteRoutine: false))
-    }
-
-    func testFreePlayerRunsOnlyTheFreeTasteRoutine() {
-        XCTAssertTrue(AccessPolicy.canRunRoutine(isPro: false, isFreeTasteRoutine: true))
-        XCTAssertFalse(AccessPolicy.canRunRoutine(isPro: false, isFreeTasteRoutine: false))
-    }
-
-    /// The default matters: a caller that forgets to pass provenance must fail **closed**, not open.
-    func testRunRoutineDefaultsToLockedForAFreePlayer() {
-        XCTAssertFalse(AccessPolicy.canRunRoutine(isPro: false))
-    }
-
-    func testIsFreeTasteRoutineRecognisesOnlyMorningWarmUp() {
-        XCTAssertTrue(AccessPolicy.isFreeTasteRoutine(slug: "morning-warm-up"))
-        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: "picking-builder"))
-        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: "rhythm-and-changes"))
-        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: nil))   // a user-built routine
-    }
-
-    func testExactlyOneFreeTasteRoutine() {
-        XCTAssertEqual(AccessPolicy.freeTasteRoutineSlugs.count, 1)
-    }
-
-    /// The slug the policy allows must be the one the seeder actually stamps — otherwise the free
-    /// routine silently Pro-locks. Pins the two constants together.
-    func testFreeTasteRoutineSlugMatchesTheSeededSpec() {
-        XCTAssertTrue(AccessPolicy.freeTasteRoutineSlugs.contains(RoutinePresets.freeTasteSlug))
-        XCTAssertEqual(RoutinePresets.specs.first?.slug, RoutinePresets.freeTasteSlug)
-    }
-
-    // MARK: - The demo exception (view + rearrange the curated routine)
-
-    func testFreePlayerCanOpenOnlyTheDemoRoutine() {
-        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: false, isFreeTasteRoutine: true))
-        XCTAssertFalse(AccessPolicy.canEditRoutine(isPro: false, isFreeTasteRoutine: false))
-    }
-
-    func testProOpensAnyRoutine() {
-        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: true))
-        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: true, isFreeTasteRoutine: false))
-    }
-
-    /// Fails closed when provenance is omitted, like `canRunRoutine`.
-    func testEditRoutineDefaultsToLockedForAFreePlayer() {
-        XCTAssertFalse(AccessPolicy.canEditRoutine(isPro: false))
-    }
-
-    /// **The seam that keeps the demo from reopening the bypass.** A free player may rearrange the
-    /// demo, but adding is Pro *even inside it* — so the demo's blocks stay the curated, verified-free
-    /// set and can never become a way to assemble and run Pro drills.
-    func testAddingBlocksIsProEvenInsideTheDemo() {
-        XCTAssertFalse(AccessPolicy.canAddRoutineUnits(isPro: false))
         XCTAssertTrue(AccessPolicy.canAddRoutineUnits(isPro: true))
+        XCTAssertFalse(AccessPolicy.canAddRoutineUnits(isPro: false))
+        XCTAssertTrue(AccessPolicy.canRunRoutine(isPro: true))
+        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: true))
     }
 
-    /// The demo is openable but never *authorable* — the two questions must not collapse into one.
-    func testOpeningTheDemoIsNotAuthoring() {
-        XCTAssertTrue(AccessPolicy.canEditRoutine(isPro: false, isFreeTasteRoutine: true))
-        XCTAssertFalse(AccessPolicy.canAuthorRoutine(isPro: false))
+    /// The demo exception is gone: without Pro there is no routine to run and none to open, whatever
+    /// slug it carries (ADR 0144 D1).
+    func testWithoutProNoRoutineRunsOrOpens() {
+        XCTAssertFalse(AccessPolicy.canRunRoutine(isPro: false))
+        XCTAssertFalse(AccessPolicy.canEditRoutine(isPro: false))
+        XCTAssertFalse(AccessPolicy.canRunRoutine(
+            isPro: false,
+            isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: RoutinePresets.freeTasteSlug)))
+    }
+
+    /// The seeded starter routine still seeds first — it is trial content now (ADR 0144 D8), not a
+    /// free taste, and its slug is still the frozen provenance identifier the seeder stamps.
+    func testStarterRoutineSlugStillMatchesTheSeededSpec() {
+        XCTAssertEqual(RoutinePresets.specs.first?.slug, RoutinePresets.freeTasteSlug)
     }
 }

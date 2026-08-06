@@ -238,15 +238,8 @@ final class PracticePresetsTests: XCTestCase {
         }
     }
 
-    /// Every free-taste slug the paywall relies on must actually be a shipped preset — guards the
-    /// `AccessPolicy.freeTasteSlugs` ↔ `PracticePresets` contract so a rename can't silently orphan
-    /// a freebie.
-    func testEveryFreeTasteSlugIsAShippedPreset() {
-        let shipped = Set(PracticePresets.allSpecs.map(\.slug))
-        for slug in AccessPolicy.freeTasteSlugs {
-            XCTAssertTrue(shipped.contains(slug), "free-taste slug \(slug) has no shipped preset")
-        }
-    }
+    // The `AccessPolicy.freeTasteSlugs` ↔ `PracticePresets` contract moved to `AccessPolicyTests`
+    // when ADR 0144 emptied the allowlist — it is now a guard on the *seam*, not on the presets.
 
     // MARK: - Provenance matcher + backfill
 
@@ -330,23 +323,17 @@ final class PracticePresetsTests: XCTestCase {
         XCTAssertEqual(PracticePresets.firstRunSlugs.count, 6)
     }
 
-    /// Every free-taste slug must actually ship on a fresh install. A freebie that isn't seeded is a
-    /// promise the app can't keep — the run allowance would point at an exercise that isn't there.
-    func testEveryFreeTasteExerciseIsSeededOnAFreshInstall() {
-        let firstRun = Set(PracticePresets.firstRunSlugs)
-        for slug in AccessPolicy.freeTasteSlugs {
-            XCTAssertTrue(firstRun.contains(slug), "free-taste \(slug) is never seeded")
-        }
-    }
-
-    /// The whole first-run library is runnable by a free player — two free-tier warm-ups plus the
-    /// four freebies — so a new install opens with nothing locked and nothing broken.
-    func testEveryFirstRunExerciseIsRunnableByAFreePlayer() {
+    /// **Inverted by ADR 0144.** The first-run library used to be the thing a free player could run
+    /// forever; it is now **trial content** (D8) — the reason a trial is worth starting rather than a
+    /// tour of an empty app. So every seeded drill needs Pro, and every one of them unlocks with it.
+    func testFirstRunExercisesAreTrialContentNotAFreeTaste() {
         for spec in PracticePresets.firstRunSpecs {
-            XCTAssertTrue(
+            XCTAssertFalse(
                 AccessPolicy.canRun(spec.template, isPro: false,
                                     isFreeTastePreset: AccessPolicy.isFreeTaste(slug: spec.slug)),
-                "\(spec.name) ships on a fresh install but a free player can't run it")
+                "\(spec.name) ships on a fresh install but must not run without Pro")
+            XCTAssertTrue(AccessPolicy.canRun(spec.template, isPro: true),
+                          "\(spec.name) must run for a subscriber")
         }
     }
 

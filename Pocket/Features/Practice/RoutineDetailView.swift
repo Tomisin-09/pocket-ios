@@ -179,8 +179,6 @@ struct RoutineDetailView: View {
                 }
             } header: {
                 Text(insertingRests ? "Tap where a rest goes" : "Blocks")
-            } footer: {
-                demoFooter
             }
 
             lengthSection

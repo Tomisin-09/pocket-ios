@@ -18,8 +18,9 @@ enum PracticePresets {
     struct Spec {
         let name: String
         /// Stable provenance identifier stamped onto the seeded `Exercise.presetSlug` (ADR 0112). A
-        /// **frozen** kebab-case id — the free-taste allowlist (`AccessPolicy.freeTasteSlugs`) and the
-        /// one-time backfill both key off it, so it must never change even if `name` is reworded.
+        /// **frozen** kebab-case id — the one-time backfill keys off it, and it is what
+        /// `AccessPolicy.freeTasteSlugs` would match on if a free line ever returns (ADR 0144 D3), so
+        /// it must never change even if `name` is reworded.
         let slug: String
         let command: Int
         /// The drill's own rhythm — notes per beat — for a preset whose **content** declares none

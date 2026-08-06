@@ -33,6 +33,26 @@ final class StoreManager {
     /// Verified, non-revoked Pro product IDs the player currently owns.
     private var entitledProductIDs: Set<String> = []
 
+    /// Whether the first `refreshEntitlements()` has completed. `isPro` starts `false` and the scan is
+    /// `async`, so **before this flips there is no difference between "not subscribed" and "we haven't
+    /// looked yet"** — and ADR 0144's launch wall must not flash at a paying subscriber during that
+    /// gap. Gates read plain `isPro` (locked-until-proven is the safe default for a *gate*); only the
+    /// unprompted launch cover waits on this. Never returns to `false`.
+    private(set) var hasResolvedEntitlements = false
+
+    /// When the current subscription period ends — the trial's conversion instant while a trial is
+    /// running (ADR 0144 D6). `nil` when nothing is owned, or when StoreKit can't tell us.
+    private(set) var currentExpiration: Date?
+
+    /// Whether the current subscription is still set to renew. `false` once the player cancels, which
+    /// is the signal that stops the trial reminder: they've already decided.
+    private(set) var willAutoRenew = false
+
+    /// Called after every entitlement refresh with the two facts the trial reminder needs. A closure
+    /// rather than a direct dependency, so `StoreManager` stays the app's only StoreKit type and
+    /// gains no knowledge of `UserNotifications`; the app root wires the two together.
+    var onSubscriptionStateChange: (@MainActor (Date?, Bool) -> Void)?
+
     #if DEBUG
     /// Debug-only entitlement override, so gates can be exercised before ASC/sandbox exists. `nil` =
     /// use the real StoreKit entitlement; `true`/`false` force it. Persisted so a relaunch remembers.
@@ -84,7 +104,31 @@ final class StoreManager {
             owned.insert(transaction.productID)
         }
         entitledProductIDs = owned
+        hasResolvedEntitlements = true
         recomputeIsPro()
+        await refreshSubscriptionState()
+        onSubscriptionStateChange?(currentExpiration, willAutoRenew)
+    }
+
+    /// Read the owned subscription's renewal state. Needs `products`, so it loads them on demand —
+    /// this runs at launch, before the paywall has ever been opened.
+    private func refreshSubscriptionState() async {
+        guard let owned = entitledProductIDs.first else {
+            currentExpiration = nil
+            willAutoRenew = false
+            return
+        }
+        if products.isEmpty { await loadProducts() }
+        guard let subscription = products.first(where: { $0.id == owned })?.subscription,
+              let statuses = try? await subscription.status else { return }
+        for status in statuses {
+            guard case .verified(let renewal) = status.renewalInfo,
+                  case .verified(let transaction) = status.transaction,
+                  entitledProductIDs.contains(transaction.productID) else { continue }
+            currentExpiration = transaction.expirationDate
+            willAutoRenew = renewal.willAutoRenew
+            return
+        }
     }
 
     /// Load the subscription products for the paywall, preserving the annual-first order regardless of
