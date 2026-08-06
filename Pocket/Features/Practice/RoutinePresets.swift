@@ -60,8 +60,11 @@ enum RoutinePresets {
                       .rest, .exercise(aMinorPentatonic)])
     ]
 
-    /// The slug of the one curated routine a free player may **run** forever (ADR 0112). Frozen —
-    /// `AccessPolicy.freeTasteRoutineSlugs` matches on it.
+    /// The slug of the seeded starter routine. It was the one routine a free player could **run**
+    /// forever under ADR 0112; since ADR 0144 it is ordinary trial content, and
+    /// `AccessPolicy.freeTasteRoutineSlugs` is empty. The name is kept (rather than renamed to
+    /// `starterSlug`) because the *value* is a frozen provenance identifier and the constant is what a
+    /// returning free line would put back into that allowlist.
     static let freeTasteSlug = "morning-warm-up"
 
     /// Build one preset routine (un-inserted) from a name→exercise lookup, resolving each exercise

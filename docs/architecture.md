@@ -39,6 +39,21 @@
 │              never .now/.current. There is no year tier and no placeholder for one (ADR 0117 defers it)
 │   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
 │              AIClient (→ proxy)
+│ Monetization — ADR 0144. One paid app: `AccessPolicy` is the single pure gate seam and every function
+│              now answers plain `isPro`; both free-taste allowlists are empty, kept as the one-file seam a
+│              free line would return through. The Toolkit and the Journal are the free surface; the Journal's
+│              doors *out* (an entry caption → its exercise/routine) stay gated, so reading your own history is
+│              free but walking back into the workbench is not.
+│              `StoreManager` (@MainActor @Observable, StoreKit 2) stays the app's only StoreKit type —
+│              `isPro`, plus `hasResolvedEntitlements` (so the launch wall can't flash at a subscriber
+│              mid-scan) and the renewal state (`currentExpiration`, `willAutoRenew`) the reminder needs.
+│              `TrialReminder` (UserNotifications) owns one local notification and the app's own record of
+│              the trial end — recorded at the moment of a trial purchase, because StoreKit can't say
+│              whether a period is a trial without a deprecated `offerType` read. Its decisions are
+│              `TrialReminderPlan` (pure: schedule/cancel + days remaining); paywall wording comes from
+│              `TrialPeriodCopy` over the product's own intro-offer period, never a hardcoded length. The
+│              two are wired at the app root by `StoreManager.onSubscriptionStateChange`, so StoreKit and
+│              UserNotifications never import each other. **Local notifications only — no `aps-environment`**
 │   Analytics — ADR 0120. `AnalyticsEvent` is the complete closed vocabulary (13 events): an enum whose
 │              associated values are only other enums/Int/Bool, so no `String` parameter exists and
 │              user-authored text (song titles, file names, journal notes, the artist name) cannot be

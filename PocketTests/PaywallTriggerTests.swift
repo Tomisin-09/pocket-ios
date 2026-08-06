@@ -9,15 +9,54 @@ import XCTest
 final class PaywallTriggerTests: XCTestCase {
 
     private let coarse: [PaywallTrigger] = [
-        .drawYourOwn, .newExercise(nil), .proExercise, .planner, .routine(.new), .general
+        .drawYourOwn, .newExercise(nil), .proExercise, .planner, .routine(.new),
+        .home(.practice), .launch, .general
     ]
 
     func testCoarseTriggerNamesAreFrozenAndUnique() {
         XCTAssertEqual(coarse.map(\.reportingName),
                        ["draw_your_own", "new_exercise", "pro_exercise",
-                        "planner", "routine", "general"],
-                       "Trigger names are a wire format — renaming breaks the dashboard series.")
+                        "planner", "routine", "home", "launch", "general"],
+                       "Trigger names are a wire format — renaming breaks the dashboard series. "
+                       + "ADR 0144 added `home` and `launch`; adding is allowed, renaming is not.")
         XCTAssertEqual(Set(coarse.map(\.reportingName)).count, coarse.count)
+    }
+
+    // MARK: - ADR 0144's wall
+
+    /// With the whole app Pro, the Home wall is the highest-volume gate there is — so *which* locked
+    /// destination was reached for has to survive to reporting, exactly as the five routine actions do.
+    func testEveryHomeDestinationReportsDistinctly() {
+        let details = HomeGate.allCases.map { PaywallTrigger.home($0).reportingDetail }
+        XCTAssertEqual(details, ["practice", "library", "song", "routine"])
+        XCTAssertEqual(Set(details.compactMap { $0 }).count, HomeGate.allCases.count)
+    }
+
+    /// The launch wall is **not** a `.general` presentation. It comes to the player unprompted, so a
+    /// dismissal here means something different from dismissing a wall they walked into, and the two
+    /// must be separable in the dashboard.
+    func testLaunchWallIsItsOwnTrigger() {
+        XCTAssertEqual(PaywallTrigger.launch.reportingName, "launch")
+        XCTAssertNotEqual(PaywallTrigger.launch.reportingName, PaywallTrigger.general.reportingName)
+        XCTAssertNil(PaywallTrigger.launch.reportingDetail)
+    }
+
+    /// Unlike the capability triggers, a Home gate's headline **does** vary by detail: the player just
+    /// tapped a specific place, so the paywall names that place.
+    func testHomeHeadlinesNameThePlaceAndAreDistinct() {
+        let headlines = HomeGate.allCases.map { PaywallTrigger.home($0).headline }
+        XCTAssertEqual(Set(headlines).count, headlines.count,
+                       "Each locked Home destination names itself.")
+        XCTAssertTrue(PaywallTrigger.home(.practice).headline.contains("Practice"))
+    }
+
+    /// **The free surface has no trigger at all** (ADR 0144 D2). The Toolkit and the Journal are never
+    /// gated, so no `HomeGate` may name one — a case appearing here would mean a paywall had been put
+    /// in front of something we promised was free.
+    func testTheFreeSurfacesHaveNoGate() {
+        let named = HomeGate.allCases.map(\.rawValue)
+        XCTAssertFalse(named.contains("toolkit"))
+        XCTAssertFalse(named.contains("journal"))
     }
 
     func testEveryProTemplateSurvivesToReporting() {
@@ -37,7 +76,7 @@ final class PaywallTriggerTests: XCTestCase {
     }
 
     func testTriggersWithoutDetailReportNone() {
-        for trigger in [PaywallTrigger.drawYourOwn, .proExercise, .planner, .general] {
+        for trigger in [PaywallTrigger.drawYourOwn, .proExercise, .planner, .launch, .general] {
             XCTAssertNil(trigger.reportingDetail)
         }
         XCTAssertNil(PaywallTrigger.newExercise(nil).reportingDetail,

@@ -5,6 +5,29 @@ import SwiftUI
 // SwiftLint's `type_body_length`). The presentational cards live in `HomeCards.swift`.
 
 extension HomeView {
+    /// **ADR 0144 D4's wall, in one place.** A top-level Home card pushes its destination for a Pro
+    /// player and presents the paywall for everyone else.
+    ///
+    /// This is the *coarse* gate: with the whole app Pro (ADR 0144 D1), the ~20 individual
+    /// `AccessPolicy` gates inside these destinations would otherwise mean twenty separate walls to
+    /// walk into. Those gates stay as defence in depth — they are what re-lock a screen already open
+    /// when a trial lapses — but a player without Pro should meet the offer at the door, once.
+    ///
+    /// `destination` is only built in the Pro branch, so a locked card constructs nothing.
+    /// **`toolkitCard` deliberately does not route through here** (ADR 0144 D2).
+    @ViewBuilder
+    func proGated<Destination: View, Label: View>(
+        _ gate: HomeGate,
+        @ViewBuilder destination: () -> Destination,
+        @ViewBuilder label: () -> Label
+    ) -> some View {
+        if isPro {
+            NavigationLink(destination: destination(), label: label)
+        } else {
+            Button { presentPaywall(.home(gate)) } label: { label() }
+        }
+    }
+
     /// Solid green disc with a bold dark plus — mirrors the app's dark-content-on-filled-colour
     /// convention (e.g. the teal CTA). Its enclosing `ToolbarItem` drops the iOS 26 shared glass
     /// background so the disc reads as a flat fill.

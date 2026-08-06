@@ -15,6 +15,29 @@ enum RoutineGate: String, CaseIterable, Equatable {
     case generate
 }
 
+/// Which locked **top-level Home destination** a `.home` gate fired from (ADR 0144 D4). The Toolkit
+/// **and the Journal** are deliberately absent: they are the free surface (ADR 0144 D2) and are never
+/// gated, so there is no trigger that could name them.
+enum HomeGate: String, CaseIterable, Equatable {
+    case practice
+    case library
+    /// The "Jump back in" card — resuming the last-practised song's waveform.
+    case song
+    /// A card in the "Recent routines" rail.
+    case routine
+
+    /// The contextual paywall line for this destination — names the *place* that's locked, since
+    /// that's what the player just tapped.
+    var headline: String {
+        switch self {
+        case .practice: return "Practice is part of Red Moon Pro"
+        case .library: return "Your song library is part of Red Moon Pro"
+        case .song: return "Practising along to your songs is part of Red Moon Pro"
+        case .routine: return "Routines are part of Red Moon Pro"
+        }
+    }
+}
+
 enum PaywallTrigger: Identifiable, Equatable {
     /// The "draw your own" custom fretboard canvas — Pro even on a free-template family (ADR 0112).
     case drawYourOwn
@@ -28,6 +51,14 @@ enum PaywallTrigger: Identifiable, Equatable {
     /// Any routine surface — running a Pro routine, building one by hand, or accepting a session
     /// generated from a collection or a song. Routines are Pro apart from the curated free taste.
     case routine(RoutineGate)
+    /// A locked **top-level Home destination** (ADR 0144 D4) — the coarse wall above the individual
+    /// gates. Carries which card was reached for, because with the whole app Pro this is now the
+    /// highest-volume gate in the app and "they hit the wall" alone would say nothing about intent.
+    case home(HomeGate)
+    /// The **once-per-launch** paywall shown to a player without Pro (ADR 0144 D4). Not reached for —
+    /// it comes to them — which is why it is its own trigger rather than `.general`: a dismissal here
+    /// is a very different signal from dismissing a wall you walked into.
+    case launch
     /// A generic entry point (e.g. a "Go Pro" affordance) with no specific locked intent.
     case general
 
@@ -50,6 +81,8 @@ enum PaywallTrigger: Identifiable, Equatable {
         case .proExercise: return "This exercise is part of Red Moon Pro"
         case .planner: return "Today's session is part of Red Moon Pro"
         case .routine: return "Routines are part of Red Moon Pro"
+        case let .home(gate): return gate.headline
+        case .launch: return "Your practice workbench, unlocked"
         case .general: return "Unlock the full practice workbench"
         }
     }
@@ -68,6 +101,8 @@ enum PaywallTrigger: Identifiable, Equatable {
         case .proExercise: return "pro_exercise"
         case .planner: return "planner"
         case .routine: return "routine"
+        case .home: return "home"
+        case .launch: return "launch"
         case .general: return "general"
         }
     }
@@ -77,7 +112,8 @@ enum PaywallTrigger: Identifiable, Equatable {
         switch self {
         case let .newExercise(template): return template?.rawValue
         case let .routine(gate): return gate.rawValue
-        case .drawYourOwn, .proExercise, .planner, .general: return nil
+        case let .home(gate): return gate.rawValue
+        case .drawYourOwn, .proExercise, .planner, .launch, .general: return nil
         }
     }
 }

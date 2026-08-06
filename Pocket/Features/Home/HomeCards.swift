@@ -37,6 +37,11 @@ struct HomeNavCard: View {
     let tint: Color
     let cardWash: Color
     let circleWash: Color
+    /// Whether this destination is behind the Pro wall (ADR 0144 D4). Swaps the chevron for a lock,
+    /// matching the "Start today's session" CTA's grammar: the card stays fully visible and reads as
+    /// **inviting-but-locked**, never hidden and never broken. Defaults to `false` — the Toolkit and
+    /// the Metronome never pass it.
+    var locked: Bool = false
 
     var body: some View {
         HStack(spacing: 14) {
@@ -54,7 +59,7 @@ struct HomeNavCard: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Spacer(minLength: 8)
-            Image(systemName: "chevron.right")
+            Image(systemName: locked ? "lock.fill" : "chevron.right")
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
         }

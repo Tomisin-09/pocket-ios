@@ -261,9 +261,10 @@ final class Exercise {
     /// e.g. `"a-minor-pentatonic"`) — `nil` for a user-authored drill. A plain optional `String`, not
     /// an enum, so the add is a **lightweight, non-lossy** migration: rows saved before this field
     /// decode to `nil` (CoreData 134110 rule, ADR 0012/0036). It records *where the drill came from*,
-    /// never a Pro flag — access stays computed live from `isPro` (ADR 0112 "gate at read time"). Its
-    /// only monetization use is the free-taste **run** allowance (`AccessPolicy.isFreeTaste`): a free
-    /// user may run the curated seeded presets even on a Pro-family template. **Never** filter it in a
+    /// never a Pro flag — access stays computed live from `isPro` (ADR 0112 "gate at read time"). It
+    /// has **no monetization use since ADR 0144**: the free-taste run allowance it fed
+    /// (`AccessPolicy.isFreeTaste`) is retired and its allowlist is empty, so seeded presets are now
+    /// simply trial content. The slug remains provenance, and remains frozen. **Never** filter it in a
     /// `#Predicate` (`presetSlug != nil` starves the main thread — the optional-predicate freeze);
     /// read it per-object in memory at the gate.
     var presetSlug: String?

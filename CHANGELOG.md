@@ -5,6 +5,23 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+- **One app, one price.** The free tier is gone. Red Moon Practice was going to launch with four
+  exercises and one routine you could keep for free, and a paywall in front of most other taps —
+  which is a lot of machinery to build a poor first impression with. Instead: **the Toolkit and the
+  Journal are free forever** — tuner, metronome, chord and theory tools, the glossary, and your own
+  notes, takes and progress, with no account, no trial and no expiry — and everything else is
+  Red Moon Pro, which you try for a month before paying anything. **What you wrote and what you
+  recorded is yours, and a lapsed subscription doesn't take it back.** Practice and your song
+  library now show as locked rather than disappearing, so you can see what's there before deciding. Nothing about what the app *does* has changed, and nothing you
+  make is ever held hostage: the entitlement is read live, so a lapsed subscription re-locks and
+  re-subscribing unlocks instantly, with all your work intact. See ADR 0144.
+- **The trial is a month, and the app reads the length from the App Store instead of claiming one.**
+  The paywall used to say "14-day" in copy that had no way of knowing — if the real offer ever
+  differed, the app would promise the wrong thing to a real buyer. It now says whatever the product
+  actually offers, and checks eligibility for the plan you have selected rather than always the
+  annual one.
+
 ### Internal
 - **CI stopped failing for reasons unrelated to the change under test** (ADR 0146). The UI tests all
   wait on first-launch seeding, which is a `.task` with no completion signal, so each one covered it
@@ -30,6 +47,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   for playback only, so a take started straight afterwards captured nothing.
 
 ### Added
+- **You get told before the free trial charges you.** A month is long enough to forget, and an
+  accidental charge is a bad way to meet a practice app. While the trial runs, Home and Settings
+  carry a "Trial ends in N days" row that goes straight to Apple's manage-subscription sheet — no
+  permission needed, so it's always there. On the paywall, before you buy anything, you can also ask
+  for **one** notification 24 hours before the trial converts. It won't be sent if you've already
+  cancelled: you made your decision, and nagging you about it isn't a reminder, it's a sales pitch.
+
 - **Record your ear training.** Humming or singing a line back is the one thing you can't judge while
   you're doing it. Ear training now records like everything else, so you can hear what actually came
   out. Nothing listens and nothing scores it — it just gets kept.

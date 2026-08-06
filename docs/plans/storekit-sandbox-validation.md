@@ -34,7 +34,8 @@ Only the third one validates `Transaction.currentEntitlements`.
       a review screenshot — **not** Apple's approval, and **not** attachment to a released build.
   - `click.decooperations.pocket.pro.monthly` — £5.99
   - `click.decooperations.pocket.pro.annual` — £49.99
-  - Group "Red Moon Pro", both with the 14-day free intro offer
+  - Group "Red Moon Pro", both with the **1-month** free intro offer (was 14 days — **ADR 0144**
+    changed it; confirm the live ASC value before validating, since this is what you are validating)
 - [x] **Paid Applications Agreement active** (confirmed: Tide GBP bank + W-8BEN-E tax all Active)
 - [ ] **Sandbox test account** — ASC → Users and Access → Sandbox → Test Accounts. Use an email that
       has never been an Apple ID (a `+tag` alias works).
@@ -71,16 +72,33 @@ Buying is the easy path. These are the ones that break:
 - [ ] **Purchase monthly** → same
 - [ ] **Restore on a wiped install** — delete the app, reinstall, tap Restore Purchases. Apple
       requires this to work and it's a common rejection reason.
-- [ ] **Trial eligibility** — the 14-day trial shows for a first-timer, and correctly does *not*
-      show on a second purchase (`product.subscription?.isEligibleForIntroOffer`)
+- [ ] **Trial eligibility** — the 1-month trial shows for a first-timer, and correctly does *not*
+      show on a second purchase (`product.subscription?.isEligibleForIntroOffer`). The CTA and the
+      disclosure must both name the length **read from the product** (ADR 0144 D5) — if they say a
+      number ASC does not, that is the bug this is looking for. Eligibility is read for the
+      **selected** plan, so check the monthly card too, not only the annual one.
 - [ ] **Monthly ↔ annual switching** within the group (single entitlement, no double-charge)
 - [ ] **Trial lapse re-locks every gate.** ⚠️ **The one most likely to be broken** — it's the
       least-travelled path in the feature, and ADR 0112's "re-enforce at trial lapse" clause has never
-      been exercised. Check: exercise library rows, Today's session, Draw your own, new-from-Pro-template,
-      edit-the-freebie, **and all five routine surfaces** (library `+`, Quick-session wand, Today's
-      session, collection→session, song→routine).
-- [ ] **The free-taste allowances survive a lapse** — the four freebie exercises still *run*, Morning
-      Routine still runs and still rearranges, and none of them become editable.
+      been exercised. Check: **the locked Home destinations — Practice, Song library, Today's session —
+      plus "Jump back in" and the recent-routines rail (ADR 0144 D4)**, exercise library rows,
+      Draw your own,
+      new-from-Pro-template, **and all five routine surfaces** (library `+`, Quick-session wand,
+      Today's session, collection→session, song→routine).
+- [ ] **The launch wall reappears after a lapse** — relaunch and it is there again, "Not now"
+      dismisses it, and Home is locked-but-visible behind it.
+- [ ] **The Toolkit and the Journal still work after a lapse** — tuner, metronome, chord and theory
+      tools, glossary; and the Journal timeline, its takes and the Progress screen. This is the whole
+      free surface (ADR 0144 D2) and the mitigation named in the review notes; if it locks, the App
+      Review argument goes with it. A journal entry's caption tapping through to its exercise or
+      routine **should** still hit the paywall.
+- [ ] **The trial reminder** — with a short renewal rate in Xcode's *Manage StoreKit Transactions*:
+      it fires ahead of conversion, the Home/Settings countdown tracks down, turning auto-renew off
+      cancels it (and the countdown stays), and conversion clears the countdown rather than pointing
+      it at the next renewal.
+- [ ] **The old free-taste allowances are gone** (ADR 0144) — after a lapse the four former freebie
+      exercises and Morning Routine are locked like everything else. If any of them still runs, an
+      allowlist has been repopulated by accident.
 
 Sandbox compresses subscription time so lapse is testable over a coffee (roughly: 1 year → 1 hour,
 1 month → 5 minutes, renewing a handful of times before stopping). **Verify these against current
