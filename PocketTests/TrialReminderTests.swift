@@ -15,7 +15,7 @@ final class TrialReminderTests: XCTestCase {
         let name = "TrialReminderTests-\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         defaults.removePersistentDomain(forName: name)
-        return TrialReminder(defaults: defaults, notifications: nil)
+        return TrialReminder(defaults: defaults, usesSystemNotifications: false)
     }
 
     func testStartsWithNoTrialOnRecord() throws {
@@ -37,11 +37,11 @@ final class TrialReminderTests: XCTestCase {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         defaults.removePersistentDomain(forName: name)
 
-        let first = TrialReminder(defaults: defaults, notifications: nil)
+        let first = TrialReminder(defaults: defaults, usesSystemNotifications: false)
         let end = now.addingTimeInterval(30 * day)
         first.noteTrialPurchase(expiration: end, now: now)
 
-        let relaunched = TrialReminder(defaults: defaults, notifications: nil)
+        let relaunched = TrialReminder(defaults: defaults, usesSystemNotifications: false)
         XCTAssertEqual(relaunched.trialEndsAt?.timeIntervalSince1970 ?? 0,
                        end.timeIntervalSince1970, accuracy: 1)
         XCTAssertEqual(relaunched.daysRemaining(now: now), 30)

@@ -300,11 +300,11 @@ struct PaywallView: View {
     PaywallView(trigger: .drawYourOwn)
         .environment(StoreManager())
         // `notifications: nil` — a preview must not reach for the real notification centre.
-        .environment(TrialReminder(notifications: nil))
+        .environment(TrialReminder(usesSystemNotifications: false))
 }
 
 #Preview("Paywall — launch wall") {
     PaywallView(trigger: .launch)
         .environment(StoreManager())
-        .environment(TrialReminder(notifications: nil))
+        .environment(TrialReminder(usesSystemNotifications: false))
 }

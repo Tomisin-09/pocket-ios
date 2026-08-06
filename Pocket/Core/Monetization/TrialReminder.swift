@@ -35,19 +35,32 @@ final class TrialReminder {
     }
 
     private let defaults: UserDefaults
-    private let notifications: UNUserNotificationCenter?
+
+    /// Whether this instance talks to the system notification centre at all.
+    ///
+    /// Deliberately a **flag, not a stored `UNUserNotificationCenter`**. Holding the centre as a
+    /// property of a `@MainActor` type puts it in the actor's isolation region, and the centre is not
+    /// `Sendable` in the SDK CI builds against (Xcode 16) though it is in a newer one — so passing it
+    /// into `requestAuthorization`'s nonisolated async context compiled clean locally and failed CI
+    /// with *"sending 'notifications' risks causing data races"*. Storing a `Bool` and reaching for
+    /// `.current()` at the point of use removes the boundary crossing rather than annotating around it.
+    ///
+    /// Nothing is lost: `UNUserNotificationCenter` has no public initialiser, so the old parameter
+    /// could only ever be `.current()` or `nil`. It was always this flag wearing a costume.
+    private let usesSystemNotifications: Bool
 
     private enum Key {
         static let trialEndsAt = "trialEndsAt"
         static let trialReminderEnabled = "trialReminderEnabled"
     }
 
-    /// - Parameter notifications: `nil` in previews and unit tests, where scheduling is a no-op and
-    ///   touching `UNUserNotificationCenter.current()` would reach for a real notification service.
+    /// - Parameter usesSystemNotifications: `false` in previews and unit tests, where scheduling is a
+    ///   no-op and touching `UNUserNotificationCenter.current()` would reach for a real notification
+    ///   service.
     init(defaults: UserDefaults = .standard,
-         notifications: UNUserNotificationCenter? = .current()) {
+         usesSystemNotifications: Bool = true) {
         self.defaults = defaults
-        self.notifications = notifications
+        self.usesSystemNotifications = usesSystemNotifications
         self.remindersEnabled = defaults.bool(forKey: Key.trialReminderEnabled)
         let stored = defaults.double(forKey: Key.trialEndsAt)
         self.trialEndsAt = stored > 0 ? Date(timeIntervalSince1970: stored) : nil
@@ -72,10 +85,18 @@ final class TrialReminder {
     /// unaffected, so the promise is still kept, just more quietly.
     @discardableResult
     func requestAuthorization() async -> Bool {
-        guard let notifications else { return false }
-        let granted = (try? await notifications.requestAuthorization(options: [.alert, .sound])) ?? false
+        guard usesSystemNotifications else { return false }
+        let granted = await Self.requestSystemAuthorization()
         remindersEnabled = granted
         return granted
+    }
+
+    /// The one `await` that touches the notification centre, deliberately **`nonisolated`**: there is
+    /// no actor region to send the centre *out of*, so the non-`Sendable` receiver never crosses an
+    /// isolation boundary on any SDK. See `usesSystemNotifications` for why that matters.
+    private nonisolated static func requestSystemAuthorization() async -> Bool {
+        (try? await UNUserNotificationCenter.current()
+            .requestAuthorization(options: [.alert, .sound])) ?? false
     }
 
     // MARK: - Recording and reconciling
@@ -109,7 +130,9 @@ final class TrialReminder {
     // MARK: - The notification itself
 
     private func apply(_ outcome: TrialReminderPlan.Outcome) {
-        guard let notifications else { return }
+        guard usesSystemNotifications else { return }
+        // Synchronous calls, so these never cross an isolation boundary the way the `await` above did.
+        let notifications = UNUserNotificationCenter.current()
         notifications.removePendingNotificationRequests(withIdentifiers: [Self.requestIdentifier])
         guard remindersEnabled, case let .schedule(fireDate) = outcome else { return }
 
