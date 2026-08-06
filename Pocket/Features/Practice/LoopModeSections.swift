@@ -64,10 +64,15 @@ struct ContinuousLoopControls: View {
     let playingStatus: String
     /// What it says before the first tap.
     var idleStatus = "Tap to loop the audio"
-    /// Practice takes over this bed (ADR 0069), when the host supports them — improvise does, ear
-    /// training doesn't (nothing is played over an ear block; you're hearing, not performing). Non-nil
-    /// puts the **arm toggle** beside the play button and begins the take as playback starts, which is
-    /// the ordinary arm-then-Start grammar: this button *is* a Start.
+    /// Practice takes over this bed (ADR 0069), when the host supports them. Non-nil puts the **arm
+    /// toggle** beside the play button and begins the take as playback starts, which is the ordinary
+    /// arm-then-Start grammar: this button *is* a Start.
+    ///
+    /// **Both modes now pass one** (2026-08-06). Ear training was excluded on the reasoning that
+    /// nothing is played over an ear block — you're hearing, not performing — which mistook *what is
+    /// captured* for *whether capture is useful*. Humming a line back is exactly the thing you can't
+    /// judge while doing it, and a take is the only way to hear it as the room heard it. The app still
+    /// forms no opinion of it (ADR 0070): it records, the player listens.
     var recorder: RecordingController?
     /// Called after the transport stops, so the host can finalize a take against its own owner —
     /// keeping these controls owner-agnostic like `RecordControls`.
@@ -75,6 +80,13 @@ struct ContinuousLoopControls: View {
     /// How many takes the owner already holds, for the resting line. A count, not a model, so these
     /// controls still know nothing about who owns the take.
     var takeCount = 0
+    /// What *this* mode calls the audio it cycles — "backing track" on improvise, plain "loop" on ear
+    /// training, where nothing is being backed. One noun rather than two ready-made sentences: every
+    /// line that names the bed builds from it, so they can't drift apart.
+    var bedNoun = "backing track"
+    /// Open the owner's takes. The host presents the sheet, since it knows the owner; these controls
+    /// only offer the way in. `nil` leaves the count as plain text.
+    var onOpenTakes: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -95,7 +107,7 @@ struct ContinuousLoopControls: View {
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
             if let recorder {
-                RecordSetupHint(recorder: recorder, startPhrase: "when the backing track starts")
+                RecordSetupHint(recorder: recorder, startPhrase: "when the \(bedNoun) starts")
                 RecordingStatusView(recorder: recorder)
                 recordRestingLine(recorder)
             }
@@ -148,12 +160,13 @@ struct ContinuousLoopControls: View {
     /// control with no explanation. Otherwise it is the ordinary saved-confirmation-then-count.
     @ViewBuilder private func recordRestingLine(_ recorder: RecordingController) -> some View {
         if player.isPlaying, !recorder.isRecording, recorder.lastSaved == nil {
-            Text("Stop the backing track to record another take.")
+            Text("Stop the \(bedNoun) to record another take.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
                 .multilineTextAlignment(.center)
         } else {
-            TakeSavedNote(recorder: recorder, takeCount: takeCount, owner: "loop")
+            TakeSavedNote(recorder: recorder, takeCount: takeCount, owner: "loop",
+                          onOpenTakes: onOpenTakes)
         }
     }
 

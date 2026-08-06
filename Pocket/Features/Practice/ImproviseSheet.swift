@@ -35,6 +35,7 @@ struct ImproviseView: View {
     /// Latch for the tool-opened event (ADR 0120) — `.onAppear` re-fires on a return from a
     /// pushed screen, and this view has two hosts.
     @State private var reportedOpen = false
+    @State private var showingTakes = false
 
     var body: some View {
         KeyboardFollowingScroll {
@@ -47,7 +48,8 @@ struct ImproviseView: View {
                                            idleStatus: "Tap to start the backing track",
                                            recorder: recorder,
                                            onStopped: finishTake,
-                                           takeCount: loop.recordings.count)
+                                           takeCount: loop.recordings.count,
+                                           onOpenTakes: openTakes)
                 }
                 JournalNoteComposer(owner: .loop(loop), kind: .improvise,
                                     header: "Note what you played",
@@ -64,6 +66,9 @@ struct ImproviseView: View {
             finishTake()     // before the bed stops — see `ContinuousLoopControls`' stop branch
             player.stop()
         }
+        .sheet(isPresented: $showingTakes) {
+            TakesSheet(owner: .loop(loop), onDelete: deleteTake)
+        }
     }
 
     /// Finalize an in-flight take against *this loop* when the bed stops or the screen exits, so a
@@ -71,6 +76,21 @@ struct ImproviseView: View {
     /// two seams overlap on purpose (stopping the bed, then leaving).
     private func finishTake() {
         recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
+    }
+
+    /// Relisten, without leaving the jam. **Stops the bed first**: the takes sheet has its own player,
+    /// and a take under the backing track it was played over is two things at once and neither of them
+    /// audible. Finalising first keeps the ordering rule the stop branch states.
+    private func openTakes() {
+        finishTake()
+        player.stop()
+        showingTakes = true
+    }
+
+    private func deleteTake(_ take: Recording) {
+        try? RecordingStore.delete(fileName: take.fileName)
+        modelContext.delete(take)
+        try? modelContext.save()
     }
 
     // MARK: - Intro (jam over it — no target, no verdict)

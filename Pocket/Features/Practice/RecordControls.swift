@@ -172,6 +172,12 @@ struct TakeSavedNote: View {
     /// What this surface calls the thing being recorded against — "block" on a freeform exercise,
     /// "loop" on improvise.
     var owner = "block"
+    /// Makes the resting count a **way in** to the takes rather than a readout. Non-nil on the
+    /// open-ended screens, which have no `PracticeReviewBar` to reach the list from — without it a
+    /// take recorded on improvise or ear training is only playable from the Journal tab, which means
+    /// leaving the thing you just played over. The count is the obvious place for it: it is already
+    /// the sentence that says the takes exist.
+    var onOpenTakes: (() -> Void)?
 
     var body: some View {
         Group {
@@ -181,8 +187,7 @@ struct TakeSavedNote: View {
                     .foregroundStyle(PocketColor.practice)
                     .transition(.opacity)
             } else if takeCount > 0 {
-                Text(takeCount == 1 ? "1 take on this \(owner)" : "\(takeCount) takes on this \(owner)")
-                    .foregroundStyle(PocketColor.textSecondary)
+                countLine
             }
         }
         .font(.futura(.caption))
@@ -197,6 +202,43 @@ struct TakeSavedNote: View {
             recorder.clearSavedNote()
         }
     }
+
+    private var countText: String {
+        takeCount == 1 ? "1 take on this \(owner)" : "\(takeCount) takes on this \(owner)"
+    }
+
+    /// The durable count — a button where the surface can open its takes, plain text where it can't.
+    @ViewBuilder private var countLine: some View {
+        if let onOpenTakes {
+            Button(action: onOpenTakes) {
+                // A chevron, not an underline: this reads as a row you can follow, matching the
+                // Journal's owner captions rather than looking like body copy someone linked.
+                Label(countText, systemImage: "chevron.right")
+                    .labelStyle(.trailingChevron)
+                    .foregroundStyle(PocketColor.practice)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(countText)
+            .accessibilityHint("Listen back to your takes")
+        } else {
+            Text(countText)
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+    }
+}
+
+/// Title first, icon after — for a "follow this" affordance, where the chevron belongs at the end.
+private struct TrailingChevronLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 4) {
+            configuration.title
+            configuration.icon.font(.futura(.caption2))
+        }
+    }
+}
+
+private extension LabelStyle where Self == TrailingChevronLabelStyle {
+    static var trailingChevron: TrailingChevronLabelStyle { TrailingChevronLabelStyle() }
 }
 
 /// The live take status during a run — a red dot + running timer + the route cue. Nothing when not

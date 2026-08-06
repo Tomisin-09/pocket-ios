@@ -17,6 +17,17 @@ All notable changes to Pocket are documented here. Format loosely follows
   for playback only, so a take started straight afterwards captured nothing.
 
 ### Added
+- **Record your ear training.** Humming or singing a line back is the one thing you can't judge while
+  you're doing it. Ear training now records like everything else, so you can hear what actually came
+  out. Nothing listens and nothing scores it — it just gets kept.
+- **Hear your takes without leaving what you're playing.** On improvise and ear training the take
+  count under the record button is now a way in: tap it to play any take back, rename or delete one,
+  and carry on. It stops the loop first, since a take under the audio it was recorded over isn't
+  audible. Previously a take recorded on those screens could only be played from the Journal tab.
+- **A session note leads to its routine.** Tapping the routine's name on a session entry opens that
+  routine, the same way a drill note opens its drill. The units you practised were already tappable;
+  the sitting itself wasn't. A note about a routine you've since deleted keeps its name and stops
+  being a link.
 - **Name your takes.** A recording used to be listed as "Take" and a timestamp, which made a list of
   them unreadable. Swipe a take — in the Journal or on a unit's Takes list — to give it a name, and
   search finds it by that name afterwards. Notes and session entries are already in your own words,

@@ -123,6 +123,21 @@ This is the only slice of the v2 close-out that touches the store.
   (ADR 0142 J5a), and raises the paywall rather than the run screen for a locked Pro drill (ADR 0142
   J5c). One rule for both, since a caption and a pill make the player the same promise.
 
+  **Extended 2026-08-06 — the session's own caption leads somewhere too.** S8 gave the *pills* a
+  destination and left the line above them, the routine's name, as the last dead label on the feed:
+  a session entry could take you to any drill you practised but not to the sitting they belonged to.
+  `JournalOwnerRoute` gains a `.routine` case, resolved from `routineUID` **loosely** against the
+  routines library — the same trade, and the same ordinary failure, as the pills: a routine deleted
+  since the session leaves the caption as plain text while `routineNameAtEntry` keeps saying what the
+  sitting was called (S3). It lands on `RoutineDetailView`, where the Routines library's own row-tap
+  goes, and is gated on `AccessPolicy.canEditRoutine` for the reason J5c gives — a note written while
+  subscribed survives a lapse, and must not become a way around the gate.
+
+  **`ownerKind` decides, not the presence of an id.** An *exercise* note written during a routine
+  also carries a `routineUID` (S4). Routing on the id alone would send a drill note to the routine
+  instead of the drill — which is exactly the confusion `ownerKind` was introduced to prevent, and
+  which `JournalOwnerRouteTests` now pins.
+
 ## Consequences
 
 - The journal now has an entry that is about *time* rather than about a thing. That is a genuine

@@ -16,6 +16,10 @@ struct EarLoopRunView: View {
     var routineContext: RoutineRunContext?
     @Environment(\.modelContext) private var modelContext
     @State private var player: ContinuousLoopPlayer
+    /// Takes are on in a routine ear block, matching the improvise block (ADR 0069 amendment): the
+    /// ramped run screens keep their `routineContext == nil` gate because a take there belongs to a
+    /// ramp, but a hummed line is worth hearing back wherever it was hummed.
+    @State private var recorder = RecordingController()
     /// When this block began (ADR 0117). An ear block has no Start — the loop plays from arrival — so
     /// the clock starts on appearance rather than on a transport action.
     @State private var startedAt: Date?
@@ -27,7 +31,7 @@ struct EarLoopRunView: View {
     }
 
     var body: some View {
-        EarTrainingView(loop: loop, player: player)
+        EarTrainingView(loop: loop, player: player, recorder: recorder)
             .navigationTitle(loop.name.isEmpty ? LoopRunMode.ear.label : loop.name)
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
@@ -60,6 +64,9 @@ struct EarLoopRunView: View {
     /// The one completion seam, shared by the Done button and the block running its planned length
     /// (ADR 0141) — so a block that timed out logs and advances exactly like one finished by hand.
     private func finish() {
+        // Explicit rather than relying on `EarTrainingView`'s teardown to catch it, matching
+        // `ImproviseLoopRunView.finish()` — and before the log, since advancing tears this screen down.
+        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
         logCompletedRun()   // before advancing — advancing tears this screen down
         routineContext?.onFinished()
     }

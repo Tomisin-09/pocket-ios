@@ -15,12 +15,13 @@ struct JournalTabView: View {
     // scope filter happen in memory via `JournalTimeline`.
     @Query(sort: \JournalEntry.createdAt, order: .reverse) private var entries: [JournalEntry]
     @Query(sort: \Recording.createdAt, order: .reverse) private var takes: [Recording]
-    // The library, for resolving a session entry's practised-unit pills (ADR 0143). Those are loose
-    // **id copies**, not relationships — that is what lets an entry outlive the units it names — so
-    // there is nothing to follow and the uid has to be looked up. Unsorted and unfiltered, like the
-    // two above and for the same reason.
+    // The library, for resolving a session entry's practised-unit pills (ADR 0143) **and its routine
+    // caption**. Those are loose **id copies**, not relationships — that is what lets an entry outlive
+    // the units it names — so there is nothing to follow and the uid has to be looked up. Unsorted and
+    // unfiltered, like the two above and for the same reason.
     @Query private var exercises: [Exercise]
     @Query private var loops: [Loop]
+    @Query private var routines: [Routine]
 
     @State private var scope: JournalTimeline.Scope = .all
     /// Free-text search over song / loop / exercise / template / date (`JournalTimeline.searchHaystack`).
@@ -120,14 +121,15 @@ struct JournalTabView: View {
     /// run screen — the same `canRun` gate `ExerciseLibraryView`'s rows apply, since a player who
     /// wrote notes while subscribed keeps the notes when the subscription lapses.
     private func openOwner(of item: JournalTimeline.Item) {
-        guard let route = JournalOwnerRoute.route(for: item) else { return }
+        guard let route = JournalOwnerRoute.route(for: item, routines: routines) else { return }
         open(route)
     }
 
-    /// The caption's tap action, or `nil` when the item has nowhere to go — a song-owned take, or a
-    /// loop whose audio no longer resolves. `nil` keeps the caption as plain text.
+    /// The caption's tap action, or `nil` when the item has nowhere to go — a song-owned take, a loop
+    /// whose audio no longer resolves, or a session whose routine has been deleted. `nil` keeps the
+    /// caption as plain text.
     private func openAction(for item: JournalTimeline.Item) -> (() -> Void)? {
-        guard JournalOwnerRoute.route(for: item) != nil else { return nil }
+        guard JournalOwnerRoute.route(for: item, routines: routines) != nil else { return nil }
         return { openOwner(of: item) }
     }
 
@@ -141,13 +143,23 @@ struct JournalTabView: View {
         return { open(route) }
     }
 
-    /// Follow a resolved route, honouring the Pro run gate.
+    /// Follow a resolved route, honouring the Pro gate. A note written while subscribed survives a
+    /// lapse — but following it must not become a way around the gate (ADR 0142 J5c), so each kind is
+    /// checked against the same policy its own library applies: `canRun` for an exercise, and
+    /// `canEditRoutine` for a routine, since the editor is where a session caption lands.
     private func open(_ route: JournalOwnerRoute) {
-        if case .exercise(let exercise) = route,
-           !AccessPolicy.canRun(exercise.template, isPro: isPro,
-                                isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug)) {
-            presentPaywall(.proExercise)
-            return
+        switch route {
+        case .exercise(let exercise):
+            guard AccessPolicy.canRun(exercise.template, isPro: isPro,
+                                      isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug))
+            else { return presentPaywall(.proExercise) }
+        case .routine(let routine):
+            guard AccessPolicy.canEditRoutine(
+                isPro: isPro,
+                isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug))
+            else { return presentPaywall(.routine(.edit)) }
+        case .loop:
+            break
         }
         openingOwner = route
     }

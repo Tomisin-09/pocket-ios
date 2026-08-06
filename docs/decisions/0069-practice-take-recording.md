@@ -161,6 +161,27 @@ owning screen's existing delete closure now runs as the *deferred* action and th
 file survives as long as the Undo toast does. The host screens were not touched.
 Rename keeps its swipe: it destroys nothing.
 
+**3b. The open-ended screens can reach their own takes** (2026-08-06). A take was
+reachable from a unit's `PracticeReviewBar`, which improvise and ear training don't
+have — they are `Form`s, not run screens — so a take recorded there was playable only
+from the Journal tab, which means leaving the loop you just played over to hear what
+you played over it. The resting take count under the record button becomes the way in:
+it is already the sentence saying the takes exist, so it carries the tap rather than
+adding a control. `ContinuousLoopControls` gains an `onOpenTakes` seam and stays
+owner-agnostic; the host presents `TakesSheet`, since only it knows the owner.
+
+**Opening the takes stops the bed first.** `TakesSheet` has its own `RecordingPlayer`,
+and a take playing under the audio it was recorded over is two things at once and
+neither audible — worse on ear training, where the take is a voice under the loop it
+was humming. Any in-flight take is finalised before the stop, keeping the ordering rule
+§3 states.
+
+**Freeform already had this** (⋯ → Takes, added with the block itself), which is why
+the gap only showed on the two loop modes. The **ramped** run screens keep today's
+behaviour deliberately: they have the review bar, and it stays gated on `!isRunning`
+because pausing a ramp to listen is a different question from relistening on a screen
+with no ramp to lose.
+
 **4. A take can be named.** `Recording` gains an optional `title` (additive, no
 declaration default). Takes are the only row on the Journal feed with nothing but a
 timestamp to distinguish them — a note carries its own words, a session note carries

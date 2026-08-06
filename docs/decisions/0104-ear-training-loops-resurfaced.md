@@ -154,3 +154,43 @@ picker. Ear training shipped as a loop mode, not an exercise template, so a plac
 generic interval trainer misdescribed the direction (the exact framing Note 7 rejected). The enum cases
 live on for the planner's `SkillFamilyMap`; only the create-picker listing (`creatable`) and the now-dead
 `isComingSoon` machinery were dropped.
+
+## Amendment — takes on an ear block (2026-08-06)
+
+**E5's "captures nothing" is narrowed, and E2/E6 are untouched.** Ear training now
+offers the same practice take the rest of the app does: an arm ring beside the play
+button, a take that begins when the loop does, and the take list one tap away under it.
+
+E5's sentence conflated two different claims — *the app forms no opinion of your
+playing* and *the microphone is never used here*. The first is load-bearing and stands
+(ADR 0070 / ADR 0094 T2b/T3): nothing listens, nothing is analysed, no verdict is
+produced, and no audio leaves the device (ADR 0001 / 0064). The second was a
+consequence nobody had a reason for. It fails on its own terms as soon as you use the
+mode: **humming a line back is precisely the thing you cannot judge while doing it.**
+Singing occupies the ear that would otherwise be assessing, and the only way to hear
+what actually came out is to record it and listen. Excluding takes from ear training
+withheld the feature from the one mode whose self-judgement is hardest to perform live.
+
+The original exclusion was recorded in code rather than here — `ContinuousLoopControls`
+carried "improvise does, ear training doesn't (nothing is played over an ear block;
+you're hearing, not performing)". That reasoning is true and beside the point: what is
+captured differs, whether capture is *useful* does not.
+
+**What this changes**
+
+- All three ear hosts (`EarTrainingSheet`, `EarTrainingScreen`, `EarLoopRunView`) own a
+  `RecordingController`, exactly as the improvise hosts do; `EarTrainingView` takes it
+  as a parameter for the same reason it takes the player (ADR 0141).
+- **Routine ear blocks record too**, matching improvise blocks. The ramped run screens
+  keep their `routineContext == nil` gate, because a take there belongs to a ramp; a
+  hummed line is worth hearing back wherever it was hummed.
+- `EarLoopRunView.finish()` finalises an in-flight take **before** logging and
+  advancing — advancing tears the screen down, and a take finalised on the far side of
+  that reads zero seconds and is discarded (the Slice 6 follow-up bug).
+- Copy is parameterised, not duplicated: `ContinuousLoopControls` takes a `bedNoun`
+  ("backing track" on improvise, "loop" here), and every line naming the bed is built
+  from it so they cannot drift apart.
+
+**Not changing:** no analysis of the take, no pitch comparison against the loop, no
+"how close were you". That would be the app judging, which E6 and ADR 0070 forbid, and
+it is not what was asked for.

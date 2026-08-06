@@ -17,12 +17,17 @@ enum JournalOwnerRoute: Hashable {
     /// ramp to open (ADR 0138), so the caption opens whichever mode `LoopModeAccess` allows, in the
     /// established precedence — trainer, then ear, then improvise.
     case loop(Loop, LoopRunMode)
+    /// The **routine a session note was written about** (2026-08-06). A session entry's caption was
+    /// the last dead label on the feed: its practised-unit pills already opened their units, while the
+    /// routine name above them — the thing the sitting actually *was* — went nowhere.
+    case routine(Routine)
 
     /// The stable business id of the unit this route lands on — the whole of the route's identity.
     var uid: UUID {
         switch self {
         case .exercise(let exercise): exercise.uid
         case .loop(let loop, _): loop.uid
+        case .routine(let routine): routine.uid
         }
     }
 
@@ -33,13 +38,27 @@ enum JournalOwnerRoute: Hashable {
     /// The route a timeline item's caption should follow, or `nil` when there is nowhere honest to
     /// go — so the caption stays plain text rather than becoming a tap that leads somewhere wrong.
     ///
-    /// Two cases have no destination, both deliberately:
-    /// - a **song**-owned take (ADR 0069 slice 4 never gave songs a standalone run surface), and
-    /// - a loop that qualifies for **no mode at all** — one whose song's audio no longer resolves.
-    static func route(for item: JournalTimeline.Item) -> JournalOwnerRoute? {
+    /// Three cases have no destination, all deliberately:
+    /// - a **song**-owned take (ADR 0069 slice 4 never gave songs a standalone run surface),
+    /// - a loop that qualifies for **no mode at all** — one whose song's audio no longer resolves, and
+    /// - a **session** whose routine has since been deleted, or whose caller passed no library.
+    ///
+    /// A session resolves through `routines` because its owner is a **loose id copy** rather than a
+    /// relationship (ADR 0143) — the same trade, and the same expected failure, as the unit pills
+    /// below. `routines` defaults to empty so the take/unit callers, which have no session to resolve,
+    /// don't have to fetch a library they'd never read.
+    static func route(for item: JournalTimeline.Item,
+                      routines: [Routine] = []) -> JournalOwnerRoute? {
         switch item {
-        case .note(let entry): route(loop: entry.loop, exercise: entry.exercise)
-        case .take(let take): route(loop: take.loop, exercise: take.exercise)
+        case .note(let entry):
+            if entry.ownerKind == .session {
+                guard let uid = entry.routineUID,
+                      let routine = routines.first(where: { $0.uid == uid }) else { return nil }
+                return .routine(routine)
+            }
+            return route(loop: entry.loop, exercise: entry.exercise)
+        case .take(let take):
+            return route(loop: take.loop, exercise: take.exercise)
         }
     }
 
