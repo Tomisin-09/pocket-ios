@@ -8,7 +8,8 @@ import SwiftUI
 /// 0043). The planner that the design brief once pencilled in here is V2 — this is a
 /// deliberately planner-free V1 home.
 struct HomeView: View {
-    @Environment(\.modelContext) private var context
+    /// Internal, not private: `HomeView+Seeding` writes the first-run content through it.
+    @Environment(\.modelContext) var context
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112). Both carry safe preview defaults
     /// (free / no-op), so `HomeView` previews render without a `StoreManager` in the environment.
     /// Non-private (like the `@Query`s below) so the `HomeView+Cards` extension can gate its CTA.
@@ -48,6 +49,11 @@ struct HomeView: View {
     /// library ("open on create"). A batch still lands in the library.
     @State private var openingSong: Song?
     @State private var showingMetronome = false
+    /// Set when `seedFirstRunContent()` finishes, purely so `seedingMarker` can publish it to the UI
+    /// tests (ADR 0146 pass 2). Nothing the player sees depends on it — seeded content appears
+    /// through `@Query` as each seeder commits, exactly as before. Internal, not private, because
+    /// both live in `HomeView+Seeding`.
+    @State var seedingComplete = false
 
     /// How many routines the "recent routines" rail shows.
     private let recentRoutineLimit = 3
@@ -175,29 +181,8 @@ struct HomeView: View {
                              onDismiss: { analyticsPromptSeen = true },
                              content: { AnalyticsConsentSheet() })
             .onAppear(perform: maybeOfferProfileMoment)
-            // Seed the curated first-run content once, ever (ADR 0046/0112) — the app root is the
-            // right place, and each seeder's own `UserDefaults` guard makes this idempotent.
-            // Routines seed **after** exercises (ADR 0071) so their by-name blocks resolve against
-            // the just-seeded drills, and the demo song comes last (it decodes off-main). Yield
-            // between steps so each surface can paint: chaining them synchronously delays first
-            // render on a cold install (the "freeze" that once looked like a regression was this).
-            .task {
-                PracticePresets.seedIfNeeded(into: context)
-                // Stamp provenance onto drills seeded before the slug existed, so the free-taste
-                // run allowance recognises them (ADR 0112). Both backfills run once, then no-op.
-                PracticePresets.backfillPresetSlugsIfNeeded(into: context)
-                // Move the retired click subdivision into `notesPerBeat` and bind every measured
-                // command to its rhythm (ADR 0121), so no later read branches on provenance.
-                ExerciseNoteRateBackfill.runIfNeeded(into: context)
-                await Task.yield()
-                RoutinePresets.seedIfNeeded(into: context)
-                await Task.yield()
-                RoutinePresets.backfillPresetSlugsIfNeeded(into: context)
-                await SongPresets.seedIfNeeded(into: context)
-                #if DEBUG
-                ScreenshotSeed.seedIfNeeded(into: context)
-                #endif
-            }
+            .task { await seedFirstRunContent() }
+            .overlay(alignment: .topLeading) { seedingMarker }
         }
     }
 

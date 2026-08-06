@@ -14,7 +14,7 @@ extension HomeView {
         // Under UI testing the app launches fresh, so the first-launch intake would cover Home and
         // block the cards the tests drive. Suppress both first-run moments there (they're exercised
         // on device and in unit tests instead), matching the `-seedScreenshots` launch-arg convention.
-        if CommandLine.arguments.contains("-uiTesting") { return }
+        if UITestRuntime.isActive { return }
         if !artistIntakeSeen {
             showingIntake = true
             return

@@ -59,12 +59,9 @@ enum Analytics {
         sink.send(event)
     }
 
-    /// The house UI-test escape hatch (`StoreManager`, `HomeView+ProfileMoment` and
-    /// `RowDeletionCoordinator` read the same flag). A UI-test run must never reach the network or
-    /// pollute the dashboard.
-    private static var isUITesting: Bool {
-        CommandLine.arguments.contains("-uiTesting")
-    }
+    /// The house UI-test escape hatch, now `UITestRuntime.isActive` (ADR 0146 pass 2). A UI-test run
+    /// must never reach the network or pollute the dashboard.
+    private static var isUITesting: Bool { UITestRuntime.isActive }
 
     /// The existing preview-safety idiom (`LoopRunModel`, `TunerView`, and two others).
     private static var isPreview: Bool {

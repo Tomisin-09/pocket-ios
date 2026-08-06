@@ -77,7 +77,7 @@ final class StoreManager {
         // `init` deliberately skips its `didSet`, so this is **not** persisted and can't leak into a
         // later launch; and it's DEBUG-only + launch-args can't be set by an App Store user, so it is
         // never a Release entitlement bypass.
-        if CommandLine.arguments.contains("-uiTesting") {
+        if UITestRuntime.isActive {
             debugProOverride = true
         }
         #endif

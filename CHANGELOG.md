@@ -31,8 +31,18 @@ All notable changes to Pocket are documented here. Format loosely follows
   (`-retry-tests-on-failure -test-iterations 3`), and disables animations under `-uiTesting`, since
   XCUITest spends every transition's duration itself. Because retries hide flakes,
   `scripts/report-test-retries.sh` names every test that needed one as a PR annotation: **a green run
-  with retries in it is not a clean run.** The real fix — a readiness signal so the waits stop being
-  guesses — is a second pass. No app behaviour changed outside UI test runs.
+  with retries in it is not a clean run.** No app behaviour changed outside UI test runs.
+- **And then the guessing was removed altogether** (ADR 0146, pass 2). Home now says when first-run
+  seeding has actually *finished*, rather than leaving the tests to infer it from whether some cell
+  they wanted has turned up yet — the two moments are seconds apart on a cold simulator, and that
+  gap was the flake. Every UI test launches through one shared `UITestCase.launchApp()`, which
+  carries the single generous wait, so a new test can't forget it and every assertion after it runs
+  against a settled app at a 10-second budget instead of 20. When something does break, the failure
+  now reads *"first-launch seeding never completed"* rather than *"no seeded exercise to tap"* —
+  the cause rather than a symptom three screens away. The blind `swipeUp()` loops were replaced
+  with a helper that stops when the element is reachable or the list stops moving, and the five
+  copies of the "are we under test?" check became one. With the cause fixed, CI's retry allowance
+  drops from three attempts to two. The readiness signal exists only under `-uiTesting`.
 
 ### Fixed
 - **The screen went to sleep during a routine, with "Keep screen awake" switched on.** The hold was released by whichever practice screen left last, so every block change handed it back — and on an ear, improvise or freeform block it was never taken in the first place. The whole session now holds the screen awake, and those screens hold it too, so the setting does what it says wherever you are in a routine.

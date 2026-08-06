@@ -92,18 +92,25 @@ jobs:
           # device exits non-zero.
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b
-          # `-retry-tests-on-failure -test-iterations 3` re-runs only what failed, so a
-          # genuine break still fails all three attempts while a one-off timing loss does
-          # not redden `main`. This deliberately trades "every red is real" away, so the
-          # raw log is teed out and the next step reports any test that needed a retry —
+          # `-retry-tests-on-failure -test-iterations 2` re-runs only what failed, so a
+          # genuine break still fails both attempts while a one-off timing loss does not
+          # redden `main`. This deliberately trades "every red is real" away, so the raw
+          # log is teed out and the next step reports any test that needed a retry —
           # a green run with retries in it is NOT a clean run (ADR 0146).
+          #
+          # Was 3 in pass 1, when the flake's cause was still unfixed and the budget was
+          # covering for it. Pass 2 removed that cause — the tests now wait on a signal the
+          # app raises rather than on a guess — so the allowance drops to a single retry:
+          # enough for a lost runner or a genuinely unlucky box, not enough for a test to
+          # flake twice and still come out green. Removing it entirely is the endpoint;
+          # that wants a stretch of retry-free runs behind it first.
           xcodebuild test \
             -scheme Pocket \
             -testPlan PocketAll \
             -destination "id=$UDID" \
             -resultBundlePath TestResults \
             -retry-tests-on-failure \
-            -test-iterations 3 \
+            -test-iterations 2 \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee xcodebuild-raw.log | xcbeautify
         env:

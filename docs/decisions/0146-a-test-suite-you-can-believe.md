@@ -1,6 +1,7 @@
 # ADR 0146 — A test suite you can believe
 
-- **Status:** Accepted — pass 1 built on `pocket-236-ui-test-reliability`; pass 2 planned
+- **Status:** Accepted — pass 1 built on `pocket-236-ui-test-reliability`; pass 2 built on
+  `pocket-230-ui-test-readiness-signal`
 - **Date:** 2026-08-06 (`pocket-236-ui-test-reliability`)
 - **Builds on:** ADR 0133 (which decides *whether* the `PocketAll` plan runs; this decides whether
   the answer it gives can be trusted).
@@ -73,22 +74,34 @@ into one named accessor — noted for pass 2, where the test-side launch seam is
 
 ### 4. Pass 2 — a readiness signal replaces the guesses
 
-Not built yet; recorded here so pass 1 isn't mistaken for the fix.
+Pass 1 made the runs survivable; this removes the reason they needed to be.
 
-- Mark Home ready when the seeding `.task` completes, via an accessibility identifier. One shared
-  helper then carries the single generous wait, and **every assertion after it drops to 3–5s**. The
-  second win is diagnostic: the failure becomes *"seeding never completed"* rather than *"no seeded
-  exercise to tap"*, which is the sentence you want at 2am.
-- Fold the repeated `launchArguments += ["-uiTesting"]` / `continueAfterFailure = false` into a
-  `UITestCase.launchApp()`, so the readiness wait lands in one place and a future test cannot forget
-  it. `setUp` must stay **nonisolated** — CI's Swift 6 is stricter here than local.
-- Replace the `while !isHittable { swipeUp() }` loops (`PracticeRunUITests.swift:25-28`,
-  `ToolkitUITests.swift:29-33`, `RowUndoUITests.swift:46-49`). Six blind swipes overshoot on a fast
-  layout and under-reach on a slow one; a helper that stops when the element is hittable **or the
-  scroll offset stops changing** is deterministic in both directions.
+- **Home publishes when seeding is done, not when it renders.** `seedFirstRunContent()` sets
+  `seedingComplete`, and `HomeView+Seeding.seedingMarker` puts a 1×1 element carrying
+  `UITestHooks.homeSeedingComplete` into the tree. `.accessibilityElement()` is load-bearing — a
+  bare `Color` is not an element, so without it the identifier attaches to nothing and every test
+  waits out the full budget before blaming the wrong assertion. Only under `-uiTesting`: an
+  invisible element is dead weight for a player using VoiceOver.
+- **`UITestCase.launchApp()` carries the one generous wait** (`seedingTimeout` 60s) and every test
+  now starts there, so a new test cannot forget it. Everything after it asserts against a settled
+  app and drops to `uiTimeout` **10s**, down from the 20s guesses. No `setUp` override:
+  `XCTestCase.setUp` is nonisolated and an override cannot add isolation its superclass lacks, so
+  main-actor work there compiles locally and fails CI's stricter Swift 6.
+- **`scrollIntoView(_:in:)` replaces the three blind swipe loops**, stopping when the element is
+  hittable *or* its frame stops moving — a fact about the app rather than a guess about how many
+  swipes a layout needs.
+- **`UITestRuntime.isActive` collapses the five hand-written `CommandLine.arguments.contains`
+  copies**, and `UITestHooks` is compiled into both targets (`project.yml`) so the launch argument
+  and the identifier are shared constants rather than literals duplicated across a process boundary.
 
-Once that lands, **revisit the retry flag** — drop `-test-iterations` to 2, or remove it entirely.
-It is scaffolding, and scaffolding that outlives its cause becomes load-bearing by accident.
+The identifier is found on the **first** poll after launch in every test — the gap the 20s budgets
+were covering was real, but it was seeding, and seeding now announces itself.
+
+**Retry flag, revisited as promised:** `-test-iterations` drops 3 → **2**. The cause the larger
+budget was covering is gone, so one retry is the remaining allowance — enough for a lost runner,
+not enough for a test to flake twice and still come out green. Removing it entirely is the
+endpoint, and wants a stretch of retry-free runs behind it: scaffolding that outlives its cause
+becomes load-bearing by accident.
 
 ### 5. The standing rule this all rests on
 
@@ -148,5 +161,11 @@ into a suite that looks healthy. The annotation is what keeps decision 2 honest.
   building this ADR (a missing `xcbeautify` killed the pipeline before `xcodebuild` ran) and the
   first cut of the script announced the dead run as "every test passed on its first attempt", which
   is the precise failure mode it exists to prevent.
-- Pass 1 alone does **not** fix the root cause. If a cold-sim flake survives it, that is expected and
-  the answer is pass 2, not another widened timeout.
+- Pass 1 alone did **not** fix the root cause, and a flake did survive it — `PracticeRunUITests`
+  failed twice on the full plan and passed in isolation, on a 20s wait for a seeded cell. That is
+  what pass 2 answers. The rule held under pressure: pass 2's first full-plan run was on a machine
+  at load 51 with ~960k pageouts, and the temptation was to read the failure as "10s is too tight"
+  and put the number back. Guess-inflation under noise is how the 20s budgets got there in the
+  first place; the run was repeated on a healthy machine instead, and passed at 10s.
+- `UITestHooks.swift` is compiled into two targets. Anything added to it must stay strings-only —
+  an app type in there would mean something different on each side of the process boundary.
