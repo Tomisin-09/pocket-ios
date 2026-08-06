@@ -85,7 +85,14 @@ if [ "$MODE" = "full" ]; then
   if [ -z "$UDID" ]; then
     echo "pre-push: no available iPhone simulator found."; exit 1
   fi
+  # Boot and settle first, as CI does (ADR 0146) — otherwise device boot is spent
+  # inside the window the UI tests' own waits are budgeted against.
+  xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
+  xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || true
   set -o pipefail 2>/dev/null || true
+  # Deliberately WITHOUT CI's `-retry-tests-on-failure`. The parity that matters is
+  # the plan and the destination; retries exist to stop a cold-runner timing loss
+  # reddening `main`, and locally you want to see the flake, not have it papered over.
   xcodebuild test \
     -scheme Pocket \
     -testPlan PocketAll \

@@ -84,12 +84,33 @@ jobs:
             echo "No available iPhone simulator found:"; xcrun simctl list devices; exit 1
           fi
           echo "Using simulator UDID: $UDID"
+          # Boot and settle the simulator BEFORE the timed run (ADR 0146). Handing a cold
+          # UDID straight to `xcodebuild test` puts boot + SpringBoard settling inside the
+          # window the UI tests' own waits are budgeted against, which is a large part of
+          # why those waits had to be guesses. `bootstatus -b` blocks until the device
+          # reports fully booted; `boot` is tolerated failing because an already-booted
+          # device exits non-zero.
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          # `-retry-tests-on-failure -test-iterations 3` re-runs only what failed, so a
+          # genuine break still fails all three attempts while a one-off timing loss does
+          # not redden `main`. This deliberately trades "every red is real" away, so the
+          # raw log is teed out and the next step reports any test that needed a retry —
+          # a green run with retries in it is NOT a clean run (ADR 0146).
           xcodebuild test \
             -scheme Pocket \
             -testPlan PocketAll \
             -destination "id=$UDID" \
             -resultBundlePath TestResults \
+            -retry-tests-on-failure \
+            -test-iterations 3 \
             CODE_SIGNING_ALLOWED=NO \
-            | xcbeautify
+            2>&1 | tee xcodebuild-raw.log | xcbeautify
         env:
           NSUnbufferedIO: YES
+
+      # Runs even when the tests failed, so a red run also names what was retried.
+      - name: Report retried tests
+        if: always() && needs.scope.outputs.docs_only != 'true'
+        shell: bash
+        run: scripts/report-test-retries.sh xcodebuild-raw.log

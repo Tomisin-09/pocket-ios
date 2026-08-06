@@ -5,6 +5,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Internal
+- **CI stopped failing for reasons unrelated to the change under test** (ADR 0146). The UI tests all
+  wait on first-launch seeding, which is a `.task` with no completion signal, so each one covered it
+  with a hardcoded 20-second guess about how slow the runner is — and a guess is what flakes; `main`
+  went red once on a PR that touched nothing in the failing path. CI now boots and settles the
+  simulator *before* the timed run rather than inside it, retries only what failed
+  (`-retry-tests-on-failure -test-iterations 3`), and disables animations under `-uiTesting`, since
+  XCUITest spends every transition's duration itself. Because retries hide flakes,
+  `scripts/report-test-retries.sh` names every test that needed one as a PR annotation: **a green run
+  with retries in it is not a clean run.** The real fix — a readiness signal so the waits stop being
+  guesses — is a second pass. No app behaviour changed outside UI test runs.
+
 ### Fixed
 - **The screen went to sleep during a routine, with "Keep screen awake" switched on.** The hold was released by whichever practice screen left last, so every block change handed it back — and on an ear, improvise or freeform block it was never taken in the first place. The whole session now holds the screen awake, and those screens hold it too, so the setting does what it says wherever you are in a routine.
 - **Practice takes could be destroyed the moment you stopped them.** Stopping the thing a take was
