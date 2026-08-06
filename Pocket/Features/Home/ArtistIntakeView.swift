@@ -16,6 +16,11 @@ struct ArtistIntakeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
+    /// Set when the disclosure footnote has been shown and the intake left (ADR 0147). Same stored
+    /// key as `HomeView`'s copy — `@AppStorage` on one key is shared state, so writing it here is
+    /// seen there immediately.
+    @AppStorage(AppSettings.Key.analyticsPromptSeen) private var analyticsDisclosureSeen = false
+
     @State private var step = 0
     @State private var experience: ArtistExperience?
     @State private var genres: Set<MusicGenre> = []
@@ -42,6 +47,7 @@ struct ArtistIntakeView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .transition(.opacity)
                 .id(step)
+                analyticsDisclosure
                 bottomBar
             }
             .readableWidth()
@@ -211,6 +217,39 @@ struct ArtistIntakeView: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
+    // MARK: - Analytics disclosure (ADR 0147)
+
+    /// The "clear and comprehensive information" the DUAA Sch A1 para 5 exception is conditional on.
+    ///
+    /// **Outside the step `Group` and above `bottomBar` on purpose**, so it is present on all four
+    /// steps — including step 0, which is where **Skip** exits. A disclosure a player can leave
+    /// without ever seeing would not satisfy the condition, and the whole legal basis rests on it.
+    ///
+    /// A footnote rather than a fifth step, deliberately: ADR 0120 §3 rejected adding a screen here
+    /// because it would tax the activation flow analytics exists to measure. That objection is to a
+    /// screen with a *decision* in it. This asks nothing and blocks nothing, so the objection does
+    /// not carry — and it reclaims the intake and first session, which 0120 wrote off as permanently
+    /// unmeasurable.
+    ///
+    /// Absent entirely under `.ask`, where consent is still asked for separately (ADR 0120).
+    @ViewBuilder
+    private var analyticsDisclosure: some View {
+        if consentModel == .notify {
+            Text("Red Moon counts which features get used, anonymously — never your playing. "
+                 + "Turn it off any time in Settings ▸ Privacy.")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 28)
+                .padding(.top, 4)
+        }
+    }
+
+    private var consentModel: AnalyticsPolicy.ConsentModel {
+        AnalyticsPolicy.consentModel(regionCode: Locale.current.region?.identifier)
+    }
+
     // MARK: - Navigation bar
 
     private var bottomBar: some View {
@@ -253,6 +292,14 @@ struct ArtistIntakeView: View {
     private func finish() {
         Profile.setCuration(experience: experience, genres: Array(genres),
                             dream: dream, minutesPerDay: minutes, in: context)
+        // Under `.notify` the footnote above *is* the disclosure, and both exits from this screen
+        // route through here — so leaving by either one means it has been shown. Recording that
+        // stops `maybeOfferProfileMoment` later raising the catch-up sheet at somebody who was
+        // already told (ADR 0147 §2). Untouched under `.ask`, where the consent sheet still owns
+        // this flag.
+        if consentModel == .notify {
+            analyticsDisclosureSeen = true
+        }
         haptic(.medium)
         dismiss()
     }

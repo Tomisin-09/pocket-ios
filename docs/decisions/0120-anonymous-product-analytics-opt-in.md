@@ -1,6 +1,17 @@
 # ADR 0120 — product analytics are anonymous, opt-in, and can never carry what you played
 
-- **Status:** Accepted
+- **Status:** Accepted — **§2 and §3 superseded in part by ADR 0147**; §1, §4–§7 stand
+- **Superseded in part by:** **ADR 0147** (2026-08-06). UK statute moved: DUAA 2025 Sch A1 para 5, in
+  force 5 Feb 2026, exempts first-party service-improvement analytics from PECR reg 6 given clear
+  information and a simple means of objecting. So §2's **opt-in default** and §3's **ask after a first
+  practice** now apply to the **EEA + CH only**; the UK and rest of world get inform-and-object with
+  the default on, and the disclosure moves into the first-run intake.
+  **Read this before reopening the argument:** §2 below already concedes that Aptabase's anonymity is
+  real *and* that it is not the unlock — the binding test is ePrivacy Art 5(3) / PECR reg 6, which
+  applies irrespective of whether the data is personal. That reasoning is unchanged and 0147 does not
+  rest on it. §1 (Tier 3 closed permanently), §4 (closed vocabulary + its SwiftLint rule), §5, §6 and
+  §7 are untouched — and §4 in particular is *load-bearing for* 0147, whose legal basis is conditional
+  on the vocabulary staying narrow.
 - **Date:** 2026-07-29
 - **Extends:** ADR 0092 (AI strategy — "your playing never leaves your device" is load-bearing there
   too), ADR 0112 (freemium — the paywall gates this now reports on)
@@ -56,6 +67,10 @@ separate repo and does not touch the app's privacy manifest; the two were explic
 
 ### 2. Opt-in, defaulting to off — because of ePrivacy, not GDPR
 
+> **Superseded in part by ADR 0147 — now EEA + CH only.** The ePrivacy reasoning below is unchanged
+> and still governs the EEA. The UK left it by statute (DUAA 2025 Sch A1 para 5), so UK and
+> rest-of-world default to on with a disclosure and an objection control.
+
 Analytics is **off** until the player explicitly turns it on.
 
 The reasoning matters, because the obvious argument points the other way. Aptabase's data is
@@ -83,6 +98,11 @@ This is not legal advice and the area is contested; a professional check is chea
 before there is any real scale.
 
 ### 3. The ask comes after a first practice, not at first run
+
+> **Superseded in part by ADR 0147 — now EEA + CH only.** Where the model is inform-and-object, the
+> disclosure is a footnote in the first-run intake instead, which reclaims the "permanently
+> unmeasurable" cost recorded below. The objection to a fifth intake *step* still stands: 0147 adds a
+> footnote that asks nothing, not a screen with a decision in it.
 
 The consent prompt is the **last rung** on the existing first-run ladder in
 `HomeView+ProfileMoment.swift`, after the curation intake (ADR 0113) and the earned-a-name

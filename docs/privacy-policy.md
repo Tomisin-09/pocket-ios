@@ -20,12 +20,16 @@ audio, your recordings, your journal notes, your song names or your artist name.
 Everything you create stays on your device and, if you use iCloud, in your own
 private iCloud storage.
 
-The one exception is **anonymous usage counts, which are off unless you turn them
-on.** If you opt in, the app reports which features get used — that a loop was
-made, that an exercise was created — so we know what to improve. These counts
-carry no account, no device identifier, no advertising ID and nothing that could
-identify you, and they are not joined up across sessions. You can turn them off
-at any time in Settings ▸ Privacy.
+The one exception is **anonymous usage counts** — the app reports which features
+get used — that a loop was made, that an exercise was created — so we know what
+to improve. These counts carry no account, no device identifier, no advertising ID
+and nothing that could identify you, and they are not joined up across sessions.
+**You can turn them off at any time in Settings ▸ Privacy.**
+
+Whether they start on or off depends on where you are. **In the EEA and
+Switzerland they are off until you turn them on**, and the app asks. **Everywhere
+else, including the UK, they are on by default** and the app tells you so during
+setup — the law differs, and the section below explains which rule applies to you.
 
 Because the counts are irreversibly anonymous, there is no record tied to you for
 Deco Operations Ltd, as data controller, to access, correct or delete — a request
@@ -47,13 +51,23 @@ to erase your data has nothing to find.
   analytics question below) are stored on-device using standard system settings
   storage.
 
-## Anonymous usage counts (off by default)
+## Anonymous usage counts
 
-If — and only if — you turn them on, the app sends a small, fixed set of counts
-about **which features get used**: that a practice run started, that a loop was
-made, that an exercise was created from a particular template, that a Red Moon Pro
-prompt was shown. That list is fixed in the app's code and cannot be extended
-without a new release.
+The app sends a small, fixed set of counts about **which features get used**: that
+a practice run started, that a loop was made, that an exercise was created from a
+particular template, that a Red Moon Pro prompt was shown. That list is fixed in
+the app's code and cannot be extended without a new release.
+
+**Whether this starts on or off depends on where you are, because the law
+differs.**
+
+| Where you are | How it starts | How to change it |
+|---|---|---|
+| **EEA and Switzerland** | **Off.** The app asks, and nothing is sent unless you say yes. | Settings ▸ Privacy |
+| **UK and everywhere else** | **On.** The app tells you during setup. | Settings ▸ Privacy |
+
+Either way it is the same small set of counts, the same anonymity, and the same
+single switch to stop it.
 
 **What these counts can never contain.** Not your audio. Not your recordings. Not
 your journal notes, your song names, your file names, your artist name, or
@@ -71,15 +85,27 @@ processed in the **European Union**. They are used only to tell us which parts o
 the app are used and which are not. They are not sold, shared, or used for
 advertising.
 
-**Our lawful basis.** Your consent. Storing or reading information on your device
-for analytics requires consent under the Privacy and Electronic Communications
-Regulations (PECR reg. 6 / ePrivacy Directive Art. 5(3)), so we ask, and the answer
-is "no" until you say otherwise. Because the resulting counts are irreversibly
-anonymous, they are not personal data and the UK GDPR does not apply to them.
+**Our lawful basis.** It depends on where you are.
 
-**Withdrawing consent.** Settings ▸ Privacy, at any time. It takes effect
-immediately — the app checks your choice before every single count it would
-otherwise send.
+*In the EEA and Switzerland* — **your consent**. Storing or reading information on
+your device for analytics requires consent under the ePrivacy Directive Art. 5(3),
+so we ask, and the answer is "no" until you say otherwise.
+
+*In the UK* — the **statistical-purposes exception** in the Data (Use and Access)
+Act 2025, Schedule A1 paragraph 5, which came into force on 5 February 2026. It
+permits first-party analytics used solely to improve the service, provided we give
+you clear information about it and a simple, free way to object. We do both: the
+app tells you during setup, and Settings ▸ Privacy turns it off in one tap.
+
+*Everywhere else* — we apply the UK approach, as the more protective of the two
+available to us.
+
+In all cases, because the resulting counts are irreversibly anonymous, they are not
+personal data and the UK GDPR does not apply to them.
+
+**Turning it off, or withdrawing consent.** Settings ▸ Privacy, at any time. It
+takes effect immediately — the app checks your choice before every single count it
+would otherwise send. There is nothing to justify and no reason to give.
 
 ## What we do not do
 

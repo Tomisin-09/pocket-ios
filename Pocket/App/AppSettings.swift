@@ -305,18 +305,10 @@ enum AppSettings {
         return NoteSpelling(rawValue: storedValue) ?? .default
     }
 
-    // MARK: - Analytics (ADR 0120)
-
-    /// Anonymous product analytics on/off. **Default off** — analytics is opt-in, because ePrivacy /
-    /// PECR Art 5(3) covers accessing information on a device regardless of whether it is personal,
-    /// and product analytics is never "strictly necessary". Note `bool`'s own fallback is `true`, so
-    /// the `default: false` here is load-bearing and must not be dropped.
-    static var analyticsEnabled: Bool { bool(Key.analyticsEnabled, default: false) }
-
-    /// Whether the one-time consent ask has been shown. The ask is deliberately deferred until after
-    /// a first completed practice (ADR 0120) rather than placed in the first-run intake, so it does
-    /// not tax the activation flow it exists to measure.
-    static var analyticsPromptSeen: Bool { bool(Key.analyticsPromptSeen, default: false) }
+    // MARK: - Analytics (ADR 0120, region-split by ADR 0147)
+    //
+    // `analyticsEnabled`, `analyticsDisclosureSeen` and `seedAnalyticsDefaultIfNeeded` live in
+    // `AppSettings+Analytics.swift` — this file sits just under the 400-line cap.
 
     /// Whether a practice run has ever been *started* on this install. Purely local bookkeeping
     /// that decides when the analytics consent ask is due; written whether or not consent exists.

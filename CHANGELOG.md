@@ -6,6 +6,16 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Changed
+- **Red Moon now tells you it counts which features get used, instead of asking — unless you're in
+  the EEA, where it still asks.** UK law changed in February 2026: first-party analytics used purely
+  to improve the app no longer needs an up-front consent prompt, provided you're told clearly and
+  can object just as easily. So outside the EEA and Switzerland the counting starts on, and the
+  first-run setup says so in plain words on every screen — including the one you can Skip from,
+  which is the point. **In the EEA and Switzerland nothing changes at all**: it's still off until
+  you say yes. Either way it's the same one switch in Settings ▸ Privacy, it takes effect on the
+  very next event, and **what is counted has not widened by a single thing** — no account, no
+  advertising ID, and your playing, recordings, notes and song names still never leave your device.
+  **If you already said "no thanks", you stay off. Permanently.** See ADR 0147.
 - **One app, one price.** The free tier is gone. Red Moon Practice was going to launch with four
   exercises and one routine you could keep for free, and a paywall in front of most other taps —
   which is a lot of machinery to build a poor first impression with. Instead: **the Toolkit and the

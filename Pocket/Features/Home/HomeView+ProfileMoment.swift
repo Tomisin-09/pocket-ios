@@ -23,10 +23,24 @@ extension HomeView {
             showingNamePrompt = true
             return
         }
-        // The analytics consent ask (ADR 0120) sits **last** on the ladder so it never competes with
-        // a profile moment, and is gated on a completed practice rather than on launch — the ask is
-        // deliberately kept out of the activation flow it exists to measure.
-        guard !analyticsPromptSeen, AppSettings.hasPracticed else { return }
+        // The analytics sheet sits **last** on the ladder so it never competes with a profile moment.
+        // What it's for now depends on the region's consent model (ADR 0147):
+        //
+        // - `.ask` (EEA + CH) — unchanged from ADR 0120: an actual consent ask, gated on a completed
+        //   practice so it stays out of the activation flow it exists to measure.
+        // - `.notify` (UK + rest of world) — a **catch-up for pre-existing installs only**. A fresh
+        //   install is told by the intake footnote and must never see this, which is what the
+        //   `artistIntakeSeen` check below encodes: reaching here with the intake seen but the
+        //   disclosure unseen means this install passed through an intake that predates the
+        //   footnote. `hasPracticed` is deliberately *not* required — they are already being
+        //   counted, so telling them is owed now, not after another practice.
+        guard !analyticsDisclosureSeen else { return }
+        switch AnalyticsPolicy.consentModel(regionCode: Locale.current.region?.identifier) {
+        case .ask:
+            guard AppSettings.hasPracticed else { return }
+        case .notify:
+            guard artistIntakeSeen else { return }
+        }
         showingAnalyticsConsent = true
     }
 

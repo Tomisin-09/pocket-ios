@@ -54,13 +54,20 @@
 │              `TrialPeriodCopy` over the product's own intro-offer period, never a hardcoded length. The
 │              two are wired at the app root by `StoreManager.onSubscriptionStateChange`, so StoreKit and
 │              UserNotifications never import each other. **Local notifications only — no `aps-environment`**
-│   Analytics — ADR 0120. `AnalyticsEvent` is the complete closed vocabulary (13 events): an enum whose
+│   Analytics — ADR 0120, region-split by ADR 0147. `AnalyticsPolicy.consentModel(regionCode:)` is the
+│              pure rule: `.ask` (EEA + CH, default off, ePrivacy Art 5(3)) vs `.notify` (UK + RoW,
+│              default on, DUAA 2025 Sch A1 para 5). It decides only the DEFAULT — never whether an
+│              event may send — and the default is written once at launch by
+│              `AppSettings.seedAnalyticsDefaultIfNeeded`, so no `@AppStorage` literal is load-bearing
+│              and an explicit ADR 0120 decline survives. `AnalyticsEvent` is the complete closed
+│              vocabulary (13 events): an enum whose
 │              associated values are only other enums/Int/Bool, so no `String` parameter exists and
 │              user-authored text (song titles, file names, journal notes, the artist name) cannot be
 │              emitted by construction — pinned by `AnalyticsEventTests` + the repo's only SwiftLint
 │              `custom_rule`. `Analytics` is the @MainActor dispatcher holding one `AnalyticsSink`, with
-│              the opt-in consent gate as a single early return re-read per send (so Settings ▸ Privacy
-│              takes effect on the next event, no relaunch) plus `-uiTesting`/preview suppression;
+│              the consent gate as a single early return re-read per send (so Settings ▸ Privacy takes
+│              effect on the next event, no relaunch, under either model) plus `-uiTesting`/preview
+│              suppression;
 │              `AnalyticsPolicy.shouldEmit` is the pure rule. `NoOpSink` ships by default, `RecordingSink`
 │              backs tests, `AptabaseSink` is the vendor — main-actor confined because the SDK is not
 │              concurrency-safe, started lazily on its first *delivered* event so it can only ever begin
