@@ -69,6 +69,9 @@ struct ImproviseView: View {
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop), onDelete: deleteTake)
         }
+        // On the shared core, so all three hosts get it once (ADR 0050) — a jam is the longest a
+        // player goes without touching the screen, and this one had never asked.
+        .keepAwakeDuringPractice()
     }
 
     /// Finalize an in-flight take against *this loop* when the bed stops or the screen exits, so a

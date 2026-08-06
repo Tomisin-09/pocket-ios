@@ -65,6 +65,9 @@ struct EarTrainingView: View {
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop), onDelete: deleteTake)
         }
+        // On the shared core, so all three hosts get it once (ADR 0050). Humming along is exactly the
+        // hands-free practice the setting exists for, and this screen had never asked.
+        .keepAwakeDuringPractice()
     }
 
     /// Finalize an in-flight take against *this loop* when the bed stops or the screen exits, so a take

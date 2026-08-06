@@ -89,6 +89,9 @@ struct FreeformRunView: View {
             metronome.stop()
             recorder.releaseRecordSession()
         }
+        // ADR 0050 — and this screen needs it more than most: a freeform block is *prose you read
+        // while practising*, so the phone can sit untouched for the whole block.
+        .keepAwakeDuringPractice()
         // A freeform block takes a planned length like any other ramp-less block (ADR 0141). No audio
         // means no phrase to protect, so it finishes at the planned moment rather than waiting for a
         // cycle to come round; open-ended outside a routine, as everywhere else.

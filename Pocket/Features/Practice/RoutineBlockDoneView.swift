@@ -131,6 +131,10 @@ struct RoutineBlockDoneView: View {
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) { continueBar }
         .background(PocketColor.background.ignoresSafeArea())
+        // ADR 0050. Part of the run, not an interlude between runs: you sit here rating what just
+        // happened and writing a note, guitar still in hand. It matters most on a **standalone** run,
+        // where this arrives as a `fullScreenCover` and there is no routine host holding a claim.
+        .keepAwakeDuringPractice()
     }
 
     // MARK: - Pieces

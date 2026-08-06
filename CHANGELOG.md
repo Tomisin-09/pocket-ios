@@ -6,6 +6,7 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Fixed
+- **The screen went to sleep during a routine, with "Keep screen awake" switched on.** The hold was released by whichever practice screen left last, so every block change handed it back — and on an ear, improvise or freeform block it was never taken in the first place. The whole session now holds the screen awake, and those screens hold it too, so the setting does what it says wherever you are in a routine.
 - **Practice takes could be destroyed the moment you stopped them.** Stopping the thing a take was
   recorded over — silencing a click, stopping a backing track, ending a run — could pull the audio
   session out from under the recorder. The take then measured as zero seconds long, was treated as an
