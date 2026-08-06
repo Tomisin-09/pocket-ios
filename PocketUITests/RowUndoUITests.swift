@@ -69,7 +69,130 @@ final class RowUndoUITests: XCTestCase {
                       "Undo did not restore the row in place (host/environment scoping regression)")
     }
 
+    /// The **Journal** feed's undo, which the library test above does not reach: a different screen,
+    /// a different coordinator, and — since 2026-08-06 — a different *gesture*. Delete here is a
+    /// press-and-hold, never a swipe, because a reflection has no source to rebuild it from the way
+    /// an exercise does. That makes this the only test that would catch the hold menu being wired to
+    /// nothing.
+    ///
+    /// A clean install's Journal is empty, so the test **writes its own note** through the app's real
+    /// capture path rather than a seeded fixture — no test-only code in the app, and the write half of
+    /// the feature gets walked on the way in.
+    ///
+    /// A take would have been the more valuable subject — its delete removes an audio file — but a
+    /// take cannot be created in the simulator at all: it needs a real microphone. The Takes sheet
+    /// shares this screen's coordinator, gesture and deferral, so this covers the pattern; the audio
+    /// path itself stays a device check.
+    @MainActor
+    func testUndoRestoresADeletedJournalNote() throws {
+        let app = launchApp()
+        // Unique per run. The simulator keeps the app's store between test runs, so a fixed string
+        // accumulates a row per run on a dev machine — and then `firstMatch` finds *last* run's copy
+        // still on screen after this run's is deleted, failing on a bug that isn't there.
+        let noteText = "Undo test note \(UUID().uuidString.prefix(6))"
+        try writeAJournalNote(noteText, in: app)
+        try openJournal(in: app)
+
+        let note = app.cells.containing(.staticText, identifier: noteText).firstMatch
+        XCTAssertTrue(note.waitForExistence(timeout: 20), "the note just written isn't on the feed")
+
+        note.press(forDuration: 1.2)
+        let deleteButton = app.buttons["Delete"]
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 5), "the hold menu offered no Delete")
+        deleteButton.tap()
+
+        // Undo first — it is the thing on a clock. See the flake note on the test above.
+        let undo = app.buttons["Undo"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 10), "no Undo toast after deleting a note")
+        XCTAssertTrue(waitForDisappearance(of: note, timeout: 5), "the deleted note stayed on screen")
+
+        undo.tap()
+        XCTAssertTrue(note.waitForExistence(timeout: 5), "Undo did not restore the journal note")
+    }
+
     // MARK: - Helpers
+
+    @MainActor
+    private func launchApp() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uiTesting"] // suppress the first-launch profile intake covering Home
+        app.launch()
+        return app
+    }
+
+    /// Write one note against a seeded drill, through the app's own capture path: Exercises → the
+    /// drill's run screen → the nav-bar quick-note button → Save. Leaves the app back on Home.
+    ///
+    /// Deliberately the **toolbar** button (ADR 0142) rather than the review bar's Journal pill: the
+    /// bar is the last thing in a long `ScrollView`, so on a fresh run screen it isn't in the
+    /// accessibility tree at all until you scroll it in. A toolbar item always is.
+    @MainActor
+    private func writeAJournalNote(_ text: String, in app: XCUIApplication) throws {
+        try openExercisesLibrary(in: app)
+
+        let drill = app.cells.containing(.staticText, identifier: "Alternate Picking").firstMatch
+        XCTAssertTrue(drill.waitForExistence(timeout: 20), "no seeded exercise to write a note against")
+        var swipes = 0
+        while !drill.isHittable && swipes < 4 {
+            app.swipeUp()
+            swipes += 1
+        }
+        drill.tap()
+
+        let quickNote = app.buttons["Write a quick journal note"]
+        XCTAssertTrue(quickNote.waitForExistence(timeout: 20), "no quick-note button on the run screen")
+        quickNote.tap()
+
+        // `TextField(axis: .vertical)` surfaces as a text *view* on some runtimes and a text field on
+        // others, so accept either rather than pinning the test to one of them.
+        let field = composerField(in: app)
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "the quick-note sheet has no field")
+        field.tap()
+        field.typeText(text)
+
+        let save = app.buttons["Save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "no Save button on the quick-note sheet")
+        save.tap()
+
+        try returnHome(in: app)
+    }
+
+    @MainActor
+    private func composerField(in app: XCUIApplication) -> XCUIElement {
+        let placeholder = "What just happened?"
+        let asField = app.textFields[placeholder]
+        return asField.waitForExistence(timeout: 5) ? asField : app.textViews[placeholder]
+    }
+
+    /// Pop back to Home. The run screen is three levels deep (Home → Practice hub → Exercises
+    /// library → run), so this walks the back button until Home's own first card shows up rather
+    /// than counting taps.
+    @MainActor
+    private func returnHome(in app: XCUIApplication) throws {
+        let homeMarker = app.buttons["Practice, your exercises and training runs"]
+        var backs = 0
+        while !homeMarker.exists && backs < 5 {
+            let back = app.navigationBars.buttons.firstMatch
+            guard back.waitForExistence(timeout: 5) else { break }
+            back.tap()
+            backs += 1
+        }
+        XCTAssertTrue(homeMarker.waitForExistence(timeout: 10), "never got back to Home")
+    }
+
+    /// Home → Journal.
+    @MainActor
+    private func openJournal(in app: XCUIApplication) throws {
+        let journalCard = app.buttons["Journal, your notes and practice takes"]
+        XCTAssertTrue(journalCard.waitForExistence(timeout: 10), "Journal card missing")
+        var swipes = 0
+        while !journalCard.isHittable && swipes < 6 {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(journalCard.isHittable, "Journal card not reachable by scrolling")
+        journalCard.tap()
+    }
 
     /// Home → Practice → Exercises. Generous timeouts: on a cold simulator each screen only paints
     /// once first-launch seeding has run, the same variance `PracticeRunUITests` allows for.

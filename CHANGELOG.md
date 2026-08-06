@@ -24,6 +24,13 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **Delete anything in the Journal.** Notes, takes and session entries can all be removed now, with
   the same Undo you get everywhere else — a deleted take's audio isn't actually removed until the
   Undo disappears. Editing a note still happens where it always did, on the exercise or loop itself.
+  **Deleting is a press-and-hold, not a swipe** — here and on a unit's Takes list. A swipe is easy to
+  trigger by accident while scrolling, and a note about how a session went, or a recording of you
+  playing, can't be rebuilt the way an exercise can. Renaming a take is still a swipe; it destroys
+  nothing.
+- **Deleting a take can be undone.** A unit's Takes list used to delete the recording, audio and all,
+  the instant you swiped — with no way back. It now behaves like every other list in the app: the
+  take disappears, an Undo appears, and the audio is only really gone once that Undo does.
 - **The record button says it's recording.** It pulses slowly while a take is rolling instead of
   going quiet, and tells you when a take was saved and how many that unit now has. On improvise you
   can end a take without stopping the backing track.

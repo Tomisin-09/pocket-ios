@@ -40,7 +40,16 @@ triad and the indigo reference hub.
   stays in the per-owner `JournalSheet`. The one exception is **takes**, which
   play in place (playing *is* their nature), through the shared `RecordingPlayer`.
   **Amended 2026-08-05 — see below: every row can now be deleted, and a take
-  renamed. Editing still lives in the per-owner sheet.**
+  renamed. Editing still lives in the per-owner sheet.** **Delete is a
+  press-and-hold only — there is no delete swipe on this feed, nor on a unit's
+  Takes list.** That departs from the libraries, which offer both, and the reason
+  is what the row *is*: an exercise deleted by a stray swipe can be built again,
+  but a note about how a session went, and a recording of someone playing, cannot.
+  A swipe is the gesture most easily fired by accident while scrolling a list, so
+  the destructive verb is behind the deliberate gesture and the Undo toast is the
+  second line, not the first. Rename stays a swipe as well as a hold — it destroys
+  nothing, and it is the verb reached for repeatedly. A note's hold menu offers
+  Delete alone; a take's offers Rename then Delete.
 - **One merged timeline.** Notes + takes are merged newest-first, day-grouped
   (reusing `JournalGrouping.byDay`), with a segmented **All / Notes / Takes**
   filter — the escape valve as the aggregate grows.

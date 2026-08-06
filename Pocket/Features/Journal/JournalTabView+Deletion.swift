@@ -12,19 +12,37 @@ import SwiftUI
 /// Split out of `JournalTabView` for the 400-line cap, the same reason `JournalTakeRow` was.
 extension JournalTabView {
 
-    /// The trailing swipe's Delete, for any row on the feed.
+    /// The **hold menu** — the *only* way to delete from this feed, deliberately.
     ///
-    /// **Never `role: .destructive`.** A destructive swipe button plays SwiftUI's own row-removal
-    /// animation the instant it is tapped, whether or not the data changed — which under a *deferred*
-    /// delete means the row vanishes on a lie and doesn't come back on Undo. The row disappears here
-    /// because `items` filters out anything pending, and reappears for the same reason.
-    @ViewBuilder func deleteButton(for item: JournalTimeline.Item) -> some View {
-        Button {
+    /// Every other list in the app deletes on a trailing swipe. This one doesn't, because the cost of
+    /// the mistake is different in kind: a deleted exercise or routine can be rebuilt from the same
+    /// idea, but a note about how a session actually went — and a take of someone playing — has no
+    /// source to regenerate it from. A swipe is the cheapest gesture in a list and the easiest to
+    /// trigger while scrolling, and the Undo window is four seconds, which only helps if you noticed.
+    /// A hold is deliberate, so the gesture now costs about what the mistake does. Rename keeps its
+    /// swipe: it destroys nothing.
+    ///
+    /// A note gets Delete; a take gets Rename first, because renaming is the verb you reach for
+    /// repeatedly and deleting is the one you reach for once.
+    ///
+    /// `role: .destructive` is right **here** and would be wrong on a swipe. In a menu it only colours
+    /// the label; on a swipe button it plays SwiftUI's own row-removal animation the moment it's
+    /// tapped, which under a *deferred* delete means the row leaves on a lie and never comes back on
+    /// Undo. The row disappears here because `items` filters out anything pending — and reappears for
+    /// the same reason.
+    @ViewBuilder func holdMenu(for item: JournalTimeline.Item) -> some View {
+        if case .take(let take) = item {
+            Button {
+                renaming = StableRef(value: take)
+            } label: {
+                Label(take.title == nil ? "Name this take" : "Rename", systemImage: "pencil")
+            }
+        }
+        Button(role: .destructive) {
             requestDelete(item)
         } label: {
             Label("Delete", systemImage: "trash")
         }
-        .tint(.red)
     }
 
     /// Hide the row, raise the Undo toast, and schedule the real delete for when the window closes.

@@ -151,6 +151,16 @@ and `ExerciseRunView` both finalise takes from `.onChange(of: isRunning)`, which
 after their engine has already released the session. Those seams are now commented as
 lease-dependent, since there is nothing there to reorder.
 
+**3a. Deleting a take is a hold, and it is undoable** (2026-08-06). `TakesSheet`
+deleted on a plain `.onDelete` swipe and called `RecordingStore.delete` straight
+through, which made it the easiest place in the app to lose a recording. A take has
+no source to regenerate it from — unlike an exercise, which can be rebuilt from the
+same idea — so the gesture should cost what the mistake does: delete moved to the
+row's hold menu, and the sheet took the shared `RowDeletionCoordinator`, so the
+owning screen's existing delete closure now runs as the *deferred* action and the
+file survives as long as the Undo toast does. The host screens were not touched.
+Rename keeps its swipe: it destroys nothing.
+
 **4. A take can be named.** `Recording` gains an optional `title` (additive, no
 declaration default). Takes are the only row on the Journal feed with nothing but a
 timestamp to distinguish them — a note carries its own words, a session note carries

@@ -43,8 +43,9 @@ struct JournalTabView: View {
     /// deleting a *take* offerable at all: its audio file is only removed once the window closes, so
     /// nothing irreversible happens while Undo is still on screen.
     @State var rowDeletion = RowDeletionCoordinator()
-    /// The take being named, by stable `uid` — never `persistentModelID` (ADR 0090).
-    @State private var renaming: StableRef<Recording>?
+    /// The take being named, by stable `uid` — never `persistentModelID` (ADR 0090). Not `private`:
+    /// the hold menu that sets it lives in `JournalTabView+Deletion.swift`.
+    @State var renaming: StableRef<Recording>?
 
     /// The scope- then search-filtered feed, minus anything awaiting deletion. Filtering here rather
     /// than at the row is what makes `sections` and the empty state follow automatically.
@@ -187,7 +188,7 @@ struct JournalTabView: View {
             JournalEntryRow(entry: entry, ownerLabel: JournalTimeline.ownerLabel(for: item),
                             onOpenOwner: openAction(for: item),
                             openUnit: openAction(for:))
-                .swipeActions(edge: .trailing) { deleteButton(for: item) }
+                .contextMenu { holdMenu(for: item) }
         case .take(let take):
             JournalTakeRow(take: take,
                            ownerLabel: JournalTimeline.ownerLabel(for: item),
@@ -195,14 +196,15 @@ struct JournalTabView: View {
                            isPlaying: player.isPlaying(take.fileName)) {
                 player.toggle(take.fileName)
             }
-            .swipeActions(edge: .trailing) { deleteButton(for: item) }
             // Naming is a take-only verb: every other row already says what it is in its own words.
+            // It also survives as a swipe where **delete** doesn't, because renaming destroys nothing.
             .swipeActions(edge: .leading) {
                 Button { renaming = StableRef(value: take) } label: {
                     Label("Rename", systemImage: "pencil")
                 }
                 .tint(PocketColor.journal)
             }
+            .contextMenu { holdMenu(for: item) }
         }
     }
 
