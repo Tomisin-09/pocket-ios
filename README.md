@@ -62,8 +62,15 @@ generated, not hand-cropped — after a new logo revision:
 ```sh
 scripts/derive-brand-svgs.py                     # light + dark → the asset catalog
 scripts/derive-brand-svgs.py --app-icon          # …and re-render the 1024² App Icon
+scripts/derive-brand-svgs.py --pro-wordmark      # …and re-crop the paywall's "Red Moon PRO"
 scripts/derive-brand-svgs.py --out /tmp/preview  # preview crops, catalog untouched
 ```
+
+The **Pro wordmark** is the exception to "one lockup, three crops": it arrives as
+a pair of transparent PNG exports rather than a lockup SVG, so there are no path
+ids to crop by and it is cropped by its **alpha channel** instead — tight to the
+ink, then area-resampled down. Point `--pro-source` at the folder holding the
+pair (default `~/Documents`).
 
 Point `--source` at the revision's folder if it moves. The App Icon is the same
 mark composited on an opaque near-black square and rasterised via QuickLook — it

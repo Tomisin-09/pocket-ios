@@ -43,6 +43,15 @@ All notable changes to Pocket are documented here. Format loosely follows
   differed, the app would promise the wrong thing to a real buyer. It now says whatever the product
   actually offers, and checks eligibility for the plan you have selected rather than always the
   annual one.
+- **The paywall wears the real Red Moon PRO wordmark.** The header used to be the crescent seal with
+  "Red Moon Pro" set in Futura underneath — close to the brand, but not it: the tier word is meant to
+  sit *quieter* than the name, and no font weight does that. It is now the designer's artwork, in a
+  light and a dark colourway. The seal hasn't gone anywhere else — it still leads Settings, the
+  artist-name prompt and the app icon.
+- **The paywall leads with loops.** Its three value lines used to open on the exercise catalog and
+  spend the middle one on "Draw your own" — which is a feature of a feature, sold before you know
+  what it draws on. Looping and slowing down your own tracks is the thing Red Moon does that a free
+  metronome app doesn't, so it goes first, the catalog second, and Today's session third.
 
 ### Internal
 - **CI stopped failing for reasons unrelated to the change under test** (ADR 0146). The UI tests all
@@ -65,6 +74,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   with a helper that stops when the element is reachable or the list stops moving, and the five
   copies of the "are we under test?" check became one. With the cause fixed, CI's retry allowance
   drops from three attempts to two. The readiness signal exists only under `-uiTesting`.
+- **`scripts/derive-brand-svgs.py --pro-wordmark`.** The Pro wordmark ships as a pair of transparent
+  PNG exports rather than a lockup SVG, so it has no path ids to crop by; it is cropped by its
+  **alpha channel** instead — tight to the ink, then area-resampled on premultiplied colour so the
+  glyphs don't pick up a dark fringe against the paywall's cream. Same rule as the rest of the brand
+  artwork: generated, never hand-trimmed, and re-runnable on the next logo revision.
 
 ### Fixed
 - **The screen went to sleep during a routine, with "Keep screen awake" switched on.** The hold was released by whichever practice screen left last, so every block change handed it back — and on an ear, improvise or freeform block it was never taken in the first place. The whole session now holds the screen awake, and those screens hold it too, so the setting does what it says wherever you are in a routine.

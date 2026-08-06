@@ -145,7 +145,11 @@ from comfortable to target speed).
 
 **The brand mark stays its own thing.** The "Red Moon" mark (app icon + the in-app
 logo/mark/wordmark, ADR 0061) is **vector** artwork, two-tone: a `#17698a` crescent with a
-`#90b3cb` inner face on light, inverted on dark. That is now within a hair of `TealCTA`
+`#90b3cb` inner face on light, inverted on dark. The **paywall header is the "Red Moon PRO"
+wordmark** — artwork, not set type, because the tier word is deliberately *recessive*
+(`#a7c4d9` beside `#17698a` on light, inverted on dark) and no font weight reproduces that.
+It replaces the crescent seal on that one screen; the seal still leads Settings, the
+artist-name prompt and the icon. That is now within a hair of `TealCTA`
 (`18698B`) — a coincidence of the same palette, not a binding. **Don't flatten them
 together.** The per-space accent families (Teal / Terracotta / Plum / Gold / Indigo) are
 what tell you which space you're in; retuning one must never be able to desync the mark, so
