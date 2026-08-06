@@ -25,6 +25,15 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         // analytics consent — it is the user's own state, and only ever leaves the device as a
         // coarse age bucket, and only then if consent is later given.
         AppSettings.recordInstallDateIfNeeded()
+        // Kill animations under UI test (ADR 0146). XCUITest blocks on app-idle before every
+        // query and every tap, so each transition's duration is spent by the *test*, not just
+        // by the app — and a loaded CI runner multiplies it. Done here rather than in the tests
+        // because it has to land before the first view is built. The house `-uiTesting` idiom,
+        // matching `Analytics`, `StoreManager`, `HomeView+ProfileMoment` and
+        // `RowDeletionCoordinator`.
+        if CommandLine.arguments.contains("-uiTesting") {
+            UIView.setAnimationsEnabled(false)
+        }
         return true
     }
 

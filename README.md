@@ -102,5 +102,10 @@ docs/          architecture.md, decisions/ (ADRs), practice-techniques.md, resea
   ~20s on a Linux runner — the required check still reports, it just has nothing to do. The rule
   lives in `scripts/docs-only.sh` and is shared with the pre-push hook. See `docs/decisions/0133`;
   note in particular why the workflow must *not* grow a `paths-ignore` filter.
+- **Flake control** (`docs/decisions/0146`): CI boots and settles the simulator before the timed run
+  and retries only failed tests (`-retry-tests-on-failure -test-iterations 3`). Because that hides
+  flakes by design, `scripts/report-test-retries.sh` annotates the PR with every test that needed a
+  retry — **a green run with retries in it is not a clean run.** The pre-push hook pre-boots too but
+  deliberately does not retry.
 - **On merge to `main`:** TestFlight via Fastlane (`.github/workflows/testflight.yml`).
 - Backend prod is AWS (Lambda + API Gateway); dev runs locally / off-AWS.
