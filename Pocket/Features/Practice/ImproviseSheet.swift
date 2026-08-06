@@ -15,16 +15,27 @@ import SwiftUI
 ///
 /// **No ramp and no rep clock** (B3). This follows a song block's rule, not the loop trainer's: it is
 /// an open jam and the app never tells you to stop playing (ADR 0014 R1). **Nothing listens** (B5) —
-/// no mic, no analysis, no verdict on what was played over it, the same posture ear training holds
-/// and for the same reason (ADR 0070 / 0094).
+/// no analysis, no verdict on what was played over it, the same posture ear training holds and for
+/// the same reason (ADR 0070 / 0094). Recording a take is the player's own capture, not the app
+/// forming an opinion: B5 stands.
+///
+/// **Takes are on** (ADR 0069 amendment). A jam has no ramp and no logged tempo, so the take *is* the
+/// record of what came out — which is why the routine gate the ramped run screens keep is lifted for
+/// an improvise block. The play button is a real Start, so the ordinary arm-then-Start grammar drops
+/// straight in with no new transport.
 struct ImproviseView: View {
     let loop: Loop
     /// Owned by the **host** (ADR 0141) — see `EarTrainingView`. Build it with
     /// `ContinuousLoopPlayer.improvising(over:)` so both hosts seed the tempo the same way.
     let player: ContinuousLoopPlayer
+    /// Also owned by the host, for the same reason the player is: this view has three of them, and a
+    /// controller declared here would be one per host with none of them in charge of the lifecycle.
+    let recorder: RecordingController
+    @Environment(\.modelContext) private var modelContext
     /// Latch for the tool-opened event (ADR 0120) — `.onAppear` re-fires on a return from a
     /// pushed screen, and this view has two hosts.
     @State private var reportedOpen = false
+    @State private var showingTakes = false
 
     var body: some View {
         KeyboardFollowingScroll {
@@ -34,7 +45,11 @@ struct ImproviseView: View {
                 Section {
                     ContinuousLoopControls(player: player,
                                            playingStatus: "Looping — play over it",
-                                           idleStatus: "Tap to start the backing track")
+                                           idleStatus: "Tap to start the backing track",
+                                           recorder: recorder,
+                                           onStopped: finishTake,
+                                           takeCount: loop.recordings.count,
+                                           onOpenTakes: openTakes)
                 }
                 JournalNoteComposer(owner: .loop(loop), kind: .improvise,
                                     header: "Note what you played",
@@ -47,7 +62,38 @@ struct ImproviseView: View {
             reportedOpen = true
             Analytics.send(.toolOpened(tool: .improvise))
         }
-        .onDisappear { player.stop() }
+        .onDisappear {
+            finishTake()     // before the bed stops — see `ContinuousLoopControls`' stop branch
+            player.stop()
+        }
+        .sheet(isPresented: $showingTakes) {
+            TakesSheet(owner: .loop(loop), onDelete: deleteTake)
+        }
+        // On the shared core, so all three hosts get it once (ADR 0050) — a jam is the longest a
+        // player goes without touching the screen, and this one had never asked.
+        .keepAwakeDuringPractice()
+    }
+
+    /// Finalize an in-flight take against *this loop* when the bed stops or the screen exits, so a
+    /// take is never left recording after the audio it was played over has stopped. Idempotent — the
+    /// two seams overlap on purpose (stopping the bed, then leaving).
+    private func finishTake() {
+        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
+    }
+
+    /// Relisten, without leaving the jam. **Stops the bed first**: the takes sheet has its own player,
+    /// and a take under the backing track it was played over is two things at once and neither of them
+    /// audible. Finalising first keeps the ordering rule the stop branch states.
+    private func openTakes() {
+        finishTake()
+        player.stop()
+        showingTakes = true
+    }
+
+    private func deleteTake(_ take: Recording) {
+        try? RecordingStore.delete(fileName: take.fileName)
+        modelContext.delete(take)
+        try? modelContext.save()
     }
 
     // MARK: - Intro (jam over it — no target, no verdict)
@@ -73,6 +119,7 @@ struct ImproviseSheet: View {
     let loop: Loop
     @Environment(\.dismiss) private var dismiss
     @State private var player: ContinuousLoopPlayer
+    @State private var recorder = RecordingController()
 
     init(loop: Loop) {
         self.loop = loop
@@ -81,7 +128,7 @@ struct ImproviseSheet: View {
 
     var body: some View {
         NavigationStack {
-            ImproviseView(loop: loop, player: player)
+            ImproviseView(loop: loop, player: player, recorder: recorder)
                 .navigationTitle("Improvise")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -99,6 +146,7 @@ struct ImproviseSheet: View {
 struct ImproviseScreen: View {
     let loop: Loop
     @State private var player: ContinuousLoopPlayer
+    @State private var recorder = RecordingController()
 
     init(loop: Loop) {
         self.loop = loop
@@ -106,7 +154,7 @@ struct ImproviseScreen: View {
     }
 
     var body: some View {
-        ImproviseView(loop: loop, player: player)
+        ImproviseView(loop: loop, player: player, recorder: recorder)
             .navigationTitle(LoopRunMode.improvise.label)
             .navigationBarTitleDisplayMode(.inline)
     }

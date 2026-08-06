@@ -31,6 +31,14 @@ final class Recording {
     /// Length of the take in seconds, measured at stop. `0` for a take that captured nothing.
     var duration: TimeInterval
 
+    /// The player's own name for this take, or `nil` for one never named.
+    ///
+    /// Takes are the **only** journal row with nothing but a timestamp to tell them apart — a note
+    /// carries its own words, a session carries its routine's name — which is why naming is offered
+    /// here and nowhere else (device pass 2026-08-05). Additive optional with **no declaration
+    /// default**, so lightweight migration is exempt from the mandatory-attribute rule.
+    var title: String?
+
     /// The AAC file's name **relative** to the recordings directory (e.g. `"<uid>.m4a"`) — never
     /// an absolute path: the container URL changes across installs/restores, so only the leaf is
     /// stable. Resolve to a `URL` through `RecordingStore.url(for:)`.
@@ -76,5 +84,17 @@ final class Recording {
     var durationLabel: String {
         let total = Int(duration.rounded())
         return String(format: "%d:%02d", total / 60, total % 60)
+    }
+
+    /// What a row calls this take: its name, or the generic word every take used to be stuck with.
+    /// Every existing row keeps rendering unchanged and no call site has to unwrap.
+    var displayTitle: String { title ?? "Take" }
+
+    /// Name (or rename) this take, following `SavedChord.rename(to:)`: trim, and refuse an empty
+    /// result rather than storing whitespace that would render as a blank row.
+    func rename(to newTitle: String) {
+        let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        title = trimmed
     }
 }

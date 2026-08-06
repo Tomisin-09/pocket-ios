@@ -13,15 +13,25 @@ import SwiftUI
 ///
 /// The three structural sections live in `LoopModeSections`, shared with `ImproviseView` (ADR 0135),
 /// the sibling ramp-less mode: only the copy and the note's `EntryKind` differ between them.
+///
+/// **Takes are on here too** (2026-08-06). The original exclusion reasoned that nothing is *played*
+/// over an ear block, which is true and beside the point: singing or humming a line back is the one
+/// thing you cannot judge while you are doing it, and a take is the only way to hear it afterwards.
+/// Nothing about ADR 0070 moves — the app records and says nothing about what it recorded.
 struct EarTrainingView: View {
     let loop: Loop
     /// Owned by the **host**, not by this view (ADR 0141): a routine block has to read what the audio
     /// is doing to end on a region boundary rather than mid-phrase, and it can't reach a `@State`
     /// declared here. The standalone sheet holds one just the same, so the two hosts stay symmetric.
     let player: ContinuousLoopPlayer
+    /// Also host-owned, for the same reason and following `ImproviseView`: three hosts, and a
+    /// controller declared here would be one per host with none of them owning the lifecycle.
+    let recorder: RecordingController
+    @Environment(\.modelContext) private var modelContext
     /// Latch for the tool-opened event (ADR 0120) — this view is embedded by both the loop-settings
     /// sheet and a routine's ear block, and `.onAppear` re-fires on a return.
     @State private var reportedOpen = false
+    @State private var showingTakes = false
 
     var body: some View {
         KeyboardFollowingScroll {
@@ -30,7 +40,12 @@ struct EarTrainingView: View {
                 introSection
                 Section {
                     ContinuousLoopControls(player: player,
-                                           playingStatus: "Looping — hum or sing along")
+                                           playingStatus: "Looping — hum or sing along",
+                                           recorder: recorder,
+                                           onStopped: finishTake,
+                                           takeCount: loop.recordings.count,
+                                           bedNoun: "loop",
+                                           onOpenTakes: openTakes)
                 }
                 JournalNoteComposer(owner: .loop(loop), kind: .ear,
                                     header: "Note what you hear",
@@ -43,7 +58,38 @@ struct EarTrainingView: View {
             reportedOpen = true
             Analytics.send(.toolOpened(tool: .earTraining))
         }
-        .onDisappear { player.stop() }
+        .onDisappear {
+            finishTake()     // before the bed stops — see `ContinuousLoopControls`' stop branch
+            player.stop()
+        }
+        .sheet(isPresented: $showingTakes) {
+            TakesSheet(owner: .loop(loop), onDelete: deleteTake)
+        }
+        // On the shared core, so all three hosts get it once (ADR 0050). Humming along is exactly the
+        // hands-free practice the setting exists for, and this screen had never asked.
+        .keepAwakeDuringPractice()
+    }
+
+    /// Finalize an in-flight take against *this loop* when the bed stops or the screen exits, so a take
+    /// is never left recording after the audio it was hummed over has stopped. Idempotent — the two
+    /// seams overlap on purpose.
+    private func finishTake() {
+        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
+    }
+
+    /// Relisten, without leaving the loop. **Stops the bed first**: one `RecordingPlayer` and the loop
+    /// would otherwise sound at once, and a take of your own humming is unlistenable under the thing
+    /// you hummed along to. Finalising first keeps the ordering rule the stop branch states.
+    private func openTakes() {
+        finishTake()
+        player.stop()
+        showingTakes = true
+    }
+
+    private func deleteTake(_ take: Recording) {
+        try? RecordingStore.delete(fileName: take.fileName)
+        modelContext.delete(take)
+        try? modelContext.save()
     }
 
     // MARK: - Intro (hum / sing, away from the guitar)
@@ -65,6 +111,7 @@ struct EarTrainingSheet: View {
     let loop: Loop
     @Environment(\.dismiss) private var dismiss
     @State private var player: ContinuousLoopPlayer
+    @State private var recorder = RecordingController()
 
     init(loop: Loop) {
         self.loop = loop
@@ -73,7 +120,7 @@ struct EarTrainingSheet: View {
 
     var body: some View {
         NavigationStack {
-            EarTrainingView(loop: loop, player: player)
+            EarTrainingView(loop: loop, player: player, recorder: recorder)
                 .navigationTitle("Train your ear")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -92,6 +139,7 @@ struct EarTrainingSheet: View {
 struct EarTrainingScreen: View {
     let loop: Loop
     @State private var player: ContinuousLoopPlayer
+    @State private var recorder = RecordingController()
 
     init(loop: Loop) {
         self.loop = loop
@@ -99,7 +147,7 @@ struct EarTrainingScreen: View {
     }
 
     var body: some View {
-        EarTrainingView(loop: loop, player: player)
+        EarTrainingView(loop: loop, player: player, recorder: recorder)
             .navigationTitle(LoopRunMode.ear.label)
             .navigationBarTitleDisplayMode(.inline)
     }

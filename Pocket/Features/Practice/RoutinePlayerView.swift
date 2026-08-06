@@ -59,6 +59,10 @@ struct RoutinePlayerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(PocketColor.background.ignoresSafeArea())
         }
+        // The **session** holds the screen awake, not just whichever block happens to be on it (ADR
+        // 0050). The host outlives every block, so the claim spans the gaps a block change opens up —
+        // and with the lease reference-counted, a block asserting it too is harmless.
+        .keepAwakeDuringPractice()
         .onAppear {
             guard runnable else { return }
             player.start()
@@ -222,8 +226,9 @@ struct RoutinePlayerView: View {
         .padding(24)
         .navigationTitle("Rest")
         .routineSessionChrome(context)
-        .keepAwakeDuringPractice()   // hold the screen through the rest (ADR 0050); the block run
-                                     // screens have it, but a rest has no child to assert it
+        // Kept, though the host now claims it for the whole session: a rest is a practice surface in
+        // its own right, and the claim is reference-counted so asserting it twice costs nothing.
+        .keepAwakeDuringPractice()   // ADR 0050
     }
 
     // MARK: - Finished

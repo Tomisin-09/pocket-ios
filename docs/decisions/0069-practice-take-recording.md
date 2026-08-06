@@ -64,6 +64,133 @@ Sliced post-v1 on its own branch, never riding the paused v1.0 submission:
   count-in, so a *speaker* take catches a couple of count-in clicks; a headphone take
   stays clean.
 
+## Amendment — open-ended blocks record too (2026-08-05)
+
+The v2 close-out's last slice took recording to the two surfaces that had no way
+to reach it: **improvise** (ADR 0135) and **freeform blocks** (ADR 0136). No model
+work was owed — a freeform block *is* an `Exercise` and improvise *is* a `Loop`,
+so `Exercise.recordings` / `Loop.recordings` already existed. What was owed is two
+reversals of decisions taken in slices 2 and 4, stated here rather than left as
+drift.
+
+**1. The arm grammar bends for a surface with no Start.** Slice 2's "armed before
+the run, not toggled mid-play" stands for every surface that *has* a Start —
+every ramped run, and improvise, whose 108 pt play button is a real Start and so
+takes the existing arm-then-Start wiring at no cost. A **Start-less surface gets a
+direct toggle** (`RecordTakeToggle` → `RecordingController.toggleTake`), because
+you cannot arm for a Start that does not exist. The original objection — fiddling
+with controls mid-drill, hands on the instrument — is about ramped drills running
+to a schedule; a freeform block is prose and a clock, and the player is already
+tapping things on it.
+
+ADR 0136 F4 is **not** amended: a freeform block still has no transport, its clock
+still starts on arrival, and the click still starts in `.onAppear`. The reversal
+is confined to this ADR's arm grammar, where it belongs.
+
+**The category flip is the real constraint**, and it is what made the arm grammar
+right in the first place. A mid-session toggle would flip `.playback` →
+`.playAndRecord` with the click already ticking, and back again on stop — the
+audible glitch slice 2 removed, twice. So a Start-less screen that ticks
+**holds the record-capable session for the lifetime of the screen**
+(`holdRecordSession()` in `.onAppear`, *before* the click starts;
+`releaseRecordSession()` on the way out), and the take toggle changes no category
+at all. With no click there is nothing sounding, so nothing is held and the
+session stays `.playback` — §3's "only while a take is armed" holds wherever it
+can, and "never a global flip" is untouched either way.
+
+**2. The routine gate lifts for open-ended blocks only.** Slice 4 gated recording
+to `routineContext == nil` because routine blocks stay focused. That gate stays
+for **ramped** exercise and loop blocks: a ramped drill already has a Done screen
+and a logged tempo as its evidence. It lifts for **freeform and improvise blocks**,
+which are open-ended by construction — no ramp, no command, no tempo trajectory —
+so a take *is* their record of what was played. Most practice happens inside a
+routine, which is where these two blocks mostly live.
+
+Consequences: no new `PracticeRunKind` (a take is captured *during* a run that
+already logs its own row; a second would double-count). `RecordingStatusView` is
+unchanged — on improvise the bed is playing out loud and
+`RecordingRoute.speakerBleed` already carries that honesty cue; `RecordSetupHint`
+gained a `startPhrase` parameter, since "when training starts" is wrong on a screen
+whose button says *start the backing track*. A freeform block never opens
+`ExerciseRunView`, so it carries its own **Takes** entry in the ⋯ menu; without it,
+its takes would exist only in the Journal tab. `RecordingOwner.song` still has no
+standalone surface and stays unused.
+
+**3. The recorder is a session holder** (added on the device pass that followed,
+2026-08-05, after takes were found to be **destroyed on stop**).
+
+`AudioPlumbing` reference-counts the shared session, and every audio producer takes
+a lease — except, until now, the recorder. So the last *other* producer stopping,
+or anything asserting `.playback`, tore the session out from under a live
+`AVAudioRecorder`. `AVAudioRecorder.currentTime` then reads `0`, which
+`RecordingController` read as an accidental tap below `minTakeDuration` and deleted
+the file. Three things follow, and together they are the fix:
+
+- **`RecordingController` holds two `AudioSessionClaim`s** — one for the duration of
+  a take, one for the duration of a held record session. The invariant is stated on
+  the property: a controller contributes `(recording ? 1 : 0) + (holding ? 1 : 0)`
+  holders, and nothing while merely `.armed`, because arming touches no session.
+- **The `.playAndRecord` guard is no longer per-engine.** It lived inline in
+  `StandaloneMetronomeEngine`, under a comment reasoning that `PracticeAudioEngine`
+  "configures once at load" and so didn't need it. True on the loop trainer, which
+  preloads; false on improvise, where the first play tap loads *after* the take was
+  armed. It is now `AudioPlumbing.ensurePlaybackSession` / `ensureRecordSession`, and
+  every producer goes through it — including `RecordingPlayer`, which was downgrading
+  the session when a take was auditioned and so breaking the *next* take.
+- **`beginArmedTake` asserts the record category rather than trusting `holdsSession`.**
+  A flag can be right while the session has since been changed underneath it, which is
+  exactly what the Takes sheet did.
+
+`TakeRecorder.stop()` also stops believing a zero: when `currentTime` reports nothing
+it reads the true length back off the written file (`AVAudioFile`, header-only), and
+logs — reaching that fallback always means something stopped the recorder behind our
+back. **A file holding real audio is never deleted for looking empty.**
+
+This repairs the **shipped** surfaces too, not just the two new ones: `LoopRunView`
+and `ExerciseRunView` both finalise takes from `.onChange(of: isRunning)`, which runs
+after their engine has already released the session. Those seams are now commented as
+lease-dependent, since there is nothing there to reorder.
+
+**3a. Deleting a take is a hold, and it is undoable** (2026-08-06). `TakesSheet`
+deleted on a plain `.onDelete` swipe and called `RecordingStore.delete` straight
+through, which made it the easiest place in the app to lose a recording. A take has
+no source to regenerate it from — unlike an exercise, which can be rebuilt from the
+same idea — so the gesture should cost what the mistake does: delete moved to the
+row's hold menu, and the sheet took the shared `RowDeletionCoordinator`, so the
+owning screen's existing delete closure now runs as the *deferred* action and the
+file survives as long as the Undo toast does. The host screens were not touched.
+Rename keeps its swipe: it destroys nothing.
+
+**3b. The open-ended screens can reach their own takes** (2026-08-06). A take was
+reachable from a unit's `PracticeReviewBar`, which improvise and ear training don't
+have — they are `Form`s, not run screens — so a take recorded there was playable only
+from the Journal tab, which means leaving the loop you just played over to hear what
+you played over it. The resting take count under the record button becomes the way in:
+it is already the sentence saying the takes exist, so it carries the tap rather than
+adding a control. `ContinuousLoopControls` gains an `onOpenTakes` seam and stays
+owner-agnostic; the host presents `TakesSheet`, since only it knows the owner.
+
+**Opening the takes stops the bed first.** `TakesSheet` has its own `RecordingPlayer`,
+and a take playing under the audio it was recorded over is two things at once and
+neither audible — worse on ear training, where the take is a voice under the loop it
+was humming. Any in-flight take is finalised before the stop, keeping the ordering rule
+§3 states.
+
+**Freeform already had this** (⋯ → Takes, added with the block itself), which is why
+the gap only showed on the two loop modes. The **ramped** run screens keep today's
+behaviour deliberately: they have the review bar, and it stays gated on `!isRunning`
+because pausing a ramp to listen is a different question from relistening on a screen
+with no ramp to lose.
+
+**4. A take can be named.** `Recording` gains an optional `title` (additive, no
+declaration default). Takes are the only row on the Journal feed with nothing but a
+timestamp to distinguish them — a note carries its own words, a session note carries
+its routine's name — so naming is offered here and on no other entry kind. Renaming is
+reachable from both surfaces a take appears on, through one shared alert keyed on the
+take's stable `uid` (ADR 0090). A named take also joins
+`JournalTimeline.searchHaystack`, or naming one would make it identifiable everywhere
+except the search field.
+
 ## Context
 
 The product should let a user **record their practice** — capture their playing,

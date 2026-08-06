@@ -109,10 +109,34 @@ This is the only slice of the v2 close-out that touches the store.
   their sheet. No third editing surface: a session note is written in one breath at the end of a
   session, and the thing you want when it comes out wrong is to remove it, not to curate it.
 
+  **Widened 2026-08-05 (ADR 0100 amendment).** The "session rows only" half did not survive contact
+  with use: the app's own designer went looking for delete on a *unit-owned* note and was surprised it
+  wasn't there. A rule its author forgets while using the app is not a rule a player will hold, and
+  the justification above — that a session note has no other way out — explains why session rows
+  needed it *first*, not why other rows should be denied it. Delete now reaches every row on the feed,
+  takes included. The rest of S7 stands unchanged: still no editing here, and the deletes are the
+  deferred, undoable kind (`RowDeletionCoordinator`), which is also what makes removing a take's audio
+  file safe to offer.
+
 - **S8 — The links honour the same gates the caption does.** A pill routes through
   `JournalOwnerRoute` on the unit's stable `uid` (ADR 0090), opens the mode a loop qualifies for
   (ADR 0142 J5a), and raises the paywall rather than the run screen for a locked Pro drill (ADR 0142
   J5c). One rule for both, since a caption and a pill make the player the same promise.
+
+  **Extended 2026-08-06 — the session's own caption leads somewhere too.** S8 gave the *pills* a
+  destination and left the line above them, the routine's name, as the last dead label on the feed:
+  a session entry could take you to any drill you practised but not to the sitting they belonged to.
+  `JournalOwnerRoute` gains a `.routine` case, resolved from `routineUID` **loosely** against the
+  routines library — the same trade, and the same ordinary failure, as the pills: a routine deleted
+  since the session leaves the caption as plain text while `routineNameAtEntry` keeps saying what the
+  sitting was called (S3). It lands on `RoutineDetailView`, where the Routines library's own row-tap
+  goes, and is gated on `AccessPolicy.canEditRoutine` for the reason J5c gives — a note written while
+  subscribed survives a lapse, and must not become a way around the gate.
+
+  **`ownerKind` decides, not the presence of an id.** An *exercise* note written during a routine
+  also carries a `routineUID` (S4). Routing on the id alone would send a drill note to the routine
+  instead of the drill — which is exactly the confusion `ownerKind` was introduced to prevent, and
+  which `JournalOwnerRouteTests` now pins.
 
 ## Consequences
 

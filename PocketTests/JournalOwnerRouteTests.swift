@@ -185,4 +185,63 @@ final class JournalOwnerRouteTests: XCTestCase {
 
         XCTAssertNil(JournalOwnerRoute.route(for: ref, exercises: [spider], loops: []))
     }
+
+    // MARK: - The session caption itself (2026-08-06)
+
+    /// The session entry's own caption — the routine name — was the last dead label on the feed: its
+    /// unit pills led somewhere and the sitting they belonged to didn't. Resolved the same loose way
+    /// the pills are, and failing the same ordinary way.
+    private func sessionNote(routineUID: UUID, name: String = "Evening warm-up") -> JournalTimeline.Item {
+        .note(JournalEntry.forSession(text: "legato felt cleaner at the top", kind: .note,
+                                      routineUID: routineUID, routineName: name, units: []))
+    }
+
+    func testASessionNoteRoutesToItsRoutine() {
+        let routine = Routine(name: "Evening warm-up")
+        let other = Routine(name: "Something else")
+
+        let route = JournalOwnerRoute.route(for: sessionNote(routineUID: routine.uid),
+                                            routines: [other, routine])
+
+        XCTAssertEqual(route, .routine(routine))
+    }
+
+    func testADeletedRoutineLeavesTheSessionCaptionAsPlainText() {
+        let route = JournalOwnerRoute.route(for: sessionNote(routineUID: UUID()), routines: [])
+
+        XCTAssertNil(route, "the entry outlives the routine; the caption stops being a link")
+    }
+
+    /// The caption keeps saying what the sitting was called even when it leads nowhere — the snapshot
+    /// and the link are independent (ADR 0038/0143).
+    func testADeletedRoutineStillLabelsItsEntry() {
+        let item = sessionNote(routineUID: UUID(), name: "Evening warm-up")
+
+        XCTAssertEqual(JournalTimeline.ownerLabel(for: item), "Evening warm-up")
+    }
+
+    /// The routines library is only consulted for a session. An exercise note resolves through its
+    /// relationship as it always did, with no library passed at all.
+    func testAnExerciseNoteStillNeedsNoRoutineLibrary() {
+        let spider = Exercise(name: "Spider", currentTempo: 80, commandTempo: 96)
+        let entry = JournalEntry.forExercise(text: "cleaner", kind: .breakthrough, commandBpmAtEntry: 96)
+        entry.exercise = spider
+
+        XCTAssertEqual(JournalOwnerRoute.route(for: .note(entry)), .exercise(spider))
+    }
+
+    /// A session entry carries a `routineUID` **and** nothing else; an exercise entry can carry a
+    /// `routineUID` too (the sitting it was written in). `ownerKind` is what separates them, and
+    /// routing must follow it rather than the presence of the id — or a drill note written during a
+    /// routine would open the routine instead of the drill.
+    func testADrillNoteWrittenInsideASessionStillOpensTheDrill() {
+        let spider = Exercise(name: "Spider", currentTempo: 80, commandTempo: 96)
+        let routine = Routine(name: "Evening warm-up")
+        let entry = JournalEntry.forExercise(text: "cleaner", kind: .breakthrough, commandBpmAtEntry: 96)
+        entry.exercise = spider
+        entry.routineUID = routine.uid
+
+        XCTAssertEqual(JournalOwnerRoute.route(for: .note(entry), routines: [routine]),
+                       .exercise(spider))
+    }
 }

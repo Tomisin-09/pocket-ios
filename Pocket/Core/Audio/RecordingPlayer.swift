@@ -26,8 +26,10 @@ final class RecordingPlayer {
         }
         stop()
         // Ensure the shared session is playback-capable — a take may be auditioned from a screen that
-        // never armed an engine.
-        AudioPlumbing.configurePlaybackSession(label: "take-playback")
+        // never armed an engine. Guarded: the Takes sheet opens from screens that hold a record
+        // session (a freeform block), and downgrading it here left the *next* take recording under
+        // `.playback`, which destroyed it (device pass 2026-08-05).
+        AudioPlumbing.ensurePlaybackSession(label: "take-playback")
         guard let url = try? RecordingStore.url(for: fileName),
               let newPlayer = try? AVAudioPlayer(contentsOf: url) else {
             AudioPlumbing.log.error("RecordingPlayer: could not open take \(fileName)")

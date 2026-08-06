@@ -7,8 +7,12 @@ import SwiftUI
 /// exercise through `ExerciseRunScreen` (which routes a freeform block onward, ADR 0136), and a loop
 /// through the screen for the mode the route resolved. No bespoke "journal detail" surface — a note
 /// is about a unit, and the unit already has a home.
+///
+/// A **session** lands on its routine's editor, which is where the Routines library's own row-tap
+/// goes — so following a session note reaches the thing you would run again, by the same door.
 struct JournalOwnerDestinationView: View {
     let route: JournalOwnerRoute
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         switch route {
@@ -20,6 +24,8 @@ struct JournalOwnerDestinationView: View {
             case .ear: EarTrainingScreen(loop: loop)
             case .improvise: ImproviseScreen(loop: loop)
             }
+        case .routine(let routine):
+            RoutineDetailView(container: modelContext.container, existing: routine)
         }
     }
 }

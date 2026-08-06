@@ -15,20 +15,22 @@ struct JournalTabView: View {
     // scope filter happen in memory via `JournalTimeline`.
     @Query(sort: \JournalEntry.createdAt, order: .reverse) private var entries: [JournalEntry]
     @Query(sort: \Recording.createdAt, order: .reverse) private var takes: [Recording]
-    // The library, for resolving a session entry's practised-unit pills (ADR 0143). Those are loose
-    // **id copies**, not relationships — that is what lets an entry outlive the units it names — so
-    // there is nothing to follow and the uid has to be looked up. Unsorted and unfiltered, like the
-    // two above and for the same reason.
+    // The library, for resolving a session entry's practised-unit pills (ADR 0143) **and its routine
+    // caption**. Those are loose **id copies**, not relationships — that is what lets an entry outlive
+    // the units it names — so there is nothing to follow and the uid has to be looked up. Unsorted and
+    // unfiltered, like the two above and for the same reason.
     @Query private var exercises: [Exercise]
     @Query private var loops: [Loop]
+    @Query private var routines: [Routine]
 
     @State private var scope: JournalTimeline.Scope = .all
     /// Free-text search over song / loop / exercise / template / date (`JournalTimeline.searchHaystack`).
     @State private var query = ""
     /// Day order — newest-first by default; flip to walk the history forwards.
     @State private var sortOrder: JournalTimeline.SortOrder = .newest
-    /// One take plays at a time; stopped on dismiss (mirrors `TakesSheet`).
-    @State private var player = RecordingPlayer()
+    /// One take plays at a time; stopped on dismiss (mirrors `TakesSheet`). Not `private`: the
+    /// deletion glue lives in `JournalTabView+Deletion.swift`, and `private` is file-scoped.
+    @State var player = RecordingPlayer()
     /// The unit an owner caption is opening (ADR 0142), or `nil`. Keyed on the unit's stable `uid`
     /// through `JournalOwnerRoute`, never `persistentModelID` (ADR 0090).
     @State private var openingOwner: JournalOwnerRoute?
@@ -36,14 +38,22 @@ struct JournalTabView: View {
     /// run gate the exercise library's rows do, so a note is never a way past it.
     @Environment(\.isPro) private var isPro
     @Environment(\.presentPaywall) private var presentPaywall
-    /// For the one write verb this read-only space has — deleting a session entry (ADR 0143).
-    @Environment(\.modelContext) private var modelContext
+    /// For this space's write verbs — deleting any entry, and naming a take (ADR 0100 amendment).
+    @Environment(\.modelContext) var modelContext
+    /// Deferred, undoable deletion — screen-owned, like every library list's. Deferral is what makes
+    /// deleting a *take* offerable at all: its audio file is only removed once the window closes, so
+    /// nothing irreversible happens while Undo is still on screen.
+    @State var rowDeletion = RowDeletionCoordinator()
+    /// The take being named, by stable `uid` — never `persistentModelID` (ADR 0090). Not `private`:
+    /// the hold menu that sets it lives in `JournalTabView+Deletion.swift`.
+    @State var renaming: StableRef<Recording>?
 
-    /// The scope- then search-filtered feed.
+    /// The scope- then search-filtered feed, minus anything awaiting deletion. Filtering here rather
+    /// than at the row is what makes `sections` and the empty state follow automatically.
     private var items: [JournalTimeline.Item] {
-        let scoped = JournalTimeline.filter(JournalTimeline.merge(entries: entries, takes: takes),
-                                            scope: scope)
-        return JournalTimeline.filter(scoped, query: query)
+        let merged = JournalTimeline.merge(entries: entries, takes: takes)
+            .filter { !rowDeletion.isPending($0.id) }
+        return JournalTimeline.filter(JournalTimeline.filter(merged, scope: scope), query: query)
     }
 
     /// Day-sectioned for display (pure helper, shared with `JournalSheet`); `oldest` reverses both the
@@ -65,6 +75,10 @@ struct JournalTabView: View {
             scopePicker
             if sections.isEmpty { emptyState } else { list }
         }
+        // Above the list-vs-empty-state branch on purpose: deleting the last row swaps the `List` for
+        // the empty state, and a host applied inside either branch would take the toast with it.
+        .pocketRowUndoHost(rowDeletion)
+        .renameTakeAlert($renaming, context: modelContext)
         // Cap to a readable column at regular width (iPad / landscape); no-op at compact
         // width, dormant on the iPhone-only v1 build (ADR 0105).
         .readableWidth()
@@ -107,14 +121,15 @@ struct JournalTabView: View {
     /// run screen — the same `canRun` gate `ExerciseLibraryView`'s rows apply, since a player who
     /// wrote notes while subscribed keeps the notes when the subscription lapses.
     private func openOwner(of item: JournalTimeline.Item) {
-        guard let route = JournalOwnerRoute.route(for: item) else { return }
+        guard let route = JournalOwnerRoute.route(for: item, routines: routines) else { return }
         open(route)
     }
 
-    /// The caption's tap action, or `nil` when the item has nowhere to go — a song-owned take, or a
-    /// loop whose audio no longer resolves. `nil` keeps the caption as plain text.
+    /// The caption's tap action, or `nil` when the item has nowhere to go — a song-owned take, a loop
+    /// whose audio no longer resolves, or a session whose routine has been deleted. `nil` keeps the
+    /// caption as plain text.
     private func openAction(for item: JournalTimeline.Item) -> (() -> Void)? {
-        guard JournalOwnerRoute.route(for: item) != nil else { return nil }
+        guard JournalOwnerRoute.route(for: item, routines: routines) != nil else { return nil }
         return { openOwner(of: item) }
     }
 
@@ -128,25 +143,25 @@ struct JournalTabView: View {
         return { open(route) }
     }
 
-    /// Follow a resolved route, honouring the Pro run gate.
+    /// Follow a resolved route, honouring the Pro gate. A note written while subscribed survives a
+    /// lapse — but following it must not become a way around the gate (ADR 0142 J5c), so each kind is
+    /// checked against the same policy its own library applies: `canRun` for an exercise, and
+    /// `canEditRoutine` for a routine, since the editor is where a session caption lands.
     private func open(_ route: JournalOwnerRoute) {
-        if case .exercise(let exercise) = route,
-           !AccessPolicy.canRun(exercise.template, isPro: isPro,
-                                isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug)) {
-            presentPaywall(.proExercise)
-            return
+        switch route {
+        case .exercise(let exercise):
+            guard AccessPolicy.canRun(exercise.template, isPro: isPro,
+                                      isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug))
+            else { return presentPaywall(.proExercise) }
+        case .routine(let routine):
+            guard AccessPolicy.canEditRoutine(
+                isPro: isPro,
+                isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug))
+            else { return presentPaywall(.routine(.edit)) }
+        case .loop:
+            break
         }
         openingOwner = route
-    }
-
-    /// Delete a session entry (ADR 0143). The Journal space is otherwise read-only — writing and
-    /// editing live in the per-owner `JournalSheet` — but a session entry **belongs to no unit**, so
-    /// no per-owner sheet can ever reach it. Without this one verb here, a session note would be
-    /// permanent. Unit-owned rows keep their read-only treatment and their sheet.
-    private func delete(_ entry: JournalEntry) {
-        JournalWriter.delete(entry, from: modelContext)
-        try? modelContext.save()
-        haptic(.light)
     }
 
     // MARK: - Scope filter
@@ -185,14 +200,7 @@ struct JournalTabView: View {
             JournalEntryRow(entry: entry, ownerLabel: JournalTimeline.ownerLabel(for: item),
                             onOpenOwner: openAction(for: item),
                             openUnit: openAction(for:))
-                // Session entries only — see `delete(_:)` for why this one verb is here at all.
-                .swipeActions(edge: .trailing) {
-                    if case .session = entry.ownerKind {
-                        Button(role: .destructive) { delete(entry) } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                }
+                .contextMenu { holdMenu(for: item) }
         case .take(let take):
             JournalTakeRow(take: take,
                            ownerLabel: JournalTimeline.ownerLabel(for: item),
@@ -200,6 +208,15 @@ struct JournalTabView: View {
                            isPlaying: player.isPlaying(take.fileName)) {
                 player.toggle(take.fileName)
             }
+            // Naming is a take-only verb: every other row already says what it is in its own words.
+            // It also survives as a swipe where **delete** doesn't, because renaming destroys nothing.
+            .swipeActions(edge: .leading) {
+                Button { renaming = StableRef(value: take) } label: {
+                    Label("Rename", systemImage: "pencil")
+                }
+                .tint(PocketColor.journal)
+            }
+            .contextMenu { holdMenu(for: item) }
         }
     }
 

@@ -20,6 +20,11 @@ struct CollapsibleLibrarySection<Content: View>: View {
     let count: Int
     /// The caller owns the state — each library persists its own collapse (`LibrarySectionExpansion`).
     @Binding var isExpanded: Bool
+    /// An optional SF Symbol between the chevron and the title, so a bucket is recognisable before it
+    /// is read. **Optional on purpose:** only the Exercises library groups by something that owns a
+    /// glyph (a template); grouping by initial letter or song title has none, and inventing one would
+    /// be decoration. Decorative here too — it stays out of the accessibility label below.
+    var icon: String?
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -34,6 +39,11 @@ struct CollapsibleLibrarySection<Content: View>: View {
                     Image(systemName: "chevron.right")
                         .font(.futura(.caption2, weight: .semibold))
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    if let icon {
+                        Image(systemName: icon)
+                            .font(.futura(.caption, weight: .semibold))
+                            .frame(width: 18)   // fixed, so titles line up whatever the glyph's width
+                    }
                     Text(title)
                     Spacer(minLength: 8)
                     Text("\(count)")

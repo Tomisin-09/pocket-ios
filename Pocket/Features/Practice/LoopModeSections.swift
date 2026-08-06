@@ -64,16 +64,57 @@ struct ContinuousLoopControls: View {
     let playingStatus: String
     /// What it says before the first tap.
     var idleStatus = "Tap to loop the audio"
+    /// Practice takes over this bed (ADR 0069), when the host supports them. Non-nil puts the **arm
+    /// toggle** beside the play button and begins the take as playback starts, which is the ordinary
+    /// arm-then-Start grammar: this button *is* a Start.
+    ///
+    /// **Both modes now pass one** (2026-08-06). Ear training was excluded on the reasoning that
+    /// nothing is played over an ear block — you're hearing, not performing — which mistook *what is
+    /// captured* for *whether capture is useful*. Humming a line back is exactly the thing you can't
+    /// judge while doing it, and a take is the only way to hear it as the room heard it. The app still
+    /// forms no opinion of it (ADR 0070): it records, the player listens.
+    var recorder: RecordingController?
+    /// Called after the transport stops, so the host can finalize a take against its own owner —
+    /// keeping these controls owner-agnostic like `RecordControls`.
+    var onStopped: () -> Void = {}
+    /// How many takes the owner already holds, for the resting line. A count, not a model, so these
+    /// controls still know nothing about who owns the take.
+    var takeCount = 0
+    /// What *this* mode calls the audio it cycles — "backing track" on improvise, plain "loop" on ear
+    /// training, where nothing is being backed. One noun rather than two ready-made sentences: every
+    /// line that names the bed builds from it, so they can't drift apart.
+    var bedNoun = "backing track"
+    /// Open the owner's takes. The host presents the sheet, since it knows the owner; these controls
+    /// only offer the way in. `nil` leaves the count as plain text.
+    var onOpenTakes: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 12) {
-            playButton
+            HStack(spacing: 14) {
+                playButton
+                if let recorder {
+                    // Disabled while the bed plays and nothing is recording: re-arming would need a
+                    // Start, and the only Start here is already running — flipping the audio category
+                    // mid-playback is the glitch the arm grammar exists to avoid. The caption below
+                    // says so, which is the difference between disabled and broken.
+                    RecordArmToggle(recorder: recorder,
+                                    disabled: player.isUnavailable
+                                              || (player.isPlaying && !recorder.isRecording),
+                                    onStopTake: onStopped)
+                }
+            }
             Text(statusLine)
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
+            if let recorder {
+                RecordSetupHint(recorder: recorder, startPhrase: "when the \(bedNoun) starts")
+                RecordingStatusView(recorder: recorder)
+                recordRestingLine(recorder)
+            }
             tempoControl
                 .padding(.top, 4)
         }
+        .animation(.easeInOut(duration: 0.2), value: recorder?.state)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
         .listRowBackground(Color.clear)
@@ -82,7 +123,18 @@ struct ContinuousLoopControls: View {
     private var playButton: some View {
         Button {
             haptic(.light)
-            player.toggle()
+            if player.isPlaying {
+                // Finish the take before the bed stops, not after: the engine releases the shared
+                // session on stop, and a take finalised on the far side of that reads a duration of
+                // zero and gets discarded as an accidental tap.
+                onStopped()
+                player.toggle()
+            } else {
+                // Before playback, never after (ADR 0069 slice 2): the `.playAndRecord` flip is
+                // inaudible only while nothing is sounding.
+                recorder?.beginArmedTake()
+                player.toggle()
+            }
         } label: {
             ZStack {
                 Circle()
@@ -101,6 +153,21 @@ struct ContinuousLoopControls: View {
         .buttonStyle(.plain)
         .disabled(player.isUnavailable)
         .accessibilityLabel(player.isPlaying ? "Stop the loop" : "Play the loop")
+    }
+
+    /// The line under the take controls. While the bed plays and nothing is recording, the arm ring is
+    /// disabled — say **why** in the slot the hint already occupies, rather than leaving a dimmed
+    /// control with no explanation. Otherwise it is the ordinary saved-confirmation-then-count.
+    @ViewBuilder private func recordRestingLine(_ recorder: RecordingController) -> some View {
+        if player.isPlaying, !recorder.isRecording, recorder.lastSaved == nil {
+            Text("Stop the \(bedNoun) to record another take.")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+                .multilineTextAlignment(.center)
+        } else {
+            TakeSavedNote(recorder: recorder, takeCount: takeCount, owner: "loop",
+                          onOpenTakes: onOpenTakes)
+        }
     }
 
     /// The state line under the button — never a score, just what the audio is doing.
