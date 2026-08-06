@@ -103,8 +103,28 @@ true under ADR 0120 and is now true only inside the EEA.
 Questionnaire answers are all "None" → **4+**.
 
 ## Price / availability
-- **Price:** Free (the base ADPLA covers free apps; you haven't accepted
-  Schedule 2 and there's no IAP in v1 — keep it free).
+- **App price:** Free to download. The app itself is never paid — everything is
+  sold through the subscription below (ADR 0144 retired the free *tier*, not the
+  free *download*).
+- **In-app purchases:** two auto-renewable subscriptions in the **"Red Moon Pro"**
+  group — `click.decooperations.pocket.pro.annual` (£49.99/yr, the default the
+  paywall leads with) and `click.decooperations.pocket.pro.monthly` (£5.99/mo).
+  Both carry a **1-month** introductory free trial.
+  ⚠ **The live price and trial length are whatever App Store Connect says**, not
+  what this file or `Configuration/RedMoonPro.storekit` says — the `.storekit`
+  file only drives local and simulator testing. Never treat either as the source
+  of truth, and note the app *derives* the trial length from StoreKit rather than
+  hardcoding it (ADR 0144 A4), so ASC is the only place it needs changing.
+  ⚠ Both products must be **"Ready to Submit"** before submission — sandbox will
+  not vend a draft.
+- **Paid Applications Agreement:** required now that there is IAP, and **active**
+  (Tide GBP bank + W-8BEN-E both confirmed Active). The old note here said the
+  base ADPLA was enough because v1 shipped no IAP — that stopped being true with
+  ADR 0144.
+- **Free surface for App Review:** the Toolkit (tuner, metronome, saved chords,
+  glossary, Help & FAQs) and the Journal are free forever and need no purchase to
+  evaluate. **Say so in the review notes** — a hard paywall draws 2.1 / 3.1.2
+  scrutiny, and this is the mitigation.
 - **Availability:** All territories, unless you want a phased rollout.
 
 ## Export compliance
@@ -118,9 +138,13 @@ Auto-skipped — `ITSAppUsesNonExemptEncryption = false` is already set.
 (iOS app)" section to the existing per-service policy at
 `decooperations.co.uk/privacy` (Vercel), matching the Docket/website section style
 — see the paste-ready section text in chat / commit. It must match
-`docs/privacy-policy.md` as revised by ADR 0120: no accounts, local + own-iCloud
-only, your playing never transmitted, and **opt-in anonymous usage counts that are
-off by default**. The older "collects nothing" wording is no longer accurate. Give
+`docs/privacy-policy.md` as revised by ADR 0120 **and 0147**: no accounts, data
+stored **on the device** (there is no cross-device sync — `Pocket.entitlements` is
+empty and no CloudKit database is configured, ADR 0145), your playing never
+transmitted, and anonymous usage counts whose **default depends on region** —
+**off until asked** in the EEA and Switzerland, **on with a simple way to object**
+everywhere else. The older "collects nothing" wording is no longer accurate, and
+neither is describing the counts as opt-in unqualified. Give
 Apple the anchored URL so the reviewer lands on the relevant section:
 - **Privacy Policy URL** → `https://decooperations.co.uk/privacy#red-moon-practice`
   (verify the heading slugifies to that anchor).
@@ -133,8 +157,13 @@ Apple the anchored URL so the reviewer lands on the relevant section:
   `decooperations.co.uk/contact` form (loses the iOS-17 / your-files expectations
   the dedicated page sets).
 
-Contact email on the support page: `support@decooperations.click` — confirm it
-exists / forwards before submission. Marketing URL: leave blank for v1 (full
+Contact email: `support@decooperations.co.uk` (Google Workspace — see
+`docs/site/DEPLOY.md` §4). ⚠ This line previously said
+`support@decooperations.click`, which was wrong and is the sort of typo that ships
+a dead support address: `.click` is the domain the *support page* is hosted on,
+the *mailbox* is on `.co.uk`. The `.co.uk` address is what `support.html`,
+`redmoon-privacy.html`, `docs/privacy-policy.md` and — since ADR 0145 — the app
+itself all use. Confirm it exists / forwards before submission. Marketing URL: leave blank for v1 (full
 marketing site is a post-launch project; point the Marketing URL at it later — no
 new build needed).
 
@@ -191,7 +220,10 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 ## Pre-submission checklist
 - [ ] Subtitle, promotional text, keywords, description entered (above)
 - [ ] 8 screenshots re-shot on iPhone 17 Pro Max sim (native 1320×2868, clean 9:41 status bar) and uploaded in order — see revised shoot guide above; verify ASC slot size on sign-in
-- [ ] `support@decooperations.click` mailbox live
+- [ ] `support@decooperations.co.uk` mailbox live — **the app now ships this address**
+      (Settings ▸ About ▸ Contact Support, and in plain text inside an FAQ answer,
+      ADR 0145), so a dead mailbox is now a bug in a shipped build, not just a
+      broken link on a page
 - [ ] "Red Moon Practice" section added to decooperations.co.uk/privacy; `#red-moon-practice` anchor resolves
 - [ ] support.html deployed to decooperations.click/redmoon/support
 - [ ] Support URL + Privacy Policy URL pasted into the form
