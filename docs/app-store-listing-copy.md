@@ -94,6 +94,61 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 >
 > Named after the Tom Misch track that started it all.
 
+## What's New in This Version — 4,000 char max (1.1)
+
+**Who actually reads this:** nobody is upgrading. 1.0 had zero downloads and is
+off sale, so there is no installed base to write a diff for. This field is read
+by (a) App Review and (b) new visitors on the product page, where Apple shows it
+alongside the description. So it should read as *what the app is now*, not as a
+changelog against a build nobody has. Keep the first two lines strong — Apple
+truncates the rest behind "more".
+
+Paste-ready:
+
+> Red Moon Practice 1.1 makes the practice room sturdier.
+>
+> • Songs you import are now kept inside the app on your phone, so they ride along
+> in your phone's own backup. Restore to a new phone and your library comes back
+> playing, with its loops, markers, takes and notes intact. Your original file stays
+> where it is, untouched.
+> • If a song ever does come up silent, you can point it at the file again and keep
+> everything attached to it — no re-importing, no lost work.
+> • Help & FAQs now lives in the Toolkit: sixteen answers, searchable, free whether
+> or not you subscribe. You can email us from inside the app.
+> • The Toolkit and the Journal are free forever — tuner, metronome, chord and
+> theory tools, and your own notes, takes and progress. Everything else is Red Moon
+> Pro, free for a month before you pay anything, and what you wrote and recorded
+> stays yours either way.
+> • The app no longer asks for access to your music library. It never used it.
+>
+> Something missing or broken? support@decooperations.co.uk — we read every one.
+
+Shorter alternative, if the list feels heavy for a first impression:
+
+> Songs you import are now kept inside the app on your phone, so they ride along in
+> your phone's own backup: restore to a new phone and your library comes back
+> playing, with its loops, markers, takes and notes intact. A song that can't find
+> its audio can be pointed at the file again without losing any of that.
+>
+> New: Help & FAQs in the Toolkit, searchable and free, with a way to email us from
+> inside the app. The Toolkit and the Journal are free forever; everything else is
+> Red Moon Pro, free for a month first.
+>
+> The app no longer asks for access to your music library — it never used it.
+>
+> support@decooperations.co.uk
+
+**Never write that imported songs "belong to Red Moon"** or any other ownership
+phrasing, however true it is of the storage location. On a product page, with no
+surrounding context, it reads as *uploaded to our cloud* — and there is no cloud.
+Anchor both halves on the device instead: kept *inside the app on your phone*,
+riding along in *your phone's own* backup. Every claim above is about local
+storage and the user's own device backup; nothing here should imply a server.
+
+**Don't** write "bug fixes and performance improvements" — Apple's own guidance
+calls it out, and with no installed base it says nothing to the only people
+reading. **Don't** mention 1.0 being pulled, ADR numbers, or CI/test work.
+
 ## Support URL — REQUIRED
 Needs to resolve to a real page. Cheapest route: a single static page (GitHub
 Pages, Notion public page, or a Carrd) with a contact email. Placeholder:
@@ -430,8 +485,17 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] Category: Music (primary) / Education (secondary)
 - [ ] Age rating questionnaire → 4+
 - [ ] Price: Free · Availability set
-- [ ] `xcodegen generate` → Archive (Release, team 2L35PZ86GP — Deco Operations Ltd, paid; owns `click.decooperations.pocket`) → Upload
+- [x] **Archived and uploaded 2026-08-07 — "Pocket 1.1 (3) uploaded".** Done in **Xcode**,
+      not the CLI: only *Apple Development* certificates were installed, and an App Store
+      upload needs an *Apple Distribution* one, which only automatic signing creates.
+      ⚠ The repo checks in `CODE_SIGN_STYLE: Manual` for CI determinism and `xcodegen
+      generate` rewrites the project — so **re-tick "Automatically manage signing" +
+      team 2L35PZ86GP after every regenerate**, and set the destination to *Any iOS
+      Device (arm64)* or Archive stays greyed out. ("Pocket" in the upload dialog is the
+      internal `PRODUCT_NAME`; `CFBundleDisplayName` is Red Moon.)
 - [ ] Build finished processing and attached to **version 1.1**
+- [ ] **What's New** filled in — paste-ready copy is in the section above. Required for a
+      new version, and read by App Review and by new visitors on the product page
 - [ ] Add for Review → Submit
 - [ ] 🔴 **TURN AVAILABILITY BACK ON once 1.1 is approved.** 1.0 was removed from sale
       2026-08-07 (done) while 1.1 is prepared, so the app is currently **not on the
