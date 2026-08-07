@@ -1,7 +1,9 @@
 # StoreKit sandbox validation — the purchase path (ADR 0112)
 
-**Status:** prerequisites cleared 2026-08-07, testing not started · **Blocks:** shipping any build
-that shows the paywall — and it is the **last open item in v2**.
+**Status:** ✅ **sandbox validation COMPLETE 2026-08-07** — accounts A and B both passed, restore
+passed, two bugs found and fixed (both shipped in #226). What remains is not sandbox work: the
+`.storekit` sync loose end, and the submission items at the bottom. **This was the last open item in
+v2, so v2's close-out is done.**
 **Context:** ADR 0112 merged 2026-07-28 (PR #178, `47fbd83`); ADR 0144 (PR #220) made the trial
 length read from the product. The ASC products are set up and out of Draft; **the purchase path
 itself is still unverified.**
@@ -51,14 +53,43 @@ state was confirmed before any eligibility reset.
 Subscriptions → Cancel Subscription. **Not** the app's own Manage Subscription, which presents
 `.manageSubscriptionsSheet` against the *production* account.
 
-### Still outstanding
+### Account B — COMPLETE and passed
 
-- [ ] Re-verify finding 1's fix on device against a lapsed account
-- [ ] **Account B** — annual purchase, monthly ↔ annual switching (a deferred downgrade is the correct
-      result, given the level split)
-- [ ] **Restore on a wiped install** — needs a spare device or a device backup; see the warning below
+Annual purchased, then **both switch directions verified on device 2026-08-07**: monthly → annual
+immediate, annual → monthly deferred to the next renewal, a single entitlement throughout and no
+double charge. Account C was held in reserve for the second direction and turned out not to be needed.
+
+**Negative eligibility passed at the StoreKit layer, not just in our own copy:** after the first
+purchase the confirmation sheet went straight to the price with no trial line, and the trial was
+absent from **both** plan cards — which is the assertion that matters, because eligibility is one-shot
+per *group*, so buying annual must make monthly ineligible too.
+
+⚠️ **Cancelling auto-renew does not restore intro-offer eligibility** — eligibility is spent when the
+trial *starts*. Cancelling only ends the entitlement, and in sandbox it ends it within ~5 minutes,
+which is enough to strand a test mid-flight. Don't cancel unless the lapse *is* the test.
+
+### Restore on a wiped install — COMPLETE and passed, with a caveat worth keeping
+
+The app was deleted, reinstalled and relaunched. **Pro came back with no user action at all**, before
+the Restore button was touched: StoreKit 2's `Transaction.currentEntitlements` is a signed statement
+about the *Apple Account*, not the install, and `StoreManager.init` calls `refreshEntitlements()`. The
+StoreKit 1 mental model — where `restoreCompletedTransactions` is mandatory and user-initiated — does
+not apply. The explicit **Restore Purchases** button was then confirmed to complete without error and
+leave Pro on; it stays because App Review taps it and Apple requires it, not because StoreKit needs it.
+
+🐛 **This pass is what found ADR 0148.** The store restored byte-perfect and not one song would play:
+every security-scoped bookmark had died with the old installation. See
+`docs/decisions/0148-a-song-you-import-is-a-file-we-keep.md`.
+
+### Every device check on this plan now passes
+
+The "What to actually test" checklist below is fully ticked, bar the trial reminder, which cannot fire
+in sandbox by construction and is covered by `TrialReminderPlanTests` instead.
+
+### Still outstanding — none of it sandbox work
+
 - [ ] The `.storekit` "Sync from App Store Connect" loose end
-- [ ] The pre-submission items
+- [ ] The pre-submission items below
 
 ## Why this exists
 
@@ -209,9 +240,9 @@ checks.
 
 Buying is the easy path. These are the ones that break:
 
-- [ ] **Purchase annual** → `isPro` flips → gates open
-- [ ] **Purchase monthly** → same
-- [ ] **Restore on a wiped install** — delete the app, reinstall, tap Restore Purchases. Apple
+- [x] **Purchase annual** → `isPro` flips → gates open — account B, 2026-08-07
+- [x] **Purchase monthly** → same — account A, 2026-08-07
+- [x] **Restore on a wiped install** — PASSED 2026-08-07; Pro returned before the button was even tapped (see the Progress section). Delete the app, reinstall, tap Restore Purchases. Apple
       requires this to work and it's a common rejection reason.
       ⚠️ **This is the one destructive step, and it destroys real data.** `Pocket.entitlements` is
       empty — no CloudKit, no iCloud sync (it's deferred to "Phase 4 when sync lands") — and the app
@@ -222,31 +253,35 @@ Buying is the easy path. These are the ones that break:
       file. ⚠️ **"Offload App" is not "Delete App"**: offloading preserves Documents & Data, so a
       reinstall after an offload gives a container that was never wiped and the test passes without
       proving anything.
-- [ ] **Trial eligibility** — the 1-month trial shows for a first-timer, and correctly does *not*
+- [x] **Trial eligibility** — PASSED on both accounts; the 1-month trial shows for a first-timer, and correctly does *not*
       show on a second purchase (`product.subscription?.isEligibleForIntroOffer`). The CTA and the
       disclosure must both name the length **read from the product** (ADR 0144 D5) — if they say a
       number ASC does not, that is the bug this is looking for. Eligibility is read for the
       **selected** plan, so check the monthly card too, not only the annual one.
-- [ ] **Monthly ↔ annual switching** within the group (single entitlement, no double-charge)
-- [ ] **Trial lapse re-locks every gate.** ⚠️ **The one most likely to be broken** — it's the
+- [x] **Monthly ↔ annual switching** within the group (single entitlement, no double-charge) — **both directions verified on device 2026-08-07**: upgrade immediate, downgrade deferred to the next renewal.
+- [x] **Trial lapse re-locks every gate.** PASSED after the #226 fix — and this is where the bug was. ⚠️ **The one most likely to be broken** — it's the
       least-travelled path in the feature, and ADR 0112's "re-enforce at trial lapse" clause has never
       been exercised. Check: **the locked Home destinations — Practice, Song library, Today's session —
       plus "Jump back in" and the recent-routines rail (ADR 0144 D4)**, exercise library rows,
       Draw your own,
       new-from-Pro-template, **and all five routine surfaces** (library `+`, Quick-session wand,
       Today's session, collection→session, song→routine).
-- [ ] **The launch wall reappears after a lapse** — relaunch and it is there again, "Not now"
-      dismisses it, and Home is locked-but-visible behind it.
-- [ ] **The Toolkit and the Journal still work after a lapse** — tuner, metronome, chord and theory
+- [x] **The launch wall reappears after a lapse** — confirmed on device 2026-08-07: it is there
+      again on relaunch, "Not now" dismisses it, and Home is locked-but-visible behind it.
+      Note it needs a **cold launch**: the wall is `@State` on the app-root `PaywallHost`, so it
+      fires once per **process**, and `maybeShowLaunchWall` keys off `hasResolvedEntitlements`,
+      **not** `isPro` — #226's foreground re-check therefore re-locks the gates without raising the
+      wall, which is D4's "not per-foreground" rule working, not a gap.
+- [x] **The Toolkit and the Journal still work after a lapse** — the free surface survived the account-A lapse. — tuner, metronome, chord and theory
       tools, glossary; and the Journal timeline, its takes and the Progress screen. This is the whole
       free surface (ADR 0144 D2) and the mitigation named in the review notes; if it locks, the App
       Review argument goes with it. A journal entry's caption tapping through to its exercise or
       routine **should** still hit the paywall.
-- [ ] **The trial reminder** — with a short renewal rate in Xcode's *Manage StoreKit Transactions*:
+- [~] **The trial reminder — NOT TESTABLE IN SANDBOX**, and the recipe below does not apply (*Manage StoreKit Transactions* is a local-config feature). `leadTime` is 24h against a ~5-minute compressed trial, so `decide` correctly always returns `.cancel`; covered by `TrialReminderPlanTests`. Original text, for the record:
       it fires ahead of conversion, the Home/Settings countdown tracks down, turning auto-renew off
       cancels it (and the countdown stays), and conversion clears the countdown rather than pointing
       it at the next renewal.
-- [ ] **The old free-taste allowances are gone** (ADR 0144) — after a lapse the four former freebie
+- [x] **The old free-taste allowances are gone** (ADR 0144) — confirmed on device 2026-08-07 — after a lapse the four former freebie
       exercises and Morning Routine are locked like everything else. If any of them still runs, an
       allowlist has been repopulated by accident.
 
