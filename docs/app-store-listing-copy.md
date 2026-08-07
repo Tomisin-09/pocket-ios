@@ -225,20 +225,31 @@ an `id` of `red-moon-practice`; the fetch could not see one, and the Privacy Pol
 above depends on it.
 - `docs/site/privacy.html` is now **redundant** — delete once the section is live.
 
-**Support URL.** Deploy `docs/site/support.html` to AWS under `decooperations.click`
-(matches the `click.decooperations.pocket` bundle namespace):
-- `docs/site/support.html` → **Support URL** `https://decooperations.click/redmoon/support`
-- Zero-deploy alternative: point Support URL at the existing
+**Support URL — DECIDED 2026-08-07: `decooperations.co.uk`, not `.click`.**
+`https://decooperations.co.uk/redmoon/support`, served from the same Vercel site as
+the marketing page and the privacy policy. This supersedes the earlier plan to put
+it on AWS under `.click` (which had only ever been chosen to echo the
+`click.decooperations.pocket` bundle namespace — a bundle id is not a hosting
+decision, and it isn't visible to anyone).
+
+Everything now lives on **one host, one repo, one deploy**: support, marketing and
+privacy. That removes the split-brain that already produced one real bug — the
+support *mailbox* is `@decooperations.co.uk` while the page was to be hosted on
+`.click`, and this file previously printed the address as `support@decooperations.click`,
+which would have shipped a dead support address. With a single domain that class of
+typo has nowhere to live.
+
+- Source file: `docs/site/support.html` → route `/redmoon/support`
+- Marketing page's Support links are now **same-host relative** (`/redmoon/support`)
+  rather than absolute `.click` URLs
+- Zero-deploy fallback if the route slips: point Support URL at the existing
   `decooperations.co.uk/contact` form (loses the iOS-17 / your-files expectations
-  the dedicated page sets).
+  the dedicated page sets)
 
 Contact email: `support@decooperations.co.uk` (Google Workspace — see
-`docs/site/DEPLOY.md` §4). ⚠ This line previously said
-`support@decooperations.click`, which was wrong and is the sort of typo that ships
-a dead support address: `.click` is the domain the *support page* is hosted on,
-the *mailbox* is on `.co.uk`. The `.co.uk` address is what `support.html`,
-`redmoon-privacy.html`, `docs/privacy-policy.md` and — since ADR 0145 — the app
-itself all use. Confirm it exists / forwards before submission. Marketing URL: leave blank for v1 (full
+`docs/site/DEPLOY.md`). It is what `support.html`, `redmoon-privacy.html`,
+`docs/privacy-policy.md` and — since ADR 0145 — the app itself all use. Confirm it
+exists / receives before submission. Marketing URL: leave blank for v1 (full
 marketing site is a post-launch project; point the Marketing URL at it later — no
 new build needed).
 
@@ -305,7 +316,9 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
       above — it omits the tuner. See the live-site check in Hosting
 - [ ] Live site: confirm the §3 heading's `id` is `red-moon-practice` so the anchored
       Privacy Policy URL actually lands
-- [ ] support.html deployed to decooperations.click/redmoon/support
+- [ ] `support.html` deployed to **decooperations.co.uk/redmoon/support** (Vercel,
+      same repo as the marketing + privacy pages — decided 2026-08-07, supersedes
+      the `.click`/AWS plan)
 - [ ] Support URL + Privacy Policy URL pasted into the form
 - [ ] App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120); everything else "not collected". **Unchanged by ADR 0147** — the nutrition label encodes collection type, linkage and tracking, none of which the region split moves
 - [x] `APTABASE_APP_KEY` set in `project.yml` from the real EU-region app key (done 2026-07-29; `AptabaseSinkTests` pins that it resolves and is EU-region)
