@@ -40,9 +40,11 @@ tool. Animations should feel like a musical phrase, not a form submission.
   new colour needs a light *and* dark value verified for contrast, not just a
   dark one.
 - **Audio reality:** the waveform/speed/loop engine runs on **DRM-free local &
-  iCloud files** only. Apple Music is **browse/metadata only** — do not design a
-  waveform or speed control for Apple Music tracks; design their cards to show
-  metadata and an "open in Music" affordance instead. (See
+  iCloud files** only. **There is no Apple Music surface to design for** — v1 ships
+  no MusicKit and no media-library access at all, so there are no Apple Music track
+  cards, and nothing requests the music-library permission. Should a browse path
+  ever be built, it would be **browse/metadata only**: never a waveform or speed
+  control, just metadata and an "open in Music" affordance. (See
   `docs/decisions/0001-audio-source-local-first.md`.)
 - **Orientation:** portrait everywhere except the **practice screen**, which also
   supports landscape (ADR 0042) — sideways gives the waveform the full width for precise

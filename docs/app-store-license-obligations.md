@@ -16,6 +16,16 @@ Music, user data, bundled content, or payments, add a row.
 **Triggered by:** any Apple Music browse/metadata use. Reinforces
 [ADR 0001](decisions/0001-audio-source-local-first.md).
 
+**Currently NOT triggered — v1 uses no MusicKit at all.** There is no MusicKit
+import, no `MPMediaLibrary`/`MPMediaPicker`, and `SongRef.appleMusic` is
+constructed only in tests. `MediaPlayer` is imported solely for
+`MPRemoteCommandCenter` / `MPNowPlayingInfoCenter` (lock-screen transport), which
+is not MusicKit and needs no permission. `NSAppleMusicUsageDescription` was
+removed from `Info.plist` during submission prep for exactly this reason.
+
+Re-read the list below the moment anyone proposes an Apple Music browse path —
+and re-add the usage string in that same commit:
+
 - Do **not** download, upload, or modify MusicKit content.
 - Do **not** cache MusicKit content, and do **not** sync it with any other content.
 - Do **not** charge for, or indirectly monetize, access to Apple Music (no IAP,
@@ -28,9 +38,9 @@ Music, user data, bundled content, or payments, add a row.
   feature directly relevant to the app.
 - Follow the Apple Music Identity Guidelines when displaying anything.
 
-**Pocket's line:** Apple Music is browse/metadata only. The practice engine
-never touches Apple Music audio, and Apple Music metadata is not persisted
-beyond what a visible, directly-relevant feature needs.
+**Pocket's line, if it is ever built:** Apple Music would be browse/metadata only.
+The practice engine never touches Apple Music audio, and Apple Music metadata is
+not persisted beyond what a visible, directly-relevant feature needs.
 
 ### Audio recording indicator — §3.3.3.A
 **Triggered by:** practice-take mic recording (ADR 0069, when built).
@@ -42,6 +52,14 @@ beyond what a visible, directly-relevant feature needs.
 ### Content rights in bundled audio — §3.3.4.A
 **Triggered by:** any seeded/demo/bundled audio or musical content shipped in the
 app (not user-supplied files).
+
+**Currently NOT triggered.** ADR 0148 §7 deleted the bundled demo track, so the app
+ships **no** recorded audio at all. The one demo the app can still produce is
+`Song.sample()` — a tone *generated at runtime* by `SampleToneGenerator`, embodying
+no master recording and no composition of anyone else's. The App Store Connect
+**Content Rights** answer is therefore "no third-party content".
+
+Re-read this section the moment anyone proposes bundling a track again:
 
 - Master recordings and compositions embodied in the app must be **wholly owned
   by you or licensed fully paid-up**, with no per-play fees owed by Apple or you.

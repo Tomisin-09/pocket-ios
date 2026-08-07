@@ -64,7 +64,18 @@ enum ScreenshotSeed {
         "I'd Rather Go Blind": Meta(
             artist: "Etta James", genre: "Blues", bpm: 68, key: "C Major",
             collections: ["blues", "needs-work"],
-            loops: [LoopSpec("Verse phrasing", 0.22, 0.36, 0.75, 4, 1)])
+            loops: [LoopSpec("Verse phrasing", 0.22, 0.36, 0.75, 4, 1)]),
+        // Jack Trader's two tracks round the library out to five. Without entries here
+        // they import with a blank artist, which reads as a bug in the library shot
+        // rather than as a real library.
+        "Binta": Meta(
+            artist: "Jack Trader", genre: "Afrobeat", bpm: 104, key: "F# Minor",
+            collections: ["chill"],
+            loops: [LoopSpec("Head", 0.12, 0.27, 1.0, 4, 2)]),
+        "Feels": Meta(
+            artist: "Jack Trader", genre: "Neo-Soul", bpm: 88, key: "A Minor",
+            collections: ["chill", "needs-work"],
+            loops: [LoopSpec("Chorus lift", 0.34, 0.48, 0.75, 5, 3)])
     ]
 
     /// Seed the library if launched with `-seedScreenshots` and it's currently empty.

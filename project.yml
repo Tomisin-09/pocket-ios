@@ -11,8 +11,16 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "2"
+    # Must match the App Store Connect version string EXACTLY — ASC compares them as
+    # strings, so a "1.1.0" build will not appear in the build picker for a version
+    # named "1.1". 1.0 is released ("Ready for Distribution") and therefore locked;
+    # this release goes out as a new version, 1.1.
+    MARKETING_VERSION: "1.1"
+    # Monotonic, and must exceed every build already uploaded under this bundle id —
+    # ASC rejects a duplicate build number outright. Bump this every archive, not just
+    # every version. If an upload is refused as a duplicate, raise it again; there is
+    # no cost to skipping numbers.
+    CURRENT_PROJECT_VERSION: "3"
     DEVELOPMENT_TEAM: "" # set via CI / local xcconfig; do not hard-code
 
 # Per-configuration backend base URL (Debug → dev, Release → prod).

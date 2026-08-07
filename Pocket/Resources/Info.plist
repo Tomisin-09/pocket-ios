@@ -38,11 +38,14 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 
-	<!-- Apple Music library access is browse/metadata only in V1. This string is
-	     surfaced verbatim in the system permission prompt; vague strings cause
-	     App Store rejection. -->
-	<key>NSAppleMusicUsageDescription</key>
-	<string>Pocket reads your music library so you can pick songs to practise and see which ones you've already added loops and notes to.</string>
+	<!-- NO NSAppleMusicUsageDescription. The app never touches the media library:
+	     there is no MusicKit import, no MPMediaLibrary/MPMediaPicker, and
+	     `SongRef.appleMusic` is constructed only in tests. `MediaPlayer` is
+	     imported solely for MPRemoteCommandCenter / MPNowPlayingInfoCenter
+	     (lock-screen transport), which needs no permission. Shipping a usage
+	     string for an unexercised capability is an over-broad permission — it
+	     invites rejection and contradicts the review note's "never Apple Music
+	     streaming audio". Re-add it only alongside a real browse path (ADR 0001). -->
 
 	<!-- Playback continues with the screen off during practice. -->
 	<key>UIBackgroundModes</key>
@@ -50,12 +53,16 @@
 		<string>audio</string>
 	</array>
 
-	<!-- Practice-take recording (ADR 0069): mic captures the user's own playing
-	     only — the app never records its own loop/song playback into a file.
-	     Surfaced verbatim in the system prompt; keep it specific (vague strings
-	     cause App Store rejection). -->
+	<!-- Two mic surfaces, and the string must name both: the tuner (ADR 0115 —
+	     `TunerEngine` taps the input to detect pitch, and it is a FREE surface,
+	     so it is often the first prompt a reviewer sees) and practice-take
+	     recording (ADR 0069 — captures the user's own playing only; the app
+	     never records its own loop/song playback into a file). Surfaced verbatim
+	     in the system prompt: keep it specific, and say "Red Moon", the name the
+	     user actually sees (CFBundleDisplayName) — never the internal target
+	     name "Pocket". Vague or mismatched strings cause App Store rejection. -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Pocket uses the microphone to record your own playing as practice takes, so you can listen back to how you sounded. Recordings stay on your device.</string>
+	<string>Red Moon uses the microphone to tune your guitar and to record your own playing as practice takes, so you can listen back to how you sounded. Audio is analysed and stored on your device, and is never uploaded.</string>
 
 	<key>UILaunchScreen</key>
 	<dict/>
