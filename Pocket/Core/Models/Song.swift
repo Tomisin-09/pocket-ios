@@ -81,6 +81,17 @@ final class Song {
     var sourceRaw: String
     var bookmark: Data?
 
+    /// Leaf name of **Pocket's own copy** of the audio, in `SongFileStore`'s directory (ADR 0148).
+    /// This is the primary way a song's audio is found; `bookmark` is the fallback for songs
+    /// imported before 0148 and the provenance record of where the file came from.
+    ///
+    /// Not on `SongRef`: that type is *identity*, and this is storage — a song keeps its loops and
+    /// markers when its audio moves, is relinked, or goes missing entirely (ADR 0148 §4). `nil`
+    /// means no copy is held yet, either because the song predates 0148 or because it is the
+    /// generated demo sample. Optional with no declaration default, so existing songs migrate to
+    /// `nil` without a store wipe (CoreData 134110 exempt).
+    var audioFileName: String?
+
     @Relationship(deleteRule: .cascade, inverse: \Loop.song) var loops: [Loop] = []
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
     /// Practice takes recorded against this song (ADR 0069) — e.g. during a play-along.
@@ -111,7 +122,7 @@ final class Song {
          collections: [String] = [], comment: String = "",
          duration: TimeInterval, amplitudes: [Double] = [], dateAdded: Date? = nil,
          lastPracticed: Date? = nil,
-         ref: SongRef) {
+         ref: SongRef, audioFileName: String? = nil) {
         self.title = title
         self.artist = artist
         self.album = album
@@ -130,7 +141,16 @@ final class Song {
         self.sourceID = ref.id
         self.sourceRaw = ref.source.rawValue
         self.bookmark = ref.bookmark
+        self.audioFileName = audioFileName
     }
+
+    /// Whether this song stands for a real imported file rather than the generated demo sample.
+    ///
+    /// Was `bookmark != nil` at every call site until ADR 0148 added the owned copy: a song can
+    /// now have audio without a usable bookmark (relinked, or the bookmark died with an old
+    /// installation), so the test is "either source is recorded" — **not** "either source
+    /// currently resolves", which is `SongAudioResolver`'s job and a different question.
+    var hasImportedAudio: Bool { audioFileName != nil || bookmark != nil }
 
     /// The import identity. `bookmark == nil` ⇒ the generated demo sample.
     var ref: SongRef {

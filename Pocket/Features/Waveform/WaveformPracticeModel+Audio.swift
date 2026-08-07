@@ -20,8 +20,8 @@ extension WaveformPracticeModel {
         guard !isPreview, engine.duration == 0 else { return }
         isLoadingAudio = true
         defer { isLoadingAudio = false }
-        if let bookmark = song.ref.bookmark {
-            await loadImportedFile(bookmark: bookmark)
+        if song.hasImportedAudio {
+            await loadImportedFile()
         } else {
             await loadDemoSample()
         }
@@ -31,41 +31,64 @@ extension WaveformPracticeModel {
         engine.onReachedEnd = { [weak self] in self?.handleReachedEnd() }
     }
 
-    /// Resolve the security-scoped bookmark and load the real file. Access is held
-    /// open (`fileAccess`) for the engine's lazy reads, released on deinit. The
-    /// engine opens the file off the main actor; `amplitudes` already holds the
-    /// waveform extracted at import (set in `init`).
-    private func loadImportedFile(bookmark: Data) async {
-        var isStale = false
-        guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
-              let access = SecurityScopedAccess(url) else {
-            AudioPlumbing.log.error("Practice: song bookmark failed to resolve — audio unavailable")
-            audioLoadFailed = true
-            return
-        }
-        fileAccess = access
-        sourceURL = url
-        if isStale { refreshStaleBookmark(url: url) }
-        await refreshWaveformIfOutdated(url: url)
+    /// Point the song at a file again and load it, without leaving the practice screen (ADR 0148
+    /// §6). Returns the relink outcome so the caller can warn about a length mismatch, or throws
+    /// with the song untouched.
+    ///
+    /// The decode runs off the main actor for the same reason import does — `WaveformExtractor`
+    /// reads the whole file, and a multi-megabyte extract on the main thread is a visible stall.
+    /// `amplitudes` is re-read from the song afterwards: the waveform on screen is drawn from the
+    /// model's copy, and a relink that redrew nothing would show the old envelope over new audio.
+    @discardableResult
+    func relinkAudio(to url: URL) async throws -> SongRelinker.Outcome {
+        // Swap the failure notice for the loading overlay **before** any work starts. Decoding a
+        // multi-megabyte file takes seconds, and without this the notice sat there with a live
+        // "Find the file" button through all of it — so the picker closing looked like nothing had
+        // happened, and the obvious response was to pick the file again (device pass 2026-08-07).
+        audioLoadFailed = false
+        isLoadingAudio = true
+        defer { isLoadingAudio = false }
+
         do {
-            try await engine.load(url: url)
+            // Only the id crosses the boundary — a `Song` and a `ModelContext` are not `Sendable`.
+            let sourceID = song.sourceID
+            let prepared = try await Task.detached(priority: .userInitiated) {
+                try SongRelinker.prepare(from: url, sourceID: sourceID)
+            }.value
+
+            let outcome = SongRelinker.apply(prepared, to: song, in: context)
+            amplitudes = song.amplitudes
+            engine.stop()
+            await loadImportedFile()
+            return outcome
         } catch {
-            AudioPlumbing.log.error("Practice: song audio failed to load: \(error.localizedDescription)")
+            // Put the notice back: the song is exactly as broken as it was, and hiding that behind
+            // a dismissed alert would leave a dead transport — the thing the notice exists to stop.
             audioLoadFailed = true
+            throw error
         }
     }
 
-    /// A resolved-but-**stale** bookmark still opens today but may stop resolving
-    /// after the next file move / iCloud eviction — re-mint it from the live URL
-    /// while we can. Safe by design: `SongRef` equality excludes the bookmark, so
-    /// the song's loops/markers are untouched. A failed refresh keeps the old
-    /// (still-working) bookmark and just logs.
-    private func refreshStaleBookmark(url: URL) {
+    /// Locate the song's audio and load the real file. Access is held open (`fileAccess`) for the
+    /// engine's lazy reads, released on deinit — `nil` for a copy Pocket owns, which needs no
+    /// security scope. The engine opens the file off the main actor; `amplitudes` already holds
+    /// the waveform extracted at import (set in `init`).
+    private func loadImportedFile() async {
+        guard let resolved = SongAudioResolver.resolve(song) else {
+            AudioPlumbing.log.error("Practice: song audio could not be located — unavailable")
+            audioLoadFailed = true
+            return
+        }
+        fileAccess = resolved.access
+        sourceURL = resolved.url
+        // While the file is provably readable — the one moment a pre-0148 song can be copied in.
+        SongAudioResolver.adoptIfNeeded(song, resolved: resolved)
+        await refreshWaveformIfOutdated(url: resolved.url)
         do {
-            song.bookmark = try url.bookmarkData()
-            try context.save()
+            try await engine.load(url: resolved.url)
         } catch {
-            AudioPlumbing.log.error("Practice: stale bookmark refresh failed: \(error.localizedDescription)")
+            AudioPlumbing.log.error("Practice: song audio failed to load: \(error.localizedDescription)")
+            audioLoadFailed = true
         }
     }
 

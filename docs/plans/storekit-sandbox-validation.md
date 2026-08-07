@@ -302,9 +302,10 @@ build *without* attaching the group, which the rule prevents.
 
 ### The rest
 
-- [ ] **Update the ASC "Content Rights" answer.** v1 declared *"No third-party content"*. That is no
-      longer true: *Binta* by Jack Trader now ships bundled as the demo song (cleared by the rights
-      holder). Separate from sandbox, but same submission.
+- [x] **ASC "Content Rights" — no change needed after all.** v1 declared *"No third-party content"*,
+      which briefly stopped being true when *Binta* by Jack Trader shipped as the bundled demo song.
+      **ADR 0148 §7 drops the demo song**, so the app ships no third-party content and the existing
+      answer stands.
 - [ ] **Don't ship the paywall before the ASC products are live.** If a build reaches users first,
       `isPro` is permanently false and every Pro surface locks with no way to buy. Attaching the
       group to the version submission (above) is what guarantees this.

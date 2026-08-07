@@ -6,6 +6,22 @@ All notable changes to Pocket are documented here. Format loosely follows
 ## [Unreleased]
 
 ### Added
+- **Songs you import now belong to Red Moon, so they survive a new phone.** Until now the app kept a
+  *reference* to your file wherever you keep it, which sounds tidy and fails badly: the reference is
+  granted to one installation, so restoring your phone from an iCloud or Finder backup brought back
+  every song, loop, marker and note — and played none of them. The library looked perfectly intact
+  and was completely silent. Imports are now copied into the app's own storage, which rides along in
+  your device backup, so a restored phone practises straight away. Songs imported before this update
+  quietly adopt themselves the next time you open them. Moving, renaming or deleting the original in
+  Files no longer breaks anything either. Your original is never moved or altered. See ADR 0148.
+- **A song that can't find its audio can be pointed at the file again.** If a song does come up
+  silent — one added before this update, after a reinstall, or because the file genuinely moved —
+  the message now says what happened in plain words and offers **Find the file** right there. Pick
+  it, and the song keeps everything: its loops, markers, takes, notes and practice history. Until
+  now the only option was importing the file as a *new* song and losing all of that. If you pick a
+  file of a noticeably different length, Red Moon says so — your loops were drawn against the old
+  one — but it never deletes them for you. See ADR 0148 §6.
+
 - **Help & FAQs, and a way to reach us from inside the app.** The Toolkit gains a fourth section:
   sixteen questions with answers that expand where you tapped them, searchable — and the search
   looks inside the answers, not just the questions, so hunting "Spotify" or "iCloud" finds the
@@ -65,6 +81,15 @@ All notable changes to Pocket are documented here. Format loosely follows
   announcing the trial was over, while every Pro screen stayed open. Since iOS can keep an app
   suspended for days, that gap wasn't momentary. Red Moon now re-checks every time it comes forward,
   which needs no network — the App Store answers from its own cache offline.
+
+### Removed
+- **The demo song is gone.** New installs used to arrive with one track already in the library —
+  *Binta* by Jack Trader, bundled with the rights holder's permission. It was the only piece of
+  someone else's material in the app, it added 2.6 MB to every download, and it handed every player
+  the same song none of them chose, in an app built around practising the music *you* are working on.
+  Your library now starts empty and fills with your own music. The practice exercises and routines
+  still arrive as before — those are ours. **If you already have the demo song, it stays put**; it's
+  yours to keep or delete like any other. See ADR 0148 §7.
 
 ### Internal
 - **CI stopped failing for reasons unrelated to the change under test** (ADR 0146). The UI tests all

@@ -186,11 +186,10 @@ app capabilities). The design:
   free, so a new install has nothing locked in it. The trade-off accepted: the exercise library no longer
   doubles as a Pro shop window (a free player used to see ~19 drills, most PRO-badged). Merchandising
   now rests on the paywall and the gated surfaces rather than on a catalog of locked rows.
-- **One bundled third-party track** ships as the demo song (*Binta*, Jack Trader, cleared by the rights
-  holder). This is a deliberate exception to "never ship someone else's material" — that rule is about
-  *pedagogy* (encoding methods, not lifting lessons), not about a licensed demo. It has a compliance
-  consequence: the App Store Connect **Content Rights** answer changes from "no third-party content",
-  and must be updated before the next submission.
+- ~~**One bundled third-party track** ships as the demo song (*Binta*, Jack Trader, cleared by the
+  rights holder), so the App Store Connect **Content Rights** answer changes from "no third-party
+  content".~~ **Superseded by ADR 0148 §7 (2026-08-07): the demo song is dropped.** The app ships no
+  third-party content again, and the Content Rights answer stays "no third-party content".
 - Routines have **five** producers, all of which must gate: the routines library `+`, its
   Quick-session wand, the planner's "Today's session", the Library's collection→session builder
   (ADR 0118), and a song's "Build a routine for this song" (ADR 0111). Two of those live outside the

@@ -77,8 +77,8 @@ final class LoopRunModel {
         guard !loaded, !isPreview else { return }
         isLoading = true
         defer { isLoading = false }
-        if let bookmark = loop.song?.ref.bookmark {
-            await loadImportedFile(bookmark: bookmark)
+        if let song = loop.song, song.hasImportedAudio {
+            await loadImportedFile(song: song)
         } else {
             await loadDemoSample()
         }
@@ -86,36 +86,19 @@ final class LoopRunModel {
         loaded = true
     }
 
-    private func loadImportedFile(bookmark: Data) async {
-        var isStale = false
-        guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
-              let access = SecurityScopedAccess(url) else {
-            AudioPlumbing.log.error("Loop run: song bookmark failed to resolve — audio unavailable")
+    private func loadImportedFile(song: Song) async {
+        guard let resolved = SongAudioResolver.resolve(song) else {
+            AudioPlumbing.log.error("Loop run: song audio could not be located — unavailable")
             loadFailed = true
             return
         }
-        fileAccess = access
-        if isStale { refreshStaleBookmark(url: url) }
+        fileAccess = resolved.access
+        SongAudioResolver.adoptIfNeeded(song, resolved: resolved)
         do {
-            try await engine.load(url: url)
+            try await engine.load(url: resolved.url)
         } catch {
             AudioPlumbing.log.error("Loop run: song audio failed to load: \(error.localizedDescription)")
             loadFailed = true
-        }
-    }
-
-    /// A resolved-but-**stale** bookmark still opens today but may stop resolving after
-    /// the next file move / iCloud eviction — re-mint it from the live URL while we can.
-    /// Safe by design: `SongRef` equality excludes the bookmark, so the song's
-    /// loops/markers are untouched. A failed refresh keeps the old (still-working)
-    /// bookmark and just logs.
-    private func refreshStaleBookmark(url: URL) {
-        guard let song = loop.song else { return }
-        do {
-            song.bookmark = try url.bookmarkData()
-            try song.modelContext?.save()
-        } catch {
-            AudioPlumbing.log.error("Loop run: stale bookmark refresh failed: \(error.localizedDescription)")
         }
     }
 
