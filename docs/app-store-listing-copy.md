@@ -1,4 +1,22 @@
-# App Store listing copy — Red Moon Practice v1.0
+# App Store listing copy — Red Moon Practice v1.1
+
+> ## ⚠ 1.0 is RELEASED, not held (discovered 2026-08-07)
+>
+> App Store Connect shows **"1.0 Ready for Distribution"** — approved *and released*.
+> The long-standing note in this project that v1 was "approved, release held on
+> purpose, therefore no users" is **no longer true**, and everything that rested on
+> it needs re-reading. Most importantly: **a shipped schema now exists in the field,
+> so every future `@Model` change owes a real migration.** Per
+> `docs/swiftdata-gotchas.md` that is precisely the class of failure that never
+> reproduces in in-memory tests and only bites on device.
+>
+> A released version is **locked** — its description, keywords, screenshots and build
+> can never be edited. Only promotional text stays editable. This submission therefore
+> goes out as a **new version, 1.1**, created with the **+** beside "iOS App".
+>
+> Note also what the live 1.0 build contains: it predates the subscription, the
+> paywall, Help & FAQs, ADR 0148's import rework, and the permission fix — so anyone
+> downloading today gets a build that still asks for Apple Music access.
 
 Draft copy for the App Store Connect submission. Tweak freely; character limits
 are Apple's hard caps. Honesty guardrail: Red Moon practises against **your own
@@ -341,7 +359,7 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] Age rating questionnaire → 4+
 - [ ] Price: Free · Availability set
 - [ ] `xcodegen generate` → Archive (Release, team 2L35PZ86GP — Deco Operations Ltd, paid; owns `click.decooperations.pocket`) → Upload
-- [ ] Build finished processing and attached to version 1.0
+- [ ] Build finished processing and attached to **version 1.1**
 - [ ] Add for Review → Submit
 - [x] "Dont" → "Don't" in the seeded library — already fixed (no `Dont` remains in the source)
 - [x] Permission audit: the app now requests **one** permission, the microphone.
