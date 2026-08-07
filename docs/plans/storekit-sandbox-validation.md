@@ -1,7 +1,64 @@
 # StoreKit sandbox validation — the purchase path (ADR 0112)
 
-**Status:** not started · **Blocks:** shipping any build that shows the paywall
-**Context:** ADR 0112 merged 2026-07-28 (PR #178, `47fbd83`). Everything below is unverified.
+**Status:** prerequisites cleared 2026-08-07, testing not started · **Blocks:** shipping any build
+that shows the paywall — and it is the **last open item in v2**.
+**Context:** ADR 0112 merged 2026-07-28 (PR #178, `47fbd83`); ADR 0144 (PR #220) made the trial
+length read from the product. The ASC products are set up and out of Draft; **the purchase path
+itself is still unverified.**
+
+## Progress — device pass 2026-08-07
+
+**Account A (monthly → lapse) is COMPLETE and passed.** Sandbox confirmed at every checkpoint: the
+purchase sheet showed `[Sandbox]`, the confirmation showed `[Environment: Sandbox]`, prices in GBP,
+and both plan cards offered the 1-month trial before purchase. `isPro` flipped, gates opened, the
+lapse re-locked every surface, the free surface survived, and the paywall's negative-eligibility
+state was confirmed before any eligibility reset.
+
+**Two findings came out of it.**
+
+1. 🐛 **A lapse did not re-lock until a cold launch** — fixed on branch
+   `pocket-241-entitlement-foreground-refresh`, and ✅ **re-verified on device 2026-08-07**: the app
+   now re-locks on return from background, with no force-quit. `refreshEntitlements()` had no
+   foreground caller and a plain expiry mints no transaction, so `Transaction.updates` never fired.
+   Worse than a stale screen: the trial countdown *did* vanish on time (it reads a stored date, not
+   StoreKit), so the app announced the trial was over while still granting it. Fix = `scenePhase →
+   .active` re-check at the app root.
+   ⚠️ **Reproducing this needs a lapse that happens while the app is backgrounded** — a lapsed
+   account plus a fresh launch proves nothing, because `init` always resolved correctly. The cycle is:
+   Reset Eligibility → buy → cancel auto-renew → **background without force-quitting** → wait out the
+   period → return via the app switcher. Note also that the UI tests can never cover this or the
+   locks: `-uiTesting` forces `debugProOverride = true`, so `isPro` is always true under test and the
+   locked state is never rendered.
+2. 💄 The recent-routines rail and the "Jump back in" card were both gated but drew **no lock** — the
+   two doors on Home that looked open while they weren't. `proGated` only swaps the destination for a
+   paywall button; the padlock lives in each card's own label, and neither had one. Locks added on
+   the same branch, trailing on the eyebrow/top row where `HomeNavCard` puts them. ✅ **Both confirmed
+   present on device 2026-08-07** — which is the only way they *can* be confirmed, since the UI tests
+   run fully unlocked.
+
+**Two things that turned out not to be testable or needed as written:**
+
+- **The trial reminder notification cannot fire in sandbox.** `TrialReminderPlan.leadTime` is 24h and
+  the compressed trial is ~5 minutes, so `decide` always returns `.cancel` — correctly. Covered by
+  `TrialReminderPlanTests` instead. The old suggestion to drive it from Xcode's *Manage StoreKit
+  Transactions* doesn't apply either; that's a local-config feature.
+- **"Reset Eligibility" exists** on the sandbox account's Manage → Subscriptions screen, and resets
+  intro-offer eligibility per subscription for the same account. This softens (does not remove) the
+  "one account, one shot" constraint below: a spent account is now reusable for trial testing. Two
+  accounts are still wanted, so one can hold a live entitlement while another is lapsed.
+
+**Cancelling auto-renew in sandbox** is Settings → Developer → Sandbox Apple Account → Manage →
+Subscriptions → Cancel Subscription. **Not** the app's own Manage Subscription, which presents
+`.manageSubscriptionsSheet` against the *production* account.
+
+### Still outstanding
+
+- [ ] Re-verify finding 1's fix on device against a lapsed account
+- [ ] **Account B** — annual purchase, monthly ↔ annual switching (a deferred downgrade is the correct
+      result, given the level split)
+- [ ] **Restore on a wiped install** — needs a spare device or a device backup; see the warning below
+- [ ] The `.storekit` "Sync from App Store Connect" loose end
+- [ ] The pre-submission items
 
 ## Why this exists
 
@@ -29,40 +86,54 @@ Only the third one validates `Transaction.currentEntitlements`.
 
 ## Prerequisites — "the ASC sitting"
 
-One session in App Store Connect. Nothing here is code, and none of it can be scripted from this
-repo; it is listed in the order the console makes easiest.
+✅ **The sitting was done 2026-08-06.** Recorded here because the console state is the input to
+everything below, and none of it is visible from this repo.
 
-⚠️ **The two products currently disagree with each other.** The 2026-08-06 device pass found the
-annual on a **14-day** intro offer and the monthly on a **2-month** one — neither is the decided
-value, and they are not even the same value. Hardcoded paywall copy would have hidden this; ADR 0144
-D5 made the app read the length from the product, which is why it surfaced. **Fixing this is the
-point of the sitting** — everything else below is bookkeeping around it.
+### 1 — Make the two offers agree, at 1 month ✅ DONE
 
-### 1 — Make the two offers agree, at 1 month
+The 2026-08-06 device pass found the annual on a **14-day** intro offer and the monthly on a
+**2-month** one — neither the decided value, and not even the same value. Hardcoded paywall copy
+would have hidden this; ADR 0144 D5 made the app read the length from the product, which is why it
+surfaced.
 
-For **each** of `click.decooperations.pocket.pro.annual` and `.pro.monthly`, under
-*Subscription Prices → Introductory Offer*:
-
-- [ ] Annual (£49.99/yr) — free, **1 month**, all storefronts  ← currently 14 days
-- [ ] Monthly (£5.99/mo) — free, **1 month**, all storefronts  ← currently 2 months
+- [x] Annual (£49.99/yr) — free, **1 month**, all storefronts  (was 14 days)
+- [x] Monthly (£5.99/mo) — free, **1 month**, all storefronts  (was 2 months)
 
 ASC has no 30-day option; **1 month is the decided value** (ADR 0144 D5), and the app will say
 whatever the product says. `Configuration/RedMoonPro.storekit` already carries `P1M` on both, so
-**no code change is owed here** — that file only drives simulator and local runs.
+**no code change was owed here** — that file only drives simulator and local runs.
 
-### 2 — Draft → Ready to Submit
+### 2 — Out of Draft ✅ DONE (verify the screenshot is current)
 
-Sandbox will not vend a draft. This needs **neither** Apple's approval **nor** a released build —
-just a complete metadata sheet on each product:
+Group **Red Moon Pro** (ID `22260435`), console state as of 2026-08-07:
 
-- [ ] Reference name · duration · price (already set)
-- [ ] Subscription **group** localization — "Red Moon Pro" display name (group-level, done once)
-- [ ] Per-product localization — display name + description
-- [ ] **A review screenshot on each product.** This is the field that keeps a product in Draft, and
-      it is the reason the paywall's Red Moon PRO wordmark landed first: the screenshot is the
-      paywall, so capture it *after* that change is on the device.
+| Level | Reference name | Product ID | Duration | Status |
+|---|---|---|---|---|
+| 1 | Red Moon Pro Annual | `click.decooperations.pocket.pro.annual` | 1 year | Prepare for Submission |
+| 2 | Red Moon Pro Monthly | `click.decooperations.pocket.pro.monthly` | 1 month | Prepare for Submission |
+
+- [x] Reference name · duration · price
+- [x] Subscription **group** localization — English (U.S.), display name "Red Moon Pro", app name
+      "Red Moon Practice"
+- [x] Per-product localization, and the per-product **review screenshot** — implied complete, since
+      an incomplete sheet shows *Missing Metadata* rather than *Prepare for Submission*
+- [ ] ⚠️ **Confirm the review screenshot is the post-#221 paywall** (Red Moon PRO wordmark,
+      loops-led copy). "Prepare for Submission" only proves a screenshot exists, not that it is the
+      current one. If it predates #221 it is a stale depiction of the purchase screen.
 - [ ] Review notes — name the **free Toolkit and Journal** here as well as in the app's own review
       notes (ADR 0144's 2.1 / 3.1.2 mitigation)
+
+**"Prepare for Submission" is the state sandbox needs.** It means metadata is complete and nothing
+has been sent to App Review. Sandbox accounts can purchase at this status; neither Apple's approval
+nor a released build is required. **So workstream C is unblocked — do not submit anything in order
+to test it.**
+
+**The level split is a decision, not a default.** Annual sits at level 1 and monthly at level 2, so
+ASC treats monthly → annual as an **upgrade** (takes effect immediately, prorated refund of the
+unused monthly) and annual → monthly as a **downgrade** (deferred to the next renewal date). Had
+both sat at the same level it would be a crossgrade. This is a sane arrangement — just know it is
+the behaviour the "monthly ↔ annual switching" test below will actually observe, so a deferred
+downgrade is the correct result, not a bug.
 
 ### 3 — A fresh sandbox account
 
@@ -101,13 +172,38 @@ about whether the *Xcode* scheme is still serving the local file.
 
 ## Running it
 
+**One phone is enough** — a sandbox account signs in at a slot entirely separate from the real App
+Store account, purchases never charge, and nothing is wiped by switching. The *only* step that needs
+a spare device is the restore test; see the warning on it below.
+
+- [ ] **Install with `scripts/run-device.sh`, not from Xcode.** It launches via `devicectl`, which
+      never applies the scheme's StoreKit configuration, so the build reads live ASC data by
+      construction. Prefer this over setting the scheme option to None: `project.yml` wires the local
+      config in, so **any `xcodegen generate` silently restores it** — and a branch switch already
+      requires one.
 - [ ] Sign the sandbox account in on the iPhone at **Settings → Developer → Sandbox Apple Account**
       (some iOS versions: Settings → App Store → Sandbox Account). **There only** — never sign it into
-      the main App Store account.
-- [ ] Build to the device from Xcode with the StoreKit config off. Development signing is fine;
-      `scripts/run-device.sh` covers the install.
+      the main App Store account. Sign out again when the pass is finished.
 - [ ] Hit a gate → paywall → buy. **The sheet must say `[Environment: Sandbox]`.** If it doesn't,
       you're not in sandbox — go back to the two switches.
+
+### Switching sandbox accounts between passes
+
+Eligibility is one-shot per account, so a full pass needs **two accounts plus a spare** — one to
+spend the trial and lapse it, one to hold a live entitlement for the negative-eligibility and restore
+checks.
+
+- **Finish one account's cycle end to end before switching.** Bouncing mid-cycle makes it ambiguous
+  whose state is on screen, and the lapse checks are the ones most worth believing.
+- **Force-quit and relaunch after every switch.** Sandbox account changes are sticky and the previous
+  account's entitlement can linger — the same "looks like it works, none of it is real" failure as the
+  two switches above. A relaunch re-runs `StoreManager.init` → `refreshEntitlements()`, and
+  `refreshSubscriptionState()` clears `currentExpiration`/`willAutoRenew` when nothing is owned, so a
+  stale trial countdown clears itself rather than bleeding into the next account.
+- **Use trial visibility as the tell that the switch took:** fresh account shows 1 month, spent
+  account shows nothing. A spent-looking paywall on an account you haven't bought anything with is
+  stale state, **not** an eligibility bug.
+- **The Entitlement picker is per device, not per account** — set it to Default once and leave it.
 
 ## What to actually test
 
@@ -117,6 +213,15 @@ Buying is the easy path. These are the ones that break:
 - [ ] **Purchase monthly** → same
 - [ ] **Restore on a wiped install** — delete the app, reinstall, tap Restore Purchases. Apple
       requires this to work and it's a common rejection reason.
+      ⚠️ **This is the one destructive step, and it destroys real data.** `Pocket.entitlements` is
+      empty — no CloudKit, no iCloud sync (it's deferred to "Phase 4 when sync lands") — and the app
+      has no export and no file sharing. So deleting it permanently destroys every song, loop, marker,
+      journal entry, take and practice-log row on that device. Do this on a **spare iPhone**, or take a
+      full Finder/iCloud device backup first (app containers are included). Sandbox needs real
+      hardware, so a spare device — not the simulator, which only ever serves the local `.storekit`
+      file. ⚠️ **"Offload App" is not "Delete App"**: offloading preserves Documents & Data, so a
+      reinstall after an offload gives a container that was never wiped and the test passes without
+      proving anything.
 - [ ] **Trial eligibility** — the 1-month trial shows for a first-timer, and correctly does *not*
       show on a second purchase (`product.subscription?.isEligibleForIntroOffer`). The CTA and the
       disclosure must both name the length **read from the product** (ADR 0144 D5) — if they say a
@@ -168,11 +273,41 @@ proper intro-offer fields) but **that realignment is itself unverified**.
 
 ## Before any paywall build ships
 
+### The first subscription must ride along with an app version
+
+Apple's rule, [documented in App Store Connect Help][asc-submit]:
+
+> "Your first consumable In-App Purchase and your first non-consumable In-App Purchase must each be
+> submitted with a new app version. Similarly, your first auto-renewable subscription and your first
+> non-renewing subscription must each be submitted with a new app version." … "Once the first item
+> of each type has been approved, you can submit additional items of that type without a new app
+> version." … "If you're submitting a new subscription it must be submitted together with its
+> subscription group. Each new subscription group must be submitted with at least one of its
+> subscriptions."
+
+These are Red Moon's **first** auto-renewable subscriptions, in a **new** group. v1 was approved
+without any IAPs, so that approval does not discharge the rule. Therefore:
+
+- [ ] Create a **new app version** in ASC, upload a build of it, and use **Add for Review** on the
+      Red Moon Pro group to attach **both** subscriptions to that version's submission. Group +
+      subscriptions + binary go to review as one submission.
+
+**This resolves the chicken-and-egg below rather than aggravating it.** The worry was shipping a
+paywall against products that aren't live yet; because Apple *forces* the first subscription into
+the same submission as an app version, the binary and the products are approved and go live
+together. There is no ordering left to get wrong — the failure mode would be submitting a paywall
+build *without* attaching the group, which the rule prevents.
+
+[asc-submit]: https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase
+
+### The rest
+
 - [ ] **Update the ASC "Content Rights" answer.** v1 declared *"No third-party content"*. That is no
       longer true: *Binta* by Jack Trader now ships bundled as the demo song (cleared by the rights
       holder). Separate from sandbox, but same submission.
 - [ ] **Don't ship the paywall before the ASC products are live.** If a build reaches users first,
-      `isPro` is permanently false and every Pro surface locks with no way to buy.
+      `isPro` is permanently false and every Pro surface locks with no way to buy. Attaching the
+      group to the version submission (above) is what guarantees this.
 
 ## Gotchas already paid for (don't re-discover these)
 
