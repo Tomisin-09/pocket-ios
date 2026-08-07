@@ -2,6 +2,24 @@
 
 Three public URLs App Store Connect needs, across your existing hosting.
 
+> ## ⚠ These HTML files are NOT what is deployed
+>
+> The live pages are **React/Next.js routes** in the `.co.uk` site repo
+> (`laundry-pickup-project`, branch `uk-site`), and they have diverged from this
+> folder. `app/redmoon/support/page.tsx` is the real support page — richer than
+> `support.html`, and already live. The privacy policy is a section inside
+> `app/privacy/page.tsx`, already live. **Edit the routes; treat `support.html`,
+> `redmoon-privacy.html` and `index.html` here as drafts that have served their
+> purpose.** Discovered 2026-08-07, when this guide still described deploying
+> `support.html` to a URL that had been serving a different page for weeks.
+>
+> **When you edit those routes, remember they are JSX, not HTML.** A plain space
+> between `</strong>` and the next word does not survive the build — use `{' '}`,
+> as the support page already does. Four words on the live privacy policy were
+> joined to the ones before them before this was caught. After any edit:
+> `npm run build`, then
+> `grep -roh "</strong>[a-zA-Z]" .next/server/app/*.html` should return nothing.
+
 **All three live on the same Vercel site (`decooperations.co.uk`) — decided 2026-08-07.**
 Support was previously planned for AWS under `.click`; that split existed only to
 echo the `click.decooperations.pocket` bundle id, which nobody sees and which is not
@@ -80,10 +98,12 @@ Send a test email to it and confirm it arrives before submitting.
 
 ## Checklist
 - [ ] `index.html` deployed to Vercel; `decooperations.co.uk/redmoon/` resolves
-- [ ] `support.html` deployed to Vercel; `decooperations.co.uk/redmoon/support` resolves
+- [x] Support page **already live** at `decooperations.co.uk/redmoon/support` — but as a
+      **Next.js route** (`app/redmoon/support/page.tsx`), not this folder's `support.html`.
+      See the warning at the top of this file
 - [x] Privacy section pasted — **live and ADR-0147-correct, verified 2026-08-07**
-- [ ] Privacy §3's microphone paragraph still omits the **tuner** — replace it (paste-ready
-      wording in `docs/app-store-listing-copy.md` ▸ Hosting ▸ Live-site check)
+- [x] Privacy §3 microphone paragraph now covers the **tuner** and the ADR 0148 owned
+      copy — done 2026-08-07
 - [ ] `#red-moon-practice` anchor actually resolves (a page fetch can't confirm this —
       check in a browser)
 - [ ] `support@decooperations.co.uk` created in Workspace + test email received

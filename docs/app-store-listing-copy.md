@@ -312,13 +312,28 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
       broken link on a page
 - [x] "Red Moon Practice" section added to decooperations.co.uk/privacy — **live and
       ADR-0147-correct as of 2026-08-07** (verified by fetching the page)
-- [ ] Live site: replace §3's "Your recordings" paragraph with the **Microphone** wording
-      above — it omits the tuner. See the live-site check in Hosting
+- [x] Live site: §3 microphone wording — **DONE 2026-08-07**, see the item above
+      ⚠ Editing that page is JSX, not HTML: a plain space between `</strong>` and the
+      next word does **not** survive the build. Use `{' '}`. Four words on the live
+      privacy policy were joined to the ones before them ("own copy**inside**",
+      "practice takes**you**", "counts**Unless**", "counts**these**") — two of them
+      pre-existing. All fixed; every built page was swept for the pattern.
 - [ ] Live site: confirm the §3 heading's `id` is `red-moon-practice` so the anchored
       Privacy Policy URL actually lands
-- [ ] `support.html` deployed to **decooperations.co.uk/redmoon/support** (Vercel,
-      same repo as the marketing + privacy pages — decided 2026-08-07, supersedes
-      the `.click`/AWS plan)
+- [x] **Support page is LIVE at `decooperations.co.uk/redmoon/support`** — verified
+      2026-08-07. It was already deployed and this checklist never knew: the real page
+      is a **Next.js route** (`app/redmoon/support/page.tsx` on the `uk-site` branch),
+      not the static `docs/site/support.html` this file kept pointing at. Its content
+      was checked against the shipping app and is accurate — free surface per ADR 0144,
+      analytics wording per ADR 0147, and "Today's session" really does ship (Pro-gated
+      `PlannerView`). ⚠ `docs/site/support.html` is therefore **redundant**, exactly
+      like `privacy.html`: the live page is richer and diverged long ago. Edit the
+      route, never the local copy — and delete the local copy so nobody edits the
+      wrong one.
+- [x] Live site: §3's microphone paragraph now covers the **tuner** as well as practice
+      takes, and states the mic is the only permission requested (2026-08-07). The
+      audio-files bullet also gained ADR 0148's "we keep our own copy" fact, which it
+      predated
 - [ ] Support URL + Privacy Policy URL pasted into the form
 - [ ] App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120); everything else "not collected". **Unchanged by ADR 0147** — the nutrition label encodes collection type, linkage and tracking, none of which the region split moves
 - [x] `APTABASE_APP_KEY` set in `project.yml` from the real EU-region app key (done 2026-07-29; `AptabaseSinkTests` pins that it resolves and is EU-region)
