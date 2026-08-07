@@ -2,7 +2,7 @@ import XCTest
 
 /// Smoke coverage for the **Toolkit hub** (ADR 0096) — the reference destination added over the last
 /// build. The unit suite can't catch broken navigation wiring, so this drives Home → Toolkit and
-/// asserts the hub and its two Slice-1 sections (My chords, Glossary) actually appear, then opens My
+/// asserts the hub and its sections (My chords, Glossary, Help & FAQs) actually appear, then opens My
 /// chords. It's a wiring guard, not an exhaustive flow — deliberately light given the sim's cold-start
 /// variance.
 final class ToolkitUITests: UITestCase {
@@ -33,6 +33,11 @@ final class ToolkitUITests: UITestCase {
         XCTAssertTrue(myChordsRow.waitForExistence(timeout: Self.uiTimeout), "My chords section missing in Toolkit")
         XCTAssertTrue(firstElement(in: app, labelStartingWith: "Glossary").exists,
                       "Glossary section missing in Toolkit")
+        // Help & FAQs (ADR 0145) — the fourth tenant, and the only in-app route to a support address.
+        // Its accessibility label spells the ampersand out ("Help and FAQs"), which is what this
+        // prefix matches; a UI test is the only thing that catches the row being unwired.
+        XCTAssertTrue(firstElement(in: app, labelStartingWith: "Help and FAQs").exists,
+                      "Help & FAQs section missing in Toolkit")
 
         // Opening My chords must land on its own screen — either the populated grid or the empty state.
         myChordsRow.tap()

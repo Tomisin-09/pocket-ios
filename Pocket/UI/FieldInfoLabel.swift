@@ -46,6 +46,11 @@ struct FieldInfoLabel: View {
 /// Single source of truth for the explanatory copy. Centralised so the shared terms read
 /// identically everywhere they surface (Command tempo appears on both the loop and exercise
 /// create paths). The copy encodes the ADR 0036 field definitions.
+///
+/// **`mastery` and `commandTempo` are also quoted by the Help & FAQs catalog** — `FAQEntry.all`
+/// interpolates them into the "difference between mastery and command tempo" answer rather than
+/// restating them, so the ⓘ popover and the FAQ cannot drift (ADR 0145 D5). `FAQEntryTests` asserts
+/// both substrings survive; editing either string here is fine, paraphrasing it there is not.
 enum PracticeFieldInfo {
     static let mastery =
         "How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can "

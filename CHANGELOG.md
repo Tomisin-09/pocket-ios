@@ -5,6 +5,18 @@ All notable changes to Pocket are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+- **Help & FAQs, and a way to reach us from inside the app.** The Toolkit gains a fourth section:
+  sixteen questions with answers that expand where you tapped them, searchable — and the search
+  looks inside the answers, not just the questions, so hunting "Spotify" or "iCloud" finds the
+  answer even when the question doesn't say it. Settings ▸ About opens the same screen, and gains a
+  **Contact Support** row that writes us an email with your version number already filled in. Until
+  now the app carried no support address at all; it was only ever on the website. The address is
+  also printed in plain, selectable text inside the "how do I get help" answer, because a mail link
+  does nothing on a phone with no mail account set up. Help lives in the Toolkit, so it's **free
+  whether or not you subscribe** — help that arrives after the paywall is help that arrives too
+  late. See ADR 0145.
+
 ### Changed
 - **Red Moon now tells you it counts which features get used, instead of asking — unless you're in
   the EEA, where it still asks.** UK law changed in February 2026: first-party analytics used purely

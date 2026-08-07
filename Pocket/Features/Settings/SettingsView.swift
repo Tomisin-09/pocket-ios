@@ -232,45 +232,9 @@ struct SettingsView: View {
             }
             #endif
 
-            Section {
-                LabeledContent("Version", value: Self.appVersion)
-                // Apple's standard EULA (the licence that governs use of the app on the
-                // App Store) applies by default when we ship no custom terms — see
-                // docs/app-store-license-obligations.md. Surfacing the link here satisfies
-                // the "Terms of Use (EULA)" disclosure Apple requires once auto-renewable
-                // subscriptions ship, and is honest for v1. Swap for a hosted custom-ToS URL
-                // if/when the Oracle AI tier introduces its own terms (ADR 0092).
-                Link(destination: Self.privacyPolicy) {
-                    LabeledContent("Privacy Policy") {
-                        Image(systemName: "arrow.up.right")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Link(destination: Self.appleStandardEULA) {
-                    LabeledContent("Terms of Use") {
-                        Image(systemName: "arrow.up.right")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            } header: {
-                Text("About")
-            } footer: {
-                // Brand mark. `RedMoonLogo` is a **vector** (SVG) asset carrying a light and a
-                // dark appearance (ADR 0061) — the two-tone crescent means it can't be a single
-                // template image tinted in code, so the pair stays. Genuinely transparent, so it
-                // sits directly on `PocketColor.background` with no seam in either appearance.
-                // The app follows the system appearance (ADR 0062), so no colour-scheme pin
-                // is needed here.
-                Image("RedMoonLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 160)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 16)
-                    .accessibilityLabel("Red Moon")
-            }
+            // Version · Help & FAQs · Contact Support · the two legal links, under the wordmark.
+            // Its own file so this one stays under the file-length ceiling (ADR 0145).
+            AboutSection()
         }
         .scrollContentBackground(.hidden)
         // Cap the form to a readable column at regular width (iPad / landscape); no-op at
@@ -316,22 +280,6 @@ struct SettingsView: View {
         artistIntakeSeen = false
     }
     #endif
-
-    /// Marketing version from the bundle (`MARKETING_VERSION`), e.g. "0.0.1".
-    private static var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
-    }
-
-    /// Apple's standard Licensed Application End User License Agreement — the licence that
-    /// governs use of the app when we ship no custom terms. A valid compile-time literal.
-    private static let appleStandardEULA =
-        URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-
-    /// Red Moon Practice's privacy policy. Points at the live section on the Deco Operations
-    /// site. When the standalone page ships (docs/site/redmoon-privacy.html), repoint this at
-    /// its dedicated URL. A valid compile-time literal.
-    private static let privacyPolicy =
-        URL(string: "https://decooperations.co.uk/privacy#red-moon-practice")!
 }
 
 /// The per-row ⓘ copy, centralised the way `PracticeFieldInfo` is for the loop sheet. Moving the

@@ -1203,10 +1203,15 @@ thought 2026-07-20):**
   *Monetization* — decide once the feature set is settled (user's standing call).
 - **Note 13 — onboarding: tutorials / walkthroughs / FAQs.** Good pre-growth, not
   pre-submission. Cheapest high-value start: (1) first-run coach-marks on the 3–4 core
-  flows (create a loop, run an exercise, save a chord); (2) an in-app **FAQ/help**
-  screen backed by static markdown (updatable without a release); (3) empty-state
-  hints (already used). **Not** a heavy tutorial engine. Own ADR; connects to the
-  *Onboarding — "the art of creating loops"* vision + musician-voice principle.
+  flows (create a loop, run an exercise, save a chord); (2) ✅ **DONE (ADR 0145,
+  `pocket-239`)** — an in-app **FAQ/help** screen, in the Toolkit and linked from
+  Settings ▸ About. Shipped as a *compiled* catalog, not static markdown: "updatable
+  without a release" needs a remote fetch with hosting, caching, an offline fallback
+  and a failure state, and a version-locked catalog is the better trade for factual
+  claims about the app (0145 D2). Revisit if the answers start changing faster than
+  the binary; (3) empty-state hints (already used). **Not** a heavy tutorial engine.
+  (1) and (3) remain open. Connects to the *Onboarding — "the art of creating loops"*
+  vision + musician-voice principle.
 
 ## Release sequencing (decided 2026-06-24)
 

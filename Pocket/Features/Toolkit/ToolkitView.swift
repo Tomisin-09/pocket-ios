@@ -6,11 +6,17 @@ import SwiftUI
 /// fourth home card; relies on an ambient `NavigationStack` (pushed from Home, like `PracticeView` /
 /// `LibraryView`) rather than owning one, so its sections push onto the home stack.
 ///
-/// Slice 1 carries the only two zero-dependency tenants (ADR 0096 D5): **My Chords** (the `SavedChord`
-/// library promoted from the in-context menu to a full screen) and a static **Glossary**. *Hear* now
-/// sounds a saved chord from its detail (ADR 0097 Slice 1); the identifier/scales/ear-training sections
-/// remain later slices with their own ADRs. The landing is a simple list of sections in the indigo
-/// "study/reference" accent (`PocketColor.toolkit`), one visual level down from the home cards.
+/// Slice 1 carried the first zero-dependency tenants (ADR 0096 D5): **My Chords** (the `SavedChord`
+/// library promoted from the in-context menu to a full screen) and a static **Glossary**, joined by the
+/// **Tuner** (ADR 0115) and now **Help & FAQs** (ADR 0145) — the same animal as the glossary, a static
+/// catalog rendered by a thin screen, and the app's first in-app support path. *Hear* sounds a saved
+/// chord from its detail (ADR 0097 Slice 1); the identifier/scales/ear-training sections remain later
+/// slices with their own ADRs. The landing is a simple list of sections in the indigo "study/reference"
+/// accent (`PocketColor.toolkit`), one visual level down from the home cards.
+///
+/// The hub is **free forever** (ADR 0144 D2) and gate-free by construction — nothing here reads
+/// `isPro`. Help living inside it is deliberate: an undecided or lapsed player can still read what the
+/// app does and reach us.
 struct ToolkitView: View {
     /// Drives the "N saved" count on the My Chords row — the same `@Query` the library screen reads.
     @Query private var savedChords: [SavedChord]
@@ -44,6 +50,17 @@ struct ToolkitView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Glossary, chord, scale and theory terms")
+
+                NavigationLink { FAQView() } label: {
+                    ToolkitSectionRow(icon: "questionmark.circle",
+                                      title: "Help & FAQs",
+                                      subtitle: "How Red Moon works",
+                                      trailing: "\(FAQEntry.all.count)")
+                }
+                .buttonStyle(.plain)
+                // Spelled "and" rather than "&": the label is read aloud, and it's the prefix the
+                // Toolkit UI test matches on.
+                .accessibilityLabel("Help and FAQs, how Red Moon works")
             }
             .padding(20)
             // Cap to a readable column at regular width (iPad / landscape); no-op at compact
