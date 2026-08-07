@@ -91,6 +91,90 @@ final class AnalyticsPolicyTests: XCTestCase {
                        + "true, so analyticsEnabled must pass default: false explicitly.")
     }
 
+    // MARK: - Which consent model applies (ADR 0147)
+
+    func testUKAndRestOfWorldGetInformAndObject() {
+        for region in ["GB", "US", "JP", "AU", "CA", "BR", "IN"] {
+            XCTAssertEqual(AnalyticsPolicy.consentModel(regionCode: region), .notify,
+                           "\(region) is outside the EEA, so DUAA-style inform-and-object applies. "
+                           + "GB especially: the UK is not in the EEA and needs no special case.")
+        }
+    }
+
+    func testEEAAndSwitzerlandStillRequireConsent() {
+        for region in ["DE", "FR", "IE", "IT", "ES", "NL", "NO", "IS", "LI", "CH"] {
+            XCTAssertEqual(AnalyticsPolicy.consentModel(regionCode: region), .ask,
+                           "\(region) is EEA (or CH, included conservatively), where ePrivacy "
+                           + "Art 5(3) still requires consent — ADR 0147 leaves it exactly as 0120.")
+        }
+    }
+
+    func testAnUnknownRegionTakesTheStricterPath() {
+        XCTAssertEqual(AnalyticsPolicy.consentModel(regionCode: nil), .ask,
+                       "A nil region must fail safe. Defaulting an unknown location to .notify "
+                       + "would turn analytics on for someone we cannot place.")
+    }
+
+    func testRegionMatchingIsCaseInsensitive() {
+        XCTAssertEqual(AnalyticsPolicy.consentModel(regionCode: "de"), .ask,
+                       "Locale region identifiers are conventionally uppercase, but a lowercase "
+                       + "value must not silently downgrade an EEA user to inform-and-object.")
+    }
+
+    // MARK: - Seeding the regional default (ADR 0147 §3)
+
+    func testSeedingWritesTheRegionalDefault() {
+        withCleanStore(#function) { store in
+            AppSettings.seedAnalyticsDefaultIfNeeded(model: .notify, store: store)
+            XCTAssertEqual(store.object(forKey: AppSettings.Key.analyticsEnabled) as? Bool, true)
+        }
+        withCleanStore(#function + "ask") { store in
+            AppSettings.seedAnalyticsDefaultIfNeeded(model: .ask, store: store)
+            XCTAssertEqual(store.object(forKey: AppSettings.Key.analyticsEnabled) as? Bool, false)
+        }
+    }
+
+    /// **The case that must never regress.** Somebody who tapped "No thanks" under ADR 0120 has the
+    /// key present and `false`; a seed that overwrote it would silently re-enrol them.
+    func testSeedingNeverOverwritesAnExplicitDecline() {
+        withCleanStore(#function) { store in
+            store.set(false, forKey: AppSettings.Key.analyticsEnabled)
+            AppSettings.seedAnalyticsDefaultIfNeeded(model: .notify, store: store)
+            XCTAssertEqual(store.object(forKey: AppSettings.Key.analyticsEnabled) as? Bool, false,
+                           "An explicit decline must survive the move to inform-and-object.")
+        }
+    }
+
+    func testSeedingNeverOverwritesAnExplicitOptIn() {
+        withCleanStore(#function) { store in
+            store.set(true, forKey: AppSettings.Key.analyticsEnabled)
+            AppSettings.seedAnalyticsDefaultIfNeeded(model: .ask, store: store)
+            XCTAssertEqual(store.object(forKey: AppSettings.Key.analyticsEnabled) as? Bool, true,
+                           "Seeding must no-op in both directions, not just the convenient one.")
+        }
+    }
+
+    func testSeedingIsIdempotent() {
+        withCleanStore(#function) { store in
+            AppSettings.seedAnalyticsDefaultIfNeeded(model: .notify, store: store)
+            store.set(false, forKey: AppSettings.Key.analyticsEnabled)
+            // A later launch must not undo a withdrawal made after the first one.
+            AppSettings.seedAnalyticsDefaultIfNeeded(model: .notify, store: store)
+            XCTAssertEqual(store.object(forKey: AppSettings.Key.analyticsEnabled) as? Bool, false,
+                           "Seeding runs on every launch; only the first may write.")
+        }
+    }
+
+    /// Run `body` against an isolated defaults suite, cleared before and after.
+    private func withCleanStore(_ name: String, _ body: (UserDefaults) -> Void) {
+        guard let store = UserDefaults(suiteName: name) else {
+            return XCTFail("Could not open an isolated defaults suite.")
+        }
+        store.removePersistentDomain(forName: name)
+        defer { store.removePersistentDomain(forName: name) }
+        body(store)
+    }
+
     func testInstallDateIsRecordedOnceAndNeverDriftsForward() {
         guard let store = UserDefaults(suiteName: #function) else {
             return XCTFail("Could not open an isolated defaults suite.")

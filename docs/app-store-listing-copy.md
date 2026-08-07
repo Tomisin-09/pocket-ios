@@ -56,9 +56,10 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 > • Chain loops, songs and exercises into a routine and press play
 > • Keep a private journal of how a passage is coming along
 >
-> Your playing never leaves your device. No account, no ads, no tracking — your
-> audio, recordings, notes and song names stay with you, on your device and your
-> own iCloud. Anonymous usage counts are opt-in, and off unless you say yes.
+> Your playing never leaves your device. No account, no ads, no advertising ID —
+> your audio, recordings, notes and song names stay with you, on your device and
+> your own iCloud. Anonymous counts of which features get used can be switched off
+> in Settings at any time.
 >
 > Named after the Tom Misch track that started it all.
 
@@ -86,8 +87,13 @@ No longer "Data Not Collected". Declare exactly one type, matching
   no IDFA, no ATT prompt and no ad SDK, permanently (ADR 0120 §1), so no ATT
   purpose string is needed and `NSPrivacyTracking` stays `false`.
 
-Note for App Review, if asked: collection is **opt-in and off by default**; the
-app is fully functional with it declined.
+Note for App Review, if asked: collection is **anonymous, unlinked and not used for
+tracking**, and there is a single switch in Settings ▸ Privacy that stops it. It is
+**opt-in and off by default in the EEA and Switzerland** (ePrivacy Art. 5(3)) and
+**on by default with a disclosure at first run elsewhere, including the UK** (Data
+(Use and Access) Act 2025, Sch. A1 para. 5) — see ADR 0147. The app is fully
+functional with it off. **Do not describe it as "opt-in" unqualified** — that was
+true under ADR 0120 and is now true only inside the EEA.
 
 ## Category
 - **Primary:** Music
@@ -189,7 +195,7 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] "Red Moon Practice" section added to decooperations.co.uk/privacy; `#red-moon-practice` anchor resolves
 - [ ] support.html deployed to decooperations.click/redmoon/support
 - [ ] Support URL + Privacy Policy URL pasted into the form
-- [ ] App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120); everything else "not collected"
+- [ ] App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120); everything else "not collected". **Unchanged by ADR 0147** — the nutrition label encodes collection type, linkage and tracking, none of which the region split moves
 - [x] `APTABASE_APP_KEY` set in `project.yml` from the real EU-region app key (done 2026-07-29; `AptabaseSinkTests` pins that it resolves and is EU-region)
 - [ ] Category: Music (primary) / Education (secondary)
 - [ ] Age rating questionnaire → 4+

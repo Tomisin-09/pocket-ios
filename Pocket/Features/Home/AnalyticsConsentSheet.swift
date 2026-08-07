@@ -1,21 +1,37 @@
 import SwiftUI
 
-/// The one-time **analytics consent ask** (ADR 0120).
+/// The one-time analytics screen — **two roles in one file**, chosen by region (ADR 0120, split by
+/// ADR 0147).
 ///
-/// Deliberately *not* part of the first-launch intake. Analytics exists to measure whether a cold
-/// install reaches a first practice, and putting the ask in front of that flow would tax the very
-/// thing it measures. So it surfaces once, after a first completed practice, when the player has
-/// felt what the app does and the question can be answered on evidence rather than on trust.
+/// **`.ask` — EEA + CH.** The ADR 0120 consent ask, verbatim and unchanged. Deliberately *not* part
+/// of the first-launch intake: analytics exists to measure whether a cold install reaches a first
+/// practice, and putting the ask in front of that flow would tax the very thing it measures. So it
+/// surfaces once, after a first practice, when the player has felt what the app does and the
+/// question can be answered on evidence rather than on trust.
 ///
-/// **Opt-in, and honestly so.** `AppSettings.analyticsEnabled` defaults to `false`, so *every* exit
-/// from this screen that isn't an explicit yes leaves analytics off — there is no dismissal path
-/// that quietly grants consent. Declining is given the same weight as accepting: a consent screen
-/// that nudges is worse than no consent screen, because it makes the privacy claim a lie.
+/// **`.notify` — UK + rest of world, and only as a catch-up.** Under DUAA 2025 Sch A1 para 5 the
+/// default is on, and a fresh install is told by the footnote in `ArtistIntakeView` — so this role
+/// exists purely for installs that passed through an intake predating that footnote. It states
+/// rather than asks, and offers turning it off as an equal option. **It is transitional:** once no
+/// such install remains it is dead code and should be deleted, not kept as furniture.
+///
+/// **The anti-nudge rule binds harder here, not less.** Under `.ask` a nudge costs a data point;
+/// under `.notify`, where the default is already on, a nudge is the difference between informing
+/// somebody and processing them without their noticing. So the secondary action is a full-width,
+/// equally reachable target in both modes — never a buried "no thanks".
 ///
 /// The copy names what is and isn't collected in concrete terms rather than in the abstract. It is
 /// the sentence the whole brand claim rests on, and it must survive being read carefully.
 struct AnalyticsConsentSheet: View {
+    /// Which role this presentation plays. Supplied by the caller from
+    /// `AnalyticsPolicy.consentModel(regionCode:)` rather than read here, so the view stays
+    /// previewable in both modes.
+    let mode: AnalyticsPolicy.ConsentModel
+
     @Environment(\.dismiss) private var dismiss
+    /// The `= false` is unreachable in practice: `AppSettings.seedAnalyticsDefaultIfNeeded` writes
+    /// the key at launch, so it is always present by the time this screen can appear (ADR 0147 §3).
+    /// Kept as a safe-direction backstop, not as the policy.
     @AppStorage(AppSettings.Key.analyticsEnabled) private var analyticsEnabled = false
 
     var body: some View {
@@ -39,11 +55,15 @@ struct AnalyticsConsentSheet: View {
 
     private var headline: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Help make Red Moon better?")
+            Text(mode == .ask
+                 ? "Help make Red Moon better?"
+                 : "Red Moon counts which features get used")
                 .font(.futura(.title2, weight: .semibold))
                 .foregroundStyle(PocketColor.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Entirely up to you, and easy to change later.")
+            Text(mode == .ask
+                 ? "Entirely up to you, and easy to change later."
+                 : "Never your playing — and you can turn it off right here.")
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
         }
@@ -51,8 +71,10 @@ struct AnalyticsConsentSheet: View {
 
     private var explanation: some View {
         VStack(alignment: .leading, spacing: 18) {
+            // Same three points in both modes; only the tense moves, because under `.notify` this
+            // describes what is already happening rather than what would happen.
             point(icon: "chart.bar",
-                  title: "What we'd count",
+                  title: mode == .ask ? "What we'd count" : "What we count",
                   body: "Which features get used — how often a loop gets made, which exercises "
                       + "get built, where the app gets in your way.")
             point(icon: "eye.slash",
@@ -89,18 +111,26 @@ struct AnalyticsConsentSheet: View {
 
     // MARK: - Choice
     //
-    // Accept is the filled capsule and decline is plain text, matching the app's standing
-    // primary/secondary grammar — but decline is a full-width, equally reachable target rather than
-    // a buried "no thanks", and it is the outcome of every other exit from this screen too.
+    // Accept is the filled capsule and the other option is plain text, matching the app's standing
+    // primary/secondary grammar — but that option is a full-width, equally reachable target rather
+    // than a buried "no thanks".
+    //
+    // The two modes differ only in what the primary *means*. Under `.ask` it grants consent and the
+    // secondary is the outcome of every other exit from the screen. Under `.notify` the primary
+    // merely acknowledges (the value is already on), and the secondary is the "simple, free means of
+    // objecting" the DUAA exception is conditional on — so it must write `false`, not just dismiss.
 
     private var buttons: some View {
         VStack(spacing: 6) {
             Button {
-                analyticsEnabled = true
+                // `.notify` deliberately does **not** write `true` here: the seeded default already
+                // holds it, and writing on acknowledgement would overwrite a player who had turned
+                // it off in Settings before this catch-up ever appeared.
+                if mode == .ask { analyticsEnabled = true }
                 haptic(.medium)
                 dismiss()
             } label: {
-                Text("Count me in")
+                Text(mode == .ask ? "Count me in" : "Got it")
                     .font(.futura(.headline))
                     .foregroundStyle(PocketColor.background)
                     .frame(maxWidth: .infinity)
@@ -114,7 +144,7 @@ struct AnalyticsConsentSheet: View {
                 haptic(.light)
                 dismiss()
             } label: {
-                Text("No thanks")
+                Text(mode == .ask ? "No thanks" : "Turn this off")
                     .font(.futura(.body))
                     .foregroundStyle(PocketColor.textSecondary)
                     .frame(maxWidth: .infinity)
@@ -132,7 +162,12 @@ struct AnalyticsConsentSheet: View {
     }
 }
 
-#Preview {
+#Preview("Ask — EEA") {
     Color.clear
-        .fullScreenCover(isPresented: .constant(true)) { AnalyticsConsentSheet() }
+        .fullScreenCover(isPresented: .constant(true)) { AnalyticsConsentSheet(mode: .ask) }
+}
+
+#Preview("Notify — UK catch-up") {
+    Color.clear
+        .fullScreenCover(isPresented: .constant(true)) { AnalyticsConsentSheet(mode: .notify) }
 }

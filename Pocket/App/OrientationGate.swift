@@ -25,6 +25,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         // analytics consent — it is the user's own state, and only ever leaves the device as a
         // coarse age bucket, and only then if consent is later given.
         AppSettings.recordInstallDateIfNeeded()
+        // Seed the regional analytics default once, before any view reads it (ADR 0147). The value
+        // differs by law — off in the EEA under ePrivacy Art 5(3), on in the UK and rest of world
+        // under DUAA 2025 Sch A1 para 5 — so it cannot be a hardcoded `@AppStorage` default. Writing
+        // it here means the key always exists by the time Settings or the sheet reads it, and an
+        // explicit decline recorded under ADR 0120 survives untouched.
+        AppSettings.seedAnalyticsDefaultIfNeeded(
+            model: AnalyticsPolicy.consentModel(regionCode: Locale.current.region?.identifier))
         // Kill animations under UI test (ADR 0146). XCUITest blocks on app-idle before every
         // query and every tap, so each transition's duration is spent by the *test*, not just
         // by the app — and a loaded CI runner multiplies it. Done here rather than in the tests
