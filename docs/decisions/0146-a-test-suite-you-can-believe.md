@@ -1,7 +1,7 @@
 # ADR 0146 — A test suite you can believe
 
 - **Status:** Accepted — pass 1 built on `pocket-236-ui-test-reliability`; pass 2 built on
-  `pocket-230-ui-test-readiness-signal`
+  `pocket-237-ui-test-readiness-signal`
 - **Date:** 2026-08-06 (`pocket-236-ui-test-reliability`)
 - **Builds on:** ADR 0133 (which decides *whether* the `PocketAll` plan runs; this decides whether
   the answer it gives can be trusted).
