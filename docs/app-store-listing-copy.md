@@ -496,7 +496,20 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] Build finished processing and attached to **version 1.1**
 - [ ] **What's New** filled in — paste-ready copy is in the section above. Required for a
       new version, and read by App Review and by new visitors on the product page
-- [ ] Add for Review → Submit
+- [x] **Add for Review → Submitted 2026-08-07 15:30**, submission
+      `b4535945-c425-4de7-8d58-fbc4b1bb4aaf`, four items: iOS App 1.1 (3) · Red Moon Pro
+      Annual · Red Moon Pro Monthly · **Red Moon Pro (Subscription Group)**.
+      ⚠ **The first-subscription rule, in full** — it cost two cycles today. A first
+      auto-renewable subscription must be reviewed *with an app version binary that
+      surfaces the purchase* **and** *with its subscription group*. The group is a
+      separate reviewable object with its own display-name localization; adding only the
+      two products leaves "must be submitted with its subscription group" and no obvious
+      next step. Pulling the app version out strands the subscriptions as well.
+      ⚠ **Withdrawing before review is free** — not a rejection, no mark on the account,
+      no queue penalty. And **App Review Information stays editable while Waiting for
+      Review**, so a forgotten note can still be pasted after submitting (unlike the
+      binary). Save, then reload to confirm it stuck — ASC discards unsaved fields
+      silently.
 - [ ] 🔴 **TURN AVAILABILITY BACK ON once 1.1 is approved.** 1.0 was removed from sale
       2026-08-07 (done) while 1.1 is prepared, so the app is currently **not on the
       store at all**. Nothing will remind you: an approved 1.1 with no availability
