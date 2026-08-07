@@ -16,7 +16,20 @@
 >
 > Note also what the live 1.0 build contains: it predates the subscription, the
 > paywall, Help & FAQs, ADR 0148's import rework, and the permission fix — so anyone
-> downloading today gets a build that still asks for Apple Music access.
+> downloading today gets a build that still asks for Apple Music access, stores
+> imports as bookmarks (a restore-from-backup gives them a silent library — the very
+> bug ADR 0148 exists to fix), and has **no paywall at all**: the whole app free.
+>
+> ### 🔴 DECIDED 2026-08-07: 1.0 is REMOVED FROM SALE while 1.1 is prepared
+>
+> Taken deliberately, to stop anyone else landing on that build and to avoid a cohort
+> who had the full app free and then meet a hard paywall on update.
+>
+> **⚠️ THE APP IS THEREFORE INVISIBLE ON THE STORE RIGHT NOW.** Availability must be
+> turned back on when 1.1 is approved, or 1.1 clears review and nobody can download
+> it — a silent failure with no error anywhere to tell you. This is the single easiest
+> thing in this whole document to forget. It is repeated as the **last item** of the
+> pre-submission checklist on purpose.
 
 Draft copy for the App Store Connect submission. Tweak freely; character limits
 are Apple's hard caps. Honesty guardrail: Red Moon practises against **your own
@@ -361,6 +374,11 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] `xcodegen generate` → Archive (Release, team 2L35PZ86GP — Deco Operations Ltd, paid; owns `click.decooperations.pocket`) → Upload
 - [ ] Build finished processing and attached to **version 1.1**
 - [ ] Add for Review → Submit
+- [ ] 🔴 **TURN AVAILABILITY BACK ON once 1.1 is approved.** 1.0 was removed from sale
+      2026-08-07 (done) while 1.1 is prepared, so the app is currently **not on the
+      store at all**. Nothing will remind you: an approved 1.1 with no availability
+      just sits there, downloadable by no one, with no warning anywhere in ASC.
+      Pricing and Availability ▸ App Availability ▸ Manage ▸ re-select the territories
 - [x] "Dont" → "Don't" in the seeded library — already fixed (no `Dont` remains in the source)
 - [x] Permission audit: the app now requests **one** permission, the microphone.
       `NSAppleMusicUsageDescription` was removed (no MusicKit, no `MPMediaLibrary`;
