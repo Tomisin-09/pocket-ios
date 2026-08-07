@@ -8,9 +8,14 @@ extension HomeView {
     /// on every launch and no-ops after the first.
     ///
     /// Routines seed **after** exercises (ADR 0071) so their by-name blocks resolve against the
-    /// just-seeded drills, and the demo song comes last (it decodes off-main). The `Task.yield()`
-    /// between steps lets each surface paint: chaining them synchronously delays first render on a
-    /// cold install — the "freeze" that once looked like a regression was this.
+    /// just-seeded drills. The `Task.yield()` between steps lets each surface paint: chaining them
+    /// synchronously delays first render on a cold install — the "freeze" that once looked like a
+    /// regression was this.
+    ///
+    /// **No song is seeded** (ADR 0148). A demo track shipped as a bundled file was the app's only
+    /// third-party content — an App Store content-rights declaration, a licence to keep straight,
+    /// and 2.6 MB in every download — to hand every player the same song none of them chose. The
+    /// library starts empty and fills with music they actually practise.
     func seedFirstRunContent() async {
         PracticePresets.seedIfNeeded(into: context)
         // Stamp provenance onto drills seeded before the slug existed, so the free-taste
@@ -23,7 +28,6 @@ extension HomeView {
         RoutinePresets.seedIfNeeded(into: context)
         await Task.yield()
         RoutinePresets.backfillPresetSlugsIfNeeded(into: context)
-        await SongPresets.seedIfNeeded(into: context)
         #if DEBUG
         ScreenshotSeed.seedIfNeeded(into: context)
         #endif

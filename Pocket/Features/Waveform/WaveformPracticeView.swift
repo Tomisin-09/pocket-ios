@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The core practice screen (design brief §4.1): a fixed practice cockpit over a
 /// scrollable reference area, driven (for now) by mock song data plus a generated
@@ -21,12 +22,62 @@ struct WaveformPracticeView: View {
     // Landscape only: the loops/markers reference is a slide-in drawer (ADR 0042), closed by
     // default so the waveform owns the full width; the top-bar menu button toggles it.
     @State private var drawerOpen = false
+    // Relink (ADR 0148 §6) — repairing a song whose audio can't be found, without leaving the
+    // screen the player came here to use.
+    @State private var relinking = false
+    @State private var relinkAlert: RelinkAlert?
 
     init(song: Song, context: ModelContext) {
         _model = State(initialValue: WaveformPracticeModel(song: song, context: context))
     }
 
     private var isLandscape: Bool { verticalSizeClass == .compact }
+
+    /// A one-shot message about a relink — the failure, or the success that needs a caveat.
+    struct RelinkAlert {
+        let title: String
+        let message: String
+    }
+
+    /// Bool-bound like `LibraryView`'s import error, so the alert clears itself on dismiss.
+    private var relinkAlertBinding: Binding<Bool> {
+        Binding(get: { relinkAlert != nil }, set: { if !$0 { relinkAlert = nil } })
+    }
+
+    /// Repair this song's audio from a file the player picks (ADR 0148 §6). On success the screen
+    /// simply starts working — no confirmation for the ordinary case, because the waveform
+    /// redrawing and the transport coming alive *is* the confirmation.
+    private func handleRelink(_ result: Result<[URL], Error>) {
+        // Belt to the overlay's braces: a second pick landing mid-relink would race two decodes
+        // onto the same `sourceID`, and the loser would overwrite the winner's copy.
+        guard !model.isLoadingAudio else { return }
+        guard case .success(let urls) = result, let url = urls.first else {
+            if case .failure(let error) = result {
+                relinkAlert = RelinkAlert(title: "Couldn’t open that file",
+                                          message: error.localizedDescription)
+            }
+            return
+        }
+        Task {
+            do {
+                let outcome = try await model.relinkAudio(to: url)
+                // A different *length* means a different recording, not a re-encode — and the
+                // loops were drawn against the old one. Say so rather than letting the player
+                // discover it as loops that play the wrong bars, but never delete their work
+                // on the strength of a guess.
+                if outcome.durationChangedMaterially {
+                    relinkAlert = RelinkAlert(
+                        title: "Song relinked",
+                        message: "That file is a different length from the original, so this "
+                            + "song's loops and markers may no longer line up. Nothing was "
+                            + "deleted — you can adjust or remove them yourself.")
+                }
+            } catch {
+                relinkAlert = RelinkAlert(title: "Couldn’t use that file",
+                                          message: error.localizedDescription)
+            }
+        }
+    }
 
     var body: some View {
         @Bindable var model = model
@@ -47,14 +98,24 @@ struct WaveformPracticeView: View {
             }
 
             // Honest failure state: the bookmark no longer resolves or the file
-            // won't read — say so instead of presenting a dead transport.
+            // won't read — say so instead of presenting a dead transport, and hand
+            // back a way off the screen rather than leaving the back chevron as the
+            // only exit.
             if model.audioLoadFailed {
-                AudioUnavailableNotice()
+                AudioUnavailableNotice(onRelink: { relinking = true }, onLeave: { dismiss() })
                     .transition(.opacity)
             }
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.audioLoadFailed)
+        // Single selection: relink repairs *this* song, unlike the library's multi-select import.
+        .fileImporter(isPresented: $relinking, allowedContentTypes: [.audio],
+                      allowsMultipleSelection: false, onCompletion: handleRelink)
+        .alert(relinkAlert?.title ?? "", isPresented: relinkAlertBinding) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(relinkAlert?.message ?? "")
+        }
         // Both orientations draw their own compact back button (portrait: inline with the
         // song strip; landscape: the back · title · menu bar), so the system nav bar is
         // hidden throughout — in portrait it otherwise reserved a tall empty band above the

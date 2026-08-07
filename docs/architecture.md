@@ -104,9 +104,11 @@
 **Current status:** stages 3–5 exist as `PracticeAudioEngine` (player →
 `TimeStretcher` → mixer; play/pause/seek/rate + a published `currentTime`) with pure
 helpers in `AudioMath` and `StretchQuality` (unit-tested). Stages 1–2 (file import) now exist:
-`SongImporter` (the `LibraryView` file picker) stores a security-scoped bookmark, and
-the practice model resolves it to feed the engine the real file; the generated arpeggio
-(`SampleToneGenerator`) remains only as the bundled demo song. Tap-to-seek, scrub,
+`SongImporter` (the `LibraryView` file picker) **copies the file into the app's own
+storage** (`SongFileStore`) and keeps a security-scoped bookmark as provenance and legacy
+fallback; `SongAudioResolver` prefers the copy, so a library restored from a device backup
+still plays (ADR 0148); `SongRelinker` repairs a song whose audio is gone by re-pointing it at a file under its existing `sourceID`, so nothing attached to it is lost. The generated arpeggio (`SampleToneGenerator`) remains only as the
+preview/dev sample — the bundled demo song was dropped with ADR 0148 §7. Tap-to-seek, scrub,
 A/B-span set, and edge-drag are driven by the waveform **gesture engine** (pure math
 in `WaveformGesture` + the pure `ABSpan` state machine, ADR 0005 / 0041). Loop creation
 is the **A/B span**: tap the A/B control to set A then B (or hold-drag to paint it), the

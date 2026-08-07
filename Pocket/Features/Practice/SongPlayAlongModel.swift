@@ -65,33 +65,33 @@ final class SongPlayAlongModel {
 
     // MARK: - Audio loading
 
-    /// Resolve the song's audio. Imported songs resolve their security-scoped bookmark (held open for
-    /// the run via `fileAccess`); the demo song renders the dev sample — mirroring `LoopRunModel`.
+    /// Resolve the song's audio via `SongAudioResolver` — Pocket's own copy, else the legacy
+    /// bookmark (held open for the run via `fileAccess`); the demo song renders the dev sample —
+    /// mirroring `LoopRunModel`.
     /// Skipped in previews and once loaded. Seeds the working `percent` from the song's resume speed.
     func loadIfNeeded() async {
         percent = clampPercent(Int((song.resumeSpeed * 100).rounded()))
         guard !loaded, !isPreview else { return }
         isLoading = true
         defer { isLoading = false }
-        if let bookmark = song.ref.bookmark {
-            await loadImportedFile(bookmark: bookmark)
+        if song.hasImportedAudio {
+            await loadImportedFile()
         } else {
             await loadDemoSample()
         }
         loaded = true
     }
 
-    private func loadImportedFile(bookmark: Data) async {
-        var isStale = false
-        guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale),
-              let access = SecurityScopedAccess(url) else {
-            AudioPlumbing.log.error("Song play-along: bookmark failed to resolve — audio unavailable")
+    private func loadImportedFile() async {
+        guard let resolved = SongAudioResolver.resolve(song) else {
+            AudioPlumbing.log.error("Song play-along: audio could not be located — unavailable")
             loadFailed = true
             return
         }
-        fileAccess = access
+        fileAccess = resolved.access
+        SongAudioResolver.adoptIfNeeded(song, resolved: resolved)
         do {
-            try await engine.load(url: url)
+            try await engine.load(url: resolved.url)
         } catch {
             AudioPlumbing.log.error("Song play-along: audio failed to load: \(error.localizedDescription)")
             loadFailed = true

@@ -112,25 +112,84 @@ struct AudioLoadingOverlay: View {
 
 /// Shown when the song's audio could not be opened (bookmark no longer resolves,
 /// file unreadable) — an honest notice instead of a silently dead transport
-/// (audit 2026-07-05). Non-blocking: loops/markers stay browsable underneath.
+/// (audit 2026-07-05).
+///
+/// **Blocking** since the restore-from-backup pass (2026-08-07). It was previously a
+/// see-through panel that let loops/markers stay browsable underneath, on the theory
+/// that the rest of the screen was still useful. On a device it read as a washed-out
+/// label floating over a transport that still invited taps, and the only way out was
+/// the small back chevron. Nothing below this notice works without audio, so there is
+/// nothing worth keeping browsable: dim, absorb touches, and offer the way out.
 struct AudioUnavailableNotice: View {
+    /// Points the song at a file again, keeping its loops and markers (ADR 0148 §6). The primary
+    /// action: the player came here to practise, and relinking is the thing that lets them.
+    let onRelink: () -> Void
+    /// Leaves the practice screen, so a broken song is a detour rather than a dead end.
+    let onLeave: () -> Void
+
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.futura(.title3))
-                .foregroundStyle(PocketColor.textSecondary)
-            Text("Couldn't load this song's audio")
-                .font(.futura(.subheadline, weight: .medium))
-                .foregroundStyle(PocketColor.textPrimary)
-            Text("The file may have moved or been deleted. Re-import it to practice again.")
-                .font(.futura(.caption))
-                .foregroundStyle(PocketColor.textSecondary)
-                .multilineTextAlignment(.center)
+        ZStack {
+            // Matches `AudioLoadingOverlay` — the two states are the same screen-level
+            // interruption, and should not read as different weights of problem.
+            Color.black.opacity(0.55).ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.futura(.title))
+                        .foregroundStyle(PocketColor.danger)
+                    Text("This song's audio is missing")
+                        .font(.futura(.headline))
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .multilineTextAlignment(.center)
+                    // Names the actual cause rather than only the symptom: Pocket stores a
+                    // reference to the file where it lives (`SongImporter` bookmarks it), so
+                    // this is a broken link, not a corrupt song — and re-importing is a real
+                    // fix rather than a shrug.
+                    Text("This song was added before Red Moon kept its own copy, and the link to "
+                         + "your file has broken — it was moved, renamed or deleted, or the app "
+                         + "was reinstalled. Find the file again and your loops, markers, takes "
+                         + "and history all stay with it.")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+                // Combined as one label so VoiceOver reads the problem in a breath; the
+                // buttons stay separate elements, or neither way out would be reachable.
+                .accessibilityElement(children: .combine)
+
+                VStack(spacing: 10) {
+                    Button(action: onRelink) {
+                        Text("Find the file").pocketRunButton
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Choose this song's audio file again, keeping its loops")
+
+                    Button(action: onLeave) {
+                        Text("Not now")
+                            .font(.futura(.subheadline, weight: .medium))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Leaves practice and returns to the previous screen")
+                }
+            }
+            .padding(24)
+            // Opaque, unlike the standard translucent `panelBackground` — over the dim, a
+            // surface tint would leave the waveform legible straight through the words.
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(PocketColor.background)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(PocketColor.surfaceBorder, lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal, 32)
         }
-        .padding(20)
-        .background(panelBackground)
-        .padding(.horizontal, 32)
-        .accessibilityElement(children: .combine)
+        // Swallow taps meant for the dead transport underneath.
+        .contentShape(Rectangle())
+        .onTapGesture { }
     }
 }
 

@@ -1057,8 +1057,9 @@ Blocking facts to carry in cold:
   has to re-lock all five routine surfaces as well as the exercise gates.
 - **Don't ship a paywall build before the ASC products are live**, or `isPro` is permanently false and
   everything Pro-locks with no way to buy.
-- Same submission, separate task: the ASC **Content Rights** answer must change from "no third-party
-  content" now that *Binta* ships bundled.
+- ~~Same submission, separate task: the ASC **Content Rights** answer must change from "no third-party
+  content" now that *Binta* ships bundled.~~ **Dropped — ADR 0148 §7 removes the demo song, so the
+  answer stays "no third-party content".**
 
 ## Collection session builder — follow-ups (ADR 0118, parked 2026-07-25)
 
