@@ -47,6 +47,10 @@
 │              `StoreManager` (@MainActor @Observable, StoreKit 2) stays the app's only StoreKit type —
 │              `isPro`, plus `hasResolvedEntitlements` (so the launch wall can't flash at a subscriber
 │              mid-scan) and the renewal state (`currentExpiration`, `willAutoRenew`) the reminder needs.
+│              `refreshEntitlements()` runs at launch, on purchase/restore, on `Transaction.updates`, and
+│              **on every scenePhase → .active** — the last because a plain expiry mints no transaction,
+│              so `updates` stays silent and the gates would otherwise hold stale until a cold launch
+│              (sandbox-verified on device, 2026-08-07).
 │              `TrialReminder` (UserNotifications) owns one local notification and the app's own record of
 │              the trial end — recorded at the moment of a trial purchase, because StoreKit can't say
 │              whether a period is a trial without a deprecated `offerType` read. Its decisions are

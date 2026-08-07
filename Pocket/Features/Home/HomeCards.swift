@@ -73,13 +73,29 @@ struct HomeNavCard: View {
 /// chrome — the metronome card owns the screen's one accent colour.
 struct JumpBackInCard: View {
     let song: Song
+    /// Whether this card is behind the Pro wall (ADR 0144 D4). The card is a *second* door into the
+    /// Song library's Pro surface and has always routed through `proGated(.song)`; the lock makes that
+    /// visible, matching `HomeNavCard` and the recent-routines rail. Rides on the eyebrow rather than
+    /// the content row, which already ends in `MasteryReadout`.
+    var locked: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("JUMP BACK IN")
-                .font(.futura(.caption2, weight: .semibold))
-                .tracking(1.5)
-                .foregroundStyle(PocketColor.textSecondary)
+            HStack(spacing: 8) {
+                Text("JUMP BACK IN")
+                    .font(.futura(.caption2, weight: .semibold))
+                    .tracking(1.5)
+                    .foregroundStyle(PocketColor.textSecondary)
+                Spacer(minLength: 0)
+                if locked {
+                    Image(systemName: "lock.fill")
+                        .font(.futura(.footnote, weight: .semibold))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        // Spoken, because an unlabelled glyph would leave VoiceOver describing an
+                        // openable card.
+                        .accessibilityLabel("Requires Red Moon Pro")
+                }
+            }
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(song.title)
@@ -120,6 +136,11 @@ struct JumpBackInCard: View {
 /// practice content, kept clear of the blue library strip and the filled today's-session CTA.
 struct RecentRoutineCard: View {
     let routine: Routine
+    /// Whether this rail card is behind the Pro wall (ADR 0144 D4). Same grammar as `HomeNavCard`:
+    /// the tile stays fully visible and reads as **inviting-but-locked**. The rail has always *been*
+    /// gated — it routes through `proGated(.routine)` — but it drew no lock, so it was the one door
+    /// on Home that looked open while it wasn't.
+    var locked: Bool = false
 
     /// Playable blocks (rests excluded) — the "3 blocks" line, so the card previews the session's size.
     private var blockCount: Int {
@@ -128,9 +149,19 @@ struct RecentRoutineCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Image(systemName: "list.bullet.rectangle.portrait")
-                .font(.futura(.title3))
-                .foregroundStyle(PocketColor.practice)
+            // The lock sits opposite the glyph on the top row, where `HomeNavCard` puts it — trailing,
+            // secondary, replacing nothing the tile needs.
+            HStack(alignment: .top, spacing: 0) {
+                Image(systemName: "list.bullet.rectangle.portrait")
+                    .font(.futura(.title3))
+                    .foregroundStyle(PocketColor.practice)
+                Spacer(minLength: 0)
+                if locked {
+                    Image(systemName: "lock.fill")
+                        .font(.futura(.footnote, weight: .semibold))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+            }
             Text(routine.name.isEmpty ? "Routine" : routine.name)
                 .font(.futura(.headline))
                 .foregroundStyle(PocketColor.textPrimary)
@@ -150,7 +181,9 @@ struct RecentRoutineCard: View {
         .frame(width: 150, height: 132, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCardWash))
         .accessibilityElement(children: .combine)
-        .accessibilityHint("Replays this routine")
+        // `.combine` swallows the lock glyph (it carries no label of its own), so the locked state
+        // has to be spoken here or VoiceOver would announce an ordinary, openable tile.
+        .accessibilityHint(locked ? "Requires Red Moon Pro" : "Replays this routine")
     }
 
     /// "2 days ago" — a relative, human description of the last practice time.

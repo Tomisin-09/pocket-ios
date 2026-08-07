@@ -76,7 +76,7 @@ struct HomeView: View {
                         proGated(.song) {
                             WaveformPracticeView(song: song, context: context)
                         } label: {
-                            JumpBackInCard(song: song)
+                            JumpBackInCard(song: song, locked: !isPro)
                         }
                         .buttonStyle(.plain)
                     }
@@ -332,7 +332,7 @@ struct HomeView: View {
                         proGated(.routine) {
                             RoutineDetailView(container: context.container, existing: routine)
                         } label: {
-                            RecentRoutineCard(routine: routine)
+                            RecentRoutineCard(routine: routine, locked: !isPro)
                         }
                         .buttonStyle(.plain)
                     }

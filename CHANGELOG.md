@@ -52,6 +52,19 @@ All notable changes to Pocket are documented here. Format loosely follows
   spend the middle one on "Draw your own" — which is a feature of a feature, sold before you know
   what it draws on. Looping and slowing down your own tracks is the thing Red Moon does that a free
   metronome app doesn't, so it goes first, the catalog second, and Today's session third.
+- **"Jump back in" and the recent-routines tiles on Home show a lock when you don't have Pro**, like
+  every other gated card on the screen. Tapping either has always led to the paywall — they were the
+  two doors on Home that looked open while they weren't.
+
+### Fixed
+- **A subscription that ran out while the app was in the background now re-locks when you come back
+  to it**, instead of staying unlocked until the next time you launch the app from cold. Found in
+  sandbox testing: the App Store reports nothing at all when a subscription simply expires — there's
+  no renewal, so there's no event — and the app only re-checked at launch, after a purchase, or after
+  a restore. The visible result was contradictory: the trial countdown disappeared on schedule,
+  announcing the trial was over, while every Pro screen stayed open. Since iOS can keep an app
+  suspended for days, that gap wasn't momentary. Red Moon now re-checks every time it comes forward,
+  which needs no network — the App Store answers from its own cache offline.
 
 ### Internal
 - **CI stopped failing for reasons unrelated to the change under test** (ADR 0146). The UI tests all
