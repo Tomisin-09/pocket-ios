@@ -27,22 +27,67 @@ renders".
 
 Only the third one validates `Transaction.currentEntitlements`.
 
-## Prerequisites
+## Prerequisites — "the ASC sitting"
 
-- [ ] **ASC products moved to "Ready to Submit."** Both subscriptions currently sit as drafts in
-      "Prepare for Submission". Sandbox will not vend a draft. They need display name, description and
-      a review screenshot — **not** Apple's approval, and **not** attachment to a released build.
-  - `click.decooperations.pocket.pro.monthly` — £5.99
-  - `click.decooperations.pocket.pro.annual` — £49.99
-  - Group "Red Moon Pro", both with the **1-month** free intro offer (was 14 days — **ADR 0144**
-    changed it; confirm the live ASC value before validating, since this is what you are validating)
+One session in App Store Connect. Nothing here is code, and none of it can be scripted from this
+repo; it is listed in the order the console makes easiest.
+
+⚠️ **The two products currently disagree with each other.** The 2026-08-06 device pass found the
+annual on a **14-day** intro offer and the monthly on a **2-month** one — neither is the decided
+value, and they are not even the same value. Hardcoded paywall copy would have hidden this; ADR 0144
+D5 made the app read the length from the product, which is why it surfaced. **Fixing this is the
+point of the sitting** — everything else below is bookkeeping around it.
+
+### 1 — Make the two offers agree, at 1 month
+
+For **each** of `click.decooperations.pocket.pro.annual` and `.pro.monthly`, under
+*Subscription Prices → Introductory Offer*:
+
+- [ ] Annual (£49.99/yr) — free, **1 month**, all storefronts  ← currently 14 days
+- [ ] Monthly (£5.99/mo) — free, **1 month**, all storefronts  ← currently 2 months
+
+ASC has no 30-day option; **1 month is the decided value** (ADR 0144 D5), and the app will say
+whatever the product says. `Configuration/RedMoonPro.storekit` already carries `P1M` on both, so
+**no code change is owed here** — that file only drives simulator and local runs.
+
+### 2 — Draft → Ready to Submit
+
+Sandbox will not vend a draft. This needs **neither** Apple's approval **nor** a released build —
+just a complete metadata sheet on each product:
+
+- [ ] Reference name · duration · price (already set)
+- [ ] Subscription **group** localization — "Red Moon Pro" display name (group-level, done once)
+- [ ] Per-product localization — display name + description
+- [ ] **A review screenshot on each product.** This is the field that keeps a product in Draft, and
+      it is the reason the paywall's Red Moon PRO wordmark landed first: the screenshot is the
+      paywall, so capture it *after* that change is on the device.
+- [ ] Review notes — name the **free Toolkit and Journal** here as well as in the app's own review
+      notes (ADR 0144's 2.1 / 3.1.2 mitigation)
+
+### 3 — A fresh sandbox account
+
+- [ ] ASC → Users and Access → Sandbox → Test Accounts. Use an email that has **never** been an
+      Apple ID (a `+tag` alias works).
+
+**Intro-offer eligibility is one-shot per Apple Account per subscription *group*.** Any account that
+has already consumed a trial — including on the old 14-day offer — will never see the month, and a
+missing trial on such an account is not a bug. "Clear Purchase History" on an existing test account
+is not a reliable reset; make a new one. This is also why workstream C runs *after* ADR 0144 and not
+before it.
+
 - [x] **Paid Applications Agreement active** (confirmed: Tide GBP bank + W-8BEN-E tax all Active)
-- [ ] **Sandbox test account** — ASC → Users and Access → Sandbox → Test Accounts. Use an email that
-      has never been an Apple ID (a `+tag` alias works).
 
 ## The two switches that will silently fool you
 
 Both fail quietly: everything *looks* like it's working, and none of it is real.
+
+**`scripts/run-device.sh` is already clear of the first one** — confirmed 2026-08-06. The StoreKit
+configuration is a *scheme run option* that Xcode applies when **it** launches the app; a
+`devicectl` launch never applies it, so a script-installed build reads **real App Store Connect
+data**. Two independent tells on that run: the paywall said "14-day" where the local file says
+`P1M`, and priced in `$` where the local file is GBP. Useful — it means the script is a legitimate
+way to see live product data — but it also means a device build from the script tells you nothing
+about whether the *Xcode* scheme is still serving the local file.
 
 - [ ] **Turn off the local StoreKit config.** `project.yml` wires
       `storeKitConfiguration: Configuration/RedMoonPro.storekit` into the run scheme. While it's set,

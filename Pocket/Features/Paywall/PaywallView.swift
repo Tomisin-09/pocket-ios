@@ -54,32 +54,43 @@ struct PaywallView: View {
 
     // MARK: - Header
 
+    /// The brand lockup, then the contextual line. The wordmark is **artwork, not text**: it carries
+    /// the "PRO" weighting the designer set, which set type can't reproduce, and it replaces both the
+    /// crescent seal and the "Red Moon Pro" title that used to sit here (the crescent still leads
+    /// Settings, the artist-name prompt and the app icon). It therefore needs an explicit
+    /// accessibility label — nothing else on this screen announces the product's name.
+    ///
+    /// The top padding clears the top-trailing ✕: the wordmark is ~7:1 and runs nearly the full
+    /// content width, so unlike the 64 pt seal it reaches under the close button unless pushed down.
     private var header: some View {
         VStack(spacing: 14) {
-            Image("RedMoonMark")
+            Image("RedMoonProWordmark")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 64, height: 64)
-                .accessibilityHidden(true)
-            Text("Red Moon Pro")
-                .font(.futura(.largeTitle, weight: .bold))
-                .foregroundStyle(PocketColor.textPrimary)
+                .frame(maxWidth: 280)
+                .accessibilityLabel("Red Moon Pro")
             Text(trigger.headline)
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
                 .multilineTextAlignment(.center)
         }
-        .padding(.top, 12)
+        .padding(.top, 24)
     }
 
     // MARK: - Value props
 
+    /// Three claims, in the order they earn a subscription. **Loops lead** — playing along to your
+    /// own tracks is the thing Red Moon does that a free metronome app doesn't, and it is what the
+    /// App Store listing opens on too ("Loop and slow down"); the wording and the `repeat` glyph are
+    /// deliberately the same as the Practice library's Loops row, so the pitch and the app agree.
+    /// The catalog is second because it's the volume claim, and the planner third because it only
+    /// means anything once you have material to plan with.
     private var valueProps: some View {
         VStack(alignment: .leading, spacing: 16) {
+            valueRow("repeat", "Loop and slow down",
+                     "Loop the tricky bar of your own tracks and slow it down — the pitch stays true.")
             valueRow("square.grid.3x3.fill", "The full exercise catalog",
                      "Every scale, chord, arpeggio and technique drill — no limits.")
-            valueRow("hand.draw.fill", "Draw your own",
-                     "Hand-shape any exercise on the fretboard canvas.")
             valueRow("sparkles", "Today's session",
                      "A fresh, self-guided practice plan built from your goals.")
         }

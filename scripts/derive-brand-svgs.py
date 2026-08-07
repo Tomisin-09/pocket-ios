@@ -17,8 +17,15 @@ tight rather than merely close).
 composited on an opaque near-black square. That one can't be vector: App Store icons must be a flat
 1024² PNG with no alpha channel, so it is rasterised here rather than left to the asset catalog.
 
+…and the **Pro wordmark** — "Red Moon PRO", the paywall header's lockup. That one is the odd one
+out: the designer ships it as a *raster* export rather than a lockup SVG, so there are no path ids
+to crop by. It is cropped by its **alpha channel** instead — tight to the ink, then area-resampled
+down to a sane intrinsic size — which is the same idea reached through a different door, and keeps
+it re-runnable rather than something hand-trimmed in an editor on every logo revision.
+
     ./scripts/derive-brand-svgs.py                     # light + dark, into the asset catalog
     ./scripts/derive-brand-svgs.py --app-icon          # …and re-render AppIcon/icon-1024.png
+    ./scripts/derive-brand-svgs.py --pro-wordmark      # …and re-crop RedMoonProWordmark
     ./scripts/derive-brand-svgs.py --variants blood    # the Blood Moon theme's artwork
     ./scripts/derive-brand-svgs.py --out /tmp/preview  # loose files, catalog untouched
 
@@ -27,7 +34,8 @@ artwork already exists, it just has no consumer yet, so it is deliberately **not
 Adding it is this one command plus the imageset entries.
 
 Source files live outside the repo (they're 300 KB Pixelmator documents alongside the SVGs);
-point `--source` at wherever the current revision sits.
+point `--source` at wherever the current revision sits. The Pro wordmark PNGs sit in their own
+folder (`--pro-source`) because they arrived as a loose pair, not as a versioned lockup set.
 """
 import argparse
 import json
@@ -67,6 +75,25 @@ APP_ICON_SIZE = 1024
 APP_ICON_BACKGROUND = "#0F0F0F"
 APP_ICON_MARK_HEIGHT_FRACTION = 0.668
 APP_ICON_VARIANT = "dark"
+
+# The Pro wordmark. Raster in, raster out — see the module docstring for why this one can't be
+# derived from path ids like the rest.
+PRO_WORDMARK_SOURCE = os.path.expanduser("~/Documents")
+PRO_WORDMARK_FILES = {
+    "light": "red_moon_logo_pro_wordmark_for_light_backgrounds.png",
+    "dark": "red_moon_logo_pro_wordmark_for_dark_backgrounds.png",
+}
+PRO_WORDMARK_IMAGESET = "RedMoonProWordmark"
+
+# Alpha at or below this is background, not ink. The export is anti-aliased, so an exactly-zero
+# test would keep a halo of near-invisible pixels and crop several points wider than the glyphs.
+PRO_WORDMARK_ALPHA_FLOOR = 8
+
+# Longest side of the emitted PNG, in pixels. The asset is single-scale (like DefaultArtwork), so
+# this is also its intrinsic size in points — irrelevant in practice, because the paywall draws it
+# `.resizable()` inside an explicit frame. It is set by the *rendered* size instead: ~300 pt wide
+# at @3x is 900 px, and 1024 clears that with room to spare while keeping the file small.
+PRO_WORDMARK_MAX_PIXELS = 1024
 
 
 def parse_path(data):
@@ -244,8 +271,12 @@ def read_png(path):
     return width, height, bpp, rows
 
 
-def write_rgb_png(path, width, height, rows):
-    """Write 8-bit RGB rows as a PNG with **no alpha channel** — what App Store icons require."""
+def write_png(path, width, height, rows, alpha=False):
+    """Write 8-bit rows as a PNG — RGB by default, RGBA when `alpha`.
+
+    The App Icon must have **no alpha channel** (App Store requirement), the Pro wordmark must
+    keep one (it sits on the paywall's own background), hence the switch.
+    """
     def chunk(kind, payload):
         return (struct.pack('>I', len(payload)) + kind + payload
                 + struct.pack('>I', zlib.crc32(kind + payload) & 0xffffffff))
@@ -253,7 +284,8 @@ def write_rgb_png(path, width, height, rows):
     body = b''.join(b'\x00' + row for row in rows)      # filter type 0 on every scanline
     with open(path, 'wb') as handle:
         handle.write(b'\x89PNG\r\n\x1a\n'
-                     + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0))
+                     + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8,
+                                                  6 if alpha else 2, 0, 0, 0))
                      + chunk(b'IDAT', zlib.compress(body, 9))
                      + chunk(b'IEND', b''))
 
@@ -286,15 +318,93 @@ def build_app_icon(source_svg, destination):
             raise SystemExit("rendered icon has transparent pixels — the background rect didn't "
                              "cover the canvas; App Store icons must be fully opaque")
         rows = [bytes(b for x in range(width) for b in row[x * 4:x * 4 + 3]) for row in rows]
-    write_rgb_png(destination, width, height, rows)
+    write_png(destination, width, height, rows)
     print(f"  {os.path.relpath(destination)}  {width}×{height}, no alpha")
 
 
-def contents_json(entries):
+def alpha_bounds(width, rows):
+    """The tightest (left, top, right, bottom) box holding every pixel with real ink in it."""
+    left, top, right, bottom = width, len(rows), -1, -1
+    for y, row in enumerate(rows):
+        inked = [x for x in range(width) if row[x * 4 + 3] > PRO_WORDMARK_ALPHA_FLOOR]
+        if not inked:
+            continue
+        left, right = min(left, inked[0]), max(right, inked[-1])
+        top, bottom = min(top, y), y
+    if right < 0:
+        raise SystemExit("source PNG is entirely transparent — is it the right export?")
+    return left, top, right, bottom
+
+
+def resample_rgba(rows, box, target_width, target_height):
+    """Area-average `box` of `rows` down to the target size, returning RGBA rows.
+
+    Averaging happens on **premultiplied** colour. Straight averaging would pull the transparent
+    pixels' RGB (which the exporter leaves at black) into every edge sample and ring the glyphs
+    with a dark fringe — invisible against white, obvious against the paywall's cream.
+    """
+    left, top, right, bottom = box
+    src_w, src_h = right - left + 1, bottom - top + 1
+    out = []
+    for ty in range(target_height):
+        y0, y1 = top + ty * src_h // target_height, top + (ty + 1) * src_h // target_height
+        line = bytearray(target_width * 4)
+        for tx in range(target_width):
+            x0, x1 = left + tx * src_w // target_width, left + (tx + 1) * src_w // target_width
+            acc_a = acc_r = acc_g = acc_b = count = 0
+            for y in range(y0, max(y1, y0 + 1)):
+                row = rows[y]
+                for x in range(x0, max(x1, x0 + 1)):
+                    alpha = row[x * 4 + 3]
+                    acc_a += alpha
+                    acc_r += row[x * 4] * alpha
+                    acc_g += row[x * 4 + 1] * alpha
+                    acc_b += row[x * 4 + 2] * alpha
+                    count += 1
+            out_a = acc_a // count
+            base = tx * 4
+            if acc_a:
+                line[base] = min(255, acc_r // acc_a)
+                line[base + 1] = min(255, acc_g // acc_a)
+                line[base + 2] = min(255, acc_b // acc_a)
+            line[base + 3] = out_a
+        out.append(bytes(line))
+    return out
+
+
+def build_pro_wordmark(source_folder, target, variants):
+    """Crop each Pro-wordmark export to its ink and write the imageset."""
+    entries = []
+    os.makedirs(target, exist_ok=True)
+    for variant in variants:
+        if variant not in PRO_WORDMARK_FILES:
+            continue
+        path = os.path.join(source_folder, PRO_WORDMARK_FILES[variant])
+        if not os.path.exists(path):
+            raise SystemExit(f"no Pro wordmark export at {path}\n"
+                             "pass --pro-source pointing at the folder holding the pair")
+        width, _, bpp, rows = read_png(path)
+        if bpp != 4:
+            raise SystemExit(f"{path} has no alpha channel — the crop has nothing to measure")
+        box = alpha_bounds(width, rows)
+        src_w, src_h = box[2] - box[0] + 1, box[3] - box[1] + 1
+        scale = min(1.0, PRO_WORDMARK_MAX_PIXELS / max(src_w, src_h))
+        out_w, out_h = max(1, round(src_w * scale)), max(1, round(src_h * scale))
+        filename = f"pro-wordmark-{variant}.png"
+        write_png(os.path.join(target, filename), out_w, out_h,
+                  resample_rgba(rows, box, out_w, out_h), alpha=True)
+        entries.append((filename, "dark" if variant == "dark" else None))
+        print(f"  {PRO_WORDMARK_IMAGESET}/{filename}  {src_w}×{src_h} → {out_w}×{out_h}")
+    return entries
+
+
+def contents_json(entries, vector=True):
     """An imageset Contents.json for `entries` — (filename, appearance-or-None) pairs.
 
     `preserves-vector-representation` is what makes the SVG scale instead of being flattened to a
     single raster at import: these are drawn from 22 pt (the Home wordmark) to 160 pt (Settings).
+    It is meaningless on the raster Pro wordmark, so that one passes `vector=False` rather than
+    claiming a vector representation it hasn't got.
     """
     images = []
     for filename, appearance in entries:
@@ -302,10 +412,10 @@ def contents_json(entries):
         if appearance:
             image["appearances"] = [{"appearance": "luminosity", "value": appearance}]
         images.append(image)
-    return json.dumps({"images": images,
-                       "info": {"author": "xcode", "version": 1},
-                       "properties": {"preserves-vector-representation": True}},
-                      indent=2) + "\n"
+    body = {"images": images, "info": {"author": "xcode", "version": 1}}
+    if vector:
+        body["properties"] = {"preserves-vector-representation": True}
+    return json.dumps(body, indent=2) + "\n"
 
 
 def main():
@@ -319,6 +429,10 @@ def main():
                         help="write loose SVGs here instead of updating the asset catalog")
     parser.add_argument("--app-icon", action="store_true",
                         help="also re-render AppIcon/icon-1024.png from the dark mark")
+    parser.add_argument("--pro-wordmark", action="store_true",
+                        help=f"also re-crop {PRO_WORDMARK_IMAGESET} from the Pro wordmark PNGs")
+    parser.add_argument("--pro-source", default=PRO_WORDMARK_SOURCE,
+                        help="folder holding the Pro wordmark PNG exports")
     args = parser.parse_args()
     if args.app_icon and APP_ICON_VARIANT not in args.variants:
         args.variants = list(args.variants) + [APP_ICON_VARIANT]
@@ -354,6 +468,13 @@ def main():
                             "icon-1024.png")
         os.makedirs(os.path.dirname(icon), exist_ok=True)
         build_app_icon(sources[APP_ICON_VARIANT], icon)
+
+    if args.pro_wordmark:
+        target = args.out or os.path.join(catalog, f"{PRO_WORDMARK_IMAGESET}.imageset")
+        entries = build_pro_wordmark(args.pro_source, target, args.variants)
+        if not args.out:
+            with open(os.path.join(target, "Contents.json"), "w", encoding="utf-8") as handle:
+                handle.write(contents_json(entries, vector=False))
     return 0
 
 
