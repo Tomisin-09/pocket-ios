@@ -301,6 +301,46 @@ Max simulator** at native **1320×2868**, then **downscale** to 1242×2688 with
 was *upscaled* → soft; the 0.4% aspect difference is invisible). Final upload set lives
 in `Documents/Red Moon Screenshots 2/appstore-2026-07-22/upload-6.5/`.
 
+### Verified working recipe (2026-08-07) — start here
+
+Every line below was run and confirmed on the day. Device: **iPhone 17 Pro Max**
+(`93C716BA-F669-4E25-92BD-0D76411B4203`), native capture **1320×2868**.
+
+```bash
+DEV=93C716BA-F669-4E25-92BD-0D76411B4203
+xcrun simctl boot $DEV
+xcodebuild build -scheme Pocket -configuration Debug \
+  -destination "platform=iOS Simulator,name=iPhone 17 Pro Max" -derivedDataPath /tmp/shots-dd
+xcrun simctl install $DEV /tmp/shots-dd/Build/Products/Debug-iphonesimulator/Pocket.app
+xcrun simctl launch $DEV click.decooperations.pocket -seedScreenshots -appearance dark
+# re-apply after EVERY launch — a relaunch resets it
+xcrun simctl status_bar $DEV override --time "9:41" --batteryState charged \
+  --batteryLevel 100 --cellularMode active --cellularBars 4 \
+  --dataNetwork wifi --wifiMode active --wifiBars 3
+xcrun simctl io $DEV screenshot raw/01-hero.png
+swift scripts/prep-shot.swift raw/01-hero.png upload/01-hero.png   # 1242×2688, opaque
+```
+
+⚠ **`xcrun simctl ui $DEV appearance dark` DOES NOT WORK.** `simctl` reports `dark`
+and the app still renders the cream light theme, across a relaunch. Pass
+**`-appearance dark`** as a launch argument instead: `AppearancePreference` is an
+`@AppStorage("appearance")` value, and iOS reads `-key value` launch arguments as
+UserDefaults, so this sets the app's *own* preference and sidesteps the system one
+entirely. The final set is dark by decision, so getting this wrong wastes a whole shoot.
+
+⚠ **Alpha must be flattened — ASC rejects a PNG with an alpha channel, and `sips`
+will not reliably remove one.** `scripts/prep-shot.swift` downscales and flattens in a
+single pass by drawing into an opaque `noneSkipFirst` CGContext. Verify with
+`sips -g hasAlpha`.
+
+⚠ **Seed audio is not in the repo and has been lost once already** (the July shoot's
+files were gone by August). It now lives outside git at
+`~/Documents/Red Moon Screenshots 2/seed-audio/`. `ScreenshotSeed` reads the
+**filename** as the song title, and only `Red Moon`, `I Don't Trust Myself With Loving
+You` and `I'd Rather Go Blind` have artist/BPM/key/loop metadata written for them.
+The simulator's `AVAudioFile` decodes AAC but **silently fails on mp3** — convert
+first: `afconvert in.mp3 out.m4a -d aac -f m4af`.
+
 **Clean status bar (don't crop — normalise):** slots demand exact pixel dimensions,
 so you can't crop the clock/battery/signal off and submit a shorter image. Instead
 override the Simulator status bar to Apple's canonical clean state before every shot:
