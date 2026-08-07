@@ -356,27 +356,46 @@ xcrun simctl io booted screenshot 01-hero-loop.png
 Loop-trainer shots (#1/#2) need a **local audio file** imported into the sim first
 (Apple Music can't be tapped); everything else runs off seeded content.
 
-Curated slots, ordered for the install sheet (first 3 carry the pitch):
+**FINAL SET — SHOT 2026-08-07.** Ten frames, dark, 1242×2688, alpha flattened, at
+`~/Documents/Red Moon Screenshots 2/appstore-2026-08-07/upload-6.5-dark/`
+(raw 1320×2868 masters beside it in `raw-1320x2868/`). Upload in filename order.
 
-| # | Subject | Verdict | Set-up |
-|---|---|---|---|
-| 1 | Loop trainer, Solo playing (1.00×) — hero, the moat | Re-shoot | import demo local file; loop playing |
-| 2 | A–B loop + "Save as loop" (0.75×) — core gesture | Re-shoot | same session, save sheet up |
-| 3 | A Minor Pentatonic (fretboard + ramp + journal) — "it teaches" | Re-shoot | Journal centralised (#157) — confirm/reframe panel |
-| 4 | Red Moon Practice Routine — session spine | Re-shoot | UI ~unchanged; reshoot for clean-bar consistency |
-| 5 | Metronome + Automator — trust/utility | Re-shoot | UI ~unchanged; reshoot for consistency |
-| 6 | Custom chord placer — novelty | Re-shoot | chord authoring redesigned (#158/#160) |
-| 7 | Chord run — chords in action | Re-shoot | same redesign |
-| 8 | Library (clean) — where you live | Re-shoot | Home/nav regrouped (#159); fix "Dont"→"Don't" seed typo first |
-| + | **Home (grouped sections)** — new hero look | Consider adding | #159 gave Home a real hero; candidate for slot 1 |
-| + | **Hear / audio preview** — differentiator | Consider adding | once ADR 0097 lands |
+| # | File | What it shows |
+|---|---|---|
+| 1 | `01-hero-waveform` | Red Moon playing, 92 BPM, three saved loops with target speeds — the moat |
+| 2 | `02-save-as-loop` | A–B drawn, **Save as loop**, at 0.75× — and 92 BPM has become 69, so the pair shows the tempo following the speed |
+| 3 | `03-tuner` | "You're in tune!", needle centred on E². **Free surface** — the 2.1 mitigation, and the most legible frame at thumbnail size |
+| 4 | `04-home` | Grouped hero with **Jump back in** populated (an app in use, not freshly installed) |
+| 5 | `05-scale-drill-running` | A Minor Pentatonic mid-run: 80 BPM · Andante · **quarters** (ADR 0121's note rate) and the **command** stage lit |
+| 6 | `06-routine` | Seven blocks mixing exercises with **loops from the user's own song** + rests — the "chain it into a session" claim, shown |
+| 7 | `07-metronome-automator` | Automator By Bars, +5 every 4 bars to 110, staircase and Step 1/5 |
+| 8 | `08-chord-placer` | Custom chord editor, "Looks like" resolving to **Cmadd9/D♯ 2nd inv** live |
+| 9 | `09-chord-run` | Current grip large, **Next** ghosted beside it |
+| 10 | `10-library` | Sorted by **Mastery**, so sections read *Polished · Solid · Needs work* rather than A–Z |
+
+Notes for whoever reshoots next:
+- **Sort the library by Mastery, not Title.** Alphabetical gives section headers of
+  "F", "I", "L" — an index. Mastery gives *Polished / Solid / Needs work*, which says
+  something about practice.
+- **Shoot run screens mid-run.** The idle version truncated the exercise title ("A Minor
+  Pentato…"); during a run the 4/4 chip disappears and the full name fits.
+- **Watch the translucent nav bar.** A row caught half-scrolled under it smears behind
+  the title and reads as a rendering glitch. Scroll so a header or a gap sits under it.
+- Slot 3 leads with the tuner deliberately: only the first three appear on the install
+  sheet, and a free, instantly-readable tool earns that place over a third loop screen.
+  ASC ordering is drag-and-drop, so this is cheap to change without reshooting.
 
 Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–08,
 1242×2688, shot 2026-07-16).
 
 ## Pre-submission checklist
 - [ ] Subtitle, promotional text, keywords, description entered (above)
-- [ ] 8 screenshots re-shot on iPhone 17 Pro Max sim (native 1320×2868, clean 9:41 status bar) and uploaded in order — see revised shoot guide above; verify ASC slot size on sign-in
+- [x] **10 screenshots re-shot 2026-08-07** on iPhone 17 Pro Max, dark, clean 9:41 bar,
+      downscaled to 1242×2688 and alpha-flattened — every file verified `hasAlpha: no`.
+      At `~/Documents/Red Moon Screenshots 2/appstore-2026-08-07/upload-6.5-dark/`
+- [ ] Upload those ten to the **6.5" slot** in filename order (ASC keeps the previous
+      version's screenshots when you create a new version, so **delete the July set
+      first** — otherwise 1.1 ships 1.0's images)
 - [ ] `support@decooperations.co.uk` mailbox live — **the app now ships this address**
       (Settings ▸ About ▸ Contact Support, and in plain text inside an FAQ answer,
       ADR 0145), so a dead mailbox is now a bug in a shipped build, not just a

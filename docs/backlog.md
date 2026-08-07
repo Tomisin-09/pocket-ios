@@ -2300,6 +2300,26 @@ route through.
 
 ## UI / polish
 
+- **Run screens leave a large empty band on a 6.9" display (logged 2026-08-07, spotted during the
+  App Store re-shoot).** On iPhone 17 Pro Max, `ExerciseRunView` (both idle and running), the chord
+  run and the routine block list all top-align their content and leave roughly a fifth to a third of
+  the screen empty above the bottom bar — most visible on the running scale drill, where the gap
+  between the ramp staircase and Pause is about a third of the frame. Three separate screens show it,
+  so it is a layout pattern rather than one screen's bug: the vertical rhythm was presumably tuned on
+  a shorter phone and nothing claims the extra height. It is not a defect — nothing is cut off or
+  unreachable — but it reads as unfinished in a screenshot, and a taller device should feel like it
+  is being used. Worth a pass when the iPad layout work (below) is picked up, since it is the same
+  question asked about a different axis.
+- **Metronome screen shows two identical "▶ Start" buttons (logged 2026-08-07, spotted during the
+  App Store re-shoot).** With the automator switched on, the screen presents a purple **▶ Start**
+  inside the automator card *and* a second **▶ Start** pinned at the bottom — same label, same icon,
+  same apparent weight. In use the difference is presumably "start the ramp" vs "start the plain
+  click", but nothing on screen says so, and in a static frame it reads as a duplicated control. It
+  was noticeable enough to stop the screenshot session, which is a decent signal. Options: label them
+  for what they each do, hide the bottom bar while the automator card is expanded, or collapse to one
+  button that respects the automator mode. Decide what the two actually do first — if they do the
+  *same* thing, that is the real finding. The shipped screenshot keeps both (an honest frame beats a
+  scrolled-to-hide one).
 - **Metronome sound picker — UI polish (logged 2026-07-24, ADR 0114).** The four-voice picker shipped
   functional (row + inline ▶ audition + selected check, `MetronomeSoundSection`) and the *sounds* are
   approved, but the presentation feels plain — a flat list of Form rows. Ideas when picked up: a richer
