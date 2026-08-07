@@ -109,6 +109,12 @@ targets:
     platform: iOS
     sources:
       - path: PocketUITests
+      # Compiled into the UI-test bundle as well as the app (ADR 0146 pass 2). A UI test runs in a
+      # separate process and cannot `@testable import` the app, so the launch argument and the
+      # readiness identifier would otherwise be the same string literal written out in two targets —
+      # and a rename that breaks the match doesn't fail fast, it waits out the full timeout and then
+      # blames the wrong assertion. Strings only; the file deliberately holds no app types.
+      - path: Pocket/Core/Testing/UITestHooks.swift
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"

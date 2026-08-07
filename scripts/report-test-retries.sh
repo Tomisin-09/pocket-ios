@@ -3,7 +3,7 @@
 #
 #   scripts/report-test-retries.sh <raw-xcodebuild-log>
 #
-# CI runs the suite with `-retry-tests-on-failure -test-iterations 3` (ADR 0146).
+# CI runs the suite with `-retry-tests-on-failure -test-iterations 2` (ADR 0146).
 # That keeps a one-off timing loss on a cold simulator from reddening `main`, but
 # it also means a green tick no longer proves every test passed first time. This
 # script closes that gap: it names every test that failed at least one attempt, as

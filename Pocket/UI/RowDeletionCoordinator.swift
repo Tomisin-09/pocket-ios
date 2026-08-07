@@ -55,7 +55,7 @@ final class RowDeletionCoordinator {
     /// harness room removes a race that was never the thing under test. The **real** duration is
     /// covered by `RowDeletionCoordinatorTests`, which runs without the flag and waits it out.
     static var window: Duration {
-        CommandLine.arguments.contains("-uiTesting") ? .seconds(120) : .seconds(4)
+        UITestRuntime.isActive ? .seconds(120) : .seconds(4)
     }
 
     private var commits: [AnyHashable: () -> Void] = [:]

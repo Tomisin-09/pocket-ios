@@ -24,48 +24,38 @@ import XCTest
 /// - the wait order is inverted here — grab the thing on a clock first;
 /// - `RowDeletionCoordinator.window` is stretched under `-uiTesting`, since the four-second figure
 ///   is a *product* decision this test was never asserting.
-final class RowUndoUITests: XCTestCase {
-
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
+final class RowUndoUITests: UITestCase {
 
     @MainActor
     func testUndoRestoresADeletedRowWithoutLeavingTheScreen() throws {
-        let app = XCUIApplication()
-        app.launchArguments += ["-uiTesting"] // suppress the first-launch profile intake covering Home
-        app.launch()
+        let app = launchApp()
 
         try openExercisesLibrary(in: app)
 
         // "Alternate Picking" is in `PracticePresets.firstRunSlugs`, so a clean install has it, and it
         // collides with no section header (unlike "Legato", which is also a template section).
         let drill = app.cells.containing(.staticText, identifier: "Alternate Picking").firstMatch
-        XCTAssertTrue(drill.waitForExistence(timeout: 20), "no seeded exercise to delete")
-        var swipes = 0
-        while !drill.isHittable && swipes < 4 {
-            app.swipeUp()
-            swipes += 1
-        }
+        XCTAssertTrue(drill.waitForExistence(timeout: Self.uiTimeout), "no seeded exercise to delete")
+        scrollIntoView(drill, in: app)
 
         drill.swipeLeft()
         let deleteButton = app.buttons["Delete Alternate Picking"]
-        XCTAssertTrue(deleteButton.waitForExistence(timeout: 5), "trailing swipe offered no Delete")
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: Self.uiTimeout), "trailing swipe offered no Delete")
         deleteButton.tap()
 
         // Reach for **Undo first**. The toast and the row's disappearance come from one state
         // change, so both are true at the same instant — but only the toast is on a clock, and any
         // wait placed in front of it is spent out of the undo window (see the flake note above).
         let undo = app.buttons["Undo"]
-        XCTAssertTrue(undo.waitForExistence(timeout: 10), "no Undo toast after deleting")
+        XCTAssertTrue(undo.waitForExistence(timeout: Self.uiTimeout), "no Undo toast after deleting")
 
         // The row leaves because the *filter* hid it — nothing is deleted yet.
-        XCTAssertTrue(waitForDisappearance(of: drill, timeout: 5), "the deleted row stayed on screen")
+        XCTAssertTrue(waitForDisappearance(of: drill), "the deleted row stayed on screen")
 
         undo.tap()
 
         // The whole point: back immediately, on this screen, with no navigation.
-        XCTAssertTrue(drill.waitForExistence(timeout: 5),
+        XCTAssertTrue(drill.waitForExistence(timeout: Self.uiTimeout),
                       "Undo did not restore the row in place (host/environment scoping regression)")
     }
 
@@ -94,31 +84,23 @@ final class RowUndoUITests: XCTestCase {
         try openJournal(in: app)
 
         let note = app.cells.containing(.staticText, identifier: noteText).firstMatch
-        XCTAssertTrue(note.waitForExistence(timeout: 20), "the note just written isn't on the feed")
+        XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "the note just written isn't on the feed")
 
         note.press(forDuration: 1.2)
         let deleteButton = app.buttons["Delete"]
-        XCTAssertTrue(deleteButton.waitForExistence(timeout: 5), "the hold menu offered no Delete")
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: Self.uiTimeout), "the hold menu offered no Delete")
         deleteButton.tap()
 
         // Undo first — it is the thing on a clock. See the flake note on the test above.
         let undo = app.buttons["Undo"]
-        XCTAssertTrue(undo.waitForExistence(timeout: 10), "no Undo toast after deleting a note")
-        XCTAssertTrue(waitForDisappearance(of: note, timeout: 5), "the deleted note stayed on screen")
+        XCTAssertTrue(undo.waitForExistence(timeout: Self.uiTimeout), "no Undo toast after deleting a note")
+        XCTAssertTrue(waitForDisappearance(of: note), "the deleted note stayed on screen")
 
         undo.tap()
-        XCTAssertTrue(note.waitForExistence(timeout: 5), "Undo did not restore the journal note")
+        XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "Undo did not restore the journal note")
     }
 
     // MARK: - Helpers
-
-    @MainActor
-    private func launchApp() -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments += ["-uiTesting"] // suppress the first-launch profile intake covering Home
-        app.launch()
-        return app
-    }
 
     /// Write one note against a seeded drill, through the app's own capture path: Exercises → the
     /// drill's run screen → the nav-bar quick-note button → Save. Leaves the app back on Home.
@@ -131,27 +113,23 @@ final class RowUndoUITests: XCTestCase {
         try openExercisesLibrary(in: app)
 
         let drill = app.cells.containing(.staticText, identifier: "Alternate Picking").firstMatch
-        XCTAssertTrue(drill.waitForExistence(timeout: 20), "no seeded exercise to write a note against")
-        var swipes = 0
-        while !drill.isHittable && swipes < 4 {
-            app.swipeUp()
-            swipes += 1
-        }
+        XCTAssertTrue(drill.waitForExistence(timeout: Self.uiTimeout), "no seeded exercise to write a note against")
+        scrollIntoView(drill, in: app)
         drill.tap()
 
         let quickNote = app.buttons["Write a quick journal note"]
-        XCTAssertTrue(quickNote.waitForExistence(timeout: 20), "no quick-note button on the run screen")
+        XCTAssertTrue(quickNote.waitForExistence(timeout: Self.uiTimeout), "no quick-note button on the run screen")
         quickNote.tap()
 
         // `TextField(axis: .vertical)` surfaces as a text *view* on some runtimes and a text field on
         // others, so accept either rather than pinning the test to one of them.
         let field = composerField(in: app)
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "the quick-note sheet has no field")
+        XCTAssertTrue(field.waitForExistence(timeout: Self.uiTimeout), "the quick-note sheet has no field")
         field.tap()
         field.typeText(text)
 
         let save = app.buttons["Save"]
-        XCTAssertTrue(save.waitForExistence(timeout: 5), "no Save button on the quick-note sheet")
+        XCTAssertTrue(save.waitForExistence(timeout: Self.uiTimeout), "no Save button on the quick-note sheet")
         save.tap()
 
         try returnHome(in: app)
@@ -161,7 +139,7 @@ final class RowUndoUITests: XCTestCase {
     private func composerField(in app: XCUIApplication) -> XCUIElement {
         let placeholder = "What just happened?"
         let asField = app.textFields[placeholder]
-        return asField.waitForExistence(timeout: 5) ? asField : app.textViews[placeholder]
+        return asField.waitForExistence(timeout: Self.uiTimeout) ? asField : app.textViews[placeholder]
     }
 
     /// Pop back to Home. The run screen is three levels deep (Home → Practice hub → Exercises
@@ -173,49 +151,32 @@ final class RowUndoUITests: XCTestCase {
         var backs = 0
         while !homeMarker.exists && backs < 5 {
             let back = app.navigationBars.buttons.firstMatch
-            guard back.waitForExistence(timeout: 5) else { break }
+            guard back.waitForExistence(timeout: Self.uiTimeout) else { break }
             back.tap()
             backs += 1
         }
-        XCTAssertTrue(homeMarker.waitForExistence(timeout: 10), "never got back to Home")
+        XCTAssertTrue(homeMarker.waitForExistence(timeout: Self.uiTimeout), "never got back to Home")
     }
 
     /// Home → Journal.
     @MainActor
     private func openJournal(in app: XCUIApplication) throws {
         let journalCard = app.buttons["Journal, your notes and practice takes"]
-        XCTAssertTrue(journalCard.waitForExistence(timeout: 10), "Journal card missing")
-        var swipes = 0
-        while !journalCard.isHittable && swipes < 6 {
-            app.swipeUp()
-            swipes += 1
-        }
-        XCTAssertTrue(journalCard.isHittable, "Journal card not reachable by scrolling")
+        XCTAssertTrue(journalCard.waitForExistence(timeout: Self.uiTimeout), "Journal card missing")
+        XCTAssertTrue(scrollIntoView(journalCard, in: app), "Journal card not reachable by scrolling")
         journalCard.tap()
     }
 
-    /// Home → Practice → Exercises. Generous timeouts: on a cold simulator each screen only paints
-    /// once first-launch seeding has run, the same variance `PracticeRunUITests` allows for.
+    /// Home → Practice → Exercises.
     @MainActor
     private func openExercisesLibrary(in app: XCUIApplication) throws {
         let practiceCard = app.buttons["Practice, your exercises and training runs"]
-        XCTAssertTrue(practiceCard.waitForExistence(timeout: 5), "Practice card missing")
-        var swipes = 0
-        while !practiceCard.isHittable && swipes < 6 {
-            app.swipeUp()
-            swipes += 1
-        }
-        XCTAssertTrue(practiceCard.isHittable, "Practice card not reachable by scrolling")
+        XCTAssertTrue(practiceCard.waitForExistence(timeout: Self.uiTimeout), "Practice card missing")
+        XCTAssertTrue(scrollIntoView(practiceCard, in: app), "Practice card not reachable by scrolling")
         practiceCard.tap()
 
         let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
-        XCTAssertTrue(exercisesRow.waitForExistence(timeout: 20), "Exercises library row missing")
+        XCTAssertTrue(exercisesRow.waitForExistence(timeout: Self.uiTimeout), "Exercises library row missing")
         exercisesRow.tap()
-    }
-
-    @MainActor
-    private func waitForDisappearance(of element: XCUIElement, timeout: TimeInterval) -> Bool {
-        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
-        return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
     }
 }

@@ -1137,5 +1137,11 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
 
 - **Unit (PocketTests):** pure logic — tempo math, slider mapping, automator
   stepping, identity, planner weighting + candidate selection (ADR 0015). Must be covered.
-- **UI (PocketUITests):** XCUITest for key flows.
+- **UI (PocketUITests):** XCUITest for key flows. Every test launches through `UITestCase`
+  (`PocketUITests/UITestCase.swift`), whose `launchApp()` waits on `UITestHooks.homeSeedingComplete`
+  — an accessibility identifier the app raises when first-launch seeding finishes, since Home paints
+  *before* that `.task` completes. That one wait replaces the per-test guesses that used to flake
+  (ADR 0146). `Pocket/Core/Testing/` holds the two halves: `UITestHooks` (strings, compiled into
+  **both** targets — a UI test cannot `@testable import` the app) and `UITestRuntime.isActive`, the
+  single answer to "is XCUITest driving this process?".
 - Audio / MusicKit behaviour is validated on device/simulator, not unit-tested.
