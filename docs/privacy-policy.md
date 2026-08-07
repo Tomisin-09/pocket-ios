@@ -116,18 +116,23 @@ would otherwise send. There is nothing to justify and no reason to give.
 - We do **not** use the IDFA, the App Tracking Transparency prompt, or any
   advertising SDK. We never will; this is a permanent product boundary.
 - We do **not** track you across apps or websites, or build a profile of you.
-- We do **not** turn analytics on for you. It is off until you choose otherwise.
+- We do **not** turn the usage counts on for you **in the EEA or Switzerland** —
+  there they stay off until you say yes. Everywhere else they start on, the app
+  tells you so at first run, and one switch in Settings ▸ Privacy stops them.
 
 ## Device permissions
 
-The app asks for two system permissions, each used only on-device for the
-feature that needs it:
+The app asks for one system permission, used only on-device for the features that
+need it:
 
-- **Microphone** — only to record your own practice takes, saved locally. The app
-  shows the system recording indicator whenever the microphone is active.
-- **Apple Music** — only to browse song metadata you choose to reference. The app
-  never reads, copies, or transmits Apple Music audio, and stores no Apple Music
-  content.
+- **Microphone** — for the tuner, which listens to a played string to work out its
+  pitch, and for the practice takes you choose to record, which are saved locally.
+  The app shows the system recording indicator whenever the microphone is active.
+  Nothing the microphone hears is uploaded; the app has no audio upload path.
+
+The app does **not** ask for access to your music library. It practises against
+DRM-free audio files you import from Files or iCloud Drive, and cannot play Apple
+Music or Spotify streaming audio at all.
 
 ## Data processed on-device only
 
@@ -153,11 +158,12 @@ them off in Settings ▸ Privacy.
 
 ## Children's privacy
 
-The app is rated 4+. It has no accounts, asks for no personal details, and
-collects nothing about anyone by default — including children under 13. The
-optional usage counts are off unless someone deliberately turns them on, and even
-then they contain no personal information and nothing that could identify a child:
-they record that a feature was used, never who used it.
+The app is rated 4+. It has no accounts and asks for no personal details from
+anyone, including children under 13. The usage counts described above carry no
+personal information and nothing that could identify a child: they record that a
+feature was used, never who used it. In the EEA and Switzerland they are off
+unless someone deliberately turns them on; everywhere else they can be turned off
+at any time in Settings ▸ Privacy.
 
 ## Changes to this policy
 

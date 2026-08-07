@@ -123,9 +123,54 @@ Questionnaire answers are all "None" → **4+**.
   ADR 0144.
 - **Free surface for App Review:** the Toolkit (tuner, metronome, saved chords,
   glossary, Help & FAQs) and the Journal are free forever and need no purchase to
-  evaluate. **Say so in the review notes** — a hard paywall draws 2.1 / 3.1.2
-  scrutiny, and this is the mitigation.
+  evaluate. A hard paywall draws 2.1 / 3.1.2 scrutiny and this is the mitigation —
+  paste-ready wording in **App Review notes** below.
 - **Availability:** All territories, unless you want a phased rollout.
+
+## App Review notes (paste-ready)
+
+Paste into **App Review Information → Notes**. Everything here is checked against the
+shipping code, not aspiration.
+
+> Red Moon Practice is a guitar practice tool. No account or sign-in is required —
+> nothing is created on a server and there is no login to give you.
+>
+> **You can evaluate a large part of the app without any purchase.** The Toolkit and
+> the Journal are free permanently, not a trial: the chromatic tuner (guitar and
+> bass), the metronome, the chord and theory tools, the glossary, and the in-app Help
+> & FAQs; plus the Journal — your written practice notes, your recordings, and the
+> Progress screen. All reachable from the home screen with no subscription.
+>
+> **To evaluate the subscription features, open the Song library and tap "Try the
+> demo".** That adds a playable practice track so you can try the waveform, loop
+> capture and speed control immediately. You can also import your own audio from the
+> Files app; the app plays DRM-free local and iCloud Drive files only, and never
+> Apple Music streaming audio. The app requests **no** access to your music library —
+> it uses no MusicKit and no media-library API.
+>
+> **Subscription:** one group, "Red Moon Pro", offering the same thing at two
+> durations — monthly or annual — each with a one-month free trial. There are no
+> other in-app purchases, no consumables and no advertising. The trial length shown
+> in the app is read live from App Store Connect rather than hardcoded.
+>
+> **Microphone:** the only permission the app requests. Used for the tuner (detecting
+> the pitch of a played string) and for optional practice recordings the player starts
+> themselves. Audio is analysed and stored on the device and is never uploaded — the
+> app has no audio upload path.
+>
+> **Privacy:** all practice data is stored locally on the device. There is no
+> cross-device sync and no user account. Anonymous, aggregate usage counts are
+> collected to improve the app; in the EEA and Switzerland these are off until the
+> player opts in, and elsewhere they are on with a clearly signposted way to object
+> in Settings → Privacy. No advertising identifier is collected and no third-party
+> ad or attribution SDK is present.
+
+**Before pasting, re-check each claim still holds** — several of these lines are the
+mitigation for a 2.1 review, so a stale one is worse than no note at all. In
+particular the free surface (ADR 0144 D2), the region-split analytics default (ADR
+0147), and "Try the demo" ([`LibraryView.swift`](../Pocket/Features/Library/LibraryView.swift),
+`LibraryEmptyState.onTryDemo` → `Song.sample()` — the *generated* tone song, which is
+why it survives ADR 0148 §7 deleting the bundled demo track).
 
 ## Export compliance
 Auto-skipped — `ITSAppUsesNonExemptEncryption = false` is already set.
@@ -148,6 +193,36 @@ neither is describing the counts as opt-in unqualified. Give
 Apple the anchored URL so the reviewer lands on the relevant section:
 - **Privacy Policy URL** → `https://decooperations.co.uk/privacy#red-moon-practice`
   (verify the heading slugifies to that anchor).
+
+### ⚠ Live-site check, 2026-08-07 — one correction still owed
+
+Fetched `decooperations.co.uk/privacy` and read §3 "Red Moon Practice (iOS app)" in
+full. **The ADR 0147 region split is live and correct** — "in the EEA and Switzerland
+the counting is off until you turn it on, and everywhere else — including the UK — it
+starts on" — and the lawful-basis paragraph correctly scopes the consent wording to
+the EEA/CH rather than claiming opt-in everywhere. Subscriptions, Aptabase-in-the-EU
+and the no-IDFA line are all accurate. Nothing there needs undoing.
+
+**What is wrong: the microphone paragraph is incomplete.** It reads only —
+
+> **Your recordings:** Practice takes you record with the microphone are saved
+> locally on your device. They are never uploaded or shared.
+
+— which never mentions the **tuner**, the app's other (and for most players *first*)
+microphone use. A privacy policy linked from the App Store listing that omits a
+disclosed permission's actual purpose is a real gap, and it's the same omission the
+`NSMicrophoneUsageDescription` string carried until it was fixed here. Replace with:
+
+> **Microphone:** The microphone is used for two things: the tuner, which listens to
+> a played string to work out its pitch, and the practice takes you choose to record,
+> which are saved locally on your device. Neither is ever uploaded or shared — the app
+> has no audio upload path. The microphone is the only system permission the app
+> requests; it does not ask for access to your music library.
+
+⚠ `uk-site` **auto-deploys to prod on every push — there is no staging gate**, so make
+this edit deliberately. Also confirm in a browser that the §3 heading actually carries
+an `id` of `red-moon-practice`; the fetch could not see one, and the Privacy Policy URL
+above depends on it.
 - `docs/site/privacy.html` is now **redundant** — delete once the section is live.
 
 **Support URL.** Deploy `docs/site/support.html` to AWS under `decooperations.click`
@@ -224,7 +299,12 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
       (Settings ▸ About ▸ Contact Support, and in plain text inside an FAQ answer,
       ADR 0145), so a dead mailbox is now a bug in a shipped build, not just a
       broken link on a page
-- [ ] "Red Moon Practice" section added to decooperations.co.uk/privacy; `#red-moon-practice` anchor resolves
+- [x] "Red Moon Practice" section added to decooperations.co.uk/privacy — **live and
+      ADR-0147-correct as of 2026-08-07** (verified by fetching the page)
+- [ ] Live site: replace §3's "Your recordings" paragraph with the **Microphone** wording
+      above — it omits the tuner. See the live-site check in Hosting
+- [ ] Live site: confirm the §3 heading's `id` is `red-moon-practice` so the anchored
+      Privacy Policy URL actually lands
 - [ ] support.html deployed to decooperations.click/redmoon/support
 - [ ] Support URL + Privacy Policy URL pasted into the form
 - [ ] App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120); everything else "not collected". **Unchanged by ADR 0147** — the nutrition label encodes collection type, linkage and tracking, none of which the region split moves
@@ -235,4 +315,11 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] `xcodegen generate` → Archive (Release, team 2L35PZ86GP — Deco Operations Ltd, paid; owns `click.decooperations.pocket`) → Upload
 - [ ] Build finished processing and attached to version 1.0
 - [ ] Add for Review → Submit
-- [ ] (optional) fix "Dont" → "Don't" in the seeded library before re-shooting #8
+- [x] "Dont" → "Don't" in the seeded library — already fixed (no `Dont` remains in the source)
+- [x] Permission audit: the app now requests **one** permission, the microphone.
+      `NSAppleMusicUsageDescription` was removed (no MusicKit, no `MPMediaLibrary`;
+      `SongRef.appleMusic` is test-only), and the mic string was rewritten to say
+      "Red Moon" — not the internal target name "Pocket" — and to cover the **tuner**
+      as well as recording. ADR 0115 §7 reused ADR 0069's string without widening its
+      wording, and a purpose string that doesn't match actual use draws 5.1.1.
+      **If any Apple Music browse path is ever built, re-add the string in that commit.**

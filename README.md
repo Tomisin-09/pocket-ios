@@ -16,9 +16,14 @@ worked on in one place.
 - Practice data attaches to a stable `SongRef` identity, so it survives across
   launches and (later) syncs across devices via CloudKit.
 - The waveform / speed / loop engine runs on **DRM-free local and iCloud files**.
-  Apple Music is browse/metadata only — its streaming audio is DRM-protected and
-  can't be tapped for waveform or time-stretch. See
+  Apple Music streaming audio is DRM-protected and can't be tapped for waveform or
+  time-stretch, so it is never a practice source. See
   `docs/decisions/0001-audio-source-local-first.md`.
+- **v1 ships no Apple Music access at all** — no MusicKit, no `MPMediaLibrary`, and
+  therefore no `NSAppleMusicUsageDescription`. Browse/metadata is the *most* that
+  ADR 0001 would ever permit, not something that exists today; `SongRef.appleMusic`
+  is a dormant model seam constructed only in tests. Build the browse path and the
+  usage string goes back in the same commit.
 - AI session suggestions (later) run through a backend proxy that holds the API
   key; the app never does. See `docs/decisions/0002-ai-proxy-backend.md`.
 

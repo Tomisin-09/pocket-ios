@@ -37,8 +37,9 @@
 │              against all history, not the window on screen) and PracticeProgress, which computes the whole
 │              Progress screen in one pure pass so the view does no arithmetic; now/calendar are parameters,
 │              never .now/.current. There is no year tier and no placeholder for one (ADR 0117 defers it)
-│   Services — MusicKit (browse), Persistence (SwiftData), Sync (CloudKit),
-│              AIClient (→ proxy)
+│   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
+│              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
+│              no MPMediaLibrary, no NSAppleMusicUsageDescription
 │ Monetization — ADR 0144. One paid app: `AccessPolicy` is the single pure gate seam and every function
 │              now answers plain `isPro`; both free-taste allowlists are empty, kept as the one-file seam a
 │              free line would return through. The Toolkit and the Journal are the free surface; the Journal's
@@ -77,7 +78,8 @@
 │              concurrency-safe, started lazily on its first *delivered* event so it can only ever begin
 │              after consent, and inert on an empty/unresolved app key
 ├─────────────────────────────────────────────────────────┤
-│ Apple: MusicKit · AVFoundation · SwiftData · CloudKit · Sign in with Apple
+│ Apple: AVFoundation · SwiftData · MediaPlayer (lock-screen transport only)
+│        planned, not shipped: MusicKit · CloudKit · Sign in with Apple
 ├─────────────────────────────────────────────────────────┤
 │ Backend (Phase 4): Claude proxy — local dev / tiny AWS prod
 └─────────────────────────────────────────────────────────┘
@@ -917,8 +919,12 @@ near the screen edge is stopped from popping the screen: the model brackets each
 touch (`isScrubbing`) and `SwipeBackGuard` disables the nav stack's interactive pop while a
 finger is down (ADR 0030).
 
-Apple Music tracks skip stages 2–4 (no raw audio) — they are browse/metadata
-only. See `docs/decisions/0001`.
+**There are no Apple Music tracks.** v1 ships no MusicKit and no media-library
+access, so nothing ever enters this pipeline without raw audio; `SongRef.appleMusic`
+is a dormant model seam constructed only in tests, and `Info.plist` carries no
+`NSAppleMusicUsageDescription`. If a browse path is ever built, such tracks would
+skip stages 2–4 (no raw audio) and be browse/metadata only. See
+`docs/decisions/0001`.
 
 ## Toolkit hub (Features/Toolkit)
 
@@ -1157,4 +1163,5 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   (ADR 0146). `Pocket/Core/Testing/` holds the two halves: `UITestHooks` (strings, compiled into
   **both** targets — a UI test cannot `@testable import` the app) and `UITestRuntime.isActive`, the
   single answer to "is XCUITest driving this process?".
-- Audio / MusicKit behaviour is validated on device/simulator, not unit-tested.
+- Audio behaviour is validated on device/simulator, not unit-tested. (No MusicKit
+  behaviour exists to validate — see the audio-source note above.)

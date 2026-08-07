@@ -34,6 +34,13 @@ All notable changes to Pocket are documented here. Format loosely follows
   late. See ADR 0145.
 
 ### Changed
+- **The microphone prompt now says "Red Moon", and mentions the tuner.** The permission sheet iOS
+  shows the first time the app listens quoted us verbatim — and what it quoted was "Pocket uses the
+  microphone…", an app name you have never seen, describing only practice recordings. The tuner
+  listens too, and for most people it is the *first* thing that asks. The prompt now names the app
+  you actually installed, covers both reasons, and says plainly that nothing the microphone hears
+  is uploaded.
+
 - **Red Moon now tells you it counts which features get used, instead of asking — unless you're in
   the EEA, where it still asks.** UK law changed in February 2026: first-party analytics used purely
   to improve the app no longer needs an up-front consent prompt, provided you're told clearly and
@@ -83,6 +90,11 @@ All notable changes to Pocket are documented here. Format loosely follows
   which needs no network — the App Store answers from its own cache offline.
 
 ### Removed
+- **The app no longer asks for access to your music library.** It never used it: Red Moon practises
+  against DRM-free files you import from Files or iCloud Drive, and has no way to play Apple Music
+  or Spotify streaming audio. The permission request was a leftover from an earlier plan, so it is
+  gone — one less thing to be asked for, and one less thing we can reach that we never should.
+
 - **The demo song is gone.** New installs used to arrive with one track already in the library —
   *Binta* by Jack Trader, bundled with the rights holder's permission. It was the only piece of
   someone else's material in the app, it added 2.6 MB to every download, and it handed every player
