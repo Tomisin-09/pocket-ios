@@ -453,12 +453,17 @@ Watch item (§D7): a completion seam that fails to log now makes its unit read *
 write path — still not store-verified end-to-end — is a ranking concern as well as a stats one. The
 failure direction is fail-safe (surfaces more, not less), but silent.
 
-## A block for the practice we don't model (ADR 0136, Proposed — unbuilt)
+## A block for the practice we don't model (ADR 0136 — **SHIPPED #211**, 2026-08-04)
 
 Pocket can't model every exercise a guitarist will ever do, and trying is a content treadmill. The
 practice done *outside* the app is still practice, so the log and the mastery picture are both
 quietly incomplete — and the more serious the player, the bigger the missing fraction. A freeform
 block is the container for it.
+
+✅ **Both slices shipped in #211 (2026-08-04)** — `FreeformRunView` / `FreeformBlockPreview` /
+`FreeformSettingsSections` in `Features/Practice/`, and the watch item landed too: `UnitDuplication`
+carries `notes`. The slice descriptions below are kept as the record of *why* it was built this way,
+not as open work. Follow-on: ADR 0139 slice 2 lets a freeform block declare itself off-guitar.
 
 Cheap because the progress spine is already content-agnostic: `PracticeRun` never asks what a unit
 renders, `mastery` is pure player input, `Exercise.lastPracticed` + `markPracticed()` supply dueness.
@@ -733,6 +738,17 @@ decides to release, not on Apple's clock. Two consequences worth acting on:
   this plan reverts to the additive-optional shape described in the Near-term entry and gets materially
   more expensive. **Confirm the schema is where you want it before hitting release** — and record here
   the date it goes live, so the next reader knows the window shut.
+
+✅ **The window shut, and the re-check was done — 2026-08-07/08. Verdict: land nothing.**
+1.0 went live 2026-08-07 with **zero downloads** and was removed from sale the same day; 1.1 (3) is in
+review. Every parked item implying a stored field was walked. Conclusion, which narrows the warning
+above: **only retypes, renames and removals are now-or-never — plain additions stay lightweight
+forever** (this file's own rule, and `docs/plans/planner-build-plan.md:126`). The one genuinely
+now-or-never item was consolidating `Song.bpm`/`preciseBPM` (`Int`→`Double`), which **ADR 0036 already
+rejected on merit** and which stays rejected. `Exercise.isUniversallyApplicable` and `Loop.chords` were
+judged cheap-but-optional and deliberately **not** landed — they can be added later at the same safety.
+So 1.1 was **not** withdrawn. Do not re-open this as a deadline; the deadline only ever applied to a
+change that was already declined.
 
 **Slice 4 — chord content — DONE (branch `pocket-203-slice4-chord-content`, 2026-07-29).** All three
 items landed, under **two** ADRs rather than the one amendment planned: 0122 for the chord vocabulary,

@@ -1,6 +1,6 @@
 # 0095 — Saved custom chords: a reusable "My chords" library
 
-- **Status:** Proposed (2026-07-17)
+- **Status:** Accepted (2026-07-17; shipped — see build note below)
 - **Date:** 2026-07-17
 - **Builds on:** ADR 0084 (movable grips + the custom-chord placer), ADR 0065 (the Chords template —
   `ChordVoicing` / `ChordProgression`), ADR 0011 (SwiftData persistence).
@@ -91,3 +91,11 @@ before the larger hub (ADR 0096) is scoped.
   design pass rather than being half-built as a chord-only screen here.
 - **Cram delete into the dropdown menu.** Not possible — SwiftUI `Menu` items can't carry a swipe action;
   hence the small `SavedChordsSheet` `List` for management (S4).
+
+## Build
+
+**Shipped.** The `SavedChord` `@Model` (`Pocket/Core/Models/SavedChord.swift`) stores the voicing as
+an encoded payload, not a child `@Model`. Management moved from the planned `SavedChordsSheet` to
+`MyChordsView` in the Toolkit hub (ADR 0096) — the "own design pass" this ADR's last alternative
+asked for — with `CustomChordSheet` in "Save" mode as the build path, and the library also inlined
+into the chord picker's *My chords* group (ADR 0103).

@@ -1,6 +1,6 @@
 # 0093 — Chord-naming engine + reverse-lookup identifier
 
-- **Status:** Proposed (2026-07-17)
+- **Status:** Accepted (2026-07-17; shipped — see build note below)
 - **Date:** 2026-07-17
 - **Builds on:** ADR 0065 (the Chords template — `ChordVoicing` / `ChordProgression` / `ChordDiagramView`),
   ADR 0084 (movable grips + the custom-chord placer).
@@ -138,3 +138,9 @@ against a vocabulary of chord qualities, choosing a root, detecting inversions, 
   theory; sending it to a model is slower, offline-fragile, costs money, and is *less* trustworthy than a
   transparent table. An AI "explain *why* / suggest a substitution" layer is a genuinely different feature
   and lives in ADR 0092 (deferred/paid), on top of this engine.
+
+## Build
+
+**Shipped.** `Pocket/Core/Theory/ChordNamer.swift` is the naming engine; the reverse-lookup
+identifier is `Pocket/Features/Practice/ChordIdentifierPanel.swift`, reached from the Toolkit.
+Note spelling is key-first per ADR 0123, which post-dates and constrains this ADR.
