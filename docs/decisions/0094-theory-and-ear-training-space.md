@@ -1,6 +1,6 @@
 # 0094 — Theory & ear-training space: direction and the no-grading line
 
-- **Status:** Proposed (2026-07-17)
+- **Status:** Accepted (2026-07-17; shipped — see build note below)
 - **Date:** 2026-07-17
 - **Sets direction for:** a future "Theory / Ear" practice space. This ADR **does not schedule a build** —
   it fixes the boundaries so the first slice, when scheduled, doesn't re-litigate what's allowed.
@@ -108,3 +108,12 @@ scored test, and a scored test of your *ear* slides right back toward judging yo
 - **Make the whole space an AI tutor.** Rejected as the *floor* — the deterministic reference/drill layer
   must exist offline, free, and trustworthy first (T5); AI is an additive lever on top (T6 / ADR 0092), not
   the substrate.
+
+## Build
+
+**Accepted as direction; the space exists and is filling in slice by slice.** The hub itself is
+ADR 0096 (`Pocket/Features/Toolkit/`), carrying the Glossary, My Chords, the Tuner (ADR 0115) and
+Help & FAQs (ADR 0145). Ear training shipped separately as a *loop mode* rather than a drill
+screen — ADR 0104, which is the concrete answer to this ADR's ear-training half. **Still unbuilt:**
+the T1 theory surface, which is why ADR 0139 §O7 records `know.*` and `create.songwriting` as
+having a permanent zero-candidate hole in the planner.

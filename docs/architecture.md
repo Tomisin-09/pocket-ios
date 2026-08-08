@@ -87,9 +87,14 @@
 
 ## Audio pipeline (local/iCloud files)
 
-1. User imports a file via the Files picker → store a **security-scoped
-   bookmark** + a `SongRef(.localFile)`.
-2. Resolve the bookmark to a URL; load with AVFoundation.
+1. User imports a file via the Files picker → **copy the file into the app's own
+   container** (`SongFileStore`, recording the leaf on `Song.audioFileName`) +
+   a `SongRef(.localFile)`. A **security-scoped bookmark** is kept alongside it as
+   provenance and as the pre-0148 fallback, no longer the primary path (ADR 0148).
+2. Resolve to a URL via `SongAudioResolver` — owned copy → legacy bookmark →
+   nothing — and load with AVFoundation. A pre-0148 song **adopts itself** on its
+   first successful resolve, which is the migration; it runs only when the file is
+   provably reachable, so a failure leaves the working bookmark untouched.
 3. Playback through `AVAudioEngine` with a **`TimeStretcher`** for pitch-preserving speed control
    (0.25×–1.5×, `TempoMath`'s single axis — ADR 0124). That type owns the time-effect AU, its rate and
    its latency in one place (ADR 0140): the rate is stored rather than read back off the unit, so which
@@ -375,7 +380,8 @@ Capture is **`TakeRecorder`** — mic-only to AAC via `AVAudioRecorder`, deliber
 the playback engine's graph, so both engines are untouched while a take is armed (the recorder
 captures the mic, the practice engine keeps playing out, and the two never share a node — the app
 therefore never renders its own playback into the file, ADR 0001/0064). Takes are **app-authored**
-files (unlike songs, which are bookmarks to files in place): the **`Recording`** `@Model` holds
+files — as, since ADR 0148, imported songs are too, both living in the app container and both
+riding along in a device backup: the **`Recording`** `@Model` holds
 `uid`/`createdAt`/`duration` + a relative `fileName`, with a **polymorphic, cascade-owned** owner
 (`loop`/`exercise`/`song` — inverse `recordings` arrays on those models, mirroring the `journal`
 pillar; `ownerKind` is derived, no stored enum). **`RecordingStore`** owns the app-container

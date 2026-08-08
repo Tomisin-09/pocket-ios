@@ -11,7 +11,10 @@ notes, session history, routines) to songs in the user's music library. The app
 is an intelligence layer over the library — it never replaces it.
 
 - **Platform:** iOS 17+, phone-first, Swift / SwiftUI.
-- **Name:** Pocket.
+- **Name:** **Red Moon Practice** on the App Store; **Pocket** everywhere in the
+  code. The Xcode target, the bundle id and this repo keep the internal name —
+  the two are not going to be reconciled, so read "Pocket" below as the codebase
+  and "Red Moon" as the product. The paid tier is **Red Moon Pro**.
 
 ## Audio sources (decided)
 
@@ -47,9 +50,16 @@ same commit.
 Practice data attaches to a `SongRef` (`Pocket/Core/Models/SongRef.swift`), a
 stable `(id, source)` identity **designed** to work for both local files and Apple
 Music — though only the local-file source is ever constructed at runtime; the
-`.appleMusic` case appears solely in `SongRefTests`. Local files carry a
-security-scoped bookmark for resolution; the bookmark is **not** part of identity,
-so a refreshed bookmark doesn't orphan loops/markers.
+`.appleMusic` case appears solely in `SongRefTests`.
+
+**Resolution is by owned copy first (ADR 0148).** An imported file is copied into
+the app's own container (`SongFileStore`) and its leaf recorded on
+`Song.audioFileName`; `SongAudioResolver` tries that copy, then the legacy
+security-scoped bookmark, then nothing. The bookmark is kept as provenance and as
+the pre-0148 fallback — it is **not** part of identity, and it is no longer the
+primary path: a bookmark is granted to one *installation*, so a library restored
+from a device backup came back whole and played nothing. Neither the copy nor the
+bookmark orphans loops/markers, because identity is the `(id, source)` pair alone.
 
 ## Modules
 
@@ -89,12 +99,28 @@ so a refreshed bookmark doesn't orphan loops/markers.
 
 ## Status
 
-Phase 1 (mostly complete) — the **waveform practice screen**: a fixed practice
+**Release state (2026-08-08).** **1.0** was approved 2026-07-28 and went live
+2026-08-07 (build `1.0.0(2)`); it took **zero downloads** and was removed from sale
+the same day, deliberately — it predates the paywall, ADR 0148's imported-song
+custody and the Apple Music permission fix. **1.1 (3)** was submitted 2026-08-07
+and is *Waiting for Review*, together with the two Red Moon Pro subscriptions and
+their subscription group. ⚠️ **Availability must be re-enabled when 1.1 is
+approved**, or it ships approved and undownloadable with no warning in ASC.
+
+The phase numbering below is historical. Phases 1 and 2 are **built and shipped**;
+the V2 planner, Journal, Toolkit, recording, tuner and the Pro paywall have all
+landed since. Treat "Phase 3 / next" language in the closing paragraph of this
+section as superseded — `CHANGELOG.md` and `docs/backlog.md` are the current view.
+
+### The waveform practice screen
+
+The **waveform practice screen**: a fixed practice
 cockpit over a scrollable reference area, with named/editable loops & markers
 (ADR 0003). Real playback runs through `PracticeAudioEngine` — play/pause/seek,
 pitch-preserving speed, and **seamless, click-free region looping** (a crossfaded
-`.loops` buffer, ADRs 0006 & 0008) — fed by an imported file's real audio (or a
-generated dev sample for the demo). Playback surfaces on the **lock screen /
+`.loops` buffer, ADRs 0006 & 0008) — fed by an imported file's real audio. (The
+generated arpeggio `SampleToneGenerator` survives only as a preview/dev sample;
+the bundled demo song was dropped with ADR 0148 §7.) Playback surfaces on the **lock screen /
 Control Center** (title, artist, play/pause only — plus a default **Red Moon
 crescent artwork**, since imported songs carry no cover art) via a
 `NowPlayingController` bridge over `MPNowPlayingInfoCenter` +
@@ -409,9 +435,14 @@ Those song notes (`Song.comment`) live in a **Notes** section directly under the
 title/artist/album header in the **song details sheet** — **editable inline behind a
 pencil affordance**: tap it to edit, an **Update** button (disabled until the draft
 changes) commits with a brief "Saved" confirmation; the rest of the sheet stays
-read-first. The song-scope half of the notes/journal feature (ADR 0038). Filename suggestions, **collections as real playlists**, and a **metronome**
-(the transport "Auto" slot) are next. Navigation/planner follow (Phase 3) — the
-planner's **selection** (goals → required skills from a **technique taxonomy**
+read-first. The song-scope half of the notes/journal feature (ADR 0038).
+
+⚠️ **The rest of this paragraph is historical.** The **metronome** shipped as its
+own screen (ADR 0043) and the **planner** shipped in V2 (ADRs 0072/0073/0074) —
+neither is "next". Filename suggestions and **collections as real playlists**
+remain genuinely unbuilt; collections are still `[String]` tags, with the
+promotion trigger recorded in ADR 0036. Kept for the reasoning it records:
+the planner's **selection** (goals → required skills from a **technique taxonomy**
 (`docs/practice-techniques.md`) → candidate items, *prioritised, not balanced*; ADR 0015)
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance

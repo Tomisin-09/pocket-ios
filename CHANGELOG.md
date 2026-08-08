@@ -1,9 +1,19 @@
 # Changelog
 
-All notable changes to Pocket are documented here. Format loosely follows
-[Keep a Changelog](https://keepachangelog.com/); this project is pre-release.
+All notable changes to Red Moon Practice (internally *Pocket*) are documented here.
+Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
+
+Sections are cut at the commit that bumped `CURRENT_PROJECT_VERSION` in `project.yml`,
+which is the only durable record of where a build was taken (there are no release tags):
+build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07). One `### Added`
+group straddled that line — collection sessions landed after the 1.0 build was cut,
+ear training before it — so 1.0 and 1.1 each carry their own copy of that heading.
 
 ## [Unreleased]
+
+_Nothing yet. Everything below has shipped or is in review._
+
+## [1.1] — build 3, submitted 2026-08-07 (Waiting for Review)
 
 ### Added
 - **Songs you import now belong to Red Moon, so they survive a new phone.** Until now the app kept a
@@ -955,6 +965,14 @@ All notable changes to Pocket are documented here. Format loosely follows
 - **More glossary terms.** The Toolkit **Glossary** gained ~30 new entries across chords, scales,
   intervals, technique and general terms — including whole-tone and diminished scales, three-notes-per-string,
   shell voicings, downstroke/upstroke, syncopation and transpose.
+
+## [1.0] — build `1.0.0(2)`, approved 2026-07-28
+
+Went live 2026-08-07, took **zero downloads**, and was removed from sale the same day —
+it predates the paywall, ADR 0148's imported-song custody and the Apple Music permission
+fix, so nobody should be left on it.
+
+### Added
 - **Train your ear on any loop.** A loop's edit sheet has a new **Train your ear** option — an
   away-from-the-guitar exercise: it plays the loop's own audio cycling continuously so you can **hum or
   sing it back**, then listen again and compare. The loop and the song it's from are shown up top, and a

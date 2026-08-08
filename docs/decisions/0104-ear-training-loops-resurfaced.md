@@ -1,6 +1,6 @@
 # 0104 — Ear training as "loops, re-surfaced" (a mode on the loop, notes into the Journal)
 
-- **Status:** Proposed (2026-07-22)
+- **Status:** Accepted (2026-07-22; shipped — see build note below)
 - **Date:** 2026-07-22
 - **Schedules the first build** of the ear-training direction — the Wave 2 "Note 7" item from the
   2026-07-20 user-testing plan of attack (`docs/backlog.md`).
@@ -194,3 +194,10 @@ captured differs, whether capture is *useful* does not.
 **Not changing:** no analysis of the take, no pitch comparison against the loop, no
 "how close were you". That would be the app judging, which E6 and ADR 0070 forbid, and
 it is not what was asked for.
+
+## Build
+
+**Shipped (#161).** `EarLoopRunView` + `EarTrainingSheet` in `Pocket/Features/Practice/`; Slice 2
+added the routine **Ear training** bucket in `AddRoutineUnitSheet` and the `.ear` `LoopRunMode`.
+Extended 2026-08-06 (ADR 0069 amendment): all three ear hosts record takes. Which loops qualify is
+`LoopModeAccess` (ADR 0138); the mode reaches the planner via ADR 0139 S1.
