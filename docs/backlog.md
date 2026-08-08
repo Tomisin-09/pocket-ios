@@ -1227,7 +1227,11 @@ thought 2026-07-20):**
   and a failure state, and a version-locked catalog is the better trade for factual
   claims about the app (0145 D2). Revisit if the answers start changing faster than
   the binary; (3) empty-state hints (already used). **Not** a heavy tutorial engine.
-  (1) and (3) remain open. Connects to the *Onboarding — "the art of creating loops"*
+  **(1) is superseded by ADR 0149**, which rejects coach-marks for the creation flow in favour of a
+  walkthrough whose steps are real product actions — a coach-mark can only point at a control, and
+  what needs teaching here is a method, not a button. (3) remains open and gains weight under 0149:
+  getting the first song in is the empty state's job, because the guided flow deliberately cannot
+  start before an import exists. Connects to the *Onboarding — "the art of creating loops"*
   vision + musician-voice principle.
 
 ## Release sequencing (decided 2026-06-24)
@@ -2172,12 +2176,19 @@ tests. Scheduled **after** the remaining Cluster 4 items land.
 
 ## Onboarding — "the art of creating loops" + musician voice
 
-A coherent vision, captured for V1's creation experience:
+A coherent vision, captured for V1's creation experience.
 
-- **Guided creation flow, onboarding-only and skippable.** An opinionated,
-  3-step path layered over the free-form practice screen, shown during
-  onboarding; the user can skip it. Implementation approach TBD (the point now
-  is to capture intent, not design the mechanism):
+> **The guided flow is now decided — see `docs/decisions/0149-guidance-arrives-with-the-song.md`
+> (Proposed, targeted at v1.2).** 0149 keeps the three steps below unchanged and closes the
+> "implementation approach TBD" question: it fires on the **first successful import** rather than at
+> first launch (the library starts empty since ADR 0148 §7, so there is nothing to guide before
+> then), presents as a four-item checklist with the import honestly pre-checked, is offered rather
+> than started for experienced players, and is dismissible permanently. **Marker auto-naming is its
+> one prerequisite and does not exist yet.** The remaining bullets in this section are still open.
+
+- **Guided creation flow, onboarding-only and skippable — mechanism now in ADR 0149.** An
+  opinionated, 3-step path layered over the free-form practice screen, shown during
+  onboarding; the user can skip it:
   1. **Listen whole** — original tempo, no speed changes. Think about parts you
      liked / want to recreate. Add a **first journal entry** (goals, aims).
   2. **Mark sections** — replay (author suggests ~0.8–0.9× tempo, musician's
