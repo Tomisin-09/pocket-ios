@@ -291,7 +291,7 @@ extension LoopEditSheet {
     /// Distinct, normalised tags used across every loop in the library, excluding those already on
     /// this loop. `Labels.suggestions` does the distinct/normalise/exclude/sort (shared, ADR 0034).
     private var tagSuggestions: [String] {
-        Labels.suggestions(from: allLoops.flatMap(\.tags), excluding: tags)
+        Labels.suggestions(from: tagPool, excluding: tags)
     }
 
     /// Canonicalise and de-dup case-insensitively through the shared normaliser (ADR 0034,

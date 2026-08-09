@@ -31,9 +31,11 @@ struct LoopEditSheet: View {
     // The store, for writing journal entries straight from this sheet (ADR 0088) — journal
     // authoring is back on song loops, sharing the `JournalWriter` path with the run screen.
     @Environment(\.modelContext) private var modelContext
-    // All loops across the library, to suggest tags already used elsewhere (ADR 0034) —
-    // the cross-song convergence read ADR 0032 forecast, here a top-level `@Query`.
-    @Query var allLoops: [Loop]
+    // Tags already used elsewhere in the library, to suggest against (ADR 0034) — the
+    // cross-song convergence read ADR 0032 forecast. Loaded in `.task` rather than held as a
+    // `@Query` of every `Loop`: this sheet opens over playing audio, and fetching (and
+    // faulting) the whole loop table during presentation is what made that open feel slow.
+    @State var tagPool: [String] = []
     @State private var name: String
     @State private var colorChoice: LoopColorChoice
     // Structured practice fields (ADR 0036 slice 3) — edited as local copies, written
@@ -195,6 +197,8 @@ struct LoopEditSheet: View {
             }
             .navigationTitle("Edit loop")
             .navigationBarTitleDisplayMode(.inline)
+            // After the first frame, not during presentation — see `tagPool`.
+            .task { tagPool = LibraryPools.loopTags(in: modelContext) }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

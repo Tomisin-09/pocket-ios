@@ -21,6 +21,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   different length from the old one. Reachable from the library (hold a song → Details) and while
   practising (hold the song title). See ADR 0152.
 
+### Fixed
+- **The practice screen no longer bogs down when you open settings while a song is playing.** Opening
+  loop settings or song details mid-playback made the whole screen sluggish, and the tempo sheet was
+  the worst of it — switching from **Tap** to **Manual** fought the keyboard on its way in. The cause
+  was the practice screen redrawing itself in full on every single frame of the playhead's travel,
+  which meant every open sheet was being rebuilt 120 times a second along with it. Now only the two
+  things that actually show a moving playhead — the waveform and the minimap — redraw at that rate.
+  The beat grid is worked out once when the tempo or the 1 changes rather than continuously, and the
+  edit sheets no longer read your entire library of loops, songs or exercises just to appear.
+  Playback keeps running while you edit, as before; scrubbing and the transport should feel lighter
+  too, since they were paying the same cost.
+
 ### Changed
 - **Your recordings and notes now survive the thing they were made against.** Deleting a loop used
   to delete every take you'd recorded over it and every note you'd written about it, without saying

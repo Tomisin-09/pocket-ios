@@ -142,7 +142,7 @@ struct WaveformPracticeView: View {
         .sheet(item: $model.editingLoop, onDismiss: model.launchPendingPractice) { ref in
             let loop = ref.value
             LoopEditSheet(loop: loop,
-                          autoColor: LoopColor.derivedColor(for: loop, among: model.loops),
+                          autoColor: model.editingLoopAutoColor,
                           onDelete: { model.deleteLoop(loop) },
                           onAdjustRange: { model.startRangeEdit(loop) },
                           onSaved: { restore in model.presentUndo("Saved changes", undo: restore) },
@@ -210,13 +210,11 @@ struct WaveformPracticeView: View {
         // targets when leaving the screen, so audio stops and nothing keeps the
         // engine alive via the global command center.
         .onDisappear { model.endPlaybackSession() }
-        // Page-mode (ADR 0010): as the playhead advances, hold the window still until
-        // it sweeps to ~90%, then page forward. Only re-anchors at page edges. Also
-        // refresh the lock-screen clock (throttled) so a seek shows up there.
-        .onChange(of: model.playheadFraction) { _, _ in
-            model.advancePageIfNeeded()
-            model.refreshNowPlaying()
-        }
+        // Page-mode + the lock-screen clock ride the playhead, which moves once per display
+        // frame. Reading it *here* would make this body — and with it all seven presentations
+        // declared above — re-evaluate at 120 Hz, which is what made opening song or loop
+        // settings mid-playback feel heavy. `PlayheadWatcher` owns that dependency instead.
+        .background { PlayheadWatcher(model: model) }
         // Crisp deep-zoom (ADR 0020): re-downsample the visible window when the
         // viewport changes. `viewport` is derived purely from these two, both Equatable.
         .onChange(of: model.zoomSpan) { _, _ in model.scheduleDetailRefresh() }

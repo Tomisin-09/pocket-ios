@@ -20,7 +20,18 @@ struct PracticeCockpit<Header: View>: View {
     @AppStorage(AppSettings.Key.waveformMarkerLabels) private var markerLabelsVisible = true
 
     var body: some View {
-        VStack(spacing: landscape ? 8 : 16) {
+        // Derived once per *real* change, not once per display frame. `loops` and `markers`
+        // each sort a SwiftData relationship (`Song.loopsByStart` / `markersByTime`); the
+        // marker map allocates. None of that may sit on the playhead's path, so the playhead
+        // is read only inside `PlayheadWaveform` / `PlayheadMinimap` and these are handed down.
+        let loops = model.loops
+        let activeLoop = model.activeLoop
+        let markers = model.markers
+        let waveformMarkers = markers.map {
+            WaveformMarker(fraction: $0.seconds / model.duration, label: $0.label)
+        }
+
+        return VStack(spacing: landscape ? 8 : 16) {
             header()                                                    // 1
             SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
                      onSetBPM: model.setBPM, onUserAdjust: model.userAdjustedSpeed,
@@ -33,18 +44,19 @@ struct PracticeCockpit<Header: View>: View {
                      compact: landscape)
             // 4. Mode instructions — replaced by the AB / downbeat bar while active.
             statusLine
-            waveform                                                    // 5
+            PlayheadWaveform(model: model,                               // 5
+                             loops: loops,
+                             activeLoop: activeLoop,
+                             markers: waveformMarkers,
+                             beats: model.beatGrid,
+                             landscape: landscape,
+                             showsMarkerLabels: markerLabelsVisible)
             TimeRuler(start: model.viewport.start * model.duration,      // 6
                       end: model.viewport.end * model.duration)
             if minimapVisible {
-                Minimap(song: model.song, activeLoop: model.activeLoop, // 7
-                        samples: model.amplitudes,
-                        markers: model.markers,
-                        fineSelection: model.abSpan.bounds,
-                        playheadFraction: model.playheadFraction,
-                        viewport: model.viewport,
-                        onSeek: model.seekToFraction,
-                        onSeekEnded: model.seekMinimapSnapping)
+                PlayheadMinimap(model: model,                            // 7
+                                activeLoop: activeLoop,
+                                markers: markers)
             }
             transport                                                   // 8
         }
@@ -79,50 +91,6 @@ struct PracticeCockpit<Header: View>: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.abActive)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
-    }
-
-    private var waveform: some View {
-        WaveformView(amplitudes: model.amplitudes,
-                     detailBars: model.detailBars,
-                     playheadFraction: model.playheadFraction,
-                     loop: model.activeLoop,
-                     loops: model.loops,
-                     markers: model.markers.map {
-                        WaveformMarker(fraction: $0.seconds / model.duration, label: $0.label) },
-                     beats: model.beatGrid,
-                     showsGrid: model.song.showsGridlines,
-                     formingStart: model.formingMarker,
-                     tapSelection: model.greenSpan,
-                     abSelection: model.isDragSelecting ? nil : model.abSpan.bounds,
-                     playheadLabel: timecode(model.engine.currentTime),
-                     onSeek: model.seekSnapping,
-                     onScrub: model.seekToFraction,
-                     onMoveABHandle: model.moveABHandle,
-                     onMoveABHandleEnded: model.endABHandle,
-                     onSnapSuspended: { haptic(.medium) },
-                     onSelectBegan: model.beginDragSelection,
-                     onSelectChanged: model.updateDragSelection,
-                     onSelectEnded: model.endDragSelection,
-                     onSelectCancelled: model.cancelDragSelection,
-                     viewport: model.viewport,
-                     onSetZoom: model.setZoom,
-                     downbeatDraft: model.downbeatDraft,
-                     onDownbeatMove: model.moveDownbeatDraft,
-                     onDownbeatEnded: model.endDownbeatDrag,
-                     onTouchBegan: model.beginWaveformTouch,
-                     onTouchEnded: model.endWaveformTouch,
-                     fillsHeight: landscape,
-                     showsMarkerLabels: markerLabelsVisible)
-            // Fit / 1× reset — only while zoomed; sits above the waveform's gestures so
-            // its tap wins (ADR 0010). Pinned bottom-trailing, clear of the time bubble.
-            .overlay(alignment: .bottomTrailing) {
-                if model.isZoomed {
-                    ZoomResetButton(action: model.resetZoom)
-                        .padding(8)
-                        .transition(.opacity)
-                }
-            }
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isZoomed)
     }
 
     private var transport: some View {
@@ -177,7 +145,7 @@ struct PracticeReference: View {
                 VStack(spacing: 16) {
                     LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
                                activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
-                               onActivate: model.activate, onEdit: { model.editingLoop = StableRef(value: $0) },
+                               onActivate: model.activate, onEdit: model.editLoop,
                                onDelete: model.deleteLoop,
                                onAdjustRange: { model.startRangeEdit($0) },
                                onAutomator: { model.editingAutomatorLoop = StableRef(value: $0) },

@@ -18,9 +18,12 @@ struct LoopBulkEditSheet: View {
     let onApply: (LoopBulkEdit) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    /// Every loop in the library — the tag-suggestion pool, the convergence mechanism
-    /// ADR 0034 relies on so one vocabulary forms instead of per-song dialects.
-    @Query private var allLoops: [Loop]
+    @Environment(\.modelContext) private var modelContext
+    /// Tags from across the library — the suggestion pool, the convergence mechanism ADR 0034
+    /// relies on so one vocabulary forms instead of per-song dialects. Loaded in `.task`, not
+    /// held as a `@Query` of every `Loop`: this opens from the practice screen over playing
+    /// audio, where a whole-table fetch during presentation is felt.
+    @State private var tagPool: [String] = []
 
     @State private var edit = LoopBulkEdit()
     @State private var newTag = ""
@@ -43,6 +46,8 @@ struct LoopBulkEditSheet: View {
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            // After the first frame, not during presentation — see `tagPool`.
+            .task { tagPool = LibraryPools.loopTags(in: modelContext) }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -165,7 +170,7 @@ struct LoopBulkEditSheet: View {
 
     /// Tags used anywhere in the loop library, minus the ones already queued to add.
     private var tagSuggestions: [String] {
-        Labels.suggestions(from: allLoops.flatMap(\.tags), excluding: edit.tagsToAdd)
+        Labels.suggestions(from: tagPool, excluding: edit.tagsToAdd)
     }
 
     private var suggestionChips: some View {

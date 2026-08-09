@@ -109,7 +109,17 @@ final class WaveformPracticeModel {
     // autosave promoting a freshly-created loop/marker's temporary `persistentModelID` doesn't read as
     // an identity change and dismiss the open sheet mid-edit (see `StableModelRef`).
     var editingLoop: StableRef<Loop>?
+    /// The "Auto" swatch colour for whatever `editingLoop` holds. Resolved once, when the sheet
+    /// is opened, because `LoopColor.derivedColor` walks every loop on the song and the sheet's
+    /// content closure is re-evaluated whenever its presenting body is.
+    var editingLoopAutoColor: Color = PocketColor.loopPalette.first ?? .gray
     var editingMarker: StableRef<Marker>?
+
+    /// Open the loop edit sheet, resolving its auto colour up front (see `editingLoopAutoColor`).
+    func editLoop(_ loop: Loop) {
+        editingLoopAutoColor = LoopColor.derivedColor(for: loop, among: loops)
+        editingLoop = StableRef(value: loop)
+    }
     /// The loop being trained full-screen via "Practice now" from the edit sheet (ADR 0082). Set only
     /// after the edit sheet dismisses (see `pendingPracticeLoop`), so the run cover never races the
     /// sheet's dismissal; exiting the run returns to the waveform it launched from.
@@ -219,58 +229,15 @@ final class WaveformPracticeModel {
     /// The loop currently loaded into the transport/waveform, if any.
     var activeLoop: Loop? { loops.first { $0.uid == activeLoopID } }
 
-    /// The beat grid (ADR 0022): beats + bar-start downbeats as song fractions.
-    /// Empty unless the song has **both** a tempo (`bpm`) and a **downbeat anchor**
-    /// (`downbeatSeconds`) — BPM fixes the interval, the anchor fixes the phase, and we
-    /// don't guess the phase. Drawn faintly on the waveform and fed into the snap
-    /// candidates (`snapCandidates`). Bar lines follow the song's time signature
-    /// (`beatsPerBar`, ADR 0051; default 4/4).
-    var beatGrid: [BeatGrid.Beat] {
-        guard let bpm = song.tempoBPM, let downbeat = song.downbeatSeconds, duration > 0 else { return [] }
-        return BeatGrid.beats(bpm: bpm, duration: duration, downbeat: downbeat,
-                              beatsPerBar: song.beatsPerBar)
-    }
-
-    /// A grid exists to show/hide only once tempo + downbeat are set — gates the gridlines
-    /// toggle's visibility (ADR 0051), the same condition that makes `beatGrid` non-empty.
-    var gridAvailable: Bool { !beatGrid.isEmpty }
-
-    /// Tempo set, but no **1** placed — so `beatGrid` is empty and there are no gridlines, no bar
-    /// lines and no beat snapping. It's the state a BPM-only commit leaves behind (`commitTempo`
-    /// deliberately won't guess the phase, ADR 0022), and on device it reads as "I set the BPM, where's
-    /// my grid?" because *nothing* appears in the Grid toggle's place. Drives a **Set the 1** prompt
-    /// there instead of silence.
-    var needsDownbeat: Bool { song.tempoBPM != nil && song.downbeatSeconds == nil }
-
-    /// Toggle this song's gridlines (ADR 0051). Mutating the `@Model` persists the per-song
-    /// preference; the grid still feeds snap candidates when hidden.
-    /// No haptic here: the control is a `ToggleChip`, which fires its own. Two would stack into one
-    /// heavier-feeling tap that reads as a different gesture.
-    func toggleGridlines() {
-        song.showsGridlines.toggle()
-    }
-
-    // MARK: - Metronome (ADR 0026)
-
-    /// A click can run only when there's a grid — both a tempo and a downbeat anchor.
-    /// Drives the transport toggle's enabled state (the button greys out without one).
-    var canUseMetronome: Bool { !beatGrid.isEmpty }
-
-    /// Toggle the in-song click. Pushes the current grid to the engine and flips the
-    /// click on/off; the engine schedules against the live (rate-following) playhead.
-    func toggleMetronome() {
-        guard canUseMetronome || metronomeOn else { return }
-        metronomeOn.toggle()
-        if metronomeOn { pushMetronomeGrid() }
-        engine.setMetronome(enabled: metronomeOn)
-    }
-
-    /// Hand the engine the beat grid in *source* seconds (fractions × duration). Called
-    /// when the click turns on and whenever the grid changes (tempo/downbeat edits).
-    func pushMetronomeGrid() {
-        let beats = beatGrid.map { (time: $0.fraction * duration, isDownbeat: $0.isDownbeat) }
-        engine.setMetronomeBeats(beats)
-    }
+    /// Backing store for `beatGrid`'s memoisation — the grid and the inputs it was built from.
+    /// Lives here because a stored property can't be declared in an extension; everything that
+    /// reads it is in `+Grid.swift`, which is why it's `internal` rather than `private` (Swift
+    /// has no cross-file-private for a single type).
+    ///
+    /// `@ObservationIgnored` so filling the cache during a `body` pass doesn't itself invalidate
+    /// that body — the observation the caller wants is on the song's tempo fields, which the
+    /// getter reads before consulting the cache.
+    @ObservationIgnored var gridCache: (key: GridKey, beats: [BeatGrid.Beat])?
 
     // MARK: - Playback lifecycle & Now Playing (ADR 0025)
 
