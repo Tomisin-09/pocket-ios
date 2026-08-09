@@ -93,6 +93,31 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 > in Settings at any time.
 >
 > Named after the Tom Misch track that started it all.
+>
+> Red Moon Pro is an auto-renewable subscription. Terms of Use (EULA):
+> https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+### ⛔ Why that last line is not optional — REJECTED 2026-08-08 for its absence
+
+App Review returned 1.1 (3) automatically, before a human looked at it: *"The
+submission offers auto-renewable subscriptions but does not include a functional
+link to the Terms of Use (EULA) in the app's metadata."* (Guideline 3.1.2.)
+
+The in-app half was already right — `PaywallView` and Settings ▸ About both link
+Apple's standard EULA — but 3.1.2 asks for the link in **two** places, and the
+App Store **description** is the one that was missing. It is a metadata-only
+defect: paste the two lines above at the end of the Description field, resubmit
+the same build. No archive, no upload, no version bump.
+
+Paste the URL as bare text, not markdown — ASC's Description field is plain text
+and renders no link syntax, and Apple checks the URL literally. Keep it on the
+end of the description, after the sign-off, where it reads as boilerplate rather
+than as a sales line.
+
+We ship **no custom EULA**, so App Information ▸ License Agreement stays on
+Apple's standard terms. Only if that ever changes does the link move into ASC's
+own custom-EULA field instead of the description — and then all three surfaces
+(description, paywall, Settings) must point at the custom one, not Apple's.
 
 ## What's New in This Version — 4,000 char max (1.1)
 
@@ -445,6 +470,14 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 
 ## Pre-submission checklist
 - [ ] Subtitle, promotional text, keywords, description entered (above)
+- [ ] 🔴 **Terms of Use (EULA) URL is in the Description** —
+      `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`, bare text, at
+      the end. **This is what rejected 1.1 (3) on 2026-08-08**, automatically and before
+      any human review. Guideline 3.1.2 wants it in the metadata *as well as* in the
+      binary; the binary half has been right since ADR 0144 (`PaywallView` + Settings ▸
+      About), so the description is the only place that can fail. Re-check this on every
+      version whose description is retyped — a locked, released version's description
+      cannot be edited, so the mistake is only ever fixable *before* approval.
 - [x] **10 screenshots re-shot 2026-08-07** on iPhone 17 Pro Max, dark, clean 9:41 bar,
       downscaled to 1242×2688 and alpha-flattened — every file verified `hasAlpha: no`.
       At `~/Documents/Red Moon Screenshots 2/appstore-2026-08-07/upload-6.5-dark/`
