@@ -114,7 +114,7 @@ helpers in `AudioMath` and `StretchQuality` (unit-tested). Stages 1–2 (file im
 `SongImporter` (the `LibraryView` file picker) **copies the file into the app's own
 storage** (`SongFileStore`) and keeps a security-scoped bookmark as provenance and legacy
 fallback; `SongAudioResolver` prefers the copy, so a library restored from a device backup
-still plays (ADR 0148); `SongRelinker` repairs a song whose audio is gone by re-pointing it at a file under its existing `sourceID`, so nothing attached to it is lost. The generated arpeggio (`SampleToneGenerator`) remains only as the
+still plays (ADR 0148); `SongRelinker` repairs a song whose audio is gone by re-pointing it at a file under its existing `sourceID`, so nothing attached to it is lost — offered both at the failure (`AudioUnavailableNotice`) and, since **ADR 0152**, unconditionally from the **Audio** section of `SongDetailsSheet` (`SongAudioSection`), because a relink onto a readable-but-*wrong* file succeeds and so never raises the failure the only other door hung on. The generated arpeggio (`SampleToneGenerator`) remains only as the
 preview/dev sample — the bundled demo song was dropped with ADR 0148 §7. Tap-to-seek, scrub,
 A/B-span set, and edge-drag are driven by the waveform **gesture engine** (pure math
 in `WaveformGesture` + the pure `ABSpan` state machine, ADR 0005 / 0041). Loop creation

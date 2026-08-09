@@ -11,6 +11,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **You can point a song at a different file whenever you like.** Song details now has an **Audio**
+  section showing what the song is playing and a **Replace audio file…** button. Previously this
+  repair only appeared when a song's audio was missing — which meant that if you ever linked a song
+  to the *wrong* file, it played happily and there was no way back, short of deleting it and losing
+  every loop, marker, take and note attached to it. Now you can just point it at the right file.
+  Everything you've built on the song stays with it, and you'll still be warned if the new file is a
+  different length from the old one. Reachable from the library (hold a song → Details) and while
+  practising (hold the song title). See ADR 0152.
+
 ### Changed
 - **Your recordings and notes now survive the thing they were made against.** Deleting a loop used
   to delete every take you'd recorded over it and every note you'd written about it, without saying

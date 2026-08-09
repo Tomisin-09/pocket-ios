@@ -45,6 +45,7 @@ extension WaveformPracticeModel {
         // multi-megabyte file takes seconds, and without this the notice sat there with a live
         // "Find the file" button through all of it — so the picker closing looked like nothing had
         // happened, and the obvious response was to pick the file again (device pass 2026-08-07).
+        let wasFailed = audioLoadFailed
         audioLoadFailed = false
         isLoadingAudio = true
         defer { isLoadingAudio = false }
@@ -62,9 +63,13 @@ extension WaveformPracticeModel {
             await loadImportedFile()
             return outcome
         } catch {
-            // Put the notice back: the song is exactly as broken as it was, and hiding that behind
-            // a dismissed alert would leave a dead transport — the thing the notice exists to stop.
-            audioLoadFailed = true
+            // Restore the state we found, rather than asserting failure. `prepare` throws before
+            // anything is written, so the song is exactly as it was: if it was broken the notice
+            // must come back (hiding that behind a dismissed alert would leave a dead transport —
+            // the thing the notice exists to stop), but if it was **playing** it still is, and
+            // dropping a blocking "audio is missing" notice over a working screen would invent a
+            // problem. That second case only exists since ADR 0152 let a healthy song be replaced.
+            audioLoadFailed = wasFailed
             throw error
         }
     }

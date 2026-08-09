@@ -1,13 +1,17 @@
 import Foundation
 import SwiftData
 
-/// Points an existing `Song` at a file again (ADR 0148 §6) — the repair path for a song whose audio
-/// can no longer be found.
+/// Points an existing `Song` at a file again (ADR 0148 §6) — for a song whose audio can no longer
+/// be found, **and** for one pointed at the wrong file (ADR 0152).
 ///
-/// The case this exists for: a library imported before ADR 0148 and carried through an app
+/// The case this was written for: a library imported before ADR 0148 and carried through an app
 /// reinstall or a restore-from-backup. Every bookmark in it is dead, no copy was ever made, and
 /// re-importing would create a *new* song — stranding the loops, markers, takes and practice history
 /// attached to the old one. Relink keeps the row and replaces only the audio.
+///
+/// The second case is the first one's own failure mode: a relink that lands on the wrong file
+/// **succeeds**, so the song resolves, the failure notice never appears, and the only door back
+/// closes behind the player. Same operation, second entry point — see `SongAudioSection`.
 ///
 /// **The invariant:** `sourceID` never changes (ADR 0148 §4). It is what loops, markers, takes and
 /// `PracticeRun` rows are attached to, so a relink that minted a fresh id would repair the sound and
@@ -69,6 +73,26 @@ enum SongRelinker {
         let audioFileName = try SongFileStore.adopt(contentsOf: url, sourceID: sourceID)
         return Prepared(audioFileName: audioFileName, bookmark: try? url.bookmarkData(),
                         duration: extracted.duration, amplitudes: extracted.amplitudes)
+    }
+
+    /// Prepare + apply in one call, off the main actor for the decode (ADR 0152).
+    ///
+    /// The whole relink for a caller that owns no audio engine — the library's Song details sheet,
+    /// where replacing the audio is a correction rather than a repair. The practice screen does
+    /// **not** use this: it has a file open and must stop and reload around the swap, so it keeps
+    /// its own `relinkAudio` wrapper over the same two halves.
+    ///
+    /// Only `sourceID` crosses the `Task.detached` boundary — a `Song` and a `ModelContext` are
+    /// not `Sendable`, which is the reason for the `prepare`/`apply` split in the first place.
+    @discardableResult
+    @MainActor
+    static func replace(audioAt url: URL, on song: Song,
+                        in context: ModelContext) async throws -> Outcome {
+        let sourceID = song.sourceID
+        let prepared = try await Task.detached(priority: .userInitiated) {
+            try prepare(from: url, sourceID: sourceID)
+        }.value
+        return apply(prepared, to: song, in: context)
     }
 
     /// Write a prepared relink onto the song. Cheap and `@MainActor` — the decode already happened.

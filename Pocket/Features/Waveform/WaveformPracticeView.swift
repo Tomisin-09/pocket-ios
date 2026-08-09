@@ -176,7 +176,12 @@ struct WaveformPracticeView: View {
                            onTurnOff: { model.turnOffAutomator(for: loop) })
         }
         .sheet(isPresented: $model.showingSongDetails) {
-            SongDetailsSheet(song: model.song)
+            // Routed through the model rather than `SongRelinker` directly (ADR 0152): the engine
+            // has this song's file open, and `SongFileStore.adopt` replaces those bytes in place.
+            // `relinkAudio` stops the engine and reloads around the swap; the plain path would
+            // leave a live `AVAudioFile` reading a file that no longer exists.
+            SongDetailsSheet(song: model.song,
+                             replaceAudio: { try await model.relinkAudio(to: $0) })
         }
         // Bulk practice categories across the selected loops (ADR 0125), from the selection
         // header's slider button — the chevron's old slot.
