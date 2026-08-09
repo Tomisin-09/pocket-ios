@@ -54,6 +54,18 @@ final class Recording {
     /// The song this take was recorded against, or `nil`. See `loop`.
     var song: Song?
 
+    /// The owner's caption at capture time — "Don't Know Why Guitar Cover · Chords" — kept so a take
+    /// that **outlives** its owner still says what it was recorded against (ADR 0151). The three
+    /// relationships above nullify on the owner's deletion, and without this the surviving row would
+    /// render as a bare "Take 0:11": the audio is the irreplaceable part, but a take you can't
+    /// identify is barely worth keeping.
+    ///
+    /// Written once at capture through `JournalTimeline.ownerLabel(loop:exercise:song:)` — the same
+    /// function that renders the live caption — so the fallback can't drift from what it replaces.
+    /// Additive optional with **no declaration default**, so lightweight migration is exempt from the
+    /// CoreData 134110 mandatory-attribute rule. `nil` for takes captured before this shipped.
+    var ownerLabelAtTake: String?
+
     init(fileName: String, duration: TimeInterval, uid: UUID = UUID(), createdAt: Date = Date(),
          loop: Loop? = nil, exercise: Exercise? = nil, song: Song? = nil) {
         self.uid = uid

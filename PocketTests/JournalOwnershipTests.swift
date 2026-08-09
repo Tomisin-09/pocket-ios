@@ -65,22 +65,27 @@ final class JournalOwnershipTests: XCTestCase {
                        ["pushed to 100", "80 comfy"], "journal lists newest first")
     }
 
-    func testDeletingExerciseCascadesItsJournal() throws {
+    /// ADR 0151 — **this test used to assert a cascade.** A note outlives the unit it was written
+    /// about, the rule session entries have followed since ADR 0143. An exercise can be rewritten
+    /// from the same idea; a note about how practice actually went cannot.
+    func testDeletingExerciseLeavesItsJournal() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
         let exercise = Exercise(name: "Spider")
         context.insert(exercise)
-        let entry = JournalEntry.forExercise(text: "clean at 90", kind: .breakthrough,
-                                             commandBpmAtEntry: 90)
-        context.insert(entry)
-        entry.exercise = exercise
+        XCTAssertTrue(JournalWriter.add(to: .exercise(exercise), text: "clean at 90",
+                                        kind: .breakthrough, into: context))
         try context.save()
-        XCTAssertEqual(try context.fetch(FetchDescriptor<JournalEntry>()).count, 1)
 
         context.delete(exercise)
         try context.save()
-        XCTAssertEqual(try context.fetch(FetchDescriptor<JournalEntry>()).count, 0,
-                       "cascade delete removes the exercise's entries")
+
+        let survivors = try context.fetch(FetchDescriptor<JournalEntry>())
+        XCTAssertEqual(survivors.count, 1, "deleting an exercise must not delete notes about it")
+        let orphan = try XCTUnwrap(survivors.first)
+        XCTAssertNil(orphan.exercise, "the relationship nullifies")
+        XCTAssertEqual(JournalTimeline.ownerLabel(for: .note(orphan)), "Spider · exercise",
+                       "the snapshot keeps the note attributed after its unit is gone")
     }
 
     /// A loop entry and an exercise entry coexist in one store, each keeping its own owner and

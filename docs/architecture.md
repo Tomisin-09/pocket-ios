@@ -382,11 +382,20 @@ captures the mic, the practice engine keeps playing out, and the two never share
 therefore never renders its own playback into the file, ADR 0001/0064). Takes are **app-authored**
 files — as, since ADR 0148, imported songs are too, both living in the app container and both
 riding along in a device backup: the **`Recording`** `@Model` holds
-`uid`/`createdAt`/`duration` + a relative `fileName`, with a **polymorphic, cascade-owned** owner
+`uid`/`createdAt`/`duration` + a relative `fileName`, with a **polymorphic** owner
 (`loop`/`exercise`/`song` — inverse `recordings` arrays on those models, mirroring the `journal`
-pillar; `ownerKind` is derived, no stored enum). **`RecordingStore`** owns the app-container
-`Recordings/` directory and the retention story — delete/size plus a pure orphan sweep that reaps
-files whose model row was cascade-deleted (cascade drops the row, not the on-disk audio). On the
+pillar; `ownerKind` is derived, no stored enum). Those relationships **nullify rather than cascade**
+(ADR 0151): deleting a loop, exercise or song leaves every take recorded against it, because a unit
+can be redrawn or rewritten and a recording of someone playing cannot be remade. Each take carries
+`ownerLabelAtTake` — the owner's caption snapshotted at capture through the *same*
+`JournalTimeline.ownerLabel(loop:exercise:song:)` that renders the live one — so a surviving take
+still says what it was recorded against instead of degrading to a bare "Take 0:11". The same change
+applies to unit-owned `JournalEntry` rows (`ownerLabelAtEntry`), bringing loops and exercises into
+line with the rule session entries have followed since ADR 0143. **`RecordingStore`** owns the
+app-container `Recordings/` directory and the retention story — delete/size plus a pure orphan sweep
+that reaps files whose model row was deleted (dropping a row never drops the on-disk audio). Since a
+nullified take keeps its row, its audio is safe by construction, and destroying a take is now only
+ever the user's own hold-to-delete. On the
 **loop trainer**, `RecordingController` orchestrates a take as a **pre-start arm toggle** beside Start
 (permission + route sampled up front; the take begins *before* playback so the `.playAndRecord` flip
 never happens mid-stream — the fix for an audible glitch), and `RecordingPlayer` plays takes back one
@@ -759,8 +768,8 @@ libraries all adopt it, and every parameter is optional so a list declines what 
 `UndoToastView`, committing when the timer expires, a second delete arrives, the screen disappears or
 the app backgrounds. That is the opposite of the waveform's delete-then-restore-from-snapshot (ADR
 0019) and deliberately so — restoring an `Exercise` or `Song` would have to rebuild routine-block
-links, song links, journal entries and takes that the real delete nullifies or cascades away, whereas
-deferring destroys nothing. The coordinator is **screen-owned** (`@State`, passed into
+links and song links that the real delete nullifies, whereas deferring destroys nothing. (Journal
+entries and takes are no longer among them — ADR 0151 made both outlive their unit.) The coordinator is **screen-owned** (`@State`, passed into
 `.pocketRowUndoHost(_:)`): a modifier applied inside `body` publishes to that view's descendants
 only, so the screen needs a direct handle to project its `present…` lists, which filter pending rows
 out of the list, the empty state and the filter menus; the environment seam is the rows' route in.
@@ -866,8 +875,9 @@ not delete-then-restore (ADR 0125): the row's `uid` goes into
 `pendingDeleted{Loop,Marker}UIDs`, `WaveformPracticeModel.loops` / `.markers` filter it —
 one choke point, so the row leaves the list, the lanes and the minimap together — and
 `context.delete` runs only when the window closes (expiry, a superseding delete, or screen
-exit). Rebuilding from a snapshot restored a loop's *numbers* while its cascade-owned
-journal and takes and its nullified routine links stayed gone.
+exit). Rebuilding from a snapshot restored a loop's *numbers* while its journal, takes and
+routine links stayed gone. (Since ADR 0151 the journal and takes survive the delete outright,
+so only the routine links are still at stake — the deferral stands on the same reasoning.)
 
 The two reference panels **multi-select** (ADR 0125): holding a panel header swaps that
 header — mode-scoped, so browse keeps its chevron — for a selection bar carrying select-all,

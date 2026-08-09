@@ -148,18 +148,24 @@ final class Loop {
     var customColorHex: String?
 
     /// The loop's practice journal — dated, context-snapshotting entries (ADR 0038).
-    /// Cascade-owned like `Song`'s loops/markers: deleting the loop deletes its journal.
+    /// **Nullified, not cascaded** (ADR 0151): deleting the loop leaves the notes written about it,
+    /// the rule session entries have followed since ADR 0143 ("deleting a routine must not delete the
+    /// reflection written about it"). A note about how practice actually went can't be rewritten from
+    /// the same idea the way the loop can. Attribution survives via `JournalEntry.ownerLabelAtEntry`.
     /// Declaration default keeps SwiftData lightweight migration additive (CoreData
     /// 134110 rule, ADR 0012) for loops saved before journalling shipped.
-    @Relationship(deleteRule: .cascade, inverse: \JournalEntry.loop)
+    @Relationship(deleteRule: .nullify, inverse: \JournalEntry.loop)
     var journal: [JournalEntry] = []
 
-    /// Practice takes recorded against this loop (ADR 0069). **Cascade-owned**, mirroring
-    /// `journal`: deleting the loop deletes its takes' rows — their files are then reaped by
-    /// `RecordingStore`'s orphan sweep (cascade removes the row, not the on-disk audio).
+    /// Practice takes recorded against this loop (ADR 0069). **Nullified, not cascaded** (ADR 0151):
+    /// deleting the loop clears the link and leaves the take, because a loop is a start/end pair that
+    /// can be redrawn in a minute and a recording of someone playing on a particular evening cannot be
+    /// remade at all. The take keeps its caption through `ownerLabelAtTake`, and its audio survives
+    /// with it — `RecordingStore`'s orphan sweep reaps files with no surviving row, and the row
+    /// survives. Deleting the take itself stays the user's call, via hold-to-delete on the Journal.
     /// Declaration default keeps the migration additive (CoreData 134110 rule) for loops
     /// saved before recording shipped.
-    @Relationship(deleteRule: .cascade, inverse: \Recording.loop)
+    @Relationship(deleteRule: .nullify, inverse: \Recording.loop)
     var recordings: [Recording] = []
 
     /// Journal entries newest-first — the order the journal sheet lists them in.

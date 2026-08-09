@@ -95,9 +95,11 @@ final class Song {
     @Relationship(deleteRule: .cascade, inverse: \Loop.song) var loops: [Loop] = []
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
     /// Practice takes recorded against this song (ADR 0069) — e.g. during a play-along.
-    /// Cascade-owned like `loops`/`markers`; the files are reaped by `RecordingStore`'s orphan
-    /// sweep. Declaration default keeps the migration additive (CoreData 134110 rule).
-    @Relationship(deleteRule: .cascade, inverse: \Recording.song) var recordings: [Recording] = []
+    /// **Nullified, not cascaded** (ADR 0151), unlike `loops`/`markers`: removing a song from the
+    /// library must not destroy recordings of the player, which are the one artifact here that can't
+    /// be remade. The caption survives via `ownerLabelAtTake`; see `Loop.recordings`. Declaration
+    /// default keeps the migration additive (CoreData 134110 rule).
+    @Relationship(deleteRule: .nullify, inverse: \Recording.song) var recordings: [Recording] = []
 
     /// Routine blocks that **reference** this song for a repertoire run-through (ADR 0066
     /// R4/R5). Inverse of `RoutineItem.song`, **nullify** delete rule: deleting the song
