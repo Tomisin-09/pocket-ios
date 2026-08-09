@@ -18,6 +18,33 @@ Three things are parked, in the order they'd sensibly resume:
 Slices 1 and 2 of ADR 0140 are **on main** — squash `e9688ff`, PR #209, merged 2026-08-02 after a
 device pass and a green CI run. Nothing from that work is outstanding except slice 3.
 
+## A loop past the end of its audio plays silence (parked 2026-08-09, after ADR 0152)
+
+Found while tracing what a **shorter** replacement file does to existing loops (ADR 0152 §4 warns
+that they "may no longer line up"). Nothing is deleted, and the clamping in `AudioMath.loopSegment`
+handles two of the three cases sensibly. The third is a silent failure.
+
+- **Loop entirely inside the new length** — plays; the only problem is musical (those seconds now
+  hold different audio). Correct behaviour, nothing to do.
+- **Loop straddling the new end** — clamps to `totalFrames`, so it plays short with no indication it
+  was truncated. Arguably fine, arguably worth a marker in the UI.
+- **Loop entirely past the new end** — **the bug.** Both ends clamp to `totalFrames`, `frameCount`
+  becomes 0, `currentLoopSegment()` → nil, `makeLoopBuffer()` → nil. The straight-through fallback
+  doesn't catch it either: `seek` already clamped the playhead to the new duration, so
+  `scheduleSegment` gets `count == 0` and returns having scheduled nothing — while
+  `primeSchedule` sets `scheduled = true` regardless. Result: the transport lights up, the playhead
+  runs, and **nothing sounds**. No completion callback is scheduled either, so nothing detects it.
+
+**Not new** — reachable since ADR 0148 §6, which could always relink to a shorter file. ADR 0152
+only made it easier to reach, and it's an edge case (deliberately shipped as-is in #232).
+
+**Shape of the fix, when it's time:** `primeSchedule` should only claim `scheduled` when something
+was actually scheduled, and the model should treat a loop falling entirely outside the audio as
+*out of range* rather than playable — a state the loops list can show, rather than a loop that
+looks runnable and isn't. Worth deciding at the same time whether a truncated (straddling) loop
+deserves the same treatment. Pure enough to unit-test off `AudioMath.loopSegment` plus a
+`primeSchedule` guard.
+
 ## ADR 0140, slowed-audio quality — slices 1–2 SHIPPED (#209), slice 3 deferred
 
 **Was the priority ahead of the queue below, and is now largely discharged.** Track A/B are new

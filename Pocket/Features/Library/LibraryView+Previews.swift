@@ -81,6 +81,22 @@ private struct PreviewSeed {
         .preferredColorScheme(.dark)
 }
 
+/// The details sheet, for eyeballing the **Audio** section (ADR 0152) in the canvas. The song
+/// claims an owned copy with no file behind it, which is the format-only label — a real device
+/// shows "MP3 · 8.4 MB". Replacing needs a file picker, so the button is here to be looked at, not
+/// driven.
+#Preview("Song details — audio section") {
+    // swiftlint:disable:next force_try
+    let container = try! ModelContainer(for: Song.self, Exercise.self,
+                                        configurations: .init(isStoredInMemoryOnly: true))
+    let song = Song.sample()
+    song.audioFileName = "\(song.sourceID).mp3"
+    container.mainContext.insert(song)
+    return SongDetailsSheet(song: song)
+        .modelContainer(container)
+        .preferredColorScheme(.dark)
+}
+
 #Preview("Song edit sheet") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(for: Song.self,

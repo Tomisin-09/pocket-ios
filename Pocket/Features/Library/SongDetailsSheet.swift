@@ -13,6 +13,16 @@ import SwiftUI
 struct SongDetailsSheet: View {
     let song: Song
 
+    /// How **Replace audio file…** performs the swap (ADR 0152). `nil` — the library's case — goes
+    /// straight through `SongRelinker`. The practice screen passes its own, because it has the file
+    /// open and has to stop and reload the engine around the replacement.
+    private let replaceAudio: ((URL) async throws -> SongRelinker.Outcome)?
+
+    init(song: Song, replaceAudio: ((URL) async throws -> SongRelinker.Outcome)? = nil) {
+        self.song = song
+        self.replaceAudio = replaceAudio
+    }
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     /// Entitlement + the shared paywall (ADR 0112) — "Build a routine for this song" produces a real
@@ -41,6 +51,9 @@ struct SongDetailsSheet: View {
                     // notes/journal feature (ADR 0038). Always shown so they're discoverable.
                     notesSection
                     detailsSection
+                    // Which file this song plays, and the way to change it (ADR 0152) — the
+                    // relink door that doesn't depend on the audio being broken.
+                    SongAudioSection(song: song, replace: replace)
                     if !song.collections.isEmpty { collectionsSection }
                     linkedExercisesSection
                     statsSection
@@ -285,15 +298,21 @@ struct SongDetailsSheet: View {
         }
     }
 
+}
+
+/// Row builders, derived text and the replace seam — in an extension so they don't count against
+/// the view's body-length cap.
+extension SongDetailsSheet {
+
     // MARK: - Row builders
 
-    private func detailRow(_ label: String, _ value: String) -> some View {
+    func detailRow(_ label: String, _ value: String) -> some View {
         DetailLabeledContent(label: label) {
             Text(value).foregroundStyle(PocketColor.textPrimary)
         }
     }
 
-    private func statRow(_ label: String, _ value: Int) -> some View {
+    func statRow(_ label: String, _ value: Int) -> some View {
         DetailLabeledContent(label: label) {
             Text("\(value)").font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
         }
@@ -302,18 +321,22 @@ struct SongDetailsSheet: View {
     // MARK: - Derived text
 
     /// `Album · Year`, omitting whichever half is unknown (empty when neither is set).
-    private var albumLine: String {
+    var albumLine: String {
         [song.album.isEmpty ? nil : song.album, song.year.map(String.init)]
             .compactMap { $0 }
             .joined(separator: " · ")
     }
 
-    private var tempoText: String {
+    var tempoText: String {
         song.bpm.map { "\($0) BPM" } ?? "—"
     }
-}
 
-extension SongDetailsSheet {
+    /// The injected replacer, or the plain one for a caller with no audio engine to quiet first
+    /// (ADR 0152).
+    func replace(_ url: URL) async throws -> SongRelinker.Outcome {
+        if let replaceAudio { return try await replaceAudio(url) }
+        return try await SongRelinker.replace(audioAt: url, on: song, in: modelContext)
+    }
     /// "Build a routine for this song" (ADR 0111) — a **Pro** action, since it materialises a real
     /// `Routine` (ADR 0112). A free player keeps the row tappable so it can open the paywall; only a
     /// song with nothing linked disables it. In an extension to keep the view under the body cap.
