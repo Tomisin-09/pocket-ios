@@ -107,6 +107,10 @@ struct WaveformView: View {
     /// `nil` when not in downbeat mode. When set, a labelled "1" handle is drawn here
     /// and any drag on the waveform moves it (snapped on release) instead of seeking.
     var downbeatDraft: Double?
+    /// Stored phase anchors as song fractions (ADR 0154) — the primary 1 plus any corrections.
+    /// Drawn only while `downbeatDraft` is active, so placing a new one shows what's already
+    /// there; the rest of the time the bar lines already say where the grid sits.
+    var downbeatAnchors: [Double] = []
     /// Live drag of the downbeat handle → this fraction (raw, tracks the finger).
     var onDownbeatMove: (Double) -> Void = { _ in }
     /// The downbeat drag released — snap to the nearest transient peak.
@@ -252,6 +256,11 @@ struct WaveformView: View {
         // Downbeat handle on top of everything while placing the 1 (ADR 0024). The
         // drawing helper lives in `WaveformDownbeat.swift` (file-length budget).
         if let downbeatDraft {
+            // Corrections already stored, under the live handle — context for where this one
+            // is going, never over the top of it (ADR 0154).
+            for anchor in downbeatAnchors where anchor >= viewport.start && anchor <= viewport.end {
+                drawDownbeatAnchor(in: context, size: size, atX: atX(anchor))
+            }
             drawDownbeatHandle(in: context, size: size, atX: atX(downbeatDraft))
         }
     }
@@ -353,27 +362,6 @@ struct WaveformView: View {
     /// waveform, minimap, and transport strip all resolve the same hue. Not `private` —
     /// `drawLoopLines` (file-length budget) lives in `WaveformDownbeat.swift`.
     func loopColor(for loop: Loop) -> Color { LoopColor.color(for: loop, among: loops) }
-
-    /// Vertical beat grid drawn **behind** the bars (ADR 0022; restyled ADR 0024/0051) so
-    /// the lines read through the gaps without cutting across the waveform. Only bar-start
-    /// **downbeats** are drawn — sub-beat gridlines were dropped (ADR 0051) as they made
-    /// zooming feel busy — and the whole grid is skipped once even downbeats would crowd.
-    private func drawBeatGrid(in context: GraphicsContext, size: CGSize,
-                              atX: (Double) -> CGFloat, region: BarRegion) {
-        guard showsGrid, beats.count >= 2 else { return }
-        let span = max(0.0001, viewport.end - viewport.start)
-        let beatPx = size.width * abs(beats[1].fraction - beats[0].fraction) / span
-        guard beatPx >= 1 else { return }          // even downbeats would crowd — no grid
-        for beat in beats where beat.isDownbeat {
-            let lineX = atX(beat.fraction)
-            guard lineX > -1, lineX < size.width + 1 else { continue }   // off-screen
-            // Stop at the baseline (`axis`) so no grid draws through the reflection (ADR 0049).
-            var line = Path()
-            line.move(to: CGPoint(x: lineX, y: region.top))
-            line.addLine(to: CGPoint(x: lineX, y: region.axis))
-            context.stroke(line, with: .color(PocketColor.gridLine), lineWidth: 1)
-        }
-    }
 
     /// 0…1 position of a song fraction on the *visible* waveform (outside 0…1 when
     /// the song fraction is off-screen at the current zoom).

@@ -41,6 +41,20 @@ final class Song {
     /// snapped to (we don't guess the phase). Optional, like `bpm`/`year`, so SwiftData
     /// lightweight migration fills pre-0022 songs with nil — no declaration default needed.
     var downbeatSeconds: TimeInterval?
+    /// **Corrections** to the phase anchor further into the song (ADR 0154) — extra places the
+    /// player has said "the 1 is *here*". One tempo and one anchor describe a straight line, and
+    /// a straight line is wrong for music whose pulse actually moves: phase error accumulates as
+    /// ∫(played tempo − stored tempo)·dt away from the anchor, so a click set against a
+    /// hand-played, unquantised beat locks, slides out, then slides back. Each extra anchor
+    /// restarts the grid — and the bar count — from that point, so the error can never
+    /// accumulate past the section being practised.
+    ///
+    /// Empty for every song with a steady tempo, which is nearly all of them. A
+    /// declaration-default `[Double]`, exactly like `collections`/`tags` — primitives, no stored
+    /// enum, no `@Model` promotion — so SwiftData lightweight migration fills pre-0154 songs
+    /// additively (the CoreData 134110 mandatory-attribute rule). Never read directly: the grid
+    /// reads `downbeatAnchors`, which is `nil`-safe about the primary.
+    var extraDownbeatSeconds: [TimeInterval] = []
     /// Time signature (ADR 0051): `beatsPerBar` groups the beat grid into bars — every
     /// `beatsPerBar`-th beat from the downbeat is a bar line — and `noteValue` is the
     /// denominator (4, 8, …), carried so the signature round-trips and reads right. Both
@@ -163,6 +177,15 @@ final class Song {
     /// the rounded `bpm` promoted to `Double` (so a song that only ever had an integer
     /// tempo still grids), else `nil` when the tempo is unknown (ADR 0024).
     var tempoBPM: Double? { preciseBPM ?? bpm.map(Double.init) }
+
+    /// Every phase anchor in time order — the primary `downbeatSeconds` plus any corrections
+    /// (ADR 0154). Empty when no 1 has been placed, which is the same "no grid, we don't guess
+    /// the phase" condition ADR 0022 established: a correction without a primary is meaningless,
+    /// so `extraDownbeatSeconds` alone never grids a song.
+    var downbeatAnchors: [TimeInterval] {
+        guard let primary = downbeatSeconds else { return [] }
+        return ([primary] + extraDownbeatSeconds).sorted()
+    }
 
     /// The full-song speed to resume at on reopen (ADR 0044): the speed you last practised the
     /// song at, or 1× when never practised (`nil`). Mirrors `Loop.resumeSpeed` at the song level.

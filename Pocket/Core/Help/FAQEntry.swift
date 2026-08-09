@@ -108,6 +108,17 @@ extension FAQEntry {
                 + "at a crawl is still in the key you'll play it in. Speeding up works the same way, up "
                 + "to one and a half times the original.",
               area: .audio),
+        // ADR 0154. Says the limitation plainly rather than implying anchors solve variable
+        // tempo outright — a track that genuinely accelerates still needs marking as it goes.
+        .init(question: "The click drifts out of time with my song. Why?",
+              answer: "Because a song here has one tempo and one starting point, and the app draws "
+                + "an even grid from them. That fits anything played to a click. It doesn't fit a "
+                + "band or a producer who played to feel — the pulse moves, and a grid that's right "
+                + "on average slides out of time and back in again. When it drifts, set the 1 again "
+                + "at the point where it's wrong: the grid re-locks from there and keeps the 1 you "
+                + "set earlier. On a track that speeds up or slows down throughout, expect to mark "
+                + "it a few times as you work through it.",
+              area: .audio),
 
         // MARK: How practice works
         .init(question: "What's the difference between mastery and command tempo?",

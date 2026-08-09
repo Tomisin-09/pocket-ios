@@ -79,6 +79,13 @@ struct DownbeatBar: View {
     let onCapture: () -> Void
     let onConfirm: () -> Void
     let onCancel: () -> Void
+    /// The song already has a 1, so ✓ means **correct from here** rather than *set it* — and
+    /// the rarer "replace the original" intent needs its own way out (ADR 0154).
+    var hasAnchor: Bool = false
+    /// How many corrections are already stored; drives the clear affordance.
+    var correctionCount: Int = 0
+    var onMove: () -> Void = {}
+    var onClearCorrections: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -86,9 +93,34 @@ struct DownbeatBar: View {
                 Image(systemName: "1.circle")
                     .font(.futura(size: 14, weight: .semibold))
                     .foregroundStyle(PocketColor.fine)
-                Text("Play and tap the 1 — or drag the handle")
+                Text(hasAnchor ? "Mark where the 1 has drifted to"
+                               : "Play and tap the 1 — or drag the handle")
                     .font(.futura(.footnote, weight: .medium))
                     .foregroundStyle(PocketColor.textSecondary)
+
+                if hasAnchor {
+                    Spacer(minLength: 4)
+                    // The rare intent, kept as plain text so it can't be mistaken for the
+                    // primary action — most returns to this bar are corrections, not do-overs.
+                    Button("Move the 1", action: onMove)
+                        .font(.futura(.caption, weight: .semibold))
+                        .foregroundStyle(PocketColor.fine)
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Replaces the original 1 instead of correcting from here")
+                }
+            }
+
+            if correctionCount > 0 {
+                HStack(spacing: 6) {
+                    Text("^[\(correctionCount) correction](inflect: true)")
+                        .font(.futura(.caption2, weight: .medium))
+                        .foregroundStyle(PocketColor.textSecondary)
+                    Button("Clear", action: onClearCorrections)
+                        .font(.futura(.caption2, weight: .semibold))
+                        .foregroundStyle(PocketColor.danger)
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Clear all corrections")
+                }
             }
 
             HStack(spacing: 8) {
@@ -114,7 +146,7 @@ struct DownbeatBar: View {
                     iconButton("xmark", tint: PocketColor.danger, action: onCancel)
                         .accessibilityLabel("Discard downbeat")
                     iconButton("checkmark", tint: PocketColor.confirm, action: onConfirm)
-                        .accessibilityLabel("Save downbeat")
+                        .accessibilityLabel(hasAnchor ? "Correct the 1 from here" : "Save downbeat")
                 }
                 .padding(3)
                 .background(

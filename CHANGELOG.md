@@ -21,6 +21,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   different length from the old one. Reachable from the library (hold a song → Details) and while
   practising (hold the song title). See ADR 0152.
 
+### Added
+- **You can correct the 1 partway through a song.** A song has one tempo and one starting point,
+  and the beat grid is drawn evenly from them — which fits anything played to a click, and doesn't
+  fit a band or a producer who played to feel. On those tracks the grid is right on average and
+  wrong locally, so the metronome slides out of time with the music and then back in again. Now,
+  when it drifts, you can set the 1 again at the point where it's wrong: the grid re-locks from
+  there, the bar lines restart with it, and the 1 you set earlier stays where it was. Set as many
+  as the song needs. The downbeat bar shows how many corrections a song is carrying and lets you
+  clear them (undoably), and **Move the 1** is still there for when the original was simply in the
+  wrong place. This doesn't make one tempo per song correct — a track that speeds up throughout
+  will still want marking as you work through it — so the tempo sheet and Help now say so. See ADR 0154.
+
 ### Fixed
 - **The practice screen no longer bogs down when you open settings while a song is playing.** Opening
   loop settings or song details mid-playback made the whole screen sluggish, and the tempo sheet was

@@ -1,7 +1,13 @@
 # 0022 — Beat grid & downbeat snap
 
-- **Status:** Accepted
+- **Status:** Accepted — **extended by [ADR 0154](0154-a-grid-you-can-correct-as-you-go.md)**
 - **Date:** 2026-06-19 (`pocket-025-beat-grid-snap`)
+
+> **Amended 2026-08-09.** "Tempo + *one* phase anchor" held for four decisions and is wrong for
+> music whose pulse moves: a single anchor makes the grid a straight line, and phase error
+> accumulates away from it. ADR 0154 lets a song carry several anchors, each restarting the grid
+> and the bar count. Everything below still describes the single-anchor case, which is what one
+> anchor now produces — exactly, by delegation.
 
 ## Context
 

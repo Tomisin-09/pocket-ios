@@ -215,6 +215,44 @@ extension WaveformView {
         context.draw(Text("1").font(.pocketMono(.caption2)).foregroundStyle(PocketColor.background),
                      at: CGPoint(x: handleX, y: badge.midY))
     }
+
+    /// Vertical beat grid drawn **behind** the bars (ADR 0022; restyled ADR 0024/0051) so
+    /// the lines read through the gaps without cutting across the waveform. Only bar-start
+    /// **downbeats** are drawn — sub-beat gridlines were dropped (ADR 0051) as they made
+    /// zooming feel busy — and the whole grid is skipped once even downbeats would crowd.
+    /// Internal, not `private`: moved here from `WaveformCanvas.swift` for the file-length
+    /// budget, and Swift has no cross-file-private for a single type.
+    func drawBeatGrid(in context: GraphicsContext, size: CGSize,
+                      atX: (Double) -> CGFloat, region: BarRegion) {
+        guard showsGrid, beats.count >= 2 else { return }
+        let span = max(0.0001, viewport.end - viewport.start)
+        let beatPx = size.width * abs(beats[1].fraction - beats[0].fraction) / span
+        guard beatPx >= 1 else { return }          // even downbeats would crowd — no grid
+        for beat in beats where beat.isDownbeat {
+            let lineX = atX(beat.fraction)
+            guard lineX > -1, lineX < size.width + 1 else { continue }   // off-screen
+            // Stop at the baseline (`axis`) so no grid draws through the reflection (ADR 0049).
+            var line = Path()
+            line.move(to: CGPoint(x: lineX, y: region.top))
+            line.addLine(to: CGPoint(x: lineX, y: region.axis))
+            context.stroke(line, with: .color(PocketColor.gridLine), lineWidth: 1)
+        }
+    }
+
+    /// A stored correction — a place the player already said the 1 had drifted to (ADR 0154).
+    /// Drawn only while placing a new one, and quieter than the live handle: these are context
+    /// for the decision being made, not things competing with it. Dashed so a correction never
+    /// reads as the bar line it sits on.
+    func drawDownbeatAnchor(in context: GraphicsContext, size: CGSize, atX anchorX: CGFloat) {
+        var stem = Path()
+        stem.move(to: CGPoint(x: anchorX, y: 0))
+        stem.addLine(to: CGPoint(x: anchorX, y: size.height))
+        context.stroke(stem, with: .color(PocketColor.fine.opacity(0.45)),
+                       style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+
+        let dot = CGRect(x: anchorX - 3, y: 3, width: 6, height: 6)
+        context.fill(Path(ellipseIn: dot), with: .color(PocketColor.fine.opacity(0.7)))
+    }
 }
 
 /// Small mono time readout pinned above the playhead (brief §3.2 — mono time).

@@ -142,7 +142,15 @@ and a downbeat anchor** (`Song.downbeatSeconds`), pure `BeatGrid` turns tempo + 
 into per-beat song fractions (flagging bar-start downbeats, 4/4); these are drawn as a
 faint, density-aware grid behind the bars and **added to the snap candidates**, so a
 release also catches the pulse — no grid is drawn or snapped to without both BPM and
-the anchor (ADR 0022). A **seek release splits by gesture** (ADR 0080): a **tap** ("take
+the anchor (ADR 0022). Since **ADR 0154** a song may carry **more than one anchor**
+(`Song.extraDownbeatSeconds` beside the primary, read together as `downbeatAnchors`):
+one tempo plus one anchor is a straight line, and phase error accumulates as
+∫(played − stored)·dt away from it, so a click set against a hand-played, unquantised
+beat locks, slides out and slides back. `BeatGrid.beats(…anchors:…)` runs beats forward
+from each anchor to the next — **restarting the bar count at each one**, since an anchor
+*is* a 1 — under a single invariant that keeps it total: no two beats may be *closer*
+than half an interval (so a beat crowding the next anchor is dropped, and near-duplicate
+anchors collapse). The single-anchor entry point delegates to it, byte-identically. A **seek release splits by gesture** (ADR 0080): a **tap** ("take
 me to that structure") snaps to the full set including beats, while a free **scrub** ("put
 the playhead exactly here") drops the dense beat grid and catches only the sparse landmarks
 (markers + loop edges) — the same candidate set the minimap uses, so a deliberate scrub

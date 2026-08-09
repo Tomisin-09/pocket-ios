@@ -159,7 +159,17 @@ for the grid to land cleanly), so a tap or drag near a marker dot or loop bounda
 a **beat grid** is drawn behind the bars (bar-start downbeats brighter, density-aware on
 zoom) and its beats join the snap candidates, so edges and **tap**-seeks catch the pulse too — pure,
 unit-tested `BeatGrid`, grouped by the song's **time signature** (`beatsPerBar`, ADR 0051;
-default 4/4). A **scrub** seek deliberately drops the beat grid and catches only the sparse
+default 4/4). **ADR 0154** lets a song carry **more than one anchor** — additive
+declaration-default `Song.extraDownbeatSeconds: [TimeInterval]` beside the primary
+`downbeatSeconds`, read together as `downbeatAnchors` — because one tempo plus one anchor is a
+straight line and phase error accumulates as ∫(played − stored)·dt away from it, so a click set
+against a hand-played, unquantised beat locks, slides out and slides back. Beats run forward from
+each anchor to the next, **restarting the bar count at each one** (an anchor *is* a 1), under one
+invariant: no two beats may be *closer* than half an interval — which drops a beat crowding the
+next anchor and collapses near-duplicate anchors. In the downbeat bar, ✓ **corrects from the drop**
+and leaves the original 1 alone, **Move the 1** replaces the original and leaves corrections alone,
+and a count + undoable **Clear** removes them. The single-anchor `BeatGrid` entry point delegates
+to the plural one byte-identically. A **scrub** seek deliberately drops the beat grid and catches only the sparse
 landmarks (markers + loop edges), the same set the minimap uses, so a free scrub between beats
 lands where the finger lifts instead of magnetizing to the pulse (ADR 0080). A per-song **Grid** toggle on the "Loop controls" row shows/hides it, appearing
 only once a grid exists; when a **tempo is set but the 1 isn't** (`needsDownbeat` — a BPM-only commit,

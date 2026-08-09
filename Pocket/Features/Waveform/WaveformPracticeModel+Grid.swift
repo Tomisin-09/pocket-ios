@@ -20,25 +20,34 @@ extension WaveformPracticeModel {
     /// the song's tempo fields are also written from outside this model (`SongEditSheet`), and
     /// a cache that can be missed is worse than no cache at all.
     var beatGrid: [BeatGrid.Beat] {
-        let key = GridKey(bpm: song.tempoBPM, downbeat: song.downbeatSeconds,
+        let key = GridKey(bpm: song.tempoBPM, anchors: song.downbeatAnchors,
                           beatsPerBar: song.beatsPerBar, duration: duration)
         if let cached = gridCache, cached.key == key { return cached.beats }
-        guard let bpm = key.bpm, let downbeat = key.downbeat, key.duration > 0 else {
+        guard let bpm = key.bpm, !key.anchors.isEmpty, key.duration > 0 else {
             gridCache = (key, [])
             return []
         }
-        let beats = BeatGrid.beats(bpm: bpm, duration: key.duration, downbeat: downbeat,
+        let beats = BeatGrid.beats(bpm: bpm, duration: key.duration, anchors: key.anchors,
                                    beatsPerBar: key.beatsPerBar)
         gridCache = (key, beats)
         return beats
     }
 
     /// Everything `beatGrid` is derived from. Equal key ⇒ the cached array is still correct.
+    /// `anchors` rather than a single downbeat since ADR 0154 — adding or removing a correction
+    /// has to miss the cache, or the grid would silently keep the phase you just corrected.
     struct GridKey: Equatable {
         let bpm: Double?
-        let downbeat: TimeInterval?
+        let anchors: [TimeInterval]
         let beatsPerBar: Int
         let duration: TimeInterval
+    }
+
+    /// The song's phase anchors as song fractions, for drawing (ADR 0154). Seconds are the
+    /// stored form; the waveform works in fractions.
+    var downbeatAnchorFractions: [Double] {
+        guard duration > 0 else { return [] }
+        return song.downbeatAnchors.map { ($0 / duration).clamped(to: 0...1) }
     }
 
     /// A grid exists to show/hide only once tempo + downbeat are set — gates the gridlines
