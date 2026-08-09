@@ -270,17 +270,19 @@ final class Exercise {
     var presetSlug: String?
 
     /// The exercise's practice journal — dated, context-snapshotting entries (ADR 0038/0058),
-    /// mirroring `Loop.journal`. Cascade-owned: deleting the exercise deletes its entries.
-    /// Declaration default keeps SwiftData lightweight migration additive (CoreData 134110
-    /// rule, ADR 0012) for exercises saved before journalling reached them.
-    @Relationship(deleteRule: .cascade, inverse: \JournalEntry.exercise)
+    /// mirroring `Loop.journal`. **Nullified, not cascaded** (ADR 0151): deleting the exercise leaves
+    /// the notes written about it, attributed through `JournalEntry.ownerLabelAtEntry`. See
+    /// `Loop.journal` for the reasoning. Declaration default keeps SwiftData lightweight migration
+    /// additive (CoreData 134110 rule, ADR 0012) for exercises saved before journalling reached them.
+    @Relationship(deleteRule: .nullify, inverse: \JournalEntry.exercise)
     var journal: [JournalEntry] = []
 
-    /// Practice takes recorded against this exercise (ADR 0069). **Cascade-owned**, mirroring
-    /// `journal`: deleting the exercise deletes its takes' rows; the files are reaped by
-    /// `RecordingStore`'s orphan sweep. Declaration default keeps the migration additive
-    /// (CoreData 134110 rule) for exercises saved before recording shipped.
-    @Relationship(deleteRule: .cascade, inverse: \Recording.exercise)
+    /// Practice takes recorded against this exercise (ADR 0069). **Nullified, not cascaded**
+    /// (ADR 0151): deleting the exercise clears the link and leaves the take — an exercise is a
+    /// recipe that can be rewritten, a take of someone playing has no way back. The caption survives
+    /// via `ownerLabelAtTake`; see `Loop.recordings` for the full rule. Declaration default keeps the
+    /// migration additive (CoreData 134110 rule) for exercises saved before recording shipped.
+    @Relationship(deleteRule: .nullify, inverse: \Recording.exercise)
     var recordings: [Recording] = []
 
     /// Journal entries newest-first — the order the journal lists them in (mirrors `Loop`).

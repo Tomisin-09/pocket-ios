@@ -87,7 +87,42 @@ final class JournalTimelineTests: XCTestCase {
     }
 
     func testOwnerLabelOrphanIsNil() {
-        XCTAssertNil(JournalTimeline.ownerLabel(for: .take(take(at: noon))))
+        XCTAssertNil(JournalTimeline.ownerLabel(for: .take(take(at: noon))),
+                     "a take with neither a live owner nor a snapshot — a pre-0151 row — reads nil")
+    }
+
+    // MARK: - Surviving the owner (ADR 0151)
+
+    func testAnOrphanedTakeFallsBackToItsSnapshottedCaption() {
+        let orphan = take(at: noon)
+        orphan.ownerLabelAtTake = "Little Wing · Verse riff"
+        XCTAssertEqual(JournalTimeline.ownerLabel(for: .take(orphan)), "Little Wing · Verse riff")
+    }
+
+    func testAnOrphanedNoteFallsBackToItsSnapshottedCaption() {
+        let orphan = note(at: noon)
+        orphan.ownerLabelAtEntry = "Spider · exercise"
+        XCTAssertEqual(JournalTimeline.ownerLabel(for: .note(orphan)), "Spider · exercise")
+    }
+
+    /// The live owner wins while it exists, so renaming a loop still moves its takes' captions —
+    /// the snapshot is a fallback, not a freeze. (A *session* note is the deliberate exception: its
+    /// snapshot always wins, because ADR 0038 says it records what the sitting was called.)
+    func testALiveOwnerOutranksTheSnapshot() {
+        let exercise = Exercise(name: "Renamed", currentTempo: 80, commandTempo: 96)
+        let entry = note(at: noon)
+        entry.exercise = exercise
+        entry.ownerLabelAtEntry = "Stale · exercise"
+        XCTAssertEqual(JournalTimeline.ownerLabel(for: .note(entry)), "Renamed · exercise")
+    }
+
+    /// An orphan stays findable: the caption feeds the haystack, so searching the deleted loop's
+    /// song still surfaces the take made against it.
+    func testAnOrphanedTakeIsStillSearchableByItsSnapshot() {
+        let orphan = take(at: noon)
+        orphan.ownerLabelAtTake = "Little Wing · Verse riff"
+        let kept = JournalTimeline.filter([.take(orphan)], query: "little wing")
+        XCTAssertEqual(kept.count, 1)
     }
 
     // MARK: - templateLabel

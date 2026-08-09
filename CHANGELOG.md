@@ -11,7 +11,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
-_Nothing yet. Everything below has shipped or is in review._
+### Changed
+- **Your recordings and notes now survive the thing they were made against.** Deleting a loop used
+  to delete every take you'd recorded over it and every note you'd written about it, without saying
+  so — and the Undo toast only ever named the loop. That was backwards: a loop is two points on a
+  waveform and an exercise is a set of instructions, both of which you can recreate in a minute,
+  while a recording of you playing on a particular evening can't be made again at all. Deleting a
+  loop, exercise or song now leaves your takes and notes exactly where they are, in the Journal,
+  still labelled with what they were recorded against — the caption just stops being a link once
+  there's nothing left to open. Deleting a take or a note is now something only you can do, by
+  holding it in the Journal as before. See ADR 0151.
 
 ## [1.1] — build 3, submitted 2026-08-07 (Waiting for Review)
 

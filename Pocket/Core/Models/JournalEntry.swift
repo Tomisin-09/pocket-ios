@@ -97,6 +97,13 @@ final class JournalEntry {
     /// truthfully (ADR 0038). `nil` for a unit-owned entry.
     var routineNameAtEntry: String?
 
+    /// The unit's caption at write time — the loop or exercise counterpart to `routineNameAtEntry`,
+    /// kept so a note that **outlives** its unit still says what it was about (ADR 0151). `loop` and
+    /// `exercise` nullify on deletion, so without this a surviving note loses its attribution
+    /// entirely. `nil` for session entries (which have `routineNameAtEntry`) and for notes written
+    /// before this shipped. Additive optional with **no declaration default** (CoreData 134110).
+    var ownerLabelAtEntry: String?
+
     /// Backing storage for `practisedUnits` — JSON in a plain `String`, **not** a `Codable` array
     /// attribute (the SwiftData non-primitive-attribute rule; see `kindRaw`). `nil` for a unit-owned
     /// entry and for a session with nothing playable in it.

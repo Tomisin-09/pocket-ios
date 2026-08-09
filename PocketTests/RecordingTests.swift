@@ -68,24 +68,53 @@ final class RecordingTests: XCTestCase {
         XCTAssertNil(loopTake.exercise)
     }
 
-    func testDeletingOwnerCascadesTheTakeRow() throws {
+    /// ADR 0151 — **this test used to assert the opposite.** A take outlives the loop it was recorded
+    /// against: the relationship nullifies, the row and its audio stay. A loop can be redrawn in a
+    /// minute; a recording of someone playing on a particular evening cannot be remade at all, so the
+    /// cascade was destroying the one artifact here with no way back.
+    func testDeletingTheOwnerLeavesTheTake() throws {
         let context = ModelContext(try makeContainer())
         let loop = Loop(name: "Chorus", start: 0.3, end: 0.5, speed: 1, repeats: 1)
-        let take = Recording(fileName: "reap-me.m4a", duration: 8)
+        let take = Recording(fileName: "keep-me.m4a", duration: 8)
         context.insert(loop)
         context.insert(take)
-        take.loop = loop
+        RecordingOwner.loop(loop).attach(to: take)
         try context.save()
-        XCTAssertEqual(try context.fetch(FetchDescriptor<Recording>()).count, 1)
 
         context.delete(loop)
         try context.save()
 
-        // Cascade-owned like the journal: deleting the owner removes the take's row. The file is
-        // now unreferenced and gets reaped by RecordingStore's orphan sweep (cascade drops the row,
-        // not the on-disk audio) — this is why that sweep exists.
-        XCTAssertTrue(try context.fetch(FetchDescriptor<Recording>()).isEmpty,
-                      "cascade delete removes the owner's takes")
+        let survivors = try context.fetch(FetchDescriptor<Recording>())
+        XCTAssertEqual(survivors.count, 1, "deleting a loop must not destroy its takes")
+        XCTAssertNil(survivors.first?.loop, "the relationship nullifies")
+        XCTAssertEqual(survivors.first?.ownerKind, Recording.OwnerKind.none)
+        // The row survives, so RecordingStore's orphan sweep still sees the file as referenced and
+        // leaves the audio alone. Deleting the take is now the user's call, not a side effect.
+        XCTAssertEqual(survivors.first?.fileName, "keep-me.m4a")
+    }
+
+    /// The caption is snapshotted at capture, so an orphaned take still says what it was recorded
+    /// against instead of degrading to a bare "Take 0:08".
+    func testAnOrphanedTakeKeepsItsCaption() throws {
+        let context = ModelContext(try makeContainer())
+        let song = Song(title: "Don't Know Why", duration: 200,
+                        ref: SongRef(id: "s", source: .localFile, bookmark: nil))
+        let loop = Loop(name: "Chords", start: 0.1, end: 0.4, speed: 1, repeats: 1)
+        let take = Recording(fileName: "t.m4a", duration: 11)
+        context.insert(song)
+        context.insert(loop)
+        context.insert(take)
+        loop.song = song
+        RecordingOwner.loop(loop).attach(to: take)
+        try context.save()
+        XCTAssertEqual(take.ownerLabelAtTake, "Don't Know Why · Chords")
+
+        context.delete(loop)
+        try context.save()
+
+        let orphan = try XCTUnwrap(try context.fetch(FetchDescriptor<Recording>()).first)
+        XCTAssertEqual(JournalTimeline.ownerLabel(for: .take(orphan)), "Don't Know Why · Chords",
+                       "the snapshot carries the caption past the owner's deletion")
     }
 
     // MARK: - Naming a take (ADR 0069 amendment)

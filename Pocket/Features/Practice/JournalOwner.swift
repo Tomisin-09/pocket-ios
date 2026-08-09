@@ -127,6 +127,9 @@ enum JournalWriter {
                                              commandTempoAtEntry: loop.commandTempo)
             context.insert(entry)
             entry.loop = loop
+            // Snapshot the caption beside the relationship (ADR 0151): the link nullifies when the
+            // loop is deleted, and an unattributed note is a worse record than none.
+            entry.ownerLabelAtEntry = JournalTimeline.ownerLabel(loop: loop, exercise: nil, song: nil)
         case .exercise(let exercise):
             // Snapshot the measured command in absolute BPM — `nil` when un-promoted, so the
             // entry records "not yet measured" rather than a defaulted value (ADR 0058/0039).
@@ -137,6 +140,8 @@ enum JournalWriter {
                                                  commandNotesPerBeatAtEntry: exercise.commandNotesPerBeat)
             context.insert(entry)
             entry.exercise = exercise
+            entry.ownerLabelAtEntry = JournalTimeline.ownerLabel(loop: nil, exercise: exercise,
+                                                                 song: nil)
         case .session(let session):
             // No relationship to assign — a session entry is owned by loose id copies, so it survives
             // the routine and every unit in it being deleted (ADR 0143). Insert and that's all.

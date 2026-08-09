@@ -9,13 +9,18 @@ enum RecordingOwner {
     case exercise(Exercise)
     case song(Song)
 
-    /// Set the matching owner relationship on `recording` (exactly one, per ADR 0058).
+    /// Set the matching owner relationship on `recording` (exactly one, per ADR 0058), and snapshot
+    /// the owner's caption beside it (ADR 0151) so the take stays identifiable if the owner is later
+    /// deleted — the relationship nullifies, the label doesn't. One choke point for both, so a take
+    /// can never acquire an owner without acquiring the caption that outlives it.
     func attach(to recording: Recording) {
         switch self {
         case .loop(let loop): recording.loop = loop
         case .exercise(let exercise): recording.exercise = exercise
         case .song(let song): recording.song = song
         }
+        recording.ownerLabelAtTake = JournalTimeline.ownerLabel(
+            loop: recording.loop, exercise: recording.exercise, song: recording.song)
     }
 
     /// This owner's takes, newest-first — what the Takes list surfaces (ADR 0069 slice 3). Reading

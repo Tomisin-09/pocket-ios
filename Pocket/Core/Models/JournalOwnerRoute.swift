@@ -38,10 +38,13 @@ enum JournalOwnerRoute: Hashable {
     /// The route a timeline item's caption should follow, or `nil` when there is nowhere honest to
     /// go — so the caption stays plain text rather than becoming a tap that leads somewhere wrong.
     ///
-    /// Three cases have no destination, all deliberately:
+    /// Four cases have no destination, all deliberately:
     /// - a **song**-owned take (ADR 0069 slice 4 never gave songs a standalone run surface),
-    /// - a loop that qualifies for **no mode at all** — one whose song's audio no longer resolves, and
-    /// - a **session** whose routine has since been deleted, or whose caller passed no library.
+    /// - a loop that qualifies for **no mode at all** — one whose song's audio no longer resolves,
+    /// - a **session** whose routine has since been deleted, or whose caller passed no library, and
+    /// - an **orphaned** take or note whose unit was deleted (ADR 0151) — the row outlives the unit,
+    ///   so both relationships are nil and there is nowhere to go. It still reads its snapshotted
+    ///   caption; the caption is simply plain text, which is the ADR 0142 honesty rule.
     ///
     /// A session resolves through `routines` because its owner is a **loose id copy** rather than a
     /// relationship (ADR 0143) — the same trade, and the same expected failure, as the unit pills

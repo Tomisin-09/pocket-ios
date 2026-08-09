@@ -79,10 +79,12 @@ enum JournalTimeline {
                 let name = entry.routineNameAtEntry ?? ""
                 return name.isEmpty ? "Routine session" : name
             case .exercise, .loop, .orphan:
-                return label(loop: entry.loop, exercise: entry.exercise, song: nil)
+                return ownerLabel(loop: entry.loop, exercise: entry.exercise, song: nil)
+                    ?? entry.ownerLabelAtEntry
             }
         case .take(let take):
-            return label(loop: take.loop, exercise: take.exercise, song: take.song)
+            return ownerLabel(loop: take.loop, exercise: take.exercise, song: take.song)
+                ?? take.ownerLabelAtTake
         }
     }
 
@@ -135,7 +137,11 @@ enum JournalTimeline {
         }
     }
 
-    private static func label(loop: Loop?, exercise: Exercise?, song: Song?) -> String? {
+    /// The owner label for a live owner — **also the snapshot** taken at write time (ADR 0151), so
+    /// the caption a surviving take or note falls back to is byte-identical to the one it showed
+    /// while its owner existed. Internal rather than private for exactly that reason: two
+    /// derivations of the same string would drift the first time either is edited.
+    static func ownerLabel(loop: Loop?, exercise: Exercise?, song: Song?) -> String? {
         if let loop {
             let loopName = loop.name.isEmpty ? "Loop" : loop.name
             if let title = loop.song?.title, !title.isEmpty { return "\(title) · \(loopName)" }
