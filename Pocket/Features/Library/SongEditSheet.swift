@@ -10,8 +10,11 @@ struct SongEditSheet: View {
     let song: Song
 
     @Environment(\.dismiss) private var dismiss
-    // All songs, to suggest collections already used across the library (ADR 0033).
-    @Query private var allSongs: [Song]
+    @Environment(\.modelContext) private var modelContext
+    // Collections already used across the library, to suggest against (ADR 0033). Loaded in
+    // `.task` rather than held as a `@Query` of every `Song` — this sheet is reached from song
+    // details, which itself opens over playing audio.
+    @State private var collectionPool: [String] = []
 
     @State private var title: String
     @State private var artist: String
@@ -52,6 +55,8 @@ struct SongEditSheet: View {
             }
             .navigationTitle("Edit song")
             .navigationBarTitleDisplayMode(.inline)
+            // After the first frame, not during presentation — see `collectionPool`.
+            .task { collectionPool = LibraryPools.songCollections(in: modelContext) }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -125,7 +130,7 @@ struct SongEditSheet: View {
     }
 
     private var collectionSuggestions: [String] {
-        Labels.suggestions(from: allSongs.flatMap(\.collections), excluding: collections)
+        Labels.suggestions(from: collectionPool, excluding: collections)
     }
 
     private var notesSection: some View {
@@ -170,7 +175,11 @@ struct SongEditSheet: View {
         // library genre's display form (ADR 0036 slice 4) so group-by-genre doesn't fragment
         // into Blues / blues / "blues ". Pool excludes this song so a deliberate case change of
         // its own genre isn't folded back onto the old form.
-        song.genre = Labels.canonicalSingle(genre, against: allSongs.filter { $0 !== song }.map(\.genre))
+        // Read here rather than from a standing query: the pool is needed once, on an explicit
+        // Done, where a fetch costs nothing anyone can feel — and it must be complete, unlike
+        // the suggestion pool above, which is only ever an offer.
+        song.genre = Labels.canonicalSingle(
+            genre, against: LibraryPools.songGenres(in: modelContext, excluding: song))
         song.year = Int(year)
         song.musicalKey = key
         song.bpm = Int(bpm)

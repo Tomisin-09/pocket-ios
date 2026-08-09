@@ -893,7 +893,14 @@ that observes and binds to it (ADR 0007). Its cockpit and loops/markers referenc
 list are extracted as `PracticeCockpit` / `PracticeReference`
 (`WaveformPracticeLayout.swift`) so the portrait (stacked) and landscape (full-width
 cockpit + a slide-in loops/markers drawer) layouts compose the same pieces; the view
-branches on `verticalSizeClass`. Landscape
+branches on `verticalSizeClass`. **Only a view that draws a moving playhead may read one**
+(ADR 0153): the per-frame dependency on `engine.currentTime` is confined to three leaves in
+`WaveformPlayheadViews.swift` — `PlayheadWatcher` (page-mode + the throttled lock-screen push,
+drawing nothing), `PlayheadWaveform` and `PlayheadMinimap` — while the sorted loops, mapped
+markers and `beatGrid` are derived by the cockpit body and passed down. Reading the playhead on
+the root body instead put all seven sheet presentations on a 120 Hz rebuild; `beatGrid` is
+memoised on a value key (tempo, the 1, time signature, duration) in
+`WaveformPracticeModel+Grid.swift` for the same reason. Landscape
 is gated to this screen alone by `OrientationGate.swift` (an `AppDelegate` answering
 `supportedInterfaceOrientationsFor` from a mask that a `.landscapeEnabled()` modifier
 widens on appear and reverts on disappear) — ADR 0042. Each loop has a per-loop **automator**
@@ -1128,7 +1135,9 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   one scope-agnostic normaliser (trim → collapse whitespace → case-insensitive de-dup, first-seen
   form), two callers, so neither set fragments into `Blues`/`blues`. Both edit sheets suggest from
   values already used across the library (`Labels.suggestions` over a `flatMap`-aggregated pool —
-  all songs' collections / all loops' tags via a top-level `@Query`) so entries converge rather than
+  all songs' collections / all loops' tags, fetched on demand via `LibraryPools` from the sheet's
+  `.task`, **not** a standing `@Query`: these sheets open over playing audio and a whole-table read
+  during presentation was felt, ADR 0153) so entries converge rather than
   multiply. Both are declaration-default `[String]` arrays (migration-safe, CloudKit-clean — no
   `@Model` promotion). The cross-song *filter by tag* payoff is gated on its first consumer (the
   planner, ADR 0014); collections already filter the library (intersection/AND, ADR 0033).

@@ -18,6 +18,63 @@ Three things are parked, in the order they'd sensibly resume:
 Slices 1 and 2 of ADR 0140 are **on main** — squash `e9688ff`, PR #209, merged 2026-08-02 after a
 device pass and a green CI run. Nothing from that work is outstanding except slice 3.
 
+## The click drifts on an unquantised beat (parked 2026-08-09, alongside ADR 0153)
+
+**The observation.** On a J Dilla production the metronome phases in and out of alignment with
+the music — locked for a while, sliding away, then sliding back. Setting the BPM more carefully
+doesn't fix it.
+
+**The cause is structural, and the click engine is innocent.** A song's entire rhythmic model is
+two scalars — `Song.preciseBPM` and `Song.downbeatSeconds` — and `BeatGrid.swift:52` is a
+straight line through them:
+
+```swift
+let time = downbeat + Double(beatIndex) * interval   // interval = 60.0 / bpm
+```
+
+Phase error therefore accumulates as ∫(actual tempo − stored tempo)·dt from the single anchor.
+Against hand-played, unquantised drums whose pulse genuinely wanders, the mean is right and the
+local fit is not — which is exactly "locked, then out, then back". `PracticeAudioEngine
++Metronome` re-derives from the heard playhead every 30 ms and re-anchors on every transport
+discontinuity (ADR 0026); it is faithfully rendering a wrong grid. `Loop` carries no tempo or
+phase fields at all, so a loop start never becomes "the 1".
+
+ADR 0004 §15 names rubato as an *estimator* failure. Nothing in `docs/` covers a grid that is
+right on average and wrong locally.
+
+**Agreed direction (2026-08-09): multiple downbeat anchors.** Keep one BPM per song, but let a
+song carry several "the 1" anchors instead of one. Each anchor re-zeros phase *and* the bar count
+from that point, so drift never accumulates past the section being practised. Sketch:
+
+- `Song.extraDownbeatSeconds: [TimeInterval] = []` alongside the existing `downbeatSeconds`
+  (which stays the primary, so no call site or stored data changes), plus a computed
+  `downbeatAnchors` returning both in time order. Additive — but **read `docs/swiftdata-gotchas
+  .md` first and verify migration on a device with an existing store**; in-memory tests won't
+  catch it.
+- `BeatGrid.beats(bpm:duration:anchors:beatsPerBar:)` as a new overload, the existing
+  `downbeat:` one delegating to `anchors: [downbeat]` so every current test and preview is
+  untouched. Beats run forward from each anchor to the next; `k mod beatsPerBar` restarts at each
+  anchor. **The one real design decision** is the seam: drop a generated beat falling within half
+  an interval of the next anchor, or a correction produces a double-click. Needs its own test.
+- UI is mostly there already — `beginSetDownbeat` → `captureDownbeatAtPlayhead` →
+  `confirmDownbeat` with peak snapping. `confirmDownbeat` appends rather than overwrites when the
+  song already has a 1; `DownbeatBar` gains an explicit "Move the 1" vs "Correct from here".
+  **Do not ship the model without a removal path** — an anchor you can add but can't delete is
+  worse than no anchor.
+- Honest copy regardless: one BPM per song is still a limitation (a track that *accelerates*
+  needs an anchor every so often). A line in the BPM sheet near the existing "can land on half or
+  double time" caption, and a Help & FAQs entry.
+
+**Also parked, smaller and independent:** `TempoMath.bpm(fromTapTimes:)` averages *all* inter-tap
+gaps with no window and no outlier rejection, and `WaveformBPMSheet` never trims `taps`. Forty
+taps across a drifting song therefore collapse to one number that fits nowhere in particular. A
+trailing-window variant (last ~8 taps) would give a *local* tempo, which is what you want on this
+material.
+
+**Rejected for now: a full tempo map** — a list of (time, BPM) with interpolation. Genuinely
+correct, but it touches `BeatGrid`, `TempoEstimator`, the schema and needs a whole authoring UI,
+for material most users don't have.
+
 ## A loop past the end of its audio plays silence (parked 2026-08-09, after ADR 0152)
 
 Found while tracing what a **shorter** replacement file does to existing loops (ADR 0152 §4 warns

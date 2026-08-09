@@ -30,7 +30,11 @@ struct SongDetailsSheet: View {
     @Environment(\.isPro) private var isPro
     @Environment(\.presentPaywall) private var presentPaywall
     /// Every exercise, to offer in the link picker (ADR 0111). Sorted by name, like the library.
-    @Query(sort: \Exercise.name) private var allExercises: [Exercise]
+    /// Candidates for the "Link exercises" picker. Loaded when *that* picker opens, not when
+    /// this sheet does — it was a `@Query` for every `Exercise`, run on the main thread during
+    /// presentation, and this sheet is opened by holding the title on the practice screen while
+    /// audio plays. Most openings never touch the picker at all.
+    @State private var exerciseCandidates: [Exercise] = []
     @State private var showingExercisePicker = false
     @State private var buildingRoutine = false
     @State private var editing = false
@@ -66,7 +70,7 @@ struct SongDetailsSheet: View {
                     title: "Link exercises",
                     prompt: "Search exercises",
                     emptyCatalog: "No exercises in your library yet.",
-                    candidates: allExercises,
+                    candidates: exerciseCandidates,
                     label: { $0.name.isEmpty ? "Untitled exercise" : $0.name },
                     subtitle: { $0.template.displayName },
                     isLinked: { isLinked($0) },
@@ -244,7 +248,13 @@ struct SongDetailsSheet: View {
                 }
                 .onDelete(perform: unlinkExercises)
             }
-            Button { showingExercisePicker = true } label: {
+            Button {
+                // Fetched on the tap that asks for the picker, not in the picker's own `.task` —
+                // a task would let the sheet draw its "No exercises in your library yet" empty
+                // state for a frame before the real list arrived.
+                exerciseCandidates = LibraryPools.exercisesByName(in: modelContext)
+                showingExercisePicker = true
+            } label: {
                 Label("Link exercises", systemImage: "plus.circle")
                     .foregroundStyle(PocketColor.practice)
             }
