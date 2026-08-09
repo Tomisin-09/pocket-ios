@@ -284,7 +284,10 @@ struct BPMSheet: View {
             Text("The 1 (downbeat)")
         } footer: {
             Text("The 1 is where a bar starts — it anchors the beat grid's phase. Mark it "
-                 + "at the playhead, or drag it onto a snare/kick peak on the waveform.")
+                 + "at the playhead, or drag it onto a snare/kick peak on the waveform.\n\n"
+                 + "One tempo assumes a steady one. If the drummer played to feel rather "
+                 + "than a click, the grid will slowly drift out of time with the music — "
+                 + "set the 1 again where it drifts, and it re-locks from there.")
         }
     }
 

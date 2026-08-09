@@ -69,7 +69,11 @@ struct PracticeCockpit<Header: View>: View {
                             onTogglePlay: model.engine.togglePlay,
                             onCapture: model.captureDownbeatAtPlayhead,
                             onConfirm: model.confirmDownbeat,
-                            onCancel: model.cancelSetDownbeat)
+                            onCancel: model.cancelSetDownbeat,
+                            hasAnchor: model.song.downbeatSeconds != nil,
+                            correctionCount: model.song.extraDownbeatSeconds.count,
+                            onMove: model.moveDownbeat,
+                            onClearCorrections: model.clearDownbeatCorrections)
                     .transition(.opacity)
             } else if model.abActive && !model.isDragSelecting {
                 ABSpanBar(isPlaying: model.engine.isPlaying,

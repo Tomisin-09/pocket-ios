@@ -103,13 +103,72 @@ extension WaveformPracticeModel {
         }
     }
 
-    /// Confirm ✓ — commit the placed downbeat as the grid's phase anchor and exit,
-    /// returning to the BPM sheet if we came from it.
+    /// Confirm ✓ — land the placed 1 and exit, returning to the BPM sheet if we came from it.
+    ///
+    /// Which of the two things this means depends on whether the song already has a 1, and the
+    /// distinction is the whole of ADR 0154. With no anchor yet, this *is* the anchor. With one
+    /// already placed, the player is telling us where the 1 has drifted to further into the
+    /// song — so it lands as a **correction from here**, leaving the original where it is.
+    /// Replacing the original is the rarer intent and has its own control (`moveDownbeat`).
     func confirmDownbeat() {
+        guard let draft = downbeatDraft else { return }
+        let seconds = draft * duration
+        downbeatDraft = nil
+        if song.downbeatSeconds == nil {
+            commitTempo(bpm: nil, downbeat: seconds)
+        } else {
+            addDownbeatCorrection(at: seconds)
+        }
+        resumeBPMSheetIfNeeded()
+    }
+
+    /// "Move the 1 instead" — replace the primary anchor rather than correcting from the drop.
+    /// For the case where the original 1 was simply in the wrong place; corrections are left
+    /// alone, since they're anchored to their own sections and are still where they should be.
+    func moveDownbeat() {
         guard let draft = downbeatDraft else { return }
         downbeatDraft = nil
         commitTempo(bpm: nil, downbeat: draft * duration)
         resumeBPMSheetIfNeeded()
+    }
+
+    /// Record a correction at `seconds` (ADR 0154). Dropping one within half a beat of an anchor
+    /// that already exists is a **nudge to that anchor**, not a new one: two anchors that close
+    /// together can't both be a 1, `BeatGrid` would discard the later one anyway, and storing it
+    /// would leave a correction in the song that provably does nothing.
+    func addDownbeatCorrection(at seconds: TimeInterval) {
+        guard let bpm = song.tempoBPM, bpm > 0 else {
+            song.downbeatSeconds = seconds
+            return
+        }
+        let minGap = (60.0 / bpm) / 2
+        if let primary = song.downbeatSeconds, abs(seconds - primary) < minGap {
+            song.downbeatSeconds = seconds
+        } else if let existing = song.extraDownbeatSeconds.firstIndex(where: {
+            abs($0 - seconds) < minGap
+        }) {
+            song.extraDownbeatSeconds[existing] = seconds
+        } else {
+            song.extraDownbeatSeconds = (song.extraDownbeatSeconds + [seconds]).sorted()
+        }
+        haptic(.medium)
+        if metronomeOn { pushMetronomeGrid() }   // grid changed — keep the click in sync (ADR 0026)
+    }
+
+    /// Drop every correction, returning the song to a single-anchor grid. Undoable, which is what
+    /// makes one clear-all button an honest removal path: corrections are cheap to re-place, and
+    /// getting them all back is one tap if this wasn't what you meant.
+    func clearDownbeatCorrections() {
+        let removed = song.extraDownbeatSeconds
+        guard !removed.isEmpty else { return }
+        song.extraDownbeatSeconds = []
+        if metronomeOn { pushMetronomeGrid() }
+        haptic(.medium)
+        presentUndo("Cleared \(removed.count) correction\(removed.count == 1 ? "" : "s")") { [weak self] in
+            guard let self else { return }
+            self.song.extraDownbeatSeconds = removed
+            if self.metronomeOn { self.pushMetronomeGrid() }
+        }
     }
 
     /// Cancel ✗ — discard the placement, leaving any existing downbeat untouched, and

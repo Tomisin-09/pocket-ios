@@ -107,4 +107,103 @@ final class BeatGridTests: XCTestCase {
         XCTAssertEqual(beats.map(\.fraction), beats.map(\.fraction).sorted())
         XCTAssertTrue(beats.allSatisfy { $0.fraction >= 0 && $0.fraction <= 1 })
     }
+
+    // MARK: - Re-anchoring (ADR 0154)
+
+    /// The whole compatibility claim in one test: the single-anchor entry point is now a
+    /// delegation, so it must produce byte-identical grids across a spread of shapes.
+    func testSingleAnchorOverloadMatchesTheAnchorsForm() {
+        for (bpm, duration, downbeat, perBar) in [(120.0, 10.0, 0.0, 4), (90.0, 12.0, 0.25, 4),
+                                                  (128.0, 45.0, 1.3, 3), (76.0, 8.0, 2.0, 1),
+                                                  (60.0, 4.0, 0.5, 4)] {
+            let single = BeatGrid.beats(bpm: bpm, duration: duration, downbeat: downbeat,
+                                        beatsPerBar: perBar)
+            let plural = BeatGrid.beats(bpm: bpm, duration: duration, anchors: [downbeat],
+                                        beatsPerBar: perBar)
+            XCTAssertEqual(single, plural, "bpm \(bpm) downbeat \(downbeat)")
+        }
+    }
+
+    func testEmptyAnchorsYieldNoGrid() {
+        XCTAssertTrue(BeatGrid.beats(bpm: 120, duration: 10, anchors: []).isEmpty)
+    }
+
+    /// The reason the feature exists. 60 BPM from t=0 would put beats on every second; a second
+    /// anchor at 3.5 restarts the grid there, so the run is 0,1,2,3 then 3.5,4.5,5.5 — the drift
+    /// the first anchor accumulated is discarded rather than carried to the end of the song.
+    func testASecondAnchorRestartsThePhase() {
+        let beats = BeatGrid.beats(bpm: 60, duration: 6, anchors: [0, 3.5])
+        assertFractions(beats, [0, 1, 2, 3, 3.5, 4.5, 5.5].map { $0 / 6 })
+    }
+
+    /// An anchor *is* a 1: the bar count restarts with it. Carrying the running count would fix
+    /// the click and leave the bar lines wrong, which is the worse of the two failures.
+    func testBarCountRestartsAtEachAnchor() {
+        let beats = BeatGrid.beats(bpm: 60, duration: 8, anchors: [0, 3.5], beatsPerBar: 4)
+        //           0     1      2      3     | 3.5   4.5    5.5    6.5   | 7.5
+        let expected = [true, false, false, false, true, false, false, false, true]
+        XCTAssertEqual(beats.map(\.isDownbeat), expected)
+    }
+
+    /// The seam. Without the guard, 60 BPM anchored at 0 puts a beat at 3.0 and an anchor at
+    /// 3.2 puts one 200 ms later — heard as a stumble, not a correction. The generated beat
+    /// closest to the next anchor is dropped and the anchor's own beat wins.
+    func testABeatIsNotEmittedRightBeforeTheNextAnchor() {
+        let beats = BeatGrid.beats(bpm: 60, duration: 5, anchors: [0, 3.2])
+        assertFractions(beats, [0, 1, 2, 3.2, 4.2].map { $0 / 5 })
+        // …and every surviving pair is at least half an interval apart.
+        for (earlier, later) in zip(beats, beats.dropFirst()) {
+            XCTAssertGreaterThanOrEqual((later.fraction - earlier.fraction) * 5, 0.5 - 1e-9)
+        }
+    }
+
+    /// The boundary, pinned deliberately on the *keep* side. Half an interval is an eighth-note
+    /// gap — a legitimate offbeat, not the stumble the guard exists to prevent — so a beat
+    /// landing exactly there survives, and only a closer one is dropped.
+    func testABeatExactlyHalfAnIntervalBeforeAnAnchorSurvives() {
+        let beats = BeatGrid.beats(bpm: 60, duration: 4, anchors: [0, 2.5])
+        assertFractions(beats, [0, 1, 2, 2.5, 3.5].map { $0 / 4 })
+    }
+
+    /// Two anchors closer than half an interval are bad data (the UI corrects the nearest rather
+    /// than appending). The grid still has to be total: the later one is discarded.
+    func testNearDuplicateAnchorsCollapse() {
+        let beats = BeatGrid.beats(bpm: 60, duration: 4, anchors: [0, 0.1])
+        assertFractions(beats, [0, 1, 2, 3, 4].map { $0 / 4 })
+    }
+
+    func testAnchorsNeedNotBeSorted() {
+        let unsorted = BeatGrid.beats(bpm: 60, duration: 6, anchors: [3.5, 0])
+        let sorted = BeatGrid.beats(bpm: 60, duration: 6, anchors: [0, 3.5])
+        XCTAssertEqual(unsorted, sorted)
+    }
+
+    func testExactDuplicateAnchorsAreHarmless() {
+        let doubled = BeatGrid.beats(bpm: 60, duration: 4, anchors: [0.5, 0.5])
+        let single = BeatGrid.beats(bpm: 60, duration: 4, downbeat: 0.5)
+        XCTAssertEqual(doubled, single)
+    }
+
+    /// Beats still extrapolate backwards from the *first* anchor only — a later anchor never
+    /// re-grids the music before it, or correcting bar 40 would silently move bar 2.
+    func testOnlyTheFirstAnchorExtrapolatesBackwards() {
+        let beats = BeatGrid.beats(bpm: 60, duration: 6, anchors: [2, 4.5])
+        assertFractions(beats, [0, 1, 2, 3, 4, 4.5, 5.5].map { $0 / 6 })
+    }
+
+    func testAnchorPastTheEndContributesNothing() {
+        let beats = BeatGrid.beats(bpm: 60, duration: 3, anchors: [0, 99])
+        assertFractions(beats, [0, 1, 2, 3].map { $0 / 3 })
+    }
+
+    func testAnchorsStayAscendingAndInRange() {
+        let beats = BeatGrid.beats(bpm: 128, duration: 45, anchors: [1.3, 17.9, 31.02])
+        XCTAssertFalse(beats.isEmpty)
+        XCTAssertEqual(beats.map(\.fraction), beats.map(\.fraction).sorted())
+        XCTAssertTrue(beats.allSatisfy { $0.fraction >= 0 && $0.fraction <= 1 })
+    }
+
+    func testMaxBeatsGuardStillAppliesAcrossAnchors() {
+        XCTAssertTrue(BeatGrid.beats(bpm: 6000, duration: 200, anchors: [0, 100]).isEmpty)
+    }
 }

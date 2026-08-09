@@ -74,6 +74,7 @@ struct PlayheadWaveform: View {
                      viewport: model.viewport,
                      onSetZoom: model.setZoom,
                      downbeatDraft: model.downbeatDraft,
+                     downbeatAnchors: model.downbeatAnchorFractions,
                      onDownbeatMove: model.moveDownbeatDraft,
                      onDownbeatEnded: model.endDownbeatDrag,
                      onTouchBegan: model.beginWaveformTouch,
