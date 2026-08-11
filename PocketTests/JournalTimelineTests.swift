@@ -105,6 +105,28 @@ final class JournalTimelineTests: XCTestCase {
         XCTAssertEqual(JournalTimeline.ownerLabel(for: .note(orphan)), "Spider · exercise")
     }
 
+    // MARK: - Belonging to nothing (ADR 0155)
+
+    /// A standalone note renders with **no caption** — it was never about a unit, so there is nothing
+    /// to attribute it to.
+    func testAStandaloneNoteHasNoOwnerCaption() {
+        let entry = JournalEntry.forStandalone(text: "strings are dead", kind: .note)
+        XCTAssertNil(JournalTimeline.ownerLabel(for: .note(entry)))
+    }
+
+    /// The guarantee, stated as the failure it prevents: a standalone note must not pick up a caption
+    /// even if one were somehow stamped on it. The orphan fallback above is deliberately *not*
+    /// reached here — that fallback is what makes a deleted unit's note still say what it was about,
+    /// and applying it to a note that never had an owner would invent the subject ADR 0155 exists to
+    /// stop being invented.
+    func testAStandaloneNoteIgnoresAStrayCaptionSnapshot() {
+        let entry = JournalEntry.forStandalone(text: "wrist tightens after work", kind: .struggle)
+        entry.ownerLabelAtEntry = "Spider · exercise"
+
+        XCTAssertNil(JournalTimeline.ownerLabel(for: .note(entry)),
+                     "the standalone branch must be read before the orphan fallback")
+    }
+
     /// The live owner wins while it exists, so renaming a loop still moves its takes' captions —
     /// the snapshot is a fallback, not a freeze. (A *session* note is the deliberate exception: its
     /// snapshot always wins, because ADR 0038 says it records what the sitting was called.)

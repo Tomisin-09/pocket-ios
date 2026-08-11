@@ -163,4 +163,54 @@ final class JournalWriterTests: XCTestCase {
                                          kind: .session, into: context))
         XCTAssertEqual(try context.fetch(FetchDescriptor<JournalEntry>()).count, 0)
     }
+
+    // MARK: - The fourth owner (ADR 0155)
+
+    /// Writing through the fourth owner stores the flag, and stores nothing else. The `isStandalone`
+    /// assertion is the one that matters: without it the row would be indistinguishable on disk from
+    /// an orphan, and there is no backfill for a distinction that was never recorded.
+    func testAddToStandaloneStoresTheFlagAndNoSnapshot() throws {
+        let context = try makeContext()
+
+        XCTAssertTrue(JournalWriter.add(to: .standalone, text: "  strings are dead  ",
+                                        kind: .note, into: context))
+
+        let entry = try XCTUnwrap(try context.fetch(FetchDescriptor<JournalEntry>()).first)
+        XCTAssertEqual(entry.text, "strings are dead", "text is trimmed, as for any owner")
+        XCTAssertEqual(entry.ownerKind, .standalone)
+        XCTAssertEqual(entry.isStandalone, true)
+        XCTAssertNil(entry.masteryAtEntry)
+        XCTAssertNil(entry.commandTempoAtEntry)
+        XCTAssertNil(entry.commandBpmAtEntry)
+        XCTAssertNil(entry.routineUID, "a standalone note is not a session note with a missing id")
+        XCTAssertNil(entry.ownerLabelAtEntry, "no caption — it was never about a unit")
+        XCTAssertNil(entry.loop)
+        XCTAssertNil(entry.exercise)
+    }
+
+    func testAnEmptyStandaloneNoteIsIgnored() throws {
+        let context = try makeContext()
+
+        XCTAssertFalse(JournalWriter.add(to: .standalone, text: "   \n ", kind: .note,
+                                         into: context))
+        XCTAssertEqual(try context.fetch(FetchDescriptor<JournalEntry>()).count, 0)
+    }
+
+    /// The composer's footer copy. Each owner owns a whole sentence (ADR 0155 §5) because the two
+    /// fragments it replaced have no honest form here — assembling them yields "Saves to your
+    /// Journal's Journal", which is the concrete bug this shape prevents.
+    func testStandaloneDestinationLinePromisesNoOwnerAndNoSnapshot() {
+        let line = JournalOwner.standalone.destinationLine
+        XCTAssertEqual(line, "Saves straight to your Journal — not attached to any loop or exercise.")
+        XCTAssertFalse(line.contains("snapshot"), "there is nothing to snapshot")
+        XCTAssertFalse(line.contains("Journal's Journal"), "the fragment-assembly bug")
+    }
+
+    /// A standalone owner holds no journal to read back — like `.session`, it exists only at the
+    /// write seam, so the per-owner browse sheet has nothing to show and never hosts one.
+    func testStandaloneOwnerHoldsNoJournal() {
+        XCTAssertTrue(JournalOwner.standalone.entries.isEmpty)
+        XCTAssertTrue(JournalOwner.standalone.entriesByRecent.isEmpty)
+        XCTAssertTrue(JournalOwner.standalone.isEmpty)
+    }
 }

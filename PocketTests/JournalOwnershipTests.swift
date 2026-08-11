@@ -144,6 +144,66 @@ final class JournalOwnershipTests: XCTestCase {
                        "a nullified relationship reads as orphan, not as a loop with no snapshot")
     }
 
+    /// The **fifth** shape (ADR 0155): a note that belongs to nothing and says so.
+    ///
+    /// The assertion that carries the decision is the last one. A standalone entry and an orphan set
+    /// exactly the same relationships — which is to say none — so if the flag weren't stored, these
+    /// two would be the same value and there would be no fact on disk to separate them later.
+    func testStandaloneIsItsOwnKindAndNotAnOrphan() {
+        let standalone = JournalEntry.forStandalone(text: "strings are dead", kind: .note)
+        XCTAssertEqual(standalone.ownerKind, .standalone)
+        XCTAssertEqual(standalone.isStandalone, true)
+
+        let orphan = JournalEntry.forLoop(text: "owner deleted", kind: .note, masteryAtEntry: nil,
+                                          commandTempoAtEntry: nil)
+        XCTAssertEqual(orphan.ownerKind, .orphan)
+        XCTAssertNotEqual(standalone.ownerKind, orphan.ownerKind,
+                          "absence already means orphan — a standalone note needs the stored flag")
+    }
+
+    /// A standalone note snapshots **nothing**, and that is the point: there is no unit for a tempo
+    /// or a mastery to be true about, and half a snapshot is the false context ADR 0155 exists to
+    /// stop. `ownerLabelAtEntry` stays nil too, so the feed renders no caption.
+    func testStandaloneCarriesNoSnapshotAndNoCaption() {
+        let entry = JournalEntry.forStandalone(text: "ten minutes tonight, that's all there was",
+                                               kind: .note)
+        XCTAssertNil(entry.masteryAtEntry)
+        XCTAssertNil(entry.commandTempoAtEntry)
+        XCTAssertNil(entry.commandBpmAtEntry)
+        XCTAssertNil(entry.commandNotesPerBeatAtEntry)
+        XCTAssertNil(entry.routineUID)
+        XCTAssertNil(entry.routineNameAtEntry)
+        XCTAssertNil(entry.ownerLabelAtEntry, "a standalone note must never be attributed to a unit")
+        XCTAssertNil(entry.loop)
+        XCTAssertNil(entry.exercise)
+    }
+
+    /// `nil` on every pre-0155 row must keep reading as it always did. The flag is additive and
+    /// optional precisely so the migration is a no-op, and an unset flag is never "standalone".
+    func testAnUnsetStandaloneFlagIsNotStandalone() {
+        let entry = JournalEntry.forLoop(text: "written before 0155", kind: .note,
+                                         masteryAtEntry: 2, commandTempoAtEntry: 0.8)
+        XCTAssertNil(entry.isStandalone)
+        entry.loop = Loop(name: "Verse", start: 0, end: 0.2, speed: 0.9, repeats: 2)
+        XCTAssertEqual(entry.ownerKind, .loop)
+    }
+
+    /// The flag is read **last**, after both relationships and the routine id. A standalone note can
+    /// therefore never be mistaken for an owned one — the ADR 0143 rule that the relationships win
+    /// survives the fifth case being added under it.
+    func testAnOwnerOutranksTheStandaloneFlag() {
+        let exerciseEntry = JournalEntry.forExercise(text: "ex", kind: .note, commandBpmAtEntry: 96)
+        exerciseEntry.exercise = Exercise(name: "Spider", currentTempo: 80, commandTempo: 96)
+        exerciseEntry.isStandalone = true
+        XCTAssertEqual(exerciseEntry.ownerKind, .exercise)
+
+        let sessionEntry = JournalEntry.forSession(text: "good hour", kind: .session,
+                                                   routineUID: UUID(), routineName: "Warm-up",
+                                                   units: [])
+        sessionEntry.isStandalone = true
+        XCTAssertEqual(sessionEntry.ownerKind, .session)
+    }
+
     /// A unit relationship always wins. Otherwise an entry that happened to carry both — a shape
     /// nothing writes today, but nothing forbids either — could start rendering as a session.
     func testAUnitOwnerOutranksARoutineIdCopy() {
