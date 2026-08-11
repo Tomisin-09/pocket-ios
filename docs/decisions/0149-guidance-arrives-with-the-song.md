@@ -1,10 +1,9 @@
 # ADR 0149 — guidance arrives with the song
 
-- **Status:** Proposed — **substantially amended by ADR 0158 before any of it was built.** §2's
-  first-import trigger is reversed (guidance now fires at first launch, on a bundled demo song),
-  §1's three-step method narrows to three beats on the waveform screen and moves the long-form
-  method to the website, §3's checklist goes with it, and §10's "prerequisite" turns out to
-  already exist. **§4, §5, §6, §7, §8 and §9 stand unchanged.** Read this ADR alongside 0158.
+- **Status:** Proposed — **amended 2026-08-11** (see the amendment after §10). §1 narrows to three
+  beats on the waveform screen, §3's checklist is dropped, the long-form method moves to the
+  website, and §10's "prerequisite" turns out to already exist. **§2's first-import trigger and
+  §4–§9 stand unchanged.**
 - **Date:** 2026-08-08 (`pocket-245-guided-creation-onboarding`), amended 2026-08-11
 - **Extends:** ADR 0113 (the local artist profile and its intake), ADR 0145 (the compiled help
   catalog), ADR 0148 §7 (a library that starts empty)
@@ -164,6 +163,37 @@ and useful independently of this flow, and it lands first.
 > Nothing was ever blocked on this. The claim appears to have been written from the absence of a
 > `Marker`-side `defaultName` helper — sessions, collections and song-routines each have one —
 > without checking the call site, where the shared `AutoName` utility does the job instead.
+
+### Amendment, 2026-08-11 — three beats, not three steps
+
+*Lifted out of ADR 0158 when the demo song was parked. These two changes never depended on there
+being a bundled song, so they survive it.*
+
+**§1 narrows.** The flow is no longer the three-step practice method — listen whole, mark sections,
+create loops. It is **three beats on the waveform screen**, run against the song the player has just
+imported:
+
+1. **Loop it.** Tap Loop at the start of a passage, tap Loop again at the end. The span closes and
+   repeats immediately (ADR 0041). The centre of the app, and the one beat that is not negotiable.
+2. **Slow it down.** Take the speed to roughly half. Pitch is held.
+3. **Keep it.** Save as loop, so the player leaves owning something.
+
+A first run is the wrong place to teach a *method*. What a new player needs is to see what this
+screen can do; the method is what they need in week two. **Markers are deliberately out** — they are
+the method's second step rather than the screen's headline capability, and every step spent is a
+step nearer the "theme park ride" §5 warns against.
+
+**§3's four-item checklist goes with it.** Three beats do not need a progress indicator, and the
+endowed-progress argument for pre-ticking the import loses its point at that length. §5's single
+ceremony stays and now lands on beat 3.
+
+**The long-form method moves to the website** as a public tips page, drafted by
+`docs/beta/user-guide.md`. It can be long there, revised without a binary, and reached when the
+player wants it rather than in their first ninety seconds. §6's rule holds: the in-app beats link
+out rather than explaining themselves inline.
+
+**§2 is untouched.** The trigger is still the first successful import. With no song at launch, §2's
+original reasoning stands exactly as written.
 
 ## Consequences
 
