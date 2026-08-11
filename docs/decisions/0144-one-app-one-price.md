@@ -128,12 +128,16 @@ Two things make a hard paywall defensible rather than hostile, and both are chea
 > carried deliberately, rather than a permanent product-line change made to avoid it. During the
 > beta itself nothing is needed — the TestFlight sandbox grant in `StoreManager` already covers it.
 >
-> **D3's free-taste seam is being reopened by ADR 0158**, for the bundled demo song and its
-> first-launch walkthrough. Note that it does **not** land the way D3 predicted: `freeTasteSlugs`
-> and `freeTasteRoutineSlugs` cover exercises and routines, and there is no song axis at all — songs
-> are gated at the Home destinations. So it is a new allowlist on the established pattern rather
-> than the promised one-file change. **D4's gates stay as defence in depth**, which is what keeps
-> the hole safe: walking out of the free song still meets a wall.
+> **D3's free-taste seam stays shut.** ADR 0158 would have reopened it for a bundled demo song and
+> a first-launch walkthrough; that ADR was parked the day it was written. The seam remains inert and
+> the allowlists remain empty, exactly as D3 left them.
+>
+> One thing 0158 established is worth keeping visible for whenever the seam *is* reopened: **it will
+> not be the one-file change D3 predicted, if the free thing is a song.** `freeTasteSlugs` and
+> `freeTasteRoutineSlugs` cover exercises and routines; there is no song axis at all, because songs
+> are gated at the Home destinations rather than through `AccessPolicy`. A free song means a new
+> allowlist on the established pattern plus a change at the Home gate — small and consistent, but not
+> one file. D3's promise holds for the two axes it actually built.
 
 - **A new App Review, on stricter ground.** The held v1 approval was for a freemium build; a hard
   paywall draws 2.1 and 3.1.2 scrutiny. The free Toolkit is the mitigation and **must be named in

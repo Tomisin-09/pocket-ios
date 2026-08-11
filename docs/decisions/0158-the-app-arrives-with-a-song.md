@@ -1,11 +1,40 @@
 # ADR 0158 — the app arrives with a song
 
-- **Status:** Proposed — not built.
+- **Status:** **PARKED 2026-08-11**, the day it was written and before anything was built. See *Parked* below for what it would take to revive it, and for the two parts that were lifted out and kept.
 - **Date:** 2026-08-11
-- **Reverses:** ADR 0148 §7 (the bundled demo song was dropped). The rest of ADR 0148 — songs are copied into the container, not bookmarked — is the *mechanism* this ADR depends on and stands untouched.
-- **Amends:** ADR 0149 §1 (the three steps), §2 (the trigger), §3 (the checklist) and §10 (a prerequisite that turns out to already exist)
-- **Reopens:** ADR 0144 D3's free-taste seam, on a **new third axis** — see §4 for why this is not the one-file change D3 promised
-- **Relates to:** ADR 0001 (local audio only) · ADR 0112 (gate at read time) · ADR 0041 (the A/B span, which is what the walkthrough teaches)
+- **Would reverse:** ADR 0148 §7 (the bundled demo song was dropped). ADR 0148's *mechanism* — songs are copied into the container, not bookmarked — stands untouched either way.
+- **Would reopen:** ADR 0144 D3's free-taste seam, on a **new third axis** — see §4 for why this is not the one-file change D3 promised
+- **Relates to:** ADR 0001 (local audio only) · ADR 0112 (gate at read time) · ADR 0041 (the A/B span)
+
+## Parked
+
+**The demo song is not coming back for now** (decision, 2026-08-11). Everything below was written
+before that call and is left intact, because the analysis is the expensive part and none of it is
+wrong — it is simply not being acted on.
+
+**Two parts did not depend on the demo song, and have been lifted out into ADR 0149 as a dated
+amendment rather than left to sleep here:**
+
+- **§3's narrowing** — the walkthrough is three beats on the waveform (loop it, slow it, keep it),
+  not a three-step practice method, and §3's four-item checklist goes with it. The argument for
+  shortening never rested on there being a demo song; it rested on a first run being the wrong place
+  to teach a method.
+- **§5's tips page** — the long-form method moves to the public website, drafted by
+  `docs/beta/user-guide.md`.
+
+**What is parked with this ADR:** §1 (bundling and copying the song), §2 (the first-launch trigger),
+and §4 (the free song axis). **ADR 0149 §2's first-import trigger therefore stands unchanged** — with
+no song at launch, its original reasoning returns in full and was never contradicted by anything
+except the demo song's existence.
+
+**What would need to be true to revive it:** a decision that the cold-start problem — a player with
+no DRM-free audio meeting a practice app they cannot practise with — is worth ~2.6 MB in every
+download and a new free-taste axis in `AccessPolicy`. Nothing about that calculation has changed;
+it simply wasn't taken.
+
+**Two findings below survive independently and are already recorded elsewhere**, so they are not
+lost with this ADR: ADR 0148 §7's content-rights justification was factually wrong (corrected in
+0148), and ADR 0149 §10's marker-auto-naming prerequisite never existed (corrected in 0149).
 
 ## Context
 

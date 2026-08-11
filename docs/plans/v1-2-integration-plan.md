@@ -3,51 +3,50 @@
 Written 2026-08-11 as a coordination pass, not an implementation. Four workstreams landed in
 parallel and interact in ways none of them can see alone: three ADRs written in a concurrent
 session (0155, 0156, 0157 — all **Proposed, all unbuilt**), the closed-beta programme
-(`docs/plans/beta-testing-plan.md`), and a decision to bring the demo song back.
+(`docs/plans/beta-testing-plan.md`), and an amendment to ADR 0149's guided flow.
 
-**Nothing here is built. Nothing is committed.** This exists so the session that does the
-building starts with the interactions already worked out.
+**Nothing here is built.** This exists so the session that does the building starts with the
+interactions already worked out.
+
+> **Revised the same day.** The first draft was written around bringing the demo song back. That was
+> **parked** a few hours later (ADR 0158), and this plan has been rewritten to match. What survived
+> the parking is the *narrowing* of ADR 0149's guided flow, which never depended on the demo song.
 
 ---
 
 ## Decisions taken this pass
 
-- **The demo song comes back**, and it is the author's own composition — influences from Frank
-  Ocean and John Mayer, but his. That provenance is the point: it speaks to what the product is
-  for, in a way a licensed stock track never could.
-- **The guided walkthrough fires at first launch, on the demo song.** This *reverses* ADR 0149
-  §2, knowingly. §2 chose the first-import trigger because the library shipped empty and step 1
-  was therefore impossible at launch; a guaranteed demo song removes that constraint entirely.
+- **The demo song stays out, for now.** ADR 0158 was written and parked the same day. Its analysis
+  is intact and revivable; nothing is being built from it.
+- **ADR 0149's trigger is unchanged** — guidance fires on the player's first successful import.
+  With no song at launch, §2's original reasoning stands.
 - **The walkthrough is short**, and it is **about the waveform screen** — the centre of the app —
-  not the full three-step method. It shows a player what they can *do* on that screen.
+  not the full three-step method. Three beats: loop it, slow it, keep it. It shows a player what
+  they can *do* on that screen. §3's four-item checklist goes with the long flow.
 - **The long-form method guide moves to the website** as a public tips page. The closed-beta
   guide already written (`docs/beta/user-guide.md`, ported to the unlisted beta route) is the
   draft of it.
-- **Testers get lifetime access** as the thank-you. See the open question below — the app has no
-  mechanism for this today.
+- **Testers get hand-renewed offer codes**, not a lifetime product. Recorded in ADR 0144.
 
 ---
 
-## The four interactions that matter
+## The interactions that matter
 
-**1. The demo song dissolves ADR 0148's own objection to it.** §7 removed the bundled song partly
-for "a second code path holding a bookmark to a file — the very mechanism this ADR exists to
-retire." That objection is dead: ADR 0148 *itself* established that songs are **copied into the
-container** via `SongFileStore`. A bundled demo can be copied on first run down that same path,
-with no bookmark and no second mechanism. Of §7's four stated reasons, one was factually wrong
-(the content-rights burden — corrected in the ADR on 2026-08-09, the track was never
-third-party), one is now moot (the bookmark), and two survive and must be answered honestly in
-the new ADR: **~2.6 MB in every download**, and **every player gets the same song they didn't
-choose**. The second is the real one, and the answer is that it is a *demo* — present to be
-practised on and then ignored or deleted, not to be the player's library.
+**1. Parking the demo keeps the paywall out of the walkthrough.** This is the quiet virtue of ADR
+0149 §2's original trigger, and it is worth naming because the alternative nearly cost a new axis in
+`AccessPolicy`. A walkthrough at *first launch* would have walked a brand-new player straight into
+ADR 0144 D4's wall, which forced ADR 0158 §4 to make the demo song free — and there is no song axis
+in `AccessPolicy` to make it free *with*. Triggering on **import** sidesteps all of it: a player who
+has reached the library is already in trial or subscribed, or they never got here. No free-taste
+seam is reopened, and `freeTasteSlugs` stays empty.
 
 **2. ADR 0149 §10's prerequisite does not exist — the thing is already built.** §10 claimed markers
 don't name themselves on drop and that it must land first. Wrong: `dropMarkerAtPlayhead()` has
 always called `AutoName.next(prefix: "Marker", existing:)`. Confirmed in the running app, corrected
-in 0149, and doubly moot now that ADR 0158 §3 drops markers from the walkthrough. **Nothing is
-blocked on this.**
+in 0149, and doubly moot now that the walkthrough drops markers anyway. **Nothing is blocked on
+this.**
 
-**3. The beta cannot validate ADR 0156.** Testers hold Pro (sandbox grant now, lifetime later),
+**3. The beta cannot validate ADR 0156.** Testers hold Pro (sandbox grant now, offer codes later),
 so `isPro` is `true`, so the launch wall and all ~18 gates are skipped by the same check. The
 paywall-cadence question — *"I don't want users feeling like the next pop up is crawling around
 the corner"* — gets **no tester data at all**. 0156 must be verified by the author on a sandbox
@@ -69,20 +68,26 @@ together", no schema, no new surface, an existing player's explicit choice prese
 beta build. **Also owed:** ADR 0131 §3a and ADR 0132 both *cite* the off default as a reason and
 need correcting whichever way this goes — 0157 says so itself.
 
-### Slice 2 — the demo song, and the short waveform walkthrough
-**ADR 0158, written.** The largest user-facing win and the one that unblocks the beta's cold start.
-Build order:
-1. The audio asset, bundled, copied to the container on first run through `SongFileStore`, gated on
-   a first-run flag (**not** on "the library is empty" — someone who deleted everything is not a new
-   player).
-2. The free-song axis in `AccessPolicy` plus the Home-gate change (0158 §4). Do this *before* the
-   walkthrough, or the walkthrough is untestable — it walks into a paywall.
-3. The walkthrough: loop it, slow it, keep it.
-4. Retire the beta guide's starter-track download to a fallback — it is currently a hard dependency
-   on a file that does not exist.
+### Slice 2 — the short waveform walkthrough (ADR 0149, as amended)
+**The demo song is parked** (ADR 0158, parked 2026-08-11 the day it was written). What survives is
+the narrowing: guidance still fires on the player's **first successful import**, and the flow is
+three beats on the waveform — loop it, slow it, keep it. No checklist, no markers, and the
+long-form method goes to the website instead.
 
-**Sequence 0156 before this**, per 0158's consequences: first launch already spends an intake and a
-paywall before the walkthrough gets its turn, and 0156 is what makes that wall the quieter one.
+Build order:
+1. The three beats, triggered from the first import. Everything they touch already exists — the A/B
+   span (ADR 0041), the speed control, Save as loop.
+2. §5's single ceremony on beat 3.
+3. The public tips page on the `.co.uk` site, drafted by `docs/beta/user-guide.md`.
+
+**No paywall interaction, and no free-song axis needed.** Because the trigger is an import, the
+player has already reached the library — so they are either in trial, subscribed, or they never got
+here. That was the quiet virtue of ADR 0149 §2's original trigger, and parking the demo restores it.
+
+**Note what parking the demo costs the beta.** The starter-track download in the tester guide goes
+back to being a **hard dependency on a file that does not exist yet** — it was going to become a
+fallback once a demo song shipped. Supplying that track is once again on the critical path for the
+closed beta.
 
 ### Slice 3 — ADR 0155, a note that belongs to no unit
 Self-contained. `isStandalone: Bool?` is an **additive optional**, which the 2026-08-07 schema
@@ -106,27 +111,23 @@ people. Recorded in 0144's consequences. Manual work every year, accepted delibe
 TestFlight sandbox grant covers the beta period, so nothing is needed now.
 
 **The walkthrough's steps: loop it, slow it, keep it.** Three beats on the waveform screen, markers
-deliberately excluded (ADR 0158 §3). The long-form three-step method moves to a public tips page on
-the website, drafted by `docs/beta/user-guide.md`.
+deliberately excluded. Recorded as a dated amendment in ADR 0149, not in the parked 0158, so it
+survives the demo song's absence. The long-form three-step method moves to a public tips page on the
+website, drafted by `docs/beta/user-guide.md`.
 
-**The demo song and its walkthrough are free** (ADR 0158 §4) — otherwise a first-launch walkthrough
-walks a new player straight into ADR 0144 D4's paywall. This reopens D3's free-taste seam on a
-**new song axis** that doesn't exist yet; `freeTasteSlugs` covers exercises, `freeTasteRoutineSlugs`
-routines, and songs are gated at the Home destinations instead.
+**The demo song is parked** (ADR 0158). With guidance triggering on import rather than launch, no
+free-taste seam is needed and `freeTasteSlugs` stays empty.
 
 ## Still open
 
-**Nothing blocking.** The largest remaining unknown is how the free-song boundary behaves in
-practice — walking *out* of the demo song into the library or planner is where a free line leaks,
-and it needs device testing rather than a decision.
+**One thing, and it is on the critical path for the beta: the starter track.** With no demo song,
+the download in the tester guide is a hard dependency again, on a file that does not exist yet. A
+tester with no DRM-free audio of their own cannot reach the core loop without it.
 
 ---
 
 ## Housekeeping
 
-The concurrent session worked in **this same working tree, on branch
-`pocket-250-beta-programme`**, so ADRs 0155–0157 and the beta programme are currently interleaved
-as one uncommitted change set. They are cleanly separable — the ADRs are docs-only and touch no
-file the beta work touches — but they should be committed as **separate commits**, and 0155–0157
-arguably belong on their own branch, since they are decisions for v1.2 rather than part of the
-beta programme.
+ADRs 0155–0158 and the beta programme were written across two sessions in the same working tree and
+landed together in **PR #235** (squash `72c4aac`), as three commits: the beta programme, two
+corrections to the record, and the v1.2 decisions. `main` is the base for implementation.
