@@ -22,6 +22,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   `fastlane beta` lane now distributes externally to the "Closed Beta" group.
   See `docs/plans/beta-testing-plan.md` and `docs/beta/user-guide.md`.
 
+### Fixed
+- **Filtering by two collections no longer shows nothing.** Ticking a second collection used to
+  *narrow* the list to songs filed in both at once — which, since you generally put a song in one
+  collection, meant an empty library. Ticking two now shows you both, which is what picking two
+  things has always meant everywhere else. See ADR 0159.
+
 ### Changed
 - **The Toolkit card on Home now mentions the tuner.** It said "Your chords & a music glossary",
   which stopped being true when the tuner moved in — so the most useful thing in there, free forever

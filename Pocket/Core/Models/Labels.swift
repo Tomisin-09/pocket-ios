@@ -70,10 +70,30 @@ enum Labels {
 
     /// Whether `itemLabels` satisfies an **intersection (AND)** filter: true when the
     /// item carries *every* one of `selected` (matched case-insensitively). An empty
-    /// `selected` matches everything (no filter). The common single-select case is
-    /// AND-of-one — tap a collection, get its items. Drives the library filter (ADR 0033).
+    /// `selected` matches everything (no filter).
+    ///
+    /// **No longer what the library filter uses** — ADR 0159 moved that to `anyOf` below. Kept
+    /// because AND is still the right relation *across* facets (collection AND instrument AND
+    /// favourite), which is the shape a combined filter will need, and because
+    /// `CollectionSessionBuilder` asks it of a single label, where the two relations agree.
     static func matches(_ itemLabels: [String], allOf selected: [String]) -> Bool {
         let have = Set(normalized(itemLabels).map { $0.lowercased() })
         return normalized(selected).allSatisfy { have.contains($0.lowercased()) }
+    }
+
+    /// Whether `itemLabels` satisfies a **union (OR)** filter: true when the item carries *any* one
+    /// of `selected` (matched case-insensitively). An empty `selected` matches everything (no
+    /// filter), exactly as `allOf` does — "no filter" must not depend on which relation is asked.
+    ///
+    /// **This is what multi-select inside one facet means** (ADR 0159). ADR 0033 chose AND here, but
+    /// the only case it argued was single-select — the one case where AND and OR are identical — so
+    /// the multi-select behaviour was never really decided. Ticking two collections asks to see
+    /// both; intersecting them asks for songs filed in both at once, which in a personal library is
+    /// almost always nothing.
+    static func matches(_ itemLabels: [String], anyOf selected: [String]) -> Bool {
+        let selected = normalized(selected)
+        guard !selected.isEmpty else { return true }
+        let have = Set(normalized(itemLabels).map { $0.lowercased() })
+        return selected.contains { have.contains($0.lowercased()) }
     }
 }

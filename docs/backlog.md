@@ -114,7 +114,14 @@ Also worth settling in the same pass: Routines has no search at all and no sort 
 and My chords, Takes and Glossary have neither. Those absences may be right — but they should be
 decided, not inherited.
 
-## Filtering by two collections returns nothing (logged 2026-08-12, device-testing note)
+## Filtering by two collections returns nothing — **SHIPPED as ADR 0159** (2026-08-12)
+
+**Done on branch `pocket-252`.** `Labels.matches(_:anyOf:)` added, `LibraryView` switched to it,
+both strings fixed, `collectionSessionBar`'s `count == 1` gate re-read and left correct. The two
+`allOf` tests were **renamed and kept**, not deleted — intersection didn't become wrong, the library
+filter just stopped using it. The rule the wider filter project inherits: **OR within a facet, AND
+across facets.** Original note preserved below.
+
 
 **The note:** *"When you try and filter by collection, I think it filters on an AND basis rather than
 an OR."* Correct, and reproduced from a screenshot: **Covers** ✓ + **Ocean's Trilogy** ✓ →

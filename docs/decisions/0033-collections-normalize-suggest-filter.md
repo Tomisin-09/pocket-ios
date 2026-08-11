@@ -1,6 +1,6 @@
 # 0033 — Collections: normalize, suggest, and filter (still `[String]`)
 
-- **Status:** Accepted (build sliced below)
+- **Status:** Accepted (build sliced below) — **the filter *relation* superseded by ADR 0159 (2026-08-12)**: multi-select is a union, not an intersection. Everything else here stands.
 - **Date:** 2026-06-22
 
 ## Context
@@ -68,6 +68,13 @@ many songs sharing the *same* one.
 `LibraryView` gains a collection filter. Selecting collections narrows the song list by
 **intersection (AND)** — a song matches if it contains **all** selected collections; the
 common single-select case is AND-of-one (tap a collection → its songs, playlist-like).
+
+> **⚠ Superseded by ADR 0159 (2026-08-12) — multi-select is a union.** The paragraph above is left
+> as written, because the *shape* of its mistake is the useful part: it decides a multi-select
+> relation while reasoning only about single-select, which is the one case where AND and OR are
+> identical. On device, ticking a second collection reliably emptied the library. Note that
+> "playlist-like" was the right instinct and pointed at the answer — ticking two playlists asks for
+> both.
 The filter predicate is **pure and unit-tested**. Empty filter ⇒ all songs; an empty
 result shows a clear "no songs in this collection" state.
 

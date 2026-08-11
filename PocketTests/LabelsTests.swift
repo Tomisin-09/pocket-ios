@@ -109,7 +109,7 @@ final class LabelsTests: XCTestCase {
         XCTAssertEqual(Labels.suggestions(from: ["Blues"], excluding: ["BLUES"]), [])
     }
 
-    // MARK: - matches (library filter)
+    // MARK: - matches, allOf (intersection — no longer the library filter, ADR 0159)
 
     func testEmptyFilterMatchesEverything() {
         XCTAssertTrue(Labels.matches([], allOf: []))
@@ -121,13 +121,51 @@ final class LabelsTests: XCTestCase {
         XCTAssertFalse(Labels.matches(["Jazz"], allOf: ["Blues"]))
     }
 
-    func testMultiSelectRequiresAllSelected() {
-        // Intersection (AND): the song must carry every selected collection.
+    /// Still correct **as an `allOf` test**. ADR 0159 didn't make intersection wrong, it moved the
+    /// library filter off it — AND remains the right relation across facets, and
+    /// `CollectionSessionBuilder` still asks it of a single label.
+    func testMultiSelectAllOfRequiresEverySelected() {
         XCTAssertTrue(Labels.matches(["Blues", "Jazz", "Rock"], allOf: ["Blues", "Jazz"]))
         XCTAssertFalse(Labels.matches(["Blues"], allOf: ["Blues", "Jazz"]))
     }
 
     func testMatchesIgnoresWhitespaceVariants() {
         XCTAssertTrue(Labels.matches(["  blues "], allOf: ["Blues"]))
+    }
+
+    // MARK: - matches, anyOf (union — the library filter, ADR 0159)
+
+    /// "No filter" must not depend on which relation is asked, or clearing the filter would behave
+    /// differently from never having set one.
+    func testEmptyAnyOfFilterMatchesEverything() {
+        XCTAssertTrue(Labels.matches([], anyOf: []))
+        XCTAssertTrue(Labels.matches(["Blues"], anyOf: []))
+    }
+
+    /// The single-select case — where AND and OR agree, which is why ADR 0033's argument for AND
+    /// went unchallenged for so long.
+    func testSingleSelectAnyOfAgreesWithAllOf() {
+        XCTAssertTrue(Labels.matches(["Blues", "Jazz"], anyOf: ["blues"]))
+        XCTAssertFalse(Labels.matches(["Jazz"], anyOf: ["Blues"]))
+    }
+
+    /// **The defect this fixes.** A song in one of two ticked collections must show. Under the old
+    /// intersection it didn't, so ticking a second collection emptied the list — the reported
+    /// symptom was "Covers ✓ + Ocean's Trilogy ✓ → No songs in this collection".
+    func testMultiSelectAnyOfMatchesASongInJustOne() {
+        XCTAssertTrue(Labels.matches(["Covers"], anyOf: ["Covers", "Ocean's Trilogy"]))
+        XCTAssertTrue(Labels.matches(["Ocean's Trilogy"], anyOf: ["Covers", "Ocean's Trilogy"]))
+        XCTAssertFalse(Labels.matches(["Originals"], anyOf: ["Covers", "Ocean's Trilogy"]),
+                       "a song in neither still stays hidden — this is a union, not a no-op")
+    }
+
+    /// A song in *both* appears once, not twice, and is not excluded for over-qualifying.
+    func testAnyOfIncludesASongCarryingEverySelectedLabel() {
+        XCTAssertTrue(Labels.matches(["Covers", "Ocean's Trilogy"],
+                                     anyOf: ["Covers", "Ocean's Trilogy"]))
+    }
+
+    func testAnyOfIgnoresWhitespaceAndCaseVariants() {
+        XCTAssertTrue(Labels.matches(["  blues "], anyOf: ["BLUES", "Jazz"]))
     }
 }
