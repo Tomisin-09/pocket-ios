@@ -114,6 +114,58 @@ Also worth settling in the same pass: Routines has no search at all and no sort 
 and My chords, Takes and Glossary have neither. Those absences may be right — but they should be
 decided, not inherited.
 
+## Filtering by two collections returns nothing (logged 2026-08-12, device-testing note)
+
+**The note:** *"When you try and filter by collection, I think it filters on an AND basis rather than
+an OR."* Correct, and reproduced from a screenshot: **Covers** ✓ + **Ocean's Trilogy** ✓ →
+*"No songs in this collection"*.
+
+Related to the filter section above, but **more prevalent** — that one is a consistency project, this
+is a control that returns the wrong answer today, on the app's most-used list screen.
+
+**It is AND, and it was decided.** `LibraryView.swift:174` calls
+`Labels.matches($0.collections, allOf: Array(selectedCollections))`, and `Labels.swift:75` is
+`allSatisfy`. ADR 0033 states it outright: *"Selecting collections narrows the song list by
+**intersection (AND)** — a song matches if it contains **all** selected collections."*
+
+**But read the justification it gives:** *"the common single-select case is AND-of-one (tap a
+collection → its songs, playlist-like)."* That is the entire argument, and it is about the one case
+where **AND and OR are identical**. The multi-select behaviour was never actually argued — it fell
+out of `allSatisfy`, and the ADR's own framing ("playlist-like") points the other way. A player
+ticking two playlists means "show me both", not "show me songs filed in both".
+
+**The proper mechanism is faceted search: OR within a facet, AND across facets.** Every list UI a
+player has priors from works this way — Finder tags, Photos albums, Music playlists, every e-commerce
+sidebar. Collections are **one** facet, so multi-select inside it is a **union**. AND only earns its
+place across *different* axes (collection AND instrument AND favourite), which is the shape the
+filter section above will have to design for anyway. Intersecting within one facet is close to
+useless in a personal library: a song is deliberately in one collection, so the answer is almost
+always empty — which is exactly what the screenshot shows.
+
+**What to correct:**
+
+- **`Labels.matches(_:anyOf:)`** — a union counterpart. Keep `allOf`; it is still right for a
+  cross-facet filter later, and `CollectionSessionBuilder.swift:87` uses `allOf: [collection]`
+  (AND-of-one), which is unaffected either way.
+- **`LibraryView.swift:174`** switches to `anyOf`, and its doc comment on `:170` ("narrowed by the
+  active collection filter (AND)") with it.
+- **The empty state** (`LibraryView.swift:303`) is singular — *"No songs in this collection"* — and
+  reads as a bug once two are ticked. Under OR an empty result also becomes much rarer, so this is
+  mostly a wording fix.
+- **The accessibility label** (`:256`) already says "Filtering by N collection(s)"; it should say
+  which relation it means once N can exceed 1.
+- **`collectionSessionBar` (`:140`) stays as-is** — it gates on `selectedCollections.count == 1`
+  because ADR 0118's generated session needs a single collection in focus, and that is still true
+  under OR. Worth re-reading rather than assuming, since it is the one caller that cares about the
+  size of the selection.
+- **Two existing tests assert the old semantics** and must flip, not be deleted:
+  `LabelsTests.swift:126` (`["Blues","Jazz","Rock"]` matches `allOf: ["Blues","Jazz"]`) and `:127`
+  (`["Blues"]` does not). The `allOf` ones stay valid *as `allOf` tests*; the union needs its own.
+
+**Needs an ADR** — it reverses a clause of ADR 0033 that was explicitly decided, even if the reasoning
+only ever covered the degenerate case. Small, pure, unit-testable, and the predicate is already
+isolated in `Labels`.
+
 ## The click drifts on an unquantised beat — **SHIPPED as ADR 0154** (2026-08-09)
 
 **The observation.** On a J Dilla production the metronome phases in and out of alignment with
