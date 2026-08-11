@@ -127,6 +127,39 @@ list that fact is carried by the section you walked through to get there; drop t
 be carried by the row, or an "All" list of similarly-named drills is unreadable. Loop and ear rows
 already show their song, so they are the same rows the groups render.
 
+### 6. The picker can create what it doesn't have *(amendment, 2026-08-11)*
+
+*From a device-testing note: "there should be a create an exercise option available when adding an
+exercise to the routine."*
+
+§1 through §5 assume the unit you want already exists. When it doesn't, the picker is a dead end: a
+player building a routine who has no scales drill has to dismiss the sheet, leave the routine editor,
+go to Practice → Exercises, create it, come back, reopen the picker, and re-find it. Six steps to
+recover from being one drill short, and the routine they were mid-thought about is behind all of
+them.
+
+`UnitPickList` — and its empty state, which currently reads a bare "Nothing here yet." — gains a
+create row presenting `NewExerciseSheet`.
+
+Four constraints:
+
+- **It commits through `NewExercisePlan.finalise(in:)` and nothing else.** ADR 0128 made that the one
+  insert path and its doc comment says so; this is a third host of an existing sheet, not a third way
+  to make an exercise.
+- **The created exercise lands in the routine immediately**, via the same `onToggle` every other pick
+  uses — so §2 holds (the picker still keeps no selection state, the editor still owns
+  `addedPickIDs`) and the "N blocks added" tally counts it. Creating a drill and then making the
+  player find it in the list would be the wrong ending to the gesture they actually made.
+- **The leaf's template is passed as `fixedTemplate`**, so creating from inside "Scales" starts on a
+  scale. The same seam `MetronomeAutomatorPanel`'s "Save as exercise" already uses. Creating from the
+  flat "All exercises" list of §5 has no template to pass and opens the picker step normally.
+- **It carries the same Pro gate as every other authoring entry point.** Authoring is Pro
+  (`ExerciseTemplatePicker` raises `.newExercise(template)`); a create door that skips the gate is a
+  hole in the paywall, not a convenience.
+
+The rest-insertion rules of §3 and §4 are untouched — this adds a unit, and a unit is never adjacent
+to itself in the sense §4 refuses.
+
 ## Consequences
 
 - **The picker's callback surface collapses from four to one.** `onPickExercise`/`onPickLoop`/

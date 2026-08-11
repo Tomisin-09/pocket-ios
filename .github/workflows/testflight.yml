@@ -1,12 +1,16 @@
 name: TestFlight
 
-# Distributes an internal TestFlight build.
+# Distributes a TestFlight build to the **external** "Closed Beta" group.
 #
 # GATED TO MANUAL until code-signing secrets exist (match + App Store Connect
-# API key). Once those are configured (Phase 4 / first TestFlight), switch the
-# trigger back to `push: branches: [main]` so merges auto-distribute — the
-# mobile equivalent of "dev auto-deploys on merge". App Store releases are cut
-# from tags, not here.
+# API key). App Store releases are cut from tags, not here.
+#
+# **Do not switch this to `push: branches: [main]`.** That advice made sense while
+# the lane was internal-only; it does not now. `fastlane beta` distributes
+# externally (docs/plans/beta-testing-plan.md), so a push trigger would ship every
+# merge straight to the invited testers and put the first build of each new version
+# through Beta App Review. Keep it deliberate: dispatch a build when there is
+# something you actually want testers to see, and set BETA_WHATS_NEW to say what.
 on:
   workflow_dispatch:
 

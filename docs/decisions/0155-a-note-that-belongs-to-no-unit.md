@@ -1,9 +1,10 @@
 # ADR 0155 — a note that belongs to no unit
 
-- **Status:** Proposed — to be refined before implementation (scheduled the week of 2026-08-10)
-- **Date:** 2026-08-09
+- **Status:** Proposed — refined 2026-08-11 (§3a, §8, and a recommendation on the open toolbar question). Still unbuilt.
+- **Date:** 2026-08-09, refined 2026-08-11
 - **Amends:** ADR 0100 §1 (the read-only stance), narrowly
 - **Extends:** ADR 0058 (polymorphic owner) · ADR 0143 (`ownerKind` is the discriminator) · ADR 0151 (the orphan state)
+- **Second consumer:** the Metronome tool — see §8, added on refinement
 
 ## Context
 
@@ -93,6 +94,21 @@ where the snapshot would have to be taken at a moment the player is not practisi
 `masteryAtEntry` and `commandBpmAtEntry` would record where the drill stands *now* rather than where
 it stood when the thing being described happened. One door, one kind of note.
 
+### 3a. What §3 constrains, and what it does not *(added on refinement, 2026-08-11)*
+
+The heading above is a rule about **what the Journal space writes** — that surface writes standalone
+notes and nothing else. It is not a rule that the Journal space is the only surface allowed to write
+a standalone note. Read the strong way it would forbid §8 below, which is not what it was written to
+do.
+
+The prohibition that does generalise, and that must survive every future door, is the **owner
+picker**: no surface may offer to file a note against a unit the player is not currently in. That is
+what protects the snapshot's honesty, and it is the whole of §3's argument.
+
+So the test for any new write seam is not "is it the Journal tab" but: *does this surface have a unit
+whose snapshot would be honest?* If it does, the note belongs to that unit and is written the
+existing way. If it does not, a standalone note is correct and the seam is welcome.
+
 ### 4. A standalone note cannot be edited after writing — accepted for this slice
 
 Editing lives in `JournalSheet`, which is per-owner and therefore unreachable for an entry with no
@@ -146,10 +162,43 @@ ADR 0144 put the Journal outside the paywall permanently. No gate, no `AccessPol
 `presentPaywall` path. A player whose subscription has lapsed can still write down that their strings
 are dead.
 
+### 8. The Metronome is the second door *(added on refinement, 2026-08-11)*
+
+From a device-testing note: *"Let's add a journal to the metronome… could give users a chance to
+actually try out the journaling feature."*
+
+A metronome sitting is not an exercise, a loop, or a routine. It is the clearest case in the app of
+§3a's test — a surface with no unit whose snapshot could be honest — so what gets written there is a
+standalone note, and this ADR already provides the whole mechanism.
+
+`MetronomeView` gains the existing `QuickJournalButton` in its `.topBarTrailing` group, ahead of the
+meter button, presenting `QuickJournalSheet(owner: .standalone)`. Both the button and the sheet
+already exist and are already used by `ExerciseRunView` and `LoopRunView`; nothing new is written.
+That the door costs one toolbar item and no new types is the strongest evidence that §1's model
+change is the right shape.
+
+Two things this deliberately does **not** do:
+
+**No `.metronome` owner kind.** A metronome owner would need a snapshot — BPM? the automator's
+ramp settings? — and a journal to read back, and the note's stated purpose is discoverability, not a
+record of metronome sittings. A fifth owner is a large price for a door.
+
+**No snapshot of the tempo, even though one is available.**
+`StandaloneMetronomeEngine.elapsed` exists (`:100`), accumulates across pause/resume, and is
+rendered nowhere in the app; the live BPM is equally to hand. Both were considered as a way to give
+the note *some* context. Rejected for the same reason §5 gives the composer its own sentence: a
+standalone note records nothing, and half a snapshot — a BPM with no unit attached to it — is the
+lending of false context this ADR's Context section is about. A player who wants the tempo in the
+note can type it, and it will mean what they meant by it.
+
+**Discoverability is the point, and it is worth being honest about the size of the claim.** A pencil
+in the metronome's toolbar teaches the journal exists to players who open the metronome. It does not
+solve journal discovery generally, and it should not be counted as having done so.
+
 ## Consequences
 
 - The feed, the routing and the row need **no changes** — §2. The whole of this lands in the model,
-  the writer, one composer and one toolbar.
+  the writer, one composer and **two** toolbars (the Journal's, and the Metronome's per §8).
 - Adding the enum case breaks four exhaustive switches, which is the point: the compiler names every
   site. `JournalTimeline.ownerLabel`, `JournalEntryRow.snapshot` and `JournalTabView+Deletion.name`
   take the same branch as `.orphan`; `JournalSheet`'s snapshot section never sees one.
@@ -164,6 +213,19 @@ are dead.
   ＋ makes three. ADR 0126's grammar is `ellipsis.circle` then `+`, which implies folding Progress
   and Sort into a menu so the ＋ takes its proper slot — at the cost of demoting Progress from one
   tap to two. Decided at build time, not here.
+
+  *Recommendation, added on refinement 2026-08-11 — still not a decision.* **Follow ADR 0126.** Three
+  bare trailing items is the shape 0126 was written to stop, and the Journal is not special enough to
+  be the exception. Two supporting facts: Sort is a two-state flip (newest/oldest) that is not even
+  persisted, so it is the weakest claim on a top-level slot of the three; and `LibraryOptionsMenu`
+  already establishes the pattern of an `ellipsis.circle` holding actions, sort and filters together
+  across three libraries, so folding is a move toward the app's existing grammar rather than away
+  from it. The cost is real and should be stated when the build lands: Progress goes from one tap to
+  two. If that proves wrong in use, the honest fix is promoting Progress back out and folding
+  something else — not three bare items.
+
+  Note that §8's metronome door needs none of this. Its toolbar has one trailing item today, so the
+  pencil simply joins it.
 - Tests to extend: `JournalOwnershipTests` (the `ownerKind` table — a standalone entry must **not**
   read as `.orphan`, and an orphaned entry must not read as standalone), `JournalWriterTests` (the
   flag is set, no relationship is), `JournalTimelineTests` (no caption, and the note still merges,

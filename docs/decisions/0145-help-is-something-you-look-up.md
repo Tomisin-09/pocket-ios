@@ -53,7 +53,7 @@ arrives after the question.
 ### D3 — expanding rows, and why searching opens them
 
 A glossary definition is one line and can always be visible. An FAQ answer is a paragraph, and
-sixteen of them stacked open is a wall rather than a list you can scan — so questions collapse and
+seventeen of them stacked open is a wall rather than a list you can scan — so questions collapse and
 open on tap, borrowing the interaction grammar of `CollapsibleLibrarySection` (light haptic, 0.2s
 ease, rotating chevron) without reusing the component itself. That component folds whole *sections*
 and carries a `LibrarySectionExpansion` persistence payload; help should open closed every time.

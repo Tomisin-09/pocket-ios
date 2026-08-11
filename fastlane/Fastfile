@@ -9,7 +9,16 @@ platform :ios do
     setup_ci if ENV["CI"]
   end
 
-  desc "Build a signed app and upload to TestFlight (internal)"
+  # The closed beta distributes to **external** testers (docs/plans/beta-testing-plan.md): the
+  # eight invited players hold no App Store Connect role, and internal testing requires one each.
+  #
+  # Two consequences of going external, both one-time:
+  #   * the first build of a version needs **Beta App Review** — fill in the beta app description,
+  #     feedback email and contact info in ASC or the submission is refused;
+  #   * the group must already exist in ASC. `fastlane` will not create it.
+  BETA_GROUP = "Closed Beta".freeze
+
+  desc "Build a signed app and upload to TestFlight (external — closed beta)"
   lane :beta do
     api_key = app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
@@ -28,8 +37,14 @@ platform :ios do
 
     upload_to_testflight(
       api_key: api_key,
-      distribute_external: false,
-      skip_waiting_for_build_processing: true
+      distribute_external: true,
+      groups: [BETA_GROUP],
+      # "What to Test" — the only per-build message testers actually read, and where each round's
+      # missions go. Passed in rather than baked in, so the copy changes without a commit.
+      changelog: ENV["BETA_WHATS_NEW"] || "Closed beta build. Follow the guide link you were sent.",
+      # External distribution has to wait for processing: a build cannot be assigned to a group
+      # until App Store Connect has finished with it.
+      skip_waiting_for_build_processing: false
     )
   end
 

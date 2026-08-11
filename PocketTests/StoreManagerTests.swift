@@ -24,6 +24,37 @@ final class StoreManagerTests: XCTestCase {
         XCTAssertFalse(StoreManager.resolveIsPro(entitled: false, debugOverride: false))
     }
 
+    // MARK: - Closed-beta grant
+    //
+    // TODO(beta): delete this section with the grant itself, before the next App Store submission.
+
+    /// The grant's whole purpose: a TestFlight tester with no purchase is Pro.
+    func testBetaGrantEntitlesWithoutAPurchase() {
+        XCTAssertTrue(StoreManager.resolveIsPro(entitled: false, debugOverride: nil, betaGrant: true))
+    }
+
+    /// **The safety assertion.** A production build must never be entitled by the beta path — an App
+    /// Store download reports `.production`, so `betaGrant` is `false` there and only a real
+    /// entitlement can unlock Pro. If this ever fails, the app is giving itself away.
+    func testBetaGrantAbsentLeavesEntitlementInCharge() {
+        XCTAssertFalse(StoreManager.resolveIsPro(entitled: false, debugOverride: nil, betaGrant: false))
+        XCTAssertTrue(StoreManager.resolveIsPro(entitled: true, debugOverride: nil, betaGrant: false))
+    }
+
+    /// An explicit debug override still wins, so a Debug build can exercise the *locked* state even
+    /// while running against the sandbox.
+    func testDebugOverrideBeatsTheBetaGrant() {
+        XCTAssertFalse(StoreManager.resolveIsPro(entitled: false, debugOverride: false, betaGrant: true))
+    }
+
+    /// Defaulting `betaGrant` must not change the pre-existing rule — the call sites above omit it.
+    func testOmittingBetaGrantMatchesTheOriginalRule() {
+        XCTAssertEqual(StoreManager.resolveIsPro(entitled: true, debugOverride: nil),
+                       StoreManager.resolveIsPro(entitled: true, debugOverride: nil, betaGrant: false))
+        XCTAssertEqual(StoreManager.resolveIsPro(entitled: false, debugOverride: nil),
+                       StoreManager.resolveIsPro(entitled: false, debugOverride: nil, betaGrant: false))
+    }
+
     func testProductIdentifiersAreAnnualFirst() {
         XCTAssertEqual(StoreManager.ProductID.all,
                        [StoreManager.ProductID.annual, StoreManager.ProductID.monthly])

@@ -5,8 +5,8 @@ import SwiftUI
 /// dependencies, which is what lets it sit in the free Toolkit alongside the Glossary.
 ///
 /// Built as `GlossaryView` with one difference: **each question expands its answer in place**. A
-/// glossary definition is a line and can always be visible; an FAQ answer is a paragraph, and sixteen
-/// of them stacked open is a wall rather than a list you can scan.
+/// glossary definition is a line and can always be visible; an FAQ answer is a paragraph, and
+/// seventeen of them stacked open is a wall rather than a list you can scan.
 ///
 /// A non-empty search **force-expands every match** — the same rule `LibrarySectionExpansion` applies
 /// while searching. Hunting a word and then having to tap each hit open to find out whether it's the

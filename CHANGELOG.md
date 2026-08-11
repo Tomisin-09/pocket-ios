@@ -11,6 +11,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Internal
+- **Closed-beta builds grant Red Moon Pro without a purchase.** TestFlight builds run against the
+  StoreKit sandbox, and are Release builds — so the DEBUG-only entitlement override doesn't apply
+  and every invited tester would otherwise meet the launch paywall on each cold launch, with
+  Practice, the library and the planner locked. Builds in the sandbox environment are now entitled
+  outright, so the beta studies the practice loop rather than a purchase decision. An App Store
+  download reports the production environment and is unaffected. **This is temporary and must be
+  removed before the next submission** — `TODO(beta)` in `StoreManager` is the grep target. The
+  `fastlane beta` lane now distributes externally to the "Closed Beta" group.
+  See `docs/plans/beta-testing-plan.md` and `docs/beta/user-guide.md`.
+
 ### Added
 - **You can point a song at a different file whenever you like.** Song details now has an **Audio**
   section showing what the song is playing and a **Replace audio file…** button. Previously this

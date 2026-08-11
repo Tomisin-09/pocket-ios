@@ -18,6 +18,102 @@ Three things are parked, in the order they'd sensibly resume:
 Slices 1 and 2 of ADR 0140 are **on main** — squash `e9688ff`, PR #209, merged 2026-08-02 after a
 device pass and a green CI run. Nothing from that work is outstanding except slice 3.
 
+## Marker labels could be terser — "M3" not "Marker 3" (logged 2026-08-11)
+
+Markers already auto-name on drop: `dropMarkerAtPlayhead()` calls
+`AutoName.next(prefix: "Marker", existing:)`, so they arrive as "Marker 1", "Marker 2". (Worth
+recording because **ADR 0149 §10 claimed this didn't exist** and named it a prerequisite — it was
+wrong, and the ADR now carries a correction.)
+
+The idea: shorten the generated form to **"M1", "M2"** — on the waveform, a marker label competes
+for horizontal room with the waveform itself, and "Marker 12" is nine characters of chrome saying
+almost nothing.
+
+Two things to work out before doing it, neither hard:
+
+- **`AutoName.next` matches on `"<prefix> <n>"` with a space**, and deliberately ignores anything
+  the user typed so the counter never reissues a live number. `"M1"` has no space, so it needs
+  either a prefix of `"M"` with the separator made optional, or a small variant. Get this wrong and
+  the high-water mark resets to 0 and starts handing out duplicates.
+- **Existing markers keep their old names** (renaming a user's data isn't ours to do), so a library
+  will mix "Marker 3" and "M4" for a while. That is survivable but it should be a deliberate
+  choice, not a surprise.
+
+Small, self-contained, no model change. Not urgent.
+
+## A rest that breathes (parked 2026-08-11, device-testing note)
+
+**The note**, marked low priority by the player who wrote it: *"Could add a rest animation here."*
+
+**What's there now.** `RoutinePlayerView.restView` is a countdown number, "Breathe — next block starts
+automatically", and an UP NEXT card. The only motion on the entire screen is
+`.contentTransition(.numericText())` on the number itself. The countdown is driven by a plain 1 s
+repeating `Timer` in `RoutineSessionPlayer` (`beginRest` → `tickRest`), so there is a clean integer
+tick to animate from and no continuous progress value — anything smoother than one-second steps needs
+its own `TimelineView` or an animation keyed off `restRemaining`, not a new engine.
+
+**Two precedents to copy from rather than inventing a third idiom.** `RoutineCountInOverlay`
+(`RoutineRunContext.swift`) already does a `withAnimation` 3-2-1 with haptics — the closest relative,
+and the one whose grammar a rest countdown should probably *not* duplicate exactly, since a count-in
+means "starting now" and a rest means "not yet" (ADR 0131's alternatives rejected reusing count-in
+grammar for a mid-run event for precisely this reason). `BeatIndicator` has a `.scaleEffect` pulse on
+a 0.07 s ease-out.
+
+**The constraint.** It must respect `accessibilityReduceMotion` — 11 sites already do. Note that
+after ADR 0157 the `exerciseAnimates` preference defaults *on*, so if a rest animation is gated on it
+at all, "off by default" is no longer a reason to avoid motion here. Whether a rest animation should
+read that preference is itself open: the preference is documented as being about *exercise* walking
+highlights, and a breathing rest is not an exercise.
+
+**Why it's genuinely low priority:** the screen already tells the player everything it needs to, and
+a rest is the one moment in a session where looking at the phone is the wrong instinct.
+
+## A filter on the list screens (parked 2026-08-11, device-testing note)
+
+**The note:** *"For our list screens, is there a way we can add a filter? What are our options here,
+this might not be an immediate feature."*
+
+Recorded with its findings, because the reason this isn't small is not the UI.
+
+**Three incompatible filter idioms are already live.**
+
+1. **`LibraryOptionsMenu`** (`Pocket/UI/LibraryOptionsMenu.swift`) — one fixed-width
+   `ellipsis.circle` trailing item holding actions, sort and boolean filters, shared by Exercises,
+   Loops and Routines. It already models three filter *shapes* — `favoritesOnly`, `widenFilter`
+   (Loops' "show all"), `narrowFilter` (Loops' "backing only") — fills its glyph when any filter is
+   active, and composes an accessibility label from them. **This is the closest thing to a canonical
+   home** and the sensible place to converge.
+2. **Screen-local toolbar menus** — the Songs library has its own `filterMenu` as a *second*
+   toolbar item deliberately outside `LibraryOptionsMenu`; Exercises has a *third* surface again, the
+   `InstrumentFilterBar` chip strip in a top `safeAreaInset`.
+3. **An in-content segmented control** — the Journal's All / Notes / Takes scope picker, the only one
+   of its kind.
+
+**Four search implementations disagree**, which is the part that actually costs:
+
+| Matcher | Behaviour |
+|---|---|
+| `PickerSearch` (`Pocket/UI/PickerItem.swift`) | case **and diacritic**-insensitive, searches the context line |
+| `JournalTimeline.filter(_:query:)` | whitespace-tokenised AND, case-folded only |
+| `PracticeLibrarySort.exerciseMatches` / `loopMatches` | case-insensitive contains |
+| `AddRoutineUnitSheet+Search.matches` | case-insensitive contains, name + song title only |
+
+Only the first is diacritic-insensitive. A player searching "Andalusian" vs "Andalusían" gets
+different results depending on which screen they are standing on.
+
+**Persistence is inconsistent too.** Sort keys and collapsed-section state use `@AppStorage`; *every*
+filter — favourites, instrument, backing-only, show-all, journal scope — is transient `@State` and
+resets on every visit.
+
+**Where to start when it's time.** Not with new filter UI. Collapse the four matchers onto
+`PickerSearch` first (it is already the most correct), then decide whether filters persist, and only
+then work out what a consistent filter affordance looks like. Doing it in the other order builds a
+uniform-looking control over four different behaviours.
+
+Also worth settling in the same pass: Routines has no search at all and no sort (fixed newest-first),
+and My chords, Takes and Glossary have neither. Those absences may be right — but they should be
+decided, not inherited.
+
 ## The click drifts on an unquantised beat — **SHIPPED as ADR 0154** (2026-08-09)
 
 **The observation.** On a J Dilla production the metronome phases in and out of alignment with
