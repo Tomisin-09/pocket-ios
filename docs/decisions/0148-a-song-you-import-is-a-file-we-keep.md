@@ -117,6 +117,22 @@ are the same for everyone by design.
 Existing installs keep the demo song they already have — it is a row in their library, and deleting a
 user's data on their behalf is not this ADR's business.
 
+> **Correction (2026-08-09).** This section is wrong on one point of fact, and the record should say
+> so rather than be quietly rewritten: the demo track was **not third-party content**. It is the
+> author's own composition, written and recorded in GarageBand. So the *Content Rights* declaration
+> and the third-party permission described above were never the burden this section claims — that
+> part of the rationale does not hold.
+>
+> **The decision still stands**, on the reasons that survive: 2.6 MB in every download, a second code
+> path holding a bookmark to a file, and every player receiving the same song none of them chose, in
+> an app whose premise is practising the music *you* are working on. Dropping it was right; one of
+> the four reasons given for it was not real.
+>
+> One consequence worth recording, because it is being relied on: since the track is the author's own,
+> it can be **distributed directly to closed-beta testers** as a starter file. A fresh install has no
+> song and streaming audio cannot be used (ADR 0001), so without one a tester cannot reach the core
+> loop at all. See `docs/plans/beta-testing-plan.md`.
+
 ### 8. Owned files are swept, like takes are
 
 `SongFileStore` carries the same orphan sweep and size reporting as `RecordingStore`: a file with no
