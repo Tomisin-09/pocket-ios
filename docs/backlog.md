@@ -225,10 +225,14 @@ collapse to one number that fits nowhere in particular — anchors fix the *phas
 produces, not the number itself. A trailing-window variant (last ~8 taps) would give a **local**
 tempo, which is what this material wants. Small, pure, unit-testable, and untouched by ADR 0154.
 
-## The transport lights up with nothing scheduled (parked 2026-08-09, **re-diagnosed 2026-08-12**)
+## The transport lights up with nothing scheduled — ✅ FIXED 2026-08-12 (re-diagnosed first)
 
-**The mechanism is real and the fix still stands. The trigger written here originally was wrong** —
-re-read the code before building this, not the first three paragraphs of the old entry.
+Kept for the re-diagnosis, which is the useful part: the entry sat here for three days describing a
+trigger that could not happen, and the fix that shipped is not the one it prescribed.
+`primeSchedule` now claims `scheduled` only when something was really queued, `play()` rewinds when
+it finds nothing left, and `PracticeAudioEngineTests` pins both (they fail against the old engine
+with the playhead stuck at `duration`). The "out of range" loop state was **not** built — see why
+below. `SongRelinker.Outcome`'s doc comment and ADR 0152 §4 were corrected in the same change.
 
 **What was originally claimed:** that a **shorter** replacement file (ADR 0152 §4, "may no longer
 line up") could strand a loop entirely past the new end, so both ends clamp to `totalFrames`,

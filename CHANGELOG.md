@@ -23,6 +23,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   See `docs/plans/beta-testing-plan.md` and `docs/beta/user-guide.md`.
 
 ### Fixed
+- **Play at the very end of a song plays it again instead of nothing.** With the playhead parked on
+  the last frame — scrub to the far-right edge of the waveform, or skip forward inside the last few
+  seconds — pressing play lit the transport and ran the playhead over silence, because there was no
+  audio left ahead of it to play. It now rewinds and plays from the top, the same thing that happens
+  when a song reaches its end on its own. Looping was never affected.
 - **Filtering by two collections no longer shows nothing.** Ticking a second collection used to
   *narrow* the list to songs filed in both at once — which, since you generally put a song in one
   collection, meant an empty library. Ticking two now shows you both, which is what picking two

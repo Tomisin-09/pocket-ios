@@ -84,6 +84,13 @@ Worth noting the warning now fires in a case §6 did not anticipate — correcti
 to the right track will usually trip it, and there the loops line up again. It is still the honest
 thing to say: we know the length changed, we do not know which direction is the correction.
 
+**What "may not line up" means, exactly** (added 2026-08-12, after a re-diagnosis). Loop bounds are
+*fractions* of the song, and `apply` refreshes `song.duration` from the new file — so a shorter
+replacement **rescales** every loop proportionally rather than stranding any past the new end. They
+all still play; they land on different bars. This wording was later read as implying loops beyond
+the end fall silent, and a backlog item was opened against a failure that cannot occur. The silent
+transport that item described is real but unrelated, and belongs to the scheduler, not to relinking.
+
 Unlike the practice screen, this surface confirms success explicitly. There the waveform redrawing
 and the transport coming alive is the confirmation; here the sheet looks identical afterwards, and a
 player correcting a mistake needs to know it took.
