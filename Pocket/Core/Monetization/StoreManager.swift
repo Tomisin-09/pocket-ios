@@ -97,6 +97,8 @@ final class StoreManager {
     /// Re-scan current entitlements and recompute `isPro`. Safe to call any time (launch, post-purchase,
     /// restore).
     func refreshEntitlements() async {
+        // TODO(beta): remove with the rest of the closed-beta grant.
+        await resolveBetaGrantIfNeeded()
         var owned: Set<String> = []
         for await result in Transaction.currentEntitlements {
             guard case .verified(let transaction) = result else { continue }
@@ -181,13 +183,72 @@ final class StoreManager {
         #if DEBUG
         override = debugProOverride
         #endif
-        isPro = Self.resolveIsPro(entitled: !entitledProductIDs.isEmpty, debugOverride: override)
+        isPro = Self.resolveIsPro(entitled: !entitledProductIDs.isEmpty,
+                                  debugOverride: override,
+                                  betaGrant: isSandboxBuild)
     }
 
     /// Pure entitlement decision, extracted so it's unit-testable without StoreKit: a debug override
-    /// wins when present, otherwise Pro follows whether any Pro product is entitled. `nonisolated` —
-    /// it touches no actor state, so gates/tests can call it from any context.
-    nonisolated static func resolveIsPro(entitled: Bool, debugOverride: Bool?) -> Bool {
-        debugOverride ?? entitled
+    /// wins when present, otherwise Pro follows whether any Pro product is entitled **or** the
+    /// closed-beta grant applies. `nonisolated` — it touches no actor state, so gates/tests can call
+    /// it from any context.
+    nonisolated static func resolveIsPro(entitled: Bool, debugOverride: Bool?, betaGrant: Bool = false) -> Bool {
+        debugOverride ?? (entitled || betaGrant)
+    }
+
+    // MARK: - Closed-beta entitlement grant
+
+    /// **TODO(beta): remove before the next App Store submission.** Tracked in
+    /// `docs/plans/beta-testing-plan.md`; this comment is the grep target.
+    ///
+    /// Whether this build runs against the StoreKit **sandbox**, which for a distributed build means
+    /// **TestFlight**. Closed-beta testers are granted Pro outright so the round can study the
+    /// practice loop rather than a purchase decision: `debugProOverride` is `#if DEBUG` only and
+    /// TestFlight ships Release builds, so without this every tester meets the ADR 0144 D4 launch
+    /// wall on every cold launch with Practice, the library and the planner all locked.
+    ///
+    /// **This cannot reach a paying customer.** An App Store download reports
+    /// `AppStore.Environment.production`; only sandbox and TestFlight report `.sandbox`. The whole
+    /// exposure is that a TestFlight tester gets Pro free, which is the intent. `.xcode` is
+    /// deliberately excluded — those builds are Debug and already have `debugProOverride`.
+    private var isSandboxBuild = false
+
+    /// Latch, so the environment is read once per launch rather than on every entitlement refresh.
+    private var hasResolvedEnvironment = false
+
+    /// Whether reading `AppTransaction` is safe here. **It is not, in a Debug build.**
+    ///
+    /// `AppTransaction.shared` reads a cached app transaction, but when there isn't one — a simulator,
+    /// or any build not installed through the App Store or TestFlight — it falls back to refreshing,
+    /// and *that* raises a system App Store sign-in prompt. The prompt lands on top of whatever is on
+    /// screen, which under UI test means the app becomes untappable and unrelated tests fail on
+    /// missing rows. (Verified: `PracticeRunUITests` failed at two different steps with the read in
+    /// place and passed with it removed.)
+    ///
+    /// Debug has `debugProOverride` and so has nothing to gain from the grant anyway. Written as a
+    /// runtime flag over a `#if` rather than fencing the call site, so the `AppTransaction` code below
+    /// still **type-checks in a Debug build** — the local `xcodebuild build` is Debug, and code that
+    /// only compiles in Release is code nothing checks until upload.
+    private static var betaGrantIsReadable: Bool {
+        #if DEBUG
+        false
+        #else
+        true
+        #endif
+    }
+
+    /// Resolve the beta grant. **Fails closed**: any error, any unverified result, any Debug build,
+    /// and the app is treated as production. Never calls `AppTransaction.refresh()` — a beta
+    /// convenience must not put an auth sheet in front of a launching app.
+    ///
+    /// On a real TestFlight install the app transaction is already cached, so this returns without
+    /// network or prompt.
+    private func resolveBetaGrantIfNeeded() async {
+        guard !hasResolvedEnvironment else { return }
+        hasResolvedEnvironment = true
+        guard Self.betaGrantIsReadable else { return }
+        guard let result = try? await AppTransaction.shared,
+              case .verified(let appTransaction) = result else { return }
+        isSandboxBuild = appTransaction.environment == .sandbox
     }
 }
