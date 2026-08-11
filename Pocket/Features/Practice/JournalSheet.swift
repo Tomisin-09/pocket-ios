@@ -94,6 +94,11 @@ struct JournalSheet: View {
             // to browse (ADR 0143). Written out rather than defaulted so the string stays true if a
             // later surface ever does hand one over.
             return "No entries yet. Log how a session went — each entry remembers what you practised."
+        case .standalone:
+            // Unreachable for the same reason `.session` is, and one step further: a standalone owner
+            // holds no journal *and* snapshots nothing (ADR 0155). If a later surface ever does hand
+            // one over, the string must not promise a snapshot the entry will never carry.
+            return "No entries yet. Jot a goal, a breakthrough or a struggle."
         }
     }
 
@@ -170,6 +175,11 @@ struct JournalSheet: View {
                     Text(session.units.isEmpty
                          ? "What you practised"
                          : session.units.map(\.title).joined(separator: ", "))
+                case .standalone:
+                    // Unreachable here too, and the only owner with genuinely nothing to preview —
+                    // a standalone note snapshots nothing at all (ADR 0155 §5), so this says so
+                    // rather than showing an empty row that reads as a missing value.
+                    Text("Nothing — this note isn't attached to a loop or exercise")
                 }
             }
             .foregroundStyle(PocketColor.textPrimary)
@@ -258,7 +268,10 @@ private struct JournalEntryEditor: View {
                                 .font(.futura(.body))
                                 .multilineTextAlignment(.trailing)
                         }
-                    case .orphan:
+                    case .standalone, .orphan:
+                        // Neither has a snapshot to show. A standalone entry can't reach this form
+                        // at all today — editing lives on the owner's screen and it has none (ADR
+                        // 0155 §4) — but it shares the orphan's rendering wherever it is seen.
                         EmptyView()
                     }
                     LabeledContent("When") {

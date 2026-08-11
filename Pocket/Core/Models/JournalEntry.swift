@@ -10,6 +10,11 @@ enum JournalEntryOwnerKind {
     case loop
     /// A whole routine session (ADR 0143) — owned by no unit, identified by a loose `routineUID`.
     case session
+    /// A note that belongs to **nothing** and says so (ADR 0155) — written from the Journal space or
+    /// the Metronome, about practice generally rather than about a unit. Renders exactly like
+    /// `.orphan` today; it is a distinct case because identical rendering is not identical meaning,
+    /// and there is no backfill for a distinction that was never recorded.
+    case standalone
     /// The owner was deleted and the relationship nullified. Nothing to render a snapshot from.
     case orphan
 }
@@ -116,13 +121,25 @@ final class JournalEntry {
         set { practisedUnitsRaw = SessionUnitRef.encode(newValue) }
     }
 
+    /// Marks an entry that belongs to **nothing** (ADR 0155) — set once at creation, never cleared.
+    ///
+    /// A stored flag rather than "no owner is set", which would be free but wrong: **absence is
+    /// already taken.** ADR 0151 spent it on `.orphan`, the state of a note whose unit was deleted and
+    /// whose relationship nullified. Deriving a second meaning from the same absent state is the
+    /// mistake ADR 0143 was written to correct. Additive optional with **no declaration default**, so
+    /// lightweight migration is exempt from the CoreData 134110 mandatory-attribute rule — and `nil`
+    /// on every pre-0155 row is correct, since every entry written before this is owned or orphaned.
+    var isStandalone: Bool?
+
     /// **The** owner discriminator — read this rather than testing a relationship for `nil` by hand.
     /// Order matters: the two unit relationships win, so an entry can never be mistaken for a session
-    /// just because a `routineUID` was also stamped on it.
+    /// just because a `routineUID` was also stamped on it — and the standalone flag is read *last*, so
+    /// a standalone note can never be mistaken for an owned one either (ADR 0155 §1).
     var ownerKind: JournalEntryOwnerKind {
         if exercise != nil { return .exercise }
         if loop != nil { return .loop }
         if routineUID != nil { return .session }
+        if isStandalone == true { return .standalone }
         return .orphan
     }
 
@@ -169,6 +186,19 @@ final class JournalEntry {
         entry.routineUID = routineUID
         entry.routineNameAtEntry = routineName
         entry.practisedUnits = units
+        return entry
+    }
+
+    /// A **standalone** entry (ADR 0155) — about practice generally rather than about any unit.
+    /// Every snapshot field stays `nil`, and that is the whole point: there is nothing here to be
+    /// honest *about*, and half a snapshot (a tempo with no unit attached to it) is the lending of
+    /// false context this ADR exists to stop. `ownerLabelAtEntry` stays `nil` too, so the feed
+    /// renders no caption.
+    static func forStandalone(text: String, kind: EntryKind,
+                              createdAt: Date = Date()) -> JournalEntry {
+        let entry = JournalEntry(text: text, kind: kind, masteryAtEntry: nil,
+                                 commandTempoAtEntry: nil, createdAt: createdAt)
+        entry.isStandalone = true
         return entry
     }
 }

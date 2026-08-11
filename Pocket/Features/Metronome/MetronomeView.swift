@@ -21,6 +21,9 @@ struct MetronomeView: View {
     @Environment(\.dismiss) private var dismiss
     /// Whether the meter/withdrawal sheet is showing — everything that shapes how the bar is filled.
     @State private var showingSettings = false
+    /// The standalone-note composer (ADR 0155 §8). Presenting it leaves the click running — the sheet
+    /// touches no transport, which is the whole reason ADR 0142 built it.
+    @State private var composing = false
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
     /// average against a new one.
@@ -68,6 +71,15 @@ struct MetronomeView: View {
                         .foregroundStyle(PocketColor.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                 }
+                // The second door onto a standalone note (ADR 0155 §8). A metronome sitting is not an
+                // exercise, a loop or a routine — it is the clearest case in the app of a surface
+                // with no unit whose snapshot could be honest — so what gets written here is a
+                // standalone note, and §1's model change already provides the whole mechanism. Ahead
+                // of the meter button, and nothing new is written: both the button and the sheet are
+                // the ones `ExerciseRunView` and `LoopRunView` already use.
+                ToolbarItem(placement: .topBarTrailing) {
+                    QuickJournalButton(isPresented: $composing)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     meterMenu
                 }
@@ -86,6 +98,13 @@ struct MetronomeView: View {
         .onDisappear { engine.stop() }
         .sheet(isPresented: $showingSettings) {
             MetronomeSettingsSheet(engine: engine)
+        }
+        // No `.metronome` owner kind, and no snapshot of the live BPM even though one is to hand
+        // (ADR 0155 §8): a standalone note records nothing, and half a snapshot — a tempo with no
+        // unit attached to it — is exactly the false context this decision exists to stop. A player
+        // who wants the tempo in the note can type it, and then it means what they meant by it.
+        .sheet(isPresented: $composing) {
+            QuickJournalSheet(owner: .standalone)
         }
     }
 

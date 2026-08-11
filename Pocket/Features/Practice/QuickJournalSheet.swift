@@ -41,7 +41,7 @@ struct QuickJournalSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         noteField
-                        EntryKindChipRow(selection: $kind)
+                        EntryKindChipRow(selection: $kind, kinds: offeredKinds)
                         destinationLine
                     }
                     .padding(20)
@@ -80,11 +80,22 @@ struct QuickJournalSheet: View {
             .task { textFocused = true }
     }
 
+    /// The tags this sheet offers. An **ownerless** note can't honestly carry the three tags that
+    /// assert it was written during something (ADR 0155 §6); every other owner gets the full
+    /// vocabulary. The four that survive are the four ADR 0100's own composer led with.
+    private var offeredKinds: [EntryKind] {
+        switch owner {
+        case .standalone: [.goal, .breakthrough, .struggle, .note]
+        case .loop, .exercise, .session: EntryKind.pickerOrder
+        }
+    }
+
     /// Where the note lands. Stated because this sheet can be opened from inside a routine, where the
     /// unit on screen is one of several — "which of these am I writing about" is a real question here
-    /// in a way it never is on the per-owner sheet.
+    /// in a way it never is on the per-owner sheet. The whole sentence comes from the owner (ADR 0155
+    /// §5): assembling it from fragments here has no honest form for an owner that records nothing.
     private var destinationLine: some View {
-        Text("Saves to \(owner.displayName)'s Journal, \(owner.snapshotBlurb).")
+        Text(owner.destinationLine)
             .font(.futura(.caption))
             .foregroundStyle(PocketColor.textSecondary)
     }

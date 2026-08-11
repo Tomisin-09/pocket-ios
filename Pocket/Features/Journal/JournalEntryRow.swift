@@ -68,7 +68,11 @@ struct JournalEntryRow: View {
             }
         case .session:
             SessionUnitChips(units: entry.practisedUnits, openAction: openUnit)
-        case .orphan:
+        case .standalone, .orphan:
+            // Two different meanings, one rendering, and deliberately so (ADR 0155 §2): a standalone
+            // note never had a subject and an orphan *lost* one, but neither has anything to
+            // snapshot. They share a branch, not an identity — the store can still tell them apart
+            // the moment either wants its own treatment.
             EmptyView()
         }
     }
