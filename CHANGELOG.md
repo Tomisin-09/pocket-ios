@@ -23,6 +23,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   See `docs/plans/beta-testing-plan.md` and `docs/beta/user-guide.md`.
 
 ### Added
+- **You can write a note that isn't about anything in particular.** Every note you could write used
+  to belong to something — a loop, a drill, a session — so a thought like *"strings are dead,
+  restring before Thursday"* or *"ten minutes tonight, that's all there was"* had nowhere to go. You
+  either lost it or filed it under whatever drill happened to be on screen, where it sat next to a
+  tempo it had nothing to do with. Now there's a **＋** in the Journal that writes a note straight to
+  your journal, attached to nothing. It's also in the **Metronome**, since practising to a click
+  isn't a drill either. These notes save no tempo and no mastery — there's nothing for them to be
+  about — and they're free forever, like the rest of the Journal. Progress and the sort order have
+  moved into the **⋯** menu to make room. See ADR 0155.
+
+### Added
 - **You can point a song at a different file whenever you like.** Song details now has an **Audio**
   section showing what the song is playing and a **Replace audio file…** button. Previously this
   repair only appeared when a song's audio was missing — which meant that if you ever linked a song
