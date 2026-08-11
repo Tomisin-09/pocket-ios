@@ -2235,6 +2235,20 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   Fix path = build the deferred hub slices (scales & modes explorer + intervals/ear per
   ADR 0094 Slice 5) so the reference Hear surfaces there. Relates to the Wave-2
   "split Toolkit into a Learn section" step.
+  - **The subtitle now under-promises, and the miss is the tuner (found 2026-08-12).** The
+    pocket-170 rewrite above was correct *on the day it shipped*. Since then **two** things landed
+    inside the Toolkit and neither was added to the card: the **Tuner** (ADR 0115, #180) and
+    **Help & FAQs** (ADR 0145, #224). `HomeView.swift:240` still reads *"Your chords & a music
+    glossary"*, and `:246`'s accessibility label repeats it.
+  - **Why this one matters more than a copy nit.** The tuner is **free forever** (ADR 0144), needs no
+    song, no library and no subscription, and is the thing a guitarist reaches for every single time
+    they pick the instrument up — it is the most likely daily-habit hook in the app. It is currently
+    behind a card that does not mention it. The closed-beta guide lists the Toolkit as *"tuner (guitar
+    and bass), saved chords, glossary"* — so the guide and the app disagree, and the guide is the one
+    telling the truth.
+  - **Fix is one string plus its accessibility twin**, and it is independent of the deferred hub
+    slices above — don't wait for them. Watch the width: `PocketLaunchUITests`/`ToolkitUITests` match
+    on the accessibility label, so change both together or the UI tests fail.
 
 ## Notes & journal — DONE (ADR 0038)
 
@@ -2574,6 +2588,15 @@ route through.
   button that respects the automator mode. Decide what the two actually do first — if they do the
   *same* thing, that is the real finding. The shipped screenshot keeps both (an honest frame beats a
   scrolled-to-hide one).
+  - **Answered 2026-08-12: they do different things, and the app already knows it.** The bottom bar
+    is `engine.toggle()` — the plain click, labelled Start/Pause/Resume (`MetronomeView.swift:206`).
+    The card is `startAutomatorRun()` — the ramp climb (`MetronomeAutomatorPanel.swift:70`). So this
+    is not a duplicated control; it is **one control with a label that under-describes it**.
+  - **The fix is one string.** That button's `accessibilityLabel` *already* reads "Start ramp" /
+    "Stop ramp" (`:84`) — the visible `Label` is the only place the distinction is dropped, so a
+    VoiceOver user has never had this problem and a sighted user always has. Make the visible label
+    say what the accessibility label already says. No layout change, nothing hidden, no behaviour
+    touched — which retires the "hide the bottom bar" and "collapse to one button" options above.
 - **Metronome sound picker — UI polish (logged 2026-07-24, ADR 0114).** The four-voice picker shipped
   functional (row + inline ▶ audition + selected check, `MetronomeSoundSection`) and the *sounds* are
   approved, but the presentation feels plain — a flat list of Form rows. Ideas when picked up: a richer
