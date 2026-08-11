@@ -2246,9 +2246,12 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
     behind a card that does not mention it. The closed-beta guide lists the Toolkit as *"tuner (guitar
     and bass), saved chords, glossary"* — so the guide and the app disagree, and the guide is the one
     telling the truth.
-  - **Fix is one string plus its accessibility twin**, and it is independent of the deferred hub
-    slices above — don't wait for them. Watch the width: `PocketLaunchUITests`/`ToolkitUITests` match
-    on the accessibility label, so change both together or the UI tests fail.
+  - ~~**Fix is one string plus its accessibility twin.**~~ **DONE (2026-08-12, branch
+    `pocket-252`).** The card now reads *"Tuner, your chords & a glossary"*, tuner first. Help &
+    FAQs stays unlisted — one line only holds so much, and it has a second door in Settings → About.
+    `ToolkitUITests` was already matching on `BEGINSWITH "Toolkit,"` rather than the full label, so
+    nothing broke; its comment now records the third rewrite. **The deferred hub slices above are
+    untouched** — this fixed the description, not the thinness it was describing.
 
 ## Notes & journal — DONE (ADR 0038)
 
@@ -2592,11 +2595,12 @@ route through.
     is `engine.toggle()` — the plain click, labelled Start/Pause/Resume (`MetronomeView.swift:206`).
     The card is `startAutomatorRun()` — the ramp climb (`MetronomeAutomatorPanel.swift:70`). So this
     is not a duplicated control; it is **one control with a label that under-describes it**.
-  - **The fix is one string.** That button's `accessibilityLabel` *already* reads "Start ramp" /
-    "Stop ramp" (`:84`) — the visible `Label` is the only place the distinction is dropped, so a
-    VoiceOver user has never had this problem and a sighted user always has. Make the visible label
-    say what the accessibility label already says. No layout change, nothing hidden, no behaviour
-    touched — which retires the "hide the bottom bar" and "collapse to one button" options above.
+  - ~~**The fix is one string.**~~ **DONE (2026-08-12, branch `pocket-252`).** That button's
+    `accessibilityLabel` *already* read "Start ramp" / "Stop ramp" (`:84`) — the visible `Label` was
+    the only place the distinction was dropped, so a VoiceOver user never had this problem and a
+    sighted user always did. The visible label now says what the accessibility label always said. No
+    layout change, nothing hidden, no behaviour touched — which retired the "hide the bottom bar" and
+    "collapse to one button" options above without having to choose between them.
 - **Metronome sound picker — UI polish (logged 2026-07-24, ADR 0114).** The four-voice picker shipped
   functional (row + inline ▶ audition + selected check, `MetronomeSoundSection`) and the *sounds* are
   approved, but the presentation feels plain — a flat list of Form rows. Ideas when picked up: a richer

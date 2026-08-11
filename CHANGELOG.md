@@ -22,6 +22,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   `fastlane beta` lane now distributes externally to the "Closed Beta" group.
   See `docs/plans/beta-testing-plan.md` and `docs/beta/user-guide.md`.
 
+### Changed
+- **The Toolkit card on Home now mentions the tuner.** It said "Your chords & a music glossary",
+  which stopped being true when the tuner moved in — so the most useful thing in there, free forever
+  and needing no song or library, was sitting behind a card that didn't name it. Now reads
+  "Tuner, your chords & a glossary".
+- **The metronome's ramp button says "Start ramp".** With the tempo automator switched on the screen
+  showed two ▶ Start buttons, and nothing on screen said which was which. They do different things —
+  one starts the ramp, one starts the plain click — and now the labels say so.
+
 ### Added
 - **You can write a note that isn't about anything in particular.** Every note you could write used
   to belong to something — a loop, a drill, a session — so a thought like *"strings are dead,

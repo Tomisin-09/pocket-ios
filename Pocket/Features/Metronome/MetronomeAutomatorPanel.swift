@@ -72,7 +72,12 @@ struct MetronomeAutomatorPanel: View {
             if engine.automatorRunning { engine.stopAutomatorRun() } else { engine.startAutomatorRun() }
             haptic(.medium)
         } label: {
-            Label(engine.automatorRunning ? "Stop" : "Start",
+            // **"ramp", not bare "Start"** — with the automator on, the screen carried two controls
+            // both reading ▶ Start: this one, and the plain click's transport pinned at the bottom.
+            // They do different things, and the app already knew it: the `accessibilityLabel` below
+            // has always said "Start ramp". The visible label was the only place the distinction was
+            // dropped, so a VoiceOver user never had this problem and a sighted user always did.
+            Label(engine.automatorRunning ? "Stop ramp" : "Start ramp",
                   systemImage: engine.automatorRunning ? "stop.fill" : "play.fill")
                 .font(.futura(.subheadline, weight: .semibold))
                 .foregroundStyle(.white)
