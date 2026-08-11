@@ -1,7 +1,11 @@
 # ADR 0149 — guidance arrives with the song
 
-- **Status:** Proposed
-- **Date:** 2026-08-08 (`pocket-245-guided-creation-onboarding`)
+- **Status:** Proposed — **substantially amended by ADR 0158 before any of it was built.** §2's
+  first-import trigger is reversed (guidance now fires at first launch, on a bundled demo song),
+  §1's three-step method narrows to three beats on the waveform screen and moves the long-form
+  method to the website, §3's checklist goes with it, and §10's "prerequisite" turns out to
+  already exist. **§4, §5, §6, §7, §8 and §9 stand unchanged.** Read this ADR alongside 0158.
+- **Date:** 2026-08-08 (`pocket-245-guided-creation-onboarding`), amended 2026-08-11
 - **Extends:** ADR 0113 (the local artist profile and its intake), ADR 0145 (the compiled help
   catalog), ADR 0148 §7 (a library that starts empty)
 - **Constrained by:** ADR 0070 (Pocket never grades playing), ADR 0120 / 0147 (analytics are opt-in)
@@ -150,6 +154,16 @@ helps, which is the over-engineering this ADR is written against.
 Step 2 requires markers to name themselves on drop. That does not exist today — `Marker` has no
 default-name derivation, unlike sessions, collections and song-routines. It is small, self-contained,
 and useful independently of this flow, and it lands first.
+
+> **Correction (2026-08-11): this section is simply wrong, and there is no prerequisite.**
+> Markers have named themselves on drop since the action was written:
+> `WaveformPracticeModel+Actions.dropMarkerAtPlayhead()` calls
+> `AutoName.next(prefix: "Marker", existing: markers.map(\.label))`, yielding "Marker 1", "Marker
+> 2", …, and the doc comment directly above it says so. Confirmed in the running app.
+>
+> Nothing was ever blocked on this. The claim appears to have been written from the absence of a
+> `Marker`-side `defaultName` helper — sessions, collections and song-routines each have one —
+> without checking the call site, where the shared `AutoName` utility does the job instead.
 
 ## Consequences
 

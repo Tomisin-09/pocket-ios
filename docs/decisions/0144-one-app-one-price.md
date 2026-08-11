@@ -117,6 +117,24 @@ Two things make a hard paywall defensible rather than hostile, and both are chea
 
 ## Consequences
 
+> **Two later decisions attach here (2026-08-11), neither of which disturbs the pricing model.**
+>
+> **Comping the closed-beta testers uses hand-renewed offer codes, not a lifetime product.** The
+> eight invited testers are promised permanent access. The tempting implementation — a
+> non-consumable "lifetime" IAP — is **rejected**: it reopens the one-price model this ADR settled,
+> adds a third product to a two-product group, and creates an entitlement that can never be
+> withdrawn or repriced. Instead they get subscription **offer codes**, reissued by hand each year.
+> That is manual work forever for eight people, which is the honest trade: an operational cost
+> carried deliberately, rather than a permanent product-line change made to avoid it. During the
+> beta itself nothing is needed — the TestFlight sandbox grant in `StoreManager` already covers it.
+>
+> **D3's free-taste seam is being reopened by ADR 0158**, for the bundled demo song and its
+> first-launch walkthrough. Note that it does **not** land the way D3 predicted: `freeTasteSlugs`
+> and `freeTasteRoutineSlugs` cover exercises and routines, and there is no song axis at all — songs
+> are gated at the Home destinations. So it is a new allowlist on the established pattern rather
+> than the promised one-file change. **D4's gates stay as defence in depth**, which is what keeps
+> the hole safe: walking out of the free song still meets a wall.
+
 - **A new App Review, on stricter ground.** The held v1 approval was for a freemium build; a hard
   paywall draws 2.1 and 3.1.2 scrutiny. The free Toolkit is the mitigation and **must be named in
   the review notes** — after ADR 0145 it also carries the help and the support address, which

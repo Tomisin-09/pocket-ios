@@ -73,6 +73,30 @@ Because there is no cross-type aggregation, **no pure `Favorites` helper is need
 filters its own `@Query` on `isFavorite`. The flag is a trivial boolean and needs no test beyond the
 additive migration.
 
+### Amendment, 2026-08-11 — the pin can also be set where you finish
+
+*From a device-testing note: "should be a way to favourite an exercise from its Done screen."*
+
+The star gains one more home: `RoutineBlockDoneView`, the post-block completion beat. Nothing about
+the model, the filter, or the three libraries changes — this is a second place to set an existing
+flag, added because the moment a drill has just gone well is the moment a player knows they want it
+close, and making them find it in the library later is how the intention gets lost.
+
+Three constraints the build has to respect:
+
+- **Exercise and loop blocks only.** `Song` has no `isFavorite` and does not gain one here — the
+  original scoping decision above (songs are already the library's first-class browse unit with their
+  own grouping axes) still holds. All three loop modes qualify: `.loop`, `.earLoop`, `.improviseLoop`.
+- **Resolve the unit by switching on `stage.payload`, never `stage.loop`.** That accessor returns the
+  loop for ear and improvise blocks too, which is right here but wrong elsewhere — the rule
+  `revisionOffer(for:)` documents in `RoutinePlayerView+Done.swift` exists so the distinction survives
+  a gate moving, and the same discipline applies to any new payload read.
+- **It stays a bookmark, not a rating.** The Done screen also carries the mastery self-rating, and the
+  two sit inches apart. They must not read as one gesture: mastery is a self-assessment the player
+  scores, the star is a pin they set, and ADR 0070 depends on the app never conflating them. The star
+  belongs on the toolbar's trailing edge (free today — the host claims only `.topBarLeading`), not
+  in the rating band.
+
 ## Consequences
 
 - Players can pin the handful of exercises, routines, and loops they return to, and filter each list to
