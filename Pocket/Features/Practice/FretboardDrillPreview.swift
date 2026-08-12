@@ -22,9 +22,9 @@ struct FretboardDrillPreview: View {
     /// independent of the global animate preference — a deliberate, user-requested pass rather than
     /// sustained motion, so it plays even under Reduce Motion (ADR 0065). `nil` requests nothing.
     var playOnceToken: Date?
-    /// Off by default (photosensitivity precaution) and forced off under Reduce Motion; off shows a
-    /// static, fully-plotted board unless a one-shot play is in progress.
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    /// On by default (ADR 0157) and forced off under Reduce Motion; off shows a static,
+    /// fully-plotted board unless a one-shot play is in progress.
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = AppSettings.exerciseAnimatesDefault
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isPlayingOnce = false
     @State private var playOnceOrigin: Date?

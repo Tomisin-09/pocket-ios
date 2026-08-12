@@ -109,6 +109,16 @@ enum AppSettings {
     /// The between-blocks rest countdown is offered in this range of seconds.
     static let routineRestSecondsRange = 5...60
 
+    /// Whether the walking highlight animates when the player has never touched the toggle —
+    /// **on** since ADR 0157.
+    ///
+    /// This exists as a named constant because the default lives at *seven* sites: this accessor and
+    /// six `@AppStorage` declarations, whose own default values are what SwiftUI actually uses for an
+    /// unset key (they do **not** consult `exerciseAnimates`). ADR 0157 §2 records that drift as the
+    /// whole implementation risk of that decision; every site now reads this one value, so it can't
+    /// happen. Do not inline it back to a literal.
+    static let exerciseAnimatesDefault = true
+
     /// Gesture-confirmation haptics on/off. Default on.
     static var hapticsEnabled: Bool { bool(Key.hapticsEnabled) }
 
@@ -156,9 +166,14 @@ enum AppSettings {
     static var keepScreenAwake: Bool { bool(Key.keepScreenAwake) }
 
     /// Whether an exercise's walking highlight animates — the fretboard board and the strum lane
-    /// both read this. Default **off** as a photosensitivity precaution; the views also force it off
-    /// under the system Reduce Motion setting.
-    static var exerciseAnimates: Bool { bool(Key.exerciseAnimates, default: false) }
+    /// both read this. Default **on** (ADR 0157): the walk in time is what an exercise *is* on those
+    /// surfaces, and off-by-default left it undiscovered. The views still force it off under the
+    /// system Reduce Motion setting, which is the real protection and the one that generalises.
+    ///
+    /// ⚠️ This accessor is **not** what the views read — each one owns its own `@AppStorage`
+    /// declaration, so all seven share `exerciseAnimatesDefault` rather than a repeated literal
+    /// (ADR 0157 §2).
+    static var exerciseAnimates: Bool { bool(Key.exerciseAnimates, default: exerciseAnimatesDefault) }
 
     /// For a strumming / Strum & Chords drill, whether the run's metronome **follows the strum
     /// pattern** (down/up/accent/mute, rests silent — ADR 0071 R5) rather than a plain steady click.

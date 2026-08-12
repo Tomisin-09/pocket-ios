@@ -60,7 +60,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.countInBars) private var countInBars = AppSettings.countInBarsRange.lowerBound
     @AppStorage(AppSettings.Key.keepScreenAwake) private var keepScreenAwake = true
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var exerciseAnimates = false
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var exerciseAnimates = AppSettings.exerciseAnimatesDefault
     @AppStorage(AppSettings.Key.strumClickFollowsPattern) private var strumClickFollowsPattern = true
     @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
     @AppStorage(AppSettings.Key.routineAutoAdvance) private var routineAutoAdvance = false

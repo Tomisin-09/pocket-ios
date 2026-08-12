@@ -234,10 +234,11 @@ duration. Both matter:
   `accessibilityHidden(true)`, so on its own the withdrawal is invisible to VoiceOver — a
   screen-reader user would get an unexplained silence. This is the same reasoning that made the
   caption a decided carrier in ADR 0131 §3, and the same fix.
-- **It must not pulse.** A static marker only. Anything animated falls under Reduce Motion and
-  `exerciseAnimates` (which defaults off), so it would be disabled by default for some of the people
-  who most need to know why the room went quiet — and a *pulsing* marker would be a visual
-  metronome, which is the thing this section exists to prevent.
+- **It must not pulse.** A static marker only. A *pulsing* marker would be a visual metronome, which
+  is the thing this section exists to prevent — and anything animated falls under Reduce Motion, so
+  it would be hidden from some of the people who most need to know why the room went quiet.
+  (Amended by ADR 0157: this also cited `exerciseAnimates` defaulting off, which no longer holds.
+  Both surviving reasons are independent of the default, so the decision is unchanged.)
 
 **The visual reads the heard bar; the audio decides on the scheduled tick.** These disagree by one
 look-ahead window, exactly as ADR 0131 §5 documents for the warning, and for the same reason: the

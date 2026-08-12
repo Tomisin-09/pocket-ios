@@ -15,8 +15,16 @@ final class FretboardPlayOnceButtonTests: XCTestCase {
     }
 
     func testShownWhenAnimationIsOff() {
-        // The default user (animate defaults off): Watch is the only way to see it move.
+        // A player who deliberately turned the walk off (ADR 0157 made *on* the default): Watch is
+        // the only way to see the shape move.
         XCTAssertTrue(FretboardPlayOnceButton.shouldShow(animates: false, reduceMotion: false))
+    }
+
+    func testHiddenForAFreshInstall() {
+        // ADR 0157 flipped the default to on, so the out-of-the-box board walks and Watch hides.
+        // The rule is unchanged — this pins the *default* it now resolves to.
+        XCTAssertFalse(FretboardPlayOnceButton.shouldShow(animates: AppSettings.exerciseAnimatesDefault,
+                                                          reduceMotion: false))
     }
 
     func testShownUnderReduceMotionEvenWithAnimateOn() {

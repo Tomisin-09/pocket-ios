@@ -18,6 +18,54 @@ Three things are parked, in the order they'd sensibly resume:
 Slices 1 and 2 of ADR 0140 are **on main** — squash `e9688ff`, PR #209, merged 2026-08-02 after a
 device pass and a green CI run. Nothing from that work is outstanding except slice 3.
 
+## A journal note at the metronome should record the metronome (logged 2026-08-12)
+
+**The player's ask, verbatim in spirit:** when a journal entry is written on the metronome, record
+its settings — **time signature, subdivision and click withdrawal** — and classify the entry as a
+metronome one rather than a bare standalone note.
+
+**This reverses an explicit decision, and that is the first thing to know.** ADR 0155 §8 declined
+exactly this, in a comment still sitting at `MetronomeView.swift`:
+
+> No `.metronome` owner kind, and no snapshot of the live BPM even though one is to hand … a
+> standalone note records nothing, and half a snapshot — a tempo with no unit attached to it — is
+> exactly the false context this decision exists to stop.
+
+**Why the reversal is nonetheless right.** 0155's objection was to recording *only* a BPM: a
+fragment of a **unit's** context with no unit behind it, which invites the reader to attach it to
+something that was never there. A metronome sitting is not that. It has a complete context of its
+own — tempo, time signature, subdivision, withdrawal — and recording all of it is a **full**
+snapshot of a real thing, which is precisely the principle every other owner kind already follows
+(`JournalEntry` "snapshots its owner's context at the moment of writing"). The player's instinct to
+*classify* it is what answers 0155: it stops being a unit-less tempo and becomes a metronome
+setting. So this wants a **new ADR superseding 0155 §8**, not a quiet code change — the old
+reasoning should be recorded as answered, not silently overwritten.
+
+**Two traps this walks straight into:**
+
+- **Never store `TimeSignature`, `Subdivision` or `ClickWithdrawal` on the `@Model`.** A custom enum
+  attribute crashes on migration, **on device only** — in-memory tests miss it completely. Store raw
+  values (`ClickWithdrawal` is already `String`-backed; `TimeSignature`/`Subdivision` need a decided
+  raw form). This is the single most likely way to break the schema here.
+- **A new `.metronome` owner kind needs its own positive flag**, for the same reason 0155 gave
+  `isStandalone` one: **absence is already `.orphan`**, so a kind inferred from missing
+  relationships is indistinguishable from a deleted owner.
+
+**No backfill is possible.** Existing standalone notes written at the metronome cannot be told apart
+from ones written in the Journal space — the distinction was never recorded. New entries only, which
+is the same conclusion 0155 reached about its own case.
+
+**Where the values live:** `StandaloneMetronomeEngine.timeSignature` / `.subdivision`, and the
+withdrawal setting (`ClickWithdrawal`, `off`/`gentle`/`standard`/`deep`) — noting the free-play
+metronome is the **only** host that opts into withdrawal at all (`allowsClickWithdrawal`, ADR 0132
+§4), so a withdrawal field is meaningful on this owner kind and on no other. Entry point is
+`QuickJournalSheet(owner: .standalone)` in `MetronomeView`.
+
+**Open question for the ADR:** whether the BPM comes along too. The player listed three settings and
+not tempo, but tempo is the metronome's headline value and the automator can move it *during* the
+sitting — so "the BPM at the moment of writing" may be a moving target worth either snapshotting
+deliberately or leaving out with a stated reason.
+
 ## Marker labels could be terser — "M3" not "Marker 3" (logged 2026-08-11)
 
 Markers already auto-name on drop: `dropMarkerAtPlayhead()` calls

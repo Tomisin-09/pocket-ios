@@ -147,10 +147,15 @@ Static — it appears, it holds, it goes. Four properties earn it the slot:
   teal is the right choice rather than a compromise one: no new token, no borrowed meaning, and no
   colour discrimination for the player to perform.
 
-- **It is not motion.** A pulse would have to respect Reduce Motion and `exerciseAnimates`, which
-  defaults **off** as a photosensitivity precaution (ADR 0050) — so a pulsing carrier would be silent
-  by default for precisely the players this feature is for. A state change that does not animate is
-  governed by neither, and needs no exemption or special case.
+- **It is not motion.** A pulse would have to respect Reduce Motion — so a pulsing carrier would be
+  silent for precisely the players this feature is for — and, the stronger objection, a pulsing
+  carrier *is a visual metronome*, which is not what a tempo warning should be. A state change that
+  does not animate is governed by neither, and needs no exemption or special case.
+
+  > **Amended by ADR 0157.** This paragraph originally also rested on `exerciseAnimates` defaulting
+  > **off** as a photosensitivity precaution, attributed to ADR 0050. Both halves were wrong: ADR 0050
+  > never decided the default, and ADR 0157 has since flipped it to **on**. The decision here is
+  > unchanged — it stands on the two reasons above, neither of which depended on that default.
 - **It is one insertion point, not four.** `ExerciseTemplateSurface` is a single view switching
   internally across all five branches, so the modifier lands there and every drill kind — plus the
   plain-metronome fallback — is covered at once. None of `FretboardView`, `StrummingLaneView`,
@@ -344,10 +349,10 @@ position until the rest of §7 is built.
 - **The beat dots as the in-gaze carrier.** Rejected on fact, not taste: `BeatIndicator` is only
   rendered in `ExerciseTemplateSurface`'s fallback branch, so it is absent from every templated drill
   (§3a). It would have shipped a carrier that works on the plain metronome and nowhere else.
-- **A pulsing tint on the drill surface.** Rejected — motion, so it falls under Reduce Motion and
-  `exerciseAnimates`, which defaults off as a photosensitivity precaution. The carrier would be
-  disabled by default for the players it exists to serve. Static costs nothing and is exempt from
-  both by construction.
+- **A pulsing tint on the drill surface.** Rejected — a pulsing carrier is itself a visual metronome,
+  and being motion it falls under Reduce Motion, disabling it for players this feature exists to
+  serve. Static costs nothing and is exempt by construction. (Amended by ADR 0157: this rejection
+  also cited `exerciseAnimates` defaulting off, which is no longer true. The rejection stands.)
 - **Swapping the drill views' existing `tint:` for the window.** Rejected — the smallest possible
   change, but on a fretboard drill the tint colours the note dots, so the warning would overwrite
   information the player is reading. Additive edge, not a repaint.

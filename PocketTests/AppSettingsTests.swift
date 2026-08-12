@@ -77,6 +77,24 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(AppSettings.resolvedTunerMode(storedValue: "spectral"), .guided)
     }
 
+    // MARK: the walking highlight (ADR 0157)
+
+    func testWalkingHighlightDefaultsOn() {
+        // ADR 0157 reversed this from off. The seven sites that used to repeat the literal now all
+        // read this constant, so pinning it here covers the views too — but note that the check that
+        // actually matters is visual, on device (ADR 0157 §2).
+        XCTAssertTrue(AppSettings.exerciseAnimatesDefault)
+        XCTAssertTrue(AppSettings.resolvedBool(storedValue: nil,
+                                               default: AppSettings.exerciseAnimatesDefault))
+    }
+
+    func testAnExplicitlyStoredFalseSurvivesTheNewDefault() {
+        // ADR 0157 §3: a player who deliberately turned the walk off has a stored `false` and keeps
+        // it. Only an absent key moves — nothing may seed the key on launch.
+        XCTAssertFalse(AppSettings.resolvedBool(storedValue: false,
+                                                default: AppSettings.exerciseAnimatesDefault))
+    }
+
     func testReferencePitchDefaultSitsInsideItsRange() {
         // The stepper's default must be a value the stepper can actually reach (A440 in A432–A446).
         XCTAssertTrue(AppSettings.tunerReferenceRange.contains(AppSettings.tunerReferenceDefault))
