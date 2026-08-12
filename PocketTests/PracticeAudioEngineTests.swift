@@ -15,7 +15,12 @@ import XCTest
 /// clamps to `duration`). The repair is that `primeSchedule` claims `scheduled` only when something
 /// was really queued, and a `play()` that finds nothing left rewinds to the top — the same reset
 /// `handleReachedEnd` makes when playback reaches the end on its own.
-@MainActor
+///
+/// **Isolation note.** `@MainActor` sits on the test methods and the engine helper, *not* on the
+/// class. `XCTestCase.setUp`/`tearDown` are nonisolated and an override cannot add isolation its
+/// superclass method lacks — so annotating the class would leave `setUp` nonisolated while making
+/// `scratch` main-actor-isolated, which local Xcode compiles and CI's Xcode 16 rejects. The scratch
+/// directory is plain file I/O and needs no isolation; only `PracticeAudioEngine` does.
 final class PracticeAudioEngineTests: XCTestCase {
 
     private var scratch: URL!
@@ -42,6 +47,7 @@ final class PracticeAudioEngineTests: XCTestCase {
         return url
     }
 
+    @MainActor
     private func loadedEngine(seconds: Double = 2) async throws -> PracticeAudioEngine {
         let engine = PracticeAudioEngine()
         try await engine.load(url: try makeSilentFile(seconds: seconds))
@@ -50,6 +56,7 @@ final class PracticeAudioEngineTests: XCTestCase {
 
     /// The load-bearing case. Park the playhead exactly at the end, press play: it must rewind and
     /// actually play, not sit lit and silent at `duration`.
+    @MainActor
     func testPlayingFromTheVeryEndRewindsInsteadOfPlayingSilence() async throws {
         let engine = try await loadedEngine()
         defer { engine.stop() }
@@ -65,6 +72,7 @@ final class PracticeAudioEngineTests: XCTestCase {
 
     /// A seek past the end clamps to `duration`, so it lands on the same branch — worth pinning
     /// separately, because this is the shape `TransportSkip` produces near the end of a song.
+    @MainActor
     func testPlayingAfterASeekPastTheEndRewinds() async throws {
         let engine = try await loadedEngine()
         defer { engine.stop() }
@@ -77,6 +85,7 @@ final class PracticeAudioEngineTests: XCTestCase {
 
     /// The control: an ordinary play from mid-file must **not** rewind. Without this the fix above
     /// would be satisfied by a `play()` that always jumped to the top.
+    @MainActor
     func testPlayingFromTheMiddleKeepsItsPosition() async throws {
         let engine = try await loadedEngine()
         defer { engine.stop() }
@@ -90,6 +99,7 @@ final class PracticeAudioEngineTests: XCTestCase {
 
     /// A loop is scheduled by its own branch and doesn't care where the playhead was parked, so
     /// arming one at the end plays the region rather than rewinding to zero.
+    @MainActor
     func testALoopStillPlaysWithThePlayheadParkedAtTheEnd() async throws {
         let engine = try await loadedEngine()
         defer { engine.stop() }
