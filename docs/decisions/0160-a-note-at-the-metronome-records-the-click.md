@@ -1,9 +1,10 @@
 # ADR 0160 — a note at the metronome records the click
 
-- **Status:** **Accepted — built 2026-08-12** (branch `pocket-254-a-note-at-the-metronome`). Device
-  pass outstanding at the time of writing; the one thing only a device can prove here is the
-  migration (a store opened with existing journal entries), because a custom-type attribute crashes
-  on device only and in-memory tests miss it entirely.
+- **Status:** **Accepted — built and device-verified 2026-08-12** (branch
+  `pocket-254-a-note-at-the-metronome`, iPhone 16 Pro). The pass that mattered is the **migration**:
+  the six additive columns opened against a store holding existing journal entries, which is the one
+  thing in-memory tests structurally cannot prove — a custom-type attribute crashes on device only.
+  The write seam, the feed caption and §5's mid-ramp case were checked by hand and all hold.
 - **Date:** 2026-08-12
 - **Supersedes:** ADR 0155 §8's two refusals — *"No `.metronome` owner kind"* and *"No snapshot of the
   tempo"*. Everything else in ADR 0155 stands, including §1's flag, §3a's owner-picker prohibition,
