@@ -13,7 +13,11 @@ struct ExerciseTemplatePicker: View {
     /// configure form so the form stays uncrowded; seeded from the profile's preferred instrument and
     /// fixed once a template is chosen. Fretboard-family templates open on this neck; the rest ignore it.
     @Binding var instrument: Instrument
-    let onSelect: (ExerciseTemplate) -> Void
+    /// Reports the template **and the instrument it was chosen on**. The instrument rides along rather
+    /// than being read back out of the binding by the host: the host reads it from a deferred
+    /// navigation closure, which never sees a segment change (see `NewExerciseSheet.TemplateChoice`).
+    /// Here it is read at tap time, on screen, so it is always the current selection.
+    let onSelect: (ExerciseTemplate, Instrument) -> Void
 
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
     @Environment(\.isPro) private var isPro
@@ -43,6 +47,10 @@ struct ExerciseTemplatePicker: View {
                     // instead of the configure step; Pro (or a free-tier template) proceeds.
                     Button { select(template) } label: { row(template) }
                         .listRowBackground(PocketColor.background)
+                        // Identified, not label-matched: the Exercises library sits behind this sheet
+                        // and has its own "Scales"/"Chords" section rows, so a label query finds the
+                        // covered one and taps nothing.
+                        .accessibilityIdentifier("template.\(template.rawValue)")
                 }
             } footer: {
                 Text("Pick the kind of drill. This sets how you build and run it — and can't be "
@@ -61,7 +69,7 @@ struct ExerciseTemplatePicker: View {
     /// template opens the paywall (ADR 0112).
     private func select(_ template: ExerciseTemplate) {
         if AccessPolicy.canAuthor(template, isPro: isPro) {
-            onSelect(template)
+            onSelect(template, instrument)
             haptic(.light)
         } else {
             presentPaywall(.newExercise(template))
@@ -117,7 +125,7 @@ struct ExerciseTemplatePicker: View {
 
 #Preview("Template picker") {
     NavigationStack {
-        ExerciseTemplatePicker(instrument: .constant(.guitar)) { _ in }
+        ExerciseTemplatePicker(instrument: .constant(.guitar)) { _, _ in }
     }
     .preferredColorScheme(.dark)
 }
