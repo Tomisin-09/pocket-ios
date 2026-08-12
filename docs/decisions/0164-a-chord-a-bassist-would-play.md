@@ -1,4 +1,4 @@
-# 0163 — a chord a bassist would play
+# 0164 — a chord a bassist would play
 
 - **Status:** Accepted
 - **Date:** 2026-08-12 (`pocket-257-bass-chord-shapes`)

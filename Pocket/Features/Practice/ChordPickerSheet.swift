@@ -20,7 +20,7 @@ struct ChordPickerSheet: View {
     let onSave: (ChordVoicing) -> Void
     /// Sheet title — "Add a chord" when appending, "Swap chord" when replacing an existing slot.
     var title: String = "Add a chord"
-    /// The neck being authored for (ADR 0163). On bass the guitar sections stand down entirely —
+    /// The neck being authored for (ADR 0164). On bass the guitar sections stand down entirely —
     /// barres, triads and open shapes are six-string geometry and there is no honest four-string
     /// reading of them — and `BassChordShape`'s dyads and shells take their place.
     var instrument: Instrument = .guitar
@@ -332,7 +332,7 @@ private extension ChordPickerSheet {
                  accessibility: "\(grip.quality.displayName) triad on \(grip.name), choose a root")
     }
 
-    /// A bass shape's chip (ADR 0163) — the same root-menu interaction as a movable grip, because a
+    /// A bass shape's chip (ADR 0164) — the same root-menu interaction as a movable grip, because a
     /// dyad is movable in exactly the same sense: the picture is the shape, the root is chosen on tap.
     /// The browse picture is the shape rooted on the low E at fret 5, which is where a hand meets it.
     ///

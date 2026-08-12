@@ -5,7 +5,7 @@ import SwiftUI
 /// fretted notes (finger number inside when known), and ×/○ over the nut for muted/open strings. A
 /// high shape drops the nut for a "n fr." caption and windows at its lowest fret.
 ///
-/// **The neck is the voicing's own** (ADR 0163): six columns for a guitar shape, four for a bass one,
+/// **The neck is the voicing's own** (ADR 0164): six columns for a guitar shape, four for a bass one,
 /// read from `frets.count`. No instrument is passed in — a shape carries its neck with it, which is
 /// what lets a saved bass chord draw correctly in the instrument-free My Chords library.
 ///
@@ -24,7 +24,7 @@ struct ChordDiagramView: View {
     /// detail passes `false` because its navigation title already names the chord (ADR 0096).
     var showsName: Bool = true
 
-    /// How many strings this chart draws — the voicing's own length (ADR 0163): six for a guitar
+    /// How many strings this chart draws — the voicing's own length (ADR 0164): six for a guitar
     /// shape, four for a bass one. Read from the shape rather than a constant so the same diagram
     /// serves both necks with no instrument passed in.
     private var stringCount: Int { voicing.frets.count }
@@ -169,7 +169,7 @@ struct ChordDiagramView: View {
         }
     }
 
-    /// Reads the outer two strings by name. Indexed off the voicing's own length (ADR 0163) — the
+    /// Reads the outer two strings by name. Indexed off the voicing's own length (ADR 0164) — the
     /// literal `strings[5]` this replaced would have **crashed** on a four-string bass shape, and an
     /// accessibility label is exactly the code path a sighted test run never executes.
     private var accessibilityLabel: String {

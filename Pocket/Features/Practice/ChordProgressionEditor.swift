@@ -16,7 +16,7 @@ import SwiftUI
 /// grid + the Movable / Custom authoring sub-sheets.
 struct ChordProgressionEditor: View {
     @Binding var progression: ChordProgression
-    /// The owning drill's neck (ADR 0163) — passed to the picker so a bass drill is offered bass
+    /// The owning drill's neck (ADR 0164) — passed to the picker so a bass drill is offered bass
     /// shapes. The rows themselves need no instrument: a diagram draws whatever neck its voicing
     /// carries, so a progression authored on either instrument renders correctly on its own.
     var instrument: Instrument = .guitar
