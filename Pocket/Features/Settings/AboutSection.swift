@@ -11,6 +11,15 @@ import SwiftUI
 /// same `FAQView` the Toolkit shows pushes on top of it and backs out to Settings — one help screen,
 /// two doors (ADR 0145 D1).
 struct AboutSection: View {
+    /// Injected so previews drive a `RecordingSupportSender` rather than the live endpoint. The
+    /// default is the real one, so `SettingsView` stays a plain `AboutSection()`.
+    var sender: SupportSending = FormspreeSender()
+
+    /// The sheet is hosted **here, not in `SettingsView`** — that file sits just under SwiftLint's
+    /// 400-line ceiling (the same pressure that split this section out in the first place), and the
+    /// row that presents it lives in this file anyway.
+    @State private var showingContactSupport = false
+
     var body: some View {
         Section {
             LabeledContent("Version", value: Self.appVersion)
@@ -19,19 +28,22 @@ struct AboutSection: View {
                 Text("Help & FAQs")
             }
 
-            // ⚠ A `mailto:` **silently does nothing** on a device with no Mail account configured —
-            // no error, no sheet, nothing. That is exactly why ADR 0145 requires the address to
-            // *also* sit as plain selectable text inside the "How do I get help?" answer. This row is
-            // the convenience; that answer is the guarantee.
-            if let supportURL = Self.supportURL {
-                Link(destination: supportURL) {
-                    LabeledContent("Contact Support") {
-                        Image(systemName: "envelope")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
+            // Was a `mailto:`, which **silently does nothing** on a device with no Mail account
+            // configured — no error, no sheet, nothing. ADR 0161 replaced it with an in-app form that
+            // posts over HTTPS and works whether or not Mail is set up. The plain-text address stays
+            // in the "How do I get help?" answer (ADR 0145) and matters more now, not less: the form
+            // can fail *out loud*, and when it does it needs somewhere to send the player.
+            Button {
+                showingContactSupport = true
+            } label: {
+                LabeledContent("Contact Support") {
+                    Image(systemName: "envelope")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
             }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isButton)
 
             // Apple's standard EULA (the licence that governs use of the app on the
             // App Store) applies by default when we ship no custom terms — see
@@ -70,27 +82,14 @@ struct AboutSection: View {
                 .padding(.top, 16)
                 .accessibilityLabel("Red Moon")
         }
+        .sheet(isPresented: $showingContactSupport) {
+            ContactSupportSheet(sender: sender)
+        }
     }
 
     /// Marketing version from the bundle (`MARKETING_VERSION`), e.g. "0.0.1".
     static var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
-    }
-
-    /// A `mailto:` to support with the version already in the subject — free triage signal for one
-    /// `URLComponents`, and it saves the player looking the number up after we ask for it.
-    ///
-    /// Optional rather than force-unwrapped: this is composed from a percent-encoding API, and a row
-    /// that quietly doesn't render is a far smaller failure than a crash. The FAQ answer carries the
-    /// address in plain text regardless.
-    private static var supportURL: URL? {
-        var components = URLComponents()
-        components.scheme = "mailto"
-        components.path = FAQEntry.supportAddress
-        components.queryItems = [
-            URLQueryItem(name: "subject", value: "Red Moon Practice \(appVersion) — support")
-        ]
-        return components.url
     }
 
     /// Apple's standard Licensed Application End User License Agreement — the licence that

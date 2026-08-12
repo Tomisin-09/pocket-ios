@@ -12,6 +12,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **Contact Support now writes to us from inside the app.** The row in Settings ▸ About used to be a
+  `mailto:` link, which on a device with no Mail account configured did *nothing at all* — no error,
+  no sheet, no sign it had failed. It now opens a form: your email, your message, Send. It works
+  whether or not Mail is set up, and when it can't send it says so instead of failing in silence,
+  keeping every character you typed so a dropped connection doesn't cost you the message. Three
+  details go with it — the app version, your iOS version and your device model — and they are
+  **printed in the sheet above the Send button** rather than attached out of sight, because the only
+  honest way to send something is to say you're sending it. Nothing from your library ever goes:
+  not your songs, your recordings, your notes or your artist name. The support address still sits as
+  plain, copyable text in the Help & FAQs answer, and matters more than before: if a send is refused
+  outright, that's where the error points you. See
+  `docs/decisions/0161-a-message-you-can-actually-send.md`.
 - **A journal note written at the metronome now records the metronome.** The pencil in the
   metronome's toolbar used to write the same blank standalone note the Journal space's ＋ does, so
   "finally clean here" came back weeks later without saying what it was clean *at*. The note now
