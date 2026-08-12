@@ -85,24 +85,44 @@ struct ModeDescriptionLine: View {
     /// setting only a BPM looked like the grid was broken, because nothing said the phase was missing.
     var needsDownbeat = false
     var onSetDownbeat: () -> Void = {}
+    /// Open the song player's settings — **held** on the *Loop controls* affordance (ADR 0163). The
+    /// four settings it opens describe this screen, and two of them already have controls in this very
+    /// row, so the row that explains the screen's gestures is also where you adjust the screen itself.
+    var onOpenPlayerSettings: () -> Void = {}
     @State private var showingInfo = false
     /// What pinch-zoom anchors to (ADR 0098) — off (the default) holds the spot under your fingers,
     /// on re-centres the window on the playhead. The setting already existed in Settings; this is the
     /// same `UserDefaults` key surfaced where the gesture is, since it's a per-moment choice (are you
     /// inspecting a spot, or chasing a moving playhead?) rather than a set-once preference.
-    @AppStorage(AppSettings.Key.zoomFollowsPlayhead) private var zoomFollowsPlayhead = false
+    @AppStorage(AppSettings.Key.zoomFollowsPlayhead)
+    private var zoomFollowsPlayhead = AppSettings.zoomFollowsPlayheadDefault
 
     var body: some View {
         HStack {
-            Button { showingInfo = true } label: {
-                Label("Loop controls", systemImage: "info.circle")
-                    .font(.futura(.footnote, weight: .medium))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $showingInfo) {
-                LoopControlsInfo().presentationCompactAdaptation(.popover)
-            }
+            // Tap = the gesture cheatsheet; **hold = the player's settings** (ADR 0163). A bare shape
+            // with two gestures rather than a `Button` with a long press added, because that pairing
+            // fires both — here it would show the popover *behind* the sheet. `MetronomeControl`'s
+            // idiom. Idle-only comes free: this whole line is replaced by the A/B strip while a span
+            // is live and by the downbeat bar while placing the 1, so there is no mid-gesture state
+            // to guard against.
+            Label("Loop controls", systemImage: "info.circle")
+                .font(.futura(.footnote, weight: .medium))
+                .foregroundStyle(PocketColor.textSecondary)
+                .contentShape(Rectangle())
+                .onTapGesture { showingInfo = true }
+                .onLongPressGesture(minimumDuration: 0.4) {
+                    haptic(.medium)     // confirm the hold landed before the sheet appears
+                    onOpenPlayerSettings()
+                }
+                .popover(isPresented: $showingInfo) {
+                    LoopControlsInfo().presentationCompactAdaptation(.popover)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel("Loop controls")
+                .accessibilityHint("How the gestures work. Hold for the song player's settings")
+                // VoiceOver can't long-press, so surface the hold's action explicitly.
+                .accessibilityAction(named: Text("Player settings"), onOpenPlayerSettings)
             Spacer()
             // **Both toggles are chips, in the speed bar's `active` green.** Follow needs the state
             // cue on its own merits — its effect only shows on the *next* pinch, so a tinted label

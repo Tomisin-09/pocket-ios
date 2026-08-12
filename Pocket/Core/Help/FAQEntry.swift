@@ -124,6 +124,16 @@ extension FAQEntry {
                 + "it a few times as you work through it.",
               area: .audio),
 
+        // ADR 0163. The hold has no affordance on screen, so this and the Settings row are the only
+        // ways to find it — which is exactly why the Settings row stayed.
+        .init(question: "Can I change how the song player looks?",
+              answer: "Yes — which side the loop button sits on, whether the whole-song strip and the "
+                + "marker labels show, and what pinch-to-zoom holds still. Hold \"Loop controls\", "
+                + "just under the speed bar, to reach them without leaving the song, or open "
+                + "Settings ▸ Song player. They're the same four switches either way, and they apply "
+                + "to every song.",
+              area: .audio),
+
         // MARK: How practice works
         .init(question: "What's the difference between mastery and command tempo?",
               // ADR 0145 D5: **quote** the in-app explanations rather than restating them, so the two

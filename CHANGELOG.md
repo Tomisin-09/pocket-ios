@@ -12,6 +12,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Changed
+- **The song player's settings are now a hold away from the song player.** Which side the loop button
+  sits on, whether the whole-song strip and the marker labels show, and what pinch-to-zoom holds
+  still — all four describe the screen you're looking at, and all four used to mean leaving that
+  screen, crossing the app to Settings, flipping a switch you could no longer see the effect of, and
+  coming back. **Hold "Loop controls"** — the line just under the speed bar, beside Follow and Grid —
+  and the same four switches open over the waveform, so you can watch the minimap appear as you turn it
+  on. Tapping it still shows the gesture cheatsheet it always did. They're still in **Settings ▸ Song
+  player** too — the hold is a shortcut, not a hiding place — and it's one set of switches either way:
+  change them from any song and every song follows. Nothing moved, nothing was reset.
+  See `docs/decisions/0163-settings-where-you-are-using-them.md`.
 - **Settings is now a short list you can read, not a scroll you have to hunt through.** It had grown
   to thirteen sections in one flat page, in the order the features happened to land — Appearance near
   the top and the single animation toggle nine sections below it, Privacy wedged in the middle of the

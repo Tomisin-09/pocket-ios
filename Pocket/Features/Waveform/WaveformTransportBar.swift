@@ -61,7 +61,8 @@ struct TransportBar: View {
     /// Marker-left / Loop-right, the shipped arrangement; on ⇒ swapped, a user preference set in
     /// Settings. Applies to the **idle** flanking controls only — while a loop is active the compact
     /// column + colour strip keep their sides (the strip must stay where the loop identity reads).
-    @AppStorage(AppSettings.Key.transportLoopOnLeft) private var loopOnLeft = false
+    @AppStorage(AppSettings.Key.transportLoopOnLeft)
+    private var loopOnLeft = AppSettings.transportLoopOnLeftDefault
     /// How far the idle skip buttons move, in seconds (ADR 0124). Lives here rather than on the
     /// model because it's a standing habit, not per-song state — the same reasoning as `loopOnLeft`.
     @AppStorage(AppSettings.Key.transportSkipSeconds) private var skipSeconds = Int(TransportSkip.defaultIncrement)

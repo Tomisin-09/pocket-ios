@@ -14,10 +14,12 @@ struct PracticeCockpit<Header: View>: View {
     var landscape: Bool = false
     @ViewBuilder var header: () -> Header
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// P1c — hide the full-song minimap strip when the user turns it off in Settings (default on).
-    @AppStorage(AppSettings.Key.waveformMinimapVisible) private var minimapVisible = true
+    /// P1c — hide the full-song minimap strip when the user turns it off (default on).
+    @AppStorage(AppSettings.Key.waveformMinimapVisible)
+    private var minimapVisible = AppSettings.waveformMinimapVisibleDefault
     /// P2 — float a marker's label over the timeline as the playhead nears it (default on).
-    @AppStorage(AppSettings.Key.waveformMarkerLabels) private var markerLabelsVisible = true
+    @AppStorage(AppSettings.Key.waveformMarkerLabels)
+    private var markerLabelsVisible = AppSettings.waveformMarkerLabelsDefault
 
     var body: some View {
         // Derived once per *real* change, not once per display frame. `loops` and `markers`
@@ -89,7 +91,8 @@ struct PracticeCockpit<Header: View>: View {
                                     gridOn: model.song.showsGridlines,
                                     onToggleGrid: model.toggleGridlines,
                                     needsDownbeat: model.needsDownbeat,
-                                    onSetDownbeat: { model.beginSetDownbeat() })
+                                    onSetDownbeat: { model.beginSetDownbeat() },
+                                    onOpenPlayerSettings: { model.showingPlayerSettings = true })
                     .transition(.opacity)
             }
         }

@@ -95,6 +95,34 @@ final class AppSettingsTests: XCTestCase {
                                                 default: AppSettings.exerciseAnimatesDefault))
     }
 
+    // MARK: the song player's four display defaults (ADR 0163)
+
+    func testSongPlayerDefaultsMatchTheShippedArrangement() {
+        // Two surfaces now open the same screen — the Settings hub and a hold on the player's Loop
+        // control — so these four had to stop being literals repeated at three sites each. Pinning
+        // the constants is what makes the two doors provably agree: every `@AppStorage` declaration
+        // and every accessor reads the value asserted here.
+        XCTAssertFalse(AppSettings.transportLoopOnLeftDefault)      // Marker-left / Loop-right
+        XCTAssertTrue(AppSettings.waveformMinimapVisibleDefault)
+        XCTAssertTrue(AppSettings.waveformMarkerLabelsDefault)
+        XCTAssertFalse(AppSettings.zoomFollowsPlayheadDefault)      // pinch holds the focal point
+    }
+
+    func testSongPlayerDefaultsSurviveAnUnsetKeyAndYieldToAStoredOne() {
+        // Deliberately *not* asserted against the live accessors: those read `UserDefaults.standard`
+        // in the test host, so a key set by any earlier run would decide the result (ADR 0146 — a
+        // green run that depends on host state isn't a clean one). This pins the rule the accessors
+        // apply instead: absent ⇒ the constant, present ⇒ the stored value, both directions.
+        for expected in [AppSettings.transportLoopOnLeftDefault,
+                         AppSettings.waveformMinimapVisibleDefault,
+                         AppSettings.waveformMarkerLabelsDefault,
+                         AppSettings.zoomFollowsPlayheadDefault] {
+            XCTAssertEqual(AppSettings.resolvedBool(storedValue: nil, default: expected), expected)
+            XCTAssertEqual(AppSettings.resolvedBool(storedValue: !expected, default: expected),
+                           !expected, "an explicit choice must outrank the default")
+        }
+    }
+
     func testReferencePitchDefaultSitsInsideItsRange() {
         // The stepper's default must be a value the stepper can actually reach (A440 in A432–A446).
         XCTAssertTrue(AppSettings.tunerReferenceRange.contains(AppSettings.tunerReferenceDefault))

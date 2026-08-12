@@ -278,7 +278,14 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
 1. Song strip — name, artist, duration, key
 2. Speed / BPM bar (always visible)
 3. Mode description line — replaced by the **edit toolbar** (▶ audition ·
-   "New loop" / "Editing loop" · **Y/N**) while a loop is captured
+   "New loop" / "Editing loop" · **Y/N**) while a loop is captured. Its **Loop
+   controls** affordance: **tap** for the gesture cheatsheet popover, **hold** for the
+   song player's own settings over the waveform (ADR 0163) — loop-control side,
+   minimap, marker labels, pinch anchor — so a switch that changes this screen is
+   flipped while watching it, in the row that already carries **Follow** and **Grid**.
+   Tap and hold are gestures on a bare shape, never a `Button` with a long press added
+   (ADR 0124 — that pairing fires both). No idle guard is needed: this line is already
+   replaced while a span is live or the 1 is being placed.
 4. Waveform (detail view) — **SoundCloud-style mirrored bars** (blue): top half
    full opacity, bottom half ~60% reflection. **Pinch to zoom** into a section (the
    view tracks the playhead). The annotation library draws on the **borders**, off

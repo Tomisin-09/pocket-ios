@@ -119,6 +119,17 @@ enum AppSettings {
     /// happen. Do not inline it back to a literal.
     static let exerciseAnimatesDefault = true
 
+    /// The song player's four display defaults (ADR 0163), named for the same reason
+    /// `exerciseAnimatesDefault` is: each lives at three sites SwiftUI does **not** reconcile — the
+    /// accessor below, the `@AppStorage` in `SongPlayerSettingsView`, and the `@AppStorage` in
+    /// whichever waveform view reads it, that last being what SwiftUI actually uses for an unset key.
+    /// Since a hold on the player opens the *same* screen the Settings hub does, a drifted literal
+    /// would show two different "off"s for one key. Do not inline these back to literals.
+    static let transportLoopOnLeftDefault = false
+    static let waveformMinimapVisibleDefault = true
+    static let waveformMarkerLabelsDefault = true
+    static let zoomFollowsPlayheadDefault = false
+
     /// Gesture-confirmation haptics on/off. Default on.
     static var hapticsEnabled: Bool { bool(Key.hapticsEnabled) }
 
@@ -209,7 +220,7 @@ enum AppSettings {
     /// Which side the big idle **Loop** button sits on in the practice transport bar; the Marker
     /// takes the other side. Default **off** ⇒ Marker-left / Loop-right (the shipped arrangement);
     /// on ⇒ swapped. Applies to the idle flanking controls only.
-    static var transportLoopOnLeft: Bool { bool(Key.transportLoopOnLeft, default: false) }
+    static var transportLoopOnLeft: Bool { bool(Key.transportLoopOnLeft, default: transportLoopOnLeftDefault) }
 
     /// How far the practice transport's −/+ skip buttons move, in seconds (ADR 0124). Set by holding
     /// either button; sticky across songs because how far you jump is a habit, not a per-song choice.
@@ -223,7 +234,9 @@ enum AppSettings {
     /// Whether the full-song **minimap** strip shows under the detail waveform on the practice
     /// screen (P1c). Default **on** — it's the whole-song overview + scrub; off ⇒ hidden to give
     /// the waveform + loops a little more vertical room.
-    static var waveformMinimapVisible: Bool { bool(Key.waveformMinimapVisible, default: true) }
+    static var waveformMinimapVisible: Bool {
+        bool(Key.waveformMinimapVisible, default: waveformMinimapVisibleDefault)
+    }
 
     #if DEBUG
     /// DEBUG-only: whether the playhead (and therefore the in-song click) is pulled back through the
@@ -237,13 +250,17 @@ enum AppSettings {
     /// Whether a marker's **label** floats over the timeline as the playhead passes near it (P2).
     /// Default **on**. Off ⇒ markers still show as triangles / count chips, but you read their
     /// labels only in the Markers panel.
-    static var waveformMarkerLabels: Bool { bool(Key.waveformMarkerLabels, default: true) }
+    static var waveformMarkerLabels: Bool {
+        bool(Key.waveformMarkerLabels, default: waveformMarkerLabelsDefault)
+    }
 
     /// Whether pinch-to-zoom on the detail waveform re-anchors to the **playhead** as you zoom
     /// (the legacy paging), rather than to the **pinch focal point** (ADR 0098). Default **off** ⇒
     /// the spot under your fingers holds still; on ⇒ the window recenters on the playhead. Only
     /// governs the pinch gesture — page-mode during playback follows the playhead regardless.
-    static var zoomFollowsPlayhead: Bool { bool(Key.zoomFollowsPlayhead, default: false) }
+    static var zoomFollowsPlayhead: Bool {
+        bool(Key.zoomFollowsPlayhead, default: zoomFollowsPlayheadDefault)
+    }
 
     /// Appearance override. Default `.system` — the app follows the device setting until
     /// the user opts into a pinned light/dark appearance.

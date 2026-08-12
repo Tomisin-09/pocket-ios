@@ -183,6 +183,11 @@ struct WaveformPracticeView: View {
             SongDetailsSheet(song: model.song,
                              replaceAudio: { try await model.relinkAudio(to: $0) })
         }
+        // The player's own settings, from holding *Loop controls* on the status line (ADR 0163) — the
+        // same screen Settings ▸ Song player opens, so the two can't drift.
+        .sheet(isPresented: $model.showingPlayerSettings) {
+            SongPlayerSettingsSheet()
+        }
         // Bulk practice categories across the selected loops (ADR 0125), from the selection
         // header's slider button — the chevron's old slot.
         .sheet(isPresented: $model.showingLoopBulkEdit) {
@@ -211,7 +216,7 @@ struct WaveformPracticeView: View {
         // engine alive via the global command center.
         .onDisappear { model.endPlaybackSession() }
         // Page-mode + the lock-screen clock ride the playhead, which moves once per display
-        // frame. Reading it *here* would make this body — and with it all seven presentations
+        // frame. Reading it *here* would make this body — and with it all eight presentations
         // declared above — re-evaluate at 120 Hz, which is what made opening song or loop
         // settings mid-playback feel heavy. `PlayheadWatcher` owns that dependency instead.
         .background { PlayheadWatcher(model: model) }
