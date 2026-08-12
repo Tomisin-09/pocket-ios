@@ -68,6 +68,15 @@ struct JournalEntryRow: View {
             }
         case .session:
             SessionUnitChips(units: entry.practisedUnits, openAction: openUnit)
+        case .metronome:
+            // The click that was running (ADR 0160) — "96 BPM · 4/4 · ♫ · gentle withdrawal", in the
+            // same mono caption an exercise's BPM uses. Nothing renders if the columns are missing,
+            // which only an entry written by a future bug could manage.
+            if let sitting = entry.metronomeContext {
+                Text(sitting.summary)
+                    .font(.pocketMono(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
         case .standalone, .orphan:
             // Two different meanings, one rendering, and deliberately so (ADR 0155 §2): a standalone
             // note never had a subject and an orphan *lost* one, but neither has anything to

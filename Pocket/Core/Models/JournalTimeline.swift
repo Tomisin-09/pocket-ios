@@ -85,6 +85,12 @@ enum JournalTimeline {
                 // a caption one careless assignment away, and a standalone note attributed to a unit
                 // is precisely the corruption this decision exists to prevent.
                 return nil
+            case .metronome:
+                // A constant, not a snapshot (ADR 0160 §6): there is exactly one metronome, it is a
+                // screen rather than a row, and it can be neither renamed nor deleted — so there is
+                // nothing for `ownerLabelAtEntry` to protect the caption from. It also makes
+                // "metronome" a search term, since `searchHaystack` folds this in.
+                return "Metronome"
             case .exercise, .loop, .orphan:
                 return ownerLabel(loop: entry.loop, exercise: entry.exercise, song: nil)
                     ?? entry.ownerLabelAtEntry

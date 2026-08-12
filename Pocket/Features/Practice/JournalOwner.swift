@@ -65,13 +65,18 @@ enum JournalOwner {
     /// so it exists only at the write seam; unlike `.session` it carries no context whatsoever,
     /// because there is none to carry.
     case standalone
+    /// A sitting at the **free-play metronome** (ADR 0160). Ownerless like `.standalone` — no
+    /// relationship, no journal to read, alive only at the write seam — but unlike it, this one
+    /// carries a context, because a click has one: tempo, meter, subdivision and withdrawal, captured
+    /// when the composer opened.
+    case metronome(MetronomeJournalContext)
 
     /// Entries newest-first — the order the journal lists them in.
     var entriesByRecent: [JournalEntry] {
         switch self {
         case .loop(let loop): loop.journalByRecent
         case .exercise(let exercise): exercise.journalByRecent
-        case .session, .standalone: []
+        case .session, .standalone, .metronome: []
         }
     }
 
@@ -80,7 +85,7 @@ enum JournalOwner {
         switch self {
         case .loop(let loop): loop.journal
         case .exercise(let exercise): exercise.journal
-        case .session, .standalone: []
+        case .session, .standalone, .metronome: []
         }
     }
 
@@ -103,6 +108,7 @@ enum JournalOwner {
         case .exercise(let exercise): exercise.name.isEmpty ? "this exercise" : exercise.name
         case .session(let context): context.routineName.isEmpty ? "this session" : context.routineName
         case .standalone: "your Journal"
+        case .metronome: "the Metronome"
         }
     }
 
@@ -121,6 +127,8 @@ enum JournalOwner {
             return "Saves to \(displayName)'s Journal, snapshotting what you practised in this session."
         case .standalone:
             return "Saves straight to your Journal — not attached to any loop or exercise."
+        case .metronome:
+            return "Saves straight to your Journal, snapshotting the click you're playing to."
         }
     }
 }
@@ -174,6 +182,12 @@ enum JournalWriter {
             // the stored `isStandalone` flag rather than by *not* having an owner, because absence
             // already means `.orphan` (ADR 0155 §1).
             let entry = JournalEntry.forStandalone(text: trimmed, kind: kind)
+            context.insert(entry)
+        case .metronome(let sitting):
+            // Also no relationship — but unlike `.standalone` there is something to record, and the
+            // snapshot arrives already taken: it was pinned when the composer opened rather than read
+            // here, because the automator can move the tempo while the sheet is up (ADR 0160 §5).
+            let entry = JournalEntry.forMetronome(text: trimmed, kind: kind, context: sitting)
             context.insert(entry)
         }
         return true

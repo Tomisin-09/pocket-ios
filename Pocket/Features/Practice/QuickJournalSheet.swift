@@ -85,7 +85,10 @@ struct QuickJournalSheet: View {
     /// vocabulary. The four that survive are the four ADR 0100's own composer led with.
     private var offeredKinds: [EntryKind] {
         switch owner {
-        case .standalone: [.goal, .breakthrough, .struggle, .note]
+        // A metronome note shares the narrowing, not by analogy but by the same argument (ADR 0160
+        // §7): 👂 Ear, 🎸 Improv and 🎬 Session each assert the note was written during something with
+        // a unit behind it, and a click is not that.
+        case .standalone, .metronome: [.goal, .breakthrough, .struggle, .note]
         case .loop, .exercise, .session: EntryKind.pickerOrder
         }
     }
@@ -111,11 +114,22 @@ struct QuickJournalSheet: View {
 /// The nav-bar way in, so every run screen opens capture the same way and from the same place.
 /// A pencil, not a book: the review bar's 📕 *Journal* pill opens the history, this writes.
 struct QuickJournalButton: View {
-    @Binding var isPresented: Bool
+    /// What the tap does. A closure rather than only a `Binding<Bool>` because the metronome has to
+    /// **pin its snapshot at the tap** (ADR 0160 §5) and then present by item — one button, two ways
+    /// to open it, rather than a second button that would have to be kept looking identical.
+    private let action: () -> Void
+
+    init(isPresented: Binding<Bool>) {
+        self.action = { isPresented.wrappedValue = true }
+    }
+
+    init(action: @escaping () -> Void) {
+        self.action = action
+    }
 
     var body: some View {
         Button {
-            isPresented = true
+            action()
             haptic(.light)
         } label: {
             Image(systemName: "square.and.pencil")

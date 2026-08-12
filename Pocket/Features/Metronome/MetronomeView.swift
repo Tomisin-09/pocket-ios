@@ -21,9 +21,15 @@ struct MetronomeView: View {
     @Environment(\.dismiss) private var dismiss
     /// Whether the meter/withdrawal sheet is showing — everything that shapes how the bar is filled.
     @State private var showingSettings = false
-    /// The standalone-note composer (ADR 0155 §8). Presenting it leaves the click running — the sheet
-    /// touches no transport, which is the whole reason ADR 0142 built it.
-    @State private var composing = false
+    /// The note being composed, **carrying the snapshot taken when the pencil was tapped** (ADR 0160
+    /// §5). Presenting it leaves the click running — the sheet touches no transport, which is the
+    /// whole reason ADR 0142 built it, and the reason the tempo can move while it is open.
+    ///
+    /// Held in `@State` and presented by item rather than rebuilt in the sheet's content closure: that
+    /// closure re-runs on every body pass, and this body reads `engine.bpm`, so a snapshot taken there
+    /// would be whichever tempo the last re-render saw — neither the moment the player reached for the
+    /// pencil nor the moment they saved.
+    @State private var composing: PendingMetronomeNote?
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
     /// average against a new one.
@@ -71,14 +77,12 @@ struct MetronomeView: View {
                         .foregroundStyle(PocketColor.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                 }
-                // The second door onto a standalone note (ADR 0155 §8). A metronome sitting is not an
-                // exercise, a loop or a routine — it is the clearest case in the app of a surface
-                // with no unit whose snapshot could be honest — so what gets written here is a
-                // standalone note, and §1's model change already provides the whole mechanism. Ahead
-                // of the meter button, and nothing new is written: both the button and the sheet are
-                // the ones `ExerciseRunView` and `LoopRunView` already use.
+                // The second door onto the journal (ADR 0155 §8), now writing a **metronome** note
+                // rather than a bare standalone one (ADR 0160). The sitting is snapshotted here, at
+                // the tap, because that is the moment the player is reacting to. Ahead of the meter
+                // button; the button itself is the one `ExerciseRunView` and `LoopRunView` use.
                 ToolbarItem(placement: .topBarTrailing) {
-                    QuickJournalButton(isPresented: $composing)
+                    QuickJournalButton { composing = PendingMetronomeNote(sitting: engine.journalContext) }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     meterMenu
@@ -99,12 +103,13 @@ struct MetronomeView: View {
         .sheet(isPresented: $showingSettings) {
             MetronomeSettingsSheet(engine: engine)
         }
-        // No `.metronome` owner kind, and no snapshot of the live BPM even though one is to hand
-        // (ADR 0155 §8): a standalone note records nothing, and half a snapshot — a tempo with no
-        // unit attached to it — is exactly the false context this decision exists to stop. A player
-        // who wants the tempo in the note can type it, and then it means what they meant by it.
-        .sheet(isPresented: $composing) {
-            QuickJournalSheet(owner: .standalone)
+        // ADR 0155 §8 refused a `.metronome` owner kind and any snapshot of the live BPM, on the
+        // grounds that half a snapshot — a tempo with no unit attached to it — is false context.
+        // **ADR 0160 reverses both**, conditionally: the objection was to a *fragment* of a unit's
+        // context, and tempo + meter + subdivision + withdrawal on an entry that says it was written
+        // at the click is a full description of a real thing, with nowhere wrong to attach it.
+        .sheet(item: $composing) { pending in
+            QuickJournalSheet(owner: .metronome(pending.sitting))
         }
     }
 
@@ -247,6 +252,17 @@ struct MetronomeView: View {
                                         to: nil, from: nil, for: nil)
         #endif
     }
+}
+
+/// A composer that has been opened, holding the sitting as it stood at that instant (ADR 0160 §5).
+///
+/// The identity is the *presentation*, not the snapshot — a fresh `UUID` per tap — so `.sheet(item:)`
+/// presents once and never re-presents itself when a value inside the snapshot happens to repeat. It
+/// lives here rather than on `MetronomeJournalContext` so that type stays a pure, `Equatable` value
+/// with no identity of its own to confuse a test.
+private struct PendingMetronomeNote: Identifiable {
+    let id = UUID()
+    let sitting: MetronomeJournalContext
 }
 
 // MARK: - Meter (time signature + subdivision + click withdrawal)

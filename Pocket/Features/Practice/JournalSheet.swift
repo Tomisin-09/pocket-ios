@@ -99,6 +99,11 @@ struct JournalSheet: View {
             // holds no journal *and* snapshots nothing (ADR 0155). If a later surface ever does hand
             // one over, the string must not promise a snapshot the entry will never carry.
             return "No entries yet. Jot a goal, a breakthrough or a struggle."
+        case .metronome:
+            // Unreachable for the same reason (ADR 0160) — a metronome owner holds no journal either.
+            // It *does* snapshot, unlike `.standalone`, so the string is allowed to promise one.
+            return "No entries yet. Jot what the click is telling you — each entry remembers the "
+                + "tempo and meter you were playing to."
         }
     }
 
@@ -180,6 +185,11 @@ struct JournalSheet: View {
                     // a standalone note snapshots nothing at all (ADR 0155 §5), so this says so
                     // rather than showing an empty row that reads as a missing value.
                     Text("Nothing — this note isn't attached to a loop or exercise")
+                case .metronome(let sitting):
+                    // Unreachable here too, but a metronome note is the one ownerless entry that
+                    // *does* carry a snapshot (ADR 0160), so it previews the sitting rather than
+                    // borrowing `.standalone`'s "nothing".
+                    Text(sitting.summary)
                 }
             }
             .foregroundStyle(PocketColor.textPrimary)
@@ -267,6 +277,15 @@ private struct JournalEntryEditor: View {
                             Text(entry.practisedUnits.map(\.title).joined(separator: ", "))
                                 .font(.futura(.body))
                                 .multilineTextAlignment(.trailing)
+                        }
+                    case .metronome:
+                        // The click it was written at (ADR 0160). Unreachable today for the same
+                        // reason a standalone entry is — there is no owner screen to edit it from —
+                        // but it must never fall through to "no snapshot", which is what it isn't.
+                        if let sitting = entry.metronomeContext {
+                            LabeledContent("Metronome") {
+                                Text(sitting.summary).font(.pocketMono(.body))
+                            }
                         }
                     case .standalone, .orphan:
                         // Neither has a snapshot to show. A standalone entry can't reach this form

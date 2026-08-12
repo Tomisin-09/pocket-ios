@@ -46,6 +46,12 @@ enum JournalOwnerRoute: Hashable {
     ///   so both relationships are nil and there is nowhere to go. It still reads its snapshotted
     ///   caption; the caption is simply plain text, which is the ADR 0142 honesty rule.
     ///
+    /// A **standalone** note has no caption at all, and a **metronome** note (ADR 0160 §6) has one
+    /// that deliberately stays plain: the metronome screen exists, but opening it would restore
+    /// whatever state it was left in rather than the sitting the note describes, so the tap would
+    /// promise a destination it can't reach. Both fall out of the relationship test below, which is
+    /// nil for either — stated here because the *reason* differs from an orphan's.
+    ///
     /// A session resolves through `routines` because its owner is a **loose id copy** rather than a
     /// relationship (ADR 0143) — the same trade, and the same expected failure, as the unit pills
     /// below. `routines` defaults to empty so the take/unit callers, which have no session to resolve,

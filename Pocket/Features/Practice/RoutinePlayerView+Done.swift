@@ -44,11 +44,13 @@ extension RoutinePlayerView {
                 case .settle(let percent): loop.settleCommand(to: Double(percent) / 100)
                 case .none: break
                 }
-            case .session, .standalone:
-                // Both unreachable: `owner(for:)` only ever builds a unit owner from a stage. A
+            case .session, .standalone, .metronome:
+                // All three unreachable: `owner(for:)` only ever builds a unit owner from a stage. A
                 // session owner belongs to the whole sitting and is written from the summary screen
                 // (ADR 0143); a standalone owner is never built from a stage at all, since a stage is
-                // exactly the unit a standalone note declines to have (ADR 0155). Neither has a
+                // exactly the unit a standalone note declines to have (ADR 0155); and a metronome
+                // owner exists only on the free-play screen, which no routine runs through (ADR
+                // 0160). None has a
                 // mastery or a command to revise — so there is nothing here to do but let the note
                 // below be written.
                 break
