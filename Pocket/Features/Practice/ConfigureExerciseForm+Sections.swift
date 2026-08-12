@@ -194,7 +194,7 @@ extension ConfigureExerciseForm {
 
     var chordsSection: some View {
         Section {
-            ChordProgressionEditor(progression: $chords)
+            ChordProgressionEditor(progression: $chords, instrument: instrument)
                 .listRowBackground(Color.clear)
         } header: {
             Text("Chord progression")
@@ -214,7 +214,8 @@ extension ConfigureExerciseForm {
                 StrumPatternEditor(beatsPerBar: signature.beats,
                                    pattern: $strumChords.strumPattern)
                 Divider()
-                ChordProgressionEditor(progression: $strumChords.chordProgression)
+                ChordProgressionEditor(progression: $strumChords.chordProgression,
+                                       instrument: instrument)
             }
             .listRowBackground(Color.clear)
         } header: {

@@ -40,7 +40,7 @@ struct ExerciseTemplatePicker: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Section {
-                ForEach(ExerciseTemplate.creatable) { template in
+                ForEach(ExerciseTemplate.creatable(for: instrument)) { template in
                     // Every creatable template is buildable now — the "Coming Soon" (Ear Training /
                     // Theory) rows were removed 2026-07-22 (ear training shipped as a loop mode, ADR 0104).
                     // Authoring a Pro-tier template is gated (ADR 0112): a free tap opens the paywall

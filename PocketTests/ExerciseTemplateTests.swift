@@ -111,6 +111,29 @@ final class ExerciseTemplateTests: XCTestCase {
         XCTAssertFalse(ExerciseTemplate.creatable.contains(.theory))
     }
 
+    /// ADR 0163: the strum-lane templates stand down on bass (a down/up arrow lane is a guitar
+    /// technique), while **Chords stays** — bass chords are dyads and shells, which is the whole point
+    /// of `BassChordShape`.
+    func testBassDropsTheStrumLaneTemplatesButKeepsChords() {
+        let bass = ExerciseTemplate.creatable(for: .bass)
+        XCTAssertFalse(bass.contains(.strumming))
+        XCTAssertFalse(bass.contains(.strumChords))
+        XCTAssertTrue(bass.contains(.chords))
+        XCTAssertTrue(bass.contains(.scales))
+        XCTAssertTrue(bass.contains(.arpeggios))
+        // Order is preserved — the gate filters, it doesn't re-sort.
+        XCTAssertEqual(bass, ExerciseTemplate.creatable.filter { bass.contains($0) })
+    }
+
+    /// Guitar is untouched by the gate, and the gate is **authoring-only**: `displayOrder` (which
+    /// buckets the library) still covers every template, so a drill saved as a bass strumming
+    /// exercise — possible while ADR 0116 S7's control was inert — still lists, opens and runs.
+    func testTheBassGateDoesNotReachBackwardsIntoTheLibrary() {
+        XCTAssertEqual(ExerciseTemplate.creatable(for: .guitar), ExerciseTemplate.creatable)
+        XCTAssertTrue(ExerciseTemplate.displayOrder.contains(.strumChords))
+        XCTAssertTrue(ExerciseTemplate.displayOrder.contains(.strumming))
+    }
+
     func testDisplayOrderCoversEveryTemplateForGrouping() {
         // Grouping order stays complete — every case, including the retired ones — so drills already
         // made under Fingerstyle / Rhythm still bucket under their section.

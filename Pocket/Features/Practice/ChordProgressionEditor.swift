@@ -16,6 +16,10 @@ import SwiftUI
 /// grid + the Movable / Custom authoring sub-sheets.
 struct ChordProgressionEditor: View {
     @Binding var progression: ChordProgression
+    /// The owning drill's neck (ADR 0163) — passed to the picker so a bass drill is offered bass
+    /// shapes. The rows themselves need no instrument: a diagram draws whatever neck its voicing
+    /// carries, so a progression authored on either instrument renders correctly on its own.
+    var instrument: Instrument = .guitar
 
     /// Which slot the picker writes into — a new chord (`.add`) or a swap of an existing one
     /// (`.replace`). The picker emits a plain `ChordVoicing`, whatever the source (library, saved,
@@ -52,7 +56,8 @@ struct ChordProgressionEditor: View {
         .sheet(item: $pickerTarget) { target in
             ChordPickerSheet(onInsert: { apply($0, to: target) },
                              onSave: save,
-                             title: target.isReplace ? "Swap chord" : "Add a chord")
+                             title: target.isReplace ? "Swap chord" : "Add a chord",
+                             instrument: instrument)
         }
     }
 

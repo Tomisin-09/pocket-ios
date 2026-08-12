@@ -224,4 +224,18 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         .basic, .warmup, .strumming, .picking, .scales, .chords, .strumChords,
         .arpeggios, .legato, .freeform
     ]
+
+    /// The templates offered when creating a drill for `instrument` (ADR 0163). Guitar gets the whole
+    /// list; **bass drops Strumming and Chords & Strum**, whose content is a down/up strum lane — a
+    /// guitar technique, and a lane of arrows over a bass line describes something bassists don't do.
+    /// Chords itself stays: bass chords are real (dyads and shells, `BassChordShape`).
+    ///
+    /// **Authoring-only**, like ADR 0127's rest rule. A drill already saved under a hidden template
+    /// still opens, edits, runs and lists exactly as before — including one saved as bass while the
+    /// create sheet's instrument control was inert (ADR 0116 S7). Withdrawing a template from the
+    /// picker must never reach backwards into a library.
+    static func creatable(for instrument: Instrument) -> [ExerciseTemplate] {
+        guard instrument == .bass else { return creatable }
+        return creatable.filter { $0 != .strumming && $0 != .strumChords }
+    }
 }

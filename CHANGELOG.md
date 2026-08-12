@@ -76,7 +76,23 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   `fastlane beta` lane now distributes externally to the "Closed Beta" group.
   See `docs/plans/beta-testing-plan.md` and `docs/beta/user-guide.md`.
 
+### Added
+- **Chord drills work on bass.** A Chords exercise created for bass now draws a **four-string** chord
+  box and offers shapes a bassist actually plays — root and fifth, root and octave, the major and
+  minor tenth, and two three-note shells for further up the neck — each slid to any root you pick. The
+  guitar catalogue stands down when you're on bass: no barre forms, no triads, no six-string open
+  shapes, and your saved chords are filtered to the instrument you're writing for. Note names, root
+  markers and Hear all read in bass tuning rather than a guitar's. Strumming and Chords & Strum aren't
+  offered for a bass drill — a down/up strum lane isn't a bass technique — and anything you already
+  made under them is untouched and still runs. See ADR 0163.
+
 ### Fixed
+- **The "My song stopped playing" answer in Help described the old behaviour.** It said Red Moon links
+  to your audio file where it lives rather than copying it, and told you to re-import — but importing
+  has copied the audio into the app since 1.1, and re-importing would make a *second* song and leave
+  your loops and markers on the first. It now says what actually happens: the copy is yours, moving or
+  deleting the original doesn't affect it, and a song that does go missing is fixed with Find the
+  file, which keeps everything attached to it.
 - **Choosing Bass when you create an exercise now actually gives you a bass neck.** The Guitar/Bass
   control on the New exercise screen was being ignored: whichever instrument was set in Settings ▸ You
   won every time, in both directions — set to Guitar, a drill you created as Bass still drew six

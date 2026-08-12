@@ -58,6 +58,50 @@ final class ExerciseInstrumentUITests: UITestCase {
                       "the configure step did not draw a guitar neck for the default instrument")
     }
 
+    /// A bass Chords drill draws **four-string** chord boxes and is offered the bass vocabulary
+    /// (ADR 0163). The picker's own sections are the proof that the guitar catalog stood down: a
+    /// six-string diagram anywhere in this flow means a guitar shape was offered for a bass drill.
+    @MainActor
+    func testBassChordsDrillUsesTheBassNeckAndVocabulary() throws {
+        let app = launchApp()
+        openNewExerciseSheet(in: app)
+
+        let bass = app.buttons["Bass"].firstMatch
+        XCTAssertTrue(bass.waitForExistence(timeout: Self.uiTimeout), "Guitar/Bass control missing")
+        bass.tap()
+
+        // The strum-lane templates stand down on bass; Chords does not.
+        XCTAssertFalse(app.buttons["template.strumChords"].exists,
+                       "Chords & Strum is offered on bass (ADR 0163 D4)")
+        XCTAssertFalse(app.buttons["template.strumming"].exists, "Strumming is offered on bass")
+        chooseTemplate("chords", in: app)
+
+        let addChord = app.buttons["Add chord"].firstMatch
+        XCTAssertTrue(addChord.waitForExistence(timeout: Self.uiTimeout),
+                      "Add chord missing from the editor")
+        addChord.tap()
+
+        XCTAssertTrue(app.navigationBars["Add a chord"].waitForExistence(timeout: Self.uiTimeout),
+                      "the chord picker did not open")
+        let bassChip = app.buttons["Power (root + 5th), choose a root"].firstMatch
+        XCTAssertTrue(bassChip.waitForExistence(timeout: Self.uiTimeout),
+                      "no bass shapes offered for a bass chords drill")
+        XCTAssertFalse(app.otherElements["chord.strings.6"].exists,
+                       "a six-string chord box is on screen for a bass drill")
+
+        bassChip.tap()
+        let root = app.buttons["C"].firstMatch
+        XCTAssertTrue(root.waitForExistence(timeout: Self.uiTimeout), "the root menu did not open")
+        root.tap()
+
+        XCTAssertTrue(app.otherElements["chord.strings.4"].waitForExistence(timeout: Self.uiTimeout),
+                      "the inserted bass chord did not draw a four-string box")
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "bass-chords-configure-step"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
     // MARK: - Flow
 
     @MainActor
