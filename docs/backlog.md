@@ -18,6 +18,50 @@ Three things are parked, in the order they'd sensibly resume:
 Slices 1 and 2 of ADR 0140 are **on main** — squash `e9688ff`, PR #209, merged 2026-08-02 after a
 device pass and a green CI run. Nothing from that work is outstanding except slice 3.
 
+## Instruments beyond guitar and 4-string bass (parked 2026-08-12, after ADR 0163 bass chords)
+
+**5-string bass and ukulele sit in the same category: out of scope until we understand what the
+instrument actually needs.** Neither is blocked on effort — both are blocked on knowledge. Revisit
+when there's a real sense of the requirements rather than a wish to support more instruments.
+
+What makes each non-trivial, so the reasons don't have to be rediscovered:
+
+- **Ukulele** — reentrant gCEA tuning is *non-monotonic*, which breaks two things at once: ADR 0116's
+  `Tuning.engineOpenMidi` reversal adapter (valid only for monotonic tunings) and CAGED box
+  generation. ADR 0116 already decided that when it lands it is **chords + custom drills only**, no
+  generated scale boxes.
+- **5-string bass** — collides with the rule that made ADR 0163's bass chords migration-free:
+  `ChordVoicing.openMidi` is derived from `frets.count` (4 ⇒ bass, else guitar). A five-slot shape has
+  nowhere to go under that rule. Supporting it means giving a voicing a real instrument axis — which
+  is a stored field, and therefore a migration — or a different discriminator entirely. Note this is
+  a *chord-layer* constraint; `FretboardDrill` already carries its own `stringCount`, so the drill
+  side is less exposed.
+- Both would also want their own curated vocabulary. ADR 0163's dyads/shells are 4-string bass
+  shapes; ADR 0116's `BassNeckLayout` is a 4-string box. Neither generalises by widening an array.
+
+Alternate *tunings* (drop D, half-step down) are a separate parked question: generation uses standard
+tuning throughout (ADR 0116 S3, ADR 0163), and the tuner already models the tunings themselves.
+
+**Not doing:** retroactively correcting exercises stored against the wrong instrument by the ADR 0116
+S7 bug. Decided 2026-08-12 — the fix stops new drills being wrong, the affected set is tiny
+(pre-fix, pre-launch), and rewriting stored drills on a player's behalf is a bigger risk than a
+handful of drills on the wrong neck that can be recreated in seconds.
+
+## ADR numbering collision — two ADRs are numbered 0163 (logged 2026-08-12)
+
+`0163-settings-where-you-are-using-them.md` (PR #243) and `0163-a-chord-a-bassist-would-play.md`
+(PR #244) were authored in parallel sessions and merged within an hour of each other, both claiming
+0163. The chord one should become **0164** (it merged second).
+
+**Being corrected straight after this entry lands.** Logged anyway, because the reason it wasn't
+bundled into #244 is worth keeping: every reference lives in Swift doc comments (`BassChordShape`,
+`ChordVoicing`, `ChordDiagramView`, `ChordBoardEditor`, `ChordPickerSheet`, `CustomChordSheet`,
+`ChordProgressionEditor`, `MyChordsView`, `ExerciseTemplate`, and three test files), so a correct
+renumber touches `.swift` and pays a full ~12-minute CI run for what is only a comment change.
+
+Renaming the file alone would be worse than leaving it as is: the comments would then say "ADR 0163"
+and land a reader on the settings ADR. It's the whole rename or none of it.
+
 ## Marker labels could be terser — "M3" not "Marker 3" (logged 2026-08-11)
 
 Markers already auto-name on drop: `dropMarkerAtPlayhead()` calls
