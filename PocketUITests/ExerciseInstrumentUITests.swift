@@ -59,7 +59,7 @@ final class ExerciseInstrumentUITests: UITestCase {
     }
 
     /// A bass Chords drill draws **four-string** chord boxes and is offered the bass vocabulary
-    /// (ADR 0163). The picker's own sections are the proof that the guitar catalog stood down: a
+    /// (ADR 0164). The picker's own sections are the proof that the guitar catalog stood down: a
     /// six-string diagram anywhere in this flow means a guitar shape was offered for a bass drill.
     @MainActor
     func testBassChordsDrillUsesTheBassNeckAndVocabulary() throws {
@@ -72,7 +72,7 @@ final class ExerciseInstrumentUITests: UITestCase {
 
         // The strum-lane templates stand down on bass; Chords does not.
         XCTAssertFalse(app.buttons["template.strumChords"].exists,
-                       "Chords & Strum is offered on bass (ADR 0163 D4)")
+                       "Chords & Strum is offered on bass (ADR 0164 D4)")
         XCTAssertFalse(app.buttons["template.strumming"].exists, "Strumming is offered on bass")
         chooseTemplate("chords", in: app)
 

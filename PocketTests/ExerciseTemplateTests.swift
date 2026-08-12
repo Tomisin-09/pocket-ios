@@ -111,7 +111,7 @@ final class ExerciseTemplateTests: XCTestCase {
         XCTAssertFalse(ExerciseTemplate.creatable.contains(.theory))
     }
 
-    /// ADR 0163: the strum-lane templates stand down on bass (a down/up arrow lane is a guitar
+    /// ADR 0164: the strum-lane templates stand down on bass (a down/up arrow lane is a guitar
     /// technique), while **Chords stays** — bass chords are dyads and shells, which is the whole point
     /// of `BassChordShape`.
     func testBassDropsTheStrumLaneTemplatesButKeepsChords() {

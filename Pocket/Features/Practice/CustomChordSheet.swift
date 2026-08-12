@@ -20,7 +20,7 @@ struct CustomChordSheet: View {
     /// voicing to persist — kept separate from `onInsert` so saving and inserting are distinct intents.
     var onSave: ((ChordVoicing) -> Void)?
 
-    /// The neck this sheet builds on (ADR 0163) — the owning drill's instrument, or the profile's
+    /// The neck this sheet builds on (ADR 0164) — the owning drill's instrument, or the profile's
     /// preferred one when the sheet is opened from the instrument-free My Chords library. Fixed for
     /// the life of the sheet: the board's string count *is* the shape being authored, so changing it
     /// mid-build would be discarding the player's work, not switching a view.

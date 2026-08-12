@@ -84,7 +84,7 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   shapes, and your saved chords are filtered to the instrument you're writing for. Note names, root
   markers and Hear all read in bass tuning rather than a guitar's. Strumming and Chords & Strum aren't
   offered for a bass drill — a down/up strum lane isn't a bass technique — and anything you already
-  made under them is untouched and still runs. See ADR 0163.
+  made under them is untouched and still runs. See ADR 0164.
 
 ### Fixed
 - **The "My song stopped playing" answer in Help described the old behaviour.** It said Red Moon links

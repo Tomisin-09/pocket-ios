@@ -225,7 +225,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         .arpeggios, .legato, .freeform
     ]
 
-    /// The templates offered when creating a drill for `instrument` (ADR 0163). Guitar gets the whole
+    /// The templates offered when creating a drill for `instrument` (ADR 0164). Guitar gets the whole
     /// list; **bass drops Strumming and Chords & Strum**, whose content is a down/up strum lane — a
     /// guitar technique, and a lane of arrows over a bass line describes something bassists don't do.
     /// Chords itself stays: bass chords are real (dyads and shells, `BassChordShape`).

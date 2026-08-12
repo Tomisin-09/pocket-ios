@@ -33,7 +33,7 @@ struct ChordBoardEditor: View {
     private let gutterWidth: CGFloat = 18
     private let columnSpacing: CGFloat = 6
 
-    /// How many strings this board edits — the bound shape's own length (ADR 0163), so the same
+    /// How many strings this board edits — the bound shape's own length (ADR 0164), so the same
     /// editor serves a six-string guitar box and a four-string bass one.
     private var stringCount: Int { frets.count }
     /// Column order left → right: lowest string … highest, the way a chord box faces you.

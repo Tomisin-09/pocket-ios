@@ -1,7 +1,7 @@
 import XCTest
 @testable import Pocket
 
-/// The **bass chord vocabulary** (ADR 0163 slices 1–2): the tuning `ChordVoicing` derives from its own
+/// The **bass chord vocabulary** (ADR 0164 slices 1–2): the tuning `ChordVoicing` derives from its own
 /// shape, and the dyad/shell generator built on it.
 ///
 /// The generator is property-tested rather than pinned to a table of expected fingerings. A table

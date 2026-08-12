@@ -1,6 +1,6 @@
 import Foundation
 
-/// The **bass chord vocabulary** (ADR 0163) — what a bassist actually plays when a chart says "C".
+/// The **bass chord vocabulary** (ADR 0164) — what a bassist actually plays when a chart says "C".
 ///
 /// Not a four-string port of `ChordGrip`. The guitar system is CAGED: barre forms and triads laid on
 /// string sets, slid by root. Bass isn't CAGED — the same finding ADR 0116 Slice 3 reached for scales,
@@ -16,7 +16,7 @@ import Foundation
 ///   assert that the voicing produced at *every* root spells exactly those intervals — which is a
 ///   stronger guarantee than hand-authoring twelve transpositions and eyeballing them.
 /// - **There is no bass barre or triad set to maintain.** The whole `ChordGrip` apparatus stays
-///   guitar-only (ADR 0163 D4), and this file is the entire bass counterpart.
+///   guitar-only (ADR 0164 D4), and this file is the entire bass counterpart.
 ///
 /// Authored in-house (T8): interval arithmetic and common-practice bass vocabulary, never anyone's
 /// protected expression.
@@ -40,7 +40,7 @@ struct BassChordShape: Equatable, Identifiable, Sendable {
     var highestStringOffset: Int { stringOffsets.max() ?? 0 }
 }
 
-// MARK: - The curated set (ADR 0163 D3 — dyads + two shells)
+// MARK: - The curated set (ADR 0164 D3 — dyads + two shells)
 
 extension BassChordShape {
     /// **Root + fifth.** The bass power dyad — the single most-played two-note shape on the
