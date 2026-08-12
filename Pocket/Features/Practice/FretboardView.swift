@@ -29,9 +29,9 @@ struct FretboardView: View {
     @State private var beatOnset = Date.now
     /// The beat index that onset belongs to, so a re-render mid-beat keeps the same anchor.
     @State private var anchoredBeat = -1
-    /// The walking-highlight preference — **off by default** as a photosensitivity precaution, and
-    /// forced off under the system Reduce Motion setting. Off shows a static, fully-plotted board.
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    /// The walking-highlight preference — **on by default** (ADR 0157), and forced off under the
+    /// system Reduce Motion setting. Off shows a static, fully-plotted board.
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = AppSettings.exerciseAnimatesDefault
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {

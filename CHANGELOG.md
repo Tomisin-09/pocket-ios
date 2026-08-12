@@ -34,6 +34,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   things has always meant everywhere else. See ADR 0159.
 
 ### Changed
+- **Exercises now animate by default.** The walking highlight — the one that walks a scale along the
+  fretboard, or the strokes along the strum lane, in time — shipped switched off, so a new player
+  built a drill, ran it, and watched a static board with no reason to suspect it could move. It is
+  on out of the box now. Reduce Motion still turns it off everywhere, and the Settings toggle is
+  where it always was, so anyone who wants the board still has one tap. **If you have already
+  turned it off yourself, it stays off** — only players who never touched the row move. One
+  knock-on: "Watch", the play-it-once button, now hides by default, because the board it exists to
+  substitute for is already walking. See ADR 0157.
 - **The Toolkit card on Home now mentions the tuner.** It said "Your chords & a music glossary",
   which stopped being true when the tuner moved in — so the most useful thing in there, free forever
   and needing no song or library, was sitting behind a card that didn't name it. Now reads

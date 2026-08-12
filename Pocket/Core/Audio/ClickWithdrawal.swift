@@ -82,10 +82,11 @@ enum ClickWithdrawal: String, CaseIterable, Identifiable {
         ///
         /// This is the **accessibility carrier, not a nicety**: `BeatIndicator` is
         /// `accessibilityHidden(true)`, so without it the withdrawal is invisible to VoiceOver and a
-        /// screen-reader user meets an unexplained silence. Static, never animated — anything
-        /// animated falls under Reduce Motion and `exerciseAnimates` (which defaults off), so it
-        /// would be disabled by default for some of the people who most need to know why the room
-        /// went quiet, and a *pulsing* marker would itself be a visual metronome.
+        /// screen-reader user meets an unexplained silence. Static, never animated — a *pulsing*
+        /// marker would itself be a visual metronome, and anything animated falls under Reduce
+        /// Motion, hiding it from some of the people who most need to know why the room went quiet.
+        /// (ADR 0157 retired this argument's third leg: `exerciseAnimates` now defaults **on**. The
+        /// decision stands on the two reasons above, which never depended on the default.)
         var caption: String? {
             switch self {
             case .full: return nil

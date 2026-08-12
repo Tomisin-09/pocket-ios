@@ -1,6 +1,8 @@
 # ADR 0157 — the walk moves by default
 
-- **Status:** Proposed — not built, and carrying one check still owed (see *Consequences*).
+- **Status:** Accepted — built, and confirmed on device 2026-08-12. The high-tempo pass that
+  *Consequences* made a precondition of acceptance was run on an iPhone 16 Pro and the walk was
+  judged to read correctly; the rate-cap alternative stays unbuilt, as intended.
 - **Date:** 2026-08-11
 - **Reverses:** the off-by-default half of the `exerciseAnimates` preference. The preference itself, its Settings row, and every reader stay exactly as they are.
 - **Relates to:** ADR 0050 (Settings V1 — where the toggle was introduced) · ADR 0065 (Watch supersedes the per-editor Animate toggle; Settings is the one place to turn continuous animation on) · ADR 0131 §3a and ADR 0132 (both of which *cite* the off default as a reason — see *Consequences*)
@@ -80,6 +82,13 @@ SwiftUI uses when the key is unset, **not** a mirror of `AppSettings.exerciseAni
 A test asserting `AppSettings.exerciseAnimates == true` on a clean defaults store would catch a
 regression in the first row and none of the other six. The check that matters is visual, on device.
 
+**Built as one site, not seven.** Rather than repeat the flipped literal and rely on care, the build
+added `AppSettings.exerciseAnimatesDefault` and pointed all seven at it — matching the house pattern
+already used for `ClickTimbre.default` and `AppSettings.tunerReferenceDefault`. The drift this section
+warns about is now unrepresentable, and `AppSettingsTests` pins the constant, so the unit test covers
+the views after all. The device check below is still the one that matters, for a different reason: it
+tests whether the walk *reads* well, not whether the value propagated.
+
 ### 3. An existing player's explicit choice is not overridden
 
 `@AppStorage` writes the key on first toggle, so anyone who has *deliberately* turned the walk off
@@ -101,6 +110,15 @@ absent — move. This is the correct behaviour and it comes for free; it is writ
   | `TempoWarningIndicators.swift:46` | restates ADR 0131 §3a |
   | `ClickWithdrawal.swift:86` | restates ADR 0132 |
 
+  All four were amended in the build; none changed its decision.
+
+- **Watch now hides by default, and that is correct.** `FretboardPlayOnceButton.shouldShow` hides the
+  one-shot exactly when the board already walks (ADR 0077), so flipping the default hides Watch on a
+  fresh install. The rule is unchanged and needed no edit — but this ADR's *Alternatives* section
+  argues Watch "has not made the continuous walk discoverable", and the flip resolves that by making
+  the continuous walk the thing you meet first. Watch remains for the two cases it was built for: a
+  player who turned the walk off, and a Reduce Motion user. Pinned by a new test.
+
   **All four decisions survive**, on the reasons that remain: Reduce Motion alone still disables an
   animated carrier for the players in question, and — the stronger argument in both cases, which
   never depended on the default — *a pulsing marker would itself be a visual metronome*, which is
@@ -113,11 +131,11 @@ absent — move. This is the correct behaviour and it comes for free; it is writ
   which was a small omission when the default was off and is a smaller one now. Worth rereading in
   the new light, but no change is required.
 
-- **The check still owed.** A device run at a **high command tempo** on a fretboard drill and on the
-  strum lane, to confirm the highlight reads as travel rather than flicker when the beat is fast, and
-  that Reduce Motion still forces it off. This ADR should not move to Accepted before that pass —
-  the §2 argument about flash thresholds is a reasoned position, not an observation, and this is the
-  one place where being wrong would matter.
+- **The check that was owed — run, and passed (2026-08-12).** A device run at a **high command
+  tempo** on a fretboard drill and on the strum lane, confirming the highlight reads as travel rather
+  than flicker when the beat is fast, and that Reduce Motion still forces it off. It gated
+  acceptance because the §2 argument about flash thresholds is a reasoned position, not an
+  observation, and this is the one place where being wrong would matter. It is now an observation.
 
 - **No migration, no schema change, no CI implication.** A `UserDefaults` default; docs-only until
   the build.

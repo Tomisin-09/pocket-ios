@@ -12,7 +12,7 @@ struct FretboardPlayOnceButton: View {
     var tint: Color = PocketColor.practice
     /// The animate-exercises preference — read so Watch can hide when the board already walks
     /// (ADR 0077). Mirrors `FretboardDrillPreview`'s own `@AppStorage`.
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = AppSettings.exerciseAnimatesDefault
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {

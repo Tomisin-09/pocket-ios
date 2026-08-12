@@ -42,10 +42,11 @@ struct RunTempoCaption: View {
 
 /// The edge the drill surface takes for the duration of the warning window.
 ///
-/// **Static, and that is the decision** (ADR 0131 §3a): a pulse would fall under Reduce Motion and
-/// `exerciseAnimates` — which defaults *off* as a photosensitivity precaution — so an animated carrier
-/// would be disabled by default for exactly the players it is meant to serve. A state change that does
-/// not animate is governed by neither.
+/// **Static, and that is the decision** (ADR 0131 §3a, reasoning amended by ADR 0157): a *pulsing*
+/// carrier would itself be a visual metronome, which is precisely what this section exists to avoid.
+/// It would also fall under Reduce Motion, disabling it for some of the players it is meant to serve.
+/// (The older "and `exerciseAnimates` defaults off" half of this argument no longer holds — that
+/// preference defaults **on** since ADR 0157. The decision is unchanged; only this reason retires.)
 ///
 /// The colour is the Practice space's own teal, because the signal is the edge's **presence**, not its
 /// hue: the drill surfaces carry no border at all the rest of the time, so its appearing is already

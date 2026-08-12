@@ -31,7 +31,7 @@ struct StrumChordsView: View {
     @State private var beatOnset = Date.now
     /// The beat index that onset belongs to, so a re-render mid-beat keeps the same anchor.
     @State private var anchoredBeat = -1
-    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = false
+    @AppStorage(AppSettings.Key.exerciseAnimates) private var animates = AppSettings.exerciseAnimatesDefault
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The active chord index, measured from the anchored origin, or `nil` before it's anchored.
