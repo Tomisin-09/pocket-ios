@@ -11,6 +11,26 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+- **Settings is now a short list you can read, not a scroll you have to hunt through.** It had grown
+  to thirteen sections in one flat page, in the order the features happened to land — Appearance near
+  the top and the single animation toggle nine sections below it, Privacy wedged in the middle of the
+  practice settings, five separate sections carrying one row each, and the subscription tucked
+  thirteenth, below the exercise animation. It's now nine rows that each open their own screen: **You**
+  (your name and what you play, previously split across two sections), **Red Moon Pro**, then
+  **Appearance**, **Sound & feel**, **Practice**, **Routines**, **Song player**, and finally
+  **Privacy** and **Help & About**. Each row shows what it's currently set to — *Appearance · System*,
+  *Sound & feel · Wood block* — so most of the time you can see the answer without opening anything.
+  **"Transport" is now "Song player"**, which is what it actually is. Nothing was added, removed or
+  reset: every setting keeps its value and its behaviour, and you'll find them all where the name says
+  they are. See `docs/decisions/0162-a-setting-you-can-find.md`.
+- **Choosing a metronome click now plays it.** The sound list had a play button at one end of each row
+  and a tick at the other, and tapping the row itself — the obvious thing to do — silently selected a
+  sound without letting you hear it. Now one tap does both: it picks the click and plays two bars of
+  it, so you always hear what you just chose. The row you've chosen is washed in the metronome's own
+  colour rather than marked with a small tick, and the play control no longer renders in a stray
+  system blue that belonged to no part of this app.
+
 ### Added
 - **Contact Support now writes to us from inside the app.** The row in Settings ▸ About used to be a
   `mailto:` link, which on a device with no Mail account configured did *nothing at all* — no error,

@@ -1102,7 +1102,7 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   migrates). It is created **lazily**: `Profile.setArtistName` is a fetch-or-create that inserts a row
   only once a non-empty name is set (and clears it back to `nil` when blanked), so an untouched install
   carries no row and the greeting reads name-free. Views read it by `@Query` `.first?.artistName` and
-  feed that into the pure `HomeFeed.TimeOfDay.greeting(name:)`; it's edited in Settings → You and offered
+  feed that into the pure `HomeFeed.TimeOfDay.greeting(name:)`; it's edited in Settings ▸ You and offered
   once from Home — a ceremonial full-screen cover (`ArtistNamePromptSheet`) — after the player has
   **completed an exercise or captured a loop** (a Home-appearance check gated by the
   `artistNamePromptSeen` UserDefaults flag). Nothing leaves the device; it is deliberately not treated as PII.
@@ -1121,8 +1121,9 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   *does* legitimately create a still-nameless row — the first-launch intake runs before a name is
   earned). Collected by the **first-launch intake** (`ArtistIntakeView`, a four-card skippable
   full-screen flow gated once by `artistIntakeSeen`; Home shows the intake *or* the naming prompt,
-  never both, via `maybeOfferProfileMoment`) and editable any time in **Settings → Your sound**
-  (`ProfileCurationSection`). That section also holds the ADR-0116 **Instrument** row (Guitar/Bass,
+  never both, via `maybeOfferProfileMoment`) and editable any time in **Settings ▸ You**
+  (`ProfileCurationSection` — its own "Your sound" top-level section until ADR 0162 folded it in with
+  the artist name, since both answer the same question). That section also holds the ADR-0116 **Instrument** row (Guitar/Bass,
   no "Not set" — the exercise axis is non-optional and falls back to guitar, so an unanswered
   question and "guitar" are the same state). It commits through `setPreferredInstrument`, *not*
   `setCuration`, because that writer overwrites its four fields as a set and would let an instrument
@@ -1211,6 +1212,14 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   object. The pure `resolvedBool(storedValue:default:)` keeps a never-set key at its **default
   (on)** rather than `UserDefaults.bool`'s `false` — unit-tested. UserDefaults is already in the
   privacy manifest (CA92.1), so no new required-reason API and no migration.
+- **The Settings surface is a hub of destinations** (`Features/Settings/`, ADR 0162), not a flat
+  `Form`. `SettingsView` holds nine `NavigationLink` rows; each pushes a screen owning one group,
+  sharing chrome via a single `settingsScreen(title:)` modifier and ⓘ copy via `SettingsInfo`. The
+  hub reads a handful of keys purely to *summarise* each row — the destinations own the bindings that
+  write them. This is presentation only: the storage layer above is untouched, which is why the
+  reorganisation needed no migration and `AppSettingsTests` needed no edit. It exists because the
+  flat screen had grown one section per ADR until `SettingsView` sat at 344 of SwiftLint's 400 lines
+  and three files carried "add no row here" warnings — a structure out of room.
 
 ## Backend
 
@@ -1224,7 +1233,7 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
 The app makes exactly two kinds of outbound call, both of which the player switched on or typed:
 
 1. **Anonymous analytics** — opt-in, closed vocabulary, Aptabase EU (ADR 0120 / 0147).
-2. **A support message** — Settings ▸ About ▸ Contact Support, sent only on an explicit tap.
+2. **A support message** — Settings ▸ Help & About ▸ Contact Support, sent only on an explicit tap.
 
 `SupportRequest` is the pure value type (message, reply address, `SupportDiagnostics`) carrying
 validation and the payload; it has no SwiftUI and no `URLSession`, so both are unit-tested away from
