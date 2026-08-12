@@ -33,6 +33,64 @@
 				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
+		<!-- ADR 0161: the in-app contact form (Settings ▸ About ▸ Contact Support).
+		     Collected ONLY when the player fills the form in and taps Send — there is
+		     no background send and no other caller. Delivered to our support inbox
+		     via Formspree; see the privacy policy's processor table.
+
+		     Linked = true for all three, and deliberately so: the message and the
+		     device details arrive attached to a reply address the player chose to
+		     give us, so they are associated with an identity even though the app
+		     has no accounts. Declaring them unlinked would be the convenient answer
+		     and the wrong one.
+
+		     There is no "customer support" purpose in Apple's vocabulary — the six
+		     valid values are ThirdPartyAdvertising, DeveloperAdvertising, Analytics,
+		     ProductPersonalization, AppFunctionality and Other. AppFunctionality is
+		     the correct one for support correspondence. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeEmailAddress</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- The body of the message the player writes. It is free text, so it is
+		     declared as user content even though nothing in the app pre-fills it —
+		     what someone chooses to type is theirs and could be anything. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- App version, iOS version and hardware model identifier — the triage
+		     details, shown to the player in the form before they send (ADR 0161 D3).
+		     Nothing here identifies a device: the model identifier is the hardware
+		     generation ("iPhone17,1"), never an IDFV, IDFA or serial. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
 	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>

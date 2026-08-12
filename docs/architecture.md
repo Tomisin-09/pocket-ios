@@ -1216,6 +1216,25 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
 
 - Single proxy endpoint for AI session suggestions; key held server-side.
 - Base URL by build config (Debug → dev, Release → prod). See `docs/decisions/0002`.
+- **Not built.** `infrastructure/prod/` is a placeholder and the Release `POCKET_API_HOST` is still
+  `api.pocket.example.com`. Nothing calls it.
+
+## Outbound network (Core/Support, ADR 0161)
+
+The app makes exactly two kinds of outbound call, both of which the player switched on or typed:
+
+1. **Anonymous analytics** — opt-in, closed vocabulary, Aptabase EU (ADR 0120 / 0147).
+2. **A support message** — Settings ▸ About ▸ Contact Support, sent only on an explicit tap.
+
+`SupportRequest` is the pure value type (message, reply address, `SupportDiagnostics`) carrying
+validation and the payload; it has no SwiftUI and no `URLSession`, so both are unit-tested away from
+the form and the network. `SupportSending` is the one-method seam; `FormspreeSender` posts JSON to the
+shared Formspree form (the same one the marketing site and beta guide use), and `RecordingSupportSender`
+backs tests and previews. Swapping Formspree for our own endpoint is a second conformance and a
+different URL — that reversibility is the reason ADR 0161 could defer building a backend.
+
+**The three diagnostics are shown on screen before sending**, and the sheet and the payload both read
+`SupportDiagnostics.summary` so they cannot drift. Nothing from the library is ever attached.
 
 ## Testing
 

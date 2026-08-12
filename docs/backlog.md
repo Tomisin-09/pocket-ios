@@ -1805,9 +1805,15 @@ not code. Re-run the audit any time with the `/ready-to-ship` skill.
   when a shipping feature exercises it (the parked pedal modeller's mic string is
   correctly absent). Vague strings cause rejection.
 - **No live host in Release until the proxy exists.** The Release `POCKET_API_HOST`
-  is a placeholder and nothing calls it (zero `URLSession` in V1). Before any
-  networked feature ships, replace it and guard against the placeholder leaking
-  into a release build.
+  is a placeholder and nothing calls it. Before any feature uses *it*, replace it
+  and guard against the placeholder leaking into a release build.
+  **The "zero `URLSession` in V1" line is retired** (ADR 0161): the in-app contact
+  form posts to Formspree, which is a fixed third-party form endpoint and
+  deliberately *not* `POCKET_API_HOST`. The narrower rule that replaces it: the
+  only outbound calls are opt-in analytics and a support message the player typed
+  and sent by hand. Any third — especially one that sends without an explicit tap
+  — needs its own ADR, its own `NSPrivacyCollectedDataTypes` entry **and** a
+  privacy-policy update in the same change.
 - **The audit gate is the bar.** A feature isn't "done" if it adds a force-unwrap,
   a silent `try?` over real user data, a TODO marker, or a new entitlement/permission
   without justification. Run `/ready-to-ship` before calling V1 shippable.

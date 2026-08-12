@@ -48,10 +48,13 @@ struct FAQEntry: Identifiable, Equatable {
 extension FAQEntry {
     /// The support address, as plain text.
     ///
-    /// ⚠ **This is not decoration.** `SettingsView`'s Contact-support row is a `mailto:` link, and a
-    /// `mailto:` **silently does nothing** on a device with no Mail account configured. The address
-    /// therefore has to exist somewhere a player can read and copy it, which is the "How do I get help"
-    /// answer below (ADR 0145). Removing it from that answer breaks the only fallback.
+    /// ⚠ **This is not decoration.** The Contact-support row used to be a `mailto:`, which silently
+    /// did nothing on a device with no Mail account configured; ADR 0161 replaced it with an in-app
+    /// form. The address still has to exist somewhere a player can read and copy it — the "How do I
+    /// get help" answer below (ADR 0145) — and the reason got *stronger*, not weaker: a form that
+    /// posts over HTTPS can fail visibly, and `SupportSendError.rejected` points the player straight
+    /// at this address when retrying won't help. Removing it from that answer breaks the only
+    /// fallback, and now breaks an error message too.
     static let supportAddress = "support@decooperations.co.uk"
 
     /// The full help catalog. Grouped by `Area`; within an area, ordered by how early a player is
@@ -78,10 +81,11 @@ extension FAQEntry {
                 + "standard notation, and the Glossary in the Toolkit explains any term you meet.",
               area: .gettingStarted),
         .init(question: "How do I get help or report a bug?",
-              answer: "Email \(supportAddress) — you can select and copy that address from right here, "
-                + "and Settings ▸ About has a Contact Support row that opens it in Mail. It helps to "
-                + "say what you were doing when it went wrong, what you expected instead, and the "
-                + "version number from Settings ▸ About.",
+              answer: "Settings ▸ About ▸ Contact Support writes to us from inside the app — your "
+                + "email, your message, and the version and device you're on, which the form shows "
+                + "you before it sends. No Mail account needed. You can also email \(supportAddress) "
+                + "directly; select and copy that address from right here. It helps to say what you "
+                + "were doing when it went wrong and what you expected instead.",
               area: .gettingStarted),
 
         // MARK: Audio & files

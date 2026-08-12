@@ -91,13 +91,24 @@ final class FAQEntryTests: XCTestCase {
                       "Must quote PracticeFieldInfo.commandTempo verbatim, not paraphrase it (D5)")
     }
 
-    // MARK: - The support address (the mailto fallback)
+    // MARK: - The support address (the fallback behind the contact form)
 
     func testSupportAddressAppearsInAnAnswerAsPlainText() {
-        // A `mailto:` does nothing on a device with no Mail account, so the address has to be
-        // readable and copyable inside the catalog itself. Deleting it from the answer would remove
-        // the only way such a player can reach us.
+        // The Contact Support row is now an in-app form (ADR 0161), not a `mailto:` — but the address
+        // still has to be readable and copyable inside the catalog itself, because the form can fail
+        // and `SupportSendError.rejected` sends the player here. Deleting it from the answer would
+        // remove the only remaining way to reach us.
         XCTAssertTrue(FAQEntry.all.contains { $0.answer.contains(FAQEntry.supportAddress) },
                       "No answer carries \(FAQEntry.supportAddress) as plain text")
+    }
+
+    func testHelpAnswerDoesNotPromiseMail() {
+        // The old answer said the row "opens it in Mail". It doesn't any more, and a help answer that
+        // describes a door that isn't there is worse than one that says nothing (the beta guide
+        // already taught us this one).
+        let answer = FAQEntry.all.first { $0.question.contains("get help") }
+        XCTAssertNotNil(answer)
+        XCTAssertFalse(answer?.answer.contains("in Mail") == true,
+                       "The Contact Support row no longer opens Mail (ADR 0161)")
     }
 }
