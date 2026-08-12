@@ -9,7 +9,8 @@ import SwiftUI
 /// claims, and a human judges "which of these two is better" far more reliably than "is this one
 /// right" — which is also what makes each failure case decisive rather than ambiguous.
 ///
-/// Its own file rather than another block inside `SettingsView`, which is at the 400-line cap.
+/// Its own file rather than another block inside its host — since ADR 0162 that host is
+/// `DeveloperSettingsView`, which gathers every DEBUG scaffold behind one row.
 struct DebugAudioSection: View {
 
     @AppStorage(AppSettings.Key.compensateStretchLatency) private var compensateStretchLatency = true

@@ -3,9 +3,9 @@ import SwiftUI
 /// The **tempo-change warning** row in Settings (ADR 0131) — whether a running ramp announces its next
 /// step before taking it.
 ///
-/// Its own file (like `MetronomeSoundSection` and `NoteSpellingSection`) so `SettingsView` stays inside
-/// the file-length ceiling, and its own section so the footer can say what the warning actually does
-/// without crowding the Practice toggles it sits under.
+/// Its own section so the footer can say what the warning actually does without crowding the Practice
+/// toggles it sits under — inside `PracticeSettingsView` since ADR 0162, because a warning about a
+/// coming tempo change belongs with Count-in: both are the run telling you what happens next.
 struct TempoWarningSection: View {
     @AppStorage(AppSettings.Key.tempoChangeWarning)
     private var warningRaw = TempoChangeWarning.default.rawValue

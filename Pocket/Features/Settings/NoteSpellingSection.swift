@@ -5,8 +5,9 @@ import SwiftUI
 /// key, the key spells the note (the fourth degree of F major is B♭ whatever this says); the preference
 /// decides only where nothing does — the tuner, a custom chord, a rootless drill, a bare root menu.
 ///
-/// Its own file (like `MetronomeSoundSection`) so `SettingsView` stays inside the file-length ceiling,
-/// and its own section so the two-word footer isn't buried under the Practice toggles.
+/// Its own section so the footer isn't buried under neighbouring rows. Hosted by
+/// `AppearanceSettingsView` since ADR 0162 — accidentals are *how a note is written*, so they group
+/// with what you see rather than with the tuner that consumes them.
 struct NoteSpellingSection: View {
     @AppStorage(AppSettings.Key.accidentalPreference)
     private var accidentalRaw = NoteSpelling.default.rawValue

@@ -152,7 +152,9 @@ struct AnalyticsConsentSheet: View {
             }
             .buttonStyle(.plain)
 
-            Text("You can change this any time in Settings.")
+            // Names the destination rather than "Settings" alone — since ADR 0162 the toggle lives on
+            // its own screen, and a promise of withdrawal should say where.
+            Text("You can change this any time in Settings ▸ Privacy.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
                 .frame(maxWidth: .infinity)

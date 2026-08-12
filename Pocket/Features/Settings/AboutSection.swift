@@ -3,21 +3,22 @@ import SwiftUI
 /// The **About** section of Settings — version, help, the support address, and the two legal links,
 /// under the Red Moon wordmark.
 ///
-/// Its own file (like `PrivacySection` and `NoteSpellingSection`) because `SettingsView` sits right on
-/// SwiftLint's 400-line ceiling and ADR 0145 adds two rows here. Lifting the section out is what buys
-/// the room; nothing about its behaviour changed in the move.
+/// Its own file since ADR 0145, when `SettingsView` sat right on SwiftLint's 400-line ceiling and this
+/// section needed two more rows. That pressure is gone — ADR 0162 split Settings into a hub, and this
+/// section is now hosted by `AboutSettingsView` — but the file stays, because a section this size
+/// earns one on its own merits.
 ///
 /// **Help & FAQs is a `NavigationLink`, not a sheet.** Settings is *pushed* onto the Home stack, so the
 /// same `FAQView` the Toolkit shows pushes on top of it and backs out to Settings — one help screen,
-/// two doors (ADR 0145 D1).
+/// two doors (ADR 0145 D1). Still true one level deeper.
 struct AboutSection: View {
     /// Injected so previews drive a `RecordingSupportSender` rather than the live endpoint. The
     /// default is the real one, so `SettingsView` stays a plain `AboutSection()`.
     var sender: SupportSending = FormspreeSender()
 
-    /// The sheet is hosted **here, not in `SettingsView`** — that file sits just under SwiftLint's
-    /// 400-line ceiling (the same pressure that split this section out in the first place), and the
-    /// row that presents it lives in this file anyway.
+    /// The sheet is hosted **here** because the row that presents it lives in this file. It was
+    /// originally here to keep `SettingsView` under SwiftLint's 400-line ceiling; that reason expired
+    /// with ADR 0162's hub split, and the better one it always also had is the one that remains.
     @State private var showingContactSupport = false
 
     var body: some View {

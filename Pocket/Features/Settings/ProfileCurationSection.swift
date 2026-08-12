@@ -1,9 +1,10 @@
 import SwiftData
 import SwiftUI
 
-/// The **"Your sound"** editor in Settings (ADR 0113, Slice 2): the four curation fields the
-/// first-launch intake collects, editable any time. Split out of `SettingsView` so that screen stays
-/// under the file/type-length cap. Reads the singleton `Profile` passed in and writes every change
+/// The **"Your sound"** editor (ADR 0113, Slice 2): the four curation fields the first-launch intake
+/// collects, editable any time. A top-level Settings section until ADR 0162 folded it into
+/// **Settings ▸ You** beneath the artist name — the two were separate sections answering the same
+/// question. Reads the singleton `Profile` passed in and writes every change
 /// straight through `Profile.setCuration`, creating the row on first use — a player who skipped the
 /// intake can still declare intent here, and one who ran it can revise it.
 ///

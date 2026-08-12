@@ -17,9 +17,10 @@ import SwiftUI
 /// makes no other network calls, such a mode would govern this single flag while implying a far
 /// broader guarantee. Withdrawal has to be as easy as granting; it does not have to be a feature.
 ///
-/// Its own file (like `NoteSpellingSection`) so `SettingsView` stays inside the file-length ceiling,
-/// and its own section so the footer — which is the honest statement of what is and isn't collected
-/// — isn't buried under unrelated rows. **Add no row to `SettingsView`**; it sits just under the cap.
+/// Its own section so the footer — which is the honest statement of what is and isn't collected —
+/// isn't buried under unrelated rows. Hosted by `PrivacySettingsView` since ADR 0162; the standing
+/// "add no row to `SettingsView`, it is at the cap" warning that used to live here is retired, because
+/// the hub split is what removed the cap.
 struct PrivacySection: View {
     /// The `= false` is unreachable: `AppSettings.seedAnalyticsDefaultIfNeeded` writes the key at
     /// launch, so it is always present here (ADR 0147 §3). Kept as a safe-direction backstop —
