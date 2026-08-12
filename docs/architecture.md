@@ -407,11 +407,29 @@ fifth case, `.standalone`, backed by one additive optional column (`JournalEntry
 0151 spent it on `.orphan`, the note whose unit was deleted and whose relationship nullified. The two
 render identically and mean opposite things (one lost its subject, one never had one), and the flag is
 read **last** in `ownerKind`, after both relationships and `routineUID`, so ADR 0143's rule that the
-relationships win survives the case being added under it. Standalone notes are written from two
-surfaces that have no unit whose snapshot could be honest — the Journal space's own ＋ and the
-**Metronome**'s toolbar — both through the existing `QuickJournalSheet`/`JournalWriter` path, and
-neither offers an owner picker: filing a note against a unit you are not currently practising is what
-would make the snapshot lie. They snapshot nothing and carry no caption, by construction.
+relationships win survives the case being added under it. Standalone notes are written from the Journal
+space's own ＋ through the existing `QuickJournalSheet`/`JournalWriter` path, which offers **no owner
+picker**: filing a note against a unit you are not currently practising is what would make the
+snapshot lie. They snapshot nothing and carry no caption, by construction.
+
+A note written at the **Metronome** is the sixth kind (ADR 0160), and reverses ADR 0155 §8's refusal
+of one. That refusal was aimed at recording a bare BPM — a fragment of a *unit's* context with no
+unit behind it, which invites the reader to attach it to a drill that was never there. A metronome
+sitting is not a fragment: it has a complete context of its own, so `.metronome` snapshots **tempo,
+meter, subdivision and click withdrawal** and renders them as a settings caption
+(`96 BPM · 4/4 · ♫ · gentle withdrawal`). Three things keep it honest. The snapshot goes down as
+**raw values only** — two `Int`s for the meter, `String`s for the two enums — because a custom type
+as a SwiftData attribute crashes on migration on device only. The kind comes from its **own stored
+flag** (`isMetronome`, read before `isStandalone`, which a metronome note leaves nil so the two
+partition), never from the columns being present, so the entry's kind can never become a function of
+its payload. And it is pinned **when the composer opens**, not at Save, because the automator keeps
+ramping behind the sheet — the moment being described is the one the player reached for the pencil
+in. The withdrawal recorded is `activeWithdrawal`, the tier actually in force, so a note written
+mid-ramp doesn't claim one the player never heard. The caption reads "Metronome" (a constant — the
+screen can't be renamed or deleted) and goes nowhere: opening the metronome would restore whatever
+state it was left in, not the sitting the note describes. The pure `MetronomeJournalContext` owns the
+raw round trip and the caption; there is no backfill, since older notes written there were never
+marked.
 
 **`RecordingStore`** owns the
 app-container `Recordings/` directory and the retention story — delete/size plus a pure orphan sweep

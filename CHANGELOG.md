@@ -11,6 +11,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **A journal note written at the metronome now records the metronome.** The pencil in the
+  metronome's toolbar used to write the same blank standalone note the Journal space's ＋ does, so
+  "finally clean here" came back weeks later without saying what it was clean *at*. The note now
+  carries the click it was written to — tempo, time signature, subdivision and any click
+  withdrawal — and reads it back on the feed as `96 BPM · 4/4 · ♫ · gentle withdrawal`, captioned
+  **Metronome** so it can be found by searching for one. The snapshot is taken the moment the pencil
+  is tapped, so a ramp climbing behind the sheet doesn't change what the note says, and the
+  withdrawal recorded is the one actually sounding rather than the one selected. Notes written at
+  the metronome before this stay as they were — nothing recorded where they came from, so there is
+  nothing to recover. See `docs/decisions/0160-a-note-at-the-metronome-records-the-click.md`.
+
 ### Internal
 - **Closed-beta builds grant Red Moon Pro without a purchase.** TestFlight builds run against the
   StoreKit sandbox, and are Release builds — so the DEBUG-only entitlement override doesn't apply

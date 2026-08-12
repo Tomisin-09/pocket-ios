@@ -15,6 +15,11 @@ enum JournalEntryOwnerKind {
     /// `.orphan` today; it is a distinct case because identical rendering is not identical meaning,
     /// and there is no backfill for a distinction that was never recorded.
     case standalone
+    /// A sitting at the **free-play metronome** (ADR 0160) — ownerless like `.standalone`, but with a
+    /// complete context of its own (tempo, meter, subdivision, withdrawal) that it snapshots and
+    /// renders. Reverses ADR 0155 §8's refusal: what that decision objected to was a *fragment* of a
+    /// unit's context with no unit behind it, and a full description of a click is not that.
+    case metronome
     /// The owner was deleted and the relationship nullified. Nothing to render a snapshot from.
     case orphan
 }
@@ -131,6 +136,51 @@ final class JournalEntry {
     /// on every pre-0155 row is correct, since every entry written before this is owned or orphaned.
     var isStandalone: Bool?
 
+    /// Marks an entry written at the **metronome** (ADR 0160) — set once at creation, never cleared.
+    ///
+    /// Its own byte rather than `metronomeBeatsAtEntry != nil`, which would classify the entry for
+    /// free. That test isn't the *absence* mistake `isStandalone` avoids — a non-nil column is a
+    /// positive fact — it is a worse relative of it: it makes the entry's **kind** a function of its
+    /// **payload**, so a column that later becomes optional-within-the-kind, or a bug in the write
+    /// order, silently turns a metronome note into an orphan. The kind is what the whole render path
+    /// branches on (ADR 0143). Additive optional, **no declaration default** (CoreData 134110).
+    ///
+    /// A metronome entry leaves `isStandalone` nil: the two flags **partition** rather than nest, so
+    /// no entry needs `ownerKind`'s ordering to decide which of two true flags counts. Nothing outside
+    /// `ownerKind` may read either.
+    var isMetronome: Bool?
+
+    /// Context snapshot for a **metronome** entry (ADR 0160 §2) — the click rate at the moment the
+    /// composer opened. `nil` for every other owner kind.
+    var metronomeBpmAtEntry: Int?
+
+    /// Context snapshot — the meter's numerator (clicks per bar). Stored as the two `Int`s a
+    /// `TimeSignature` is built from, **never the struct itself**: a custom type as a SwiftData
+    /// attribute crashes on migration on device only, where in-memory tests miss it entirely
+    /// (`docs/swiftdata-gotchas.md`; `Loop.loopTypeRaw` is the precedent).
+    var metronomeBeatsAtEntry: Int?
+
+    /// Context snapshot — the meter's denominator. See `metronomeBeatsAtEntry` for why it's an `Int`.
+    var metronomeNoteValueAtEntry: Int?
+
+    /// Backing storage for the entry's subdivision — `Subdivision.rawValue`, a plain `String`.
+    /// **`.none` is `""`**, so an empty string is a recorded "no subdivision" and `nil` is "never
+    /// recorded"; the read path must not collapse the two.
+    var metronomeSubdivisionRaw: String?
+
+    /// Backing storage for the entry's click withdrawal — `ClickWithdrawal.rawValue`. The tier that
+    /// was **in force** (`activeWithdrawal`), not the one configured, so a note written mid-ramp
+    /// doesn't claim a withdrawal the player never heard (ADR 0160 §4).
+    var metronomeWithdrawalRaw: String?
+
+    /// The metronome sitting this entry snapshotted, or `nil` when it isn't a metronome entry (or
+    /// predates the columns). Rebuilt from the raw columns, never stored as a value.
+    var metronomeContext: MetronomeJournalContext? {
+        MetronomeJournalContext(beats: metronomeBeatsAtEntry, noteValue: metronomeNoteValueAtEntry,
+                                bpm: metronomeBpmAtEntry, subdivisionRaw: metronomeSubdivisionRaw,
+                                withdrawalRaw: metronomeWithdrawalRaw)
+    }
+
     /// **The** owner discriminator — read this rather than testing a relationship for `nil` by hand.
     /// Order matters: the two unit relationships win, so an entry can never be mistaken for a session
     /// just because a `routineUID` was also stamped on it — and the standalone flag is read *last*, so
@@ -139,6 +189,7 @@ final class JournalEntry {
         if exercise != nil { return .exercise }
         if loop != nil { return .loop }
         if routineUID != nil { return .session }
+        if isMetronome == true { return .metronome }
         if isStandalone == true { return .standalone }
         return .orphan
     }
@@ -199,6 +250,26 @@ final class JournalEntry {
         let entry = JournalEntry(text: text, kind: kind, masteryAtEntry: nil,
                                  commandTempoAtEntry: nil, createdAt: createdAt)
         entry.isStandalone = true
+        return entry
+    }
+
+    /// A **metronome** entry (ADR 0160) — written at the free-play click, which owns no unit but has a
+    /// complete context of its own. Every unit snapshot field stays `nil` (there is no mastery, no
+    /// song fraction, and no *command* — nothing here was promoted or measured, which is why this does
+    /// not reuse `commandBpmAtEntry`), and the four metronome values are stored as raw columns.
+    ///
+    /// `isStandalone` is deliberately left `nil`: the flags partition, and `ownerKind` reads
+    /// `isMetronome` first.
+    static func forMetronome(text: String, kind: EntryKind, context: MetronomeJournalContext,
+                             createdAt: Date = Date()) -> JournalEntry {
+        let entry = JournalEntry(text: text, kind: kind, masteryAtEntry: nil,
+                                 commandTempoAtEntry: nil, createdAt: createdAt)
+        entry.isMetronome = true
+        entry.metronomeBpmAtEntry = context.bpm
+        entry.metronomeBeatsAtEntry = context.timeSignature.beats
+        entry.metronomeNoteValueAtEntry = context.timeSignature.noteValue
+        entry.metronomeSubdivisionRaw = context.subdivision.rawValue
+        entry.metronomeWithdrawalRaw = context.withdrawal.rawValue
         return entry
     }
 }

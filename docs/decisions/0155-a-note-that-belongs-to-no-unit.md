@@ -5,6 +5,12 @@
 - **Amends:** ADR 0100 §1 (the read-only stance), narrowly
 - **Extends:** ADR 0058 (polymorphic owner) · ADR 0143 (`ownerKind` is the discriminator) · ADR 0151 (the orphan state)
 - **Second consumer:** the Metronome tool — see §8, added on refinement
+- **Partly superseded:** §8's two refusals — *"No `.metronome` owner kind"* and *"No snapshot of the
+  tempo"* — were reversed by **ADR 0160** on 2026-08-12. Everything else here stands, including §1's
+  stored flag, §3a's owner-picker prohibition, and §8's decision to put the door on the metronome at
+  all. The reversal is conditional and does not weaken this ADR: what §8 objected to was a *fragment*
+  of a unit's context (a bare BPM), and 0160 records a metronome sitting's context in **full** on an
+  entry that declares what it is, so there is nowhere wrong left to attach it.
 
 ## Context
 
@@ -183,6 +189,14 @@ Two things this deliberately does **not** do:
 ramp settings? — and a journal to read back, and the note's stated purpose is discoverability, not a
 record of metronome sittings. A fifth owner is a large price for a door.
 
+> **Reversed by ADR 0160 (2026-08-12).** The question this refusal asks — *what would a metronome
+> owner even snapshot?* — turned out to have a complete answer: tempo, meter, subdivision and
+> withdrawal, all of them to hand at the write seam. A sixth owner kind was the right price once the
+> snapshot was a full description of a real thing rather than a fragment. It still holds no journal
+> to read back, exactly as this section anticipated.
+
+
+
 **No snapshot of the tempo, even though one is available.**
 `StandaloneMetronomeEngine.elapsed` exists (`:100`), accumulates across pause/resume, and is
 rendered nowhere in the app; the live BPM is equally to hand. Both were considered as a way to give
@@ -190,6 +204,13 @@ the note *some* context. Rejected for the same reason §5 gives the composer its
 standalone note records nothing, and half a snapshot — a BPM with no unit attached to it — is the
 lending of false context this ADR's Context section is about. A player who wants the tempo in the
 note can type it, and it will mean what they meant by it.
+
+> **Reversed by ADR 0160 (2026-08-12).** The premise — that a standalone note records nothing — is
+> what changed, not the reasoning. A tempo *alongside its meter, subdivision and withdrawal*, on an
+> entry classified as a metronome note, is not half a snapshot; it is a whole one of something that
+> is not a unit. The device pass also supplied the case this section did not weigh: a player who
+> takes this door and writes "finally clean here" gets a note that does not say what tempo, which is
+> the outcome most likely to teach them the journal isn't worth using.
 
 **Discoverability is the point, and it is worth being honest about the size of the claim.** A pencil
 in the metronome's toolbar teaches the journal exists to players who open the metronome. It does not
