@@ -60,13 +60,18 @@ enum JournalOwner {
     /// session-complete screen) and is never a `JournalSheet` subject; its entries are read on the
     /// aggregated Journal feed like any other.
     case session(SessionJournalContext)
+    /// **No owner at all** (ADR 0155) — a note about practice generally, written from the Journal
+    /// space or the Metronome. Like `.session` it holds no relationship and has no journal to read,
+    /// so it exists only at the write seam; unlike `.session` it carries no context whatsoever,
+    /// because there is none to carry.
+    case standalone
 
     /// Entries newest-first — the order the journal lists them in.
     var entriesByRecent: [JournalEntry] {
         switch self {
         case .loop(let loop): loop.journalByRecent
         case .exercise(let exercise): exercise.journalByRecent
-        case .session: []
+        case .session, .standalone: []
         }
     }
 
@@ -75,7 +80,7 @@ enum JournalOwner {
         switch self {
         case .loop(let loop): loop.journal
         case .exercise(let exercise): exercise.journal
-        case .session: []
+        case .session, .standalone: []
         }
     }
 
@@ -84,24 +89,38 @@ enum JournalOwner {
     /// What to call the owner in a composer that isn't already on its screen — the compact capture
     /// sheet says which unit the note lands on (ADR 0142). Falls back to the owner's kind rather than
     /// an empty string, matching `JournalTimeline.ownerLabel`'s handling of an unnamed unit.
+    ///
+    /// **`.standalone` has no honest value here** (ADR 0155 §5) — it is never a name because it is
+    /// never a thing. Both callers that can reach one go through `destinationLine` instead, and
+    /// `JournalNoteComposer` (which still reads this) is only ever hosted on a run screen, so it never
+    /// sees a standalone owner. The fallback is deliberately a *string* and not a
+    /// `preconditionFailure`: this repo's standing trade is that a sentence reading oddly is a far
+    /// smaller failure than a crash, and a visibly silly "your Journal's Journal" is a fine bug signal
+    /// if a future surface ever wires one through by mistake.
     var displayName: String {
         switch self {
         case .loop(let loop): loop.name.isEmpty ? "this loop" : loop.name
         case .exercise(let exercise): exercise.name.isEmpty ? "this exercise" : exercise.name
         case .session(let context): context.routineName.isEmpty ? "this session" : context.routineName
+        case .standalone: "your Journal"
         }
     }
 
-    /// One true sentence about **what a new entry will snapshot** — the composers' footer copy.
-    /// Owner-supplied rather than written into the composer, because "where the unit stands right
-    /// now" is a lie about a session: it spans several units at several tempos, and its snapshot is
-    /// the list of them (ADR 0143).
-    var snapshotBlurb: String {
+    /// One true **whole sentence** about where a new entry lands and what it snapshots — the compact
+    /// composer's footer copy.
+    ///
+    /// A whole sentence rather than ADR 0142's two assembled fragments (`"Saves to \(displayName)'s
+    /// Journal, \(snapshotBlurb)."`), because neither fragment has an honest value for an owner that
+    /// is not a thing and records nothing: patching them yields "Saves to your Journal's Journal"
+    /// (ADR 0155 §5). One caller, so owning the whole sentence costs nothing.
+    var destinationLine: String {
         switch self {
         case .loop, .exercise:
-            return "snapshotting where the unit stands right now"
+            return "Saves to \(displayName)'s Journal, snapshotting where the unit stands right now."
         case .session:
-            return "snapshotting what you practised in this session"
+            return "Saves to \(displayName)'s Journal, snapshotting what you practised in this session."
+        case .standalone:
+            return "Saves straight to your Journal — not attached to any loop or exercise."
         }
     }
 }
@@ -149,6 +168,12 @@ enum JournalWriter {
                                                 routineUID: session.routineUID,
                                                 routineName: session.routineName,
                                                 units: session.units)
+            context.insert(entry)
+        case .standalone:
+            // No relationship, no snapshot, no caption — the entry declares its ownerlessness with
+            // the stored `isStandalone` flag rather than by *not* having an owner, because absence
+            // already means `.orphan` (ADR 0155 §1).
+            let entry = JournalEntry.forStandalone(text: trimmed, kind: kind)
             context.insert(entry)
         }
         return true

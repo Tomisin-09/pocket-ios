@@ -1,6 +1,6 @@
 # ADR 0155 — a note that belongs to no unit
 
-- **Status:** Proposed — refined 2026-08-11 (§3a, §8, and a recommendation on the open toolbar question). Still unbuilt.
+- **Status:** **Accepted — built 2026-08-12** (branch `pocket-252-standalone-journal-note`). Refined 2026-08-11 (§3a, §8, and a recommendation on the open toolbar question); the open toolbar question is now **decided** — see the build note after *Consequences*.
 - **Date:** 2026-08-09, refined 2026-08-11
 - **Amends:** ADR 0100 §1 (the read-only stance), narrowly
 - **Extends:** ADR 0058 (polymorphic owner) · ADR 0143 (`ownerKind` is the discriminator) · ADR 0151 (the orphan state)
@@ -259,3 +259,37 @@ buys the purity by making the feature harder to find.
 **Free-text tags rather than the closed `EntryKind` set.** Standalone notes are the loosest kind, so
 the pressure to loosen the vocabulary lands here first. ADR 0038 chose a closed set specifically to
 avoid a later text→enum migration; nothing about an ownerless note changes that reasoning.
+
+## Build note (2026-08-12) — what was decided at build time
+
+**The open toolbar question is resolved as recommended: ADR 0126 wins.** `JournalTabView`'s trailing
+edge folds Progress and Sort into an `ellipsis.circle` menu, and the ＋ takes the slot 0126's grammar
+gives it. Progress is demoted from one tap to two — the cost the question named, paid knowingly.
+
+One mechanical detail the recommendation didn't anticipate: **a `NavigationLink` inside a `Menu` does
+not push.** Progress therefore became a `Button` setting a flag, with the push moved out to a
+`.navigationDestination(isPresented:)` beside the existing owner-route destination. It behaves
+identically; it is simply not the one-line move into a menu it looks like.
+
+**One deviation from §5.** That section says `JournalNoteComposer` "never sees `.standalone` and is
+untouched", which is true — but `JournalOwner.displayName` is an exhaustive `switch`, so the case
+must still be written. It returns the string `"your Journal"` rather than trapping. A
+`preconditionFailure` was considered and rejected: this repo's standing trade is that a sentence
+reading oddly beats a crash (the same reasoning `AboutSection.supportURL` gives for being optional),
+and if a future surface ever wires one through by mistake, a visibly silly "your Journal's Journal"
+is a perfectly good bug signal that costs nobody their session.
+
+**§2's "no changes needed" held, with one addition made on purpose.**
+`JournalTimeline.ownerLabel` needed a `.standalone` branch returning `nil` — which is what it would
+have returned anyway by falling through, since `forStandalone` writes no `ownerLabelAtEntry`. It is
+written explicitly regardless: resting on that would leave a caption one careless assignment away,
+and a standalone note wearing a unit's name is the exact corruption this ADR exists to prevent.
+
+**Six exhaustive switches broke**, two more than the four *Consequences* predicted — `JournalSheet`
+accounts for three of them (its empty state, its capture preview, and the entry-detail snapshot
+section) and `RoutinePlayerView+Done` for the fourth beyond the forecast. All six either take the
+orphan's branch or document why they are unreachable. This is the mechanism working as intended: the
+compiler named every site.
+
+**Not built, per §4:** a standalone note still cannot be edited after writing. Delete-and-rewrite
+remains the answer, with the feed's existing hold-to-delete and its Undo window.

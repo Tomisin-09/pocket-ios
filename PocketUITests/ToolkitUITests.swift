@@ -12,8 +12,9 @@ final class ToolkitUITests: UITestCase {
         let app = launchApp()
 
         // Match by label prefix, not the full subtitle — the card's subtitle changes as the hub grows
-        // (it read "chords, scales and theory reference", now "your chords and a music glossary"), and a
-        // hard-coded full label made this wiring guard brittle to copy edits.
+        // ("chords, scales and theory reference" → "your chords and a music glossary" → "tuner, your
+        // chords and a glossary"), and a hard-coded full label made this wiring guard brittle to copy
+        // edits. Three rewrites in, that has paid for itself.
         let toolkitCard = app.buttons
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Toolkit,")).firstMatch
         XCTAssertTrue(toolkitCard.waitForExistence(timeout: Self.uiTimeout), "Toolkit card missing on Home")

@@ -78,6 +78,13 @@ enum JournalTimeline {
             case .session:
                 let name = entry.routineNameAtEntry ?? ""
                 return name.isEmpty ? "Routine session" : name
+            case .standalone:
+                // Never a caption, and stated as its own branch rather than left to fall through
+                // (ADR 0155 §2). The shared branch below would reach the same `nil` today only
+                // because `forStandalone` writes no `ownerLabelAtEntry` — resting on that would make
+                // a caption one careless assignment away, and a standalone note attributed to a unit
+                // is precisely the corruption this decision exists to prevent.
+                return nil
             case .exercise, .loop, .orphan:
                 return ownerLabel(loop: entry.loop, exercise: entry.exercise, song: nil)
                     ?? entry.ownerLabelAtEntry

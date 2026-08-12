@@ -6,10 +6,18 @@ import SwiftUI
 /// exercises (Practice) alike. A top-level Home destination (the 4th nav strip), because the feed is
 /// cross-cutting: it belongs above Practice and Library, not inside either.
 ///
-/// Read-only by design — reflection, not authoring: writing/editing entries stays in the per-owner
-/// `JournalSheet`. Takes are the exception, since playing one *is* their nature. All the merge /
-/// filter / owner-label logic is the pure `JournalTimeline`; this view only queries, groups by day,
-/// and renders.
+/// Read-only for **owned** entries — reflection, not authoring: writing and editing an entry that
+/// belongs to a loop, an exercise or a session stays on that owner's screen, because that is the only
+/// place its snapshot is honest. Takes are the exception, since playing one *is* their nature.
+///
+/// ADR 0155 §3 narrows that rule rather than overturning it: this space writes **standalone** notes,
+/// and only standalone notes. What the ＋ cannot do is offer an owner picker — filing a note against a
+/// unit at a moment you are not practising it would snapshot where that unit stands *now* rather than
+/// where it stood when the thing being described happened, which is the exact dishonesty ADR 0100 §1
+/// was protecting against.
+///
+/// All the merge / filter / owner-label logic is the pure `JournalTimeline`; this view only queries,
+/// groups by day, and renders.
 struct JournalTabView: View {
     // Unfiltered queries (no optional `#Predicate` — those starve the main thread); the merge and
     // scope filter happen in memory via `JournalTimeline`.
@@ -28,6 +36,11 @@ struct JournalTabView: View {
     @State private var query = ""
     /// Day order — newest-first by default; flip to walk the history forwards.
     @State private var sortOrder: JournalTimeline.SortOrder = .newest
+    /// The standalone-note composer (ADR 0155 §3).
+    @State private var composing = false
+    /// Whether the Progress screen is pushed — a flag rather than a `NavigationLink`, because the
+    /// link now lives inside the options menu and a `NavigationLink` in a `Menu` doesn't push.
+    @State private var showingProgress = false
     /// One take plays at a time; stopped on dismiss (mirrors `TakesSheet`). Not `private`: the
     /// deletion glue lives in `JournalTabView+Deletion.swift`, and `private` is file-scoped.
     @State var player = RecordingPlayer()
@@ -87,32 +100,28 @@ struct JournalTabView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .searchable(text: $query, prompt: "Search by song, exercise, template or date")
         .toolbar {
-            // Progress lives behind the same door as the timeline: both are read-only practice
-            // history, so ADR 0117's screen is reached from here rather than from a new Home card —
-            // which keeps Home's grouped layout (ADR 0102) unchanged until the deferred year tier and
-            // card evolution land together. A fixed-width glyph, per the toolbar grammar (ADR 0126).
+            // ADR 0126's grammar is `ellipsis.circle` then `+`, and three bare trailing items is
+            // exactly the shape it was written to stop — so Progress and Sort fold into the options
+            // menu and the ＋ takes its proper slot (ADR 0155, the open toolbar question, resolved at
+            // build time as the ADR said it would be). Progress is demoted from one tap to two; Sort
+            // is a two-state flip that isn't even persisted, so between the three it had the weakest
+            // claim on a top-level slot.
+            ToolbarItem(placement: .topBarTrailing) { optionsMenu }
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    PracticeProgressView()
-                } label: {
-                    Image(systemName: "chart.bar.xaxis")
-                }
-                .accessibilityLabel("Progress")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Picker("Sort", selection: $sortOrder) {
-                        Label("Newest first", systemImage: "arrow.down").tag(JournalTimeline.SortOrder.newest)
-                        Label("Oldest first", systemImage: "arrow.up").tag(JournalTimeline.SortOrder.oldest)
-                    }
-                } label: {
-                    Image(systemName: "arrow.up.arrow.down")
-                }
-                .accessibilityLabel("Sort order")
+                QuickJournalButton(isPresented: $composing)
             }
         }
         .navigationDestination(item: $openingOwner) { route in
             JournalOwnerDestinationView(route: route)
+        }
+        // Progress moved into the menu, and a `NavigationLink` inside a `Menu` doesn't push — so the
+        // menu sets a flag and the push happens out here.
+        .navigationDestination(isPresented: $showingProgress) { PracticeProgressView() }
+        // The Journal space's own write seam (ADR 0155 §3): standalone notes, and *only* standalone
+        // notes. No owner picker — filing a note against a unit you are not currently practising is
+        // what makes a snapshot dishonest, and that prohibition outlives this screen.
+        .sheet(isPresented: $composing) {
+            QuickJournalSheet(owner: .standalone)
         }
         .onDisappear { player.stop() }
     }
@@ -162,6 +171,35 @@ struct JournalTabView: View {
             break
         }
         openingOwner = route
+    }
+
+    // MARK: - Toolbar
+
+    /// Progress and Sort, behind one fixed-width glyph (ADR 0126).
+    ///
+    /// Progress lives behind the same door as the timeline: both are read-only practice history, so
+    /// ADR 0117's screen is reached from here rather than from a new Home card — which keeps Home's
+    /// grouped layout (ADR 0102) unchanged until the deferred year tier and card evolution land
+    /// together.
+    private var optionsMenu: some View {
+        Menu {
+            Section {
+                Button {
+                    showingProgress = true
+                } label: {
+                    Label("Progress", systemImage: "chart.bar.xaxis")
+                }
+            }
+            Section {
+                Picker("Sort", selection: $sortOrder) {
+                    Label("Newest first", systemImage: "arrow.down").tag(JournalTimeline.SortOrder.newest)
+                    Label("Oldest first", systemImage: "arrow.up").tag(JournalTimeline.SortOrder.oldest)
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+        .accessibilityLabel("Journal options")
     }
 
     // MARK: - Scope filter
@@ -259,9 +297,12 @@ struct JournalTabView: View {
         }
         switch scope {
         case .all:
-            return "Notes you write and takes you record — on your loops and exercises — gather here."
+            return "Notes you write and takes you record gather here — from your loops and "
+                + "exercises, or straight from this screen."
         case .notes:
-            return "Jot a goal, a breakthrough, or a struggle after a run and it shows up here."
+            // This is the line that teaches the ＋ exists, so it is doing more work than it looks
+            // (ADR 0155). Before that button, "after a run" was the only true answer.
+            return "Jot a goal, a breakthrough or a struggle — after a run, or any time with ＋."
         case .takes:
             return "Arm recording next to Start training to capture your playing."
         }

@@ -113,7 +113,12 @@ final class PracticeAudioEngine {
     func play() {
         guard file != nil else { return }
         startEngineIfNeeded()
-        if !scheduled { primeSchedule() }
+        // Nothing to schedule means the playhead sits at the file's end with no loop: rewind and
+        // play from the top — the same reset the natural end makes. Else the transport lit silence.
+        if !scheduled, !primeSchedule() {
+            rewindToStart()
+            guard primeSchedule() else { return }
+        }
         player.play()
         isPlaying = true
         armMetronome()
@@ -202,15 +207,25 @@ final class PracticeAudioEngine {
         return seg.frameCount > 0 ? seg : nil
     }
 
-    /// Schedule the active loop's crossfaded buffer, or the straight-through
-    /// segment to the file end when not looping.
-    private func primeSchedule() {
+    /// Schedule the active loop's crossfaded buffer, or the straight-through segment to the file end
+    /// when not looping. Returns whether anything was actually queued — it claims `scheduled` only
+    /// then, so a branch that queues nothing can no longer pass for a primed player.
+    private func primeSchedule() -> Bool {
         if currentLoopSegment() != nil {
-            scheduleLoopBuffer(offsetFrames: loopOffsetFrames(forSeekFrame: Int(seekFrame)))
+            scheduled = scheduleLoopBuffer(offsetFrames: loopOffsetFrames(forSeekFrame: Int(seekFrame)))
         } else if let file {
-            scheduleSegment(file, fromFrame: Int(seekFrame), toFrame: Int(totalFrames))
+            scheduled = scheduleSegment(file, fromFrame: Int(seekFrame), toFrame: Int(totalFrames))
+        } else {
+            scheduled = false
         }
-        scheduled = true
+        return scheduled
+    }
+
+    /// Playhead back to the top, invalidating any in-flight completion.
+    private func rewindToStart() {
+        seekFrame = 0
+        currentTime = 0
+        generation += 1
     }
 
     /// How far into the active loop a seek lands, in source frames (clamped at 0 below
@@ -245,17 +260,18 @@ final class PracticeAudioEngine {
         return true
     }
 
-    /// Schedule a straight-through segment `[fromFrame, toFrame)` that stops at the
-    /// file end (`.dataPlayedBack`, after the tail has played out).
-    private func scheduleSegment(_ file: AVAudioFile, fromFrame: Int, toFrame: Int) {
+    /// Schedule a straight-through segment `[fromFrame, toFrame)` that stops at the file end
+    /// (`.dataPlayedBack`, after the tail plays out). `false` = empty span, nothing queued.
+    private func scheduleSegment(_ file: AVAudioFile, fromFrame: Int, toFrame: Int) -> Bool {
         let count = toFrame - fromFrame
-        guard count > 0 else { return }
+        guard count > 0 else { return false }
         let token = generation
         player.scheduleSegment(file, startingFrame: AVAudioFramePosition(fromFrame),
                                frameCount: AVAudioFrameCount(count), at: nil,
                                completionCallbackType: .dataPlayedBack) { [weak self] _ in
             Task { @MainActor in self?.handleReachedEnd(token: token) }
         }
+        return true
     }
 
     /// The straight-through segment finished — stop and reset to the top.
@@ -264,9 +280,7 @@ final class PracticeAudioEngine {
         player.stop()
         scheduled = false
         isPlaying = false
-        seekFrame = 0
-        currentTime = 0
-        generation += 1
+        rewindToStart()
         stopTimer()
         // Natural end of the file (not a manual stop/seek) — let an observing play-along advance.
         onReachedEnd?()

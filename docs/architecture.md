@@ -399,7 +399,21 @@ can be redrawn or rewritten and a recording of someone playing cannot be remade.
 `JournalTimeline.ownerLabel(loop:exercise:song:)` that renders the live one — so a surviving take
 still says what it was recorded against instead of degrading to a bare "Take 0:11". The same change
 applies to unit-owned `JournalEntry` rows (`ownerLabelAtEntry`), bringing loops and exercises into
-line with the rule session entries have followed since ADR 0143. **`RecordingStore`** owns the
+line with the rule session entries have followed since ADR 0143.
+
+A journal entry may also belong to **nothing at all** (ADR 0155). `JournalEntryOwnerKind` carries a
+fifth case, `.standalone`, backed by one additive optional column (`JournalEntry.isStandalone`) — a
+*stored* flag rather than the absence of an owner, because **absence is already spoken for**: ADR
+0151 spent it on `.orphan`, the note whose unit was deleted and whose relationship nullified. The two
+render identically and mean opposite things (one lost its subject, one never had one), and the flag is
+read **last** in `ownerKind`, after both relationships and `routineUID`, so ADR 0143's rule that the
+relationships win survives the case being added under it. Standalone notes are written from two
+surfaces that have no unit whose snapshot could be honest — the Journal space's own ＋ and the
+**Metronome**'s toolbar — both through the existing `QuickJournalSheet`/`JournalWriter` path, and
+neither offers an owner picker: filing a note against a unit you are not currently practising is what
+would make the snapshot lie. They snapshot nothing and carry no caption, by construction.
+
+**`RecordingStore`** owns the
 app-container `Recordings/` directory and the retention story — delete/size plus a pure orphan sweep
 that reaps files whose model row was deleted (dropping a row never drops the on-disk audio). Since a
 nullified take keeps its row, its audio is safe by construction, and destroying a take is now only

@@ -236,14 +236,25 @@ struct HomeView: View {
     /// of the teal · plum · terracotta triad above it.
     private var toolkitCard: some View {
         NavigationLink { ToolkitView() } label: {
+            // The subtitle **names the tuner first**, deliberately. The pocket-170 rewrite that
+            // replaced "Chords, scales & theory reference" was fixing an over-promise and was right
+            // on the day — but the Tuner (ADR 0115) and Help & FAQs (ADR 0145) both landed inside
+            // the Toolkit afterwards and neither reached this card, so it started *under*-promising
+            // instead. The tuner is free forever (ADR 0144), needs no song and no library, and is
+            // the thing a guitarist reaches for every time they pick the instrument up — it is the
+            // strongest daily-habit hook in the app, and it was sitting behind a card that didn't
+            // mention it. Help & FAQs stays unlisted: one line only holds so much, and it has a
+            // second door in Settings → About.
             HomeNavCard(icon: "books.vertical.fill", title: "Toolkit",
-                        subtitle: "Your chords & a music glossary",
+                        subtitle: "Tuner, your chords & a glossary",
                         tint: PocketColor.toolkit,
                         cardWash: PocketColor.toolkitCardWash,
                         circleWash: PocketColor.toolkitCircleWash)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Toolkit, your chords and a music glossary")
+        // Kept in step with the subtitle by hand. `ToolkitUITests` matches on `BEGINSWITH "Toolkit,"`
+        // rather than the whole string, so the copy can move without breaking the smoke test.
+        .accessibilityLabel("Toolkit, tuner, your chords and a glossary")
     }
 
     // MARK: - Journal card

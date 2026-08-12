@@ -114,6 +114,65 @@ Also worth settling in the same pass: Routines has no search at all and no sort 
 and My chords, Takes and Glossary have neither. Those absences may be right — but they should be
 decided, not inherited.
 
+## Filtering by two collections returns nothing — **SHIPPED as ADR 0159** (2026-08-12)
+
+**Done on branch `pocket-252`.** `Labels.matches(_:anyOf:)` added, `LibraryView` switched to it,
+both strings fixed, `collectionSessionBar`'s `count == 1` gate re-read and left correct. The two
+`allOf` tests were **renamed and kept**, not deleted — intersection didn't become wrong, the library
+filter just stopped using it. The rule the wider filter project inherits: **OR within a facet, AND
+across facets.** Original note preserved below.
+
+
+**The note:** *"When you try and filter by collection, I think it filters on an AND basis rather than
+an OR."* Correct, and reproduced from a screenshot: **Covers** ✓ + **Ocean's Trilogy** ✓ →
+*"No songs in this collection"*.
+
+Related to the filter section above, but **more prevalent** — that one is a consistency project, this
+is a control that returns the wrong answer today, on the app's most-used list screen.
+
+**It is AND, and it was decided.** `LibraryView.swift:174` calls
+`Labels.matches($0.collections, allOf: Array(selectedCollections))`, and `Labels.swift:75` is
+`allSatisfy`. ADR 0033 states it outright: *"Selecting collections narrows the song list by
+**intersection (AND)** — a song matches if it contains **all** selected collections."*
+
+**But read the justification it gives:** *"the common single-select case is AND-of-one (tap a
+collection → its songs, playlist-like)."* That is the entire argument, and it is about the one case
+where **AND and OR are identical**. The multi-select behaviour was never actually argued — it fell
+out of `allSatisfy`, and the ADR's own framing ("playlist-like") points the other way. A player
+ticking two playlists means "show me both", not "show me songs filed in both".
+
+**The proper mechanism is faceted search: OR within a facet, AND across facets.** Every list UI a
+player has priors from works this way — Finder tags, Photos albums, Music playlists, every e-commerce
+sidebar. Collections are **one** facet, so multi-select inside it is a **union**. AND only earns its
+place across *different* axes (collection AND instrument AND favourite), which is the shape the
+filter section above will have to design for anyway. Intersecting within one facet is close to
+useless in a personal library: a song is deliberately in one collection, so the answer is almost
+always empty — which is exactly what the screenshot shows.
+
+**What to correct:**
+
+- **`Labels.matches(_:anyOf:)`** — a union counterpart. Keep `allOf`; it is still right for a
+  cross-facet filter later, and `CollectionSessionBuilder.swift:87` uses `allOf: [collection]`
+  (AND-of-one), which is unaffected either way.
+- **`LibraryView.swift:174`** switches to `anyOf`, and its doc comment on `:170` ("narrowed by the
+  active collection filter (AND)") with it.
+- **The empty state** (`LibraryView.swift:303`) is singular — *"No songs in this collection"* — and
+  reads as a bug once two are ticked. Under OR an empty result also becomes much rarer, so this is
+  mostly a wording fix.
+- **The accessibility label** (`:256`) already says "Filtering by N collection(s)"; it should say
+  which relation it means once N can exceed 1.
+- **`collectionSessionBar` (`:140`) stays as-is** — it gates on `selectedCollections.count == 1`
+  because ADR 0118's generated session needs a single collection in focus, and that is still true
+  under OR. Worth re-reading rather than assuming, since it is the one caller that cares about the
+  size of the selection.
+- **Two existing tests assert the old semantics** and must flip, not be deleted:
+  `LabelsTests.swift:126` (`["Blues","Jazz","Rock"]` matches `allOf: ["Blues","Jazz"]`) and `:127`
+  (`["Blues"]` does not). The `allOf` ones stay valid *as `allOf` tests*; the union needs its own.
+
+**Needs an ADR** — it reverses a clause of ADR 0033 that was explicitly decided, even if the reasoning
+only ever covered the degenerate case. Small, pure, unit-testable, and the predicate is already
+isolated in `Labels`.
+
 ## The click drifts on an unquantised beat — **SHIPPED as ADR 0154** (2026-08-09)
 
 **The observation.** On a J Dilla production the metronome phases in and out of alignment with
@@ -166,32 +225,57 @@ collapse to one number that fits nowhere in particular — anchors fix the *phas
 produces, not the number itself. A trailing-window variant (last ~8 taps) would give a **local**
 tempo, which is what this material wants. Small, pure, unit-testable, and untouched by ADR 0154.
 
-## A loop past the end of its audio plays silence (parked 2026-08-09, after ADR 0152)
+## The transport lights up with nothing scheduled — ✅ FIXED 2026-08-12 (re-diagnosed first)
 
-Found while tracing what a **shorter** replacement file does to existing loops (ADR 0152 §4 warns
-that they "may no longer line up"). Nothing is deleted, and the clamping in `AudioMath.loopSegment`
-handles two of the three cases sensibly. The third is a silent failure.
+Kept for the re-diagnosis, which is the useful part: the entry sat here for three days describing a
+trigger that could not happen, and the fix that shipped is not the one it prescribed.
+`primeSchedule` now claims `scheduled` only when something was really queued, `play()` rewinds when
+it finds nothing left, and `PracticeAudioEngineTests` pins both (they fail against the old engine
+with the playhead stuck at `duration`). The "out of range" loop state was **not** built — see why
+below. `SongRelinker.Outcome`'s doc comment and ADR 0152 §4 were corrected in the same change.
 
-- **Loop entirely inside the new length** — plays; the only problem is musical (those seconds now
-  hold different audio). Correct behaviour, nothing to do.
-- **Loop straddling the new end** — clamps to `totalFrames`, so it plays short with no indication it
-  was truncated. Arguably fine, arguably worth a marker in the UI.
-- **Loop entirely past the new end** — **the bug.** Both ends clamp to `totalFrames`, `frameCount`
-  becomes 0, `currentLoopSegment()` → nil, `makeLoopBuffer()` → nil. The straight-through fallback
-  doesn't catch it either: `seek` already clamped the playhead to the new duration, so
-  `scheduleSegment` gets `count == 0` and returns having scheduled nothing — while
-  `primeSchedule` sets `scheduled = true` regardless. Result: the transport lights up, the playhead
-  runs, and **nothing sounds**. No completion callback is scheduled either, so nothing detects it.
+**What was originally claimed:** that a **shorter** replacement file (ADR 0152 §4, "may no longer
+line up") could strand a loop entirely past the new end, so both ends clamp to `totalFrames`,
+`frameCount` becomes 0, and nothing plays.
 
-**Not new** — reachable since ADR 0148 §6, which could always relink to a shorter file. ADR 0152
-only made it easier to reach, and it's an edge case (deliberately shipped as-is in #232).
+**Why that can't happen.** `Loop.start`/`.end` are **fractions of the song (0...1)**, not seconds —
+and every path that turns them into seconds divides by a duration read from *the file that is
+actually open*:
 
-**Shape of the fix, when it's time:** `primeSchedule` should only claim `scheduled` when something
-was actually scheduled, and the model should treat a loop falling entirely outside the audio as
-*out of range* rather than playable — a state the loops list can show, rather than a loop that
-looks runnable and isn't. Worth deciding at the same time whether a truncated (straddling) loop
-deserves the same treatment. Pure enough to unit-test off `AudioMath.loopSegment` plus a
-`primeSchedule` guard.
+- `SongRelinker.apply` writes `song.duration = prepared.duration`, taken from `WaveformExtractor`,
+  which computes it as `totalFrames / sampleRate` of the new file. Both relink entry points (the
+  library's `SongDetailsSheet` and the practice screen's `relinkAudio`) go through it.
+- `WaveformPracticeModel.duration` prefers `engine.duration` — the open `AVAudioFile` — over the
+  stored one, and `LoopRunModel` multiplies by `engine.duration` directly.
+
+So a fraction times a live duration is inside the file **by construction**. A shorter replacement
+file doesn't strand loops past the end; it **rescales every one of them proportionally**. That is
+the first bullet of the old entry (the loop now covers different audio — a musical problem, not a
+silent one), and it is what happens to *all* loops, not to some. The "straddling" and "entirely
+past" cases don't exist. `SongRelinker.Outcome`'s doc comment ("loops beyond the new end won't
+play", `SongRelinker.swift:52`) and ADR 0152 §4 both need this correction.
+
+**The trigger that does reach it: a playhead parked at the very end, with no loop.**
+`seek` clamps to `duration`, and `framesToSeconds(totalFrames)` → `secondsToFrames` round-trips
+exactly, so `seekFrame == totalFrames`. Then `primeSchedule` takes the straight-through branch and
+calls `scheduleSegment(file, fromFrame: totalFrames, toFrame: totalFrames)` — `count == 0`, an
+early `return`, nothing scheduled, no completion callback — while `primeSchedule` sets
+`scheduled = true` regardless. The transport lights up, the playhead runs, **nothing sounds**, and
+nothing detects it. Reachable two ways, neither of them exotic:
+
+- `seekToFraction(1.0)` — scrub or tap the waveform at its far right edge.
+- `TransportSkip.target` clamps to `duration`, so skipping forward inside the last increment lands
+  on it too.
+
+**Not new, and not about ADR 0152 at all** — this is as old as the straight-through scheduler.
+
+**Shape of the fix:** `primeSchedule` should only claim `scheduled` when something was actually
+scheduled (return a `Bool` from both branches), and `play()` should not enter the playing state —
+lit transport, running timer — when nothing was. Then decide what a play at the very end *should*
+do: almost certainly rewind to 0 and play, matching `handleReachedEnd`, rather than refusing.
+**The "out of range" loop state for the loops list is no longer needed** — no loop can be out of
+range. Unit-testable off `primeSchedule`'s return plus the `seekFrame == totalFrames` case; the
+`AudioMath.loopSegment` clamping the old entry pointed at is not where the bug lives.
 
 ## ADR 0140, slowed-audio quality — slices 1–2 SHIPPED (#209), slice 3 deferred
 
@@ -2183,6 +2267,23 @@ dedicated theory/ear-training context isn't bound by it. Worth its own ADR befor
   Fix path = build the deferred hub slices (scales & modes explorer + intervals/ear per
   ADR 0094 Slice 5) so the reference Hear surfaces there. Relates to the Wave-2
   "split Toolkit into a Learn section" step.
+  - **The subtitle now under-promises, and the miss is the tuner (found 2026-08-12).** The
+    pocket-170 rewrite above was correct *on the day it shipped*. Since then **two** things landed
+    inside the Toolkit and neither was added to the card: the **Tuner** (ADR 0115, #180) and
+    **Help & FAQs** (ADR 0145, #224). `HomeView.swift:240` still reads *"Your chords & a music
+    glossary"*, and `:246`'s accessibility label repeats it.
+  - **Why this one matters more than a copy nit.** The tuner is **free forever** (ADR 0144), needs no
+    song, no library and no subscription, and is the thing a guitarist reaches for every single time
+    they pick the instrument up — it is the most likely daily-habit hook in the app. It is currently
+    behind a card that does not mention it. The closed-beta guide lists the Toolkit as *"tuner (guitar
+    and bass), saved chords, glossary"* — so the guide and the app disagree, and the guide is the one
+    telling the truth.
+  - ~~**Fix is one string plus its accessibility twin.**~~ **DONE (2026-08-12, branch
+    `pocket-252`).** The card now reads *"Tuner, your chords & a glossary"*, tuner first. Help &
+    FAQs stays unlisted — one line only holds so much, and it has a second door in Settings → About.
+    `ToolkitUITests` was already matching on `BEGINSWITH "Toolkit,"` rather than the full label, so
+    nothing broke; its comment now records the third rewrite. **The deferred hub slices above are
+    untouched** — this fixed the description, not the thinness it was describing.
 
 ## Notes & journal — DONE (ADR 0038)
 
@@ -2522,6 +2623,16 @@ route through.
   button that respects the automator mode. Decide what the two actually do first — if they do the
   *same* thing, that is the real finding. The shipped screenshot keeps both (an honest frame beats a
   scrolled-to-hide one).
+  - **Answered 2026-08-12: they do different things, and the app already knows it.** The bottom bar
+    is `engine.toggle()` — the plain click, labelled Start/Pause/Resume (`MetronomeView.swift:206`).
+    The card is `startAutomatorRun()` — the ramp climb (`MetronomeAutomatorPanel.swift:70`). So this
+    is not a duplicated control; it is **one control with a label that under-describes it**.
+  - ~~**The fix is one string.**~~ **DONE (2026-08-12, branch `pocket-252`).** That button's
+    `accessibilityLabel` *already* read "Start ramp" / "Stop ramp" (`:84`) — the visible `Label` was
+    the only place the distinction was dropped, so a VoiceOver user never had this problem and a
+    sighted user always did. The visible label now says what the accessibility label always said. No
+    layout change, nothing hidden, no behaviour touched — which retired the "hide the bottom bar" and
+    "collapse to one button" options above without having to choose between them.
 - **Metronome sound picker — UI polish (logged 2026-07-24, ADR 0114).** The four-voice picker shipped
   functional (row + inline ▶ audition + selected check, `MetronomeSoundSection`) and the *sounds* are
   approved, but the presentation feels plain — a flat list of Form rows. Ideas when picked up: a richer

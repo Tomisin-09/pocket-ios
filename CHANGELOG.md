@@ -22,6 +22,37 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   `fastlane beta` lane now distributes externally to the "Closed Beta" group.
   See `docs/plans/beta-testing-plan.md` and `docs/beta/user-guide.md`.
 
+### Fixed
+- **Play at the very end of a song plays it again instead of nothing.** With the playhead parked on
+  the last frame — scrub to the far-right edge of the waveform, or skip forward inside the last few
+  seconds — pressing play lit the transport and ran the playhead over silence, because there was no
+  audio left ahead of it to play. It now rewinds and plays from the top, the same thing that happens
+  when a song reaches its end on its own. Looping was never affected.
+- **Filtering by two collections no longer shows nothing.** Ticking a second collection used to
+  *narrow* the list to songs filed in both at once — which, since you generally put a song in one
+  collection, meant an empty library. Ticking two now shows you both, which is what picking two
+  things has always meant everywhere else. See ADR 0159.
+
+### Changed
+- **The Toolkit card on Home now mentions the tuner.** It said "Your chords & a music glossary",
+  which stopped being true when the tuner moved in — so the most useful thing in there, free forever
+  and needing no song or library, was sitting behind a card that didn't name it. Now reads
+  "Tuner, your chords & a glossary".
+- **The metronome's ramp button says "Start ramp".** With the tempo automator switched on the screen
+  showed two ▶ Start buttons, and nothing on screen said which was which. They do different things —
+  one starts the ramp, one starts the plain click — and now the labels say so.
+
+### Added
+- **You can write a note that isn't about anything in particular.** Every note you could write used
+  to belong to something — a loop, a drill, a session — so a thought like *"strings are dead,
+  restring before Thursday"* or *"ten minutes tonight, that's all there was"* had nowhere to go. You
+  either lost it or filed it under whatever drill happened to be on screen, where it sat next to a
+  tempo it had nothing to do with. Now there's a **＋** in the Journal that writes a note straight to
+  your journal, attached to nothing. It's also in the **Metronome**, since practising to a click
+  isn't a drill either. These notes save no tempo and no mastery — there's nothing for them to be
+  about — and they're free forever, like the rest of the Journal. Progress and the sort order have
+  moved into the **⋯** menu to make room. See ADR 0155.
+
 ### Added
 - **You can point a song at a different file whenever you like.** Song details now has an **Audio**
   section showing what the song is playing and a **Replace audio file…** button. Previously this

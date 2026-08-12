@@ -49,7 +49,14 @@ enum SongRelinker {
         /// Whether the new file is a materially different length from the one the loops were drawn
         /// against. A re-encode of the same track lands within a second; a *different* track does
         /// not. The relink still succeeds — the loops are the player's work and are not deleted on
-        /// a guess — but the caller should say so, because loops beyond the new end won't play.
+        /// a guess — but the caller should say so, because every loop now covers different audio.
+        ///
+        /// Precisely what happens to them, since this comment used to get it wrong: `Loop.start`
+        /// /`.end` are **fractions of the song**, and `apply` below refreshes `song.duration` from
+        /// the new file — so the loops **rescale** proportionally and all stay inside the audio.
+        /// None is stranded past the end, and none falls silent; they land on different bars. That
+        /// is a musical problem for the player to judge, which is exactly why this warns rather
+        /// than repairing anything.
         var durationChangedMaterially: Bool { abs(newDuration - previousDuration) > 1 }
     }
 

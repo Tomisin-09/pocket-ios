@@ -15,6 +15,17 @@ struct EntryKindChipRow: View {
     @Binding var selection: EntryKind
     /// The row's own caption, or `nil` where the host already labels the field (the compact sheet).
     var title: String? = "Tag this"
+    /// Which tags this surface offers — the whole vocabulary by default.
+    ///
+    /// Narrowed by exactly one caller (ADR 0155 §6): three of the seven tags **assert the note was
+    /// written during something** — 👂 Ear (ear-training on a loop), 🎸 Improv (jamming over a backing
+    /// loop), 🎬 Session (a routine sitting just finished) — so offering them on a surface with no
+    /// owner lets a player file a session note about no session.
+    ///
+    /// Worth stating plainly: `EntryKind` is **never** filtered, queried or branched on anywhere in
+    /// the app — it drives this chip's emoji, label and colour and nothing else. A wrong tag is a
+    /// misleading label, not broken behaviour. This parameter is bought for honesty, not correctness.
+    var kinds: [EntryKind] = EntryKind.pickerOrder
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -26,7 +37,7 @@ struct EntryKindChipRow: View {
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    ForEach(EntryKind.pickerOrder) { option in
+                    ForEach(kinds) { option in
                         chip(option)
                     }
                 }

@@ -167,11 +167,15 @@ struct LibraryView: View {
             .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
     }
 
-    /// Songs narrowed by the active collection filter (AND) and the search query. Order
+    /// Songs narrowed by the active collection filter (**OR**, ADR 0159) and the search query. Order
     /// is the `@Query` title sort, preserved by `filter`.
+    ///
+    /// Collections are one facet, so ticking two of them means "show me both". The AND this replaced
+    /// meant "songs filed in both at once", which for playlist-shaped groupings is almost always
+    /// nothing — ticking a second collection *emptied* the list.
     private var filteredSongs: [Song] {
         presentSongs.filter {
-            Labels.matches($0.collections, allOf: Array(selectedCollections))
+            Labels.matches($0.collections, anyOf: Array(selectedCollections))
                 && LibrarySectioning.matchesSearch(fields(for: $0), query: searchText)
         }
     }
@@ -196,7 +200,9 @@ struct LibraryView: View {
             if !searchText.isEmpty {
                 ContentUnavailableView.search(text: searchText)
             } else {
-                NoMatchesState { selectedCollections.removeAll() }
+                NoMatchesState(collectionCount: selectedCollections.count) {
+                    selectedCollections.removeAll()
+                }
             }
         } else {
             groupedList
@@ -253,9 +259,18 @@ struct LibraryView: View {
                   : "line.3.horizontal.decrease.circle.fill")
                 .tint(PocketColor.active)
         }
-        .accessibilityLabel(selectedCollections.isEmpty
-                            ? "Filter by collection"
-                            : "Filtering by \(selectedCollections.count) collection(s)")
+        // Names the **relation** once more than one is ticked (ADR 0159). "Filtering by 2
+        // collections" left the question a sighted user could at least answer by looking at the
+        // list; "any of" answers it outright.
+        .accessibilityLabel(filterAccessibilityLabel)
+    }
+
+    private var filterAccessibilityLabel: String {
+        switch selectedCollections.count {
+        case 0: return "Filter by collection"
+        case 1: return "Filtering by 1 collection"
+        default: return "Filtering by any of \(selectedCollections.count) collections"
+        }
     }
 
     private func toggleCollection(_ collection: String) {
@@ -293,6 +308,11 @@ struct LibraryView: View {
 /// Shown when the active collection filter excludes every song — a clear message and
 /// a one-tap way back to the full library (ADR 0033).
 private struct NoMatchesState: View {
+    /// How many collections are ticked — the copy was written when only one could be, and read as a
+    /// bug the moment a second was added (ADR 0159). Under OR an empty result is also much rarer:
+    /// it now means *none* of the chosen collections has a song in it, not that no song sits in all
+    /// of them at once.
+    var collectionCount: Int = 1
     let onClear: () -> Void
 
     var body: some View {
@@ -300,7 +320,8 @@ private struct NoMatchesState: View {
             Image(systemName: "line.3.horizontal.decrease.circle")
                 .font(.futura(size: 40))
                 .foregroundStyle(PocketColor.textSecondary)
-            Text("No songs in this collection")
+            Text(collectionCount > 1 ? "No songs in these collections"
+                                     : "No songs in this collection")
                 .font(.futura(.headline))
                 .foregroundStyle(PocketColor.textPrimary)
             Button("Clear filter", action: onClear)
