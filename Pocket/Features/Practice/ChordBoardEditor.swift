@@ -33,12 +33,18 @@ struct ChordBoardEditor: View {
     private let gutterWidth: CGFloat = 18
     private let columnSpacing: CGFloat = 6
 
-    /// Column order left → right: low E (index 5) … high e (index 0), the way a chord box faces you.
-    private let columns = Array((0..<ChordVoicing.stringCount).reversed())
-    /// String names by index (0 = high e … 5 = low E), drawn under each column.
-    private let stringNames = ["e", "B", "G", "D", "A", "E"]
+    /// How many strings this board edits — the bound shape's own length (ADR 0163), so the same
+    /// editor serves a six-string guitar box and a four-string bass one.
+    private var stringCount: Int { frets.count }
+    /// Column order left → right: lowest string … highest, the way a chord box faces you.
+    private var columns: [Int] { Array((0..<stringCount).reversed()) }
+    /// String name by index (0 = highest), drawn under each column — shared with the drill boards so
+    /// a bass board reads G D A E rather than a guitar's names on four columns.
+    private func stringName(_ index: Int) -> String {
+        FretboardGrid.stringName(index, of: stringCount)
+    }
 
-    private var gridWidth: CGFloat { cellSize * CGFloat(ChordVoicing.stringCount) }
+    private var gridWidth: CGFloat { cellSize * CGFloat(stringCount) }
     private var gridContentHeight: CGFloat { cellSize * CGFloat(Self.totalFretCount) }
     private var viewportHeight: CGFloat { cellSize * CGFloat(Self.visibleFretCount) }
 
@@ -212,7 +218,6 @@ struct ChordBoardEditor: View {
 
     private func columnCenter(_ column: Int) -> CGFloat { (CGFloat(column) + 0.5) * cellSize }
     private func rowCenter(_ row: Int) -> CGFloat { (CGFloat(row) + 0.5) * cellSize }
-    private func stringName(_ string: Int) -> String { stringNames[string] }
 
     /// Fret `string` at `fret`; tapping the string's own fret again clears it back to muted.
     private func placeFret(string: Int, fret: Int) {

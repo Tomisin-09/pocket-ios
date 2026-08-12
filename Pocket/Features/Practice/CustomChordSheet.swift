@@ -20,14 +20,32 @@ struct CustomChordSheet: View {
     /// voicing to persist — kept separate from `onInsert` so saving and inserting are distinct intents.
     var onSave: ((ChordVoicing) -> Void)?
 
+    /// The neck this sheet builds on (ADR 0163) — the owning drill's instrument, or the profile's
+    /// preferred one when the sheet is opened from the instrument-free My Chords library. Fixed for
+    /// the life of the sheet: the board's string count *is* the shape being authored, so changing it
+    /// mid-build would be discarding the player's work, not switching a view.
+    var instrument: Instrument = .guitar
+
     @Environment(\.dismiss) private var dismiss
 
     /// Last voicing handed to `onSave`, so the button reads "Saved" until the shape changes.
     @State private var lastSaved: ChordVoicing?
 
-    /// Per-string fret, high-e first (0…5 low E) — `nil` muted, `0` open, `n` fretted. Starts all muted.
-    @State private var frets: [Int?] = Array(repeating: nil, count: ChordVoicing.stringCount)
+    /// Per-string fret, highest string first — `nil` muted, `0` open, `n` fretted. Starts all muted,
+    /// sized to the chosen instrument's neck.
+    @State private var frets: [Int?]
     @State private var name: String = ""
+
+    init(onInsert: @escaping (ChordVoicing) -> Void,
+         confirmTitle: String = "Insert",
+         onSave: ((ChordVoicing) -> Void)? = nil,
+         instrument: Instrument = .guitar) {
+        self.onInsert = onInsert
+        self.confirmTitle = confirmTitle
+        self.onSave = onSave
+        self.instrument = instrument
+        _frets = State(initialValue: Array(repeating: nil, count: instrument.stringCount))
+    }
 
     /// Caption mode for sounded strings — shared globally with the scale boards so chords/scales agree.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue

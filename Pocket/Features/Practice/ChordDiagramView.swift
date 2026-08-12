@@ -1,9 +1,13 @@
 import SwiftUI
 
 /// The **presentational chord diagram** (ADR 0065) — a standard vertical chord box for one
-/// `ChordVoicing`: six strings as columns (low E left → high e right), a four-fret window, dots for
+/// `ChordVoicing`: one column per string (lowest left → highest right), a four-fret window, dots for
 /// fretted notes (finger number inside when known), and ×/○ over the nut for muted/open strings. A
 /// high shape drops the nut for a "n fr." caption and windows at its lowest fret.
+///
+/// **The neck is the voicing's own** (ADR 0163): six columns for a guitar shape, four for a bass one,
+/// read from `frets.count`. No instrument is passed in — a shape carries its neck with it, which is
+/// what lets a saved bass chord draw correctly in the instrument-free My Chords library.
 ///
 /// Pure and stateless — it just draws the voicing it's handed, so the live change view and any
 /// static preview render pixel-identically. **T10**: every colour resolves through a semantic
@@ -20,9 +24,13 @@ struct ChordDiagramView: View {
     /// detail passes `false` because its navigation title already names the chord (ADR 0096).
     var showsName: Bool = true
 
-    /// Display order left → right: low E (index 5) first … high e (index 0) last — the standard way
-    /// a chart is drawn when the guitar faces you.
-    private let displayStrings = Array((0..<ChordVoicing.stringCount).reversed())
+    /// How many strings this chart draws — the voicing's own length (ADR 0163): six for a guitar
+    /// shape, four for a bass one. Read from the shape rather than a constant so the same diagram
+    /// serves both necks with no instrument passed in.
+    private var stringCount: Int { voicing.frets.count }
+    /// Display order left → right: lowest string first … highest last — the standard way a chart is
+    /// drawn when the instrument faces you.
+    private var displayStrings: [Int] { Array((0..<stringCount).reversed()) }
     private var baseFret: Int { voicing.displayBaseFret }
     private var showsNut: Bool { baseFret == 1 }
 
@@ -41,6 +49,9 @@ struct ChordDiagramView: View {
         .opacity(isActive ? 1 : 0.55)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
+        // Which neck this chart drew, where a UI test can read it — the same seam
+        // `FretboardGrid.stringCountIdentifier` opened for the fretboard board.
+        .accessibilityIdentifier("chord.strings.\(stringCount)")
     }
 
     // MARK: - Layout
@@ -63,7 +74,7 @@ struct ChordDiagramView: View {
     }
 
     private func columnX(_ column: Int, origin: CGPoint, width: CGFloat) -> CGFloat {
-        origin.x + CGFloat(column) / CGFloat(ChordVoicing.stringCount - 1) * width
+        origin.x + CGFloat(column) / CGFloat(max(1, stringCount - 1)) * width
     }
 
     /// Vertical centre of the fret *space* holding an absolute `fret` (space 0 = the top window fret).
@@ -76,7 +87,7 @@ struct ChordDiagramView: View {
 
     private func gridLines(origin: CGPoint, width: CGFloat, height: CGFloat) -> some View {
         ZStack {
-            ForEach(0..<ChordVoicing.stringCount, id: \.self) { column in
+            ForEach(0..<stringCount, id: \.self) { column in
                 Path { path in
                     let posX = columnX(column, origin: origin, width: width)
                     path.move(to: CGPoint(x: posX, y: origin.y))
@@ -143,7 +154,7 @@ struct ChordDiagramView: View {
     /// A plain filled dot for each fretted string. Finger numbers are intentionally not drawn — at
     /// diagram scale they read as noise; the shape alone is what the player follows.
     private func dots(origin: CGPoint, width: CGFloat, height: CGFloat) -> some View {
-        let diameter = min(width / CGFloat(ChordVoicing.stringCount - 1),
+        let diameter = min(width / CGFloat(max(1, stringCount - 1)),
                            height / CGFloat(fretWindow)) * 0.62
         return ForEach(displayStrings.indices, id: \.self) { column in
             let stringIndex = displayStrings[column]
@@ -158,6 +169,9 @@ struct ChordDiagramView: View {
         }
     }
 
+    /// Reads the outer two strings by name. Indexed off the voicing's own length (ADR 0163) — the
+    /// literal `strings[5]` this replaced would have **crashed** on a four-string bass shape, and an
+    /// accessibility label is exactly the code path a sighted test run never executes.
     private var accessibilityLabel: String {
         let strings = voicing.frets.map { fret -> String in
             switch fret {
@@ -166,7 +180,10 @@ struct ChordDiagramView: View {
             case .some(let value): return "fret \(value)"
             }
         }
-        return "\(voicing.name) chord: high e \(strings[0]), \(strings[5]) low E"
+        guard let highest = strings.first, let lowest = strings.last else { return voicing.name }
+        let highName = FretboardGrid.stringName(0, of: stringCount)
+        let lowName = FretboardGrid.stringName(stringCount - 1, of: stringCount)
+        return "\(voicing.name) chord: \(highName) \(highest), \(lowest) \(lowName)"
     }
 }
 

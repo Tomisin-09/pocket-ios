@@ -16,6 +16,11 @@ struct MyChordsView: View {
 
     /// Newest first — the just-built chord lands at the top where the player looks for it.
     @Query(sort: \SavedChord.createdAt, order: .reverse) private var savedChords: [SavedChord]
+    /// The profile, for the neck a newly built chord opens on (ADR 0163). My Chords is deliberately a
+    /// **single library across both instruments** — a saved shape carries its own neck and draws
+    /// correctly here whichever it is — so this decides only where the placer starts, and the picker
+    /// filters by neck at the point of insertion.
+    @Query private var profiles: [Profile]
 
     @State private var building = false
 
@@ -41,7 +46,8 @@ struct MyChordsView: View {
         .fullScreenCover(isPresented: $building) {
             // Reuse the placer in "Save" mode: confirming keeps the shape in My Chords instead of
             // inserting it into a progression. The identifier panel still suggests names as the shape forms.
-            CustomChordSheet(onInsert: save, confirmTitle: "Save")
+            CustomChordSheet(onInsert: save, confirmTitle: "Save",
+                             instrument: profiles.first?.preferredInstrument ?? .guitar)
         }
         .tint(PocketColor.toolkit)
     }

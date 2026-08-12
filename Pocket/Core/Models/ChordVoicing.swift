@@ -23,15 +23,39 @@ struct ChordVoicing: Codable, Equatable, Identifiable {
 
     var id: String { name }
 
-    /// Standard six-string tuning; index 0 = high e … 5 = low E.
+    /// Standard six-string tuning; index 0 = high e … 5 = low E. **Guitar's** open strings — kept as
+    /// the name every existing call site knows, now one of two (see `openMidi(for:)`).
     static let stringCount = 6
     static let openMidi = [64, 59, 55, 50, 45, 40]
+
+    /// Standard four-string bass, highest-first to match: G2 D2 A1 E1 (ADR 0116's `engineOpenMidi`
+    /// order). A bass voicing is a four-entry `frets` array, which is what selects this.
+    static let bassStringCount = 4
+    static let bassOpenMidi = [43, 38, 33, 28]
 
     init(_ name: String, frets: [Int?], fingers: [Int?]? = nil) {
         self.name = name
         self.frets = frets
         self.fingers = fingers
     }
+
+    /// The open strings this voicing's frets are measured against — **derived from its own shape**.
+    ///
+    /// This is the whole reason bass needs no migration and no new stored field: `frets.count`
+    /// already carries the string count, on every voicing ever encoded. A six-slot shape is a guitar
+    /// shape and resolves exactly as it always did (byte-identical, golden-tested); a four-slot shape
+    /// is a bass shape. Nothing written before bass existed can be misread, because nothing written
+    /// before bass existed has four strings.
+    ///
+    /// Anything unrecognised falls back to guitar rather than trapping — a voicing is player-visible
+    /// content, and a wrong caption is a better failure than no chord at all.
+    var openMidi: [Int] {
+        frets.count == Self.bassStringCount ? Self.bassOpenMidi : Self.openMidi
+    }
+
+    /// Whether this shape is written for the bass neck. Views read it to pick the string count they
+    /// draw; the pitch layer goes through `openMidi` instead.
+    var isBass: Bool { frets.count == Self.bassStringCount }
 }
 
 // MARK: - Pure geometry (T5 — SwiftUI-free, unit-tested)
@@ -42,9 +66,10 @@ extension ChordVoicing {
 
     /// MIDI note numbers of the sounded strings, low-to-high unsorted (string order).
     var midiNotes: [Int] {
-        soundedStrings.compactMap { index in
-            guard let fret = frets[index] else { return nil }
-            return ChordVoicing.openMidi[index] + fret
+        let open = openMidi
+        return soundedStrings.compactMap { index in
+            guard let fret = frets[index], open.indices.contains(index) else { return nil }
+            return open[index] + fret
         }
     }
 
@@ -91,8 +116,10 @@ extension ChordVoicing {
     }
 
     /// Playable as encoded: right string count, no negative frets, and at least one string sounds.
+    /// Playable as encoded: a **known** string count (six or four — the neck it's written for is the
+    /// shape's own length), no negative frets, and at least one string sounds.
     var isValid: Bool {
-        frets.count == ChordVoicing.stringCount
+        (frets.count == ChordVoicing.stringCount || frets.count == ChordVoicing.bassStringCount)
             && frets.allSatisfy { ($0 ?? 0) >= 0 }
             && !soundedStrings.isEmpty
     }
@@ -120,9 +147,10 @@ extension ChordVoicing {
     /// to `rootPitchClass` (the bass), the honest chromatic read when no chord is recognised.
     func degreeLabels(relativeTo root: Int?) -> [String?] {
         guard let anchor = root ?? rootPitchClass else { return Array(repeating: nil, count: frets.count) }
+        let open = openMidi
         return frets.indices.map { index in
-            guard let fret = frets[index] else { return nil }
-            let pitchClass = (((ChordVoicing.openMidi[index] + fret) % 12) + 12) % 12
+            guard let fret = frets[index], open.indices.contains(index) else { return nil }
+            let pitchClass = (((open[index] + fret) % 12) + 12) % 12
             return ChordVoicing.degreeName(semitonesAboveRoot: pitchClass - anchor)
         }
     }
@@ -132,9 +160,10 @@ extension ChordVoicing {
     /// — that's the whole point of the placer — so this is one of the surfaces the accidental
     /// preference decides (ADR 0123); the view passes it in and pure callers take the sharp default.
     func noteLabels(spelling: NoteSpelling = .default) -> [String?] {
-        frets.indices.map { index in
-            guard let fret = frets[index] else { return nil }
-            return spelling.name(pitchClass: ChordVoicing.openMidi[index] + fret)
+        let open = openMidi
+        return frets.indices.map { index in
+            guard let fret = frets[index], open.indices.contains(index) else { return nil }
+            return spelling.name(pitchClass: open[index] + fret)
         }
     }
 }

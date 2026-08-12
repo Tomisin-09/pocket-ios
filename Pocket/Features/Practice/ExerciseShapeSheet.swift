@@ -330,7 +330,7 @@ private extension ExerciseShapeSheet {
     /// contract: the template stays chords; you edit the progression, not the type.
     var chordsSection: some View {
         Section {
-            ChordProgressionEditor(progression: $chords)
+            ChordProgressionEditor(progression: $chords, instrument: exercise.instrument)
                 .listRowBackground(Color.clear)
         } header: {
             Text("How to play — chords")
@@ -351,7 +351,8 @@ private extension ExerciseShapeSheet {
                 StrumPatternEditor(beatsPerBar: exercise.beatsPerBar,
                                    pattern: $strumChords.strumPattern)
                 Divider()
-                ChordProgressionEditor(progression: $strumChords.chordProgression)
+                ChordProgressionEditor(progression: $strumChords.chordProgression,
+                                       instrument: exercise.instrument)
             }
             .listRowBackground(Color.clear)
         } header: {

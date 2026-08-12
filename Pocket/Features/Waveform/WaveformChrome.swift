@@ -142,10 +142,10 @@ struct AudioUnavailableNotice: View {
                         .font(.futura(.headline))
                         .foregroundStyle(PocketColor.textPrimary)
                         .multilineTextAlignment(.center)
-                    // Names the actual cause rather than only the symptom: Pocket stores a
-                    // reference to the file where it lives (`SongImporter` bookmarks it), so
-                    // this is a broken link, not a corrupt song — and re-importing is a real
-                    // fix rather than a shrug.
+                    // Names the actual cause rather than only the symptom: this is a broken link,
+                    // not a corrupt song, so relinking is a real fix rather than a shrug. The copy
+                    // is what a current import keeps (ADR 0148 §1), which is why the only songs that
+                    // reach this notice are pre-0148 ones still resolving through a bookmark (§2).
                     Text("This song was added before Red Moon kept its own copy, and the link to "
                          + "your file has broken — it was moved, renamed or deleted, or the app "
                          + "was reinstalled. Find the file again and your loops, markers, takes "
