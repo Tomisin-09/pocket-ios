@@ -32,7 +32,9 @@ Thanks for doing this. Three things, and then we'll get to the music.
 
 You'll need:
 
-- **An iPhone on iOS 17 or newer.**
+- **An iPhone on iOS 17 or newer.** iPhone specifically — it'll install on an iPad, but in
+  phone-compatibility mode, and I've never tested it there. An iPad read isn't useful to me
+  this round.
 - **The TestFlight app**, and the invite link I sent you.
 - **Headphones**, or at least somewhere you can hear the click over your playing.
 - **One piece of music you own as a file.** This is the important one — see below.
@@ -50,8 +52,8 @@ So you need one of:
 - **A backing track** you own.
 - **Something you recorded yourself.** Thirty seconds of you playing into Voice Memos is
   genuinely enough to test with.
-- **The starter track** — [download it here]. It's a piece I wrote and recorded, so you're
-  clear to use it. Grab it if you have nothing else to hand.
+- **The starter track** — *Binta*, [download it here]. It's a piece I wrote and recorded, so
+  you're clear to use it. Grab it if you have nothing else to hand.
 
 Get at least one of your own in there too, if you can. How that import feels on your own
 music is a big part of what I'm trying to learn.
@@ -82,7 +84,7 @@ speed, without touching anything.
 This feels like a wasted step. It isn't. You're deciding what you actually want out of this
 song before you start dismantling it.
 
-Then write it down: open the **Journal** and add a note about what you're after. One line is
+Then write it down: open the **Journal**, tap **＋**, and note what you're after. One line is
 fine. *"The turnaround at 1:20 — I keep rushing it."*
 
 ### Step 2 — Mark the bit you can't play
@@ -135,6 +137,7 @@ list — but here's the list anyway, because some of these are genuinely hidden.
 | **Hold a panel header** | Select several at once, to delete or edit in bulk |
 | **Double-tap** the restart button | Jump to the previous marker |
 | **Hold** the skip button | Choose how far it skips |
+| **Hold "Loop controls"** — the status line under the speed bar, beside Follow and Grid | This screen's four switches, opened over the waveform so you can watch them take effect: which side the Loop button sits on, the whole-song strip, marker labels, and what pinch-to-zoom holds still. A *tap* still shows the gesture cheatsheet |
 | **Pinch** the waveform | Zoom, centred where your fingers are |
 
 **Everywhere**
@@ -164,6 +167,18 @@ Rhythm, Warm-up, Ear training, Theory, and Freeform.
 **Freeform** is worth knowing about: it's a duration and a box for your own instructions.
 Sight-reading, transcribing, whatever your teacher set you — practice that's real but that
 the app doesn't model.
+
+**Guitar or bass is decided on this screen**, by the control at the top — not in Settings.
+Settings ▸ You only sets which one the screen *opens* on; whatever you pick here is what the
+drill is, and what its notes get named in. Pick **Bass** and you get a four-string neck, bass
+tuning, and a chord vocabulary a bassist would actually play — roots and fifths, octaves, the
+major and minor tenth, two shell shapes for further up. Strumming and Chords & Strum aren't
+offered for a bass drill, because a down/up strum lane isn't a bass technique.
+
+**The board moves while it plays.** The walking highlight — the one that walks a scale along
+the fretboard, or the strokes along the strum lane, in time — is on out of the box now. If
+you'd rather it didn't, Settings ▸ Practice has the switch, and Reduce Motion turns it off
+everywhere.
 
 **For the beta, please build at least two:** one **Scale** and one **Chord progression**.
 They're the two richest editors and the two I most need eyes on.
@@ -197,12 +212,16 @@ Two honest notes:
 
 - **Routines** — string drills together into a session you can replay. Rests allowed.
 - **Journal** — every note and recording you've made, newest first. Tap the caption on any
-  entry to jump back to what it was about.
+  entry to jump back to what it was about. **A note doesn't have to be about anything** —
+  the ＋ writes one that belongs to no loop, drill or routine, which is what you want for
+  "left hand tired today" or an idea you don't want to lose.
 - **Progress** — from the Journal toolbar. Your week, your month, your all-time hours.
 - **Toolkit** — tuner (guitar and bass), your saved chords, and a glossary. Free forever,
   no subscription.
-- **Metronome** — standalone click with ramps and a tap-tempo.
-- **Help & FAQs** — in the Toolkit, and in Settings → About. Seventeen answers to the
+- **Metronome** — standalone click with ramps and a tap-tempo. The **pencil** in its toolbar
+  writes a note that carries the click you wrote it to — tempo, time signature, subdivision,
+  any withdrawal — so weeks later it still says what it was clean *at*.
+- **Help & FAQs** — in the Toolkit, and in Settings → Help & About. Seventeen answers to the
   questions that actually come up. Start there before you email me.
 
 ---
@@ -213,9 +232,15 @@ Two honest notes:
 scribble on it and add a note. That comes straight to me with your device and build details
 attached, which saves us both a round trip.
 
-There's a **Contact Support** row in Settings → About, but fair warning: it opens Mail, so if
-you don't have Mail set up on your iPhone, tapping it does nothing at all. That's a bug I
-know about. TestFlight is the reliable route.
+There's also a **Contact Support** row in **Settings → Help & About**. It used to open Mail —
+and do nothing at all if you had no Mail account set up — but it's a form now: your email,
+your message, Send. It works whether or not Mail is configured. Three details ride along, and
+they're printed in the sheet above the Send button so you can see exactly what you're sending:
+the app version, your iOS version, and your device model. Nothing from your library goes with
+it — not your songs, recordings, notes or artist name.
+
+Either channel reaches me. TestFlight is still the better one for anything visual, because the
+screenshot comes attached.
 
 And on this page, every step has an **"It didn't do that"** button. Press it the moment
 something goes sideways — a note written while you're confused is worth ten written a week

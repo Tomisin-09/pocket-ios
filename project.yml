@@ -13,14 +13,24 @@ settings:
     SWIFT_VERSION: "6.0"
     # Must match the App Store Connect version string EXACTLY — ASC compares them as
     # strings, so a "1.1.0" build will not appear in the build picker for a version
-    # named "1.1". 1.0 is released ("Ready for Distribution") and therefore locked;
-    # this release goes out as a new version, 1.1.
-    MARKETING_VERSION: "1.1"
+    # named "1.1". 1.0 is released ("Ready for Distribution") and therefore locked.
+    #
+    # 1.2 is the closed-beta build. It does NOT supersede 1.1: that submission was
+    # rejected on metadata alone (3.1.2, the EULA link) with build 3 itself unfaulted,
+    # so the ASC "1.1" record still holds build 3 and is resubmitted with corrected
+    # metadata on its own track. A TestFlight build needs no App Store version record,
+    # so the two do not collide.
+    MARKETING_VERSION: "1.2"
     # Monotonic, and must exceed every build already uploaded under this bundle id —
     # ASC rejects a duplicate build number outright. Bump this every archive, not just
     # every version. If an upload is refused as a duplicate, raise it again; there is
     # no cost to skipping numbers.
-    CURRENT_PROJECT_VERSION: "3"
+    #
+    # `fastlane beta` overwrites this at archive time with
+    # `latest_testflight_build_number + 1`, so the committed value is not what ships.
+    # It is bumped anyway because the CHANGELOG cuts its sections at the commit that
+    # moves this number — it is the only durable record of where a build was taken.
+    CURRENT_PROJECT_VERSION: "4"
     DEVELOPMENT_TEAM: "" # set via CI / local xcconfig; do not hard-code
 
 # Per-configuration backend base URL (Debug → dev, Release → prod).

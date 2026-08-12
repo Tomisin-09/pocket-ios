@@ -120,9 +120,22 @@ free-taste seam is needed and `freeTasteSlugs` stays empty.
 
 ## Still open
 
-**One thing, and it is on the critical path for the beta: the starter track.** With no demo song,
-the download in the tester guide is a hard dependency again, on a file that does not exist yet. A
-tester with no DRM-free audio of their own cannot reach the core loop without it.
+~~**One thing, and it is on the critical path for the beta: the starter track.**~~ **Closed
+2026-08-12.** The track exists: *Binta*, the user's own recording, committed to the site repo at
+`public/redmoon/beta/starter-track.m4a` on branch `redmoon-beta-guide` and linked from the guide's
+"About that file" section. It is about ninety seconds — short on purpose, and long enough to loop. A
+tester with no DRM-free audio of their own can now reach the core loop.
+
+**What is actually left is not in either repo.** Both remaining blockers are manual App Store
+Connect work: create the **Closed Beta** group with its Beta App Review information, and confirm the
+rejected 1.1 metadata submission does not hold up Beta App Review for the 1.2 build. Neither can be
+done from here.
+
+**Note on sequencing that was not obvious.** Slices 1 and 3 (ADRs 0157 and 0155) both shipped, but
+slices 2 and 4 — the walkthrough and ADR 0156 — were **deferred past v1.2** rather than built in
+order. The beta therefore runs on a build with neither, which is correct for slice 4 (interaction 3
+above: testers hold Pro, so 0156 was never going to get tester data) and is the entire *point* for
+slice 2 (0149 is unbuilt, and this round is the manual version of it that produces its spec).
 
 ---
 
