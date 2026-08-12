@@ -133,6 +133,10 @@ final class WaveformPracticeModel {
     var settingBPM = false
     /// Drives the read-first `SongDetailsSheet` (Edit → `SongEditSheet`), opened by holding the title.
     var showingSongDetails = false
+    /// Drives `SongPlayerSettingsSheet`, opened by holding *Loop controls* (ADR 0163). A plain
+    /// `Bool` because what it presents is global `@AppStorage` — there's no model whose identity could
+    /// change underneath it, so ADR 0090's stable-`uid` rule has nothing to apply to.
+    var showingPlayerSettings = false
 
     /// In-song metronome click (ADR 0026). The click rides `beatGrid` and follows
     /// playback speed; it never alters the song's stored BPM. Only available when the
