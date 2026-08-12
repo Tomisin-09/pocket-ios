@@ -71,6 +71,11 @@ struct FretboardGrid: View {
         .frame(height: 168)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Fretboard drill: \(accessibilitySummary)")
+        // The neck's string count, stated where a UI test can read it. Which instrument a board is
+        // drawing is otherwise only inferable from the string-name captions, which a note-label query
+        // can't distinguish from a root picker's letters — and "the create sheet drew a guitar neck
+        // for a bass drill" is exactly the defect this identifier exists to catch (ADR 0116).
+        .accessibilityIdentifier(Self.stringCountIdentifier(stringCount))
     }
 
     /// The string names down the left edge (high e at top … low E at bottom), aligned to the rows.
@@ -349,6 +354,10 @@ struct FretboardGrid: View {
     }
 
     /// Standard 6-string names top-to-bottom (high e … low E); other counts read as "String N".
+    /// The accessibility identifier a board carries for a given string count — the one spelling,
+    /// shared with the UI tests so neither side hardcodes the literal.
+    static func stringCountIdentifier(_ count: Int) -> String { "fretboard.strings.\(count)" }
+
     static func stringName(_ index: Int, of count: Int) -> String {
         let guitar = ["e", "B", "G", "D", "A", "E"]
         let bass = ["G", "D", "A", "E"]   // standard 4-string bass, highest-first (ADR 0116)

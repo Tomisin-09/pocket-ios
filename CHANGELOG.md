@@ -67,6 +67,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   See `docs/plans/beta-testing-plan.md` and `docs/beta/user-guide.md`.
 
 ### Fixed
+- **Choosing Bass when you create an exercise now actually gives you a bass neck.** The Guitar/Bass
+  control on the New exercise screen was being ignored: whichever instrument was set in Settings ▸ You
+  won every time, in both directions — set to Guitar, a drill you created as Bass still drew six
+  strings; set to Bass, one you created as Guitar drew four. It affected every fretboard drill —
+  scales, arpeggios, warm-up, picking, legato, and the draw-your-own canvas — and the drill was saved
+  against the wrong instrument too, so its notes and root markers were named in the wrong tuning
+  afterwards. The control now decides the drill, and Settings does what it always claimed to: sets the
+  one the screen *opens* on. Exercises you already made are untouched. See ADR 0116.
 - **Play at the very end of a song plays it again instead of nothing.** With the playhead parked on
   the last frame — scrub to the far-right edge of the waveform, or skip forward inside the last few
   seconds — pressing play lit the transport and ran the playhead over silence, because there was no

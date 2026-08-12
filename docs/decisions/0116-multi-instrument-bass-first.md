@@ -68,6 +68,9 @@ Guitar (shipped) → **bass** (this ADR: tuning-as-value + string-count de-hardc
    byte-identical (unset `openMidi` ⇒ guitar); covered by `FretboardDrillTuningTests`.
 6. **Instrument axis moves to the create sheet.** ✅ Relocated the Guitar/Bass control from the top of
    `ConfigureExerciseForm` onto the `NewExerciseSheet` template picker — see the "Slice 6" section below.
+7. **The axis crosses the push.** ✅ Slice 6's control was inert from the day it landed — the profile
+   instrument won in both directions. The choice now travels *with* the navigation item; see "Slice 7"
+   below for the SwiftUI trap and the rule it earns.
 
 ## Slice 3 sub-decision — bass generation is a ladder-based placement rule, not a truncated CAGED box
 
@@ -153,3 +156,34 @@ in a top section of that list (defaulted from the profile's preferred instrument
 
 UI move only — the per-exercise axis (S2), its persistence, and every generation/render path (S3/S5) are
 unchanged; all 1256 tests stay green.
+
+## Slice 7 — the axis has to *cross* the push (fix, 2026-08-12)
+
+Slice 6's move was silently inert. From the moment it landed until this fix, **the create sheet's
+Guitar/Bass control changed nothing**: every fretboard drill drew whatever the profile said, in both
+directions — Settings on guitar drew six strings for a drill created as bass, Settings on bass drew four
+for one created as guitar. The instrument was also *persisted* wrong, so the drill's labels and root
+markers resolved in the wrong tuning ever after.
+
+**Cause — a state read inside a deferred closure.** `NewExerciseSheet` held the choice as `@State` and
+read it from inside its `navigationDestination(item:)` destination closure. SwiftUI registers a
+dependency only for values read *during* body evaluation; the picker received `$instrument` (a binding,
+which is not a read of the value), so changing the segment invalidated nothing and the destination kept
+the snapshot from the one body evaluation that ran when the sheet opened — where the instrument is still
+the profile default.
+
+**Fix.** The template picker reports `(template, instrument)` together, and the pair *is* the navigation
+item (`NewExerciseSheet.TemplateChoice`). The value is now read at tap time by the on-screen picker
+rather than by a closure that runs later, so it cannot go stale; and because the pair is the navigation
+identity, re-picking the same template after switching instrument pushes a freshly seeded form instead
+of reusing the previous one's `@State`.
+
+**The general rule this earns:** *a deferred closure — `navigationDestination`, `sheet`, `fullScreenCover`,
+a toolbar action — must not read `@State` that only a child mutates through a `@Binding`. Carry the value
+on the item, or read it where it changes.* Nothing about that is checked by the compiler, and every layer
+below was correct and unit-tested, which is exactly why it survived a device pass.
+
+**Test.** `PocketUITests/ExerciseInstrumentUITests` drives Home → Practice → Exercises → + → Bass →
+Scales and asserts the board's string count via `FretboardGrid.stringCountIdentifier`. It was confirmed
+to fail against the old read and pass against the fix. A unit test could not have caught this: the seam
+that broke is the push itself.

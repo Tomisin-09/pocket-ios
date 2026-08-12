@@ -61,8 +61,27 @@ struct NewExerciseSheet: View {
     /// Called with the assembled plan when the user confirms. The caller inserts the model.
     let onCreate: (NewExercisePlan) -> Void
 
+    /// **What the picker step hands to the configure step** — the template *and* the instrument it was
+    /// chosen on, travelling together as the navigation item.
+    ///
+    /// The instrument used to be read off `@State` from inside the `navigationDestination` closure. That
+    /// silently never worked: SwiftUI registers a dependency only for values read *during* body
+    /// evaluation, and the picker receives `$instrument` (a binding — not a read of the value), so
+    /// changing the segment invalidated nothing. The destination closure kept the snapshot from the one
+    /// body evaluation that ran when the sheet opened, where the instrument is still the profile
+    /// default — so the Settings instrument overrode the control in **both** directions and every
+    /// fretboard drill drew the profile's neck. Carrying the value on the item means it is read at tap
+    /// time, by the on-screen picker, and can't go stale.
+    ///
+    /// It is also the navigation **identity**, so picking the same template again after switching
+    /// instrument pushes a fresh form rather than reusing the previous one's seeded `@State`.
+    struct TemplateChoice: Hashable {
+        let template: ExerciseTemplate
+        let instrument: Instrument
+    }
+
     @Environment(\.dismiss) private var dismiss
-    @State private var chosen: ExerciseTemplate?
+    @State private var chosen: TemplateChoice?
     /// Whether this sheet actually produced a drill. Drives the abandonment signal on disappear
     /// (ADR 0120) — reported from here rather than from each host's `onDismiss` because this is the
     /// only place that knows *which* template was being configured when the player walked away, and
@@ -93,13 +112,15 @@ struct NewExerciseSheet: View {
                                           initialSignature: initialSignature,
                                           initialInstrument: instrument, create: create)
                 } else {
-                    ExerciseTemplatePicker(instrument: $instrument) { chosen = $0 }
+                    ExerciseTemplatePicker(instrument: $instrument) { template, instrument in
+                        chosen = TemplateChoice(template: template, instrument: instrument)
+                    }
                 }
             }
-            .navigationDestination(item: $chosen) { template in
-                ConfigureExerciseForm(template: template, initialCommand: initialCommand,
+            .navigationDestination(item: $chosen) { choice in
+                ConfigureExerciseForm(template: choice.template, initialCommand: initialCommand,
                                       initialSignature: initialSignature,
-                                      initialInstrument: instrument, create: create)
+                                      initialInstrument: choice.instrument, create: create)
             }
             .tint(PocketColor.practice)
             .toolbar {
@@ -112,7 +133,7 @@ struct NewExerciseSheet: View {
         // all of them are the same thing to the player: they opened the create flow and got nothing.
         .onDisappear {
             guard !created else { return }
-            Analytics.send(.exerciseAuthoringAbandoned(template: chosen ?? fixedTemplate))
+            Analytics.send(.exerciseAuthoringAbandoned(template: chosen?.template ?? fixedTemplate))
         }
     }
 
