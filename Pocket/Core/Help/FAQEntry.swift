@@ -100,12 +100,16 @@ extension FAQEntry {
                 + "looping it and drawing it as a waveform all need that raw sound, so Red Moon is "
                 + "built on files you hold rather than streams you rent.",
               area: .audio),
+        // ADR 0148: importing **copies** the file into the app. This answer described the older
+        // behaviour — a link to the file where it lived — and told players to re-import, which would
+        // have made a *second* song and stranded everything attached to the first (§6).
         .init(question: "My song stopped playing — what happened?",
-              answer: "Red Moon links to your audio file where it already lives rather than copying it, "
-                + "so your library stays your library and the app stays small. The trade is that the "
-                + "link can break: the file may have moved or been deleted, or iCloud Drive may have "
-                + "cleared it off this device to save space. Re-import it to practise again — your "
-                + "loops, markers and notes are waiting.",
+              answer: "Importing a song copies the audio into Red Moon, so moving, renaming or "
+                + "deleting the original in Files doesn't affect the copy you practise with. A song "
+                + "can still go missing if it was added by an early version that pointed at your file "
+                + "rather than keeping its own copy. Open it and choose Find the file — your loops, "
+                + "markers, takes and history all stay with it. Don't re-import: that makes a second "
+                + "song and leaves your work on the first.",
               area: .audio),
         .init(question: "Does slowing a song down change its pitch?",
               answer: "No. The pitch is held where it is however far you slow the tempo, so a passage "
