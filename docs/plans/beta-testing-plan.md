@@ -12,6 +12,23 @@ beta is the manual, human-run version of that flow. **Where testers stall is the
 
 The tester-facing guide that accompanies it is `docs/beta/user-guide.md`.
 
+> **Revised 2026-08-12, against the build the round actually runs on: 1.2 (4).** Eleven merges
+> landed between this plan and the build, and three of them change the protocol rather than
+> just the app. **ADR 0161** made the in-app Contact Support row work without Mail, retiring
+> C0's fourth screening question. **ADR 0163** added a hold whose tap does something else
+> entirely, which belongs in the C2 gesture count. **ADR 0116 S7 and 0164** moved the
+> instrument choice onto the exercise-creation screen and gave bass its own chord vocabulary,
+> which is most of tester H's lane. Also landed: **0157** (the walk animates by default —
+> Week 2 now reads a moving board), **0155** and **0160** (standalone journal notes, and a
+> note at the metronome that records the click), **0162** (Settings is nine destinations, and
+> "Transport" is now "Song player"), and **0159** (two collections widen rather than narrow).
+>
+> **Deferred past this build, deliberately:** ADR 0156's paywall cadence and ADR 0149's guided
+> walkthrough. The round is unaffected by the first — interaction 3 in
+> `docs/plans/v1-2-integration-plan.md` already established that testers hold Pro and can tell
+> us nothing about paywall reaction. The second is the *point*: 0149 is unbuilt, and this round
+> is the manual, human-run version of it.
+
 ---
 
 ## Decisions taken at planning — settled, don't re-litigate
@@ -115,6 +132,29 @@ three artists' fluency stand in for the median user's.
 
 ---
 
+## The build, and what to tell testers it is
+
+The round runs on **1.2 (4)**. `fastlane beta` sets the build number itself from
+`latest_testflight_build_number + 1`, so the value committed in `project.yml` is a record of where
+the cut was taken, not what ships.
+
+**"What to Test" is the only per-build message testers actually read**, and the lane takes it from
+`BETA_WHATS_NEW` rather than baking it in — so it changes without a commit, and so it has nowhere
+else to live. Week 1's copy:
+
+```
+This is the first build. Don't go looking for the new bits — there's nothing here
+you've seen before.
+
+One thing this week: get a song in, find the bar that beats you, and loop it slow.
+The guide walks you through it. Everything else can wait.
+
+If you get stuck, stop and tell me where. That's the part I need.
+```
+
+Keep it to a mission, not a changelog. A changelog invites testers to audit features; a mission
+sends them at the one path the week is measuring.
+
 ## C0 — Screening, before any build goes out
 
 A short form. Five items, each of which changes what we can conclude:
@@ -124,10 +164,14 @@ A short form. Five items, each of which changes what we can conclude:
 3. **Do you own any audio files — not streaming — that you could put on your phone?**
    The single biggest risk to the round. A fresh install has no song (ADR 0148 §7) and
    streaming audio cannot be used (ADR 0001), so a tester with no files cannot reach the
-   core loop at all. Testers answering no get the starter track and a nudge to record
-   thirty seconds of themselves.
-4. **Is Mail set up on your iPhone?** If not, the in-app Contact Support row is a dead tap
-   for them (ADR 0145 D7) and TestFlight feedback is their only channel. Tell them so.
+   core loop at all. Testers answering no get the starter track — *Binta*, served from the
+   guide at `/redmoon/beta/starter-track.m4a` — and a nudge to record thirty seconds of
+   themselves.
+4. ~~**Is Mail set up on your iPhone?**~~ **Retired 2026-08-12.** ADR 0161 replaced the
+   `mailto:` row with an in-app form that sends with or without Mail configured, so the
+   answer no longer changes what a tester can do or how they can reach us. Left in place
+   rather than deleted because both this plan and the guide used to route around it, and
+   the absence of the question would otherwise read as an oversight.
 5. **What country is your App Store account in?** Determines whether they are ever asked
    about analytics, and therefore whether they emit anything at all.
 
@@ -161,6 +205,16 @@ warmup, earTraining, theory, freeform. The first-run seed exercises only five of
 **nine templates ship with no example to look at** — a tester meets an empty authoring
 surface or never opens it.
 
+**H sees a different menu.** Since ADR 0164, a bass drill is offered twelve templates, not
+fourteen — Strumming and Chords & Strum are withheld, because a down/up strum lane isn't a
+bass technique — and the Chords editor draws a four-string box with a bassist's vocabulary
+(roots and fifths, octaves, the major and minor tenth, two shells) rather than the guitar
+catalogue. The instrument is now chosen on the creation screen itself (ADR 0116 S7), with
+Settings ▸ You only setting the default. **Two things to watch with H specifically:** whether
+they notice the instrument control at all, and whether the withheld templates read as *absent*
+or as *broken*. A tester who wanted to build a strum drill and found no such option may not
+conclude it was deliberate.
+
 Everyone authors **one Scale exercise and one Chord progression**, plus their lane's
 template. Three questions each:
 
@@ -184,8 +238,12 @@ strings. **C** lives in Strumming and Chords & Strum.
 ### Hidden gestures
 
 The app has roughly sixteen interactions with **no visual affordance** — all documented in
-section 6 of the guide, all following one house rule (a 0.4-second hold). Ask which ones each
-tester found **on their own**, before the guide told them. Anything nobody found unaided is a
+**section 4** of the guide, all following one house rule (a 0.4-second hold). One of them is
+new since this plan was written: ADR 0163 put the song player's four display switches behind
+a hold on the **"Loop controls"** status line, where a tap shows the gesture cheatsheet. That
+one is worth asking about specifically — it is the newest hold in the app and the only one
+whose tap and hold do entirely different jobs. Ask which ones each tester found **on their
+own**, before the guide told them. Anything nobody found unaided is a
 candidate for a visible affordance, and that count is worth more than any opinion they could
 offer about it. The held-out pair's answers are the only truly clean data here.
 

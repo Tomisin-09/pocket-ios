@@ -5,11 +5,21 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 Sections are cut at the commit that bumped `CURRENT_PROJECT_VERSION` in `project.yml`,
 which is the only durable record of where a build was taken (there are no release tags):
-build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07). One `### Added`
+build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07), build 4 at the 1.2
+cut (2026-08-12 — squash hash added on merge, as the others were). One `### Added`
 group straddled that line — collection sessions landed after the 1.0 build was cut,
 ear training before it — so 1.0 and 1.1 each carry their own copy of that heading.
 
 ## [Unreleased]
+
+## [1.2] — build 4, cut 2026-08-12 for the closed beta
+
+Distributed to the eight invited testers via TestFlight, not to the App Store. Two things
+are true of this build and no other: it grants Red Moon Pro outright in the StoreKit
+sandbox (see **Internal**, and the `TODO(beta)` that must come out before the next
+submission), and it ships without the paywall-cadence rules of ADR 0156 or the guided
+walkthrough of ADR 0149 — both deferred past v1.2, so the round studies the practice loop
+rather than either of those. See `docs/plans/beta-testing-plan.md`.
 
 ### Changed
 - **The song player's settings are now a hold away from the song player.** Which side the loop button
@@ -184,7 +194,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   there's nothing left to open. Deleting a take or a note is now something only you can do, by
   holding it in the Journal as before. See ADR 0151.
 
-## [1.1] — build 3, submitted 2026-08-07 (Waiting for Review)
+## [1.1] — build 3, submitted 2026-08-07 (rejected 3.1.2, resubmission pending)
+
+> Rejected on **metadata alone** — guideline 3.1.2, a missing EULA link — with build 3
+> itself unfaulted. The ASC "1.1" record still holds build 3 and goes back for review with
+> corrected metadata on its own track; 1.2 below is the TestFlight beta and does not
+> supersede it. Note the app is currently **off sale**: availability has to be re-enabled
+> at approval or 1.1 ships invisibly.
 
 ### Added
 - **Songs you import now belong to Red Moon, so they survive a new phone.** Until now the app kept a

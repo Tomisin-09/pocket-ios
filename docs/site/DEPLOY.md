@@ -18,7 +18,17 @@ Three public URLs App Store Connect needs, across your existing hosting.
 > as the support page already does. Four words on the live privacy policy were
 > joined to the ones before them before this was caught. After any edit:
 > `npm run build`, then
-> `grep -roh "</strong>[a-zA-Z]" .next/server/app/*.html` should return nothing.
+>
+> ```
+> grep -rhoE "</(strong|em)>[a-zA-Z]" .next/server/app --include="*.html"
+> ```
+>
+> should return nothing. **Use that recursive form, not `.next/server/app/*.html`.**
+> The old non-recursive glob only ever saw the top-level pages, so it never looked
+> inside `redmoon/support.html` or `redmoon/story.html` — and on 2026-08-12 it was
+> found to have been missing a live joined pair on the support page
+> (`Subscriptions</strong>on your iPhone`) for as long as that sentence existed.
+> `</em>` is included for the same reason `</strong>` is.
 
 **All three live on the same Vercel site (`decooperations.co.uk`) — decided 2026-08-07.**
 Support was previously planned for AWS under `.click`; that split existed only to
