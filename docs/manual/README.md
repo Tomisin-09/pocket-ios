@@ -22,9 +22,9 @@ index is two orderings that drift apart.
 
 | Page | The goal it serves | Status |
 |---|---|---|
-| `getting-started` | What this is, what you need, and a first session in three moves | — |
-| `songs` | Get your own music in, and find it again | — |
-| `looping` | The loop workflow, end to end — the largest page | — |
+| `getting-started` | What this is, what you need, and a first session in three moves | Slice A |
+| `songs` | Get your own music in, and find it again | Slice A |
+| `looping` | The loop workflow, end to end — the largest page | Slice A |
 | `exercises` | Run what shipped, then build your own | — |
 | `routines` | Put exercises in an order and play them | — |
 | `sessions` | Let the app plan a session around a goal | — |
@@ -33,9 +33,9 @@ index is two orderings that drift apart.
 | `toolkit` | Tuner, saved chords, glossary, help | — |
 | `subscription` | What's free, what Pro covers, how to start and stop | — |
 | `privacy` | Where your data lives and what leaves the device | — |
-| `gestures` | Every hold, drag, pinch and swipe in one place | — |
-| `terms` | The app's own words for the things it measures | — |
-| `shots` | Screenshot manifest — **generated** from the page markers, never hand-kept | — |
+| `gestures` | Every hold, drag, pinch and swipe in one place | Slice A |
+| `terms` | The app's own words for the things it measures | Slice A |
+| `shots` | Screenshot manifest — **generated** from the page markers, never hand-kept | Generated |
 
 ### The reference wing — what a screen is
 
@@ -88,8 +88,60 @@ human, and it is the first thing to reread when a page starts to feel thin.
 - **A free tier or "free taste".** `freeTasteSlugs` is empty (ADR 0144).
 - **Instruments beyond guitar and 4-string bass.** Ukulele and the rest are parked (ADR 0116).
 - **Take sharing.** Parked pending legal advice (ADR 0150).
-- **The bundled demo song.** Dropped by ADR 0148 §7 — check the Library empty state before
-  describing "Try the demo" as a thing a reader can tap.
+- ~~**The bundled demo song.**~~ **Resolved 2026-08-13, and it is not parked.** Walked in the
+  build: `LibraryView`'s empty state still offers **Try the demo** beside **Import a song**, and it
+  inserts `Song.sample()` — Little Wing, with loops and markers already on it. ADR 0148 §7 does not
+  describe what shipped. `songs.md` documents it.
+
+## The shot markers
+
+Every figure is an HTML comment written beside the sentence it belongs to. It renders as nothing on
+GitHub, so the repo copy still reads as prose, and the port turns it into an image.
+
+```
+<!-- shot: looping/speed-bar | role: band
+     | alt: The speed bar showing the speed control, the metronome and the BPM readout
+     | state: seeded library, Little Wing, speed reduced below 100% -->
+```
+
+- **`slug`** is `group/name` and names the *shot*, not the page. The same crop legitimately appears
+  on two pages, so C10 deliberately does **not** require the group to match the filename — requiring
+  that would force one of the two pages to invent a second name for one image.
+- **`role`** is one of `glyph` · `detail` · `panel` · `band` · `screen` · `strip`.
+- **`alt`** is required, and is empty *only* for `glyph`, where the control's name sits in bold text
+  beside it and the image is reinforcement.
+- **`state`** is what to seed and what must be on screen. Written now, while the page is fresh, so
+  the shoot is a batch rather than archaeology.
+- **`crop`** is `x,y,w,h` in device pixels, and is **filled at shoot time, not now.** A rect is
+  measured against a master that does not exist yet, and it is only meaningful once the master
+  device is chosen — the walk ran on an iPhone 17 simulator (1206×2622), which is not the geometry
+  the plan assumed (1320×2868). C10 validates the format when a marker carries one.
+- **`device:`** marks a shot the simulator cannot produce honestly. Landscape is the known one.
+
+## Capturing the states — what the simulator can and cannot do
+
+Slice A's pages were written with the build running, driven through their flows on an **iPhone 17
+simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover it:
+
+- **Seed audio must be WAV.** `ScreenshotSeed` reads `Documents/SeedAudio/`, and the simulator's
+  decoder silently fails on the `.m4a` masters — the seed then imports nothing, `importReal` returns
+  early, and the library shows one song (Little Wing, the built-in) instead of six. `afconvert -f
+  WAVE -d LEI16@44100` over the masters fixes it. A one-song library looks like a working seed, so
+  check the count before shooting.
+- **The import picker is a separate process.** `app.screenshot()` returns a clean picture of Home
+  with no picker in it. Capture that state with `XCUIScreen.main.screenshot()`.
+- **Landscape needs a real device.** The one state on this list the simulator does not render
+  honestly; markers for it carry a `device:` field.
+- **Rows below the fold do not exist.** SwiftUI has not built them, so they cannot be found or
+  scrolled to by element — scroll first, then query. Under the default **↑ Title** grouping only
+  the first four songs are on screen.
+- **`-uiTesting` runs the app fully unlocked** (`StoreManager` sets `debugProOverride`), which is
+  what makes a driven walk possible at all — but it also means the trial row on Home, the paywall
+  and every locked state are *unreachable* on that launch. Those states need a launch without the
+  flag, so they are shot by hand or against a StoreKit test configuration.
+- **The first-run questions are skipped** under the same flag (`HomeView+ProfileMoment` returns
+  early). `getting-started`'s first-run shot has to come from a launch without it, on a fresh
+  install.
 
 ## The check
 
