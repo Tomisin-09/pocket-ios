@@ -12,6 +12,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Fixed
+- **All-time on Progress can no longer read as less than the month above it.** Time played was
+  rounded to the nearest minute for the week and month, but the all-time headline floored the raw
+  seconds into whole hours and dropped the remainder — so a first month totalling 1h59m50s showed
+  "120 minutes" for August and "1 hour" for all-time, on the same runs. All three tiers now speak the
+  same rounded minutes, and past an hour the headline keeps the remainder ("2 hours 55 minutes")
+  instead of discarding up to 59 of them. The screen still never claims an hour that wasn't
+  practised; it can now round up by at most half a minute, which is what the other two tiers have
+  always done.
+
 ## [1.2] — build 4, cut 2026-08-12 for the closed beta
 
 Distributed to the eight invited testers via TestFlight, not to the App Store. Two things

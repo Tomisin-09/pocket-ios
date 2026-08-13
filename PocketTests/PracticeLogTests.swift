@@ -139,9 +139,29 @@ final class PracticeLogTests: XCTestCase {
         XCTAssertEqual(lifetime.since, date(3, 9))
     }
 
-    func testLifetimeHoursTruncateRatherThanRoundUp() {
-        // 119 minutes is one hour, not two — never claim an hour that wasn't practised.
-        XCTAssertEqual(PracticeLog.lifetime([run(date(10), minutes: 119)]).hours, 1)
+    func testLifetimeHoursDoNotRoundUpAWholeHour() {
+        // 119 minutes is one hour and 59, not two — the headline never invents an hour.
+        let lifetime = PracticeLog.lifetime([run(date(10), minutes: 119)])
+        XCTAssertEqual(lifetime.hours, 1)
+        XCTAssertEqual(lifetime.remainingMinutes, 59)
+    }
+
+    func testLifetimeHoursAgreeWithTheMinutesTheMonthWouldShow() {
+        // Ten seconds short of two hours. The month section rounds this to 120 minutes, so all-time
+        // must say two hours — flooring the raw seconds said "1 hour" and read as all-time being
+        // *smaller* than the month inside it.
+        let records = [run(date(10), minutes: 119 + 50.0 / 60)]
+        let lifetime = PracticeLog.lifetime(records)
+        XCTAssertEqual(PracticeLog.totalMinutes(records), 120)
+        XCTAssertEqual(lifetime.minutes, 120)
+        XCTAssertEqual(lifetime.hours, 2)
+        XCTAssertEqual(lifetime.remainingMinutes, 0)
+    }
+
+    func testLifetimeUnderAnHourHasNoHoursToShow() {
+        let lifetime = PracticeLog.lifetime([run(date(10), minutes: 17)])
+        XCTAssertEqual(lifetime.hours, 0)
+        XCTAssertEqual(lifetime.remainingMinutes, 17)
     }
 
     func testNegativeDurationsAreClampedAtTheValueBoundary() {

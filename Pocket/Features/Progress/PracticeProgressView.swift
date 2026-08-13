@@ -147,13 +147,24 @@ struct PracticeProgressView: View {
         }
     }
 
-    /// The headline: hours and sessions, and when it started. Hours are truncated, so this never
-    /// claims an hour that wasn't practised.
+    /// The headline: time played and sessions, and when it started.
+    ///
+    /// Under an hour it reads in minutes; past that, hours **and** the minutes past the hour. Both the
+    /// hours and the remainder come off the same rounded minute total the week and month sections use
+    /// (`PracticeLog.Lifetime`), so this line can never print a smaller number than the month above it.
     private func lifetimeLine(_ lifetime: PracticeLog.Lifetime) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 20) {
-                figure(lifetime.hours > 0 ? "\(lifetime.hours)" : "\(lifetime.minutes)",
-                       lifetime.hours > 0 ? (lifetime.hours == 1 ? "hour" : "hours") : "minutes")
+                if lifetime.hours > 0 {
+                    figure("\(lifetime.hours)", lifetime.hours == 1 ? "hour" : "hours")
+                    // Dropped at a round hour — "2 hours 0 minutes" is noise, not precision.
+                    if lifetime.remainingMinutes > 0 {
+                        figure("\(lifetime.remainingMinutes)",
+                               lifetime.remainingMinutes == 1 ? "minute" : "minutes")
+                    }
+                } else {
+                    figure("\(lifetime.minutes)", lifetime.minutes == 1 ? "minute" : "minutes")
+                }
                 figure("\(lifetime.sittingCount)",
                        lifetime.sittingCount == 1 ? "session" : "sessions")
             }
