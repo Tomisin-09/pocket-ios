@@ -15,18 +15,35 @@
 #   full            — also runs the PocketAll test plan (matches CI exactly)
 #   skip            — bypass entirely (same as `git push --no-verify`)
 #
+# The manual check (ADR 0165) sits OUTSIDE the tiers and runs on every push,
+# including `skip` and docs-only ones — see the note at the top of the script.
+#
 # Installed as .git/hooks/pre-push by scripts/install-hooks.sh.
 
 set -eu
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
+# --- The manual (ADR 0165) -------------------------------------------------
+# Deliberately ABOVE the tier logic and above `skip`: this is the one check whose
+# whole subject is documentation, so the two states that turn everything else off
+# — a docs-only push, and POCKET_PREPUSH=skip — are exactly the states in which it
+# most needs to run. It is stdlib Python over markdown; it costs a fraction of a
+# second, so there is no tier worth giving it.
+if [ -x scripts/check-manual.py ]; then
+  scripts/check-manual.py >/dev/null || {
+    echo "pre-push: the manual is out of step with the app —"
+    scripts/check-manual.py || true
+    exit 1
+  }
+fi
 
 MODE="${POCKET_PREPUSH:-fast}"
 if [ "$MODE" = "skip" ]; then
   echo "pre-push: POCKET_PREPUSH=skip — skipping checks"
   exit 0
 fi
-
-REPO_ROOT=$(git rev-parse --show-toplevel)
-cd "$REPO_ROOT"
 
 # --- Figure out what's actually being pushed -------------------------------
 # Pre-push receives "<local ref> <local sha> <remote ref> <remote sha>" lines on

@@ -47,8 +47,21 @@ jobs:
         if: needs.scope.outputs.docs_only == 'true'
         run: echo "Documentation-only change — lint, build and test skipped."
 
+      # Unconditional, because the manual check below is unconditional and
+      # cannot read a repository that was never checked out. A docs-only run
+      # previously took this branch and did nothing at all; on ubuntu the
+      # checkout costs a couple of seconds.
       - uses: actions/checkout@v4
-        if: needs.scope.outputs.docs_only != 'true'
+
+      # The manual (ADR 0165 D8). NO `if:` — a docs-only change is precisely the
+      # change this guards, and it is the change that turns every other step in
+      # this job off. It lives here, inside `lint-build-test`, rather than in a
+      # job of its own or in `scope`, because `lint-build-test` is the required
+      # status check: `scope` is a `needs:` dependency, so failing it *skips* the
+      # required check, and a required check that never reports is a PR that can
+      # never merge (ADR 0133's trap, in a new costume).
+      - name: Check the manual
+        run: scripts/check-manual.py
 
       # Use the runner's default Xcode — it has iOS simulator runtimes
       # pre-installed. Pinning a specific Xcode_*.app can select a version whose
