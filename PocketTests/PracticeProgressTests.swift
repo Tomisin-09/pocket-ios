@@ -141,6 +141,19 @@ final class PracticeProgressTests: XCTestCase {
         XCTAssertEqual(allTime.lifetime.since, date(5, 1, 9))
     }
 
+    /// The invariant the three horizons have to satisfy *as displayed*, not just internally: all-time
+    /// contains the month, so the time it prints can never be less. This failed on a first month made
+    /// of one 1h59m50s total — the month rounded to "120 minutes" and all-time floored to "1 hour".
+    func testAllTimeNeverPrintsLessTimeThanTheMonthInsideIt() {
+        let records = [run(6, 3, minutes: 60), run(6, 5, minutes: 40), run(6, 9, minutes: 19 + 50.0 / 60)]
+        let summary = summarize(records)
+        let lifetime = summary.allTime.lifetime
+        XCTAssertEqual(summary.month.minutes, 120)
+        XCTAssertEqual(lifetime.hours * 60 + lifetime.remainingMinutes, summary.month.minutes)
+        XCTAssertGreaterThanOrEqual(lifetime.minutes, summary.month.minutes)
+        XCTAssertGreaterThanOrEqual(summary.month.minutes, summary.week.minutes)
+    }
+
     func testInventoryCountsArePassedThroughNotRecomputed() {
         let inventory = PracticeStats.Summary(loops: 12, exercises: 5, fullMasteryCount: 3, notes: 8)
         let allTime = summarize([run(6, 3, minutes: 10)], inventory: inventory).allTime

@@ -184,9 +184,17 @@ enum PracticeLog {
 
         var isEmpty: Bool { runCount == 0 }
         var minutes: Int { PracticeLog.minutes(totalSeconds) }
-        /// Whole hours — the headline framing ("87 hours"). Truncated, not rounded: claiming an hour
-        /// the player hasn't practised is the one direction this number must never round.
-        var hours: Int { Int(totalSeconds / 3600) }
+        /// Whole hours — the headline framing ("87 hours"). Derived from `minutes`, **not** from the
+        /// raw seconds, so all-time speaks the same rounded minutes the week and month do. Truncating
+        /// the seconds instead made the two disagree on screen: a lifetime ten seconds short of two
+        /// hours rounds to "120 minutes" in the month section and floored to "1 hour" right below it,
+        /// which reads as all-time being *smaller* than the month inside it. Same input, one rounding
+        /// rule, one answer. The cost is that a milestone can light up to 30 seconds early — far
+        /// cheaper than a headline that contradicts the section above it.
+        var hours: Int { minutes / 60 }
+        /// Minutes past the whole hour, for the "2 hours 55 minutes" reading. Hours alone discard up
+        /// to 59 minutes, which is invisible at 87 hours and half the number at two.
+        var remainingMinutes: Int { minutes % 60 }
     }
 
     static func lifetime(_ records: [SessionRecord], gap: TimeInterval = sittingGap) -> Lifetime {
