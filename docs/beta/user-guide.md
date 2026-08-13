@@ -6,8 +6,12 @@ reviewed alongside the app, and so it can later seed the in-app guided-creation 
 (ADR 0149).
 
 **Do not restate the FAQ here.** `Pocket/Core/Help/FAQEntry.swift` is the single source of
-truth for those seventeen answers. This guide points at Help & FAQs; it does not duplicate
+truth for those eighteen answers. This guide points at Help & FAQs; it does not duplicate
 it, or the two will drift.
+
+**Screenshots live only in the web port.** This file is text-only on purpose — the images
+sit in `public/redmoon/` beside the port, so the binaries have one home rather than two.
+When a screen changes, replace the file there; the prose here is what has to stay in step.
 
 Voice: address the reader as a musician. Plain, direct, no marketing. The one moment that
 gets any ceremony is the first loop.
@@ -221,7 +225,11 @@ Two honest notes:
 - **Metronome** — standalone click with ramps and a tap-tempo. The **pencil** in its toolbar
   writes a note that carries the click you wrote it to — tempo, time signature, subdivision,
   any withdrawal — so weeks later it still says what it was clean *at*.
-- **Help & FAQs** — in the Toolkit, and in Settings → Help & About. Seventeen answers to the
+- **Settings** — grouped by what you're changing rather than by which screen it affects: the
+  click under **Sound & feel**, count-in under **Practice**, the waveform screen under
+  **Song player**. Most switches also sit where you use them; this is the other door to the
+  same settings, not a different set.
+- **Help & FAQs** — in the Toolkit, and in Settings → Help & About. Eighteen answers to the
   questions that actually come up. Start there before you email me.
 
 ---
