@@ -134,7 +134,8 @@ list — but here's the list anyway, because some of these are genuinely hidden.
 
 | Do this | Get this |
 |---|---|
-| **Hold the BPM number** | Type a tempo in directly, instead of nudging it |
+| **Tap the speed** — the 1.00× on the far left | Type an exact speed. The slider is too short to land on 0.85× |
+| **Hold the BPM number** | The tempo editor: tap along to the song, type the BPM, or have it guess from the audio — plus where the 1 falls and the time signature. This tells the app what the *song's* tempo is; it doesn't change what you're hearing |
 | **Hold the song title** | Song details |
 | **Hold a loop** in the panel below | Edit it (a tap just plays it) |
 | **Hold a marker** | Edit it (a tap jumps there) |
