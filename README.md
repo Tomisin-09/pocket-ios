@@ -114,6 +114,11 @@ docs/          architecture.md, decisions/ (ADRs), practice-techniques.md, resea
   ~20s on a Linux runner — the required check still reports, it just has nothing to do. The rule
   lives in `scripts/docs-only.sh` and is shared with the pre-push hook. See `docs/decisions/0133`;
   note in particular why the workflow must *not* grow a `paths-ignore` filter.
+- **The manual check** (`docs/decisions/0165`): `scripts/check-manual.py` holds `docs/manual/` to
+  what the app's compiled catalogs actually say. It is the one step with no `if:` on it — a
+  docs-only change is exactly what it guards, and exactly what switches everything else off. Stdlib
+  Python, no dependencies, so it runs on either runner; it sits inside `lint-build-test` rather than
+  in `scope` or a job of its own, for the reason 0133 gives.
 - **Flake control** (`docs/decisions/0146`): the UI tests wait on a readiness signal the app raises
   when first-launch seeding completes, not on a guess about how slow the runner is — every test
   launches through `UITestCase.launchApp()`, which carries the one generous wait. CI also boots and

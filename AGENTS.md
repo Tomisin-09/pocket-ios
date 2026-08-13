@@ -34,13 +34,20 @@ Run these before every commit that touches app code. Do not push until all pass.
 > that is stricter than local Xcode 26.5 — the hook narrows but can't fully
 > close that gap.
 >
-> **Docs-only changes are free.** If a push touches only `**/*.md`, `docs/**` or
-> `LICENSE`, the hook exits immediately and CI skips lint/build/test (~20s
-> instead of ~7min). One rule, `scripts/docs-only.sh`, serves both — change it
-> there or not at all. Anything else, including `.github/workflows/**` and
-> `*.xctestplan`, runs the full set. **Never add `paths-ignore` to `ci.yml`**:
-> the required check would stop reporting and every docs PR would become
-> unmergeable (ADR 0133).
+> **Docs-only changes are nearly free.** If a push touches only `**/*.md`,
+> `docs/**` or `LICENSE`, the hook and CI skip lint/build/test (~20s instead of
+> ~7min). One rule, `scripts/docs-only.sh`, serves both — change it there or not
+> at all. Anything else, including `.github/workflows/**` and `*.xctestplan`,
+> runs the full set. **Never add `paths-ignore` to `ci.yml`**: the required check
+> would stop reporting and every docs PR would become unmergeable (ADR 0133).
+>
+> **One check runs regardless: `scripts/check-manual.py`** (ADR 0165), in the
+> hook *above* the tier logic and in CI *inside* `lint-build-test` with no `if:`.
+> It holds `docs/manual/` to what the app actually says, so the state that turns
+> everything else off — a docs-only push — is the state it exists for. It is
+> stdlib Python over markdown and takes a fraction of a second. Do not move it
+> into `scope`, and do not give it a job of its own; see 0165 D8 for why both
+> break the required check.
 
 1. **Lint** — `swiftlint`. Fix all errors. Suppress only with
    `// swiftlint:disable:next <rule>` on the exact line, never file-wide.
@@ -64,6 +71,7 @@ Run these before every commit that touches app code. Do not push until all pass.
    | `docs/architecture.md` | New/changed module, audio pipeline stage, persistence/sync change, or third-party service |
    | `docs/decisions/` | Any decision that closes off an alternative (new ADR, numbered) |
    | `docs/design-brief.md` | Changes to the design system/tokens, screen inventory, or the design working protocol |
+   | `docs/manual/` | A screen gains or loses a control, a control is renamed, a navigation path changes, or what's free vs Pro moves |
    | `README.md` | Changes to project structure, build/CI, or the "How it works" summary |
 
    **What counts as significant:** new screen, new model/service, schema or
