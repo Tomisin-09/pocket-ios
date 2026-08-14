@@ -1,7 +1,11 @@
 # ADR 0165 — the manual quotes the app
 
-- **Status:** **Draft** — the shape is settled; no manual prose is committed yet
-  (branch `pocket-262-the-manual-quotes-the-app`)
+- **Status:** **Accepted** — the whole manual is written and on `main`: 19 pages, ~24,000 words,
+  96 shot markers. Every check C1–C12 is live and passing, none pending; the coverage audit ran at
+  the end of the reference wing and found nothing unticked (see
+  [docs/manual/README.md](../manual/README.md)). What remains is Phase 5, the images.
+  <br>Drafted 2026-08-13, accepted 2026-08-14. `CHANGELOG.md` still gets no entry until the manual
+  **ports** to the site, which is the trigger set in Consequences and is unchanged by this.
 - **Date:** 2026-08-13
 - **Extends:** ADR 0145 (help is something you look up). Its D5 (*quote, don't restate*) and D6
   (*no numbers*) were written for one compiled catalog; this ADR lifts both out of the FAQ and
