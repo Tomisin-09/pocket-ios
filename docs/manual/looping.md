@@ -109,6 +109,11 @@ the right place the app needs two things: the song's tempo, and where beat one i
 **The tempo.** Hold the metronome button or the BPM readout to open the tempo editor. You can tap it
 out, type a BPM, or let the app guess it from the audio. The editor also carries the time signature.
 
+Tapping reads the playhead rather than your finger, so a loop or a slowed-down speed still reads the
+song's true tempo. The reading follows your **last few taps** rather than everything you have tapped,
+so on a song that drifts you can keep tapping through the section you actually care about and the
+number will settle on it.
+
 <!-- shot: looping/tempo-editor | role: screen
      | alt: The tempo editor with a tap area, a typed BPM field, the guess-from-audio option, setting the 1, and the time signature
      | state: seeded library, Little Wing, tempo editor open -->
