@@ -25,9 +25,9 @@ index is two orderings that drift apart.
 | `getting-started` | What this is, what you need, and a first session in three moves | Slice A |
 | `songs` | Get your own music in, and find it again | Slice A |
 | `looping` | The loop workflow, end to end — the largest page | Slice A |
-| `exercises` | Run what shipped, then build your own | — |
-| `routines` | Put exercises in an order and play them | — |
-| `sessions` | Let the app plan a session around a goal | — |
+| `exercises` | Run what shipped, then build your own | Slice B |
+| `routines` | Put exercises in an order and play them | Slice B |
+| `sessions` | Let the app plan a session around a goal | Slice B |
 | `journal-and-progress` | Write down what happened, and look back at it | — |
 | `metronome` | The click on its own | — |
 | `toolkit` | Tuner, saved chords, glossary, help | — |
@@ -48,8 +48,9 @@ index is two orderings that drift apart.
 | `reference/settings` | Reaching Settings, and each of its nine destinations | — |
 
 Written in slices: Slice A is `getting-started` · `songs` · `looping` · `gestures` · `terms` — the
-first hour, and the path the whole product is built around. The reference wing comes last on
-purpose, so the how-tos already know what they are linking into.
+first hour, and the path the whole product is built around. Slice B is `exercises` · `routines` ·
+`sessions` — the practice side, which is the half of the app that has no waveform in it. The
+reference wing comes last on purpose, so the how-tos already know what they are linking into.
 
 ## Standing rules for whoever writes here
 
