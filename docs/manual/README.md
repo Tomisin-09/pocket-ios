@@ -28,11 +28,11 @@ index is two orderings that drift apart.
 | `exercises` | Run what shipped, then build your own | Slice B |
 | `routines` | Put exercises in an order and play them | Slice B |
 | `sessions` | Let the app plan a session around a goal | Slice B |
-| `journal-and-progress` | Write down what happened, and look back at it | — |
-| `metronome` | The click on its own | — |
-| `toolkit` | Tuner, saved chords, glossary, help | — |
-| `subscription` | What's free, what Pro covers, how to start and stop | — |
-| `privacy` | Where your data lives and what leaves the device | — |
+| `journal-and-progress` | Write down what happened, and look back at it | Slice C |
+| `metronome` | The click on its own | Slice C |
+| `toolkit` | Tuner, saved chords, glossary, help | Slice C |
+| `subscription` | What's free, what Pro covers, how to start and stop | Slice C |
+| `privacy` | Where your data lives and what leaves the device | Slice C |
 | `gestures` | Every hold, drag, pinch and swipe in one place | Slice A |
 | `terms` | The app's own words for the things it measures | Slice A |
 | `shots` | Screenshot manifest — **generated** from the page markers, never hand-kept | Generated |

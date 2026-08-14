@@ -32,6 +32,13 @@ marker grammar in [README.md](README.md).
 | `getting-started/home` | `screen` | `getting-started` | seeded library, Home, evening greeting |  |
 | `getting-started/import-picker` | `screen` | `getting-started` | seeded library, Home, + tapped |  |
 | `getting-started/loop-active` | `band` | `getting-started` | seeded library, Little Wing, a loop active and repeating |  |
+| `journal/month-heatmap` | `panel` | `journal-and-progress` | seeded library, Progress, two or more weeks of history in the current month |  |
+| `journal/progress` | `screen` | `journal-and-progress` | seeded library, Progress, several weeks of practice history |  |
+| `journal/quick-note` | `screen` | `journal-and-progress` | an exercise run screen, quick note tapped |  |
+| `journal/quick-note-button` | `glyph` | `journal-and-progress` | — |  |
+| `journal/record-arm` | `glyph` | `journal-and-progress` | — |  |
+| `journal/take-row` | `detail` | `journal-and-progress` | seeded library, Journal, Takes filter, at least one take |  |
+| `journal/timeline` | `screen` | `journal-and-progress` | seeded library, Journal, several notes and one take across two days |  |
 | `looping/ab-forming` | `band` | `looping` | seeded library, Little Wing, playing, loop start dropped, end not set |  |
 | `looping/automator` | `screen` | `looping` | seeded library, Little Wing, loop "Verse riff", automator open |  |
 | `looping/loop-active` | `band` | `looping` | seeded library, Little Wing, loop "Verse riff" active and repeating |  |
@@ -39,6 +46,11 @@ marker grammar in [README.md](README.md).
 | `looping/multi-select` | `panel` | `looping` | seeded library, Little Wing, Loops panel header held, two loops selected |  |
 | `looping/speed-bar` | `band` | `looping` | seeded library, Little Wing, speed reduced below 100% |  |
 | `looping/tempo-editor` | `screen` | `looping` | seeded library, Little Wing, tempo editor open |  |
+| `metronome/automator` | `panel` | `metronome` | Metronome open, automator armed By Bars |  |
+| `metronome/screen` | `screen` | `metronome` | Metronome open, 96 BPM, 4/4, stopped |  |
+| `metronome/settings-sheet` | `screen` | `metronome` | Metronome open, meter control tapped |  |
+| `metronome/tempo-controls` | `band` | `metronome` | Metronome open, 96 BPM |  |
+| `privacy/settings` | `panel` | `privacy` | Settings ▸ Privacy |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
 | `routines/editor` | `screen` | `routines` | Practice ▸ Routines ▸ + , three blocks added |  |
 | `routines/library` | `screen` | `routines` | seeded library, Practice ▸ Routines, several routines saved |  |
@@ -60,8 +72,17 @@ marker grammar in [README.md](README.md).
 | `songs/missing-audio` | `panel` | `songs` | seeded library, a song whose file cannot be found, details open |  |
 | `songs/song-edit` | `screen` | `songs` | seeded library, song "Little Wing", edit sheet open |  |
 | `songs/sort-menu` | `panel` | `songs` | seeded library, Library screen, sort menu open |  |
+| `subscription/paywall` | `screen` | `subscription` | fresh install without Pro, paywall open from a locked Home card |  |
+| `subscription/settings-pro` | `panel` | `subscription` | Settings ▸ Red Moon Pro, subscribed |  |
+| `subscription/trial-row` | `band` | `subscription` | an account inside a running trial, Home |  |
 | `terms/command-tempo-info` | `detail` | `terms` | seeded library, Little Wing, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo |  |
 | `terms/info-button` | `glyph` | `terms` | — |  |
 | `terms/mastery-info` | `detail` | `terms` | seeded library, Little Wing, loop "Verse riff" edit sheet, ⓘ tapped on Mastery |  |
+| `toolkit/faq` | `screen` | `toolkit` | Toolkit ▸ Help & FAQs, one question expanded |  |
+| `toolkit/glossary` | `screen` | `toolkit` | Toolkit ▸ Glossary, no search |  |
+| `toolkit/hub` | `screen` | `toolkit` | Toolkit open, some saved chords present |  |
+| `toolkit/my-chords` | `screen` | `toolkit` | Toolkit ▸ My chords, three or more saved chords |  |
+| `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
+| `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-48 shots across 8 pages.
+69 shots across 13 pages.
