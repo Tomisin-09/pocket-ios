@@ -13,6 +13,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Fixed
+- **The app calls itself Red Moon in the two places it used to call itself Pocket.** *Pocket* is the
+  internal name — the Xcode target and the bundle id — and it had leaked into two pieces of shipped
+  copy, both on the freeform drill: the template picker's one-liner ("anything Pocket doesn't
+  cover") and the footer under the instructions field. Found while writing the user manual, whose
+  rule is to quote the app's own words; a manual cannot quote a name the product does not go by.
 - **Tap tempo now reads your last few taps instead of every tap since you started.** It averaged
   the whole tapping run, which failed three ways on hand-played material: tapping a passage that
   drifts from 89 to 93 BPM returned about 91 — right at neither end — the shaky taps you make

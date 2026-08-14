@@ -220,7 +220,7 @@ private extension ConfigureExerciseForm {
             Text("Instructions")
         } footer: {
             Text("Sight-reading, transcribing, a piece you're working by hand, something your teacher "
-                 + "set — whatever Pocket doesn't cover. You'll see this while you practise. Nothing "
+                 + "set — whatever Red Moon doesn't cover. You'll see this while you practise. Nothing "
                  + "reads it but you.\n\nTick the box and this can turn up in an "
                  + "\u{201C}Away from your instrument\u{201D} session — a commute, a quiet room. "
                  + "We can't tell from what you wrote, so it's your call.")

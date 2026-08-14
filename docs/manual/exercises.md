@@ -146,9 +146,9 @@ not offered there. Chords stays — bass chords are real.
 | **Chords & Strum** | Strum a groove while the chords change under it. |
 | **Arpeggios** | Run chord tones across the neck, in position. |
 | **Legato** | Hammer-ons and pull-offs, even and smooth. |
-| **Your own practice** | Anything the app doesn't cover, written by you. |
+| **Your own practice** | Write your own — anything Red Moon doesn't cover. |
 
-The first nine are the app's own one-liners, taken from the picker itself.
+Those one-liners are the app's, taken from the picker itself.
 
 ### Step two — the details
 

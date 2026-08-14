@@ -88,7 +88,7 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .theory: return "Drill fretboard and theory knowledge."
         // Names what it is *for*, never what it lacks (F9) — the player is about to put the most
         // personal practice they have into it.
-        case .freeform: return "Write your own — anything Pocket doesn't cover."
+        case .freeform: return "Write your own — anything Red Moon doesn't cover."
         }
     }
 
