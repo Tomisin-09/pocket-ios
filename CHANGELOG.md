@@ -13,6 +13,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Fixed
+- **Tap tempo now reads your last few taps instead of every tap since you started.** It averaged
+  the whole tapping run, which failed three ways on hand-played material: tapping a passage that
+  drifts from 89 to 93 BPM returned about 91 — right at neither end — the shaky taps you make
+  while finding the pulse never left the average, and the longer you tapped the less each new tap
+  could move the number, so "keep tapping until it settles" froze it instead. The reading is now
+  taken from the last twelve gaps, with a fumbled tap (a double-tap, a missed beat, or just a
+  mistimed one) dropped rather than averaged in, so it follows the section you're actually
+  tapping and re-converges if
+  you change tempo mid-run. Applies both to setting a song's BPM and to the metronome's TAP
+  buttons. On a perfectly steady track the reading is fractionally noisier than before — the
+  trade that buys the rest (ADR 0166).
 - **All-time on Progress can no longer read as less than the month above it.** Time played was
   rounded to the nearest minute for the week and month, but the all-time headline floored the raw
   seconds into whole hours and dropped the remainder — so a first month totalling 1h59m50s showed

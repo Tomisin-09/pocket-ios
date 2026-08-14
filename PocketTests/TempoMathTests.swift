@@ -130,6 +130,126 @@ final class TempoMathTests: XCTestCase {
         XCTAssertEqual(TempoMath.bpm(fromTapTimes: [0, 10]) ?? 0, TempoMath.minTapBPM, accuracy: 1e-6)
     }
 
+    // MARK: tap tempo — trailing window and outlier rejection (ADR 0166)
+
+    /// Tap timestamps whose successive gaps are `gaps`, starting at 0 — the tests below are
+    /// all written in terms of gaps, since that is what the reading is actually taken from.
+    private func taps(gaps: [TimeInterval]) -> [TimeInterval] {
+        var times: [TimeInterval] = [0]
+        var clock: TimeInterval = 0
+        for gap in gaps {
+            clock += gap
+            times.append(clock)
+        }
+        return times
+    }
+
+    func testTapTempoWindowReadsTheEndOfTheRunNotItsMean() {
+        // A passage that drifts 89 → 93 BPM. The old all-gaps mean landed between the two
+        // and fitted neither end of it; the window reads where the tapping finished.
+        let gaps = Array(repeating: 60.0 / 89.0, count: 20)
+            + Array(repeating: 60.0 / 93.0, count: TempoMath.tapWindow)
+        let times = taps(gaps: gaps)
+
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: times) ?? 0, 93, accuracy: 1e-6)
+
+        // The behaviour this replaced, kept explicit so the difference can't quietly vanish.
+        let everyGap = TempoMath.bpm(fromTapTimes: times, window: 0) ?? 0
+        XCTAssertGreaterThan(everyGap, 89)
+        XCTAssertLessThan(everyGap, 91)
+    }
+
+    func testTapTempoReconvergesAfterALongSteadyRun() {
+        // The old mean froze: with 40 gaps banked a new tap moved it by a fortieth, so
+        // "keep tapping until it settles" never settled. The window turns over instead.
+        let steady = Array(repeating: 0.6, count: 40)                       // 100 BPM
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: taps(gaps: steady)) ?? 0, 100, accuracy: 1e-6)
+
+        let shifted = steady + Array(repeating: 0.5, count: TempoMath.tapWindow + 1)   // 120 BPM
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: taps(gaps: shifted)) ?? 0, 120, accuracy: 1e-6)
+    }
+
+    func testTapTempoWindowDropsTheGapBeyondIt() {
+        // A 0.55 s opening gap — inside the tolerance band around the 0.5 s median, so it
+        // survives rejection and this isolates the window itself. With `tapWindow` clean
+        // gaps after it, the opener sits one place past the edge and is not read.
+        let gaps = [0.55] + Array(repeating: 0.5, count: TempoMath.tapWindow)
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: taps(gaps: gaps)) ?? 0, 120, accuracy: 1e-6)
+
+        // One fewer clean gap and the opener is inside the window, pulling the mean down.
+        let narrower = Array(gaps.dropLast())
+        let mean = narrower.reduce(0, +) / Double(narrower.count)
+        let reading = TempoMath.bpm(fromTapTimes: taps(gaps: narrower)) ?? 0
+        XCTAssertEqual(reading, 60.0 / mean, accuracy: 1e-6)
+        XCTAssertLessThan(reading, 120)                 // direction, not just the arithmetic
+    }
+
+    func testTapTempoAbsorbsAnEarlyTapWhenBothHalvesAreInTheWindow() {
+        // The device symptom that widened `tapWindow` (ADR 0166 §Revision). A mistimed tap
+        // is a *paired* error — early by 0.06 s shortens one gap and lengthens the next by
+        // the same 0.06 — so the two cancel in the mean and the reading doesn't move. That
+        // only holds while both halves are inside the window; at the old width one half
+        // rolled out and the survivor showed. Both are inside the tolerance band, so this
+        // is cancellation doing the work, not rejection.
+        let gaps = Array(repeating: 0.5, count: 5)
+            + [0.44, 0.56]
+            + Array(repeating: 0.5, count: TempoMath.tapWindow - 7)
+        XCTAssertEqual(gaps.count, TempoMath.tapWindow)
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: taps(gaps: gaps)) ?? 0, 120, accuracy: 1e-6)
+    }
+
+    func testTapTempoRejectsADoubleTap() {
+        // One stray extra tap splits a gap in half. Both halves sit 50% from the median and
+        // are dropped — without rejection the window would hand them ¼ of the reading.
+        let gaps: [TimeInterval] = [0.5, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5, 0.5]
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: taps(gaps: gaps)) ?? 0, 120, accuracy: 1e-6)
+    }
+
+    func testTapTempoRejectsAMissedBeat() {
+        // A skipped tap doubles one gap — the other classic tapping error.
+        let gaps: [TimeInterval] = [0.5, 0.5, 0.5, 1.0, 0.5, 0.5, 0.5, 0.5]
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: taps(gaps: gaps)) ?? 0, 120, accuracy: 1e-6)
+    }
+
+    func testTapTempoKeepsGenuineDrift() {
+        // 89 → 93 BPM across one window is ~4.5% — real movement, not a fumble. Every gap
+        // must survive, or the tolerance is flattening the drift it exists to follow.
+        let gaps = (0..<TempoMath.tapWindow).map { step -> TimeInterval in
+            let fraction = Double(step) / Double(TempoMath.tapWindow - 1)
+            return 60.0 / (89.0 + 4.0 * fraction)
+        }
+        let mean = gaps.reduce(0, +) / Double(gaps.count)
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: taps(gaps: gaps)) ?? 0,
+                       60.0 / mean, accuracy: 1e-6)
+    }
+
+    func testTapTempoKeepsEveryGapBelowTheRejectionFloor() {
+        // Three gaps is below the floor: there is no majority to be an outlier *from*, so
+        // even a wild gap is averaged rather than discarded.
+        XCTAssertEqual(TempoMath.minGapsForOutlierRejection, 4)
+        let gaps: [TimeInterval] = [0.5, 0.5, 1.4]                          // mean 0.8
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: taps(gaps: gaps)) ?? 0,
+                       60.0 / 0.8, accuracy: 1e-6)
+    }
+
+    func testTapTempoWindowArgumentIsHonoured() {
+        // `window: 0` keeps the unwindowed mean expressible — on genuinely steady material
+        // more samples is the better estimator, and the ADR trades that away deliberately.
+        // Every gap here is inside the tolerance band, so only the window separates the two.
+        let gaps = Array(repeating: 0.5, count: 20) + Array(repeating: 0.55, count: 4)
+        let times = taps(gaps: gaps)
+
+        let recent = Array(gaps.suffix(TempoMath.tapWindow))
+        let windowedMean = recent.reduce(0, +) / Double(recent.count)
+        let everyGapMean = gaps.reduce(0, +) / Double(gaps.count)
+        XCTAssertNotEqual(windowedMean, everyGapMean, accuracy: 1e-4)       // the fixture bites
+
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: times) ?? 0,
+                       60.0 / windowedMean, accuracy: 1e-6)
+        XCTAssertEqual(TempoMath.bpm(fromTapTimes: times, window: 0) ?? 0,
+                       60.0 / everyGapMean, accuracy: 1e-6)
+    }
+
     // MARK: automator step count
 
     func testAutomatorStepCountExact() {

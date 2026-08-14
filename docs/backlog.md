@@ -263,12 +263,127 @@ continuously moving tempo, but it touches `BeatGrid`, `TempoEstimator`, the sche
 authoring UI, for material most users don't have. Anchors compose with it later rather than
 blocking it.
 
-**STILL PARKED, independent of 0154: a trailing window for tap tempo.**
-`TempoMath.bpm(fromTapTimes:)` averages *all* inter-tap gaps with no window and no outlier
-rejection, and `WaveformBPMSheet` never trims `taps`. Forty taps across a drifting song therefore
-collapse to one number that fits nowhere in particular — anchors fix the *phase* that number
-produces, not the number itself. A trailing-window variant (last ~8 taps) would give a **local**
-tempo, which is what this material wants. Small, pure, unit-testable, and untouched by ADR 0154.
+**A trailing window for tap tempo — SHIPPED as ADR 0166** (2026-08-14).
+`TempoMath.bpm(fromTapTimes:)` averaged *all* inter-tap gaps with no window and no outlier
+rejection, and neither caller trimmed its `taps`. Forty taps across a drifting song therefore
+collapsed to one number that fitted nowhere in particular — anchors fix the *phase* that number
+produces, not the number itself.
+
+**Shipped:** the reading is taken from the last `tapWindow = 12` gaps, with gaps further than
+`tapOutlierTolerance = 0.15` from that window's median dropped (`AudioMath.percentile(_:0.5)`
+does the median; below `minGapsForOutlierRejection = 4` gaps everything is kept). The window and
+the rejection are one decision — shortening to twelve gaps makes each gap worth ~1/12 rather than
+~1/40th, so windowing *alone* would have amplified a fumbled tap. Both surfaces get it through
+the shared pure function (`WaveformBPMSheet`, `MetronomeView`); the metronome's 2-second
+`tapResetGap` stays, since it marks a new measurement rather than a rolling window. `window: 0`
+keeps the old all-gaps mean expressible.
+
+**The stated cost:** fractionally noisier on genuinely steady material, where more samples was
+the better estimator. Named in the ADR's consequences and in the BPM sheet's tap footer.
+
+**Both constants moved on device testing** (ADR 0166 §Revision), in opposite directions, and the
+reasoning is worth keeping: a mistimed tap is a **paired** error — early by 0.06 s shortens one
+gap and lengthens the next by 0.06 — so the halves cancel in the mean *only while both are inside
+the window*, which is the real argument for widening 8 → 12. And the tolerance had to **tighten**
+(0.3 → 0.15), which inverts the intuition: a wider band keeps *more* bad gaps, so raising it makes
+a fumble matter more, not less.
+
+**What it unblocks:** a per-section tempo map is authored by tapping *through* a section and
+reading that section's tempo — which is what a trailing window produces and an all-taps mean
+cannot. See the next entry.
+
+## A song whose tempo changes at a section — NEXT (would be ADR 0167)
+
+**The observation.** A song that runs 92 in the verse and 78 in the bridge cannot be gridded.
+Set 92 and the grid is wrong for the whole bridge *and* wrong from the bridge to the end,
+because nothing ever recovers the error.
+
+**Anchors (0154) only half-cover it, by construction.** Planting an anchor at the bridge resets
+the *phase* there, but the beat *interval* is still 92's, so it is wrong again within a couple of
+bars and you would be planting an anchor every bar. 0154 says this in its own consequences:
+anchors stop error accumulating, they don't make one BPM correct. **Wobble wants anchors; a
+stated change wants a tempo.** That distinction is the whole design.
+
+**The finding that makes this cheap — everything downstream of the grid is already tempo-agnostic.**
+Nothing after `BeatGrid` sees a BPM. `MetronomeSchedule.upcoming` takes `[(time, isDownbeat)]`;
+`WaveformPracticeModel+Snap` takes `beatGrid.map(\.fraction)`; the drawing layer takes
+`model.beatGrid`. So a tempo map lands almost entirely inside one pure function plus authoring
+UI — not the sprawl 0154 priced it at.
+
+### Preferred shape: a tempo per anchor (piecewise-constant)
+
+`Shape.interval` in `BeatGrid` becomes **per-segment**. `segment(from:upTo:)` already runs
+anchor-to-anchor at a fixed interval, so the maths change is small. Decide explicitly whose
+interval the half-interval collapse rule uses at a seam (the incoming segment's, or the larger of
+the two) — that rule is what keeps `beats(...)` total.
+
+**Storage, against a schema frozen for destructive `@Model` changes** (additive stays safe):
+
+- **Preferred:** a new cascade-owned `@Model TempoAnchor { uid, seconds, bpm: Double? }`, the same
+  shape `Marker` already uses, where `bpm == nil` means "phase correction only" — which is exactly
+  what 0154's `extraDownbeatSeconds` entries are today. A new entity plus a to-many on `Song` is
+  additive, but **must be device-verified over an existing install** (`docs/swiftdata-gotchas.md`;
+  the in-memory test store starts empty and cannot catch a migration failure), as 0154 was.
+- **Escape hatch** if that migration proves risky pre-1.2: a parallel `[Double]` beside
+  `extraDownbeatSeconds`. Cheaper to migrate, but it carries a silent alignment invariant — the
+  exact class of bug this repo prefers to design out.
+- Either way `Song.tempoBPM` stays the **headline** tempo so no existing call site moves — the
+  same trick 0154 used by keeping `downbeatSeconds` primary.
+
+**Deferred: interpolation.** A tempo that *slides* (ritardando, gradual accelerando) means beats
+are no longer at fixed multiples and you have to integrate to place them. A section change is a
+step function, so piecewise-constant covers the actual use case; only build interpolation on
+evidence.
+
+**Not the model, but yes the UI: markers.** `Marker` already carries seconds + a label ("Bridge")
+and is already a snap candidate. Keep the types separate — a named place and a tempo change are
+different things, and a marker must never grid a song — but offer "set the tempo from here" at a
+marker and snap anchor drops to them.
+
+**Still rejected: per-loop tempo overrides.** 0154's reasoning stands — it leaves the whole-song
+grid wrong whenever no loop is armed, which is where the drift is noticed.
+
+### Auto-detection is in scope — 0004 permits it, and 0154 rejected something narrower
+
+Worth stating plainly, because it was nearly parked on a misreading. **ADR 0004 does not ban
+estimation, it institutionalises it:** rung 2 is "else optionally estimate on-device, flagged as
+estimated", and it already auto-places *the 1* — `TempoEstimator.Estimate` carries
+`downbeatSeconds` today. What 0004 forbids is **auto-commit**. What 0154 rejected is narrower
+still: silently *re-anchoring* a grid the player had already placed by hand. Proposing boundaries
+into a song that has none is neither of those things.
+
+This also attacks the cost that got the map deferred in the first place ("needs an authoring UI") —
+a detected first draft you then correct is far cheaper than a blank timeline.
+
+Mechanically it reuses what exists: run `estimateBPM` over overlapping ~10–15 s windows of the same
+onset envelope to get a tempo *curve* instead of a scalar, and propose a boundary where that curve
+steps and holds. `minConfidence` already returns `nil` on windows with no clear periodicity rather
+than inventing a tempo. Two traps to design against:
+
+1. **Re-centre the prior per song.** `preferredBPM` is a fixed 120 with a log-normal prior sized to
+   fold half/double errors. Per-window that is not enough — one window flipping to double-tempo
+   reads as a section change that isn't there. Centre each window's prior on the song's *global*
+   estimate so windows are pulled toward the song's own tempo and only a genuine step survives.
+2. **Threshold and hysteresis, or wobble becomes sections.** The same windowing that finds a bridge
+   sees Dilla drift as a constant trickle of small changes. Propose a boundary only when the change
+   is both large enough and sustained — get this wrong and an unquantised track becomes forty
+   bogus sections.
+
+### Slices, and two things that will bite
+
+1. Per-anchor tempo in `BeatGrid` — the correctness fix, pure and unit-testable.
+2. Authoring: set/edit a section tempo, tapping through a section to read it (ADR 0166's window is
+   what makes that reading local).
+3. Detection as prefill, never auto-commit.
+
+- **`GridKey` must gain the per-section tempos** (`WaveformPracticeModel+Grid.swift`), or the
+  memoised grid silently keeps the phase you just corrected — the ADR 0153 trap 0154 already paid
+  for once.
+- **`SongTempoTransition` already exists and means something else** (banking playback *speed* on
+  loop arm/disarm). "Tempo" means two things in this app; don't let a tempo map inherit that name.
+- **ADR 0131 opportunity:** it currently warns before an *exercise ramp* changes tempo. A song
+  tempo map is a second source of "the tempo is about to change" — pre-lighting a bar before the
+  bridge is nearly free once the map exists.
 
 ## The transport lights up with nothing scheduled — ✅ FIXED 2026-08-12 (re-diagnosed first)
 

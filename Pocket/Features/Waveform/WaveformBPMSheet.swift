@@ -13,6 +13,15 @@ import SwiftUI
 /// it back via `onCommit`; the model stores it in `Song.preciseBPM` (grid) and mirrors
 /// the rounded value into `Song.bpm` (display). Reads the engine's observable state
 /// live so the play/pause label and tap capture stay in sync.
+/// The tap section's footer. File-scope rather than inline because `BPMSheet` sits on
+/// SwiftLint's 250-line type-body limit, and prose is the part that can live outside the
+/// body without losing anything. The second sentence is the ADR 0166 disclosure: the
+/// reading moves while you tap now, which is surprising if it isn't said.
+private let tapFooterText =
+    "Play the song and tap along. Tapping reads the playhead, so a loop or slowed speed "
+    + "still reads the true tempo. The reading follows your last few taps, so on a song "
+    + "that drifts, keep tapping through the section you care about."
+
 struct BPMSheet: View {
     /// The live engine — read for `currentTime` (tap capture) and `isPlaying`, and
     /// driven for play/pause so the user can audition while tapping.
@@ -176,8 +185,7 @@ struct BPMSheet: View {
             }
             .padding(.vertical, 4)
         } footer: {
-            Text("Play the song and tap along to the beat. Tapping reads the playhead, "
-                 + "so a loop or slowed-down speed still reads the true tempo.")
+            Text(tapFooterText)
         }
     }
 
