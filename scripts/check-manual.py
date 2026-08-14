@@ -24,9 +24,11 @@ Checks implemented here (0165's Phase 0b set):
     C7  `streak` and `this year` appear on no published page
     C8  count tripwires: a `<!-- key: N -->` comment fails when N stops matching
         the live count in the source
+    C9  inside reference/**, every backticked token is a real Swift string literal
 
 C3/C4/C5 (FAQ citation, no-copied-answers, byte-for-byte quoting) arrive with
-Slice A, when there is prose for them to check.
+Slice A, when there is prose for them to check; C9 arrives with the reference
+wing, whose backticks are the only ones that promise to be on screen.
 
 **The rule of thumb, for whoever extends this:** name checks where names exist,
 count tripwires where they don't. A check that can name the thing it is guarding
@@ -365,6 +367,24 @@ def check_c5():
             return FAIL, ["docs/manual/gestures.md does not quote the Loop controls "
                           "row(s) %s byte-for-byte" % ", ".join(repr(s) for s in stale)]
         notes.append("all %d Loop controls rows quoted verbatim" % len(rows))
+
+    # `reference/settings.md` walks all nine destinations, so between them it meets every
+    # `SettingsInfo` explanation — which makes "quote the ones you claim to" and "quote all
+    # of them" the same requirement, and the second is the one a script can state without
+    # guessing what a claim looks like. C1 proves the page *names* the destinations; this
+    # proves it reproduces the copy inside them rather than describing it.
+    reference = page("reference", "settings.md")
+    if os.path.exists(reference):
+        explanations = swift_constants("Features/Settings/SettingsInfo.swift", "enum SettingsInfo")
+        if not explanations:
+            return FAIL, ["parsed no explanations from SettingsInfo — the parser has drifted"]
+        body = read(reference)
+        missing = [name for name, value in explanations.items() if value not in body]
+        if missing:
+            return FAIL, ["docs/manual/reference/settings.md does not quote %s byte-for-byte. "
+                          "Copy the string from SettingsInfo rather than retyping it."
+                          % ", ".join(sorted(missing))]
+        notes.append("all %d SettingsInfo explanations quoted verbatim" % len(explanations))
     return OK, notes
 
 
@@ -463,6 +483,143 @@ TRIPWIRES = {
 }
 
 TRIPWIRE = re.compile(r"<!--\s*([a-z-]+):\s*(\d+)\s*-->")
+
+
+def strip_comments(text):
+    """Drop `//` and `/* */` comments, leaving string literals intact.
+
+    Load-bearing for C9, and the reason it is a state machine rather than a regex.
+    This codebase documents itself heavily and quotes its own UI copy while doing
+    it — `"Nice work"`, `"Start ramp"`, whole footers reproduced in a doc comment
+    explaining why they were reworded. Harvesting those as shipping literals would
+    make C9 pass on strings that are only ever *described* on screen, which is the
+    one failure a check like this must not have. Skipping `//` blindly is equally
+    wrong in the other direction: `"https://…"` would lose its tail and the URL
+    literals would stop matching themselves.
+    """
+    out = []
+    index, length = 0, len(text)
+    while index < length:
+        char = text[index]
+        if char == '"':
+            out.append(char)
+            index += 1
+            while index < length:
+                out.append(text[index])
+                if text[index] == "\\" and index + 1 < length:
+                    out.append(text[index + 1])
+                    index += 2
+                    continue
+                if text[index] == '"':
+                    index += 1
+                    break
+                index += 1
+            continue
+        if text.startswith("//", index):
+            while index < length and text[index] != "\n":
+                index += 1
+            continue
+        if text.startswith("/*", index):
+            index = text.find("*/", index)
+            index = length if index < 0 else index + 2
+            continue
+        out.append(char)
+        index += 1
+    return "".join(out)
+
+
+def source_literals():
+    """Every string literal that survives into the build, unescaped.
+
+    Interpolated literals are split on their `\\(…)` segments, so a label written
+    as `"Trial ends in \\(days) days"` contributes `Trial ends in ` and ` days`
+    rather than one string nothing could ever match. That is why C9's escape hatch
+    exists: a control whose whole name is assembled at runtime has no literal to
+    find, and saying so in a comment is more honest than loosening the check for
+    everybody.
+    """
+    found = set()
+    for path in source_files():
+        text = strip_comments(read(path))
+        for hit in _LITERAL.finditer(text):
+            value = unescape(hit.group(1))
+            found.add(value)
+            for part in re.split(r"\\\([^)]*\)", value):
+                if part:
+                    found.add(part)
+    return found
+
+
+# `<!-- not-in-source: "Set the 1" — built by interpolation -->` — the escape hatch,
+# file-scoped, and required to carry a reason after the string. A hatch you can open
+# without saying why is just a disabled check with extra steps.
+NOT_IN_SOURCE = re.compile(r'<!--\s*not-in-source:\s*"([^"]+)"\s*(?:—|--)\s*(\S[^>]*?)\s*-->')
+
+# Backticked tokens in `reference/**`. Fenced blocks are skipped by the caller.
+BACKTICKED = re.compile(r"`([^`\n]+)`")
+
+
+def reference_pages():
+    return [p for p in prose_pages()
+            if os.path.basename(os.path.dirname(p)) == "reference"]
+
+
+def check_c9():
+    """In `reference/**`, a backticked token is a claim that the string is on screen.
+
+    The reference wing's whole job is to name controls, so its backticks carry a
+    stronger promise than the spine's: **this is the exact text of a thing you can
+    look at**. That is checkable, and it is the check that keeps a per-screen
+    inventory from quietly describing a build two releases old.
+
+    Deliberately scoped to `reference/**` and no wider. The spine's pages backtick
+    file paths, slugs and settings keys as ordinary prose typography, and holding
+    those to the same rule would mean allowlisting half of `README.md`.
+
+    `reference/README.md` is out of scope too, and not by accident: `prose_pages()`
+    drops every `README.md` by basename, which is what lets the wing's index
+    backtick `scripts/check-manual.py` while stating the rule that would forbid it.
+    An index of links makes no claim about what is on screen.
+    """
+    pages = reference_pages()
+    if not pages:
+        return PENDING, ["the reference wing is not written yet"]
+    literals = source_literals()
+    if not literals:
+        return FAIL, ["harvested no string literals from Pocket/ — the parser has "
+                      "drifted, which fails silently as a pass"]
+
+    problems, checked = [], 0
+    for path in pages:
+        body = read(path)
+        exempt = {hit.group(1) for hit in NOT_IN_SOURCE.finditer(body)}
+        unused = set(exempt)
+        # A fenced block is code, not a control name — `swift`, `./scripts/…` and
+        # the marker grammar all live in one, and none of them is on screen.
+        prose = re.sub(r"```.*?```", "", body, flags=re.DOTALL)
+        for number, line in enumerate(prose.splitlines(), start=1):
+            for hit in BACKTICKED.finditer(line):
+                token = hit.group(1).strip()
+                if not token:
+                    continue
+                checked += 1
+                if token in exempt:
+                    unused.discard(token)
+                    continue
+                if token not in literals:
+                    problems.append(
+                        "%s:%d backticks %r, which is not a string literal under "
+                        "Pocket/. Either it is not what the screen says, or it is "
+                        "assembled at runtime — in which case add "
+                        "<!-- not-in-source: %r — why --> to this page."
+                        % (relative(path), number, token, token))
+        for stale in sorted(unused):
+            problems.append("%s exempts %r, which it never backticks — drop the "
+                            "not-in-source comment" % (relative(path), stale))
+    if problems:
+        return FAIL, problems
+    return OK, ["%d backticked control name%s found in the source"
+                % (checked, "" if checked == 1 else "s")]
 
 
 def check_c8():
@@ -675,6 +832,7 @@ CHECKS = [
     ("C5", "terms.md quotes PracticeFieldInfo verbatim", check_c5),
     ("C6", "no price, no trial length", check_c6),
     ("C7", "no streak, no 'this year'", check_c7),
+    ("C9", "reference backticks name real on-screen strings", check_c9),
     ("C10", "shot markers parse and obey the role grammar", check_c10),
     ("C11", "no image referred to by position", check_c11),
     ("C12", "shots.md matches the markers", check_c12),

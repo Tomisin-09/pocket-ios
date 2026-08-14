@@ -41,16 +41,21 @@ index is two orderings that drift apart.
 
 | Page | Covers | Status |
 |---|---|---|
-| `reference/home-and-library` | Home, first-run, Song library and its sheets | — |
-| `reference/song-player` | The waveform screen band by band, its eight sheets, landscape | — |
-| `reference/practice` | Practice hub, Planner, Routines, Exercises, Loops | — |
-| `reference/tools-and-journal` | Metronome, Journal, Progress, Toolkit | — |
-| `reference/settings` | Reaching Settings, and each of its nine destinations | — |
+| `reference/README` | How to read the wing, and its own conventions | Phase 4 |
+| `reference/home-and-library` | Home, first-run, Song library and its sheets | Phase 4 |
+| `reference/song-player` | The waveform screen band by band, its sheets, landscape | Phase 4 |
+| `reference/practice` | Practice hub, Planner, Routines, Exercises, Loops | Phase 4 |
+| `reference/tools-and-journal` | Metronome, Journal, Progress, Toolkit | Phase 4 |
+| `reference/settings` | Reaching Settings, and each of its nine destinations | Phase 4 |
 
 Written in slices: Slice A is `getting-started` · `songs` · `looping` · `gestures` · `terms` — the
 first hour, and the path the whole product is built around. Slice B is `exercises` · `routines` ·
-`sessions` — the practice side, which is the half of the app that has no waveform in it. The
-reference wing comes last on purpose, so the how-tos already know what they are linking into.
+`sessions` — the practice side, which is the half of the app that has no waveform in it. Slice C is
+`journal-and-progress` · `metronome` · `toolkit` · `subscription` · `privacy` — the rest of the app,
+minus the waveform. The reference wing came last on purpose, so the how-tos already knew what they
+were linking into.
+
+**The prose is complete.** What remains is Phase 5: shooting the images the markers describe.
 
 ## Standing rules for whoever writes here
 
@@ -155,9 +160,46 @@ A check whose page does not exist yet reports **pending**, not failure — that 
 machinery land before the prose. What it cannot check is whether a page is *true*: only somebody
 with the build open can say that, which is why every slice ends with a walk through the app.
 
-**The coverage audit, at the end of the reference wing, is this manual's definition of done:** tick
-every surface — Home, Practice hub, Planner, Routines, Exercises and their templates, the shape
-editors, Loops and its three modes, Song library, the waveform screen and its eight sheets,
-Metronome, Journal, Progress, the four Toolkit sections, the nine Settings destinations, the
-paywall — against a heading here. Anything unticked is either written or added to the parked list
-above with a reason.
+## The coverage audit — run 2026-08-14, at the end of the reference wing
+
+ADR 0165 calls this the manual's definition of done: every surface ticked against a heading, and
+anything unticked either written or added to the parked list above with a reason.
+
+| Surface | Where |
+|---|---|
+| Home, and the first run | `reference/home-and-library` · `getting-started` |
+| Song library, its sort, filter, row menu, details and edit sheets | `reference/home-and-library` · `songs` |
+| The waveform screen, band by band | `reference/song-player` · `looping` |
+| Its sheets — loop edit, marker edit, bulk edit, automator, tempo, player settings, journal, takes | `reference/song-player` |
+| Landscape | `reference/song-player` · `looping` |
+| Practice hub | `reference/practice` |
+| Today's session, goals, the review screen | `reference/practice` · `sessions` |
+| Routines — building, playing, between blocks, the end | `reference/practice` · `routines` |
+| Exercises, the ten creatable templates, the shape editors | `reference/practice` · `exercises` |
+| Loops library, and the three ways to run a loop | `reference/practice` · `looping` |
+| Metronome, its settings sheet, the automator | `reference/tools-and-journal` · `metronome` |
+| Journal, Quick note, takes | `reference/tools-and-journal` · `journal-and-progress` |
+| Progress | `reference/tools-and-journal` · `journal-and-progress` |
+| Toolkit ×4 | `reference/tools-and-journal` · `toolkit` |
+| Settings ×9 | `reference/settings` |
+| The paywall, the trial, restore and cancel | `subscription` |
+| Every hold, swipe and pinch | `gestures` |
+| The app's own practice vocabulary | `terms` |
+| What leaves the device | `privacy` |
+
+**Three things the audit found, all now written:**
+
+1. **The library groups by every template the app has ever had, not the ten you can create.** A drill
+   made under a withdrawn template still lists, opens and runs under its own heading. Noted in
+   `reference/practice`.
+2. **The player's settings sheet has no button.** It is reachable only by holding `Loop controls`,
+   which is one of the nine hintless holds. Named in `reference/song-player`, `reference/settings`
+   and `gestures`.
+3. **Song details is reached by holding the title** in the player, and by the row menu in the
+   library — two doors, one sheet. Both are now stated.
+
+**Nothing is unticked.** The parked list above is unchanged by the audit: everything on it is still
+absent from the build, and no page describes any of it.
+
+What the audit cannot do is prove a page is *true* — only somebody with the build open can, which is
+why every slice ended with a walk through the app. The last one drove 71 screens.

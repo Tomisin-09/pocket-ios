@@ -51,6 +51,33 @@ marker grammar in [README.md](README.md).
 | `metronome/settings-sheet` | `screen` | `metronome` | Metronome open, meter control tapped |  |
 | `metronome/tempo-controls` | `band` | `metronome` | Metronome open, 96 BPM |  |
 | `privacy/settings` | `panel` | `privacy` | Settings ▸ Privacy |  |
+| `reference/exercises-library` | `screen` | `practice` | seeded library, Practice ▸ Exercises, the seeded six present |  |
+| `reference/home` | `screen` | `home-and-library` | seeded library, Home, one song recently practised |  |
+| `reference/journal` | `screen` | `tools-and-journal` | seeded library, Journal, notes and a take across two days |  |
+| `reference/library` | `screen` | `home-and-library` | seeded library, Library, sorted by title |  |
+| `reference/library-row-menu` | `detail` | `home-and-library` | seeded library, Library, a row held |  |
+| `reference/loop-automator` | `screen` | `song-player` | seeded library, Little Wing, automator opened on "Verse riff" |  |
+| `reference/loop-edit` | `screen` | `song-player` | seeded library, Little Wing, loop "Verse riff" held, Edit loop |  |
+| `reference/loops-library` | `screen` | `practice` | fresh library with no measured loops, Practice ▸ Loops |  |
+| `reference/loops-panel` | `panel` | `song-player` | seeded library, Little Wing, Loops expanded |  |
+| `reference/metronome` | `screen` | `tools-and-journal` | Metronome open, stopped |  |
+| `reference/metronome-settings` | `screen` | `tools-and-journal` | Metronome open, meter control tapped |  |
+| `reference/planner` | `screen` | `practice` | seeded library, Practice ▸ Today, no goals yet |  |
+| `reference/player` | `screen` | `song-player` | seeded library, Little Wing, idle, Loops panel expanded |  |
+| `reference/practice-hub` | `screen` | `practice` | seeded library, Practice hub |  |
+| `reference/progress` | `screen` | `tools-and-journal` | seeded library, Progress, several weeks of history |  |
+| `reference/quick-note` | `screen` | `tools-and-journal` | an exercise run screen, quick note tapped |  |
+| `reference/routines-library` | `screen` | `practice` | seeded library, Practice ▸ Routines |  |
+| `reference/settings-hub` | `screen` | `settings` | Settings open |  |
+| `reference/settings-privacy` | `panel` | `settings` | Settings ▸ Privacy |  |
+| `reference/settings-routines` | `panel` | `settings` | Settings ▸ Routines |  |
+| `reference/settings-sound` | `panel` | `settings` | Settings ▸ Sound & feel |  |
+| `reference/settings-you` | `screen` | `settings` | Settings ▸ You |  |
+| `reference/song-details` | `screen` | `home-and-library` | seeded library, Little Wing, Details from the row hold menu |  |
+| `reference/song-edit` | `screen` | `home-and-library` | seeded library, Little Wing, Edit from the row hold menu |  |
+| `reference/tempo-editor` | `screen` | `song-player` | seeded library, Little Wing, tempo editor open |  |
+| `reference/toolkit` | `screen` | `tools-and-journal` | Toolkit open |  |
+| `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
 | `routines/editor` | `screen` | `routines` | Practice ▸ Routines ▸ + , three blocks added |  |
 | `routines/library` | `screen` | `routines` | seeded library, Practice ▸ Routines, several routines saved |  |
@@ -85,4 +112,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-69 shots across 13 pages.
+96 shots across 18 pages.
