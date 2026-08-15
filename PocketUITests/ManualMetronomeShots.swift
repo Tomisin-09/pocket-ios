@@ -52,7 +52,10 @@ final class ManualMetronomeShots: ManualShotCase {
 
         // The meter control is a button, not a menu: its label carries the current signature and
         // subdivision after a fixed opening, so it is matched on that opening.
-        tapRow(labelStartingWith: "Metronome settings.", in: app)
+        // Arrival is `Done`, not a navigation bar: the sheet's bar is titled "Metronome" too, so the
+        // usual gate cannot tell it from the screen underneath. `Done` is the sheet's own control.
+        tapRow(labelStartingWith: "Metronome settings.", in: app,
+               arrivingAt: app.buttons["Done"], called: "the settings sheet")
 
         capture(app, slug: "metronome/settings-sheet",
                 assertingOnScreen: "Metronome",
@@ -68,6 +71,10 @@ final class ManualMetronomeShots: ManualShotCase {
     func testMetronomeAutomator() {
         let app = launchForShoot()
         openMetronome(in: app)
+        // Raised to the same 96 as `metronome/screen`. Without this the automator figure sits on the
+        // engine's opening 90, and the two figures — adjacent on one page of the manual — show the
+        // readout at different tempos with nothing in the prose to explain the change.
+        raiseTempoToFigureBPM(in: app)
 
         // A segmented `Picker` — its options are buttons inside the segmented control, not buttons on
         // the screen, the same shape as the Journal's All / Notes / Takes filter.

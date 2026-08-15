@@ -90,8 +90,19 @@ HOUR="$(date +%-H)"
 if [ "$HOUR" -lt 5 ] || [ "$HOUR" -gt 11 ]; then
     echo "⚠️  It is $(date +%H:%M) locally, but the status bar is faked to 09:41." >&2
     echo "   Home's greeting reads the real clock and is only 'Good morning' from 05:00 to 11:59," >&2
-    echo "   so the shot will disagree with its own status bar. Shoot in that window, or change" >&2
-    echo "   --time below to a clock in the same bucket as now." >&2
+    echo "   so the shot will disagree with its own status bar." >&2
+    # A hard stop, not a warning. This began as a warning, and a warning is the wrong shape for it:
+    # it scrolls past inside a ten-minute run, every test still passes, and the contradiction lives
+    # in the pixels of `reference/home` where no assertion can reach it. The whole harness is built
+    # on the principle that a green run proves nothing about the picture — a check that only prints
+    # is a check that participates in exactly the failure it was written to prevent.
+    if [ -z "${POCKET_SHOOT_ANY_HOUR:-}" ]; then
+        echo "" >&2
+        echo "   Refusing to shoot. Run between 05:00 and 11:59, or set POCKET_SHOOT_ANY_HOUR=1 to" >&2
+        echo "   validate the harness — in which case reference/home is NOT shippable." >&2
+        exit 1
+    fi
+    echo "   POCKET_SHOOT_ANY_HOUR is set — continuing. reference/home will be wrong." >&2
 fi
 
 say "Forcing dark appearance and a clean status bar"

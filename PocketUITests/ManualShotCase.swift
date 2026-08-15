@@ -58,18 +58,19 @@ class ManualShotCase: UITestCase {
 
     /// Assert where we are, then shoot, then record both.
     ///
-    /// `assertingOnScreen` is a navigation-title string that is true of the intended screen and false
-    /// of the one before it. It is the whole safeguard: without it a screenshot proves only that the
-    /// app was running.
+    /// `assertingOnScreen` is the intended screen's **navigation-bar title**, resolved against the
+    /// navigation bar itself rather than against any text with that name on it. It is the whole
+    /// safeguard: without it a screenshot proves only that the app was running.
     ///
-    /// One frame often serves several markers — `journal/progress` and `reference/progress` are the
-    /// same Progress screen written up on two pages. Only **one** attachment is made in that case,
-    /// named for the first slug, and the others are recorded in the test's doc comment. Attaching the
-    /// same pixels twice would defeat the audit rule that two identical images mean a missed tap.
+    /// One frame often serves several markers — `journal/progress`, `reference/progress` and
+    /// `journal/month-heatmap` are three crops of one Progress screen. Only **one** attachment is made
+    /// in that case, named for the first slug, and the others are recorded in the test's doc comment.
+    /// Attaching the same pixels twice would defeat the audit rule that two identical images mean a
+    /// missed tap — which is not theoretical: it is what caught `reference/settings-you` being shot
+    /// on the Settings hub.
     ///
-    /// Share a frame only when the markers genuinely want the same picture. `journal/month-heatmap`
-    /// was folded in above on the grounds that a `role: panel` crop comes out of the screen shot —
-    /// and it does not, if the panel is below the fold when the screen figure is composed.
+    /// Share a frame only when every marker's subject is actually inside it, and assert both ends of
+    /// the picture rather than assuming a `role: panel` crop falls within the screen shot.
     ///
     /// - Parameter alsoRequiring: strings that must be **inside the frame**, matched exactly, for the
     ///   *state* to be right rather than just the screen. Being on the correct screen in the wrong
@@ -84,8 +85,22 @@ class ManualShotCase: UITestCase {
                  alsoRequiring required: [String] = [],
                  orBeginningWith prefixes: [String] = [],
                  file: StaticString = #filePath, line: UInt = #line) {
-        let marker = app.staticTexts[title]
-        let arrived = marker.waitForExistence(timeout: Self.shootTimeout)
+        // Text **inside a navigation bar** — not any static text with this name on it, and not the
+        // bar's own identifier either.
+        //
+        // `app.staticTexts["You"]` was the original check, and it matched the Settings hub's own `You`
+        // row: a swallowed tap left the shoot on the hub, the assertion agreed it was on "You", and
+        // `reference/settings-you` came back byte-identical to `reference/settings-hub`. Nothing in
+        // the run objected — the duplicate image was the only evidence.
+        //
+        // `app.navigationBars[title]` was the fix, and it was too narrow: `MetronomeView` sets no
+        // `navigationTitle` at all, putting a custom `Text("Metronome")` in a `.principal` toolbar
+        // item, so its bar carries no such identifier and two passing figures started failing. Asking
+        // for the title *within the bar's subtree* covers both spellings, and still cannot be
+        // satisfied by a row in the content — which is the whole point.
+        let inBar = app.navigationBars.staticTexts[title]
+        var arrived = inBar.waitForExistence(timeout: Self.shootTimeout)
+        if !arrived { arrived = app.navigationBars[title].exists }
         note(arrived ? "arrived at '\(title)' for \(slug)" : "MISSED '\(title)' for \(slug)")
 
         XCTAssertTrue(arrived, """
@@ -95,8 +110,11 @@ class ManualShotCase: UITestCase {
             """, file: file, line: line)
 
         for needed in required {
-            let target = app.descendants(matching: .any)[needed]
-            let present = target.waitForExistence(timeout: Self.shootTimeout)
+            // Label *or* identifier, which is what the `[needed]` subscript matched before this
+            // became a query — narrowing it to one or the other here would quietly drop assertions.
+            let target = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@ OR identifier == %@", needed, needed))
+            let present = target.firstMatch.waitForExistence(timeout: Self.shootTimeout)
                 && isInFrame(target, of: app)
             note(present ? "state '\(needed)' in frame" : "state '\(needed)' NOT IN FRAME")
             XCTAssertTrue(present, """
@@ -107,8 +125,8 @@ class ManualShotCase: UITestCase {
         }
 
         for prefix in prefixes {
-            let target = element(in: app, labelStartingWith: prefix)
-            let present = target.waitForExistence(timeout: Self.shootTimeout)
+            let target = elements(in: app, labelStartingWith: prefix)
+            let present = target.firstMatch.waitForExistence(timeout: Self.shootTimeout)
                 && isInFrame(target, of: app)
             note(present ? "state '\(prefix)…' in frame" : "state '\(prefix)…' NOT IN FRAME")
             XCTAssertTrue(present, """
@@ -148,12 +166,21 @@ class ManualShotCase: UITestCase {
     /// over content that is legitimately inside the window. That is a matter of how a figure is
     /// composed rather than what is asserted about it, and is handled by not scrolling a header under
     /// the bar in the first place.
+    /// Takes a **query**, not an element, and asks whether *any* match is in the picture.
+    ///
+    /// Both halves of that matter. `element.frame` throws outright when its query matches more than
+    /// one thing — `Start`, `Done` and `Less` each match a button and the label inside it — and
+    /// `exists` does not, so the first version of this sailed through the existence gate and then
+    /// failed five tests with `Multiple matching elements found`. Taking `.firstMatch` would have
+    /// silenced that while introducing something worse: a screen showing two `More`s would be judged
+    /// on whichever the query reached first, which may be the one scrolled off the top.
     @MainActor
-    private func isInFrame(_ element: XCUIElement, of app: XCUIApplication) -> Bool {
-        guard element.exists else { return false }
-        let frame = element.frame
-        guard !frame.isEmpty else { return false }
-        return app.windows.firstMatch.frame.contains(frame)
+    private func isInFrame(_ query: XCUIElementQuery, of app: XCUIApplication) -> Bool {
+        let window = app.windows.firstMatch.frame
+        return query.allElementsBoundByAccessibilityElement.contains { candidate in
+            let frame = candidate.frame
+            return !frame.isEmpty && window.contains(frame)
+        }
     }
 
     // MARK: - Queries
@@ -170,9 +197,14 @@ class ManualShotCase: UITestCase {
     /// later capture is quietly of the wrong screen — green the whole way.
     @MainActor
     func element(in app: XCUIApplication, labelStartingWith prefix: String) -> XCUIElement {
+        elements(in: app, labelStartingWith: prefix).firstMatch
+    }
+
+    /// The same query, unresolved — for callers that need to weigh every match rather than the first.
+    @MainActor
+    func elements(in app: XCUIApplication, labelStartingWith prefix: String) -> XCUIElementQuery {
         app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH %@", prefix))
-            .firstMatch
     }
 
     /// Tap one of Home's nav cards, which live in titled sections below the fold (ADR 0102).
@@ -301,9 +333,15 @@ class ManualShotCase: UITestCase {
     ///
     /// Returns nothing and fails loudly rather than returning a flag: a shoot that carries on past a
     /// missed tap is precisely how a set of clean images of the wrong screens gets made.
+    /// - Parameter arrivingAt: an element the destination owns. Omitting it means the tap is not
+    ///   checked at all, which is how `reference/settings-you` came back as a picture of the Settings
+    ///   hub: the row was found, the tap was swallowed, and nothing downstream disagreed. Pass it
+    ///   wherever the row opens a screen.
     @MainActor
     func tapRow(labelStartingWith prefix: String,
                 in app: XCUIApplication,
+                arrivingAt arrival: XCUIElement? = nil,
+                called arrivalName: String = "the destination",
                 file: StaticString = #filePath, line: UInt = #line) {
         let row = element(in: app, labelStartingWith: prefix)
         let found = row.waitForExistence(timeout: Self.shootTimeout)
@@ -313,8 +351,13 @@ class ManualShotCase: UITestCase {
 
         XCTAssertTrue(scrollIntoView(row, in: app),
                       "row '\(prefix)' never became tappable.\n\(stepLog)", file: file, line: line)
-        row.tap()
-        note("tapped '\(prefix)'")
+
+        guard let arrival else {
+            row.tap()
+            note("tapped '\(prefix)' (no arrival check)")
+            return
+        }
+        tap(row, labelled: prefix, revealing: arrival, called: arrivalName, file: file, line: line)
     }
 
     // MARK: - Step log

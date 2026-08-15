@@ -39,7 +39,8 @@ final class ManualSettingsShots: ManualShotCase {
     func testSettingsYou() {
         let app = launchForShoot()
         openSettings(in: app)
-        tapRow(labelStartingWith: "You", in: app)
+        tapRow(labelStartingWith: "You", in: app,
+               arrivingAt: app.navigationBars["You"], called: "the You screen")
         capture(app, slug: "reference/settings-you", assertingOnScreen: "You")
     }
 
@@ -51,7 +52,8 @@ final class ManualSettingsShots: ManualShotCase {
     func testSettingsPrivacy() {
         let app = launchForShoot()
         openSettings(in: app)
-        tapRow(labelStartingWith: "Privacy", in: app)
+        tapRow(labelStartingWith: "Privacy", in: app,
+               arrivingAt: app.navigationBars["Privacy"], called: "the Privacy screen")
         capture(app, slug: "reference/settings-privacy", assertingOnScreen: "Privacy")
     }
 
@@ -60,7 +62,8 @@ final class ManualSettingsShots: ManualShotCase {
     func testSettingsRoutines() {
         let app = launchForShoot()
         openSettings(in: app)
-        tapRow(labelStartingWith: "Routines", in: app)
+        tapRow(labelStartingWith: "Routines", in: app,
+               arrivingAt: app.navigationBars["Routines"], called: "the Routines screen")
         capture(app, slug: "reference/settings-routines",
                 assertingOnScreen: "Routines",
                 alsoRequiring: ["Auto-start blocks"])
@@ -71,7 +74,8 @@ final class ManualSettingsShots: ManualShotCase {
     func testSettingsSound() {
         let app = launchForShoot()
         openSettings(in: app)
-        tapRow(labelStartingWith: "Sound & feel", in: app)
+        tapRow(labelStartingWith: "Sound & feel", in: app,
+               arrivingAt: app.navigationBars["Sound & feel"], called: "the Sound & feel screen")
         capture(app, slug: "reference/settings-sound",
                 assertingOnScreen: "Sound & feel",
                 alsoRequiring: ["Haptics"])

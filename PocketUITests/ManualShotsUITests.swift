@@ -33,18 +33,20 @@ final class ManualShotsUITests: ManualShotCase {
         capture(app, slug: "journal/take-row", assertingOnScreen: "Journal")
     }
 
-    /// `journal/progress` · `reference/progress` — the screen as it opens. Then `journal/month-heatmap`.
+    /// `journal/progress` · `reference/progress` · `journal/month-heatmap` — one frame, three markers.
     ///
-    /// **Two frames, not one.** These were written as three crops of a single capture, and that was
-    /// wrong: This week, the month grid, All-time and *What you've built* come to well over one
-    /// screen on the master device, so a frame holding all three sections does not exist to be shot.
-    /// The first attempt at making it fit added a `swipeUp`, which produced a figure with This week
-    /// scrolled off the top and the This month header sliced in half by the navigation bar — and it
-    /// passed, because a section above the top of the screen is still in the accessibility tree. Both
-    /// markers' alt text described three sections that were never in the picture.
+    /// **The screen as it opens, unscrolled.** An earlier version added a `swipeUp` to bring All-time
+    /// into shot, which pushed This week off the top — and passed, because a section above the frame
+    /// is still in the accessibility tree at its true offset. The image that came back showed This
+    /// month and All-time while both markers' alt text promised a bar chart that was not in it.
     ///
-    /// So: the screen figure is the screen **as it opens**, unscrolled, which is what a reader sees on
-    /// arriving; and the heatmap gets the separate capture its `role: panel` always implied.
+    /// Splitting the heatmap into its own scrolled capture was the next attempt, and was an
+    /// overcorrection: the unscrolled frame already holds This week's chart, the complete month grid
+    /// and its key, with nothing occluded. The scrolled version only added a `THIS MONTH` header
+    /// sliced by the navigation bar. So the three markers share this frame again — the fault was
+    /// never the sharing, it was the scroll.
+    ///
+    /// All-time begins at the foot of the frame and is cut, which the alt text says.
     @MainActor
     func testProgress() {
         let app = launchForShoot()
@@ -67,21 +69,13 @@ final class ManualShotsUITests: ManualShotCase {
         tap(progress, labelled: "Progress",
             revealing: app.staticTexts["THIS WEEK"], called: "the Progress screen")
 
-        // No scroll. `THIS WEEK` is the first section and is required *in frame* — with the old
-        // existence check this same assertion passed on a screen scrolled well past it.
+        // No scroll, and one frame for all three markers. `THIS WEEK` is the first section; `Less` and
+        // `More` are the key under the month grid, so requiring all three *in frame* is what proves
+        // both ends of the picture fit — the bar chart at the top, the whole grid and its key at the
+        // bottom. If they ever stop fitting, this fails and says so.
         capture(app, slug: "journal/progress",
                 assertingOnScreen: "Progress",
-                alsoRequiring: ["THIS WEEK"])
-
-        // The panel figure: the month grid and the key that explains its shading. `Less` and `More`
-        // sit at the bottom of the grid, so requiring both in frame is what proves the whole grid is
-        // in the picture — and that the scroll below did not carry it past.
-        app.swipeUp(velocity: .slow)
-        note("swiped up to bring the month grid and its key into frame")
-
-        capture(app, slug: "journal/month-heatmap",
-                assertingOnScreen: "Progress",
-                alsoRequiring: ["Less", "More"])
+                alsoRequiring: ["THIS WEEK", "Less", "More"])
     }
 
     /// `reference/home` — Home with something recently practised.

@@ -124,7 +124,7 @@ take's audio file, which is what makes offering the delete safe at all.
 **⋯ ▸ Progress** opens the counted-up version of the same history: three sections, at three scales.
 
 <!-- shot: journal/progress | role: screen
-     | alt: The Progress screen showing This week with its bar chart, This month with its heatmap, and the All-time section
+     | alt: The Progress screen showing This week with its seven-day bar chart above This month with its shaded calendar grid and Less to More key, with All-time beginning at the foot
      | state: seeded library, Progress, several weeks of practice history -->
 
 Before you have finished anything it says **Nothing here yet** and describes what will fill it — one

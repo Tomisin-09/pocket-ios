@@ -28,7 +28,8 @@ final class ManualToolkitShots: ManualShotCase {
     func testMyChords() {
         let app = launchForShoot()
         openToolkit(in: app)
-        tapRow(labelStartingWith: "My chords", in: app)
+        tapRow(labelStartingWith: "My chords", in: app,
+               arrivingAt: app.navigationBars["My chords"], called: "the My chords screen")
         // `Em7` is the newest of the four seeded voicings and therefore the first cell in the grid.
         // Asserting a chord *name* rather than the nav title is what distinguishes the populated grid
         // from the empty state, which carries the same title.
@@ -42,7 +43,8 @@ final class ManualToolkitShots: ManualShotCase {
     func testGlossary() {
         let app = launchForShoot()
         openToolkit(in: app)
-        tapRow(labelStartingWith: "Glossary", in: app)
+        tapRow(labelStartingWith: "Glossary", in: app,
+               arrivingAt: app.navigationBars["Glossary"], called: "the Glossary screen")
         capture(app, slug: "toolkit/glossary", assertingOnScreen: "Glossary")
     }
 
@@ -56,7 +58,8 @@ final class ManualToolkitShots: ManualShotCase {
         openToolkit(in: app)
         // The row's label spells the ampersand out — "Help and FAQs" — while the screen it opens is
         // titled "Help & FAQs". Matching the written form finds nothing.
-        tapRow(labelStartingWith: "Help and FAQs", in: app)
+        tapRow(labelStartingWith: "Help and FAQs", in: app,
+               arrivingAt: app.navigationBars["Help & FAQs"], called: "the Help & FAQs screen")
 
         let question = app.descendants(matching: .any)["What is Red Moon Practice?"].firstMatch
         XCTAssertTrue(question.waitForExistence(timeout: Self.shootTimeout),

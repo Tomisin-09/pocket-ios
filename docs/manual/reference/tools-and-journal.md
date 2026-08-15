@@ -93,7 +93,7 @@ rather than seven. The full table is in [the journal](../journal-and-progress.md
 Reached from `Journal options` ▸ `Progress`.
 
 <!-- shot: reference/progress | role: screen
-     | alt: The Progress screen with This week, This month and All-time
+     | alt: The Progress screen with This week's bar chart and This month's shaded grid in full, and All-time beginning at the foot
      | state: seeded library, Progress, several weeks of history -->
 
 - **`This week`** — minutes and days, over a bar per day.
