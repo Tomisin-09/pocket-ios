@@ -52,8 +52,8 @@ The control at the top right shows the current time signature, plus a note glyph
 is on — **4/4 ♫**. Tap it and everything that shapes the bar is in one sheet.
 
 <!-- shot: metronome/settings-sheet | role: screen
-     | alt: The Metronome settings sheet with the Time signature, Subdivision and Click withdrawal sections
-     | state: Metronome open, meter control tapped -->
+     | alt: The top of the Metronome settings sheet, showing the seven Time signature presets each captioned with the music it belongs to, and the first Subdivision options below them
+     | state: Metronome open, meter control tapped, scrolled to the top -->
 
 **Time signature.** Seven, each with the music it belongs to:
 

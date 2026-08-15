@@ -118,10 +118,13 @@ GitHub, so the repo copy still reads as prose, and the port turns it into an ima
   beside it and the image is reinforcement.
 - **`state`** is what to seed and what must be on screen. Written now, while the page is fresh, so
   the shoot is a batch rather than archaeology.
-- **`crop`** is `x,y,w,h` in device pixels, and is **filled at shoot time, not now.** A rect is
-  measured against a master that does not exist yet, and it is only meaningful once the master
-  device is chosen — the walk ran on an iPhone 17 simulator (1206×2622), which is not the geometry
-  the plan assumed (1320×2868). C10 validates the format when a marker carries one.
+- **`crop`** is `x,y,w,h` in device pixels against the **1206×2622 master**, and is filled at shoot
+  time. That geometry is both the iPhone 17 simulator the walk ran on and the iPhone 16 Pro the
+  `device:` shots come from, so driven and hand-shot figures are interchangeable pixel for pixel and
+  one set of rects measures both. The App Store material sits at 1320×2868 and is **not** a source
+  for this manual (see below); where a frame has to come across, downscale it — resampling 1320 down
+  to 1206 lands within two pixels of the master, and going the other way softens the type. C10
+  validates the format when a marker carries one.
 - **`device:`** marks a shot the simulator cannot produce honestly. Landscape is the known one.
 
 ## Capturing the states — what the simulator can and cannot do
@@ -145,9 +148,43 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
   what makes a driven walk possible at all — but it also means the trial row on Home, the paywall
   and every locked state are *unreachable* on that launch. Those states need a launch without the
   flag, so they are shot by hand or against a StoreKit test configuration.
+- **Anything the app only writes at runtime has to be seeded too.** `ScreenshotSeed` builds a
+  library; it writes no `PracticeRun`, `JournalEntry`, `Recording` or `SavedChord`, because those are
+  only ever written as somebody uses the app. Progress and the Journal therefore open empty on a
+  freshly seeded install, and the Toolkit reads *My chords, none saved* — nine figures are of those
+  screens. `-seedHistory` (`PracticeHistorySeed`) writes six weeks of runs, four notes, one take and
+  four saved voicings, deterministically. It is a **separate flag** from `-seedScreenshots` so the
+  App Store shoot keeps its ahistorical library, and both refuse to run twice — so the shoot needs
+  `xcrun simctl erase` in front of it, or it photographs the last run.
 - **The first-run questions are skipped** under the same flag (`HomeView+ProfileMoment` returns
   early). `getting-started`'s first-run shot has to come from a launch without it, on a fresh
   install.
+- **Debug-only UI has to be hidden, not cropped.** The Settings hub carries a tenth destination,
+  `Developer`, under `#if DEBUG` — present in every build a shoot can drive, and shipped to nobody.
+  The first shoot photographed it into `reference/settings-hub`, whose own alt text lists the nine
+  that ship. `ScreenshotSeed.isShooting` now hides it, and `ManualSettingsShots` asserts it is gone;
+  a figure is a claim about the shipping app, so the shoot has to be able to say *not this*.
+- **Home's cards need slow swipes.** They sit in titled sections below the fold, and the shared
+  `scrollIntoView` moves more than a card's height per swipe — a card can be carried past the
+  viewport (and then reported missing), or pass `isHittable` and move before the tap is synthesised,
+  which taps whatever slid into its place and photographs the wrong screen. `ManualShotCase.tapHomeCard`
+  swipes slowly and re-reads hittability on each pass. Both failures were intermittent.
+
+## Filing what comes back
+
+`xcrun xcresulttool export attachments` writes every attachment under a **UUID** and puts the real
+name in `manifest.json`, so a raw export cannot be audited — and auditing is the point, because a
+missed tap produces a clean screenshot of the previous screen and the run still passes.
+
+```sh
+./scripts/file-shots.py shots/export shots/filed     # run for you by shoot-manual.sh
+```
+
+It renames each capture to its slug, reports how many of the 96 are still unshot, and warns when a
+slug was shot twice (a retried test is not a clean run) or when a capture's slug is not a marker in
+any page. **What counts as a figure comes from `shots.md`, not from the filename** — XCTest files
+some of its own diagnostics under the same `name_retry_uuid` convention, and filtering on the shape
+alone put a screen recording in with the figures.
 
 ## The check
 

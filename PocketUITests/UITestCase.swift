@@ -39,12 +39,16 @@ class UITestCase: XCTestCase {
     /// Every test starts here. A test that queried the app before seeding completed is what pass 1
     /// papered over with retries; routing all four files through one function means a new test
     /// cannot forget the wait, which is the part that makes this hold over time.
+    /// - Parameter extraArguments: launch arguments appended after `-uiTesting`. The manual shoot
+    ///   passes `-seedScreenshots` and `-seedHistory` this way (ADR 0165 Phase 5); ordinary tests
+    ///   pass nothing and get the same launch they always had.
     @MainActor
     @discardableResult
-    func launchApp(file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {
+    func launchApp(extraArguments: [String] = [],
+                   file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments += [UITestHooks.launchArgument]
+        app.launchArguments += [UITestHooks.launchArgument] + extraArguments
         app.launch()
 
         let seeded = app.otherElements[UITestHooks.homeSeedingComplete]

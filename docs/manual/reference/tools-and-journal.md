@@ -36,8 +36,8 @@ the current tempo into Practice as a drill.
 Opened from the meter control, and titled `Metronome`.
 
 <!-- shot: reference/metronome-settings | role: screen
-     | alt: The metronome settings sheet with the Time signature, Subdivision and Click withdrawal sections
-     | state: Metronome open, meter control tapped -->
+     | alt: The top of the metronome settings sheet, showing the seven Time signature presets and the first Subdivision options; Click withdrawal follows below the fold
+     | state: Metronome open, meter control tapped, scrolled to the top -->
 
 - **`Time signature`** — seven presets, each captioned with the music it belongs to.
 - **`Subdivision`** — `None`, `Eighths`, `Triplets`, `Sixteenths`, footnoted *Extra clicks between

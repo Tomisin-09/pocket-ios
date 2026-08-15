@@ -30,6 +30,9 @@ extension HomeView {
         RoutinePresets.backfillPresetSlugsIfNeeded(into: context)
         #if DEBUG
         ScreenshotSeed.seedIfNeeded(into: context)
+        // Strictly after the library seed: the seeded journal and take hang off the loops and
+        // exercises it creates, and an entry with no owner renders as a different thing (ADR 0143).
+        PracticeHistorySeed.seedIfNeeded(into: context)
         #endif
         seedingComplete = true
     }
