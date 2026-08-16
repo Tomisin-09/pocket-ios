@@ -94,16 +94,20 @@ final class ManualSettingsShots: ManualShotCase {
     /// in — which failed as *"no row whose label begins 'Privacy'"*, a sentence that sends you looking
     /// at the row rather than at the navigation. Gating on arrival both fixes the race and puts the
     /// failure at the step that actually went wrong.
+    ///
+    /// It goes through `tap(_:revealing:)` for the same reason every row does, and it did not always:
+    /// this was the shoot's last bare `.tap()` followed by a hand-written assert, and on 2026-08-16 it
+    /// swallowed one. `testSettingsHub` found the gear, synthesised the event at t=16.9s, and spent
+    /// thirty seconds checking for a navigation bar that never arrived — while the four sibling tests
+    /// that call this same function all passed. That is the swallowed tap `tap(_:revealing:)` exists
+    /// for, and writing the wait out by hand meant this one step opted out of the retry every other
+    /// navigation in the shoot already had.
     @MainActor
     private func openSettings(in app: XCUIApplication) {
         let gear = app.buttons["Settings"].firstMatch
         XCTAssertTrue(gear.waitForExistence(timeout: Self.shootTimeout),
                       "no Settings gear on Home. \(stepLog)")
-        gear.tap()
-        note("tapped the Settings gear")
-
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: Self.shootTimeout),
-                      "the Settings gear was tapped but the hub never appeared. \(stepLog)")
-        note("arrived at the Settings hub")
+        tap(gear, labelled: "the Settings gear",
+            revealing: app.navigationBars["Settings"], called: "the Settings hub")
     }
 }

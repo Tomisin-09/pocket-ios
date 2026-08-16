@@ -30,6 +30,28 @@ final class ManualShotsUITests: ManualShotCase {
         takes.tap()
         note("tapped Takes")
 
+        // A segmented option opens no destination, so `tap(_:revealing:)` has nothing to gate on and
+        // this step has to prove the filter moved by other means. It matters more here than the
+        // missing gate suggests: **All** shows the same take this figure is of, with the seeded notes
+        // above it, so a swallowed tap yields a clean, plausible, wrong photograph — the exact failure
+        // the rest of this harness is built against.
+        //
+        // Two assertions, because neither alone is sufficient. `isSelected` proves the picker's state
+        // moved but not that the list redrew; the vanished note proves the list redrew but would also
+        // hold if the timeline had simply failed to load. Waited on rather than read, since the filter
+        // animates and the tap returns before it settles.
+        let selected = expectation(for: NSPredicate(format: "isSelected == true"),
+                                   evaluatedWith: takes)
+        XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: Self.shootTimeout), .completed,
+                       "tapped Takes and the picker never moved off All. \(stepLog)")
+
+        let aNote = app.staticTexts["The bend still lands flat when I take it above three quarters speed."]
+        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: aNote)
+        XCTAssertEqual(XCTWaiter.wait(for: [gone], timeout: Self.shootTimeout), .completed,
+                       "the Takes filter is selected but a seeded note is still in the timeline, so "
+                       + "this frame is of the unfiltered list. \(stepLog)")
+        note("the timeline is filtered to takes")
+
         capture(app, slug: "journal/take-row", assertingOnScreen: "Journal")
     }
 
