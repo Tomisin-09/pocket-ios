@@ -1,15 +1,15 @@
 {
   "configurations" : [
     {
-      "id" : "2883F84D-1989-4368-8060-AD4CE1CB76A0",
-      "name" : "All",
+      "id" : "B5DAB611-60AB-4149-97E4-F1CCA794B71A",
+      "name" : "Shoot",
       "options" : {
 
       }
     }
   ],
   "defaultOptions" : {
-    "codeCoverage" : true,
+    "codeCoverage" : false,
     "targetForVariableExpansion" : {
       "containerPath" : "container:Pocket.xcodeproj",
       "identifier" : "7D169845C7D92117E36B994A",
@@ -18,14 +18,7 @@
   },
   "testTargets" : [
     {
-      "target" : {
-        "containerPath" : "container:Pocket.xcodeproj",
-        "identifier" : "A835E4A168196F4AB43F0648",
-        "name" : "PocketTests"
-      }
-    },
-    {
-      "skippedTests" : [
+      "selectedTests" : [
         "ManualMetronomeShots",
         "ManualSettingsShots",
         "ManualShotsUITests",

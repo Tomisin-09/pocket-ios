@@ -150,10 +150,23 @@ schemes:
       # entitlement flow can be exercised with no App Store Connect / sandbox dependency.
       storeKitConfiguration: Configuration/RedMoonPro.storekit
     test:
-      # Two test plans (see docs/decisions/0053). The default is the fast
+      # Three test plans (see docs/decisions/0053). The default is the fast
       # logic-only plan (unit tests, no coverage) run on local pre-push; CI
       # selects the full plan (adds UI tests + coverage) with `-testPlan PocketAll`.
+      #
+      # `PocketShoot` is the manual's screenshot run (ADR 0165 Phase 5) and exists
+      # because those four classes are not tests. They photograph an erased device
+      # that `scripts/shoot-manual.sh` has staged with seed audio and a faked status
+      # bar, so on CI's ordinary simulator they are seven minutes of flake producing
+      # attachments nobody collects. `PocketAll` skips them; this plan selects them.
+      #
+      # It is a plan rather than `-skip-testing:` flags because a flag list would have
+      # to be repeated in `ci.yml` and `pre-push.sh` and would drift. It is not done
+      # with `skippedTests` alone, either: `-only-testing:` does **not** override a
+      # plan's skip list — it runs zero tests and exits 0, which is a silent green and
+      # exactly the failure this harness is written against.
       testPlans:
         - path: PocketLogic.xctestplan
           defaultPlan: true
         - path: PocketAll.xctestplan
+        - path: PocketShoot.xctestplan

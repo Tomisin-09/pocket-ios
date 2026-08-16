@@ -30,6 +30,15 @@
 set -euo pipefail
 
 SIM_NAME="${POCKET_SIM:-iPhone 17}"
+
+# The shoot has its own plan. `PocketAll` — what CI runs — *skips* these four classes, because they
+# photograph an erased device this script has staged and are seven minutes of flake on an ordinary
+# simulator. The two lists are the same four names in two files, so the guard after the run checks
+# that every class it asked for actually reported: adding a class here and forgetting the plan makes
+# xcodebuild run **zero tests and exit 0**, which is the quietest possible way for a shoot to stop
+# shooting. That is not hypothetical — it is what `-only-testing:` against `PocketAll`'s skip list
+# does, measured, and it is why the selection lives in a plan instead of in flags.
+TEST_PLAN="${POCKET_SHOOT_PLAN:-PocketShoot}"
 # The shoot's test classes, listed rather than inferred. They are split by area of the manual so one
 # broken tap doesn't take an unrelated page's figures down with it, which means adding an area means
 # adding a line here — a visible cost, and the alternative (running the whole target and skipping the
@@ -139,7 +148,7 @@ say "Building for testing"
 xcodebuild build-for-testing \
     -scheme Pocket \
     -destination "platform=iOS Simulator,name=$SIM_NAME" \
-    -testPlan PocketAll \
+    -testPlan "$TEST_PLAN" \
     -derivedDataPath "$DERIVED" \
     -enableCodeCoverage NO \
     -quiet
@@ -205,7 +214,7 @@ done
 xcodebuild test-without-building \
     -scheme Pocket \
     -destination "platform=iOS Simulator,name=$SIM_NAME" \
-    -testPlan PocketAll \
+    -testPlan "$TEST_PLAN" \
     "${ONLY_TESTING[@]}" \
     -derivedDataPath "$DERIVED" \
     -enableCodeCoverage NO \
@@ -262,6 +271,26 @@ grep -qE "TEST SUCCEEDED|TEST EXECUTE SUCCEEDED" "$RUN_LOG" || {
     echo "❌ no verdict line in $RUN_LOG — treat as a failure, not a pass" >&2
     exit 1
 }
+
+# **A green verdict over zero tests.** `xcodebuild` reports success for running nothing, so a shoot
+# that selects no tests at all is indistinguishable at the exit code from a shoot that took every
+# figure. The way in is mundane: a class added to `SHOOT_CLASSES` but not to `PocketShoot.xctestplan`
+# is silently skipped, and so is every class if the plan name is wrong. Measured, not feared —
+# `-only-testing:` against a plan that skips the class runs `Executed 0 tests` and exits 0.
+#
+# So each class is required to have reported at least one test case by name. This is the same
+# principle as C13's refusal to pass when it finds no `capture()` calls: a check that can be
+# satisfied by reading nothing is not a check.
+missing=()
+for class in "${SHOOT_CLASSES[@]}"; do
+    grep -qE "Test Case '-\[PocketUITests\.$class " "$RUN_LOG" || missing+=("$class")
+done
+if [ ${#missing[@]} -gt 0 ]; then
+    echo "❌ the run passed, but these classes never executed a single test: ${missing[*]}" >&2
+    echo "   A plan that selects nothing still exits 0. Check that each class is listed in" >&2
+    echo "   $TEST_PLAN.xctestplan as well as in SHOOT_CLASSES here." >&2
+    exit 1
+fi
 
 # --- 5. export ----------------------------------------------------------------------------------
 say "Exporting attachments → $OUT_DIR/export"
