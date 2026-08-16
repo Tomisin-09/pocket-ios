@@ -29,7 +29,7 @@ marker grammar in [README.md](README.md).
 | `gestures/speed-bar` | `band` | `gestures` | seeded library, Little Wing, player idle |  |
 | `gestures/undo-toast` | `band` | `gestures` | seeded library, Library screen, a row swiped left and deleted |  |
 | `getting-started/first-run` | `screen` | `getting-started` | fresh install, first launch, step 1 of 4 |  |
-| `getting-started/home` | `screen` | `getting-started` | seeded library, Home, evening greeting |  |
+| `getting-started/home` | `screen` | `getting-started` | seeded library, Home, morning greeting |  |
 | `getting-started/import-picker` | `screen` | `getting-started` | seeded library, Home, + tapped |  |
 | `getting-started/loop-active` | `band` | `getting-started` | seeded library, Little Wing, a loop active and repeating |  |
 | `journal/month-heatmap` | `panel` | `journal-and-progress` | seeded library, Progress, two or more weeks of history in the current month |  |

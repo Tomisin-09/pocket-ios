@@ -91,12 +91,21 @@ class ManualShotCase: UITestCase {
     ///   Inside the frame, not merely in the tree — see `isInFrame`, and the figure that taught it.
     /// - Parameter orBeginningWith: the same check for labels too long or too variable to spell out —
     ///   a wrapped FAQ answer, a readout that carries a tempo marking after the number.
+    /// - Parameter alsoServing: the other markers this one frame satisfies — crops of it, or the same
+    ///   screen shown on a second page. Still **one** attachment; this only records the sharing.
+    ///
+    ///   It used to be recorded in the test's doc comment, which is true and unreadable by anything.
+    ///   `check-manual.py`'s C13 compares markers against `capture()` calls to say how much of the
+    ///   shoot is built, and a frame serving three markers counted as one — so eight slugs that are
+    ///   photographed reported as unshot, and the number Phase 5 is tracked by was wrong in the
+    ///   direction that hides finished work.
     @MainActor
     func capture(_ app: XCUIApplication,
                  slug: String,
                  assertingOnScreen title: String,
                  alsoRequiring required: [String] = [],
                  orBeginningWith prefixes: [String] = [],
+                 alsoServing shared: [String] = [],
                  file: StaticString = #filePath, line: UInt = #line) {
         // Text **inside a navigation bar** — not any static text with this name on it, and not the
         // bar's own identifier either.
@@ -156,7 +165,8 @@ class ManualShotCase: UITestCase {
 
         // The context, stored beside the image. An image whose recorded screen is missing or
         // surprising is the one to open first when auditing the set.
-        let context = XCTAttachment(string: "slug: \(slug)\nscreen: \(title)\nsteps:\n\(stepLog)")
+        let serves = shared.isEmpty ? "" : "also serves: \(shared.joined(separator: ", "))\n"
+        let context = XCTAttachment(string: "slug: \(slug)\n\(serves)screen: \(title)\nsteps:\n\(stepLog)")
         context.name = "\(shot.name ?? slug).context"
         context.lifetime = .keepAlways
         add(context)

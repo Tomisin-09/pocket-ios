@@ -829,6 +829,15 @@ def check_c12():
 
 CAPTURE = re.compile(r'capture\(\s*\w+\s*,\s*slug:\s*"([^"]+)"')
 
+# One frame often satisfies several markers — a crop of it, or the same screen shown on a second
+# page — and the harness declares that with `alsoServing:`. Those slugs are photographed just as
+# surely as the one the attachment is named for, so a check that only read `slug:` reported eight
+# finished shots as unshot. Collected file-wide rather than per call: C13 only needs the *set* of
+# slugs the harness produces, and matching a bracket list back to its own `capture(` across the
+# intervening arguments would be a parser where a set union does.
+ALSO_SERVING = re.compile(r'alsoServing:\s*\[([^\]]*)\]', re.S)
+QUOTED = re.compile(r'"([^"]+)"')
+
 
 def captured_slugs():
     """`slug -> [file, …]` for every shot the harness actually photographs."""
@@ -838,8 +847,12 @@ def captured_slugs():
     for name in sorted(os.listdir(UITESTS)):
         if not (name.startswith("Manual") and name.endswith(".swift")):
             continue
-        for hit in CAPTURE.finditer(read(os.path.join(UITESTS, name))):
+        source = read(os.path.join(UITESTS, name))
+        for hit in CAPTURE.finditer(source):
             found.setdefault(hit.group(1), []).append(name)
+        for block in ALSO_SERVING.finditer(source):
+            for slug in QUOTED.findall(block.group(1)):
+                found.setdefault(slug, []).append(name)
     return found
 
 

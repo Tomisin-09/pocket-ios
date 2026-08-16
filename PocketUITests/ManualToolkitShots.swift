@@ -20,7 +20,8 @@ final class ManualToolkitShots: ManualShotCase {
         // landed: with no saved chords the screen is identical but for these few words.
         capture(app, slug: "toolkit/hub",
                 assertingOnScreen: "Toolkit",
-                orBeginningWith: ["My chords, 4 saved"])
+                orBeginningWith: ["My chords, 4 saved"],
+                alsoServing: ["reference/toolkit"])
     }
 
     /// `toolkit/my-chords` — the grid of saved diagrams, newest first.

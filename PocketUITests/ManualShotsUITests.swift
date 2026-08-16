@@ -13,7 +13,8 @@ final class ManualShotsUITests: ManualShotCase {
     func testJournalTimeline() {
         let app = launchForShoot()
         openJournal(in: app)
-        capture(app, slug: "journal/timeline", assertingOnScreen: "Journal")
+        capture(app, slug: "journal/timeline", assertingOnScreen: "Journal",
+                alsoServing: ["reference/journal"])
     }
 
     /// `journal/take-row` — the Takes filter, for the row crop.
@@ -97,7 +98,8 @@ final class ManualShotsUITests: ManualShotCase {
         // bottom. If they ever stop fitting, this fails and says so.
         capture(app, slug: "journal/progress",
                 assertingOnScreen: "Progress",
-                alsoRequiring: ["THIS WEEK", "Less", "More"])
+                alsoRequiring: ["THIS WEEK", "Less", "More"],
+                alsoServing: ["reference/progress", "journal/month-heatmap"])
     }
 
     /// `reference/home` — Home with something recently practised.
@@ -111,28 +113,20 @@ final class ManualShotsUITests: ManualShotCase {
         // accessibility tree carries the literal. The manual's prose quotes it the other way round
         // (C9 — a name is written as the app writes it, not as a screen sets it), so the two will
         // not match and are not meant to.
+        // `getting-started/home` was briefly its own frame at `hour: 19`, because its marker asked
+        // for an evening greeting. It photographed "Good evening" above the 09:41 status bar the
+        // shoot fakes for every figure — the same contradiction the retired wall-clock gate existed
+        // to prevent, arriving from the other direction. The status bar is set once per run and the
+        // greeting was the only thing that could move, so the two could not be made to agree without
+        // a second pass over the device.
+        //
+        // One morning frame serves both pages instead, which is what ADR 0165 D7 asks for anyway —
+        // one master per screen per appearance. `Good morning` is asserted rather than assumed: it
+        // is now the only thing keeping the greeting and the status bar in agreement.
         capture(app, slug: "reference/home",
                 assertingOnScreen: "Red Moon",
-                alsoRequiring: ["JUMP BACK IN", "Good morning"])
-    }
-
-    /// `getting-started/home` — the same screen, greeted as an evening session.
-    ///
-    /// The manual opens on Home twice and deliberately not at the same hour, so the two figures do
-    /// not read as one image printed on two pages. This one was unshootable until the hour became a
-    /// launch argument: the greeting came from the wall clock, and `shoot-manual.sh` refused to run
-    /// outside 05:00–11:59 to stop `reference/home` contradicting its own faked status bar. A marker
-    /// asking for evening could not be satisfied at any time of day.
-    ///
-    /// `Good evening` is in `alsoRequiring` rather than trusted, because that is the whole subject
-    /// here — if the argument stopped being read, this would quietly become a second morning Home
-    /// and nothing else in the run would disagree.
-    @MainActor
-    func testGettingStartedHome() {
-        let app = launchForShoot(hour: 19)
-        capture(app, slug: "getting-started/home",
-                assertingOnScreen: "Red Moon",
-                alsoRequiring: ["JUMP BACK IN", "Good evening"])
+                alsoRequiring: ["JUMP BACK IN", "Good morning"],
+                alsoServing: ["getting-started/home"])
     }
 
     // MARK: - Navigation

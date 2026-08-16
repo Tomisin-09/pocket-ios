@@ -44,7 +44,7 @@ here.
 
 <!-- shot: getting-started/home | role: screen
      | alt: The Home screen with Start today's session, the Practice and Metronome cards, and Song library, Journal and Toolkit
-     | state: seeded library, Home, evening greeting -->
+     | state: seeded library, Home, morning greeting -->
 
 - **Start today's session** builds a session for you out of what you have been working on.
 - **Practice** holds your exercises, routines and saved loops.

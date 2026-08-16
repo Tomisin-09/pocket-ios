@@ -34,7 +34,8 @@ final class ManualMetronomeShots: ManualShotCase {
                 assertingOnScreen: "Metronome",
                 alsoRequiring: ["Start"],
                 orBeginningWith: ["\(Self.figureBPM) beats per minute",
-                                  "Metronome settings. Time signature 4/4"])
+                                  "Metronome settings. Time signature 4/4"],
+                alsoServing: ["reference/metronome", "metronome/tempo-controls"])
     }
 
     /// `metronome/settings-sheet` · `reference/metronome-settings` — time signature, subdivision and
@@ -65,7 +66,8 @@ final class ManualMetronomeShots: ManualShotCase {
 
         capture(app, slug: "metronome/settings-sheet",
                 assertingOnScreen: "Metronome",
-                alsoRequiring: ["Done"])
+                alsoRequiring: ["Done"],
+                alsoServing: ["reference/metronome-settings"])
     }
 
     /// `metronome/automator` — the ramp armed **By Bars**.

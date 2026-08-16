@@ -54,7 +54,8 @@ final class ManualSettingsShots: ManualShotCase {
         openSettings(in: app)
         tapRow(labelStartingWith: "Privacy", in: app,
                arrivingAt: app.navigationBars["Privacy"], called: "the Privacy screen")
-        capture(app, slug: "reference/settings-privacy", assertingOnScreen: "Privacy")
+        capture(app, slug: "reference/settings-privacy", assertingOnScreen: "Privacy",
+                alsoServing: ["privacy/settings"])
     }
 
     /// `reference/settings-routines` — auto-start, auto-advance, rest length, song looping.
