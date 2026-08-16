@@ -13,6 +13,11 @@
 #   POCKET_SIM="iPhone 17 Pro" ./scripts/shoot-manual.sh
 #   POCKET_SEED_AUDIO=/path/to/masters ./scripts/shoot-manual.sh
 #   POCKET_SHOOT_ONLY=ManualToolkitShots ./scripts/shoot-manual.sh    # one class while writing it
+#   POCKET_SHOOT_KEEP_RUNS=20 ./scripts/shoot-manual.sh               # keep more logs than the last 5
+#
+# Every attempt lands in `$OUT_DIR/runs/<timestamp>.{log,xcresult}`, with `shoot.log` and
+# `shoot.xcresult` symlinked to the latest. A failed run's evidence therefore survives the re-run
+# that fixes it — see the note at RUN_ID for the shoot this was learned on.
 #
 # `-enableCodeCoverage NO`: the plan turns coverage on, which instruments the app under test and buys
 # a shoot nothing. It is timing cost on exactly the code path the captures race against. Passed to
@@ -50,7 +55,22 @@ BUNDLE_ID="click.decooperations.pocket"
 SEED_AUDIO_SRC="${POCKET_SEED_AUDIO:-$HOME/Documents/Red Moon Screenshots 2/seed-audio}"
 DERIVED="${POCKET_DERIVED:-build-sim}"
 OUT_DIR="${POCKET_SHOT_OUT:-shots}"
-RESULT_BUNDLE="$OUT_DIR/shoot.xcresult"
+
+# **Every attempt keeps its own log and its own result bundle.** This used to be one `shoot.log` and
+# one `shoot.xcresult`, both truncated at the top of the run, and that made a failed shoot erase
+# itself: on 2026-08-16 `testMetronome` and `testMetronomeAutomator` failed, the shoot was re-run,
+# and the second log — 16/16, TEST EXECUTE SUCCEEDED — replaced the evidence. Afterwards nothing on
+# disk showed the failure had ever happened. Worse, the failure message tells you to read "the step
+# log attached to each test", which lives in the result bundle the re-run had already deleted.
+#
+# So a run is identified by when it started, and `shoot.log` / `shoot.xcresult` become pointers to
+# the latest — the convenient names still work, and history survives them. Kept to the last few
+# runs, because a result bundle is tens of megabytes and `$OUT_DIR` is gitignored scratch.
+RUN_ID="$(date +%Y%m%d-%H%M%S)"
+RUNS_DIR="$OUT_DIR/runs"
+RUN_LOG="$RUNS_DIR/$RUN_ID.log"
+RESULT_BUNDLE="$RUNS_DIR/$RUN_ID.xcresult"
+KEEP_RUNS="${POCKET_SHOOT_KEEP_RUNS:-5}"
 
 say() { printf '\n\033[1m▸ %s\033[0m\n' "$1"; }
 
@@ -154,8 +174,30 @@ fi
 
 # --- 4. shoot -----------------------------------------------------------------------------------
 say "Shooting"
-mkdir -p "$OUT_DIR"
-rm -rf "$RESULT_BUNDLE"
+mkdir -p "$RUNS_DIR"
+
+# Prune by *run id*, not by file: one run is two entries and deleting the newest `.xcresult` while
+# keeping its `.log` would leave a run that says where to look and no longer has it. Ids are start
+# timestamps, so sorting them lexically sorts them chronologically — no mtime parsing, and re-filing
+# an old bundle doesn't promote it out of the queue.
+keep=$(( KEEP_RUNS > 0 ? KEEP_RUNS - 1 : 0 ))
+stale_ids="$(find "$RUNS_DIR" -mindepth 1 -maxdepth 1 -name '20*' -exec basename {} \; \
+             | sed 's/\.[^.]*$//' | sort -ru | tail -n "+$(( keep + 1 ))")"
+if [ -n "$stale_ids" ]; then
+    while IFS= read -r id; do
+        [ -n "$id" ] || continue
+        rm -rf "${RUNS_DIR:?}/$id.log" "${RUNS_DIR:?}/$id.xcresult"
+    done <<<"$stale_ids"
+fi
+
+# The stable names stay, as pointers to this run. Removed rather than overwritten: `ln -sf` onto an
+# existing *directory* links inside it, so a legacy real `shoot.xcresult` would quietly become
+# `shoot.xcresult/<id>.xcresult` and every path in the messages below would be wrong.
+rm -rf "$OUT_DIR/shoot.log" "$OUT_DIR/shoot.xcresult"
+ln -s "runs/$RUN_ID.log" "$OUT_DIR/shoot.log"
+ln -s "runs/$RUN_ID.xcresult" "$OUT_DIR/shoot.xcresult"
+echo "  run $RUN_ID → $RUN_LOG"
+
 ONLY_TESTING=()
 for class in "${SHOOT_CLASSES[@]}"; do
     ONLY_TESTING+=("-only-testing:PocketUITests/$class")
@@ -168,7 +210,7 @@ xcodebuild test-without-building \
     -derivedDataPath "$DERIVED" \
     -enableCodeCoverage NO \
     -resultBundlePath "$RESULT_BUNDLE" 2>&1 \
-    | tee "$OUT_DIR/shoot.log" \
+    | tee "$RUN_LOG" \
     | grep -E "Test Case .* (passed|failed)|TEST (EXECUTE )?(SUCCEEDED|FAILED)" || true
 
 # `2>&1` **before** the pipe, and it is load-bearing: xcodebuild prints the failing verdict on
@@ -193,7 +235,7 @@ xcodebuild test-without-building \
 FILED="$OUT_DIR/filed"
 [ -n "${POCKET_SHOOT_ONLY:-}" ] && FILED="$OUT_DIR/filed-partial"
 
-if grep -qE "TEST FAILED|TEST EXECUTE FAILED" "$OUT_DIR/shoot.log"; then
+if grep -qE "TEST FAILED|TEST EXECUTE FAILED" "$RUN_LOG"; then
     # A failed shoot never reaches the filing step, so whatever is sitting in $FILED is from an
     # earlier run against an earlier build — sixteen slug-named PNGs that look exactly like a
     # finished set, because last time they were one. Say so *in the directory*: that is where
@@ -205,16 +247,19 @@ if grep -qE "TEST FAILED|TEST EXECUTE FAILED" "$OUT_DIR/shoot.log"; then
 The shoot that ran at $(date "+%Y-%m-%d %H:%M") FAILED, and these images are from before it.
 
 They were not re-filed, so they are of an earlier build of the app. Do not copy them into the
-site repo. Read $OUT_DIR/shoot.log and the step log attached to the failing test, fix the
-shoot, and run it again — this file disappears when a run files a fresh set.
+site repo. Read $RUN_LOG and the step log inside $RESULT_BUNDLE, fix the shoot, and run it
+again — this file disappears when a run files a fresh set.
+
+Both of those are named for run $RUN_ID and survive the next attempt, so a fix can be checked
+against what actually failed rather than against whatever ran last.
 STALE
         echo "⚠️  $FILED still holds the previous run's images — marked STALE-DO-NOT-SHIP.txt" >&2
     fi
-    echo "❌ the shoot failed — read $OUT_DIR/shoot.log, and the step log attached to each test" >&2
+    echo "❌ the shoot failed — read $RUN_LOG, and the step log inside $RESULT_BUNDLE" >&2
     exit 1
 fi
-grep -qE "TEST SUCCEEDED|TEST EXECUTE SUCCEEDED" "$OUT_DIR/shoot.log" || {
-    echo "❌ no verdict line in $OUT_DIR/shoot.log — treat as a failure, not a pass" >&2
+grep -qE "TEST SUCCEEDED|TEST EXECUTE SUCCEEDED" "$RUN_LOG" || {
+    echo "❌ no verdict line in $RUN_LOG — treat as a failure, not a pass" >&2
     exit 1
 }
 
