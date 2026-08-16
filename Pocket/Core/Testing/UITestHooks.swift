@@ -15,6 +15,20 @@ enum UITestHooks {
     /// spelling the literal out at the call site.
     static let launchArgument = "-uiTesting"
 
+    /// `-shotHour <0…23>`: the hour Home's greeting is computed from, for the manual's shoot.
+    ///
+    /// Home reads the wall clock, and the shoot fakes the status bar to 09:41 — two clocks that
+    /// disagree the moment a run crosses a bucket boundary, producing "Late session" under a
+    /// morning status bar. That contradiction lives entirely in the pixels, where no assertion
+    /// reaches it, so `shoot-manual.sh` used to defend it by refusing to run outside 05:00–11:59.
+    ///
+    /// A wall-clock gate is the wrong shape for it twice over: it makes a deterministic artefact
+    /// depend on when you happened to run it, and it cannot express a figure that needs a
+    /// *different* hour — `getting-started/home` asks for an evening greeting and was therefore
+    /// unshootable at any time of day. Naming the hour makes both figures reproducible and retires
+    /// the gate. Read app-side through `UITestRuntime.shotHour`.
+    static let shotHourArgument = "-shotHour"
+
     /// Marks Home as **finished seeding**, not merely rendered.
     ///
     /// First-launch seeding is a `.task` that paints Home before it completes, so "Home is on

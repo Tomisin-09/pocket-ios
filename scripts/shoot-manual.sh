@@ -108,32 +108,17 @@ xcrun simctl bootstatus "$SIM_NAME" -b
 # creative brief's — is dark. One light figure in the middle of a page is the thing a reader
 # notices. This is not a preference; it is the set staying one set.
 #
-# Home's greeting is computed from the *real* clock, which the status-bar override does not touch.
-# What matters is the **bucket, not the clock**: `HomeFeed.TimeOfDay.at(hour:)` reads 5–11 as
-# morning, so anything in that range produces the same "Good morning" a 09:41 status bar implies —
-# an earlier guard here said 09:00 and sent the shoot away for no reason at 08:30. What actually
-# breaks the figure is crossing into another bucket: shoot at 02:00 and the frame says "Late
-# session" under a morning clock, a contradiction inside one image that no assertion catches,
-# because both halves are individually correct.
-HOUR="$(date +%-H)"
-if [ "$HOUR" -lt 5 ] || [ "$HOUR" -gt 11 ]; then
-    echo "⚠️  It is $(date +%H:%M) locally, but the status bar is faked to 09:41." >&2
-    echo "   Home's greeting reads the real clock and is only 'Good morning' from 05:00 to 11:59," >&2
-    echo "   so the shot will disagree with its own status bar." >&2
-    # A hard stop, not a warning. This began as a warning, and a warning is the wrong shape for it:
-    # it scrolls past inside a ten-minute run, every test still passes, and the contradiction lives
-    # in the pixels of `reference/home` where no assertion can reach it. The whole harness is built
-    # on the principle that a green run proves nothing about the picture — a check that only prints
-    # is a check that participates in exactly the failure it was written to prevent.
-    if [ -z "${POCKET_SHOOT_ANY_HOUR:-}" ]; then
-        echo "" >&2
-        echo "   Refusing to shoot. Run between 05:00 and 11:59, or set POCKET_SHOOT_ANY_HOUR=1 to" >&2
-        echo "   validate the harness — in which case reference/home is NOT shippable." >&2
-        exit 1
-    fi
-    echo "   POCKET_SHOOT_ANY_HOUR is set — continuing. reference/home will be wrong." >&2
-fi
-
+# **There is no longer an hour gate here.** There used to be: Home's greeting was computed from the
+# real clock, the status bar is faked to 09:41, and the two disagreed the moment a run crossed a
+# bucket boundary — "Late session" under a morning clock, a contradiction living entirely in the
+# pixels where no assertion reaches it. This script defended that by refusing to run outside
+# 05:00–11:59.
+#
+# That was the wrong shape for the problem twice. It made a deterministic artefact depend on when
+# someone happened to start the run, and it could not express a figure that needs a *different*
+# hour — `getting-started/home` asks for an evening greeting and was unshootable at any time of day.
+# The app now takes the hour as a launch argument (`UITestHooks.shotHourArgument`), each test names
+# the one its figure needs, and the clock in the frame agrees with the status bar by construction.
 say "Forcing dark appearance and a clean status bar"
 xcrun simctl ui "$SIM_NAME" appearance dark
 # 09:41, full bars, no carrier noise — the same status bar the App Store shots carry, so a hand-shot

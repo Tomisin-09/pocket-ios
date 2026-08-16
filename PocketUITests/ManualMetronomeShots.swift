@@ -13,6 +13,12 @@ final class ManualMetronomeShots: ManualShotCase {
     /// error the prose check cannot see, because the number lives in the image.
     private static let figureBPM = 96
 
+    /// How many dropped `+` taps the run tolerates before calling the stepper broken rather than the
+    /// machine busy. Generous, because each one costs only `tapProbeTimeout` and the alternative is a
+    /// six-minute shoot lost to a single dropped event; bounded, because a stepper that has genuinely
+    /// stopped responding should say so rather than spin.
+    private static let maxSwallowedTaps = 6
+
     /// `metronome/screen` · `reference/metronome` · `metronome/tempo-controls` — 96 BPM, 4/4, stopped.
     @MainActor
     func testMetronome() {
@@ -105,9 +111,34 @@ final class ManualMetronomeShots: ManualShotCase {
         XCTAssertTrue(plus.waitForExistence(timeout: Self.shootTimeout),
                       "no + stepper on the metronome. \(stepLog)")
 
-        let steps = Self.figureBPM - StandaloneMetronomeDefaults.bpm
-        for _ in 0..<steps { plus.tap() }
-        note("tapped + \(steps)× to reach \(Self.figureBPM) BPM")
+        // **One tap at a time, each confirmed.** This was `for _ in 0..<steps { plus.tap() }`, and it
+        // is the same swallowed-tap problem as the Settings gear and the Journal's filter, multiplied
+        // by six: any one event dropped leaves the tempo a beat short, and on 2026-08-16 one was, and
+        // the shoot failed on `95 beats per minute`. Six blind taps is six chances to lose one.
+        //
+        // The readout is re-read after every tap rather than counted, so a dropped tap is retried and
+        // an accepted one is never repeated — a loop that just tapped harder would overshoot to 97,
+        // which photographs as confidently as 95 and is equally wrong.
+        var bpm = StandaloneMetronomeDefaults.bpm
+        var swallowed = 0
+        while bpm < Self.figureBPM {
+            plus.tap()
+            let next = element(in: app, labelStartingWith: "\(bpm + 1) beats per minute")
+            if next.waitForExistence(timeout: Self.tapProbeTimeout) {
+                bpm += 1
+                continue
+            }
+            swallowed += 1
+            note("+ tap \(swallowed) did nothing — still \(bpm) BPM, retrying")
+            XCTAssertLessThanOrEqual(swallowed, Self.maxSwallowedTaps,
+                                     """
+                                     the + stepper stopped responding at \(bpm) BPM, \
+                                     \(Self.figureBPM - bpm) short of the figure.
+                                     \(stepLog)
+                                     """)
+            if swallowed > Self.maxSwallowedTaps { return }
+        }
+        note("reached \(bpm) BPM" + (swallowed > 0 ? " (\(swallowed) tap(s) swallowed)" : ""))
     }
 
     // MARK: - Navigation

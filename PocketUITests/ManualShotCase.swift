@@ -20,6 +20,14 @@ class ManualShotCase: UITestCase {
     /// Launch arguments the shoot adds: a library to photograph, and a past for it to have had.
     static let shootArguments = ["-seedScreenshots", "-seedHistory"]
 
+    /// The hour every figure is shot at unless it asks for another — **09**, because the status bar
+    /// is overridden to 09:41 and the two clocks in one frame have to agree.
+    ///
+    /// Before this, Home's greeting came from the wall clock and the shoot defended the mismatch by
+    /// refusing to run outside 05:00–11:59. That made the images depend on when someone happened to
+    /// start the run, and it could not express a figure needing a different hour at all.
+    static let defaultShotHour = 9
+
     /// How long a shoot waits for anything — deliberately longer than `UITestCase.uiTimeout`.
     ///
     /// The suite's 10 seconds is calibrated for a regression test, where a long wait hides how slow
@@ -48,10 +56,15 @@ class ManualShotCase: UITestCase {
     private var steps: [String] = []
 
     /// Launch with the shoot's seeds. Every capture test starts here.
+    ///
+    /// - Parameter hour: the hour Home's greeting is computed from. Defaults to `defaultShotHour`,
+    ///   which matches the faked status bar; pass another only for a figure whose `state:` asks for
+    ///   a different part of the day, as `getting-started/home` does.
     @MainActor
     @discardableResult
-    func launchForShoot() -> XCUIApplication {
-        launchApp(extraArguments: Self.shootArguments)
+    func launchForShoot(hour: Int = ManualShotCase.defaultShotHour) -> XCUIApplication {
+        launchApp(extraArguments: Self.shootArguments
+                  + [UITestHooks.shotHourArgument, String(hour)])
     }
 
     // MARK: - Capture

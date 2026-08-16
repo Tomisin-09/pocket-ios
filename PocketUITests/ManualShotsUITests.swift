@@ -113,7 +113,26 @@ final class ManualShotsUITests: ManualShotCase {
         // not match and are not meant to.
         capture(app, slug: "reference/home",
                 assertingOnScreen: "Red Moon",
-                alsoRequiring: ["JUMP BACK IN"])
+                alsoRequiring: ["JUMP BACK IN", "Good morning"])
+    }
+
+    /// `getting-started/home` — the same screen, greeted as an evening session.
+    ///
+    /// The manual opens on Home twice and deliberately not at the same hour, so the two figures do
+    /// not read as one image printed on two pages. This one was unshootable until the hour became a
+    /// launch argument: the greeting came from the wall clock, and `shoot-manual.sh` refused to run
+    /// outside 05:00–11:59 to stop `reference/home` contradicting its own faked status bar. A marker
+    /// asking for evening could not be satisfied at any time of day.
+    ///
+    /// `Good evening` is in `alsoRequiring` rather than trusted, because that is the whole subject
+    /// here — if the argument stopped being read, this would quietly become a second morning Home
+    /// and nothing else in the run would disagree.
+    @MainActor
+    func testGettingStartedHome() {
+        let app = launchForShoot(hour: 19)
+        capture(app, slug: "getting-started/home",
+                assertingOnScreen: "Red Moon",
+                alsoRequiring: ["JUMP BACK IN", "Good evening"])
     }
 
     // MARK: - Navigation
