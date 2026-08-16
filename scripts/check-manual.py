@@ -25,6 +25,8 @@ Checks implemented here (0165's Phase 0b set):
     C8  count tripwires: a `<!-- key: N -->` comment fails when N stops matching
         the live count in the source
     C9  inside reference/**, every backticked token is a real Swift string literal
+    C13 every `capture()` in the shoot harness names a marker that exists, and no
+        `device:` shot is driven; shots still unshot report pending, not fail
 
 C3/C4/C5 (FAQ citation, no-copied-answers, byte-for-byte quoting) arrive with
 Slice A, when there is prose for them to check; C9 arrives with the reference
@@ -47,6 +49,7 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANUAL = os.path.join(REPO, "docs", "manual")
 SOURCE = os.path.join(REPO, "Pocket")
+UITESTS = os.path.join(REPO, "PocketUITests")
 
 OK, FAIL, PENDING = "ok", "fail", "pending"
 
@@ -824,6 +827,93 @@ def check_c12():
     return OK, ["%d shots listed, matching the markers" % len(shot_rows())]
 
 
+CAPTURE = re.compile(r'capture\(\s*\w+\s*,\s*slug:\s*"([^"]+)"')
+
+# One frame often satisfies several markers — a crop of it, or the same screen shown on a second
+# page — and the harness declares that with `alsoServing:`. Those slugs are photographed just as
+# surely as the one the attachment is named for, so a check that only read `slug:` reported eight
+# finished shots as unshot. Collected file-wide rather than per call: C13 only needs the *set* of
+# slugs the harness produces, and matching a bracket list back to its own `capture(` across the
+# intervening arguments would be a parser where a set union does.
+ALSO_SERVING = re.compile(r'alsoServing:\s*\[([^\]]*)\]', re.S)
+QUOTED = re.compile(r'"([^"]+)"')
+
+
+def captured_slugs():
+    """`slug -> [file, …]` for every shot the harness actually photographs."""
+    found = {}
+    if not os.path.isdir(UITESTS):
+        return found
+    for name in sorted(os.listdir(UITESTS)):
+        if not (name.startswith("Manual") and name.endswith(".swift")):
+            continue
+        source = read(os.path.join(UITESTS, name))
+        for hit in CAPTURE.finditer(source):
+            found.setdefault(hit.group(1), []).append(name)
+        for block in ALSO_SERVING.finditer(source):
+            for slug in QUOTED.findall(block.group(1)):
+                found.setdefault(slug, []).append(name)
+    return found
+
+
+def check_c13():
+    """Markers and the shoot harness name the same shots.
+
+    The prose has twelve checks on it and the images had none, so the two halves of
+    a figure — the marker that promises it and the `capture()` that takes it — were
+    held together by hand. A slug renamed in the prose left the harness shooting a
+    file nobody references, and every other check stayed green; the only reason the
+    gap was ever visible was someone counting both sides by hand.
+
+    **Undriven shots are `pending`, not `fail`.** Eighty of ninety-six are unshot
+    while Phase 5 runs, and a check that red-lights every push until a six-minute
+    shoot completes is a check that gets commented out in a week. What hard-fails is
+    a *ghost*: a `capture()` naming a slug no marker defines. That is always a defect
+    and never a to-do, because it means an image is being produced that no page can
+    ever show.
+
+    A `device:` marker is the simulator's own admission that it cannot render the
+    state honestly (landscape is the known one), so driving one is a failure too —
+    it would produce a clean, wrong picture, which is the failure `ManualShotCase` is
+    written against.
+
+    Deliberately **not** recorded in `shots.md`. That file is generated and diffed by
+    C12, so putting driven-state in it would make editing a Swift test fail a docs
+    check — coupling the two things `scripts/docs-only.sh` exists to keep apart.
+    """
+    rows = shot_rows()
+    if not rows:
+        return PENDING, ["no markers to drive yet"]
+    captured = captured_slugs()
+    if not captured:
+        return FAIL, ["found no capture() calls under PocketUITests/Manual*.swift — the "
+                      "parser has drifted from the harness, which fails silently as a pass"]
+
+    slugs = {slug for slug, _role, _page, _state, _device in rows}
+    hand = {slug for slug, _role, _page, _state, device in rows if device}
+
+    problems = []
+    for slug in sorted(set(captured) - slugs):
+        problems.append("%s captures %r, which no marker defines — renamed in the prose, "
+                        "or misspelt in the harness"
+                        % ("/".join(sorted(set(captured[slug]))), slug))
+    for slug in sorted(set(captured) & hand):
+        problems.append("%r is marked `device:` and the simulator cannot shoot it honestly, "
+                        "but %s captures it"
+                        % (slug, "/".join(sorted(set(captured[slug])))))
+    if problems:
+        return FAIL, problems
+
+    drivable = slugs - hand
+    undriven = sorted(drivable - set(captured))
+    if undriven:
+        preview = ", ".join(undriven[:4]) + ("…" if len(undriven) > 4 else "")
+        return PENDING, ["%d of %d drivable shots not captured yet (%d hand-shot on device): %s"
+                         % (len(undriven), len(drivable), len(hand), preview)]
+    return OK, ["all %d drivable shots captured (%d hand-shot on device)"
+                % (len(drivable), len(hand))]
+
+
 CHECKS = [
     ("C1", "Settings destinations are named in the reference", check_c1),
     ("C2", "Toolkit sections are named in toolkit.md", check_c2),
@@ -836,6 +926,7 @@ CHECKS = [
     ("C10", "shot markers parse and obey the role grammar", check_c10),
     ("C11", "no image referred to by position", check_c11),
     ("C12", "shots.md matches the markers", check_c12),
+    ("C13", "markers and the shoot harness name the same shots", check_c13),
     ("C8", "count tripwires still match the source", check_c8),
 ]
 

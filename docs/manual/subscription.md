@@ -55,9 +55,12 @@ top naming what you just reached for. Those cards draw a **padlock** where the c
 they read as locked rather than broken. **Toolkit** and **Journal** never do, because they are never
 locked.
 
-<!-- shot: subscription/paywall | role: screen
-     | alt: The paywall with the Red Moon Pro wordmark, three value lines, the Annual and Monthly plan cards with Annual selected, the call to action, Restore Purchases and the disclosure block
-     | state: fresh install without Pro, paywall open from a locked Home card -->
+<!-- shot: subscription/paywall | role: panel
+     | crop: 0,160,1206,1040
+     | alt: The top of the paywall — the Red Moon Pro wordmark, its one-line promise, and the three value lines beneath it
+     | state: fresh install without Pro, paywall open from a locked Home card
+     | device: iPhone — cropped above the plan cards on purpose: an image carrying a price outlives
+       the sentence that would have carried it, and D6 keeps prices out of this manual -->
 
 ## Starting a subscription
 

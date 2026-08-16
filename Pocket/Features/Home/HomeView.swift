@@ -196,7 +196,11 @@ struct HomeView: View {
 
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(HomeFeed.TimeOfDay.at(hour: Calendar.current.component(.hour, from: .now))
+            // `shotHour` is nil in every normal launch; the manual's shoot names an hour so the
+            // greeting agrees with the status bar it fakes (see `UITestHooks.shotHourArgument`).
+            Text(HomeFeed.TimeOfDay
+                .at(hour: UITestRuntime.shotHour
+                    ?? Calendar.current.component(.hour, from: .now))
                 .greeting(name: profiles.first?.artistName))
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)

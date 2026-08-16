@@ -24,7 +24,22 @@ deferred.
     runs it. Fast inner loop.
   - **`PocketAll.xctestplan`** — `PocketTests` + `PocketUITests`, `codeCoverage: true`.
     CI selects it explicitly with `-testPlan PocketAll`, so both suites and coverage
-    still gate merges.
+    still gate merges. It **skips the four `Manual*` shot classes** — see below.
+  - **`PocketShoot.xctestplan`** *(added 2026-08-16, ADR 0165 Phase 5)* — the four
+    `Manual*` classes and nothing else, `codeCoverage: false`. They are not tests: they
+    photograph an erased device that `scripts/shoot-manual.sh` has staged with seed
+    audio, a dark appearance and a faked 09:41 status bar, so on CI's ordinary
+    simulator they are ~7 minutes of flake producing attachments nobody collects.
+
+    **Why a third plan rather than `-skip-testing:` flags or a skip list alone.** Flags
+    would have to be repeated in `ci.yml` and `pre-push.sh` and would drift. And a skip
+    list alone is not enough to keep the shoot working, because **`-only-testing:` does
+    not override a plan's `skippedTests`**: measured on 2026-08-16, `-only-testing:` a
+    skipped class runs `Executed 0 tests` and **exits 0**. Selecting the shoot's classes
+    out of `PocketAll` would therefore have turned the shoot into a silent green that
+    produced no images at all. `shoot-manual.sh` additionally asserts that every class it
+    asked for reported at least one test case, because that exit code cannot be trusted
+    to notice.
 - **The default/fast plan drops the 2 UI tests and coverage gathering** — UI tests
   each cold-launch the app (~13s + ~12s) and coverage instrumentation adds ~40s;
   neither earns its cost on every local push, and CI still enforces both.

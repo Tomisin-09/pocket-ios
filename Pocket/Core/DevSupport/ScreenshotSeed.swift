@@ -78,10 +78,26 @@ enum ScreenshotSeed {
             loops: [LoopSpec("Chorus lift", 0.34, 0.48, 0.75, 5, 3)])
     ]
 
+    static let launchArgument = "-seedScreenshots"
+
+    /// Whether this launch is a screenshot shoot — App Store or user manual.
+    ///
+    /// Read by anything that is *correct in a Debug build but false in a photograph of the app*. The
+    /// Settings hub's **Developer** row is the case that named this: it is `#if DEBUG` and therefore
+    /// present in every build a shoot can drive, but it ships to nobody, and a manual figure carrying
+    /// it shows a tenth destination the page beside it does not document. A screenshot is a claim
+    /// about the shipping app, so the shoot has to be able to say "not this".
+    ///
+    /// Deliberately narrow: this is not a general "hide things in Debug" switch. Anything gated on it
+    /// must be absent from the release build too, or the figure starts lying in the other direction.
+    static var isShooting: Bool {
+        CommandLine.arguments.contains(launchArgument)
+    }
+
     /// Seed the library if launched with `-seedScreenshots` and it's currently empty.
     @MainActor
     static func seedIfNeeded(into context: ModelContext) {
-        guard CommandLine.arguments.contains("-seedScreenshots") else { return }
+        guard CommandLine.arguments.contains(launchArgument) else { return }
         let existing = (try? context.fetchCount(FetchDescriptor<Song>())) ?? 0
         guard existing == 0 else { return }
 

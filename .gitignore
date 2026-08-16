@@ -52,6 +52,12 @@ infrastructure/**/*.tfvars
 # Local preview screenshots (not committed)
 .preview/
 
+# User-manual shoot output — result bundle, raw export, filed images (ADR 0165).
+# The manual's binaries have one home and it is the site repo, same rule as the beta
+# guide (0165 D7); processed shots are staged in ~/Documents/Red Moon Manual Shots/.
+# Re-runnable from scratch with ./scripts/shoot-manual.sh, so nothing here is a source.
+shots/
+
 # Third-party reference material — raw sources are reference-only, never
 # committed or shipped. Our derivatives live in docs/research/ instead.
 # Anchored to repo root so it does NOT match docs/research/.

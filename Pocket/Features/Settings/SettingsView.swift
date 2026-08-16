@@ -81,13 +81,19 @@ struct SettingsView: View {
                 }
             }
 
+            // Hidden during a screenshot shoot as well as in release. The footer says it plainly —
+            // never present in a shipping build — and a figure in the user manual is a picture of
+            // the shipping build, so a Debug-only tenth destination in it is simply wrong (ADR 0165).
+            // The manual's own alt text for this screen lists the nine that ship.
             #if DEBUG
-            Section {
-                NavigationLink { DeveloperSettingsView() } label: {
-                    SettingsHubRow(icon: "hammer", title: "Developer")
+            if !ScreenshotSeed.isShooting {
+                Section {
+                    NavigationLink { DeveloperSettingsView() } label: {
+                        SettingsHubRow(icon: "hammer", title: "Developer")
+                    }
+                } footer: {
+                    Text("DEBUG only — never present in a shipping build.")
                 }
-            } footer: {
-                Text("DEBUG only — never present in a shipping build.")
             }
             #endif
         }

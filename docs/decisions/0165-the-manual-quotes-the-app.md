@@ -1,9 +1,10 @@
 # ADR 0165 — the manual quotes the app
 
 - **Status:** **Accepted** — the whole manual is written and on `main`: 19 pages, ~24,000 words,
-  96 shot markers. Every check C1–C12 is live and passing, none pending; the coverage audit ran at
+  96 shot markers. Every check C1–C12 is live and passing; the coverage audit ran at
   the end of the reference wing and found nothing unticked (see
-  [docs/manual/README.md](../manual/README.md)). What remains is Phase 5, the images.
+  [docs/manual/README.md](../manual/README.md)). What remains is Phase 5, the images — tracked by
+  **C13**, which is pending by design until the shoot finishes (16 of 94 drivable shots captured).
   <br>Drafted 2026-08-13, accepted 2026-08-14. `CHANGELOG.md` still gets no entry until the manual
   **ports** to the site, which is the trigger set in Consequences and is unchanged by this.
 - **Date:** 2026-08-13
@@ -158,6 +159,20 @@ no FAQ answer text, price or trial length appears; `streak` and `this year` appe
 comment tripwires (`<!-- long-press-sites: 9 -->`, `<!-- faq-entries: 18 -->`,
 `<!-- loop-controls-rows: 8 -->`) fail when the count they name moves. **Name checks where names
 exist, count tripwires where they don't.**
+
+**C13 extends the same rule to the images.** The prose has twelve checks on it and the markers had
+none past their own grammar, so the two halves of a figure — the marker that promises it and the
+`capture()` in `PocketUITests/Manual*.swift` that takes it — were held together by hand. C13 parses
+both sides and requires them to name the same slugs. It is the one check with a **third verdict**:
+a marker nobody has shot yet is `pending`, never `fail`, because eighty of ninety-six are unshot
+while Phase 5 runs and a check that red-lights every push until a ten-minute shoot completes is a
+check that gets commented out inside a week. What hard-fails is a *ghost* — a `capture()` naming a
+slug no marker defines — because that is an image no page can ever show; a driven `device:` marker,
+which is the simulator shooting a state it has already admitted it renders dishonestly; and a parse
+finding **zero** captures, which would otherwise let the check pass by reading nothing.
+Driven-state is deliberately kept **out of `shots.md`**: C12 diffs that file, so recording it there
+would make editing a Swift test fail a docs check, coupling the two halves that
+`scripts/docs-only.sh` exists to keep apart.
 
 Two callers, one implementation — the `docs-only.sh` pattern from ADR 0133:
 

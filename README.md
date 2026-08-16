@@ -90,7 +90,9 @@ See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild te
 `xcodebuild test -scheme Pocket` runs the default **`PocketLogic`** test plan —
 the ~498 unit tests, no coverage — for a fast local loop (~59s vs ~123s for the
 full suite). CI runs the full **`PocketAll`** plan (`-testPlan PocketAll`, adds
-the UI tests + coverage). See `docs/decisions/0053`.
+the UI tests + coverage). A third plan, **`PocketShoot`**, holds the user manual's
+screenshot classes; it is driven only by `scripts/shoot-manual.sh` and is skipped
+by `PocketAll`. See `docs/decisions/0053`.
 
 ## Project layout
 

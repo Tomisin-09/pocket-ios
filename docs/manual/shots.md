@@ -29,7 +29,7 @@ marker grammar in [README.md](README.md).
 | `gestures/speed-bar` | `band` | `gestures` | seeded library, Little Wing, player idle |  |
 | `gestures/undo-toast` | `band` | `gestures` | seeded library, Library screen, a row swiped left and deleted |  |
 | `getting-started/first-run` | `screen` | `getting-started` | fresh install, first launch, step 1 of 4 |  |
-| `getting-started/home` | `screen` | `getting-started` | seeded library, Home, evening greeting |  |
+| `getting-started/home` | `screen` | `getting-started` | seeded library, Home, morning greeting |  |
 | `getting-started/import-picker` | `screen` | `getting-started` | seeded library, Home, + tapped |  |
 | `getting-started/loop-active` | `band` | `getting-started` | seeded library, Little Wing, a loop active and repeating |  |
 | `journal/month-heatmap` | `panel` | `journal-and-progress` | seeded library, Progress, two or more weeks of history in the current month |  |
@@ -48,7 +48,7 @@ marker grammar in [README.md](README.md).
 | `looping/tempo-editor` | `screen` | `looping` | seeded library, Little Wing, tempo editor open |  |
 | `metronome/automator` | `panel` | `metronome` | Metronome open, automator armed By Bars |  |
 | `metronome/screen` | `screen` | `metronome` | Metronome open, 96 BPM, 4/4, stopped |  |
-| `metronome/settings-sheet` | `screen` | `metronome` | Metronome open, meter control tapped |  |
+| `metronome/settings-sheet` | `screen` | `metronome` | Metronome open, meter control tapped, scrolled to the top |  |
 | `metronome/tempo-controls` | `band` | `metronome` | Metronome open, 96 BPM |  |
 | `privacy/settings` | `panel` | `privacy` | Settings ▸ Privacy |  |
 | `reference/exercises-library` | `screen` | `practice` | seeded library, Practice ▸ Exercises, the seeded six present |  |
@@ -61,7 +61,7 @@ marker grammar in [README.md](README.md).
 | `reference/loops-library` | `screen` | `practice` | fresh library with no measured loops, Practice ▸ Loops |  |
 | `reference/loops-panel` | `panel` | `song-player` | seeded library, Little Wing, Loops expanded |  |
 | `reference/metronome` | `screen` | `tools-and-journal` | Metronome open, stopped |  |
-| `reference/metronome-settings` | `screen` | `tools-and-journal` | Metronome open, meter control tapped |  |
+| `reference/metronome-settings` | `screen` | `tools-and-journal` | Metronome open, meter control tapped, scrolled to the top |  |
 | `reference/planner` | `screen` | `practice` | seeded library, Practice ▸ Today, no goals yet |  |
 | `reference/player` | `screen` | `song-player` | seeded library, Little Wing, idle, Loops panel expanded |  |
 | `reference/practice-hub` | `screen` | `practice` | seeded library, Practice hub |  |
@@ -99,7 +99,8 @@ marker grammar in [README.md](README.md).
 | `songs/missing-audio` | `panel` | `songs` | seeded library, a song whose file cannot be found, details open |  |
 | `songs/song-edit` | `screen` | `songs` | seeded library, song "Little Wing", edit sheet open |  |
 | `songs/sort-menu` | `panel` | `songs` | seeded library, Library screen, sort menu open |  |
-| `subscription/paywall` | `screen` | `subscription` | fresh install without Pro, paywall open from a locked Home card |  |
+| `subscription/paywall` | `panel` | `subscription` | fresh install without Pro, paywall open from a locked Home card | iPhone — cropped above the plan cards on purpose: an image carrying a price outlives
+       the sentence that would have carried it, and D6 keeps prices out of this manual |
 | `subscription/settings-pro` | `panel` | `subscription` | Settings ▸ Red Moon Pro, subscribed |  |
 | `subscription/trial-row` | `band` | `subscription` | an account inside a running trial, Home |  |
 | `terms/command-tempo-info` | `detail` | `terms` | seeded library, Little Wing, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo |  |

@@ -6,7 +6,7 @@ out to where you were.
 ## The hub
 
 <!-- shot: reference/settings-hub | role: screen
-     | alt: The Settings hub with Red Moon Pro and You above a Preferences group holding Appearance, Sound & feel, Practice, Routines, Song player and Privacy, and Help & About below
+     | alt: The Settings hub with You and Red Moon Pro above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Privacy and Help & About in a group below
      | state: Settings open -->
 
 Nine destinations. **Each row states its current value on the right**, so most questions are
