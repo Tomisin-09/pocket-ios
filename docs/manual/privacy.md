@@ -89,6 +89,17 @@ Not your audio. Not your recordings. Not your journal notes, your song names, yo
 artist name, or anything else you have typed or chosen — with the counts on or off. There is no
 profile of you, here or anywhere, because there is no identifier to hang one on.
 
+## Links you save
+
+The addresses you put in **Where you learned it** are stored on the device like everything else, and
+Red Moon never contacts them: it fetches no page titles, no previews and no thumbnails, so saving a
+link tells the site nothing. See [Where you learned it](references.md).
+
+Opening one is different, and worth being clear about. Tapping a link hands the address to whichever
+app handles it — your browser, YouTube — and from that moment you are that app's visitor under that
+app's own policy, exactly as if you had typed the address there yourself. Red Moon is not in the
+middle of it and cannot be: it has no web view of its own.
+
 ## If that ever changes
 
 The policy is explicit about it: if a future version adds something that processes data differently —

@@ -76,6 +76,7 @@ struct PocketApp: App {
         }
         .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,
                               Exercise.self, Routine.self, RoutineItem.self, Goal.self,
-                              Recording.self, SavedChord.self, Profile.self, PracticeRun.self])
+                              Recording.self, SavedChord.self, Profile.self, PracticeRun.self,
+                              ReferenceLink.self])
     }
 }

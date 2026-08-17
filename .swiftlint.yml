@@ -55,3 +55,28 @@ custom_rules:
     regex: '^\s*case\s+\w+\([^)]*:\s*String'
     message: "An AnalyticsEvent case must not take a String (ADR 0120). Pass a closed enum instead — this is what makes it impossible to leak user-authored text into telemetry."
     severity: error
+
+  # The app is called **Red Moon**. `Pocket` is the Xcode target and the bundle id, and it has
+  # never been a name the product goes by — so it must not appear in a string the player can read.
+  #
+  # This has now shipped twice. The first pair (the freeform template's one-liner and the
+  # instructions footer) was found by hand while writing the user manual, whose whole rule is that
+  # it quotes the app's own words — and a manual cannot quote a name the product does not use. The
+  # second was a footer on the reference-link editor, caught only because somebody opened a
+  # screenshot. Neither a build, a test, nor `check-manual.py` can see it: the string is valid Swift
+  # and the docs are consistent with themselves. So it is a lint.
+  #
+  # Matches `Pocket` inside a double-quoted literal, in the app target only. Comments and doc
+  # comments are exempt by construction (no quotes), which is what lets this file's own prose and
+  # every `/// … Pocket …` explanation stand. `PocketColor` and friends are identifiers, not
+  # literals, so they never match. A legitimate literal — a file path, a bundle id — takes
+  # `// swiftlint:disable:next internal_name_in_user_copy` on the exact line, per AGENTS.md.
+  internal_name_in_user_copy:
+    name: "User-facing copy says Red Moon, never Pocket"
+    included: ".*/Pocket/.*\\.swift"
+    # `[^"\n]`, not `[^"]`: without the newline exclusion the character class runs past the end of
+    # the line and pairs an opening quote on one line with a `Pocket` twenty lines below it in a doc
+    # comment. That first draft reported thirteen violations, twelve of them prose.
+    regex: '"[^"\n]*\bPocket\b[^"\n]*"'
+    message: "This string says 'Pocket', the internal target name. The app is called Red Moon — a player never sees the word Pocket. If this literal is a path or a bundle id rather than copy, suppress it on the line."
+    severity: error

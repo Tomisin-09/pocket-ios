@@ -174,3 +174,50 @@ Not built here. Two things are decided now so the field shape does not change la
   destructive consequence here, and it differs from the note/take rule a reader may have
   internalised — hence the contrast being stated twice.
 - **The ADR decides; it does not build.** Implementation is a separate slice.
+
+## Built — 2026-08-17 (`pocket-268-reference-links`)
+
+The URL half shipped as decided, with three things worth recording because they are not in the
+decision above:
+
+- **`ReferenceLinkStore` is the single write path**, over a `ReferenceLinkOwner` protocol the four
+  models conform to (`Core/Models/ReferenceLink+Owners.swift`). Without it the `http`/`https` gate
+  would live in a view, and the five surfaces would each own a copy of the `order` renumbering.
+- **A scheme-less paste is read as `https`.** Not stated above, and it is the input the feature
+  exists for — a phone share sheet hands over `youtube.com/watch?v=…`. A string that *does* carry a
+  scheme is still taken at its word and refused if it is not on the allowlist, so `javascript:` is
+  never rewritten into something openable.
+- **The paste affordance is a `PasteButton`, not a `Button` that reads `UIPasteboard`.** The first
+  build did the latter — inside `body`, so it could offer *"Paste youtube.com"*, naming the site it
+  would paste. That is a worse feature than it sounds: reading the pasteboard programmatically
+  raises the system's *Allow Paste?* prompt, so opening this sheet would have asked permission to
+  inspect the clipboard, and it re-read on every body evaluation. Under UI test it hung the app for
+  sixty seconds (`App event loop idle notification not received`). `PasteButton` makes the tap the
+  consent: nothing is read until the player asks, and no prompt appears. The cost is that the
+  control says *Paste* rather than naming the host — the right trade, and one §3.5 would have
+  reached anyway.
+- **The routine surface needed three constraints the ADR did not anticipate**, all from
+  `RoutineDetailView` being a sandboxed editor rather than a live one:
+  1. **Gated on `existsInStore`.** A provisional generated session is not saved yet; attaching a
+     link would insert the routine through the relationship and quietly keep a routine the player
+     never chose to keep.
+  2. **Writes into `editContext`, not the environment's context.** The routine is faulted into a
+     private child context; inserting a link through the app context while pointing it at that
+     routine is a cross-context relationship — a corruption, not a preference. `ReferencesSection`
+     grew an explicit `context:` parameter for this, defaulting to the environment for the other
+     three surfaces.
+  3. **Read-only outside edit mode, and it does not save on each change.** Outside edit mode there
+     is no Save, so a link added there would sit in the sandbox until the next Cancel threw it away;
+     inside it, saving per-change would commit whatever block rearrangement was pending, making an
+     unrelated edit permanent because somebody added a link. Links follow the screen's existing
+     contract instead — Cancel discards, Save keeps — which is also the rule the manual already
+     stated for that screen.
+
+  The other three surfaces edit live models and keep the immediate write, matching how linked songs
+  already behave beside them.
+
+The manual page is `docs/manual/references.md` — one page, pointed at from the four owner pages
+rather than restated on each.
+
+**Phase 2 (images) is unbuilt and unchanged.** `kindRaw` ships carrying `.image`, so it stays a pure
+addition.

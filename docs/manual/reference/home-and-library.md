@@ -95,6 +95,8 @@ A read-only summary, with `Edit` in its toolbar.
   different file — for a song whose audio is missing, or one linked to the wrong track. Your loops,
   markers, takes and practice history all stay with the song.*
 - `Collections`.
+- **`Where you learned it`** — links out to the transcription or breakdown you worked from, with an
+  `Add a link` button. See [where you learned it](../references.md).
 - **`Exercises for this song`** — drills linked to it, with `Link exercises` and
   `Build a routine for this song`. Empty, it reads *No drills linked yet — link the exercises that
   help you play this song.*

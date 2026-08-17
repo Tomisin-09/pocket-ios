@@ -1083,6 +1083,39 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   them is a live ranking change owed its own decision. This makes the write path above a *ranking*
   concern as well as a stats one — a seam that silently failed to log would leave its unit max-due
   forever — which is why all three seams were verified against the on-device store before it shipped.
+- **`ReferenceLink`** (ADR 0167) is *where you learned it* — a title and a URL hung off the thing it
+  explains. Additive new table; nothing existing migrates. The owner is polymorphic through **four
+  typed optional relationships** (`exercise` / `song` / `loop` / `routine`, exactly one non-nil), the
+  ADR 0066 R4 shape rather than a generic `ownerKind + ownerID`, which would move referential
+  integrity out of SwiftData and into hand-written lookups that cannot cascade. ⚠ Those inverses
+  **cascade**, which is the deliberate opposite of the rule the two neighbouring polymorphic models
+  follow: `JournalEntry` and `Recording` **nullify** (ADR 0151) because they are records of *you* and
+  outlive the unit they were made against, while a reference link is a record of *the owner* — a
+  pointer to where **this exercise** came from, meaningless once the exercise is gone. A reader who
+  has internalised the nullify rule will read the cascade as a bug, so it is stated at the model, in
+  `PROJECT.md`, and here. `kindRaw` is a `String` with a computed `kind` accessor (`.link` today,
+  `.image` carried from day one so the sequenced-second image half is a pure addition rather than a
+  retype after the freeze), and the relationship is never filtered in a `#Predicate` — the
+  optional-relationship freeze.
+  **Every write funnels through `ReferenceLinkStore`** (`Core/Models/ReferenceLink+Owners.swift`),
+  over a small `ReferenceLinkOwner` protocol the four owners conform to. That is not tidiness: it
+  makes the pure **`ReferenceURL`** gate the single place a URL enters the store, so no view can add
+  a link the allowlist would refuse, and it keeps the contiguous-`order` renumbering identical across
+  the five surfaces that host a section. `ReferenceURL` accepts **`http` and `https` only** — an
+  allowlist, because `openURL` will happily take `shortcuts://`, `mailto:` or an app's own scheme and
+  a practice-log field is not the place to have opinions about those — and reads a **scheme-less
+  paste as `https`**, which is the input the feature exists for (a phone share sheet hands over a
+  bare host). The row's subtitle is the host, derived locally: **nothing here touches the network**.
+  Fetching a page title or a favicon would be a new outbound request made against the player's
+  private practice data — a privacy-policy change, not a nicety — and the app's one outbound request
+  (Formspree, ADR 0161) stays one.
+  The **clipboard** is treated the same way. The paste affordance is a SwiftUI `PasteButton`, not a
+  `Button` that reads `UIPasteboard`: the first build read the pasteboard *inside `body`* so the
+  control could name the site it would paste, which raises the system **Allow Paste?** prompt on
+  merely opening the sheet — and re-runs on every body evaluation. It hung the app for sixty seconds
+  under UI test. With `PasteButton` the tap is the consent and nothing is read until the player asks,
+  which is the same principle as the missing network call: the app does not look at things on the
+  player's behalf.
 - **Reading the log** (ADR 0117, Slice 2). `PracticeProgressView` is reached from the **Journal**
   toolbar, not Home. The ADR specified "make the existing `PracticeStatsCard` tappable", but that card
   was dropped from Home in the 2026-07-09 hub rework (`a0c754e1`) and has been dead code since; Journal

@@ -78,6 +78,8 @@ marker grammar in [README.md](README.md).
 | `reference/tempo-editor` | `screen` | `song-player` | seeded library, Little Wing, tempo editor open |  |
 | `reference/toolkit` | `screen` | `tools-and-journal` | Toolkit open |  |
 | `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed |  |
+| `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
+| `references/section` | `panel` | `references` | seeded library, an exercise detail sheet with two links saved, scrolled to the section |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
 | `routines/editor` | `screen` | `routines` | Practice ▸ Routines ▸ + , three blocks added |  |
 | `routines/library` | `screen` | `routines` | seeded library, Practice ▸ Routines, several routines saved |  |
@@ -113,4 +115,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-96 shots across 18 pages.
+98 shots across 19 pages.

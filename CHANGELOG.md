@@ -12,6 +12,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **Exercises, songs, loops and routines can now say where you learned them.** A **Where you
+  learned it** section on each one holds links out to the lesson, tab page, course or teacher's
+  write-up the thing came from — paste an address, name it if you want, tap it to open it in its
+  own app. Routines get this too, which is the point: a course belongs to a *session*, not to a
+  single drill, and until now a routine built around week 3 of something had nowhere to say so.
+  Links never appear on a run screen — a link you tap mid-session is a session you've left — and
+  Red Moon never fetches anything from them: no titles, no thumbnails, no requests. Deleting the
+  exercise, song, loop or routine deletes its links with it (unlike notes and takes, which
+  outlive what they were about). ADR 0167.
+
 ### Changed
 - **Help now describes both halves of the app, not just the loop.** "What is Red Moon Practice?"
   and "Where do I start?" both ended by saying the loop was the whole app in miniature and
@@ -22,6 +33,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   promotional text say the same thing; the reasoning is in `docs/positioning.md`.
 
 ### Fixed
+- **Two more places the app called itself Pocket, and a lint so there is no third time.** The
+  reference-link editor's footer and its rejection message both used the internal name. The footer
+  was caught by opening a screenshot; the rejection message only appears after a failed save, so
+  nothing would have shown it. A SwiftLint rule (`internal_name_in_user_copy`) now fails the build
+  on the word *Pocket* inside any user-facing string literal in the app target — the check the two
+  earlier fixes needed and did not have.
 - **The app calls itself Red Moon in the two places it used to call itself Pocket.** *Pocket* is the
   internal name — the Xcode target and the bundle id — and it had leaked into two pieces of shipped
   copy, both on the freeform drill: the template picker's one-liner ("anything Pocket doesn't

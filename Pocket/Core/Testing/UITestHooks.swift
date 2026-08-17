@@ -36,4 +36,16 @@ enum UITestHooks {
     /// cold simulator. Every wait that guessed at that gap with a hardcoded duration is what
     /// flaked. Tests wait on this instead, once, and then assert against a settled app.
     static let homeSeedingComplete = "home.seedingComplete"
+
+    /// The URL field on the reference-link editor (ADR 0167) — the gate that says *this sheet is
+    /// open*.
+    ///
+    /// It exists because the two obvious gates both failed. `navigationBars["Add a link"]` is not
+    /// dependable for a sheet (`capture()` learned the same and resolves the title inside the bar's
+    /// subtree), and it is a phrase the presenting screen's own button already carries, so it is one
+    /// mistake away from being satisfiable before the sheet opens at all. `buttons["Paste"]` was the
+    /// second attempt: `PasteButton` is a system control whose exposed label is Apple's to change
+    /// and to localise, so gating on it is a guess about somebody else's accessibility text.
+    /// An identifier we set ourselves is neither.
+    static let referenceLinkField = "reference.linkField"
 }

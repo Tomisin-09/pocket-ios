@@ -66,6 +66,10 @@ struct RoutineDetailView: View {
     /// routine has a temporary `persistentModelID` that flips on the first save, which would dismiss
     /// the reps editor mid-edit if keyed on it (ADR 0090 / swiftdata-gotchas).
     @State var repsEditorItem: StableRef<RoutineItem>?
+    /// The reference link being added or edited (ADR 0167). Internal so the `+References` extension
+    /// binds it. Held here because a sheet presented from inside the `List` does not present — see
+    /// `ReferenceLinkEditing`.
+    @State var editingReference: ReferenceLinkDraft?
 
     /// The session length the user asked the planner for, in minutes — set only on a provisional
     /// generated session so the review screen can show its estimate against a soft budget (R3).
@@ -183,6 +187,11 @@ struct RoutineDetailView: View {
 
             lengthSection
 
+            // Where this session came from (ADR 0167). Lives in
+            // `RoutineDetailView+References.swift` — the sandbox makes this surface the odd
+            // one out among the five that host a section, in three ways written up there.
+            referencesSection
+
             if canAddBlocks {
                 Section {
                     if insertingRests {
@@ -220,6 +229,10 @@ struct RoutineDetailView: View {
                                               onToggle: toggleUnit) })
         .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
         .sheet(item: $repsEditorItem) { repsEditorSheet($0.value) }
+        // Attached to the `List`, never inside it — see `ReferenceLinkEditing`. Writes into the
+        // sandbox and defers the save, so links follow this screen's Cancel/Save contract.
+        .referenceLinkEditing($editingReference, owner: routine, accent: PocketColor.practice,
+                              context: editContext, savesImmediately: false)
         .navigationDestination(item: $previewTarget) { blockPreview($0) }
     }
 

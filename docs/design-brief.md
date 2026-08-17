@@ -259,6 +259,15 @@ elsewhere is the problem. *"Keep the lesson you're following — put a link on t
 exercise"*, not *"replace your scattered resources"*. Applies to the music too, which is
 the narrower form `PROJECT.md:9` already states.
 
+**That example stopped being hypothetical on 2026-08-17.** ADR 0167 shipped it: a
+**Where you learned it** section on exercises, songs, loops and routines. Read the copy
+there as the worked instance of this principle — the empty state says what the section is
+*for* ("Nothing linked yet — add the lesson, tab or course this exercise came from"),
+never what the player has failed to do; the count is never mentioned, let alone judged;
+and the app opens the source **in its own app** rather than embedding it, because
+embedding is a small step towards being the source. The section header is the musician's
+phrasing (principle 4) over the productivity tool's *Resources*.
+
 **2. No shame.** The app never grades your *playing* (ADR 0070) and never grades your
 *habits* either. It does not congratulate you for consistency or note your absence.
 Concretely, and enforced:

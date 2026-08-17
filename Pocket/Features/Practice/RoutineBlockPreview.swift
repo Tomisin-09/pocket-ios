@@ -96,6 +96,9 @@ struct ExerciseBlockPreview: View {
                                        runMinutes: runMinutes, authoredMinutes: authoredMinutes,
                                        tint: PocketColor.practice)
                 }
+                // Read-only here (ADR 0167): checking what is in a session without starting it is a
+                // reading moment, so the preview shows the sources and sends editing to Details.
+                ReferencesCard(owner: exercise, accent: PocketColor.practice)
                 if let strumPattern {
                     PreviewAudioButton(isPlaying: strumPreview.isPlaying,
                                        idleTitle: "Hear the strum") {

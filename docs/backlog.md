@@ -4,6 +4,34 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## `uk-site` needs a route for `/redmoon/manual/references` (logged 2026-08-17) — BLOCKING
+
+**One page of the user manual currently has no way to be read.** ADR 0167 added
+`docs/manual/references.md` ("Where you learned it"), and this repo is the canonical author of the
+manual while the `.co.uk` site is only a rendering target — **one markdown file, one route, no
+exceptions** (`docs/manual/README.md`). The route half of that contract lives in the *other* repo
+and was not added, because it cannot be: it is a separate codebase.
+
+Until it exists, four manual pages (`exercises`, `songs`, `looping`, `routines`) plus three
+reference-wing pages link to a page that 404s. Nothing in this repo can detect that —
+`check-manual.py` validates markers, citations and quoted source, and has no opinion about whether
+the site renders a file.
+
+What's needed:
+
+- A route at `/redmoon/manual/references` rendering `docs/manual/references.md`, alongside the
+  nineteen that already exist.
+- The manual's **index/nav** on the site updated. Worth checking whether it mirrors the spine order,
+  which changed in the same commit: the pages are now grouped under **the audio half** / **the
+  session half** / **around both halves** / **the rest**, with `references` deliberately in neither
+  half. If the site's nav is a hand-kept list, it is a second place that ordering lives and will
+  drift.
+- ⚠ `uk-site` **auto-deploys to prod on every push** — see the `redmoon-marketing-site` note. There
+  is no staging step, so the route and the nav change want to land together.
+
+Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
+is the deliverable ADR 0165 defines.
+
 ## Where to pick up (2026-08-02)
 
 Three things are parked, in the order they'd sensibly resume:
@@ -292,7 +320,7 @@ a fumble matter more, not less.
 reading that section's tempo — which is what a trailing window produces and an all-taps mean
 cannot. See the next entry.
 
-## A song whose tempo changes at a section — NEXT (would be ADR 0167)
+## A song whose tempo changes at a section — NEXT (would be ADR 0168)
 
 **The observation.** A song that runs 92 in the verse and 78 in the bridge cannot be gridded.
 Set 92 and the grid is wrong for the whole bridge *and* wrong from the bridge to the end,
@@ -1437,7 +1465,9 @@ cost, and that cost should be weighed against the flag's value at that point rat
   **not** `@Attribute(.externalStorage)`, which is used nowhere here and is the wrong shape for
   CloudKit — and viewing is at the *choosing* moment, never mid-practice (ADR 0077). Still open:
   the upload path (photo picker? camera? files?), downscale on import, a per-owner cap, and an
-  alt-text field for VoiceOver. Read `docs/swiftdata-gotchas.md` first: binary blobs on a `@Model`
+  alt-text field for VoiceOver. **The URL half shipped 2026-08-17** — `ReferenceLink` exists, with
+  `kindRaw` already carrying `.image`, so the image half is now a pure addition to a live table
+  rather than a retype. Read `docs/swiftdata-gotchas.md` first: binary blobs on a `@Model`
   are exactly the class of thing that behaves in the simulator and bites on device.
 
 **Branding — SVG logo swap — DONE 2026-07-29.**
@@ -2927,7 +2957,9 @@ Ordered by value, highest first.
    isFavorite, presetSlug, items, and nothing else), unlike `Exercise.notes` and
    `Song.comment`. ADR 0167 covers the *pointer* half (a link out to where the routine
    came from) but not the *prose* half. Additive optional `String`, so the schema freeze
-   permits it.
+   permits it. **Sharpened 2026-08-17**: the pointer half is now built, so a routine's only
+   words about itself are its name and a list of link titles. That is the gap in its clearest
+   form — a routine can say *where* it came from and still not say *what it is for*.
 3. **A routine cannot be found.** No search, no sort — fixed newest-first, and the
    toolbar comment says so in as many words (`Pocket/Features/Practice/RoutineLibraryView.swift:93-94`).
    Compounding it: **Estimated length is hidden once the routine is saved**

@@ -1,0 +1,158 @@
+import Foundation
+import SwiftData
+
+/// What a reference link *is* — a pointer out of the app, stored as a `String` and never as a raw
+/// enum attribute (`docs/swiftdata-gotchas.md`: a custom enum stored on a `@Model` migrates cleanly
+/// in the simulator and traps on a device that has old data — ADR 0036 paid for that lesson).
+///
+/// `image` is carried from day one although ADR 0167 sequences images second. The field exists so
+/// phase 2 is a **pure addition** rather than a retype after the schema freeze, which
+/// `docs/backlog.md` records as now-or-never.
+enum ReferenceLinkKind: String, CaseIterable {
+    /// A URL the player typed or pasted — a lesson, a tab page, a course, a teacher's write-up.
+    case link
+    /// A picture of the source (a tab screenshot, a page of a book). **Not built** — ADR 0167
+    /// phase 2. Deliberately the non-parsing version of `docs/research/feasibility-tab-to-fretboard.md`,
+    /// whose OCR phase is explicitly not planned: a photo you look at collides with nothing.
+    case image
+}
+
+/// **Where you learned it** (ADR 0167): a URL and a title hung off the thing it explains — an
+/// exercise, a song, a loop or a routine.
+///
+/// Pocket does not own the material and does not own the method. Somebody else is teaching the
+/// thing, and the app's job is what happens between opening that resource and being able to play
+/// it. Until this model existed that was a claim in `PROJECT.md` and nothing in the store: an
+/// exercise built from a lesson came back a week later as a fretboard diagram with no provenance.
+///
+/// Follows the model discipline (ADR 0011/0036): a business `uid`, **declaration defaults** on
+/// every non-optional attribute (the CoreData 134110 rule — `init`-only defaults wipe the store),
+/// and any enum stored through a `String` backing field.
+///
+/// The owner is polymorphic through **typed optional relationships**, the shape ADR 0066 R4 chose
+/// over a generic `ownerKind + ownerID` and `JournalEntry` follows: exactly one of `exercise`,
+/// `song`, `loop`, `routine` is non-nil. A generic pair would move referential integrity out of
+/// SwiftData and into hand-written lookups that cannot cascade.
+///
+/// ⚠ **The owner inverses cascade** — the opposite of notes and takes, and the first question a
+/// reviewer asks. A note or a take nullifies (ADR 0151) because it is a record of *you*: a
+/// reflection you wrote outlives the loop it was about. A reference link is a record of *the
+/// owner* — it is a pointer to where **this exercise** came from, and it means nothing once the
+/// exercise is gone. Delete the owner, delete the pointer.
+///
+/// **Never filter on this in a `#Predicate`.** Optional-relationship predicates starve the main
+/// thread (`docs/swiftdata-gotchas.md`); fetch broadly and filter in memory.
+@Model
+final class ReferenceLink {
+    /// Stable business id — list diffing / selection / undo, like `Loop`/`Exercise`/`Routine`.
+    var uid: UUID
+
+    /// What the player calls this source ("Signals Music Studio — CAGED part 2"). Typed by hand:
+    /// nothing here fetches a page title, see `ReferenceURL`. Empty is allowed and renders as the
+    /// host, because making the player name a link before they may save it is friction in front of
+    /// the paste this feature exists for.
+    var title: String = ""
+
+    /// The destination, stored exactly as `ReferenceURL.normalised` produced it. Validated on save
+    /// to `http`/`https`; opened with `openURL`, which adds no web view and no capability.
+    var urlString: String = ""
+
+    /// Position within its owner's list — the player's order, not a ranking (ADR 0070). Contiguous
+    /// from zero after any add or delete.
+    var order: Int = 0
+
+    /// When the link was added. Not shown anywhere yet; kept so a later "recently added" read does
+    /// not need a migration.
+    var dateAdded: Date = Date.now
+
+    /// `ReferenceLinkKind` through a `String` — see the type's note. Read `kind`, never this.
+    var kindRaw: String = ReferenceLinkKind.link.rawValue
+
+    // MARK: - Owners (exactly one is non-nil)
+
+    /// The exercise this came from — a drill built out of somebody's lesson.
+    var exercise: Exercise?
+    /// The song this came from — a transcription, a tab page, a cover breakdown.
+    var song: Song?
+    /// The loop this came from — the one passage a video actually explains.
+    var loop: Loop?
+    /// The routine this came from — a course's week 3. **The most on-thesis owner and the half
+    /// nobody else models**: a course belongs to a session, not to a drill (ADR 0167).
+    var routine: Routine?
+
+    init(uid: UUID = UUID(),
+         title: String = "",
+         urlString: String = "",
+         order: Int = 0,
+         dateAdded: Date = .now,
+         kind: ReferenceLinkKind = .link,
+         exercise: Exercise? = nil,
+         song: Song? = nil,
+         loop: Loop? = nil,
+         routine: Routine? = nil) {
+        self.uid = uid
+        self.title = title
+        self.urlString = urlString
+        self.order = order
+        self.dateAdded = dateAdded
+        self.kindRaw = kind.rawValue
+        self.exercise = exercise
+        self.song = song
+        self.loop = loop
+        self.routine = routine
+    }
+}
+
+// MARK: - Derived
+
+extension ReferenceLink {
+    /// The stored `kindRaw` as its enum. An unrecognised string reads as `.link` rather than
+    /// crashing — a store written by a newer build must stay openable by an older one.
+    var kind: ReferenceLinkKind {
+        get { ReferenceLinkKind(rawValue: kindRaw) ?? .link }
+        set { kindRaw = newValue.rawValue }
+    }
+
+    /// The site this points at, for the row's subtitle. `nil` if the stored string somehow is not a
+    /// link we would accept today.
+    var displayHost: String? { ReferenceURL.displayHost(urlString) }
+
+    /// What the row's first line shows: the player's title, or the host when they saved without
+    /// naming it, or the raw string as a last resort. Never empty, never "Untitled" — a link with
+    /// no name is still a place, so we show the place.
+    var displayTitle: String {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty { return trimmed }
+        return displayHost ?? urlString
+    }
+
+    /// The destination to hand `openURL`, or `nil` if it is no longer openable.
+    var destination: URL? { ReferenceURL.normalised(urlString) }
+}
+
+// MARK: - Ordering
+
+extension ReferenceLink {
+    /// Links in the player's order. `@Relationship` arrays are not a dependable ordering, so the
+    /// order is read off the explicit `order` field — the same discipline as `Routine.orderedItems`
+    /// and `Song.loopsByStart`. `uid` breaks ties so a list never jitters between reads.
+    static func ordered(_ links: [ReferenceLink]) -> [ReferenceLink] {
+        links.sorted { lhs, rhs in
+            lhs.order == rhs.order ? lhs.uid.uuidString < rhs.uid.uuidString
+                                   : lhs.order < rhs.order
+        }
+    }
+
+    /// Renumber `links` contiguously from zero in their current order, so a delete never leaves a
+    /// hole that the next add lands in. Call after every add, delete or move.
+    static func renumber(_ links: [ReferenceLink]) {
+        for (index, link) in ordered(links).enumerated() where link.order != index {
+            link.order = index
+        }
+    }
+
+    /// The `order` a new link should take to land at the end of `links`.
+    static func nextOrder(after links: [ReferenceLink]) -> Int {
+        (links.map(\.order).max() ?? -1) + 1
+    }
+}

@@ -20,17 +20,47 @@ index is two orderings that drift apart.
 
 ### The spine — how to do a thing
 
+Grouped, since 2026-08-17, under the two halves the product is the **intersection** of
+(`docs/positioning.md` §1). The grouping is the argument: an unbroken list of fifteen pages that
+happens to open with looping reads as *this is a looping app with extras*, which is the claim
+`docs/positioning.md` establishes we cannot defend. Naming the halves says what the flat list was
+only ever able to imply. **No page moved and no prose moved** — the headings are new, the order
+inside them is the order that was already there.
+
+**Start here**
+
 | Page | The goal it serves | Status |
 |---|---|---|
 | `getting-started` | What this is, what you need, and a first session in three moves | Slice A |
+
+**The audio half — your own music, slowed right down**
+
+| Page | The goal it serves | Status |
+|---|---|---|
 | `songs` | Get your own music in, and find it again | Slice A |
 | `looping` | The loop workflow, end to end — the largest page | Slice A |
+
+**The session half — what you practise, and in what order**
+
+| Page | The goal it serves | Status |
+|---|---|---|
 | `exercises` | Run what shipped, then build your own | Slice B |
 | `routines` | Put exercises in an order and play them | Slice B |
 | `sessions` | Let the app plan a session around a goal | Slice B |
+
+**Around both halves**
+
+| Page | The goal it serves | Status |
+|---|---|---|
+| `references` | Keep the thread back to whoever taught you the thing | Slice D |
 | `journal-and-progress` | Write down what happened, and look back at it | Slice C |
 | `metronome` | The click on its own | Slice C |
 | `toolkit` | Tuner, saved chords, glossary, help | Slice C |
+
+**The rest**
+
+| Page | The goal it serves | Status |
+|---|---|---|
 | `subscription` | What's free, what Pro covers, how to start and stop | Slice C |
 | `privacy` | Where your data lives and what leaves the device | Slice C |
 | `gestures` | Every hold, drag, pinch and swipe in one place | Slice A |
@@ -53,13 +83,25 @@ first hour, and the way most players come in. Slice B is `exercises` · `routine
 session half, where the loops from Slice A become blocks in something you press play on. Slice C is
 `journal-and-progress` · `metronome` · `toolkit` · `subscription` · `privacy` — the rest of the app.
 The reference wing came last on purpose, so the how-tos already knew what they were linking into.
+Slice D is `references`, written with ADR 0167 rather than after it — the first page whose feature
+and whose prose landed in the same change.
 
-**On the order: A before B is a teaching order, not a ranking.** The app is the intersection of the
-audio half and the session half (`docs/positioning.md`), and neither is the thing the other is built
-around — earlier drafts of this file and of `getting-started` said the whole product was built around
-looping, which is a claim the market does not support. Looping still comes first here because it is
-what a new player does on day one and it needs no vocabulary. If you rewrite a page's framing, keep
-that distinction: **first** is about sequence, never about which half matters.
+**`references` is one page, not four paragraphs.** The section it describes sits on exercises,
+songs, loops *and* routines, so the four owner pages point at it and none of them restates it.
+Four copies of the same explanation is four things to forget to update, which is the failure this
+manual's whole discipline is written against.
+
+**On the order: A before B is a teaching order, not a ranking.** Neither half is the thing the other
+is built around — earlier drafts of this file and of `getting-started` said the whole product was
+built around looping, which is a claim the market does not support. Looping still comes first
+because it is what a new player does on day one and it needs no vocabulary. If you rewrite a page's
+framing, keep that distinction: **first** is about sequence, never about which half matters.
+
+The headings above are the second attempt at holding that line. The first was this paragraph on its
+own, and a paragraph asking readers not to draw the obvious inference from a list is weaker than a
+list that does not invite it. **`references` sits in neither half deliberately** — it hangs off
+exercises, songs, loops and routines alike, and putting it in one half would misfile the feature
+that exists to say the app is not the source for either.
 
 **The prose is complete.** What remains is Phase 5: shooting the images the markers describe.
 
@@ -227,6 +269,7 @@ anything unticked either written or added to the parked list above with a reason
 | Settings ×9 | `reference/settings` |
 | The paywall, the trial, restore and cancel | `subscription` |
 | Every hold, swipe and pinch | `gestures` |
+| Where you learned it — the section, the editor, what it refuses | `references` |
 | The app's own practice vocabulary | `terms` |
 | What leaves the device | `privacy` |
 

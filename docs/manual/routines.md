@@ -143,6 +143,12 @@ content, its tempo anchors, its staircase, and an audition — so you can check 
 without starting it. **Edit** is what unlocks the changes, so a routine cannot be rearranged by
 accident.
 
+A saved routine also carries **Where you learned it**, and this is the one that matters most: a
+course, a teacher's assignment, a book chapter belongs to a whole session rather than to any single
+drill in it. It sits behind the same **Edit** gate as the blocks — you can read the links at any
+time, and adding or removing one is a change you keep with **Save**. A block's preview shows the
+drill's own links too, read-only. See [Where you learned it](references.md).
+
 ## Next
 
 - [Let the app plan a session around a goal](sessions.md)

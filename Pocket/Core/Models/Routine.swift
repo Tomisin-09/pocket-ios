@@ -63,6 +63,14 @@ final class Routine {
     /// discipline as `Song.loopsByStart`.
     var orderedItems: [RoutineItem] { RoutineItem.ordered(items) }
 
+    /// Where this session came from (ADR 0167) — a course's week 3, a teacher's assignment. **The
+    /// most on-thesis owner of the four**: a course belongs to a sitting, not to a single drill,
+    /// and it is the half of this feature nobody else models. It is also, for now, the *only* prose
+    /// a routine carries — `Routine` still has no description or notes field of its own, a gap
+    /// `docs/backlog.md` keeps open. **`.cascade` like `items`.** Additive (CoreData 134110 rule).
+    @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.routine)
+    var references: [ReferenceLink] = []
+
     init(name: String = "", dateAdded: Date = .now) {
         self.uid = UUID()
         self.name = name

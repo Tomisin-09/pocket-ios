@@ -180,6 +180,14 @@ final class Loop {
     @Relationship(deleteRule: .nullify, inverse: \RoutineItem.loop)
     var routineItems: [RoutineItem] = []
 
+    /// Where this passage is explained (ADR 0167) — the video that covers *this* eight bars, which
+    /// is usually more specific than anything hung off the whole song. **`.cascade`, the opposite
+    /// of `journal` and `recordings` above**: ADR 0151 keeps a take alive past its loop because the
+    /// take is the player's; a pointer to a lesson about a region that no longer exists is not.
+    /// Additive (CoreData 134110 rule).
+    @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.loop)
+    var references: [ReferenceLink] = []
+
     init(name: String, start: Double, end: Double, speed: Double, repeats: Int) {
         self.uid = UUID()
         self.name = name
