@@ -106,7 +106,7 @@ Pocket/
 PocketTests/      Unit tests (pure logic)
 PocketUITests/    XCUITest flows
 infrastructure/  Terraform for the Phase 4 Claude proxy (prod)
-docs/          architecture.md, decisions/ (ADRs), practice-techniques.md, research/ (3rd-party refs, git-ignored raw)
+docs/          architecture.md, positioning.md (who we're up against and the line we take), decisions/ (ADRs), manual/ (user manual), practice-techniques.md, research/ (3rd-party refs, git-ignored raw)
 ```
 
 ## CI/CD

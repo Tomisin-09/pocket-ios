@@ -12,6 +12,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+- **Help now describes both halves of the app, not just the loop.** "What is Red Moon Practice?"
+  and "Where do I start?" both ended by saying the loop was the whole app in miniature and
+  everything else was a way of doing more of it. It isn't: the loops you save become blocks in a
+  routine you press play on, and that session half is half the reason the app exists. The looping
+  answer still comes first — it's what you do on day one — but it now says what happens to a loop
+  tomorrow instead of implying there is nothing else. The manual's opening page and the App Store
+  promotional text say the same thing; the reasoning is in `docs/positioning.md`.
+
 ### Fixed
 - **The app calls itself Red Moon in the two places it used to call itself Pocket.** *Pocket* is the
   internal name — the Xcode target and the bundle id — and it had leaked into two pieces of shipped

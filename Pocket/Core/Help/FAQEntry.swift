@@ -63,17 +63,23 @@ extension FAQEntry {
     static let all: [FAQEntry] = [
         // MARK: Getting started
         .init(question: "What is Red Moon Practice?",
-              answer: "A practice room for your own material. Bring in a song you own, mark the bars "
-                + "you can't play yet, slow them down, and run them against a click until they're "
-                + "yours. Alongside that: drills you build yourself, a tuner and metronome, chord and "
-                + "theory tools, and a journal of what you actually did.",
+              answer: "A practice room that runs on music you already own. It holds two things that "
+                + "usually live in separate apps. One is the audio: bring in a song, mark the bars "
+                + "you can't play yet, slow them down and run them against a click. The other is "
+                + "the session: those loops become blocks you can line up with your own drills and "
+                + "press play on. Alongside both, a tuner and metronome, chord and theory tools, "
+                + "and a journal of what you actually did. It doesn't teach you the song — it's "
+                + "where you go to get it under your fingers.",
               area: .gettingStarted),
         .init(question: "Where do I start?",
               answer: "Import a song and play it. When the passage that keeps falling apart comes "
                 + "up, tap Loop where it starts and Loop again where it ends — that span now "
                 + "repeats. Slow it right down, slower than feels necessary, and let it go round. "
-                + "When it's clean, nudge the speed up. That loop is the whole app in miniature; "
-                + "everything else is a way of doing more of it.",
+                + "When it's clean, nudge the speed up. That's one half of the app, and it's the "
+                + "half to start with. The other half is what to do with it tomorrow: save that "
+                + "loop and it becomes a block in a routine, next to drills you built and other "
+                + "songs you're working on. Most people find the loop first and the routine a "
+                + "week later.",
               area: .gettingStarted),
         .init(question: "Do I need to read music?",
               answer: "No. Exercises are drawn on a fretboard, a strum lane or a chord grid, and songs "
