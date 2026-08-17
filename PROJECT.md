@@ -10,6 +10,17 @@ A native iOS guitar-practice tool that attaches practice data (loops, markers,
 notes, session history, routines) to songs in the user's music library. The app
 is an intelligence layer over the library — it never replaces it.
 
+**The position, stated once:** Pocket is the intersection of two categories that
+normally ship separately — a **session conductor** (routines, blocks, history) and a
+**real audio engine over the player's own DRM-free files** (waveform, A/B span,
+time-stretch, markers, takes, a ramp against a click). The practice organisers have no
+engine; the slow-downers model no session. Holding both is the claim; *"we have
+routines"* is not, because nine competitors have those. The multiplier rule above
+generalises from the user's **music** to their **learning sources**: we reinforce
+whatever they already learn from — a lesson, a teacher, a course — and never ask them to
+move it here. Full argument, competitor roster and the surfaces still contradicting it:
+**`docs/positioning.md`** (2026-08-16).
+
 - **Platform:** iOS 17+, phone-first, Swift / SwiftUI.
 - **Name:** **Red Moon Practice** on the App Store; **Pocket** everywhere in the
   code. The Xcode target, the bundle id and this repo keep the internal name —

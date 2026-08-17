@@ -1428,12 +1428,17 @@ cost, and that cost should be weighed against the flag's value at that point rat
 
 **Parked pending a clearer product story:**
 
-- **Image attachments on exercises** (reference photos). Parked until we can articulate what the user
-  gains. When picked up, the open design questions are: how the user uploads (photo picker? camera?
-  files?) and how they view them mid-practice — plus `@Attribute(.externalStorage)`, downscale on
-  import, a per-exercise cap, and an alt-text field for VoiceOver. Read
-  `docs/swiftdata-gotchas.md` first: binary blobs on a `@Model` are exactly the class of thing that
-  behaves in the simulator and bites on device.
+- ~~**Image attachments on exercises** (reference photos). Parked until we can articulate what the
+  user gains.~~ **UNPARKED 2026-08-16 — ADR 0167 is the articulation.** The gain is not "attach a
+  picture", it is *keep the thread back to where this came from*: a reference is owned by an
+  exercise, song, loop or **routine**, and a tab screenshot is the image form of the URL 0167
+  ships first. Two of the open questions are now answered by that ADR: storage follows
+  `SongFileStore`/`RecordingStore` (bytes in `Application Support/`, leaf filename in the model) —
+  **not** `@Attribute(.externalStorage)`, which is used nowhere here and is the wrong shape for
+  CloudKit — and viewing is at the *choosing* moment, never mid-practice (ADR 0077). Still open:
+  the upload path (photo picker? camera? files?), downscale on import, a per-owner cap, and an
+  alt-text field for VoiceOver. Read `docs/swiftdata-gotchas.md` first: binary blobs on a `@Model`
+  are exactly the class of thing that behaves in the simulator and bites on device.
 
 **Branding — SVG logo swap — DONE 2026-07-29.**
 
@@ -2898,3 +2903,68 @@ active-loop Loops panel" is **resolved by reuse** — no new panel needed. One f
   **"Loop control on left"** toggle (`AppSettings.transportLoopOnLeft`, default off = Marker-left /
   Loop-right) which `WaveformTransportBar` reads to swap the two idle flanking controls. Applies to
   the idle buttons only — while a loop is active the compact column + colour strip keep their sides.
+
+## Routines — the container that isn't yet a system (logged 2026-08-16)
+
+Came out of the positioning work (`docs/positioning.md`). Once the market was actually
+checked, the evidence was hard to miss: **routines have less surface than looping does.**
+A routine is a container you fill and press play on; it is not yet a thing that
+accumulates. If the intersection position holds — a session conductor over a real audio
+engine — this is the half that needs to catch up.
+
+Ordered by value, highest first.
+
+1. **A routine accumulates no meaning. (Highest-value gap.)** `PracticeRun.routineUID`
+   is written on every run (`Pocket/Core/Stats/PracticeLogWriter.swift:35,46`, from all
+   six run surfaces) and **never read back anywhere**. No run count, no last-run
+   summary, no "you've run this eleven times". The one object that should have a history
+   is the only one without one. AxeLog ships exactly this. The data is already on disk;
+   this is a read, not a schema change — which is what makes it the cheapest big win on
+   the list. ⚠ Whatever is shown must be **facts, not verdicts** (design-brief §3.5 no-shame):
+   a count and a date, never "on track" or a consistency score, and never a streak.
+2. **A routine cannot explain itself.** No description or notes field at all
+   (`Pocket/Core/Models/Routine.swift` — uid, name, dateAdded, lastPracticed,
+   isFavorite, presetSlug, items, and nothing else), unlike `Exercise.notes` and
+   `Song.comment`. ADR 0167 covers the *pointer* half (a link out to where the routine
+   came from) but not the *prose* half. Additive optional `String`, so the schema freeze
+   permits it.
+3. **A routine cannot be found.** No search, no sort — fixed newest-first, and the
+   toolbar comment says so in as many words (`Pocket/Features/Practice/RoutineLibraryView.swift:93-94`).
+   Compounding it: **Estimated length is hidden once the routine is saved**
+   (`RoutineDetailView+Length.swift`, `lengthSection` gates on `!existsInStore`), so a
+   stored routine never tells you how long it is — the single most useful thing to sort
+   or choose by.
+4. **A routine cannot be given away.** No export, no import, no share; `Routine` is not
+   `Codable`. ADR 0064 named the *exercise* as the shareable unit, but **the routine is
+   what a teacher hands over** — and under the multiplier thesis, a teacher handing over
+   a session is the purest form of the product working. Thesis-critical if the
+   positioning holds.
+5. **Hand-authoring cannot reach the model.** Every hand-added block is `.focused`
+   (`RoutineItemRow.swift:6-9` states the reasoning); `warmup` and `play` are
+   generator-only. The model carries three kinds and the editor can author one.
+6. **One seeded routine, exercise-only.** Deliberate — "the demo, shown whole", and the
+   right call under progressive disclosure — but thin if routines become the headline.
+   Note the tension with ADR 0144: the seam that would make a routine free forever is
+   inert on purpose (`AccessPolicy.freeTasteRoutineSlugs`, and `docs/positioning.md` §9
+   rejects re-opening it).
+7. **Rest length is one global setting**, though `RoutineBudget` already models per-rest
+   min/default/max minutes for planning. The model is more expressive than the editor.
+8. **No routine UI tests.** `PocketUITests` has no routine file; ADR 0127's authoring
+   gestures are device-verified only. Every other library screen has coverage.
+
+### Progressive disclosure — name it before building it
+
+`hasEarnedAName` (`Pocket/Features/Home/HomeView+ProfileMoment.swift:50-52`) is the
+**only** behaviour-gated reveal in the app, and nothing generalises it. Deliberately not
+an ADR yet — an ADR for "we should drip-feed" with no mechanism is over-engineering.
+
+Two constraints any design must satisfy, both from `docs/positioning.md` §4:
+
+- **Reveal by relevance and behaviour, never by attainment or permission.** Never lock;
+  just don't lead with it. A level system fails this test.
+- **It must fit inside the one-month trial** (ADR 0144), or the drip hides the feature
+  that would have converted the player. Hard commercial bound.
+
+Likeliest first mechanism: generalise `hasEarnedAName` into a small derived "what has
+this player met?" read over existing data — exercises practised, loops captured, runs
+logged. **No new schema.** Write the ADR when there is a concrete proposal, not before.

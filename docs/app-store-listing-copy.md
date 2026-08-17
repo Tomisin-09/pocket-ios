@@ -50,8 +50,26 @@ Alternates:
 - `The guitar woodshed in your pocket` — too long (34); trim if you love it.
 
 ## Promotional text — 170 char max (editable anytime, no review)
-> Bring your own tracks and loop the hard bar until it's yours — slow it down,
-> keep the pitch, and drill scales, chords and routines between takes. *(140)*
+> Loop the hard bar in your own tracks and slow it down without dropping the
+> pitch — then line those loops up with your drills into a session you press
+> play on. *(157)*
+
+*Reframed 2026-08-16 (`docs/positioning.md` §6). The promotional field is the **only**
+listing layer editable while 1.1 is live — subtitle, keywords, description and
+screenshots are locked until 1.2 — so it carries the intersection claim on its own for
+now. It states both halves in one sentence: the audio engine on your own files, and the
+session those loops feed. Deliberately **not** "we have routines" — nine other apps have
+routines; the claim is holding both ends.*
+
+**Locked until 1.2, then reframe (`docs/positioning.md` §7):**
+
+- **Subtitle** stays *"Loop, slow down, learn songs"* even in 1.2. That is the
+  acquisition layer working correctly — *"slow downer"* is a real search query and
+  *"practice routine app"* is not. Do not trade a working keyword for a positioning
+  statement.
+- **Description**: *"Build a session"* is currently the 4th block and routines are one
+  bullet inside it. In 1.2 it moves up beside *"Loop and slow down"*, and the opening
+  paragraph names both halves rather than only the waveform.
 
 ## Keywords — 100 char max, comma-separated, NO spaces after commas
 Don't spend keyword space on words already in the name ("practice") or subtitle.

@@ -207,6 +207,15 @@ original reasoning stands exactly as written.
 - **We are choosing not to teach exercises, routines, or the planner this way.** Those seed with
   content and are closer to conventions the player has met before. If they need guidance, it is a
   separate decision and probably a different mechanism.
+
+  > **⚠ Under review, 2026-08-16 — a pointer, not a reversal.** `docs/positioning.md` §6/§7 finds
+  > that this clause is one of eight shipped surfaces arguing loop-first, while the defensible
+  > position is the **intersection** of a session conductor and a real audio engine. If routines
+  > carry half the position, onboarding teaching none of them is a live question. The proposal on
+  > the table is *"a separate decision and probably a different mechanism"* taken literally: a
+  > **deferred fourth beat at the second session**, where the loop the player already saved becomes
+  > a routine block — not in the first ninety seconds, and still behaviour-triggered per §2. **This
+  > ADR's decision stands until that is written up.** Nothing here is amended by this note.
 - **Dismissal is permanent, so a mis-tap costs the player the flow.** Mitigated by catalog re-entry,
   and preferred to any design that keeps asking.
 - **Activation cannot be measured completely.** §8 is the record of that, and of why we are proceeding

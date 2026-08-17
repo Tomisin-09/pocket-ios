@@ -2,8 +2,13 @@
 
 Red Moon Practice is a practice room for music you already own. You bring in an audio file, mark the
 few bars that keep falling apart, slow them down, and loop them against a click until they stop
-falling apart. Everything else in the app — drills, routines, the tuner, the journal — is built
-around that one move.
+falling apart. That is the first move, and this page walks you through it.
+
+It is not the whole app. The other half is what you do with those loops afterwards: a saved loop
+becomes a block in a routine, sitting next to drills you built and other songs you are working on,
+and the routine is what you press play on when you have twenty minutes and no plan. The tuner, the
+metronome, the chord tools and the journal fill in around both. Most people meet the looping first
+and the routines a week or two later, which is the order this manual is written in.
 
 **See Help & FAQs: "What is Red Moon Practice?"**
 

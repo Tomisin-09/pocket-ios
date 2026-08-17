@@ -49,11 +49,17 @@ index is two orderings that drift apart.
 | `reference/settings` | Reaching Settings, and each of its nine destinations | Phase 4 |
 
 Written in slices: Slice A is `getting-started` · `songs` · `looping` · `gestures` · `terms` — the
-first hour, and the path the whole product is built around. Slice B is `exercises` · `routines` ·
-`sessions` — the practice side, which is the half of the app that has no waveform in it. Slice C is
-`journal-and-progress` · `metronome` · `toolkit` · `subscription` · `privacy` — the rest of the app,
-minus the waveform. The reference wing came last on purpose, so the how-tos already knew what they
-were linking into.
+first hour, and the way most players come in. Slice B is `exercises` · `routines` · `sessions` — the
+session half, where the loops from Slice A become blocks in something you press play on. Slice C is
+`journal-and-progress` · `metronome` · `toolkit` · `subscription` · `privacy` — the rest of the app.
+The reference wing came last on purpose, so the how-tos already knew what they were linking into.
+
+**On the order: A before B is a teaching order, not a ranking.** The app is the intersection of the
+audio half and the session half (`docs/positioning.md`), and neither is the thing the other is built
+around — earlier drafts of this file and of `getting-started` said the whole product was built around
+looping, which is a claim the market does not support. Looping still comes first here because it is
+what a new player does on day one and it needs no vocabulary. If you rewrite a page's framing, keep
+that distinction: **first** is about sequence, never about which half matters.
 
 **The prose is complete.** What remains is Phase 5: shooting the images the markers describe.
 

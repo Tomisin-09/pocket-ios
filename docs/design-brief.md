@@ -246,6 +246,52 @@ Elsewhere, don't reach for a literal hex in views; go through
   control that spells out its state in text (`↑ Recently Added`) drags the inline title off-centre and
   makes it jump as the state changes. State shows as a filled icon variant, never as a wider one.
 
+### 3.5 Voice & tone
+
+The design system's copy half. These govern **every user-facing string in the app** —
+FAQ answers, empty states, button labels, toasts, onboarding, the manual, the store
+listing. The full argument behind them is `docs/positioning.md`; this is the part that
+decides wording.
+
+**1. Multiplier, never replacement.** We do not own the material or the method. Copy
+never asks the player to move their learning here, and never implies that what they use
+elsewhere is the problem. *"Keep the lesson you're following — put a link on the
+exercise"*, not *"replace your scattered resources"*. Applies to the music too, which is
+the narrower form `PROJECT.md:9` already states.
+
+**2. No shame.** The app never grades your *playing* (ADR 0070) and never grades your
+*habits* either. It does not congratulate you for consistency or note your absence.
+Concretely, and enforced:
+
+- **No streaks, no "this year", no heatmaps, no consistency scores.**
+  `scripts/check-manual.py` C7 (`:423`, `:426`) fails the build if `streak` or `this
+  year` appears on a published manual page. Treat that as the floor, not the ceiling —
+  the same words are banned in-app by this principle, where no checker watches.
+- **No second person past tense about failure.** Never *"you haven't practised since
+  Tuesday"*. A gap in the history is data the player can read for themselves; the app
+  does not narrate it.
+- **Jumping between resources is normal, not a symptom.** The competitor line is *"you
+  are scattered, we will fix you"*. Ours is *"scattered is normal — here is what makes
+  it add up."*
+- Numbers may be **shown**; they may not be **judged**. A tempo, a run count and a date
+  are facts. "On track", "behind", "your best week" are verdicts.
+
+**3. Reveal by relevance, never by attainment.** The app carries the surface area of two
+categories, so not everything can be on screen at once — but withholding must never read
+as a lock or a reward. Never *"unlock"*, *"earn"*, *"level"*, *"you're ready for…"*.
+Surface a feature when it becomes relevant to what the player just did, and let it be
+found at any time by anyone looking. `hasEarnedAName`
+(`Pocket/Features/Home/HomeView+ProfileMoment.swift:50-52`) is the one shipped example
+of the good form: the invitation waits for a first exercise or loop, but nothing is
+gated. (Its internal name predates this principle and reads more like attainment than
+the behaviour it actually checks.)
+
+**4. Musician's voice, not a productivity tool's.** The ethos in §1 applied to words:
+unhurried, plain, specific to playing. *"Slow it right down, slower than feels
+necessary"* — not *"optimise your practice efficiency"*. Rituals get real names; nothing
+is a "task" or an "item" if it is a loop, a drill or a take. This is the principle
+`docs/backlog.md:2650-2656` parked *"until acted on"*.
+
 ---
 
 ## 4. Screens & components
