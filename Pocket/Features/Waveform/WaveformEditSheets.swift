@@ -36,6 +36,10 @@ struct LoopEditSheet: View {
     // `@Query` of every `Loop`: this sheet opens over playing audio, and fetching (and
     // faulting) the whole loop table during presentation is what made that open feel slow.
     @State var tagPool: [String] = []
+    /// The reference link being added or edited (ADR 0167). Held at this level, like the journal
+    /// sheet below it — a sheet presented from inside this `Form` dismisses *this* sheet instead of
+    /// opening. See `ReferenceLinkEditing`.
+    @State var editingReference: ReferenceLinkDraft?
     @State private var name: String
     @State private var colorChoice: LoopColorChoice
     // Structured practice fields (ADR 0036 slice 3) — edited as local copies, written
@@ -177,6 +181,12 @@ struct LoopEditSheet: View {
                 practiceSection
                 backingTrackSection
                 journalSection
+                // Where this passage is explained (ADR 0167). Beside the journal on purpose: both
+                // are things you read about the loop rather than settings you tune, and both write
+                // straight through rather than waiting for Done — a link is a discrete add, like a
+                // journal entry, not part of the local-copy edit Cancel discards.
+                ReferencesSection(owner: loop, accent: PocketColor.practice,
+                                  editing: $editingReference)
                 tagsSection
                 Section {
                     LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
@@ -218,6 +228,7 @@ struct LoopEditSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .referenceLinkEditing($editingReference, owner: loop, accent: PocketColor.practice)
         .sheet(isPresented: $showingJournal) {
             // Authorable again from song loops (ADR 0088, reversing 0058's waveform read-only) —
             // the same `JournalWriter` path the Practice run screen uses, each entry snapshotting

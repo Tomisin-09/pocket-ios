@@ -94,6 +94,8 @@ sheet. Marker names can also float over the timeline as you play up to them — 
 - **`Train your ear`** and **`Improvise`** — the two alternative ways to run this loop.
 - **`Backing track`** — marks the span as something to solo over.
 - **`Journal`** — notes written against this loop, showing a count or `None`.
+- **`Where you learned it`** — links out to whatever explains this passage, with an `Add a link`
+  button. See [where you learned it](../references.md).
 - **`Tags`** — your own labels, plus a row of suggestions.
 - **`Colour`** — how the span is drawn on the waveform, including `Custom colour`.
 - **`Delete loop`** at the bottom.

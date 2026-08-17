@@ -310,6 +310,14 @@ final class Exercise {
     @Relationship(deleteRule: .nullify, inverse: \Song.linkedExercises)
     var linkedSongs: [Song] = []
 
+    /// Where this drill came from (ADR 0167) — the lesson, tab page or course it was built out of.
+    /// **`.cascade`, unlike `journal` and `recordings` right above it.** Those nullify because they
+    /// are records of *you* and outlive the drill; a reference link is a record of *this exercise*
+    /// and means nothing without it. Declaration default keeps the migration additive (CoreData
+    /// 134110 rule). Read `referencesInOrder`, never this array's raw order.
+    @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.exercise)
+    var references: [ReferenceLink] = []
+
     init(name: String = "",
          currentTempo: Int = 80,
          commandTempo: Int? = nil,

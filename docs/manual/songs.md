@@ -90,6 +90,9 @@ reach the same details.
 Songs have no favourite. Exercises, routines and saved loops do, and those you can pin; a song is
 found by searching, sorting or filtering instead.
 
+**Details** also carries **Where you learned it** — the transcription, tab page or cover breakdown
+you worked from. See [Where you learned it](references.md).
+
 **Edit song** carries **Title**, **Artist**, **Album** and **Genre**, a **Collections** section
 where you add your own labels, a key picker, and a **Notes** field for anything you want to tell
 yourself later — a tuning, a capo position, what to listen for.

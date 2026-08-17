@@ -27,6 +27,7 @@
     {
       "skippedTests" : [
         "ManualMetronomeShots",
+        "ManualReferenceShots",
         "ManualSettingsShots",
         "ManualShotsUITests",
         "ManualToolkitShots"

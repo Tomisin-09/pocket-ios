@@ -54,7 +54,10 @@ order.
 `List options` holds sorting, and `Generate a quick session`, which skips the goals entirely.
 
 Tapping a row opens the routine, where its blocks are listed and can be reordered, added to and
-removed. Procedure is in [routines](../routines.md).
+removed. Below the blocks and the length it carries a `Where you learned it` section — read-only until you
+tap `Edit`, which is what puts `Add a link` on it, the same gate the blocks are behind. See
+[where you learned it](../references.md). A generated session that has not been saved yet does not
+show the section at all. Procedure is in [routines](../routines.md).
 
 ## `Exercises`
 
@@ -90,7 +93,9 @@ Opened by tapping a drill.
 - **A `Journal` and `Takes` bar** holds what you have already written and recorded against this
   drill.
 - **`Start training`** commits and runs. Beside it, the **record** control arms a take.
-- **`Exercise details`** — the ⓘ — opens the drill's reference sheet.
+- **`Exercise details`** — the ⓘ — opens the drill's reference sheet, which carries its description,
+  progress, linked songs, a `Where you learned it` section with an `Add a link` button, the feel and
+  the template chip.
 - **The ✏️** writes a [journal note](tools-and-journal.md#journal) without touching the run.
 
 While running, the screen shows the live BPM, a count-in if you have one turned on (`Counting in`),

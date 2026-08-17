@@ -48,6 +48,7 @@ SHOOT_CLASSES=(
     ManualSettingsShots
     ManualToolkitShots
     ManualMetronomeShots
+    ManualReferenceShots
 )
 
 # `POCKET_SHOOT_ONLY` narrows the run to one class (or a space-separated few) while a new area is

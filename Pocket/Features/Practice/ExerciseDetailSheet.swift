@@ -28,6 +28,10 @@ struct ExerciseDetailSheet: View {
     /// full fetch is cheap; it becomes worth revisiting when a Progress screen queries it per render.
     @Query(sort: \PracticeRun.startedAt) private var practiceRuns: [PracticeRun]
     @State private var showingSongPicker = false
+    /// The reference link being added or edited (ADR 0167). Held here, not in `ReferencesSection`,
+    /// because a sheet presented from inside this `Form` dismisses *this* sheet instead of opening —
+    /// the same reason `showingSongPicker` lives here. See `ReferenceLinkEditing`.
+    @State private var editingReference: ReferenceLinkDraft?
     @State private var notes: String
     /// The exercise's self-rated mastery (0–5, `nil` = unrated), held locally and committed on
     /// Done — the planner's dueScore *need* signal (V2 planner Slice 1, ADR 0070: self-set, never
@@ -65,6 +69,11 @@ struct ExerciseDetailSheet: View {
                                             runCount: TempoTrajectory.runCount(for: exercise.uid,
                                                                                in: sessionRecords))
                     linkedSongsSection
+                    // Where this drill came from (ADR 0167). Above Feel and the template chip
+                    // because provenance is what you read when you have forgotten what a drill was
+                    // for; the meter is what you check once you already know.
+                    ReferencesSection(owner: exercise, accent: PocketColor.practice,
+                                      editing: $editingReference)
                     if !isFreeform { feelSection }
                     templateSection
                 }
@@ -85,6 +94,8 @@ struct ExerciseDetailSheet: View {
                     toggle: { toggleLink($0) },
                     accent: PocketColor.practice)
             }
+            .referenceLinkEditing($editingReference, owner: exercise,
+                                  accent: PocketColor.practice)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {

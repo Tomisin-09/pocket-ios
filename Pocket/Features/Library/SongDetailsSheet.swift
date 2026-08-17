@@ -44,6 +44,10 @@ struct SongDetailsSheet: View {
     @State private var draftComment = ""
     @FocusState private var notesFocused: Bool
     @State private var savedPulse = false
+    /// The reference link being added or edited (ADR 0167). Held here rather than in
+    /// `ReferencesSection` — a sheet presented from inside this `Form` dismisses *this* sheet
+    /// instead of opening. See `ReferenceLinkEditing`.
+    @State private var editingReference: ReferenceLinkDraft?
 
     var body: some View {
         NavigationStack {
@@ -60,6 +64,8 @@ struct SongDetailsSheet: View {
                     SongAudioSection(song: song, replace: replace)
                     if !song.collections.isEmpty { collectionsSection }
                     linkedExercisesSection
+                    ReferencesSection(owner: song, accent: PocketColor.library,
+                                      editing: $editingReference)
                     statsSection
                 }
             }
@@ -94,6 +100,7 @@ struct SongDetailsSheet: View {
             }
         }
         .presentationDetents([.large])
+        .referenceLinkEditing($editingReference, owner: song, accent: PocketColor.library)
         // Edit is a nested sheet over the details so dismissing it returns here; the
         // edited values write straight back to the persisted `Song`, which this view
         // observes, so the read view refreshes on save.

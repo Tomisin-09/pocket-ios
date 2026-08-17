@@ -131,6 +131,13 @@ final class Song {
     /// with no store wipe (CoreData 134110 rule).
     var linkedExercises: [Exercise] = []
 
+    /// Where the player learned this song (ADR 0167) — a transcription, a tab page, a cover
+    /// breakdown. **`.cascade` like `loops`/`markers`, not `.nullify` like `recordings`**: a
+    /// pointer to where this song came from is a fact about the song, not an artifact of the
+    /// player, so it goes when the song does. Additive (CoreData 134110 rule).
+    @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.song)
+    var references: [ReferenceLink] = []
+
     init(title: String, artist: String = "", album: String = "", genre: String = "",
          year: Int? = nil,
          key: String = "", bpm: Int? = nil, preciseBPM: Double? = nil,

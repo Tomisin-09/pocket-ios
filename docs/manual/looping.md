@@ -143,6 +143,9 @@ Hold a loop's row to open **Edit loop**. It carries:
 - **Practice** — **Type**, **Mastery**, **Focus** and **Command tempo**. These four are the app's
   own vocabulary and are defined in [the app's own words](terms.md).
 - **Journal** — a note about this loop.
+- **Where you learned it** — links to whatever explains this passage. A loop is usually the most
+  specific thing to hang one on: the video covers *these* eight bars. See
+  [Where you learned it](references.md).
 - **Backing track** — mark the span as a bed to solo over, which files it under Backing tracks
   elsewhere in the app.
 - **Tags** — your own labels, for finding loops across songs later.

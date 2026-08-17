@@ -178,6 +178,10 @@ The shape is editable after the fact: open the drill, and **Edit shape** sits in
 preview card. The name, description and song links live on the **ⓘ** detail sheet. Only the template
 is fixed.
 
+That sheet also holds **Where you learned it** — links out to the lesson or tab page the drill came
+from, so a drill you built in February still says who taught it to you in June. See
+[Where you learned it](references.md).
+
 Changing how many notes per beat a drill plays asks you what should happen to its command tempo,
 because the two mean nothing apart.
 
