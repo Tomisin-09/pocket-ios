@@ -83,6 +83,7 @@ extension ManualShotCase {
     /// failed five tests with `Multiple matching elements found`. Taking `.firstMatch` would have
     /// silenced that while introducing something worse: a screen showing two `More`s would be judged
     /// on whichever the query reached first, which may be the one scrolled off the top.
+    @MainActor
     func isInFrame(_ query: XCUIElementQuery, of app: XCUIApplication) -> Bool {
         let window = app.windows.firstMatch.frame
         return query.allElementsBoundByAccessibilityElement.contains { candidate in
