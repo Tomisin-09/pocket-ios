@@ -15,6 +15,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **The metronome's BPM can be typed.** Tap the big number and a keypad opens: 96 to 138 is one
+  entry rather than 42 taps of **+** or a slider you can't land a specific number on. The other
+  three ways in — the steppers, the slider and TAP — are unchanged, and a value outside 30–300
+  snaps back to the nearest end of the range rather than being refused. The same field the tempo
+  automator and the practice run setup already used.
 - **Exercises, songs, loops and routines can now say where you learned them.** A **Where you
   learned it** section on each one holds links out to the lesson, tab page, course or teacher's
   write-up the thing came from — paste an address, name it if you want, tap it to open it in its
