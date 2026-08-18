@@ -239,6 +239,21 @@ final class Exercise {
     /// job, not this number's (the planner never silently lowers a rating the player set).
     var mastery: Int?
 
+    /// The command tempo the current `mastery` was given at (ADR 0169) — `nil` when there is no
+    /// rating, or when the rating predates this field. Written by `rateMastery` at every mastery
+    /// write, in the sibling position `commandNotesPerBeat` occupies for the command itself: a
+    /// rating without the tempo it describes is half a fact by ADR 0121's own argument, and without
+    /// it the planner cannot tell a 5 earned at today's command from one earned two promotes ago.
+    /// Additive optional — pre-0169 exercises migrate to `nil` (CoreData 134110 exempt), which reads
+    /// correctly as "conditions unrecorded" rather than as a claim.
+    var masteryTempo: Int?
+
+    /// The rhythm that rating was given in — notes per beat (ADR 0169 / 0121). Stored beside
+    /// `masteryTempo` for the reason `commandNotesPerBeatAtEntry` sits beside a journal entry's BPM:
+    /// "5 at 90" is unreadable the moment the drill's rhythm moves. `nil` when the drill states no
+    /// rhythm — the honest record of "rated, rhythm unstated", never "quarters".
+    var masteryNotesPerBeat: Int?
+
     /// When this exercise was last practised (a run started) — or `nil` when never run.
     /// Feeds the planner on **two** axes from one field: *dueness* on the focused axis (an
     /// exercise resurfaces as time passes since it was practised) and least-recently-used
@@ -372,22 +387,6 @@ final class Exercise {
         self.lastPracticed = lastPracticed
         self.dateAdded = dateAdded
     }
-
-    /// Mark this exercise practised **now** — stamps `lastPracticed` so the planner's dueness
-    /// (focused axis) and LRU rotation (warm-up axis) both advance. Called from the run path
-    /// when a run actually starts; deliberately does *not* touch `mastery` (self-rated only).
-    func markPracticed(_ date: Date = .now) { lastPracticed = date }
-
-    /// Whether this unit can honestly be practised with nothing in your hands (ADR 0139 O6). Gated on
-    /// the template as well as the flag, so a value left behind on an exercise whose template somehow
-    /// isn't freeform can never leak into a constrained session — the declaration is meaningful only
-    /// where the app doesn't model the content.
-    var declaresAwayFromInstrument: Bool { template == .freeform && awayFromInstrument }
-
-    /// Whether this block should tick while it runs. Gated on the template for the same reason as
-    /// `declaresAwayFromInstrument`: the click settings are only meaningful where the app models
-    /// nothing, and every other template drives its click from the ramp instead.
-    var playsFreeformClick: Bool { template == .freeform && clickEnabled }
 
     /// The time signature as a display string ("4/4", "6/8").
     var timeSignatureLabel: String { "\(beatsPerBar)/\(noteValue)" }

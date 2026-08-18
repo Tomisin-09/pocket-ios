@@ -35,6 +35,7 @@ extension LoopEditSheet {
     var practiceSection: some View {
         Section("Practice") {
             masteryRow
+            masteryReadingRow
             focusRow
             typeRow
             commandTempoRow
@@ -160,6 +161,19 @@ extension LoopEditSheet {
             }
         } label: {
             FieldInfoLabel(title: "Mastery", info: PracticeFieldInfo.mastery)
+        }
+    }
+
+    /// The conditions the **stored** rating was given under (ADR 0169) — "Rated at 85%", and whether
+    /// the command has since moved off it. Shown only while the edited `mastery` still matches the
+    /// rating it describes, so walking the dots doesn't leave a caption attached to a number that has
+    /// gone from the screen.
+    @ViewBuilder
+    var masteryReadingRow: some View {
+        if let reading = loop.masteryReading, reading.rating == mastery {
+            Text(reading.caption)
+                .font(.futura(.footnote))
+                .foregroundStyle(PocketColor.textSecondary)
         }
     }
 

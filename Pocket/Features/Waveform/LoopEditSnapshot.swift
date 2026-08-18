@@ -8,6 +8,9 @@ import Foundation
 struct LoopEditSnapshot: Equatable {
     var name: String
     var mastery: Int?
+    /// The command speed that rating was given at (ADR 0169) — snapshotted so an Undo restores the
+    /// reading's *conditions*, not just its number.
+    var masteryAtSpeed: Double?
     var focus: Int?
     var commandTempo: Double?
     var loopType: LoopType
@@ -23,6 +26,7 @@ struct LoopEditSnapshot: Equatable {
     init(_ loop: Loop) {
         name = loop.name
         mastery = loop.mastery
+        masteryAtSpeed = loop.masteryAtSpeed
         focus = loop.focus
         commandTempo = loop.commandTempo
         loopType = loop.loopType
@@ -35,7 +39,11 @@ struct LoopEditSnapshot: Equatable {
 
     func restore(to loop: Loop) {
         loop.name = name
+        // Restored **verbatim**, not through `rateMastery` (ADR 0169): this is an undo, so the
+        // reading has to come back exactly as it was, conditions included. Re-stamping here would
+        // silently re-date a rating the player is in the middle of *discarding* an edit to.
         loop.mastery = mastery
+        loop.masteryAtSpeed = masteryAtSpeed
         loop.focus = focus
         loop.commandTempo = commandTempo
         loop.loopType = loopType

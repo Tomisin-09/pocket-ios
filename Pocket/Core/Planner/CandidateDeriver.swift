@@ -126,7 +126,7 @@ enum CandidateDeriver {
             .map { exercise in
                 PlannerCandidate(unit: PlannerUnitRef(exercise.uid, .exercise),
                                  priority: priority,
-                                 mastery: exercise.mastery,
+                                 mastery: exercise.mastery, masteryIsStale: exercise.masteryIsStale,
                                  lastPracticed: exercise.lastPracticed,
                                  estimatedMinutes: exercise.estimatedMinutes,
                                  skillID: info.id, goalUID: goal.uid)
@@ -136,7 +136,7 @@ enum CandidateDeriver {
             .map { loop in
                 PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
                                  priority: priority,
-                                 mastery: loop.mastery,
+                                 mastery: loop.mastery, masteryIsStale: loop.masteryIsStale,
                                  lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes,
                                  skillID: info.id, goalUID: goal.uid)
@@ -158,7 +158,7 @@ enum CandidateDeriver {
             .map { loop in
                 PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
                                  priority: priority,
-                                 mastery: loop.mastery,
+                                 mastery: loop.mastery, masteryIsStale: loop.masteryIsStale,
                                  lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes,
                                  skillID: skillID, runMode: mode, goalUID: goal.uid)
@@ -190,7 +190,7 @@ enum CandidateDeriver {
             .map { loop in
                 PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
                                  priority: priority,
-                                 mastery: loop.mastery,
+                                 mastery: loop.mastery, masteryIsStale: loop.masteryIsStale,
                                  lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes,
                                  skillID: skillID, goalUID: goal.uid)

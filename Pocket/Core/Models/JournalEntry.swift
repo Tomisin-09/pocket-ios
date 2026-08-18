@@ -62,8 +62,16 @@ final class JournalEntry {
     /// copied at creation, never updated (ADR 0058). A distinct field, *not* the loop's
     /// `commandTempoAtEntry`, so a BPM is never stored in a `Double` documented as a song
     /// fraction (the defaulted-semantics lie ADR 0039 removed). `nil` for loop entries and for
-    /// an un-promoted exercise at the time. Exercises have no mastery, so `masteryAtEntry`
-    /// stays `nil` for them. Additive optional column — pre-0058 loop entries read `nil`.
+    /// an un-promoted exercise at the time. Additive optional column — pre-0058 loop entries read
+    /// `nil`.
+    ///
+    /// **Exercise entries snapshot `masteryAtEntry` too** (ADR 0169). This comment used to say they
+    /// had no mastery to snapshot; that was true under ADR 0058 and stopped being true on 2026-07-08
+    /// when ADR 0072 gave `Exercise` a `mastery`, and was never revisited — so exercise entries kept
+    /// the tempo and silently dropped the rating while loop entries kept both. Entries written before
+    /// the fix genuinely don't know theirs and are **not** back-filled: the snapshot is immutable
+    /// (ADR 0038), and inventing today's rating for a note written months ago would be the exact
+    /// defaulted-semantics lie ADR 0039 removed.
     var commandBpmAtEntry: Int?
 
     /// The **rhythm** that BPM was measured in — notes per beat — snapshotted beside it (ADR 0121).
@@ -215,12 +223,17 @@ final class JournalEntry {
                      commandTempoAtEntry: commandTempoAtEntry, createdAt: createdAt)
     }
 
-    /// An **exercise** entry — snapshots the command in absolute BPM. Exercises have no mastery
-    /// and no song fraction, so both loop snapshot fields stay `nil` (ADR 0058).
+    /// An **exercise** entry — snapshots the command in absolute BPM and the self-rating beside it
+    /// (ADR 0058; mastery added by ADR 0169). `commandTempoAtEntry` stays `nil`: that field is
+    /// documented as a *song fraction*, and an exercise has no song to be a fraction of.
+    ///
+    /// `masteryAtEntry` is defaulted so the preview and seed call sites that state no rating still
+    /// read as before; the one real caller (`JournalOwner`) passes the exercise's rating.
     static func forExercise(text: String, kind: EntryKind, commandBpmAtEntry: Int?,
                             commandNotesPerBeatAtEntry: Int? = nil,
+                            masteryAtEntry: Int? = nil,
                             createdAt: Date = Date()) -> JournalEntry {
-        JournalEntry(text: text, kind: kind, masteryAtEntry: nil, commandTempoAtEntry: nil,
+        JournalEntry(text: text, kind: kind, masteryAtEntry: masteryAtEntry, commandTempoAtEntry: nil,
                      commandBpmAtEntry: commandBpmAtEntry,
                      commandNotesPerBeatAtEntry: commandNotesPerBeatAtEntry, createdAt: createdAt)
     }

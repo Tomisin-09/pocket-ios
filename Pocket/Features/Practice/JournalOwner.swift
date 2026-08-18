@@ -161,10 +161,14 @@ enum JournalWriter {
             // Snapshot the measured command in absolute BPM — `nil` when un-promoted, so the
             // entry records "not yet measured" rather than a defaulted value (ADR 0058/0039).
             // …and the rhythm it was measured in beside it (ADR 0121), so the number stays readable
-            // after the drill's rhythm moves.
+            // after the drill's rhythm moves. And the self-rating (ADR 0169): exercises have had a
+            // `mastery` since ADR 0072, but this path went on passing `nil` on the strength of a
+            // stale comment, so an exercise entry recorded the tempo and dropped the rating while a
+            // loop entry kept both.
             let entry = JournalEntry.forExercise(text: trimmed, kind: kind,
                                                  commandBpmAtEntry: exercise.commandTempo,
-                                                 commandNotesPerBeatAtEntry: exercise.commandNotesPerBeat)
+                                                 commandNotesPerBeatAtEntry: exercise.commandNotesPerBeat,
+                                                 masteryAtEntry: exercise.mastery)
             context.insert(entry)
             entry.exercise = exercise
             entry.ownerLabelAtEntry = JournalTimeline.ownerLabel(loop: nil, exercise: exercise,

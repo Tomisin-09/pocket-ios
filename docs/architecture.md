@@ -702,6 +702,20 @@ exercises **by name**; exercise-only, since loops/songs need user audio at cold 
 (ADR 0072, V2 Slice 1) is now a live producer of this same `Routine`: a pure two-stage pipeline in
 `Pocket/Core/Planner/` — `DueScore` ranks candidates (`goalWeight × dueness(lastPracticed) ×
 (1 − mastery/5)`, ADR 0015 S5) and `SessionBuilder.buildSession` lays the ranked `PlannerCandidate`s
+
+**A mastery rating carries the conditions it was taken under (ADR 0169).** `Exercise.masteryTempo`
++ `masteryNotesPerBeat` and `Loop.masteryAtSpeed` are stamped by the models' own `rateMastery`, the
+single write path — the same "bind the achievement to what it was measured in" rule `promoteCommand`
+applies to `commandNotesPerBeat` (ADR 0121). The pure `MasteryReading` decides when a reading has
+gone **stale** (the command, or an exercise's rhythm, has left the stamp; an *unstamped* pre-0169
+rating is never stale), and `DueScore.masteryTerm` floors a stale rating at `masteryTerm(4)` instead
+of letting a 5 zero the product. That closes a live bug in which accepting a raise on a mastery 5 —
+`commitDone` writes the rating and the promote in one commit — sank the drill to the bottom of the
+ranking at a tempo it had never been rated at. ("Retired" is loose: `SessionBuilder.ranked` filters
+on `priority`, not score, so a 0 sorts *last* rather than being excluded.) The rating itself is never rewritten (ADR 0070); only the note that its
+conditions moved is new. The stamp is read back as a caption under the mastery row on the exercise
+detail's Progress section and the loop edit sheet ("Rated at 90 BPM · 8ths"), never on the Done
+screen, which is a commit beat rather than a read-back.
 into `[SessionBlock]` honouring the ADR 0014 pacing (≤20-min blocks, U-shape with the top-due drill
 last, warm-up LRU-picked / unbudgeted). **A preset denominates focused *blocks*, not minutes
 (ADR 0129):** `SessionLength` is `blocks × itemsPerBlock` — Quick 1×3, Focused 2×3, Full 4×3 — each

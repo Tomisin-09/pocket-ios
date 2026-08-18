@@ -14,7 +14,23 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Fixed
+- **Raising your command tempo no longer quietly retires a drill.** Rating something **5** on the
+  completion screen and accepting the offer to raise your command tempo used to do two things at
+  once: record the 5, and move the drill to a faster tempo it had never been rated at. The 5 then
+  sent the drill to the back of the queue for planned sessions, so it stopped coming round. Now a
+  rating remembers the tempo it was given at, so a raise leaves the drill competing for a slot
+  again — and your rating is never rewritten, only marked as describing a speed you have moved
+  past. Rating something 5 and *declining* the raise still parks it, as before.
+- **A journal note on an exercise now records your mastery rating.** It always recorded the command
+  tempo; the rating beside it was dropped, so an exercise entry was a less complete record than a
+  loop entry written the same minute. Notes written before this fix are left as they are rather than
+  back-filled with a rating from today.
+
 ### Added
+- **A mastery rating now shows the tempo you gave it at** — *Rated at 85%* under the rating in the
+  loop edit sheet, *Rated at 90 BPM · 8ths* on an exercise. Move the command tempo past it and the
+  line says so, so an old 5 can't be mistaken for a claim about where you are now.
 - **The metronome's BPM can be typed.** Tap the big number and a keypad opens: 96 to 138 is one
   entry rather than 42 taps of **+** or a slider you can't land a specific number on. The other
   three ways in — the steppers, the slider and TAP — are unchanged, and a value outside 30–300

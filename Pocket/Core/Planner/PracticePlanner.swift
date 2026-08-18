@@ -35,11 +35,15 @@ enum PracticePlanner {
             let library = library(exercises: exercises, loops: loops, lastPracticed: lastPracticed)
             let pool = library.loops.map { loop in
                 PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
-                                 mastery: loop.mastery, lastPracticed: loop.lastPracticed,
+                                 mastery: loop.mastery,
+                                 masteryIsStale: loop.masteryIsStale,
+                                 lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes)
             } + library.exercises.map { exercise in
                 PlannerCandidate(unit: PlannerUnitRef(exercise.uid, .exercise),
-                                 mastery: exercise.mastery, lastPracticed: exercise.lastPracticed,
+                                 mastery: exercise.mastery,
+                                 masteryIsStale: exercise.masteryIsStale,
+                                 lastPracticed: exercise.lastPracticed,
                                  estimatedMinutes: exercise.estimatedMinutes)
             }
             // No warm-up: the warm-up pool is `template == .warmup` exercises, and every one of them
@@ -115,11 +119,13 @@ enum PracticePlanner {
             exercises: exercises
                 .filter { $0.template != .warmup }
                 .map { PlannerExercise(uid: $0.uid, template: $0.template, mastery: $0.mastery,
+                                       masteryIsStale: $0.masteryIsStale,
                                        lastPracticed: $0.lastPracticed,
                                        estimatedMinutes: estimatedMinutes(for: $0),
                                        awayFromInstrument: $0.declaresAwayFromInstrument) },
             loops: loops.map { PlannerLoop(uid: $0.uid, songUID: $0.song.map { PlannerID.uid(from: $0.sourceID) },
-                                           mastery: $0.mastery, lastPracticed: lastPracticed[$0.uid],
+                                           mastery: $0.mastery, masteryIsStale: $0.masteryIsStale,
+                                           lastPracticed: lastPracticed[$0.uid],
                                            estimatedMinutes: estimatedMinutes(for: $0),
                                            templates: recognizedTemplates(for: $0),
                                            modeFacts: LoopModeAccess.Facts($0)) },
@@ -133,7 +139,7 @@ enum PracticePlanner {
     static func candidate(for exercise: Exercise) -> PlannerCandidate {
         PlannerCandidate(unit: PlannerUnitRef(exercise.uid, .exercise),
                          priority: 1.0,
-                         mastery: exercise.mastery,
+                         mastery: exercise.mastery, masteryIsStale: exercise.masteryIsStale,
                          lastPracticed: exercise.lastPracticed,
                          estimatedMinutes: estimatedMinutes(for: exercise))
     }
