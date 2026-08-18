@@ -365,4 +365,28 @@ convention: `// beta feedback 2026-08 #N`.
       from Proposed toward Accepted.
 - [ ] **The TestFlight Pro grant removed before the next App Store submission.** It is a
       Release-build entitlement path; a `TODO(beta)` marker in
-      `Pocket/Core/Monetization/StoreManager.swift` exists so a grep finds it.
+      `Pocket/Core/Monetization/StoreManager.swift` exists so a grep finds it. **Four markers
+      now**, not one: the receipt probe in `init`, `confirmBetaGrantIfNeeded()`, `betaDiagnostic`,
+      and the diagnostic's footer row in `ProSettingsView`. Also delete the "Which build the grant
+      fires on" section of `PocketTests/StoreManagerTests.swift`.
+
+### What went wrong with the grant, and the rule it leaves behind
+
+The first implementation of the grant read `AppTransaction.shared` to ask which StoreKit
+environment the build was in. Testers met the paywall anyway — on every launch — because that
+read is `async` and needs a network round trip when nothing is cached, which is precisely the
+first launch after an install. It failed three ways at once: the Home gates read plain `isPro`
+and so painted locked until it landed; it was awaited *ahead of* the ordinary entitlement scan,
+so a stall held up the whole app's entitlement answer; and it latched "resolved" *before* the
+read, so one failure disabled the grant for the rest of the launch and no foreground refresh
+could recover it.
+
+**The rule: a Release-only code path needs a Debug-testable decision and a way to see it from
+the outside.** The grant was compiled out of Debug, so the simulator, every local device build
+and every UI test skipped it — `StoreManagerTests` covered `resolveIsPro`, but nothing covered
+*what fed its `betaGrant` argument*. It shipped with literally nothing checking it, to the one
+audience that cannot attach a debugger. The fix splits the two: `resolveSandbox(receiptURL:)`
+is a pure function under test on every push, and `betaDiagnostic` puts the resolved state on
+screen in Settings ▸ Red Moon Pro so a tester can read it back. **Ask for that line before
+diagnosing any further entitlement report** — two rounds of tester prose were read wrong
+before it existed.

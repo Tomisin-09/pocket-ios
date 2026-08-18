@@ -33,6 +33,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   promotional text say the same thing; the reasoning is in `docs/positioning.md`.
 
 ### Fixed
+- **Closed-beta testers were meeting the paywall instead of the app.** TestFlight builds grant Pro
+  outright so the round can study practice rather than a purchase decision, but the grant asked
+  `AppTransaction` for the environment — an `async` read that needs the network when nothing is
+  cached, which is exactly the first launch after an install. Three failures came out of one
+  cause: the Home gates painted locked until it landed, the read was awaited *ahead of* the
+  ordinary entitlement scan so a stall delayed the whole app's answer, and a single failure
+  latched the grant off for the rest of the launch with no foreground refresh able to recover it.
+  The grant now resolves synchronously from the receipt path before the first paint, needing no
+  network, no App Store sign-in and no verification; the `AppTransaction` read stays as a second
+  opinion that can only grant, off the critical path, and latches only on a conclusive answer.
+  Settings ▸ Red Moon Pro carries a one-line beta diagnostic for the rest of the round.
+  Unreachable from an App Store build, which carries a receipt named `receipt`, not
+  `sandboxReceipt`.
 - **Two more places the app called itself Pocket, and a lint so there is no third time.** The
   reference-link editor's footer and its rejection message both used the internal name. The footer
   was caught by opening a screenshot; the rejection message only appears after a failed save, so
