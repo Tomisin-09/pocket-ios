@@ -20,7 +20,7 @@ the words Red Moon coined for its own practice model.
 
 ## Mastery
 
-> How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can play something fast but scrappy, or slow but perfect.
+> How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can play something fast but scrappy, or slow but perfect. A rating is kept with the tempo you gave it at, so it still means something after you move on.
 
 **Where you set it.** Open a song, hold a loop in the **Loops** panel to open its edit sheet, and
 set **Mastery** there. It is a rating out of five and it is yours to set — nothing in Red Moon
@@ -33,6 +33,16 @@ listens to you play or assigns it for you.
 An untouched loop shows no rating at all rather than a zero. That is deliberate: a loop you have
 never assessed and a loop you have assessed as poor are different things, and only one of them
 should look like a problem.
+
+**A rating remembers the tempo you gave it at.** Under the rating you will see a line like
+*Rated at 85%* — on an exercise, *Rated at 90 BPM · 8ths*. Once you move the command tempo past
+that, the line adds *command has moved since*: your rating is still yours and still stands, but
+it describes a speed you have since left behind.
+
+That matters most when you raise your command tempo straight after rating something 5. Without
+the tempo attached, a 5 would take the drill out of rotation entirely — at a speed you had not
+actually rated it at yet. With it, the drill comes back round instead, so you get a chance to
+say whether the new tempo is really clean.
 
 ## Command tempo
 

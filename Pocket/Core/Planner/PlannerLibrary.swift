@@ -11,6 +11,11 @@ struct PlannerExercise: Equatable {
     var uid: UUID
     var template: ExerciseTemplate
     var mastery: Int?
+    /// Whether that rating's conditions have moved — the command tempo (or rhythm) has left the one
+    /// it was given at (ADR 0169). Projected alongside `mastery` so the pure selection math can floor
+    /// a stale reading instead of letting it retire the unit. Defaulted, so every existing
+    /// construction site and test is unchanged.
+    var masteryIsStale: Bool = false
     var lastPracticed: Date?
     var estimatedMinutes: Int
     /// The player's declaration that this block needs no instrument (ADR 0139 O6) — only ever true
@@ -27,6 +32,11 @@ struct PlannerLoop: Equatable {
     var uid: UUID
     var songUID: UUID?
     var mastery: Int?
+    /// Whether that rating's conditions have moved — the command tempo (or rhythm) has left the one
+    /// it was given at (ADR 0169). Projected alongside `mastery` so the pure selection math can floor
+    /// a stale reading instead of letting it retire the unit. Defaulted, so every existing
+    /// construction site and test is unchanged.
+    var masteryIsStale: Bool = false
     var lastPracticed: Date?
     var estimatedMinutes: Int
     var templates: [ExerciseTemplate] = []

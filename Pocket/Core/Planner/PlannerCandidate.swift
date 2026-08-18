@@ -41,6 +41,12 @@ struct PlannerCandidate: Equatable {
     /// (ADR 0070: self-set, never measured). `nil` ⇒ treated as max-due (cold-start friendly).
     var mastery: Int?
 
+    /// Whether that rating's **conditions have moved** — the command tempo (or rhythm) has left the
+    /// one it was given at (ADR 0169, `MasteryReading`). Projected from the model alongside `mastery`
+    /// because the pure planner cannot ask the `@Model`. `false` for an unstamped rating: pre-0169
+    /// ratings don't know their conditions, which is not the same as knowing they changed.
+    var masteryIsStale: Bool
+
     /// When the unit was last practised (`nil` = never) — drives dueness (rises with time) on
     /// the focused axis and LRU rotation on the warm-up axis. Same field, two rules.
     var lastPracticed: Date?
@@ -75,6 +81,7 @@ struct PlannerCandidate: Equatable {
     init(unit: PlannerUnitRef,
          priority: Double = 1.0,
          mastery: Int? = nil,
+         masteryIsStale: Bool = false,
          lastPracticed: Date? = nil,
          estimatedMinutes: Int,
          skillID: String? = nil,
@@ -83,6 +90,7 @@ struct PlannerCandidate: Equatable {
         self.unit = unit
         self.priority = priority
         self.mastery = mastery
+        self.masteryIsStale = masteryIsStale
         self.lastPracticed = lastPracticed
         self.estimatedMinutes = estimatedMinutes
         self.skillID = skillID

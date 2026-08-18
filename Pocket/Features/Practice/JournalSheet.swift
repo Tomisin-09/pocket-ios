@@ -259,6 +259,14 @@ private struct JournalEntryEditor: View {
                 Section {
                     switch entry.ownerKind {
                     case .exercise:
+                        // Gated on the value, unlike the loop case below (ADR 0169). Exercise entries
+                        // only started snapshotting a rating here; every entry written before that
+                        // holds `nil` meaning *unrecorded*, and `MasteryReadout` renders `nil` as
+                        // "Unrated" — a claim about the player rather than about the record. Showing
+                        // no row is what those entries have always shown, and it is the truth.
+                        if entry.masteryAtEntry != nil {
+                            LabeledContent("Mastery") { MasteryReadout(mastery: entry.masteryAtEntry) }
+                        }
                         LabeledContent("Command tempo") {
                             Text(JournalSheet.bpmLabel(entry.commandBpmAtEntry,
                                                        notesPerBeat: entry.commandNotesPerBeatAtEntry))

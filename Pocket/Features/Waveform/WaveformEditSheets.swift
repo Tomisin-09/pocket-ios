@@ -128,9 +128,14 @@ struct LoopEditSheet: View {
     /// a command tempo set moments ago takes before the run seeds from the loop.
     func writeEdits() {
         loop.name = name
-        loop.mastery = mastery
         loop.focus = focus
+        // Command **before** the rating, the opposite order to the Done screen's (ADR 0169). There a
+        // rating is given about the run that just happened and an accepted raise then moves the
+        // command off it, so the gap is real. Here the editor commits one coherent declaration — "I
+        // own this at 85%, and I rate it 4" — so the rating is about the command being set in the
+        // same breath, and stamping the value it is replacing would invent staleness.
         loop.commandTempo = commandTempo
+        loop.rateMastery(mastery)
         loop.loopType = loopType
         loop.tags = tags
         loop.isFavorite = isFavorite

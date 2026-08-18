@@ -194,7 +194,10 @@ extension ExerciseRunView {
     /// the single write path (`persist`, ADR 0057) — there's no following Start, so this *is* the commit.
     func commitCompletion(mastery: Int?, note: String, kind: EntryKind,
                           revision: CommandOffer.Revision?) {
-        exercise.mastery = mastery
+        // Stamped before the revision lands: `commitAndStart` already persisted this run's command,
+        // so the rating records the tempo actually played, and the `persist()` below moves the
+        // command off it when a raise was accepted (ADR 0169).
+        exercise.rateMastery(mastery)
         _ = JournalWriter.add(to: .exercise(exercise), text: note, kind: kind, into: modelContext)
         switch revision {
         case .raise(let tempo):

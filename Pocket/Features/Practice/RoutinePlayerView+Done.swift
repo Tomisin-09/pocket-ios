@@ -20,7 +20,11 @@ extension RoutinePlayerView {
         if let owner = owner(for: stage) {
             switch owner {
             case .exercise(let exercise):
-                exercise.mastery = mastery
+                // Stamped **before** the revision below, which is what makes the ordering truthful
+                // (ADR 0169): the rating records the command the block just ran at, and an accepted
+                // raise then moves the command off it. That gap is the staleness `DueScore` reads —
+                // without it a 5 that earned a promote also retired the drill, at a tempo never rated.
+                exercise.rateMastery(mastery)
                 // The chosen value is already clamped by the Done screen's stepper. Both setters carry
                 // their own invariants — `promoteCommand` drops a caught-up reach pin, `settleCommand`
                 // pulls the warm-up floor down and drops a caught-up backoff pin (ADR 0134 §6).
@@ -30,7 +34,7 @@ extension RoutinePlayerView {
                 case .none: break
                 }
             case .loop(let loop):
-                loop.mastery = mastery
+                loop.rateMastery(mastery)   // stamped before the revision, as above (ADR 0169)
                 // Loops by symmetry (ADR 0134 §8), differing only in unit: the screen works in whole
                 // percent and the model in `×`, the same conversion the standalone screen makes.
                 //

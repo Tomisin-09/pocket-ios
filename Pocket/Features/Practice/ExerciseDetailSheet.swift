@@ -64,6 +64,7 @@ struct ExerciseDetailSheet: View {
                     }
                     ExerciseProgressSection(mastery: $mastery,
                                             lastPracticed: exercise.lastPracticed,
+                                            reading: exercise.masteryReading,
                                             trajectory: TempoTrajectory.reading(for: exercise.uid,
                                                                                 in: sessionRecords),
                                             runCount: TempoTrajectory.runCount(for: exercise.uid,
@@ -260,7 +261,7 @@ struct ExerciseDetailSheet: View {
     /// deliberate self-assessment (ADR 0070), never computed from playing.
     private func commitMastery() {
         guard mastery != exercise.mastery else { return }
-        exercise.mastery = mastery
+        exercise.rateMastery(mastery)
         try? modelContext.save()
     }
 }
