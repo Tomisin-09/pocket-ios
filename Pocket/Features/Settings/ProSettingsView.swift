@@ -28,9 +28,17 @@ struct ProSettingsView: View {
                 }
                 Button("Restore Purchases") { Task { await store.restore() } }
             } footer: {
-                Text(isPro
-                     ? "You have Red Moon Pro. Manage or cancel anytime in Manage Subscription."
-                     : "Unlock the full exercise catalog, “draw your own”, and Today's session.")
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(isPro
+                         ? "You have Red Moon Pro. Manage or cancel anytime in Manage Subscription."
+                         : "Unlock the full exercise catalog, “draw your own”, and Today's session.")
+                    // TODO(beta): remove with the rest of the closed-beta grant.
+                    // Closed-beta testers are granted Pro without a purchase, and that grant can only
+                    // take effect in a build we cannot debug. This is the line we ask them to send.
+                    Text(store.betaDiagnostic)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .settingsScreen(title: "Red Moon Pro")
