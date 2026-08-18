@@ -35,7 +35,8 @@ struct ImproviseLoopRunView: View {
     }
 
     var body: some View {
-        ImproviseView(loop: loop, player: player, recorder: recorder)
+        ImproviseView(loop: loop, player: player, recorder: recorder,
+                      routineContext: routineContext)
             .navigationTitle(loop.name.isEmpty ? LoopRunMode.improvise.label : loop.name)
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)

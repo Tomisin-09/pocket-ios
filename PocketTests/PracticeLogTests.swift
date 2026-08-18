@@ -20,9 +20,10 @@ final class PracticeLogTests: XCTestCase {
     }
 
     private func run(_ start: Date, minutes: Double, kind: PracticeRunKind = .exercise,
-                     unit: UUID? = nil, bpm: Int? = nil, perBeat: Int? = nil) -> SessionRecord {
+                     unit: UUID? = nil, routine: UUID? = nil,
+                     bpm: Int? = nil, perBeat: Int? = nil) -> SessionRecord {
         SessionRecord(startedAt: start, durationSeconds: minutes * 60, kind: kind,
-                      unitUID: unit, tempoBPM: bpm, notesPerBeat: perBeat)
+                      unitUID: unit, routineUID: routine, tempoBPM: bpm, notesPerBeat: perBeat)
     }
 
     // MARK: - Windows
@@ -84,6 +85,42 @@ final class PracticeLogTests: XCTestCase {
     func testBestDayIsNilWhenNothingWasPractised() {
         let week = PracticeLog.weekInterval(containing: date(10), calendar: calendar)
         XCTAssertNil(PracticeLog.bestDay(PracticeLog.dailyBuckets([], in: week, calendar: calendar)))
+    }
+
+    // MARK: - Standalone runs (ADR 0117)
+
+    /// **A run practised outside a routine counts exactly as much as one inside it.** The writer has
+    /// always passed `routineUID: nil` for a standalone run and written the row anyway, and no
+    /// aggregate here filters on it — but that was proven only incidentally, because every other test
+    /// in this file builds rows with no routine at all. Pinned, because "standalone practice doesn't
+    /// count" is a plausible-sounding claim that would be cheap to implement by accident.
+    func testStandaloneRunsCountTowardStatsAlongsideRoutineRuns() {
+        let routine = UUID()
+        let week = PracticeLog.weekInterval(containing: date(10), calendar: calendar)
+        let records = [run(date(9, 9), minutes: 20, routine: routine),
+                       run(date(10, 9), minutes: 15),                       // standalone
+                       run(date(11, 9), minutes: 25, kind: .earLoop),       // standalone ear training
+                       run(date(12, 9), minutes: 10, kind: .improvise)]     // standalone jam
+
+        XCTAssertEqual(PracticeLog.totalMinutes(records), 70,
+                       "every minute counts, whatever container it happened in")
+        let buckets = PracticeLog.dailyBuckets(records, in: week, calendar: calendar)
+        XCTAssertEqual(PracticeLog.daysActive(buckets), 4,
+                       "a standalone run earns its day like any other")
+        XCTAssertEqual(PracticeLog.lifetime(records).runCount, 4)
+    }
+
+    /// The mirror of the above: dropping the routine rows must change the totals by exactly those
+    /// rows and nothing else — so no aggregate can be quietly keying off `routineUID`.
+    func testRoutineAttributionDoesNotChangeAnyAggregate() {
+        let unit = UUID()
+        let inRoutine = [run(date(10, 9), minutes: 20, unit: unit, routine: UUID())]
+        let standalone = [run(date(10, 9), minutes: 20, unit: unit)]
+
+        XCTAssertEqual(PracticeLog.totalMinutes(inRoutine), PracticeLog.totalMinutes(standalone))
+        XCTAssertEqual(PracticeLog.sittings(inRoutine).count, PracticeLog.sittings(standalone).count)
+        XCTAssertEqual(PracticeLog.lastPracticedByUnit(inRoutine)[unit],
+                       PracticeLog.lastPracticedByUnit(standalone)[unit])
     }
 
     // MARK: - Sittings
