@@ -3,8 +3,11 @@ import SwiftUI
 
 /// The reusable **ear-training core** for a loop (ADR 0104) — the identity header, the continuous
 /// play control, the live tempo adjuster, and Journal note capture. Rendered as a `Form` with no
-/// navigation chrome of its own, so it drops into two hosts: the standalone `EarTrainingSheet`
-/// (from the loop settings sheet) and `EarLoopRunView` (an ear-training block inside a routine).
+/// navigation chrome of its own, so it drops into **three** hosts: the standalone
+/// `EarTrainingSheet` (from the loop settings sheet), the pushed `EarTrainingScreen` (from the
+/// Loops library), and `EarLoopRunView` (an ear-training block inside a routine). Anything every
+/// host must do — keeping the screen awake, logging the run — belongs here rather than on one of
+/// them; `RampLessRunLog` records what the second of those cost when it didn't.
 ///
 /// Ear training as "the loops, re-surfaced": an away-from-the-guitar exercise — the loop's own audio
 /// cycles continuously so the player can **hum or sing it back** and listen again to compare. No
@@ -27,6 +30,10 @@ struct EarTrainingView: View {
     /// Also host-owned, for the same reason and following `ImproviseView`: three hosts, and a
     /// controller declared here would be one per host with none of them owning the lifecycle.
     let recorder: RecordingController
+    /// The routine block hosting this core, or `nil` for the standalone sheet and the pushed screen.
+    /// Deliberately **not defaulted**: it decides which seam logs the run (`RampLessRunLog`), and a
+    /// host that could quietly omit it is exactly how the standalone hosts came to log nothing.
+    let routineContext: RoutineRunContext?
     @Environment(\.modelContext) private var modelContext
     /// Latch for the tool-opened event (ADR 0120) — this view is embedded by both the loop-settings
     /// sheet and a routine's ear block, and `.onAppear` re-fires on a return.
@@ -68,6 +75,8 @@ struct EarTrainingView: View {
         // On the shared core, so all three hosts get it once (ADR 0050). Humming along is exactly the
         // hands-free practice the setting exists for, and this screen had never asked.
         .keepAwakeDuringPractice()
+        .logsRampLessRun(kind: .earLoop, unitUID: loop.uid,
+                         routineContext: routineContext)
     }
 
     /// Finalize an in-flight take against *this loop* when the bed stops or the screen exits, so a take
@@ -120,7 +129,8 @@ struct EarTrainingSheet: View {
 
     var body: some View {
         NavigationStack {
-            EarTrainingView(loop: loop, player: player, recorder: recorder)
+            EarTrainingView(loop: loop, player: player, recorder: recorder,
+                            routineContext: nil)
                 .navigationTitle("Train your ear")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -147,7 +157,8 @@ struct EarTrainingScreen: View {
     }
 
     var body: some View {
-        EarTrainingView(loop: loop, player: player, recorder: recorder)
+        EarTrainingView(loop: loop, player: player, recorder: recorder,
+                        routineContext: nil)
             .navigationTitle(LoopRunMode.ear.label)
             .navigationBarTitleDisplayMode(.inline)
     }

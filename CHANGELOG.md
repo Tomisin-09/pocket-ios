@@ -35,6 +35,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   promotional text say the same thing; the reasoning is in `docs/positioning.md`.
 
 ### Fixed
+- **Ear training and improvising outside a routine now count towards your practice stats.** Both
+  modes have always logged their minutes when played as a block inside a routine — but the same
+  screens reached on their own, from a loop's settings sheet or from the Loops library, recorded
+  nothing at all. Time spent humming a line back or jamming over a section went missing from
+  Progress: no minutes, no run, and no day marked as practised. The writer call now lives on the
+  part of the screen both routes share, so every way in logs the same way. Runs already recorded
+  are unaffected; nothing lost before this can be recovered.
 - **Closed-beta testers were meeting the paywall instead of the app.** TestFlight builds grant Pro
   outright so the round can study practice rather than a purchase decision, but the grant asked
   `AppTransaction` for the environment — an `async` read that needs the network when nothing is

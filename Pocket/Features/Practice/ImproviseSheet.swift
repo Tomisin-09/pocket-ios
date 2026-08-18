@@ -3,10 +3,11 @@ import SwiftUI
 
 /// The reusable **improvise core** for a loop (ADR 0135) — the loop's own audio as a **backing
 /// track**, cycling continuously at one live-adjustable tempo, with Journal capture for what came
-/// out of the jam. Rendered as a `Form` with no navigation chrome of its own, so it drops into two
-/// hosts exactly as `EarTrainingView` does: the standalone `ImproviseSheet` (from the loop settings
-/// sheet) and — once ADR 0135 Slice 2 lands — `ImproviseLoopRunView`, an improvise block inside a
-/// routine.
+/// out of the jam. Rendered as a `Form` with no navigation chrome of its own, so it drops into the
+/// same **three** hosts `EarTrainingView` does: the standalone `ImproviseSheet` (from the loop
+/// settings sheet), the pushed `ImproviseScreen` (from the Loops library), and
+/// `ImproviseLoopRunView`, an improvise block inside a routine. Anything every host must do —
+/// keeping the screen awake, logging the run — belongs here rather than on one of them.
 ///
 /// A section of the player's own song, looping with no vocal over it, *is* a backing track. Every
 /// mechanism this needs already shipped: the region loops gaplessly (`PracticeAudioEngine` folds a
@@ -31,6 +32,10 @@ struct ImproviseView: View {
     /// Also owned by the host, for the same reason the player is: this view has three of them, and a
     /// controller declared here would be one per host with none of them in charge of the lifecycle.
     let recorder: RecordingController
+    /// The routine block hosting this core, or `nil` for the standalone sheet and the pushed screen.
+    /// Deliberately **not defaulted**: it decides which seam logs the run (`RampLessRunLog`), and a
+    /// host that could quietly omit it is exactly how the standalone hosts came to log nothing.
+    let routineContext: RoutineRunContext?
     @Environment(\.modelContext) private var modelContext
     /// Latch for the tool-opened event (ADR 0120) — `.onAppear` re-fires on a return from a
     /// pushed screen, and this view has two hosts.
@@ -72,6 +77,8 @@ struct ImproviseView: View {
         // On the shared core, so all three hosts get it once (ADR 0050) — a jam is the longest a
         // player goes without touching the screen, and this one had never asked.
         .keepAwakeDuringPractice()
+        .logsRampLessRun(kind: .improvise, unitUID: loop.uid,
+                         routineContext: routineContext)
     }
 
     /// Finalize an in-flight take against *this loop* when the bed stops or the screen exits, so a
@@ -128,7 +135,8 @@ struct ImproviseSheet: View {
 
     var body: some View {
         NavigationStack {
-            ImproviseView(loop: loop, player: player, recorder: recorder)
+            ImproviseView(loop: loop, player: player, recorder: recorder,
+                          routineContext: nil)
                 .navigationTitle("Improvise")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -154,7 +162,8 @@ struct ImproviseScreen: View {
     }
 
     var body: some View {
-        ImproviseView(loop: loop, player: player, recorder: recorder)
+        ImproviseView(loop: loop, player: player, recorder: recorder,
+                      routineContext: nil)
             .navigationTitle(LoopRunMode.improvise.label)
             .navigationBarTitleDisplayMode(.inline)
     }

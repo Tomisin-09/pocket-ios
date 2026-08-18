@@ -14,6 +14,13 @@ import SwiftData
 ///
 /// A run that is **stopped by hand** logs nothing. That is deliberate — the log records completed
 /// unit-runs, and an aborted run has no honest length or tempo to claim.
+///
+/// **The "one seam" above holds for the *ramped* screens only.** Ear training (ADR 0104) and
+/// improvising (ADR 0135) are a shared core view inside several different hosts, not one screen with
+/// an optional context — so the seam is per-host, and putting the call in the routine host alone left
+/// the four standalone hosts logging nothing at all until 2026-08-18. Those two modes now clock from
+/// `RampLessRunLog` on the shared core; the routine block still logs at its own Done/planned-length
+/// seam, because there **skip and exit must keep logging nothing**.
 @MainActor
 enum PracticeLogWriter {
 

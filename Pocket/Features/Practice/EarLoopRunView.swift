@@ -31,7 +31,8 @@ struct EarLoopRunView: View {
     }
 
     var body: some View {
-        EarTrainingView(loop: loop, player: player, recorder: recorder)
+        EarTrainingView(loop: loop, player: player, recorder: recorder,
+                        routineContext: routineContext)
             .navigationTitle(loop.name.isEmpty ? LoopRunMode.ear.label : loop.name)
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
