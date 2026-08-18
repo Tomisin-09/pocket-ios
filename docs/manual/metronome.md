@@ -30,6 +30,10 @@ The screen stays awake while the click runs, unless you have turned that off in 
 
 Four ways, all driving the same number:
 
+- **Tap the number itself** and type the tempo on the keypad. This is the way to make a big jump —
+  96 to 138 without holding a stepper — and the one to reach for when you already know the number.
+  It takes the tempo when you dismiss the keyboard with **✓**, or scroll, or tap away; anything
+  outside 30–300 snaps back to the nearest end of that range.
 - **− and +** either side of the readout nudge it by one. Hold either and it repeats, accelerating as
   you hold.
 - **The slider** covers 30 to 300 BPM. It is deliberately not a linear scale — its middle sits around

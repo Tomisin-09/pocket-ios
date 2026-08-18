@@ -116,16 +116,14 @@ struct MetronomeView: View {
     // MARK: - Tempo readout
 
     /// The BPM number + marking, flanked by the − / + steppers (moved here so the slider row
-    /// can hold the tap buttons instead of a separate full-width Tap row).
+    /// can hold the tap buttons instead of a separate full-width Tap row). The number itself is
+    /// **typable** — see `TypableTempo`.
     private var tempoReadout: some View {
         HStack {
             tempoStepper(symbol: "minus", label: "Decrease tempo", delta: -1)
             Spacer()
             VStack(spacing: 2) {
-                Text("\(engine.bpm)")
-                    .font(.pocketMono(.largeTitle))
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .contentTransition(.numericText())
+                TypableTempo(engine: engine)
                 // Free play is where the click withdrawal lands hardest (ADR 0132 §7a) — the eyes are
                 // on the hands and the click is the only reference — so the caption carries its word
                 // here too. Its own view, so the per-tick read doesn't rebuild these controls.
@@ -263,6 +261,57 @@ struct MetronomeView: View {
 private struct PendingMetronomeNote: Identifiable {
     let id = UUID()
     let sitting: MetronomeJournalContext
+}
+
+// MARK: - Typable tempo
+
+/// The hero BPM readout, **typed into directly**: tap the number, a number pad opens, and the value
+/// commits when focus leaves — the keyboard's **Done** (`dismissKeyboard()` above), a scroll, or a
+/// tap elsewhere. The screen's other three ways in (±1, the slider, TAP) all move by feel; getting
+/// to 138 from 96 took either 42 taps or a slider you can't land a specific number on.
+///
+/// Same contract as `EditableTempoRow` and `AutomatorNumberField`, the two typable tempo fields
+/// already shipped: a *draft* string that the live value only refreshes while the field is **not**
+/// focused (so a ramp climbing underneath can't rewrite what is half-typed), and a commit that hands
+/// the parsed value to the clamp and then resyncs — so `999`, `0` or an empty field visibly snap
+/// back to what was actually stored rather than sitting there as a number the engine never took.
+///
+/// Its own view because it owns focus state: kept inline, every keystroke would re-render the
+/// controls around it. It also costs the readout `.contentTransition(.numericText())` — a
+/// `TextField` has no such transition — which is the one thing typing takes away here.
+private struct TypableTempo: View {
+    let engine: StandaloneMetronomeEngine
+
+    @State private var draft = ""
+    @FocusState private var typing: Bool
+
+    var body: some View {
+        TextField("", text: $draft)
+            .keyboardType(.numberPad)
+            .multilineTextAlignment(.center)
+            .font(.pocketMono(.largeTitle))
+            .foregroundStyle(PocketColor.textPrimary)
+            // Fixed width, not intrinsic: a TextField is greedy and would push the steppers to the
+            // screen edges, and a width that tracked the digit count would make the whole readout
+            // jump as the tempo crossed 99.
+            .frame(width: 132)
+            .focused($typing)
+            .accessibilityLabel("Tempo in beats per minute")
+            .accessibilityValue("\(engine.bpm)")
+            .onAppear { draft = "\(engine.bpm)" }
+            .onChange(of: engine.bpm) { _, updated in if !typing { draft = "\(updated)" } }
+            .onChange(of: typing) { _, isTyping in
+                if isTyping { draft = "\(engine.bpm)" } else { commit() }
+            }
+    }
+
+    /// Hand the typed value to the engine — which clamps to `bpmRange` and re-bases an armed
+    /// automator exactly as a stepper or the slider does — then resync the draft to whatever was
+    /// actually stored.
+    private func commit() {
+        if let typed = Int(draft) { engine.setBPM(typed) }
+        draft = "\(engine.bpm)"
+    }
 }
 
 // MARK: - Meter (time signature + subdivision + click withdrawal)
