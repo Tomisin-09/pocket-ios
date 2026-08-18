@@ -58,6 +58,7 @@ final class StandaloneRunLoggingUITests: UITestCase {
         XCTAssertTrue(ear.waitForExistence(timeout: Self.uiTimeout),
                       "no loop in the library offers ear training — check `-seedScreenshots` "
                       + "actually seeded a song, since a loop with no song qualifies for no mode")
+        XCTAssertTrue(waitUntilHittable(ear), "the ear-training button never became tappable")
         ear.tap()
 
         // A phrase only the ear-training screen says. Its nav title is "Train your ear", which the
@@ -122,11 +123,13 @@ final class StandaloneRunLoggingUITests: UITestCase {
     private func openLoopLibrary(in app: XCUIApplication) {
         let practice = app.buttons["Practice, your exercises and training runs"]
         XCTAssertTrue(practice.waitForExistence(timeout: Self.uiTimeout), "no Practice card on Home")
+        XCTAssertTrue(waitUntilHittable(practice), "the Practice card never became tappable")
         practice.tap()
 
         // "Loops" alone is a word Home says too; the subtitle belongs to this row only.
         let loops = app.staticTexts["Measured song loops"]
         XCTAssertTrue(loops.waitForExistence(timeout: Self.uiTimeout), "Practice never opened")
+        XCTAssertTrue(waitUntilHittable(loops), "the Loops row never became tappable")
         loops.tap()
 
         XCTAssertTrue(app.navigationBars["Loops"].waitForExistence(timeout: Self.uiTimeout),
@@ -157,6 +160,7 @@ final class StandaloneRunLoggingUITests: UITestCase {
     private func openProgress(in app: XCUIApplication) {
         let journal = app.buttons["Journal, your notes and practice takes"]
         XCTAssertTrue(journal.waitForExistence(timeout: Self.uiTimeout), "no Journal card on Home")
+        XCTAssertTrue(waitUntilHittable(journal), "the Journal card never became tappable")
         journal.tap()
 
         // Progress shares the Journal's ⋯ door (ADR 0117) — there is no Home card for it.
@@ -171,18 +175,38 @@ final class StandaloneRunLoggingUITests: UITestCase {
                       "Progress never opened")
     }
 
-    /// Tap a menu control until it opens, re-tapping **only while the control is still hittable** —
-    /// false the moment a menu's scrim covers it, so a second tap only ever happens from a screen
-    /// that visibly did not change. The suite's known swallowed-tap failure, guarded the same way
-    /// `ManualShotCase.tap` guards it.
+    /// Tap a menu control until it opens.
+    ///
+    /// The first version of this abandoned as soon as the control stopped being hittable, reasoning
+    /// that a menu's scrim covers it and so a re-tap would only ever fire from a screen that visibly
+    /// did not change. That reasoning has a hole, and CI found it: a control is *also* un-hittable
+    /// while the push that revealed it is still animating, and `waitForExistence` returns the moment
+    /// it enters the tree — well before it settles. So one tap got swallowed mid-transition, the
+    /// guard read the un-hittable control as "the menu is open", and the run failed from a screen
+    /// where one more tap would have worked. (The menu-item query itself is sound: `RowUndoUITests`
+    /// finds hold-menu buttons the same way and passes on CI.)
+    ///
+    /// Waiting for hittability before each tap covers both causes, and checking `item` first means
+    /// an already-open menu is never tapped shut again.
     @MainActor
     private func openMenu(_ control: XCUIElement, revealing item: XCUIElement, called name: String) {
-        for _ in 0..<3 where !item.exists {
-            guard control.isHittable else { break }
+        for _ in 0..<3 {
+            if item.exists { return }
+            guard waitUntilHittable(control) else { continue }
             control.tap()
-            _ = item.waitForExistence(timeout: Self.uiTimeout)
+            if item.waitForExistence(timeout: Self.uiTimeout) { return }
         }
-        XCTAssertTrue(item.exists, "\(name) never opened")
+        XCTFail("\(name) never opened")
+    }
+
+    /// Wait for `element` to become tappable, not merely present — the distinction the failure above
+    /// turned on. XCTest ships `waitForExistence` and nothing for this.
+    @MainActor
+    private func waitUntilHittable(_ element: XCUIElement,
+                                   timeout: TimeInterval = UITestCase.uiTimeout) -> Bool {
+        let hittable = expectation(for: NSPredicate(format: "isHittable == true"),
+                                   evaluatedWith: element)
+        return XCTWaiter().wait(for: [hittable], timeout: timeout) == .completed
     }
 
     /// Pop back to Home, which is where both destinations are reached from.
