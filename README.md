@@ -129,5 +129,11 @@ docs/          architecture.md, positioning.md (who we're up against and the lin
   `scripts/report-test-retries.sh` annotates the PR with every test that needed one — **a green run
   with retries in it is not a clean run.** The pre-push hook pre-boots too but deliberately does not
   retry.
+- **Debugging a CI-only failure:** every run uploads a **`TestResults`** artifact — the
+  `.xcresult` bundle plus the raw `xcodebuild` log — and it uploads on red runs too, which are the
+  ones worth downloading. Grab it from the run's summary page and open the bundle in Xcode for the
+  failure's screenshots and attachments. Without it the only way to chase a test that passes locally
+  and fails on the runner is a guess per ~11-minute round, which is how one UI test came to be
+  deleted rather than fixed.
 - **On merge to `main`:** TestFlight via Fastlane (`.github/workflows/testflight.yml`).
 - Backend prod is AWS (Lambda + API Gateway); dev runs locally / off-AWS.

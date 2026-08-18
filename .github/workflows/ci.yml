@@ -121,13 +121,33 @@ jobs:
             -scheme Pocket \
             -testPlan PocketAll \
             -destination "id=$UDID" \
-            -resultBundlePath TestResults \
+            -resultBundlePath TestResults.xcresult \
             -retry-tests-on-failure \
             -test-iterations 2 \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee xcodebuild-raw.log | xcbeautify
         env:
           NSUnbufferedIO: YES
+
+      # The result bundle, kept. `-resultBundlePath` above has always written one; nothing
+      # ever collected it, so a test that passes locally and fails only on this runner (older
+      # Xcode, slower box) could not be diagnosed at all — the choice was guessing at ~11
+      # minutes a round or deleting the test, and deleting the test is what happened. Runs on
+      # failure too, because the failed run is the only one worth downloading.
+      - name: Upload test results
+        if: always() && needs.scope.outputs.docs_only != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          # The extension is spelled out on `-resultBundlePath` above rather than left to the
+          # toolchain (Xcode 26.5 takes the path verbatim, so a bare `TestResults` downloads as
+          # a folder Xcode won't open until it's renamed). The raw log rides along — it holds
+          # the failure text xcbeautify swallows.
+          path: |
+            TestResults.xcresult
+            xcodebuild-raw.log
+          retention-days: 14
+          if-no-files-found: warn
 
       # Runs even when the tests failed, so a red run also names what was retried.
       - name: Report retried tests
