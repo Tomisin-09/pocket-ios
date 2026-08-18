@@ -6,7 +6,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 Sections are cut at the commit that bumped `CURRENT_PROJECT_VERSION` in `project.yml`,
 which is the only durable record of where a build was taken (there are no release tags):
 build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07), build 4 at the 1.2
-cut (2026-08-12 — squash hash added on merge, as the others were). One `### Added`
+cut (2026-08-12 — squash hash added on merge, as the others were), build 5 at the beta-grant
+fix (2026-08-18 — the closed beta's second build, cut because build 4 walled every tester
+out of the app). One `### Added`
 group straddled that line — collection sessions landed after the 1.0 build was cut,
 ear training before it — so 1.0 and 1.1 each carry their own copy of that heading.
 

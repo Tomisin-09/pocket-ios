@@ -30,7 +30,7 @@ settings:
     # `latest_testflight_build_number + 1`, so the committed value is not what ships.
     # It is bumped anyway because the CHANGELOG cuts its sections at the commit that
     # moves this number — it is the only durable record of where a build was taken.
-    CURRENT_PROJECT_VERSION: "4"
+    CURRENT_PROJECT_VERSION: "5"
     DEVELOPMENT_TEAM: "" # set via CI / local xcconfig; do not hard-code
 
 # Per-configuration backend base URL (Debug → dev, Release → prod).
