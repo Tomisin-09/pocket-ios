@@ -57,6 +57,7 @@ marker grammar in [README.md](README.md).
 | `reference/journal` | `screen` | `tools-and-journal` | seeded library, Journal, notes and a take across two days |  |
 | `reference/library` | `screen` | `home-and-library` | seeded library, Library, sorted by title |  |
 | `reference/library-row-menu` | `detail` | `home-and-library` | seeded library, Library, a row held |  |
+| `reference/long-term-goals` | `screen` | `practice` | seeded library, Practice ▸ Long-term goals, two goals ranked |  |
 | `reference/loop-automator` | `screen` | `song-player` | seeded library, Little Wing, automator opened on "Verse riff" |  |
 | `reference/loop-edit` | `screen` | `song-player` | seeded library, Little Wing, loop "Verse riff" held, Edit loop |  |
 | `reference/loops-library` | `screen` | `practice` | fresh library with no measured loops, Practice ▸ Loops |  |
@@ -116,4 +117,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-99 shots across 19 pages.
+100 shots across 19 pages.

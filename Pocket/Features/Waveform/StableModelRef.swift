@@ -22,6 +22,7 @@ protocol UIDIdentified: AnyObject {
 extension Loop: UIDIdentified {}
 extension Marker: UIDIdentified {}
 extension Goal: UIDIdentified {}
+extension LongTermGoal: UIDIdentified {}
 extension RoutineItem: UIDIdentified {}
 extension Recording: UIDIdentified {}   // takes are renamed through a `StableRef` (ADR 0069 amendment)
 

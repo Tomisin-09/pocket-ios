@@ -45,9 +45,10 @@ enum SessionBuilder {
                              candidates: [PlannerCandidate],
                              warmUp: PlannerCandidate? = nil,
                              play: PlannerCandidate? = nil,
+                             ranking: [UUID] = [],
                              now: Date) -> [SessionBlock] {
         let (jams, drills) = partitionJams(candidates)
-        let selected = select(drills, items: length.items, now: now)
+        let selected = select(drills, items: length.items, ranking: ranking, now: now)
         let focused = blocked(uShape(selected))
 
         var blocks: [SessionBlock] = []
@@ -133,9 +134,10 @@ enum SessionBuilder {
     /// every slot and the player's second goal never appeared. Round-robin is the smallest fix that
     /// restores the guarantee: each goal is represented while it has candidates left, and a goal with
     /// more due material still wins the later slots.
-    static func select(_ candidates: [PlannerCandidate], items: Int, now: Date) -> [Selected] {
+    static func select(_ candidates: [PlannerCandidate], items: Int,
+                       ranking: [UUID] = [], now: Date) -> [Selected] {
         guard items > 0 else { return [] }
-        return roundRobin(ranked(candidates, now: now), items: items)
+        return roundRobin(ranked(candidates, now: now), items: items, ranking: ranking)
             .map { Selected(candidate: $0, score: DueScore.score($0, now: now)) }
     }
 
@@ -162,13 +164,15 @@ enum SessionBuilder {
     /// a place, so a thin second goal never costs the session an item. With one goal — or none, the
     /// goal-less Quick path where every candidate carries `priority = 1` — this is exactly the old
     /// top-N.
-    static func roundRobin(_ ranked: [PlannerCandidate], items: Int) -> [PlannerCandidate] {
+    static func roundRobin(_ ranked: [PlannerCandidate], items: Int,
+                           ranking: [UUID] = []) -> [PlannerCandidate] {
         var order: [UUID?] = []
         var byGoal: [UUID?: [PlannerCandidate]] = [:]
         for candidate in ranked {
             if byGoal[candidate.goalUID] == nil { order.append(candidate.goalUID) }
             byGoal[candidate.goalUID, default: []].append(candidate)
         }
+        order = visitOrder(order, ranking: ranking)
 
         var picked: [PlannerCandidate] = []
         var pass = 0
@@ -182,6 +186,32 @@ enum SessionBuilder {
             pass += 1
         }
         return picked
+    }
+
+    /// Re-order `roundRobin`'s goal visit list so that **ranked goals go last, in rank order**
+    /// (ADR 0171 D3). `ranking` is the long-term tier's `order`, newest-first-free: a goal named in
+    /// it is visited after every goal that isn't, and named goals follow the list exactly.
+    ///
+    /// Two things this buys, and neither is cosmetic. Short-term goals lead, because the player
+    /// opened *Today's session* and said what they want **today** — that intent takes the first
+    /// passes. And rank stays observable past the item count: `roundRobin` deals one item per goal
+    /// per pass, so with a Quick session's three items only the first three goals visited ever
+    /// appear. Without this, visit order would be dueness-derived and ranks 4–10 would be
+    /// decorative — the player could reorder the list and watch nothing change.
+    ///
+    /// An empty `ranking` (every existing caller) returns the discovery order untouched.
+    static func visitOrder(_ discovered: [UUID?], ranking: [UUID]) -> [UUID?] {
+        guard !ranking.isEmpty else { return discovered }
+        var rankIndex: [UUID: Int] = [:]
+        for (index, uid) in ranking.enumerated() where rankIndex[uid] == nil { rankIndex[uid] = index }
+        // Partition rather than sort: `sorted` is not guaranteed stable, and the unranked half must
+        // keep its discovery (best-candidate) order exactly.
+        let unranked = discovered.filter { $0.flatMap { rankIndex[$0] } == nil }
+        let ranked = discovered
+            .compactMap { $0 }
+            .filter { rankIndex[$0] != nil }
+            .sorted { rankIndex[$0, default: .max] < rankIndex[$1, default: .max] }
+        return unranked + ranked.map { Optional($0) }
     }
 
     /// Arrange selected blocks into the **U-shape** (ADR 0014 R5): the single highest-due item goes

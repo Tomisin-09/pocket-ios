@@ -46,6 +46,10 @@ struct PracticeProgressView: View {
                     weekSection(summary.week)
                     monthSection(summary.month)
                     allTimeSection(summary.allTime)
+                    // A read-only reflection of the Practice list (ADR 0171 D6) — no controls, so
+                    // this screen stays read-back-only per ADR 0117. Renders nothing when the
+                    // player has authored no long-term goals.
+                    LongTermGoalEchoSection()
                 }
             }
             .padding(.horizontal, 20)
