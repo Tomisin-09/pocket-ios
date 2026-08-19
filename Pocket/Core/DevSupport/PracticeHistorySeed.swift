@@ -100,6 +100,11 @@ enum PracticeHistorySeed {
         seedReferences(exercises: exercises, into: context)
         seedRecency(historiedRoutineUID: historiedRoutine?.uid, into: context)
         seedSavedChords(into: context)
+        // Both **after** `seedRecency`: it stamps `lastPracticed` on every routine it finds, and
+        // these two are meant to read as never run. Home's rail reads that stamp while the routine's
+        // own screen reads the log, and the two disagreeing is ADR 0173 D2's failure exactly.
+        seedLongTermGoals(songs: (try? context.fetch(FetchDescriptor<Song>())) ?? [], into: context)
+        seedRoutines(exercises: exercises, loops: loops, into: context)
 
         try? context.save()
     }

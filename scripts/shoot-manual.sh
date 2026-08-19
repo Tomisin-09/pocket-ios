@@ -14,6 +14,7 @@
 #   POCKET_SEED_AUDIO=/path/to/masters ./scripts/shoot-manual.sh
 #   POCKET_SHOOT_ONLY=ManualToolkitShots ./scripts/shoot-manual.sh    # one class while writing it
 #   POCKET_SHOOT_KEEP_RUNS=20 ./scripts/shoot-manual.sh               # keep more logs than the last 5
+#   POCKET_SHOOT_PREPARE=1 ./scripts/shoot-manual.sh                  # stage the device, then stop
 #
 # Every attempt lands in `$OUT_DIR/runs/<timestamp>.{log,xcresult}`, with `shoot.log` and
 # `shoot.xcresult` symlinked to the latest. A failed run's evidence therefore survives the re-run
@@ -31,9 +32,9 @@ set -euo pipefail
 
 SIM_NAME="${POCKET_SIM:-iPhone 17}"
 
-# The shoot has its own plan. `PocketAll` — what CI runs — *skips* these four classes, because they
+# The shoot has its own plan. `PocketAll` — what CI runs — *skips* these classes, because they
 # photograph an erased device this script has staged and are seven minutes of flake on an ordinary
-# simulator. The two lists are the same four names in two files, so the guard after the run checks
+# simulator. The two lists are the same names in two files, so the guard after the run checks
 # that every class it asked for actually reported: adding a class here and forgetting the plan makes
 # xcodebuild run **zero tests and exit 0**, which is the quietest possible way for a shoot to stop
 # shooting. That is not hypothetical — it is what `-only-testing:` against `PocketAll`'s skip list
@@ -42,13 +43,14 @@ TEST_PLAN="${POCKET_SHOOT_PLAN:-PocketShoot}"
 # The shoot's test classes, listed rather than inferred. They are split by area of the manual so one
 # broken tap doesn't take an unrelated page's figures down with it, which means adding an area means
 # adding a line here — a visible cost, and the alternative (running the whole target and skipping the
-# four ordinary UI-test classes) inverts it onto every future non-shoot test instead.
+# ordinary UI-test classes) inverts it onto every future non-shoot test instead.
 SHOOT_CLASSES=(
     ManualShotsUITests
     ManualSettingsShots
     ManualToolkitShots
     ManualMetronomeShots
     ManualReferenceShots
+    ManualPracticeShots
 )
 
 # `POCKET_SHOOT_ONLY` narrows the run to one class (or a space-separated few) while a new area is
@@ -165,6 +167,49 @@ if [ -d "$SEED_AUDIO_SRC" ]; then
 else
     echo "⚠️  no seed audio at '$SEED_AUDIO_SRC' — the shoot will run with Little Wing only." >&2
     echo "   Set POCKET_SEED_AUDIO to the masters directory." >&2
+fi
+
+# --- 3b. hand-shoot: stop here with the device ready ---------------------------------------------
+# `POCKET_SHOOT_PREPARE=1` does stages 1–3 and stops, leaving the app installed, seeded and running
+# on an erased device with the dark appearance and the 09:41 status bar already forced.
+#
+# **This exists so a hand-shot figure and a driven one are the same photograph.** Shooting by hand
+# off a real phone means the photographer's own library, their own practice history, and a live
+# status bar — three differences visible in every frame, in a set whose whole claim is that it is one
+# set. None of them can be overridden on hardware. Driving this simulator by hand costs nothing
+# against that and keeps the 33 already-filed figures valid.
+if [ -n "${POCKET_SHOOT_PREPARE:-}" ]; then
+    # **`-uiTesting` is not optional here**, and it is not about tests. It is the argument every one
+    # of the driven figures was shot under, and it does three things a hand-shoot needs: it unlocks
+    # Pro (without it, Practice, Routines and the song library all meet a paywall — most of the
+    # manual), it disables animations so a capture cannot land mid-transition, and it holds the
+    # undo toast open for 120s instead of 4, which is the difference between `gestures/undo-toast`
+    # being shootable by hand and not.
+    #
+    # It also suppresses the first-run intake — which is why `getting-started/first-run` gets its own
+    # launch below rather than being unshootable on a seeded device, as this script once assumed.
+    say "Launching the app, seeded and unlocked"
+    xcrun simctl launch "$SIM_NAME" "$BUNDLE_ID" \
+        -uiTesting -seedScreenshots -seedHistory -shotHour 9 >/dev/null
+    cat <<PREPARED
+
+✅ Ready to shoot by hand. $SIM_NAME is erased, seeded, dark, and showing 09:41.
+
+   Screenshot:  xcrun simctl io "$SIM_NAME" screenshot ~/Desktop/manual-shots/<slug>.png
+                (⌘S in Simulator saves to the Desktop and is the same pixels)
+
+   Every image must be 1206×2622 — do not resize the window, and do not crop by hand.
+   Re-launch without losing the seed:
+                xcrun simctl launch "$SIM_NAME" $BUNDLE_ID -uiTesting -seedScreenshots \
+                    -seedHistory -shotHour 9
+
+   For getting-started/first-run ONLY, drop -uiTesting so the intake appears:
+                xcrun simctl terminate "$SIM_NAME" $BUNDLE_ID
+                xcrun simctl launch "$SIM_NAME" $BUNDLE_ID -seedScreenshots -seedHistory -shotHour 9
+
+   Filing: one file per slug, '/' becomes '-'  →  routines/library = routines-library.png
+PREPARED
+    exit 0
 fi
 
 # --- 4. shoot -----------------------------------------------------------------------------------

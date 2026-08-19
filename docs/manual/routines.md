@@ -64,10 +64,10 @@ a routine you start and abandon leaves nothing behind.
      | alt: The repeat sheet for one block showing ×3 and the stepper that sets it
      | state: routine editor, a unit block tapped, repeat set to 3 -->
 
-While the routine is still unsaved, an **Estimated length** reads under the block list and
-re-reckons as you add and remove things, so you can see whether what you are building fits the time
-you actually have. It goes once the routine is saved: the estimate is there to help you decide what
-to keep, and a routine you already decided on does not need telling.
+An **Estimated length** reads under the block list and re-reckons as you add and remove things, so
+you can see whether what you are building fits the time you actually have. It stays on the routine
+once you save it, where it sits with the routine's history — see
+[Reading a routine without playing it](#reading-a-routine-without-playing-it).
 
 **Save** commits; **Cancel** discards everything since you tapped Edit.
 

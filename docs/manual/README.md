@@ -105,6 +105,40 @@ that exists to say the app is not the source for either.
 
 **The prose is complete.** What remains is Phase 5: shooting the images the markers describe.
 
+### Phase 5 runs in three stages, and they are not interchangeable
+
+Learned by interleaving them and paying for it. **Seed everything first, drive area by area, review
+the whole set once.**
+
+1. **Seed.** Audit every marker's `state:` against what the store actually holds, and make all the
+   seed additions in one pass. A seed change is retroactive: it invalidates every figure already
+   shot, because the set is only a set if all of it came from one device state — which is why
+   `shoot-manual.sh` files narrowed runs into `filed-partial/` and reserves `filed/` for a full one.
+   Verify seed work against the **model**, not by shooting it.
+2. **Drive.** One class per area of the manual, each run narrowed with `POCKET_SHOOT_ONLY`. This
+   stage cannot be batched: selectors are only discoverable by running, a failed shoot exits before
+   the filing step, and sixty tests written blind against guessed labels means one bad label files
+   nothing after a nine-minute run. Images from these runs are throwaway — they prove the drive
+   works, not the set.
+3. **Review.** One full run, one erased device, then open all 101. `md5` the filed directory first:
+   two identical images is the signature of a missed tap.
+
+### What the audit found, and what is still open
+
+The `state:` fields resolve against the seed except for these. None of them is a prose problem; each
+is a device the shoot cannot currently produce.
+
+| Markers | Needs | Status |
+|---|---|---|
+| `songs/empty-library` · `reference/loops-library` · `getting-started/first-run` | a launch with **no seed flags** — the seeded device has six songs with loops attached and skips the first-run questions | needs a second unseeded pass in `shoot-manual.sh`; does not exist |
+| `songs/missing-audio` | a song whose file cannot be found | not seeded, and seeding one permanently puts a broken row in **every** library figure — decide between that, breaking a file mid-run, and hand-shooting |
+| `subscription/settings-pro` · `subscription/trial-row` | a Pro entitlement and a running trial | no launch hook exists, and `AppTransaction.shared` prompts for sign-in on a simulator and leaves the app untappable — treat as `device:`, as `subscription/paywall` already is |
+| `toolkit/tuner` · `reference/tuner` | a microphone hearing a real string | already `device:`, noted in `ManualToolkitShots` |
+
+Everything else the markers name resolves: `Little Wing`'s `Verse riff`, the `Binta` and `Feels`
+imports, the four collections behind the filter menu, and — since this pass — two ranked long-term
+goals and two extra routines.
+
 ## Standing rules for whoever writes here
 
 1. **Quote, don't restate.** A definition that exists in `PracticeFieldInfo` or `SettingsInfo` is
@@ -200,13 +234,43 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
   library; it writes no `PracticeRun`, `JournalEntry`, `Recording` or `SavedChord`, because those are
   only ever written as somebody uses the app. The Practice log and the Journal therefore open empty on a
   freshly seeded install, and the Toolkit reads *My chords, none saved* — nine figures are of those
-  screens. `-seedHistory` (`PracticeHistorySeed`) writes six weeks of runs, four notes, one take and
-  four saved voicings, deterministically. It is a **separate flag** from `-seedScreenshots` so the
-  App Store shoot keeps its ahistorical library, and both refuse to run twice — so the shoot needs
-  `xcrun simctl erase` in front of it, or it photographs the last run.
-- **The first-run questions are skipped** under the same flag (`HomeView+ProfileMoment` returns
-  early). `getting-started`'s first-run shot has to come from a launch without it, on a fresh
-  install.
+  screens. `-seedHistory` (`PracticeHistorySeed`) writes six weeks of runs, four notes, one take,
+  four saved voicings, two ranked long-term goals and two routines beside the preset one,
+  deterministically. It is a **separate flag** from `-seedScreenshots` so the App Store shoot keeps
+  its ahistorical library, and both refuse to run twice — so the shoot needs `xcrun simctl erase` in
+  front of it, or it photographs the last run.
+- **A screen that ships without a seed documents its own empty state.** The long-term goals and the
+  extra routines above were added for exactly that reason: ADR 0171 shipped the goal list and its
+  marker, nothing wrote a `LongTermGoal`, and `reference/long-term-goals` would have come back as a
+  clean photograph of *Nothing here yet* filed under a page describing a ranked list — green run,
+  right screen, wrong figure. Check the seed when a marker names a populated state, and add to
+  `PracticeHistorySeed+Authored` rather than working around it in a test.
+- **Seed fixtures resolve by frozen id, never by display name — and a silent miss is the danger.**
+  The routine seed asked for an exercise called `Scale Runs`, which is in `PracticePresets.allSpecs`
+  and **not** in the six of `firstRunSlugs`, so the lookup returned nil, a `guard … else { continue }`
+  dropped the block, and the shoot filed a routine reading `1 block` where three were intended. The
+  run was green, the screen was right, and the store was wrong. Resolve on `presetSlug`, assert that
+  what you name is what a fresh install actually holds, and note that the unit tests covering that
+  seed **passed** throughout: they created the exercises themselves, by the names the seed asked
+  for. A fixture that supplies its own preconditions cannot test a claim about the world.
+- **Three figures need the opposite — a device with nothing on it.** `songs/empty-library`,
+  `reference/loops-library` and `getting-started/first-run` all specify a fresh install, and the
+  shoot's whole premise is a seeded one: `ScreenshotSeed` writes six songs with loops attached, so
+  the loops library is never empty on that device and the first-run questions never appear. They
+  need a second pass with no seed flags, which `shoot-manual.sh` does not yet have. Until it does,
+  a driven run cannot produce them, and a test that shot them from the seeded device would be
+  photographing a state its page does not describe.
+- **The first-run questions are skipped under `-uiTesting`, not under `-seedScreenshots`.**
+  `HomeView+ProfileMoment` returns early on `UITestRuntime.isActive`; its own comment says it
+  *matches* the `-seedScreenshots` convention, which is easy to read as *reads that flag*. It does
+  not. A launch carrying only the seed flags shows the intake over Home — verified, not inferred.
+  That is useful rather than a problem: `getting-started/first-run` is shootable on the seeded
+  device by launching without `-uiTesting`, and does not need a bare install.
+- **`-uiTesting` is what unlocks Pro, and most of the manual is behind it.** `StoreManager` sets
+  `debugProOverride = true` under it, so a launch without it meets a paywall at Practice, Routines
+  and the song library. It also disables animations (no capture landing mid-transition) and holds
+  the undo toast open for 120s instead of 4, which is what makes `gestures/undo-toast` shootable by
+  hand at all. Every driven figure was shot under it, so any hand-shot frame must be too.
 - **Debug-only UI has to be hidden, not cropped.** The Settings hub carries a tenth destination,
   `Developer`, under `#if DEBUG` — present in every build a shoot can drive, and shipped to nobody.
   The first shoot photographed it into `reference/settings-hub`, whose own alt text lists the nine

@@ -227,6 +227,22 @@ page doesn't is a sixth source of truth with no check behind it.
 - **The manual is where "we never built that" becomes visible.** A page that cannot be written
   without an apology is a design finding, and the coverage audit at the end of the reference wing
   is the manual's definition of done.
+- **The shoot is where "we never seeded that" becomes visible, and it fails silently.** A marker
+  naming a populated state (`"two goals ranked"`, `"several routines saved"`) is a claim about the
+  *store*, and nothing in D8's checks can test it — C13 only asks whether a `capture()` exists.
+  Where the seed is short, the figure comes back a clean photograph of an empty screen, filed under
+  a page describing a full one, with a green verdict over it. Found twice in two ADRs: 0173 grew
+  `PracticeHistorySeed` for the routine history section before shooting it, and ADR 0171's
+  long-term goal list had shipped a screen and a marker with nothing writing a `LongTermGoal` at
+  all. **A feature that ships a screen ships its seed**, in `PracticeHistorySeed+Authored`.
+- **Three markers need a device the shoot cannot produce, and that is a gap in the harness rather
+  than in the pages.** `songs/empty-library`, `reference/loops-library` and
+  `getting-started/first-run` each specify a fresh install; `shoot-manual.sh` erases once and then
+  seeds six songs with loops attached, so on that device the loops library is never empty and the
+  first-run questions never appear. They need a **second unseeded pass** in the same script, which
+  does not exist yet. Shooting them from the seeded device instead would satisfy C13 while
+  photographing states the pages do not describe — the failure this whole phase is written against,
+  arriving through the progress metric.
 
 ## Alternatives rejected
 

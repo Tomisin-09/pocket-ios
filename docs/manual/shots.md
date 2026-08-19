@@ -69,10 +69,10 @@ marker grammar in [README.md](README.md).
 | `reference/metronome-settings` | `screen` | `tools-and-journal` | Metronome open, meter control tapped, scrolled to the top |  |
 | `reference/planner` | `screen` | `practice` | seeded library, Practice ▸ Today, no goals yet |  |
 | `reference/player` | `screen` | `song-player` | seeded library, Little Wing, idle, Loops panel expanded |  |
-| `reference/practice-hub` | `screen` | `practice` | seeded library, Practice hub |  |
+| `reference/practice-hub` | `screen` | `practice` | seeded library, Practice hub, goals and routines present |  |
 | `reference/progress` | `screen` | `tools-and-journal` | seeded library, Practice log, several weeks of history |  |
 | `reference/quick-note` | `screen` | `tools-and-journal` | an exercise run screen, quick note tapped |  |
-| `reference/routines-library` | `screen` | `practice` | seeded library, Practice ▸ Routines |  |
+| `reference/routines-library` | `screen` | `practice` | seeded library, Practice ▸ Routines, at least one routine run before |  |
 | `reference/settings-hub` | `screen` | `settings` | Settings open |  |
 | `reference/settings-privacy` | `panel` | `settings` | Settings ▸ Privacy |  |
 | `reference/settings-routines` | `panel` | `settings` | Settings ▸ Routines |  |
@@ -110,8 +110,11 @@ marker grammar in [README.md](README.md).
 | `songs/sort-menu` | `panel` | `songs` | seeded library, Library screen, sort menu open |  |
 | `subscription/paywall` | `panel` | `subscription` | fresh install without Pro, paywall open from a locked Home card | iPhone — cropped above the plan cards on purpose: an image carrying a price outlives
        the sentence that would have carried it, and D6 keeps prices out of this manual |
-| `subscription/settings-pro` | `panel` | `subscription` | Settings ▸ Red Moon Pro, subscribed |  |
-| `subscription/trial-row` | `band` | `subscription` | an account inside a running trial, Home |  |
+| `subscription/settings-pro` | `panel` | `subscription` | Settings ▸ Red Moon Pro, subscribed | iPhone — subscribed is an entitlement the shoot cannot grant, and the same sign-in
+       prompt as the trial row applies |
+| `subscription/trial-row` | `band` | `subscription` | an account inside a running trial, Home | iPhone — a running trial is an entitlement, and no launch argument fakes one. On a
+       simulator `AppTransaction.shared` puts up a sign-in prompt that leaves the app untappable, so
+       a driven attempt at this figure hangs rather than failing |
 | `terms/command-tempo-info` | `detail` | `terms` | seeded library, Little Wing, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo |  |
 | `terms/info-button` | `glyph` | `terms` | — |  |
 | `terms/mastery-info` | `detail` | `terms` | seeded library, Little Wing, loop "Verse riff" edit sheet, ⓘ tapped on Mastery |  |
