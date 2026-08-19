@@ -53,6 +53,16 @@ final class ReferenceLink {
     /// the paste this feature exists for.
     var title: String = ""
 
+    /// **What you took from it** — "the down-up bit starts about four minutes in", "only the chorus
+    /// voicings are useful here". Distinct in job from `title`, and the distinction is the whole
+    /// reason the field exists: the title says *what the resource is*, which you can reconstruct
+    /// from the host a week later; the note says *what it gave you*, which you cannot.
+    ///
+    /// Plain non-optional `String` with a **declaration default**, the shape `Exercise.notes` and
+    /// `Song.comment` already use — never `String?`, and never an `init`-only default (this file's
+    /// header states the CoreData 134110 rule this obeys).
+    var note: String = ""
+
     /// The destination, stored exactly as `ReferenceURL.normalised` produced it. Validated on save
     /// to `http`/`https`; opened with `openURL`, which adds no web view and no capability.
     var urlString: String = ""
@@ -82,6 +92,7 @@ final class ReferenceLink {
 
     init(uid: UUID = UUID(),
          title: String = "",
+         note: String = "",
          urlString: String = "",
          order: Int = 0,
          dateAdded: Date = .now,
@@ -92,6 +103,7 @@ final class ReferenceLink {
          routine: Routine? = nil) {
         self.uid = uid
         self.title = title
+        self.note = note
         self.urlString = urlString
         self.order = order
         self.dateAdded = dateAdded
@@ -124,6 +136,14 @@ extension ReferenceLink {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty { return trimmed }
         return displayHost ?? urlString
+    }
+
+    /// The note as the row should show it, or `nil` when there is nothing to show. Trimmed *here*
+    /// as well as at the store, so a link written by an older build — or by a test that set the
+    /// property directly — can never render a third line made of whitespace.
+    var displayNote: String? {
+        let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     /// The destination to hand `openURL`, or `nil` if it is no longer openable.

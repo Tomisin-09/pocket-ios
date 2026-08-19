@@ -1,8 +1,13 @@
 import SwiftUI
 
-/// The generated-session **length readout + soft budget** (V2 planner R3), split out of
-/// `RoutineDetailView` to keep that type under the body-length cap. Shows the estimated total
-/// against the length the user asked the planner for — guidance only, never a gate.
+/// The **length estimate + soft budget** (V2 planner R3), split out of `RoutineDetailView` to keep
+/// that type under the body-length cap. Shows the estimated total against the length the user asked
+/// the planner for — guidance only, never a gate.
+///
+/// This file supplies the two *values*; the section that renders them lives in
+/// `RoutineDetailView+History`, which folded the old `lengthSection` into one section alongside the
+/// routine's history (ADR 0173). Before that, the estimate was gated on `!existsInStore` and so
+/// vanished the moment a routine was saved — on exactly the routines you would want to choose by.
 extension RoutineDetailView {
 
     /// Total estimated minutes for the routine as it currently stands — ramp-staircase per exercise,
@@ -23,32 +28,6 @@ extension RoutineDetailView {
         case .under: return "Room to spare for \(asked). Add a goal for more."
         case .onTarget: return "About right for \(asked)."
         case .over: return "A touch over \(asked) — trim a block if you're short on time."
-        }
-    }
-
-    /// The estimate + soft-budget readout, shown only on a provisional generated session that has
-    /// something runnable. A saved routine has no target, so it isn't shown there.
-    @ViewBuilder
-    var lengthSection: some View {
-        if !existsInStore && hasPlayableBlock {
-            Section {
-                HStack {
-                    Text("Estimated length")
-                        .font(.futura(.body))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Spacer()
-                    Text("~\(estimatedMinutes) min")
-                        .font(.futura(.body, weight: .semibold))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-                .listRowBackground(PocketColor.background)
-            } footer: {
-                if let budgetHint {
-                    Text(budgetHint)
-                        .font(.futura(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-            }
         }
     }
 }

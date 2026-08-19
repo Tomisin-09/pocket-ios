@@ -2944,7 +2944,22 @@ engine — this is the half that needs to catch up.
 
 Ordered by value, highest first.
 
-1. **A routine accumulates no meaning. (Highest-value gap.)** `PracticeRun.routineUID`
+1. **A routine accumulates no meaning — SHIPPED as ADR 0173** (2026-08-19, branch
+   `pocket-277-a-routine-that-remembers`). The routine detail screen now carries one section
+   holding estimated length, last practised and how many times, read off the log through the
+   pure `PracticeLog.routineHistory`. No schema change, as predicted.
+
+   **The one thing the note below got wrong, and it would have shipped a wrong number:** the log
+   holds *one row per completed block*, so counting rows reports a six-block routine run once on a
+   Tuesday as "practised 6 times". The count groups through `PracticeLog.sittings` instead. A
+   second correction found on the way: `Routine.lastPracticed` already exists but is stamped on
+   `.onAppear` — it records the player *opening* the player screen, while the log records runs that
+   *finish*, so both facts are taken from the log and the stored field is left to Home's rail.
+
+   `PracticeHistorySeed` also had to grow a routine history, or the new section would have been
+   photographed empty in every manual figure of that screen. Original note preserved below.
+
+   **A routine accumulates no meaning. (Highest-value gap.)** `PracticeRun.routineUID`
    is written on every run (`Pocket/Core/Stats/PracticeLogWriter.swift:35,46`, from all
    six run surfaces) and **never read back anywhere**. No run count, no last-run
    summary, no "you've run this eleven times". The one object that should have a history
@@ -2962,10 +2977,12 @@ Ordered by value, highest first.
    form — a routine can say *where* it came from and still not say *what it is for*.
 3. **A routine cannot be found.** No search, no sort — fixed newest-first, and the
    toolbar comment says so in as many words (`Pocket/Features/Practice/RoutineLibraryView.swift:93-94`).
-   Compounding it: **Estimated length is hidden once the routine is saved**
+   ~~Compounding it: **Estimated length is hidden once the routine is saved**
    (`RoutineDetailView+Length.swift`, `lengthSection` gates on `!existsInStore`), so a
    stored routine never tells you how long it is — the single most useful thing to sort
-   or choose by.
+   or choose by.~~ **The length half is fixed** (ADR 0173): a saved routine states its
+   estimated length in the same section as its history. The search-and-sort half stays open,
+   now with a length worth sorting by.
 4. **A routine cannot be given away.** No export, no import, no share; `Routine` is not
    `Codable`. ADR 0064 named the *exercise* as the shareable unit, but **the routine is
    what a teacher hands over** — and under the multiplier thesis, a teacher handing over

@@ -252,4 +252,79 @@ enum PracticeLog {
         }
         return result
     }
+
+    // MARK: - A routine's own history
+
+    /// What the log remembers about one **routine**: two facts and no verdict.
+    ///
+    /// ADR 0117 and design-brief §3.5 permit a count and a date and refuse everything that would
+    /// grade them — there is deliberately no denominator here, no week-over-week delta, no streak
+    /// and no field for whether the number is good.
+    struct RoutineHistory: Equatable, Sendable {
+        /// When a run attributed to this routine last **started**, or `nil` when it has never run.
+        let lastPracticed: Date?
+        /// How many separate **sittings** hold a run attributed to this routine.
+        let sessionCount: Int
+
+        var isEmpty: Bool { sessionCount == 0 }
+    }
+
+    /// One routine's history, read straight off the log (ADR 0173).
+    ///
+    /// **Sittings, not rows — this is the whole difficulty.** The log holds *one row per completed
+    /// unit-run*, so a six-block routine run once on a Tuesday writes six rows. Counting rows the
+    /// way `TempoTrajectory.runCount` counts a drill's would report that Tuesday as "practised six
+    /// times", which is not a smaller number than the truth — it is a different fact. Grouping on
+    /// time is the same recovery `sittings` already performs for every session-level stat, so the
+    /// routine screen and the Progress screen cannot disagree about what one sit is.
+    ///
+    /// Two consequences inherited from `sittingGap`, both intended: a routine run twice inside half
+    /// an hour counts **once**, and one abandoned and picked up after a long break counts **twice**.
+    /// Neither is worth a second definition of a session.
+    ///
+    /// Rows with a `nil` `routineUID` are skipped, the same rule `lastPracticedByUnit` follows for
+    /// rows that name no unit: a standalone run says nothing about any routine.
+    static func routineHistory(for routineUID: UUID,
+                               in records: [SessionRecord],
+                               gap: TimeInterval = sittingGap) -> RoutineHistory {
+        let mine = records.filter { $0.routineUID == routineUID }
+        guard !mine.isEmpty else { return RoutineHistory(lastPracticed: nil, sessionCount: 0) }
+        return RoutineHistory(lastPracticed: mine.max { $0.startedAt < $1.startedAt }?.startedAt,
+                              sessionCount: sittings(mine, gap: gap).count)
+    }
+
+    /// Every routine's session count in **one pass**, for a list that shows a tally per row.
+    ///
+    /// The list counterpart of `routineHistory`, and it exists rather than being the same call in a
+    /// loop because it is read once per *screen*, not once per row: calling `routineHistory` from a
+    /// row body would re-filter the entire log for every routine on screen, which is the shape that
+    /// turns a library of thirty routines into thirty full scans on every redraw.
+    ///
+    /// Routines with no runs are **absent from the map** rather than present with a zero. A caller
+    /// showing a tally omits the fragment entirely at that point — a list where most rows announce a
+    /// thing not done reads as a nag however neutral each word is, and absence is not a statement.
+    static func routineSessionCounts(in records: [SessionRecord],
+                                     gap: TimeInterval = sittingGap) -> [UUID: Int] {
+        var byRoutine: [UUID: [SessionRecord]] = [:]
+        for record in records {
+            guard let routineUID = record.routineUID else { continue }
+            byRoutine[routineUID, default: []].append(record)
+        }
+        return byRoutine.mapValues { sittings($0, gap: gap).count }
+    }
+
+    /// When each routine was last practised, in one pass — the list counterpart of
+    /// `routineHistory.lastPracticed`, and the same shape `lastPracticedByUnit` uses for units.
+    ///
+    /// Rows naming no routine are skipped, and a routine never run is **absent** rather than
+    /// present with a placeholder date, so a caller cannot accidentally render one.
+    static func routineLastPractised(in records: [SessionRecord]) -> [UUID: Date] {
+        var result: [UUID: Date] = [:]
+        for record in records {
+            guard let routineUID = record.routineUID else { continue }
+            if let seen = result[routineUID], seen >= record.startedAt { continue }
+            result[routineUID] = record.startedAt
+        }
+        return result
+    }
 }

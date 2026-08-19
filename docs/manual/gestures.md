@@ -88,6 +88,7 @@ Not every list offers all of it, because not every item has all of it:
 | Your exercises | Its own actions, **Favourite**, **Delete** |
 | Your routines | Its own actions, **Favourite**, **Delete** |
 | Your saved loops | Its own actions and **Favourite** — no delete, because a loop belongs to its song and is removed on the waveform |
+| **Where you learned it** links | **Edit link** and **Delete** — a link has no favourite, and this delete is immediate rather than undoable |
 
 <!-- shot: gestures/row-hold-menu | role: panel
      | alt: A song row held down in the library, showing its menu of Details, Edit and Delete

@@ -11,15 +11,18 @@ Find them at **Practice ▸ Routines**.
 ## The library
 
 <!-- shot: routines/library | role: screen
-     | alt: The Routines library listing routines, each row with a play control and a one-line summary of its blocks
+     | alt: The Routines library listing routines, each row with a play control, a summary of its blocks and rests, and — where the routine has been run — a second line giving how many times and when
      | state: seeded library, Practice ▸ Routines, several routines saved -->
 
 A fresh install arrives with one, **Morning Routine** — two warm-ups, a rest, alternate picking, a
 rest and a scale — so there is a whole session to look at before you build your own. It is an
 ordinary routine, and you can take it apart.
 
-Each row is one routine, newest first, under a count of what is in it — **4 units · 2 rests**. The
-row has two halves and they do different things: **▶** starts the session, and tapping the name
+Each row is one routine, newest first, under a count of what is in it — **4 blocks · 2 rests**.
+Once you have run one, a second line underneath says how many times and when: **Practised 11 times ·
+yesterday**. A routine you have not run yet simply doesn't carry that line, rather than saying so.
+
+The row has two halves and they do different things: **▶** starts the session, and tapping the name
 opens the routine to read or edit.
 
 Hold a row for **Play**, **Edit**, **Duplicate**, **Favourite** and **Delete**. As everywhere else,
@@ -142,6 +145,21 @@ Opening a routine gives you the read-only view. Tapping a block there pushes a p
 content, its tempo anchors, its staircase, and an audition — so you can check what is in a session
 without starting it. **Edit** is what unlocks the changes, so a routine cannot be rearranged by
 accident.
+
+A saved routine tells you three things about itself. **Estimated length** is roughly how long
+running it end to end would take. **Last practised** is when you last ran it, or **Not yet** if you
+never have. Under those, how many times you have practised it.
+
+A run counts as one practice however many blocks it holds — a routine of six exercises done in one
+sitting is one, not six. Two runs inside the same half hour also count as one; a morning and an
+evening count as two.
+
+<!-- shot: routines/history | role: detail
+     | alt: The length and history section of a saved routine, showing its estimated length, when it was last practised and how many times
+     | state: seeded history, Practice ▸ Routines ▸ Morning Routine, read-only -->
+
+It counts and it dates, and that is all it does. There is no target to hit, nothing that goes up or
+down against last week, and nothing anywhere that remarks on a gap.
 
 A saved routine also carries **Where you learned it**, and this is the one that matters most: a
 course, a teacher's assignment, a book chapter belongs to a whole session rather than to any single

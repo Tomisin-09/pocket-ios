@@ -61,7 +61,7 @@ final class ManualReferenceShots: ManualShotCase {
         // system control does surface with that label, so the marker's alt text can promise it.
         capture(app, slug: "references/editor",
                 assertingOnScreen: "Add a link",
-                alsoRequiring: ["Link", "Name", "Paste"])
+                alsoRequiring: ["Link", "Name", "Note", "Paste"])
     }
 
     // MARK: - Navigation

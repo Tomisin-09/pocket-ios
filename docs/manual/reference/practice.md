@@ -78,20 +78,24 @@ sessions.* Procedure is in [Today's session](../sessions.md).
 ## `Routines`
 
 <!-- shot: reference/routines-library | role: screen
-     | alt: The Routines library with one routine row showing its unit and rest counts and a play button
+     | alt: The Routines library with one routine row showing its block and rest counts and a play button
      | state: seeded library, Practice ▸ Routines -->
 
-A list of routines, each row carrying its name and what it is made of — `4 units · 2 rests` — with a
+A list of routines, each row carrying its name and what it is made of — `4 blocks · 2 rests` — with a
 **play** control on the row itself. The toolbar carries `List options` then `New routine`, in that
 order.
 
-<!-- not-in-source: "4 units · 2 rests" — counted per routine at render time, so the row's summary
+Once a routine has been run, a second line underneath carries how many times it has been practised
+and when it last was.
+
+<!-- not-in-source: "4 blocks · 2 rests" — counted per routine at render time, so the row's summary
      is never one literal. The words either side of the counts are. -->
 
 `List options` holds sorting, and `Generate a quick session`, which skips the goals entirely.
 
 Tapping a row opens the routine, where its blocks are listed and can be reordered, added to and
-removed. Below the blocks and the length it carries a `Where you learned it` section — read-only until you
+removed. Below the blocks, a saved routine states its `Estimated length`, its `Last practised` date
+and how many times it has been practised. Below that it carries a `Where you learned it` section — read-only until you
 tap `Edit`, which is what puts `Add a link` on it, the same gate the blocks are behind. See
 [where you learned it](../references.md). A generated session that has not been saved yet does not
 show the section at all. Procedure is in [routines](../routines.md).

@@ -66,7 +66,26 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
                     .foregroundStyle(PocketColor.textSecondary)
             } else {
                 ForEach(owner.referencesInOrder, id: \.uid) { link in
+                    // **Hold for the menu, swipe for either half** — the grammar every other list
+                    // row in this app already reads in (`pocketRowActions`). Editing used to be
+                    // reachable *only* by the leading swipe, which nothing on the row advertised,
+                    // so a link named badly was effectively stuck. Found on device by going looking
+                    // for the affordance and not finding it.
+                    //
+                    // A `.contextMenu` rather than a hand-rolled long press: it carries its own
+                    // haptic and lift preview, and it does not fight the row's tap the way an
+                    // `onLongPressGesture` on a `Button` does. Delete is `role: .destructive` here
+                    // because this section deletes immediately — there is no deferred-delete seam
+                    // on these hosts, so nothing can disappear on a promise it doesn't keep.
                     ReferenceLinkRow(link: link, accent: accent) { open(link) }
+                        .contextMenu {
+                            Button { editing = .editing(link) } label: {
+                                Label("Edit link", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) { delete(link) } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                         .swipeActions(edge: .leading, allowsFullSwipe: false) {
                             Button { editing = .editing(link) } label: {
                                 Label("Edit", systemImage: "pencil")
@@ -102,6 +121,13 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
         openURL(destination)
     }
 
+    /// Delete one link — the menu's route in. The `IndexSet` overload below is the swipe's, and
+    /// both land on the same store call so the two cannot drift.
+    private func delete(_ link: ReferenceLink) {
+        ReferenceLinkStore.delete([link], from: owner, in: writeContext)
+        persist()
+    }
+
     private func delete(at offsets: IndexSet) {
         let ordered = owner.referencesInOrder
         ReferenceLinkStore.delete(offsets.map { ordered[$0] }, from: owner, in: writeContext)
@@ -134,6 +160,7 @@ struct ReferencesReadOnlySection<Owner: ReferenceLinkOwner & AnyObject>: View {
         if owner.hasReferences {
             Section("Where you learned it") {
                 ForEach(owner.referencesInOrder, id: \.uid) { link in
+                    // No menu: this surface reads, it does not edit.
                     ReferenceLinkRow(link: link, accent: accent) {
                         if let destination = link.destination { openURL(destination) }
                     }
@@ -159,6 +186,7 @@ struct ReferencesCard<Owner: ReferenceLinkOwner & AnyObject>: View {
                     .font(.futura(.caption, weight: .semibold))
                     .foregroundStyle(PocketColor.textSecondary)
                 ForEach(owner.referencesInOrder, id: \.uid) { link in
+                    // No menu: this surface reads, it does not edit.
                     ReferenceLinkRow(link: link, accent: accent) {
                         if let destination = link.destination { openURL(destination) }
                     }
@@ -176,6 +204,14 @@ struct ReferencesCard<Owner: ReferenceLinkOwner & AnyObject>: View {
 ///
 /// A plain `Button` rather than `Link`, because the row must stay tappable when the destination is
 /// no longer openable — and because a `Link` inside a `List` row swallows the swipe actions.
+///
+/// **The hold is a `.contextMenu`, applied by the host, and that is what lets this stay a `Button`.**
+/// A first pass gave the row an `onLongPressGesture` and had to stop being a `Button` to do it: a
+/// SwiftUI `Button` fires its tap action on the *release of a long press too*, so it would have
+/// opened the source **and** the editor on every hold — the bug this repo has shipped to a device
+/// twice. A `.contextMenu` has no such quarrel with the tap, brings its own haptic and preview, and
+/// is the idiom every other row in the app already uses through `pocketRowActions`. The row that
+/// needed hand-rolled gestures was the row solving the wrong problem.
 struct ReferenceLinkRow: View {
     let link: ReferenceLink
     let accent: Color
@@ -193,6 +229,22 @@ struct ReferenceLinkRow: View {
                         Text(host)
                             .font(.futura(.caption))
                             .foregroundStyle(PocketColor.textSecondary)
+                    }
+                    // **What you took from it**, under the site. `lineLimit(2)` is load-bearing
+                    // rather than cosmetic: this row is also used by `ReferencesCard`, which sits
+                    // in `RoutineBlockPreview`'s `ScrollView`, where an uncapped note would push
+                    // the rest of the card off a dense screen.
+                    //
+                    // ⚠ **Do not move this into `.accessibilityHint`.** The row combines its
+                    // children into one label, so this `Text` is already read — in full and
+                    // untruncated, which is the right behaviour: the two-line cap is a layout
+                    // decision, not a content one. Adding it to the hint would read it twice.
+                    if let note = link.displayNote {
+                        Text(note)
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.textSecondary.opacity(0.85))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
                     }
                 }
                 Spacer(minLength: 8)

@@ -441,7 +441,12 @@ def check_c7():
 
 
 def count_long_press_sites():
-    return sum(read(path).count("onLongPressGesture") for path in source_files())
+    # Comments stripped first, for the same reason C9 strips them: this codebase documents
+    # itself heavily and names the APIs it is discussing. A doc comment explaining *why* a
+    # row uses `onLongPressGesture` is not a tenth place the app wires up a hold, and
+    # counting it sends the next reader hunting through the manual for a hold that does not
+    # exist. Found when exactly that happened (ADR 0167's revision).
+    return sum(strip_comments(read(path)).count("onLongPressGesture") for path in source_files())
 
 
 def count_faq_entries():

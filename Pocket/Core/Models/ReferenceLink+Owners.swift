@@ -33,9 +33,12 @@ enum ReferenceLinkStore {
     /// The URL is normalised through `ReferenceURL` first: this is the **single** save-time gate,
     /// so a caller cannot store a `javascript:` string by skipping a view's validation. Returns
     /// `nil` — inserting nothing — when the string is not one we accept.
+    ///
+    /// `note` is defaulted here and **deliberately not on `update`** — see that method.
     @discardableResult
     static func add(title: String,
                     url raw: String,
+                    note: String = "",
                     to owner: some ReferenceLinkOwner,
                     in context: ModelContext) -> ReferenceLink? {
         guard let destination = ReferenceURL.normalised(raw) else { return nil }
@@ -46,6 +49,7 @@ enum ReferenceLinkStore {
         let order = ReferenceLink.nextOrder(after: owner.references)
         let link = owner.makeReference()
         link.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        link.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
         link.urlString = destination.absoluteString
         link.order = order
         context.insert(link)
@@ -53,11 +57,17 @@ enum ReferenceLinkStore {
     }
 
     /// Re-point an existing link. Same gate as `add`: a rejected string leaves the link untouched
-    /// and reports `false`, rather than half-applying the edit.
+    /// and reports `false`, rather than half-applying the edit — which is why the note is written
+    /// *after* the guard, not before it.
+    ///
+    /// **`note` has no default here, and that asymmetry with `add` is deliberate.** A defaulted
+    /// parameter would let an existing call site that never mentions the note silently erase one
+    /// the player wrote. Adding a link cannot lose anything; correcting one can.
     @discardableResult
-    static func update(_ link: ReferenceLink, title: String, url raw: String) -> Bool {
+    static func update(_ link: ReferenceLink, title: String, url raw: String, note: String) -> Bool {
         guard let destination = ReferenceURL.normalised(raw) else { return false }
         link.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        link.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
         link.urlString = destination.absoluteString
         return true
     }

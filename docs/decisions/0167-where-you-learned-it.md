@@ -58,8 +58,12 @@ sequenced second.
 
 ## Decision
 
-**A `ReferenceLink` is a URL and a title, owned by an exercise, a song, a loop or a routine,
-shown where you choose what to practise and never where you are practising.**
+**A `ReferenceLink` is a URL, a title and an optional note, owned by an exercise, a song, a
+loop or a routine, shown where you choose what to practise and never where you are
+practising.**
+
+> The note was added by the revision at the end of this ADR (2026-08-19). As originally
+> decided this read "a URL and a title".
 
 ### The model
 
@@ -70,6 +74,7 @@ are now-or-never.
 ```swift
 var uid: UUID
 var title: String = ""
+var note: String = ""        // added by the 2026-08-19 revision, below
 var urlString: String = ""
 var order: Int = 0
 var dateAdded: Date = Date.now
@@ -221,3 +226,80 @@ rather than restated on each.
 
 **Phase 2 (images) is unbuilt and unchanged.** `kindRaw` ships carrying `.image`, so it stays a pure
 addition.
+
+## Revision — a note beside the link (2026-08-19, `pocket-277-a-routine-that-remembers`)
+
+**A reference link gains an optional free-text note.** The decision line and the model block
+above are amended in place; this section is the reasoning.
+
+**Why the title was not already enough.** The title answers *what the resource is*, and a week
+later that is the half you can reconstruct — the host is right there under it. What you cannot
+reconstruct is *what it gave you*: that the useful four minutes start at 4:10, that only the
+chorus voicings are worth taking, that the first half is theory. The whole argument of this ADR
+is keeping the thread back to where something came from, and a pointer with no note keeps the
+address while losing the reason.
+
+- **`var note: String = ""`** — plain non-optional `String` with a declaration default, the
+  shape `Exercise.notes` and `Song.comment` already use. Never `String?`: an `init`-only
+  default is the CoreData 134110 failure this file's model discipline exists to prevent.
+  Additive on a live table, which the schema freeze permits, and device-verified against an
+  install holding pre-existing links rather than trusted to a green in-memory test.
+- **It renders as a third row line, capped at two lines**, under the site. The cap is
+  load-bearing rather than cosmetic: `ReferenceLinkRow` is shared by the section, the read-only
+  section and `ReferencesCard`, and the card sits in `RoutineBlockPreview`'s `ScrollView` where
+  an uncapped note would push the rest of the card off the screen.
+- **VoiceOver gets it in full, untruncated, by construction** — the row is a plain `Button`
+  with no `accessibilityElement(children:)` override, so SwiftUI folds the note into the
+  combined label. The two-line cap is a layout decision, not a content one, and the hint stays
+  about opening the destination. Adding the note to the hint as well would read it twice.
+- **`ReferenceLinkStore.add` defaults `note:`; `update` deliberately does not.** A defaulted
+  parameter on `update` would let a call site that never mentions the note silently erase one
+  the player wrote. Adding a link cannot lose anything; correcting one can. The note is written
+  *after* the URL guard, so a rejected edit still leaves title, URL and note all untouched.
+
+**Fixed in the same pass:** the editor's Link field is `axis: .vertical` and shipped with no
+`keyboardDoneButton`, so there was no way off the keyboard. One accessory now covers the sheet.
+
+**The routine's prose gap is narrowed but not closed.** A routine still has no description of
+its own — this gives it words *about a source*, not about itself. `docs/backlog.md` Routines
+item 2 stays open.
+
+**Phase 2 (images) remains unbuilt and unchanged by this.**
+
+### Also in this revision — a hold that opens the row's menu
+
+**Correcting a link was reachable only by a leading swipe**, and nothing on the row said so.
+Tapping opens the source, so a player looking for a way in finds the one gesture that does
+something else. Found the way this kind of thing is always found: on a device, by going
+looking for it and not finding it.
+
+A hold now opens a **menu — Edit link, Delete** — which is the grammar every other list row in
+the app already reads in through `pocketRowActions`. The swipes stay; this adds a route rather
+than moving one.
+
+**It is a `.contextMenu`, and the first attempt was worse.** That pass hung an
+`onLongPressGesture` on the row, which forced `ReferenceLinkRow` to stop being a `Button` —
+a SwiftUI `Button` fires its tap action on the *release of a long press too*, so it would have
+opened the source **and** the editor on every hold, the bug this repo has already shipped to a
+device twice. Rebuilding the row as a plain shape with hand-rolled gestures worked, but it also
+meant re-deriving the accessibility traits a `Button` gives for free, and it produced a bare
+Edit action where every other row in the app offers a menu. A `.contextMenu` has no quarrel
+with the tap, brings its own haptic and lift preview, and needs none of that. **The row that
+needed hand-rolled gestures was the row solving the wrong problem** — worth recording, because
+the hand-rolled version looked like the careful choice right up until the shared idiom was the
+answer.
+
+Delete is `role: .destructive` and **immediate**: these hosts install no deferred-delete seam,
+so there is no undo toast, and a row that vanished on a promise the screen cannot keep would be
+worse than one that goes when you say so. `docs/manual/references.md` says this out loud, since
+`gestures.md` otherwise promises undo on every row delete.
+
+The menu is on `ReferencesSection` only. The two read-only surfaces
+(`ReferencesReadOnlySection`, `ReferencesCard`) get no hold — a gesture offering to edit on a
+screen that deliberately does not edit is worse than no gesture.
+
+One tooling consequence, found the hard way. `scripts/check-manual.py`'s `long-press-sites`
+tripwire counted **raw text**, so the doc comments *explaining* the `onLongPressGesture`
+decision registered as two extra hold sites and failed C8 against a file that wires up none.
+The counter now strips comments before counting, exactly as C9 already does and for exactly the
+same reason: this codebase documents itself heavily and names the APIs it discusses.
