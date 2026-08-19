@@ -19,6 +19,7 @@ struct PracticeView: View {
     @Query private var exercises: [Exercise]
     @Query private var allLoops: [Loop]
     @Query private var routines: [Routine]
+    @Query private var longTermGoals: [LongTermGoal]
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
     @Environment(\.isPro) private var isPro
     @Environment(\.presentPaywall) private var presentPaywall
@@ -34,6 +35,13 @@ struct PracticeView: View {
                 libraryRow(title: "Routines", subtitle: "Hand-built practice sessions",
                            icon: "list.bullet.rectangle.portrait", count: routines.count) {
                     RoutineLibraryView()
+                }
+                // The long-term tier's one editable surface (ADR 0171 D6). Same altitude as the
+                // planner and routines — one tap from the screen that consumes it, and outside any
+                // session. Progress echoes this list read-only; nothing else may edit it.
+                libraryRow(title: "Long-term goals", subtitle: "Standing outcomes, ranked",
+                           icon: "flag", count: longTermGoals.count) {
+                    LongTermGoalListView()
                 }
             }
             Section("Your units") {

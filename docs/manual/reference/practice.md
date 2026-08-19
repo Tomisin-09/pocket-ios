@@ -8,17 +8,18 @@ Reached from the `Practice` card on Home. Everything in this region is part of R
      | alt: The Practice hub with the Today section, the Routines row and the Your units section holding Exercises and Loops
      | state: seeded library, Practice hub -->
 
-Four rows in two sections, each carrying a count.
+Five rows in two sections, each carrying a count.
 
 | Row | Subtitle | Opens |
 |---|---|---|
 | `Today` | `A session shaped by your goals` | The planner |
 | `Routines` | `Hand-built practice sessions` | The routines library |
+| `Long-term goals` | `Standing outcomes, ranked` | The long-term goals list |
 | `Exercises` | `Click-only command drills` | The exercises library |
 | `Loops` | `Measured song loops` | The loops library |
 
-`Today` sits on its own; the other three group under `Your units`. Routines are sessions; exercises
-and loops are the units a session is built from.
+`Today`, `Routines` and `Long-term goals` sit together; `Exercises` and `Loops` group under
+`Your units`. Routines are sessions; exercises and loops are the units a session is built from.
 
 ## `Today` — the planner
 
@@ -28,15 +29,51 @@ and loops are the units a session is built from.
 
 - **`How long do you have?`** — `Quick`, `Focused` and `Full`, each captioned with roughly how long
   the whole sitting runs.
-- **`Away from your instrument`** — the app's own words: *Listening work built from your own loops,
-  for a commute or a quiet room. Nothing to hold, nothing to plug in.* It resets each time.
-- **`Goals`** — what steers the session, with `Add a goal`. With none it says *No goals yet —
+- **`Away from your instrument`** — a toggle. Its **ⓘ** explains it in the app's own words:
+  *Listening work built from your own loops, for a commute or a quiet room. Nothing to hold,
+  nothing to plug in.* It resets each time.
+- **`Build from`** — `Both`, `This session`, `Long-term`. **Only present once you have a long-term
+  goal**; before that there is nothing to choose between. Its **ⓘ** carries the rule: *Goals for
+  this session are dealt first; long-term goals follow in your ranking.* A footer appears **only**
+  when the selection has nothing to contribute — *Nothing selected has anything to contribute yet,
+  so Generate will build a quick, due-based session from your exercises.*
+- **`This session`** — what steers this sitting in particular, with
+  `Add a goal for this session`, and, once there is at least one,
+  `Clear this session's goals`. **Hidden entirely when `Build from` is `Long-term`.** With none, and no long-term goals either, it says *No goals yet —
   Generate builds a quick, due-based session from your exercises. Add a goal to steer what you
-  practise.*
+  practise.* With a long-term goal standing it says *Nothing extra for today — Generate will follow
+  your long-term goals. Add one here to steer this session in particular.*
+- **`Long-term goals`** — a read-only copy of the ranked list, present only when you have one and
+  **hidden entirely when `Build from` is `This session`**. It carries no controls except
+  `Edit long-term goals`, which opens the list in Practice, and no footer — the `Build from` ⓘ
+  already states the order.
 - **`Generate today's session`** at the bottom.
 
 The goal editor, the review screen and what happens when nothing resolves are all in
 [Today's session](../sessions.md).
+
+## `Long-term goals`
+
+<!-- shot: reference/long-term-goals | role: screen
+     | alt: The Long-term goals screen with a numbered list of goals, each showing its skill count, and Add a long-term goal below
+     | state: seeded library, Practice ▸ Long-term goals, two goals ranked -->
+
+A numbered list under `Ranked`, each row carrying the goal's name and its skill count — plus its
+target song when it has one. Below them, `Add a long-term goal`.
+
+The toolbar carries one control, `Reorder goals`, which is off until there are two to reorder.
+
+With none, the section reads *Nothing here yet. A long-term goal is something you're working toward
+with no deadline attached — the higher it sits, the harder it pulls when you build a session.* The
+footer below the list says *Order them however you like. The top of the list pulls hardest when a
+session is built.*
+
+There is a ceiling of ten. On reaching it the `Add a long-term goal` row goes away and the footer
+says *That's 10 — the most a ranking stays meaningful at. Mark one met or delete one to add
+another.*
+
+Goals you have marked met collect under `Met`, footed *Kept here, and no longer shaping new
+sessions.* Procedure is in [Today's session](../sessions.md).
 
 ## `Routines`
 

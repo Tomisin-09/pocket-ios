@@ -46,37 +46,50 @@ instrument can turn up in one too — see [Exercises](exercises.md).
 
 ### What are you working towards?
 
-Goals are what steer the session. Without any, **Generate** still works — you get a quick session
-built from whichever of your drills are most due — but it has nothing to aim at.
+Goals are what steer the session, and there are **two kinds**. A **goal for this session** is what
+you want out of this sitting; a **long-term goal** is a standing outcome you are working toward,
+and it keeps steering sessions until you say otherwise. They differ in what they are about, not in
+how long they last.
+
+Without either, **Generate** still works — you get a quick session built from whichever of your
+drills are most due — but it has nothing to aim at.
 
 <!-- shot: sessions/goals | role: panel
-     | alt: The Goals section listing two goals, each with its skill count, target song and priority
+     | alt: The This session section listing two goals, each with its skill count, target song and priority
      | state: seeded library, Today's session, goals present -->
 
-Each goal shows how many skills it covers, its target song when it has one, and its priority.
-Tap one to edit it; swipe it to delete it.
+Each goal under **This session** shows how many skills it covers, its target song when it has one,
+and its priority. Tap one to edit it; swipe it to delete it.
 
-## Goals
+## Goals for this session
 
-**Add a goal** opens the editor, which asks two things in turn.
+**Add a goal for this session** opens the editor, which asks two things in turn.
 
 ### Start from a goal
 
 <!-- shot: sessions/goal-templates | role: screen
-     | alt: The New goal screen offering four starting points — play a specific song, build speed, improvise in a style, general progress
+     | alt: The New goal screen offering ten starting points, from playing a specific song to writing your own music, with a Something else row below them
      | state: Today's session, Add a goal tapped -->
 
-Four starting points, each pre-loaded with a sensible set of skills:
+Ten starting points, each pre-loaded with a sensible set of skills:
 
 | Starting point | What it does |
 |---|---|
 | **Play a specific song** | Learn a song from your library end-to-end. |
 | **Build speed** | Push picking and legato technique faster, cleanly. |
 | **Improvise in a style** | Grow soloing vocabulary over scales you know. |
+| **Tighten your timing** | Sit in the pocket — steady time, syncopation, cleaner strumming. |
+| **Clean up your chord changes** | Move between shapes without the gap you can hear. |
+| **Train your ear** | Hear intervals, lift parts off records, listen with intent. |
+| **Learn the fretboard** | Know what note you are on, and what it is doing. |
+| **Strengthen your fretting hand** | Reach, independence and stamina — the hand, not the speed. |
+| **Write your own music** | Turn the chords and lines you know into something of yours. |
 | **General progress** | A balanced mix of timing, scales, and clean changes. |
 
-There is no blank-goal option. Every goal starts as one of those and is then trimmed, because a
-goal's skills are what it actually schedules and an empty one schedules nothing.
+Below them, **Something else** skips the starting points and takes you straight to the full skill
+catalogue, so you can name the goal yourself. What you cannot make is a goal with *no* skills —
+**Save** stays unavailable until you have kept at least one, because a goal's skills are what it
+actually schedules and an empty one schedules nothing.
 
 ### Then trim it
 
@@ -86,7 +99,8 @@ goal's skills are what it actually schedules and an empty one schedules nothing.
 
 - **Name** — what you would call it out loud.
 - **Priority** — **Low**, **Normal** or **High**. This is how hard the goal pulls its skills into
-  today's session, not a deadline.
+  today's session, not a deadline. Long-term goals have no priority control; their rank does the
+  same job.
 - **Skills** — tap to include or drop one, or **Add skills** to pick more from the full catalogue.
   **Save** stays unavailable until at least one is kept.
 - **Target song** — this row appears only when you have kept a skill that needs a song to mean
@@ -97,6 +111,64 @@ Reopening a goal you have already made goes straight to this form.
 
 **Mark as met** retires a goal without deleting it: it stays in your history and stops shaping new
 sessions. Met goals collect in their own section, and you can bring one back the same way.
+
+### Starting over
+
+Once you have set at least one, **Clear this session's goals** appears below the add button and
+removes them in one go, after asking. It clears only the goals you set for *this* session — your
+long-term goals are untouched, so are any you have marked met, and so is everything you have
+practised. Swiping a single goal away is still there when you only want to drop one.
+
+## Long-term goals
+
+A **long-term goal** is something you are working toward over months — playing a particular song end
+to end, getting your picking faster, building a vocabulary to improvise with. Unlike the goals on
+Today's session, it stays put: you set it once and it keeps steering sessions until you mark it met.
+
+They live in their own list, in **Practice ▸ Long-term goals**, and they are authored exactly like
+the goals above — same four starting points, same skill trimming, same target song, same **Mark as
+met**. What they do not have is a priority control, and what they do not have is a deadline.
+
+**There is no deadline, and there is nothing to be late for.** Nothing here counts down, nothing
+turns red, and nothing tells you a goal is overdue. That is deliberate: a goal you set for yourself
+should not become something the app can hold over you.
+
+### Choosing which goals build a session
+
+Once you have at least one long-term goal, Today's session grows a **Build from** control and shows
+your ranked list underneath, read-only.
+
+| Build from | What Generate uses |
+|---|---|
+| **Both** | Goals for this session first, then your long-term goals in your ranking. The default. |
+| **This session** | Only the goals you added on Today's session. |
+| **Long-term** | Only your ranked standing list. |
+
+Whichever you pick, the other list **disappears from the screen** — the control above already says
+which one you are using, so leaving a greyed-out copy on screen would only be something to scroll
+past. Editing the long-term list still happens in **Practice ▸ Long-term goals**; the copy on
+Today's session is there to be read, not changed.
+
+Like **Away from your instrument**, this resets each time. It is a decision about this afternoon,
+not a setting.
+
+If whatever you pick has nothing in it, **Generate** still works — you get a quick, due-based
+session rather than a refusal.
+
+### Ranking is how you say what matters
+
+The list is numbered, and the order is yours. Tap **Reorder goals** in the toolbar, then drag.
+
+The rank does real work. The higher a goal sits, the harder it pulls when a session is built — and
+because a short session only has room for a few things, the ones near the top are the ones that
+actually get scheduled. Moving a goal up is how you change what you are handed tomorrow.
+
+Goals for **this session** come first when a session is built, then your long-term goals in your
+order. So naming something for today does not throw away the ranking; it takes priority for that
+sitting.
+
+You can keep **ten**. That is enough to hold what you are actually working on and few enough that
+ranking them still means something.
 
 ## Generating and reviewing
 

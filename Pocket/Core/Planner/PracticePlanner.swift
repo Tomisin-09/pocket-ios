@@ -75,6 +75,7 @@ enum PracticePlanner {
     /// with the same model arrays to persist and run.
     static func planGoalSession(length: SessionLength,
                                 goals: [Goal],
+                                longTermGoals: [LongTermGoal] = [],
                                 exercises: [Exercise],
                                 loops: [Loop] = [],
                                 songs: [Song] = [],
@@ -85,7 +86,12 @@ enum PracticePlanner {
         let library = library(exercises: exercises, loops: loops, songs: songs,
                               lastPracticed: lastPracticed)
         let emphasis = profile.map { PracticeEmphasis(genres: $0.genres, dream: $0.dream) } ?? .neutral
-        let candidates = CandidateDeriver.deriveCandidates(goals: goals.map(\.plannerProjection),
+        // Both tiers land in one pool and compete on the same terms (ADR 0171 D3) — a long-term
+        // goal's weight comes from its rank, so the only way to change how hard it pulls is to
+        // move it up the list. Short-term goals lead the round-robin; `ranking` puts the long-term
+        // tier after them, in the player's order, so rank stays observable past the item count.
+        let projected = goals.map(\.plannerProjection) + longTermGoals.map(\.plannerProjection)
+        let candidates = CandidateDeriver.deriveCandidates(goals: projected,
                                                            library: library, emphasis: emphasis,
                                                            constraint: constraint)
         // A warm-up wants the instrument, so a constrained session leads with the work itself
@@ -95,7 +101,9 @@ enum PracticePlanner {
             : exercises.filter { $0.template == .warmup }.map { candidate(for: $0) }
         let warmUp = SessionBuilder.warmUpPick(warmUps)
         return SessionBuilder.buildSession(length: length, candidates: candidates,
-                                           warmUp: warmUp, now: now)
+                                           warmUp: warmUp,
+                                           ranking: LongTermGoalStore.ranking(longTermGoals),
+                                           now: now)
     }
 
     /// Project the live library into the pure value types the deriver reasons over — the impure

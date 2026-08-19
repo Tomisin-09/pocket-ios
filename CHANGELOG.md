@@ -14,6 +14,34 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **Long-term goals.** A second kind of goal, in **Practice ▸ Long-term goals**: a standing outcome
+  you're working toward — playing a particular song end to end, getting your picking faster — that
+  keeps steering sessions until you mark it met, instead of being re-stated every time you plan.
+  The list is **ranked**, and the rank does real work: the higher a goal sits, the harder it pulls
+  when a session is built, and because a short session only has room for a few things, moving a
+  goal up changes what you are actually handed. Goals you set for *today* still come first. You can
+  keep ten.
+  **There is no deadline, and nothing counts down.** A long-term goal has no date on it at all, so
+  there is nothing you can be late for — that is the point of it, not an omission.
+  Progress carries a read-only echo of the list, showing each goal's skills and when you last
+  practised something serving it. No bars, no percentages, no "3 of 5 covered".
+- **You choose which goals build a session.** Today's session gains a **Build from** control —
+  **Both**, **This session** or **Long-term** — and shows your ranked long-term list underneath, so
+  the screen accounts for everything Generate is using instead of quietly consulting a list you
+  can't see from there. Picking one kind hides the other, so you are only ever looking at the goals
+  in play. It resets each time, like *Away from your instrument*.
+- **Clear this session's goals** — one action to empty the short list, with a confirmation. It
+  leaves your long-term goals, your met goals and your practice history alone.
+- **Six more starting points for a goal**, covering ground the original four didn't: tightening your
+  timing, cleaning up chord changes, training your ear, learning the fretboard, strengthening your
+  fretting hand, and writing your own music. And a **Something else** row that skips the starting
+  points and opens the full skill catalogue, for when none of them is quite what you mean.
+
+### Changed
+- **The planner's `Goals` section is now `This session`.** With two kinds of goal, the old heading
+  no longer said which one it meant. Adding one reads **Add a goal for this session**.
+
 ### Fixed
 - **Editing a chord progression no longer forgets the key you set.** Every edit — adding a chord,
   removing one, swapping one, changing how long it is held — rebuilt the progression without its

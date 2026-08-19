@@ -1,47 +1,43 @@
 import SwiftData
 import SwiftUI
 
-/// The **goal editor** (V2 planner Slice 3, ADR 0015 S1 / Decision 7): create a practice goal from a
-/// curated `GoalTemplate`, or edit an existing one. A new goal starts on the template picker; picking
-/// one seeds the title and a sensible skill set the user then **trims** (no free-text / AI in V2).
-/// Priority is the three-level `GoalPriority` surface over the stored `weight`; a repertoire goal
-/// (any selected skill in `repertoire` mode) additionally asks for a target song (Path B). Editing
-/// adds a **met** toggle and delete. Mutations are applied to the passed context and saved on Save.
+/// The **long-term goal editor** (ADR 0171): create a standing outcome from a shared `GoalTemplate`,
+/// or edit an existing one. Shape mirrors `GoalEditorView` — template picker, then trim the skills,
+/// then a target song for a repertoire goal — and the three shared sections come from
+/// `GoalAuthoringSections` so the two tiers can't drift.
 ///
-/// This edits the **short-term** tier — what you want out of *this* session (ADR 0171). The
-/// template picker, skill trimming and target song are shared with `LongTermGoalEditorView` via
-/// `GoalAuthoringSections`; what is local here is the priority segment, because weighting is the
-/// thing that distinguishes this tier from the ranked one.
-struct GoalEditorView: View {
+/// **What is absent here is the decision.** There is no priority segment, because this tier is
+/// ranked by its position in the list rather than weighted (ADR 0171 D3) — the only way to change
+/// how hard a long-term goal pulls is to drag it. And there is **no date field of any kind**
+/// (D1): no deadline, no horizon, no "by when". With nothing stored there is nothing for the app to
+/// be late against, which is what makes the no-verdict property of ADR 0070 structural rather than
+/// a promise kept by copy. Do not add one.
+struct LongTermGoalEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
 
     /// The goal under edit, or `nil` to create a new one (which begins on the template picker).
-    let existing: Goal?
+    let existing: LongTermGoal?
     /// The song library, for the repertoire target picker.
     let songs: [Song]
+    /// Where a new goal lands in the ranking — the caller passes the current count, so a new goal
+    /// joins the **bottom** of the list rather than displacing something the player ranked.
+    var newGoalOrder: Int = 0
 
-    /// The chosen template for a new goal — `nil` until picked (the picker is shown until then).
     @State private var template: GoalTemplate?
     @State private var title = ""
-    @State private var priority: GoalPriority = .normal
-    /// Every skill offered as a trimmable row (the template's or the existing goal's seeded set).
     @State private var offeredSkillIDs: [String] = []
-    /// The subset currently kept — tapping a row toggles membership.
     @State private var keptSkillIDs: Set<String> = []
     @State private var targetSong: Song?
     @State private var isMet = false
-    /// Whether the full-catalog skill picker is showing (R2 — add skills beyond the template's seed).
     @State private var showingSkillPicker = false
     /// Whether the player chose **Something else** — no template, straight to the form. Its own flag
     /// rather than a sentinel template, because `template` is also what supplies the fallback title,
     /// and a blank start deliberately has none.
     @State private var startedBlank = false
 
-    /// Whether any kept skill routes via the target song (Path B) — drives the song picker's presence.
     private var needsTargetSong: Bool { goalNeedsTargetSong(keptSkillIDs) }
 
-    /// A new goal with no template chosen yet shows the picker instead of the field form.
     private var isPickingTemplate: Bool { existing == nil && template == nil && !startedBlank }
 
     var body: some View {
@@ -55,7 +51,7 @@ struct GoalEditorView: View {
             }
             .scrollContentBackground(.hidden)
             .background(PocketColor.background.ignoresSafeArea())
-            .navigationTitle(existing == nil ? "New goal" : "Edit goal")
+            .navigationTitle(existing == nil ? "New long-term goal" : "Edit long-term goal")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -78,25 +74,15 @@ struct GoalEditorView: View {
 
     private var editorForm: some View {
         List {
-            Section("Name") {
+            Section {
                 TextField("Goal name", text: $title)
                     .font(.futura(.body))
                     .foregroundStyle(PocketColor.textPrimary)
                     .listRowBackground(PocketColor.background)
-            }
-
-            Section {
-                Picker("Priority", selection: $priority) {
-                    ForEach(GoalPriority.allCases) { level in
-                        Text(level.label).tag(level)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .listRowBackground(PocketColor.background)
             } header: {
-                Text("Priority")
+                Text("Name")
             } footer: {
-                Text("How hard this goal pulls its skills up today's session.")
+                Text("Open-ended by design — there's no deadline here, and nothing counts down.")
                     .font(.futura(.caption))
             }
 
@@ -126,7 +112,7 @@ struct GoalEditorView: View {
                     }
                     .listRowBackground(PocketColor.background)
                 } footer: {
-                    Text("A met goal stays in your history but stops shaping new sessions.")
+                    Text("A met goal stays in your list but stops shaping new sessions.")
                         .font(.futura(.caption))
                 }
             }
@@ -135,19 +121,15 @@ struct GoalEditorView: View {
 
     // MARK: - State
 
-    /// Seed the editor from an existing goal (once, on appear). New goals seed from their template
-    /// via `choose(_:)` instead.
     private func loadExisting() {
         guard let existing, offeredSkillIDs.isEmpty else { return }
         title = existing.title
-        priority = GoalPriority.nearest(toWeight: existing.weight)
         offeredSkillIDs = existing.skillIDs
         keptSkillIDs = Set(existing.skillIDs)
         targetSong = existing.targetSong
         isMet = existing.isMet
     }
 
-    /// Seed a new goal's fields from the picked template and move on to the field form.
     private func choose(_ candidate: GoalTemplate) {
         template = candidate
         title = candidate.title
@@ -166,15 +148,13 @@ struct GoalEditorView: View {
 
     // MARK: - Persistence
 
-    /// Commit the edit: mutate the existing goal or insert a new one, preserving the offered skill
-    /// order (only the kept subset is stored). A repertoire goal without a chosen song still saves —
-    /// it simply produces no Path-B candidates until one is picked (the app never refuses, ADR 0073).
+    /// Commit the edit. A new goal takes `newGoalOrder` — the bottom of the ranking — so authoring
+    /// never silently reorders what the player already arranged; promoting it is a deliberate drag.
     private func save() {
         let keptOrdered = offeredSkillIDs.filter { keptSkillIDs.contains($0) }
         let finalTitle = title.trimmingCharacters(in: .whitespaces)
-        let goal = existing ?? Goal()
-        goal.title = finalTitle.isEmpty ? (template?.title ?? "Goal") : finalTitle
-        goal.weight = priority.weight
+        let goal = existing ?? LongTermGoal(order: newGoalOrder)
+        goal.title = finalTitle.isEmpty ? (template?.title ?? "Long-term goal") : finalTitle
         goal.skillIDs = keptOrdered
         goal.targetSong = needsTargetSong ? targetSong : nil
         goal.isMet = isMet
@@ -191,11 +171,11 @@ struct GoalEditorView: View {
     }
 }
 
-#Preview("Goal editor — new") {
+#Preview("Long-term goal editor — new") {
     // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Goal.self, Song.self,
+    let container = try! ModelContainer(for: LongTermGoal.self, Song.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
-    return GoalEditorView(existing: nil, songs: [])
+    return LongTermGoalEditorView(existing: nil, songs: [])
         .modelContainer(container)
         .preferredColorScheme(.dark)
 }
