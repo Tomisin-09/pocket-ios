@@ -10,13 +10,13 @@ reach another way, or changes a setting that has a sensible default.
 ## The cheatsheet the app carries
 
 The song player has its own summary built in. Tap **Loop controls** on the line under the speed bar
-and a popover lists the eight things you can do to a loop:
+and a popover lists the nine things you can do to a loop:
 
 <!-- shot: gestures/loop-controls-popover | role: panel
-     | alt: The Loop controls popover open over the waveform, listing eight rows from "Make a loop" to "Follow"
+     | alt: The Loop controls popover open over the waveform, listing nine rows from "Make a loop" to "Follow"
      | state: seeded library, Little Wing, player idle, Loop controls tapped -->
 
-<!-- loop-controls-rows: 8 -->
+<!-- loop-controls-rows: 9 -->
 
 | | |
 |---|---|
@@ -27,6 +27,7 @@ and a popover lists the eight things you can do to a loop:
 | **Move around** | Tap or drag to seek · pinch to zoom · skip with − / + |
 | **Change the skip** | Hold either skip button to pick 5s · 10s · 15s · 30s · 1 min |
 | **Set the tempo** | Hold the metronome to open tap-tempo or type a BPM |
+| **Carry the tempo** | Hold the BPM to take it to the metronome or a new exercise |
 | **Follow** | Off: zoom holds the spot under your fingers · On: it tracks the playhead |
 
 That popover covers the waveform. The rest of this page covers everything else.
@@ -40,7 +41,7 @@ them are in the song player.
 |---|---|
 | The song's title and artist, at the top of the player | The song's details |
 | The compact title bar, in landscape | The song's details |
-| The **BPM** readout on the speed bar | The tempo editor |
+| The **BPM** readout on the speed bar | Somewhere to take that tempo |
 | The metronome button on the speed bar | The tempo editor |
 | The **Loop controls** line | The song player's settings |
 | A row in the **Loops** panel | That loop's edit sheet |
@@ -51,9 +52,19 @@ them are in the song player.
 Two of those are worth calling out because they are doors to somewhere you would otherwise go
 hunting for.
 
-**The tempo editor has two handles.** Both the BPM readout and the metronome button open it, so
-whichever one you happen to be looking at when the number turns out to be wrong is the one that
-works.
+**The two numbers on the speed bar do different jobs.** The metronome button opens the tempo
+editor, which is where you go when the song's tempo is wrong or missing. The **BPM** readout beside
+it does the opposite — it hands the tempo *out*. Hold it and you can take that number to the
+metronome, which opens already set to it, or into a new exercise, which starts at it and arrives
+linked to the song you took it from.
+
+<!-- shot: gestures/carry-tempo | role: panel
+     | alt: The Carry this tempo sheet listing "To the metronome" and "Into a new exercise", headed with the tempo being carried
+     | state: seeded library, Little Wing, player idle, BPM readout held -->
+
+The number it carries is the one on screen. That is the song's tempo **at the speed you have set**,
+so a 200 BPM song at 0.25× carries 50 — the tempo you are actually playing at, which is usually the
+one you wanted.
 
 <!-- shot: gestures/speed-bar | role: band
      | alt: The speed bar with the speed control, the metronome button and the BPM readout

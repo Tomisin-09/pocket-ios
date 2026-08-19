@@ -17,6 +17,11 @@ struct ConfigureExerciseForm: View {
     /// control *before* this form (S6), so it's set once here and rides onto the plan. The form seeds its
     /// generated content and draw canvas for it in `init`; it isn't editable on this step.
     let initialInstrument: Instrument
+    /// Songs the link picker (ADR 0111) starts with already ticked. Empty for both original hosts —
+    /// a drill authored in Practice or saved out of the automator knows of no song. The song
+    /// player's tempo-carry gateway (ADR 0170) passes the song the tempo was read off, because that
+    /// is the one fact that route knows and the form cannot infer.
+    let initialSongs: [Song]
     let create: (NewExercisePlan) -> Void
 
     @State var name = ""
@@ -73,7 +78,7 @@ struct ConfigureExerciseForm: View {
     /// written through: nothing exists to link to until Create, and abandoning the sheet must leave
     /// the library untouched. (Contrast `ExerciseDetailSheet`, where the drill already exists and each
     /// toggle persists immediately.)
-    @State var pickedSongs: [Song] = []
+    @State var pickedSongs: [Song]
     @State var showingSongPicker = false
 
     /// The instrument this drill draws and generates for — fixed at the create sheet (S6), so it's just
@@ -83,13 +88,15 @@ struct ConfigureExerciseForm: View {
     private let range = StandaloneMetronomeEngine.bpmRange
 
     init(template: ExerciseTemplate, initialCommand: Int, initialSignature: TimeSignature,
-         initialInstrument: Instrument = .guitar,
+         initialInstrument: Instrument = .guitar, initialSongs: [Song] = [],
          create: @escaping (NewExercisePlan) -> Void) {
         self.template = template
         self.initialCommand = initialCommand
         self.initialSignature = initialSignature
         self.initialInstrument = initialInstrument
+        self.initialSongs = initialSongs
         self.create = create
+        _pickedSongs = State(initialValue: initialSongs)
         _command = State(initialValue: initialCommand)
         _signature = State(initialValue: initialSignature)
         let bars = initialSignature.beats

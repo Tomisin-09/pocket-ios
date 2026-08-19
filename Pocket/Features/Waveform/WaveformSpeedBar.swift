@@ -5,8 +5,9 @@ import SwiftUI
 // more jobs and pushed that file past its line budget; shares the same `panelBackground` chrome.
 //
 // The row, left to right: the **speed readout** (tap for custom numeric entry), the **slider**
-// (0.25×–1.5×, `TempoMath`'s axis), the **effective BPM** when the song's tempo is known, then two
-// packed circular controls — **repeat the song** and the **metronome click**.
+// (0.25×–1.5×, `TempoMath`'s axis), the **effective BPM** when the song's tempo is known (hold it to
+// **carry that tempo out** — ADR 0170), then two packed circular controls — **repeat the song** and
+// the **metronome click**.
 //
 // ADR 0124 moved the tempo entry point onto the metronome: the "Set BPM" capsule that used to hold
 // the readout's slot is gone, and its place is now REPEAT. Holding the metronome opens the tempo
@@ -21,6 +22,12 @@ struct SpeedBar: View {
     /// `nil` when the song's tempo is unknown — the BPM readout collapses and the metronome badges.
     let displayedBPM: Int?
     let onSetBPM: () -> Void
+    /// Holding the BPM callout **carries that tempo out of the song** (ADR 0170) — to the
+    /// metronome, or into a new exercise. Handed the number the readout is showing at the moment of
+    /// the hold, so what leaves is what the player was looking at; the callout is the effective
+    /// tempo (`song.bpm × speed`), so a 200 BPM song at 0.25× carries 50. Defaults to a no-op for
+    /// previews/standalone use.
+    var onCarryTempo: (Int) -> Void = { _ in }
     /// Fired when the user grabs the slider (or commits a typed speed), so a running loop automator
     /// can stand down — manual control wins. Defaults to a no-op for previews/standalone use.
     var onUserAdjust: () -> Void = {}
@@ -112,8 +119,12 @@ struct SpeedBar: View {
         }
     }
 
-    /// Effective BPM (song tempo × speed). Long-press still re-opens the tempo editor — the route
-    /// that shipped with ADR 0024 — so a wrong tempo stays correctable where it's displayed.
+    /// Effective BPM (song tempo × speed). **The hold carries this tempo out of the song** (ADR
+    /// 0170) rather than re-opening the tempo editor, which is the route it held from ADR 0024 to
+    /// 0170. The two BPM handles specialise: correcting a wrong tempo stays on the metronome
+    /// control beside it — a *visible* one, with its own badge — and this one, which shows a tempo
+    /// you can already read, hands it to the metronome or to a new drill. No hold is spent doing
+    /// it: this gesture already existed, so the app's hold count is unchanged (ADR 0163).
     private func bpmReadout(_ bpm: Int) -> some View {
         VStack(alignment: .trailing, spacing: 0) {
             Text("\(bpm)")
@@ -125,13 +136,13 @@ struct SpeedBar: View {
         }
         .contentShape(Rectangle())
         .onLongPressGesture(minimumDuration: 0.4) {
-            haptic(.medium)     // confirm the hold landed before the editor opens
-            onSetBPM()
+            haptic(.medium)     // confirm the hold landed before the chooser opens
+            onCarryTempo(bpm)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(bpm) beats per minute")
-        .accessibilityHint("Long press to change the tempo")
-        .accessibilityAction(named: "Change tempo") { onSetBPM() }
+        .accessibilityHint("Long press to take this tempo to the metronome or into a new exercise")
+        .accessibilityAction(named: "Carry this tempo") { onCarryTempo(bpm) }
     }
 }
 

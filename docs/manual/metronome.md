@@ -43,6 +43,10 @@ Four ways, all driving the same number:
   five times and the tempo follows. Leave it a couple of seconds and the next tap starts a fresh
   measurement rather than averaging against a stale one.
 
+There is also a fifth way the number can be set, which is not a control on this screen: **arrive
+already on it.** Hold the **BPM** readout in the song player and choose *To the metronome*, and this
+screen opens on the tempo you were practising that song at. See **Every hold, swipe and pinch**.
+
 <!-- shot: metronome/tempo-controls | role: band
      | alt: The BPM readout with its Italian tempo marking, the minus and plus steppers, and the slider flanked by two TAP buttons
      | state: Metronome open, 96 BPM -->

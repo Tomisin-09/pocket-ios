@@ -183,6 +183,7 @@ private struct LoopControlsInfo: View {
             row("Move around", "Tap or drag to seek · pinch to zoom · skip with − / +")
             row("Change the skip", "Hold either skip button to pick 5s · 10s · 15s · 30s · 1 min")
             row("Set the tempo", "Hold the metronome to open tap-tempo or type a BPM")
+            row("Carry the tempo", "Hold the BPM to take it to the metronome or a new exercise")
             row("Follow", "Off: zoom holds the spot under your fingers · On: it tracks the playhead")
         }
         .padding(16)
