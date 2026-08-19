@@ -632,7 +632,18 @@ never an audio or tempo input. It powers **"Build a routine for this song"**: th
 (exercises/loops as `.focus`, the song as a trailing `.play`), reusing the planner's
 `RoutineDetailView(generatedSession:)` → `PracticePlanner.materialise` review-then-Save seam so nothing
 persists until the player commits — the "planner becomes a producer of these edges" framing, with the
-direct edge as the first producer. The **collection-wide** sibling is `CollectionSessionBuilder`
+direct edge as the first producer. **Since ADR 0172 the edge is also walkable**, having been display
+only: a drill row under *Exercises for this song* pushes `ExerciseRunScreen` inside the details
+sheet's own `NavigationStack` (the same push *Build a routine* uses), while a song row on
+`ExerciseDetailSheet` goes the other way through an injected `onOpenSong` — staged, sheet dismissed,
+then pushed by the host, because `WaveformPracticeView` rotates (ADR 0042) and holds a keep-awake
+lease and so cannot run inside a sheet. That stage → promote → clear stepping is the pure,
+unit-tested **`LinkedSongRoute`**, attached by a `.linkedSongPlayer(_:)` modifier, shared by the two
+hosts that inject the handler: `ExerciseLibraryView`, and `ExerciseRunView`'s ⓘ behind
+`canLeaveForSong` (`!isRunning && routineContext == nil` — a *runtime* guard, since a run screen is a
+setup surface before it is a running one). `RoutineBlockPreview` and `FreeformRunView` pass `nil` and
+their rows stay inert. The section itself moved to **`SongDetailsSheet+Links.swift`** to keep the
+sheet under the 400-line cap, mirroring `RoutineDetailView+References.swift`. The **collection-wide** sibling is `CollectionSessionBuilder`
 (ADR 0118): a **Collection** is a `[String]` label axis on `Song` (ADR 0033), not an entity, so the
 builder fans out across every song carrying the label, pools their linked exercises/loops/play-throughs,
 **de-duplicates shared units by `uid`** (a drill linked to three songs warms the set up once), **sizes**

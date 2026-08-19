@@ -169,6 +169,11 @@ The second step is titled for what you picked — **New warm-up**, **New scales*
 - **Time signature** — sets the run's accents and count-in length. Defaults to 4/4.
 - **Songs** — link the songs this drill is for. The link shows on the song too.
 
+A chord progression is built a chord at a time, and each chord carries its own controls: the name
+opens the picker to swap it, the stepper sets how many beats it is held for, and the up and down
+arrows move it along the progression. So an order you got wrong is a couple of taps to fix rather
+than a chord to delete and rebuild. The arrows appear once there are two chords to order.
+
 **Create** saves it and drops you straight onto its run screen, so making a drill and playing it are
 one move.
 
@@ -181,6 +186,11 @@ is fixed.
 That sheet also holds **Where you learned it** — links out to the lesson or tab page the drill came
 from, so a drill you built in February still says who taught it to you in June. See
 [Where you learned it](references.md).
+
+Its **Songs** section is a way through, not just a label: tapping a linked song opens that song in
+the player. It is there while you are setting a drill up, and stands down — the songs still listed,
+just not tappable — once the drill is running, or when the drill is a block inside a routine.
+Opening a song from either would strand the thing you were in the middle of.
 
 Changing how many notes per beat a drill plays asks you what should happen to its command tempo,
 because the two mean nothing apart.

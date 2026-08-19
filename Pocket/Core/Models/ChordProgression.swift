@@ -123,9 +123,21 @@ extension ChordProgression {
 // MARK: - Editing (pure — the authoring editor is a thin skin over these, T5)
 
 extension ChordProgression {
+    /// This progression with a new set of `changes` and **everything else carried over** — the key
+    /// included. Every editor below goes through here rather than calling the memberwise `init`,
+    /// because the four that predated it each rebuilt with `changes:` and `version:` alone and so
+    /// silently reset `keyRoot` / `keyIsMinor` to "inferred from the first chord": re-beating a
+    /// chord in a progression explicitly set to G major re-read its numerals against whatever
+    /// happened to be first. Keeping the rebuild in one place is what stops a fifth editor
+    /// reintroducing it.
+    private func with(changes updated: [ChordChange]) -> ChordProgression {
+        ChordProgression(changes: updated, keyRoot: keyRoot, keyIsMinor: keyIsMinor,
+                         version: version)
+    }
+
     /// The progression with `voicing` appended, held for `beats`.
     func appending(_ voicing: ChordVoicing, beats: Int = 4) -> ChordProgression {
-        ChordProgression(changes: changes + [ChordChange(voicing, beats: beats)], version: version)
+        with(changes: changes + [ChordChange(voicing, beats: beats)])
     }
 
     /// The progression with the change at `index` removed (never below one change).
@@ -133,7 +145,7 @@ extension ChordProgression {
         guard changes.indices.contains(index), changeCount > 1 else { return self }
         var updated = changes
         updated.remove(at: index)
-        return ChordProgression(changes: updated, version: version)
+        return with(changes: updated)
     }
 
     /// The progression with the change at `index` re-voiced to `voicing`, its hold unchanged.
@@ -141,7 +153,7 @@ extension ChordProgression {
         guard changes.indices.contains(index) else { return self }
         var updated = changes
         updated[index] = ChordChange(voicing, beats: updated[index].beats)
-        return ChordProgression(changes: updated, version: version)
+        return with(changes: updated)
     }
 
     /// The progression with the change at `index` held for `beats` (clamped ≥ 1), its voicing kept.
@@ -149,6 +161,26 @@ extension ChordProgression {
         guard changes.indices.contains(index) else { return self }
         var updated = changes
         updated[index] = ChordChange(updated[index].voicing, beats: beats)
-        return ChordProgression(changes: updated, version: version)
+        return with(changes: updated)
+    }
+
+    /// The progression with the change at `index` moved `offset` slots (−1 up, +1 down) — a genuine
+    /// move, not a swap, so it stays correct if a caller ever steps by more than one.
+    ///
+    /// Order **is** the model here — `changes` is played in array order and wraps — so a reorder is
+    /// just a permutation and nothing downstream of it needs to know: `activeIndex(atBeat:)` and
+    /// `beatOffset(ofChange:)` read whatever order they are handed.
+    ///
+    /// A move off either end returns `self` unchanged rather than trapping or wrapping. The editor
+    /// disables the arrow at each end, so a no-op here is the belt to that braces — and wrapping
+    /// would make a mis-tap on the last row silently rewrite the start of the progression.
+    func movingChange(at index: Int, by offset: Int) -> ChordProgression {
+        let destination = index + offset
+        guard changes.indices.contains(index), changes.indices.contains(destination) else {
+            return self
+        }
+        var updated = changes
+        updated.insert(updated.remove(at: index), at: destination)
+        return with(changes: updated)
     }
 }

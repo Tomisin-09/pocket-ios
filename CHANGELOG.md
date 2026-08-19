@@ -15,6 +15,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Fixed
+- **Editing a chord progression no longer forgets the key you set.** Every edit — adding a chord,
+  removing one, swapping one, changing how long it is held — rebuilt the progression without its
+  key, so the Roman-numeral badges silently went back to reading against whatever chord happened to
+  be first. A progression you had set to G major re-lettered itself the moment you touched it. The
+  key now survives every edit, so those badges may read differently from today on a drill whose key
+  was set and then edited — differently, and correctly.
 - **Raising your command tempo no longer quietly retires a drill.** Rating something **5** on the
   completion screen and accepting the offer to raise your command tempo used to do two things at
   once: record the 5, and move the drill to a faster tempo it had never been rated at. The 5 then
@@ -28,6 +34,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   back-filled with a rating from today.
 
 ### Added
+- **Chords in a progression can be moved.** Every chord row now carries an up and a down arrow, so a
+  progression you built in the wrong order is a couple of taps to fix instead of a delete and a
+  rebuild. The arrows sit on the row rather than behind an edit mode — reordering is usually a
+  repair, and a repair wants the control already there. ADR 0172.
+- **The exercises and songs you've linked are now something you can follow.** Both sides listed the
+  link and then left you to go and find the other thing by name. Tapping a drill under **Exercises
+  for this song** now opens its run screen, and comes back to the song when you're done. Tapping a
+  song under **Songs** on a drill's ⓘ sheet opens it in the player. That one waits until leaving is
+  safe: it is there while you are setting a drill up, and stands down once the drill is running or
+  when it is a block inside a routine, where opening a song would strand what you were in the
+  middle of. ADR 0172.
 - **Hold the BPM in the song player to take that tempo with you.** The number on the speed bar used
   to be something you could only read. Hold it now and it goes where you need it: to the metronome,
   which opens already set to it, or into a new exercise, which starts at it and arrives linked to
