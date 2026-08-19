@@ -46,6 +46,12 @@ struct ChordProgressionEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            // Identity is the **index**, so a reorder redraws the rows in place rather than
+            // animating one past another. That is deliberate: the alternative is a stable id on
+            // `ChordChange`, and `ChordChange` is `Equatable` inside a `Codable` blob that
+            // `ExerciseShapeSheet.commitChords()` diffs against a *freshly decoded* copy to decide
+            // whether to write. A per-decode `UUID` would make that diff always report "changed",
+            // so every Done would write. A missing animation is the cheaper of the two.
             ForEach(Array(progression.changes.enumerated()), id: \.offset) { index, change in
                 changeRow(index: index, change: change)
                 if index < progression.changeCount - 1 { Divider() }
@@ -89,6 +95,7 @@ struct ChordProgressionEditor: View {
                 beatsStepper(index: index, change: change)
             }
             Spacer(minLength: 0)
+            nudgeButtons(index: index, name: change.voicing.name)
             Button(role: .destructive) {
                 progression = progression.removingChange(at: index)
             } label: {
@@ -97,6 +104,45 @@ struct ChordProgressionEditor: View {
             .buttonStyle(.borderless)
             .disabled(progression.changeCount <= 1)
         }
+    }
+
+    /// Move this chord up or down the progression. Two plain buttons rather than a drag handle:
+    /// the rows are a `VStack` inside a *single* `Form` row at all four call sites, and SwiftUI's
+    /// `.onMove` — what the routine editor's blocks use — only reaches a `ForEach` that is a direct
+    /// child of a `List`. Restructuring for it would break the shared strum + chords layout, and a
+    /// hand-rolled drag inside a `Form` fights the scroll it sits in.
+    ///
+    /// Always visible rather than behind an edit mode: reordering a progression is a *repair* — you
+    /// notice the F should have come first — and a repair wants the control already there.
+    private func nudgeButtons(index: Int, name: String) -> some View {
+        VStack(spacing: 2) {
+            nudgeButton(index: index, by: -1, systemImage: "chevron.up",
+                        label: "Move \(name) up")
+            nudgeButton(index: index, by: 1, systemImage: "chevron.down",
+                        label: "Move \(name) down")
+        }
+        // The whole pair goes when there's nothing to reorder, rather than sitting there dimmed:
+        // a one-chord progression can't be ordered at all, so the control has no meaning yet.
+        .opacity(progression.changeCount > 1 ? 1 : 0)
+        .disabled(progression.changeCount <= 1)
+        .accessibilityHidden(progression.changeCount <= 1)
+    }
+
+    private func nudgeButton(index: Int, by offset: Int,
+                             systemImage: String, label: String) -> some View {
+        // `.borderless` for the sibling-button reason in the file header: without it a tap in a
+        // `Form` row fires every button in the row, and this row now holds five.
+        Button {
+            progression = progression.movingChange(at: index, by: offset)
+        } label: {
+            Image(systemName: systemImage)
+                .font(.caption.weight(.semibold))
+                .frame(width: 26, height: 18)
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(PocketColor.practice)
+        .disabled(!progression.changes.indices.contains(index + offset))
+        .accessibilityLabel(label)
     }
 
     /// The chord's name, tapped to open the picker on this slot for a swap (ADR 0103). The chevron reads

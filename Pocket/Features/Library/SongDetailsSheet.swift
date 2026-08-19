@@ -24,19 +24,23 @@ struct SongDetailsSheet: View {
     }
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.modelContext) var modelContext
     /// Entitlement + the shared paywall (ADR 0112) — "Build a routine for this song" produces a real
     /// `Routine`, which is Pro. Linking exercises to a song stays free (it's not authoring content).
-    @Environment(\.isPro) private var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
+    @Environment(\.isPro) var isPro
+    @Environment(\.presentPaywall) var presentPaywall
     /// Every exercise, to offer in the link picker (ADR 0111). Sorted by name, like the library.
     /// Candidates for the "Link exercises" picker. Loaded when *that* picker opens, not when
     /// this sheet does — it was a `@Query` for every `Exercise`, run on the main thread during
     /// presentation, and this sheet is opened by holding the title on the practice screen while
     /// audio plays. Most openings never touch the picker at all.
-    @State private var exerciseCandidates: [Exercise] = []
-    @State private var showingExercisePicker = false
-    @State private var buildingRoutine = false
+    @State var exerciseCandidates: [Exercise] = []
+    @State var showingExercisePicker = false
+    @State var buildingRoutine = false
+    /// The linked drill being opened for a run. The link is a route, not just a label (ADR 0172):
+    /// the app already knows this exercise is *for* this song, so reading it here and then making
+    /// you go and find it in the exercise library is a fact it declines to act on.
+    @State var openingExercise: Exercise?
     @State private var editing = false
     // Inline notes editing: a local draft committed on Update, so the read view only
     // changes when you explicitly save (not keystroke-by-keystroke).
@@ -89,6 +93,19 @@ struct SongDetailsSheet: View {
                 RoutineDetailView(container: modelContext.container,
                                   generatedSession: SongRoutineBuilder.sessionBlocks(for: song),
                                   defaultName: SongRoutineBuilder.defaultName(for: song))
+            }
+            // A linked drill opens its run screen, pushed inside this sheet the same way "Build a
+            // routine" is — so the back chevron returns to the song you came from. Bool-bound, not
+            // `.navigationDestination(item:)`: a model's `persistentModelID` can flip on a save and
+            // item-based presentation reads that as an identity change and pops (ADR 0090).
+            // Attached here at the `NavigationStack`, never inside the `Form` — a presentation
+            // raised from a row inside this sheet's form dismisses *this* sheet (see
+            // `ReferenceLinkEditing`).
+            .navigationDestination(isPresented: Binding(get: { openingExercise != nil },
+                                                        set: { if !$0 { openingExercise = nil } })) {
+                // Through `ExerciseRunScreen`, never `ExerciseRunView` — it is the one place that
+                // decides which run screen a drill gets, so a freeform block gets its own (ADR 0136).
+                if let exercise = openingExercise { ExerciseRunScreen(exercise: exercise) }
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -230,83 +247,6 @@ struct SongDetailsSheet: View {
         }
     }
 
-    // MARK: - Linked drills (ADR 0111)
-
-    /// The exercises that **serve** this song — the song side of the `Song.linkedExercises` ↔
-    /// `Exercise.linkedSongs` edge, and the future home of "Build a practice routine for this song".
-    /// Each row unlinks with a swipe; **Link exercises** opens the multi-select picker. Link changes
-    /// persist immediately, matching the inline-notes save here (a discrete, intentional edit).
-    private var linkedExercisesSection: some View {
-        Section {
-            if song.linkedExercises.isEmpty {
-                Text("No drills linked yet — link the exercises that help you play this song.")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
-            } else {
-                ForEach(linkedExercisesByName, id: \.persistentModelID) { exercise in
-                    HStack(spacing: 8) {
-                        Text(exercise.name.isEmpty ? "Untitled exercise" : exercise.name)
-                            .foregroundStyle(PocketColor.textPrimary)
-                        Spacer(minLength: 8)
-                        Text(exercise.template.displayName)
-                            .font(.futura(.caption))
-                            .foregroundStyle(PocketColor.textSecondary)
-                    }
-                }
-                .onDelete(perform: unlinkExercises)
-            }
-            Button {
-                // Fetched on the tap that asks for the picker, not in the picker's own `.task` —
-                // a task would let the sheet draw its "No exercises in your library yet" empty
-                // state for a frame before the real list arrived.
-                exerciseCandidates = LibraryPools.exercisesByName(in: modelContext)
-                showingExercisePicker = true
-            } label: {
-                Label("Link exercises", systemImage: "plus.circle")
-                    .foregroundStyle(PocketColor.practice)
-            }
-            buildRoutineButton
-        } header: {
-            Text("Exercises for this song")
-        } footer: {
-            Text("Exercises that help you play this song — they show on the exercise too. "
-                 + "Build a routine strings these together with your saved loops and a full "
-                 + "play-through, ready to review and save.")
-        }
-    }
-
-    private var linkedExercisesByName: [Exercise] {
-        song.linkedExercises.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-    }
-
-    /// Whether "Build a routine" has anything to work with — a linked exercise or a saved loop
-    /// (ADR 0111). Mirrors `SongRoutineBuilder.canBuild` so the button disables when the generated
-    /// routine would be a lone play-through.
-    private var canBuildRoutine: Bool { SongRoutineBuilder.canBuild(for: song) }
-
-    private func isLinked(_ exercise: Exercise) -> Bool {
-        song.linkedExercises.contains { $0.persistentModelID == exercise.persistentModelID }
-    }
-
-    /// Toggle a drill's link from the picker — mutating the relationship + `save()` keeps the picker
-    /// checkmark and the section behind it in sync.
-    private func toggleLink(_ exercise: Exercise) {
-        if let index = song.linkedExercises.firstIndex(where: { $0.persistentModelID == exercise.persistentModelID }) {
-            song.linkedExercises.remove(at: index)
-        } else {
-            song.linkedExercises.append(exercise)
-        }
-        try? modelContext.save()
-    }
-
-    private func unlinkExercises(at offsets: IndexSet) {
-        let targets = offsets.map { linkedExercisesByName[$0] }
-        for exercise in targets {
-            song.linkedExercises.removeAll { $0.persistentModelID == exercise.persistentModelID }
-        }
-        try? modelContext.save()
-    }
-
     private var statsSection: some View {
         Section("Practice stats") {
             statRow("Loops", song.loops.count)
@@ -353,23 +293,6 @@ extension SongDetailsSheet {
     func replace(_ url: URL) async throws -> SongRelinker.Outcome {
         if let replaceAudio { return try await replaceAudio(url) }
         return try await SongRelinker.replace(audioAt: url, on: song, in: modelContext)
-    }
-    /// "Build a routine for this song" (ADR 0111) — a **Pro** action, since it materialises a real
-    /// `Routine` (ADR 0112). A free player keeps the row tappable so it can open the paywall; only a
-    /// song with nothing linked disables it. In an extension to keep the view under the body cap.
-    @ViewBuilder
-    var buildRoutineButton: some View {
-        Button {
-            guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                return presentPaywall(.routine(.generate))
-            }
-            buildingRoutine = true
-        } label: {
-            Label("Build a routine for this song",
-                  systemImage: isPro ? "wand.and.stars" : "lock.fill")
-                .foregroundStyle(canBuildRoutine ? PocketColor.practice : PocketColor.textSecondary)
-        }
-        .disabled(isPro && !canBuildRoutine)
     }
 }
 

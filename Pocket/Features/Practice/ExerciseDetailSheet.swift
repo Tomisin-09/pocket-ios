@@ -18,6 +18,17 @@ import SwiftUI
 struct ExerciseDetailSheet: View {
     let exercise: Exercise
 
+    /// Where a tapped song in the **Songs** section goes (ADR 0172). The song player is not a screen
+    /// this sheet can host: it rotates (ADR 0042 — the one screen that does) and holds a keep-awake
+    /// lease, and neither survives being run inside a sheet. So the host dismisses this sheet first
+    /// and pushes the player onto its own stack.
+    ///
+    /// `nil` — the default — leaves the rows exactly as they were: plain, unlinked text. Three of
+    /// this sheet's four hosts pass nothing, because they are *mid-practice* surfaces (a running
+    /// drill, a routine block, a freeform run) where swapping a rotating player in over the top is
+    /// not a link, it's a trapdoor. Only the exercise library wires it.
+    var onOpenSong: ((Song) -> Void)?
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     /// Every song, to offer in the link picker (ADR 0111). Sorted by title, matching the library.
@@ -42,8 +53,9 @@ struct ExerciseDetailSheet: View {
     /// so the trajectory math stays SwiftData-free and unit-tested (ADR 0117).
     private var sessionRecords: [SessionRecord] { practiceRuns.map(\.record) }
 
-    init(exercise: Exercise) {
+    init(exercise: Exercise, onOpenSong: ((Song) -> Void)? = nil) {
         self.exercise = exercise
+        self.onOpenSong = onOpenSong
         _notes = State(initialValue: exercise.notes)
         _mastery = State(initialValue: exercise.mastery)
     }
@@ -172,16 +184,12 @@ struct ExerciseDetailSheet: View {
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             } else {
+                // Keyed by `persistentModelID`, as every other `Song` list is — `Song` carries no
+                // `uid` of its own, and ADR 0090's rule is about *presentation* identity, which
+                // this isn't: the tap hands the song to the host through a closure rather than
+                // binding a `.sheet(item:)` to it.
                 ForEach(linkedSongsByTitle, id: \.persistentModelID) { song in
-                    HStack(spacing: 8) {
-                        Text(song.title.isEmpty ? "Untitled song" : song.title)
-                            .foregroundStyle(PocketColor.textPrimary)
-                        if !song.artist.isEmpty {
-                            Text(song.artist)
-                                .font(.futura(.caption))
-                                .foregroundStyle(PocketColor.textSecondary)
-                        }
-                    }
+                    linkedSongRow(song)
                 }
                 .onDelete(perform: unlinkSongs)
             }
@@ -194,6 +202,53 @@ struct ExerciseDetailSheet: View {
         } footer: {
             Text("The songs this drill is for. Links show on the song too, and later seed a "
                  + "one-tap practice routine for it.")
+        }
+    }
+
+    /// One linked song. Tappable only where the host supplied somewhere for it to go — see
+    /// `onOpenSong`. Where it didn't, the row draws exactly as it always has, because a row that
+    /// looks tappable and isn't is worse than one that never offered.
+    ///
+    /// A `Button` with `.buttonStyle(.plain)` rather than a `NavigationLink`, matching
+    /// `ReferenceLinkRow`: a link inside a `List` row swallows the swipe actions, and
+    /// swipe-to-unlink is the only way to break the link from here.
+    @ViewBuilder
+    private func linkedSongRow(_ song: Song) -> some View {
+        if let onOpenSong {
+            Button {
+                // Commit first: this tap closes the sheet, and the description and mastery are
+                // held locally until Done. Leaving without them would silently drop an edit the
+                // player had just typed, which a *navigation* tap gives no warning of.
+                commitNotes()
+                commitMastery()
+                onOpenSong(song)
+            } label: {
+                linkedSongLabel(song, showsChevron: true)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens this song in the player")
+        } else {
+            linkedSongLabel(song, showsChevron: false)
+        }
+    }
+
+    private func linkedSongLabel(_ song: Song, showsChevron: Bool) -> some View {
+        HStack(spacing: 8) {
+            Text(song.title.isEmpty ? "Untitled song" : song.title)
+                .foregroundStyle(PocketColor.textPrimary)
+                .multilineTextAlignment(.leading)
+            if !song.artist.isEmpty {
+                Text(song.artist)
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            if showsChevron {
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.futura(.caption2, weight: .semibold))
+                    .foregroundStyle(PocketColor.practice)
+                    .accessibilityHidden(true)
+            }
         }
     }
 

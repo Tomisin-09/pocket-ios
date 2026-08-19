@@ -90,6 +90,80 @@ final class ChordProgressionTests: XCTestCase {
         XCTAssertEqual(pop.settingBeats(at: 0, to: -5).changes[0].beats, 1)
     }
 
+    // MARK: - Reordering
+
+    func testMovingAChangeUpAndDown() {
+        // G · D · Em · C  →  move D (index 1) up  →  D · G · Em · C
+        let raised = pop.movingChange(at: 1, by: -1)
+        XCTAssertEqual(raised.changes.map(\.voicing), [.dMajor, .gMajor, .eMinor, .cMajor])
+
+        // …and back down again returns the original order.
+        XCTAssertEqual(raised.movingChange(at: 0, by: 1).changes.map(\.voicing),
+                       pop.changes.map(\.voicing))
+    }
+
+    func testMovingCarriesTheHoldWithTheChord() {
+        // A reorder is a permutation, not a re-beat: the moved chord keeps its own hold, and the
+        // cycle length is unchanged.
+        let uneven = ChordProgression(changes: [ChordChange(.gMajor, beats: 2),
+                                                ChordChange(.dMajor, beats: 6)])
+        let moved = uneven.movingChange(at: 0, by: 1)
+        XCTAssertEqual(moved.changes.map(\.beats), [6, 2])
+        XCTAssertEqual(moved.lengthInBeats, uneven.lengthInBeats)
+    }
+
+    func testMovingOffEitherEndIsANoOp() {
+        XCTAssertEqual(pop.movingChange(at: 0, by: -1), pop, "the first chord cannot move up")
+        XCTAssertEqual(pop.movingChange(at: 3, by: 1), pop, "the last chord cannot move down")
+        XCTAssertEqual(pop.movingChange(at: 9, by: -1), pop, "an out-of-range index is inert")
+    }
+
+    func testMovingIsAMoveNotASwap() {
+        // Stepping by more than one must slide the neighbours along, not exchange two chords:
+        // moving G from the front to the back leaves D · Em · C in their original order.
+        let moved = pop.movingChange(at: 0, by: 3)
+        XCTAssertEqual(moved.changes.map(\.voicing), [.dMajor, .eMinor, .cMajor, .gMajor])
+    }
+
+    // MARK: - The key survives an edit
+
+    /// Every editing helper rebuilds the progression, and for a long time each rebuilt with
+    /// `changes:` and `version:` alone — silently resetting `keyRoot` / `keyIsMinor` to "inferred
+    /// from the first chord". Re-beating a chord in a progression explicitly set to G major
+    /// re-read its numerals against whatever happened to be first. This is the test that would
+    /// have caught it, and it covers every helper so a new one can't quietly reintroduce it.
+    func testEditingHelpersPreserveTheDeclaredKey() {
+        let keyed = ChordProgression(changes: [ChordChange(.aMinor, beats: 4),
+                                               ChordChange(.dMajor, beats: 4),
+                                               ChordChange(.eMinor, beats: 4)],
+                                     keyRoot: 9, keyIsMinor: true)   // A minor, stated not inferred
+
+        let edited: [(String, ChordProgression)] = [
+            ("appending", keyed.appending(.cMajor)),
+            ("removingChange", keyed.removingChange(at: 0)),
+            ("replacingVoicing", keyed.replacingVoicing(at: 0, with: .fBarre)),
+            ("settingBeats", keyed.settingBeats(at: 0, to: 2)),
+            ("movingChange", keyed.movingChange(at: 0, by: 1))
+        ]
+
+        for (helper, result) in edited {
+            XCTAssertEqual(result.keyRoot, 9, "\(helper) dropped keyRoot")
+            XCTAssertTrue(result.keyIsMinor, "\(helper) dropped keyIsMinor")
+        }
+    }
+
+    /// The user-visible consequence of the above: the numerals keep reading against the stated key
+    /// after an edit. `removingChange(at: 0)` takes the Am away, so an *inferred* key would fall
+    /// back to D and re-letter everything.
+    func testNumeralsStillReadAgainstTheStatedKeyAfterAnEdit() {
+        let keyed = ChordProgression(changes: [ChordChange(.aMinor, beats: 4),
+                                               ChordChange(.dMajor, beats: 4),
+                                               ChordChange(.eMinor, beats: 4)],
+                                     keyRoot: 9, keyIsMinor: true)
+        let trimmed = keyed.removingChange(at: 0)
+        XCTAssertEqual(trimmed.numeral(for: .eMinor), keyed.numeral(for: .eMinor))
+    }
+
     // MARK: - Roman-numeral badges
 
     func testPopProgressionReadsAsOneFiveSixFourInGMajor() {

@@ -35,6 +35,10 @@ struct ExerciseLibraryView: View {
     /// The drill whose read-only reference sheet is open (Slice 3's "view info" row action) — the
     /// same `ExerciseDetailSheet` the run screen's ⓘ opens, now reachable without starting a run.
     @State private var detailExercise: Exercise?
+    /// A song tapped in that sheet's **Songs** section, on its way to the player (ADR 0172) — the
+    /// same two-state hand-off as `justCreated` → `opening` above, for the same reason, and shared
+    /// with the run screen's ⓘ, which offers the identical route (`LinkedSongRoute`).
+    @State private var songRoute = LinkedSongRoute()
     /// Sort key + direction, persisted across launches (ADR 0056).
     @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
     @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
@@ -185,9 +189,20 @@ struct ExerciseLibraryView: View {
         // ADR 0090 reason the whole app now follows: a model's `persistentModelID` can flip on a
         // save mid-edit and dismiss an item-based sheet.
         .sheet(isPresented: Binding(get: { detailExercise != nil },
-                                    set: { if !$0 { detailExercise = nil } })) {
-            if let exercise = detailExercise { ExerciseDetailSheet(exercise: exercise) }
-        }
+                                    set: { if !$0 { detailExercise = nil } }),
+               onDismiss: { songRoute.promote() },
+               content: {
+            if let exercise = detailExercise {
+                // Tapping a linked song stages it and closes the sheet; `onDismiss` does the push.
+                // The player can't run inside the sheet — it rotates (ADR 0042) and holds a
+                // keep-awake lease, and neither survives a modal.
+                ExerciseDetailSheet(exercise: exercise, onOpenSong: { song in
+                    songRoute.stage(song)
+                    detailExercise = nil
+                })
+            }
+        })
+        .linkedSongPlayer($songRoute)
     }
 
     private func displayName(_ exercise: Exercise) -> String {

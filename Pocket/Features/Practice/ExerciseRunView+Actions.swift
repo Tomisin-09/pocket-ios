@@ -9,6 +9,39 @@ import SwiftUI
 /// extension can drive it.
 extension ExerciseRunView {
 
+    /// Whether the ⓘ sheet's linked songs may be tapped through to their player (ADR 0172).
+    ///
+    /// The route is offered from a run screen that is **set up but not running, and standing on its
+    /// own**. Both halves matter, and each is the guard this file already uses three times over for
+    /// affordances of exactly this kind:
+    ///
+    /// - **Not running.** The player takes the audio session and a keep-awake lease of its own.
+    ///   Leaving a live run to it would strand the run rather than end it.
+    /// - **Not in a routine.** Inside a session the back chevron belongs to the routine player, and
+    ///   there is no stack of this screen's own to push a song onto.
+    ///
+    /// Where either fails the sheet is handed `nil` and its song rows draw as plain text, exactly as
+    /// they did before — a row that looks tappable and isn't is worse than one that never offered.
+    var canLeaveForSong: Bool { !isRunning && routineContext == nil }
+
+    /// What the ⓘ sheet is handed for its song rows — the handler, or `nil` to leave them as plain
+    /// text. A `guard` returning an explicit closure, not a ternary over a method reference: the
+    /// ternary form gives the type-checker nothing to resolve `nil` against, and it fails somewhere
+    /// unrelated — first as "ambiguous use of `init`" on the nearest view in the body, then as an
+    /// outright "failed to produce diagnostic".
+    ///
+    /// Mutating `@State` from inside the escaping closure is fine: `State`'s setter is `nonmutating`,
+    /// so it writes through the wrapper's own storage rather than through the captured `self`.
+    var songTapHandler: ((Song) -> Void)? {
+        guard canLeaveForSong else { return nil }
+        // Stage and close. The push waits for `onDismiss` — presenting into a dismissing sheet
+        // drops it.
+        return { song in
+            songRoute.stage(song)
+            showingDetail = false
+        }
+    }
+
     /// Write a new entry, snapshotting the exercise's current command tempo in BPM (ADR 0058). Serves
     /// the full `JournalSheet`; the compact capture sheet (ADR 0142) owns its own write, since it can
     /// be opened where this screen's sheet cannot.

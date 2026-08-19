@@ -62,6 +62,7 @@ struct ExerciseRunView: View {
     @State var recorder = RecordingController()
     /// The exercise detail/reference sheet (V1 feedback #2) — an ⓘ in the nav bar opens it.
     @State var showingDetail = false
+    @State var songRoute = LinkedSongRoute()
     /// The content/shape editor sheet (ADR 0077) — an "Edit shape" button on the board opens it.
     /// Library-only: in a routine an exercise is tempo-only, so the button is never shown there.
     @State var showingShape = false
@@ -167,6 +168,7 @@ struct ExerciseRunView: View {
             }
         }
         .routineSessionChrome(routineContext)
+        .linkedSongPlayer($songRoute)
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
         .onAppear { seedIfNeeded(); maybeAutoStart() }
@@ -195,9 +197,8 @@ struct ExerciseRunView: View {
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .exercise(exercise), onDelete: deleteTake)
         }
-        .sheet(isPresented: $showingDetail) {
-            ExerciseDetailSheet(exercise: exercise)
-        }
+        .sheet(isPresented: $showingDetail, onDismiss: { songRoute.promote() },
+               content: { ExerciseDetailSheet(exercise: exercise, onOpenSong: songTapHandler) })
         .sheet(isPresented: $showingShape) {
             ExerciseShapeSheet(exercise: exercise)
         }
