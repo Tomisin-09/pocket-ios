@@ -58,6 +58,10 @@ struct NewExerciseSheet: View {
     /// The instrument the create step opens on (ADR 0116) — the profile's preferred instrument, defaulting
     /// to guitar so an untouched install is unchanged.
     var defaultInstrument: Instrument = .guitar
+    /// Songs pre-ticked in the configure step's link picker (ADR 0111). Empty for the two original
+    /// hosts; the song player's tempo-carry gateway (ADR 0170) passes the song the carried tempo was
+    /// read off, so a drill born out of a song arrives already tied to it.
+    var initialSongs: [Song] = []
     /// Called with the assembled plan when the user confirms. The caller inserts the model.
     let onCreate: (NewExercisePlan) -> Void
 
@@ -95,11 +99,13 @@ struct NewExerciseSheet: View {
          initialSignature: TimeSignature = .standard,
          fixedTemplate: ExerciseTemplate? = nil,
          defaultInstrument: Instrument = .guitar,
+         initialSongs: [Song] = [],
          onCreate: @escaping (NewExercisePlan) -> Void) {
         self.initialCommand = initialCommand
         self.initialSignature = initialSignature
         self.fixedTemplate = fixedTemplate
         self.defaultInstrument = defaultInstrument
+        self.initialSongs = initialSongs
         self.onCreate = onCreate
         _instrument = State(initialValue: defaultInstrument)
     }
@@ -110,7 +116,8 @@ struct NewExerciseSheet: View {
                 if let fixedTemplate {
                     ConfigureExerciseForm(template: fixedTemplate, initialCommand: initialCommand,
                                           initialSignature: initialSignature,
-                                          initialInstrument: instrument, create: create)
+                                          initialInstrument: instrument, initialSongs: initialSongs,
+                                          create: create)
                 } else {
                     ExerciseTemplatePicker(instrument: $instrument) { template, instrument in
                         chosen = TemplateChoice(template: template, instrument: instrument)
@@ -120,7 +127,8 @@ struct NewExerciseSheet: View {
             .navigationDestination(item: $chosen) { choice in
                 ConfigureExerciseForm(template: choice.template, initialCommand: initialCommand,
                                       initialSignature: initialSignature,
-                                      initialInstrument: choice.instrument, create: create)
+                                      initialInstrument: choice.instrument, initialSongs: initialSongs,
+                                      create: create)
             }
             .tint(PocketColor.practice)
             .toolbar {

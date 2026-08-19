@@ -36,7 +36,8 @@ struct PracticeCockpit<Header: View>: View {
         return VStack(spacing: landscape ? 8 : 16) {
             header()                                                    // 1
             SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
-                     onSetBPM: model.setBPM, onUserAdjust: model.userAdjustedSpeed,
+                     onSetBPM: model.setBPM, onCarryTempo: model.carryTempo,
+                     onUserAdjust: model.userAdjustedSpeed,
                      metronomeOn: model.metronomeOn,
                      canUseMetronome: model.canUseMetronome,
                      onToggleMetronome: model.toggleMetronome,

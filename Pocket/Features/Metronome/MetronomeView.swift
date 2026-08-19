@@ -15,7 +15,7 @@ import UIKit
 /// ramp until your hands break down — and a later slice adds a "Save as exercise" seam that
 /// hands a discovered tempo into Practice's create flow.
 struct MetronomeView: View {
-    @State private var engine = StandaloneMetronomeEngine()
+    @State private var engine: StandaloneMetronomeEngine
     /// Wall-clock times of recent taps for tap-tempo (`TempoMath.bpm(fromTapTimes:)`).
     @State private var taps: [TimeInterval] = []
     @Environment(\.dismiss) private var dismiss
@@ -34,6 +34,22 @@ struct MetronomeView: View {
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
     /// average against a new one.
     private let tapResetGap: TimeInterval = 2.0
+
+    /// `initialBPM` opens the screen already on a tempo the player arrived with — the song player's
+    /// tempo-carry gateway (ADR 0170). `nil` (the Home hub's route, and every preview) keeps the
+    /// free-play default.
+    ///
+    /// Seeded here, before the first body pass, rather than in `onAppear`: the readout, the marking
+    /// and the slider all read `engine.bpm` while the body runs, so a later write would show 90 for
+    /// a frame and then jump. Through `setBPM` rather than a seeding initialiser so the carried
+    /// tempo meets the **same clamp** every other way in meets — a song at 1.5× can read past 300.
+    /// Its two side effects are both `transport`-guarded and this engine is `.stopped`: there is no
+    /// phase to re-anchor and nothing to publish to Now Playing.
+    init(initialBPM: Int? = nil) {
+        let engine = StandaloneMetronomeEngine()
+        if let initialBPM { engine.setBPM(initialBPM) }
+        _engine = State(initialValue: engine)
+    }
 
     var body: some View {
         NavigationStack {

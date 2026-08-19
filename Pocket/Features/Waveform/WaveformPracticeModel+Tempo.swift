@@ -11,6 +11,22 @@ extension WaveformPracticeModel {
         prepareHaptics(.light)
     }
 
+    /// Holding the BPM callout — lift the tempo **as displayed** and offer somewhere to put it
+    /// (ADR 0170). `bpm` arrives from the readout rather than being recomputed here, so the number
+    /// that leaves the song is the one that was under the finger: the callout shows `song.bpm ×
+    /// speed`, and a slowed reading is a real tempo the player is really practising at.
+    func carryTempo(_ bpm: Int) {
+        carryingTempo = CarriedTempo(bpm: bpm)
+    }
+
+    /// The song's meter, as the create flow's picker wants it (ADR 0051 stores the two numbers;
+    /// `forStored` recovers the named preset when there is one, so a 3/4 song seeds a drill labelled
+    /// "3/4 · Waltz" instead of a bare custom signature). Accents aren't stored on a song, so the
+    /// preset's own pattern stands — the carried thing is the meter, not an arrangement.
+    var songSignature: TimeSignature {
+        TimeSignature.forStored(beats: song.beatsPerBar, noteValue: song.noteValue, accentBeats: [])
+    }
+
     /// Estimate the song's tempo **and downbeat phase** on-device from its audio — rung 2
     /// of ADR 0004's fallback chain. Decodes an onset envelope off the main actor, then
     /// autocorrelates it for the tempo and comb-filters it for the phase (`TempoEstimator`).

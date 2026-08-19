@@ -19,15 +19,16 @@ open [Song details](home-and-library.md#song-details) — there is no button for
 - **`Reset`**, and the shortcuts beside it, return it to full speed or jump to a fixed fraction.
 - **The BPM readout** shows the song's tempo, captioned `BPM`. It reads *Tempo not set* until you
   give the song one.
-- **The metronome button** turns a click on over the song. **Holding either it or the BPM readout**
-  opens the tempo editor — the same sheet from two handles.
+- **Holding the BPM readout** carries that tempo out of the song — to the metronome, or into a new
+  exercise. It carries the number as shown, which is the song's tempo at the speed you have set.
+- **The metronome button** turns a click on over the song. **Holding it** opens the tempo editor.
 - **`Repeat the song`** loops the whole track rather than a marked span.
 
 ## The status line
 
 The row beneath the speed bar, which changes with what you are doing.
 
-- **`Loop controls`** — *tap* for the gesture cheatsheet, an eight-row popover reproduced in full in
+- **`Loop controls`** — *tap* for the gesture cheatsheet, a nine-row popover reproduced in full in
   [gestures](../gestures.md). **Hold it for the player's own settings** — the four in
   [Settings ▸ Song player](settings.md#song-player), surfaced where they apply. This hold has no
   visible hint, which is why it is written down here and there.
@@ -112,7 +113,8 @@ A ramp for one loop, expressed in percentages of the song's speed: `Start`, `Tar
 
 ### The tempo editor
 
-Two ways in — hold the metronome button or the BPM readout.
+One way in — hold the metronome button on the speed bar. (Holding the **BPM** readout beside it used
+to open this too; it now carries the tempo out instead.)
 
 <!-- shot: reference/tempo-editor | role: screen
      | alt: The tempo sheet with the Tap and Manual segments, the tap pad, Estimate from audio, and the downbeat section

@@ -28,6 +28,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   back-filled with a rating from today.
 
 ### Added
+- **Hold the BPM in the song player to take that tempo with you.** The number on the speed bar used
+  to be something you could only read. Hold it now and it goes where you need it: to the metronome,
+  which opens already set to it, or into a new exercise, which starts at it and arrives linked to
+  the song you took it from — in the song's own time signature. What it carries is what you can
+  see, which is the song's tempo *at the speed you have set* — so a 200 BPM solo at quarter speed
+  carries 50, the tempo you are actually playing. The tempo editor is unaffected but now has one
+  handle instead of two: hold the metronome button beside the number, which is the one that badges
+  itself when a song has no tempo yet. ADR 0170.
 - **A mastery rating now shows the tempo you gave it at** — *Rated at 85%* under the rating in the
   loop edit sheet, *Rated at 90 BPM · 8ths* on an exercise. Move the command tempo past it and the
   line says so, so an old 5 can't be mistaken for a claim about where you are now.

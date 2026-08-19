@@ -190,6 +190,10 @@ struct WaveformPracticeView: View {
         }
         // Bulk practice categories across the selected loops (ADR 0125), from the selection
         // header's slider button — the chevron's old slot.
+        // Holding the BPM callout carries that tempo out of the song (ADR 0170) — to the metronome
+        // or into a new drill. Bound to the snapshot taken at the hold, not to a Bool, so what the
+        // chooser offers can't be re-read from a moved slider.
+        .carryTempoSheet(model)
         .sheet(isPresented: $model.showingLoopBulkEdit) {
             LoopBulkEditSheet(loops: model.selectedLoops, onApply: model.applyBulkEdit)
         }
@@ -216,9 +220,9 @@ struct WaveformPracticeView: View {
         // engine alive via the global command center.
         .onDisappear { model.endPlaybackSession() }
         // Page-mode + the lock-screen clock ride the playhead, which moves once per display
-        // frame. Reading it *here* would make this body — and with it all eight presentations
-        // declared above — re-evaluate at 120 Hz, which is what made opening song or loop
-        // settings mid-playback feel heavy. `PlayheadWatcher` owns that dependency instead.
+        // frame. Reading it *here* would make this body — and with it all **nine** presentations
+        // declared above (the tempo-carry chooser, ADR 0170, is the ninth) — re-evaluate at 120 Hz,
+        // which is what made opening song or loop settings mid-playback feel heavy. `PlayheadWatcher` owns that dependency instead.
         .background { PlayheadWatcher(model: model) }
         // Crisp deep-zoom (ADR 0020): re-downsample the visible window when the
         // viewport changes. `viewport` is derived purely from these two, both Equatable.

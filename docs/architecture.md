@@ -155,7 +155,7 @@ me to that structure") snaps to the full set including beats, while a free **scr
 the playhead exactly here") drops the dense beat grid and catches only the sparse landmarks
 (markers + loop edges) — the same candidate set the minimap uses, so a deliberate scrub
 between beats lands where the finger lifts. Beat snap for *placement* (loop-edge commit,
-Fine-handle release, the downbeat) is unaffected; only the seek scrub stops catching beats. Tempo and the downbeat are set behind the **metronome control** on the speed bar (`BPMSheet`, opened by holding it — or by a plain tap while the song has no tempo, the state it badges; ADR 0124 retired the "Set BPM" capsule and gave its slot to whole-song **repeat**):
+Fine-handle release, the downbeat) is unaffected; only the seek scrub stops catching beats. Tempo and the downbeat are set behind the **metronome control** on the speed bar (`BPMSheet`, opened by holding it — or by a plain tap while the song has no tempo, the state it badges; ADR 0124 retired the "Set BPM" capsule and gave its slot to whole-song **repeat**; **ADR 0170 made that control the *only* handle on the editor**, specialising the BPM callout beside it into a gateway *out* — see below):
 **tap-tempo** captures the engine's song-time per tap (pure `TempoMath.bpm(fromTapTimes:)`,
 so in-loop / slowed tapping reads the true tempo) or **manual** entry, and **the 1** is
 placed by a draggable waveform handle that **snaps to the loudest transient** near the drop
@@ -702,6 +702,27 @@ exercises **by name**; exercise-only, since loops/songs need user audio at cold 
 (ADR 0072, V2 Slice 1) is now a live producer of this same `Routine`: a pure two-stage pipeline in
 `Pocket/Core/Planner/` — `DueScore` ranks candidates (`goalWeight × dueness(lastPracticed) ×
 (1 − mastery/5)`, ADR 0015 S5) and `SessionBuilder.buildSession` lays the ranked `PlannerCandidate`s
+
+**A tempo can leave the song player (ADR 0170).** Holding the speed bar's BPM callout — the
+gesture that opened the tempo editor from ADR 0024 until now — lifts the **effective** tempo
+(`song.bpm × speed`, the number on screen, so a slowed reading carries slowed) into
+`WaveformPracticeModel.carryingTempo`, a per-hold snapshot with a minted identity, and
+`CarryTempoSheet` offers two destinations. **To the metronome:** `MetronomeView(initialBPM:)` seeds
+a fresh `StandaloneMetronomeEngine` through `setBPM` in the view's `init` — through `setBPM` because
+this is the first tempo to reach the metronome from outside its own controls and the song player's
+range is wider (a 300 BPM song at 1.5× carries 450), and in `init` because the body reads
+`engine.bpm` on its first pass; the song is paused first via the existing `pauseForNestedAudio`
+seam. **Into a new exercise:** `NewExerciseSheet` seeded with the tempo, the song's meter
+(`TimeSignature.forStored` off `Song.beatsPerBar`/`noteValue`) and the new `initialSongs`, which
+pre-ticks the ADR 0111 link picker so a drill born from a song arrives tied to it; the template
+picker runs (unlike the automator's `.basic` seam) and creation funnels through
+`NewExercisePlan.finalise(in:)`, the shared insert, as its third host. The destination **replaces the
+chooser's content in place** rather than being presented from it, so the waveform screen declares
+nine presentations rather than eleven — ADR 0163's constraint on what
+`WaveformPracticeView.body` reads is unchanged, and the sheet is wired through the
+`carryTempoSheet(_:)` modifier to keep that body inside its size budget. The app's
+`onLongPressGesture` count is unchanged at nine: this repointed an existing hold rather than
+spending a new one.
 
 **A mastery rating carries the conditions it was taken under (ADR 0169).** `Exercise.masteryTempo`
 + `masteryNotesPerBeat` and `Loop.masteryAtSpeed` are stamped by the models' own `rateMastery`, the

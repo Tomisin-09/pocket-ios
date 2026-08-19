@@ -137,6 +137,23 @@ final class WaveformPracticeModel {
     /// `Bool` because what it presents is global `@AppStorage` — there's no model whose identity could
     /// change underneath it, so ADR 0090's stable-`uid` rule has nothing to apply to.
     var showingPlayerSettings = false
+    /// The tempo the BPM callout was holding when it was held (ADR 0170) — drives the carry
+    /// chooser. **A snapshot, not a live read.** The number is captured at the hold and carried on
+    /// this value, for the reason `PendingMetronomeNote` captures the metronome's sitting at the tap
+    /// (ADR 0160 §5): a sheet's content closure re-runs on every body pass, so a tempo read *there*
+    /// would be whatever the last re-render saw rather than what the player reached for. Nothing on
+    /// the screen can move the speed while the chooser is up, which is exactly why an accident here
+    /// would be silent.
+    var carryingTempo: CarriedTempo?
+
+    /// A tempo lifted off the callout, on its way somewhere else (ADR 0170). Its own identity, not
+    /// the BPM, so holding the same tempo twice re-presents the chooser (ADR 0090's rule about
+    /// `item:`-bound presentations, arrived at from the other direction: this identity is stable
+    /// because it is minted here and never touches SwiftData).
+    struct CarriedTempo: Identifiable, Hashable {
+        let id = UUID()
+        let bpm: Int
+    }
 
     /// In-song metronome click (ADR 0026). The click rides `beatGrid` and follows
     /// playback speed; it never alters the song's stored BPM. Only available when the

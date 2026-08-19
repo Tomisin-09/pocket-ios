@@ -24,6 +24,7 @@ marker grammar in [README.md](README.md).
 | `exercises/run-setup` | `screen` | `exercises` | seeded library, Exercises, "Alternate Picking" opened, stopped |  |
 | `exercises/staircase` | `band` | `exercises` | seeded library, an exercise run screen, staircase visible |  |
 | `exercises/template-picker` | `screen` | `exercises` | New exercise sheet, template picker, guitar selected |  |
+| `gestures/carry-tempo` | `panel` | `gestures` | seeded library, Little Wing, player idle, BPM readout held |  |
 | `gestures/loop-controls-popover` | `panel` | `gestures` | seeded library, Little Wing, player idle, Loop controls tapped |  |
 | `gestures/row-hold-menu` | `panel` | `gestures` | seeded library, Library screen, row "Binta" held |  |
 | `gestures/speed-bar` | `band` | `gestures` | seeded library, Little Wing, player idle |  |
@@ -115,4 +116,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-98 shots across 19 pages.
+99 shots across 19 pages.

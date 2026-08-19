@@ -84,7 +84,9 @@ The **BPM** readout on the same bar shows the effective tempo — the song's tem
 speed you have chosen — so you can see what you are actually playing at rather than what the record
 does.
 
-Holding either the BPM readout or the metronome button opens the tempo editor.
+Holding the metronome button beside it opens the tempo editor. Holding the **BPM readout itself**
+does something else: it carries that tempo out of the song, to the metronome or into a new exercise.
+What it carries is the number you can see — the effective tempo, not the record's.
 
 **See Help & FAQs: "Does slowing a song down change its pitch?"**
 
@@ -106,8 +108,8 @@ times round to stay on each one. The per-step change is worked out for you. **Se
 The metronome button on the speed bar turns a click on over the top of the song. For it to land in
 the right place the app needs two things: the song's tempo, and where beat one is.
 
-**The tempo.** Hold the metronome button or the BPM readout to open the tempo editor. You can tap it
-out, type a BPM, or let the app guess it from the audio. The editor also carries the time signature.
+**The tempo.** Hold the metronome button to open the tempo editor. You can tap it out, type a BPM,
+or let the app guess it from the audio. The editor also carries the time signature.
 
 Tapping reads the playhead rather than your finger, so a loop or a slowed-down speed still reads the
 song's true tempo. The reading follows your **last few taps** rather than everything you have tapped,
