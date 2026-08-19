@@ -363,12 +363,18 @@ convention: `// beta feedback 2026-08 #N`.
 - [ ] Triage written into `docs/backlog.md` in the established pass format.
 - [ ] ADR 0149 revisited — steps confirmed or corrected against the recordings, and moved
       from Proposed toward Accepted.
-- [ ] **The TestFlight Pro grant removed before the next App Store submission.** It is a
-      Release-build entitlement path; a `TODO(beta)` marker in
-      `Pocket/Core/Monetization/StoreManager.swift` exists so a grep finds it. **Four markers
-      now**, not one: the receipt probe in `init`, `confirmBetaGrantIfNeeded()`, `betaDiagnostic`,
-      and the diagnostic's footer row in `ProSettingsView`. Also delete the "Which build the grant
-      fires on" section of `PocketTests/StoreManagerTests.swift`.
+- [ ] **The TestFlight Pro grant removed before the next App Store submission. This is now the
+      single most important item on this list.** Since 2026-08-18 the grant is *unconditional* in
+      every non-Debug build — no receipt check, no environment probe — so **shipping this binary to
+      the App Store gives Red Moon Pro away to every download, for free**, with nothing server-side
+      able to take it back. The earlier receipt condition made an accidental submission harmless;
+      it was dropped because it was the last thing that could fail on a tester's first launch, and
+      that safety went with it. **Nothing automated will catch this.** The markers a grep finds:
+      `betaGrantIsActive` and its assignment in `init`, `betaGrantIsReadable`, `betaDiagnostic` —
+      all in `Pocket/Core/Monetization/StoreManager.swift` — and the diagnostic's footer row in
+      `ProSettingsView`. Removing them restores plain `isPro`, which
+      `testBetaGrantAbsentLeavesEntitlementInCharge` in `PocketTests/StoreManagerTests.swift`
+      already pins; delete the "Closed-beta grant" section there last.
 
 ### What went wrong with the grant, and the rule it leaves behind
 
@@ -385,8 +391,25 @@ could recover it.
 the outside.** The grant was compiled out of Debug, so the simulator, every local device build
 and every UI test skipped it — `StoreManagerTests` covered `resolveIsPro`, but nothing covered
 *what fed its `betaGrant` argument*. It shipped with literally nothing checking it, to the one
-audience that cannot attach a debugger. The fix splits the two: `resolveSandbox(receiptURL:)`
+audience that cannot attach a debugger. The first fix split the two: `resolveSandbox(receiptURL:)`
 is a pure function under test on every push, and `betaDiagnostic` puts the resolved state on
 screen in Settings ▸ Red Moon Pro so a tester can read it back. **Ask for that line before
 diagnosing any further entitlement report** — two rounds of tester prose were read wrong
 before it existed.
+
+**Then the receipt probe went too (2026-08-18).** Testers reported the paywall again on the
+build after the fix, and the answer was that the grant still had a *condition* — one that could
+only be evaluated on the very device we could not inspect. Two rounds had now been lost to
+narrowing the grant correctly. It is now a bare `#if DEBUG`: Debug builds are locked (so the
+gates stay checkable locally, via `debugProOverride`), and **every other build grants Pro
+outright**.
+
+**The trade, stated plainly, because it is not a good one and was taken anyway.** A conditional
+grant is a grant that can be wrong on a tester's phone. An unconditional grant is a grant that
+can be wrong *in the App Store* — and where the first failure mode cost a beta round, the second
+costs revenue on every download until a new build replaces it. What made it the right call here
+is only that the round was already blocked twice and v1.2 is not near submission. **The moment a
+submission is on the table, the checklist item above stops being paperwork.** The structural
+alternative — a third build configuration carrying its own compilation condition, so the
+unconditional grant cannot exist in a Release archive — was considered and skipped for speed; it
+is the right answer if a third beta build is ever needed.

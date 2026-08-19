@@ -8,7 +8,8 @@ which is the only durable record of where a build was taken (there are no releas
 build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07), build 4 at the 1.2
 cut (2026-08-12 — squash hash added on merge, as the others were), build 5 at the beta-grant
 fix (2026-08-18 — the closed beta's second build, cut because build 4 walled every tester
-out of the app). One `### Added`
+out of the app), build 6 at the unconditional grant (2026-08-19 — cut because build 5's
+receipt check still left testers walled out; squash hash added on merge). One `### Added`
 group straddled that line — collection sessions landed after the 1.0 build was cut,
 ear training before it — so 1.0 and 1.1 each carry their own copy of that heading.
 
@@ -74,8 +75,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   network, no App Store sign-in and no verification; the `AppTransaction` read stays as a second
   opinion that can only grant, off the critical path, and latches only on a conclusive answer.
   Settings ▸ Red Moon Pro carries a one-line beta diagnostic for the rest of the round.
-  Unreachable from an App Store build, which carries a receipt named `receipt`, not
-  `sandboxReceipt`.
+- **The beta grant stopped having a condition at all.** Testers still met the paywall on the build
+  after the fix above, so the receipt check went too: **every build that is not a local Debug build
+  now grants Red Moon Pro outright**, resolved before the first paint with nothing to read, nothing
+  to await and nothing that can fail on a first launch. Debug builds are unaffected and stay locked,
+  so the paywall and its gates are still checkable on the simulator and on a local device build.
+  This closes off the safety the receipt name provided: an App Store download used to be unreachable
+  by the grant, and no longer is. **The build carrying this must not be submitted to review** — the
+  removal checklist in `docs/plans/beta-testing-plan.md` is now the only thing standing between it
+  and giving Pro away.
 - **Two more places the app called itself Pocket, and a lint so there is no third time.** The
   reference-link editor's footer and its rejection message both used the internal name. The footer
   was caught by opening a screenshot; the rejection message only appears after a failed save, so
