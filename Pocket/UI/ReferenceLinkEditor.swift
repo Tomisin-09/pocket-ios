@@ -35,9 +35,16 @@ enum ReferenceLinkDraft: Identifiable {
         case .editing(let link): return link.urlString
         }
     }
+
+    var note: String {
+        switch self {
+        case .adding: return ""
+        case .editing(let link): return link.note
+        }
+    }
 }
 
-/// Add or correct one reference link (ADR 0167). Two fields and a paste button.
+/// Add or correct one reference link (ADR 0167). Three fields and a paste button.
 ///
 /// **The paste affordance is required, not optional.** On a phone, typing a YouTube address by
 /// hand is the difference between this feature being used and not — a bare `TextField` would make
@@ -49,21 +56,25 @@ enum ReferenceLinkDraft: Identifiable {
 struct ReferenceLinkEditor: View {
     let draft: ReferenceLinkDraft
     let accent: Color
-    /// Called with a title and a URL string that has already passed `ReferenceURL.isValid`.
-    let save: (String, String) -> Void
+    /// Called with a title, a URL string that has already passed `ReferenceURL.isValid`, and a
+    /// note. All three are `String`, so the order — **title, url, note**, matching the store — is
+    /// the one thing here the compiler cannot check for you.
+    let save: (String, String, String) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var title: String
     @State private var urlString: String
+    @State private var note: String
     /// Set only after a failed save attempt, so the field is not red while it is still being typed.
     @State private var showingRejection = false
 
-    init(draft: ReferenceLinkDraft, accent: Color, save: @escaping (String, String) -> Void) {
+    init(draft: ReferenceLinkDraft, accent: Color, save: @escaping (String, String, String) -> Void) {
         self.draft = draft
         self.accent = accent
         self.save = save
         _title = State(initialValue: draft.title)
         _urlString = State(initialValue: draft.urlString)
+        _note = State(initialValue: draft.note)
     }
 
     var body: some View {
@@ -120,6 +131,23 @@ struct ReferenceLinkEditor: View {
                 } footer: {
                     Text("Optional. Left empty, the row shows the site instead.")
                 }
+
+                Section {
+                    // The house note idiom, unchanged from `Exercise.notes` and `Song.comment`:
+                    // vertical axis, a soft line range, and the keyboard's escape hatch. The
+                    // `keyboardDoneButton` is attached **once for the whole sheet** — it resigns
+                    // whichever field is first responder rather than naming one — which is also
+                    // what finally gives the Link field above an escape. That field has been
+                    // `axis: .vertical` with no way off the keyboard since ADR 0167 shipped.
+                    TextField("What you took from it", text: $note, axis: .vertical)
+                        .lineLimit(3...8)
+                        .keyboardDoneButton(tint: accent)
+                } header: {
+                    Text("Note")
+                } footer: {
+                    Text("Optional. What this taught you, or where in it to look — the row shows "
+                         + "it under the site.")
+                }
             }
             .navigationTitle(isEditing ? "Edit link" : "Add a link")
             .navigationBarTitleDisplayMode(.inline)
@@ -153,7 +181,7 @@ struct ReferenceLinkEditor: View {
             showingRejection = true
             return
         }
-        save(title, urlString)
+        save(title, urlString, note)
         dismiss()
     }
 }

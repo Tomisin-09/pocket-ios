@@ -19,24 +19,29 @@ practise:
 | A routine | Open it from the Routines library. Readable straight away; **Edit** is what lets you add or remove one, and **Save** keeps the change |
 
 <!-- shot: references/section | role: panel
-     | alt: The "Where you learned it" section on an exercise detail sheet, listing two links with their sites underneath and an "Add a link" button
-     | state: seeded library, an exercise detail sheet with two links saved, scrolled to the section -->
+     | alt: The "Where you learned it" section on an exercise detail sheet, listing two links with their sites underneath, one of them carrying a note under its site, and an "Add a link" button
+     | state: seeded library, an exercise detail sheet with two links saved, one of them carrying a note, scrolled to the section -->
 
 A routine having one is the point of the whole feature. A course belongs to a *session*, not to a
 single drill, and until now a routine built around week three of something had nowhere to say so.
 
 ## Adding one
 
-**Add a link** opens two fields.
+**Add a link** opens three fields.
 
 <!-- shot: references/editor | role: screen
-     | alt: The Add a link sheet showing the Link field with a Paste button beneath it and the Name field below
+     | alt: The Add a link sheet showing the Link field with a Paste button beneath it, then the Name field, then the Note field
      | state: seeded library, an exercise detail sheet, Add a link tapped -->
 
 - **Link** — the address, with **Paste** underneath it so getting a video address in is one tap.
   Red Moon does not look at your clipboard until you tap that button; nothing here reads it in the
   background, and you will never be asked to allow it.
 - **Name** — optional. Leave it empty and the row shows the site instead.
+- **Note** — optional, and the one worth writing. The name says what the source *is*, which you can
+  usually work out from the address a week later. The note says what you took from it — *the
+  down-up bit starts about four minutes in*, *only the chorus voicings are useful* — which you
+  cannot. It shows on the row itself, under the site, so it is there while you are deciding what to
+  practise.
 
 It has to be a web address — something beginning `http://` or `https://`. Leave the scheme off and
 Red Moon assumes `https://`, so pasting `youtube.com/...` works. Anything else is refused with a
@@ -44,13 +49,21 @@ message saying so, because a link that cannot be opened is worse than no link.
 
 ## Using them
 
+**Hold a row** and you get **Edit link** and **Delete**, the same menu every other list in the app
+puts behind a hold. Editing opens the link back up with everything you typed, so a name you'd change
+or a note you didn't write at the time is one gesture away. Swiping the row right opens the editor
+too; swiping left deletes.
+
+Deleting a link is immediate — there is no undo toast here, unlike deleting a song or a routine.
+Nothing else goes with it: the exercise, song, loop or routine it was attached to is untouched.
+
 Tap a row and the source opens **in its own app** — YouTube in YouTube, a tab site in your browser.
 Red Moon does not show it inside itself, and it never fetches anything from the address: no titles,
 no previews, no thumbnails, no requests of any kind. What is stored is what you typed. See
 [Privacy](privacy.md).
 
-Swipe a row to delete it, or swipe the other way to edit it. On a routine, where the list is already
-in edit mode, you can also drag a link into a different order.
+On a routine, where the list is already in edit mode, you can also drag a link into a different
+order.
 
 ## Two things it deliberately does not do
 

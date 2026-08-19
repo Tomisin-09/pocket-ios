@@ -81,9 +81,10 @@ marker grammar in [README.md](README.md).
 | `reference/toolkit` | `screen` | `tools-and-journal` | Toolkit open |  |
 | `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed |  |
 | `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
-| `references/section` | `panel` | `references` | seeded library, an exercise detail sheet with two links saved, scrolled to the section |  |
+| `references/section` | `panel` | `references` | seeded library, an exercise detail sheet with two links saved, one of them carrying a note, scrolled to the section |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
 | `routines/editor` | `screen` | `routines` | Practice ▸ Routines ▸ + , three blocks added |  |
+| `routines/history` | `detail` | `routines` | seeded history, Practice ▸ Routines ▸ Morning Routine, read-only |  |
 | `routines/library` | `screen` | `routines` | seeded library, Practice ▸ Routines, several routines saved |  |
 | `routines/player-block` | `screen` | `routines` | seeded library, a routine playing, second block of four |  |
 | `routines/repeat-block` | `detail` | `routines` | routine editor, a unit block tapped, repeat set to 3 |  |
@@ -117,4 +118,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-100 shots across 19 pages.
+101 shots across 19 pages.

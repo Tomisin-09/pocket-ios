@@ -15,6 +15,30 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **A routine now remembers.** Open a saved routine and it tells you three things it never used to:
+  roughly **how long** it is, **when you last practised** it, and **how many times**. All three come
+  from the practice log you were already building by running it — nothing new is recorded, and
+  nothing about it is scored. There is no target, no percentage and nothing that notices a gap: a
+  routine you have never run says **Not yet** and leaves it there.
+  A run counts as **one practice**, however many blocks it has — a routine of six exercises done in
+  one sitting is one, not six. Two runs in the same half hour also count as one; a morning and an
+  evening count as two.
+  The **estimated length** used to disappear the moment you saved a routine, which meant the one
+  number you'd want when choosing between them was missing from every routine you'd kept. It stays
+  now.
+  The **Routines list** carries it too: *4 blocks · 2 rests* on one line, and *Practised 11 times ·
+  3 days ago* underneath, so you can compare without opening each one. A routine you haven't run
+  simply doesn't carry that second line. The row also stops calling them *units* — the rest of the
+  app has always called them blocks.
+- **A note on a link.** **Where you learned it** links gain an optional **Note** — what you actually
+  took from the source, rather than what the source is. *"The down-up bit starts about four minutes
+  in"*, *"only the chorus voicings are useful"*. It shows under the site on the link's own row, so
+  you see it while you're deciding what to practise, and it works on exercises, songs, loops and
+  routines alike.
+- **Hold a saved link for Edit and Delete.** Editing one used to be reachable only by swiping the
+  row, which nothing told you about — so a link you'd named badly, or wanted to add a note to, was
+  effectively stuck. Holding it now gives you the same menu every other list in the app does.
+  Swiping still works. Deleting a link is immediate rather than undoable, and takes nothing with it.
 - **Long-term goals.** A second kind of goal, in **Practice ▸ Long-term goals**: a standing outcome
   you're working toward — playing a particular song end to end, getting your picking faster — that
   keeps steering sessions until you mark it met, instead of being re-stated every time you plan.
@@ -43,6 +67,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   no longer said which one it meant. Adding one reads **Add a goal for this session**.
 
 ### Fixed
+- **The Add a link sheet's address field had no way off the keyboard.** It accepts multiple lines,
+  so Return added one instead of dismissing. Every other text surface in the app carries a checkmark
+  for exactly this; this one had been missing since the feature shipped.
 - **Editing a chord progression no longer forgets the key you set.** Every edit — adding a chord,
   removing one, swapping one, changing how long it is held — rebuilt the progression without its
   key, so the Roman-numeral badges silently went back to reading against whatever chord happened to

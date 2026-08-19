@@ -27,6 +27,11 @@ struct RoutineLibraryView: View {
     /// Every exercise in the library — the raw material the planner's Quick session draws from
     /// (V2 planner Slice 1). Ranked by dueness, warm-up LRU-picked; no goals yet.
     @Query private var exercises: [Exercise]
+    /// The practice log, for the per-row tally (ADR 0173). Fetched whole and reduced **once** into
+    /// `sessionCounts` below — a `#Predicate` on the optional `routineUID` is the documented way to
+    /// starve the main thread, and a per-row `routineHistory` call would rescan the log for every
+    /// routine on screen.
+    @Query private var runs: [PracticeRun]
 
     /// Drives the push into a fresh-routine editor. The new routine isn't created here — the
     /// editor builds it in its own sandbox and only persists it on Save, so an abandoned
@@ -71,8 +76,12 @@ struct RoutineLibraryView: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else {
+                // Reduced once here and handed down, rather than read from a computed property
+                // inside the row: `summary` is called per row, and rebuilding the map there would
+                // rescan the whole log for every routine on screen, on every redraw.
+                let history = routineHistory
                 ForEach(ordered) { routine in
-                    row(for: routine)
+                    row(for: routine, history: history)
                         .listRowBackground(PocketColor.background)
                         .pocketRowActions(displayName(routine),
                                           tint: PocketColor.practice,
@@ -142,7 +151,8 @@ struct RoutineLibraryView: View {
     /// `canAuthorRoutine` (so that same routine still can't be *edited* — run the freebie, don't
     /// author it, exactly as the free-taste exercises behave). A routine a free player can neither run
     /// nor edit stays **visible but badged** — "locked, not hidden".
-    private func row(for routine: Routine) -> some View {
+    private func row(for routine: Routine,
+                     history: (counts: [UUID: Int], dates: [UUID: Date])) -> some View {
         let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
         let runnable = AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo)
         return HStack(spacing: 14) {
@@ -157,7 +167,7 @@ struct RoutineLibraryView: View {
                                 : "Locked — Red Moon Pro")
 
             Button { edit(routine) } label: {
-                rowBody(for: routine, openable: runnable)
+                rowBody(for: routine, openable: runnable, history: history)
             }
             .buttonStyle(.plain)
         }
@@ -191,7 +201,8 @@ struct RoutineLibraryView: View {
     /// entitlement affordances. `openable` means the row leads somewhere for this player — true for
     /// any routine when Pro, and for the curated demo when free. The PRO capsule and the padlock both
     /// mark the rows that don't, so the demo reads as ordinary and the rest read as locked.
-    private func rowBody(for routine: Routine, openable: Bool) -> some View {
+    private func rowBody(for routine: Routine, openable: Bool,
+                         history: (counts: [UUID: Int], dates: [UUID: Date])) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -208,6 +219,12 @@ struct RoutineLibraryView: View {
                 Text(summary(for: routine))
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.practice)
+                if let line = self.history(for: routine,
+                                           counts: history.counts, dates: history.dates) {
+                    Text(line)
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
             }
             Spacer(minLength: 8)
             if !openable { proBadge }
@@ -263,14 +280,47 @@ struct RoutineLibraryView: View {
         haptic(.medium)
     }
 
-    /// "3 units · 1 rest" — the routine's shape at a glance; "Empty" before any blocks.
+    /// Both history maps, built **once per redraw** rather than per row (ADR 0173 D6).
+    private var routineHistory: (counts: [UUID: Int], dates: [UUID: Date]) {
+        let records = runs.map(\.record)
+        return (PracticeLog.routineSessionCounts(in: records),
+                PracticeLog.routineLastPractised(in: records))
+    }
+
+    /// "3 blocks · 1 rest" — what is *in* the routine; "Empty" before any blocks.
+    ///
+    /// **Blocks, not units.** The detail screen's own section header says `Blocks` and the model
+    /// calls them blocks; this row was the only surface calling them units, which left the two
+    /// screens disagreeing about what the things in a routine are.
+    ///
+    /// **Not "exercise blocks"**, which was tried and rejected the same day: `kind.carriesUnit` is
+    /// true for a loop and a song block as well as an exercise one (ADR 0129/0134), so a routine of
+    /// two loops and a song would have read "3 exercise blocks". "Blocks" is true of all three.
     private func summary(for routine: Routine) -> String {
         let items = routine.items
         guard !items.isEmpty else { return "Empty" }
-        let units = items.filter(\.kind.carriesUnit).count
-        let rests = items.count - units
-        var parts = ["\(units) unit\(units == 1 ? "" : "s")"]
+        let blocks = items.filter(\.kind.carriesUnit).count
+        let rests = items.count - blocks
+        var parts = ["\(blocks) block\(blocks == 1 ? "" : "s")"]
         if rests > 0 { parts.append("\(rests) rest\(rests == 1 ? "" : "s")") }
+        return parts.joined(separator: " · ")
+    }
+
+    /// "Practised 11 times · 3 days ago" — what the routine has *come to*, or `nil` when it has
+    /// never been run (ADR 0173 D6).
+    ///
+    /// A second line rather than more of the first: the two answer different questions, and four
+    /// facts on one caption wrap to three lines on a long name at a large text size.
+    ///
+    /// **A routine with no runs returns `nil` rather than "Not yet."** The detail screen has room to
+    /// say that kindly beside a date; a list does not, and thirty rows each announcing a thing not
+    /// done reads as a nag however neutral the words are (design-brief §3.5).
+    private func history(for routine: Routine, counts: [UUID: Int], dates: [UUID: Date]) -> String? {
+        guard let sessions = counts[routine.uid], sessions > 0 else { return nil }
+        var parts = [sessions == 1 ? "Practised once" : "Practised \(sessions) times"]
+        if let last = dates[routine.uid] {
+            parts.append(last.formatted(.relative(presentation: .named)))
+        }
         return parts.joined(separator: " · ")
     }
 

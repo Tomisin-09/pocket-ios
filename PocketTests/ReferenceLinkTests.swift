@@ -109,6 +109,33 @@ final class ReferenceLinkTests: XCTestCase {
         XCTAssertEqual(link.title, "Lesson")
     }
 
+    func testAddStoresTheNoteBesideTheTitle() throws {
+        let context = try makeContext()
+        let exercise = Exercise(name: "Spider")
+        context.insert(exercise)
+
+        let link = try XCTUnwrap(ReferenceLinkStore.add(title: "  Lesson  ",
+                                                        url: "https://youtube.com/watch?v=x",
+                                                        note: "  The bit at 4:20.  ",
+                                                        to: exercise, in: context))
+        try context.save()
+        XCTAssertEqual(link.title, "Lesson")
+        XCTAssertEqual(link.note, "The bit at 4:20.")
+    }
+
+    /// A link saved without a note stores `""`, never `nil`. The one assertion that catches somebody
+    /// retyping the field as `String?` — which passes in the simulator and traps on a device holding
+    /// old data (`docs/swiftdata-gotchas.md`).
+    func testANewLinkHasAnEmptyNoteRatherThanNil() {
+        XCTAssertEqual(ReferenceLink().note, "")
+    }
+
+    func testDisplayNoteIsNilWhenTheNoteIsOnlyWhitespace() {
+        // Otherwise the row renders a blank third line under the site.
+        XCTAssertNil(ReferenceLink(note: "   \n  ").displayNote)
+        XCTAssertEqual(ReferenceLink(note: "  Bar 12.  ").displayNote, "Bar 12.")
+    }
+
     func testAddAppendsInOrder() throws {
         let context = try makeContext()
         let routine = Routine(name: "Week 3")
@@ -123,12 +150,32 @@ final class ReferenceLinkTests: XCTestCase {
         XCTAssertEqual(routine.referencesInOrder.map(\.order), [0, 1, 2])
     }
 
-    /// A rejected edit must leave the link exactly as it was, not half-apply the new title.
+    /// A rejected edit must leave the link exactly as it was, not half-apply the new title — or the
+    /// new note, which is written after the same guard for exactly this reason.
     func testUpdateLeavesTheLinkUntouchedWhenTheURLIsRefused() {
-        let link = ReferenceLink(title: "Original", urlString: "https://example.com/a")
-        XCTAssertFalse(ReferenceLinkStore.update(link, title: "Changed", url: "mailto:x@y.com"))
+        let link = ReferenceLink(title: "Original", note: "Original note",
+                                 urlString: "https://example.com/a")
+        XCTAssertFalse(ReferenceLinkStore.update(link, title: "Changed", url: "mailto:x@y.com",
+                                                 note: "Changed too"))
         XCTAssertEqual(link.title, "Original")
+        XCTAssertEqual(link.note, "Original note")
         XCTAssertEqual(link.urlString, "https://example.com/a")
+    }
+
+    /// The positive half of the above. Without it, the refusal test would pass just as happily
+    /// against an `update` that never wrote the note at all.
+    func testUpdateReplacesTheNoteWhenTheURLIsAccepted() {
+        let link = ReferenceLink(title: "Original", note: "Original note",
+                                 urlString: "https://example.com/a")
+        XCTAssertTrue(ReferenceLinkStore.update(link, title: "Renamed",
+                                                url: "https://example.com/b",
+                                                note: "  Bar 12 onwards.  "))
+        XCTAssertEqual(link.note, "Bar 12 onwards.", "the note is trimmed on the way in")
+
+        // Clearing is a legitimate edit, not a no-op guarded by "empty means leave it alone".
+        XCTAssertTrue(ReferenceLinkStore.update(link, title: "Renamed",
+                                                url: "https://example.com/b", note: ""))
+        XCTAssertEqual(link.note, "")
     }
 
     func testDeleteRenumbersTheSurvivors() throws {

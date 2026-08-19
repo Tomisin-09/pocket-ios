@@ -55,6 +55,23 @@ enum PracticeHistorySeed {
     /// `new tempos` figure is non-zero and the trajectory reads as a trajectory.
     private static let exerciseTempos = [72, 76, 80, 84, 88, 92, 96, 100]
 
+    /// Which of the practised days were a run of the seeded **Morning Routine**, as whole days back.
+    /// Without these the routine's own history section (ADR 0173) renders empty in every figure of
+    /// the routine detail screen — `routineUID` is written by the app on every run, and a seed that
+    /// never sets it produces a store the app itself could not have produced.
+    ///
+    /// **Chosen, not derived**, against two constraints that a different four offsets would break:
+    ///
+    /// 1. Each is a day `minutesByDay` does **not** split in two, so the day is one sitting and
+    ///    reads as one session — which is what the history section counts (sittings, not rows).
+    /// 2. Each lands on an `.exercise`-kind row. Morning Routine is exercise-only by construction
+    ///    (`RoutinePresets`), so a `.loop` or `.song` row inside it would be a shape the app would
+    ///    never write, and this seed's rule is that it writes only shapes the app writes.
+    ///
+    /// Four of them, because one is not a history and ten is a claim about how much this player
+    /// practises that the manual has no business making.
+    private static let routineDayOffsets = [6, 9, 17, 21]
+
     // MARK: - Entry point
 
     /// Write a practice history if launched with `-seedHistory` and there is none.
@@ -70,12 +87,18 @@ enum PracticeHistorySeed {
 
         let loops = (try? context.fetch(FetchDescriptor<Loop>())) ?? []
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
+        // Pinned by name for the same reason `seedReferences` pins its exercise: an unsorted
+        // `FetchDescriptor` returns store order, and a figure whose subject can move is a figure
+        // that goes wrong without anything failing.
+        let routines = (try? context.fetch(FetchDescriptor<Routine>())) ?? []
+        let historiedRoutine = routines.first { $0.name == "Morning Routine" } ?? routines.first
 
-        seedRuns(loops: loops, exercises: exercises, into: context)
+        seedRuns(units: SeededUnits(loops: loops, exercises: exercises),
+                 routineUID: historiedRoutine?.uid, into: context)
         seedJournal(loops: loops, exercises: exercises, into: context)
         seedTake(loops: loops, into: context)
         seedReferences(exercises: exercises, into: context)
-        seedRecency(into: context)
+        seedRecency(historiedRoutineUID: historiedRoutine?.uid, into: context)
         seedSavedChords(into: context)
 
         try? context.save()
@@ -128,8 +151,14 @@ enum PracticeHistorySeed {
     /// the log — they are two independent records of the same fact, and only one of them is what
     /// Home reads. `reference/home` is specified as "one song recently practised", which is this
     /// field and not a `PracticeRun` row.
+    ///
+    /// The same trap one level down, and the reason `historiedRoutineUID` is threaded here: a
+    /// routine's `lastPracticed` stamp and its practice-log rows are *also* two independent records
+    /// of one fact, and the detail screen reads the log while Home's rail reads the stamp. Stamping
+    /// the historied routine from the most recent of `routineDayOffsets` is what stops the two
+    /// disagreeing on screen in a published figure.
     @MainActor
-    private static func seedRecency(into context: ModelContext) {
+    private static func seedRecency(historiedRoutineUID: UUID?, into context: ModelContext) {
         let songs = (try? context.fetch(FetchDescriptor<Song>())) ?? []
         // Newest first by index, so the resume card is stable across runs rather than whichever
         // song the fetch happened to return first.
@@ -140,11 +169,23 @@ enum PracticeHistorySeed {
 
         let routines = (try? context.fetch(FetchDescriptor<Routine>())) ?? []
         for (index, routine) in routines.enumerated() {
-            routine.lastPracticed = calendarDay(daysAgo: index + 1)
+            if routine.uid == historiedRoutineUID, let mostRecent = routineDayOffsets.min() {
+                routine.lastPracticed = calendarDay(daysAgo: mostRecent)
+            } else {
+                routine.lastPracticed = calendarDay(daysAgo: index + 1)
+            }
         }
     }
 
     // MARK: - The log behind Progress
+
+    /// The already-seeded units a log row can point at. One parameter rather than two, because the
+    /// pair travels together everywhere and splitting them pushed `makeRun` past the parameter cap
+    /// once `routineUID` joined it.
+    private struct SeededUnits {
+        let loops: [Loop]
+        let exercises: [Exercise]
+    }
 
     /// One to three runs per practised day, alternating unit kinds so the log isn't a single colour.
     ///
@@ -152,7 +193,9 @@ enum PracticeHistorySeed {
     /// insert and defaults `endedAt` to now, and this is writing eighty-odd rows into the past.
     /// The row shape is the writer's, field for field — see `PracticeLogWriter.log`.
     @MainActor
-    private static func seedRuns(loops: [Loop], exercises: [Exercise], into context: ModelContext) {
+    private static func seedRuns(units: SeededUnits,
+                                 routineUID: UUID?,
+                                 into context: ModelContext) {
         let midday = 14
 
         for (index, dayOffset) in practisedDayOffsets.enumerated() {
@@ -174,21 +217,27 @@ enum PracticeHistorySeed {
                 let run = makeRun(index: index + slot,
                                   startedAt: startedAt,
                                   minutes: minutes,
-                                  loops: loops,
-                                  exercises: exercises)
+                                  units: units,
+                                  routineUID: routineDayOffsets.contains(dayOffset) ? routineUID : nil)
                 context.insert(run)
             }
         }
     }
 
     /// One row, with the unit kind and tempo chosen from the row's position so the mix is stable.
+    ///
+    /// `routineUID` is carried into **all three** kinds rather than only the exercise one. Only
+    /// exercise rows receive a non-nil value today, because `routineDayOffsets` is chosen so they
+    /// do — but that constraint belongs to the offsets, where it is written down, not hidden here
+    /// as a branch that quietly drops what it was handed.
     @MainActor
     private static func makeRun(index: Int,
                                 startedAt: Date,
                                 minutes: Int,
-                                loops: [Loop],
-                                exercises: [Exercise]) -> PracticeRun {
+                                units: SeededUnits,
+                                routineUID: UUID?) -> PracticeRun {
         let seconds = Double(minutes * 60)
+        let (loops, exercises) = (units.loops, units.exercises)
 
         // Three runs in four are on a unit; the fourth is a play-along, which carries minutes and a
         // day but no tempo (ADR 0071) and keeps the log from reading as all drill.
@@ -199,6 +248,7 @@ enum PracticeHistorySeed {
                                durationSeconds: seconds,
                                kind: .exercise,
                                unitUID: exercise?.uid,
+                               routineUID: routineUID,
                                tempoBPM: exerciseTempos[index % exerciseTempos.count],
                                notesPerBeat: 2)
         case 1:
@@ -207,12 +257,14 @@ enum PracticeHistorySeed {
                                durationSeconds: seconds,
                                kind: .loop,
                                unitUID: loop?.uid,
+                               routineUID: routineUID,
                                tempoPercent: 75 + (index % 4) * 5)
         default:
             return PracticeRun(startedAt: startedAt,
                                durationSeconds: seconds,
                                kind: .song,
-                               unitUID: nil)
+                               unitUID: nil,
+                               routineUID: routineUID)
         }
     }
 
@@ -297,7 +349,8 @@ enum PracticeHistorySeed {
 
     // MARK: - Where you learned it (ADR 0167)
 
-    /// Two reference links on the first seeded exercise, for `references/section`.
+    /// Two reference links on the first seeded exercise — one of them carrying a note — for
+    /// `references/section`.
     ///
     /// Seeded rather than driven. Typing two URLs through the keyboard would add a minute to a run
     /// that is already six, and a URL field is exactly where a UI test's typing goes wrong —
@@ -315,10 +368,17 @@ enum PracticeHistorySeed {
     private static func seedReferences(exercises: [Exercise], into context: ModelContext) {
         guard let exercise = exercises.first(where: { $0.name == "Alternate Picking" })
                 ?? exercises.first else { return }
-        let sources = [("The lesson this came from", "https://example.com/lessons/alternate-picking"),
-                       ("Tab for the whole run", "https://tabs.example.org/alternate-picking")]
-        for (title, url) in sources {
-            ReferenceLinkStore.add(title: title, url: url, to: exercise, in: context)
+        // **One noted, one not** — on purpose. The note is optional, so a figure showing only
+        // noted rows would promise a third line that most rows do not have, and a figure showing
+        // none could not illustrate the field at all. Two rows is exactly enough to show both.
+        let sources = [("The lesson this came from",
+                        "https://example.com/lessons/alternate-picking",
+                        "The down-up bit starts about four minutes in — the rest is theory."),
+                       ("Tab for the whole run",
+                        "https://tabs.example.org/alternate-picking",
+                        "")]
+        for (title, url, note) in sources {
+            ReferenceLinkStore.add(title: title, url: url, note: note, to: exercise, in: context)
         }
     }
 

@@ -1117,6 +1117,13 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   Read today by `ExerciseDetailSheet`, which queries the whole log and filters in memory (a `#Predicate`
   on the optional `unitUID` is the documented way to starve the main thread) and hands values to
   `TempoTrajectory`. The Progress screen is Slice 2.
+  **`routineUID` gained its first reader in ADR 0173** — the routine detail screen's length-and-history
+  section, via the pure `PracticeLog.routineHistory`. It is the point at which the per-unit schema above
+  pays for itself in the direction it was justified: because the rows are per *block*, a routine's own
+  history has to **recover sittings** from them through `PracticeLog.sittings` rather than count rows,
+  or a six-block routine run once on a Tuesday reports as six separate practices. Same recovery every
+  other session-level statistic performs, so the routine screen and Progress cannot disagree about what
+  one sit is. No schema change: `SessionRecord.routineUID` was already carried through.
   **The log is also the planner's time axis** (ADR 0137). `PracticeLog.lastPracticedByUnit` groups the
   rows by `unitUID` and takes the latest `startedAt`; `PracticePlanner.library` fills
   `PlannerLoop.lastPracticed` from that map instead of the `nil` it used to hard-code. `Loop` has no
@@ -1129,8 +1136,10 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   them is a live ranking change owed its own decision. This makes the write path above a *ranking*
   concern as well as a stats one — a seam that silently failed to log would leave its unit max-due
   forever — which is why all three seams were verified against the on-device store before it shipped.
-- **`ReferenceLink`** (ADR 0167) is *where you learned it* — a title and a URL hung off the thing it
-  explains. Additive new table; nothing existing migrates. The owner is polymorphic through **four
+- **`ReferenceLink`** (ADR 0167) is *where you learned it* — a title, a URL and an optional note hung
+  off the thing it explains. The note (added by the ADR's 2026-08-19 revision) is *what you took from
+  the source*, as against the title's *what the source is*: a plain non-optional `String` with a
+  declaration default, additive on a live table, shown as a two-line-capped third line on the row. Additive new table; nothing existing migrates. The owner is polymorphic through **four
   typed optional relationships** (`exercise` / `song` / `loop` / `routine`, exactly one non-nil), the
   ADR 0066 R4 shape rather than a generic `ownerKind + ownerID`, which would move referential
   integrity out of SwiftData and into hand-written lookups that cannot cascade. ⚠ Those inverses

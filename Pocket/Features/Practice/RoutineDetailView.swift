@@ -185,7 +185,11 @@ struct RoutineDetailView: View {
                 Text(insertingRests ? "Tap where a rest goes" : "Blocks")
             }
 
-            lengthSection
+            // How long it is, when you last did it, how many times (ADR 0173). Lives in
+            // `RoutineDetailView+History.swift` — one section rather than two because the old
+            // length gate and a history gate were near-complements, so the screen would have
+            // shown one or the other and never both.
+            lengthAndHistorySection
 
             // Where this session came from (ADR 0167). Lives in
             // `RoutineDetailView+References.swift` — the sandbox makes this surface the odd

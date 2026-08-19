@@ -112,6 +112,11 @@ final class PracticeLogTests: XCTestCase {
 
     /// The mirror of the above: dropping the routine rows must change the totals by exactly those
     /// rows and nothing else — so no aggregate can be quietly keying off `routineUID`.
+    ///
+    /// The invariant is about the **shared** aggregates, the ones every screen reads.
+    /// `PracticeLog.routineHistory` (ADR 0173) is the deliberate exception and the only read in the
+    /// file that *may* key off `routineUID`; see `testRoutineHistoryLeavesTheSharedAggregatesAlone`,
+    /// which pins that it stays an addition rather than a change of what the field means here.
     func testRoutineAttributionDoesNotChangeAnyAggregate() {
         let unit = UUID()
         let inRoutine = [run(date(10, 9), minutes: 20, unit: unit, routine: UUID())]
