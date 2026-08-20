@@ -31,3 +31,14 @@ struct StableRef<Model: UIDIdentified>: Identifiable {
     let value: Model
     var id: UUID { value.uid }
 }
+
+/// Identity **is** the `uid`, which is what the whole type exists to say — so equality and hashing
+/// go through it and never through the wrapped model, whose own `persistentModelID` is the unstable
+/// value this wrapper was written to route around.
+///
+/// Needed because `navigationDestination(item:)` requires `Hashable` where `.sheet(item:)` only
+/// requires `Identifiable`, and takes are pushed rather than presented (ADR 0174).
+extension StableRef: Hashable {
+    static func == (lhs: StableRef<Model>, rhs: StableRef<Model>) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+}

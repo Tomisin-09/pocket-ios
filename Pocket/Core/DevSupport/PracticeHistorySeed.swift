@@ -323,30 +323,6 @@ enum PracticeHistorySeed {
         }
     }
 
-    // MARK: - The take
-
-    /// One recorded take, owned by a loop so the row renders with its owner caption underneath —
-    /// which is the whole subject of `journal/take-row`.
-    ///
-    /// **No audio file is written.** `JournalTakeRow` renders entirely from the model — play button,
-    /// title, duration, time, caption — and never consults the disk, so a still of it needs no bytes
-    /// behind it. Tapping play on a seeded take will find nothing; that is the one thing this seed
-    /// does not reproduce, and it is not in frame.
-    @MainActor
-    private static func seedTake(loops: [Loop], into context: ModelContext) {
-        guard let day = calendarDay(daysAgo: 1),
-              let createdAt = Calendar.current.date(byAdding: .hour, value: 19, to: day)
-        else { return }
-
-        let uid = UUID()
-        let take = Recording(fileName: RecordingStore.fileName(for: uid),
-                             duration: 47,
-                             uid: uid,
-                             createdAt: createdAt,
-                             loop: loops.first)
-        context.insert(take)
-    }
-
     // MARK: - Where you learned it (ADR 0167)
 
     /// Two reference links on the first seeded exercise — one of them carrying a note — for
@@ -386,7 +362,10 @@ enum PracticeHistorySeed {
 
     /// Midnight, `daysAgo` days back. Everything here is anchored to the start of a day so a shoot
     /// that runs at 23:55 doesn't quietly drop a run into tomorrow.
-    private static func calendarDay(daysAgo: Int) -> Date? {
+    ///
+    /// Not `private`: `private` is file-scoped, and `seedTake` moved next door when writing real
+    /// audio pushed this file past the line cap.
+    static func calendarDay(daysAgo: Int) -> Date? {
         let today = Calendar.current.startOfDay(for: .now)
         return Calendar.current.date(byAdding: .day, value: -daysAgo, to: today)
     }

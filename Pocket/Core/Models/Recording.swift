@@ -39,6 +39,15 @@ final class Recording {
     /// default**, so lightweight migration is exempt from the mandatory-attribute rule.
     var title: String?
 
+    /// What the player wrote about this take, or `nil` for one never annotated (ADR 0174).
+    ///
+    /// A take's own field, deliberately **not** a `JournalEntry` owned by the recording. A note here
+    /// belongs to the audio the way a title does — it is read on the take's own screen, beside the
+    /// thing it describes. The cost, accepted in 0174: it does not appear in the Journal feed and
+    /// Journal search does not match it. Additive optional with **no declaration default**, so
+    /// lightweight migration is exempt from the mandatory-attribute rule — the same shape as `title`.
+    var note: String?
+
     /// The AAC file's name **relative** to the recordings directory (e.g. `"<uid>.m4a"`) — never
     /// an absolute path: the container URL changes across installs/restores, so only the leaf is
     /// stable. Resolve to a `URL` through `RecordingStore.url(for:)`.
@@ -108,5 +117,17 @@ final class Recording {
         let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         title = trimmed
+    }
+
+    /// Whether this take carries a note — what a list row's marker glyph binds to.
+    var hasNote: Bool { !(note ?? "").isEmpty }
+
+    /// Write (or clear) this take's note. Unlike `rename(to:)`, an empty result **is** meaningful
+    /// here and clears the note rather than being refused: naming a take is how you tell it apart, so
+    /// a blank name is a mistake, but a note you no longer want is a note you should be able to
+    /// delete. Whitespace still stores as `nil`, never as a note that renders as an empty block.
+    func setNote(_ newNote: String) {
+        let trimmed = newNote.trimmingCharacters(in: .whitespacesAndNewlines)
+        note = trimmed.isEmpty ? nil : trimmed
     }
 }

@@ -56,6 +56,49 @@ final class ManualShotsUITests: ManualShotCase {
         capture(app, slug: "journal/take-row", assertingOnScreen: "Journal")
     }
 
+    /// `journal/take-detail` — a take's own screen: the scrub strip, the transport, the note
+    /// (ADR 0174).
+    @MainActor
+    func testTakeDetail() {
+        let app = launchForShoot()
+        openTakeDetail(in: app)
+        capture(app, slug: "journal/take-detail", assertingOnScreen: "Take",
+                alsoRequiring: ["Take position"])
+    }
+
+    /// `journal/take-trim` — trim mode, with the handles on the strip and the keep-span readout.
+    @MainActor
+    func testTakeTrim() {
+        let app = launchForShoot()
+        openTakeDetail(in: app)
+
+        let actions = app.buttons["Take actions"]
+        XCTAssertTrue(actions.waitForExistence(timeout: Self.shootTimeout),
+                      "the take's actions menu never appeared. \(stepLog)")
+        actions.tap()
+        note("opened the take actions menu")
+
+        // The trim item is `Trim…` with a real ellipsis character, not three dots.
+        let trim = app.buttons["Trim…"]
+        XCTAssertTrue(trim.waitForExistence(timeout: Self.shootTimeout),
+                      "no Trim item in the take's menu. \(stepLog)")
+        trim.tap()
+        note("entered trim mode")
+
+        // Trim mode is proven by the strip changing role, not by the menu having been tapped — a
+        // swallowed tap leaves a perfectly plausible take screen, which is the failure this whole
+        // harness exists against.
+        let strip = app.otherElements["Trim range"]
+        XCTAssertTrue(strip.waitForExistence(timeout: Self.shootTimeout),
+                      "tapped Trim and the scrubber never became a trim range. \(stepLog)")
+        note("the strip is a trim range")
+
+        // Gated on the strip's role above, not on the keep-span readout: that sits below the
+        // transport and can be under the fold on a short device, which is a framing question for
+        // whoever crops the figure rather than evidence the app is in the wrong state.
+        capture(app, slug: "journal/take-trim", assertingOnScreen: "Take")
+    }
+
     /// `journal/progress` · `reference/progress` · `journal/month-heatmap` — one frame, three markers.
     ///
     /// **The screen as it opens, unscrolled.** An earlier version added a `swipeUp` to bring All-time
@@ -145,5 +188,26 @@ final class ManualShotsUITests: ManualShotCase {
         tapHomeCard("Journal, your notes and practice takes",
                     in: app,
                     arrivingAt: app.buttons["Journal options"])
+    }
+
+    /// Home → Journal → the seeded take's own screen (ADR 0174).
+    ///
+    /// The row's title line is its **own** button, separate from the play glyph, so tapping the take
+    /// opens it rather than starting it.
+    ///
+    /// Matched by **identifier**, not by label prefix. The label is the whole line concatenated —
+    /// name, duration, note marker, time — so the only stable part of it is the word *Take*, and
+    /// that is also the prefix of the Journal's **Takes** filter a few points above. A prefix match
+    /// found the filter first, tapped it, and reported the take as opened.
+    @MainActor
+    private func openTakeDetail(in app: XCUIApplication) {
+        openJournal(in: app)
+
+        let row = app.buttons[UITestHooks.takeRowOpen]
+        XCTAssertTrue(row.waitForExistence(timeout: Self.shootTimeout),
+                      "no seeded take in the Journal timeline. \(stepLog)")
+        tap(row, labelled: "the take row", revealing: app.buttons["Take actions"],
+            called: "the take's actions menu")
+        note("opened the take")
     }
 }

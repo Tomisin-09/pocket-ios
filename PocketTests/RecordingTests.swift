@@ -157,4 +157,47 @@ final class RecordingTests: XCTestCase {
         let haystack = JournalTimeline.searchHaystack(for: .take(take))
         XCTAssertTrue(haystack.contains("bridge run"), "a named take must be searchable by its name")
     }
+
+    // MARK: - The take's note (ADR 0174)
+
+    func testANewTakeHasNoNote() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        XCTAssertNil(take.note)
+        XCTAssertFalse(take.hasNote)
+    }
+
+    func testSettingANoteTrimsWhitespace() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.setNote("  rushed the turnaround  ")
+        XCTAssertEqual(take.note, "rushed the turnaround")
+        XCTAssertTrue(take.hasNote)
+    }
+
+    /// Where a note parts company with a *name*: clearing one is meaningful. A blank name is a
+    /// mistake, because a name is how you tell two takes apart; a note you no longer want is a note
+    /// you should be able to delete.
+    func testClearingANoteRemovesIt() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.setNote("something")
+        take.setNote("")
+        XCTAssertNil(take.note)
+        XCTAssertFalse(take.hasNote)
+    }
+
+    /// Whitespace stores as `nil`, never as a note that renders as an empty block.
+    func testANoteOfOnlyWhitespaceIsNoNote() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.setNote("   \n  ")
+        XCTAssertNil(take.note)
+    }
+
+    /// A take's note is deliberately **not** on the Journal's search rail (ADR 0174) — it belongs to
+    /// the take's own screen. Pinned so the decision is visible if someone later wonders why a search
+    /// for a note's words finds nothing.
+    func testANotesWordsAreNotOnTheJournalSearchRail() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.setNote("rushed the turnaround")
+        let haystack = JournalTimeline.searchHaystack(for: .take(take))
+        XCTAssertFalse(haystack.contains("turnaround"))
+    }
 }

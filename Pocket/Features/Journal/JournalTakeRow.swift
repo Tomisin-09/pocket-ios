@@ -14,6 +14,10 @@ struct JournalTakeRow: View {
     let onOpenOwner: (() -> Void)?
     let isPlaying: Bool
     let onToggle: () -> Void
+    /// Open the take's own screen — scrub, trim, note (ADR 0174). Scoped to the **title line** only:
+    /// this row already spends its second line on the owner caption, which is its own link, and a
+    /// whole-row tap target would sit on top of it.
+    let onOpen: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -26,21 +30,34 @@ struct JournalTakeRow: View {
             .accessibilityLabel(isPlaying ? "Pause take" : "Play take")
 
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 8) {
-                    // `displayTitle` falls back to the generic word every take used to be stuck with,
-                    // so an unnamed take renders exactly as it always did (ADR 0069 amendment).
-                    Text(take.displayTitle)
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .lineLimit(1)
-                    Text(take.durationLabel)
-                        .font(.pocketMono(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
-                    Spacer(minLength: 0)
-                    Text(take.createdAt.formatted(date: .omitted, time: .shortened))
-                        .font(.pocketMono(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
+                Button(action: onOpen) {
+                    HStack(spacing: 8) {
+                        // `displayTitle` falls back to the generic word every take used to be stuck
+                        // with, so an unnamed take renders exactly as it always did (ADR 0069
+                        // amendment).
+                        Text(take.displayTitle)
+                            .font(.futura(.subheadline))
+                            .foregroundStyle(PocketColor.textPrimary)
+                            .lineLimit(1)
+                        Text(take.durationLabel)
+                            .font(.pocketMono(.caption))
+                            .foregroundStyle(PocketColor.textSecondary)
+                        if take.hasNote {
+                            Image(systemName: "text.alignleft")
+                                .font(.futura(.caption))
+                                .foregroundStyle(PocketColor.textSecondary)
+                                .accessibilityLabel("Has a note")
+                        }
+                        Spacer(minLength: 0)
+                        Text(take.createdAt.formatted(date: .omitted, time: .shortened))
+                            .font(.pocketMono(.caption))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityHint("Opens the take")
+                .accessibilityIdentifier(UITestHooks.takeRowOpen)
                 if let ownerLabel {
                     JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner)
                 }

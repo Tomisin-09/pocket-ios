@@ -90,6 +90,53 @@ does. Takes land in this same timeline alongside your notes.
 
 Takes are also reachable from the run screen they were made on, through its **Takes** bar.
 
+### Opening a take
+
+**▶** plays a take where it sits. Tapping anywhere else on the row — the name, the duration, the
+time — opens the take on a screen of its own.
+
+<!-- shot: journal/take-detail | role: screen
+     | alt: A take's own screen with its waveform strip, the play and skip controls beneath, and its note below
+     | state: seeded library, Journal, a take opened -->
+
+- The **strip** is the take drawn as a waveform. Drag it to move the playhead, or tap a point to go
+  there. The two timecodes underneath say where you are and how long the take runs.
+- **▶** plays and pauses. **⏪** and **⏩** jump ten seconds back and forward.
+- **Length** and **Size** at the bottom say what the take runs to and what it is costing you.
+- **⋯** holds the rest: **Rename**, the note, **Trim…** and **Delete**.
+
+### A note on a take
+
+**⋯ ▸ Add a note** — or tapping the note block itself — writes a line about the take. What the
+playing was like, what to change next time.
+
+The note lives with the take and shows on this screen; a take that has one gets a small marker on
+its row so you can see which takes you wrote about. It is a note **on the take**, not a Journal
+entry: it does not appear in the timeline, and searching the Journal will not find its words.
+
+Leaving the note empty removes it.
+
+### Trimming a take
+
+**⋯ ▸ Trim…** turns the strip into a range with a handle at each end.
+
+<!-- shot: journal/take-trim | role: screen
+     | alt: The same take in trim mode, a handle at each end of the strip and a Keeping readout with Cancel and Trim beneath
+     | state: seeded library, Journal, a take opened, Trim tapped -->
+
+- Drag the handles to set **what to keep**. Everything outside them dims.
+- **Keeping** says how much survives, and the timecodes beside it say which part.
+- Press **▶** and you hear only the part you are keeping, so you can check the edges before you
+  commit.
+- **Trim** does it. **Cancel** leaves the take alone.
+
+> **A trim cannot be undone.** It rewrites the recording and throws away what you cut, which is how
+> it gives you the space back — so it asks first, and tells you how much is going. A take is the one
+> thing in the app with no source to rebuild it from. If the trim fails for any reason, the take is
+> left exactly as it was.
+
+**Trim** stays dim until you actually move a handle: keeping the whole take is not a trim.
+
 ## Finding something again
 
 - The **All · Notes · Takes** control at the top narrows the feed to one or the other.

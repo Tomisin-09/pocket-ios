@@ -29,12 +29,23 @@ final class TakeRecorder {
     /// AAC in an `.m4a` container, **mono**, 44.1 kHz — the ADR's "encoded AAC (not raw PCM —
     /// storage)". Mono because a take is a single guitar/room mic; it halves the file versus stereo
     /// for no meaningful loss on one source (~1 MB/min, per the feasibility sizing).
-    private static let settings: [String: Any] = [
-        AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-        AVSampleRateKey: 44_100.0,
-        AVNumberOfChannelsKey: 1,
-        AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-    ]
+    ///
+    /// Not `private`: `TakeTrimmer` re-encodes a trimmed span and reads the format from here, so a
+    /// trimmed take comes back in exactly the format every other take is in (ADR 0174).
+    ///
+    /// `nonisolated` and **computed**, because the trimmer runs off the main actor and this class is
+    /// `@MainActor`. A stored `static let` would inherit that isolation (unreachable from the
+    /// trimmer) and, being a non-`Sendable` dictionary, would not survive Swift 6 strict concurrency
+    /// as a `nonisolated` stored property either. A computed property has no shared storage to race
+    /// over, so it is safe from anywhere and hands each caller its own copy.
+    nonisolated static var settings: [String: Any] {
+        [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 44_100.0,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+    }
 
     /// Begin capturing to `url`. Returns `false` (and logs) if the recorder can't start — failures
     /// are surfaced, not swallowed, matching the rest of `Core/Audio` (dead audio must say why).

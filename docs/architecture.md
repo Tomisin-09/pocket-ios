@@ -401,6 +401,29 @@ still says what it was recorded against instead of degrading to a bare "Take 0:1
 applies to unit-owned `JournalEntry` rows (`ownerLabelAtEntry`), bringing loops and exercises into
 line with the rule session entries have followed since ADR 0143.
 
+A take then became something you can **move around in** (ADR 0174): a screen of its own
+(`TakeDetailView`, pushed from both `TakesSheet` and the Journal feed, carrying the *caller's*
+`RecordingPlayer` so one take still plays at a time across a surface and the screen it pushes) with a
+scrubber, a destructive trim and a note. `RecordingPlayer` grows `seek`/`pause`/`resume` and a
+`position` refreshed ~20 Hz; **ADR 0153 governs who reads it** — only the `PlayheadTakeScrubber` leaf
+does, with the envelope and the take's length passed in from a body that runs on real change. The
+strip itself (`TakeScrubber`) is new because `WaveformView`/`Minimap` are built around a `Song`, but
+everything under it is reused: `WaveformGesture` for point→fraction and handle maths, `ABSpan` for
+the ordered width-clamped two-handle span, `WaveformAmplitude`/`WaveformBars` for the bars, and
+`WaveformExtractor` for the envelope — **extracted on open, never stored**, since a take is short and
+a persisted array would need a format version kept in step. Trimming is the one thing in the app that
+**overwrites a take's audio**: pure span rules in `TakeTrim` (ordering, the minimum keep, the no-op
+guard that refuses to re-encode a whole file to arrive back where it started), and the I/O in
+`TakeTrimmer` — `AVAudioFile` rather than `AVAssetExportSession`, which on the iOS 17 target would
+cost an availability fork and a deprecation for nothing, and which lets the encode settings be read
+off the *source* so the writer's `processingFormat` matches the reader's with no converter between.
+The original is never opened for writing: the span is encoded to a sibling temp, read back and
+checked for real audio of about the right length, and only then swapped in by `replaceItemAt`, so
+every failure path leaves the take byte-identical. The note is `Recording.note`, one additive
+optional mirroring `title` — deliberately a **field on the take, not a `JournalEntry`**, so it is
+read beside the audio it describes and is correspondingly absent from the Journal feed and its
+search rail.
+
 A journal entry may also belong to **nothing at all** (ADR 0155). `JournalEntryOwnerKind` carries a
 fifth case, `.standalone`, backed by one additive optional column (`JournalEntry.isStandalone`) — a
 *stored* flag rather than the absence of an owner, because **absence is already spoken for**: ADR
