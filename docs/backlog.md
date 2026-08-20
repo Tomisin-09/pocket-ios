@@ -32,6 +32,187 @@ What's needed:
 Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
 is the deliverable ADR 0165 defines.
 
+## Real guitar audio for chords and strums (parked 2026-08-20)
+
+**The app ships zero audio bytes.** Every sound is synthesised at runtime — the click from
+`ClickTimbre`, every pitch from an `AVAudioUnitSampler` with **no sound bank loaded**. That was
+deliberate ([ADR 0097](decisions/0097-hear-synthesized-tone-preview.md) D4.2 — an unloaded sampler is
+"a good, honest **pitch reference**", it "ships tiny, and carries zero licensing") and it is fine for
+checking *which notes* a voicing contains. It does not sound like a guitar, and two things follow
+from that.
+
+1. **Chords sound as a block.** ADR 0097 D4.4 prototyped a strummed stagger and dropped it — "too
+   subtle to justify at chord scale". True of a synthetic tone. Not true of real samples, where the
+   stagger is most of what makes a strum read as a strum.
+2. **Strum data never meets pitch.** `StrumPattern` carries direction, accent, a slot grid and
+   `activeSlotIndex(atBeat:)`, but `StandaloneMetronomeEngine+Strum.swift` renders all of it as
+   *clicks* — its own header says the click voice conveys "when and how hard you strum, not the
+   chord tone". A `.strumChords` run is click-only.
+
+Designed but **not scheduled**. Chord & strum is the exercise kind that gains most; plain chord
+changes are fine as blocks.
+
+### Recording: ~32 WAVs, not every note
+
+Recording every note is hundreds of takes and `AVAudioUnitSampler` **cannot use most of them** — it
+is keyed by MIDI pitch and cannot tell an open E4 from a fretted E4. You cover a *pitch range* once,
+not each string.
+
+The range is MIDI 40–79 (`ChordVoicing.openMidi` plus ~15 frets). A sampler pitch-shifts ±1 semitone
+transparently, so **3-semitone spacing** is the widest gap with no audible stretching — 14 zones.
+Space them further and the in-between notes go rubbery. Three semitones is a minor third, so the run
+is a **dim7 arpeggio** cycling every octave:
+
+| # | Pitch | Position | # | Pitch | Position |
+|---|---|---|---|---|---|
+| 1 | E2 | 6th string, open | 8 | C#4 | 2nd, fret 2 |
+| 2 | G2 | 6th, fret 3 | 9 | E4 | 1st, open |
+| 3 | Bb2 | 6th, fret 6 | 10 | G4 | 1st, fret 3 |
+| 4 | C#3 | 5th, fret 4 | 11 | Bb4 | 1st, fret 6 |
+| 5 | E3 | 4th, fret 2 | 12 | C#5 | 1st, fret 9 |
+| 6 | G3 | 3rd, open | 13 | E5 | 1st, fret 12 |
+| 7 | Bb3 | 3rd, fret 3 | 14 | G5 | 1st, fret 15 |
+
+Three passes: that run normally, the same run harder (the accent layer, which drives
+`StrumSlot.accented`), then ~4 muted chunks for `StrumDirection.mute`. **14 × 2 + 4 ≈ 32 files.** An
+afternoon.
+
+**Record our own rather than sourcing a bank — a deliberate deviation from D4.3.** ADR 0097 D4.3
+already sanctions this upgrade path, but names a **"redistributable (CC0 / public-domain)
+SoundFont"** as the route (repeated at `ToneEngine.swift:18`). Recording our own satisfies the same
+redistributability requirement with no licence audit at all, and is worth the afternoon: most sample
+licences are written for *making music*, and putting samples inside an app is redistribution — in a
+file a user could extract — so a licence permitting the first does not automatically permit the
+second. Many free SF2s carry no clear licence, and this is a paid app. Own recordings also sound like
+*our* guitar, which for a practice app is arguably a feature. If the recording session falls through,
+D4.3's CC0 route is still open and still correct.
+
+**Export:** WAV · 44.1 kHz (matches `TakeRecorder.settings`) · **16-bit** (SF2 stores uncompressed
+PCM, so this halves the bundle) · **mono** · ~3 s (chord sustain is 1.8 s) · **dry, no reverb** — it
+stacks up ugly when six strings sound at once.
+
+Four things decide whether it sounds real, and none of them is the playing:
+
+- **Consistency across the 32.** One sitting, don't move the mic. Uneven brightness between
+  neighbouring zones is what makes a sample bank sound fake as you move up the neck.
+- **Name each file by pitch** (`E2.wav`, `Bb3.wav`). Every sample needs a **root key** — the pitch it
+  was actually played at — and a wrong one puts that entire zone out of tune with the rest.
+- **Do not normalise per file.** It flattens the soft and hard layers into each other, which is
+  exactly the difference the two passes exist to capture, and makes quiet high notes as loud as
+  booming low ones. Same gain across the set, or none.
+- **No loop points.** A plucked note decays; badly placed loop points sound worse than none.
+
+Trim tight to the attack — leading silence becomes lag when you tap Hear — and fade the last ~100 ms
+rather than hard-cutting, or every note ends in a click.
+
+### Stage 1 — the sample bank (no code at all)
+
+`ToneEngine.loadSoundFontIfPresent()` (`Pocket/Core/Audio/ToneEngine.swift:96`) **already looks for a
+file called `HearGuitar.sf2`**, at GM program 24 (nylon guitar), bank MSB `0x79`. The hook is dormant
+only because no such file exists. Build the SF2 in Polyphone, drop it in `Pocket/Resources/`
+(`project.yml`'s `- path: Pocket` already covers it), `xcodegen generate`.
+
+Every Hear surface improves at once with **no Swift changes** — `ChordHearButton`,
+`FretboardHearButton`, and the tuner. Check the tuner deliberately: `TunerView:375` shares the engine
+for its reference pitch, and a nylon-guitar reference tone is a different proposition from a neutral
+one.
+
+Before committing to SF2 authoring, `AVAudioUnitSampler.loadAudioFiles(at:)` maps raw WAVs directly.
+Rougher, but it says within minutes whether the recordings are worth building a bank from.
+
+**Stop here and listen on a device.** A mediocre bank can sound *worse* than what's there now: a
+neutral tone reads as "this is a reference pitch", an unconvincing guitar reads as a cheap guitar and
+draws attention to itself. Be genuinely willing to bin it. Everything below is only worth doing if
+stage 1 sounds good.
+
+### Stage 2 — per-string strum stagger
+
+The scheduling maths is nearly there already. `HearPlan.events(notes:stride:duration:)`
+(`Pocket/Core/Audio/HearPlan.swift:23`) takes a **stride between successive onsets** — a strum is
+that stride with the notes ordered low→high. `stride: 0` is today's block chord. One line blocks it:
+
+```swift
+static func isMonophonic(stride: TimeInterval) -> Bool { stride > 0 }   // HearPlan.swift:35
+```
+
+This conflates *spaced* with *monophonic*, so any stride > 0 silences the previous note
+(`ToneEngine.swift:149`) and a strum would sound as a fast one-voice arpeggio. Split the two
+concepts: a melodic run stays monophonic, a strum is **staggered and polyphonic**.
+
+1. **`ChordVoicing`** — add a string-aware accessor beside `midiNotes` (`ChordVoicing.swift:68`),
+   which currently collapses a voicing to `[Int]` and discards string, fret and finger. **That
+   collapse, not the samples, is what blocks strumming.** Keep `midiNotes` for existing callers.
+2. **`HearPlan`** — strum planning: order by string, apply the stagger, and encode the rules a real
+   strum follows (an up-stroke usually catches only the treble strings; `.mute` is a short damped
+   chunk; `.rest` is silence; `accented` selects the upper velocity layer). Pure Foundation, and
+   AGENTS.md **requires** tests for logic like this.
+3. **`ToneEngine`** — a `strum(_ voicing:direction:spread:velocity:)` entry point and a staggered
+   polyphonic mode in `HearSequencer`.
+4. **Tune `spread` on device.** ~10–15 ms per string is the usual ballpark and a slow ballad strum is
+   wider. This is an ear judgement, not a spec.
+
+**Carry the string index through from day one**, even though a single shared bank ignores it. If
+per-string banks ever prove necessary — six samplers for true open-vs-fretted timbre, and 6× the
+recording — that becomes a backend swap with no call-site changes, the same discipline
+`ExerciseAudioEngine` already applies. Once `strum(...)` exists, giving plain chord-change exercises
+a stagger too is a one-line call-site change.
+
+### Stage 3 — opt-in chord audio during a run
+
+Fill in the seam that was declared for exactly this. `Pocket/Core/Audio/ExerciseAudio.swift` already
+ships `protocol ExerciseAudioEngine`, `AccompanimentSettings` (`Codable` — "persistable so a
+per-exercise choice can be stored the day audio ships"), `AccompanimentStyle.chords` and a
+`SilentExerciseAudio` default behind an environment key. It has no UI consumer. Give it one.
+
+Sound the chord **at each change**, via `ChordProgression.activeIndex(atBeat:)`. Default **off**,
+following the `AppSettings.strumClickFollowsPattern` precedent (`AppSettings.swift:193`) — and bind
+the default to **one constant**, since an `@AppStorage` literal does not mirror its accessor.
+
+**The hazard is clock drift.** `ToneEngine` has its own `AVAudioEngine` and its own dispatch queue;
+a run's timeline is `StandaloneMetronomeEngine`. Scheduling chord audio off a separate queue *will*
+drift against the click. Join at the existing tick path — `scheduledLevel(forTick:ticksPerBeat:)`,
+`StandaloneMetronomeEngine+Strum.swift:47` — and account for two engines' differing latency. Do
+**not** drive it from a SwiftUI body: reading the playhead in a body invalidates at 120 Hz (ADR
+0153).
+
+`AudioPlumbing`'s reference-counted session lease already handles engines coexisting, and
+`ToneEngine.start()` correctly declines to downgrade a `.playAndRecord` session, so this composes
+with recording a take.
+
+### Stage 4 — per-stroke playback (optional, maybe not)
+
+Sound **every stroke slot** rather than only chord changes, joining `StrumPattern.clickIntensities`
+with the progression's active chord. Note the tension with stage 3: against a busy strum pattern,
+chords that sound only at changes may read as oddly sparse. If that is how it lands on device, stage
+4 stops being optional.
+
+### What an ADR will have to decide
+
+Less than it first looks, and the distinction matters — **only one clause is actually being
+reversed**:
+
+- **Stage 1 fulfils ADR 0097 D4.3, it does not overturn it.** D4.3 is titled "Guitar timbre is a
+  documented upgrade path, not v1 scope" and prescribes bundling an `.sf2` selecting a nylon program
+  — precisely what `loadSoundFontIfPresent()` implements. So the sample bank needs no new decision,
+  only a note that the deferred path was taken (and that own recordings replaced D4.3's CC0 route).
+  D4.2 is *conditional* on there being no bank, so it retires rather than being contradicted.
+- **Stage 2 genuinely reverses ADR 0097 D4.4** — the strummed stagger was prototyped and dropped as
+  "too subtle to justify at chord scale". That was measured against a **synthetic tone**. Say that
+  out loud in the ADR, or the next reader re-litigates it from the same starting point and reaches
+  the same answer.
+- **Stage 3 is the one that needs real argument** — an app that plays audio *during* a run is a new
+  posture, not an upgrade to an existing one. That, not the samples, is the ADR's substance.
+- **ADR 0070 is untouched** — this demonstrates, it does not grade.
+
+The other genuinely new thing is architectural: **the first audio bytes the app has ever shipped**
+(~7 MB), so `docs/architecture.md` gains a resource that until now did not exist in any form.
+
+Files it will touch: `Pocket/Resources/HearGuitar.sf2` (new), `Core/Audio/HearPlan.swift`,
+`Core/Models/ChordVoicing.swift`, `Core/Audio/ToneEngine.swift`, `Core/Audio/ExerciseAudio.swift`,
+`Core/Audio/StandaloneMetronomeEngine+Strum.swift`, `App/AppSettings.swift`,
+`PocketTests/HearPlanTests.swift`. Docs on shipping: `CHANGELOG.md`, `PROJECT.md`,
+`docs/architecture.md`, and `docs/manual/` for the new setting.
+
 ## Where to pick up (2026-08-02)
 
 Three things are parked, in the order they'd sensibly resume:
