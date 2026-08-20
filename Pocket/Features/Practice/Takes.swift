@@ -176,11 +176,11 @@ private struct TakeRow: View {
                     Spacer(minLength: 0)
                     // The note itself stays on the take's screen — a row this dense has room to say
                     // that one exists, and nothing more.
-                    if take.hasNote {
+                    if take.hasWriting {
                         Image(systemName: "text.alignleft")
                             .font(.futura(.caption))
                             .foregroundStyle(PocketColor.textSecondary)
-                            .accessibilityLabel("Has a note")
+                            .accessibilityLabel("Has notes")
                     }
                     Image(systemName: "chevron.right")
                         .font(.futura(.caption))

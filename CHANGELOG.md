@@ -26,6 +26,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   **A note** goes on the take too — what the playing was like, what to change next time. Takes that
   have one show a small marker in the list. The note lives with the take and is not a Journal entry:
   it does not appear in the timeline and Journal search does not match its words.
+- **Notes you can pin to a moment in a take.** The take's own note says what the whole thing was
+  like; a **moment** says what happened *there*. Play to the bit worth remembering, press **Add note
+  here**, and it lands on the spot the playhead was at — a gold pin on the waveform and a row in a
+  **Moments** list underneath. Tap a row's timecode to play from that point, tap the rest of it to
+  edit the words, hold it for play/edit/delete.
+  Trimming keeps them honest: moments inside the range you keep **move with the audio** and go on
+  pointing at the same playing, and moments outside it are removed with the part you cut — their
+  pins dim while you drag the handles, and the confirmation now says how many are going as well as
+  how much audio. Like the take's own note, a moment stays on the take's screen: it is not a Journal
+  entry and Journal search does not match its words. A take with a note, a moment or both shows the
+  small marker in the list.
 - **A routine now remembers.** Open a saved routine and it tells you three things it never used to:
   roughly **how long** it is, **when you last practised** it, and **how many times**. All three come
   from the practice log you were already building by running it — nothing new is recorded, and

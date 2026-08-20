@@ -39,6 +39,7 @@ marker grammar in [README.md](README.md).
 | `journal/quick-note-button` | `glyph` | `journal-and-progress` | — |  |
 | `journal/record-arm` | `glyph` | `journal-and-progress` | — |  |
 | `journal/take-detail` | `screen` | `journal-and-progress` | seeded library, Journal, a take opened |  |
+| `journal/take-moments` | `screen` | `journal-and-progress` | seeded library, Journal, a take opened |  |
 | `journal/take-row` | `detail` | `journal-and-progress` | seeded library, Journal, Takes filter, at least one take |  |
 | `journal/take-trim` | `screen` | `journal-and-progress` | seeded library, Journal, a take opened, Trim tapped |  |
 | `journal/timeline` | `screen` | `journal-and-progress` | seeded library, Journal, several notes and one take across two days |  |
@@ -120,4 +121,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-103 shots across 19 pages.
+104 shots across 19 pages.

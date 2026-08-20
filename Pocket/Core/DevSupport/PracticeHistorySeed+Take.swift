@@ -49,6 +49,15 @@ extension PracticeHistorySeed {
         // both have something to show (ADR 0174).
         take.setNote("Second half is steadier — the first eight bars are still rushing.")
         context.insert(take)
+        // Two moments, so the Moments list and the strip's pins both have something to show
+        // (ADR 0175). Placed inside the 47 seconds above, and far enough apart that the pins read as
+        // two marks rather than one thick one at this strip width.
+        //
+        // **After the insert**, not before: these hang off the take by relationship, and relating
+        // them to a row the context has never seen leaves whether they are pulled in with it up to
+        // the insert's cascade rather than stated here.
+        take.addMoment(at: 12, text: "Rushing into the turnaround — count the bar before it.")
+        take.addMoment(at: 31, text: "This is the one. Same feel, slower, and it holds.")
     }
 }
 #endif

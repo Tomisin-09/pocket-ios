@@ -116,6 +116,27 @@ entry: it does not appear in the timeline, and searching the Journal will not fi
 
 Leaving the note empty removes it.
 
+### Notes pinned to a moment
+
+The take's own note says what the whole thing was like. A **moment** says what happened *here* —
+the turnaround at 1:20, the bar where it finally sat right.
+
+<!-- shot: journal/take-moments | role: screen
+     | alt: A take's screen showing gold pins along the top of the waveform strip and a Moments list beneath, each row a timecode beside a line of writing
+     | state: seeded library, Journal, a take opened -->
+
+- Play to the bit you want to remember, then **Add note here** — in the **Moments** section, or in
+  **⋯**. Playback pauses and the note is pinned to where the playhead was.
+- Each moment appears as a **pin** on the strip and a row underneath it.
+- Tapping a row's **timecode** plays from that point. Tapping the rest of the row opens the note to
+  edit it.
+- Press and hold a row for **Play from here**, **Edit** and **Delete**.
+
+A moment lives with the take, on the spot it points at. Like the take's own note, it stays on this
+screen: it does not appear in the Journal timeline and searching the Journal will not find its words.
+
+A take with a note, a moment, or both gets the small marker on its row.
+
 ### Trimming a take
 
 **⋯ ▸ Trim…** turns the strip into a range with a handle at each end.
@@ -129,9 +150,13 @@ Leaving the note empty removes it.
 - Press **▶** and you hear only the part you are keeping, so you can check the edges before you
   commit.
 - **Trim** does it. **Cancel** leaves the take alone.
+- Moments inside the range **move with the audio** and keep pointing at the same playing. Moments
+  outside it are **removed with the part you cut** — their pins dim while you drag the handles, and
+  the confirmation says how many are going.
 
-> **A trim cannot be undone.** It rewrites the recording and throws away what you cut, which is how
-> it gives you the space back — so it asks first, and tells you how much is going. A take is the one
+> **A trim cannot be undone.** It rewrites the recording and throws away what you cut — and any
+> moments pinned inside it — which is how it gives you the space back, so it asks first and tells you
+> how much is going. A take is the one
 > thing in the app with no source to rebuild it from. If the trim fails for any reason, the take is
 > left exactly as it was.
 

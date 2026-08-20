@@ -99,6 +99,40 @@ final class ManualShotsUITests: ManualShotCase {
         capture(app, slug: "journal/take-trim", assertingOnScreen: "Take")
     }
 
+    /// `journal/take-moments` — the pins on the strip and the Moments list beneath (ADR 0175).
+    ///
+    /// **No scroll and no tap beyond opening the take.** The seed writes the take's two moments
+    /// (`PracticeHistorySeed.seedTake`), so the section is populated the moment the screen appears —
+    /// which is the whole reason the seed writes them rather than the shoot adding them by hand: a
+    /// figure of a list is a figure of a list with rows in it, and driving the editor twice to fill
+    /// one would put two sheet dismissals between the launch and the frame.
+    ///
+    /// Gated on the **Moments section's own add control**, not on the words "Add note here": the
+    /// take's actions menu carries an item with the same label, so a label query has two hits on
+    /// this screen and picks whichever it orders first — the same class of mistake `takeRowOpen`
+    /// exists for.
+    @MainActor
+    func testTakeMoments() {
+        let app = launchForShoot()
+        openTakeDetail(in: app)
+
+        let add = app.buttons[UITestHooks.takeAddMoment]
+        XCTAssertTrue(add.waitForExistence(timeout: Self.shootTimeout),
+                      "the take screen has no Moments section. \(stepLog)")
+        note("the Moments section is on screen")
+
+        // The rows are the subject. A seeded moment's timecode button is the one element that can
+        // only exist if a `TakeNote` was read back off the store and rendered — an empty section
+        // still has its heading and its add control, and would photograph as a plausible screen.
+        let moment = app.buttons["Play from 0:12"]
+        XCTAssertTrue(moment.waitForExistence(timeout: Self.shootTimeout),
+                      "the Moments section is empty — the seeded take's notes never landed. \(stepLog)")
+        note("a seeded moment is in the list")
+
+        capture(app, slug: "journal/take-moments", assertingOnScreen: "Take",
+                alsoRequiring: ["Moments"])
+    }
+
     /// `journal/progress` · `reference/progress` · `journal/month-heatmap` — one frame, three markers.
     ///
     /// **The screen as it opens, unscrolled.** An earlier version added a `swipeUp` to bring All-time
