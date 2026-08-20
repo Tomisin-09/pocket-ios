@@ -48,4 +48,15 @@ enum UITestHooks {
     /// and to localise, so gating on it is a guess about somebody else's accessibility text.
     /// An identifier we set ourselves is neither.
     static let referenceLinkField = "reference.linkField"
+
+    /// The control that opens a take's own screen (ADR 0174) — the title half of a take row, which
+    /// is a separate button from the play glyph beside it.
+    ///
+    /// An identifier rather than a label prefix, for the reason the harness keeps relearning: the
+    /// button's label is its whole line concatenated — name, duration, note marker, time — and the
+    /// only stable part of it is the word *Take*, which is also the prefix of the Journal's **Takes**
+    /// filter sitting a few points above it. A prefix match found the filter first, tapped it, and
+    /// reported that the take had been opened. The row is the thing being aimed at, so the row says
+    /// so itself.
+    static let takeRowOpen = "take.rowOpen"
 }

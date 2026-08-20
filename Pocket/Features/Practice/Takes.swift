@@ -23,6 +23,8 @@ struct TakesSheet: View {
     @State private var player = RecordingPlayer()
     /// The take being named, by stable `uid` — never `persistentModelID` (ADR 0090).
     @State private var renaming: StableRef<Recording>?
+    /// The take pushed onto the detail screen (ADR 0174), held the same way and for the same reason.
+    @State private var opened: StableRef<Recording>?
     /// Deferred, undoable deletion, sheet-owned. The host screens are untouched: their existing
     /// `onDelete` becomes the *deferred action* rather than the immediate one.
     @State private var rowDeletion = RowDeletionCoordinator()
@@ -58,12 +60,22 @@ struct TakesSheet: View {
         .renameTakeAlert($renaming, context: modelContext)
     }
 
+    /// The detail screen (ADR 0174), pushed from a row. The **same** `player` goes with it — one
+    /// take plays at a time across the sheet and the screen it pushes, so a take auditioned from a
+    /// row and then opened is still the one that is playing. Delete routes back through this sheet's
+    /// deferred, undoable path rather than the caller's immediate one.
+    @ViewBuilder
+    private func detailDestination(_ ref: StableRef<Recording>) -> some View {
+        TakeDetailView(take: ref.value, player: player) { delete(ref.value) }
+    }
+
     private var list: some View {
         List {
             ForEach(takes, id: \.uid) { take in
-                TakeRow(take: take, isPlaying: player.isPlaying(take.fileName)) {
-                    player.toggle(take.fileName)
-                }
+                TakeRow(take: take,
+                        isPlaying: player.isPlaying(take.fileName),
+                        onToggle: { player.toggle(take.fileName) },
+                        onOpen: { opened = StableRef(value: take) })
                 .listRowBackground(PocketColor.background)
                 // Rename leads, because a list of identical "Take" rows is the problem this sheet
                 // has. Not `role: .destructive` — this button changes nothing until you type.
@@ -88,6 +100,7 @@ struct TakesSheet: View {
             }
         }
         .listStyle(.plain)
+        .navigationDestination(item: $opened) { detailDestination($0) }
     }
 
     /// Hide the row, raise the Undo toast, and hand the real delete to the owning screen only once the
@@ -122,10 +135,16 @@ struct TakesSheet: View {
 }
 
 /// One take row — a play/pause toggle, the date, and the duration.
+///
+/// **Two tap targets, not one.** The glyph plays; everything to the right of it opens the take's own
+/// screen (ADR 0174). They are separate buttons rather than a `NavigationLink` wrapping the row,
+/// because a link that owns the whole cell swallows the play control — and playing a take from the
+/// list without leaving it is the thing this list was built to do.
 private struct TakeRow: View {
     let take: Recording
     let isPlaying: Bool
     let onToggle: () -> Void
+    let onOpen: () -> Void
 
     var body: some View {
         HStack(spacing: 14) {
@@ -137,24 +156,42 @@ private struct TakeRow: View {
             .buttonStyle(.plain)
             .accessibilityLabel(isPlaying ? "Pause take" : "Play take")
 
-            VStack(alignment: .leading, spacing: 2) {
-                // A named take leads with its name; an unnamed one keeps the date it always had, so
-                // nothing about an old list changes until the player names something.
-                Text(take.title ?? take.createdAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.futura(.subheadline))
-                    .foregroundStyle(PocketColor.textPrimary)
+            Button(action: onOpen) {
                 HStack(spacing: 8) {
-                    Text(take.durationLabel)
-                    if take.title != nil {
-                        Text(take.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    VStack(alignment: .leading, spacing: 2) {
+                        // A named take leads with its name; an unnamed one keeps the date it always
+                        // had, so nothing about an old list changes until the player names something.
+                        Text(take.title ?? take.createdAt.formatted(date: .abbreviated, time: .shortened))
+                            .font(.futura(.subheadline))
+                            .foregroundStyle(PocketColor.textPrimary)
+                        HStack(spacing: 8) {
+                            Text(take.durationLabel)
+                            if take.title != nil {
+                                Text(take.createdAt.formatted(date: .abbreviated, time: .shortened))
+                            }
+                        }
+                        .font(.pocketMono(.caption2))
+                        .foregroundStyle(PocketColor.textSecondary)
                     }
+                    Spacer(minLength: 0)
+                    // The note itself stays on the take's screen — a row this dense has room to say
+                    // that one exists, and nothing more.
+                    if take.hasNote {
+                        Image(systemName: "text.alignleft")
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.textSecondary)
+                            .accessibilityLabel("Has a note")
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
                 }
-                .font(.pocketMono(.caption2))
-                .foregroundStyle(PocketColor.textSecondary)
+                .contentShape(Rectangle())
             }
-            Spacer(minLength: 0)
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens the take")
+            .accessibilityIdentifier(UITestHooks.takeRowOpen)
         }
         .padding(.vertical, 6)
-        .contentShape(Rectangle())
     }
 }

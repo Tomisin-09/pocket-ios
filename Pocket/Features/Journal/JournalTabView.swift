@@ -47,6 +47,9 @@ struct JournalTabView: View {
     /// The unit an owner caption is opening (ADR 0142), or `nil`. Keyed on the unit's stable `uid`
     /// through `JournalOwnerRoute`, never `persistentModelID` (ADR 0090).
     @State private var openingOwner: JournalOwnerRoute?
+    /// The take pushed onto its own screen (ADR 0174), keyed on the stable `uid` like every other
+    /// model presentation here.
+    @State private var openedTake: StableRef<Recording>?
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112) — the caption link honours the same
     /// run gate the exercise library's rows do, so a note is never a way past it.
     @Environment(\.isPro) private var isPro
@@ -113,6 +116,12 @@ struct JournalTabView: View {
         }
         .navigationDestination(item: $openingOwner) { route in
             JournalOwnerDestinationView(route: route)
+        }
+        // The take's own screen (ADR 0174), carrying this space's shared player so a take auditioned
+        // from the feed and then opened is still the one playing. Delete goes back through the
+        // feed's deferred, undoable path — the audio file is only removed once the toast closes.
+        .navigationDestination(item: $openedTake) { ref in
+            TakeDetailView(take: ref.value, player: player) { requestDelete(.take(ref.value)) }
         }
         // Progress moved into the menu, and a `NavigationLink` inside a `Menu` doesn't push — so the
         // menu sets a flag and the push happens out here.
@@ -243,9 +252,9 @@ struct JournalTabView: View {
             JournalTakeRow(take: take,
                            ownerLabel: JournalTimeline.ownerLabel(for: item),
                            onOpenOwner: openAction(for: item),
-                           isPlaying: player.isPlaying(take.fileName)) {
-                player.toggle(take.fileName)
-            }
+                           isPlaying: player.isPlaying(take.fileName),
+                           onToggle: { player.toggle(take.fileName) },
+                           onOpen: { openedTake = StableRef(value: take) })
             // Naming is a take-only verb: every other row already says what it is in its own words.
             // It also survives as a swipe where **delete** doesn't, because renaming destroys nothing.
             .swipeActions(edge: .leading) {

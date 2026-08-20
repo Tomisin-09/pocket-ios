@@ -38,7 +38,9 @@ marker grammar in [README.md](README.md).
 | `journal/quick-note` | `screen` | `journal-and-progress` | an exercise run screen, quick note tapped |  |
 | `journal/quick-note-button` | `glyph` | `journal-and-progress` | — |  |
 | `journal/record-arm` | `glyph` | `journal-and-progress` | — |  |
+| `journal/take-detail` | `screen` | `journal-and-progress` | seeded library, Journal, a take opened |  |
 | `journal/take-row` | `detail` | `journal-and-progress` | seeded library, Journal, Takes filter, at least one take |  |
+| `journal/take-trim` | `screen` | `journal-and-progress` | seeded library, Journal, a take opened, Trim tapped |  |
 | `journal/timeline` | `screen` | `journal-and-progress` | seeded library, Journal, several notes and one take across two days |  |
 | `looping/ab-forming` | `band` | `looping` | seeded library, Little Wing, playing, loop start dropped, end not set |  |
 | `looping/automator` | `screen` | `looping` | seeded library, Little Wing, loop "Verse riff", automator open |  |
@@ -118,4 +120,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-101 shots across 19 pages.
+103 shots across 19 pages.

@@ -15,6 +15,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **A take is something you can move around in now.** Tap a recording anywhere but its **▶** and it
+  opens on a screen of its own: the take drawn as a waveform you can drag to move the playhead or
+  tap to jump to a point, ten-second skips either side of play/pause, and what the take runs to and
+  what it is costing you on disk.
+  **Trim** cuts it down to the part worth keeping — drag a handle to each end, press play to hear
+  just that part, then commit. Trimming rewrites the recording and gives the space back, so it
+  cannot be undone: it asks first and tells you how much is going, and it refuses when you have not
+  actually moved a handle. If it fails for any reason the take is left exactly as it was.
+  **A note** goes on the take too — what the playing was like, what to change next time. Takes that
+  have one show a small marker in the list. The note lives with the take and is not a Journal entry:
+  it does not appear in the timeline and Journal search does not match its words.
 - **A routine now remembers.** Open a saved routine and it tells you three things it never used to:
   roughly **how long** it is, **when you last practised** it, and **how many times**. All three come
   from the practice log you were already building by running it — nothing new is recorded, and
