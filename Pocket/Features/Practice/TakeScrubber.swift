@@ -19,6 +19,9 @@ struct TakeScrubber: View {
     /// The keep-span while trimming, or `nil` when the strip is a plain scrubber. When set, the
     /// region outside it is dimmed and drags grab the nearest handle instead of the playhead.
     let trimSpan: (start: Double, end: Double)?
+    /// Where this take's moments sit, as `0…1` (ADR 0175) — drawn as pins along the top edge. Passed
+    /// in already computed, never derived here, so the strip stays a drawing surface.
+    let momentFractions: [Double]
     /// Continuous scrub — fired while the finger moves, un-snapped.
     let onSeek: (Double) -> Void
     /// Drag release, so the caller can settle the position.
@@ -60,7 +63,10 @@ struct TakeScrubber: View {
         .frame(height: 76)
         .accessibilityElement()
         .accessibilityLabel(trimSpan == nil ? "Take position" : "Trim range")
-        .accessibilityValue("\(Int((playheadFraction * 100).rounded()))%")
+        .accessibilityValue(momentFractions.isEmpty
+                            ? "\(Int((playheadFraction * 100).rounded()))%"
+                            : "\(Int((playheadFraction * 100).rounded()))%, "
+                              + "\(TakeMoments.noteCountPhrase(momentFractions.count)) on this take")
         .accessibilityHint(trimSpan == nil ? "Adjust to move the playhead" : "Drag the handles to set what to keep")
         .accessibilityAdjustableAction { direction in
             let step = 0.05
@@ -107,6 +113,7 @@ struct TakeScrubber: View {
             if let trimSpan {
                 drawTrimChrome(in: context, size: size, span: trimSpan)
             }
+            drawMoments(in: context, size: size)
             drawPlayhead(in: context, size: size)
         }
     }
@@ -159,6 +166,26 @@ struct TakeScrubber: View {
         }
     }
 
+    /// The moments, as pins along the top edge in the Journal's own colour — writing, against a
+    /// strip that is otherwise all Practice teal.
+    ///
+    /// **In trim mode a pin outside the keep-span is drawn faint**, by the same rule the bars follow,
+    /// because those are the notes the trim is about to take with the audio (ADR 0175). Seeing which
+    /// ones go is the point: the confirmation says *how many*, and the strip says *which*.
+    private func drawMoments(in context: GraphicsContext, size: CGSize) {
+        for fraction in momentFractions {
+            let pinX = CGFloat(min(max(fraction, 0), 1)) * size.width
+            let doomed = trimSpan.map { fraction < $0.start || fraction > $0.end } ?? false
+            let tint = doomed ? PocketColor.barPlayed : PocketColor.journal
+            var stem = Path()
+            stem.move(to: CGPoint(x: pinX, y: 0))
+            stem.addLine(to: CGPoint(x: pinX, y: size.height * 0.28))
+            context.stroke(stem, with: .color(tint), lineWidth: 1.5)
+            let head = CGRect(x: pinX - 3.5, y: 0, width: 7, height: 7)
+            context.fill(Path(ellipseIn: head), with: .color(tint))
+        }
+    }
+
     private func drawPlayhead(in context: GraphicsContext, size: CGSize) {
         let headX = CGFloat(min(max(playheadFraction, 0), 1)) * size.width
         var line = Path()
@@ -179,6 +206,7 @@ struct PlayheadTakeScrubber: View {
     let duration: TimeInterval
     let samples: [Double]
     let trimSpan: (start: Double, end: Double)?
+    let momentFractions: [Double]
     let onSeek: (Double) -> Void
     let onMoveTrimHandle: (WaveformGesture.Handle, Double) -> Void
 
@@ -187,6 +215,7 @@ struct PlayheadTakeScrubber: View {
             TakeScrubber(samples: samples,
                          playheadFraction: playheadFraction,
                          trimSpan: trimSpan,
+                         momentFractions: momentFractions,
                          onSeek: onSeek,
                          onSeekEnded: onSeek,
                          onMoveTrimHandle: onMoveTrimHandle)

@@ -53,6 +53,15 @@ final class Recording {
     /// stable. Resolve to a `URL` through `RecordingStore.url(for:)`.
     var fileName: String
 
+    /// The **moments** written on this take — notes pinned to points in the audio (ADR 0175).
+    ///
+    /// **`.cascade`, unlike `Loop`/`Exercise`/`Song`.`recordings` right above them.** Those nullify
+    /// because a take is the one artifact here that cannot be remade, so it outlives its owner
+    /// (ADR 0151). A moment is the opposite kind of thing: a pointer *into* the audio, unreadable
+    /// once the audio is gone. Declaration default keeps the additive migration lightweight — a new
+    /// entity, so there are no pre-existing rows to migrate.
+    @Relationship(deleteRule: .cascade, inverse: \TakeNote.recording) var moments: [TakeNote] = []
+
     /// The loop this take was recorded against, or `nil`. Optional additive relationship — a new
     /// entity, so there are no pre-existing rows to migrate; nullifies if the loop is deleted.
     var loop: Loop?
@@ -119,8 +128,34 @@ final class Recording {
         title = trimmed
     }
 
-    /// Whether this take carries a note — what a list row's marker glyph binds to.
+    /// Whether this take carries a whole-take note. Drives the note editor's own title
+    /// ("Add a note" vs "Edit note"); the **row** glyph binds to `hasWriting`, which is the wider
+    /// question.
     var hasNote: Bool { !(note ?? "").isEmpty }
+
+    /// This take's moments in playback order — the order the list renders and the strip marks them
+    /// in. Ties break on `createdAt`, so two notes written at the same instant of the audio keep the
+    /// order they were written in rather than an arbitrary one (ADR 0175).
+    var momentsByTime: [TakeNote] {
+        moments.sorted { ($0.time, $0.createdAt) < ($1.time, $1.createdAt) }
+    }
+
+    /// Whether anything at all has been written on this take — the whole-take note, a moment, or
+    /// both. **This**, not `hasNote`, is what a list row's marker glyph means: the glyph answers
+    /// "did I write about this one?", and after ADR 0175 there are two ways to have done so.
+    var hasWriting: Bool { hasNote || !moments.isEmpty }
+
+    /// Pin a note to a point in this take. Refuses empty text — a moment with no words is a mark
+    /// with nothing to say — and returns the note so the caller can select it.
+    @discardableResult
+    func addMoment(at time: TimeInterval, text: String) -> TakeNote? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let note = TakeNote(time: max(0, time), text: trimmed)
+        note.recording = self
+        moments.append(note)
+        return note
+    }
 
     /// Write (or clear) this take's note. Unlike `rename(to:)`, an empty result **is** meaningful
     /// here and clears the note rather than being refused: naming a take is how you tell it apart, so

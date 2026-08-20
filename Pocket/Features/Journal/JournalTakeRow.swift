@@ -42,11 +42,11 @@ struct JournalTakeRow: View {
                         Text(take.durationLabel)
                             .font(.pocketMono(.caption))
                             .foregroundStyle(PocketColor.textSecondary)
-                        if take.hasNote {
+                        if take.hasWriting {
                             Image(systemName: "text.alignleft")
                                 .font(.futura(.caption))
                                 .foregroundStyle(PocketColor.textSecondary)
-                                .accessibilityLabel("Has a note")
+                                .accessibilityLabel("Has notes")
                         }
                         Spacer(minLength: 0)
                         Text(take.createdAt.formatted(date: .omitted, time: .shortened))

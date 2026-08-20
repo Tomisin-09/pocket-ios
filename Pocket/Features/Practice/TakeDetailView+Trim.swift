@@ -48,14 +48,21 @@ extension TakeDetailView {
         .background(PocketColor.surfaceSubtle, in: RoundedRectangle(cornerRadius: 12))
     }
 
-    /// What the confirmation says. The number is the point — "this can't be undone" means little
+    /// What the confirmation says. The numbers are the point — "this can't be undone" means little
     /// without saying what actually goes.
+    ///
+    /// **Since ADR 0175 there are two things that go**, and the sentence names both: the audio, and
+    /// the moments pinned inside it. A note whose passage is being removed is removed with it, and a
+    /// player who is about to lose three of them should be told before, not discover it after.
     var trimWarning: String {
         guard let span = trim.bounds else { return "" }
         let keep = TakeTrim.span(from: span.start, to: span.end, duration: audioDuration)
         let removed = TakeTrim.removed(start: keep.start, end: keep.end, duration: audioDuration)
-        return "This removes \(timecode(removed)) from the take and can’t be undone. "
-            + "\(timecode(keep.end - keep.start)) is kept."
+        let dropped = TakeMoments.droppedCount(times: take.moments.map(\.time),
+                                               keepStart: keep.start, keepEnd: keep.end)
+        let alsoNotes = dropped == 0 ? "" : ", and \(TakeMoments.noteCountPhrase(dropped)) with it"
+        return "This removes \(timecode(removed)) from the take\(alsoNotes). "
+            + "It can’t be undone — \(timecode(keep.end - keep.start)) is kept."
     }
 
     var trimFailurePresented: Binding<Bool> {
@@ -109,6 +116,7 @@ extension TakeDetailView {
                 try TakeTrimmer.trim(fileName: fileName, from: keep.start, to: keep.end)
             }.value
             take.duration = trimmed
+            rebaseMoments(keep: keep, newDuration: trimmed)
             try? modelContext.save()
             trim = .idle
             player.limitPlayback(until: nil)
@@ -116,6 +124,30 @@ extension TakeDetailView {
             await loadWaveform()
         } catch {
             trimFailure = "The take was left as it was. \(error.localizedDescription)"
+        }
+    }
+
+    /// Move the surviving moments onto the trimmed timeline, and delete the ones whose audio has
+    /// gone (ADR 0175). Called **only after** `TakeTrimmer` returns — a trim that throws leaves the
+    /// file untouched, and the notes must be left untouched with it.
+    ///
+    /// The drop decision uses the span the player was shown and agreed to, so what happens here is
+    /// exactly what the confirmation counted. The surviving positions are then clamped into the
+    /// length the **encoder** produced rather than the one that was asked for, because that is the
+    /// audio a mark can now point into.
+    private func rebaseMoments(keep: (start: TimeInterval, end: TimeInterval),
+                               newDuration: TimeInterval) {
+        let ordered = take.momentsByTime
+        guard !ordered.isEmpty else { return }
+        let outcome = TakeMoments.rebase(times: ordered.map(\.time),
+                                         keepStart: keep.start, keepEnd: keep.end)
+        for (moment, rebased) in zip(ordered, outcome.kept) {
+            guard let rebased else {
+                take.moments.removeAll { $0.uid == moment.uid }
+                modelContext.delete(moment)
+                continue
+            }
+            moment.time = min(max(rebased, 0), newDuration)
         }
     }
 }

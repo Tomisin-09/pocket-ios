@@ -424,6 +424,28 @@ optional mirroring `title` — deliberately a **field on the take, not a `Journa
 read beside the audio it describes and is correspondingly absent from the Journal feed and its
 search rail.
 
+**ADR 0175 builds the version 0174 parked**: a note pinned to a *point* in the take. A new
+`TakeNote` entity (`uid`/`time`/`text`/`createdAt`) hangs off a new `Recording.moments`, and that
+relationship is **`.cascade` — the deliberate inverse of the `.nullify` on `recordings`**: ADR 0151
+keeps a take alive past its loop because the audio cannot be remade, while a moment is a *pointer
+into* that audio and is unreadable once it is gone, with no `ownerLabelAtTake` equivalent that could
+save it. `Recording.note` is untouched and sits above the list — two fields answering two questions
+("what was this take like?" against "what happened here?"), which is why the tidier collapse into one
+optionally-timed list was declined rather than migrated into. Drawing: gold pins along the top of
+`TakeScrubber`, from a `momentFractions` array computed in the screen's body and passed down, so the
+`PlayheadTakeScrubber` leaf keeps its per-tick dependency to the playhead alone (ADR 0153) — and for
+the same reason the add control is labelled **Add note here** with *no live timecode*, reading
+`player.position` once on the tap instead of twenty times a second from a body. The editor is
+presented by a plain `TakeMomentDraft` value rather than a model reference: a moment being written for
+the first time has no row to present by, so nothing is inserted until Save and there is no
+`persistentModelID` to flip temp→permanent under an open sheet (ADR 0090). **Trim interacts**, and
+the rules are pure and unit-tested in `TakeMoments`: a moment inside the keep-span is *rebased* by
+`keepStart`, one outside it is *deleted with the audio it described* (clamping to the edges was
+rejected — it keeps a row pointing at playing it was never about), the confirmation names the count
+alongside the seconds, doomed pins draw faint while the handles move, and the whole rebase runs only
+**after** `TakeTrimmer` returns so a failed trim leaves the notes as byte-identical as the file.
+Moments stay off the Journal feed and its search rail for the reason the whole-take note does, harder.
+
 A journal entry may also belong to **nothing at all** (ADR 0155). `JournalEntryOwnerKind` carries a
 fifth case, `.standalone`, backed by one additive optional column (`JournalEntry.isStandalone`) — a
 *stored* flag rather than the absence of an owner, because **absence is already spoken for**: ADR

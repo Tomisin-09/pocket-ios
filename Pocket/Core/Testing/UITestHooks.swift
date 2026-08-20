@@ -59,4 +59,11 @@ enum UITestHooks {
     /// reported that the take had been opened. The row is the thing being aimed at, so the row says
     /// so itself.
     static let takeRowOpen = "take.rowOpen"
+
+    /// The **Add note here** control in the take screen's Moments section (ADR 0175).
+    ///
+    /// An identifier for the same reason `takeRowOpen` is one, one step worse: the take's actions
+    /// menu carries an item with the *same words*, so a label match has two hits on one screen and
+    /// picks whichever the query orders first. The section's button is the one the shoot aims at.
+    static let takeAddMoment = "take.addMoment"
 }

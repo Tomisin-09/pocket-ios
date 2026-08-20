@@ -28,7 +28,7 @@ private enum ProgressPreview {
     @MainActor static func container(weeks: Int) -> ModelContainer {
         // swiftlint:disable:next force_try
         let container = try! ModelContainer(
-            for: Song.self, Loop.self, Exercise.self, JournalEntry.self, Recording.self,
+            for: Song.self, Loop.self, Exercise.self, JournalEntry.self, Recording.self, TakeNote.self,
             PracticeRun.self,
             configurations: .init(isStoredInMemoryOnly: true))
         let context = container.mainContext

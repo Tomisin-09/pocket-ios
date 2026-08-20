@@ -40,6 +40,11 @@ struct TakeDetailView: View {
     @State var trim: ABSpan = .idle
 
     @State private var renaming: StableRef<Recording>?
+    // Not `private`: the moments half of this screen lives in `TakeDetailView+Moments.swift`.
+    /// The moment being written or edited (ADR 0175), or `nil`. A plain draft rather than a
+    /// `StableRef`, because a moment being written for the first time has no row to refer to yet —
+    /// see `TakeMomentDraft`.
+    @State var editing: TakeMomentDraft?
     @State private var editingNote: StableRef<Recording>?
     @State var confirmingTrim = false
     @State var isTrimming = false
@@ -53,6 +58,7 @@ struct TakeDetailView: View {
                 transport
                 if let span = trim.bounds { trimBar(span) }
                 noteSection
+                momentsSection
                 detailsSection
             }
             .padding(20)
@@ -67,6 +73,7 @@ struct TakeDetailView: View {
         .task(id: take.uid) { await loadWaveform() }
         .renameTakeAlert($renaming, context: modelContext)
         .takeNoteSheet($editingNote, context: modelContext)
+        .takeMomentSheet($editing, take: take, context: modelContext)
         .confirmationDialog("Trim this take?", isPresented: $confirmingTrim, titleVisibility: .visible) {
             Button("Trim", role: .destructive) { Task { await commitTrim() } }
             Button("Cancel", role: .cancel) { }
@@ -115,6 +122,7 @@ struct TakeDetailView: View {
                              duration: audioDuration,
                              samples: samples,
                              trimSpan: trim.bounds,
+                             momentFractions: momentFractions,
                              onSeek: { seek(toFraction: $0) },
                              onMoveTrimHandle: moveTrimHandle)
     }
@@ -197,6 +205,10 @@ struct TakeDetailView: View {
             } label: {
                 Label(take.hasNote ? "Edit note" : "Add a note", systemImage: "text.alignleft")
             }
+            Button { addMomentHere() } label: {
+                Label("Add note here", systemImage: "mappin.and.ellipse")
+            }
+            .disabled(audioDuration <= 0)
             Button { beginTrim() } label: {
                 Label("Trim…", systemImage: "scissors")
             }
