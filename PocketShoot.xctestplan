@@ -17,9 +17,19 @@
   "testTargets": [
     {
       "selectedTests": [
+        "ManualBareShots",
+        "ManualExerciseShots",
+        "ManualExploreShots",
+        "ManualImportShots",
+        "ManualLibraryShots",
+        "ManualLoopSheetShots",
         "ManualMetronomeShots",
+        "ManualMissingAudioShots",
+        "ManualPlayerShots",
         "ManualPracticeShots",
         "ManualReferenceShots",
+        "ManualRoutineShots",
+        "ManualSessionShots",
         "ManualSettingsShots",
         "ManualShotsUITests",
         "ManualToolkitShots"

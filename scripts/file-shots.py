@@ -21,6 +21,13 @@ the manual's own manifest instead also catches the opposite error: a `capture` c
 a marker in any page, i.e. a figure nothing will ever place.
 
     ./scripts/file-shots.py shots/export shots/filed
+    ./scripts/file-shots.py --keep shots/export shots/filed   # add to the set, don't clear it
+
+**`--keep` is for the second pass onwards, and only that.** The shoot drives several passes, each
+against its own erased device (see `shoot-manual.sh`), and each files what it shot into the same
+directory. Clearing on every call would leave `filed/` holding the last pass alone; never clearing
+would let a renamed slug's old image survive to be shipped. So the first pass of a shoot clears and
+the rest keep, and which one is calling is the caller's to know.
 """
 
 import json
@@ -64,9 +71,12 @@ def parse(name):
 
 
 def main():
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    keep = "--keep" in args
+    args = [a for a in args if a != "--keep"]
+    if len(args) != 2:
         sys.exit(__doc__)
-    export, filed = Path(sys.argv[1]), Path(sys.argv[2])
+    export, filed = Path(args[0]), Path(args[1])
 
     manifest = export / "manifest.json"
     if not manifest.exists():
@@ -75,9 +85,10 @@ def main():
 
     slugs = known_slugs()
     filed.mkdir(parents=True, exist_ok=True)
-    for stale in filed.iterdir():
-        if stale.is_file():
-            stale.unlink()
+    if not keep:
+        for stale in filed.iterdir():
+            if stale.is_file():
+                stale.unlink()
 
     # slug -> [(attempt, source, suffix)], so a slug shot more than once is visible rather than
     # resolved by whichever the loop happened to reach last.
@@ -139,7 +150,12 @@ def main():
                 aliases += 1
                 images += 1
 
-    print(f"\n  {images} image(s) filed into {filed}  ({len(slugs) - len(found) - aliases} of "
+    # Counted off the **directory**, not off this call's tally, because a pass files into a set the
+    # passes before it also filed into: "still unshot" is a fact about `filed/`, not about the
+    # export being read. Reporting this call's share as the whole was how a mid-shoot pass would
+    # claim ninety figures were missing while they sat in the same folder.
+    on_disk = len({p.stem for p in filed.glob("*.png")} & slugs)
+    print(f"\n  {images} image(s) filed into {filed}  ({len(slugs) - on_disk} of "
           f"{len(slugs)} manual slugs still unshot)")
     if aliases:
         print(f"  {aliases} of those are shared frames, copied from the figure that shot them.")

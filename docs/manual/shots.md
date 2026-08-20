@@ -62,7 +62,7 @@ marker grammar in [README.md](README.md).
 | `reference/library-row-menu` | `detail` | `home-and-library` | seeded library, Library, a row held |  |
 | `reference/long-term-goals` | `screen` | `practice` | seeded library, Practice ▸ Long-term goals, two goals ranked |  |
 | `reference/loop-automator` | `screen` | `song-player` | seeded library, Slow Bend, automator opened on "Verse riff" |  |
-| `reference/loop-edit` | `screen` | `song-player` | seeded library, Slow Bend, loop "Verse riff" held, Edit loop |  |
+| `reference/loop-edit` | `screen` | `song-player` | seeded library, Slow Bend, loop "Verse riff" held, Edit loop, top of the sheet |  |
 | `reference/loops-library` | `screen` | `practice` | fresh library with no measured loops, Practice ▸ Loops |  |
 | `reference/loops-panel` | `panel` | `song-player` | seeded library, Slow Bend, Loops expanded |  |
 | `reference/metronome` | `screen` | `tools-and-journal` | Metronome open, stopped |  |
@@ -122,7 +122,7 @@ marker grammar in [README.md](README.md).
 | `toolkit/glossary` | `screen` | `toolkit` | Toolkit ▸ Glossary, no search |  |
 | `toolkit/hub` | `screen` | `toolkit` | Toolkit open, some saved chords present |  |
 | `toolkit/my-chords` | `screen` | `toolkit` | Toolkit ▸ My chords, three or more saved chords |  |
-| `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
+| `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
 105 shots across 19 pages.

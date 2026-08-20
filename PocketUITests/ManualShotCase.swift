@@ -77,6 +77,28 @@ class ManualShotCase: UITestCase {
                   + [UITestHooks.shotHourArgument, String(hour)])
     }
 
+    /// Wait until `element` will actually take a touch.
+    ///
+    /// `waitForExistence` returns when an element **enters the tree**, not when it settles, and a
+    /// gesture synthesised in between fails outright: *Failed to synthesize event: Not hittable*.
+    /// That is not the swallowed tap this file's retries are about — nothing is dropped, the gesture
+    /// never happens — and it is not a wrong screen either. It is a race, and it shows up on whichever
+    /// step happens to be fastest to reach.
+    ///
+    /// Measured, on the loop rows in the song player: `Play Verse riff` sits at a fixed frame well
+    /// inside the window, `ManualPlayerShots` taps it successfully, and four `ManualLoopSheetShots`
+    /// tests failed to press it — the only difference being that they arrive at the panel and press
+    /// immediately rather than after another query has already made the runner wait.
+    @MainActor
+    @discardableResult
+    func awaitHittable(_ element: XCUIElement,
+                       timeout: TimeInterval = ManualShotCase.tapProbeTimeout) -> Bool {
+        if element.exists && element.isHittable { return true }
+        let hittable = expectation(for: NSPredicate(format: "isHittable == true"),
+                                   evaluatedWith: element)
+        return XCTWaiter().wait(for: [hittable], timeout: timeout) == .completed
+    }
+
     // MARK: - Capture
 
     /// Assert where we are, then shoot, then record both.
@@ -116,6 +138,7 @@ class ManualShotCase: UITestCase {
                  alsoRequiring required: [String] = [],
                  orBeginningWith prefixes: [String] = [],
                  alsoServing shared: [String] = [],
+                 wholeDisplay: Bool = false,
                  file: StaticString = #filePath, line: UInt = #line) {
         // Text **inside a navigation bar** — not any static text with this name on it, and not the
         // bar's own identifier either.
@@ -141,6 +164,71 @@ class ManualShotCase: UITestCase {
             \(stepLog)
             """, file: file, line: line)
 
+        record(app, slug: slug, screen: title, required: required, prefixes: prefixes,
+               shared: shared, wholeDisplay: wholeDisplay, file: file, line: line)
+    }
+
+    /// Shoot a screen that has **no navigation bar**, gated on labels it owns instead.
+    ///
+    /// `capture` resolves the intended screen inside the navigation bar's subtree, and that is the
+    /// right gate precisely because content cannot satisfy it. A `fullScreenCover` has no bar at all,
+    /// so for those screens the gate has to come from somewhere — and the somewhere must still be
+    /// something **only the destination has**. The first-run intake is the case in hand: it draws its
+    /// own header over `PocketColor.background` with no `navigationTitle` anywhere in it.
+    ///
+    /// Kept as a separate entry point rather than making `capture`'s title optional. An optional gate
+    /// is one a caller forgets, and the failure it lets through — a clean photograph of the previous
+    /// screen — is the one this whole file exists to prevent. Ninety-odd figures keep the strong gate;
+    /// this is the door for the handful that genuinely cannot use it.
+    ///
+    /// - Parameter screen: what to call this screen in the step log and the `.context` file. Not
+    ///   asserted — `ownedBy` is what is asserted.
+    /// - Parameter ownedBy: labels the destination has and the screen before it does not. The intake
+    ///   is reached from Home, so `A few quick things` qualifies and `Skip` would not.
+    @MainActor
+    func captureChromeless(_ app: XCUIApplication,
+                           slug: String,
+                           screen name: String,
+                           ownedBy owned: [String],
+                           alsoRequiring required: [String] = [],
+                           orBeginningWith prefixes: [String] = [],
+                           alsoServing shared: [String] = [],
+                           file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertFalse(owned.isEmpty,
+                       "captureChromeless needs at least one label the screen owns, or it asserts "
+                       + "only that the app was running.", file: file, line: line)
+
+        for marker in owned {
+            let target = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@ OR identifier == %@", marker, marker))
+            let arrived = target.firstMatch.waitForExistence(timeout: Self.shootTimeout)
+                && isInFrame(target, of: app)
+            note(arrived ? "arrived at '\(name)' via '\(marker)' for \(slug)"
+                         : "MISSED '\(marker)' for \(slug)")
+            XCTAssertTrue(arrived, """
+                expected to be on '\(name)' before shooting \(slug), and '\(marker)' was not in the \
+                frame — so this capture would have been a clean photograph of the wrong screen.
+                \(stepLog)
+                """, file: file, line: line)
+        }
+
+        record(app, slug: slug, screen: name, required: required, prefixes: prefixes,
+               shared: shared, file: file, line: line)
+    }
+
+    /// Assert the state, shoot, and write the context beside it — the half both capture paths share.
+    ///
+    /// The three state lists carry defaults because a figure legitimately has none: several captures
+    /// assert only the screen, and their `state:` is the screen's own default.
+    @MainActor
+    private func record(_ app: XCUIApplication,
+                        slug: String,
+                        screen title: String,
+                        required: [String] = [],
+                        prefixes: [String] = [],
+                        shared: [String] = [],
+                        wholeDisplay: Bool = false,
+                        file: StaticString = #filePath, line: UInt = #line) {
         for needed in required {
             // Label *or* identifier, which is what the `[needed]` subscript matched before this
             // became a query — narrowing it to one or the other here would quietly drop assertions.
@@ -168,7 +256,17 @@ class ManualShotCase: UITestCase {
                 """, file: file, line: line)
         }
 
-        let shot = XCTAttachment(screenshot: app.screenshot())
+        // `app.screenshot()` photographs **this app**, and two figures in the manual are of something
+        // else drawn over it: the system document picker is `com.apple.DocumentManagerUICore`, a
+        // separate process, and an app-scoped screenshot of it comes back as a clean picture of the
+        // library with no picker in it — the wrong-subject failure, arriving through the camera
+        // rather than through a missed tap. `XCUIScreen.main.screenshot()` takes the display.
+        //
+        // Not the default, because the display shot also carries the simulator's own status bar
+        // rather than the app's view of it, and ninety-odd figures are better off with the narrower
+        // one they have always used.
+        let shot = XCTAttachment(screenshot: wholeDisplay ? XCUIScreen.main.screenshot()
+                                                          : app.screenshot())
         shot.name = slug.replacingOccurrences(of: "/", with: "-")
         shot.lifetime = .keepAlways
         add(shot)

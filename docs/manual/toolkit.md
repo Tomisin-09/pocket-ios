@@ -56,8 +56,8 @@ The caption at the bottom always states what you are tuning against: **A440 · S
 The **slider** control in the toolbar opens everything the tuner can be changed to:
 
 <!-- shot: toolkit/tune-settings | role: screen
-     | alt: The Tune Settings sheet with Instrument, Mode, Tuning, Reference pitch and Success chime cards
-     | state: Toolkit ▸ Tuner, Tune settings tapped -->
+     | alt: The top of the Tune Settings sheet, with the Instrument and Mode controls and the Tuning list beginning beneath them
+     | state: Toolkit ▸ Tuner, Tune settings tapped, top of the sheet -->
 
 - **Instrument** — **Guitar** or **Bass**. Switching resets the tuning to that instrument's Standard,
   so a guitar tuning can never linger on a bass.

@@ -32,11 +32,19 @@ final class ManualPracticeShots: ManualShotCase {
                 orBeginningWith: ["Long-term goals, 2"])
     }
 
-    /// `reference/exercises-library` — drills grouped into collapsible template sections.
+    /// `reference/exercises-library` · `exercises/library` — drills grouped into collapsible
+    /// template sections.
     ///
     /// Asserted on a **section header**, not a drill: the sections are what the figure is of, the
     /// rows inside them are ordinary, and a header is at the top of the screen where a `role: screen`
     /// capture can actually see it. `Picking` holds the seeded Alternate Picking drill.
+    ///
+    /// **The two markers are one screen in one state** — "the seeded six present" and "several
+    /// templates present" — so they share this frame rather than being shot twice. That is worth
+    /// more than tidiness here. `exercises/library` was listed for a hand shoot with an ordering rule
+    /// beside it: shoot it *before* authoring the freeform drill, or a seventh row appears in one
+    /// figure of this screen and not the other. Serving both markers from a pass that never authors
+    /// anything retires the rule instead of restating it.
     @MainActor
     func testExercisesLibrary() {
         let app = launchForShoot()
@@ -45,7 +53,8 @@ final class ManualPracticeShots: ManualShotCase {
                arrivingAt: app.navigationBars["Exercises"], called: "the Exercises library")
         capture(app, slug: "reference/exercises-library",
                 assertingOnScreen: "Exercises",
-                orBeginningWith: ["Picking"])
+                orBeginningWith: ["Picking"],
+                alsoServing: ["exercises/library"])
     }
 
     /// `routines/library` · `reference/routines-library` — the list, with one routine carrying a
@@ -112,6 +121,33 @@ final class ManualPracticeShots: ManualShotCase {
         capture(app, slug: "reference/long-term-goals",
                 assertingOnScreen: "Long-term goals",
                 orBeginningWith: ["Play Slow Bend end to end"])
+    }
+
+    /// `reference/loops-library` — the Loops library with nothing measured in it yet.
+    ///
+    /// **This figure was on the bare-device list and does not belong there.** It was grouped with
+    /// `songs/empty-library` as one of two shots needing a device with nothing on it, and the source
+    /// does not bear that out: `LoopLibraryView.emptyStateMessage` has *two* empty states, and which
+    /// one it draws turns on `hasAnyLoops`, not on whether any are measured.
+    ///
+    /// A bare device has no songs and therefore no loops, so it draws *"No loops yet. Open a song,
+    /// draw a loop on the waveform"* — while the marker's alt text promises the other one, the copy
+    /// that explains loops appear **once a command tempo is set**. That sentence only exists when
+    /// there are unmeasured loops for it to be about, which is exactly the seeded device: six songs,
+    /// one loop each, none measured. The Practice hub says as much on the way past — `Loops, 0`.
+    ///
+    /// So the figure is shot here, on the seeded device, and the bare pass is left with the one shot
+    /// that genuinely needs it. Asserted on the copy rather than on emptiness, because "the list is
+    /// empty" is true of both states and this figure is about which of them is showing.
+    @MainActor
+    func testLoopsLibrary() {
+        let app = launchForShoot()
+        openPractice(in: app)
+        tapRow(labelStartingWith: "Loops,", in: app,
+               arrivingAt: app.navigationBars["Loops"], called: "the Loops library")
+        capture(app, slug: "reference/loops-library",
+                assertingOnScreen: "Loops",
+                orBeginningWith: ["No measured loops yet."])
     }
 
     // MARK: - Navigation

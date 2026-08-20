@@ -65,7 +65,7 @@ One row per loop: its name, its range as times, and its mastery. Each row carrie
 **adjust range** control that takes you back to the waveform to drag the ends, and a **ramp** control
 that opens the loop automator.
 
-**Hold a row** for its menu, including `Edit loop`.
+**Hold a row** to open `Edit loop` — the sheet opens straight away, with no menu in between.
 
 <!-- shot: reference/loops-panel | role: panel
      | alt: The Loops panel expanded, each row showing the loop name, its range, its mastery and the play, adjust and automator controls
@@ -83,8 +83,8 @@ sheet. Marker names can also float over the timeline as you play up to them — 
 ### `Edit loop`
 
 <!-- shot: reference/loop-edit | role: screen
-     | alt: The Edit loop sheet showing Name, Favourite, Range, and the Practice section with Mastery, Focus, Type and Command tempo
-     | state: seeded library, Slow Bend, loop "Verse riff" held, Edit loop -->
+     | alt: The top of the Edit loop sheet, showing Name, Favourite and Range with the Practice section beginning beneath them
+     | state: seeded library, Slow Bend, loop "Verse riff" held, Edit loop, top of the sheet -->
 
 `Cancel` discards, `Done` keeps.
 

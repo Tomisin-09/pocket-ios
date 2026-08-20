@@ -2,8 +2,9 @@ import XCTest
 
 /// The manual's **Toolkit** figures (ADR 0165, Phase 5) — the hub, My chords, the Glossary and the FAQs.
 ///
-/// The Tuner is not here. It needs a microphone hearing a real string, which a simulator cannot
-/// provide, so `toolkit/tuner` and `reference/tuner` are `device:` shots — see `docs/manual/README.md`.
+/// The Tuner **screen** is not here. It needs a microphone hearing a real string, which a simulator
+/// cannot provide, so `toolkit/tuner` and `reference/tuner` are `device:` shots — see
+/// `docs/manual/README.md`. Its *settings sheet* has no such requirement and is shot below.
 ///
 /// `toolkit/hub` asks for "some saved chords present" and `toolkit/my-chords` for "three or more". A
 /// `SavedChord` is only ever written by the custom placer at runtime, so `ScreenshotSeed` has none;
@@ -81,6 +82,40 @@ final class ManualToolkitShots: ManualShotCase {
         capture(app, slug: "toolkit/faq",
                 assertingOnScreen: "Help & FAQs",
                 orBeginningWith: ["A practice room that runs on music you already own"])
+    }
+
+    /// `toolkit/tune-settings` — the Tune Settings sheet, from the top.
+    ///
+    /// The tuner itself needs a microphone and stays a `device:` shot; its settings sheet does not,
+    /// so this one figure of the Tuner route is drivable.
+    ///
+    /// **The marker asked for more than fits, and this shoots what fits.** Its alt text listed five
+    /// cards — Instrument, Mode, Tuning, Reference pitch and Success chime — and the sheet's content
+    /// is about 1280pt tall in an 874pt window: Reference pitch begins some 200pt below the fold and
+    /// Success chime a further 120 beyond that. The tempting fix is a `swipeUp` that makes it "fit",
+    /// which is how `journal/progress` was once shot with its own subject scrolled out of the top.
+    /// So the figure is the top of the sheet, and the marker's alt text now says so.
+    ///
+    /// Gated on `Guided` rather than the sheet's title: `Tune Settings` is a phrase the button that
+    /// opens it already carries as `Tune settings`, and a gate one casing away from being true before
+    /// the tap is not worth relying on.
+    @MainActor
+    func testTuneSettings() {
+        let app = launchForShoot()
+        openToolkit(in: app)
+        tapRow(labelStartingWith: "Tuner,", in: app,
+               arrivingAt: app.navigationBars["Tuner"], called: "the Tuner")
+
+        let settings = app.buttons["Tune settings"]
+        tap(settings, labelled: "Tune settings",
+            revealing: app.buttons["Guided"], called: "the Tune Settings sheet")
+
+        // `Standard, EADGBE` is the first row of the Tuning list and the last thing the frame holds,
+        // so requiring it proves the picture reaches the third card rather than stopping at Mode.
+        capture(app, slug: "toolkit/tune-settings",
+                assertingOnScreen: "Tune Settings",
+                alsoRequiring: ["Instrument", "Guitar", "Bass", "Mode", "Guided", "Chromatic",
+                                "Tuning", "Standard, EADGBE"])
     }
 
     // MARK: - Navigation
