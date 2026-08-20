@@ -60,7 +60,7 @@ linked to the song you took it from.
 
 <!-- shot: gestures/carry-tempo | role: panel
      | alt: The Carry this tempo sheet listing "To the metronome" and "Into a new exercise", headed with the tempo being carried
-     | state: seeded library, Slow Bend, player idle, BPM readout held -->
+     | state: seeded library, Slow Bend, player idle at full speed, BPM readout held -->
 
 The number it carries is the one on screen. That is the song's tempo **at the speed you have set**,
 so a 200 BPM song at 0.25× carries 50 — the tempo you are actually playing at, which is usually the

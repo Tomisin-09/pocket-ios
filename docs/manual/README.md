@@ -130,7 +130,7 @@ is a device the shoot cannot currently produce.
 
 | Markers | Needs | Status |
 |---|---|---|
-| `songs/empty-library` · `reference/loops-library` · `getting-started/first-run` | a launch with **no seed flags** — the seeded device has six songs with loops attached and skips the first-run questions | needs a second unseeded pass in `shoot-manual.sh`; does not exist |
+| `songs/empty-library` · `reference/loops-library` · `getting-started/first-run` | a launch with **no seed flags** — the seeded device has six songs with loops attached and skips the first-run questions | **solved — the `bare` pass.** `shoot-manual.sh` now drives an unseeded device as a pass of its own (`ManualBareShots`); `reference/loops-library` turned out not to need it and is shot in `base` |
 | `songs/missing-audio` | a song whose file cannot be found | **solved — break the link mid-session, do not seed it.** `ScreenshotSeed.importReal` builds every seeded song with a bookmark into `Documents/SeedAudio/` and **no** `audioFileName`, so a seeded song is pre-0148-shaped and resolves through that bookmark alone until it is first opened. Delete one staged file (and the song's owned copy, if it has since adopted) and `SongAudioResolver.resolve` returns `nil` for that song and nothing else. Reversible — copy the master back. Recipe in `docs/manual-shoot-list.md` |
 | `subscription/settings-pro` · `subscription/trial-row` | a Pro entitlement and a running trial | no launch hook exists, and `AppTransaction.shared` prompts for sign-in on a simulator and leaves the app untappable — treat as `device:`, as `subscription/paywall` already is |
 | `toolkit/tuner` · `reference/tuner` | a microphone hearing a real string | already `device:`, noted in `ManualToolkitShots` |
@@ -253,13 +253,14 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
   what you name is what a fresh install actually holds, and note that the unit tests covering that
   seed **passed** throughout: they created the exercises themselves, by the names the seed asked
   for. A fixture that supplies its own preconditions cannot test a claim about the world.
-- **Three figures need the opposite — a device with nothing on it.** `songs/empty-library`,
-  `reference/loops-library` and `getting-started/first-run` all specify a fresh install, and the
-  shoot's whole premise is a seeded one: `ScreenshotSeed` writes six songs with loops attached, so
-  the loops library is never empty on that device and the first-run questions never appear. They
-  need a second pass with no seed flags, which `shoot-manual.sh` does not yet have. Until it does,
-  a driven run cannot produce them, and a test that shot them from the seeded device would be
-  photographing a state its page does not describe.
+- **Some figures need the opposite — a device with nothing on it.** `songs/empty-library` and
+  `getting-started/first-run` specify a fresh install, and the shoot's whole premise is a seeded
+  one: `ScreenshotSeed` writes six songs with loops attached, so the library is never empty on that
+  device and the first-run questions never appear. This is what the **`bare` pass** is: an erased
+  device launched with no seed flags, driven by `ManualBareShots`. It costs nothing extra, because a
+  pass is already one erased device — the bare pass simply declines to seed the one it gets.
+  `reference/loops-library` was listed here too and did not belong: a seeded device's *loops* library
+  is a different screen from its song library, and it is shot in `base`.
 - **The first-run questions are skipped under `-uiTesting`, not under `-seedScreenshots`.**
   `HomeView+ProfileMoment` returns early on `UITestRuntime.isActive`; its own comment says it
   *matches* the `-seedScreenshots` convention, which is easy to read as *reads that flag*. It does

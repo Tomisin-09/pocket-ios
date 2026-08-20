@@ -49,11 +49,12 @@ extension ManualShotCase {
 
         // Which of the two failures this is decides where to look, so it is worked out here rather
         // than left to whoever reads the log: in the tree means scrolling, absent means wrong screen.
-        let diagnosis = element.exists
+        let verdict = element.exists
             ? "It is in the tree, so this is a scrolling problem, not a missing element."
-            : "It is not in the tree at all, so this is the wrong screen."
+            : "It is not in the tree at all, so this is the wrong screen — or the wrong name for it."
         XCTFail("""
-            never brought '\(name)' into the frame in \(maxSwipes) slow swipes. \(diagnosis)
+            never brought '\(name)' into the frame in \(maxSwipes) slow swipes. \(verdict)
+            \(diagnosis(for: name, in: app))
             \(stepLog)
             """, file: file, line: line)
     }
@@ -223,6 +224,17 @@ extension ManualShotCase {
     /// than tapping blind — because a shoot that carries on from an unknown screen is exactly how a
     /// clean photograph of the wrong subject gets made. Every attempt is written to the step log, so
     /// a figure that needed three taps is visible afterwards rather than smoothed away.
+    ///
+    /// ⚠️ **Never aim this at a toggle.** The retry is sound only for a control that *goes away* when
+    /// it works — a row that pushes a screen, a button that opens a sheet, anything that covers or
+    /// replaces itself. A disclosure header stays exactly where it is when it works, so the "did
+    /// anything happen?" test is satisfied on every attempt and the retry fires every time — and each
+    /// retry reverses the last one. `exercises/practice-settings` was written this way and reported
+    /// *tapped 3× and the expanded panel never appeared* about a panel the first tap had opened
+    /// correctly: expand, collapse, expand, with the two probes in between looking at the wrong
+    /// state. For a toggle, tap once by hand and assert what it revealed — and if the revealed thing
+    /// is below the fold, reach it with `scrollIntoFrame`, which can tell "not scrolled to" from
+    /// "not there" and says which it was.
     ///
     /// - Parameter revealing: an element the destination owns and the current screen does **not**.
     ///   A gate the starting screen can already satisfy is not a gate — see `tapHomeCard`.

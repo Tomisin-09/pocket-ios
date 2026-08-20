@@ -220,6 +220,53 @@ class ManualShotCase: UITestCase {
     ///
     /// The three state lists carry defaults because a figure legitimately has none: several captures
     /// assert only the screen, and their `state:` is the screen's own default.
+    /// What the screen *does* have, for a state assertion that failed on what it *wanted*.
+    ///
+    /// **Written because the absence of this cost two separate diagnoses in one shoot.** The
+    /// assertion above says "'Artist' was not in the frame" and stops, and every explanation for
+    /// that sentence — the row is below the fold, the label is the field's value rather than its
+    /// placeholder, the element is clipped by a sheet detent, the screen is not the one we think —
+    /// is equally consistent with it. Each one sends you to different source, and the only way to
+    /// choose between them was to open the app's code and reason about SwiftUI's labelling, which is
+    /// guessing with extra steps. The tree already knows; it simply was not being asked.
+    ///
+    /// Two lists, because the distinction is the whole diagnosis: what is **in the frame** (so the
+    /// screen is right and the wanted label is wrong) versus what is **in the tree but out of the
+    /// frame** (so the label is right and the scrolling is wrong). Capped, because a failure message
+    /// nobody reads to the end is not a failure message.
+    @MainActor
+    func diagnosis(for wanted: String, in app: XCUIApplication) -> String {
+        var inFrame: [String] = []
+        var offscreen: [String] = []
+        let window = app.windows.firstMatch.frame
+
+        for candidate in app.descendants(matching: .any).allElementsBoundByAccessibilityElement {
+            let label = candidate.label
+            guard !label.isEmpty else { continue }
+            let frame = candidate.frame
+            if !frame.isEmpty && window.contains(frame) {
+                inFrame.append(label)
+            } else {
+                offscreen.append(label)
+            }
+            if inFrame.count + offscreen.count >= 120 { break }
+        }
+
+        func list(_ labels: [String], _ heading: String) -> String {
+            let unique = Array(NSOrderedSet(array: labels)).compactMap { $0 as? String }
+            guard !unique.isEmpty else { return "\(heading): (nothing)" }
+            let shown = unique.prefix(40).map { "'\($0)'" }.joined(separator: ", ")
+            let more = unique.count > 40 ? " … and \(unique.count - 40) more" : ""
+            return "\(heading): \(shown)\(more)"
+        }
+
+        return """
+            Looking for '\(wanted)'. What the screen actually offers:
+            \(list(inFrame, "  IN FRAME"))
+            \(list(offscreen, "  IN THE TREE BUT NOT IN FRAME — scrolling, not naming"))
+            """
+    }
+
     @MainActor
     private func record(_ app: XCUIApplication,
                         slug: String,
@@ -240,6 +287,7 @@ class ManualShotCase: UITestCase {
             XCTAssertTrue(present, """
                 on '\(title)' but '\(needed)' was not in the frame, so \(slug) would have been shot \
                 in the wrong state.
+                \(diagnosis(for: needed, in: app))
                 \(stepLog)
                 """, file: file, line: line)
         }
@@ -252,6 +300,7 @@ class ManualShotCase: UITestCase {
             XCTAssertTrue(present, """
                 on '\(title)' but nothing in the frame had a label beginning '\(prefix)', so \(slug) \
                 would have been shot in the wrong state.
+                \(diagnosis(for: prefix, in: app))
                 \(stepLog)
                 """, file: file, line: line)
         }

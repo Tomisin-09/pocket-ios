@@ -86,54 +86,81 @@ final class ManualRoutineShots: ManualShotCase {
 
     /// `routines/player-block` · `routines/block-done` · `routines/session-complete` — playing one.
     ///
-    /// **Blocks are finished by hand, not waited out.** A seeded routine's blocks are minutes long
-    /// each, and a test that played `Morning Routine` honestly would sit for the better part of half
-    /// an hour. `Done with this block` is the control a player uses to move on early, so the states
-    /// reached through it are the states the manual describes — this is a shortcut through the
-    /// clock, not around the flow.
+    /// **`Done with this block` does not exist in a routine, and this test used to be built on it.**
+    /// That label lives only in `FreeformRunView`; `Morning Routine` is exercise-only by
+    /// construction (`PracticeHistorySeed`), so no block it plays has ever carried it. The control
+    /// the routine chrome actually offers is `Skip to next block` (`RoutineRunContext`), beside a
+    /// progress strip whose accessibility container reads `Block N of M`.
     ///
-    /// The order is the sequence itself: block one runs, is finished, and the between-blocks screen
-    /// appears; continuing lands on block two, which is what `routines/player-block` is of; finishing
-    /// the rest of them reaches the recap.
+    /// **And skipping cannot produce `routines/block-done`.** Skip bypasses the Done gate outright
+    /// (`RoutinePlayerView`), so the between-blocks screen — the one the figure is *of* — is only
+    /// ever raised by a block finishing on its own. So one block is run to its natural end here, and
+    /// the rest are skipped: the shortcut is taken where it changes nothing and refused where it
+    /// would change the subject.
+    ///
+    /// Waiting is affordable, which is the other half of why this is safe. `exercises/run-complete`
+    /// already sits through a full staircase on the same seeded drill and finishes well inside
+    /// `rampTimeout`.
+    ///
+    /// The order is the sequence itself: block one runs and finishes, raising the between-blocks
+    /// screen; continuing lands on block two, which is what `routines/player-block` is of; skipping
+    /// the remainder reaches the recap.
     @MainActor
     func testPlayThrough() {
         let app = launchForShoot()
         openRoutines(in: app)
 
-        let play = app.buttons["Play Morning Routine"]
-        tap(play, labelled: "Play Morning Routine",
-            revealing: app.buttons["Done with this block"], called: "the first block")
+        // Gated on the chrome's own Skip control — the one thing a block inside a routine has that
+        // the same drill run standalone does not.
+        tap(app.buttons["Play Morning Routine"], labelled: "Play Morning Routine",
+            revealing: app.buttons["Skip to next block"], called: "the first block")
 
-        // Block one → the between-blocks screen.
-        // `RoutineBlockDoneView` is a plain view inside the player, with no `navigationTitle` of its
-        // own — so this and the two below take the chromeless path. `Nice work` is the completion
-        // line and exists on no other screen.
-        finishBlock(in: app)
+        // A block opens on its run *setup* screen and waits to be started; it does not auto-run.
+        // Scrolled into frame first: the routine chrome takes a strip off the top, so the Start
+        // control sits lower here than on the same drill run standalone, and an element below the
+        // fold is in the tree and cannot take a touch.
+        let start = app.buttons["Start training routine"]
+        scrollIntoFrame(start, called: "the Start training control", in: app)
+        tap(start, labelled: "Start training",
+            revealing: app.buttons["Stop and reset"], called: "the running transport")
+
+        // Block one → the between-blocks screen. `RoutineBlockDoneView` is a plain view inside the
+        // player with no `navigationTitle` of its own, so this and the two below take the chromeless
+        // path. `Nice work` is the completion line and exists on no other screen in this pass.
+        let doneLine = app.staticTexts["Nice work"]
+        XCTAssertTrue(doneLine.waitForExistence(timeout: Self.rampTimeout), """
+            the first block never finished within \(Int(Self.rampTimeout))s. It cannot be short-cut: \
+            `Skip to next block` bypasses the Done gate, so a skipped block raises no between-blocks \
+            screen at all. If the seeded drill's staircase has grown, this number has to grow too.
+            \(stepLog)
+            """)
+        note("the first block finished on its own")
+
         captureChromeless(app, slug: "routines/block-done",
                           screen: "the between-blocks screen",
                           ownedBy: ["Nice work"],
-                          alsoRequiring: ["Up next"])
+                          alsoRequiring: ["Set mastery to 5"],
+                          orBeginningWith: ["Up next"])
 
-        // …and on into block two, which is the block the marker names.
-        // A block in play shows the *drill's* navigation title, not the routine's, so the gate is
-        // `Exit routine` — the one control the routine player adds and a standalone run does not.
+        // …and on into block two, which is the block the marker names. The strip's container label
+        // is the gate: a block in play shows the *drill's* title, not the routine's, so `Block 2 of`
+        // is the only thing on screen that says which block this is.
         continuePastBlockDone(in: app)
         captureChromeless(app, slug: "routines/player-block",
                           screen: "a routine block in play",
-                          ownedBy: ["Exit routine"],
+                          ownedBy: ["Skip to next block"],
                           orBeginningWith: ["Block 2 of"])
 
-        // Then to the end. The routine is four blocks and two rests; rests advance on their own, so
-        // the loop only has to keep finishing units until the recap appears. Bounded rather than
-        // `while true`: a run that never finishes should fail with a step log, not hang the shoot.
+        // Then to the end, by skipping — no further Done screens are wanted, and rests advance on
+        // their own. Bounded rather than `while true`: a run that never finishes should fail with a
+        // step log, not hang the shoot.
         let recap = app.staticTexts["You practised"]
-        for pass in 1...8 where !recap.exists {
-            finishBlock(in: app)
-            continuePastBlockDone(in: app)
-            note("finished block, pass \(pass)")
+        for pass in 1...12 where !recap.exists {
+            skipBlock(in: app)
+            note("skipped a block, pass \(pass)")
         }
         XCTAssertTrue(recap.waitForExistence(timeout: Self.shootTimeout), """
-            the routine never reached its recap after eight blocks.
+            the routine never reached its recap after twelve skips.
             \(stepLog)
             """)
 
@@ -142,6 +169,11 @@ final class ManualRoutineShots: ManualShotCase {
                           ownedBy: ["You practised"],
                           alsoRequiring: ["How did that go?", "Done"])
     }
+
+    /// How long a block is given to finish on its own. Mirrors `ManualExerciseShots.rampTimeout`,
+    /// and is a measured allowance rather than a guess: the same seeded drill's staircase already
+    /// completes inside it when run standalone for `exercises/run-complete`.
+    static let rampTimeout: TimeInterval = 900
 
     // MARK: - Steps
 
@@ -154,6 +186,13 @@ final class ManualRoutineShots: ManualShotCase {
         tapRow(labelStartingWith: "Exercises,", in: app,
                arrivingAt: app.navigationBars["Exercises"], called: "the exercise bucket")
 
+        // **The bucket is not the list.** `GroupPickList` shows the drills grouped by template — one
+        // row per group, plus an `All exercises` row that is "the way past them" in its own words.
+        // So the individual drills are a level further down, and looking for them here swiped ten
+        // times against a list that never held them and then reported the wrong screen.
+        tapRow(labelStartingWith: "All exercises,", in: app,
+               arrivingAt: app.navigationBars["All exercises"], called: "the flat exercise list")
+
         // Three drills the first-run seed always writes, named rather than taken by position: a
         // positional pick is a different block every time the seed's ordering moves.
         for drill in ["Alternate Picking", "Chromatic Warm-up", "Spider Walk"] {
@@ -162,20 +201,48 @@ final class ManualRoutineShots: ManualShotCase {
             note("added '\(drill)'")
         }
 
+        // **Back out to the sheet's root before reaching for `Done`.**
+        //
+        // `Done` is one item in `AddRoutineUnitSheet`'s own toolbar — the `Add to routine` level —
+        // and the drills were picked two pushes deeper, on `All exercises`. The stack keeps the root
+        // alive, so from down there `Done` is in the tree and not on the screen: *in the tree but
+        // never hittable*, which `awaitHittable` reported precisely and which no amount of retrying
+        // could have fixed.
+        //
+        // The leading navigation-bar item is used rather than the back button's label, which carries
+        // the *previous* screen's title and would collide with the rows on these very screens.
+        for level in ["Exercises", "Add to routine"] {
+            let back = app.navigationBars.firstMatch.buttons.element(boundBy: 0)
+            XCTAssertTrue(back.waitForExistence(timeout: Self.shootTimeout),
+                          "no back button while returning to '\(level)'.\n\(stepLog)")
+            awaitHittable(back)
+            back.tap()
+            XCTAssertTrue(app.navigationBars[level].waitForExistence(timeout: Self.shootTimeout),
+                          "went back but never arrived at '\(level)'.\n\(stepLog)")
+            note("back to '\(level)'")
+        }
+
         tap(app.buttons["Done"], labelled: "Done",
             revealing: app.buttons["Add exercise, loop or song"], called: "the routine editor")
     }
 
-    /// Finish whichever unit is running.
+    /// Move past whichever unit is showing, without finishing it.
+    ///
+    /// Deliberately *not* routed through `tap(_:revealing:)`: what a skip reveals depends on what
+    /// comes next — another block, a rest countdown, or the recap — so there is no single element to
+    /// gate on, and the caller checks for the recap between skips instead.
     @MainActor
-    private func finishBlock(in app: XCUIApplication) {
-        let done = app.buttons["Done with this block"]
-        guard done.waitForExistence(timeout: Self.shootTimeout) else {
-            note("no 'Done with this block' — not on a running unit")
+    private func skipBlock(in app: XCUIApplication) {
+        let skip = app.buttons["Skip to next block"]
+        guard skip.waitForExistence(timeout: Self.shootTimeout) else {
+            note("no 'Skip to next block' — not on a running unit")
             return
         }
-        tap(done, labelled: "Done with this block",
-            revealing: app.staticTexts["Nice work"], called: "the between-blocks screen")
+        guard awaitHittable(skip) else {
+            note("'Skip to next block' never became hittable")
+            return
+        }
+        skip.tap()
     }
 
     /// Leave the between-blocks screen for whatever is next.

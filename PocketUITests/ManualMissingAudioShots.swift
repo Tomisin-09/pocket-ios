@@ -28,8 +28,16 @@ final class ManualMissingAudioShots: ManualShotCase {
     /// this the missing-audio state rather than a slow one, and they are what the marker's alt text
     /// promises the reader.
     ///
-    /// The screen assertion is the song's own title: the notice is drawn inside the practice view, so
-    /// the navigation bar underneath it is still the player's.
+    /// **This took the chromeless path only after claiming, in this comment, that it could not.**
+    /// The line here used to read "the notice is drawn inside the practice view, so the navigation
+    /// bar underneath it is still the player's" — and `WaveformPracticeView` sets no
+    /// `navigationTitle` at all. The player is chromeless, which is the entire reason
+    /// `captureChromeless` exists; the sentence sounded like a reason and was simply false.
+    ///
+    /// The guard did its job, and this is the one failure in the resumed shoot where it did: the
+    /// notice was reached, the screen assertion could not be satisfied, and the capture was
+    /// **refused** rather than filed under the right slug. A wrong-screen photograph is the failure
+    /// this whole file is written against, and here the harness declined to take one.
     @MainActor
     func testMissingAudio() {
         let app = launchForShoot()
@@ -53,8 +61,9 @@ final class ManualMissingAudioShots: ManualShotCase {
         // separate elements by design (the comment in that view says so: combining them would leave
         // neither way out reachable), and they are what distinguish this notice from the loading
         // overlay that draws over the same dim.
-        capture(app, slug: "songs/missing-audio",
-                assertingOnScreen: "I'd Rather Go Blind (Cover)",
-                alsoRequiring: ["Find the file", "Not now"])
+        captureChromeless(app, slug: "songs/missing-audio",
+                          screen: "the audio-unavailable notice",
+                          ownedBy: ["Find the file"],
+                          alsoRequiring: ["Not now"])
     }
 }

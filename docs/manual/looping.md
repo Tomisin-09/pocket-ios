@@ -10,7 +10,7 @@ Open a song from the library and you land on the player, which is where all of t
 
 <!-- shot: song-player/portrait-idle | role: screen
      | alt: The song player in portrait, showing the song strip, speed bar, status line, waveform, time ruler, minimap and transport
-     | state: seeded library, Slow Bend, idle, no loop active -->
+     | state: seeded library, Slow Bend, idle at full speed, no loop active -->
 
 From the top:
 

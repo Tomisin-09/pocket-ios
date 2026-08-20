@@ -145,7 +145,19 @@ def main():
                     print(f"  ⚠️  '{shared.strip()}' is served by {context.stem} but is not a "
                           f"marker in any page")
                     continue
-                shutil.copy2(primary, filed / f"{name}.png")
+                # **An alias's own `.context` is a copy of the primary's, `also serves:` line and
+                # all.** So once aliases survive into a later pass — which is exactly what `--keep`
+                # made possible — this loop reads one back and is asked to copy a file onto itself,
+                # and `shutil.copy2` raises `SameFileError`. That crashed the filing step of a pass
+                # whose tests had all passed, and the shoot reported the pass as failed: a green run
+                # turned red by its own bookkeeping.
+                #
+                # Skipped rather than guarded upstream, because the same check covers the other way
+                # in: a marker that legitimately names itself in `alsoServing:`.
+                target = filed / f"{name}.png"
+                if target.resolve() == primary.resolve():
+                    continue
+                shutil.copy2(primary, target)
                 shutil.copy2(context, filed / f"{name}.context")
                 aliases += 1
                 images += 1

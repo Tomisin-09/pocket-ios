@@ -31,10 +31,15 @@ final class ManualPlayerShots: ManualShotCase {
     /// `Playback speed 1.00 times` is the state, not decoration. `gestures/speed-bar` asks for the
     /// bar at 100%, and the same bar at any other speed photographs identically apart from two
     /// numbers.
+    ///
+    /// **Which is why the speed is set here rather than assumed** — see `resetSpeed`. This figure
+    /// failed on a driven run wanting `Playback speed 1.00 times`, on a player that had opened at
+    /// 0.75× because an earlier test in the same pass had practised the song.
     @MainActor
     func testPlayerIdle() {
         let app = launchForShoot()
         openSlowBend(in: app)
+        resetSpeed(in: app)
 
         captureChromeless(app, slug: "song-player/portrait-idle",
                           screen: "the song player",
@@ -106,6 +111,9 @@ final class ManualPlayerShots: ManualShotCase {
     func testCarryTempo() {
         let app = launchForShoot()
         openSlowBend(in: app)
+        // 76 below is the song's tempo at **full speed**, and the readout carries the number as
+        // shown — so the speed has to be known before the number can be asserted. See `resetSpeed`.
+        resetSpeed(in: app)
 
         let readout = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label ENDSWITH %@", "beats per minute")).firstMatch
@@ -176,6 +184,81 @@ final class ManualPlayerShots: ManualShotCase {
                           orBeginningWith: ["Verse riff", "Chorus bend"])
     }
 
+    /// `looping/ab-forming` — the A/B strip with A dropped and B not yet set.
+    ///
+    /// One tap of `Loop` drops A at the playhead and plays on (`tapAB` → `.armed`), so the forming
+    /// state is a single gesture away: no waiting, no second tap, nothing to race.
+    ///
+    /// Gated on the strip's own caption, `Tap Loop again to set the end` — the `.armed` case of
+    /// `abSpanLabel`, a string that exists in no other state and on no other screen. The Loop
+    /// control's `isSelected` trait would not do as a gate: it lights for a **closed** span too, so
+    /// it cannot tell "A dropped" from "A↔B set", which is the entire subject of this figure.
+    ///
+    /// `ABSpanBar` hides ▶ and `Save as loop` until the span closes (`isSet`), so while forming the
+    /// strip is a prompt and an ✕ — which is why `Clear loop` is the control required in the frame
+    /// and `Save loop` is deliberately not.
+    ///
+    /// The A itself is **drawn** on the waveform (`formingMarker`) with no accessibility element of
+    /// its own, so that half of the figure can only be confirmed by opening the image.
+    ///
+    /// A span is ephemeral until `Save as loop` — nothing is written — so this belongs in the
+    /// read-only player pass and leaves Slow Bend with the loops the seed gave it.
+    @MainActor
+    func testABForming() {
+        let app = launchForShoot()
+        openSlowBend(in: app)
+
+        // The caption is reached by prefix rather than as `app.staticTexts[…]`: whether a `Text`
+        // inside a strip that also holds buttons surfaces as its own static text is SwiftUI's call,
+        // not ours, and a gate that might not resolve when the thing *did* happen is worthless.
+        tap(app.buttons["Loop"], labelled: "the Loop control",
+            revealing: element(in: app, labelStartingWith: "Tap Loop again to set the end"),
+            called: "the A/B strip, forming")
+
+        captureChromeless(app, slug: "looping/ab-forming",
+                          screen: "the song player with a forming A/B span",
+                          ownedBy: ["Tap Loop again to set the end"],
+                          alsoRequiring: ["Clear loop"])
+    }
+
     // MARK: - Navigation
 
+    /// Put the speed bar back to 1.00× before a figure that names a speed or a tempo.
+    ///
+    /// **A song does not open at full speed.** `WaveformPracticeModel` sets `speed` from
+    /// `song.resumeSpeed` on load (ADR 0044 — "the speed you last practised it at"), and
+    /// `Song.lastPracticedSpeed` is persisted. Slow Bend's `Verse riff` is seeded at `speed: 0.75`,
+    /// so any earlier test in this pass that arms it changes the state every later figure opens in.
+    ///
+    /// **The passes cannot fix this and are not meant to.** A pass isolates one *area* per erased
+    /// device, which stops a routine's history from landing in the library figures. These are all
+    /// legitimately player-area tests sharing one device by design; what leaks between them is a
+    /// per-song field, not a cross-area write.
+    ///
+    /// So the state is set rather than inherited. `Reset` is a `PresetPill` in the speed bar that is
+    /// always present — `isSelected` when the speed is already 1.0 — so this is safe to call
+    /// unconditionally, and it is a control the manual documents rather than a back door.
+    ///
+    /// The read-back is the point: a lost tap here photographs exactly as confidently as a landed
+    /// one, and the two figures that need this both assert a number the wrong speed would change.
+    @MainActor
+    private func resetSpeed(in app: XCUIApplication) {
+        let reset = app.buttons["Reset"]
+        XCTAssertTrue(reset.waitForExistence(timeout: Self.shootTimeout),
+                      "no 'Reset' pill on the speed bar.\n\(stepLog)")
+        awaitHittable(reset)
+        reset.tap()
+        note("tapped Reset on the speed bar")
+
+        // `element(in:labelStartingWith:)`, not `app.staticTexts[…]`: the readout is a `Button`
+        // wrapping its `Text` (it opens numeric entry), so a type-pinned query finds nothing and
+        // would report a landed tap as a lost one.
+        XCTAssertTrue(element(in: app, labelStartingWith: "Playback speed 1.00")
+            .waitForExistence(timeout: Self.shootTimeout), """
+            tapped 'Reset' and the speed bar did not read 1.00× — every figure below this names a \
+            number that the speed changes, so shooting on would file the right screen at the wrong \
+            speed.
+            \(stepLog)
+            """)
+    }
 }

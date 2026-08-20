@@ -135,9 +135,29 @@ final class ManualExerciseShots: ManualShotCase {
         // one: it is a plain `Text` in an `HStack` that may or may not surface as its own element
         // depending on how the row combines, and a gate that *might* not exist when the thing did
         // happen is indistinguishable from one that correctly says nothing happened.
-        let summary = element(in: app, labelStartingWith: "Practice settings,")
-        tap(summary, labelled: "the Practice Settings summary",
-            revealing: app.buttons["Raise Working"], called: "the expanded panel")
+        // **Tapped once, by hand, and deliberately not through `tap(_:revealing:)`.**
+        //
+        // That helper retries when the control it tapped is still hittable, on the reasoning that a
+        // control which is still there did not do anything. For a *disclosure header* that reasoning
+        // is inverted: the header stays exactly where it is when it works, so the retry fires every
+        // time — and each retry toggles the panel back. Three attempts is expand, collapse, expand,
+        // reported as "tapped 3× and the expanded panel never appeared".
+        //
+        // `showSettings` defaults to `false`, so one tap is all this needs.
+        let summary = app.buttons
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Practice settings,")).firstMatch
+        XCTAssertTrue(summary.waitForExistence(timeout: Self.shootTimeout),
+                      "no Practice Settings header on the run screen.\n\(stepLog)")
+        awaitHittable(summary)
+        summary.tap()
+        note("expanded the Practice Settings panel")
+
+        // The panel opens *below the fold*, and an element off the bottom of a scroll view is not in
+        // the tree at all — so waiting on `Raise Working` where it stood would have waited forever
+        // however many times the header was tapped. `scrollIntoFrame` handles the absent case
+        // (`element.exists ? element.frame : .zero`, then swipe) and is the only thing that can
+        // distinguish "not scrolled to" from "not there", which its failure message then says.
+        scrollIntoFrame(app.buttons["Raise Working"], called: "the Working row", in: app)
 
         capture(app, slug: "exercises/practice-settings",
                 assertingOnScreen: "Alternate Picking",
@@ -228,9 +248,17 @@ final class ManualExerciseShots: ManualShotCase {
         let app = launchForShoot()
         openExercises(in: app)
 
+        // Gated on the picker's own navigation bar, not on the row this test wants. `template.freeform`
+        // is the **last** template in `ExerciseTemplate`, so it renders below the fold and is absent
+        // from the tree until the list is scrolled — which the old gate read as "the picker never
+        // opened", on a picker that had opened perfectly well. `testTemplatePicker` passes against
+        // the same screen only because `template.warmup` and `template.picking` sit near the top.
         tap(app.buttons["New exercise"], labelled: "New exercise",
-            revealing: app.buttons["template.freeform"], called: "the template picker")
-        tap(app.buttons["template.freeform"], labelled: "the Your own practice template",
+            revealing: app.navigationBars["New exercise"], called: "the template picker")
+
+        let freeform = app.buttons["template.freeform"]
+        scrollIntoFrame(freeform, called: "the Your own practice template", in: app)
+        tap(freeform, labelled: "the Your own practice template",
             revealing: app.navigationBars["New your own practice"], called: "the configure step")
 
         type(Self.freeformName, into: app.textFields.firstMatch, called: "the name field", in: app)
@@ -238,20 +266,30 @@ final class ManualExerciseShots: ManualShotCase {
              into: app.textFields["What are you practising?"], called: "the instructions", in: app)
 
         tap(app.buttons["Create"], labelled: "Create",
-            revealing: app.navigationBars[Self.freeformName], called: "the new drill's run screen")
+            revealing: app.buttons["Done with this block"], called: "the running freeform block")
 
-        tap(app.buttons["Start training routine"], labelled: "Start training",
-            revealing: app.buttons["Done with this block"], called: "the running block")
+        // **A freeform block has no Start control — it is already running.**
+        // `FreeformRunView.onAppear` sets `startedAt` the moment the screen appears, and the only
+        // control on it is `Done with this block` in a `safeAreaInset`. This test pressed
+        // `Start training routine` for two rounds: once reported as *in the tree but never hittable*
+        // (the button flickering through the Create transition), once as *not in the tree at all*
+        // after ten fruitless swipes — by which point the block had been running for fifty seconds
+        // and the dump said so. Create lands on a running block; nothing else is needed.
 
-        // The elapsed time is the figure's other half and it counts from zero, so this waits for the
-        // clock to have visibly moved rather than shooting a timer reading 0:00.
-        XCTAssertTrue(elements(in: app, labelStartingWith: "0:0").firstMatch
-            .waitForExistence(timeout: Self.shootTimeout),
-                      "no elapsed time on the freeform block.\n\(stepLog)")
+        // The elapsed time is the figure's other half, so this waits for the clock to have **visibly
+        // moved** rather than shooting a timer reading 0:00. The old form waited for a label
+        // beginning `0:0`, which 0:00 itself satisfies — it asserted the timer existed, not that it
+        // had started. The label reads "<m:ss> elapsed on this block".
+        let ticked = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label BEGINSWITH %@ AND NOT (label BEGINSWITH %@)", "0:", "0:00"))
+        XCTAssertTrue(ticked.firstMatch.waitForExistence(timeout: Self.shootTimeout),
+                      "the freeform block's clock never moved off 0:00.\n\(stepLog)")
 
+        // `Instructions: ` — the run screen prefixes the player's own words, so a prefix aimed at
+        // the prose itself matches nothing. The dump on the failing run is where that came from.
         capture(app, slug: "exercises/freeform-run",
                 assertingOnScreen: Self.freeformName,
-                orBeginningWith: ["One new piece from the book"])
+                orBeginningWith: ["Instructions: One new piece from the book"])
     }
 
     // MARK: - Fixtures

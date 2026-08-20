@@ -11,14 +11,63 @@ final class ManualImportShots: ManualShotCase {
 
     /// The system document picker's process. **Not the app**, which is the whole difficulty.
     ///
-    /// `app.screenshot()` photographs the application under test, so a picker drawn by
-    /// `com.apple.DocumentManagerUICore` comes back as a clean picture of Home with nothing over it —
-    /// and app-scoped queries cannot see it either, so there is nothing to assert on and nothing in
-    /// the frame. Both halves are solved separately: the gate below reaches across to the picker's
-    /// own process, and `capture(wholeDisplay: true)` takes the display rather than the app.
-    private var documentPicker: XCUIApplication {
-        XCUIApplication(bundleIdentifier: "com.apple.DocumentManagerUICore")
+    /// `app.screenshot()` photographs the application under test, so a picker drawn by another
+    /// process comes back as a clean picture of Home with nothing over it — and app-scoped queries
+    /// cannot see it either, so there is nothing to assert on and nothing in the frame. Both halves
+    /// are solved separately: the gate below reaches across to the picker's own process, and
+    /// `capture(wholeDisplay: true)` takes the display rather than the app.
+    ///
+    /// **The first identifier tried here could never have resolved.** It was
+    /// `com.apple.DocumentManagerUICore`, which on the iOS 26.5 runtime is a *PrivateFramework*, not
+    /// an application — so `XCUIApplication(bundleIdentifier:)` was being handed the name of a
+    /// dylib. The picker is hosted by that framework's plug-in, whose `CFBundleIdentifier` is
+    /// `com.apple.DocumentManagerUICore.Service`:
+    ///
+    ///     RuntimeRoot/System/Library/PrivateFrameworks/DocumentManagerUICore.framework
+    ///         /PlugIns/com.apple.DocumentManager.Service.appex
+    ///
+    /// Hence a *list*, not a name. These are Apple's to rename at any release and this test cannot
+    /// tell a renamed host from an absent picker, so it tries each and reports all of them on
+    /// failure — the next OS bump should cost a reading of the log, not another guess. That dump
+    /// earned its keep on the first run: it showed `com.apple.DocumentManagerUICore.Service` present
+    /// with `Cancel` in it, which turned "the bundle id is wrong" into "the sweep was too impatient"
+    /// without a second guess or a second run.
+    private static let pickerBundleIDs = [
+        "com.apple.DocumentManagerUICore.Service",   // the picker's remote-view extension
+        "com.apple.CloudDocsUI.DocumentPicker",      // iCloud Drive's own picker extension
+        "com.apple.DocumentsApp"                     // the Files app, if it fronts the picker
+    ]
+
+    /// The first candidate process showing the picker, or `nil` once the deadline passes.
+    ///
+    /// **Swept repeatedly against one deadline, rather than each candidate waited out in turn.**
+    /// The first shape of this gave every candidate its own generous timeout, one after another, and
+    /// failed on a cold device *while the picker was opening*: three sequential waits expired, and
+    /// the tree dumped by the failure — taken after all of them — showed the picker present, with
+    /// `Cancel` exactly where this was looking for it. A per-candidate timeout long enough to cover
+    /// a slow open multiplies by the number of candidates, and most of that wait is spent on
+    /// processes that were never going to answer.
+    ///
+    /// So each probe is brief and the *sweep* is what repeats. A wrong bundle id still fails fast
+    /// and stays failing; a slow open is caught by a later lap.
+    @MainActor
+    private func resolvedPicker() -> XCUIApplication? {
+        let deadline = Date().addingTimeInterval(Self.shootTimeout)
+        repeat {
+            for id in Self.pickerBundleIDs {
+                let candidate = XCUIApplication(bundleIdentifier: id)
+                if candidate.buttons["Cancel"].waitForExistence(timeout: Self.pickerProbeTimeout) {
+                    note("the document picker is hosted by '\(id)'")
+                    return candidate
+                }
+            }
+        } while Date() < deadline
+        return nil
     }
+
+    /// Per-probe patience. Deliberately short — the sweep above is what provides the patience, and a
+    /// long value here is paid once per candidate per lap.
+    private static var pickerProbeTimeout: TimeInterval { 2 }
 
     /// `getting-started/import-picker` — the file picker open over Home.
     ///
@@ -37,14 +86,21 @@ final class ManualImportShots: ManualShotCase {
         add.tap()
         note("tapped 'Add a song'")
 
-        let cancel = documentPicker.buttons["Cancel"]
-        XCTAssertTrue(cancel.waitForExistence(timeout: Self.shootTimeout), """
-            the document picker never appeared. It is a separate process, so this gate is a guess \
-            about somebody else's accessibility text — here is what that process actually offers:
-            \(documentPicker.debugDescription)
-            \(stepLog)
-            """)
-        note("the document picker is up")
+        guard resolvedPicker() != nil else {
+            let dump = Self.pickerBundleIDs
+                .map { "── \($0) ──\n\(XCUIApplication(bundleIdentifier: $0).debugDescription)" }
+                .joined(separator: "\n")
+            XCTFail("""
+                the document picker never appeared in any of the processes known to host it. It is \
+                a separate process, so this gate is a guess about somebody else's bundle id — here \
+                is what each candidate actually offers. If one of them is plainly the picker under \
+                a new name, add it to `pickerBundleIDs`; if they are all empty, the picker did not \
+                open at all and the tap is what to look at.
+                \(dump)
+                \(stepLog)
+                """)
+            return
+        }
 
         capture(app, slug: "getting-started/import-picker",
                 assertingOnScreen: "Red Moon",

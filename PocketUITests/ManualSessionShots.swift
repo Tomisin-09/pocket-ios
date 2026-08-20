@@ -40,22 +40,31 @@ final class ManualSessionShots: ManualShotCase {
                                 "Add a goal for this session", "Generate today's session"],
                 orBeginningWith: ["Quick ·", "Nothing extra for today"])
 
-        // 2. The template picker. It lives inside the goal editor's navigation stack, so the bar
-        // already says `New goal` — which is why the state assertion is `Something else`, the row
-        // that only exists on the picker step and not on the form it leads to.
+        // 2. The template picker, and it took two wrong gates to get here.
+        //
+        // **Every row is reached by prefix, never by name.** `GoalAuthoringSections` builds each one
+        // as a `Button` wrapping a title *and* a blurb, so SwiftUI combines the children and the
+        // label is "Build speed, <blurb>" — one element, not two. Exact-match queries find nothing.
+        // `element(in:labelStartingWith:)` warns about this in its own doc comment.
+        //
+        // **And the gate is the navigation bar, not `Something else`.** That row is the last thing
+        // on the screen, under ten title-and-blurb rows, so it begins below the fold and therefore
+        // outside the tree — a gate that cannot resolve until the screen is scrolled reports an
+        // opened sheet as a sheet that never opened, which is exactly how this failed twice. The bar
+        // is sound here despite also titling the form behind it, because the screen being left is
+        // the planner, whose bar says `Today's session`.
         tap(app.buttons["Add a goal for this session"], labelled: "Add a goal",
-            revealing: app.buttons["Something else"], called: "the goal template picker")
+            revealing: app.navigationBars["New goal"], called: "the goal template picker")
 
         capture(app, slug: "sessions/goal-templates",
                 assertingOnScreen: "New goal",
-                alsoRequiring: ["Play a specific song", "Build speed", "Improvise in a style",
-                                "Something else"],
-                orBeginningWith: ["Pick a starting point"])
+                orBeginningWith: ["Pick a starting point", "Play a specific song", "Build speed",
+                                  "Improvise in a style", "Something else"])
 
         // 3. The form behind one of them. Same navigation bar, different state — so the assertion has
         // to be something only the form has. The priority control is that: three segments the picker
         // step does not draw.
-        tap(app.buttons["Build speed"], labelled: "Build speed",
+        tap(element(in: app, labelStartingWith: "Build speed"), labelled: "Build speed",
             revealing: app.buttons["Normal"], called: "the goal editor")
 
         capture(app, slug: "sessions/goal-editor",
@@ -108,9 +117,16 @@ final class ManualSessionShots: ManualShotCase {
     /// Add a goal from a named template, start to finish.
     @MainActor
     private func addGoal(_ template: String, in app: XCUIApplication) {
+        // Bar as the gate, prefix for the row — both for the reasons spelled out at the picker's
+        // first use above.
         tap(app.buttons["Add a goal for this session"], labelled: "Add a goal",
-            revealing: app.buttons["Something else"], called: "the goal template picker")
-        tap(app.buttons[template], labelled: template,
+            revealing: app.navigationBars["New goal"], called: "the goal template picker")
+        // Scrolled to before it is tapped: the templates are ten title-and-blurb rows, so which of
+        // them start on screen depends on the name, and a caller naming one near the bottom would
+        // otherwise fail as though the picker had not opened.
+        let row = element(in: app, labelStartingWith: template)
+        scrollIntoFrame(row, called: "the '\(template)' template", in: app)
+        tap(row, labelled: template,
             revealing: app.buttons["Normal"], called: "the goal editor")
         saveGoal(in: app)
         note("added the '\(template)' goal")

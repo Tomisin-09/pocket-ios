@@ -24,7 +24,7 @@ marker grammar in [README.md](README.md).
 | `exercises/run-setup` | `screen` | `exercises` | seeded library, Exercises, "Alternate Picking" opened, stopped |  |
 | `exercises/staircase` | `band` | `exercises` | seeded library, an exercise run screen, staircase visible |  |
 | `exercises/template-picker` | `screen` | `exercises` | New exercise sheet, template picker, guitar selected |  |
-| `gestures/carry-tempo` | `panel` | `gestures` | seeded library, Slow Bend, player idle, BPM readout held |  |
+| `gestures/carry-tempo` | `panel` | `gestures` | seeded library, Slow Bend, player idle at full speed, BPM readout held |  |
 | `gestures/loop-controls-popover` | `panel` | `gestures` | seeded library, Slow Bend, player idle, Loop controls tapped |  |
 | `gestures/row-hold-menu` | `panel` | `gestures` | seeded library, Library screen, row "Binta" held |  |
 | `gestures/speed-bar` | `band` | `gestures` | seeded library, Slow Bend, player idle |  |
@@ -100,7 +100,7 @@ marker grammar in [README.md](README.md).
 | `sessions/planner` | `screen` | `sessions` | seeded library, Today's session, two active goals |  |
 | `sessions/review` | `screen` | `sessions` | seeded library, Today's session, Generate tapped, result showing |  |
 | `song-player/landscape` | `band` | `looping` | seeded library, Slow Bend, landscape, drawer open | iPhone — the simulator does not render this layout honestly |
-| `song-player/portrait-idle` | `screen` | `looping` | seeded library, Slow Bend, idle, no loop active |  |
+| `song-player/portrait-idle` | `screen` | `looping` | seeded library, Slow Bend, idle at full speed, no loop active |  |
 | `songs/empty-library` | `screen` | `songs` | fresh install, Song library, no songs |  |
 | `songs/filter-menu` | `panel` | `songs` | seeded library, Library screen, filter menu open, two collections ticked |  |
 | `songs/import-progress` | `band` | `songs` | seeded library, Library screen, multi-file import in progress |  |

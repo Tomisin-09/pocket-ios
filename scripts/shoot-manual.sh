@@ -450,12 +450,12 @@ against what actually failed rather than against whatever ran last.
 STALE
         echo "⚠️  $FILED still holds the previous run's images — marked STALE-DO-NOT-SHIP.txt" >&2
     fi
-    echo "❌ the shoot failed — read $RUN_LOG, and the step log inside $RESULT_BUNDLE" >&2
-    exit 1
+    echo "❌ pass '$pass' failed — read $RUN_LOG, and the step log inside $RESULT_BUNDLE" >&2
+    return 1
 fi
 grep -qE "TEST SUCCEEDED|TEST EXECUTE SUCCEEDED" "$RUN_LOG" || {
     echo "❌ no verdict line in $RUN_LOG — treat as a failure, not a pass" >&2
-    exit 1
+    return 1
 }
 
 # **A green verdict over zero tests.** `xcodebuild` reports success for running nothing, so a shoot
@@ -475,7 +475,7 @@ if [ ${#missing[@]} -gt 0 ]; then
     echo "❌ pass '$pass' passed, but these classes never executed a single test: ${missing[*]}" >&2
     echo "   A plan that selects nothing still exits 0. Check that each class is listed in" >&2
     echo "   $TEST_PLAN.xctestplan as well as in pass_classes() here." >&2
-    exit 1
+    return 1
 fi
 
 # --- 5. export ----------------------------------------------------------------------------------
@@ -500,18 +500,62 @@ fi
 # the manual's own shoot list is written in, which is the order that is easiest to audit against.
 prune_runs
 keep_filed=""
-if [ -z "$PARTIAL" ]; then
-    # A complete shoot owns `filed/` outright, so the first pass clears it and the rest add to it.
+if [ -n "$PARTIAL" ]; then
+    # **A partial run does not own `filed-partial/`, and must never clear it.**
+    #
+    # A complete shoot does own `filed/`: it takes every figure, so clearing on the first pass and
+    # adding on the rest leaves exactly one shoot's images behind. A partial run is the opposite —
+    # it exists precisely because other partial runs are filing into the same directory, whether
+    # earlier in this shoot or in a separate invocation yesterday.
+    #
+    # This was a one-line data-loss bug and it destroyed real work. `keep_filed` is reset per
+    # *invocation*, and only set to `keep` after the first pass *within* one. So the documented
+    # resume path — one invocation per pass, in a shell loop, so that a failing pass doesn't stop
+    # the others — had every successful pass wipe the previous pass's images before filing its own.
+    # Seven passes ran; two images survived. Nothing warned, because clearing a directory you were
+    # told to file into is not an error.
+    #
+    # A partial run therefore starts in `keep` mode. To start `filed-partial/` empty, delete it.
+    keep_filed="keep"
+else
     # That has to happen here rather than inside `file-shots.py`, which cannot know whether it is
     # being called for the first pass of eight or the only pass of one.
     echo "  filing a complete shoot into $FILED (cleared by the first pass)"
 fi
+# **A failing pass no longer takes the rest of the shoot with it.**
+#
+# `shoot_pass` used to `exit 1`, which under `set -e` ended the whole invocation on the first
+# failure. With one pass per invocation that was harmless; now that a multi-pass invocation is the
+# *only* way to file safely (see `keep_filed` above), it meant a single failure in the first pass
+# left the other eight undriven — an hour of device time spent on one test, and eight areas' worth of
+# failures still unknown. A shoot is diagnostic work: the point is to come back with every failure,
+# not the first one.
+#
+# Each pass still gets its own erased device, and a failed pass still files nothing. The names are
+# collected and reported together at the end, and the script still exits non-zero — a shoot with any
+# failing pass is a failed shoot.
+failed_passes=()
 for pass in "${PASSES[@]}"; do
     stage_device
     pass_prepare "$pass"
-    shoot_pass "$pass" "$keep_filed"
+    if ! shoot_pass "$pass" "$keep_filed"; then
+        failed_passes+=("$pass")
+        echo "⚠️  pass '$pass' failed — continuing with the remaining passes" >&2
+    fi
     keep_filed="keep"
 done
+
+if [ ${#failed_passes[@]} -gt 0 ]; then
+    cat >&2 <<EOF
+
+❌ ${#failed_passes[@]} of ${#PASSES[@]} pass(es) failed: ${failed_passes[*]}
+
+   Each failed pass filed nothing, so $FILED holds only the passes that succeeded.
+   Read the per-pass logs — they are named for the pass and they survive the re-run:
+       $OUT_DIR/runs/$RUN_ID-<pass>.log
+EOF
+    exit 1
+fi
 
 cat <<EOF
 
