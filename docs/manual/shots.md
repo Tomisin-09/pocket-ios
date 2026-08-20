@@ -16,7 +16,7 @@ marker grammar in [README.md](README.md).
 | Shot | Role | Page | State to seed | Needs a device |
 |---|---|---|---|---|
 | `exercises/configure` | `screen` | `exercises` | New exercise sheet, Warm-up template chosen, top of the configure step |  |
-| `exercises/freeform-run` | `screen` | `exercises` | seeded library, a freeform exercise, running |  |
+| `exercises/freeform-run` | `screen` | `exercises` | seeded library, a hand-authored freeform exercise, running |  |
 | `exercises/library` | `screen` | `exercises` | seeded library, Practice ▸ Exercises, several templates present |  |
 | `exercises/practice-settings` | `panel` | `exercises` | seeded library, an exercise run screen, Practice Settings expanded |  |
 | `exercises/run-complete` | `screen` | `exercises` | seeded library, an exercise run finished naturally |  |
@@ -105,7 +105,7 @@ marker grammar in [README.md](README.md).
 | `songs/filter-menu` | `panel` | `songs` | seeded library, Library screen, filter menu open, two collections ticked |  |
 | `songs/import-progress` | `band` | `songs` | seeded library, Library screen, multi-file import in progress |  |
 | `songs/library-row` | `detail` | `songs` | seeded library, Library screen, row "Feels" |  |
-| `songs/missing-audio` | `panel` | `songs` | seeded library, a song whose file cannot be found, details open |  |
+| `songs/missing-audio` | `panel` | `songs` | seeded library, a song whose file cannot be found, opened for practice |  |
 | `songs/song-edit` | `screen` | `songs` | seeded library, song "Little Wing", edit sheet open |  |
 | `songs/sort-menu` | `panel` | `songs` | seeded library, Library screen, sort menu open |  |
 | `subscription/paywall` | `panel` | `subscription` | fresh install without Pro, paywall open from a locked Home card | iPhone — cropped above the plan cards on purpose: an image carrying a price outlives

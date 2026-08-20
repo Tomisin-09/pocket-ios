@@ -203,7 +203,7 @@ written instructions, and it runs as a timer with those instructions on screen.
 
 <!-- shot: exercises/freeform-run | role: screen
      | alt: A "Your own practice" block running, showing the player's own written instructions and the elapsed time
-     | state: seeded library, a freeform exercise, running -->
+     | state: seeded library, a hand-authored freeform exercise, running -->
 
 It has no tempo and no meter on purpose: most of what belongs in one has no BPM at all, and a
 setting the run screen never reads is a question with no honest answer.

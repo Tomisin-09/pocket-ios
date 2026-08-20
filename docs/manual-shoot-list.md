@@ -5,8 +5,8 @@ each figure has to show. Derived from the `<!-- shot: -->` markers in the pages 
 source of truth, and `docs/manual/shots.md` stays the generated index. This file is the working
 sheet you hold while shooting.
 
-**68 of 101 figures remain** — 66 shootable in the eight sessions below, plus two that are blocked
-on a decision. 33 are already filed from driven runs and must not be re-shot: they came off a
+**68 of 101 figures remain**, all of them on the nine sessions below — nothing is parked on a
+decision any more. 33 are already filed from driven runs and must not be re-shot: they came off a
 specific device state, and re-shooting one by hand puts a different library in it.
 
 ---
@@ -118,10 +118,12 @@ Open **Little Wing**. Most of the manual's mass is here.
 | `looping/loop-active` | band | Activate **Verse riff**, let it repeat | Transport in active form, loop name above the controls |
 | `getting-started/loop-active` | band | *Same frame as `looping/loop-active`* | Must also show the loop span drawn across the waveform — check before filing |
 
-## 3 · Exercises — 12 figures
+## 3 · Exercises — 13 figures
 
-Practice ▸ **Exercises**. `run-complete` writes practice history, so shoot it after everything else
-on this screen.
+Practice ▸ **Exercises**. **Two things here change the screen, so the order is load-bearing.**
+`run-complete` writes practice history, and `freeform-run` needs a drill that does not exist until
+you create it — which adds a seventh row to a library every other figure shows with six. Shoot the
+table top to bottom and both stay right.
 
 | Slug | Role | How to get there | What must be in the frame |
 |---|---|---|---|
@@ -137,6 +139,27 @@ on this screen.
 | `exercises/run-complete` | screen | Let a run finish **naturally** | Mastery rating, note field, the command-tempo offer |
 | `exercises/template-picker` | screen | Exercises ▸ **+** | Guitar / Bass control at the top, the template list |
 | `exercises/configure` | screen | Choose **Warm-up** ▸ configure step | Name field and the fretboard run editor |
+| `exercises/freeform-run` | screen | **Create the drill first — see below the table.** Then run it | The instructions you typed, on screen, with the elapsed time counting up |
+
+### Creating the freeform drill — do this **after** `exercises/library`
+
+`exercises/library` and `reference/exercises-library` are two figures of the same screen, and the
+reference one is already filed showing the six drills a fresh install seeds. Create this drill before
+you shoot `exercises/library` and the two disagree — seven rows in one, six in the other, on a screen
+the manual presents as the same place.
+
+Exercises ▸ **+** ▸ **Your own practice**, then set exactly this, so a re-shoot months from now
+produces the same picture:
+
+| Field | Value |
+|---|---|
+| Name | `Sight-reading` |
+| **Instructions** (*What are you practising?*) | `One new piece from the book, slowly. Keep going to the end — no stopping to fix mistakes.` |
+| **I can do this without my instrument** | off |
+| **Metronome** | off |
+
+Both toggles are off on purpose. The page says a freeform block has no tempo and no meter, and the
+figure should show the plain timer and your own words, not a click.
 
 ## 4 · Routines — 6 figures
 
@@ -173,7 +196,44 @@ The Tuner itself needs a microphone and is on the phone list, but its settings s
 |---|---|---|---|
 | `toolkit/tune-settings` | screen | Home ▸ **Toolkit** ▸ **Tuner** ▸ **Tune settings** | Instrument, Mode, Tuning, Reference pitch, Success chime |
 
-## 7 · A second pass on an unseeded device — 2 figures
+## 7 · Break one link — 1 figure, and it goes last
+
+`songs/missing-audio` needs a song whose audio cannot be found. It is **not** seeded and must not be:
+a seed change is retroactive and would invalidate the 33 figures already filed. Break the link by
+hand instead, at the very end of the seeded shoot, immediately before the erase in session 8.
+
+**Why it is safe, and why it was wrongly thought not to be.** This was parked on the belief that a
+broken song puts an audio-unavailable row into every library figure. It does not. `SongCard` renders
+title, artist, metadata, collections and mastery, and the library list never calls
+`SongAudioResolver` at all — a song with no audio behind it looks completely normal in the library.
+The state shows up in exactly two places: the player, and the **Audio** section of Song details.
+
+**Why it works.** `ScreenshotSeed.importReal` builds every seeded song with a bookmark into
+`Documents/SeedAudio/` and **no** `audioFileName` — a pre-0148-shaped song that resolves through
+that bookmark alone until something opens it and `SongAudioResolver.adoptIfNeeded` copies it into
+`Application Support/Songs/`. Remove what it resolves through and `resolve` returns `nil` for that
+song and nothing else.
+
+Use **I'd Rather Go Blind**: no figure in this list plays it, so nothing already shot is affected.
+Do not use Little Wing — it is `Song.sample()`, plays through the tone generator, and has no file to
+take away.
+
+```sh
+CONTAINER="$(xcrun simctl get_app_container "iPhone 17" click.decooperations.pocket data)"
+# The bookmark's target.
+mv "$CONTAINER/Documents/SeedAudio/I'd Rather Go Blind."* /tmp/
+# The owned copy, if the song has been opened at any point this session. Leaf names are
+# sourceID-keyed, so match on size rather than name; skip this if you never opened it.
+ls -l "$CONTAINER/Library/Application Support/Songs/"
+```
+
+| Slug | Role | How to get there | What must be in the frame |
+|---|---|---|---|
+| `songs/missing-audio` | panel | Open **I'd Rather Go Blind** for practice | The audio-unavailable notice over the player: the explanation, **Find the file**, **Not now** |
+
+Restoring is `mv` back, but session 8 erases the device anyway, so there is usually nothing to undo.
+
+## 8 · A second pass on an unseeded device — 2 figures
 
 These two need a device with **nothing on it**, which is the opposite of every figure above. Erase
 and install without the seed flags. (`getting-started/first-run` used to be on this list and is
@@ -196,7 +256,7 @@ xcrun simctl launch "iPhone 17" click.decooperations.pocket
 
 Do this pass **after** the seeded one — it destroys the seeded device.
 
-## 8 · On a real phone — 6 figures, marked DEVICE
+## 9 · On a real phone — 6 figures, marked DEVICE
 
 | Slug | Role | Why hardware |
 |---|---|---|
@@ -212,12 +272,12 @@ The subscription three need a real entitlement: no launch argument fakes one, an
 
 ---
 
-## Two that are blocked, and need a decision first
+## Nothing is blocked
 
-| Slug | Blocked on |
-|---|---|
-| `songs/missing-audio` | Nothing in the library has a broken file. Seeding one permanently would put an audio-unavailable row into **every** library figure above. The alternatives are to delete a staged audio file from the app container mid-session and shoot the state, or to shoot it by hand on a phone |
-| `exercises/freeform-run` | A fresh install seeds six drills and none is a *Your own practice* block. Author one by hand before shooting it — note that doing so adds a drill to the Exercises library, so shoot `exercises/library` **before** you create it |
+Both figures that were parked on a decision are now on the list. `songs/missing-audio` is session 7
+— it was parked on the belief that a broken song shows up in every library figure, which the source
+does not bear out. `exercises/freeform-run` is session 3, authored by hand rather than seeded, so
+that nothing already filed is invalidated; the cost is the ordering rule written beside it.
 
 ## Already filed — do not re-shoot
 

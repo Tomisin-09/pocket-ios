@@ -118,20 +118,23 @@ it.
 ## When a song loses its audio
 
 A song can end up with no audio behind it — most often a library imported by an older version of the
-app and carried through a reinstall or a restore from a backup. The song's row says so rather than
-failing silently when you try to play it.
+app and carried through a reinstall or a restore from a backup. The library row looks normal; you
+find out when you open the song, and the player says what happened rather than failing silently.
 
 <!-- shot: songs/missing-audio | role: panel
-     | alt: A song showing its audio-unavailable notice with the option to relink it to a file
-     | state: seeded library, a song whose file cannot be found, details open -->
+     | alt: A song's player showing the audio-unavailable notice, offering Find the file and Not now
+     | state: seeded library, a song whose file cannot be found, opened for practice -->
 
-**Relink** points the song at a file again. Use it rather than re-importing: a re-import creates a
-new song, and your loops, markers, takes and practice history stay attached to the old one. A relink
-keeps the row and replaces only the sound underneath it.
+**Find the file** points the song at a file again; **Not now** leaves it as it is. Use it rather
+than re-importing: a re-import creates a new song, and your loops, markers, takes and practice
+history stay attached to the old one. Pointing the song at a file again keeps the row and replaces
+only the sound underneath it.
 
-The same control fixes a song pointed at the *wrong* file. That case is worth knowing about, because
-relinking onto the wrong file succeeds quietly — the song plays, just not the song you expected — so
-check the audio is what you think it is after relinking.
+There is a second door that doesn't need the audio to be broken. **Song details** ▸ **Audio** ▸
+**Replace audio file…** does the same job at any time, and its **File** row reads **Missing** for a
+song with nothing left to play. That is also how you fix a song pointed at the *wrong* file — worth
+knowing about, because pointing a song at the wrong file succeeds quietly: it plays, just not the
+song you expected. Check the audio is what you think it is afterwards.
 
 **See Help & FAQs: "My song stopped playing — what happened?"**
 

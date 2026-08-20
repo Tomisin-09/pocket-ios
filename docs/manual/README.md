@@ -131,7 +131,7 @@ is a device the shoot cannot currently produce.
 | Markers | Needs | Status |
 |---|---|---|
 | `songs/empty-library` · `reference/loops-library` · `getting-started/first-run` | a launch with **no seed flags** — the seeded device has six songs with loops attached and skips the first-run questions | needs a second unseeded pass in `shoot-manual.sh`; does not exist |
-| `songs/missing-audio` | a song whose file cannot be found | not seeded, and seeding one permanently puts a broken row in **every** library figure — decide between that, breaking a file mid-run, and hand-shooting |
+| `songs/missing-audio` | a song whose file cannot be found | **solved — break the link mid-session, do not seed it.** `ScreenshotSeed.importReal` builds every seeded song with a bookmark into `Documents/SeedAudio/` and **no** `audioFileName`, so a seeded song is pre-0148-shaped and resolves through that bookmark alone until it is first opened. Delete one staged file (and the song's owned copy, if it has since adopted) and `SongAudioResolver.resolve` returns `nil` for that song and nothing else. Reversible — copy the master back. Recipe in `docs/manual-shoot-list.md` |
 | `subscription/settings-pro` · `subscription/trial-row` | a Pro entitlement and a running trial | no launch hook exists, and `AppTransaction.shared` prompts for sign-in on a simulator and leaves the app untappable — treat as `device:`, as `subscription/paywall` already is |
 | `toolkit/tuner` · `reference/tuner` | a microphone hearing a real string | already `device:`, noted in `ManualToolkitShots` |
 
