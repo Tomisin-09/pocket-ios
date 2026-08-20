@@ -81,7 +81,7 @@ the end of it and tap **Loop** again. That span now repeats.
 
 <!-- shot: getting-started/loop-active | role: band
      | alt: The waveform with a loop span drawn across it and the transport showing the loop active
-     | state: seeded library, Little Wing, a loop active and repeating -->
+     | state: seeded library, Slow Bend, a loop active and repeating -->
 
 If you would rather draw it, hold anywhere on the waveform and drag across the passage instead.
 

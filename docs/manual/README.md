@@ -135,7 +135,7 @@ is a device the shoot cannot currently produce.
 | `subscription/settings-pro` · `subscription/trial-row` | a Pro entitlement and a running trial | no launch hook exists, and `AppTransaction.shared` prompts for sign-in on a simulator and leaves the app untappable — treat as `device:`, as `subscription/paywall` already is |
 | `toolkit/tuner` · `reference/tuner` | a microphone hearing a real string | already `device:`, noted in `ManualToolkitShots` |
 
-Everything else the markers name resolves: `Little Wing`'s `Verse riff`, the `Binta` and `Feels`
+Everything else the markers name resolves: `Slow Bend`'s `Verse riff`, the `Binta` and `Feels`
 imports, the four collections behind the filter menu, and — since this pass — two ranked long-term
 goals and two extra routines.
 
@@ -178,7 +178,7 @@ human, and it is the first thing to reread when a page starts to feel thin.
 - **Take sharing.** Parked pending legal advice (ADR 0150).
 - ~~**The bundled demo song.**~~ **Resolved 2026-08-13, and it is not parked.** Walked in the
   build: `LibraryView`'s empty state still offers **Try the demo** beside **Import a song**, and it
-  inserts `Song.sample()` — Little Wing, with loops and markers already on it. ADR 0148 §7 does not
+  inserts `Song.sample()` — Slow Bend, with loops and markers already on it. ADR 0148 §7 does not
   describe what shipped. `songs.md` documents it.
 
 ## The shot markers
@@ -189,7 +189,7 @@ GitHub, so the repo copy still reads as prose, and the port turns it into an ima
 ```
 <!-- shot: looping/speed-bar | role: band
      | alt: The speed bar showing the speed control, the metronome and the BPM readout
-     | state: seeded library, Little Wing, speed reduced below 100% -->
+     | state: seeded library, Slow Bend, speed reduced below 100% -->
 ```
 
 - **`slug`** is `group/name` and names the *shot*, not the page. The same crop legitimately appears
@@ -216,7 +216,7 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
 
 - **Seed audio must be WAV.** `ScreenshotSeed` reads `Documents/SeedAudio/`, and the simulator's
   decoder silently fails on the `.m4a` masters — the seed then imports nothing, `importReal` returns
-  early, and the library shows one song (Little Wing, the built-in) instead of six. `afconvert -f
+  early, and the library shows one song (Slow Bend, the built-in) instead of six. `afconvert -f
   WAVE -d LEI16@44100` over the masters fixes it. A one-song library looks like a working seed, so
   check the count before shooting.
 - **The import picker is a separate process.** `app.screenshot()` returns a clean picture of Home

@@ -99,7 +99,7 @@ yourself later — a tuning, a capo position, what to listen for.
 
 <!-- shot: songs/song-edit | role: screen
      | alt: The Edit song sheet showing Title, Artist, Album and Genre fields with the Collections section beneath
-     | state: seeded library, song "Little Wing", edit sheet open -->
+     | state: seeded library, song "Slow Bend", edit sheet open -->
 
 The song's **details** show what the app knows and what it has worked out: **Tempo**, **Mastery**
 and **Length**, along with your practice stats for it. Mastery here is derived from the loops

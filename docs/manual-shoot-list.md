@@ -75,8 +75,8 @@ Home ▸ **Song library**. Shoot the destructive one last.
 | `songs/filter-menu` | panel | Tap the filter control, tick **blues** and **chill** | Several collections listed, exactly two ticked |
 | `reference/library-row-menu` | detail | Hold the **Binta** row | The menu: Details, Edit, Delete |
 | `gestures/row-hold-menu` | panel | *Same frame as `reference/library-row-menu`* | — |
-| `reference/song-details` | screen | Hold **Little Wing** ▸ **Details** | Title, artist, notes, key, tempo, mastery, length |
-| `reference/song-edit` | screen | Hold **Little Wing** ▸ **Edit** — top of the sheet | Title, artist, album, genre, year, BPM, downbeat, major/minor |
+| `reference/song-details` | screen | Hold **Slow Bend** ▸ **Details** | Title, artist, notes, key, tempo, mastery, length |
+| `reference/song-edit` | screen | Hold **Slow Bend** ▸ **Edit** — top of the sheet | Title, artist, album, genre, year, BPM, downbeat, major/minor |
 | `songs/song-edit` | screen | Same sheet, **scrolled to Collections** | The Collections section with its chips |
 | `songs/import-progress` | band | Home ▸ **+** ▸ select several files at once | The progress indicator over the library. Transient — have the shot command ready |
 | `gestures/undo-toast` | band | **Shoot last.** Swipe any row left to delete | The undo toast offering **Undo**. It stays up for 120s under this launch, so there is no rush — then tap Undo |
@@ -93,7 +93,7 @@ Relaunch with `-uiTesting` afterwards, or the rest of the list meets a paywall.
 
 ## 2 · Song player — 20 figures
 
-Open **Little Wing**. Most of the manual's mass is here.
+Open **Slow Bend**. Most of the manual's mass is here.
 
 | Slug | Role | How to get there | What must be in the frame |
 |---|---|---|---|
@@ -215,7 +215,7 @@ that bookmark alone until something opens it and `SongAudioResolver.adoptIfNeede
 song and nothing else.
 
 Use **I'd Rather Go Blind**: no figure in this list plays it, so nothing already shot is affected.
-Do not use Little Wing — it is `Song.sample()`, plays through the tone generator, and has no file to
+Do not use Slow Bend — it is `Song.sample()`, plays through the tone generator, and has no file to
 take away.
 
 ```sh
@@ -286,6 +286,12 @@ references section, the Practice hub, `reference/exercises-library`, `reference/
 `routines/library`, `routines/history` and `reference/long-term-goals`. Note that
 `reference/exercises-library` is done and **`exercises/library` is not** — they are two figures of
 the same screen on two different pages, and only the reference one has been shot.
+
+**One of those 33 now needs re-driving: `reference/long-term-goals`.** The demo song was retitled
+off Jimi Hendrix on 2026-08-20 (it ships — `LibraryView.addDemo` inserts it behind *Try the demo*),
+and the seeded goal that figure photographs reads *Play Slow Bend end to end*. The filed image still
+says *Little Wing*. Nothing else in the filed set names a renamed song; the library figures, which
+carry the three renamed artists, are all still ahead of you.
 
 `./scripts/check-manual.py --list` prints exactly which remain at any moment. That count is the
 progress metric; this file is a working sheet and will drift the moment a page gains a marker.

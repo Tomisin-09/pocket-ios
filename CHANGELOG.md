@@ -178,6 +178,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   points and opens the full skill catalogue, for when none of them is quite what you mean.
 
 ### Changed
+- **The demo song is now *Slow Bend* by *Jack Trader*.** The song behind **Try the demo** on an empty
+  library used to present itself as *Little Wing* by Jimi Hendrix, from *Axis: Bold as Love*. Its
+  audio was always a generated arpeggio — nothing was ever reproduced — but a real musician's name
+  and album carried as demo content in a released build is a claim we should not be making. Its
+  loops (**Verse riff**, **Chorus bend**) and markers are unchanged. A demo song already added to
+  your library keeps the name it was given.
 - **The planner's `Goals` section is now `This session`.** With two kinds of goal, the old heading
   no longer said which one it meant. Adding one reads **Add a goal for this session**.
 

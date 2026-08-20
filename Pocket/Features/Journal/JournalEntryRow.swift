@@ -87,7 +87,7 @@ struct JournalEntryRow: View {
     }
 }
 
-/// The **owner attribution** under a feed item — "Little Wing · Verse riff", "Spider · exercise".
+/// The **owner attribution** under a feed item — "Slow Bend · Verse riff", "Spider · exercise".
 /// A link when the owner has somewhere to go (ADR 0142), plain text otherwise, so the affordance is
 /// never a promise the tap can't keep.
 ///

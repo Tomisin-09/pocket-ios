@@ -72,7 +72,7 @@ enum CandidateDeriver {
     /// — every song run, and every exercise except the one kind that says otherwise — and **pin** the
     /// loops that survive to the constraint's mode
     /// rather than dropping the ones whose resolving skill chose differently. Pinning is what lets a
-    /// "learn Little Wing" goal contribute to an off-guitar session at all: its loops arrive as
+    /// "learn Slow Bend" goal contribute to an off-guitar session at all: its loops arrive as
     /// trainer blocks with a ramp you cannot run on a train, and leave as ear work on the same
     /// material. Filtering instead would have made the constrained session reachable only by players
     /// who happen to hold an ear goal.

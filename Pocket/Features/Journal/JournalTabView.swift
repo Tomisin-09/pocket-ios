@@ -346,8 +346,8 @@ private enum JournalTabPreview {
         let now = Date()
 
         let song = Song.sample()
-        song.title = "Little Wing"
-        song.artist = "Jimi Hendrix"
+        song.title = "Slow Bend"
+        song.artist = "Jack Trader"
         let loop = Loop(name: "Verse riff", start: 0.2, end: 0.35, speed: 0.9, repeats: 4)
         loop.mastery = 3
         loop.commandTempo = 0.9

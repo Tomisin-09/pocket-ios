@@ -85,7 +85,7 @@ A read-only summary, with `Edit` in its toolbar.
 
 <!-- shot: reference/song-details | role: screen
      | alt: The Song details sheet showing the title and artist, notes, key, tempo, mastery, length and the audio file section
-     | state: seeded library, Little Wing, Details from the row hold menu -->
+     | state: seeded library, Slow Bend, Details from the row hold menu -->
 
 - The title, artist, and album with its year.
 - `Notes` — free text about the song, with `Edit notes`.
@@ -106,7 +106,7 @@ A read-only summary, with `Edit` in its toolbar.
 
 <!-- shot: reference/song-edit | role: screen
      | alt: The Edit song sheet with title, artist, album, genre, year, BPM, downbeat and the major/minor key picker
-     | state: seeded library, Little Wing, Edit from the row hold menu -->
+     | state: seeded library, Slow Bend, Edit from the row hold menu -->
 
 `Cancel` discards, `Done` keeps. It carries:
 

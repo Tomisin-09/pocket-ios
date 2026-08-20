@@ -1,7 +1,7 @@
 import Foundation
 
 /// **Where an entry's owner caption leads** (ADR 0142). The Journal space renders an owner label on
-/// every item — "Little Wing · Verse riff", "Spider · exercise" — and until now it was dead text: the
+/// every item — "Slow Bend · Verse riff", "Spider · exercise" — and until now it was dead text: the
 /// one place in the app that names a unit and can't take you to it.
 ///
 /// Pure and UI-free, like its sibling `JournalTimeline`, so which screen an item points at is decided

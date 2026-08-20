@@ -18,7 +18,7 @@ private struct PreviewSeed {
               mastery: 1, collections: ["blues", "needs-work"]),
         .init(title: "Apex", artist: "Arc", genre: "Rock",
               mastery: 5, collections: ["rock"]),
-        .init(title: "Little Wing", artist: "Jimi Hendrix", genre: "Rock",
+        .init(title: "Slow Bend", artist: "Jack Trader", genre: "Rock",
               mastery: 2, collections: []),
         .init(title: "3 Strikes", artist: "", genre: "",
               mastery: nil, collections: ["needs-work"])

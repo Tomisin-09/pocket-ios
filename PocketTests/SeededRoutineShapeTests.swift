@@ -67,8 +67,8 @@ final class SeededRoutineShapeTests: XCTestCase {
             exercise.presetSlug = spec.slug
             context.insert(exercise)
         }
-        let song = Song(title: "Little Wing", duration: 100,
-                        ref: SongRef(id: "little-wing", source: .localFile, bookmark: nil))
+        let song = Song(title: "Any Song", duration: 100,
+                        ref: SongRef(id: "any-song", source: .localFile, bookmark: nil))
         context.insert(song)
         let loop = Loop(name: "Solo", start: 0.1, end: 0.4, speed: 1, repeats: 1)
         loop.song = song
@@ -121,8 +121,13 @@ final class SeededRoutineShapeTests: XCTestCase {
     @MainActor
     func testSeededGoalsAreRankedAndOneTargetsItsSong() throws {
         let context = try makeContext()
-        let song = Song(title: "Little Wing", duration: 100,
-                        ref: SongRef(id: "little-wing", source: .localFile, bookmark: nil))
+        // Titled from `Song.sample()` rather than by hand. `seedLongTermGoals` finds its target
+        // song by matching that title, so a fixture inventing its own would agree with the seed
+        // no matter what the demo song is actually called — and the rename that desyncs them
+        // would leave the goal with no target and this test still green. Deriving it here is
+        // what makes the assertion below a claim about the app instead of about itself.
+        let song = Song(title: Song.sample().title, duration: 100,
+                        ref: SongRef(id: "demo-song", source: .localFile, bookmark: nil))
         context.insert(song)
         try context.save()
 
@@ -133,7 +138,8 @@ final class SeededRoutineShapeTests: XCTestCase {
         let goals = try context.fetch(FetchDescriptor<LongTermGoal>()).sorted { $0.order < $1.order }
         XCTAssertEqual(goals.map(\.order), [0, 1], "ranks are contiguous from zero")
         XCTAssertNil(goals[0].targetSong, "rank 1 is the skills-only shape")
-        XCTAssertEqual(goals[1].targetSong?.title, "Little Wing")
+        XCTAssertEqual(goals[1].targetSong?.title, Song.sample().title,
+                       "the seed's title lookup has drifted from the demo song")
         // Every id resolves, or the row's skill count is quietly one short in the photograph.
         for goal in goals {
             XCTAssertFalse(goal.skillIDs.isEmpty)

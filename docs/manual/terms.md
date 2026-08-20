@@ -28,7 +28,7 @@ listens to you play or assigns it for you.
 
 <!-- shot: terms/mastery-info | role: detail
      | alt: The Mastery row in the loop edit sheet with its ⓘ popover open, showing the definition
-     | state: seeded library, Little Wing, loop "Verse riff" edit sheet, ⓘ tapped on Mastery -->
+     | state: seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Mastery -->
 
 An untouched loop shows no rating at all rather than a zero. That is deliberate: a loop you have
 never assessed and a loop you have assessed as poor are different things, and only one of them
@@ -53,7 +53,7 @@ percentage of the song's original speed, so 100% means you have it at the tempo 
 
 <!-- shot: terms/command-tempo-info | role: detail
      | alt: The Command tempo row in the loop edit sheet with its ⓘ popover open
-     | state: seeded library, Little Wing, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo -->
+     | state: seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo -->
 
 Because the two axes are independent, a loop can sit at a high command tempo and a low mastery —
 you can get through it at full speed, but it is scrappy. That combination is a useful thing to be

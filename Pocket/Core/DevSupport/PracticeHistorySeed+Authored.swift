@@ -45,15 +45,15 @@ extension PracticeHistorySeed {
 
         // Pinned by title, like `seedReferences`' exercise: an unsorted fetch returns store order,
         // and a figure whose subject can move goes wrong without anything failing.
-        let littleWing = songs.first { $0.title == "Little Wing" }
+        let demoSong = songs.first { $0.title == "Slow Bend" }
 
         let specs = [
             GoalSpec(title: "Improvise over a blues without thinking about it",
                      skillIDs: ["scale.pentatonic", "scale.blues", "improv.vocabulary"],
                      targetSong: nil),
-            GoalSpec(title: "Play Little Wing end to end",
+            GoalSpec(title: "Play Slow Bend end to end",
                      skillIDs: ["rep.learn-song", "fret.slide", "rhythm.chord-changes"],
-                     targetSong: littleWing)
+                     targetSong: demoSong)
         ]
 
         for (index, spec) in specs.enumerated() {

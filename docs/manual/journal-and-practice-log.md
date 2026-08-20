@@ -171,13 +171,13 @@ A take with a note, a moment, or both gets the small marker on its row.
 ## Finding something again
 
 - The **All · Notes · Takes** control at the top narrows the feed to one or the other.
-- **Search** matches song, exercise, template and date — so *Little Wing*, *Legato* or a month name
+- **Search** matches song, exercise, template and date — so *Slow Bend*, *Legato* or a month name
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you
   read forwards through a stretch of work rather than backwards.
 - Days are grouped under **Today**, **Yesterday** and then dated headers.
 
-The caption under a note or take names what it was about — *Little Wing · Verse riff*, *Spider ·
+The caption under a note or take names what it was about — *Slow Bend · Verse riff*, *Spider ·
 exercise* — and where it has somewhere to go it is a link with a chevron. Tap it to open the thing
 itself. A caption with no chevron is a subject that no longer exists, or one with no screen to open,
 so the affordance is never a promise the tap cannot keep. The pills on a session note behave the
