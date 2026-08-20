@@ -13,6 +13,49 @@ specific device state, and re-shooting one by hand puts a different library in i
 
 ---
 
+## Start here
+
+**One driven run goes first, and it is not yours to take.** Twelve figures listed for months as
+already filed have no image on disk, and `reference/long-term-goals` is stale since the demo song
+was renamed. All thirteen already have a `capture()` in the harness, so a single run files them —
+thirteen you do not hand-shoot.
+
+```sh
+./scripts/shoot-manual.sh          # ~9 min, erases the sim, drives and files
+```
+
+It **erases the device**, so it has to happen before any hand session, not between two.
+
+### Then, once per session
+
+```sh
+POCKET_SHOOT_PREPARE=1 ./scripts/shoot-manual.sh
+mkdir -p ~/Desktop/manual-shots
+xcrun simctl io "iPhone 17" screenshot ~/Desktop/manual-shots/songs-library-row.png
+```
+
+Shoot the session's table top to bottom, saving each frame as its slug with `/` becoming `-`. That
+folder is one of the directories `shoot-progress.py` scans, so a shot counts the moment you save it
+— there is nothing to import.
+
+### Where you got to
+
+```sh
+./scripts/shoot-progress.py            # shot / left, grouped by page
+./scripts/shoot-progress.py --verify   # geometry, unexpected duplicates, truncated files
+./scripts/shoot-progress.py --remaining
+```
+
+**The images are the state.** Nothing needs writing down between sessions. That matters more than it
+sounds: C13 counts `capture()` calls in the test source, so a hand shoot would never have moved it —
+it would have read 33 of 97 forever while the work went on, which is also how twelve missing images
+went unnoticed.
+
+`--verify` catches the three failures that still produce a *file*, and so read as success everywhere
+else: identical images (the missed-tap signature), a frame that is not the 1206×2622 master every
+recorded crop is measured against, and truncated captures. What it cannot catch is a frame that is
+the right size and unique and shows the wrong screen. That one needs eyes.
+
 ## Set the device up first
 
 ```sh
