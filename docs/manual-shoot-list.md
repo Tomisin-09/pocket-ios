@@ -214,14 +214,14 @@ that bookmark alone until something opens it and `SongAudioResolver.adoptIfNeede
 `Application Support/Songs/`. Remove what it resolves through and `resolve` returns `nil` for that
 song and nothing else.
 
-Use **I'd Rather Go Blind**: no figure in this list plays it, so nothing already shot is affected.
+Use **I'd Rather Go Blind (Cover)**: no figure in this list plays it, so nothing already shot is affected.
 Do not use Slow Bend — it is `Song.sample()`, plays through the tone generator, and has no file to
 take away.
 
 ```sh
 CONTAINER="$(xcrun simctl get_app_container "iPhone 17" click.decooperations.pocket data)"
 # The bookmark's target.
-mv "$CONTAINER/Documents/SeedAudio/I'd Rather Go Blind."* /tmp/
+mv "$CONTAINER/Documents/SeedAudio/I'd Rather Go Blind (Cover)."* /tmp/
 # The owned copy, if the song has been opened at any point this session. Leaf names are
 # sourceID-keyed, so match on size rather than name; skip this if you never opened it.
 ls -l "$CONTAINER/Library/Application Support/Songs/"
@@ -229,7 +229,7 @@ ls -l "$CONTAINER/Library/Application Support/Songs/"
 
 | Slug | Role | How to get there | What must be in the frame |
 |---|---|---|---|
-| `songs/missing-audio` | panel | Open **I'd Rather Go Blind** for practice | The audio-unavailable notice over the player: the explanation, **Find the file**, **Not now** |
+| `songs/missing-audio` | panel | Open **I'd Rather Go Blind (Cover)** for practice | The audio-unavailable notice over the player: the explanation, **Find the file**, **Not now** |
 
 Restoring is `mv` back, but session 8 erases the device anyway, so there is usually nothing to undo.
 
@@ -291,7 +291,7 @@ the same screen on two different pages, and only the reference one has been shot
 off Jimi Hendrix on 2026-08-20 (it ships — `LibraryView.addDemo` inserts it behind *Try the demo*),
 and the seeded goal that figure photographs reads *Play Slow Bend end to end*. The filed image still
 says *Little Wing*. Nothing else in the filed set names a renamed song; the library figures, which
-carry the three renamed artists, are all still ahead of you.
+now show every row as Jack Trader, are all still ahead of you.
 
 `./scripts/check-manual.py --list` prints exactly which remain at any moment. That count is the
 progress metric; this file is a working sheet and will drift the moment a page gains a marker.
