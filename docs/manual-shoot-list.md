@@ -5,8 +5,9 @@ each figure has to show. Derived from the `<!-- shot: -->` markers in the pages 
 source of truth, and `docs/manual/shots.md` stays the generated index. This file is the working
 sheet you hold while shooting.
 
-**80 of 101 figures remain**: 68 by hand across the nine sessions below, 12 that a harness run
-files on its own, and 6 that need a real phone. Nothing is parked on a decision any more.
+**68 of 101 figures remain**, and every one of them needs a hand: 62 on the simulator across the
+nine sessions below, 6 on a real phone. **The driven half is finished** — 33 images are filed from
+one green run. Nothing is parked on a decision.
 `./scripts/shoot-progress.py` is the live count — it reads the images, so it is the one number
 that survives a session ending. 33 are already filed from driven runs and must not be re-shot: they came off a
 specific device state, and re-shooting one by hand puts a different library in it.
@@ -324,33 +325,20 @@ Both figures that were parked on a decision are now on the list. `songs/missing-
 does not bear out. `exercises/freeform-run` is session 3, authored by hand rather than seeded, so
 that nothing already filed is invalidated; the cost is the ordering rule written beside it.
 
-## Already filed, and the twelve that only looked filed
+## Already filed — 33, and do not re-shoot them
 
-**21 images exist, not 33.** That number came from `check-manual.py`'s C13, which counts
-`capture()` calls in `PocketUITests/Manual*.swift` — a count of what the harness *intends* to
-shoot, never of what it produced. Three driven runs failed part-way through, and a shoot that
-exits before filing leaves the `capture()` behind in the source with no image on disk. Nothing
-objected, because no check reads the image directory.
+One green run on 2026-08-20 filed the lot: 23 frames, 10 of which serve a second marker as well.
 
-`./scripts/shoot-progress.py` reads the images. It is the progress metric now; C13 is not, and
-cannot be, because a hand shoot never adds a `capture()`.
+**Two things had to be fixed to get there, and both had been silently true for a while.**
+`ManualToolkitShots.testFAQ` was asserting on FAQ copy that the positioning reframe rewrote on
+2026-08-17, and `ManualPracticeShots.testLongTermGoals` still expected the old demo-song title. A
+failed shoot never reaches the filing step, so each of them cost a whole run.
 
-**Genuinely filed (21)** — Home, the Journal, Progress, Settings, the Metronome, the Toolkit, the
-references section, the Practice hub, `reference/exercises-library`, `routines/library` and
-`routines/history`. Note `reference/exercises-library` is done and **`exercises/library` is not** —
-two figures of the same screen on two different pages.
+**And ten figures could never have been filed at all.** `capture(…, alsoServing:)` shoots one frame
+for several markers — `journal/progress` also serves `reference/progress` and
+`journal/month-heatmap` — but the image was attached once, under the primary slug, with the shared
+names recorded only in an *"also serves:"* line inside the `.context`. Every marker places an image
+on its own page, so every marker needs a file. `file-shots.py` now copies them. Nothing had noticed,
+because C13 counts the `capture()` call, which covers all of them, and nothing counted files.
 
-**Driven, but no image (12)** — these already have a `capture()`, so one harness run files them all
-rather than twelve hand shots:
-
-    getting-started/home        journal/month-heatmap       metronome/tempo-controls
-    privacy/settings            reference/journal           reference/metronome
-    reference/metronome-settings reference/progress         reference/routines-library
-    reference/toolkit           references/editor           references/section
-
-**Stale (1)** — `reference/long-term-goals` is on disk but photographs the goal that now reads
-*Play Slow Bend end to end*. It has a `capture()`, so the same run replaces it.
-
-So the driven run recovers **13**, and the nine sessions above are the **68** that need a hand.
-21 + 13 + 68 = 101. Run the driven one **first**: it erases the device, which would destroy a
-part-finished hand session.
+`./scripts/shoot-progress.py` counts files. Run it rather than trusting this paragraph.

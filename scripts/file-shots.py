@@ -109,8 +109,40 @@ def main():
                 shutil.copy2(source, filed / f"{slug}{suffix}")
                 images += int(suffix == ".png")
 
-    print(f"\n  {images} image(s) filed into {filed}  ({len(slugs) - len(found)} of "
+    # One frame legitimately serves several markers — `capture(…, alsoServing:)` — and until now
+    # only the primary got a file. The shared slugs were recorded in an "also serves:" line inside
+    # the `.context` text and nowhere else, so a fully green shoot left ten markers with no image
+    # while every check agreed it had succeeded: C13 counts the `capture()` call, which covers all
+    # of them, and nothing counted files. Each marker places an image on its own page, so each
+    # needs one on disk.
+    #
+    # Copied rather than symlinked: these are uploaded to the site repo, where a link would arrive
+    # as a dangling file, and a figure is small.
+    aliases = 0
+    for context in sorted(filed.glob("*.context")):
+        primary = context.with_suffix(".png")
+        if not primary.exists():
+            continue
+        for raw in context.read_text(encoding="utf-8").splitlines():
+            if not raw.startswith("also serves:"):
+                continue
+            for shared in raw.split(":", 1)[1].split(","):
+                name = shared.strip().replace("/", "-")
+                if not name:
+                    continue
+                if name not in slugs:
+                    print(f"  ⚠️  '{shared.strip()}' is served by {context.stem} but is not a "
+                          f"marker in any page")
+                    continue
+                shutil.copy2(primary, filed / f"{name}.png")
+                shutil.copy2(context, filed / f"{name}.context")
+                aliases += 1
+                images += 1
+
+    print(f"\n  {images} image(s) filed into {filed}  ({len(slugs) - len(found) - aliases} of "
           f"{len(slugs)} manual slugs still unshot)")
+    if aliases:
+        print(f"  {aliases} of those are shared frames, copied from the figure that shot them.")
     for slug in sorted(unplaced):
         print(f"  ⚠️  '{slug}' was captured but is not a marker in any page — check the slug "
               f"in the test against docs/manual/shots.md")

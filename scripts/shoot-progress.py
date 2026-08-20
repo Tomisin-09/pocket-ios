@@ -76,17 +76,43 @@ def figures():
     return [(slug, role, page, bool(device)) for slug, role, page, _state, device in rows]
 
 
-def intentional_pairs():
-    """Slug pairs the shot list says share one frame, so --verify does not cry wolf.
+def intentional_pairs(dirs):
+    """Every pair of slugs that is *meant* to be one frame, so --verify does not cry wolf.
 
-    Parsed from the list rather than listed here: the sheet is what a person shoots by, and
-    an exception that disagrees with it would report a real duplicate as expected (or the
-    reverse) on the next reshuffle.
+    There are two ways a shared frame gets declared and both have to be read, which the first
+    version of this got wrong by reading only the first:
+
+      * **A hand shot** says so in the shot list — *same frame as `slug`* — because that sheet is
+        what a person shoots by.
+      * **A driven shot** says so in the harness, `capture(…, alsoServing:)`, and the filed
+        `.context` beside the image carries it as an "also serves:" line.
+
+    Reading the `.context` is better than re-reading the Swift: it is what was true of the frame
+    actually on disk, so a test edited after the shoot cannot make a stale exception look current.
     """
-    if not SHOOT_LIST.exists():
-        return set()
-    text = SHOOT_LIST.read_text(encoding="utf-8")
-    return {frozenset(pair) for pair in SAME_FRAME.findall(text)}
+    pairs = set()
+    if SHOOT_LIST.exists():
+        pairs |= {frozenset(pair) for pair in SAME_FRAME.findall(
+            SHOOT_LIST.read_text(encoding="utf-8"))}
+    for directory in dirs:
+        if not directory.is_dir():
+            continue
+        for context in directory.glob("*.context"):
+            text = context.read_text(encoding="utf-8", errors="replace")
+            primary = ""
+            shared = []
+            for raw in text.splitlines():
+                if raw.startswith("slug:"):
+                    primary = raw.split(":", 1)[1].strip()
+                elif raw.startswith("also serves:"):
+                    shared = [s.strip() for s in raw.split(":", 1)[1].split(",") if s.strip()]
+            for other in shared:
+                pairs.add(frozenset((primary, other)))
+            # Two aliases of one frame are identical to each other, not only to the primary.
+            for i, a in enumerate(shared):
+                for b in shared[i + 1:]:
+                    pairs.add(frozenset((a, b)))
+    return pairs
 
 
 def png_size(path):
@@ -162,7 +188,7 @@ def main():
 
     if args.verify:
         print()
-        problems = verify(on_disk, rows)
+        problems = verify(on_disk, rows, dirs)
         if problems:
             print("verify — %d thing(s) to look at:" % len(problems))
             for line in problems:
@@ -173,7 +199,7 @@ def main():
     return 0
 
 
-def verify(on_disk, rows):
+def verify(on_disk, rows, dirs):
     """The three failures that still produce a file. Returns a list of complaints."""
     wanted = {slug.replace("/", "-"): slug for slug, _r, _p, _d in rows}
     problems = []
@@ -195,16 +221,16 @@ def verify(on_disk, rows):
                             "— recorded crops will not land on this frame")
         digests.setdefault(hashlib.md5(path.read_bytes()).hexdigest(), []).append(wanted[stem])
 
-    expected = intentional_pairs()
+    expected = intentional_pairs(dirs)
     for slugs in digests.values():
         if len(slugs) < 2:
             continue
-        if len(slugs) == 2 and frozenset(slugs) in expected:
+        if all(frozenset((a, b)) in expected
+               for i, a in enumerate(sorted(slugs)) for b in sorted(slugs)[i + 1:]):
             continue
         problems.append("identical images: " + ", ".join(sorted(slugs))
-                        + " — a missed tap photographs the previous state twice"
-                        + (" (not listed as a shared frame in the shot list)"
-                           if len(slugs) == 2 else ""))
+                        + " — a missed tap photographs the previous state twice, and neither the "
+                        "shot list nor the filed .context declares these a shared frame")
     return problems
 
 
