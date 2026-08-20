@@ -82,7 +82,7 @@ marker grammar in [README.md](README.md).
 | `reference/song-edit` | `screen` | `home-and-library` | seeded library, Slow Bend, Edit from the row hold menu |  |
 | `reference/tempo-editor` | `screen` | `song-player` | seeded library, Slow Bend, tempo editor open |  |
 | `reference/toolkit` | `screen` | `tools-and-journal` | Toolkit open |  |
-| `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed |  |
+| `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 | `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
 | `references/section` | `panel` | `references` | seeded library, an exercise detail sheet with two links saved, one of them carrying a note, scrolled to the section |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
@@ -123,6 +123,6 @@ marker grammar in [README.md](README.md).
 | `toolkit/hub` | `screen` | `toolkit` | Toolkit open, some saved chords present |  |
 | `toolkit/my-chords` | `screen` | `toolkit` | Toolkit ▸ My chords, three or more saved chords |  |
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
-| `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
+| `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
 105 shots across 19 pages.

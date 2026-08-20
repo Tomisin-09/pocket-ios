@@ -5,8 +5,10 @@ each figure has to show. Derived from the `<!-- shot: -->` markers in the pages 
 source of truth, and `docs/manual/shots.md` stays the generated index. This file is the working
 sheet you hold while shooting.
 
-**68 of 101 figures remain**, all of them on the nine sessions below — nothing is parked on a
-decision any more. 33 are already filed from driven runs and must not be re-shot: they came off a
+**80 of 101 figures remain**: 68 by hand across the nine sessions below, 12 that a harness run
+files on its own, and 6 that need a real phone. Nothing is parked on a decision any more.
+`./scripts/shoot-progress.py` is the live count — it reads the images, so it is the one number
+that survives a session ending. 33 are already filed from driven runs and must not be re-shot: they came off a
 specific device state, and re-shooting one by hand puts a different library in it.
 
 ---
@@ -279,19 +281,33 @@ Both figures that were parked on a decision are now on the list. `songs/missing-
 does not bear out. `exercises/freeform-run` is session 3, authored by hand rather than seeded, so
 that nothing already filed is invalidated; the cost is the ordering rule written beside it.
 
-## Already filed — do not re-shoot
+## Already filed, and the twelve that only looked filed
 
-The 33 driven figures cover Home, the Journal, Progress, Settings, the Metronome, the Toolkit, the
-references section, the Practice hub, `reference/exercises-library`, `reference/routines-library`,
-`routines/library`, `routines/history` and `reference/long-term-goals`. Note that
-`reference/exercises-library` is done and **`exercises/library` is not** — they are two figures of
-the same screen on two different pages, and only the reference one has been shot.
+**21 images exist, not 33.** That number came from `check-manual.py`'s C13, which counts
+`capture()` calls in `PocketUITests/Manual*.swift` — a count of what the harness *intends* to
+shoot, never of what it produced. Three driven runs failed part-way through, and a shoot that
+exits before filing leaves the `capture()` behind in the source with no image on disk. Nothing
+objected, because no check reads the image directory.
 
-**One of those 33 now needs re-driving: `reference/long-term-goals`.** The demo song was retitled
-off Jimi Hendrix on 2026-08-20 (it ships — `LibraryView.addDemo` inserts it behind *Try the demo*),
-and the seeded goal that figure photographs reads *Play Slow Bend end to end*. The filed image still
-says *Little Wing*. Nothing else in the filed set names a renamed song; the library figures, which
-now show every row as Jack Trader, are all still ahead of you.
+`./scripts/shoot-progress.py` reads the images. It is the progress metric now; C13 is not, and
+cannot be, because a hand shoot never adds a `capture()`.
 
-`./scripts/check-manual.py --list` prints exactly which remain at any moment. That count is the
-progress metric; this file is a working sheet and will drift the moment a page gains a marker.
+**Genuinely filed (21)** — Home, the Journal, Progress, Settings, the Metronome, the Toolkit, the
+references section, the Practice hub, `reference/exercises-library`, `routines/library` and
+`routines/history`. Note `reference/exercises-library` is done and **`exercises/library` is not** —
+two figures of the same screen on two different pages.
+
+**Driven, but no image (12)** — these already have a `capture()`, so one harness run files them all
+rather than twelve hand shots:
+
+    getting-started/home        journal/month-heatmap       metronome/tempo-controls
+    privacy/settings            reference/journal           reference/metronome
+    reference/metronome-settings reference/progress         reference/routines-library
+    reference/toolkit           references/editor           references/section
+
+**Stale (1)** — `reference/long-term-goals` is on disk but photographs the goal that now reads
+*Play Slow Bend end to end*. It has a `capture()`, so the same run replaces it.
+
+So the driven run recovers **13**, and the nine sessions above are the **68** that need a hand.
+21 + 13 + 68 = 101. Run the driven one **first**: it erases the device, which would destroy a
+part-finished hand session.

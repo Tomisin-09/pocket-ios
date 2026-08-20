@@ -130,7 +130,8 @@ Reached from `Toolkit` on Home. Four sections, each carrying a count or a state.
 
 <!-- shot: reference/tuner | role: screen
      | alt: The tuner listening, with the note disc, the cents gauge, the string circles and the reference pitch caption
-     | state: Toolkit ▸ Tuner, microphone allowed -->
+     | state: Toolkit ▸ Tuner, microphone allowed
+     | device: iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge -->
 
 It needs the microphone; refused, it says `Microphone access is off` and offers `Open Settings`.
 

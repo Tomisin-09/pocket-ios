@@ -309,6 +309,21 @@ A check whose page does not exist yet reports **pending**, not failure — that 
 machinery land before the prose. What it cannot check is whether a page is *true*: only somebody
 with the build open can say that, which is why every slice ends with a walk through the app.
 
+**C13 is not a measure of how much of the shoot is done, and never was.** It counts `capture()`
+calls in `PocketUITests/Manual*.swift`, which is what the harness *intends* to shoot. A run that
+fails part-way leaves the call in the source with no image on disk, and a hand shoot adds no calls
+at all — so C13 read 33 while 21 images existed. Ask the images:
+
+```sh
+./scripts/shoot-progress.py            # shot / left, grouped by page
+./scripts/shoot-progress.py --verify   # geometry, unexpected duplicates, truncated files
+./scripts/shoot-progress.py --remaining
+```
+
+It shares this script's marker parse rather than re-reading the generated `shots.md`, for the
+reason the rest of this file gives: a second parser for a fact that already has an owner gets it
+wrong, and its first version did — 98 figures of 101, and 1 device figure of 4.
+
 ## The coverage audit — run 2026-08-14, at the end of the reference wing
 
 ADR 0165 calls this the manual's definition of done: every surface ticked against a heading, and
