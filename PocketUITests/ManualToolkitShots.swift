@@ -70,9 +70,17 @@ final class ManualToolkitShots: ManualShotCase {
 
         // Matched by prefix: the answer is a paragraph assembled from four concatenated string
         // literals and wrapped across however many lines the layout gives it.
+        //
+        // **This is app copy, and `FAQEntry.all` owns it.** The prefix below went stale in 1ab4ff2
+        // (the positioning reframe rewrote the answer) and nothing noticed until a shoot failed on
+        // it three days later, after fifteen minutes of driving — a failed shoot never reaches the
+        // filing step, so the whole run produced nothing. Asserting on the *question* instead would
+        // never go stale, and would also never fail: the question is on screen before the tap, so a
+        // swallowed tap would photograph a collapsed row and pass. The answer is the only thing
+        // that proves the row opened, so it stays, and it stays copy-bound on purpose.
         capture(app, slug: "toolkit/faq",
                 assertingOnScreen: "Help & FAQs",
-                orBeginningWith: ["A practice room for your own material"])
+                orBeginningWith: ["A practice room that runs on music you already own"])
     }
 
     // MARK: - Navigation

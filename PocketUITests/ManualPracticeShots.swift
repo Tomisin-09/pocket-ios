@@ -111,7 +111,7 @@ final class ManualPracticeShots: ManualShotCase {
                arrivingAt: app.navigationBars["Long-term goals"], called: "the long-term goal list")
         capture(app, slug: "reference/long-term-goals",
                 assertingOnScreen: "Long-term goals",
-                orBeginningWith: ["Play Little Wing end to end"])
+                orBeginningWith: ["Play Slow Bend end to end"])
     }
 
     // MARK: - Navigation

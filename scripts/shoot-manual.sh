@@ -163,9 +163,9 @@ if [ -d "$SEED_AUDIO_SRC" ]; then
         count=$((count + 1))
     done
     echo "  $count file(s) staged"
-    [ "$count" -ge 5 ] || echo "  ⚠️  fewer than 5 — the library shots expect six songs including Little Wing"
+    [ "$count" -ge 5 ] || echo "  ⚠️  fewer than 5 — the library shots expect six songs including Slow Bend"
 else
-    echo "⚠️  no seed audio at '$SEED_AUDIO_SRC' — the shoot will run with Little Wing only." >&2
+    echo "⚠️  no seed audio at '$SEED_AUDIO_SRC' — the shoot will run with Slow Bend only." >&2
     echo "   Set POCKET_SEED_AUDIO to the masters directory." >&2
 fi
 
