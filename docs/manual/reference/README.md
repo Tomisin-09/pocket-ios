@@ -9,7 +9,7 @@ control on them.
 | [home-and-library](home-and-library.md) | Home, the first run, the Song library and its sheets |
 | [song-player](song-player.md) | The waveform screen band by band, its sheets, landscape |
 | [practice](practice.md) | The Practice hub, Today's session, Routines, Exercises, Loops |
-| [tools-and-journal](tools-and-journal.md) | Metronome, Journal, Progress, Toolkit |
+| [tools-and-journal](tools-and-journal.md) | Metronome, Journal, Practice log, Toolkit |
 | [settings](settings.md) | Reaching Settings, and each of its nine destinations |
 
 ## How to read a page here

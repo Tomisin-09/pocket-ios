@@ -81,19 +81,23 @@ struct JournalSheet: View {
     }
 
     /// The empty-state prompt — nudges what to write.
+    ///
+    /// Says **write**, never *log*: ADR 0176 gives "practice log" to the counted-up screen, and one
+    /// word cannot be both the noun for minutes the app records by itself and the verb for a
+    /// sentence the player types.
     private var emptyMessage: String {
         switch owner {
         case .loop:
-            return "No entries yet. Log a goal, a breakthrough, or what's fighting back — each "
+            return "No entries yet. Write down a goal, a breakthrough, or what's fighting back — each "
                 + "entry remembers your mastery and command tempo at the time."
         case .exercise:
-            return "No entries yet. Log a goal, a breakthrough, or what's fighting back — each "
+            return "No entries yet. Write down a goal, a breakthrough, or what's fighting back — each "
                 + "entry remembers your command tempo at the time."
         case .session:
             // Unreachable — this sheet is presented per *unit*, and a session owner holds no journal
             // to browse (ADR 0143). Written out rather than defaulted so the string stays true if a
             // later surface ever does hand one over.
-            return "No entries yet. Log how a session went — each entry remembers what you practised."
+            return "No entries yet. Write down how a session went — each entry remembers what you practised."
         case .standalone:
             // Unreachable for the same reason `.session` is, and one step further: a standalone owner
             // holds no journal *and* snapshots nothing (ADR 0155). If a later surface ever does hand

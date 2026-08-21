@@ -1,10 +1,17 @@
 import SwiftData
 import SwiftUI
 
-/// The **Progress screen** (ADR 0117, Slice 2) — the payoff over the practice log: This week, This
-/// month, All-time. Pushed from the Journal space, which is already the read-only practice-history
-/// destination (ADR 0100); Home's grouped layout is untouched, so ADR 0102's grouping gets churned
-/// once, when the deferred year tier and card evolution land together.
+/// The **Practice log** screen (ADR 0117, Slice 2; renamed and un-buried by ADR 0176) — the payoff
+/// over the practice log: This week, This month, All-time. Pushed from the Journal space, which is
+/// already the read-only practice-history destination (ADR 0100); Home's grouped layout is untouched,
+/// so ADR 0102's grouping gets churned once, when the deferred year tier and card evolution land
+/// together.
+///
+/// **Why it is not called Progress any more (ADR 0176).** "Progress" names a direction — getting
+/// better — and that is the one thing this screen is built never to say. Every measure here is
+/// effort, by ADR 0070, so a quiet week renders as a quiet week and a screen titled *Progress* then
+/// reports the absence of it. *Practice log* names what the thing actually is, and agrees with
+/// `PracticeLog` / `PracticeRun` underneath, so the user-facing word and the type no longer drift.
 ///
 /// **This year is deliberately not here**, nor is a placeholder for it: a year view over five weeks of
 /// history shows one month, and the "wrapped" card it belongs with is worth building against real data
@@ -15,8 +22,10 @@ import SwiftUI
 /// appears only as a factual log of what was played. Nothing is compared to another player, and a
 /// quiet week is described, not judged.
 ///
-/// The view does no arithmetic — it queries, maps to values, and hands them to `PracticeProgress`.
-struct PracticeProgressView: View {
+/// The view does no arithmetic — it queries, maps to values, and hands them to `PracticeProgress`,
+/// which keeps its name because `PracticeLog` is already taken by the windowing layer beneath it
+/// (ADR 0176): the screen was renamed, the two pure types under it were not.
+struct PracticeLogView: View {
     // Unfiltered queries, mapped and windowed in memory — an optional `#Predicate` starves the main
     // thread (`docs/swiftdata-gotchas.md`), and the aggregation is pure by design anyway.
     @Query(sort: \PracticeRun.startedAt) private var runs: [PracticeRun]
@@ -57,7 +66,7 @@ struct PracticeProgressView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .readableWidth()
-        .navigationTitle("Progress")
+        .navigationTitle("Practice log")
         .navigationBarTitleDisplayMode(.inline)
         .background(PocketColor.background.ignoresSafeArea())
     }

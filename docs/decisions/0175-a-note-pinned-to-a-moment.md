@@ -173,5 +173,5 @@ different things is worse than a new word.
 
 ## Related
 
-- `docs/manual/journal-and-progress.md` § Takes — the user-facing account.
+- `docs/manual/journal-and-practice-log.md` § Takes — the user-facing account.
 - `PocketUITests/ManualShotsUITests.swift` — `testTakeMoments`.

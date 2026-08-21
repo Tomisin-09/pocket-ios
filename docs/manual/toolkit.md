@@ -142,5 +142,5 @@ Use**.
 ## Next
 
 - [The words this app made up](terms.md)
-- [Where notes and takes live](journal-and-progress.md)
+- [Where notes and takes live](journal-and-practice-log.md)
 - [What your data does and does not do](privacy.md)

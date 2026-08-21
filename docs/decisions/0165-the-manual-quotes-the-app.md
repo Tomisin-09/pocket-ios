@@ -71,7 +71,7 @@ what keeps a repo with no staging gate from becoming the fifth writer.
 ### D2 — Diátaxis split: a goal-shaped spine plus a per-screen reference, one file → one route
 
 **Spine** (goal-shaped): `README.md` · `getting-started` · `songs` · `looping` · `exercises` ·
-`routines` · `sessions` · `journal-and-progress` · `metronome` · `toolkit` · `subscription` ·
+`routines` · `sessions` · `journal-and-practice-log` · `metronome` · `toolkit` · `subscription` ·
 `privacy` · `gestures` · `terms` · `shots` — plus **reference/**: `home-and-library` ·
 `song-player` · `practice` · `tools-and-journal` · `settings`. Roughly 20 files, ~13,000 words.
 

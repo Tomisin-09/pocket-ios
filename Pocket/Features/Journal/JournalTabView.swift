@@ -38,9 +38,11 @@ struct JournalTabView: View {
     @State private var sortOrder: JournalTimeline.SortOrder = .newest
     /// The standalone-note composer (ADR 0155 §3).
     @State private var composing = false
-    /// Whether the Progress screen is pushed — a flag rather than a `NavigationLink`, because the
-    /// link now lives inside the options menu and a `NavigationLink` in a `Menu` doesn't push.
-    @State private var showingProgress = false
+    /// Whether the Practice log screen is pushed. Still a flag rather than a `NavigationLink`: the
+    /// row that sets it sits outside the `List`, in the same `VStack` as the scope picker, and a bare
+    /// `NavigationLink` there would draw list chrome that belongs to neither. Not `private`: the row
+    /// lives in `JournalTabView+PracticeLog.swift`, and `private` is file-scoped.
+    @State var showingPracticeLog = false
     /// One take plays at a time; stopped on dismiss (mirrors `TakesSheet`). Not `private`: the
     /// deletion glue lives in `JournalTabView+Deletion.swift`, and `private` is file-scoped.
     @State var player = RecordingPlayer()
@@ -89,6 +91,7 @@ struct JournalTabView: View {
     var body: some View {
         VStack(spacing: 0) {
             scopePicker
+            if !searching { practiceLogRow }
             if sections.isEmpty { emptyState } else { list }
         }
         // Above the list-vs-empty-state branch on purpose: deleting the last row swaps the `List` for
@@ -104,11 +107,11 @@ struct JournalTabView: View {
         .searchable(text: $query, prompt: "Search by song, exercise, template or date")
         .toolbar {
             // ADR 0126's grammar is `ellipsis.circle` then `+`, and three bare trailing items is
-            // exactly the shape it was written to stop — so Progress and Sort fold into the options
-            // menu and the ＋ takes its proper slot (ADR 0155, the open toolbar question, resolved at
-            // build time as the ADR said it would be). Progress is demoted from one tap to two; Sort
-            // is a two-state flip that isn't even persisted, so between the three it had the weakest
-            // claim on a top-level slot.
+            // exactly the shape it was written to stop (ADR 0155, the open toolbar question). That
+            // resolution folded **both** Progress and Sort into this menu, which cost the practice
+            // log its discoverability — ADR 0176 gives it a row on the screen instead, and the menu
+            // keeps only Sort, a two-state flip that isn't even persisted and had the weakest claim
+            // on a top-level slot all along.
             ToolbarItem(placement: .topBarTrailing) { optionsMenu }
             ToolbarItem(placement: .topBarTrailing) {
                 QuickJournalButton(isPresented: $composing)
@@ -123,9 +126,9 @@ struct JournalTabView: View {
         .navigationDestination(item: $openedTake) { ref in
             TakeDetailView(take: ref.value, player: player) { requestDelete(.take(ref.value)) }
         }
-        // Progress moved into the menu, and a `NavigationLink` inside a `Menu` doesn't push — so the
-        // menu sets a flag and the push happens out here.
-        .navigationDestination(isPresented: $showingProgress) { PracticeProgressView() }
+        // The row sets a flag and the push happens out here, so the destination is declared once
+        // whether the timeline or the empty state is on screen (ADR 0176).
+        .navigationDestination(isPresented: $showingPracticeLog) { PracticeLogView() }
         // The Journal space's own write seam (ADR 0155 §3): standalone notes, and *only* standalone
         // notes. No owner picker — filing a note against a unit you are not currently practising is
         // what makes a snapshot dishonest, and that prohibition outlives this screen.
@@ -184,26 +187,14 @@ struct JournalTabView: View {
 
     // MARK: - Toolbar
 
-    /// Progress and Sort, behind one fixed-width glyph (ADR 0126).
-    ///
-    /// Progress lives behind the same door as the timeline: both are read-only practice history, so
-    /// ADR 0117's screen is reached from here rather than from a new Home card — which keeps Home's
-    /// grouped layout (ADR 0102) unchanged until the deferred year tier and card evolution land
-    /// together.
+    /// Sort, behind one fixed-width glyph (ADR 0126). The practice log used to share this menu and
+    /// no longer does (ADR 0176) — it is a *destination*, and a destination reached only from a menu
+    /// is a destination most players never find.
     private var optionsMenu: some View {
         Menu {
-            Section {
-                Button {
-                    showingProgress = true
-                } label: {
-                    Label("Progress", systemImage: "chart.bar.xaxis")
-                }
-            }
-            Section {
-                Picker("Sort", selection: $sortOrder) {
-                    Label("Newest first", systemImage: "arrow.down").tag(JournalTimeline.SortOrder.newest)
-                    Label("Oldest first", systemImage: "arrow.up").tag(JournalTimeline.SortOrder.oldest)
-                }
+            Picker("Sort", selection: $sortOrder) {
+                Label("Newest first", systemImage: "arrow.down").tag(JournalTimeline.SortOrder.newest)
+                Label("Oldest first", systemImage: "arrow.up").tag(JournalTimeline.SortOrder.oldest)
             }
         } label: {
             Image(systemName: "ellipsis.circle")
