@@ -145,10 +145,10 @@ click you were playing to at the moment you tapped the pencil — *96 BPM · 4/4
 withdrawal* — pinned then, not when you save, so the tempo can move under you while you type.
 
 Because a click is not a drill, the note belongs to no unit and offers the four general tags rather
-than all seven. It lands in the [journal](journal-and-progress.md) like any other.
+than all seven. It lands in the [journal](journal-and-practice-log.md) like any other.
 
 ## Next
 
-- [Where the notes you write here end up](journal-and-progress.md)
+- [Where the notes you write here end up](journal-and-practice-log.md)
 - [Turn a discovered tempo into a drill](exercises.md)
 - [The click over a song, which is a different control](looping.md)

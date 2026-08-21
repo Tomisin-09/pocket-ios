@@ -167,5 +167,5 @@ is a trim you cannot be told failed.
 
 ## Related
 
-- `docs/manual/journal-and-progress.md` § Takes — the user-facing account.
+- `docs/manual/journal-and-practice-log.md` § Takes — the user-facing account.
 - `PocketUITests/ManualShotsUITests.swift` — `testTakeDetail`, `testTakeTrim`.

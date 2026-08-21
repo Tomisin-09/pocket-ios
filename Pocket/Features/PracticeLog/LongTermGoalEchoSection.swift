@@ -16,7 +16,7 @@ import SwiftUI
 /// *"a denominator states a target, and a target is habit-pressure under another name."* The
 /// register is the milestone wall's: a wall you pass, not a ladder you're being timed on.
 ///
-/// Its own view, with its own queries, rather than an extension on `PracticeProgressView` — that
+/// Its own view, with its own queries, rather than an extension on `PracticeLogView` — that
 /// screen is already near the file-length cap, and the attribution here needs the song library and
 /// the goal list, which nothing else on Progress reads.
 struct LongTermGoalEchoSection: View {

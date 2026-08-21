@@ -21,7 +21,7 @@ Three parts of the app are outside the subscription and stay that way:
 
 - **The [Toolkit](toolkit.md)** — the tuner, your saved chords, the glossary and the help catalogue.
 - **The [metronome](metronome.md)**, including the tempo automator.
-- **The [journal and Progress](journal-and-progress.md)** — everything you have written and every
+- **The [journal and Practice log](journal-and-practice-log.md)** — everything you have written and every
   take you have recorded.
 
 The journal is on that list for a specific reason: what you wrote and what you played is yours, and a
@@ -116,12 +116,12 @@ Nothing is deleted. Your songs, loops, exercises, routines, notes and takes all 
 they are on the device, and they come back the moment Pro does.
 
 What changes is reach: the Pro surfaces lock again, immediately, including a screen you already had
-open. Your journal, your Progress, the metronome and the Toolkit carry on as before — so a note you
+open. Your journal, your Practice log, the metronome and the Toolkit carry on as before — so a note you
 wrote while subscribed is still readable, though following its caption through to a locked drill will
 meet the paywall rather than the drill.
 
 ## Next
 
 - [What never leaves your device](privacy.md)
-- [What is free: the Toolkit](toolkit.md) · [the metronome](metronome.md) · [the journal](journal-and-progress.md)
+- [What is free: the Toolkit](toolkit.md) · [the metronome](metronome.md) · [the journal](journal-and-practice-log.md)
 - [Getting started](getting-started.md)

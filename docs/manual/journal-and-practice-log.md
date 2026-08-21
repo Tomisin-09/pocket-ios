@@ -2,13 +2,13 @@
 
 Practice disappears if you do not write it down. The **Journal** is where Red Moon keeps what you
 wrote and what you recorded — one timeline across everything you play, in the order it happened.
-**Progress** is the same history counted up: minutes, days, and the things you have made.
+The **Practice log** is the same history counted up: minutes, days, and the things you have made.
 
 Both are **free forever**. Notes and takes are yours whatever happens to a subscription, which is
 why they are the one part of the app that is never behind a lock.
 
-Reach the journal from **Journal** on Home. Progress is one step further in — the **⋯** at the top
-right of the journal, then **Progress**.
+Reach the journal from **Journal** on Home. The practice log is one step further in — the
+**Practice log** row above the timeline.
 
 <!-- shot: journal/timeline | role: screen
      | alt: The Journal timeline with the All / Notes / Takes filter across the top and day sections beneath, mixing written notes and recorded takes
@@ -191,13 +191,15 @@ gesture is a deliberate one rather than the cheapest one in a list.
 Deleting raises an **Undo** toast, and nothing is actually removed until it passes — including a
 take's audio file, which is what makes offering the delete safe at all.
 
-## Progress
+## The practice log
 
-**⋯ ▸ Progress** opens the counted-up version of the same history: three sections, at three scales.
+**Practice log**, above the timeline, opens the counted-up version of the same history: three
+sections, at three scales. Where the timeline holds what you *wrote*, this holds what you *did* — and
+Red Moon fills it in by itself as you finish drills, so there is nothing to keep up.
 
 <!-- shot: journal/progress | role: screen
-     | alt: The Progress screen showing This week with its seven-day bar chart above This month with its shaded calendar grid and Less to More key, with All-time beginning at the foot
-     | state: seeded library, Progress, several weeks of practice history -->
+     | alt: The Practice log screen showing This week with its seven-day bar chart above This month with its shaded calendar grid and Less to More key, with All-time beginning at the foot
+     | state: seeded library, Practice log, several weeks of practice history -->
 
 Before you have finished anything it says **Nothing here yet** and describes what will fill it — one
 statement rather than three empty sections.
@@ -216,7 +218,7 @@ by how long you played.
 
 <!-- shot: journal/month-heatmap | role: panel
      | alt: The month grid with one shaded cell per day and the Less to More key beneath it
-     | state: seeded library, Progress, two or more weeks of history in the current month -->
+     | state: seeded library, Practice log, two or more weeks of history in the current month -->
 
 The shading is **relative to this month's own busiest day** — that is what the *Less → More* key
 under it means. There is no fixed number it is shaded against, because choosing one would be setting
@@ -234,10 +236,11 @@ palest step, so "nothing" never reads as "a little".
   at the bottom: it measures the size of your library rather than the work, and it can go *down*
   when you delete a drill.
 
-### What Progress does not do
+### What the practice log does not do
 
-It does not grade you. Every measure on it is effort — minutes, days, sessions, things made — and
-tempo appears only as a record of what you played. Nothing compares you to another player.
+It does not grade you. That is why it is called a log and not *progress*: every measure on it is
+effort — minutes, days, sessions, things made — and tempo appears only as a record of what you
+played. Nothing compares you to another player.
 
 There is also no count of consecutive days, no weekly target, no percentage of days active, and no
 week-on-week comparison. All of those turn a record into a debt, and this screen is a record.

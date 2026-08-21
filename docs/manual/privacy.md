@@ -31,7 +31,7 @@ your original alone.
 The app asks for one system permission, and uses it in exactly two places:
 
 - **The [tuner](toolkit.md)**, which listens to a played string while you are on that screen.
-- **A [take](journal-and-progress.md)** you start yourself, which is saved to the device as a file.
+- **A [take](journal-and-practice-log.md)** you start yourself, which is saved to the device as a file.
 
 iOS shows its own recording indicator whenever the mic is live, and Red Moon releases it as soon as
 you leave the screen or send the app to the background. Nothing the microphone hears is uploaded —
@@ -109,5 +109,5 @@ that feature ships, the processing is disclosed, and it is opt-in.
 ## Next
 
 - [The full privacy policy](../privacy-policy.md)
-- [Where your notes and takes live](journal-and-progress.md)
+- [Where your notes and takes live](journal-and-practice-log.md)
 - [Red Moon Pro, and what Apple handles](subscription.md)

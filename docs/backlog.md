@@ -977,7 +977,7 @@ Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` thr
 (re-loses ADR 0104 E5 — the point is real music, and the sampler tone isn't a bed); overloading
 `LoopType.chords` or a free-text tag rather than a typed flag; retyping `improv.vocabulary` to
 `.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
-bulk-flagging via ADR 0125's multi-select, and exposure surfacing on Progress.
+bulk-flagging via ADR 0125's multi-select, and exposure surfacing on the Practice log.
 
 ## Practice you can do without your instrument (ADR 0139 — slice 1 SHIPPED #208, slice 2 deferred)
 

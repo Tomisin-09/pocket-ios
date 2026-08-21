@@ -1,30 +1,30 @@
 import SwiftData
 import SwiftUI
 
-/// Previews for the Progress screen (ADR 0117, Slice 2), kept out of the view file so it stays under
+/// Previews for the Practice log screen (ADR 0117, Slice 2), kept out of the view file so it stays under
 /// the 400-line cap. Three states, because the **empty ones are the design work**: a fresh install
 /// meets this screen at zero, and a screen the player navigated to can't hide the way the old derived
 /// home card did.
-#Preview("Progress — a few weeks in") {
-    NavigationStack { PracticeProgressView() }
-        .modelContainer(ProgressPreview.container(weeks: 5))
+#Preview("Practice log — a few weeks in") {
+    NavigationStack { PracticeLogView() }
+        .modelContainer(PracticeLogPreview.container(weeks: 5))
 }
 
-#Preview("Progress — first week") {
-    NavigationStack { PracticeProgressView() }
-        .modelContainer(ProgressPreview.container(weeks: 1))
+#Preview("Practice log — first week") {
+    NavigationStack { PracticeLogView() }
+        .modelContainer(PracticeLogPreview.container(weeks: 1))
 }
 
-#Preview("Progress — nothing logged yet") {
-    NavigationStack { PracticeProgressView() }
-        .modelContainer(ProgressPreview.container(weeks: 0))
+#Preview("Practice log — nothing logged yet") {
+    NavigationStack { PracticeLogView() }
+        .modelContainer(PracticeLogPreview.container(weeks: 0))
         .preferredColorScheme(.dark)
 }
 
 /// Seeds an in-memory store with a plausible practice history: a handful of drills run most days at
 /// slowly climbing tempos, so the week bars, the month ramp and the "new tempos" count all have
 /// something real to render.
-private enum ProgressPreview {
+private enum PracticeLogPreview {
     @MainActor static func container(weeks: Int) -> ModelContainer {
         // swiftlint:disable:next force_try
         let container = try! ModelContainer(

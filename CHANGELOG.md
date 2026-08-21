@@ -14,6 +14,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+- **"Progress" is now the "Practice log", and it is no longer hidden in a menu.** The screen counting
+  up your minutes, days and tempos is renamed: *progress* names a direction, and this screen is built
+  never to say one — a quiet week is drawn as a quiet week, and a title promising progress turned that
+  into a verdict. It is a record of the work, not a mark for it, so it is called a log.
+  It also moved out of the journal's **⋯** menu onto a **Practice log** row above the timeline, one tap
+  in instead of two. It stays free, like the rest of the journal.
+
 ### Added
 - **A take is something you can move around in now.** Tap a recording anywhere but its **▶** and it
   opens on a screen of its own: the take drawn as a waveform you can drag to move the playhead or

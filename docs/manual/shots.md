@@ -33,16 +33,16 @@ marker grammar in [README.md](README.md).
 | `getting-started/home` | `screen` | `getting-started` | seeded library, Home, morning greeting |  |
 | `getting-started/import-picker` | `screen` | `getting-started` | seeded library, Home, + tapped |  |
 | `getting-started/loop-active` | `band` | `getting-started` | seeded library, Little Wing, a loop active and repeating |  |
-| `journal/month-heatmap` | `panel` | `journal-and-progress` | seeded library, Progress, two or more weeks of history in the current month |  |
-| `journal/progress` | `screen` | `journal-and-progress` | seeded library, Progress, several weeks of practice history |  |
-| `journal/quick-note` | `screen` | `journal-and-progress` | an exercise run screen, quick note tapped |  |
-| `journal/quick-note-button` | `glyph` | `journal-and-progress` | — |  |
-| `journal/record-arm` | `glyph` | `journal-and-progress` | — |  |
-| `journal/take-detail` | `screen` | `journal-and-progress` | seeded library, Journal, a take opened |  |
-| `journal/take-moments` | `screen` | `journal-and-progress` | seeded library, Journal, a take opened |  |
-| `journal/take-row` | `detail` | `journal-and-progress` | seeded library, Journal, Takes filter, at least one take |  |
-| `journal/take-trim` | `screen` | `journal-and-progress` | seeded library, Journal, a take opened, Trim tapped |  |
-| `journal/timeline` | `screen` | `journal-and-progress` | seeded library, Journal, several notes and one take across two days |  |
+| `journal/month-heatmap` | `panel` | `journal-and-practice-log` | seeded library, Practice log, two or more weeks of history in the current month |  |
+| `journal/progress` | `screen` | `journal-and-practice-log` | seeded library, Practice log, several weeks of practice history |  |
+| `journal/quick-note` | `screen` | `journal-and-practice-log` | an exercise run screen, quick note tapped |  |
+| `journal/quick-note-button` | `glyph` | `journal-and-practice-log` | — |  |
+| `journal/record-arm` | `glyph` | `journal-and-practice-log` | — |  |
+| `journal/take-detail` | `screen` | `journal-and-practice-log` | seeded library, Journal, a take opened |  |
+| `journal/take-moments` | `screen` | `journal-and-practice-log` | seeded library, Journal, a take opened |  |
+| `journal/take-row` | `detail` | `journal-and-practice-log` | seeded library, Journal, Takes filter, at least one take |  |
+| `journal/take-trim` | `screen` | `journal-and-practice-log` | seeded library, Journal, a take opened, Trim tapped |  |
+| `journal/timeline` | `screen` | `journal-and-practice-log` | seeded library, Journal, several notes and one take across two days |  |
 | `looping/ab-forming` | `band` | `looping` | seeded library, Little Wing, playing, loop start dropped, end not set |  |
 | `looping/automator` | `screen` | `looping` | seeded library, Little Wing, loop "Verse riff", automator open |  |
 | `looping/loop-active` | `band` | `looping` | seeded library, Little Wing, loop "Verse riff" active and repeating |  |
@@ -70,7 +70,7 @@ marker grammar in [README.md](README.md).
 | `reference/planner` | `screen` | `practice` | seeded library, Practice ▸ Today, no goals yet |  |
 | `reference/player` | `screen` | `song-player` | seeded library, Little Wing, idle, Loops panel expanded |  |
 | `reference/practice-hub` | `screen` | `practice` | seeded library, Practice hub |  |
-| `reference/progress` | `screen` | `tools-and-journal` | seeded library, Progress, several weeks of history |  |
+| `reference/progress` | `screen` | `tools-and-journal` | seeded library, Practice log, several weeks of history |  |
 | `reference/quick-note` | `screen` | `tools-and-journal` | an exercise run screen, quick note tapped |  |
 | `reference/routines-library` | `screen` | `practice` | seeded library, Practice ▸ Routines |  |
 | `reference/settings-hub` | `screen` | `settings` | Settings open |  |

@@ -1,4 +1,4 @@
-# Metronome, Journal, Progress and the Toolkit
+# Metronome, Journal, Practice log and the Toolkit
 
 Everything on this page is free, permanently. Nothing here is behind Red Moon Pro.
 
@@ -58,7 +58,10 @@ Reached from `Journal` on Home.
 **Top bar.** `Journal options` — the ⋯ — then the ✏️, `Write a quick journal note`. Underneath, a
 search field prompting `Search by song, exercise, template or date`.
 
-**`Journal options`** holds `Progress` and a `Sort` picker of `Newest first` / `Oldest first`.
+**`Journal options`** holds a `Sort` picker of `Newest first` / `Oldest first`.
+
+**`Practice log`** sits above the feed, between the scope control and the first day
+heading. It is hidden while a search is running.
 
 **The scope control** — `All`, `Notes`, `Takes`.
 
@@ -86,15 +89,15 @@ One field prompting `What just happened?`, the kind chips, and a line naming whe
 transport.
 
 Which chips appear depends on where you opened it — a note with no unit behind it is offered four
-rather than seven. The full table is in [the journal](../journal-and-progress.md#the-kinds).
+rather than seven. The full table is in [the journal](../journal-and-practice-log.md#the-kinds).
 
-## `Progress`
+## `Practice log`
 
-Reached from `Journal options` ▸ `Progress`.
+Reached from the `Practice log` row on the `Journal`.
 
 <!-- shot: reference/progress | role: screen
-     | alt: The Progress screen with This week's bar chart and This month's shaded grid in full, and All-time beginning at the foot
-     | state: seeded library, Progress, several weeks of history -->
+     | alt: The Practice log screen with This week's bar chart and This month's shaded grid in full, and All-time beginning at the foot
+     | state: seeded library, Practice log, several weeks of history -->
 
 - **`This week`** — minutes and days, over a bar per day.
 - **The month section** — its header names the month it is showing (*This month · August*), because

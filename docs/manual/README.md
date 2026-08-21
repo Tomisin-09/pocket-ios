@@ -53,7 +53,7 @@ inside them is the order that was already there.
 | Page | The goal it serves | Status |
 |---|---|---|
 | `references` | Keep the thread back to whoever taught you the thing | Slice D |
-| `journal-and-progress` | Write down what happened, and look back at it | Slice C |
+| `journal-and-practice-log` | Write down what happened, and look back at it | Slice C |
 | `metronome` | The click on its own | Slice C |
 | `toolkit` | Tuner, saved chords, glossary, help | Slice C |
 
@@ -75,13 +75,13 @@ inside them is the order that was already there.
 | `reference/home-and-library` | Home, first-run, Song library and its sheets | Phase 4 |
 | `reference/song-player` | The waveform screen band by band, its sheets, landscape | Phase 4 |
 | `reference/practice` | Practice hub, Planner, Routines, Exercises, Loops | Phase 4 |
-| `reference/tools-and-journal` | Metronome, Journal, Progress, Toolkit | Phase 4 |
+| `reference/tools-and-journal` | Metronome, Journal, Practice log, Toolkit | Phase 4 |
 | `reference/settings` | Reaching Settings, and each of its nine destinations | Phase 4 |
 
 Written in slices: Slice A is `getting-started` · `songs` · `looping` · `gestures` · `terms` — the
 first hour, and the way most players come in. Slice B is `exercises` · `routines` · `sessions` — the
 session half, where the loops from Slice A become blocks in something you press play on. Slice C is
-`journal-and-progress` · `metronome` · `toolkit` · `subscription` · `privacy` — the rest of the app.
+`journal-and-practice-log` · `metronome` · `toolkit` · `subscription` · `privacy` — the rest of the app.
 The reference wing came last on purpose, so the how-tos already knew what they were linking into.
 Slice D is `references`, written with ADR 0167 rather than after it — the first page whose feature
 and whose prose landed in the same change.
@@ -136,7 +136,7 @@ human, and it is the first thing to reread when a page starts to feel thin.
   time-stretch (ADR 0001). Apple Music is browse and metadata only.
 - **CloudKit sync.** Practice data is local to the device.
 - **The AI planner.** Charter only (ADR 0092); nothing ships.
-- **Streaks, "this year", weekly goals on Progress.** These do not exist and are checked for by
+- **Streaks, "this year", weekly goals on the Practice log.** These do not exist and are checked for by
   name, because there is no legitimate use of those words here.
 - **Ear training and theory as *creatable* templates.** Ear training shipped as a loop mode.
 - **A free tier or "free taste".** `freeTasteSlugs` is empty (ADR 0144).
@@ -198,7 +198,7 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
   flag, so they are shot by hand or against a StoreKit test configuration.
 - **Anything the app only writes at runtime has to be seeded too.** `ScreenshotSeed` builds a
   library; it writes no `PracticeRun`, `JournalEntry`, `Recording` or `SavedChord`, because those are
-  only ever written as somebody uses the app. Progress and the Journal therefore open empty on a
+  only ever written as somebody uses the app. The Practice log and the Journal therefore open empty on a
   freshly seeded install, and the Toolkit reads *My chords, none saved* — nine figures are of those
   screens. `-seedHistory` (`PracticeHistorySeed`) writes six weeks of runs, four notes, one take and
   four saved voicings, deterministically. It is a **separate flag** from `-seedScreenshots` so the
@@ -263,8 +263,8 @@ anything unticked either written or added to the parked list above with a reason
 | Exercises, the ten creatable templates, the shape editors | `reference/practice` · `exercises` |
 | Loops library, and the three ways to run a loop | `reference/practice` · `looping` |
 | Metronome, its settings sheet, the automator | `reference/tools-and-journal` · `metronome` |
-| Journal, Quick note, takes | `reference/tools-and-journal` · `journal-and-progress` |
-| Progress | `reference/tools-and-journal` · `journal-and-progress` |
+| Journal, Quick note, takes | `reference/tools-and-journal` · `journal-and-practice-log` |
+| Practice log | `reference/tools-and-journal` · `journal-and-practice-log` |
 | Toolkit ×4 | `reference/tools-and-journal` · `toolkit` |
 | Settings ×9 | `reference/settings` |
 | The paywall, the trial, restore and cancel | `subscription` |

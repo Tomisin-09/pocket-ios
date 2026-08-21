@@ -1,5 +1,10 @@
 # 0117 — Practice stats & the Progress screen: measure effort, never performance; streaks are opt-in
 
+> **Amended by ADR 0176 (2026-08-21).** The screen this ADR built is now called the **Practice log**,
+> and is reached from a row on the Journal above the timeline rather than from the ⋯ menu. Its
+> content, its constraints and every deferral below are unchanged — read "Progress screen" throughout
+> as "Practice log screen".
+
 - **Status:** Accepted — **rescoped 2026-07-31** (`pocket-209-session-block-model`), then **amended the same
   day** (`pocket-214-practice-log-progress-screen`) to un-defer the near horizons of the Progress screen. The
   log is built now at a corrected granularity, and it is read by the per-exercise tempo trajectory **and** a

@@ -74,10 +74,10 @@ run screen is built to prevent. Read the source before you start or after you st
 **Deleting the thing deletes its links.** A reference belongs to what it explains, so removing an
 exercise, song, loop or routine removes the links hung off it. This is not how notes and takes
 behave — those outlive what they were written about, because they are records of *you* rather than
-of the material. See [Journal and Progress](journal-and-progress.md).
+of the material. See [Journal and Practice log](journal-and-practice-log.md).
 
 ## Next
 
-- [Write down what happened](journal-and-progress.md)
+- [Write down what happened](journal-and-practice-log.md)
 - [Put exercises in an order and play them](routines.md)
 - [Where your data lives](privacy.md)

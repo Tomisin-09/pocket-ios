@@ -1,6 +1,6 @@
 import XCTest
 
-/// The user manual's Home, Journal and Progress figures, driven (ADR 0165, Phase 5).
+/// The user manual's Home, Journal and Practice log figures, driven (ADR 0165, Phase 5).
 ///
 /// Committed rather than thrown away, because the manual is re-shot every time a screen changes and
 /// a shoot nobody can repeat is a shoot that silently goes stale. `docs/manual/shots.md` is the
@@ -148,33 +148,34 @@ final class ManualShotsUITests: ManualShotCase {
     ///
     /// All-time begins at the foot of the frame and is cut, which the alt text says.
     @MainActor
-    func testProgress() {
+    func testPracticeLog() {
         let app = launchForShoot()
         openJournal(in: app)
 
-        // Two taps, both retried, because both are the swallowed-tap shape. Opening the ⋯ menu is
-        // where a cold run actually broke: the button was found, the event was synthesised, and the
-        // menu never came up. `Progress` is the only thing that proves it did — the menu draws no
-        // container of its own that the timeline underneath does not also have.
-        let options = app.buttons["Journal options"]
-        XCTAssertTrue(options.waitForExistence(timeout: Self.shootTimeout),
-                      "the Journal options (⋯) button never appeared. \(stepLog)")
+        // One tap now, not two. This figure used to be reached through the ⋯ menu, and that hop was
+        // the shoot's second recurring failure — the button was found, the event was synthesised, and
+        // the menu never came up (see `tap(_:labelled:revealing:called:)`). ADR 0176 moved the
+        // practice log onto a row on the Journal itself, so the menu that swallowed the tap is no
+        // longer on the path. The retry stays: the row is still an unguarded tap, which is the shape
+        // that recurs.
+        let row = app.buttons["Practice log"]
+        XCTAssertTrue(row.waitForExistence(timeout: Self.shootTimeout),
+                      "the Practice log row never appeared on the Journal. \(stepLog)")
 
-        let progress = app.buttons["Progress"]
-        tap(options, labelled: "Journal options", revealing: progress, called: "the ⋯ menu")
-
-        // `THIS WEEK` is the Progress screen's first section, and — unlike the word "Progress" — it
-        // is not also the name of the control we just tapped. Gating on "Progress" here would be the
-        // metronome mistake again: an assertion that is already true of the menu we are leaving.
-        tap(progress, labelled: "Progress",
-            revealing: app.staticTexts["THIS WEEK"], called: "the Progress screen")
+        // `THIS WEEK` is the screen's first section, and — unlike "Practice log" — it is not also the
+        // name of the control we just tapped. Gating on "Practice log" here would be the metronome
+        // mistake again: an assertion already true of the screen we are leaving.
+        tap(row, labelled: "Practice log",
+            revealing: app.staticTexts["THIS WEEK"], called: "the Practice log screen")
 
         // No scroll, and one frame for all three markers. `THIS WEEK` is the first section; `Less` and
         // `More` are the key under the month grid, so requiring all three *in frame* is what proves
         // both ends of the picture fit — the bar chart at the top, the whole grid and its key at the
         // bottom. If they ever stop fitting, this fails and says so.
+        // The slug stays `journal/progress`: a shot slug is an id, and renaming it would orphan
+        // every already-captured frame that names it (ADR 0176).
         capture(app, slug: "journal/progress",
-                assertingOnScreen: "Progress",
+                assertingOnScreen: "Practice log",
                 alsoRequiring: ["THIS WEEK", "Less", "More"],
                 alsoServing: ["reference/progress", "journal/month-heatmap"])
     }
