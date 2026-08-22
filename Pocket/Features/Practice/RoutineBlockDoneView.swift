@@ -56,6 +56,14 @@ struct RoutineBlockDoneView: View {
     /// The next **unit** coming up (rests skipped), shown so you know what you're continuing into
     /// (ADR 0071 R4b). `nil` when nothing playable remains.
     let upNext: UpNext?
+    /// The take this block just captured (ADR 0179), or `nil` when it captured none — which is the
+    /// case for every block not marked to record, so an unmarked block's Done screen is exactly what
+    /// it was. A value descriptor rather than the `Recording`, keeping this view SwiftData-free like
+    /// `UpNext` beside it.
+    var savedTake: SavedTake?
+    /// Play the take back. `nil` alongside a `nil` `savedTake`; the host presents the sheet, since
+    /// only it knows the owner.
+    var onPlayTake: (() -> Void)?
     /// Commit the optional mastery (unchanged ⇒ pass through), the optional note **and its kind tag**
     /// (🎯/⚡️/🧗/📝/🎬 — defaults to `.note`, ADR 0100), and the accepted command revision — `nil`
     /// when the toggle is off, else a `.raise`/`.settle` carrying the chosen (possibly custom) value
@@ -69,6 +77,12 @@ struct RoutineBlockDoneView: View {
         let title: String
         let detail: String?
         let symbol: String
+    }
+
+    /// What the completion beat says about the take just captured — its length, already formatted
+    /// (`Recording.durationLabel`), so this view needs no model and no formatter.
+    struct SavedTake: Equatable {
+        let durationLabel: String
     }
 
     @State var mastery: Int?
@@ -85,6 +99,7 @@ struct RoutineBlockDoneView: View {
     init(title: String, initialMastery: Int?,
          anchors: CommandOffer.Anchors? = nil, unit: TempoUnit = .bpm,
          isLast: Bool, upNext: UpNext?,
+         savedTake: SavedTake? = nil, onPlayTake: (() -> Void)? = nil,
          onContinue: @escaping (_ mastery: Int?, _ note: String, _ kind: EntryKind,
                                 _ revision: CommandOffer.Revision?) -> Void) {
         self.title = title
@@ -93,6 +108,8 @@ struct RoutineBlockDoneView: View {
         self.unit = unit
         self.isLast = isLast
         self.upNext = upNext
+        self.savedTake = savedTake
+        self.onPlayTake = onPlayTake
         self.onContinue = onContinue
         _mastery = State(initialValue: initialMastery)
         // Seeded from whatever the *pre-filled* rating leans toward, so the stepper opens on a
@@ -109,6 +126,7 @@ struct RoutineBlockDoneView: View {
             ScrollView {
                 VStack(spacing: 28) {
                     completionBeat
+                    if let savedTake { takeRow(savedTake) }
                     masteryTap
                     tagSelector
                     noteField
@@ -135,6 +153,28 @@ struct RoutineBlockDoneView: View {
         // happened and writing a note, guitar still in hand. It matters most on a **standalone** run,
         // where this arrives as a `fullScreenCover` and there is no routine host holding a claim.
         .keepAwakeDuringPractice()
+    }
+
+    /// **"Take saved · 0:47"**, with a way to hear it (ADR 0179).
+    ///
+    /// Placed with the completion beat rather than below the note, because it is a statement about
+    /// what just happened, not a third thing to fill in. Nothing here grades the take (ADR 0070) —
+    /// it offers the audio and forms no opinion of it.
+    private func takeRow(_ take: SavedTake) -> some View {
+        HStack(spacing: 10) {
+            Label("Take saved · \(take.durationLabel)", systemImage: "waveform")
+                .font(.futura(.subheadline))
+                .foregroundStyle(PocketColor.practice)
+            Spacer(minLength: 8)
+            if let onPlayTake {
+                Button("Listen") { onPlayTake(); haptic(.light) }
+                    .font(.futura(.subheadline, weight: .semibold))
+                    .tint(PocketColor.practice)
+                    .accessibilityHint("Play back what you just recorded")
+            }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 11)
+        .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.practiceCircleWash))
     }
 
     // MARK: - Pieces

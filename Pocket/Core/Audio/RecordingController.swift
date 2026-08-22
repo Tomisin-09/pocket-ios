@@ -145,6 +145,31 @@ final class RecordingController {
         }
     }
 
+    /// Arm **without prompting** — for a routine block marked to record when the routine was authored
+    /// (ADR 0179). The two-step arm grammar is unchanged; what changes is who taps it. `toggleArm()`
+    /// is `async` only because it may raise the system permission prompt, and a routine block cannot
+    /// wait on one: with auto-start on, the block is already running by the time a prompt would be
+    /// answered. Permission was settled at authoring time, which is the settled, non-playing moment
+    /// ADR 0069 slice 2 wanted the prompt to happen in anyway.
+    ///
+    /// Revoked since? The block runs normally and records nothing, with `micDenied` set so the screen
+    /// can say why — never a hang, and never a silent failure. Arming touches no session, so this
+    /// takes no lease: the invariant on `takeClaim`/`holdClaim` holds unchanged.
+    func armIfPermitted() {
+        guard state == .idle else { return }
+        switch MicPermission.status {
+        case .granted:
+            micDenied = false
+            route = RecordingRoute.current()
+            state = .armed
+        case .denied:
+            micDenied = true
+        case .undetermined:
+            // Deliberately nothing. Prompting here is the one thing this method exists not to do.
+            break
+        }
+    }
+
     /// Begin the take if armed — called as the run starts, **before** playback, so the session flips
     /// to `.playAndRecord` with no audio in flight (no mid-play glitch). Re-samples the route (the user
     /// may have plugged in headphones since arming). No permission prompt here; that happened on arm.

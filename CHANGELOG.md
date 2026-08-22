@@ -23,6 +23,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   in instead of two. It stays free, like the rest of the journal.
 
 ### Added
+- **A routine block can record you.** Open a block from a routine and turn on **Record this block**:
+  the take starts when the block does and ends with it, and the block's finish screen offers it back
+  with a **Listen** button. It is per-block on purpose — one drill is worth hearing again, the warm-up
+  before it usually isn't, and a whole session recorded is a folder nobody opens. Blocks set to record
+  carry a small waveform badge in the routine's list. Ear-training, improvise and your-own-practice
+  blocks already recorded inside a routine and are unchanged; the take is saved against the exercise
+  or loop you played, not the routine, so it survives if the routine is deleted.
 - **Routines can be sorted and searched.** The one library in the app still stuck in a fixed order
   now sorts four ways — **Recently Added** (where it starts, and where it stays until you change
   it), **Name**, **Last Practised** and **Length** — with **Order** to flip any of them. A routine

@@ -86,6 +86,7 @@ marker grammar in [README.md](README.md).
 | `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
 | `references/section` | `panel` | `references` | seeded library, an exercise detail sheet with two links saved, one of them carrying a note, scrolled to the section |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
+| `routines/block-record` | `detail` | `routines` | seeded library, Practice ▸ Routines ▸ Morning Routine, first block opened |  |
 | `routines/editor` | `screen` | `routines` | Practice ▸ Routines ▸ + , three blocks added |  |
 | `routines/history` | `detail` | `routines` | seeded history, Practice ▸ Routines ▸ Morning Routine, read-only |  |
 | `routines/library` | `screen` | `routines` | seeded library, Practice ▸ Routines, several routines saved |  |
@@ -121,4 +122,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding |  |
 
-104 shots across 19 pages.
+105 shots across 19 pages.

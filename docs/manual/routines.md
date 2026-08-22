@@ -106,7 +106,8 @@ Underneath, the block is just its own run screen. An exercise block is the exerc
 its settings and its staircase; a loop block is the loop; a song block plays the song through. What
 drops out is authoring and review: you cannot edit a block's shape or change its meter here, and the
 takes and journal bar is not on this screen either. A routine is where you play the thing. The
-**quick note** button stays, because a routine block is exactly where a note tends to be owed.
+**quick note** button stays, because a routine block is exactly where a note tends to be owed — and
+a block you set to record shows its recording timer here, which is a readout, not a button.
 
 Every block gets a **3 · 2 · 1** count-in, so an auto-started block never begins mid-stride.
 
@@ -116,6 +117,11 @@ Finish a block and you land on its own completion screen: **Nice work**, an opti
 an optional tagged note, and — for an exercise or a loop — the offer to move its command tempo up to
 what you just played, or settle it down to something you own. **Up next** names what follows.
 **Continue** moves on; the last block says **Finish** instead.
+
+If the block was set to record, the completion screen says **Take saved** with its length, and
+**Listen** plays it back before you rate anything. With **Advance automatically** on there is no
+completion screen to carry it — the take is still saved, and you will find it in the Journal and on
+the drill's own takes bar.
 
 <!-- shot: routines/block-done | role: screen
      | alt: The between-blocks screen showing Nice work, the five mastery dots, a note field with its tag chips, and the Up next card
@@ -155,6 +161,34 @@ Opening a routine gives you the read-only view. Tapping a block there pushes a p
 content, its tempo anchors, its staircase, and an audition — so you can check what is in a session
 without starting it. **Edit** is what unlocks the changes, so a routine cannot be rearranged by
 accident.
+
+### Recording a block
+
+A block's preview carries **Record this block**. Turn it on and the block captures a take while it
+runs: the recording starts when the block does and ends with it, and there is nothing to tap during
+the block itself — the decision was made here, so your hands stay on the guitar. A red dot and a
+running timer sit above the transport while it records, so you always know the microphone is live.
+
+<!-- shot: routines/block-record | role: detail
+     | alt: The Record this block switch on an exercise block's preview, turned on, with the line explaining that the take starts with the block
+     | state: seeded library, Practice ▸ Routines ▸ Morning Routine, first block opened -->
+
+It is per block on purpose. One drill in a session is usually the one worth hearing again; the
+warm-up before it is not, and a whole session recorded is a folder nobody opens. Blocks set to
+record carry a small waveform badge in the routine's block list, so you can see which ones do
+without opening each.
+
+The take is saved against the **exercise or loop you played, not the routine** — so it turns up
+wherever that drill's takes turn up, and it survives if the routine is ever deleted. Recording is
+free, like the rest of the journal.
+
+The first time you turn this on, the app asks for the microphone. That happens here, while you are
+building, and never mid-session: a routine cannot wait on a permission prompt. If microphone access
+is off, the switch says so and points at Settings.
+
+**Your own practice**, **ear training** and **improvise** blocks do not carry the switch. They record
+inside a routine already, from their own screens, because there is no tempo or staircase recording
+what happened on those.
 
 A saved routine tells you three things about itself. **Estimated length** is roughly how long
 running it end to end would take. **Last practised** is when you last ran it, or **Not yet** if you

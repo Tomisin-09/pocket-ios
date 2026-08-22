@@ -32,6 +32,14 @@ struct RoutineRunContext {
     /// player's (sub-decision 3), and `persist()` writes the edit state, not the fitted ramp.
     /// Defaulted so every other call site is unchanged.
     var plannedMinutes: Int?
+    /// Whether this block was marked to capture a **take** while it runs (ADR 0179).
+    ///
+    /// A run screen reads this to arm its recorder on appearance; it never turns into a control. The
+    /// decision was taken when the routine was authored, so the running block gains a status readout
+    /// and nothing to tap — which is how this keeps ADR 0077's "a routine block stays focused" while
+    /// still letting a player hear back the one block worth hearing. Defaulted so every existing call
+    /// site is unchanged.
+    var recordsTake = false
     /// Step back to the previous block (user-initiated).
     let onBack: () -> Void
     /// Jump to the next block now (user-initiated).

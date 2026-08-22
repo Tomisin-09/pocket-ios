@@ -157,6 +157,23 @@ final class RoutineItem {
     /// Declaration default `false` → additive lightweight migration, no store wipe (CoreData 134110).
     var usesAuthoredLength: Bool = false
 
+    /// Whether this block captures a **practice take** while it runs (ADR 0179).
+    ///
+    /// Authored on the block, not decided mid-session, and that is the whole design: routine blocks
+    /// auto-start by default (`AppSettings.routineAutoStart`), so a run-time arm control would flash
+    /// past before it could be tapped — and ADR 0069/0077's objection to recording inside a routine
+    /// was precisely about controls competing for a player's hands mid-drill. Marked here, the block
+    /// arms itself on appearance and the take starts with the run; nothing new appears on the
+    /// running block.
+    ///
+    /// Only meaningful on a **ramped** exercise or loop block. The ramp-less modes (freeform, ear,
+    /// improvise) already record unconditionally inside a routine (ADR 0069 amendment §2), and a song
+    /// block has no recorder at all (ADR 0179 D6).
+    ///
+    /// Declaration default `false` → additive lightweight migration, no store wipe (CoreData 134110),
+    /// and every routine authored before this reads exactly as it did.
+    var recordsTake: Bool = false
+
     /// The minutes that actually govern this block — the allotment unless the player declined it
     /// (ADR 0130). **The one expression** the run, the block preview and the session estimate read, so
     /// a decline cannot take effect on one surface and not another.

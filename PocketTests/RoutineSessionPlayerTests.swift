@@ -62,6 +62,33 @@ final class RoutineSessionPlayerTests: XCTestCase {
         XCTAssertIdentical(player.stages[1].loop, earLoop)   // `loop` accessor covers both modes
     }
 
+    // MARK: - A block marked to record (ADR 0179)
+
+    func testRecordsTakeReachesTheStageAndDefaultsOff() {
+        let marked = Exercise(name: "Marked")
+        let plain = Exercise(name: "Plain")
+        let markedItem = RoutineItem.item(marked, order: 0)
+        markedItem.recordsTake = true
+        let player = RoutineSessionPlayer(routine: routine([markedItem, .item(plain, order: 1)]))
+        XCTAssertEqual(player.stages.map(\.recordsTake), [true, false])
+    }
+
+    /// A ramp-less loop mode already records inside a routine unconditionally (ADR 0069 amendment
+    /// §2), through its own screen's controls. Honouring the flag there too would be a second switch
+    /// over the same behaviour — and the block-list badge would then claim to be the reason a block
+    /// records when it isn't.
+    func testAMarkedLoopBlockOnlyCarriesTheFlagInTrainerMode() {
+        let trainer = Loop(name: "Riff", start: 0.1, end: 0.2, speed: 1, repeats: 4)
+        let ear = Loop(name: "Lick", start: 0.3, end: 0.4, speed: 1, repeats: 4)
+        let trainerItem = RoutineItem.item(trainer, order: 0)
+        trainerItem.recordsTake = true
+        let earItem = RoutineItem.earLoopItem(ear, order: 1)
+        earItem.recordsTake = true
+        let player = RoutineSessionPlayer(routine: routine([trainerItem, earItem]))
+        XCTAssertEqual(player.stages.map(\.kind), [.loop, .earLoop])
+        XCTAssertEqual(player.stages.map(\.recordsTake), [true, false])
+    }
+
     // MARK: - Auto-start no longer excludes the first block (ADR 0071 R4b)
 
     func testAutoStartTreatsEveryBlockAlike() {

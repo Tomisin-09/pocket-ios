@@ -28,6 +28,15 @@ struct RoutinePlayerView: View {
     /// The just-finished unit block sitting on its **Done screen** (ADR 0071 R4), or `nil`. Set when a
     /// block completes with manual advance (the default); Continue/Finish commits and advances.
     @State var doneStage: RoutineStage?
+    /// When the block currently on stage began — the cutoff the Done screen's take row reads
+    /// (ADR 0179). Without it the row would offer `recordingsByRecent.first`, which on a unit
+    /// practised before is a take from some earlier day: the completion beat would claim you had just
+    /// recorded something you recorded last week.
+    @State var blockStartedAt: Date?
+    /// Whether the Done screen's takes sheet is up (ADR 0179) — the block's own takes, reached from
+    /// the "Take saved" row. A `Bool`, deliberately: the stage is already in scope where it's
+    /// presented, so there is no model to key a `.sheet(item:)` on.
+    @State var showingTakes = false
 
     init(routine: Routine) {
         self.routine = routine
@@ -163,6 +172,7 @@ struct RoutinePlayerView: View {
                           canGoBack: player.canGoBack, routineUID: routine.uid,
                           repLabel: player.repLabel,
                           plannedMinutes: player.current?.plannedMinutes,
+                          recordsTake: player.current?.recordsTake ?? false,
                           onBack: { player.back(); haptic(.light) },
                           onSkip: { player.skip(); haptic(.light) },
                           onFinished: { finishedBlock() },
@@ -176,20 +186,25 @@ struct RoutinePlayerView: View {
         // Key each run screen on the block **and** the current rep, so a multi-rep block restarts the
         // drill from scratch on every rep rather than SwiftUI reusing the finished one (ADR 0076).
         let runID = "\(stage.id.uuidString)-rep\(player.currentRep)"
-        switch stage.payload {
-        case .exercise(let exercise):
-            ExerciseRunScreen(exercise: exercise, routineContext: context).id(runID)
-        case .loop(let loop):
-            LoopRunView(loop: loop, routineContext: context).id(runID)
-        case .earLoop(let loop):
-            EarLoopRunView(loop: loop, routineContext: context).id(runID)
-        case .improviseLoop(let loop):
-            ImproviseLoopRunView(loop: loop, routineContext: context).id(runID)
-        case .song(let song):
-            SongPlayAlongView(song: song, routineContext: context).id(runID)
-        case .rest:
-            EmptyView()   // rests never reach here — the conductor is in `.resting`
+        Group {
+            switch stage.payload {
+            case .exercise(let exercise):
+                ExerciseRunScreen(exercise: exercise, routineContext: context).id(runID)
+            case .loop(let loop):
+                LoopRunView(loop: loop, routineContext: context).id(runID)
+            case .earLoop(let loop):
+                EarLoopRunView(loop: loop, routineContext: context).id(runID)
+            case .improviseLoop(let loop):
+                ImproviseLoopRunView(loop: loop, routineContext: context).id(runID)
+            case .song(let song):
+                SongPlayAlongView(song: song, routineContext: context).id(runID)
+            case .rest:
+                EmptyView()   // rests never reach here — the conductor is in `.resting`
+            }
         }
+        // Stamped on the **host**, not the run screen, because the screen is torn down before the
+        // Done screen reads it. `initial: true` covers the first block, whose id never changes.
+        .onChange(of: runID, initial: true) { _, _ in blockStartedAt = .now }
     }
 
     // MARK: - Rest

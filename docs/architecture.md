@@ -815,7 +815,16 @@ control one-way — and `RoutineItem.effectivePlannedMinutes` is the single expr
 (`RoutineSessionPlayer.stage`), the block preview and `estimatedMinutes(forRoutine:)` all read, so a
 decline cannot take on one surface and not another. The block preview states both numbers where they
 differ (`BlockLengthControl`) and carries the toggle; the routine's estimate re-flows on the spot,
-which is what makes the opt-out a knowing spend rather than a hole in the preset's promise. Selection
+which is what makes the opt-out a knowing spend rather than a hole in the preset's promise. **A block
+may also be marked to record** (ADR 0179): `RoutineItem.recordsTake` rides the same preview beside it
+(`BlockRecordControl`) and the same save discipline, reaching the run through
+`RoutineStage.recordsTake` → `RoutineRunContext.recordsTake`. The run screens read it in `.onAppear`
+and call `RecordingController.armIfPermitted()` — a **synchronous, non-prompting** arm added for this,
+because a routine with auto-start on cannot wait on a permission dialog; the prompt happens when the
+block is marked. From there the take rides the `beginArmedTake()` already in `commitAndStart`, so no
+audio-session category flips mid-run. The take is owned by the `Exercise`/`Loop`, never the routine,
+and the block's Done screen offers it back through `RoutineTakeLookup.take(from:since:)` — a **cutoff**
+against the block's start, so the completion beat can't offer a take from an earlier day. Selection
 **deals across goals** rather than skimming
 the top N (`SessionBuilder.ranked` → `roundRobin`, keyed by `PlannerCandidate.goalUID`): at three items
 a straight top-N gave every slot to one goal. Both import
