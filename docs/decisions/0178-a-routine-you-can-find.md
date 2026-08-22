@@ -112,7 +112,24 @@ disagree. All three list-wide derivations (counts, dates, minutes) are computed 
 one `RoutineListFacts` value: every one is a whole-collection walk, and a row that took them
 separately could be handed one redraw's history beside another's lengths.
 
-### D8 — `LibraryOptionsMenu`'s fixed-order overload is deleted
+### D8 — the search bar is `.always`, not the default placement
+
+Found by CI, and it is a product decision the toolchain merely exposed. Under an inline title the
+default placement hides the search bar until the list is pulled down — and it does so **differently
+by OS version**: on iOS 26 the bar is in the view hierarchy from launch, on CI's iOS 18 it is not.
+So the UI test passed on one machine and failed on the other with *"the Routines library has no
+search field"*, a sentence about the app that was really about the toolchain.
+
+The fix is in the app rather than the test. A search you have to know to pull down for is a search
+a player can miss entirely, on the one screen whose complaint was that a routine could not be found;
+`SearchablePickerList` had already made the same call. The test keeps a pull-down fallback anyway,
+because a test that depends on placement is a test that breaks when placement is revisited.
+
+Exercises and Loops still take the default. Aligning them is a change to two screens this ADR is not
+about, and a permanently visible search bar costs vertical space on every launch — a design call,
+logged in `docs/backlog.md` rather than smuggled in here.
+
+### D9 — `LibraryOptionsMenu`'s fixed-order overload is deleted
 
 Its doc comment read *"a library with a fixed order (Routines — newest first)"* and Routines was its
 only caller. There is now no library without a sort, so the overload goes rather than sitting as

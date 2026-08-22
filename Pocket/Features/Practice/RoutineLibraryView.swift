@@ -131,7 +131,15 @@ struct RoutineLibraryView: View {
         .pocketRowUndoHost(rowDeletion)
         .navigationTitle("Routines")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "Routines")
+        // **`.always`, not the default placement** (ADR 0178). Under an inline title the default
+        // hides the search bar until the list is pulled down — which is a search a player can miss
+        // entirely, on the one screen whose whole complaint was that a routine could not be found.
+        // It also differs by OS version: the bar is in the view hierarchy from the start on iOS 26
+        // and is not on iOS 18, so the default is not one behaviour but two. `SearchablePickerList`
+        // already makes this choice. Exercises and Loops still take the default — see
+        // `docs/backlog.md`.
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Routines")
         // Leading is the back button alone. The session generator moves off the bar and into the
         // shared options menu — as a *labelled* row rather than a bare wand, which also gives its
         // disabled and locked states somewhere to read (`LibraryOptionsMenu`). The sort pickers

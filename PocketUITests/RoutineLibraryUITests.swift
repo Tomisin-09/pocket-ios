@@ -187,15 +187,30 @@ final class RoutineLibraryUITests: UITestCase {
                       "the Routines library never appeared")
     }
 
-    /// The library's search field. Named through a helper because an empty `.searchable` field is
-    /// reachable as a `searchField` but carries no value to match on, so `firstMatch` is the only
-    /// dependable query — and a bare `firstMatch` at four call sites is four places to be wrong.
+    /// The library's search field, revealing it first if the toolchain has not materialised it.
+    ///
+    /// `app.searchFields.firstMatch` is enough on iOS 26 and finds **nothing** on CI's Xcode 16 /
+    /// iOS 18 simulator: under an inline navigation title a `.searchable` list opens scrolled past
+    /// its own search bar, so the bar is not in the accessibility tree until the list is pulled
+    /// down. The failure reads "the Routines library has no search field", which is true and
+    /// describes the toolchain rather than the app.
+    ///
+    /// So: look, pull down, look again. On a toolchain that already shows it the first look
+    /// returns and nothing is swiped.
     @MainActor
-    private func searchField(in app: XCUIApplication) throws -> XCUIElement {
-        let field = app.searchFields.firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: Self.uiTimeout),
-                      "the Routines library has no search field")
-        return field
+    private func searchField(in app: XCUIApplication, pulls: Int = 3) throws -> XCUIElement {
+        for attempt in 0...pulls {
+            let field = app.searchFields.firstMatch
+            if field.waitForExistence(timeout: attempt == 0 ? 2 : Self.uiTimeout) { return field }
+            app.swipeDown()
+        }
+        XCTFail("""
+                the Routines library has no search field, after \(pulls) pulls.
+                searchFields=\(app.searchFields.allElementsBoundByIndex.map(\.identifier))
+                textFields=\(app.textFields.allElementsBoundByIndex.map(\.identifier))
+                navBars=\(app.navigationBars.allElementsBoundByIndex.map(\.identifier))
+                """)
+        return app.searchFields.firstMatch
     }
 
     /// Open the seeded routine's detail screen from the library. The row is two buttons — ▶ and the
@@ -228,27 +243,37 @@ final class RoutineLibraryUITests: UITestCase {
         if !text.isEmpty { field.typeText(text) }
     }
 
-    /// Empty a text field with backspaces, putting the caret at the end first.
+    /// Empty a text field, putting the caret at the end and deleting until it is actually empty.
     ///
-    /// Two things make the obvious version wrong. An empty SwiftUI `TextField` reports its
-    /// **placeholder** as its `value`, so the delete count has to come from a value that is really
-    /// text. And a plain `tap()` lands the caret wherever it hit — mid-string on a field that
-    /// already holds text — so the backspaces eat the middle and the following `typeText` inserts
-    /// into the wreckage. Tapping the field's bottom-right corner puts the caret past the last
-    /// character on the last line, which is the only position from which a count of deletes means
-    /// what it says.
+    /// Three things make the obvious one-liner wrong, and the third only shows up on CI.
     ///
-    /// It **asserts that it worked**, because a clear that silently half-ran would surface later as
-    /// the save assertion failing — a sentence about the wrong feature.
+    /// An empty SwiftUI `TextField` reports its **placeholder** as its `value`, so the count has to
+    /// come from a value that is really text. A plain `tap()` lands the caret wherever it hit —
+    /// mid-string on a populated field — so the backspaces eat the middle and the following
+    /// `typeText` inserts into the wreckage.
+    ///
+    /// And **a single burst of N deletes does not reliably delete N characters.** A fresh install
+    /// seeds Morning Routine with ADR 0177's description, about 130 characters; on CI's slower
+    /// runner one burst left 17 characters behind on the first attempt and 58 on the retry. So the
+    /// value is re-read and the delete repeated until the field is empty, which converges regardless
+    /// of how many keystrokes a given runner drops. The bound is what keeps a field that genuinely
+    /// will not clear from spinning: it fails, naming what is still in there.
+    ///
+    /// **This is also the failure that says the local simulator is not the environment.** Its
+    /// routine was seeded before ADR 0177 and carried no description at all, so the clear had
+    /// nothing to do and the test passed for a reason that only held on one machine.
     @MainActor
-    private func clear(_ field: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
-        guard let value = field.value as? String,
-              !value.isEmpty, value != field.placeholderValue else { return }
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.9)).tap()
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: value.count))
-        let after = field.value as? String ?? ""
-        XCTAssertTrue(after.isEmpty || after == field.placeholderValue,
-                      "the Description field would not clear — it still reads “\(after)”",
+    private func clear(_ field: XCUIElement, rounds: Int = 10,
+                       file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<rounds {
+            guard let value = field.value as? String,
+                  !value.isEmpty, value != field.placeholderValue else { return }
+            field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.9)).tap()
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: value.count + 2))
+        }
+        let left = field.value as? String ?? ""
+        XCTAssertTrue(left.isEmpty || left == field.placeholderValue,
+                      "the Description field would not clear in \(rounds) rounds — it still reads “\(left)”",
                       file: file, line: line)
     }
 
