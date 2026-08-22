@@ -18,9 +18,10 @@ A fresh install arrives with one, **Morning Routine** — two warm-ups, a rest, 
 rest and a scale — so there is a whole session to look at before you build your own. It is an
 ordinary routine, and you can take it apart.
 
-Each row is one routine, newest first, under a count of what is in it — **4 blocks · 2 rests**.
+Each row is one routine, newest first until you choose otherwise, under a count of what is in it — **4 blocks · 2 rests**.
 Once you have run one, a second line underneath says how many times and when: **Practised 11 times ·
 yesterday**. A routine you have not run yet simply doesn't carry that line, rather than saying so.
+The row also says roughly how long the routine runs — the same estimate you see when you open it.
 
 The row has two halves and they do different things: **▶** starts the session, and tapping the name
 opens the routine to read or edit.
@@ -28,8 +29,17 @@ opens the routine to read or edit.
 Hold a row for **Play**, **Edit**, **Duplicate**, **Favourite** and **Delete**. As everywhere else,
 delete waits behind an undo toast.
 
-The toolbar's options control holds the favourites filter and **Generate a quick session**, which is
-covered in [Today's session](sessions.md). Routines have a fixed order, so there are no sort keys.
+The toolbar's options control holds the favourites filter, the sort keys, and **Generate a quick
+session**, which is covered in [Today's session](sessions.md).
+
+**Sort by** offers four: **Recently Added**, which is where the list starts and where it stays until
+you change it; **Name**; **Last Practised**, most recent first, with routines you have never run at
+the end rather than the beginning; and **Length**, shortest first, using the same estimate the
+routine states about itself. **Order** flips any of them.
+
+**Search** narrows the list by name *and* by description, so a word you only ever wrote in the prose
+— the week of a course, who a session is for — still finds the routine. Clearing the field puts the
+whole list back.
 
 ## Building one
 

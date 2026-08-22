@@ -11,8 +11,9 @@ import SwiftUI
 /// an Undo toast, so `ordered` filters out rows awaiting their delete.
 ///
 /// Relies on the ambient `NavigationStack` (Practice → Home's stack), like the exercise and
-/// loop libraries. Sorted newest-first in memory so `@Query` stays unsorted and deletion
-/// indexes the displayed order.
+/// loop libraries. **Searched and sorted in memory** (ADR 0178) via the pure `PracticeLibrarySort`,
+/// so `@Query` stays unsorted and deletion indexes the displayed order. Row rendering lives in
+/// `RoutineLibraryView+Row.swift`.
 struct RoutineLibraryView: View {
     @Environment(\.modelContext) private var context
     /// Deferred, undoable row deletion (Slice 3). **Owned here, not by the modifier**: this view
@@ -21,7 +22,7 @@ struct RoutineLibraryView: View {
     @State private var rowDeletion = RowDeletionCoordinator()
     /// Entitlement + the shared paywall (ADR 0112). **Routines are Pro**, apart from the one curated
     /// free-taste routine a free player may run (but not edit).
-    @Environment(\.isPro) private var isPro
+    @Environment(\.isPro) var isPro
     @Environment(\.presentPaywall) private var presentPaywall
     @Query private var routines: [Routine]
     /// Every exercise in the library — the raw material the planner's Quick session draws from
@@ -46,13 +47,44 @@ struct RoutineLibraryView: View {
     @State private var quickDraft: QuickSessionDraft?
     /// Whether the list is narrowed to favourited routines (ADR 0119) — a session toggle, not persisted.
     @State private var favoritesOnly = false
+    /// Sort key + direction, persisted across launches (ADR 0178), defaulting to the newest-first
+    /// order this library had when it had no choice — so an existing player's list is unchanged
+    /// until they change it.
+    @AppStorage("routineLibrarySort") private var sortKey: RoutineSortKey = .recentlyAdded
+    @AppStorage("routineLibrarySortAscending") private var sortAscending = true
+    @State private var searchText = ""
 
-    /// Newest first — the same default sort key as the other libraries (`dateAdded`) — optionally
-    /// narrowed to favourites (ADR 0119).
-    private var ordered: [Routine] {
-        presentRoutines
-            .filter { !favoritesOnly || $0.isFavorite }
-            .sorted { $0.dateAdded > $1.dateAdded }
+    /// The routines on screen: narrowed by the favourites filter (ADR 0119) and the search query,
+    /// then ordered by the chosen key (ADR 0178).
+    ///
+    /// **It takes the history maps rather than reading them**, because two of the four sort keys
+    /// need the practice log and `body` has already reduced it once for the rows. A computed
+    /// property here would rescan the whole log a second time on every redraw — the cost ADR 0173 D6
+    /// went out of its way to pay only once.
+    private func ordered(facts: RoutineListFacts) -> [Routine] {
+        let matched = presentRoutines.filter {
+            (!favoritesOnly || $0.isFavorite)
+                && PracticeLibrarySort.routineMatches(fields(for: $0, facts: facts),
+                                                      query: searchText)
+        }
+        return PracticeLibrarySort.sortedRoutines(matched, by: sortKey, ascending: sortAscending,
+                                                  fields: { fields(for: $0, facts: facts) })
+    }
+
+    /// One routine's sort-relevant fields, read out of the already-computed `facts`.
+    private func fields(for routine: Routine, facts: RoutineListFacts) -> RoutineSortFields {
+        RoutineSortFields(name: displayName(routine), dateAdded: routine.dateAdded,
+                          notes: routine.notes, lastPractised: facts.dates[routine.uid],
+                          estimatedMinutes: facts.minutes[routine.uid] ?? 0)
+    }
+
+    /// The message shown when the library has routines but none is on screen — search-aware, so a
+    /// query with no hits doesn't read as "you have no favourites" (and vice versa).
+    private var noMatchMessage: String {
+        if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "No routines match “\(searchText)”."
+        }
+        return "No favourite routines yet. Swipe or hold a routine and tap Favourite to pin it."
     }
 
     /// The routines actually on screen — everything except rows whose delete is pending behind the
@@ -64,24 +96,26 @@ struct RoutineLibraryView: View {
 
     var body: some View {
         List {
+            // Reduced once here and handed down — to the sort, to the rows, and to the length
+            // each row now states (ADR 0178). Every one of the three is a whole-collection walk:
+            // rebuilding them per row would rescan the practice log, and re-price every block of
+            // every routine, on every redraw.
+            let facts = listFacts
+            let visible = ordered(facts: facts)
             if presentRoutines.isEmpty {
                 Text("No routines yet. Tap + to build one — an ordered run of exercises and "
                      + "loops you work through in a sitting.")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
-            } else if ordered.isEmpty {
-                Text("No favourite routines yet. Swipe or hold a routine and tap Favourite to pin it.")
+            } else if visible.isEmpty {
+                Text(noMatchMessage)
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else {
-                // Reduced once here and handed down, rather than read from a computed property
-                // inside the row: `summary` is called per row, and rebuilding the map there would
-                // rescan the whole log for every routine on screen, on every redraw.
-                let history = routineHistory
-                ForEach(ordered) { routine in
-                    row(for: routine, history: history)
+                ForEach(visible) { routine in
+                    row(for: routine, facts: facts)
                         .listRowBackground(PocketColor.background)
                         .pocketRowActions(displayName(routine),
                                           tint: PocketColor.practice,
@@ -97,10 +131,11 @@ struct RoutineLibraryView: View {
         .pocketRowUndoHost(rowDeletion)
         .navigationTitle("Routines")
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Routines")
         // Leading is the back button alone. The session generator moves off the bar and into the
         // shared options menu — as a *labelled* row rather than a bare wand, which also gives its
-        // disabled and locked states somewhere to read (`LibraryOptionsMenu`). Routines have a
-        // fixed order (newest first), so the menu carries no sort pickers.
+        // disabled and locked states somewhere to read (`LibraryOptionsMenu`). The sort pickers
+        // join it (ADR 0178), which is what made this the last library with a fixed order.
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 LibraryOptionsMenu(favoritesOnly: $favoritesOnly,
@@ -110,6 +145,8 @@ struct RoutineLibraryView: View {
                               systemImage: isPro ? "wand.and.stars" : "lock.fill")
                     }
                     .disabled(isPro && !exercises.contains { $0.template != .warmup })
+                }, sortControls: {
+                    LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
                 })
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -143,40 +180,9 @@ struct RoutineLibraryView: View {
         }
     }
 
-    /// A routine row — a ▶ that plays the session, then a tappable name + one-line block summary
-    /// that opens the editor. Two independent plain buttons so the two actions never collide.
-    ///
-    /// Entitlement-aware (ADR 0112), and the two halves gate **differently**: ▶ asks `canRunRoutine`
-    /// (so the curated free-taste routine plays for a free player) while the body asks
-    /// `canAuthorRoutine` (so that same routine still can't be *edited* — run the freebie, don't
-    /// author it, exactly as the free-taste exercises behave). A routine a free player can neither run
-    /// nor edit stays **visible but badged** — "locked, not hidden".
-    private func row(for routine: Routine,
-                     history: (counts: [UUID: Int], dates: [UUID: Date])) -> some View {
-        let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
-        let runnable = AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo)
-        return HStack(spacing: 14) {
-            Button { play(routine) } label: {
-                Image(systemName: runnable ? "play.circle.fill" : "lock.circle.fill")
-                    .font(.futura(.title2))
-                    .foregroundStyle(runnable ? PocketColor.practice : PocketColor.textSecondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(runnable
-                                ? "Play \(routine.name.isEmpty ? "routine" : routine.name)"
-                                : "Locked — Red Moon Pro")
-
-            Button { edit(routine) } label: {
-                rowBody(for: routine, openable: runnable, history: history)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.vertical, 2)
-    }
-
     /// Run the session — gated on `canRunRoutine`, so the curated free-taste routine plays for a
     /// free player (ADR 0112). Shared by the ▶ button and the row menu's Play.
-    private func play(_ routine: Routine) {
+    func play(_ routine: Routine) {
         let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
         guard AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
             return presentPaywall(.routine(.play))
@@ -188,61 +194,13 @@ struct RoutineLibraryView: View {
     /// Open the editor. The demo exception (ADR 0112): the curated free-taste routine opens for a
     /// free player too — read-only, then rearrange-only under Edit. Adding stays Pro. Shared by the
     /// row-body tap and the row menu's Edit.
-    private func edit(_ routine: Routine) {
+    func edit(_ routine: Routine) {
         let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
         guard AccessPolicy.canEditRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
             return presentPaywall(.routine(.edit))
         }
         editing = routine
         haptic(.light)
-    }
-
-    /// The tappable half of a row: name (+ favourite star), block summary, and the trailing
-    /// entitlement affordances. `openable` means the row leads somewhere for this player — true for
-    /// any routine when Pro, and for the curated demo when free. The PRO capsule and the padlock both
-    /// mark the rows that don't, so the demo reads as ordinary and the rest read as locked.
-    private func rowBody(for routine: Routine, openable: Bool,
-                         history: (counts: [UUID: Int], dates: [UUID: Date])) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(routine.name.isEmpty ? "Untitled routine" : routine.name)
-                        .font(.futura(.body))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    if routine.isFavorite {
-                        Image(systemName: "star.fill")
-                            .font(.futura(.caption2))
-                            .foregroundStyle(PocketColor.practice)
-                            .accessibilityLabel("Favourite")
-                    }
-                }
-                Text(summary(for: routine))
-                    .font(.futura(.caption))
-                    .foregroundStyle(PocketColor.practice)
-                if let line = self.history(for: routine,
-                                           counts: history.counts, dates: history.dates) {
-                    Text(line)
-                        .font(.futura(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-            }
-            Spacer(minLength: 8)
-            if !openable { proBadge }
-            Image(systemName: openable ? "chevron.right" : "lock.fill")
-                .font(.futura(.caption))
-                .foregroundStyle(PocketColor.textSecondary)
-        }
-        .contentShape(Rectangle())
-    }
-
-    /// The "PRO" capsule marking a routine a free player cannot run (ADR 0112). Matches the exercise
-    /// library's badge, and is deliberately absent from the curated free-taste routine, which plays.
-    private var proBadge: some View {
-        Text("PRO")
-            .font(.futura(.caption2, weight: .bold))
-            .foregroundStyle(PocketColor.background)
-            .padding(.horizontal, 6).padding(.vertical, 1)
-            .background(Capsule().fill(PocketColor.practice))
     }
 
     private func displayName(_ routine: Routine) -> String {
@@ -280,48 +238,20 @@ struct RoutineLibraryView: View {
         haptic(.medium)
     }
 
-    /// Both history maps, built **once per redraw** rather than per row (ADR 0173 D6).
-    private var routineHistory: (counts: [UUID: Int], dates: [UUID: Date]) {
+    /// Everything the list derives about its routines, built **once per redraw** rather than per
+    /// row (ADR 0173 D6, extended by ADR 0178 to the length).
+    ///
+    /// The **estimate is the same number the detail screen shows** — both go through
+    /// `PracticePlanner.estimatedMinutes(forRoutine:)` — so a list sorted by length, the length
+    /// printed on its rows, and the routine you then open cannot disagree with each other.
+    private var listFacts: RoutineListFacts {
         let records = runs.map(\.record)
-        return (PracticeLog.routineSessionCounts(in: records),
-                PracticeLog.routineLastPractised(in: records))
-    }
-
-    /// "3 blocks · 1 rest" — what is *in* the routine; "Empty" before any blocks.
-    ///
-    /// **Blocks, not units.** The detail screen's own section header says `Blocks` and the model
-    /// calls them blocks; this row was the only surface calling them units, which left the two
-    /// screens disagreeing about what the things in a routine are.
-    ///
-    /// **Not "exercise blocks"**, which was tried and rejected the same day: `kind.carriesUnit` is
-    /// true for a loop and a song block as well as an exercise one (ADR 0129/0134), so a routine of
-    /// two loops and a song would have read "3 exercise blocks". "Blocks" is true of all three.
-    private func summary(for routine: Routine) -> String {
-        let items = routine.items
-        guard !items.isEmpty else { return "Empty" }
-        let blocks = items.filter(\.kind.carriesUnit).count
-        let rests = items.count - blocks
-        var parts = ["\(blocks) block\(blocks == 1 ? "" : "s")"]
-        if rests > 0 { parts.append("\(rests) rest\(rests == 1 ? "" : "s")") }
-        return parts.joined(separator: " · ")
-    }
-
-    /// "Practised 11 times · 3 days ago" — what the routine has *come to*, or `nil` when it has
-    /// never been run (ADR 0173 D6).
-    ///
-    /// A second line rather than more of the first: the two answer different questions, and four
-    /// facts on one caption wrap to three lines on a long name at a large text size.
-    ///
-    /// **A routine with no runs returns `nil` rather than "Not yet."** The detail screen has room to
-    /// say that kindly beside a date; a list does not, and thirty rows each announcing a thing not
-    /// done reads as a nag however neutral the words are (design-brief §3.5).
-    private func history(for routine: Routine, counts: [UUID: Int], dates: [UUID: Date]) -> String? {
-        guard let sessions = counts[routine.uid], sessions > 0 else { return nil }
-        var parts = [sessions == 1 ? "Practised once" : "Practised \(sessions) times"]
-        if let last = dates[routine.uid] {
-            parts.append(last.formatted(.relative(presentation: .named)))
-        }
-        return parts.joined(separator: " · ")
+        return RoutineListFacts(
+            counts: PracticeLog.routineSessionCounts(in: records),
+            dates: PracticeLog.routineLastPractised(in: records),
+            minutes: Dictionary(uniqueKeysWithValues: presentRoutines.map {
+                ($0.uid, PracticePlanner.estimatedMinutes(forRoutine: $0))
+            }))
     }
 
     /// Generate a Quick session (default short budget, ADR 0014 R8) from the exercise library and
@@ -341,6 +271,18 @@ struct RoutineLibraryView: View {
         haptic(.light)
     }
 
+}
+
+/// What the Routines list derives about the routines on it: how many sittings each has been
+/// practised in, when it last was (ADR 0173), and roughly how long it runs (ADR 0178).
+///
+/// One value rather than three parameters, because all three are computed together, at the same
+/// moment, for the same reason — and a row that took them separately could be handed one redraw's
+/// history beside another's lengths.
+struct RoutineListFacts {
+    let counts: [UUID: Int]
+    let dates: [UUID: Date]
+    let minutes: [UUID: Int]
 }
 
 /// A freshly-generated Quick session pending review — the pure `[SessionBlock]` plus its dated

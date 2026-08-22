@@ -68,6 +68,7 @@ extension RoutineDetailView {
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(3...8)
                     .keyboardDoneButton()
+                    .accessibilityIdentifier(UITestHooks.routineDescriptionField)
                     .listRowBackground(PocketColor.background)
             } header: {
                 Text("Description")

@@ -3169,7 +3169,17 @@ Ordered by value, highest first.
    permits it. **Sharpened 2026-08-17**: the pointer half is now built, so a routine's only
    words about itself are its name and a list of link titles. That is the gap in its clearest
    form — a routine can say *where* it came from and still not say *what it is for*.
-3. **A routine cannot be found.** No search, no sort — fixed newest-first, and the
+3. **A routine cannot be found — SHIPPED as ADR 0178** (2026-08-22, branch
+   `pocket-281-a-routine-you-can-find`). Search over name + description, four sort keys
+   (Recently Added · Name · Last Practised · Length) through the existing `LibrarySortKey` /
+   `LibrarySortPickers` machinery. Two things worth keeping: a **times practised** key was
+   considered and rejected (ranking the library by it is a league table of the player's own
+   habits — ADR 0070), and a never-practised routine sorts **last** ascending rather than as
+   `.distantPast`, which would assert something about practice that never happened. Searching
+   the **blocks** stays open — it means walking every block on every keystroke and matching text
+   that is nowhere on the row it returns. Original note preserved below.
+
+   **A routine cannot be found.** No search, no sort — fixed newest-first, and the
    toolbar comment says so in as many words (`Pocket/Features/Practice/RoutineLibraryView.swift:93-94`).
    ~~Compounding it: **Estimated length is hidden once the routine is saved**
    (`RoutineDetailView+Length.swift`, `lengthSection` gates on `!existsInStore`), so a
@@ -3193,7 +3203,18 @@ Ordered by value, highest first.
    rejects re-opening it).
 7. **Rest length is one global setting**, though `RoutineBudget` already models per-rest
    min/default/max minutes for planning. The model is more expressive than the editor.
-8. **No routine UI tests.** `PocketUITests` has no routine file; ADR 0127's authoring
+8. **No routine UI tests — MOSTLY CLOSED by ADR 0178** (2026-08-22).
+   `RoutineLibraryUITests` covers the library's search and the detail screen's
+   *Cancel discards, Save keeps* contract on the description, and was proven non-vacuous by
+   neutralising `routineMatches`.
+
+   **Still open: anything behind the toolbar `Menu`** — the sort pickers and *Generate a quick
+   session*. A toolbar `Menu`'s items do not resolve through `app.buttons[…]` on CI's
+   macOS-15 / Xcode 16 toolchain (see `shoot-harness-green-run-traps`), so such a test passes
+   locally and fails every CI run. ADR 0127's *authoring* gestures — the hold-to-place rest
+   insert, drag reorder — are also still device-only. Original note preserved below.
+
+   **No routine UI tests.** `PocketUITests` has no routine file; ADR 0127's authoring
    gestures are device-verified only. Every other library screen has coverage.
 
 ### Progressive disclosure — name it before building it
