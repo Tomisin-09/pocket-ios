@@ -49,6 +49,17 @@ enum UITestHooks {
     /// An identifier we set ourselves is neither.
     static let referenceLinkField = "reference.linkField"
 
+    /// The routine's **Description** field (ADR 0177) — the gate that says *edit mode is on and the
+    /// prose section is drawn*.
+    ///
+    /// An identifier rather than the placeholder text, for two reasons the harness has paid for
+    /// before. A `TextField(axis: .vertical)` is not exposed as a `textField` at all — XCUITest sees
+    /// a **text view** — so a query written against the wrong element type finds nothing and reports
+    /// it as "the field is missing" rather than "you asked for the wrong kind of thing". And the
+    /// placeholder is user-facing copy: rewording it would silently break a test that has nothing to
+    /// do with wording.
+    static let routineDescriptionField = "routine.descriptionField"
+
     /// The control that opens a take's own screen (ADR 0174) — the title half of a take row, which
     /// is a separate button from the play glyph beside it.
     ///

@@ -4,6 +4,9 @@ import SwiftUI
 /// item holding the sort key, the sort direction, the favourites filter, and (on Routines) the
 /// screen's non-primary action.
 ///
+/// The `SortControls == EmptyView` overload this used to carry — "a library with a fixed order
+/// (Routines)" — went with ADR 0178, which gave Routines a sort and left no library without one.
+///
 /// It exists to fix a chrome bug, not just to deduplicate. Exercises previously carried *two*
 /// `.topBarLeading` items — a sort control that renders as a text pill (`↑ Recently Added`) plus a
 /// favourites star — behind the system back button. With `.navigationBarTitleDisplayMode(.inline)`
@@ -105,18 +108,6 @@ extension LibraryOptionsMenu where Actions == EmptyView {
                   narrowFilter: narrowFilter, narrowFilterLabel: narrowFilterLabel,
                   narrowFilterImage: narrowFilterImage,
                   tint: tint, actions: { EmptyView() }, sortControls: sortControls)
-    }
-}
-
-extension LibraryOptionsMenu where SortControls == EmptyView {
-    /// A library with a fixed order (Routines — newest first), so only actions and the filter.
-    init(favoritesOnly: Binding<Bool>,
-         showsFavoritesFilter: Bool = true,
-         tint: Color = PocketColor.practice,
-         @ViewBuilder actions: () -> Actions) {
-        self.init(favoritesOnly: favoritesOnly, showsFavoritesFilter: showsFavoritesFilter,
-                  widenFilter: nil, widenFilterLabel: "Show all", narrowFilter: nil,
-                  tint: tint, actions: actions, sortControls: { EmptyView() })
     }
 }
 

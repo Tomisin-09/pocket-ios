@@ -23,6 +23,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   in instead of two. It stays free, like the rest of the journal.
 
 ### Added
+- **Routines can be sorted and searched.** The one library in the app still stuck in a fixed order
+  now sorts four ways — **Recently Added** (where it starts, and where it stays until you change
+  it), **Name**, **Last Practised** and **Length** — with **Order** to flip any of them. A routine
+  you have never run sorts to the *end* of Last Practised rather than the front: it has no date, and
+  treating "never" as "longest ago" would be claiming something about practice that never happened.
+  There is no *times practised* key, deliberately: the count is a fact worth reading on a row, and
+  ranking your library by it would be a league table of your own habits.
+  **Search** matches a routine's name **and** its description, so a word you only ever wrote in the
+  prose — the week of a course, who a session is for — still finds it.
+  Each row now also states **roughly how long the routine runs**, off to the right — because a list
+  you can order by length should be a list you can *read* the lengths off. It is the same estimate
+  the routine states on its own screen.
 - **A routine can say what it is for.** Routines gain a **Description** — the thing that never fitted
   in the name. *"Ten minutes before a lesson."* *"The bits of the week 3 sheet that actually needed
   work."* *"Warm up cold, and don't skip the rests."* It sits above **Where you learned it**, which

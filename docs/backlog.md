@@ -272,6 +272,26 @@ renumber touches `.swift` and pays a full ~12-minute CI run for what is only a c
 Renaming the file alone would be worse than leaving it as is: the comments would then say "ADR 0163"
 and land a reader on the settings ADR. It's the whole rename or none of it.
 
+## The Exercises and Loops search bars hide until you pull down (logged 2026-08-22)
+
+`ExerciseLibraryView` and `LoopLibraryView` use `.searchable(text:prompt:)` with the **default**
+placement under an inline navigation title, which does not show the search bar until the list is
+scrolled down. ADR 0178 moved the new Routines search to
+`.navigationBarDrawer(displayMode: .always)` — the choice `SearchablePickerList` already made — and
+deliberately did not touch the other two, being a routines change.
+
+Two reasons it is worth aligning them, neither urgent:
+
+- **A control you have to discover by pulling is a control most players never find**, and all three
+  libraries now claim a search in `docs/manual/`.
+- **The default is not one behaviour, it is two.** The bar is in the view hierarchy from launch on
+  iOS 26 and is not on iOS 18 — which is how ADR 0178's UI test came to pass locally and fail on
+  CI's Xcode 16 runner, with a message about the app that was really about the toolchain. The
+  deployment target is iOS 17, so both behaviours ship.
+
+One line each. The reason to think before doing it is that a permanently visible search bar costs
+vertical space on every launch of those two screens, which is a design call rather than a fix.
+
 ## Marker labels could be terser — "M3" not "Marker 3" (logged 2026-08-11)
 
 Markers already auto-name on drop: `dropMarkerAtPlayhead()` calls
@@ -3169,7 +3189,17 @@ Ordered by value, highest first.
    permits it. **Sharpened 2026-08-17**: the pointer half is now built, so a routine's only
    words about itself are its name and a list of link titles. That is the gap in its clearest
    form — a routine can say *where* it came from and still not say *what it is for*.
-3. **A routine cannot be found.** No search, no sort — fixed newest-first, and the
+3. **A routine cannot be found — SHIPPED as ADR 0178** (2026-08-22, branch
+   `pocket-281-a-routine-you-can-find`). Search over name + description, four sort keys
+   (Recently Added · Name · Last Practised · Length) through the existing `LibrarySortKey` /
+   `LibrarySortPickers` machinery. Two things worth keeping: a **times practised** key was
+   considered and rejected (ranking the library by it is a league table of the player's own
+   habits — ADR 0070), and a never-practised routine sorts **last** ascending rather than as
+   `.distantPast`, which would assert something about practice that never happened. Searching
+   the **blocks** stays open — it means walking every block on every keystroke and matching text
+   that is nowhere on the row it returns. Original note preserved below.
+
+   **A routine cannot be found.** No search, no sort — fixed newest-first, and the
    toolbar comment says so in as many words (`Pocket/Features/Practice/RoutineLibraryView.swift:93-94`).
    ~~Compounding it: **Estimated length is hidden once the routine is saved**
    (`RoutineDetailView+Length.swift`, `lengthSection` gates on `!existsInStore`), so a
@@ -3193,7 +3223,18 @@ Ordered by value, highest first.
    rejects re-opening it).
 7. **Rest length is one global setting**, though `RoutineBudget` already models per-rest
    min/default/max minutes for planning. The model is more expressive than the editor.
-8. **No routine UI tests.** `PocketUITests` has no routine file; ADR 0127's authoring
+8. **No routine UI tests — MOSTLY CLOSED by ADR 0178** (2026-08-22).
+   `RoutineLibraryUITests` covers the library's search and the detail screen's
+   *Cancel discards, Save keeps* contract on the description, and was proven non-vacuous by
+   neutralising `routineMatches`.
+
+   **Still open: anything behind the toolbar `Menu`** — the sort pickers and *Generate a quick
+   session*. A toolbar `Menu`'s items do not resolve through `app.buttons[…]` on CI's
+   macOS-15 / Xcode 16 toolchain (see `shoot-harness-green-run-traps`), so such a test passes
+   locally and fails every CI run. ADR 0127's *authoring* gestures — the hold-to-place rest
+   insert, drag reorder — are also still device-only. Original note preserved below.
+
+   **No routine UI tests.** `PocketUITests` has no routine file; ADR 0127's authoring
    gestures are device-verified only. Every other library screen has coverage.
 
 ### Progressive disclosure — name it before building it

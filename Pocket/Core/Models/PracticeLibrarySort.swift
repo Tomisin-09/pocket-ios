@@ -54,6 +54,50 @@ enum ExerciseSortKey: String, CaseIterable, Identifiable, LibrarySortKey {
     }
 }
 
+/// How the **Routines** library inside Practice is ordered (ADR 0178). Routines are whole
+/// *sessions*, so the keys are the four questions you actually ask when choosing one: which is new,
+/// what is it called, when did I last do it, and how long is it.
+///
+/// No **times practised** key. A tally is a fine thing to *read* on a row (ADR 0173) and a poor
+/// thing to rank a library by: the top of that list is the routine you have done most, which is a
+/// league table of your own habits and the closest this app would come to grading them (ADR 0070).
+enum RoutineSortKey: String, CaseIterable, Identifiable, LibrarySortKey {
+    /// Newest first, by `Routine.dateAdded` — **the default**, and the order this library had
+    /// before it had any others.
+    case recentlyAdded
+    /// Routine name, A→Z.
+    case name
+    /// Most recently practised first, never-practised last (ADR 0173's date).
+    case lastPractised
+    /// Shortest first, by the same estimate the detail screen shows (ADR 0173's length).
+    case length
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .recentlyAdded: "Recently Added"
+        case .name: "Name"
+        case .lastPractised: "Last Practised"
+        case .length: "Length"
+        }
+    }
+}
+
+/// The sort-relevant projection of a `Routine` (see `LoopSortFields`) — a plain value, so the
+/// ordering stays SwiftData-free and unit-testable.
+struct RoutineSortFields {
+    let name: String
+    let dateAdded: Date
+    /// What the session is *for* (ADR 0177) — searched alongside the name, never sorted on.
+    var notes: String = ""
+    /// When the routine was last run, read off the practice log, or `nil` for one never run.
+    var lastPractised: Date?
+    /// `PracticePlanner.estimatedMinutes(forRoutine:)` — computed at the call site, because it walks
+    /// SwiftData relationships and this type must not.
+    var estimatedMinutes: Int = 0
+}
+
 /// The sort-relevant projection of a `Loop` — the only fields the ordering needs. Keeping it a
 /// plain value keeps `PracticeLibrarySort` SwiftData-free and unit-testable (AGENTS.md: pure
 /// logic stays pure), mirroring `SongGroupFields`.
@@ -94,8 +138,9 @@ struct ExerciseSortFields {
     var commandNotesPerMinute: Int { max(0, command) * max(1, notesPerBeat) }
 }
 
-/// Pure ordering + search for the two Practice unit libraries (ADR 0056). Generic over the item
-/// type so it works on `[Loop]` / `[Exercise]` without importing SwiftData — the caller supplies a
+/// Pure ordering + search for the three Practice libraries — loops and exercises (ADR 0056), and
+/// routines (ADR 0178). Generic over the item type so it works on `[Loop]` / `[Exercise]` /
+/// `[Routine]` without importing SwiftData — the caller supplies a
 /// closure projecting each item to its fields. `ascending` is the natural order for the key (A→Z,
 /// low→high, needs-work first, newest first); `false` **flips the whole list**, ties included, so
 /// the reversal is total and predictable (matching the song library, ADR 0035).
@@ -255,6 +300,72 @@ enum PracticeLibrarySort {
     }
 
     private static func byName(_ lhs: ExerciseSortFields, _ rhs: ExerciseSortFields) -> Bool {
+        lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
+    }
+
+    // MARK: - Routines
+
+    static func sortedRoutines<Item>(_ items: [Item], by key: RoutineSortKey, ascending: Bool,
+                                     fields: (Item) -> RoutineSortFields) -> [Item] {
+        let ordered = items
+            .map { (item: $0, fields: fields($0)) }
+            .sorted { routinePrecedes($0.fields, $1.fields, key: key) }
+        return (ascending ? ordered : ordered.reversed()).map(\.item)
+    }
+
+    /// Whether a routine matches a search `query` — its name **or its description** (ADR 0177),
+    /// case- and diacritic-insensitively. An empty/whitespace query matches everything.
+    ///
+    /// The description is in scope because it is where the words a player would search for actually
+    /// live: a name is short by function, so "lesson", "week 3" and "warm up cold" are all things
+    /// that only ever got written in the prose.
+    static func routineMatches(_ fields: RoutineSortFields, query: String) -> Bool {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return true }
+        return contains(fields.name, trimmed) || contains(fields.notes, trimmed)
+    }
+
+    /// Ascending comparator for routines; `name` breaks every tie so the order is deterministic and
+    /// the descending flip reverses ties too (ADR 0035).
+    private static func routinePrecedes(_ lhs: RoutineSortFields, _ rhs: RoutineSortFields,
+                                        key: RoutineSortKey) -> Bool {
+        switch key {
+        case .recentlyAdded:
+            // "Ascending" reads newest-first here, as it does for exercises and songs.
+            if lhs.dateAdded != rhs.dateAdded { return lhs.dateAdded > rhs.dateAdded }
+            return byName(lhs, rhs)
+        case .name:
+            return byName(lhs, rhs)
+        case .lastPractised:
+            if let decided = mostRecentlyPractised(lhs.lastPractised, rhs.lastPractised) {
+                return decided
+            }
+            return byName(lhs, rhs)
+        case .length:
+            if lhs.estimatedMinutes != rhs.estimatedMinutes {
+                return lhs.estimatedMinutes < rhs.estimatedMinutes
+            }
+            return byName(lhs, rhs)
+        }
+    }
+
+    /// Whether `left` precedes `right` on the last-practised key, or `nil` when the two are
+    /// indistinguishable and the caller should fall through to the name tiebreak.
+    ///
+    /// A routine never run has no date, and `.distantPast` is the wrong stand-in: it would read as
+    /// "practised longer ago than anything else", which is a claim about practice that never
+    /// happened. It sorts **last ascending** instead — the same shape as an unrated loop's mastery —
+    /// so the head of the list is always something you have actually done.
+    private static func mostRecentlyPractised(_ left: Date?, _ right: Date?) -> Bool? {
+        switch (left, right) {
+        case let (left?, right?): return left == right ? nil : left > right
+        case (nil, _?): return false
+        case (_?, nil): return true
+        case (nil, nil): return nil
+        }
+    }
+
+    private static func byName(_ lhs: RoutineSortFields, _ rhs: RoutineSortFields) -> Bool {
         lhs.name.caseInsensitiveCompare(rhs.name) == .orderedAscending
     }
 
