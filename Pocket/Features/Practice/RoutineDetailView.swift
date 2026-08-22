@@ -140,25 +140,12 @@ struct RoutineDetailView: View {
 
     var body: some View {
         List {
-            // The name is editable both in edit mode and on a **provisional generated session** —
-            // surfaced inline (not buried behind a Save-time alert) so the session you'll keep going
-            // back to can be named right on the review screen (R1b).
-            if isEditing || !existsInStore {
-                Section {
-                    TextField("Routine name", text: $routine.name)
-                        .font(.futura(.body))
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .listRowBackground(PocketColor.background)
-                } header: {
-                    Text("Name")
-                } footer: {
-                    if !existsInStore {
-                        Text("Name it to keep it in your routines and run it again.")
-                            .font(.futura(.caption))
-                            .foregroundStyle(PocketColor.textSecondary)
-                    }
-                }
-            }
+            // The routine's own words — its name and what the session is for (ADR 0177). Both live
+            // in `RoutineDetailView+Prose.swift` and share one edit gate: edit mode, or a
+            // provisional generated session, which is named and described inline on the review
+            // screen rather than behind a Save-time alert (R1b).
+            nameSection
+            descriptionSection
 
             Section {
                 if routine.items.isEmpty {
@@ -276,6 +263,7 @@ struct RoutineDetailView: View {
     /// Idempotent — a no-op once already stored.
     private func commitProvisional(named name: String) {
         guard !existsInStore else { return }
+        trimDescription()
         let others = ((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])
             .filter { $0.persistentModelID != routine.persistentModelID }
             .map(\.name)
@@ -327,8 +315,13 @@ struct RoutineDetailView: View {
 
     /// Commit the sandbox and drop back to the read-only view. A brand-new routine with nothing in it
     /// is dismissed rather than saved (an abandoned "New routine" leaves no empty shell).
+    ///
+    /// "Nothing in it" counts the **description** too (ADR 0177): typing what a session is for and
+    /// nothing else is thin, but it is something the player wrote, and dropping it on Save would be
+    /// the screen discarding work without saying so.
     private func saveEdits() {
-        if !existsInStore && routine.items.isEmpty
+        trimDescription()
+        if !existsInStore && routine.items.isEmpty && routine.notes.isEmpty
             && routine.name.trimmingCharacters(in: .whitespaces).isEmpty {
             dismiss()
             return

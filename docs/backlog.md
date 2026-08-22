@@ -3148,7 +3148,20 @@ Ordered by value, highest first.
    this is a read, not a schema change — which is what makes it the cheapest big win on
    the list. ⚠ Whatever is shown must be **facts, not verdicts** (design-brief §3.5 no-shame):
    a count and a date, never "on track" or a consistency score, and never a streak.
-2. **A routine cannot explain itself.** No description or notes field at all
+2. **A routine cannot explain itself — SHIPPED as ADR 0177** (2026-08-22, branch
+   `pocket-280-a-routine-that-explains-itself`). `Routine.notes` plus a **Description**
+   section on the detail screen, above **Where you learned it** and behind the same Edit
+   gate. Additive `String` with a declaration default, as predicted; the starter routine
+   ships with one.
+
+   **Two things the note below did not anticipate**, both decided in the build: the
+   description is *not* gated on `existsInStore` the way ADR 0167's links are — a `String`
+   on the routine itself cannot persist anything the routine's own Save does not, while a
+   `ReferenceLink` is a separate `@Model` and can — and `RoutineDetailView` was already at
+   the 400-line cap, so the **name** section moved out alongside the new one into
+   `RoutineDetailView+Prose.swift`. Original note preserved below.
+
+   **A routine cannot explain itself.** No description or notes field at all
    (`Pocket/Core/Models/Routine.swift` — uid, name, dateAdded, lastPracticed,
    isFavorite, presetSlug, items, and nothing else), unlike `Exercise.notes` and
    `Song.comment`. ADR 0167 covers the *pointer* half (a link out to where the routine
@@ -3163,7 +3176,8 @@ Ordered by value, highest first.
    stored routine never tells you how long it is — the single most useful thing to sort
    or choose by.~~ **The length half is fixed** (ADR 0173): a saved routine states its
    estimated length in the same section as its history. The search-and-sort half stays open,
-   now with a length worth sorting by.
+   now with a length worth sorting by — and, since ADR 0177, with a **description** that
+   whatever search lands should match alongside the name.
 4. **A routine cannot be given away.** No export, no import, no share; `Routine` is not
    `Codable`. ADR 0064 named the *exercise* as the shareable unit, but **the routine is
    what a teacher hands over** — and under the multiplier thesis, a teacher handing over

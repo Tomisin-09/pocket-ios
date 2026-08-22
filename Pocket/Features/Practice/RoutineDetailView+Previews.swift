@@ -8,6 +8,9 @@ import SwiftUI
 /// with its Add affordances, and the **free demo** — the curated routine a free player may open and
 /// rearrange but not extend. `\.isPro` defaults to `false`, so the demo preview needs no injection
 /// beyond a matching `presetSlug`.
+///
+/// Both carry a **description** (ADR 0177) so the read-only rendering of it is in the canvas; both
+/// open read-only, and tapping **Edit** in the running preview is what shows the editable field.
 
 #Preview("Routine detail — Pro") {
     // swiftlint:disable:next force_try
@@ -17,6 +20,7 @@ import SwiftUI
     let drill = Exercise(name: "Alternating picking", currentTempo: 70, commandTempo: 96)
     container.mainContext.insert(drill)
     let routine = Routine(name: "Morning warm-up")
+    routine.notes = "Ten minutes before a lesson — hands first, then the piece."
     routine.items = [RoutineItem.item(drill, kind: .warmup, order: 0),
                      RoutineItem.rest(order: 1),
                      RoutineItem.item(drill, order: 2)]
@@ -36,6 +40,7 @@ import SwiftUI
     container.mainContext.insert(drill)
     let routine = Routine(name: "Morning Routine")
     routine.presetSlug = RoutinePresets.freeTasteSlug
+    routine.notes = RoutinePresets.specs.first?.notes ?? ""
     routine.items = [RoutineItem.item(drill, kind: .warmup, order: 0),
                      RoutineItem.rest(order: 1),
                      RoutineItem.item(drill, order: 2)]
