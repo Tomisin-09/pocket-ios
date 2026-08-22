@@ -21,13 +21,22 @@ enum RoutinePresets {
         case rest
     }
 
-    /// The seed spec for one routine: a name, a stable provenance slug, and its ordered blocks.
+    /// The seed spec for one routine: a name, a stable provenance slug, what the session is for,
+    /// and its ordered blocks.
     struct Spec {
         let name: String
         /// Stable provenance identifier stamped onto the seeded `Routine.presetSlug` (ADR 0112). The
         /// free-taste run allowance and the one-time backfill both key off it, so it must never
         /// change even if `name` is reworded.
         let slug: String
+        /// What the session is for, seeded onto `Routine.notes` (ADR 0177). The starter routine is
+        /// the demo shown whole, so it demonstrates this field by *having* one rather than by
+        /// arriving blank — the same reason `PracticePresets` ships its exercises with `notes`.
+        /// Unlike `slug`, this is ordinary copy and may be reworded freely.
+        ///
+        /// A `var` with a default, not a `let`: Swift drops a defaulted `let` from the memberwise
+        /// initialiser, and the tests build specs without prose.
+        var notes: String = ""
         let blocks: [Block]
     }
 
@@ -55,6 +64,8 @@ enum RoutinePresets {
     /// of this re-runs and nothing is removed.
     static let specs: [Spec] = [
         Spec(name: "Morning Routine", slug: freeTasteSlug,
+             notes: "Get the hands working before anything else: two warm-ups, then picking, then "
+                  + "a scale to play with. Take the rests — they're part of it.",
              blocks: [.exercise(spiderWalk), .exercise(chromaticWarmup),
                       .rest, .exercise(alternatePicking),
                       .rest, .exercise(aMinorPentatonic)])
@@ -86,6 +97,7 @@ enum RoutinePresets {
         guard resolvedAnExercise else { return nil }
         let routine = Routine(name: spec.name)
         routine.presetSlug = spec.slug
+        routine.notes = spec.notes
         for item in items { item.routine = routine }
         routine.items = items
         return routine

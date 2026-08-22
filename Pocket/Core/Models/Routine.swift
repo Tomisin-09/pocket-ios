@@ -63,11 +63,27 @@ final class Routine {
     /// discipline as `Song.loopsByStart`.
     var orderedItems: [RoutineItem] { RoutineItem.ordered(items) }
 
+    /// Free-text **description**: what this session is *for* (ADR 0177). "Ten minutes before a
+    /// lesson", "the bits of the Berklee week 3 sheet that actually needed work".
+    ///
+    /// The routine was the last practice unit with no prose of its own — `Exercise.notes` and
+    /// `Song.comment` have always existed, and ADR 0167's `references` gave a routine somewhere to
+    /// say *where it came from* without giving it anywhere to say *what it is for*. Named `notes` to
+    /// mirror `Exercise.notes` exactly (the surface calls it **Description**, as the exercise's does).
+    ///
+    /// A **plain `String` with a declaration default**, not an optional: the field means "the prose,
+    /// possibly none", and `""` says that as well as `nil` does while sparing every reader an
+    /// unwrap. That is `Exercise.notes`' shape and the CoreData 134110 rule's requirement in one —
+    /// additive, so lightweight migration fills every existing routine with `""` and no store is
+    /// wiped. Trimmed at the commit sites, never on read.
+    var notes: String = ""
+
     /// Where this session came from (ADR 0167) — a course's week 3, a teacher's assignment. **The
     /// most on-thesis owner of the four**: a course belongs to a sitting, not to a single drill,
-    /// and it is the half of this feature nobody else models. It is also, for now, the *only* prose
-    /// a routine carries — `Routine` still has no description or notes field of its own, a gap
-    /// `docs/backlog.md` keeps open. **`.cascade` like `items`.** Additive (CoreData 134110 rule).
+    /// and it is the half of this feature nobody else models. Since ADR 0177 it is no longer the
+    /// only prose a routine carries: `notes` says what the session is *for*, this says where it
+    /// came *from*, and the two are deliberately separate fields.
+    /// **`.cascade` like `items`.** Additive (CoreData 134110 rule).
     @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.routine)
     var references: [ReferenceLink] = []
 

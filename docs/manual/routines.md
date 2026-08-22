@@ -161,6 +161,12 @@ evening count as two.
 It counts and it dates, and that is all it does. There is no target to hit, nothing that goes up or
 down against last week, and nothing anywhere that remarks on a gap.
 
+A routine also carries a **Description** — what the session is for, in as many words as you like.
+It is the thing that will not fit in a name: who it is for, which week of the course it covers, why
+the blocks are in the order they are. It sits behind the same **Edit** gate as the blocks, so you
+read it at any time and change it with Edit, and **Save** keeps it. A routine you have not described
+shows no Description at all until you add one. The starter **Morning Routine** arrives with one.
+
 A saved routine also carries **Where you learned it**, and this is the one that matters most: a
 course, a teacher's assignment, a book chapter belongs to a whole session rather than to any single
 drill in it. It sits behind the same **Edit** gate as the blocks — you can read the links at any

@@ -11,8 +11,9 @@ extension RoutineDetailView {
     /// Where this session came from — a course's week 3, a teacher's assignment.
     ///
     /// The routine is the **most on-thesis owner** of the four (`docs/positioning.md` §1: a course
-    /// belongs to a sitting, not to a single drill) and, for now, the only prose a routine carries —
-    /// `Routine` still has no description field of its own, a gap `docs/backlog.md` keeps open.
+    /// belongs to a sitting, not to a single drill). It sits directly under the **Description**
+    /// (ADR 0177), which closed the gap this note used to name: where you learned it and what it is
+    /// for are neighbours on the screen and separate fields in the model.
     ///
     /// Three constraints, none of which the other four surfaces need:
     ///

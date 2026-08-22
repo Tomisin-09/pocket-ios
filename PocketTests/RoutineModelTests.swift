@@ -18,6 +18,12 @@ final class RoutineModelTests: XCTestCase {
         XCTAssertNotEqual(Routine().uid, Routine().uid)
     }
 
+    /// ADR 0177. A routine with no description reads as `""`, never `nil` — the shape
+    /// `Exercise.notes` uses, and the one that keeps the add additive (CoreData 134110).
+    func testRoutineDescriptionDefaultsToEmptyRatherThanNil() {
+        XCTAssertTrue(Routine().notes.isEmpty)
+    }
+
     func testItemDefaultsToAnInertRest() {
         let item = RoutineItem()
         XCTAssertEqual(item.kind, .rest)
@@ -130,6 +136,19 @@ final class RoutineModelTests: XCTestCase {
         XCTAssertEqual(fetched.count, 1)
         XCTAssertEqual(fetched.first?.orderedItems.count, 1)
         XCTAssertEqual(fetched.first?.orderedItems.first?.exercise?.name, "Spider")
+    }
+
+    /// ADR 0177 — the description survives a real store round-trip, which is what proves the field
+    /// actually joined the schema rather than merely compiling as a property.
+    func testRoutineDescriptionRoundTripsThroughTheStore() throws {
+        let context = try makeContext()
+        let routine = Routine(name: "Morning")
+        routine.notes = "Ten minutes before a lesson."
+        context.insert(routine)
+        try context.save()
+
+        let fetched = try context.fetch(FetchDescriptor<Routine>())
+        XCTAssertEqual(fetched.first?.notes, "Ten minutes before a lesson.")
     }
 
     /// Deleting a referenced unit **nullifies** the block's link and leaves the routine

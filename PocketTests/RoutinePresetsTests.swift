@@ -95,6 +95,31 @@ final class RoutinePresetsTests: XCTestCase {
         XCTAssertEqual(routine?.presetSlug, "test-slug")
     }
 
+    // MARK: - Description (ADR 0177)
+
+    func testMakeRoutineSeedsTheSpecDescription() {
+        let spec = RoutinePresets.Spec(name: "Test", slug: "test-slug",
+                                       notes: "What this session is for.", blocks: [.exercise("A")])
+        let routine = RoutinePresets.makeRoutine(spec, resolving: ["A": Exercise(name: "A")])
+        XCTAssertEqual(routine?.notes, "What this session is for.")
+    }
+
+    /// A spec that states no description seeds an empty one, not the string `"nil"` or a
+    /// placeholder — the routine simply arrives without prose, as a hand-built one does.
+    func testASpecWithoutADescriptionSeedsAnEmptyOne() {
+        let spec = RoutinePresets.Spec(name: "Test", slug: "test-slug", blocks: [.exercise("A")])
+        let routine = RoutinePresets.makeRoutine(spec, resolving: ["A": Exercise(name: "A")])
+        XCTAssertEqual(routine?.notes, "")
+    }
+
+    /// The starter routine is the demo shown whole, so it must actually demonstrate the field.
+    func testEveryShippedRoutineCarriesADescription() {
+        for spec in RoutinePresets.specs {
+            XCTAssertFalse(spec.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                           "\(spec.name) ships with no description")
+        }
+    }
+
     func testBackfillSlugLookupMatchesByNameOnly() {
         XCTAssertEqual(RoutinePresets.slug(forName: "Morning Routine"), RoutinePresets.freeTasteSlug)
         XCTAssertNil(RoutinePresets.slug(forName: "My own routine"))

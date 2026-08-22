@@ -23,6 +23,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   in instead of two. It stays free, like the rest of the journal.
 
 ### Added
+- **A routine can say what it is for.** Routines gain a **Description** — the thing that never fitted
+  in the name. *"Ten minutes before a lesson."* *"The bits of the week 3 sheet that actually needed
+  work."* *"Warm up cold, and don't skip the rests."* It sits above **Where you learned it**, which
+  says where the session came *from*, and behind the same **Edit** gate as everything else on that
+  screen: read it any time, change it with Edit, keep it with **Save**. A routine you haven't
+  described shows nothing at all rather than a standing note about a field you haven't filled in.
+  The starter **Morning Routine** arrives with one, so the field shows up as something routines have
+  rather than something you have to find.
 - **A take is something you can move around in now.** Tap a recording anywhere but its **▶** and it
   opens on a screen of its own: the take drawn as a waveform you can drag to move the playhead or
   tap to jump to a point, ten-second skips either side of play/pause, and what the take runs to and
