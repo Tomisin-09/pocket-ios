@@ -30,6 +30,9 @@ final class RoutineModelTests: XCTestCase {
         XCTAssertEqual(item.order, 0)
         XCTAssertFalse(item.hasResolvableUnit)
         XCTAssertNotEqual(RoutineItem().uid, RoutineItem().uid)
+        // ADR 0179 — a block records only when it was marked to, so every routine authored before
+        // this shipped reads exactly as it did.
+        XCTAssertFalse(item.recordsTake)
     }
 
     // MARK: - String-backed enum round-trip

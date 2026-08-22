@@ -70,12 +70,29 @@ extension RoutinePlayerView {
     @ViewBuilder
     func doneView(for stage: RoutineStage) -> some View {
         let offer = revisionOffer(for: stage)
+        // Resolved **in the body**, which is the point: reading the relationship here establishes
+        // SwiftData observation on it, so the row appears even when the run screen's `.onDisappear`
+        // finalises the take *after* this screen first renders. That ordering is real — the Done
+        // screen replaces the run screen, so the teardown that saves the take happens on the far
+        // side of the first render.
+        let take = takeFromThisBlock(stage)
         RoutineBlockDoneView(title: stage.title,
                              initialMastery: mastery(for: stage),
                              anchors: offer?.anchors, unit: offer?.unit ?? .bpm,
                              isLast: player.upNext == nil,
-                             upNext: upNextDescriptor()) { mastery, note, kind, revision in
-            commitDone(stage, mastery: mastery, note: note, kind: kind, revision: revision)
+                             upNext: upNextDescriptor(),
+                             savedTake: take.map { .init(durationLabel: $0.durationLabel) },
+                             onPlayTake: take == nil ? nil : { showingTakes = true },
+                             onContinue: { mastery, note, kind, revision in
+                                 commitDone(stage, mastery: mastery, note: note,
+                                            kind: kind, revision: revision)
+                             })
+        // Presented by a plain `Bool`, never `.sheet(item:)` on a model — that self-dismisses when
+        // the identity churns (ADR 0090). The stage is already in hand from the enclosing view.
+        .sheet(isPresented: $showingTakes) {
+            if let owner = takeOwner(for: stage) {
+                TakesSheet(owner: owner, onDelete: deleteTake)
+            }
         }
         // The Done screen sits outside the per-block session chrome, so give it its own way out —
         // Continue advances, but a player mid-routine needs to be able to leave from here too.
@@ -88,6 +105,31 @@ extension RoutinePlayerView {
                 .accessibilityLabel("Exit routine")
             }
         }
+    }
+
+    /// The take **this run** captured, or `nil` (ADR 0179). The cutoff is what makes it this run's:
+    /// a unit practised before already holds takes, and the newest of those is a recording from some
+    /// earlier day. `RoutineTakeLookup` holds the rule, pure and tested.
+    func takeFromThisBlock(_ stage: RoutineStage) -> Recording? {
+        guard stage.recordsTake, let owner = takeOwner(for: stage) else { return nil }
+        return RoutineTakeLookup.take(from: owner.recordingsByRecent, since: blockStartedAt)
+    }
+
+    /// This stage's take owner — the same polymorphic routing `RecordingController` uses, so the
+    /// sheet lists exactly the takes the block wrote. A song stage has no recorder (ADR 0179 D6) and
+    /// a rest has no unit, so both are `nil`.
+    func takeOwner(for stage: RoutineStage) -> RecordingOwner? {
+        if let exercise = stage.exercise { return .exercise(exercise) }
+        if let loop = stage.loop { return .loop(loop) }
+        return nil
+    }
+
+    /// Delete a take from the sheet — the file and the row (ADR 0069 retention), mirroring the run
+    /// screens' own `deleteTake`.
+    func deleteTake(_ take: Recording) {
+        try? RecordingStore.delete(fileName: take.fileName)
+        modelContext.delete(take)
+        try? modelContext.save()
     }
 
     /// The tempo anchors the Done screen sizes its revision offer from **and the unit they read in**

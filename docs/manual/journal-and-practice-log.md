@@ -90,6 +90,11 @@ does. Takes land in this same timeline alongside your notes.
 
 Takes are also reachable from the run screen they were made on, through its **Takes** bar.
 
+Inside a **routine**, a block records only if you set it to. Open the block from the routine and turn
+on **Record this block**; the take then starts and stops with the block, and the block's completion
+screen offers it back. See [Recording a block](routines.md#recording-a-block). Your own practice, ear
+training and improvise blocks record from their own screens, in or out of a routine.
+
 ### Opening a take
 
 **▶** plays a take where it sits. Tapping anywhere else on the row — the name, the duration, the

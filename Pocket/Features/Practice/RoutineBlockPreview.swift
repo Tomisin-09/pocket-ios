@@ -46,6 +46,9 @@ struct ExerciseBlockPreview: View {
     /// The block's opt-out from that fit (ADR 0130). Bound to the `RoutineItem`, so toggling it
     /// re-draws the staircase here and re-flows the routine's estimate behind this screen.
     @Binding var usesAuthoredLength: Bool
+    /// Whether this block captures a take while it runs (ADR 0179) — bound to the `RoutineItem`, so
+    /// flipping it here is what a marked block reads at run time.
+    @Binding var recordsTake: Bool
     @Environment(\.modelContext) private var modelContext
     @State private var preview = CommandTempoPreviewPlayer()
     @State private var strumPreview = StrumPatternPreviewPlayer()
@@ -96,6 +99,9 @@ struct ExerciseBlockPreview: View {
                                        runMinutes: runMinutes, authoredMinutes: authoredMinutes,
                                        tint: PocketColor.practice)
                 }
+                // Unconditional, unlike the length control above — that one only speaks when a
+                // session sized the block, but any block is worth hearing back (ADR 0179).
+                BlockRecordControl(recordsTake: $recordsTake, tint: PocketColor.practice)
                 // Read-only here (ADR 0167): checking what is in a session without starting it is a
                 // reading moment, so the preview shows the sources and sends editing to Details.
                 ReferencesCard(owner: exercise, accent: PocketColor.practice)

@@ -24,6 +24,41 @@ final class RecordingControllerTests: XCTestCase {
         XCTAssertFalse(controller.micDenied)
     }
 
+    // MARK: - armIfPermitted (ADR 0179)
+
+    /// The one thing this method exists **not** to do. A routine block with auto-start on is already
+    /// running by the time a permission dialog could be answered, so `armIfPermitted` must return
+    /// synchronously on an undetermined permission rather than prompting — and it must not arm, since
+    /// arming without permission would start a take that captures nothing.
+    ///
+    /// On a simulator the mic permission is granted, so this asserts the shape that holds either way:
+    /// the call returns, and the controller is never left in a state that took a session it can't use.
+    func testArmIfPermittedNeverPromptsAndNeverTakesASession() {
+        let controller = RecordingController()
+        controller.armIfPermitted()
+        XCTAssertFalse(controller.isRecording)
+        // Arming touches no session — the invariant stated on `takeClaim`/`holdClaim` is that a
+        // controller holds nothing while merely `.armed`.
+        XCTAssertFalse(controller.holdsSession)
+        if MicPermission.status == .granted {
+            XCTAssertEqual(controller.state, .armed)
+            XCTAssertFalse(controller.micDenied)
+        } else {
+            XCTAssertEqual(controller.state, .idle)
+        }
+    }
+
+    /// `.onAppear` can fire more than once for one screen, and a block that re-appears must not
+    /// re-arm over a take already rolling.
+    func testArmIfPermittedIsANoOpUnlessIdle() {
+        let controller = RecordingController()
+        controller.armIfPermitted()
+        let after = controller.state
+        controller.armIfPermitted()
+        XCTAssertEqual(controller.state, after)
+        XCTAssertFalse(controller.holdsSession)
+    }
+
     func testHoldThenReleaseReturnsTheSession() {
         let controller = RecordingController()
         controller.holdRecordSession()

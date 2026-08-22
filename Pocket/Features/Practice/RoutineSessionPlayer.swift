@@ -13,6 +13,10 @@ struct RoutineStage: Identifiable {
     /// Minutes a generated session allotted this block (ADR 0129), or `nil` when it was hand-authored.
     /// Handed to the run screen so it can fit its ramp to the slot.
     let plannedMinutes: Int?
+    /// Whether this block was marked to capture a **take** while it runs (ADR 0179) — the block's
+    /// `RoutineItem.recordsTake`. Defaulted, so the ramp-less and rest stages that can never carry one
+    /// say so by omission rather than by repeating `false` four times.
+    var recordsTake: Bool = false
     let payload: Payload
 
     enum Payload {
@@ -141,7 +145,8 @@ final class RoutineSessionPlayer {
         if let exercise = item.exercise {
             let title = exercise.name.isEmpty ? "Exercise" : exercise.name
             return RoutineStage(id: item.uid, title: title, reps: reps,
-                                plannedMinutes: planned, payload: .exercise(exercise))
+                                plannedMinutes: planned, recordsTake: item.recordsTake,
+                                payload: .exercise(exercise))
         }
         if let loop = item.loop {
             let title = loop.name.isEmpty ? "Loop" : loop.name
@@ -156,8 +161,13 @@ final class RoutineSessionPlayer {
             // `resolvedBlockMinutes`, not `planned`: a ramp-less block has to tell "the player
             // declined a length" (open-ended) from "no session ever sized this block" (the mode's
             // default), and `effectivePlannedMinutes` folds those together (ADR 0141).
+            // Only the **trainer** mode reads the flag. Ear and improvise blocks already record
+            // inside a routine unconditionally (ADR 0069 amendment §2), so honouring it there would
+            // be a second, contradictory switch over the same behaviour.
             return RoutineStage(id: item.uid, title: title, reps: reps,
-                                plannedMinutes: item.resolvedBlockMinutes, payload: payload)
+                                plannedMinutes: item.resolvedBlockMinutes,
+                                recordsTake: item.recordsTake && item.loopRunMode == .trainer,
+                                payload: payload)
         }
         if let song = item.song {
             return RoutineStage(id: item.uid, title: song.title.isEmpty ? "Song" : song.title,
