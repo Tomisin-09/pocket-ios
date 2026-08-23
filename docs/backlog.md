@@ -32,6 +32,35 @@ What's needed:
 Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
 is the deliverable ADR 0165 defines.
 
+## The beta grant needs a structural guard (logged 2026-08-23, blind-spot review 2026-08-22) — RISK
+
+`betaGrantIsActive = Self.betaGrantIsReadable` is true in **every non-Debug build**, so a Release
+archive cut off `pocket-273-beta-grant-unconditional` ships Red Moon Pro free to everyone. The only
+thing standing between that and the App Store is a `TODO(beta)` comment and someone remembering.
+
+Wants a CI check that fails when the grant is reachable under a Release configuration — the same
+shape as the lint rules that exist because the thing they catch already shipped.
+
+**Separately, and more urgent than the guard:** that branch is a long way behind `main`. Takes,
+moments, trim, long-term goals, carry-tempo, reference links and routine history are all absent from
+build 6, so testers are giving feedback on an app that has largely stopped existing. Decide which:
+cut a fresh beta off `main`, or accept that this round's feedback is about the older surface.
+
+## `Song+Sample.swift:9` still ships "Little Wing" / "Jimi Hendrix" (logged 2026-08-23)
+
+Two lines, and the one site the rename missed. The seeded songs were renamed to `(Cover)` titles by
+Jack Trader; `Song.sample()` was not, and it has **no `#if DEBUG`**, so ADR 0158 puts a real artist's
+real song title into every fresh install.
+
+## Accessibility has never been walked (logged 2026-08-23, blind-spot review 2026-08-22)
+
+114 of 478 files carry an `accessibilityLabel`, so the coverage is deliberate rather than accidental
+— but there is no evidence anyone has run VoiceOver or AX-size Dynamic Type against the transport,
+which is the screen where a mislabelled control costs the most.
+
+Cheap relative to building it: the shoot harness already drives every screen and can dump the
+accessibility tree, so the audit is mostly reading what it produces.
+
 ## Relink dead ends — `LoopRunView` and `SongPlayAlongView` (logged 2026-08-23, ADR 0182 §6)
 
 **Becomes blocking if the backup exclusion ever ships as a default.** Not before.

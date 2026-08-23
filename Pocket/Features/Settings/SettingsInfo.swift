@@ -52,6 +52,10 @@ enum SettingsInfo {
     static let exportRecordings =
         "Your takes are the one part of an archive nothing else can rebuild, and the largest part by "
         + "far. Leave this on unless all you want is your notes and settings."
+    static let attachDiagnostics =
+        "Adds one line to your next support message: how many crashes or freezes there were, when, "
+        + "and what iOS called them. It is the line shown on this screen and nothing more — never "
+        + "your songs, your recordings or your notes."
     static let animateExercises =
         "A moving highlight walks the exercise in time — the notes on the fretboard, the strokes on "
         + "the strum lane. Always off when your device has Reduce Motion on."

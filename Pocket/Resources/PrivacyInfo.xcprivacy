@@ -78,7 +78,19 @@
 		<!-- App version, iOS version and hardware model identifier — the triage
 		     details, shown to the player in the form before they send (ADR 0161 D3).
 		     Nothing here identifies a device: the model identifier is the hardware
-		     generation ("iPhone17,1"), never an IDFV, IDFA or serial. -->
+		     generation ("iPhone17,1"), never an IDFV, IDFA or serial.
+
+		     Widened by ADR 0183 to cover one more optional field: a single bounded
+		     line summarising the crashes and freezes MetricKit reported — how many,
+		     since when, what iOS called the most recent one, and its OS version.
+		     It is attached **only** when the player turns "Include in support
+		     messages" on (off by default), and it is shown in the form in full
+		     before they send, so this stays the same claim ADR 0161 D3 made rather
+		     than a wider one. No call stacks, no logs, no file paths.
+
+		     MetricKit itself needs no NSPrivacyAccessedAPITypes entry — it is not a
+		     required-reason API. If a diagnostic ever gains free disk space, that
+		     *is* NSPrivacyAccessedAPICategoryDiskSpace and needs one. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>

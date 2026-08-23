@@ -23,7 +23,16 @@ struct ContactSupportSheet: View {
 
     /// The diagnostics are captured **once, when the sheet opens**, and shown from that snapshot — the
     /// player is looking at the exact values that will be sent, not a fresh read taken later.
-    private let diagnostics = SupportDiagnostics.current
+    private let diagnostics: SupportDiagnostics
+
+    /// - Parameter diagnosticLine: the bounded crash line (ADR 0183), or `nil` — which is what every
+    ///   caller passes unless the player has turned the setting on. Passed in rather than read here so
+    ///   the sheet needs neither the recorder nor the preference to be presentable, including in a
+    ///   preview.
+    init(sender: SupportSending, diagnosticLine: String? = nil) {
+        self.sender = sender
+        self.diagnostics = SupportDiagnostics.current(diagnosticLine: diagnosticLine)
+    }
 
     private enum Field: Hashable { case message, address }
 
@@ -128,6 +137,11 @@ struct ContactSupportSheet: View {
 
 #Preview("Empty") {
     ContactSupportSheet(sender: RecordingSupportSender())
+}
+
+#Preview("With diagnostics attached") {
+    ContactSupportSheet(sender: RecordingSupportSender(),
+                        diagnosticLine: "2 crashes since 12 Aug · EXC_BAD_ACCESS · iOS 18.5")
 }
 
 #Preview("Send fails") {

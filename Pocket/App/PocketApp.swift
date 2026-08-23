@@ -21,6 +21,12 @@ struct PocketApp: App {
     // read from the environment by the paywall's opt-in toggle and the Home/Settings countdown rows.
     @State private var trialReminder = TrialReminder()
 
+    // MetricKit's crash and hang reports (ADR 0183) — read by the Diagnostics screen and, only when
+    // the player has opted in, by the support sheet. Owned **here** and nowhere else, because
+    // `MXMetricManager` holds its subscribers weakly: a recorder created further down the tree is
+    // dropped by the OS the moment that view goes away, silently and with nothing to notice.
+    @State private var diagnostics = DiagnosticsRecorder()
+
     init() {
         // The composition root, and the only place that knows a vendor exists (ADR 0120). Installing
         // the sink does **not** start the SDK — `AptabaseSink` initialises on its first *delivered*
@@ -37,6 +43,7 @@ struct PocketApp: App {
                 .paywallHost()
                 .environment(store)
                 .environment(trialReminder)
+                .environment(diagnostics)
                 .preferredColorScheme(appearance.colorScheme)
                 // The composition seam between StoreKit and notifications (ADR 0144 D6): the store
                 // publishes renewal state, the reminder decides what to do with it. Set once, and it

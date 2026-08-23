@@ -204,14 +204,25 @@ Leave blank for v1, or point at the same host's landing page.
 Host `docs/privacy-policy.md` (rendered) somewhere public and paste the URL.
 GitHub Pages renders Markdown directly, which is the zero-effort option.
 
-## App Privacy (nutrition label) — CHANGED by ADR 0120
-No longer "Data Not Collected". Declare exactly one type, matching
+## App Privacy (nutrition label) — CHANGED by ADR 0120, widened by 0161 and 0183
+No longer "Data Not Collected". Declare **four** types, matching
 `Pocket/Resources/PrivacyInfo.xcprivacy` and the manifest the Aptabase SDK ships:
 
 - **Product Interaction** → used for **Analytics** → **not linked to the user's
-  identity** → **not used for tracking**.
-- Everything else stays *not collected*. No contact info, no identifiers, no user
-  content, no diagnostics.
+  identity** → **not used for tracking**. (ADR 0120.)
+- **Email Address**, **Other User Content** and **Other Diagnostic Data** → all used
+  for **App Functionality** → all **linked**, and none used for tracking. These are
+  the in-app contact form (ADR 0161 D6): the reply address the player types, their
+  message, and the installation details shown to them in the sheet before they send.
+  Linked is deliberate — they arrive attached to an address the player chose to give
+  us, and declaring them unlinked would be the convenient answer rather than the
+  right one.
+- **Other Diagnostic Data also covers ADR 0183**: one bounded line summarising the
+  crashes and freezes iOS reported, attached **only** when the player turns
+  *Settings ▸ Help & About ▸ Diagnostics ▸ Include in support messages* on (off by
+  default) and shown to them in full first. No call stacks, no logs. MetricKit needs
+  no `NSPrivacyAccessedAPITypes` entry — it is not a required-reason API.
+- Everything else stays *not collected*. No identifiers, no location, no contacts.
 - **"Do you or your third-party partners use data for tracking?" → No.** There is
   no IDFA, no ATT prompt and no ad SDK, permanently (ADR 0120 §1), so no ATT
   purpose string is needed and `NSPrivacyTracking` stays `false`.

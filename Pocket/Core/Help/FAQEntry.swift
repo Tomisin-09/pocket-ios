@@ -91,7 +91,9 @@ extension FAQEntry {
                 + "email, your message, and the version and device you're on, which the form shows "
                 + "you before it sends. No Mail account needed. You can also email \(supportAddress) "
                 + "directly; select and copy that address from right here. It helps to say what you "
-                + "were doing when it went wrong and what you expected instead.",
+                + "were doing when it went wrong and what you expected instead. If the app crashed "
+                + "or froze, Settings ▸ Help & About ▸ Diagnostics shows what iOS reported and can "
+                + "add one line about it to your message.",
               area: .gettingStarted),
 
         // MARK: Audio & files

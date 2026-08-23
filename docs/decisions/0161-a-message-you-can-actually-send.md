@@ -6,7 +6,8 @@
   that ADR 0145 required in the "How do I get help?" answer **stands, and matters more** — see D5.
 - **Relates to:** ADR 0120 / ADR 0147 (analytics, and the only other thing this app sends anywhere) ·
   ADR 0002 (the AI proxy backend, which this deliberately does **not** wait for) · ADR 0092 (the AI
-  charter's "audio never leaves the device" promise, which this does not touch)
+  charter's "audio never leaves the device" promise, which this does not touch) · **ADR 0183**
+  (crash reports, which add the fourth field to `SupportDiagnostics` — see the amendment under D3)
 
 ## Context
 
@@ -67,6 +68,23 @@ ever added to the payload without also appearing on screen.
 
 Nothing else goes: no identifier, no locale, no carrier, no storage figures, nothing derived from the
 library. Not song titles, not the artist name, not notes, not recordings.
+
+> **Amendment (2026-08-23, ADR 0183).** A **fourth** field now exists, and the rule above is the one
+> that let it in rather than the one it broke.
+>
+> `SupportDiagnostics.diagnosticLine` carries a single bounded line about crashes and freezes —
+> `3 crashes since 12 Aug · EXC_BAD_ACCESS · iOS 18.2` — and it is `nil` unless the player turns
+> *Settings ▸ Help & About ▸ Diagnostics ▸ Include in support messages* on, which is **off by
+> default**. `summary` appends it, so it reaches the sheet and the payload by the same single route
+> this D3 built, and it is readable in full on screen, which is the test this D3 actually sets.
+>
+> `testPayloadCarriesNothingTheSheetDoesNotShow` was updated **deliberately**, meeting all three
+> conditions its own failure message names: the sheet shows the line, this D3's rule is honoured
+> because the line is bounded rather than a log, and the privacy manifest's `OtherDiagnosticData`
+> comment was widened to describe it. `testPayloadNeverCarriesAnIdentifier` is untouched.
+>
+> The rejected alternative below is unchanged: **unbounded** logs are still rejected, and nothing in
+> 0183 attaches a call stack, a file path or a log line.
 
 ### D4 — Formspree, not a backend of our own
 
@@ -169,6 +187,10 @@ Richer triage, and it would make some bug reports much easier to action. It also
 moment what is attached stops being something a player can read in full on one line, "we send this
 and nothing else" stops being a sentence we can honestly write on the screen. The version, the OS and
 the model answer most triage questions; the rest can be asked for in the reply.
+
+**Still rejected after ADR 0183.** 0183 attaches one *bounded* line, opt-in and shown on screen. It
+is the version of this idea that passes the sentence above rather than a reversal of it — no call
+stacks, no file paths, no log lines, and nothing derived from the library.
 
 ### Send anonymously (no address) — rejected
 

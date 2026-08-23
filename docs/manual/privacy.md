@@ -106,6 +106,20 @@ Not your audio. Not your recordings. Not your journal notes, your song names, yo
 artist name, or anything else you have typed or chosen — with the counts on or off. There is no
 profile of you, here or anywhere, because there is no identifier to hang one on.
 
+## Crashes and freezes
+
+iOS keeps its own record of any time Red Moon crashed or froze, and hands it to the app about once a
+day. That record stays on your device. It is not analytics, it does not go through the toggle above,
+and it is never sent on its own.
+
+`Settings ▸ Help & About ▸ Diagnostics` shows you exactly what iOS reported — the last five, with the
+date, what iOS called each one, and the build and iOS version it happened on. `Clear` forgets them.
+
+One switch on that screen, **off unless you turn it on**, adds a single line to your next support
+message: how many there were, since when, and what iOS called the most recent one. No call stacks, no
+logs, no file paths. As everywhere else, the contact form shows you that line in full before you
+send.
+
 ## Links you save
 
 The addresses you put in **Where you learned it** are stored on the device like everything else, and
@@ -126,5 +140,6 @@ that feature ships, the processing is disclosed, and it is opt-in.
 ## Next
 
 - [The full privacy policy](../privacy-policy.md)
+- [What Settings holds](reference/settings.md)
 - [Where your notes and takes live](journal-and-practice-log.md)
 - [Red Moon Pro, and what Apple handles](subscription.md)

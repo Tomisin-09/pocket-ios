@@ -21,6 +21,24 @@ struct AboutSection: View {
     /// with ADR 0162's hub split, and the better one it always also had is the one that remains.
     @State private var showingContactSupport = false
 
+    /// Optional on purpose. The recorder is a `@State` at the `PocketApp` root and reaches here
+    /// through the environment; the non-optional form **traps** in every preview and in the settings
+    /// UI tests, which build this section without an app root above it (ADR 0183).
+    @Environment(DiagnosticsRecorder.self) private var recorder: DiagnosticsRecorder?
+
+    /// The literal is `AppSettings.attachDiagnosticsDefault`, not `false`, because a `@AppStorage`
+    /// uses the value it declares for an unset key and does not consult the accessor beside it.
+    @AppStorage(AppSettings.Key.attachDiagnostics)
+    private var attachDiagnostics = AppSettings.attachDiagnosticsDefault
+
+    /// What travels with a support message, and the **only** route a diagnostic ever takes off the
+    /// device: the setting is on, and there is something to report. Read here rather than inside the
+    /// sheet so the sheet stays presentable with neither the recorder nor the preference present.
+    private var diagnosticLine: String? {
+        guard attachDiagnostics else { return nil }
+        return recorder?.supportLine
+    }
+
     var body: some View {
         Section {
             LabeledContent("Version", value: Self.appVersion)
@@ -45,6 +63,17 @@ struct AboutSection: View {
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isButton)
+
+            // Beside Contact Support because feeding a support message is its only purpose
+            // (ADR 0183). Not a Settings hub destination of its own: a screen a player visits when
+            // something has already gone wrong does not earn a permanent row on the top level.
+            NavigationLink { DiagnosticsSettingsView() } label: {
+                LabeledContent("Diagnostics") {
+                    if let count = recorder?.events.count, count > 0 {
+                        Text("\(count)")
+                    }
+                }
+            }
 
             // Apple's standard EULA (the licence that governs use of the app on the
             // App Store) applies by default when we ship no custom terms — see
@@ -84,7 +113,7 @@ struct AboutSection: View {
                 .accessibilityLabel("Red Moon")
         }
         .sheet(isPresented: $showingContactSupport) {
-            ContactSupportSheet(sender: sender)
+            ContactSupportSheet(sender: sender, diagnosticLine: diagnosticLine)
         }
     }
 

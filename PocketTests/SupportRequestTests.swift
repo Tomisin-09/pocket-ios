@@ -16,9 +16,18 @@ final class SupportRequestTests: XCTestCase {
         deviceModel: "iPhone17,1"
     )
 
+    /// The same installation with the ADR 0183 line attached — the opted-in case.
+    private var withDiagnosticLine: SupportDiagnostics {
+        var attached = diagnostics
+        attached.diagnosticLine = "2 crashes since 12 Aug · EXC_BAD_ACCESS · iOS 18.5"
+        return attached
+    }
+
     private func request(message: String = "The loop keeps jumping back a bar.",
-                         address: String = "player@example.com") -> SupportRequest {
-        SupportRequest(message: message, replyAddress: address, diagnostics: diagnostics)
+                         address: String = "player@example.com",
+                         diagnostics: SupportDiagnostics? = nil) -> SupportRequest {
+        SupportRequest(message: message, replyAddress: address,
+                       diagnostics: diagnostics ?? self.diagnostics)
     }
 
     // MARK: - What may be sent
@@ -93,20 +102,48 @@ final class SupportRequestTests: XCTestCase {
     /// **The disclosure promise.** Every value in the payload is either something the player typed or
     /// something `summary` puts on screen. A new key here that the sheet doesn't show turns the
     /// "nothing else goes with it" footer into a false statement, and this is what catches that.
+    ///
+    /// ADR 0183 added `diagnostics` and this test was updated **deliberately**, with all three of the
+    /// things its old failure message demanded: the sheet shows the line (it is inside `summary`),
+    /// ADR 0161 D3's rule is honoured by the line being bounded rather than a log, and the privacy
+    /// manifest's `OtherDiagnosticData` comment was widened to name it.
     func testPayloadCarriesNothingTheSheetDoesNotShow() {
-        let payload = request().formspreePayload
+        let payload = request(diagnostics: withDiagnosticLine).formspreePayload
         let typed = ["email", "message"]
-        let disclosed = ["app_version", "ios_version", "device_model", "_subject"]
+        let disclosed = ["app_version", "ios_version", "device_model", "_subject", "diagnostics"]
         XCTAssertEqual(Set(payload.keys), Set(typed + disclosed),
                        "A payload key was added or removed — if it is new, the sheet must show it "
                         + "and ADR 0161 D3 plus the privacy manifest must be updated with it")
 
-        let summary = diagnostics.summary
-        for key in ["app_version", "ios_version", "device_model"] {
+        let summary = withDiagnosticLine.summary
+        for key in ["app_version", "ios_version", "device_model", "diagnostics"] {
             guard let value = payload[key] else { return XCTFail("\(key) missing from the payload") }
             XCTAssertTrue(summary.contains(value),
                           "\(key) is sent but does not appear in the summary shown to the player")
         }
+    }
+
+    /// The default, and the case that must stay the one from ADR 0161: no opt-in, no key at all.
+    /// An empty `diagnostics` field would put a row in the support inbox implying something was
+    /// collected and found nothing, which is a different claim from "they did not opt in".
+    func testNoDiagnosticsKeyWhenThePlayerDidNotOptIn() {
+        let payload = request().formspreePayload
+        XCTAssertNil(payload["diagnostics"])
+        XCTAssertEqual(Set(payload.keys),
+                       ["email", "message", "app_version", "ios_version", "device_model", "_subject"])
+    }
+
+    func testTheAttachedLineIsTheLineOnScreen() {
+        // Not "contains a similar line" — the same string, reached by the same property. This is the
+        // invariant ADR 0161 relies on and ADR 0183 had to keep while adding a field.
+        let attached = withDiagnosticLine
+        XCTAssertEqual(request(diagnostics: attached).formspreePayload["diagnostics"],
+                       attached.diagnosticLine)
+        XCTAssertTrue(attached.summary.hasSuffix(attached.diagnosticLine ?? "—"))
+    }
+
+    func testSummaryIsUnchangedWithoutAnOptIn() {
+        XCTAssertFalse(diagnostics.summary.contains("\n"))
     }
 
     func testPayloadNeverCarriesAnIdentifier() {
