@@ -303,6 +303,20 @@ final class RoutineItem {
         RoutineBudget.isOrphaned(kind: kind, hasResolvableUnit: hasResolvableUnit)
     }
 
+    /// Whether this block can capture a **take** while it runs, and so whether `recordsTake` means
+    /// anything on it (ADR 0180 D2).
+    ///
+    /// Lives on the model because three surfaces have to agree about it — the block-list badge, the
+    /// swipe that sets the flag, and `RoutineSessionPlayer.stage(for:)` that acts on it — and a badge
+    /// promising a recording the player will never make is the exact failure. Every loop mode
+    /// qualifies (D1). A **song** block has no recorder at all (ADR 0179 D6). A **freeform** exercise
+    /// records with a live start/stop button and has no armed state to pre-set, nor a start event to
+    /// hang a take on. A **rest** and an **orphan** carry no unit, and fall out of the same test.
+    var canRecordTake: Bool {
+        if let exercise { return exercise.template != .freeform }
+        return loop != nil
+    }
+
     /// Play order for a set of items (ADR 0066 R2) — sorted by explicit `order`, ties
     /// broken by `uid` for a stable result. Pure over the passed array (no relationship
     /// traversal), so it is testable on plain uninserted items.

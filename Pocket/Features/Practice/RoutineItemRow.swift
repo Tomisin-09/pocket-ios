@@ -87,13 +87,11 @@ struct RoutineItemRow: View {
     ///
     /// Unlike `showsReps` this ignores `showsRepsBadge`: the editor replaces the repeat badge with its
     /// own tappable chip, but there is no record chip to replace it with, so suppressing it there
-    /// would hide the flag on the one screen where it is set. Mirrors the rule
-    /// `RoutineSessionPlayer.stage(for:)` applies — a ramp-less loop mode records regardless of the
-    /// flag (ADR 0069 amendment §2), so a badge there would claim to be the reason.
+    /// would hide the flag on the one screen where it is set. Reads `RoutineItem.canRecordTake` —
+    /// the same rule `RoutineSessionPlayer.stage(for:)` acts on, so a badge and the block it sits on
+    /// cannot disagree about whether anything gets recorded (ADR 0180 D2).
     private var showsRecord: Bool {
-        guard item.recordsTake, !item.isOrphaned else { return false }
-        if item.exercise != nil { return true }
-        return item.loop != nil && item.loopRunMode == .trainer
+        item.recordsTake && item.canRecordTake
     }
 
     private var symbolName: String {

@@ -31,4 +31,39 @@ extension RoutineDetailView {
         guard canDeleteBlocks else { return nil }
         return { offsets in delete(offsets) }
     }
+
+    /// The same optional-handler trick for **reorder** (ADR 0180 D3), gated by the same rule as
+    /// delete — reordering and removing are the same authoring act, so they answer to one gate.
+    ///
+    /// `List` will drag-reorder a row on a long press whether or not `editMode` is active, so the
+    /// unconditional `.onMove` this replaces left a **saved routine in read-only mode** rearrangeable
+    /// by a hold that drifts — and silently, because there is no Cancel on that path to put it back
+    /// and the sandbox commits the new `order` on the spot. The screen already promised otherwise:
+    /// Edit is what unlocks the changes. Handing `nil` is what makes that promise true, and leaves
+    /// reordering where its drag handles already are.
+    ///
+    /// A **provisional generated session** keeps the hold-drag, because it is `!existsInStore` and so
+    /// passes the gate: that screen is a review, editable without an Edit tap, and it already swipes
+    /// to delete on the same grounds.
+    var blockMoveAction: ((IndexSet, Int) -> Void)? {
+        guard canDeleteBlocks else { return nil }
+        return { offsets, destination in move(from: offsets, to: destination) }
+    }
+
+    /// Drag-reorder writes the explicit `order` (ADR 0066 R2) so play order survives a fetch.
+    private func move(from offsets: IndexSet, to destination: Int) {
+        var ordered = routine.orderedItems
+        ordered.move(fromOffsets: offsets, toOffset: destination)
+        for (index, item) in ordered.enumerated() { item.order = index }
+        haptic(.light)
+    }
+
+    /// Delete the swiped blocks (offsets index the *displayed* ordered list), then renumber
+    /// the survivors so `order` stays contiguous.
+    func delete(_ offsets: IndexSet) {
+        let ordered = routine.orderedItems
+        for index in offsets { editContext.delete(ordered[index]) }
+        renumberBlocks()
+        haptic(.medium)
+    }
 }

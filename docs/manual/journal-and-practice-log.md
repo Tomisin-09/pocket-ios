@@ -90,10 +90,11 @@ does. Takes land in this same timeline alongside your notes.
 
 Takes are also reachable from the run screen they were made on, through its **Takes** bar.
 
-Inside a **routine**, a block records only if you set it to. Open the block from the routine and turn
-on **Record this block**; the take then starts and stops with the block, and the block's completion
-screen offers it back. See [Recording a block](routines.md#recording-a-block). Your own practice, ear
-training and improvise blocks record from their own screens, in or out of a routine.
+Inside a **routine**, a block records only if you set it to. Swipe the block right for **Record**, or
+open it and turn on **Record this block**; the take then starts and stops with the block, and the
+block's completion screen offers it back. See [Recording a block](routines.md#recording-a-block). Ear
+training and improvise blocks can be marked the same way, and keep their own record button as well.
+Your own practice blocks are live-only — their start and stop button is the whole of it.
 
 ### Opening a take
 

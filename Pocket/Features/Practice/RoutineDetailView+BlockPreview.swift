@@ -111,7 +111,8 @@ extension RoutineDetailView {
                              recordsTake: recordsTake(of: block))
         case .rampLess(let loop, let mode, let block):
             RampLessBlockPreview(loop: loop, mode: mode, block: block,
-                                 runsOpenEnded: authoredLength(of: block))
+                                 runsOpenEnded: authoredLength(of: block),
+                                 recordsTake: recordsTake(of: block))
         case .freeform(let exercise, let block):
             FreeformBlockPreview(exercise: exercise, block: block,
                                  runsOpenEnded: authoredLength(of: block))
@@ -135,40 +136,6 @@ extension RoutineDetailView {
                 })
     }
 
-    /// A binding onto a block's **record this block** flag (ADR 0179), carrying the same save
-    /// discipline as `authoredLength(of:)` above — commit now on a stored routine, ride along with a
-    /// provisional generated session until Save or Start.
-    ///
-    /// **This is where the microphone prompt happens** (D3). Every other surface in the app arms on a
-    /// setup screen for exactly this reason (ADR 0069 slice 2): a system prompt belongs in a settled,
-    /// non-playing moment, and building a routine is the most settled moment there is. At run time
-    /// the block arms through `RecordingController.armIfPermitted()`, which never prompts — a routine
-    /// with auto-start on cannot wait on a dialog.
-    ///
-    /// A denial **reverts the flag**, so the block list can't show a record badge on a block that has
-    /// no way to record.
-    private func recordsTake(of item: RoutineItem) -> Binding<Bool> {
-        Binding(get: { item.recordsTake },
-                set: { newValue in
-                    item.recordsTake = newValue
-                    if existsInStore { try? editContext.save() }
-                    guard newValue else { return }
-                    // One event, at the decision — not once per block-run, which would count the same
-                    // choice every time the routine is played (ADR 0120).
-                    Analytics.send(.toolOpened(tool: .recording))
-                    guard MicPermission.status == .undetermined else { return }
-                    // Explicitly `@MainActor`: the sandboxed `RoutineItem` written on the far side
-                    // of the await is a `@Model`, and CI's older toolchain is stricter about this
-                    // than local Xcode is.
-                    Task { @MainActor in
-                        let granted = await MicPermission.request()
-                        Analytics.send(.micPermission(outcome: granted ? .granted : .denied))
-                        guard !granted else { return }
-                        item.recordsTake = false
-                        if existsInStore { try? editContext.save() }
-                    }
-                })
-    }
 }
 
 /// The per-block **Repeat** editor (ADR 0076) — a compact sheet opened by tapping a unit block in the

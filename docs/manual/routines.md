@@ -53,8 +53,10 @@ a routine you start and abandon leaves nothing behind.
 - **Name it** — the field at the top. Naming is what keeps it in your routines to run again.
 - **Add exercise, loop or song** opens a picker grouped by kind. It stays open as you tap, so you
   can add several in one go, and a second tap on something takes it back out again.
-- **Drag** a block by its handle to reorder.
-- **Swipe** a block to remove it.
+- **Drag** a block by its handle to reorder. Handles only appear while you are editing — a routine
+  you are reading cannot be rearranged, by a drag or anything else.
+- **Swipe left** on a block to remove it.
+- **Swipe right** on a block for **Record**, which works while reading too.
 - **Tap** a block to set how many times it repeats — up to nine back-to-back runs before the routine
   moves on.
 
@@ -164,10 +166,18 @@ accident.
 
 ### Recording a block
 
-A block's preview carries **Record this block**. Turn it on and the block captures a take while it
-runs: the recording starts when the block does and ends with it, and there is nothing to tap during
-the block itself — the decision was made here, so your hands stay on the guitar. A red dot and a
-running timer sit above the transport while it records, so you always know the microphone is live.
+**Swipe a block right** in the routine's list and it offers **Record**. That is the whole gesture:
+the block now captures a take while it runs. Swipe right again for **Don't record**. It works whether
+or not you are editing, because this is a decision about the next run rather than a change to the
+routine's shape.
+
+Opening the block gives you the same switch, **Record this block**, with the explanation beside it —
+what the take covers and where it is saved. The switch and the swipe are the same setting.
+
+Either way: the recording starts when the block does and ends with it, and there is nothing to tap
+during the block itself — the decision was made in advance, so your hands stay on the guitar. A red
+dot and a running timer sit above the transport while it records, so you always know the microphone
+is live.
 
 <!-- shot: routines/block-record | role: detail
      | alt: The Record this block switch on an exercise block's preview, turned on, with the line explaining that the take starts with the block
@@ -186,9 +196,21 @@ The first time you turn this on, the app asks for the microphone. That happens h
 building, and never mid-session: a routine cannot wait on a permission prompt. If microphone access
 is off, the switch says so and points at Settings.
 
-**Your own practice**, **ear training** and **improvise** blocks do not carry the switch. They record
-inside a routine already, from their own screens, because there is no tempo or staircase recording
-what happened on those.
+**Ear training** and **improvise** blocks take the mark too, and it means something slightly
+different on them. Those blocks have always been able to record from their own screens, because they
+never start on their own — but only if you remembered to reach for the button mid-session. Marked,
+the take starts with the backing track instead, and the block's own record ring is still there,
+already armed, if you want to stop it or change your mind for this one run. A block with no time
+limit records until you tap **Done**.
+
+There is no completion screen after one of those — an ear or improvise block has nothing to rate and
+no tempo to move, so the routine goes straight on. The take comes back to you **on the block itself**:
+stop the backing track and **Take saved** appears with its length, beside the way into that loop's
+takes.
+
+**Your own practice** blocks are the one kind that does not carry the switch. A freeform block has
+no start — it simply appears, and you play — so there is no moment for a take to begin with. It
+keeps its own start and stop button, in a routine exactly as outside one.
 
 A saved routine tells you three things about itself. **Estimated length** is roughly how long
 running it end to end would take. **Last practised** is when you last ran it, or **Not yet** if you

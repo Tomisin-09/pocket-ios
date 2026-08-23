@@ -106,6 +106,10 @@ On any row that offers them:
   favourite, so a song row has nothing on its right swipe.
 - **Swipe left** to delete it.
 
+Right is always the affirmative one, so it does the local job wherever a row has a different one. On
+a **block inside a routine** it is **Record** — marking that block to capture a take when you play it
+— and on a **take** it is naming. See [Recording a block](routines.md#recording-a-block).
+
 Deleting is not final straight away. A toast appears with an **Undo**, and the row only really goes
 when the toast does.
 

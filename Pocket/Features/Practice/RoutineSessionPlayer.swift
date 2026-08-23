@@ -13,9 +13,10 @@ struct RoutineStage: Identifiable {
     /// Minutes a generated session allotted this block (ADR 0129), or `nil` when it was hand-authored.
     /// Handed to the run screen so it can fit its ramp to the slot.
     let plannedMinutes: Int?
-    /// Whether this block was marked to capture a **take** while it runs (ADR 0179) — the block's
-    /// `RoutineItem.recordsTake`. Defaulted, so the ramp-less and rest stages that can never carry one
-    /// say so by omission rather than by repeating `false` four times.
+    /// Whether this block was marked to capture a **take** while it runs (ADR 0179, widened to the
+    /// ramp-less loop modes by ADR 0180) — the block's `RoutineItem.recordsTake`. Defaulted, so the
+    /// song and rest stages that can never carry one say so by omission rather than by repeating
+    /// `false`.
     var recordsTake: Bool = false
     let payload: Payload
 
@@ -144,8 +145,12 @@ final class RoutineSessionPlayer {
         let planned = item.effectivePlannedMinutes
         if let exercise = item.exercise {
             let title = exercise.name.isEmpty ? "Exercise" : exercise.name
-            return RoutineStage(id: item.uid, title: title, reps: reps,
-                                plannedMinutes: planned, recordsTake: item.recordsTake,
+            // `canRecordTake` rather than the flag alone (ADR 0180 D2) — a freeform exercise is
+            // never offered the switch, so the only way here is a flag set while the exercise was
+            // ramped and left behind by a template change. One rule on the model, so this and the
+            // block-list badge cannot disagree about which blocks record.
+            return RoutineStage(id: item.uid, title: title, reps: reps, plannedMinutes: planned,
+                                recordsTake: item.recordsTake && item.canRecordTake,
                                 payload: .exercise(exercise))
         }
         if let loop = item.loop {
@@ -161,12 +166,14 @@ final class RoutineSessionPlayer {
             // `resolvedBlockMinutes`, not `planned`: a ramp-less block has to tell "the player
             // declined a length" (open-ended) from "no session ever sized this block" (the mode's
             // default), and `effectivePlannedMinutes` folds those together (ADR 0141).
-            // Only the **trainer** mode reads the flag. Ear and improvise blocks already record
-            // inside a routine unconditionally (ADR 0069 amendment §2), so honouring it there would
-            // be a second, contradictory switch over the same behaviour.
+            // **Every loop mode reads the flag** (ADR 0180 D1). Ear and improvise blocks can already
+            // record from their own screens (ADR 0069 amendment §2), but only by remembering to arm
+            // mid-session; the flag arms the block for you, so the take starts with the bed. The
+            // on-screen arm ring stays, and reads as already armed — one behaviour, two doors, not
+            // two switches.
             return RoutineStage(id: item.uid, title: title, reps: reps,
                                 plannedMinutes: item.resolvedBlockMinutes,
-                                recordsTake: item.recordsTake && item.loopRunMode == .trainer,
+                                recordsTake: item.recordsTake && item.canRecordTake,
                                 payload: payload)
         }
         if let song = item.song {
