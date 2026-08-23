@@ -5,7 +5,14 @@ import XCTest
 /// a test (no payload can be constructed, and the manager only delivers on a real device roughly
 /// daily), so `record` is internal and this drives it directly. Everything the recorder *decides* is
 /// in `DiagnosticSummary` and tested there.
-@MainActor
+///
+/// **Isolation note.** `@MainActor` sits on the test methods and the recorder helper, *not* on the
+/// class — the same shape as `PracticeAudioEngineTests`, and for the same reason.
+/// `XCTestCase.setUp`/`tearDown` are nonisolated and an override cannot add isolation its superclass
+/// method lacks, so annotating the class would leave `setUpWithError` nonisolated while making
+/// `root` and `files` main-actor-isolated. Local Xcode compiles that; CI's Xcode 16 rejects it, and
+/// it cost this branch a red run. The temp container is plain file I/O and needs no isolation; only
+/// `DiagnosticsRecorder` does.
 final class DiagnosticsRecorderTests: XCTestCase {
 
     private final class TempContainer: FileManager {
@@ -39,6 +46,7 @@ final class DiagnosticsRecorderTests: XCTestCase {
         try? FileManager.default.removeItem(at: root)
     }
 
+    @MainActor
     private func recorder(seeded: [DiagnosticEvent]? = nil) -> DiagnosticsRecorder {
         DiagnosticsRecorder(usesSystemMetrics: false, seeded: seeded, files: files)
     }
@@ -48,11 +56,13 @@ final class DiagnosticsRecorderTests: XCTestCase {
                         detail: detail, appBuild: "4", systemVersion: "18.5")
     }
 
+    @MainActor
     func testStartsEmptyWithNothingOnDisk() {
         XCTAssertTrue(recorder().events.isEmpty)
         XCTAssertNil(recorder().supportLine)
     }
 
+    @MainActor
     func testRecordedEventsSurviveANewInstance() {
         recorder().record([event(daysAgo: 1, detail: "SIGTRAP")])
         // A second recorder over the same container reads what the first wrote. This is the whole
@@ -61,6 +71,7 @@ final class DiagnosticsRecorderTests: XCTestCase {
         XCTAssertEqual(recorder().events.map(\.detail), ["SIGTRAP"])
     }
 
+    @MainActor
     func testRecordingMergesRatherThanReplaces() {
         let recorder = recorder()
         recorder.record([event(daysAgo: 2, detail: "first")])
@@ -70,18 +81,21 @@ final class DiagnosticsRecorderTests: XCTestCase {
                         + "replacing the first would lose the pattern the screen exists to show")
     }
 
+    @MainActor
     func testRecordingIsCappedNoMatterHowManyArriveAtOnce() {
         let recorder = recorder()
         recorder.record((1...20).map { event(daysAgo: Double($0)) })
         XCTAssertEqual(recorder.events.count, DiagnosticSummary.retained)
     }
 
+    @MainActor
     func testAnEmptyDeliveryChangesNothing() {
         let recorder = recorder(seeded: [event(daysAgo: 1, detail: "kept")])
         recorder.record([])
         XCTAssertEqual(recorder.events.map(\.detail), ["kept"])
     }
 
+    @MainActor
     func testClearEmptiesTheScreenAndTheDisk() {
         let recorder = recorder()
         recorder.record([event(daysAgo: 1)])
@@ -91,6 +105,7 @@ final class DiagnosticsRecorderTests: XCTestCase {
                       + "array — otherwise it comes back on the next launch")
     }
 
+    @MainActor
     func testSupportLineIsTheSameOneDiagnosticSummaryRenders() {
         let events = [event(daysAgo: 1, detail: "EXC_BAD_ACCESS"), event(daysAgo: 3)]
         let recorder = recorder(seeded: events)
