@@ -21,6 +21,9 @@ struct LoopBlockPreview: View {
     let plannedMinutes: Int?
     /// The block's opt-out from the session's fit (ADR 0130) — bound to the `RoutineItem`.
     @Binding var usesAuthoredLength: Bool
+    /// Whether this block captures a take while it runs (ADR 0179) — bound to the `RoutineItem`, so
+    /// flipping it here is what a marked block reads at run time.
+    @Binding var recordsTake: Bool
     @Environment(\.modelContext) private var modelContext
     @State private var preview: LoopAudioPreviewPlayer
     /// Disclosure state for the collapsible tempo + steps panel — purely local UI; the edits
@@ -28,10 +31,12 @@ struct LoopBlockPreview: View {
     @State private var showSettings = false
     @State private var showSteps = false
 
-    init(loop: Loop, plannedMinutes: Int? = nil, usesAuthoredLength: Binding<Bool>) {
+    init(loop: Loop, plannedMinutes: Int? = nil, usesAuthoredLength: Binding<Bool>,
+         recordsTake: Binding<Bool>) {
         self.loop = loop
         self.plannedMinutes = plannedMinutes
         _usesAuthoredLength = usesAuthoredLength
+        _recordsTake = recordsTake
         _preview = State(initialValue: LoopAudioPreviewPlayer(loop: loop))
     }
 
@@ -84,6 +89,9 @@ struct LoopBlockPreview: View {
                                        runMinutes: runMinutes, authoredMinutes: authoredMinutes,
                                        tint: PocketColor.practice)
                 }
+                // Unconditional, unlike the length control above — that one only speaks when a
+                // session sized the block, but any block is worth hearing back (ADR 0179).
+                BlockRecordControl(recordsTake: $recordsTake, tint: PocketColor.practice)
                 if preview.isUnavailable {
                     Text("Audio unavailable — the song file couldn't be found.")
                         .font(.futura(.footnote))

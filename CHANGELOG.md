@@ -22,7 +22,25 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   It also moved out of the journal's **⋯** menu onto a **Practice log** row above the timeline, one tap
   in instead of two. It stays free, like the rest of the journal.
 
+### Fixed
+- **A routine you were only reading could be rearranged by accident.** Holding a block on a saved
+  routine's read-only screen and letting the finger drift reordered it — permanently, with no Edit
+  session to cancel out of and nothing on screen to say it had happened. Reordering now answers to
+  the same gate as removing a block: **Edit**, where the drag handles are. A generated session you
+  are still reviewing is unchanged, since that screen is editable by design.
+
 ### Added
+- **A routine block can record you.** Turn on **Record this block** — **swipe a block right** in the
+  routine's list, or open it and use the switch — and the take starts when the block does and ends
+  with it. The block's finish screen offers it back with a **Listen** button. It is per-block on
+  purpose: one drill is worth hearing again, the warm-up before it usually isn't, and a whole session
+  recorded is a folder nobody opens. Blocks set to record carry a small waveform badge in the list.
+  **Ear-training and improvise blocks can be marked too** — they could always record from their own
+  screens, but only if you remembered to arm them mid-session; marked, the take starts with the
+  backing track, and their record ring is still there if you change your mind. **Your own practice**
+  blocks are the one kind that stays live-only: there is no start for a take to begin with, so they
+  keep their start/stop button. The take is saved against the exercise or loop you played, not the
+  routine, so it survives if the routine is deleted.
 - **Routines can be sorted and searched.** The one library in the app still stuck in a fixed order
   now sorts four ways — **Recently Added** (where it starts, and where it stays until you change
   it), **Name**, **Last Practised** and **Length** — with **Order** to flip any of them. A routine

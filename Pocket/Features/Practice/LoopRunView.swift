@@ -194,7 +194,7 @@ struct LoopRunView: View {
         .safeAreaInset(edge: .bottom) { transport }
         .overlay { if showCountIn { RoutineCountInOverlay(onComplete: countInFinished) } }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
-        .onAppear(perform: seedIfNeeded)
+        .onAppear { seedIfNeeded(); armIfBlockRecords() }
         .task { await model.loadIfNeeded(); maybeAutoStart() }
         .onChange(of: isRunning) { _, running in
             // Fires *after* the engine has already stopped and released the shared session, so this
@@ -314,58 +314,8 @@ struct LoopRunView: View {
         .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
-    // MARK: - Transport
-
-    private var transport: some View {
-        HStack(spacing: 14) {
-            if isRunning {
-                Button { model.stop(); haptic(.medium) } label: {
-                    Image(systemName: "stop.fill")
-                        .font(.futura(.title3))
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .frame(width: 56, height: 56)
-                        .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Stop and reset")
-                Button { model.toggle(); haptic(.medium) } label: {
-                    Label(model.transport == .playing ? "Pause" : "Resume",
-                          systemImage: model.transport == .playing ? "pause.fill" : "play.fill")
-                        .pocketRunButton
-                }
-                .buttonStyle(.plain)
-            } else {
-                VStack(spacing: 8) {
-                    if model.loadFailed {
-                        Text("Couldn't load this song's audio — the file may have moved or been deleted.")
-                            .font(.futura(.caption))
-                            .foregroundStyle(PocketColor.textSecondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    HStack(spacing: 14) {
-                        Button(action: startTapped) {
-                            Label("Start training", systemImage: "play.fill").pocketRunButton
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(model.isLoading || model.loadFailed)
-                        .accessibilityLabel("Start training routine")
-                        // Recording is a standalone-practice feature — routine blocks stay focused
-                        // (ADR 0071/0077), matching the Takes/Journal bar's `routineContext == nil` gate.
-                        if routineContext == nil {
-                            RecordArmToggle(recorder: recorder,
-                                            disabled: model.isLoading || model.loadFailed)
-                        }
-                    }
-                    RecordSetupHint(recorder: recorder)
-                }
-                .animation(.easeInOut(duration: 0.2), value: recorder.isArmed)
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 16)
-        .padding(.top, 8)
-        .background(PocketColor.background.opacity(0.95))
-    }
+    // The bottom transport lives in `LoopRunView+Transport.swift` — this file's struct body is
+    // at the 250-line cap CI's `--strict` lint enforces.
 }
 
 #Preview("Loop run") {

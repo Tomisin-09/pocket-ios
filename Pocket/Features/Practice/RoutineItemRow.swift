@@ -39,6 +39,13 @@ struct RoutineItemRow: View {
                 }
             }
             Spacer(minLength: 4)
+            if showsRecord {
+                Image(systemName: "waveform")
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.practice)
+                    .padding(.horizontal, 7).padding(.vertical, 3)
+                    .background(Capsule().fill(PocketColor.practiceCircleWash))
+            }
             if showsReps {
                 Text("×\(item.effectiveReps)")
                     .font(.pocketMono(.caption))
@@ -50,7 +57,10 @@ struct RoutineItemRow: View {
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title). \(subtitle ?? "")")
+        // `children: .combine` swallows the badges' own labels, so the record state has to be said
+        // here or it is invisible to VoiceOver — the badge is the only thing telling these blocks
+        // apart in the list.
+        .accessibilityLabel("\(title). \(subtitle ?? "")\(showsRecord ? ". Records a take" : "")")
     }
 
     /// A small type glyph — the exercise's template icon, a loop/rest symbol — washed in the
@@ -70,6 +80,18 @@ struct RoutineItemRow: View {
     /// (`showsRepsBadge`) in favour of its own tappable chip.
     private var showsReps: Bool {
         showsRepsBadge && item.kind != .rest && !item.isOrphaned && item.effectiveReps > 1
+    }
+
+    /// Whether to badge this block as **recording** (ADR 0179) — so the routine's block list says
+    /// which blocks capture a take without opening each one.
+    ///
+    /// Unlike `showsReps` this ignores `showsRepsBadge`: the editor replaces the repeat badge with its
+    /// own tappable chip, but there is no record chip to replace it with, so suppressing it there
+    /// would hide the flag on the one screen where it is set. Reads `RoutineItem.canRecordTake` —
+    /// the same rule `RoutineSessionPlayer.stage(for:)` acts on, so a badge and the block it sits on
+    /// cannot disagree about whether anything gets recorded (ADR 0180 D2).
+    private var showsRecord: Bool {
+        item.recordsTake && item.canRecordTake
     }
 
     private var symbolName: String {

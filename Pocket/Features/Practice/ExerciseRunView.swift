@@ -171,7 +171,8 @@ struct ExerciseRunView: View {
         .linkedSongPlayer($songRoute)
         .safeAreaInset(edge: .bottom) { transport }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
-        .onAppear { seedIfNeeded(); maybeAutoStart() }
+        // Arm **before** `maybeAutoStart()`, never after — see `armIfBlockRecords()`.
+        .onAppear { seedIfNeeded(); armIfBlockRecords(); maybeAutoStart() }
         .onChange(of: isRunning) { _, running in
             // Runs after the engine stopped and released the shared session — see the twin comment in
             // `LoopRunView`. `RecordingController`'s own lease is what keeps the take alive across it.
@@ -335,57 +336,8 @@ struct ExerciseRunView: View {
         .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
-    // MARK: - Transport
-
-    /// Stopped → **Start training** (commit + `run(ramp:)`). Running → pause / resume with a
-    /// secondary stop that ends the run and clears the ramp.
-}
-
-// Transport split into a same-file extension to keep the main struct body under the
-// `type_body_length` cap; `private` still reaches same-file extensions.
-extension ExerciseRunView {
-    fileprivate var transport: some View {
-        HStack(spacing: 14) {
-            if isRunning {
-                Button { engine.stop(); haptic(.medium) } label: {
-                    Image(systemName: "stop.fill")
-                        .font(.futura(.title3))
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .frame(width: 56, height: 56)
-                        .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Stop and reset")
-                Button { engine.toggle(); haptic(.medium) } label: {
-                    Label(engine.transport == .playing ? "Pause" : "Resume",
-                          systemImage: engine.transport == .playing ? "pause.fill" : "play.fill")
-                        .pocketRunButton
-                }
-                .buttonStyle(.plain)
-            } else {
-                VStack(spacing: 8) {
-                    HStack(spacing: 14) {
-                        Button(action: commitAndStart) {
-                            Label("Start training", systemImage: "play.fill").pocketRunButton
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Start training routine")
-                        // Standalone-only — routine blocks stay focused (ADR 0071/0077), matching the
-                        // Takes/Journal bar gate.
-                        if routineContext == nil {
-                            RecordArmToggle(recorder: recorder)
-                        }
-                    }
-                    RecordSetupHint(recorder: recorder)
-                }
-                .animation(.easeInOut(duration: 0.2), value: recorder.isArmed)
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 16)
-        .padding(.top, 8)
-        .background(PocketColor.background.opacity(0.95))
-    }
+    // The bottom transport lives in `ExerciseRunView+Transport.swift` — this file is at the
+    // 400-line cap CI's `--strict` lint enforces.
 }
 
 #Preview("Exercise run") {

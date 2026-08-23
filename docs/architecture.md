@@ -815,7 +815,28 @@ control one-way — and `RoutineItem.effectivePlannedMinutes` is the single expr
 (`RoutineSessionPlayer.stage`), the block preview and `estimatedMinutes(forRoutine:)` all read, so a
 decline cannot take on one surface and not another. The block preview states both numbers where they
 differ (`BlockLengthControl`) and carries the toggle; the routine's estimate re-flows on the spot,
-which is what makes the opt-out a knowing spend rather than a hole in the preset's promise. Selection
+which is what makes the opt-out a knowing spend rather than a hole in the preset's promise. **A block
+may also be marked to record** (ADR 0179): `RoutineItem.recordsTake` rides the same preview beside it
+(`BlockRecordControl`) and the same save discipline, reaching the run through
+`RoutineStage.recordsTake` → `RoutineRunContext.recordsTake`. The run screens read it in `.onAppear`
+and call `RecordingController.armIfPermitted()` — a **synchronous, non-prompting** arm added for this,
+because a routine with auto-start on cannot wait on a permission dialog; the prompt happens when the
+block is marked. From there the take rides the `beginArmedTake()` already in `commitAndStart`, so no
+audio-session category flips mid-run. The take is owned by the `Exercise`/`Loop`, never the routine,
+and the block's Done screen offers it back through `RoutineTakeLookup.take(from:since:)` — a **cutoff**
+against the block's start, so the completion beat can't offer a take from an earlier day.
+
+**Which blocks can be marked is one rule, on the model** (ADR 0180): `RoutineItem.canRecordTake`. Three
+surfaces have to agree about it — `stage(for:)` that acts on the flag, `RoutineItemRow` that badges it,
+and the leading **swipe** (`RoutineDetailView+Record`) that sets it — and the failure when they disagree
+is a badge promising a recording nothing will make. Every `LoopRunMode` qualifies, reversing 0179's
+trainer-only guard: **ear** and **improvise** blocks never auto-start, so the flag *pre-arms* their own
+still-visible ring rather than replacing it, and the take begins with the backing track instead of
+waiting on a tap mid-jam. A **freeform** exercise does not: `FreeformRunView` records through a live
+start/stop toggle with no armed state to pre-set and no start event to hang a take on. Reorder answers
+to the same gate as delete for the same reason (`blockMoveAction`) — `List` drag-reorders on a long
+press with `editMode` inactive, so the unconditional `.onMove` this replaces let a saved routine be
+rearranged from its read-only screen. Selection
 **deals across goals** rather than skimming
 the top N (`SessionBuilder.ranked` → `roundRobin`, keyed by `PlannerCandidate.goalUID`): at three items
 a straight top-N gave every slot to one goal. Both import

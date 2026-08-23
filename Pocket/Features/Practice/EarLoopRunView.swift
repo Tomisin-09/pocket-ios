@@ -37,11 +37,26 @@ struct EarLoopRunView: View {
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
             .toolbar { doneButton }
-            .onAppear { if startedAt == nil { startedAt = .now } }
+            .onAppear { if startedAt == nil { startedAt = .now }; armIfBlockRecords() }
             .rampLessBlockLength(plannedMinutes: routineContext?.plannedMinutes,
                                  cycleSeconds: { player.cycleSeconds(for: loop) },
                                  isPlaying: { player.isPlaying },
                                  onFinish: finish)
+    }
+
+    /// Arm the recorder when this block was marked to record (ADR 0180), so the take begins with the
+    /// bed rather than waiting on a tap the player has to remember mid-session.
+    ///
+    /// A ramp-less block never auto-starts, so unlike the ramped screens its on-screen arm ring is
+    /// genuinely reachable — which is why recording has always worked here (ADR 0069 amendment §2).
+    /// This does not replace that ring: it pre-sets it. The controls render as already armed, and a
+    /// player who changes their mind can disarm this one run without touching the routine.
+    ///
+    /// `armIfPermitted()` never prompts. The prompt happened when the block was marked, in the
+    /// routine editor.
+    func armIfBlockRecords() {
+        guard routineContext?.recordsTake == true else { return }
+        recorder.armIfPermitted()
     }
 
     /// Log the block as a completed unit-run (ADR 0117). **Done is a genuine completion here**, not a

@@ -103,13 +103,16 @@ extension RoutineDetailView {
         switch target {
         case .exercise(let exercise, let block):
             ExerciseBlockPreview(exercise: exercise, plannedMinutes: block.plannedMinutes,
-                                 usesAuthoredLength: authoredLength(of: block))
+                                 usesAuthoredLength: authoredLength(of: block),
+                                 recordsTake: recordsTake(of: block))
         case .loop(let loop, let block):
             LoopBlockPreview(loop: loop, plannedMinutes: block.plannedMinutes,
-                             usesAuthoredLength: authoredLength(of: block))
+                             usesAuthoredLength: authoredLength(of: block),
+                             recordsTake: recordsTake(of: block))
         case .rampLess(let loop, let mode, let block):
             RampLessBlockPreview(loop: loop, mode: mode, block: block,
-                                 runsOpenEnded: authoredLength(of: block))
+                                 runsOpenEnded: authoredLength(of: block),
+                                 recordsTake: recordsTake(of: block))
         case .freeform(let exercise, let block):
             FreeformBlockPreview(exercise: exercise, block: block,
                                  runsOpenEnded: authoredLength(of: block))
@@ -132,6 +135,7 @@ extension RoutineDetailView {
                     if existsInStore { try? editContext.save() }
                 })
     }
+
 }
 
 /// The per-block **Repeat** editor (ADR 0076) — a compact sheet opened by tapping a unit block in the

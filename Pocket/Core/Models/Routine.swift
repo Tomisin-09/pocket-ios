@@ -157,6 +157,23 @@ final class RoutineItem {
     /// Declaration default `false` → additive lightweight migration, no store wipe (CoreData 134110).
     var usesAuthoredLength: Bool = false
 
+    /// Whether this block captures a **practice take** while it runs (ADR 0179).
+    ///
+    /// Authored on the block, not decided mid-session, and that is the whole design: routine blocks
+    /// auto-start by default (`AppSettings.routineAutoStart`), so a run-time arm control would flash
+    /// past before it could be tapped — and ADR 0069/0077's objection to recording inside a routine
+    /// was precisely about controls competing for a player's hands mid-drill. Marked here, the block
+    /// arms itself on appearance and the take starts with the run; nothing new appears on the
+    /// running block.
+    ///
+    /// Only meaningful on a **ramped** exercise or loop block. The ramp-less modes (freeform, ear,
+    /// improvise) already record unconditionally inside a routine (ADR 0069 amendment §2), and a song
+    /// block has no recorder at all (ADR 0179 D6).
+    ///
+    /// Declaration default `false` → additive lightweight migration, no store wipe (CoreData 134110),
+    /// and every routine authored before this reads exactly as it did.
+    var recordsTake: Bool = false
+
     /// The minutes that actually govern this block — the allotment unless the player declined it
     /// (ADR 0130). **The one expression** the run, the block preview and the session estimate read, so
     /// a decline cannot take effect on one surface and not another.
@@ -284,6 +301,20 @@ final class RoutineItem {
     /// orphaned (it carries no unit by design). Pure decision in `RoutineBudget`.
     var isOrphaned: Bool {
         RoutineBudget.isOrphaned(kind: kind, hasResolvableUnit: hasResolvableUnit)
+    }
+
+    /// Whether this block can capture a **take** while it runs, and so whether `recordsTake` means
+    /// anything on it (ADR 0180 D2).
+    ///
+    /// Lives on the model because three surfaces have to agree about it — the block-list badge, the
+    /// swipe that sets the flag, and `RoutineSessionPlayer.stage(for:)` that acts on it — and a badge
+    /// promising a recording the player will never make is the exact failure. Every loop mode
+    /// qualifies (D1). A **song** block has no recorder at all (ADR 0179 D6). A **freeform** exercise
+    /// records with a live start/stop button and has no armed state to pre-set, nor a start event to
+    /// hang a take on. A **rest** and an **orphan** carry no unit, and fall out of the same test.
+    var canRecordTake: Bool {
+        if let exercise { return exercise.template != .freeform }
+        return loop != nil
     }
 
     /// Play order for a set of items (ADR 0066 R2) — sorted by explicit `order`, ties

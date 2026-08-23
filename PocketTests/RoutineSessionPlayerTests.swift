@@ -62,6 +62,47 @@ final class RoutineSessionPlayerTests: XCTestCase {
         XCTAssertIdentical(player.stages[1].loop, earLoop)   // `loop` accessor covers both modes
     }
 
+    // MARK: - A block marked to record (ADR 0179)
+
+    func testRecordsTakeReachesTheStageAndDefaultsOff() {
+        let marked = Exercise(name: "Marked")
+        let plain = Exercise(name: "Plain")
+        let markedItem = RoutineItem.item(marked, order: 0)
+        markedItem.recordsTake = true
+        let player = RoutineSessionPlayer(routine: routine([markedItem, .item(plain, order: 1)]))
+        XCTAssertEqual(player.stages.map(\.recordsTake), [true, false])
+    }
+
+    /// **Every loop mode honours the flag** (ADR 0180 D1), reversing ADR 0179's trainer-only rule.
+    /// Ear and improvise blocks could always record from their own screens (ADR 0069 amendment §2),
+    /// but only by remembering to arm mid-session; the flag arms them in advance. The block-list
+    /// badge reads the same rule, so a badge never disagrees with what the block does.
+    func testEveryLoopModeCarriesTheRecordFlag() {
+        let trainer = Loop(name: "Riff", start: 0.1, end: 0.2, speed: 1, repeats: 4)
+        let ear = Loop(name: "Lick", start: 0.3, end: 0.4, speed: 1, repeats: 4)
+        let jam = Loop(name: "Vamp", start: 0.5, end: 0.6, speed: 1, repeats: 4)
+        let items = [RoutineItem.item(trainer, order: 0),
+                     RoutineItem.earLoopItem(ear, order: 1),
+                     RoutineItem.improviseLoopItem(jam, order: 2)]
+        for item in items { item.recordsTake = true }
+        let player = RoutineSessionPlayer(routine: routine(items))
+        XCTAssertEqual(player.stages.map(\.kind), [.loop, .earLoop, .improviseLoop])
+        XCTAssertEqual(player.stages.map(\.recordsTake), [true, true, true])
+    }
+
+    /// A **freeform** exercise runs `FreeformRunView`, which records with a live start/stop button
+    /// and has no armed state to pre-set (ADR 0180 D2). Its preview never offers the switch, so the
+    /// only way to reach this is a flag set while the exercise was ramped and left behind by a
+    /// template change — and a stage that carried it would badge a block that records nothing.
+    func testAFreeformExerciseBlockDropsTheRecordFlag() {
+        let ramped = Exercise(name: "Alt picking")
+        let freeform = Exercise(name: "Noodling", template: .freeform)
+        let items = [RoutineItem.item(ramped, order: 0), RoutineItem.item(freeform, order: 1)]
+        for item in items { item.recordsTake = true }
+        let player = RoutineSessionPlayer(routine: routine(items))
+        XCTAssertEqual(player.stages.map(\.recordsTake), [true, false])
+    }
+
     // MARK: - Auto-start no longer excludes the first block (ADR 0071 R4b)
 
     func testAutoStartTreatsEveryBlockAlike() {

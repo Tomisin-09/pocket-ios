@@ -34,6 +34,8 @@ struct RoutineDetailView: View {
     /// Read-only by default; every mutating control is revealed only in edit mode. A brand-new
     /// routine opens directly in edit mode (there's nothing to view yet).
     @State var isEditing: Bool
+    /// Raised when a swipe tries to mark a block for recording and the microphone is off (ADR 0180).
+    @State var micAccessBlocked = false
 
     /// Entitlement (ADR 0112) — internal so the access extension reads it. Routines are Pro; the
     /// curated free-taste routine opens as a rearrange-only demo.
@@ -164,8 +166,9 @@ struct RoutineDetailView: View {
                     ForEach(Array(routine.orderedItems.enumerated()), id: \.element.uid) { pair in
                         blockRow(pair.element, number: pair.offset + 1)
                             .listRowBackground(PocketColor.background)
+                            .swipeActions(edge: .leading) { recordSwipe(for: pair.element) }
                     }
-                    .onMove(perform: move)
+                    .onMove(perform: blockMoveAction)
                     .onDelete(perform: blockDeleteAction)
                 }
             } header: {
@@ -211,6 +214,7 @@ struct RoutineDetailView: View {
         // Rest-insert mode borrows the list: drag handles and swipe-delete would fight the gap
         // taps, so edit mode is suspended (not exited) for its duration.
         .environment(\.editMode, .constant(isEditing && !insertingRests ? .active : .inactive))
+        .modifier(MicAccessAlert(isPresented: $micAccessBlocked))
         .toolbar { toolbarContent }
         .safeAreaInset(edge: .bottom) { startBar }
         // The picker no longer dismisses on a pick (ADR 0127) — it adds and stays open, so the
@@ -373,20 +377,4 @@ struct RoutineDetailView: View {
         for (index, item) in routine.orderedItems.enumerated() { item.order = index }
     }
 
-    /// Drag-reorder writes the explicit `order` (ADR 0066 R2) so play order survives a fetch.
-    private func move(from offsets: IndexSet, to destination: Int) {
-        var ordered = routine.orderedItems
-        ordered.move(fromOffsets: offsets, toOffset: destination)
-        for (index, item) in ordered.enumerated() { item.order = index }
-        haptic(.light)
-    }
-
-    /// Delete the swiped blocks (offsets index the *displayed* ordered list), then renumber
-    /// the survivors so `order` stays contiguous.
-    func delete(_ offsets: IndexSet) {
-        let ordered = routine.orderedItems
-        for index in offsets { editContext.delete(ordered[index]) }
-        renumberBlocks()
-        haptic(.medium)
-    }
 }

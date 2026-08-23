@@ -30,6 +30,33 @@ final class RoutineModelTests: XCTestCase {
         XCTAssertEqual(item.order, 0)
         XCTAssertFalse(item.hasResolvableUnit)
         XCTAssertNotEqual(RoutineItem().uid, RoutineItem().uid)
+        // ADR 0179 — a block records only when it was marked to, so every routine authored before
+        // this shipped reads exactly as it did.
+        XCTAssertFalse(item.recordsTake)
+        // A bare item carries no unit, so there is nothing for a take to belong to (ADR 0180 D2).
+        XCTAssertFalse(item.canRecordTake)
+    }
+
+    // MARK: - Which blocks can record (ADR 0180 D2)
+
+    /// The one rule the block-list badge, the swipe and `RoutineSessionPlayer.stage(for:)` all read.
+    /// Every loop mode qualifies (D1); a song has no recorder (ADR 0179 D6); a freeform exercise has
+    /// no armed state to pre-set, and a rest no unit at all.
+    func testCanRecordTakeCoversEveryLoopModeAndNoSongOrFreeform() {
+        let loop = Loop(name: "Riff", start: 0.1, end: 0.2, speed: 1, repeats: 4)
+        XCTAssertTrue(RoutineItem.item(loop, order: 0).canRecordTake)
+        XCTAssertTrue(RoutineItem.earLoopItem(loop, order: 0).canRecordTake)
+        XCTAssertTrue(RoutineItem.improviseLoopItem(loop, order: 0).canRecordTake)
+
+        XCTAssertTrue(RoutineItem.item(Exercise(name: "Alt picking"), order: 0).canRecordTake)
+        XCTAssertFalse(
+            RoutineItem.item(Exercise(name: "Noodling", template: .freeform), order: 0)
+                .canRecordTake)
+
+        let song = Song(title: "Red Moon", duration: 200,
+                        ref: SongRef(id: "x", source: .localFile, bookmark: nil))
+        XCTAssertFalse(RoutineItem.item(song, order: 0).canRecordTake)
+        XCTAssertFalse(RoutineItem.rest(order: 0).canRecordTake)
     }
 
     // MARK: - String-backed enum round-trip

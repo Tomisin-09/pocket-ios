@@ -17,15 +17,19 @@ struct RampLessBlockPreview: View {
     /// A binding onto the block's open-ended opt-out (`RoutineItem.usesAuthoredLength`, ADR 0130
     /// reused per ADR 0141 L4), carrying the editor's save discipline with it.
     var runsOpenEnded: Binding<Bool>?
+    /// A binding onto the block's **record** flag (`RoutineItem.recordsTake`, ADR 0180 D1). `nil`
+    /// outside a routine, where there is no block to mark.
+    var recordsTake: Binding<Bool>?
 
     @State private var preview: LoopAudioPreviewPlayer
 
     init(loop: Loop, mode: LoopRunMode, block: RoutineItem? = nil,
-         runsOpenEnded: Binding<Bool>? = nil) {
+         runsOpenEnded: Binding<Bool>? = nil, recordsTake: Binding<Bool>? = nil) {
         self.loop = loop
         self.mode = mode
         self.block = block
         self.runsOpenEnded = runsOpenEnded
+        self.recordsTake = recordsTake
         _preview = State(initialValue: LoopAudioPreviewPlayer(loop: loop))
     }
 
@@ -75,6 +79,14 @@ struct RampLessBlockPreview: View {
                 if let block, let runsOpenEnded {
                     RampLessBlockLengthControl(runsOpenEnded: runsOpenEnded,
                                                minutes: block.resolvedBlockMinutes, tint: tint)
+                }
+                // Ear and improvise blocks can already be armed from their own screens; this is the
+                // same behaviour decided in advance (ADR 0180 D1), so the same switch as every other
+                // block gets. `openEnded` softens the copy: a jam ends when you end it, so "ends with
+                // the block" would be a promise about a clock that isn't running.
+                if let recordsTake {
+                    BlockRecordControl(recordsTake: recordsTake, tint: tint,
+                                       kind: .rampLess(openEnded: block?.usesAuthoredLength == true))
                 }
             }
             .padding(24)
