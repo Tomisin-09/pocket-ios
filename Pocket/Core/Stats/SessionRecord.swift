@@ -6,7 +6,7 @@ import Foundation
 /// The kind names the **unit** that was practised, not the container: a routine's blocks log as the
 /// exercises and loops they actually are, and the routine itself is carried by `routineUID`. That
 /// falls straight out of one-row-per-unit-run — there is no such thing as a "routine row" to name.
-enum PracticeRunKind: String, CaseIterable, Equatable, Sendable {
+enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
     case exercise
     case loop
     /// Ear-training on a loop (ADR 0104) — the same material, a different job, so it windows with
@@ -51,7 +51,10 @@ enum PracticeRunKind: String, CaseIterable, Equatable, Sendable {
 /// to one of these, and hands the array to `PracticeLog` / `TempoTrajectory`. That keeps the
 /// off-by-one-prone code (day boundaries, week starts, sitting gaps) free of SwiftData and SwiftUI
 /// and therefore unit-testable, per AGENTS.md — mirroring how `PracticeStats.summarize` already works.
-struct SessionRecord: Equatable, Identifiable, Sendable {
+/// `Codable` so the practice log can be exported as-is (ADR 0181). It is already the flat, store-free
+/// shape an archive wants, so the export reuses it rather than declaring a parallel DTO that would have
+/// to be kept in step with this one.
+struct SessionRecord: Codable, Equatable, Identifiable, Sendable {
     let id: UUID
     let startedAt: Date
     let durationSeconds: Double
