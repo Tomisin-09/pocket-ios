@@ -26,6 +26,23 @@ Imported audio is **copied into the app**, so a song keeps playing whether or no
 from is still where you found it. Deleting a song from Red Moon removes Red Moon's copy and leaves
 your original alone.
 
+### Taking a copy out
+
+**Settings ▸ Your data ▸ Export** writes everything you have built into a single zip and hands it to
+the share sheet, so you can keep it wherever you keep things. Inside are `practice.json` — songs,
+loops, markers, exercises, chords, routines, goals, journal and practice history — and a `takes`
+folder holding the audio of your recordings, which you can leave out if you only want the writing.
+
+Nothing is uploaded. The file is written on your device and handed to the share sheet; where it goes
+after that is your choice alone, and Red Moon has no idea. **The app cannot read an archive back
+in** — it is a copy for you, not a restore.
+
+Two things worth knowing before you send one anywhere. It contains your notes and your recordings in
+full. And a take recorded next to a playing song may have picked that song up through the
+[microphone](#the-microphone).
+
+See [Settings ▸ Your data](reference/settings.md#your-data).
+
 ## The microphone
 
 The app asks for one system permission, and uses it in exactly two places:

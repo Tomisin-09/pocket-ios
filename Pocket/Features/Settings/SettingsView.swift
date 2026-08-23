@@ -4,7 +4,7 @@ import SwiftUI
 /// The **Settings hub** (ADR 0162) — a short list of destinations, pushed from the Home toolbar gear.
 ///
 /// This was thirteen sections in one flat `Form`, grown one section per ADR in the order the ADRs
-/// landed. It is now nine rows that each push a screen owning one coherent group, which is the shape
+/// landed. It is now ten rows that each push a screen owning one coherent group, which is the shape
 /// `ToolkitView` (ADR 0096) already uses and the shape the platform's own Settings uses — so it costs
 /// the player no new idea. ADR 0050 chose a push over a sheet *"so it can grow sub-screens"*; this is
 /// that affordance finally being spent.
@@ -35,6 +35,10 @@ struct SettingsView: View {
     /// The `= false` is unreachable — `AppSettings.seedAnalyticsDefaultIfNeeded` writes this at launch
     /// (ADR 0147 §3) — but it is the safe direction if it ever were reached.
     @AppStorage(AppSettings.Key.analyticsEnabled) private var analyticsEnabled = false
+
+    /// Disk use behind the *Your data* row (ADR 0181). Optional so the row shows nothing rather than
+    /// a confident "Zero KB" in the moment before the measurement lands.
+    @State private var usage: StorageUsage?
 
     var body: some View {
         Form {
@@ -73,6 +77,12 @@ struct SettingsView: View {
             }
 
             Section {
+                // Above Privacy, and in this group rather than Preferences: an export changes
+                // nothing (ADR 0162 D2). The value is a real measurement, so it starts blank and
+                // fills in — a hub row that guessed would be worse than one that waits.
+                NavigationLink { YourDataSettingsView() } label: {
+                    SettingsHubRow(icon: "externaldrive", title: "Your data", value: storageSummary)
+                }
                 NavigationLink { PrivacySettingsView() } label: {
                     SettingsHubRow(icon: "hand.raised", title: "Privacy", value: privacySummary)
                 }
@@ -84,7 +94,7 @@ struct SettingsView: View {
             // Hidden during a screenshot shoot as well as in release. The footer says it plainly —
             // never present in a shipping build — and a figure in the user manual is a picture of
             // the shipping build, so a Debug-only tenth destination in it is simply wrong (ADR 0165).
-            // The manual's own alt text for this screen lists the nine that ship.
+            // The manual's own alt text for this screen lists the ten that ship.
             #if DEBUG
             if !ScreenshotSeed.isShooting {
                 Section {
@@ -98,6 +108,13 @@ struct SettingsView: View {
             #endif
         }
         .settingsScreen(title: "Settings")
+        .task { usage = await Task.detached(priority: .utility) { StorageUsage.measure() }.value }
+    }
+
+    /// Blank until the directories have actually been measured, then the total. Off the main actor:
+    /// it is a directory listing plus a resource value per file, which is cheap but is still I/O.
+    private var storageSummary: String? {
+        usage.map { StorageUsage.formatted(bytes: $0.total) }
     }
 
     /// "Tomisin · Guitar", or just the instrument before a name has been set. The instrument always

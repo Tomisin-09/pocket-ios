@@ -14,6 +14,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **You can take a copy of everything out.** A new **Settings ▸ Your data** holds **Export**: one tap
+  prepares a zip of everything you have built — songs, loops, markers, exercises, chords, routines,
+  goals, your whole journal and your practice history, plus the audio of your recordings — and hands
+  it to the share sheet, so you can keep it in Files, iCloud Drive or anywhere else. *Include
+  recordings* starts on, because your takes are the one part nothing can rebuild; turned off you get a
+  small file that still describes every take, its notes and its moments. The size is shown before you
+  start and exactly after it finishes. Nothing is uploaded — the file is written on your device and
+  where it goes next is entirely your choice. Red Moon can't read an archive back in yet, so this is a
+  copy for you to keep rather than a restore. The **Your data** row also shows how much space your
+  songs and recordings are using.
+
 ### Changed
 - **"Progress" is now the "Practice log", and it is no longer hidden in a menu.** The screen counting
   up your minutes, days and tempos is renamed: *progress* names a direction, and this screen is built

@@ -42,6 +42,9 @@ enum SettingsInfo {
     static let zoomFollowsPlayhead =
         "Pinch-zoom normally keeps the spot under your fingers still. Turn this on to have the "
         + "window re-center on the playhead as you zoom instead."
+    static let exportRecordings =
+        "Your takes are the one part of an archive nothing else can rebuild, and the largest part by "
+        + "far. Leave this on unless all you want is your notes and settings."
     static let animateExercises =
         "A moving highlight walks the exercise in time — the notes on the fretboard, the strokes on "
         + "the strum lane. Always off when your device has Reduce Motion on."
