@@ -98,7 +98,10 @@ struct SongAudioSection: View {
                                 hasBookmark: song.bookmark != nil,
                                 sizeInBytes: song.audioFileName.flatMap {
                                     SongFileStore.fileSize(fileName: $0)
-                                })
+                                },
+                                copyExists: song.audioFileName.map {
+                                    SongFileStore.exists(fileName: $0)
+                                } ?? false)
     }
 
     private func handlePick(_ result: Result<[URL], Error>) {
@@ -155,17 +158,25 @@ enum SongAudioLabel {
     ///     it and has not adopted yet.
     ///   - hasBookmark: whether a legacy in-place bookmark exists (§2/§5). With no copy *and* no
     ///     bookmark there is nothing left to play — the state relink exists to repair.
-    ///   - sizeInBytes: size of the owned copy, `nil` if it can't be read — which for a song that
-    ///     claims a copy means the file is gone from under it.
-    static func describe(audioFileName: String?, hasBookmark: Bool, sizeInBytes: Int64?) -> String {
-        guard let leaf = audioFileName else {
+    ///   - sizeInBytes: size of the owned copy, `nil` when it can't be read even though the file is
+    ///     there.
+    ///   - copyExists: whether the owned copy is **actually on disk** (ADR 0182).
+    ///
+    /// `copyExists` was missing, and its absence was a lie the label told: a song whose copy had gone
+    /// from under it still reported its format, because an unreadable size was treated as "there but
+    /// unmeasurable". `SongAudioResolver` has always fallen through to the bookmark when the copy is
+    /// absent, so the label was contradicting the thing that actually decides what plays. It now
+    /// mirrors the resolver exactly — a claimed-but-absent copy is no copy.
+    static func describe(audioFileName: String?, hasBookmark: Bool, sizeInBytes: Int64?,
+                         copyExists: Bool) -> String {
+        guard let leaf = audioFileName, copyExists else {
             return hasBookmark ? "Linked file" : "Missing"
         }
         let format = (leaf as NSString).pathExtension.uppercased()
         guard let bytes = sizeInBytes else {
             return format.isEmpty ? "In your library" : format
         }
-        let size = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        let size = StorageUsage.formatted(bytes: bytes)
         return format.isEmpty ? size : "\(format) · \(size)"
     }
 }

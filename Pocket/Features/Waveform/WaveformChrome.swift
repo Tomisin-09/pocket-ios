@@ -121,11 +121,30 @@ struct AudioLoadingOverlay: View {
 /// the small back chevron. Nothing below this notice works without audio, so there is
 /// nothing worth keeping browsable: dim, absorb touches, and offer the way out.
 struct AudioUnavailableNotice: View {
+    /// Whether this song ever had a copy of its own (ADR 0182).
+    ///
+    /// The notice used to state one cause for both states — *"added before Red Moon kept its own
+    /// copy"* — which is true only for a pre-0148 song still resolving through a bookmark. For every
+    /// song imported since, the copy **existed and is gone**, and telling that player their song is
+    /// old sends them looking for the wrong problem. Two states, two sentences.
+    let hadOwnCopy: Bool
     /// Points the song at a file again, keeping its loops and markers (ADR 0148 §6). The primary
     /// action: the player came here to practise, and relinking is the thing that lets them.
     let onRelink: () -> Void
     /// Leaves the practice screen, so a broken song is a detour rather than a dead end.
     let onLeave: () -> Void
+
+    /// Both endings are identical on purpose — the repair and what survives it don't depend on how
+    /// the audio went missing, and only the cause does.
+    private var explanation: String {
+        let cause = hadOwnCopy
+            ? "Red Moon's copy of this song's audio is no longer on this device — it may have been "
+                + "removed to free up space, or lost in a restore."
+            : "This song was added before Red Moon kept its own copy, and the link to your file has "
+                + "broken — it was moved, renamed or deleted, or the app was reinstalled."
+        return cause + " Find the file again and your loops, markers, takes and history all stay "
+            + "with it."
+    }
 
     var body: some View {
         ZStack {
@@ -143,13 +162,9 @@ struct AudioUnavailableNotice: View {
                         .foregroundStyle(PocketColor.textPrimary)
                         .multilineTextAlignment(.center)
                     // Names the actual cause rather than only the symptom: this is a broken link,
-                    // not a corrupt song, so relinking is a real fix rather than a shrug. The copy
-                    // is what a current import keeps (ADR 0148 §1), which is why the only songs that
-                    // reach this notice are pre-0148 ones still resolving through a bookmark (§2).
-                    Text("This song was added before Red Moon kept its own copy, and the link to "
-                         + "your file has broken — it was moved, renamed or deleted, or the app "
-                         + "was reinstalled. Find the file again and your loops, markers, takes "
-                         + "and history all stay with it.")
+                    // not a corrupt song, so relinking is a real fix rather than a shrug — and which
+                    // cause it names now depends on which one is true (ADR 0182).
+                    Text(explanation)
                         .font(.futura(.caption))
                         .foregroundStyle(PocketColor.textSecondary)
                         .multilineTextAlignment(.center)

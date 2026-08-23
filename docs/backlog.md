@@ -32,6 +32,36 @@ What's needed:
 Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
 is the deliverable ADR 0165 defines.
 
+## Relink dead ends — `LoopRunView` and `SongPlayAlongView` (logged 2026-08-23, ADR 0182 §6)
+
+**Becomes blocking if the backup exclusion ever ships as a default.** Not before.
+
+When a song's audio can't be found, the waveform screen offers *Find the file* and `SongDetailsSheet`
+offers a replace. The other two practice surfaces offer nothing: `LoopRunView` shows a disabled
+button and `SongPlayAlongView` a caption, both dead ends with no repair path from where the player
+actually is.
+
+ADR 0182 D3 ships *Keep songs in backup* **defaulting on**, so a missing copy stays rare and this is
+liveable. The moment that default flips — which ADR 0148's own reasoning says should not happen
+lightly — a restored device is full of songs needing a relink, and two of the four places a player
+meets one have no way to do it. Widen the door first.
+
+## An importer to close the export loop (logged 2026-08-23, ADR 0181)
+
+Export shipped without import, which is half a loop, and the manual says so plainly. A merge-vs-replace
+importer with id collisions and cross-version schemas is its own ADR. `schemaVersion` in
+`practice.json` is the seam that keeps it possible; nothing reads it yet.
+
+Worth pairing with a reconsideration of the **schema freeze** (2026-08-07). The freeze exists because
+a bad migration is unrecoverable — which stops being true for anyone holding an archive.
+
+## An automatic orphan sweep (logged 2026-08-23, ADR 0182)
+
+ADR 0182 ships *Reclaim space* as a manual action deliberately: a delete the player did not ask for
+and cannot see is the wrong first version, especially while the referenced set is only as good as the
+fetch that feeds it. Once the manual sweep has been observed doing the right thing on real devices,
+running it on launch or in the background is the obvious follow-up.
+
 ## Real guitar audio for chords and strums (parked 2026-08-20)
 
 **The app ships zero audio bytes.** Every sound is synthesised at runtime — the click from

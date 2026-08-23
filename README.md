@@ -100,7 +100,7 @@ by `PocketAll`. See `docs/decisions/0053`.
 Pocket/
   App/         App entry, root scene
   Features/    Home · Library · Waveform · Metronome · Practice · Repertoire
-  Core/        Audio (engine + pure tempo math) · Models · Services
+  Core/        Audio (engine + pure tempo math) · Models · Services · Export (ADR 0181) · Storage
   UI/          Shared components, design tokens
   Resources/   Info.plist, PrivacyInfo.xcprivacy
 PocketTests/      Unit tests (pure logic)

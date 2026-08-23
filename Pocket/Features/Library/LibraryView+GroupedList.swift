@@ -66,7 +66,14 @@ extension LibraryView {
     /// Deleting a song takes its loops, markers and journal with it (cascade), so the Undo window
     /// the shared coordinator adds matters more here than anywhere else. Keyed on
     /// `persistentModelID` — `Song` is the one list model with no business `uid`.
+    ///
+    /// **It also deletes the audio (ADR 0182)**, via `SongDeletion` — this was the only song-delete
+    /// path in the app and it was a bare `context.delete`, so every song ever deleted left its
+    /// full-size copy behind forever. Safe against Undo: the coordinator defers `perform` until the
+    /// window closes, so an undone delete never reaches this at all.
     func deletion(for song: Song) -> PocketRowDelete {
-        PocketRowDelete(id: song.persistentModelID, name: displayName(song)) { context.delete(song) }
+        PocketRowDelete(id: song.persistentModelID, name: displayName(song)) {
+            SongDeletion.perform(song) { context.delete(song) }
+        }
     }
 }

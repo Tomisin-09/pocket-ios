@@ -87,6 +87,36 @@ enum SongFileStore {
         return names
     }
 
+    /// Whether the songs directory is currently held out of iCloud/iTunes backup (ADR 0182).
+    ///
+    /// Read back from the filesystem rather than from the preference that set it: the two can
+    /// disagree — a restore, a reinstall, or a write that silently failed — and the disk is the one
+    /// that decides whether a backup carries the audio.
+    static func isExcludedFromBackup(_ fileManager: FileManager = .default) -> Bool {
+        guard let dir = try? directory(fileManager),
+              let values = try? dir.resourceValues(forKeys: [.isExcludedFromBackupKey]) else {
+            return false
+        }
+        return values.isExcludedFromBackup ?? false
+    }
+
+    /// Hold the songs directory in or out of device backup (ADR 0182 amending ADR 0148).
+    ///
+    /// **Songs only, never takes.** A song's audio came from a file the player still has somewhere
+    /// and can point Red Moon at again; a take has no source to regenerate from, which is why
+    /// `Song.recordings` nullifies rather than cascades (ADR 0151). Excluding recordings would be
+    /// offering to lose the one thing that cannot be replaced.
+    ///
+    /// The resource value is set on the **directory**, so it covers every song copy including ones
+    /// imported later — setting it per file would leave every subsequent import in the backup and
+    /// make the setting quietly untrue.
+    static func setExcludedFromBackup(_ excluded: Bool, _ fileManager: FileManager = .default) throws {
+        var dir = try directory(fileManager)
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = excluded
+        try dir.setResourceValues(values)
+    }
+
     /// **Pure** retention sweep: files on disk not referenced by any surviving `Song` — safe to
     /// delete. Orphans arise when a song row is deleted but its copy lingers, or an interrupted
     /// copy leaves a stray file (ADR 0148 §8).

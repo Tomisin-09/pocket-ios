@@ -103,9 +103,9 @@ def read(path):
 def strip_debug(text):
     """Drop `#if DEBUG` regions.
 
-    Load-bearing for C1: `SettingsView` has ten `SettingsHubRow`s and only nine
-    of them ship. The tenth is the Developer row (ADR 0162 D8), which no player
-    can reach — requiring the manual to name it would be requiring a lie.
+    Load-bearing for C1: `SettingsView` has eleven `SettingsHubRow`s and only
+    ten of them ship. The eleventh is the Developer row (ADR 0162 D8), which no
+    player can reach — requiring the manual to name it would be requiring a lie.
     """
     out, depth = [], 0
     for line in text.splitlines(keepends=True):
@@ -201,7 +201,7 @@ def names_appear_in(names, target, owner):
 
 
 def check_c1():
-    """The nine shipping Settings destinations are named in reference/settings.md."""
+    """The ten shipping Settings destinations are named in reference/settings.md."""
     text = strip_debug(read(os.path.join(SOURCE, "Features/Settings/SettingsView.swift")))
     names = labelled_arguments(text, "SettingsHubRow", "title")
     return names_appear_in(names, page("reference", "settings.md"), "SettingsHubRow (ADR 0162)")
@@ -371,7 +371,7 @@ def check_c5():
                           "row(s) %s byte-for-byte" % ", ".join(repr(s) for s in stale)]
         notes.append("all %d Loop controls rows quoted verbatim" % len(rows))
 
-    # `reference/settings.md` walks all nine destinations, so between them it meets every
+    # `reference/settings.md` walks all ten destinations, so between them it meets every
     # `SettingsInfo` explanation — which makes "quote the ones you claim to" and "quote all
     # of them" the same requirement, and the second is the one a script can state without
     # guessing what a claim looks like. C1 proves the page *names* the destinations; this

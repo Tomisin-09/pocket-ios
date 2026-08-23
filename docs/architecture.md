@@ -478,7 +478,11 @@ marked.
 
 **`RecordingStore`** owns the
 app-container `Recordings/` directory and the retention story — delete/size plus a pure orphan sweep
-that reaps files whose model row was deleted (dropping a row never drops the on-disk audio). Since a
+that reaps files whose model row was deleted (dropping a row never drops the on-disk audio).
+**That sweep had no production caller until ADR 0182** — this paragraph described behaviour the app
+did not have. It is now run from *Settings ▸ Your data ▸ Reclaim space* via `OrphanSweep`, over a
+referenced set built from **every** `Recording` row (never one owner's relationship: a take outlives
+its loop, ADR 0151, and routine blocks record takes too, ADRs 0179/0180). Since a
 nullified take keeps its row, its audio is safe by construction, and destroying a take is now only
 ever the user's own hold-to-delete. On the
 **loop trainer**, `RecordingController` orchestrates a take as a **pre-start arm toggle** beside Start
@@ -1371,13 +1375,79 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   (on)** rather than `UserDefaults.bool`'s `false` — unit-tested. UserDefaults is already in the
   privacy manifest (CA92.1), so no new required-reason API and no migration.
 - **The Settings surface is a hub of destinations** (`Features/Settings/`, ADR 0162), not a flat
-  `Form`. `SettingsView` holds nine `NavigationLink` rows; each pushes a screen owning one group,
+  `Form`. `SettingsView` holds ten `NavigationLink` rows; each pushes a screen owning one group,
   sharing chrome via a single `settingsScreen(title:)` modifier and ⓘ copy via `SettingsInfo`. The
   hub reads a handful of keys purely to *summarise* each row — the destinations own the bindings that
   write them. This is presentation only: the storage layer above is untouched, which is why the
   reorganisation needed no migration and `AppSettingsTests` needed no edit. It exists because the
   flat screen had grown one section per ADR until `SettingsView` sat at 344 of SwiftLint's 400 lines
   and three files carried "add no row here" warnings — a structure out of room.
+
+## Export (Core/Export, ADR 0181)
+
+The app's **only file-out path**, and its first. `Settings ▸ Your data ▸ Export` writes everything a
+player has built into one zip and hands it to the system share sheet; the app transmits nothing and
+does not know where the file goes, which is what keeps the published "no audio upload path" claim
+true (ADR 0150 §118-121).
+
+- **A separate DTO tree, not `Codable` models.** `PracticeArchive` and its records are plain
+  `Sendable` values. No `@Model` conforms to `Codable` and none should: SwiftData will not persist a
+  `Codable` attribute, the models carry installation-scoped state that must never leave the device
+  (`Song.bookmark`), and a graph with both cascade and nullify relationships has no single correct
+  serialisation. Cascade relationships **nest** (a song owns its loops, a routine its blocks, a take
+  its moments); nullify relationships are written as **ids**, because both ends outlive each other
+  (ADR 0151). Identity is the stable business `uid` throughout (ADR 0090) — except `Song`, which has
+  none and is keyed on `sourceID`, the same identity its audio file is named for.
+- **`ArchiveBuilder` holds the rules and is where they are tested.** `snapshot` is `@MainActor`
+  (reading a `@Model` is main-actor work); `encode`/`decode` are `nonisolated`. Never exported:
+  `Song.bookmark`, `Song.amplitudes` (512 derived `Double`s per song), any **computed** property, and
+  any statistic — ADR 0117 and ADR 0070 permit a count and a date and refuse anything that grades.
+  The three JSON-in-`Data` columns (`Exercise.templatePayload`, `SavedChord.voicingData`,
+  `JournalEntry.practisedUnitsRaw`) are **decoded and nested** as real JSON rather than base64.
+  `SessionRecord` was already export-shaped and simply gained `Codable`. Every collection is sorted
+  with `uid` as tie-breaker and the encoder uses `.sortedKeys`, so two exports of an unchanged library
+  are byte-identical.
+- **`ArchiveWriter` does the slow half, off the main actor.** Layout is
+  `red-moon-practice-<date>/practice.json` plus `takes/<recording-uid>.m4a`, and `fileName` is the
+  join between them. Zipping is `NSFileCoordinator(.forUploading)` — Foundation, not a dependency
+  (ADR 0120 pins the one package the project has). Takes are staged with **`linkItem`, not
+  `copyItem`**: a copy would double the recordings on disk before the zip is written, and both paths
+  are in the app container so a hard link is free. The staging tree and the zip share one working
+  directory, deleted when the screen closes, when another export is prepared, and on the **failure**
+  path — which is the one that would otherwise leak, since the caller never gets a handle.
+- **`ArchiveSource.everything(in:)`** (`Core/Export/ArchiveSource+Store.swift`) is the only SwiftData
+  in the layer: ten one-shot fetches of the top-level types, deliberately not `@Query`, so an export
+  does not keep the library resident for as long as Settings is open.
+- **Storage figures come from `Core/Storage/StorageUsage.swift`** (see below). Export needs it to
+  state a size before the tap.
+- **No import.** `practice.json` carries a `schemaVersion` so an importer stays possible; nothing
+  reads it yet.
+
+## Storage (Core/Storage, ADR 0182)
+
+What the app is holding, and the two leaks that ran behind ADR 0148 §8's unkept promise of honest
+disk use. Surfaced as *Settings ▸ Your data ▸ Storage*, under Export on the same screen.
+
+- **`StorageUsage`** — pure and `Sendable`; sums `Songs/` and `Recordings/` through the two stores'
+  existing `filesOnDisk`/`fileSize`, plus the SwiftData store and its `-wal`/`-shm` siblings. The
+  store URL comes off the live `ModelContainer`'s configuration, never a guessed
+  `Application Support/default.store`, which keeps the type free of SwiftData. `.file` count style so
+  the figure is comparable with *iPhone Storage*. It is also the app's **one** `ByteCountFormatter`:
+  `SongAudioSection` and `TakeDetailView` both call `StorageUsage.formatted` now.
+- **`SongDeletion`** — deletes a song's audio, then its row. Its own type rather than two lines in
+  the view because the bug was an **absence** (the app's only song-delete path was a bare
+  `context.delete`, leaking every deleted song's audio forever), and an absence survives every build
+  and every existing test unless it can be neutralised and watched to fail. Safe without a reference
+  check — `SongImporter` mints a fresh `sourceID` per import — and safe against Undo, since
+  `RowDeletionCoordinator` defers `perform` until the window closes.
+- **`OrphanSweep`** — composes the two stores' pure sweeps, measures **before** deleting, and reports
+  what it freed. Reaps `.trimtmp.m4a` files stranded by a crash mid-trim, which `TakeTrimmer` keeps
+  the `.m4a` suffix on for exactly this reason. "Nothing to reclaim" is worded as the good answer.
+- **Backup exclusion** — `SongFileStore.setExcludedFromBackup` / `isExcludedFromBackup`, set on the
+  **directory** so later imports are covered, and read back off the filesystem rather than assumed.
+  Bound to `AppSettings.songsInBackupDefault` (**true** — today's behaviour; ADR 0148 stands, 0182
+  only makes the trade a choice). **Takes are never excluded** — they have no source to regenerate
+  from.
 
 ## Backend
 

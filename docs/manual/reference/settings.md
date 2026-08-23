@@ -6,10 +6,10 @@ out to where you were.
 ## The hub
 
 <!-- shot: reference/settings-hub | role: screen
-     | alt: The Settings hub with You and Red Moon Pro above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Privacy and Help & About in a group below
+     | alt: The Settings hub with You and Red Moon Pro above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data, Privacy and Help & About in a group below
      | state: Settings open -->
 
-Nine destinations. **Each row states its current value on the right**, so most questions are
+Ten destinations. **Each row states its current value on the right**, so most questions are
 answered without opening anything.
 
 | Row | Holds |
@@ -21,6 +21,7 @@ answered without opening anything.
 | `Practice` | Count-in, screen, and the strumming click |
 | `Routines` | How a routine moves from block to block |
 | `Song player` | Four things about the waveform screen |
+| `Your data` | A copy of everything, and what it takes up |
 | `Privacy` | The one analytics switch |
 | `Help & About` | Version, help, contact, and the legal links |
 
@@ -101,6 +102,52 @@ on `Loop controls` — one setting, two doors.
 - **`Show marker labels`** — *Floats a marker's name over the timeline as you play up to it. Off keeps labels in the Markers panel only.*
 - **`Zoom follows playhead`** — *Pinch-zoom normally keeps the spot under your fingers still. Turn this on to have the window re-center on the playhead as you zoom instead.*
 
+## `Your data`
+
+The hub row shows what Red Moon is holding on disk — your imported song files plus your recordings.
+That figure is measured when you open Settings, so it is what is there now, not what was there when
+you last looked.
+
+### Export
+
+**`Prepare a copy`** writes everything you have built into a single zip and hands it to the share
+sheet, so you can put it in Files, iCloud Drive, or anywhere else you keep things.
+
+Inside are `practice.json` — your songs, loops, markers, exercises, chords, routines, goals, journal
+and practice history — and a `takes` folder with the audio of your recordings.
+
+- **`Include recordings`** is on to start with: *Your takes are the one part of an archive nothing else can rebuild, and the largest part by far. Leave this on unless all you want is your notes and settings.* Turned off, the file is small and your takes are still described in it — their notes, their moments, and the name of the missing audio — but the audio itself is not there.
+- **`Size`** is an estimate, because how far a zip compresses is not knowable until it is written.
+  The exact size appears on the share row once the copy is ready.
+
+Preparing and sharing are two taps rather than one: the file has to exist before the share sheet can
+carry it, and on a large library that takes a moment.
+
+**Red Moon cannot read an archive back in.** This is a copy for you to keep, not a restore. If a
+recording's audio has gone missing from the device, the copy says how many and carries on.
+
+A take recorded next to a playing song may have picked that song up through the mic. That is worth
+knowing before you send an archive anywhere.
+
+Nothing here uploads anything. The file is written on the device and handed to the share sheet; where
+it goes after that is entirely your choice. See [your data](../privacy.md).
+
+### Storage
+
+What Red Moon is using on this device, measured when you open the screen, in three lines and a total:
+
+| Line | What it is |
+|---|---|
+| `Songs` | The copies Red Moon keeps of the audio you imported |
+| `Recordings` | Your takes |
+| `Practice data` | Everything you have written — loops, exercises, routines, journal, history |
+
+It is measured the same way **Settings ▸ General ▸ iPhone Storage** measures it, so the two figures
+are comparable.
+
+- **`Keep songs in backup`** is on to start with: *Your imported song files ride along in your device backup, so a restored phone plays them straight away. Turning this off makes backups much smaller, and means a restored phone needs each song pointed at its file again. Your recordings are always backed up.*
+- **`Reclaim space`**: *Deletes audio files left behind by songs and takes you have already removed. It never touches a song or a take you still have.* It tells you how much it freed, or that there was nothing to reclaim — which is the answer you want.
+
 ## `Privacy`
 
 One switch, **`Share anonymous usage`**: *Counts of which features get used — how often a loop gets made, which exercises get built. Anonymous and not joined up across sessions, so it can't be traced back to you. Never your audio, notes, song names or artist name.*
@@ -124,5 +171,5 @@ in [your data](../privacy.md).
 
 ## Not in a shipping build
 
-There is a tenth row on the hub in development builds only. It is not present in the app you can
+There is an eleventh row on the hub in development builds only. It is not present in the app you can
 install, and nothing in this manual describes it.

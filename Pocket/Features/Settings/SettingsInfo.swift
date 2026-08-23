@@ -42,6 +42,16 @@ enum SettingsInfo {
     static let zoomFollowsPlayhead =
         "Pinch-zoom normally keeps the spot under your fingers still. Turn this on to have the "
         + "window re-center on the playhead as you zoom instead."
+    static let songsInBackup =
+        "Your imported song files ride along in your device backup, so a restored phone plays them "
+        + "straight away. Turning this off makes backups much smaller, and means a restored phone "
+        + "needs each song pointed at its file again. Your recordings are always backed up."
+    static let reclaimSpace =
+        "Deletes audio files left behind by songs and takes you have already removed. It never "
+        + "touches a song or a take you still have."
+    static let exportRecordings =
+        "Your takes are the one part of an archive nothing else can rebuild, and the largest part by "
+        + "far. Leave this on unless all you want is your notes and settings."
     static let animateExercises =
         "A moving highlight walks the exercise in time — the notes on the fretboard, the strokes on "
         + "the strum lane. Always off when your device has Reduce Motion on."

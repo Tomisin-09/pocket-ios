@@ -1,9 +1,39 @@
 # 0150 — A take is yours to send (export, not hosting)
 
-- **Status:** Proposed — **parked pending legal advice.** This ADR is written to
-  hold the shape of the question, not to authorise a build. It must not move to
-  Accepted on the evidence currently in it.
+- **Status:** Proposed — **parked pending legal advice**, and **superseded in
+  part by ADR 0181, for self-export only** (see the amendment below). This ADR
+  is written to hold the shape of the question, not to authorise a build. It
+  must not move to Accepted on the evidence currently in it.
 - **Date:** 2026-08-09
+
+## Amendment — 2026-08-23, ADR 0181
+
+Left as written; this note records what has since been decided around it rather
+than editing the reasoning that led here.
+
+**One half of this ADR has been acted on.** ADR 0181 ships a whole-archive
+export — every song, loop, exercise, routine, journal entry and take, written to
+a zip and handed to the OS share sheet. That is the **export, not hosting** case
+this ADR reasons through at §29-43, and 0181 adds one argument to it: a backup
+the player keeps for restore is a materially weaker case on the Content Rights
+axis than a single take one tap from Messages, because the artefact's purpose,
+shape and natural destination are all restore rather than distribution.
+
+**The other half stays exactly where it was.** Per-take sharing is still parked.
+There is no `ShareLink` on a take row and no share action in `TakesSheet`. Every
+open question in §92-110 — the EULA, the Content Rights declaration, commercial
+audio picked up through the mic — is still open. Nothing in 0181 resolved them;
+it **scoped around** them.
+
+**The decision to proceed for self-export was the owner's, taken 2026-08-22.**
+No legal review has happened. Do not read the amendment as evidence that one
+did.
+
+**The speaker-bleed warning this ADR asked for was built**, in the form the
+archive allows: one line on the export screen and in the manual saying that a
+take recorded next to a playing song may have picked that song up through the
+mic. The §118-121 claim that the privacy page rests on — *"the app has no audio
+upload path"* — was re-checked and still holds: a share sheet transmits nothing.
 
 ## Context
 

@@ -14,6 +14,34 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **You can take a copy of everything out.** A new **Settings ▸ Your data** holds **Export**: one tap
+  prepares a zip of everything you have built — songs, loops, markers, exercises, chords, routines,
+  goals, your whole journal and your practice history, plus the audio of your recordings — and hands
+  it to the share sheet, so you can keep it in Files, iCloud Drive or anywhere else. *Include
+  recordings* starts on, because your takes are the one part nothing can rebuild; turned off you get a
+  small file that still describes every take, its notes and its moments. The size is shown before you
+  start and exactly after it finishes. Nothing is uploaded — the file is written on your device and
+  where it goes next is entirely your choice. Red Moon can't read an archive back in yet, so this is a
+  copy for you to keep rather than a restore. The **Your data** row also shows how much space your
+  songs and recordings are using.
+- **You can see what Red Moon is using, and reclaim what it shouldn't be.** **Settings ▸ Your data**
+  now shows your songs, recordings and practice data with a total, measured the same way iPhone
+  Storage measures it. **Reclaim space** removes audio left behind by songs and takes you already
+  deleted, and tells you how much it freed. **Keep songs in backup** is a new switch, on to start
+  with — exactly how it has always worked — that you can turn off to make device backups much
+  smaller, at the cost of having to point each song at its file again after a restore. Your
+  recordings are always backed up.
+
+### Fixed
+- **Deleting a song now deletes its audio too.** Until now the copy Red Moon keeps was left behind
+  forever, so a library could take up far more space than it appeared to. *Reclaim space* clears out
+  anything left behind by earlier deletions.
+- **A song with missing audio now says which of the two things happened** — an old song whose link to
+  your file broke, or a copy that has gone from the device — instead of always claiming the first.
+  The Audio line in a song's details had the mirror problem and could report a file that wasn't
+  there; it now says *Missing*.
+
 ### Changed
 - **"Progress" is now the "Practice log", and it is no longer hidden in a menu.** The screen counting
   up your minutes, days and tempos is renamed: *progress* names a direction, and this screen is built

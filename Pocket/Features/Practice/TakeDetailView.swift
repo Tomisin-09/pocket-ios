@@ -178,7 +178,7 @@ struct TakeDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             detailRow("Length", timecode(audioDuration > 0 ? audioDuration : take.duration))
             if let size = RecordingStore.fileSize(fileName: take.fileName) {
-                detailRow("Size", ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
+                detailRow("Size", StorageUsage.formatted(bytes: size))
             }
         }
         .font(.pocketMono(.caption))

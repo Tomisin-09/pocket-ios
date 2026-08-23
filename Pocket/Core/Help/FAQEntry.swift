@@ -112,10 +112,11 @@ extension FAQEntry {
         .init(question: "My song stopped playing — what happened?",
               answer: "Importing a song copies the audio into Red Moon, so moving, renaming or "
                 + "deleting the original in Files doesn't affect the copy you practise with. A song "
-                + "can still go missing if it was added by an early version that pointed at your file "
-                + "rather than keeping its own copy. Open it and choose Find the file — your loops, "
-                + "markers, takes and history all stay with it. Don't re-import: that makes a second "
-                + "song and leaves your work on the first.",
+                + "can still go missing two ways: it was added by an early version that pointed at "
+                + "your file rather than keeping its own copy, or Red Moon's copy itself is gone — "
+                + "removed to free up space, or lost in a restore. Either way, open it and choose "
+                + "Find the file — your loops, markers, takes and history all stay with it. Don't "
+                + "re-import: that makes a second song and leaves your work on the first.",
               area: .audio),
         .init(question: "Does slowing a song down change its pitch?",
               answer: "No. The pitch is held where it is however far you slow the tempo, so a passage "
