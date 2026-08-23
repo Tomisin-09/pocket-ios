@@ -90,6 +90,7 @@ enum AppSettings {
         static let installDate = "installDate"
         static let hasPracticed = "hasPracticed"
         static let songsInBackup = "songsInBackup"
+        static let attachDiagnostics = "attachDiagnostics"
         #if DEBUG
         /// DEBUG-only A/B for ADR 0140 §3. Never read in Release, which always compensates.
         static let compensateStretchLatency = "compensateStretchLatency"

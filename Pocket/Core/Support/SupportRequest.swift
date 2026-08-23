@@ -10,7 +10,7 @@ protocol InfoDictionaryReading {
 
 extension Bundle: InfoDictionaryReading {}
 
-/// The three facts about the installation that travel with a support message (ADR 0161).
+/// The facts about the installation that travel with a support message (ADR 0161, widened by 0183).
 ///
 /// **Deliberately Foundation-only — no UIKit.** The OS version comes from `ProcessInfo` and the model
 /// identifier from `uname(3)`, both of which are plain Foundation/Darwin, so this type stays pure and
@@ -22,6 +22,10 @@ extension Bundle: InfoDictionaryReading {}
 /// nothing derived from the library. The player is shown this exact summary in the sheet before they
 /// send, which is the promise `SupportRequestTests` pins — if a field is added here it appears on
 /// screen too, or the disclosure has silently become a lie.
+///
+/// ADR 0183 added a **fourth, optional** field and kept that promise intact: `diagnosticLine` is
+/// `nil` unless the player turned the setting on, and when it is not `nil` it is appended to
+/// `summary` — so the line on screen and the line in the payload remain the same string.
 struct SupportDiagnostics: Equatable, Sendable {
     /// Marketing version and build, e.g. `1.2 (4)`.
     let appVersion: String
@@ -32,18 +36,33 @@ struct SupportDiagnostics: Equatable, Sendable {
     /// exactly as identifying (which is to say, not).
     let deviceModel: String
 
-    /// The one-line form shown in the sheet **and** sent in the payload. Both read this property, so
-    /// the disclosure and the payload cannot drift apart.
+    /// The bounded crash-and-freeze line from `DiagnosticSummary` (ADR 0183), or `nil` — which is
+    /// the default and what every caller gets unless the player turned *Include in support messages*
+    /// on. Bounded is the whole argument: ADR 0161 D3 turned down attaching **logs**, because what
+    /// is attached has to be readable in full on screen, and one line is.
+    var diagnosticLine: String?
+
+    /// The form shown in the sheet **and** sent in the payload. Both read this property, so the
+    /// disclosure and the payload cannot drift apart.
+    ///
+    /// Two lines when a diagnostic line is present, one when it isn't — and the sheet renders it as
+    /// written, so the second line appears there the moment it appears here.
     var summary: String {
-        "Red Moon Practice \(appVersion) · iOS \(systemVersion) · \(deviceModel)"
+        let identity = "Red Moon Practice \(appVersion) · iOS \(systemVersion) · \(deviceModel)"
+        guard let diagnosticLine else { return identity }
+        return identity + "\n" + diagnosticLine
     }
 
     /// The live snapshot for this installation.
-    static var current: SupportDiagnostics {
+    ///
+    /// - Parameter diagnosticLine: passed in rather than read here, because whether it exists is a
+    ///   question about a *preference and a recorder*, and this type is deliberately Foundation-only.
+    static func current(diagnosticLine: String? = nil) -> SupportDiagnostics {
         SupportDiagnostics(
             appVersion: currentAppVersion(bundle: Bundle.main),
             systemVersion: currentSystemVersion(ProcessInfo.processInfo.operatingSystemVersion),
-            deviceModel: currentDeviceModel()
+            deviceModel: currentDeviceModel(),
+            diagnosticLine: diagnosticLine
         )
     }
 
@@ -133,8 +152,10 @@ struct SupportRequest: Equatable, Sendable {
     /// row in that email.
     ///
     /// Values are trimmed, because a message that is mostly a trailing newline reads as an empty one.
+    /// `diagnostics` appears **only when the player opted in** — an absent key rather than an empty
+    /// one, so the support inbox shows a row for it exactly when there was something to say.
     var formspreePayload: [String: String] {
-        [
+        var payload = [
             "email": replyAddress.trimmingCharacters(in: .whitespacesAndNewlines),
             "message": message.trimmingCharacters(in: .whitespacesAndNewlines),
             "app_version": diagnostics.appVersion,
@@ -142,5 +163,9 @@ struct SupportRequest: Equatable, Sendable {
             "device_model": diagnostics.deviceModel,
             "_subject": "Red Moon Practice \(diagnostics.appVersion) — support"
         ]
+        if let diagnosticLine = diagnostics.diagnosticLine {
+            payload["diagnostics"] = diagnosticLine
+        }
+        return payload
     }
 }
