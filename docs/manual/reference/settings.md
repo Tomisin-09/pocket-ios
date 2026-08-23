@@ -23,7 +23,7 @@ answered without opening anything.
 | `Song player` | Four things about the waveform screen |
 | `Your data` | A copy of everything, and what it takes up |
 | `Privacy` | The one analytics switch |
-| `Help & About` | Version, help, contact, and the legal links |
+| `Help & About` | Version, help, contact, diagnostics, and the legal links |
 
 `Red Moon Pro` and `You` sit above the rest because they are *state* — what you have and who you
 are — rather than preferences.
@@ -167,7 +167,24 @@ in [your data](../privacy.md).
   onto this stack instead.
 - **`Contact Support`** — an in-app form that posts over the internet, so it works with no Mail
   account set up.
+- **`Diagnostics`** — what iOS has reported going wrong, and whether any of it travels with a support
+  message. See below.
 - **`Privacy Policy`** and **`Terms of Use`** — both open in the browser.
+
+### `Diagnostics`
+
+iOS collects crashes and freezes in the background and hands them to Red Moon about once a day, so
+something that just happened will not be here yet. An empty screen the morning after a crash is
+normal. Nothing on it is sent anywhere on its own.
+
+The last five are listed, newest first, each with its date, what iOS called it, the build it happened
+on, and the iOS version. Anything older than roughly three months drops off. `Clear` forgets the list
+on this device; it does not stop iOS collecting more.
+
+- **`Include in support messages`** — *Adds one line to your next support message: how many crashes or freezes there were, when, and what iOS called them. It is the line shown on this screen and nothing more — never your songs, your recordings or your notes.*
+
+Off unless you turn it on. Turned on, the line appears under the toggle so you can read it, and it is
+shown again inside the contact form before you send — the form always shows everything it attaches.
 
 ## Not in a shipping build
 

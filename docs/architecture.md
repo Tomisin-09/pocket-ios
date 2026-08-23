@@ -1470,8 +1470,38 @@ shared Formspree form (the same one the marketing site and beta guide use), and 
 backs tests and previews. Swapping Formspree for our own endpoint is a second conformance and a
 different URL — that reversibility is the reason ADR 0161 could defer building a backend.
 
-**The three diagnostics are shown on screen before sending**, and the sheet and the payload both read
+**The diagnostics are shown on screen before sending**, and the sheet and the payload both read
 `SupportDiagnostics.summary` so they cannot drift. Nothing from the library is ever attached.
+
+ADR 0183 added a **fourth, optional** field, `diagnosticLine`, and kept that invariant: it is `nil`
+unless the player turned *Include in support messages* on, and when it is not `nil` `summary` appends
+it — so the extra line reaches the screen and the payload by the same route as the other three.
+
+## Crash and freeze reports (Core/Diagnostics, ADR 0183)
+
+MetricKit is the only reporter. No third-party SDK, no signal handler, and no route into analytics —
+`AnalyticsEvent` is a closed vocabulary that cannot carry a free `String` (ADR 0120 / 0147), and this
+never goes near it.
+
+- **`DiagnosticSummary`** — pure, Foundation-only, and holds **every** decision: retention (five
+  events, ~90 days), the noun a player would use ("freeze", not "hang"), the day-and-month format,
+  the Mach-exception and signal names, and the single bounded line a support message may carry. Unit
+  tested.
+- **`DiagnosticsStore`** — the events as a small JSON file in `Application Support/Diagnostics/`,
+  shaped like `SongFileStore`, with an injected `FileManager`. Held out of backup unconditionally
+  (unlike songs, ADR 0182): a crash report restored onto a new phone would describe the old one. Every
+  failure path returns an empty list — throwing from the diagnostics reader would be a crash in the
+  crash reporter.
+- **`DiagnosticsRecorder`** — `@MainActor @Observable`, owns the `MXMetricManagerSubscriber`, and
+  holds no judgement. `usesSystemMetrics` is a **`Bool` flag, never a stored `MXMetricManager`** —
+  the `TrialReminder` lesson (ADR 0144 D6) about a non-`Sendable` OS singleton on a `@MainActor`
+  type. An `MXDiagnosticPayload` is not `Sendable`, so the private `DiagnosticsSubscriber` reduces it
+  to values **on the delivery queue** and hands the main actor an array of structs.
+
+⚠ `MXMetricManager` holds subscribers **weakly**, so the recorder is a `@State` at the `PocketApp`
+root beside `store` and `trialReminder`, injected via `.environment`. Both readers take it as an
+*optional* environment value — the non-optional form traps wherever that root is absent. Surfaced as
+*Settings ▸ Help & About ▸ Diagnostics*, deliberately not a Settings hub destination.
 
 ## Testing
 

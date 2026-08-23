@@ -33,6 +33,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   smaller, at the cost of having to point each song at its file again after a restore. Your
   recordings are always backed up.
 
+- **The app can tell you when it crashed, and you can tell us.** iOS has always kept a record of any
+  time Red Moon crashed or froze; **Settings ▸ Help & About ▸ Diagnostics** now shows it to you — the
+  last five, with the date, what iOS called each one, and the build it happened on. It stays on your
+  device and is never sent on its own. One switch, **off unless you turn it on**, adds a single
+  readable line about it to your next support message, so a problem you report arrives with something
+  to go on. No call stacks and no logs, and the contact form still shows you everything it attaches
+  before you send. iOS hands these over about once a day, so something that just happened won't be
+  there yet.
+
 ### Fixed
 - **Deleting a song now deletes its audio too.** Until now the copy Red Moon keeps was left behind
   forever, so a library could take up far more space than it appeared to. *Reclaim space* clears out

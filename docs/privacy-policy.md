@@ -20,7 +20,10 @@ audio, your recordings, your journal notes, your song names or your artist name.
 Everything you create stays on your device and, if you use iCloud, in your own
 private iCloud storage.
 
-The one exception is **anonymous usage counts** — the app reports which features
+There are two exceptions, and neither one carries anything you have played,
+recorded or written.
+
+The first is **anonymous usage counts** — the app reports which features
 get used — that a loop was made, that an exercise was created — so we know what
 to improve. These counts carry no account, no device identifier, no advertising ID
 and nothing that could identify you, and they are not joined up across sessions.
@@ -31,9 +34,14 @@ Switzerland they are off until you turn them on**, and the app asks. **Everywher
 else, including the UK, they are on by default** and the app tells you so during
 setup — the law differs, and the section below explains which rule applies to you.
 
+The second is **a message you write to us** from Settings ▸ Help & About ▸ Contact
+Support. Nothing is sent unless you type it and tap Send, and the app shows you
+everything it attaches before you do. See *When you write to us*, below.
+
 Because the counts are irreversibly anonymous, there is no record tied to you for
 Deco Operations Ltd, as data controller, to access, correct or delete — a request
-to erase your data has nothing to find.
+to erase your data has nothing to find. A support message is different: it is tied
+to the address you gave us, and you can ask us to delete it.
 
 ## What stays on your device
 
@@ -107,11 +115,45 @@ personal data and the UK GDPR does not apply to them.
 takes effect immediately — the app checks your choice before every single count it
 would otherwise send. There is nothing to justify and no reason to give.
 
+## When you write to us
+
+Settings ▸ Help & About ▸ Contact Support is an in-app form. It sends only when
+you tap Send, and it sends only these things:
+
+- **The reply address you type**, used to answer you and nothing else. It is not
+  added to a mailing list.
+- **The message you type.**
+- **Three details about the installation** — your app version and build, your iOS
+  version, and your device model identifier (for example `iPhone17,1`, the hardware
+  generation, never a serial number or an advertising ID). All three are printed in
+  the form, in full, before you send.
+- **One optional line about crashes**, described next.
+
+The form is delivered by Formspree, which passes it to our support inbox. Because
+your message arrives attached to an address you chose to give us, we treat all of
+it as linked to you: you can ask us to delete it, at the address at the foot of
+this policy.
+
+### Crash and freeze reports
+
+iOS keeps its own record of any time the app crashed or froze, and hands it to the
+app roughly once a day. **That record stays on your device.** It is not analytics,
+it is not covered by the usage-counts switch, and it is never sent anywhere on its
+own. You can read it, and clear it, at Settings ▸ Help & About ▸ Diagnostics.
+
+One switch on that screen — **off unless you turn it on** — adds a single line to
+your next support message: how many crashes or freezes there were, since when, and
+what iOS called the most recent one, with its iOS version. No call stacks, no logs,
+no file paths, and nothing about what you were playing. The line is shown to you on
+that screen and again in the form before you send.
+
 ## What we do not do
 
-- We do **not** collect names, email addresses, contacts, or location.
+- We do **not** collect names, contacts, or location. We collect an email address
+  only when you type one into the contact form so we can reply.
 - We do **not** send your audio, recordings, journal notes, song names or artist
-  name anywhere, ever — with or without analytics turned on.
+  name anywhere, ever — with or without analytics turned on, and not in a support
+  message or a crash summary either.
 - We do **not** show ads or use advertising identifiers.
 - We do **not** use the IDFA, the App Tracking Transparency prompt, or any
   advertising SDK. We never will; this is a permanent product boundary.
