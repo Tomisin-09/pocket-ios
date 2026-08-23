@@ -22,27 +22,60 @@ struct StorageUsage: Equatable, Sendable {
     /// Practice takes — `Application Support/Recordings/`.
     var takeBytes: Int64 = 0
 
-    /// Everything the app owns that a player would recognise as theirs.
+    /// The SwiftData store and its journal — everything *written* rather than recorded. Years of
+    /// journal entries, every loop and its settings, the whole practice log.
     ///
-    /// The SwiftData store itself is deliberately not in here yet: it is a fraction of the audio and
-    /// ADR 0182 is where it gets measured and explained. A total that quietly folded it in would be a
-    /// number nobody could reconcile against anything.
-    var total: Int64 { songBytes + takeBytes }
+    /// It is reported beside the audio even though it is a rounding error next to it, because the
+    /// screen's job is to account for the app's whole footprint. A player comparing this against
+    /// *iPhone Storage* and finding a gap has no way to tell a missing category from a bug.
+    var storeBytes: Int64 = 0
+
+    /// Everything the app is holding.
+    var total: Int64 { songBytes + takeBytes + storeBytes }
 
     static let none = StorageUsage()
+
+    /// The categories, in the order the screen lists them: biggest cause first, and the one a player
+    /// can actually act on at the top.
+    var breakdown: [(label: String, bytes: Int64)] {
+        [("Songs", songBytes), ("Recordings", takeBytes), ("Practice data", storeBytes)]
+    }
 
     /// Measure both directories. The only impure function on the type.
     ///
     /// A file whose size cannot be read counts as zero rather than failing the measurement — a
     /// storage figure that refuses to appear because one file is unreadable is worse than one that is
     /// a few kilobytes light.
-    static func measure(_ fileManager: FileManager = .default) -> StorageUsage {
+    /// - Parameter storeURL: the SwiftData store's location, which only the caller knows — it comes
+    ///   off the live `ModelContainer`'s configuration rather than being guessed at
+    ///   `Application Support/default.store`, so this type stays free of SwiftData and a store moved
+    ///   by a later configuration is still measured. `nil` reports no practice data rather than
+    ///   inventing a path.
+    static func measure(_ fileManager: FileManager = .default, storeURL: URL? = nil) -> StorageUsage {
         StorageUsage(
             songBytes: SongFileStore.filesOnDisk(fileManager)
                 .reduce(into: 0) { $0 += SongFileStore.fileSize(fileName: $1, fileManager) ?? 0 },
             takeBytes: RecordingStore.filesOnDisk(fileManager)
-                .reduce(into: 0) { $0 += RecordingStore.fileSize(fileName: $1, fileManager) ?? 0 }
+                .reduce(into: 0) { $0 += RecordingStore.fileSize(fileName: $1, fileManager) ?? 0 },
+            storeBytes: storeBytes(at: storeURL, fileManager)
         )
+    }
+
+    /// The store plus its write-ahead log and shared-memory sibling.
+    ///
+    /// The `-wal` file is not an implementation detail worth hiding: between checkpoints it can hold
+    /// a real fraction of the database, and a figure that ignored it would drift from what the system
+    /// reports for no reason a player could ever discover.
+    static func storeBytes(at storeURL: URL?, _ fileManager: FileManager = .default) -> Int64 {
+        guard let storeURL else { return 0 }
+        let directory = storeURL.deletingLastPathComponent()
+        let name = storeURL.lastPathComponent
+        return [name, name + "-wal", name + "-shm"]
+            .map { directory.appending(path: $0, directoryHint: .notDirectory) }
+            .reduce(into: 0) { total, url in
+                let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+                total += Int64(size ?? 0)
+            }
     }
 
     /// The app's one byte formatter.

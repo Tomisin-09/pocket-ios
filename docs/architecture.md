@@ -478,7 +478,11 @@ marked.
 
 **`RecordingStore`** owns the
 app-container `Recordings/` directory and the retention story — delete/size plus a pure orphan sweep
-that reaps files whose model row was deleted (dropping a row never drops the on-disk audio). Since a
+that reaps files whose model row was deleted (dropping a row never drops the on-disk audio).
+**That sweep had no production caller until ADR 0182** — this paragraph described behaviour the app
+did not have. It is now run from *Settings ▸ Your data ▸ Reclaim space* via `OrphanSweep`, over a
+referenced set built from **every** `Recording` row (never one owner's relationship: a take outlives
+its loop, ADR 0151, and routine blocks record takes too, ADRs 0179/0180). Since a
 nullified take keeps its row, its audio is safe by construction, and destroying a take is now only
 ever the user's own hold-to-delete. On the
 **loop trainer**, `RecordingController` orchestrates a take as a **pre-start arm toggle** beside Start
@@ -1414,11 +1418,36 @@ true (ADR 0150 §118-121).
 - **`ArchiveSource.everything(in:)`** (`Core/Export/ArchiveSource+Store.swift`) is the only SwiftData
   in the layer: ten one-shot fetches of the top-level types, deliberately not `@Query`, so an export
   does not keep the library resident for as long as Settings is open.
-- **Storage figures come from `Core/Storage/StorageUsage.swift`**, which sums `Songs/` and
-  `Recordings/` through the two stores' existing `filesOnDisk`/`fileSize`. Export needs it to state a
-  size before the tap; ADR 0182's screen is built on the same type.
+- **Storage figures come from `Core/Storage/StorageUsage.swift`** (see below). Export needs it to
+  state a size before the tap.
 - **No import.** `practice.json` carries a `schemaVersion` so an importer stays possible; nothing
   reads it yet.
+
+## Storage (Core/Storage, ADR 0182)
+
+What the app is holding, and the two leaks that ran behind ADR 0148 §8's unkept promise of honest
+disk use. Surfaced as *Settings ▸ Your data ▸ Storage*, under Export on the same screen.
+
+- **`StorageUsage`** — pure and `Sendable`; sums `Songs/` and `Recordings/` through the two stores'
+  existing `filesOnDisk`/`fileSize`, plus the SwiftData store and its `-wal`/`-shm` siblings. The
+  store URL comes off the live `ModelContainer`'s configuration, never a guessed
+  `Application Support/default.store`, which keeps the type free of SwiftData. `.file` count style so
+  the figure is comparable with *iPhone Storage*. It is also the app's **one** `ByteCountFormatter`:
+  `SongAudioSection` and `TakeDetailView` both call `StorageUsage.formatted` now.
+- **`SongDeletion`** — deletes a song's audio, then its row. Its own type rather than two lines in
+  the view because the bug was an **absence** (the app's only song-delete path was a bare
+  `context.delete`, leaking every deleted song's audio forever), and an absence survives every build
+  and every existing test unless it can be neutralised and watched to fail. Safe without a reference
+  check — `SongImporter` mints a fresh `sourceID` per import — and safe against Undo, since
+  `RowDeletionCoordinator` defers `perform` until the window closes.
+- **`OrphanSweep`** — composes the two stores' pure sweeps, measures **before** deleting, and reports
+  what it freed. Reaps `.trimtmp.m4a` files stranded by a crash mid-trim, which `TakeTrimmer` keeps
+  the `.m4a` suffix on for exactly this reason. "Nothing to reclaim" is worded as the good answer.
+- **Backup exclusion** — `SongFileStore.setExcludedFromBackup` / `isExcludedFromBackup`, set on the
+  **directory** so later imports are covered, and read back off the filesystem rather than assumed.
+  Bound to `AppSettings.songsInBackupDefault` (**true** — today's behaviour; ADR 0148 stands, 0182
+  only makes the trade a choice). **Takes are never excluded** — they have no source to regenerate
+  from.
 
 ## Backend
 

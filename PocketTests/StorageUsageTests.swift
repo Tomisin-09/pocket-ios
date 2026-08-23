@@ -46,6 +46,8 @@ final class StorageUsageTests: XCTestCase {
 
         XCTAssertEqual(usage.songBytes, 3000)
         XCTAssertEqual(usage.takeBytes, 500)
+        // No store URL passed, so practice data contributes nothing here.
+        XCTAssertEqual(usage.storeBytes, 0)
         XCTAssertEqual(usage.total, 3500)
     }
 
@@ -58,6 +60,47 @@ final class StorageUsageTests: XCTestCase {
                 .appending(path: "notes.txt", directoryHint: .notDirectory))
 
         XCTAssertEqual(StorageUsage.measure(fileManager).takeBytes, 800)
+    }
+
+    // MARK: - The store
+
+    /// The SwiftData store is measured with its journal siblings. Between checkpoints the `-wal` can
+    /// hold a real fraction of the database, and ignoring it would put the app's own figure quietly
+    /// below the system's for a reason no player could discover.
+    func testThePracticeStoreCountsItsWriteAheadLogAndSharedMemory() throws {
+        let store = fileManager.root.appending(path: "default.store", directoryHint: .notDirectory)
+        try Data(repeating: 0x44, count: 4000).write(to: store)
+        try Data(repeating: 0x44, count: 1500)
+            .write(to: fileManager.root.appending(path: "default.store-wal", directoryHint: .notDirectory))
+        try Data(repeating: 0x44, count: 500)
+            .write(to: fileManager.root.appending(path: "default.store-shm", directoryHint: .notDirectory))
+
+        XCTAssertEqual(StorageUsage.storeBytes(at: store, fileManager), 6000)
+    }
+
+    /// No store URL means no practice data reported — never a guessed path. The container's own
+    /// configuration is the only thing that knows where the store is.
+    func testAnAbsentStoreURLReportsNothingRatherThanGuessing() {
+        XCTAssertEqual(StorageUsage.storeBytes(at: nil, fileManager), 0)
+    }
+
+    /// A store file that is not there yet — first launch, before the first save — is zero, not a
+    /// failed measurement.
+    func testAStoreThatDoesNotExistYetIsZero() {
+        let missing = fileManager.root.appending(path: "nothing.store", directoryHint: .notDirectory)
+        XCTAssertEqual(StorageUsage.storeBytes(at: missing, fileManager), 0)
+    }
+
+    // MARK: - The breakdown
+
+    /// The screen lists the categories in this order, and the total is their sum. If the two ever
+    /// disagree, the screen is accounting for less than the app is using.
+    func testTheBreakdownNamesEveryCategoryAndSumsToTheTotal() {
+        let usage = StorageUsage(songBytes: 100, takeBytes: 20, storeBytes: 3)
+
+        XCTAssertEqual(usage.breakdown.map(\.label), ["Songs", "Recordings", "Practice data"])
+        XCTAssertEqual(usage.breakdown.reduce(0) { $0 + $1.bytes }, usage.total)
+        XCTAssertEqual(usage.total, 123)
     }
 
     // MARK: - Formatting

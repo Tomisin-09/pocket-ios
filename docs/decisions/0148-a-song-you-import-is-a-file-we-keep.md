@@ -145,6 +145,26 @@ disk use.
   user data that cannot be re-downloaded, which is exactly what a backup is for.
 - **Device backups grow** by the size of the library. This is the mechanism by which the fix works;
   a backup exclusion would defeat the entire ADR.
+
+> **Amendment (2026-08-23, ADR 0182).** This line still holds and is not being walked back — but it
+> now describes a **default** rather than the absence of an option.
+>
+> ADR 0182 adds *Settings ▸ Your data ▸ Keep songs in backup*, **on by default**, which is exactly
+> the behaviour this ADR chose. A player who never opens that screen is in precisely the position
+> this ADR put them in, for precisely the reasons above. What 0182 adds is the ability to take the
+> other side of the trade **knowingly**: the ⓘ copy states the cost in the same breath as the
+> benefit — a restored device needs each song pointed at its file again.
+>
+> Takes are **never** excluded, on this ADR's own logic pushed one step further: a song's audio came
+> from a file the player still has and can point Red Moon at again, and a recording of them playing
+> came from a moment that is gone.
+>
+> Two things this ADR promised and did not deliver were also found unkept and are fixed there rather
+> than here, so the record of what this ADR shipped stays accurate: §8's honesty about disk use had
+> no screen behind it, and the orphan sweep it introduced had **no production caller at all**.
+>
+> ⚠ **The exclusion must not become a default** until the relink door is widened — `LoopRunView` and
+> `SongPlayAlongView` are dead ends when audio is missing. See 0182 §6.
 - **Deleting the original in Files no longer breaks the song.** A behaviour change, and a welcome one.
 - **Import gets slower** by one file copy, on a path that already reads the whole file.
 - **This does not make songs follow you to a fresh phone.** A device set up without restoring a backup

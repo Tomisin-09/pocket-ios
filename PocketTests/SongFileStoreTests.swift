@@ -127,4 +127,35 @@ final class SongFileStoreTests: XCTestCase {
         // ever proposes deleting real, unreferenced files.
         XCTAssertTrue(SongFileStore.orphanedFiles(onDisk: [], referenced: ["ghost.m4a"]).isEmpty)
     }
+
+    // MARK: - Backup exclusion (ADR 0182)
+
+    /// ADR 0148 traded bigger backups for song custody deliberately, so today's behaviour — songs
+    /// **in** the backup — must be what an untouched install reports.
+    func testSongsAreInTheBackupUntilSomethingSaysOtherwise() throws {
+        _ = try SongFileStore.directory(fileManager)
+        XCTAssertFalse(SongFileStore.isExcludedFromBackup(fileManager))
+    }
+
+    /// The write is read back off the filesystem rather than trusted, because a resource-value write
+    /// can fail quietly and a switch that lies about where a player's audio is going is worse than
+    /// one that never moved.
+    func testExclusionIsWrittenToTheDirectoryAndReadsBack() throws {
+        try SongFileStore.setExcludedFromBackup(true, fileManager)
+        XCTAssertTrue(SongFileStore.isExcludedFromBackup(fileManager))
+
+        try SongFileStore.setExcludedFromBackup(false, fileManager)
+        XCTAssertFalse(SongFileStore.isExcludedFromBackup(fileManager))
+    }
+
+    /// Set on the **directory**, not per file, so a song imported after the switch was flipped is
+    /// covered too — otherwise the setting would be quietly untrue for everything added next.
+    func testExclusionCoversCopiesAdoptedAfterItWasSet() throws {
+        try SongFileStore.setExcludedFromBackup(true, fileManager)
+        let source = try fileManager.makeSourceFile(named: "later.wav", contents: "audio")
+        _ = try SongFileStore.adopt(contentsOf: source, sourceID: "later", fileManager)
+
+        XCTAssertTrue(SongFileStore.isExcludedFromBackup(fileManager),
+                      "adopting a new copy must not clear the directory's exclusion")
+    }
 }

@@ -132,6 +132,22 @@ knowing before you send an archive anywhere.
 Nothing here uploads anything. The file is written on the device and handed to the share sheet; where
 it goes after that is entirely your choice. See [your data](../privacy.md).
 
+### Storage
+
+What Red Moon is using on this device, measured when you open the screen, in three lines and a total:
+
+| Line | What it is |
+|---|---|
+| `Songs` | The copies Red Moon keeps of the audio you imported |
+| `Recordings` | Your takes |
+| `Practice data` | Everything you have written — loops, exercises, routines, journal, history |
+
+It is measured the same way **Settings ▸ General ▸ iPhone Storage** measures it, so the two figures
+are comparable.
+
+- **`Keep songs in backup`** is on to start with: *Your imported song files ride along in your device backup, so a restored phone plays them straight away. Turning this off makes backups much smaller, and means a restored phone needs each song pointed at its file again. Your recordings are always backed up.*
+- **`Reclaim space`**: *Deletes audio files left behind by songs and takes you have already removed. It never touches a song or a take you still have.* It tells you how much it freed, or that there was nothing to reclaim — which is the answer you want.
+
 ## `Privacy`
 
 One switch, **`Share anonymous usage`**: *Counts of which features get used — how often a loop gets made, which exercises get built. Anonymous and not joined up across sessions, so it can't be traced back to you. Never your audio, notes, song names or artist name.*

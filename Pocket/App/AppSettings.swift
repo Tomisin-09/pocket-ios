@@ -89,6 +89,7 @@ enum AppSettings {
         static let analyticsPromptSeen = "analyticsPromptSeen"
         static let installDate = "installDate"
         static let hasPracticed = "hasPracticed"
+        static let songsInBackup = "songsInBackup"
         #if DEBUG
         /// DEBUG-only A/B for ADR 0140 §3. Never read in Release, which always compensates.
         static let compensateStretchLatency = "compensateStretchLatency"
@@ -97,14 +98,6 @@ enum AppSettings {
 
     /// Count-in length is offered as whole bars in this range.
     static let countInBarsRange = 1...2
-
-    /// Reference-pitch (concert A) calibration range offered by the tuner, in Hz (ADR 0115). A440 is
-    /// the default; A432–A446 covers the ensembles a player might tune to. Free — unlike Fender, we
-    /// don't gate calibration behind a paid tier (our Pro line is author-vs-run, ADR 0112).
-    static let tunerReferenceRange = 432...446
-
-    /// The tuner's default reference pitch, standard concert A.
-    static let tunerReferenceDefault = 440
 
     /// The between-blocks rest countdown is offered in this range of seconds.
     static let routineRestSecondsRange = 5...60
@@ -125,10 +118,22 @@ enum AppSettings {
     /// whichever waveform view reads it, that last being what SwiftUI actually uses for an unset key.
     /// Since a hold on the player opens the *same* screen the Settings hub does, a drifted literal
     /// would show two different "off"s for one key. Do not inline these back to literals.
+    /// Whether imported song copies ride along in device backups. **Default on, which is today's
+    /// behaviour** — ADR 0148 traded bigger backups for song custody deliberately, and ADR 0182 turns
+    /// that trade into an informed choice rather than reversing it.
+    ///
+    /// Named for the same reason the constants below are: the literal a `@AppStorage` declares is what
+    /// SwiftUI actually uses for an unset key, and it does **not** consult the accessor. A drifted
+    /// literal here would tell a player their songs are in their backup while the app acts otherwise.
+    static let songsInBackupDefault = true
+
     static let transportLoopOnLeftDefault = false
     static let waveformMinimapVisibleDefault = true
     static let waveformMarkerLabelsDefault = true
     static let zoomFollowsPlayheadDefault = false
+
+    /// Whether song copies stay in device backups (ADR 0182). Default on.
+    static var songsInBackup: Bool { bool(Key.songsInBackup, default: songsInBackupDefault) }
 
     /// Gesture-confirmation haptics on/off. Default on.
     static var hapticsEnabled: Bool { bool(Key.hapticsEnabled) }
@@ -289,39 +294,6 @@ enum AppSettings {
         return ClickTimbre(rawValue: storedValue) ?? .default
     }
 
-    /// The tuner's instrument axis (ADR 0115). Default `.guitar`.
-    static var tunerInstrument: Instrument {
-        resolvedInstrument(storedValue: UserDefaults.standard.string(forKey: Key.tunerInstrument))
-    }
-
-    /// Pure default-resolution: a missing or unrecognised value falls back to `.guitar`.
-    static func resolvedInstrument(storedValue: String?) -> Instrument {
-        guard let storedValue else { return .default }
-        return Instrument(rawValue: storedValue) ?? .default
-    }
-
-    /// The tuner's mode — guided vs chromatic (ADR 0115). Default `.guided`.
-    static var tunerMode: TunerMode {
-        resolvedTunerMode(storedValue: UserDefaults.standard.string(forKey: Key.tunerMode))
-    }
-
-    /// Pure default-resolution: a missing or unrecognised value falls back to `.guided`.
-    static func resolvedTunerMode(storedValue: String?) -> TunerMode {
-        guard let storedValue else { return .default }
-        return TunerMode(rawValue: storedValue) ?? .default
-    }
-
-    /// The tuner's reference pitch in Hz, clamped to `tunerReferenceRange` (ADR 0115). Default 440.
-    static var tunerReferenceA: Int {
-        let resolved = resolvedInt(storedValue: UserDefaults.standard.object(forKey: Key.tunerReferenceA),
-                                   default: tunerReferenceDefault)
-        return min(tunerReferenceRange.upperBound, max(tunerReferenceRange.lowerBound, resolved))
-    }
-
-    /// Whether the tuner sounds a short chime when a string settles in tune (ADR 0115). Default on.
-    /// Rewarding an *objective* pitch target — not performance feedback (ADR 0070 intact).
-    static var tunerChimeEnabled: Bool { bool(Key.tunerChimeEnabled, default: true) }
-
     /// How the player prefers to read accidentals — sharps or flats (ADR 0123). A **tiebreaker**, not a
     /// global override: anywhere a tonal centre exists the key spells the note (F major reads B♭ for
     /// everyone), and this decides only where there is nothing to spell against — the tuner, a custom
@@ -377,8 +349,9 @@ enum AppSettings {
         return LatencyBucket(installAge: Date.now.timeIntervalSince(installDate))
     }
 
-    private static func bool(_ key: String, default fallback: Bool = true,
-                             store: UserDefaults = .standard) -> Bool {
+    /// Internal rather than private since ADR 0182's file split — `AppSettings+Tuner` reads it.
+    static func bool(_ key: String, default fallback: Bool = true,
+                     store: UserDefaults = .standard) -> Bool {
         resolvedBool(storedValue: store.object(forKey: key), default: fallback)
     }
 

@@ -25,6 +25,22 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   where it goes next is entirely your choice. Red Moon can't read an archive back in yet, so this is a
   copy for you to keep rather than a restore. The **Your data** row also shows how much space your
   songs and recordings are using.
+- **You can see what Red Moon is using, and reclaim what it shouldn't be.** **Settings ▸ Your data**
+  now shows your songs, recordings and practice data with a total, measured the same way iPhone
+  Storage measures it. **Reclaim space** removes audio left behind by songs and takes you already
+  deleted, and tells you how much it freed. **Keep songs in backup** is a new switch, on to start
+  with — exactly how it has always worked — that you can turn off to make device backups much
+  smaller, at the cost of having to point each song at its file again after a restore. Your
+  recordings are always backed up.
+
+### Fixed
+- **Deleting a song now deletes its audio too.** Until now the copy Red Moon keeps was left behind
+  forever, so a library could take up far more space than it appeared to. *Reclaim space* clears out
+  anything left behind by earlier deletions.
+- **A song with missing audio now says which of the two things happened** — an old song whose link to
+  your file broke, or a copy that has gone from the device — instead of always claiming the first.
+  The Audio line in a song's details had the mirror problem and could report a file that wasn't
+  there; it now says *Missing*.
 
 ### Changed
 - **"Progress" is now the "Practice log", and it is no longer hidden in a menu.** The screen counting

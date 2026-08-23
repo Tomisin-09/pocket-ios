@@ -102,7 +102,8 @@ struct WaveformPracticeView: View {
             // back a way off the screen rather than leaving the back chevron as the
             // only exit.
             if model.audioLoadFailed {
-                AudioUnavailableNotice(onRelink: { relinking = true }, onLeave: { dismiss() })
+                AudioUnavailableNotice(hadOwnCopy: model.song.audioFileName != nil,
+                                       onRelink: { relinking = true }, onLeave: { dismiss() })
                     .transition(.opacity)
             }
         }
