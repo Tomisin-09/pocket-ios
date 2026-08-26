@@ -47,7 +47,7 @@ whole list back.
 a routine you start and abandon leaves nothing behind.
 
 <!-- shot: routines/editor | role: screen
-     | alt: The routine editor in edit mode, with the Name field, numbered blocks, the estimated length and the Add and Insert rest rows
+     | alt: The routine editor in edit mode, with the Name field, the Description, the numbered blocks and the estimated length
      | state: Practice ▸ Routines ▸ + , three blocks added -->
 
 - **Name it** — the field at the top. Naming is what keeps it in your routines to run again.

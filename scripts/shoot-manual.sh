@@ -212,6 +212,16 @@ xcrun simctl status_bar "$SIM_NAME" override \
 say "Installing"
 xcrun simctl install "$SIM_NAME" "$APP_PATH"
 
+# Grant the microphone **before the app has ever launched**, because the alternative is a system
+# alert landing on top of a figure. `routines/block-record` turns `Record this block` on, and the
+# first flip is what raises the prompt (ADR 0179 D3) — on an erased device that is every run. A
+# permission alert is the worst shape of shoot failure: the tap lands, the assertion on the screen
+# behind it still passes, and what gets filed is a photograph of an alert. Nothing in the manual
+# photographs an ungranted mic — `routines.md` describes the prompt in prose and the tuner figures
+# are already `device:` — so there is no state being faked away here, only a modal removed from a
+# frame that never wanted it.
+xcrun simctl privacy "$SIM_NAME" grant microphone "$BUNDLE_ID"
+
 # --- 3. stage the seed audio --------------------------------------------------------------------
 if [ -d "$SEED_AUDIO_SRC" ]; then
     CONTAINER="$(xcrun simctl get_app_container "$SIM_NAME" "$BUNDLE_ID" data)"

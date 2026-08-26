@@ -250,11 +250,7 @@ extension ManualShotCase {
         for attempt in 1...attempts {
             guard prepare() else { return }
             guard awaitHittable(control) else {
-                XCTFail("""
-                    '\(label)' is in the tree but never became hittable, so the tap could not be \
-                    synthesised at all. This is a race, not a swallowed tap.
-                    \(stepLog)
-                    """, file: file, line: line)
+                XCTFail(unreachable(control, labelled: label), file: file, line: line)
                 return
             }
 
@@ -274,6 +270,7 @@ extension ManualShotCase {
                     tapped '\(label)' and it is no longer reachable, but \(revealedName) never \
                     appeared — so something opened and it is not what this shot needs, and any \
                     capture from here would be of the wrong thing.
+                    \(diagnosis(for: revealedName, in: XCUIApplication()))
                     \(stepLog)
                     """, file: file, line: line)
                 return
@@ -283,6 +280,7 @@ extension ManualShotCase {
 
         XCTFail("""
             tapped '\(label)' \(attempts)× and \(revealedName) never appeared.
+            \(diagnosis(for: revealedName, in: XCUIApplication()))
             \(stepLog)
             """, file: file, line: line)
     }

@@ -99,6 +99,35 @@ class ManualShotCase: UITestCase {
         return XCTWaiter().wait(for: [hittable], timeout: timeout) == .completed
     }
 
+    /// Why a tap could not be synthesised — **which** of the two reasons, because `awaitHittable`
+    /// answers `false` for both.
+    ///
+    /// It returns false for a control that is present and covered, and for one that was never in the
+    /// tree at all. `tap` used to call every one of them *"a race, not a swallowed tap"*, which is a
+    /// message that sends whoever reads it hunting for a timing problem when the actual fault is a
+    /// query resolving to nothing. It cost precisely that: a routine block reported as "in the tree
+    /// but never became hittable" was not in the tree, so the first fix swapped one absent query for
+    /// another and failed with the identical sentence. **A failure message naming the wrong cause is
+    /// worse than a bare assertion** — the bare one at least does not send you somewhere.
+    ///
+    /// The screen dump comes along because the answer to "then what *is* there?" is the next thing
+    /// wanted every single time, and it is not recoverable after the fact from a step log.
+    @MainActor
+    func unreachable(_ control: XCUIElement, labelled label: String) -> String {
+        let cause = control.exists
+            ? "is in the tree but never became hittable, so the tap could not be synthesised. "
+                + "Something is drawn over it, or it is scrolled out of reach — an occlusion, not a "
+                + "swallowed tap."
+            : "never entered the tree at all, so the query resolved to nothing. This is the wrong "
+                + "screen, the wrong name for the control, or a row that has to be scrolled into "
+                + "existence before it can be asked for."
+        return """
+            '\(label)' \(cause)
+            \(diagnosis(for: label, in: XCUIApplication()))
+            \(stepLog)
+            """
+    }
+
     // MARK: - Capture
 
     /// Assert where we are, then shoot, then record both.
@@ -161,6 +190,7 @@ class ManualShotCase: UITestCase {
         XCTAssertTrue(arrived, """
             expected to be on '\(title)' before shooting \(slug), and was not — so this capture \
             would have been a clean photograph of the wrong screen.
+            \(diagnosis(for: title, in: app))
             \(stepLog)
             """, file: file, line: line)
 
@@ -208,6 +238,7 @@ class ManualShotCase: UITestCase {
             XCTAssertTrue(arrived, """
                 expected to be on '\(name)' before shooting \(slug), and '\(marker)' was not in the \
                 frame — so this capture would have been a clean photograph of the wrong screen.
+                \(diagnosis(for: marker, in: app))
                 \(stepLog)
                 """, file: file, line: line)
         }
