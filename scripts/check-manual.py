@@ -832,7 +832,15 @@ def check_c12():
     return OK, ["%d shots listed, matching the markers" % len(shot_rows())]
 
 
-CAPTURE = re.compile(r'capture\(\s*\w+\s*,\s*slug:\s*"([^"]+)"')
+# Both spellings, and the second one is the whole reason this is a character class rather than a
+# literal. `captureChromeless` is what the harness uses for every screen with no navigation bar —
+# the song player, the between-blocks screen, the session recap, the reps editor, the first-run
+# intake — and a pattern anchored on `capture(` matches none of them. It read as a narrow miss and
+# was not: fourteen finished figures reported as unshot, which is the *quiet* half. The loud half is
+# that the ghost branch below is the same set, so a `captureChromeless` naming a slug no marker
+# defines — the one thing C13 hard-fails on — could never have been seen at all. A check that parses
+# a subset of the thing it guards passes by not looking.
+CAPTURE = re.compile(r'capture\w*\(\s*\w+\s*,\s*slug:\s*"([^"]+)"')
 
 # One frame often satisfies several markers — a crop of it, or the same screen shown on a second
 # page — and the harness declares that with `alsoServing:`. Those slugs are photographed just as
@@ -852,7 +860,11 @@ def captured_slugs():
     for name in sorted(os.listdir(UITESTS)):
         if not (name.startswith("Manual") and name.endswith(".swift")):
             continue
-        source = read(os.path.join(UITESTS, name))
+        # Stripped for the same reason C9 strips: a `capture()` inside a comment is a figure the
+        # harness does *not* take, and counting it marks the shot done while nothing photographs it.
+        # The disabled call and the live one are the same characters — only the comment tells them
+        # apart — so the set has to be harvested from code alone.
+        source = strip_comments(read(os.path.join(UITESTS, name)))
         for hit in CAPTURE.finditer(source):
             found.setdefault(hit.group(1), []).append(name)
         for block in ALSO_SERVING.finditer(source):
