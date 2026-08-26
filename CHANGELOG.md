@@ -43,6 +43,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   there yet.
 
 ### Fixed
+- **A picking pattern can start on any finger now.** The finger row would never let you delete the
+  first finger, so every generated run in the app began on your index finger — a descending
+  G♯-G-F♯-F could only be typed as 1-4-3-2-1. Backspace now clears the row completely, and a new
+  **⇄** flips the whole pattern end-for-end in one tap. *Coming back* explains itself in your own
+  fingers instead of always saying "4-3-2-1".
 - **Deleting a song now deletes its audio too.** Until now the copy Red Moon keeps was left behind
   forever, so a library could take up far more space than it appeared to. *Reclaim space* clears out
   anything left behind by earlier deletions.
@@ -52,6 +57,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   there; it now says *Missing*.
 
 ### Changed
+- **Across now shows you the strings.** Choosing how far a picking run travels was two dropdowns and
+  an arrow that never moved. It is now the neck itself: tap a string to move the nearer end of the
+  run, tap an end again to narrow it to that one string, and **⇄** sends the run the other way. The
+  span you have chosen is filled in, so you can see how much of the neck a run crosses instead of
+  reading it off two labels.
 - **"Progress" is now the "Practice log", and it is no longer hidden in a menu.** The screen counting
   up your minutes, days and tempos is renamed: *progress* names a direction, and this screen is built
   never to say one — a quiet week is drawn as a quiet week, and a title promising progress turned that

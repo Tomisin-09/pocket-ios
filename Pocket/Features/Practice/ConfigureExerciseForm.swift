@@ -250,12 +250,17 @@ private extension ConfigureExerciseForm {
     /// least one chord placed — an empty progression has nothing to change through. A **freeform**
     /// block is gated the same way and for the same reason: its instructions *are* its content
     /// (ADR 0136 F2), so one with none is the empty block F9 refuses to ship.
+    ///
+    /// A **generated run** joins them: its finger pattern is now clearable to empty, so that the first
+    /// finger can be something other than 1, and an empty pattern expands to a drill with no notes.
+    /// Draw mode is untouched — there the run isn't the payload.
     var canCreate: Bool {
         guard !trimmedName.isEmpty else { return false }
         switch template.bespokeEditor {
         case .chords: return !chords.changes.isEmpty
         case .strumChords: return !strumChords.chordProgression.changes.isEmpty
         case .freeform: return !trimmedInstructions.isEmpty
+        case .run: return runMode == .draw || !run.fingers.isEmpty
         default: return true
         }
     }
