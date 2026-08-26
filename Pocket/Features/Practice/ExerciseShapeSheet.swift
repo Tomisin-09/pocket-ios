@@ -101,12 +101,20 @@ struct ExerciseShapeSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { done() }
+                        .disabled(!canCommit)
                 }
             }
             .rhythmChangePrompt($pendingRhythmChange,
                                 onKeep: { resolveRhythmChange(keepingNoteSpeed: true) },
                                 onReMeasure: { resolveRhythmChange(keepingNoteSpeed: false) })
         }
+    }
+
+    /// Whether Done may write. The run editor's finger pattern is clearable to empty now (that is what
+    /// lets it start on a finger other than 1) and an empty one expands to a drill with no notes, so it
+    /// must not be *saved*. Mirrors `ConfigureExerciseForm.canCreate`; swipe-to-dismiss still escapes.
+    private var canCommit: Bool {
+        exercise.template.bespokeEditor != .run || runMode == .draw || !run.fingers.isEmpty
     }
 
     // MARK: - Rhythm changes (ADR 0121)

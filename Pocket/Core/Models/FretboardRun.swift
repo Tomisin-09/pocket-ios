@@ -4,11 +4,11 @@ import Foundation
 /// `roundTrip` is on; a no-op otherwise. Additive optional field — an older blob decodes to
 /// `.retrace`, so the shipped chromatic warm-up stays byte-identical.
 enum ReturnStyle: String, Codable, CaseIterable, Identifiable {
-    /// The strict palindrome: the ascent note-path reversed, so each string is played **4-3-2-1** on
-    /// the way down (today's, and the default).
+    /// The strict palindrome: the ascent note-path reversed, so each string plays the finger pattern
+    /// **backwards** on the way down — 4-3-2-1 for the chromatic default (today's, and the default).
     case retrace
     /// The ascending finger pattern **restated** per string while the strings are walked back
-    /// high→low: each string still **1-2-3-4**, string order reversed.
+    /// high→low: each string plays the pattern as written, string order reversed.
     case restate
 
     var id: String { rawValue }
@@ -21,11 +21,22 @@ enum ReturnStyle: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// A one-line explanation for the editor.
-    var caption: String {
+    /// A one-line explanation for the editor, spelled in the run's **own** finger pattern. These
+    /// captions used to hard-code "4-3-2-1" and "1-2-3-4" — the chromatic default's reading, and true
+    /// of every run only for as long as a pattern was forced to start on finger 1. Now that any
+    /// pattern is authorable, a caption that names the wrong fingers is worse than none.
+    func caption(fingers: [Int]) -> String {
+        guard !fingers.isEmpty else {
+            switch self {
+            case .retrace: return "Reverse the path coming down."
+            case .restate: return "Restate the pattern, strings reversed."
+            }
+        }
+        let ascending = fingers.map(String.init).joined(separator: "-")
+        let descending = fingers.reversed().map(String.init).joined(separator: "-")
         switch self {
-        case .retrace: return "Reverse the path — each string 4-3-2-1 coming down."
-        case .restate: return "Restate the pattern — each string 1-2-3-4, strings reversed."
+        case .retrace: return "Reverse the path — each string \(descending) coming down."
+        case .restate: return "Restate the pattern — each string \(ascending), strings reversed."
         }
     }
 }
@@ -62,8 +73,11 @@ struct FretboardRun: Codable, Equatable {
     /// The version the blob was encoded at — for a future decode-time upgrade.
     var version: Int
     /// Finger numbers in playing order, laid on each string in turn — `[1, 3, 2, 4]` is the classic
-    /// spider. Finger 1 sits on `baseFret`; each higher finger is one fret up (a movable shape, so
-    /// the same pattern slides anywhere on the neck). Empty means an empty run.
+    /// spider, `[4, 3, 2, 1]` a descending one. Finger 1 sits on `baseFret` and each higher finger is
+    /// one fret up (a movable shape, so the same pattern slides anywhere on the neck) — an anchoring
+    /// rule about *fingers*, not about which finger the run happens to start on. Empty means an empty
+    /// run, which the editor allows as a transient state while a pattern is retyped; Create and Done
+    /// refuse to ship one.
     var fingers: [Int]
     /// The fret finger 1 sits on — where the whole shape is anchored. Clamped to at least 1.
     var baseFret: Int

@@ -289,4 +289,56 @@ final class FretboardRunTests: XCTestCase {
         XCTAssertEqual(exercise.fretboardContent, .custom(.spiderWalk))
         XCTAssertEqual(exercise.fretboardDrill, .spiderWalk)
     }
+
+    // MARK: - Any starting finger (pocket-275)
+
+    // The editor used to pin every run to finger 1 — its backspace stopped at one finger, and append
+    // plus remove-last were its only mutations, so `fingers[0]` could never change. The model always
+    // supported a descending pattern; nothing but the editor's guard stood in the way. These pin the
+    // model's half of that down so a future "tidy-up" can't quietly reintroduce an ascending assumption.
+
+    func testDescendingFingerPatternPlaysTheHighestFretFirst() {
+        // 4-3-2-1 anchored at the 1st fret on the low E — the G#-G-F#-F the editor could not author.
+        let run = FretboardRun(fingers: [4, 3, 2, 1], baseFret: 1,
+                               fromString: 5, toString: 5, roundTrip: false)
+        XCTAssertEqual(run.sequence.map(\.fret), [4, 3, 2, 1])
+    }
+
+    func testDescendingPatternRetracesBackUpItsOwnFingers() {
+        let run = FretboardRun(fingers: [4, 3, 2, 1], baseFret: 1,
+                               fromString: 5, toString: 5, roundTrip: true)
+        // Ascent 4-3-2-1, then the path reversed with the shared peak and start dropped.
+        XCTAssertEqual(run.sequence.map(\.fret), [4, 3, 2, 1, 2, 3])
+    }
+
+    func testDescendingPatternCarriesTheSameNeckHeadroomAsItsAscendingTwin() {
+        // The climb cap must read the *highest* finger, not the last one — otherwise a descending
+        // pattern would be allowed one pass too many and its top note would fall off the neck.
+        let base = { (fingers: [Int]) in
+            FretboardRun(fingers: fingers, baseFret: 1, fromString: 5, toString: 5,
+                         fretShiftPerPass: 2, passCount: 1)
+        }
+        XCTAssertEqual(base([4, 3, 2, 1]).maxPassCount, base([1, 2, 3, 4]).maxPassCount)
+    }
+
+    func testEmptyFingerPatternExpandsToNoNotes() {
+        // The transient state the editor now allows while a pattern is retyped. It must expand to
+        // nothing rather than crash — and Create / Done refuse to save an exercise in it.
+        let run = FretboardRun(fingers: [], baseFret: 1, fromString: 5, toString: 0)
+        XCTAssertTrue(run.sequence.isEmpty)
+        XCTAssertEqual(run.expanded().noteCount, 0)
+    }
+
+    func testReturnStyleCaptionsSpellTheRunsOwnFingerPattern() {
+        XCTAssertTrue(ReturnStyle.retrace.caption(fingers: [1, 2, 3, 4]).contains("4-3-2-1"))
+        XCTAssertTrue(ReturnStyle.retrace.caption(fingers: [4, 3, 2, 1]).contains("1-2-3-4"))
+        XCTAssertTrue(ReturnStyle.restate.caption(fingers: [4, 3, 2, 1]).contains("4-3-2-1"))
+        XCTAssertTrue(ReturnStyle.restate.caption(fingers: [1, 3, 2, 4]).contains("1-3-2-4"))
+    }
+
+    func testReturnStyleCaptionsNameNoFingersWhenThePatternIsEmpty() {
+        for style in ReturnStyle.allCases {
+            XCTAssertFalse(style.caption(fingers: []).contains("-"))
+        }
+    }
 }

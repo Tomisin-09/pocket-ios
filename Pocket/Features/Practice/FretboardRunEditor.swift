@@ -45,10 +45,6 @@ struct FretboardRunEditor: View {
     private static let maxShiftPerPass = 5
     private static let staggerRange = -2...3
 
-    /// The strings the span picker offers, lowest → highest as the neck reads — all six for guitar, the
-    /// four bass strings otherwise (ADR 0116).
-    private var stringOrder: [Int] { Array((0..<instrument.stringCount).reversed()) }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
@@ -57,7 +53,8 @@ struct FretboardRunEditor: View {
                                   labelMode: labelMode, playOnceToken: playOnceToken)
             patternField
             baseFretField
-            spanField
+            StringSpanStrip(from: $run.fromString, to: $run.toString,
+                            instrument: instrument, tint: tint)
             movement
             advanced
             Text("Set the finger pattern, then where it sits and how far it travels — the run builds "
@@ -105,12 +102,19 @@ struct FretboardRunEditor: View {
                     }
                 }
                 Spacer()
+                Button { reverseFingers() } label: {
+                    Image(systemName: "arrow.left.arrow.right")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(PocketColor.textSecondary)
+                .disabled(run.fingers.count < 2)
+                .accessibilityLabel("Reverse the finger pattern")
                 Button { removeLastFinger() } label: {
                     Image(systemName: "delete.left")
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(PocketColor.textSecondary)
-                .disabled(run.fingers.count <= 1)
+                .disabled(run.fingers.isEmpty)
                 .accessibilityLabel("Remove last finger")
             }
             HStack(spacing: 8) {
@@ -153,39 +157,6 @@ struct FretboardRunEditor: View {
         }
     }
 
-    // MARK: - String span
-
-    private var spanField: some View {
-        HStack {
-            EditorFieldLabel("Across")
-            Spacer()
-            stringMenu(selection: $run.fromString)
-            Image(systemName: "arrow.right")
-                .font(.footnote)
-                .foregroundStyle(PocketColor.textSecondary)
-            stringMenu(selection: $run.toString)
-        }
-    }
-
-    private func stringMenu(selection: Binding<Int>) -> some View {
-        Picker("", selection: selection) {
-            ForEach(stringOrder, id: \.self) { index in
-                Text(stringLabel(index)).tag(index)
-            }
-        }
-        .pickerStyle(.menu)
-        .tint(tint)
-        .accessibilityLabel("String \(stringLabel(selection.wrappedValue))")
-    }
-
-    /// A full string name for the menu (the single-letter board label is too terse in a picker).
-    private func stringLabel(_ index: Int) -> String {
-        let guitar = ["high e", "B", "G", "D", "A", "low E"]
-        let bass = ["G", "D", "A", "low E"]   // engine index 0 = G … 3 = low E (ADR 0116)
-        let names = instrument == .guitar ? guitar : bass
-        return names.indices.contains(index) ? names[index] : "String \(index + 1)"
-    }
-
     // MARK: - Edits
 
     private func appendFinger(_ finger: Int) {
@@ -193,9 +164,22 @@ struct FretboardRunEditor: View {
         haptic(.light)
     }
 
+    /// Backspace, **clearable to empty**. It used to stop at one finger — and since appending and
+    /// removing the last were the only two mutations, that made `fingers[0]` unreachable and pinned
+    /// every generated run in the app to the index finger: a descending 4-3-2-1 could only be typed as
+    /// 1-4-3-2-1. The empty state is not a valid run, but it *is* a valid step on the way to one, so
+    /// the editor allows it and `canCreate` / Done refuse to ship it.
     private func removeLastFinger() {
-        guard run.fingers.count > 1 else { return }
+        guard !run.fingers.isEmpty else { return }
         run.fingers.removeLast()
+        haptic(.light)
+    }
+
+    /// Flip the pattern end-for-end — 1-2-3-4 becomes 4-3-2-1 in one tap. Descending is the case the
+    /// pinned first finger made impossible, and retyping it is eight taps; this is one.
+    private func reverseFingers() {
+        guard run.fingers.count > 1 else { return }
+        run.fingers.reverse()
         haptic(.light)
     }
 }
@@ -291,7 +275,7 @@ extension FretboardRunEditor {
                 }
             }
             .pickerStyle(.segmented)
-            Text(run.returnStyle.caption).font(.futura(.caption))
+            Text(run.returnStyle.caption(fingers: run.fingers)).font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
         .accessibilityElement(children: .combine)
