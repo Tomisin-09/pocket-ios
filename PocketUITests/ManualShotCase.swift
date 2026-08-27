@@ -247,6 +247,11 @@ class ManualShotCase: UITestCase {
                shared: shared, file: file, line: line)
     }
 
+    /// How many elements `diagnosis` will walk before giving up. Generous on purpose: this runs only
+    /// on a failure, where the cost of one slow enumeration is nothing beside the cost of a reader
+    /// being told a control is absent when the scan merely stopped short of it.
+    static let diagnosisScanCap = 500
+
     /// Assert the state, shoot, and write the context beside it — the half both capture paths share.
     ///
     /// The three state lists carry defaults because a figure legitimately has none: several captures
@@ -280,21 +285,34 @@ class ManualShotCase: UITestCase {
             } else {
                 offscreen.append(label)
             }
-            if inFrame.count + offscreen.count >= 120 { break }
+            if inFrame.count + offscreen.count >= Self.diagnosisScanCap { break }
         }
+        let truncated = inFrame.count + offscreen.count >= Self.diagnosisScanCap
 
         func list(_ labels: [String], _ heading: String) -> String {
             let unique = Array(NSOrderedSet(array: labels)).compactMap { $0 as? String }
             guard !unique.isEmpty else { return "\(heading): (nothing)" }
-            let shown = unique.prefix(40).map { "'\($0)'" }.joined(separator: ", ")
-            let more = unique.count > 40 ? " … and \(unique.count - 40) more" : ""
+            let shown = unique.prefix(120).map { "'\($0)'" }.joined(separator: ", ")
+            let more = unique.count > 120 ? " … and \(unique.count - 120) more" : ""
             return "\(heading): \(shown)\(more)"
         }
 
+        // **Say so when the scan stopped early, because otherwise this reads as a complete answer.**
+        // The cap used to be 120 with nothing announcing it, and a sheet presented over a long list
+        // is exactly the case that overruns it: the library behind the Edit song sheet spends the
+        // budget before the sheet's own fields are reached, so a field that is plainly on screen is
+        // absent from both buckets. Read as "not in the tree", which is what the message next to this
+        // one says, that sends you hunting for a renamed control that was never renamed. A partial
+        // scan presented as a full one is the same defect as a parser that reads two thirds of its
+        // input and reports a number.
+        let caveat = truncated
+            ? "\n  ⚠️ stopped after \(Self.diagnosisScanCap) elements — this listing is PARTIAL, so a "
+                + "name missing from it may simply be past the cap rather than off the screen."
+            : ""
         return """
             Looking for '\(wanted)'. What the screen actually offers:
             \(list(inFrame, "  IN FRAME"))
-            \(list(offscreen, "  IN THE TREE BUT NOT IN FRAME — scrolling, not naming"))
+            \(list(offscreen, "  IN THE TREE BUT NOT IN FRAME — scrolling, not naming"))\(caveat)
             """
     }
 
