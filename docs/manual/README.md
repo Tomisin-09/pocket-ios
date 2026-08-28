@@ -326,6 +326,41 @@ It shares this script's marker parse rather than re-reading the generated `shots
 reason the rest of this file gives: a second parser for a fact that already has an owner gets it
 wrong, and its first version did — 98 figures of 101, and 1 device figure of 4.
 
+## Cutting the figures
+
+A master is a whole device frame. A **figure** is what a page shows — often the same frame, but for
+eighteen of them a `crop:` rect out of one.
+
+```sh
+./scripts/build-figures.py             # → shots/figures/ + MANIFEST.json
+./scripts/build-figures.py --out DIR
+```
+
+Output lands under `shots/`, which is **gitignored, and that is the point**: binaries get one home
+and it is the rendering site's `public/redmoon/`, so this is a drop rather than a checked-in asset.
+The manifest carries each figure's slug, role, alt, crop and page for the port to consume, and marks
+every one `theme: dark` — the shoot forces dark appearance, so the light half of the `<picture>`
+pairing D7 describes does not exist yet.
+
+Three things it deliberately does not do. It never invents a master: a marker with no image on disk
+is reported and skipped, because a placeholder is indistinguishable from a figure until somebody
+looks. It never burns `call:` callouts into the raster — they are carried into the manifest for the
+site to draw as SVG, so rewording one never costs a re-shoot. And it never resizes, because the role
+carries the display width and the site owns that.
+
+**It also reports a gap the shoot cannot see.** A role is a promise about size — a `glyph` is one
+control inline in a sentence — and without a `crop:` the figure falls back to the whole master,
+which is not a smaller version of the right picture but a different one. The driven harness files
+masters and never measures rects, so a purely driven shoot leaves every `glyph`, `detail` and `band`
+un-cropped. Thirteen were, when this script was first run; `terms/info-button` was a whole phone
+screen where the sentence wanted an 84×94 ⓘ.
+
+**Measure a rect by cutting it and looking at it.** `sips` given a rect that runs off the frame does
+not fail and does not clamp — it returns an image of exactly the size asked for and pads the
+overhang, so "is the output w×h" passes on a figure that is half padding, and passes loudest on the
+rect that is most wrong. The script compares the rect to the master for that reason; your eyes are
+still what confirm it is the right part of it.
+
 ## The coverage audit — run 2026-08-14, at the end of the reference wing
 
 ADR 0165 calls this the manual's definition of done: every surface ticked against a heading, and
