@@ -1,6 +1,6 @@
 # Privacy Policy — Red Moon Practice
 
-_Last updated: 29 July 2026_
+_Last updated: 28 August 2026_
 
 Red Moon Practice ("the app") is a guitar-practice tool published by **Deco
 Operations Ltd** (registered in England and Wales, company number **17032490**;
