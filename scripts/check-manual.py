@@ -27,6 +27,8 @@ Checks implemented here (0165's Phase 0b set):
     C9  inside reference/**, every backticked token is a real Swift string literal
     C13 every `capture()` in the shoot harness names a marker that exists, and no
         `device:` shot is driven; shots still unshot report pending, not fail
+    C14 every shoot class is selected by `PocketShoot` and skipped by `PocketAll`,
+        so CI never runs one on a device nothing has staged
 
 C3/C4/C5 (FAQ citation, no-copied-answers, byte-for-byte quoting) arrive with
 Slice A, when there is prose for them to check; C9 arrives with the reference
@@ -42,6 +44,7 @@ fail. That is what lets the machinery land before the prose (0165's Phase 0b)
 instead of being retrofitted around pages that were written without a guard.
 """
 import argparse
+import json
 import os
 import re
 import sys
@@ -50,6 +53,9 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANUAL = os.path.join(REPO, "docs", "manual")
 SOURCE = os.path.join(REPO, "Pocket")
 UITESTS = os.path.join(REPO, "PocketUITests")
+# The shoot has its own target (ADR 0165 Phase 5) so `PocketAll` cannot reach it. C13 reads the
+# `capture()` calls from here; C14 keeps the boundary honest.
+SHOOT_TESTS = os.path.join(REPO, "PocketShootUITests")
 
 OK, FAIL, PENDING = "ok", "fail", "pending"
 
@@ -855,16 +861,16 @@ QUOTED = re.compile(r'"([^"]+)"')
 def captured_slugs():
     """`slug -> [file, …]` for every shot the harness actually photographs."""
     found = {}
-    if not os.path.isdir(UITESTS):
+    if not os.path.isdir(SHOOT_TESTS):
         return found
-    for name in sorted(os.listdir(UITESTS)):
+    for name in sorted(os.listdir(SHOOT_TESTS)):
         if not (name.startswith("Manual") and name.endswith(".swift")):
             continue
         # Stripped for the same reason C9 strips: a `capture()` inside a comment is a figure the
         # harness does *not* take, and counting it marks the shot done while nothing photographs it.
         # The disabled call and the live one are the same characters — only the comment tells them
         # apart — so the set has to be harvested from code alone.
-        source = strip_comments(read(os.path.join(UITESTS, name)))
+        source = strip_comments(read(os.path.join(SHOOT_TESTS, name)))
         for hit in CAPTURE.finditer(source):
             found.setdefault(hit.group(1), []).append(name)
         for block in ALSO_SERVING.finditer(source):
@@ -931,6 +937,67 @@ def check_c13():
                 % (len(drivable), len(hand))]
 
 
+def check_c14():
+    """The shoot lives in its own target, and nothing has leaked back.
+
+    A shoot class only means anything on a device `shoot-manual.sh` has staged — erased,
+    seeded, dark, mic granted, Pro unlocked. Run anywhere else it does not error out; it
+    walks a first-run app and fails on the *state*, which is why this once surfaced as
+    sixteen assertions about missing rows rather than as anything pointing at a test plan.
+
+    **This used to be a list and is now a boundary.** The classes lived in `PocketUITests`
+    with `PocketAll` naming each one in `skippedTests` — two lists of the same names that
+    both had to grow, and Phase 5 grew one of them. `PocketShootUITests` cannot drift that
+    way: `PocketAll` contains `PocketUITests`, so it has no route to these classes at all.
+
+    What is left to check is that the boundary holds. A shoot class written into the wrong
+    directory is the one way back to the old failure, and it is an easy mistake — the two
+    folders sit next to each other and every other UI test lives in the older one.
+    """
+    if not os.path.isdir(SHOOT_TESTS):
+        return PENDING, ["no PocketShootUITests directory"]
+
+    def classes_in(directory):
+        found = set()
+        for name in sorted(os.listdir(directory)):
+            if name.endswith(".swift"):
+                found |= set(re.findall(r"^final class (\w+)\s*:",
+                                        read(os.path.join(directory, name)), re.M))
+        return found
+
+    shoot = classes_in(SHOOT_TESTS)
+    if not shoot:
+        return FAIL, ["found no classes in PocketShootUITests — the parser has drifted, "
+                      "which fails silently as a pass"]
+
+    problems = []
+    if os.path.isdir(UITESTS):
+        for stray in sorted(c for c in classes_in(UITESTS) if c.startswith("Manual")):
+            problems.append("%s is in PocketUITests, which PocketAll runs — a shoot class there "
+                            "is driven by CI on a device nothing has staged" % stray)
+
+    def plan_targets(name):
+        path = os.path.join(REPO, name)
+        if not os.path.isfile(path):
+            return None
+        return {target.get("target", {}).get("name")
+                for target in json.loads(read(path)).get("testTargets", [])}
+
+    everyday, shoot_plan = plan_targets("PocketAll.xctestplan"), plan_targets("PocketShoot.xctestplan")
+    if everyday is None or shoot_plan is None:
+        return PENDING, ["a test plan is missing"]
+    if "PocketShootUITests" in everyday:
+        problems.append("PocketAll includes PocketShootUITests — that is the boundary gone, "
+                        "and CI will drive the shoot")
+    if "PocketShootUITests" not in shoot_plan:
+        problems.append("PocketShoot does not include PocketShootUITests, so the shoot drives nothing")
+
+    if problems:
+        return FAIL, problems
+    return OK, ["%d shoot classes, all in PocketShootUITests and unreachable from PocketAll"
+                % len(shoot)]
+
+
 CHECKS = [
     ("C1", "Settings destinations are named in the reference", check_c1),
     ("C2", "Toolkit sections are named in toolkit.md", check_c2),
@@ -944,6 +1011,7 @@ CHECKS = [
     ("C11", "no image referred to by position", check_c11),
     ("C12", "shots.md matches the markers", check_c12),
     ("C13", "markers and the shoot harness name the same shots", check_c13),
+    ("C14", "shoot classes are driven by the shoot, not by CI", check_c14),
     ("C8", "count tripwires still match the source", check_c8),
 ]
 

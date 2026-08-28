@@ -1507,7 +1507,9 @@ root beside `store` and `trialReminder`, injected via `.environment`. Both reade
 
 - **Unit (PocketTests):** pure logic — tempo math, slider mapping, automator
   stepping, identity, planner weighting + candidate selection (ADR 0015). Must be covered.
-- **UI (PocketUITests):** XCUITest for key flows. Every test launches through `UITestCase`
+- **UI (PocketUITests):** XCUITest for key flows. The user manual's screenshot classes are **not**
+  here — they are their own target, `PocketShootUITests`, driven only by `scripts/shoot-manual.sh`
+  against a device it has staged (ADR 0053, amended). Every test launches through `UITestCase`
   (`PocketUITests/UITestCase.swift`), whose `launchApp()` waits on `UITestHooks.homeSeedingComplete`
   — an accessibility identifier the app raises when first-launch seeding finishes, since Home paints
   *before* that `.task` completes. That one wait replaces the per-test guesses that used to flake

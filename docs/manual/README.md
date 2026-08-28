@@ -312,7 +312,7 @@ machinery land before the prose. What it cannot check is whether a page is *true
 with the build open can say that, which is why every slice ends with a walk through the app.
 
 **C13 is not a measure of how much of the shoot is done, and never was.** It counts `capture()`
-calls in `PocketUITests/Manual*.swift`, which is what the harness *intends* to shoot. A run that
+calls in `PocketShootUITests/`, which is what the harness *intends* to shoot. A run that
 fails part-way leaves the call in the source with no image on disk, and a hand shoot adds no calls
 at all — so C13 read 33 while 21 images existed. Ask the images:
 

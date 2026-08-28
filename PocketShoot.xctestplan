@@ -16,27 +16,10 @@
   },
   "testTargets": [
     {
-      "selectedTests": [
-        "ManualBareShots",
-        "ManualExerciseShots",
-        "ManualImportShots",
-        "ManualLibraryShots",
-        "ManualLoopSheetShots",
-        "ManualMetronomeShots",
-        "ManualMissingAudioShots",
-        "ManualPlayerShots",
-        "ManualPracticeShots",
-        "ManualReferenceShots",
-        "ManualRoutineShots",
-        "ManualSessionShots",
-        "ManualSettingsShots",
-        "ManualShotsUITests",
-        "ManualToolkitShots"
-      ],
       "target": {
         "containerPath": "container:Pocket.xcodeproj",
-        "identifier": "23D16638A9045581F3F038B5",
-        "name": "PocketUITests"
+        "identifier": "79B3EE02F1A922AC4BFD1EA3",
+        "name": "PocketShootUITests"
       }
     }
   ],

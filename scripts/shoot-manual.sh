@@ -2,7 +2,7 @@
 #
 # Shoot the user manual (ADR 0165, Phase 5).
 #
-# Drives `PocketUITests/ManualShotsUITests` against a freshly erased simulator and exports the
+# Drives `PocketShootUITests` against a freshly erased simulator and exports the
 # captures. Exists as a script rather than a paragraph in a README because the *order* is the whole
 # problem: the seed audio has to be on the device before the app's first launch, and the app has to
 # be installed before there is a container to put it in. Get that order wrong and every seed guard
@@ -32,19 +32,23 @@ set -euo pipefail
 
 SIM_NAME="${POCKET_SIM:-iPhone 17}"
 
-# The shoot has its own plan. `PocketAll` — what CI runs — *skips* these classes, because they
-# photograph an erased device this script has staged and are seven minutes of flake on an ordinary
-# simulator. The two lists are the same names in two files, so the guard after the run checks
-# that every class it asked for actually reported: adding a class here and forgetting the plan makes
-# xcodebuild run **zero tests and exit 0**, which is the quietest possible way for a shoot to stop
-# shooting. That is not hypothetical — it is what `-only-testing:` against `PocketAll`'s skip list
-# does, measured, and it is why the selection lives in a plan instead of in flags.
+# The shoot has its own plan over its own **target**, `PocketShootUITests`. `PocketAll` — what CI
+# runs — contains `PocketUITests` and therefore cannot reach these classes at all.
+#
+# It used to be a skip list inside one shared target, and that is a policy rather than a boundary:
+# two lists of the same names that both have to grow. Phase 5 grew one of them, CI ran ten shoot
+# classes on a device nothing had staged, and it did not report a plan problem — a shoot class on an
+# unstaged device walks a first-run app and fails on the state, so it surfaced as sixteen assertions
+# about rows that were not there. A target cannot drift that way; there is no list.
+#
+# The guard after the run stays, for the other half of the same failure: xcodebuild runs **zero
+# tests and exits 0** when a selection matches nothing, which is the quietest possible way for a
+# shoot to stop shooting.
 TEST_PLAN="${POCKET_SHOOT_PLAN:-PocketShoot}"
 # The shoot's test classes, listed rather than inferred, and grouped into **passes**. They are split
 # by area of the manual so one broken tap doesn't take an unrelated page's figures down with it,
 # which means adding an area means adding a line here — a visible cost, and the alternative (running
-# the whole target and skipping the ordinary UI-test classes) inverts it onto every future non-shoot
-# test instead.
+# the whole target in one pass) gives up the isolation the passes exist for.
 #
 # **A pass is one erased device**, staged, driven, and filed. The shoot is several of them in order
 # rather than one long run, and the reason is the half of the manual that was left after the first
@@ -417,7 +421,7 @@ echo "  run $RUN_ID → $RUN_LOG"
 
 ONLY_TESTING=()
 for class in "${classes[@]}"; do
-    ONLY_TESTING+=("-only-testing:PocketUITests/$class")
+    ONLY_TESTING+=("-only-testing:PocketShootUITests/$class")
 done
 xcodebuild test-without-building \
     -scheme Pocket \
@@ -475,21 +479,21 @@ grep -qE "TEST SUCCEEDED|TEST EXECUTE SUCCEEDED" "$RUN_LOG" || {
 
 # **A green verdict over zero tests.** `xcodebuild` reports success for running nothing, so a shoot
 # that selects no tests at all is indistinguishable at the exit code from a shoot that took every
-# figure. The way in is mundane: a class added to `SHOOT_CLASSES` but not to `PocketShoot.xctestplan`
+# figure. The way in is mundane: a class named in `pass_classes()` that is not in the shoot target
 # is silently skipped, and so is every class if the plan name is wrong. Measured, not feared —
-# `-only-testing:` against a plan that skips the class runs `Executed 0 tests` and exits 0.
+# `-only-testing:` against a selection that matches nothing runs `Executed 0 tests` and exits 0.
 #
 # So each class is required to have reported at least one test case by name. This is the same
 # principle as C13's refusal to pass when it finds no `capture()` calls: a check that can be
 # satisfied by reading nothing is not a check.
 missing=()
 for class in "${classes[@]}"; do
-    grep -qE "Test Case '-\[PocketUITests\.$class " "$RUN_LOG" || missing+=("$class")
+    grep -qE "Test Case '-\[PocketShootUITests\.$class " "$RUN_LOG" || missing+=("$class")
 done
 if [ ${#missing[@]} -gt 0 ]; then
     echo "❌ pass '$pass' passed, but these classes never executed a single test: ${missing[*]}" >&2
-    echo "   A plan that selects nothing still exits 0. Check that each class is listed in" >&2
-    echo "   $TEST_PLAN.xctestplan as well as in pass_classes() here." >&2
+    echo "   A selection that matches nothing still exits 0. Check that each class is a file in" >&2
+    echo "   PocketShootUITests/ as well as being named in pass_classes() here." >&2
     return 1
 fi
 
