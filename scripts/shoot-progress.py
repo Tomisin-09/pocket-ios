@@ -65,7 +65,13 @@ DEFAULT_DIRS = [REPO / "shots" / "filed",
                 Path.home() / "Desktop" / "manual-shots"]
 
 # The shot list's own note that two figures deliberately share one frame.
-SAME_FRAME = re.compile(r"`([a-z0-9/-]+)`[^|]*?[Ss]ame frame as\s*`([a-z0-9/-]+)`")
+#
+# Line-bound on purpose. `[^|]` also matches a newline, so the first version of this ran the gap
+# between the two slugs across paragraphs: the earliest backticked slug anywhere above a "same
+# frame as" won the first group, and the pair that was actually written on the line went unread.
+# One wrong pair is worse than none — it exempts a duplicate nobody declared while leaving the
+# declared one to be reported as a missed tap.
+SAME_FRAME = re.compile(r"`([a-z0-9/-]+)`[^|\n]*?[Ss]ame frame as\s*`([a-z0-9/-]+)`")
 
 
 def figures():
@@ -194,14 +200,29 @@ def main():
             for line in problems:
                 print("  " + line)
         else:
-            print(f"verify — {len(done)} filed image(s): all {MASTER[0]}×{MASTER[1]}, "
-                  "no unexpected duplicates, none truncated")
+            print(f"verify — {len(done)} filed image(s): all {MASTER[0]}×{MASTER[1]} "
+                  "(or turned, where the marker says so), no unexpected duplicates, "
+                  "none truncated")
     return 0
+
+
+def landscape_slugs():
+    """Slugs whose marker says the phone is turned, and whose master is therefore transposed.
+
+    The manual has one, `song-player/landscape`, and it would otherwise be a complaint that can
+    never be cleared — a permanent red line beside a correct figure, which is the fastest way to
+    teach someone to stop reading this check's output. The state field is the right owner: the
+    marker already has to say the phone is turned, so nothing new is written down and a second
+    landscape figure needs no change here.
+    """
+    return {slug for slug, _role, _page, state, _device in check_manual().shot_rows()
+            if "landscape" in (state or "").lower()}
 
 
 def verify(on_disk, rows, dirs):
     """The three failures that still produce a file. Returns a list of complaints."""
     wanted = {slug.replace("/", "-"): slug for slug, _r, _p, _d in rows}
+    turned = landscape_slugs()
     problems = []
     digests = {}
 
@@ -216,8 +237,9 @@ def verify(on_disk, rows, dirs):
         if dims is None:
             problems.append(f"{wanted[stem]}: not a readable PNG ({size} bytes) — truncated?")
             continue
-        if dims != MASTER:
-            problems.append(f"{wanted[stem]}: {dims[0]}×{dims[1]}, not {MASTER[0]}×{MASTER[1]} "
+        master = MASTER[::-1] if wanted[stem] in turned else MASTER
+        if dims != master:
+            problems.append(f"{wanted[stem]}: {dims[0]}×{dims[1]}, not {master[0]}×{master[1]} "
                             "— recorded crops will not land on this frame")
         digests.setdefault(hashlib.md5(path.read_bytes()).hexdigest(), []).append(wanted[stem])
 

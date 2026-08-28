@@ -73,8 +73,9 @@ plateau with its BPM over it, the **reach**, and the **back off** — so you can
 run before you play a note of it.
 
 <!-- shot: exercises/staircase | role: band
-     | alt: The training staircase with its warm-up steps, the wide command plateau labelled 90 BPM, the reach step and the back-off step
-     | state: seeded library, an exercise run screen, staircase visible -->
+     | alt: The training staircase with its warm-up steps, the wide command plateau labelled 80 BPM, the reach step and the back-off step
+     | state: seeded library, an exercise run screen, staircase visible
+     | crop: 0,1355,1206,410 -->
 
 The toolbar shows the drill's meter — **4/4** unless you have changed it — and tapping it sets the
 accents and the length of the count-in.
@@ -108,10 +109,6 @@ A run that reaches the end of its staircase on its own lands on a completion scr
 then an optional mastery rating, an optional note, and the offer to move your command tempo up to
 the reach you just played.
 
-<!-- shot: exercises/run-complete | role: screen
-     | alt: The completion screen after a finished run, with a mastery rating, a note field and the command tempo revision
-     | state: seeded library, an exercise run finished naturally -->
-
 A run you stop by hand does not land there and does not log. The practice log records runs that
 finished, because a run cut short has no honest length to claim.
 
@@ -122,10 +119,6 @@ finished, because a run cut short has no honest length to claim.
 **+** in the Exercises toolbar opens the two-step create sheet.
 
 ### Step one — the kind of drill
-
-<!-- shot: exercises/template-picker | role: screen
-     | alt: The New exercise template picker with the Guitar / Bass control at the top and the list of templates beneath it
-     | state: New exercise sheet, template picker, guitar selected -->
 
 First **Guitar or bass**, which sets the neck for the scale, arpeggio and fretboard drills; the rest
 ignore it. Then the template itself. This is the one choice you cannot change afterwards — it fixes
@@ -200,10 +193,6 @@ because the two mean nothing apart.
 The last template is the one for practice the app does not model — sight-reading, transcribing,
 singing while you play, something a teacher set. Instead of a shape and a tempo it takes your own
 written instructions, and it runs as a timer with those instructions on screen.
-
-<!-- shot: exercises/freeform-run | role: screen
-     | alt: A "Your own practice" block running, showing the player's own written instructions and the elapsed time
-     | state: seeded library, a hand-authored freeform exercise, running -->
 
 It has no tempo and no meter on purpose: most of what belongs in one has no BPM at all, and a
 setting the run screen never reads is a question with no honest answer.

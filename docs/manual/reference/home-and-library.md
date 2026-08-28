@@ -75,17 +75,13 @@ they narrow it.
 
 Hold a row for `Details`, `Edit` and `Delete`. There is no delete swipe here, and no favourite.
 
-<!-- shot: reference/library-row-menu | role: detail
-     | alt: The hold menu on a song row offering Details, Edit and Delete
-     | state: seeded library, Library, a row held -->
-
 ### `Song details`
 
 A read-only summary, with `Edit` in its toolbar.
 
 <!-- shot: reference/song-details | role: screen
-     | alt: The Song details sheet showing the title and artist, notes, key, tempo, mastery, length and the audio file section
-     | state: seeded library, Slow Bend, Details from the row hold menu -->
+     | alt: The Song details sheet showing the title and artist, an empty Notes section, key, tempo, mastery and length, and the audio file section with Replace audio file
+     | state: seeded library, song "Feels", Details from the row hold menu -->
 
 - The title, artist, and album with its year.
 - `Notes` — free text about the song, with `Edit notes`.

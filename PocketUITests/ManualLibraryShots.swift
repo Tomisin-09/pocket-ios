@@ -1,12 +1,16 @@
 import XCTest
 
-/// The manual's **Song library** figures (ADR 0165, Phase 5) — the list itself, its two toolbar
-/// menus, and the menu a held row opens.
+/// The manual's **Song library** figures (ADR 0165, Phase 5) — the list itself, and the two sheets
+/// that hang off a row.
 ///
 /// Read-only: nothing here saves an edit, imports a file or deletes a row, so this class rides in
-/// the `library` pass on a device it leaves exactly as it found it. The library figures that *do*
-/// change the store — the import picker, its progress band, and the undo toast after a delete — are
-/// not here for that reason; they author, and a pass is one erased device.
+/// the `library` pass on a device it leaves exactly as it found it.
+///
+/// **It used to shoot three menus as well** — the sort menu, the collection filter and the menu a
+/// held row opens — and their markers were cut from the prose in Phase 5 rather than reshot. Each
+/// was a picture of a list of words the page beside it already listed, which is the one thing ADR
+/// 0165 says a figure should never be. The tests went with the markers: a `capture()` of a slug no
+/// marker defines fails C13, so a cut that stops at the prose leaves the check red.
 ///
 /// **Two things about this screen decided how every test below is written.**
 ///
@@ -14,9 +18,10 @@ import XCTest
 /// needs no tap at all — it is asserted rather than set, because a figure whose state is a default
 /// is one app change away from being a figure of something else.
 ///
-/// And **Slow Bend is below the fold.** It is the fifth of six songs, so it is not merely off-screen
-/// but absent from the accessibility tree, which is why the sheets that hang off it live in
-/// `ManualLibrarySheetShots` with `revealRow` in front of them rather than here.
+/// And **Slow Bend is below the fold.** It is the fifth of six songs by title, so it is not merely
+/// off-screen but absent from the accessibility tree — which is why `testSongEdit` puts `revealRow`
+/// in front of the hold, and a query that simply asked for the row would report a library that has
+/// it as a library that does not.
 final class ManualLibraryShots: ManualShotCase {
 
     /// `reference/library` · `songs/library-row` — the grouped list, and the row crop taken from it.
@@ -44,102 +49,38 @@ final class ManualLibraryShots: ManualShotCase {
                 alsoServing: ["songs/library-row"])
     }
 
-    /// `songs/sort-menu` — the sort menu open over the library.
-    ///
-    /// Every option is required in frame, which is more than a gate: the marker's alt text lists all
-    /// six categories and both directions, so a menu that had lost one would make the sentence beside
-    /// the image false. `Title` and `Ascending` also carry `Selected`, which is what the library
-    /// underneath is actually sorted by — the figure and `reference/library` agree by construction.
-    ///
-    /// The screen assertion is still `Library`: a menu draws over the navigation bar's screen rather
-    /// than replacing it, so the bar is the right thing to prove we never left.
-    @MainActor
-    func testSortMenu() {
-        let app = launchForShoot()
-        openLibrary(in: app)
-
-        let sort = app.buttons["Sort by Title, ascending"]
-        tap(sort, labelled: "the sort control",
-            revealing: app.buttons["Recently Added"], called: "the sort menu")
-
-        capture(app, slug: "songs/sort-menu",
-                assertingOnScreen: "Library",
-                alsoRequiring: ["Mastery", "Recently Added", "Title", "Artist", "Album", "Genre",
-                                "Ascending", "Descending"])
-    }
-
-    /// `reference/library-row-menu` · `gestures/row-hold-menu` — the menu a held row opens.
-    ///
-    /// **Binta**, because it is the first song in the list and therefore the one row that is in the
-    /// tree the moment the screen arrives — a figure of a hold gesture should not also be a test of
-    /// scrolling.
-    ///
-    /// Gated on `Delete`, the last of the three items, rather than on `Details`. The menu builds top
-    /// down, so waiting on the first item can return with the rest still arriving, and this figure is
-    /// of all three.
-    @MainActor
-    func testRowHoldMenu() {
-        let app = launchForShoot()
-        openLibrary(in: app)
-
-        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Binta,")).firstMatch
-        hold(row, labelled: "the Binta row",
-             revealing: app.buttons["Delete"], called: "the row menu")
-
-        capture(app, slug: "reference/library-row-menu",
-                assertingOnScreen: "Library",
-                alsoRequiring: ["Details", "Edit", "Delete"],
-                alsoServing: ["gestures/row-hold-menu"])
-    }
-
-    /// `songs/filter-menu` — the collection filter with two ticked.
-    ///
-    /// **The filter control renames itself as it works**, which is what made this the fiddliest of
-    /// the library figures. It is `Filter by collection` with nothing selected, `Filtering by 1
-    /// collection` after one, and `Filtering by any of 2 collections` after two — so re-opening the
-    /// menu between ticks means asking for a *different* control each time, and an explore walk that
-    /// asked twice for the first name reported the second collection as missing from a screen that
-    /// had it.
-    ///
-    /// The relation in that last label is the figure's subject as much as the ticks are: ADR 0159
-    /// made the filter OR within a facet, and "any of" is the app saying so.
-    @MainActor
-    func testFilterMenu() {
-        let app = launchForShoot()
-        openLibrary(in: app)
-
-        tickCollection("chill", openingWith: "Filter by collection", in: app)
-        tickCollection("blues", openingWith: "Filtering by 1 collection", in: app)
-
-        let reopen = app.buttons["Filtering by any of 2 collections"]
-        tap(reopen, labelled: "the filter control with two ticked",
-            revealing: app.buttons["Clear filter"], called: "the filter menu")
-
-        // `Clear filter` only exists once something is selected, so requiring it proves the ticks
-        // took — a menu photographed with nothing selected is the same picture otherwise.
-        capture(app, slug: "songs/filter-menu",
-                assertingOnScreen: "Library",
-                alsoRequiring: ["Clear filter", "chill", "blues"])
-    }
-
     /// `reference/song-details` — the Song details sheet.
     ///
-    /// Shot on **Slow Bend**, which the shoot list names and which is below the fold — fifth of six
-    /// by title, so absent from the tree until the list is swiped.
+    /// **Shot on Feels, and Slow Bend is why.** This was on Slow Bend until a hand re-shoot in Phase
+    /// 5 put the resulting frame in front of a pair of eyes: its `Audio` section read `File:
+    /// Missing`. Slow Bend is the bundled tone-generator demo, the one seeded song with no bookmark
+    /// and no file behind it, so the figure that exists to show the audio section was showing that
+    /// section's failure state — a true picture of the wrong song. The marker's alt text names the
+    /// file row, so this must be a song that has one.
+    ///
+    /// Feels is second of six by title and therefore already in the tree, which is also why the
+    /// swipe that Slow Bend needed is gone.
     @MainActor
     func testSongDetails() {
         let app = launchForShoot()
         openLibrary(in: app)
 
-        let row = revealRow(labelStartingWith: "Slow Bend", in: app)
-        hold(row, labelled: "the Slow Bend row",
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Feels,")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: Self.shootTimeout),
+                      "no Feels row to hold.\n\(stepLog)")
+        hold(row, labelled: "the Feels row",
              revealing: app.buttons["Details"], called: "the row menu")
         tap(app.buttons["Details"], labelled: "Details",
             revealing: app.navigationBars["Song details"], called: "the Song details sheet")
 
+        // `File, WAV` rather than `File`: the row is a `LabeledContent`, so the label and its value
+        // combine into one element reading "File, WAV · 8.9 MB". Asserting the value and not just
+        // the row is the point — `SongAudioLabel.describe` returns `Missing` for a song with no
+        // copy behind it, and that row is present and correct-looking either way. The size is left
+        // off because it moves with the seed audio; the format does not.
         capture(app, slug: "reference/song-details",
                 assertingOnScreen: "Song details",
-                orBeginningWith: ["Slow Bend"])
+                orBeginningWith: ["Feels", "File, WAV"])
     }
 
     /// `reference/song-edit` · `songs/song-edit` — the Edit song sheet, top and scrolled.
@@ -162,12 +103,18 @@ final class ManualLibraryShots: ManualShotCase {
         tap(app.buttons["Edit"], labelled: "Edit",
             revealing: app.navigationBars["Edit song"], called: "the Edit song sheet")
 
-        // `Downbeat (s)` is the last row of the Details section, so requiring it is what proves the
-        // frame reaches the bottom of what the marker's alt text lists rather than stopping at Genre.
+        // **`Title`, `Artist`, `Album` and `Genre` are placeholders, not labels** — this asserted
+        // all four for months and could never have passed. `SongEditSheet` builds them as
+        // `ClearableTextField("Title", text: $title)`, where the string is the prompt: it is in the
+        // tree only while the field is *empty*, and on a seeded song every one of them holds a
+        // value. The test was demanding evidence that the sheet had failed to load the song.
+        //
+        // `Year`, `BPM` and `Downbeat (s)` are `NumberRow(label:)` and stay whatever the field
+        // holds, so they are the rows that can be asserted. `Downbeat (s)` is the last of the
+        // section, which is what proves the frame reaches the bottom of what the alt text lists.
         capture(app, slug: "reference/song-edit",
                 assertingOnScreen: "Edit song",
-                alsoRequiring: ["Details", "Title", "Artist", "Album", "Genre", "Year", "BPM",
-                                "Downbeat (s)"])
+                alsoRequiring: ["Details", "Year", "BPM", "Downbeat (s)"])
 
         // Then the same sheet, scrolled. Aimed at `Add a collection`, the last row of the section —
         // stopping at the header would leave the chips the figure is of below the fold.
@@ -177,20 +124,6 @@ final class ManualLibraryShots: ManualShotCase {
         capture(app, slug: "songs/song-edit",
                 assertingOnScreen: "Edit song",
                 alsoRequiring: ["Collections", "Add a collection"])
-    }
-
-    // MARK: - Steps
-
-    /// Open the filter menu by whatever it is currently called, and tick one collection.
-    @MainActor
-    private func tickCollection(_ collection: String,
-                                openingWith control: String,
-                                in app: XCUIApplication) {
-        let filter = app.buttons[control]
-        tap(filter, labelled: "the filter control ('\(control)')",
-            revealing: app.buttons[collection], called: "the '\(collection)' row")
-        app.buttons[collection].tap()
-        note("ticked '\(collection)'")
     }
 
     // MARK: - Navigation

@@ -23,10 +23,6 @@ Five rows in two sections, each carrying a count.
 
 ## `Today` — the planner
 
-<!-- shot: reference/planner | role: screen
-     | alt: The Today's session screen with the length presets, the away-from-your-instrument toggle, the Goals section and Generate today's session
-     | state: seeded library, Practice ▸ Today, no goals yet -->
-
 - **`How long do you have?`** — `Quick`, `Focused` and `Full`, each captioned with roughly how long
   the whole sitting runs.
 - **`Away from your instrument`** — a toggle. Its **ⓘ** explains it in the app's own words:

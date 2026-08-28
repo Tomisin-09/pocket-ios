@@ -55,16 +55,22 @@ TEST_PLAN="${POCKET_SHOOT_PLAN:-PocketShoot}"
 # nothing here controls. The first version of this script had one erase at the top and could not
 # have expressed the rest of the shoot at all.
 #
-# Passes make cross-area ordering a non-question: `exercises/library` is shot on a device where the
-# freeform drill has never existed, and `reference/planner` on one where no goal has ever been saved,
-# because those are different devices. What a pass still owes is ordering *inside* itself — a figure
-# whose state has to be built belongs in one test that shoots the before and the after in sequence,
-# not spread across two tests whose relative order is XCTest's to pick.
+# Passes make cross-area ordering a non-question: `reference/exercises-library` is shot on a device
+# where the `sessions` pass has never saved a goal, because those are different devices. What a pass
+# still owes is ordering *inside* itself — a figure whose state has to be built belongs in one test
+# that shoots the before and the after in sequence, not spread across two tests whose relative order
+# is XCTest's to pick.
 #
 # The cost is one erase and boot per pass, which on this machine is the expensive part (~2 minutes)
 # and buys the guarantee outright. Named passes, so a single area can be re-driven while it is being
 # written: `POCKET_SHOOT_PASS=player ./scripts/shoot-manual.sh`.
-PASSES=(base library player exercises routines sessions imports broken bare)
+#
+# **`imports` is gone** (Phase 5). It existed for two figures, `getting-started/import-picker` and
+# `gestures/undo-toast`, whose markers were cut from the prose — and it was the most expensive pass
+# per figure in the shoot, since both of them wrote to the store and so bought a whole erased device
+# between them. `ManualImportShots` went with them; its notes on which process hosts the system
+# document picker are in the commit that removed it, should an import figure ever be wanted again.
+PASSES=(base library player exercises routines sessions broken bare)
 
 # The classes each pass drives. `base` is the read-only set the first shoot filed; the rest are the
 # areas that had to build their own state.
@@ -77,7 +83,6 @@ pass_classes() {
         exercises) echo "ManualExerciseShots" ;;
         routines)  echo "ManualRoutineShots" ;;
         sessions)  echo "ManualSessionShots" ;;
-        imports)   echo "ManualImportShots" ;;
         broken)    echo "ManualMissingAudioShots" ;;
         bare)      echo "ManualBareShots" ;;
         # `POCKET_SHOOT_ONLY`'s ad-hoc pass — whatever was asked for, on its own erased device.

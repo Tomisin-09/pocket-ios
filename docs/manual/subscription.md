@@ -58,7 +58,7 @@ locked.
 <!-- shot: subscription/paywall | role: panel
      | crop: 0,160,1206,1040
      | alt: The top of the paywall — the Red Moon Pro wordmark, its one-line promise, and the three value lines beneath it
-     | state: fresh install without Pro, paywall open from a locked Home card
+     | state: an account without Pro, the paywall on screen
      | device: iPhone — cropped above the plan cards on purpose: an image carrying a price outlives
        the sentence that would have carried it, and D6 keeps prices out of this manual -->
 
