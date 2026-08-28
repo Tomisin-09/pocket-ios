@@ -47,7 +47,7 @@ whole list back.
 a routine you start and abandon leaves nothing behind.
 
 <!-- shot: routines/editor | role: screen
-     | alt: The routine editor in edit mode, with the Name field, numbered blocks, the estimated length and the Add and Insert rest rows
+     | alt: The routine editor in edit mode, with the Name field, the Description, the numbered blocks and the estimated length
      | state: Practice ▸ Routines ▸ + , three blocks added -->
 
 - **Name it** — the field at the top. Naming is what keeps it in your routines to run again.
@@ -62,12 +62,13 @@ a routine you start and abandon leaves nothing behind.
 
 <!-- shot: routines/repeat-block | role: detail
      | alt: The repeat sheet for one block showing ×3 and the stepper that sets it
-     | state: routine editor, a unit block tapped, repeat set to 3 -->
+     | state: routine editor, a unit block tapped, repeat set to 3
+     | crop: 25,1635,1155,675 -->
 
-While the routine is still unsaved, an **Estimated length** reads under the block list and
-re-reckons as you add and remove things, so you can see whether what you are building fits the time
-you actually have. It goes once the routine is saved: the estimate is there to help you decide what
-to keep, and a routine you already decided on does not need telling.
+An **Estimated length** reads under the block list and re-reckons as you add and remove things, so
+you can see whether what you are building fits the time you actually have. It stays on the routine
+once you save it, where it sits with the routine's history — see
+[Reading a routine without playing it](#reading-a-routine-without-playing-it).
 
 **Save** commits; **Cancel** discards everything since you tapped Edit.
 
@@ -181,7 +182,8 @@ is live.
 
 <!-- shot: routines/block-record | role: detail
      | alt: The Record this block switch on an exercise block's preview, turned on, with the line explaining that the take starts with the block
-     | state: seeded library, Practice ▸ Routines ▸ Morning Routine, first block opened -->
+     | state: seeded library, Practice ▸ Routines ▸ Morning Routine, first block opened
+     | crop: 70,1010,1065,365 -->
 
 It is per block on purpose. One drill in a session is usually the one worth hearing again; the
 warm-up before it is not, and a whole session recorded is a folder nobody opens. Blocks set to
@@ -222,7 +224,8 @@ evening count as two.
 
 <!-- shot: routines/history | role: detail
      | alt: The length and history section of a saved routine, showing its estimated length, when it was last practised and how many times
-     | state: seeded history, Practice ▸ Routines ▸ Morning Routine, read-only -->
+     | state: seeded history, Practice ▸ Routines ▸ Morning Routine, read-only
+     | crop: 70,1810,1065,410 -->
 
 It counts and it dates, and that is all it does. There is no target to hit, nothing that goes up or
 down against last week, and nothing anywhere that remarks on a gap.

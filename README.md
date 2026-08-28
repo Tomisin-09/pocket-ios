@@ -94,6 +94,14 @@ the UI tests + coverage). A third plan, **`PocketShoot`**, holds the user manual
 screenshot classes; it is driven only by `scripts/shoot-manual.sh` and is skipped
 by `PocketAll`. See `docs/decisions/0053`.
 
+The split is a **boundary, not a list**: the shoot classes live in their own target,
+`PocketShootUITests`, so `PocketAll` — which contains `PocketUITests` — has no route
+to them and neither plan carries a skip list. It was a skip list until 2026-08-28,
+and that is a policy two files have to keep in step: Phase 5 grew one of them and CI
+ran ten shoot classes on a device nothing had staged, surfacing as sixteen assertions
+about missing rows rather than as anything pointing at a plan. `check-manual.py`'s
+C14 guards the one way back — a `Manual*` class written into `PocketUITests`.
+
 ## Project layout
 
 ```
@@ -105,6 +113,7 @@ Pocket/
   Resources/   Info.plist, PrivacyInfo.xcprivacy
 PocketTests/      Unit tests (pure logic)
 PocketUITests/    XCUITest flows
+PocketShootUITests/  The user manual's screenshot run — not tests (ADR 0165)
 infrastructure/  Terraform for the Phase 4 Claude proxy (prod)
 docs/          architecture.md, positioning.md (who we're up against and the line we take), decisions/ (ADRs), manual/ (user manual), practice-techniques.md, research/ (3rd-party refs, git-ignored raw)
 ```

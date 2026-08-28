@@ -24,7 +24,8 @@ deferred.
     runs it. Fast inner loop.
   - **`PocketAll.xctestplan`** — `PocketTests` + `PocketUITests`, `codeCoverage: true`.
     CI selects it explicitly with `-testPlan PocketAll`, so both suites and coverage
-    still gate merges. It **skips the four `Manual*` shot classes** — see below.
+    still gate merges. It carries **no skip list**: the shoot is a separate target — see
+    the amendment below.
   - **`PocketShoot.xctestplan`** *(added 2026-08-16, ADR 0165 Phase 5)* — the four
     `Manual*` classes and nothing else, `codeCoverage: false`. They are not tests: they
     photograph an erased device that `scripts/shoot-manual.sh` has staged with seed
@@ -40,6 +41,27 @@ deferred.
     produced no images at all. `shoot-manual.sh` additionally asserts that every class it
     asked for reported at least one test case, because that exit code cannot be trusted
     to notice.
+
+    **Amended 2026-08-28 — the shoot classes moved to their own target,
+    `PocketShootUITests`.** The skip list was a *policy*: the same names in two files,
+    both of which had to grow. Phase 5 took the shoot from four classes to fifteen and
+    grew only `PocketShoot`, so CI ran ten of them on a device nothing had staged. It did
+    not report a plan problem — a shoot class on an unstaged device walks a first-run app
+    and fails on the *state*, so it surfaced as sixteen assertions about rows that were
+    not there, and the seed made it worse: `ScreenshotSeed` inserts Slow Bend but imports
+    nothing under `xcodebuild test` (the seed audio is staged over `simctl`), so the
+    library was one song rather than none and the figures needing no song went green
+    beside the ones that failed.
+
+    A target is a *boundary*. `PocketAll` contains `PocketUITests` and therefore has no
+    route to the shoot at all — both plans now name targets and carry no `skippedTests`
+    or `selectedTests` between them. `check-manual.py`'s C14 guards the one way back: a
+    `Manual*` class written into `PocketUITests` by mistake. It also makes finishing this
+    work a one-directory deletion rather than an audit.
+
+    `UITestCase.swift` and `UITestHooks.swift` are compiled into both UI-test targets
+    rather than shared through a dependency, because a UI-test bundle cannot import
+    another; `UITestHooks` was already duplicated into the app for the same reason.
 - **The default/fast plan drops the 2 UI tests and coverage gathering** — UI tests
   each cold-launch the app (~13s + ~12s) and coverage instrumentation adds ~40s;
   neither earns its cost on every local push, and CI still enforces both.

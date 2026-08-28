@@ -31,7 +31,8 @@ you open anything. The tuner's says **Free**, which is the app stating the rule 
 
 <!-- shot: toolkit/tuner | role: screen
      | alt: The tuner listening, with the note disc, the cents needle gauge, the flat and sharp end labels, the row of string circles and the reference pitch caption
-     | state: Toolkit ▸ Tuner, microphone allowed, a string sounding -->
+     | state: Toolkit ▸ Tuner, microphone allowed, a string sounding
+     | device: iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge -->
 
 It listens through the microphone, so the first time you open it iOS asks for permission. Say no and
 the screen says so and offers a way to iOS Settings; there is no other way to use it. The mic is
@@ -55,8 +56,8 @@ The caption at the bottom always states what you are tuning against: **A440 · S
 The **slider** control in the toolbar opens everything the tuner can be changed to:
 
 <!-- shot: toolkit/tune-settings | role: screen
-     | alt: The Tune Settings sheet with Instrument, Mode, Tuning, Reference pitch and Success chime cards
-     | state: Toolkit ▸ Tuner, Tune settings tapped -->
+     | alt: The top of the Tune Settings sheet, with the Instrument and Mode controls and the Tuning list beginning beneath them
+     | state: Toolkit ▸ Tuner, Tune settings tapped, top of the sheet -->
 
 - **Instrument** — **Guitar** or **Bass**. Switching resets the tuning to that instrument's Standard,
   so a guitar tuning can never linger on a bass.

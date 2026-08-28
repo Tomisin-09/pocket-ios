@@ -5,7 +5,7 @@ The waveform screen. Reached by tapping a song in the [library](home-and-library
 
 <!-- shot: reference/player | role: screen
      | alt: The song player with the title strip, the speed bar, the status line, the waveform, the transport and the Loops panel
-     | state: seeded library, Little Wing, idle, Loops panel expanded -->
+     | state: seeded library, Slow Bend, idle, Loops panel expanded -->
 
 ## The title strip
 
@@ -65,11 +65,11 @@ One row per loop: its name, its range as times, and its mastery. Each row carrie
 **adjust range** control that takes you back to the waveform to drag the ends, and a **ramp** control
 that opens the loop automator.
 
-**Hold a row** for its menu, including `Edit loop`.
+**Hold a row** to open `Edit loop` — the sheet opens straight away, with no menu in between.
 
 <!-- shot: reference/loops-panel | role: panel
      | alt: The Loops panel expanded, each row showing the loop name, its range, its mastery and the play, adjust and automator controls
-     | state: seeded library, Little Wing, Loops expanded -->
+     | state: seeded library, Slow Bend, Loops expanded -->
 
 **Hold the panel header** to start selecting, then tap rows to act on several at once.
 
@@ -83,8 +83,8 @@ sheet. Marker names can also float over the timeline as you play up to them — 
 ### `Edit loop`
 
 <!-- shot: reference/loop-edit | role: screen
-     | alt: The Edit loop sheet showing Name, Favourite, Range, and the Practice section with Mastery, Focus, Type and Command tempo
-     | state: seeded library, Little Wing, loop "Verse riff" held, Edit loop -->
+     | alt: The top of the Edit loop sheet, showing Name, Favourite and Range with the Practice section beginning beneath them
+     | state: seeded library, Slow Bend, loop "Verse riff" held, Edit loop, top of the sheet -->
 
 `Cancel` discards, `Done` keeps.
 
@@ -105,7 +105,7 @@ sheet. Marker names can also float over the timeline as you play up to them — 
 
 <!-- shot: reference/loop-automator | role: screen
      | alt: The loop automator sheet with the Start, Target, Steps and Loops per step fields above the ramp summary
-     | state: seeded library, Little Wing, automator opened on "Verse riff" -->
+     | state: seeded library, Slow Bend, automator opened on "Verse riff" -->
 
 A ramp for one loop, expressed in percentages of the song's speed: `Start`, `Target`, `Steps` and
 `Loops / step`, with a summary of the climb above them and the BPM it works out to below.
@@ -118,7 +118,7 @@ to open this too; it now carries the tempo out instead.)
 
 <!-- shot: reference/tempo-editor | role: screen
      | alt: The tempo sheet with the Tap and Manual segments, the tap pad, Estimate from audio, and the downbeat section
-     | state: seeded library, Little Wing, tempo editor open -->
+     | state: seeded library, Slow Bend, tempo editor open -->
 
 - **`Tap`** — `Tap to the beat`. The app's own explanation: *Play the song and tap along. Tapping
   reads the playhead, so a loop or slowed speed still reads the true tempo. The reading follows your

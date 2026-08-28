@@ -56,16 +56,6 @@ final class ManualShotsUITests: ManualShotCase {
         capture(app, slug: "journal/take-row", assertingOnScreen: "Journal")
     }
 
-    /// `journal/take-detail` — a take's own screen: the scrub strip, the transport, the note
-    /// (ADR 0174).
-    @MainActor
-    func testTakeDetail() {
-        let app = launchForShoot()
-        openTakeDetail(in: app)
-        capture(app, slug: "journal/take-detail", assertingOnScreen: "Take",
-                alsoRequiring: ["Take position"])
-    }
-
     /// `journal/take-trim` — trim mode, with the handles on the strip and the keep-span readout.
     @MainActor
     func testTakeTrim() {
@@ -129,8 +119,21 @@ final class ManualShotsUITests: ManualShotCase {
                       "the Moments section is empty — the seeded take's notes never landed. \(stepLog)")
         note("a seeded moment is in the list")
 
+        // **One frame, two markers — declared, because it was being shot twice.**
+        // `journal/take-detail` had a test of its own that did exactly what this one does: open the
+        // take, capture, no scroll and no interaction between them. The two markers carry the *same*
+        // `state:` ("seeded library, Journal, a take opened") and differ only in which half of the
+        // screen their alt text reads — the strip and transport, or the pins and the Moments list.
+        // So two byte-identical images were being filed under two names.
+        //
+        // That is not merely wasteful: identical images are the signature this shoot uses to detect a
+        // missed tap, and an undeclared duplicate spends that signal. `./scripts/shoot-progress.py
+        // --verify` flagged exactly this pair. `alsoServing` is what the harness already provides for
+        // a frame shown on a second page, and `Take position` comes across from the deleted test so
+        // the transport is still asserted.
         capture(app, slug: "journal/take-moments", assertingOnScreen: "Take",
-                alsoRequiring: ["Moments"])
+                alsoRequiring: ["Moments", "Take position"],
+                alsoServing: ["journal/take-detail"])
     }
 
     /// `journal/progress` · `reference/progress` · `journal/month-heatmap` — one frame, three markers.

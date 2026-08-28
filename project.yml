@@ -139,6 +139,34 @@ targets:
     dependencies:
       - target: Pocket
 
+  # The user manual's screenshot run (ADR 0165 Phase 5) — its own target, not a corner of
+  # `PocketUITests`, and the difference is not tidiness.
+  #
+  # These classes are not tests. They photograph a device `scripts/shoot-manual.sh` has erased,
+  # seeded, forced dark and given a faked status bar. Run anywhere else they do not error out —
+  # they walk a first-run app and fail on the *state*, which is how ten of them ended up in a CI
+  # run reporting sixteen assertions about rows that were not there.
+  #
+  # They lived in `PocketUITests` with `PocketAll` skipping them by name, and that is a **policy**:
+  # two lists that both have to grow, and Phase 5 grew only one. A separate target is a
+  # **boundary** — `PocketAll` contains `PocketUITests` and therefore cannot run these, with
+  # nothing to remember and no list to keep in step. It also makes the day this work is finished a
+  # one-directory deletion.
+  PocketShootUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: PocketShootUITests
+      # Both shared files are compiled in rather than depended on: a UI-test bundle cannot import
+      # another, and `UITestHooks` is already duplicated into the app for the same reason (above).
+      - path: PocketUITests/UITestCase.swift
+      - path: Pocket/Core/Testing/UITestHooks.swift
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+    dependencies:
+      - target: Pocket
+
 schemes:
   Pocket:
     build:

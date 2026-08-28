@@ -17,7 +17,7 @@ Reach the journal from **Journal** on Home. The practice log is one step further
 ## Writing a note
 
 The **✏️** in the toolbar
-<!-- shot: journal/quick-note-button | role: glyph | alt: -->
+<!-- shot: journal/quick-note-button | role: glyph | alt: | crop: 856,188,120,120 -->
 opens **Quick note** — one field, the kind chips, **Save**. It is on the journal itself, on every
 exercise and loop run screen, and on the metronome. Opening it over a run **touches nothing**: the
 audio carries on, the click keeps time, and the note costs the run nothing.
@@ -72,15 +72,16 @@ was like *then*, not what it is like now.
 
 ## Takes
 
-A **take** is a recording of you playing, captured through the microphone. Arm the red
+A **take** is a recording of you playing, captured through the microphone. Arm the
 **record** button
-<!-- shot: journal/record-arm | role: glyph | alt: -->
-next to **Start training** on a run screen and the take starts when the run does and ends when it
-does. Takes land in this same timeline alongside your notes.
+<!-- shot: journal/record-arm | role: glyph | alt: | crop: 967,2306,160,160 -->
+next to **Start training** on a run screen — it turns red once armed — and the take starts when the
+run does and ends when it does. Takes land in this same timeline alongside your notes.
 
 <!-- shot: journal/take-row | role: detail
      | alt: A take in the timeline with its play button, name, duration, time and the owner caption beneath
-     | state: seeded library, Journal, Takes filter, at least one take -->
+     | state: seeded library, Journal, Takes filter, at least one take
+     | crop: 35,855,1135,185 -->
 
 - **▶** plays it. One plays at a time, and it stops when you leave the screen.
 - Its row shows the take's name, how long it runs, and when it was made.
@@ -171,13 +172,13 @@ A take with a note, a moment, or both gets the small marker on its row.
 ## Finding something again
 
 - The **All · Notes · Takes** control at the top narrows the feed to one or the other.
-- **Search** matches song, exercise, template and date — so *Little Wing*, *Legato* or a month name
+- **Search** matches song, exercise, template and date — so *Slow Bend*, *Legato* or a month name
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you
   read forwards through a stretch of work rather than backwards.
 - Days are grouped under **Today**, **Yesterday** and then dated headers.
 
-The caption under a note or take names what it was about — *Little Wing · Verse riff*, *Spider ·
+The caption under a note or take names what it was about — *Slow Bend · Verse riff*, *Spider ·
 exercise* — and where it has somewhere to go it is a link with a chevron. Tap it to open the thing
 itself. A caption with no chevron is a subject that no longer exists, or one with no screen to open,
 so the affordance is never a promise the tap cannot keep. The pills on a session note behave the

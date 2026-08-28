@@ -1,36 +1,27 @@
 {
-  "configurations" : [
+  "configurations": [
     {
-      "id" : "B5DAB611-60AB-4149-97E4-F1CCA794B71A",
-      "name" : "Shoot",
-      "options" : {
-
-      }
+      "id": "B5DAB611-60AB-4149-97E4-F1CCA794B71A",
+      "name": "Shoot",
+      "options": {}
     }
   ],
-  "defaultOptions" : {
-    "codeCoverage" : false,
-    "targetForVariableExpansion" : {
-      "containerPath" : "container:Pocket.xcodeproj",
-      "identifier" : "7D169845C7D92117E36B994A",
-      "name" : "Pocket"
+  "defaultOptions": {
+    "codeCoverage": false,
+    "targetForVariableExpansion": {
+      "containerPath": "container:Pocket.xcodeproj",
+      "identifier": "7D169845C7D92117E36B994A",
+      "name": "Pocket"
     }
   },
-  "testTargets" : [
+  "testTargets": [
     {
-      "selectedTests" : [
-        "ManualMetronomeShots",
-        "ManualReferenceShots",
-        "ManualSettingsShots",
-        "ManualShotsUITests",
-        "ManualToolkitShots"
-      ],
-      "target" : {
-        "containerPath" : "container:Pocket.xcodeproj",
-        "identifier" : "23D16638A9045581F3F038B5",
-        "name" : "PocketUITests"
+      "target": {
+        "containerPath": "container:Pocket.xcodeproj",
+        "identifier": "79B3EE02F1A922AC4BFD1EA3",
+        "name": "PocketShootUITests"
       }
     }
   ],
-  "version" : 1
+  "version": 1
 }

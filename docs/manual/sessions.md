@@ -55,7 +55,7 @@ Without either, **Generate** still works — you get a quick session built from 
 drills are most due — but it has nothing to aim at.
 
 <!-- shot: sessions/goals | role: panel
-     | alt: The This session section listing two goals, each with its skill count, target song and priority
+     | alt: The This session section listing two goals, each with its skill count and priority, above Add a goal for this session and Clear this session's goals
      | state: seeded library, Today's session, goals present -->
 
 Each goal under **This session** shows how many skills it covers, its target song when it has one,
@@ -66,10 +66,6 @@ and its priority. Tap one to edit it; swipe it to delete it.
 **Add a goal for this session** opens the editor, which asks two things in turn.
 
 ### Start from a goal
-
-<!-- shot: sessions/goal-templates | role: screen
-     | alt: The New goal screen offering ten starting points, from playing a specific song to writing your own music, with a Something else row below them
-     | state: Today's session, Add a goal tapped -->
 
 Ten starting points, each pre-loaded with a sensible set of skills:
 
@@ -94,8 +90,8 @@ actually schedules and an empty one schedules nothing.
 ### Then trim it
 
 <!-- shot: sessions/goal-editor | role: screen
-     | alt: The goal editor form with the name field, the Low / Normal / High priority control and the skills list
-     | state: Today's session, a goal template chosen -->
+     | alt: The Edit goal form with the name, the Low / Normal / High priority control, the skills list, Mark as met and Delete goal
+     | state: seeded library, Today's session, an existing goal reopened -->
 
 - **Name** — what you would call it out loud.
 - **Priority** — **Low**, **Normal** or **High**. This is how hard the goal pulls its skills into

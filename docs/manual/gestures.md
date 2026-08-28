@@ -14,7 +14,7 @@ and a popover lists the nine things you can do to a loop:
 
 <!-- shot: gestures/loop-controls-popover | role: panel
      | alt: The Loop controls popover open over the waveform, listing nine rows from "Make a loop" to "Follow"
-     | state: seeded library, Little Wing, player idle, Loop controls tapped -->
+     | state: seeded library, Slow Bend, player idle, Loop controls tapped -->
 
 <!-- loop-controls-rows: 9 -->
 
@@ -60,7 +60,7 @@ linked to the song you took it from.
 
 <!-- shot: gestures/carry-tempo | role: panel
      | alt: The Carry this tempo sheet listing "To the metronome" and "Into a new exercise", headed with the tempo being carried
-     | state: seeded library, Little Wing, player idle, BPM readout held -->
+     | state: seeded library, Slow Bend, player idle at full speed, BPM readout held -->
 
 The number it carries is the one on screen. That is the song's tempo **at the speed you have set**,
 so a 200 BPM song at 0.25× carries 50 — the tempo you are actually playing at, which is usually the
@@ -68,7 +68,8 @@ one you wanted.
 
 <!-- shot: gestures/speed-bar | role: band
      | alt: The speed bar with the speed control, the metronome button and the BPM readout
-     | state: seeded library, Little Wing, player idle -->
+     | state: seeded library, Slow Bend, player idle
+     | crop: 0,370,1206,280 -->
 
 **Tapping and holding the Loop controls line do different things.** A tap gives you the cheatsheet
 above; a hold opens the player's settings — the same four switches as **Settings ▸ Song player**,
@@ -90,10 +91,6 @@ Not every list offers all of it, because not every item has all of it:
 | Your saved loops | Its own actions and **Favourite** — no delete, because a loop belongs to its song and is removed on the waveform |
 | **Where you learned it** links | **Edit link** and **Delete** — a link has no favourite, and this delete is immediate rather than undoable |
 
-<!-- shot: gestures/row-hold-menu | role: panel
-     | alt: A song row held down in the library, showing its menu of Details, Edit and Delete
-     | state: seeded library, Library screen, row "Binta" held -->
-
 The transport's skip buttons use the same kind of menu for a different job: hold either one and pick
 how far it jumps — **5s**, **10s**, **15s**, **30s** or **1 min**. Journal entries and recorded
 takes have their own hold menus too.
@@ -112,10 +109,6 @@ a **block inside a routine** it is **Record** — marking that block to capture 
 
 Deleting is not final straight away. A toast appears with an **Undo**, and the row only really goes
 when the toast does.
-
-<!-- shot: gestures/undo-toast | role: band
-     | alt: The undo toast after deleting a row, offering Undo
-     | state: seeded library, Library screen, a row swiped left and deleted -->
 
 ## On the waveform
 

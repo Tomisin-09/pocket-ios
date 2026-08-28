@@ -128,7 +128,7 @@ struct PlannerGoalsSection: View {
         }
     }
 
-    /// "3 skills · Little Wing" — the goal's shape at a glance; the target song appended when set.
+    /// "3 skills · Slow Bend" — the goal's shape at a glance; the target song appended when set.
     func subtitle(for goal: Goal) -> String {
         let count = goal.skillIDs.count
         var parts = ["\(count) skill\(count == 1 ? "" : "s")"]

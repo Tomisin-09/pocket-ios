@@ -67,10 +67,6 @@ Tap **+** on Home — or open **Song library** and use **Import a song** — and
 app copies it into its own storage, reads the whole file once to draw its waveform, and adds it to
 your library.
 
-<!-- shot: getting-started/import-picker | role: screen
-     | alt: The file picker open over Home, ready to choose an audio file
-     | state: seeded library, Home, + tapped -->
-
 The copy matters: because the song is Red Moon's own from then on, moving or deleting the original
 later does not silence it.
 
@@ -81,7 +77,8 @@ the end of it and tap **Loop** again. That span now repeats.
 
 <!-- shot: getting-started/loop-active | role: band
      | alt: The waveform with a loop span drawn across it and the transport showing the loop active
-     | state: seeded library, Little Wing, a loop active and repeating -->
+     | state: seeded library, Slow Bend, a loop active and repeating
+     | crop: 0,810,1206,945 -->
 
 If you would rather draw it, hold anywhere on the waveform and drag across the passage instead.
 

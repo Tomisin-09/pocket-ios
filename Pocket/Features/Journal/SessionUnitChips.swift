@@ -78,7 +78,7 @@ struct SessionUnitChips: View {
 
 #Preview("Session unit chips") {
     let live = SessionUnitRef(uid: UUID(), title: "Alternating picking", kind: .exercise)
-    let loop = SessionUnitRef(uid: UUID(), title: "Little Wing · Verse riff", kind: .loop)
+    let loop = SessionUnitRef(uid: UUID(), title: "Slow Bend · Verse riff", kind: .loop)
     let gone = SessionUnitRef(uid: UUID(), title: "Deleted drill", kind: .exercise)
     return SessionUnitChips(units: [live, loop, gone]) { unit in
         unit.uid == gone.uid ? nil : {}

@@ -121,12 +121,39 @@ final class ManualMetronomeShots: ManualShotCase {
         // The readout is re-read after every tap rather than counted, so a dropped tap is retried and
         // an accepted one is never repeated — a loop that just tapped harder would overshoot to 97,
         // which photographs as confidently as 95 and is equally wrong.
+        // **The opening tempo is read off the screen, not assumed.**
+        //
+        // The loop below treats "the readout does not say `bpm + 1`" as a dropped tap, and on a cold
+        // device that is not the only thing it can mean: this is the first test of the first pass,
+        // running against a simulator that finished booting seconds ago, and a readout that has not
+        // rendered yet fails exactly the same probe. That is how this failed at 90 BPM having
+        // "stopped responding" — six taps spent inside the first moments of the screen's life, on a
+        // stepper that was working. The Home card on the way in needed a retry in the same run,
+        // which was the tell.
+        //
+        // Waiting for the default here proves the view is live and the engine has published a tempo
+        // before a single tap is counted against the stepper. It also catches the trap the
+        // `StandaloneMetronomeDefaults` comment describes — an engine default that moved — as a
+        // legible failure rather than as six mysterious swallowed taps.
         var bpm = StandaloneMetronomeDefaults.bpm
+        XCTAssertTrue(element(in: app, labelStartingWith: "\(bpm) beats per minute")
+            .waitForExistence(timeout: Self.shootTimeout), """
+            the metronome never showed its opening tempo of \(bpm) BPM, so nothing below this can \
+            tell a swallowed tap from a screen that has not drawn yet. If the engine's `defaultBPM` \
+            has moved, `StandaloneMetronomeDefaults` has to move with it.
+            \(stepLog)
+            """)
+        note("the metronome is live at \(bpm) BPM")
+
         var swallowed = 0
         while bpm < Self.figureBPM {
             plus.tap()
+            // The first probe after a swallowed tap gets the full timeout rather than the short one:
+            // once a tap has been lost, slowness is back on the table as an explanation and the
+            // cheap probe is no longer the right instrument.
+            let patience = swallowed == 0 ? Self.tapProbeTimeout : Self.shootTimeout
             let next = element(in: app, labelStartingWith: "\(bpm + 1) beats per minute")
-            if next.waitForExistence(timeout: Self.tapProbeTimeout) {
+            if next.waitForExistence(timeout: patience) {
                 bpm += 1
                 continue
             }

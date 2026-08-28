@@ -49,13 +49,56 @@ extension ManualShotCase {
 
         // Which of the two failures this is decides where to look, so it is worked out here rather
         // than left to whoever reads the log: in the tree means scrolling, absent means wrong screen.
-        let diagnosis = element.exists
+        let verdict = element.exists
             ? "It is in the tree, so this is a scrolling problem, not a missing element."
-            : "It is not in the tree at all, so this is the wrong screen."
+            : "It is not in the tree at all, so this is the wrong screen — or the wrong name for it."
         XCTFail("""
-            never brought '\(name)' into the frame in \(maxSwipes) slow swipes. \(diagnosis)
+            never brought '\(name)' into the frame in \(maxSwipes) slow swipes. \(verdict)
+            \(diagnosis(for: name, in: app))
             \(stepLog)
             """, file: file, line: line)
+    }
+
+    /// Swipe blind until a row **enters the tree at all**, then return it.
+    ///
+    /// `scrollIntoFrame` and `scrollIntoView` both watch an element while they scroll, so both need
+    /// one to exist before they can start. Below the fold in a SwiftUI `List` there is nothing to
+    /// watch: the row has not been built, so it is not merely off-screen, it is absent — `exists` is
+    /// false and `waitForExistence` times out against a screen the row is plainly on.
+    ///
+    /// Measured, not feared. The seeded library sorts by title and holds six songs; **Slow Bend** is
+    /// the fifth, and every song-player figure in the manual is shot on it. The first walk of that
+    /// screen reported `MISS 'Slow Bend' — not in the tree` and carried on photographing the library,
+    /// which is exactly the wrong-subject failure this harness exists to catch, arriving through a
+    /// helper that could not start.
+    ///
+    /// So this swipes first and queries after, which is the only order that works, and hands back to
+    /// `scrollIntoFrame` once there is something to watch.
+    ///
+    /// - Parameter prefix: matched against `Button` labels only. A row carries its metadata after
+    ///   its title (`Slow Bend, Jack Trader, 1 loop, …`), so a prefix is the right shape — but never
+    ///   aim one at text the **back button** shares, which inside a pushed screen is the previous
+    ///   screen's title.
+    @MainActor
+    @discardableResult
+    func revealRow(labelStartingWith prefix: String,
+                   in app: XCUIApplication,
+                   maxSwipes: Int = 10,
+                   file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
+        for pass in 0...maxSwipes {
+            if row.exists {
+                note("revealed row '\(prefix)'" + (pass > 0 ? " after \(pass) swipe(s)" : ""))
+                return row
+            }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTFail("""
+            no row whose label begins '\(prefix)' after \(maxSwipes) slow swipes — it never entered \
+            the tree, so either this is the wrong screen or the list does not hold it.
+            \(stepLog)
+            """, file: file, line: line)
+        return row
     }
 
     /// Is this element in the **photograph** — not merely in the accessibility tree?
@@ -182,6 +225,17 @@ extension ManualShotCase {
     /// clean photograph of the wrong subject gets made. Every attempt is written to the step log, so
     /// a figure that needed three taps is visible afterwards rather than smoothed away.
     ///
+    /// ⚠️ **Never aim this at a toggle.** The retry is sound only for a control that *goes away* when
+    /// it works — a row that pushes a screen, a button that opens a sheet, anything that covers or
+    /// replaces itself. A disclosure header stays exactly where it is when it works, so the "did
+    /// anything happen?" test is satisfied on every attempt and the retry fires every time — and each
+    /// retry reverses the last one. `exercises/practice-settings` was written this way and reported
+    /// *tapped 3× and the expanded panel never appeared* about a panel the first tap had opened
+    /// correctly: expand, collapse, expand, with the two probes in between looking at the wrong
+    /// state. For a toggle, tap once by hand and assert what it revealed — and if the revealed thing
+    /// is below the fold, reach it with `scrollIntoFrame`, which can tell "not scrolled to" from
+    /// "not there" and says which it was.
+    ///
     /// - Parameter revealing: an element the destination owns and the current screen does **not**.
     ///   A gate the starting screen can already satisfy is not a gate — see `tapHomeCard`.
     /// - Parameter prepare: run before each tap; return `false` to abandon (it has already failed).
@@ -195,6 +249,10 @@ extension ManualShotCase {
              beforeEachTap prepare: () -> Bool = { true }) {
         for attempt in 1...attempts {
             guard prepare() else { return }
+            guard awaitHittable(control) else {
+                XCTFail(unreachable(control, labelled: label), file: file, line: line)
+                return
+            }
 
             control.tap()
             note("tapped '\(label)'" + (attempt > 1 ? " (attempt \(attempt))" : ""))
@@ -212,6 +270,7 @@ extension ManualShotCase {
                     tapped '\(label)' and it is no longer reachable, but \(revealedName) never \
                     appeared — so something opened and it is not what this shot needs, and any \
                     capture from here would be of the wrong thing.
+                    \(diagnosis(for: revealedName, in: XCUIApplication()))
                     \(stepLog)
                     """, file: file, line: line)
                 return
@@ -221,6 +280,67 @@ extension ManualShotCase {
 
         XCTFail("""
             tapped '\(label)' \(attempts)× and \(revealedName) never appeared.
+            \(diagnosis(for: revealedName, in: XCUIApplication()))
+            \(stepLog)
+            """, file: file, line: line)
+    }
+
+    /// **Hold** a control and wait for what it opens — `tap(_:revealing:)` for a long press.
+    ///
+    /// Four figures are context menus a player reaches by holding (`gestures/row-hold-menu`,
+    /// `reference/library-row-menu`, `routines/rest-insert`, `looping/multi-select`), and a hold is
+    /// lost the same way a tap is: the gesture is synthesised, accepted, and nothing opens. It is
+    /// worse here, because a lost hold leaves the app on a screen that is *supposed* to be in the
+    /// frame — the library is still the library with no menu over it — so the capture that follows is
+    /// a clean, plausible, wrong photograph.
+    ///
+    /// One difference from `tap`, and it is deliberate: a press is retried only while the revealed
+    /// item is still absent, and the item is checked **first**. A context menu that did open covers
+    /// its own row with a scrim, so pressing again would dismiss it — the retry would undo the thing
+    /// it is meant to secure.
+    ///
+    /// - Parameter revealing: an item the menu owns. Never the row's own label: the menu draws a
+    ///   *preview* of the held row, so the row's text is in the tree either way and gating on it
+    ///   cannot tell an open menu from a closed one.
+    @MainActor
+    func hold(_ control: XCUIElement,
+              labelled label: String,
+              revealing revealed: XCUIElement,
+              called revealedName: String,
+              duration: TimeInterval = 1.0,
+              attempts: Int = 3,
+              file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(control.waitForExistence(timeout: Self.shootTimeout),
+                      "nothing to hold: '\(label)' is not in the tree.\n\(stepLog)",
+                      file: file, line: line)
+
+        for attempt in 1...attempts {
+            if revealed.exists {
+                note("\(revealedName) is open, not pressing '\(label)' again")
+                return
+            }
+            guard awaitHittable(control) else {
+                XCTFail("""
+                    '\(label)' is in the tree but never became hittable, so the press could not be \
+                    synthesised at all. This is a race, not a swallowed gesture.
+                    \(stepLog)
+                    """, file: file, line: line)
+                return
+            }
+            control.press(forDuration: duration)
+            note("held '\(label)'" + (attempt > 1 ? " (attempt \(attempt))" : ""))
+
+            let patience = attempt == attempts ? Self.shootTimeout : Self.tapProbeTimeout
+            if revealed.waitForExistence(timeout: patience) {
+                note("\(revealedName) appeared after holding '\(label)'")
+                return
+            }
+            note("hold \(attempt) opened nothing, retrying")
+        }
+
+        XCTFail("""
+            held '\(label)' \(attempts)× and \(revealedName) never appeared — so the screen is \
+            unchanged, and a capture from here would be of the library with no menu on it.
             \(stepLog)
             """, file: file, line: line)
     }

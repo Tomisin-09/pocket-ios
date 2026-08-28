@@ -105,6 +105,41 @@ that exists to say the app is not the source for either.
 
 **The prose is complete.** What remains is Phase 5: shooting the images the markers describe.
 
+### Phase 5 runs in three stages, and they are not interchangeable
+
+Learned by interleaving them and paying for it. **Seed everything first, drive area by area, review
+the whole set once.**
+
+1. **Seed.** Audit every marker's `state:` against what the store actually holds, and make all the
+   seed additions in one pass. A seed change is retroactive: it invalidates every figure already
+   shot, because the set is only a set if all of it came from one device state — which is why
+   `shoot-manual.sh` files narrowed runs into `filed-partial/` and reserves `filed/` for a full one.
+   Verify seed work against the **model**, not by shooting it.
+2. **Drive.** One class per area of the manual, each run narrowed with `POCKET_SHOOT_ONLY`. This
+   stage cannot be batched: selectors are only discoverable by running, a failed shoot exits before
+   the filing step, and sixty tests written blind against guessed labels means one bad label files
+   nothing after a nine-minute run. Images from these runs are throwaway — they prove the drive
+   works, not the set.
+3. **Review.** One full run, one erased device, then open all 101. `md5` the filed directory first:
+   two identical images is the signature of a missed tap.
+
+### What the audit found, and what is still open
+
+The `state:` fields resolve against the seed except for these. None of them is a prose problem; each
+is a device the shoot cannot currently produce.
+
+| Markers | Needs | Status |
+|---|---|---|
+| `songs/empty-library` · `reference/loops-library` · `getting-started/first-run` | a launch with **no seed flags** — the seeded device has six songs with loops attached and skips the first-run questions | **solved — the `bare` pass.** `shoot-manual.sh` now drives an unseeded device as a pass of its own (`ManualBareShots`); `reference/loops-library` turned out not to need it and is shot in `base` |
+| `songs/missing-audio` | a song whose file cannot be found | **solved — break the link mid-session, do not seed it.** `ScreenshotSeed.importReal` builds every seeded song with a bookmark into `Documents/SeedAudio/` and **no** `audioFileName`, so a seeded song is pre-0148-shaped and resolves through that bookmark alone until it is first opened. Delete one staged file (and the song's owned copy, if it has since adopted) and `SongAudioResolver.resolve` returns `nil` for that song and nothing else. Reversible — copy the master back. Recipe in `docs/manual-shoot-list.md` |
+| `subscription/settings-pro` · `subscription/trial-row` | a Pro entitlement and a running trial | no launch hook exists, and `AppTransaction.shared` prompts for sign-in on a simulator and leaves the app untappable — treat as `device:`, as `subscription/paywall` already is |
+| `toolkit/tuner` · `reference/tuner` | a microphone hearing a real string | already `device:`, noted in `ManualToolkitShots` |
+| `songs/import-progress` | a multi-file import **caught in flight** | **open — it needs a hold, not a faster tap.** The picker itself is reachable (`ManualImportShots.resolvedPicker` already crosses into its process), but the overlay exists only for as long as the decode takes, and a driven attempt that arrives late photographs the library with nothing over it — clean, and wrong, which is the one failure this harness is built to refuse. `-uiTesting` has no equivalent of the undo window's 4s→120s stretch for an import. The fix has a known shape — seed the batch so it does not go through the picker, and hold `SongImportModel.progress` under the test flag — and it is an app-side seam, so it is a decision rather than a tap |
+
+Everything else the markers name resolves: `Slow Bend`'s `Verse riff`, the `Binta` and `Feels`
+imports, the four collections behind the filter menu, and — since this pass — two ranked long-term
+goals and two extra routines.
+
 ## Standing rules for whoever writes here
 
 1. **Quote, don't restate.** A definition that exists in `PracticeFieldInfo` or `SettingsInfo` is
@@ -144,7 +179,7 @@ human, and it is the first thing to reread when a page starts to feel thin.
 - **Take sharing.** Parked pending legal advice (ADR 0150).
 - ~~**The bundled demo song.**~~ **Resolved 2026-08-13, and it is not parked.** Walked in the
   build: `LibraryView`'s empty state still offers **Try the demo** beside **Import a song**, and it
-  inserts `Song.sample()` — Little Wing, with loops and markers already on it. ADR 0148 §7 does not
+  inserts `Song.sample()` — Slow Bend, with loops and markers already on it. ADR 0148 §7 does not
   describe what shipped. `songs.md` documents it.
 
 ## The shot markers
@@ -155,7 +190,7 @@ GitHub, so the repo copy still reads as prose, and the port turns it into an ima
 ```
 <!-- shot: looping/speed-bar | role: band
      | alt: The speed bar showing the speed control, the metronome and the BPM readout
-     | state: seeded library, Little Wing, speed reduced below 100% -->
+     | state: seeded library, Slow Bend, speed reduced below 100% -->
 ```
 
 - **`slug`** is `group/name` and names the *shot*, not the page. The same crop legitimately appears
@@ -182,7 +217,7 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
 
 - **Seed audio must be WAV.** `ScreenshotSeed` reads `Documents/SeedAudio/`, and the simulator's
   decoder silently fails on the `.m4a` masters — the seed then imports nothing, `importReal` returns
-  early, and the library shows one song (Little Wing, the built-in) instead of six. `afconvert -f
+  early, and the library shows one song (Slow Bend, the built-in) instead of six. `afconvert -f
   WAVE -d LEI16@44100` over the masters fixes it. A one-song library looks like a working seed, so
   check the count before shooting.
 - **The import picker is a separate process.** `app.screenshot()` returns a clean picture of Home
@@ -200,13 +235,44 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
   library; it writes no `PracticeRun`, `JournalEntry`, `Recording` or `SavedChord`, because those are
   only ever written as somebody uses the app. The Practice log and the Journal therefore open empty on a
   freshly seeded install, and the Toolkit reads *My chords, none saved* — nine figures are of those
-  screens. `-seedHistory` (`PracticeHistorySeed`) writes six weeks of runs, four notes, one take and
-  four saved voicings, deterministically. It is a **separate flag** from `-seedScreenshots` so the
-  App Store shoot keeps its ahistorical library, and both refuse to run twice — so the shoot needs
-  `xcrun simctl erase` in front of it, or it photographs the last run.
-- **The first-run questions are skipped** under the same flag (`HomeView+ProfileMoment` returns
-  early). `getting-started`'s first-run shot has to come from a launch without it, on a fresh
-  install.
+  screens. `-seedHistory` (`PracticeHistorySeed`) writes six weeks of runs, four notes, one take,
+  four saved voicings, two ranked long-term goals and two routines beside the preset one,
+  deterministically. It is a **separate flag** from `-seedScreenshots` so the App Store shoot keeps
+  its ahistorical library, and both refuse to run twice — so the shoot needs `xcrun simctl erase` in
+  front of it, or it photographs the last run.
+- **A screen that ships without a seed documents its own empty state.** The long-term goals and the
+  extra routines above were added for exactly that reason: ADR 0171 shipped the goal list and its
+  marker, nothing wrote a `LongTermGoal`, and `reference/long-term-goals` would have come back as a
+  clean photograph of *Nothing here yet* filed under a page describing a ranked list — green run,
+  right screen, wrong figure. Check the seed when a marker names a populated state, and add to
+  `PracticeHistorySeed+Authored` rather than working around it in a test.
+- **Seed fixtures resolve by frozen id, never by display name — and a silent miss is the danger.**
+  The routine seed asked for an exercise called `Scale Runs`, which is in `PracticePresets.allSpecs`
+  and **not** in the six of `firstRunSlugs`, so the lookup returned nil, a `guard … else { continue }`
+  dropped the block, and the shoot filed a routine reading `1 block` where three were intended. The
+  run was green, the screen was right, and the store was wrong. Resolve on `presetSlug`, assert that
+  what you name is what a fresh install actually holds, and note that the unit tests covering that
+  seed **passed** throughout: they created the exercises themselves, by the names the seed asked
+  for. A fixture that supplies its own preconditions cannot test a claim about the world.
+- **Some figures need the opposite — a device with nothing on it.** `songs/empty-library` and
+  `getting-started/first-run` specify a fresh install, and the shoot's whole premise is a seeded
+  one: `ScreenshotSeed` writes six songs with loops attached, so the library is never empty on that
+  device and the first-run questions never appear. This is what the **`bare` pass** is: an erased
+  device launched with no seed flags, driven by `ManualBareShots`. It costs nothing extra, because a
+  pass is already one erased device — the bare pass simply declines to seed the one it gets.
+  `reference/loops-library` was listed here too and did not belong: a seeded device's *loops* library
+  is a different screen from its song library, and it is shot in `base`.
+- **The first-run questions are skipped under `-uiTesting`, not under `-seedScreenshots`.**
+  `HomeView+ProfileMoment` returns early on `UITestRuntime.isActive`; its own comment says it
+  *matches* the `-seedScreenshots` convention, which is easy to read as *reads that flag*. It does
+  not. A launch carrying only the seed flags shows the intake over Home — verified, not inferred.
+  That is useful rather than a problem: `getting-started/first-run` is shootable on the seeded
+  device by launching without `-uiTesting`, and does not need a bare install.
+- **`-uiTesting` is what unlocks Pro, and most of the manual is behind it.** `StoreManager` sets
+  `debugProOverride = true` under it, so a launch without it meets a paywall at Practice, Routines
+  and the song library. It also disables animations (no capture landing mid-transition) and holds
+  the undo toast open for 120s instead of 4, which is what makes `gestures/undo-toast` shootable by
+  hand at all. Every driven figure was shot under it, so any hand-shot frame must be too.
 - **Debug-only UI has to be hidden, not cropped.** The Settings hub carries a tenth destination,
   `Developer`, under `#if DEBUG` — present in every build a shoot can drive, and shipped to nobody.
   The first shoot photographed it into `reference/settings-hub`, whose own alt text lists the nine
@@ -244,6 +310,56 @@ alone put a screen recording in with the figures.
 A check whose page does not exist yet reports **pending**, not failure — that is what let the
 machinery land before the prose. What it cannot check is whether a page is *true*: only somebody
 with the build open can say that, which is why every slice ends with a walk through the app.
+
+**C13 is not a measure of how much of the shoot is done, and never was.** It counts `capture()`
+calls in `PocketShootUITests/`, which is what the harness *intends* to shoot. A run that
+fails part-way leaves the call in the source with no image on disk, and a hand shoot adds no calls
+at all — so C13 read 33 while 21 images existed. Ask the images:
+
+```sh
+./scripts/shoot-progress.py            # shot / left, grouped by page
+./scripts/shoot-progress.py --verify   # geometry, unexpected duplicates, truncated files
+./scripts/shoot-progress.py --remaining
+```
+
+It shares this script's marker parse rather than re-reading the generated `shots.md`, for the
+reason the rest of this file gives: a second parser for a fact that already has an owner gets it
+wrong, and its first version did — 98 figures of 101, and 1 device figure of 4.
+
+## Cutting the figures
+
+A master is a whole device frame. A **figure** is what a page shows — often the same frame, but for
+eighteen of them a `crop:` rect out of one.
+
+```sh
+./scripts/build-figures.py             # → shots/figures/ + MANIFEST.json
+./scripts/build-figures.py --out DIR
+```
+
+Output lands under `shots/`, which is **gitignored, and that is the point**: binaries get one home
+and it is the rendering site's `public/redmoon/`, so this is a drop rather than a checked-in asset.
+The manifest carries each figure's slug, role, alt, crop and page for the port to consume, and marks
+every one `theme: dark` — the shoot forces dark appearance, so the light half of the `<picture>`
+pairing D7 describes does not exist yet.
+
+Three things it deliberately does not do. It never invents a master: a marker with no image on disk
+is reported and skipped, because a placeholder is indistinguishable from a figure until somebody
+looks. It never burns `call:` callouts into the raster — they are carried into the manifest for the
+site to draw as SVG, so rewording one never costs a re-shoot. And it never resizes, because the role
+carries the display width and the site owns that.
+
+**It also reports a gap the shoot cannot see.** A role is a promise about size — a `glyph` is one
+control inline in a sentence — and without a `crop:` the figure falls back to the whole master,
+which is not a smaller version of the right picture but a different one. The driven harness files
+masters and never measures rects, so a purely driven shoot leaves every `glyph`, `detail` and `band`
+un-cropped. Thirteen were, when this script was first run; `terms/info-button` was a whole phone
+screen where the sentence wanted an 84×94 ⓘ.
+
+**Measure a rect by cutting it and looking at it.** `sips` given a rect that runs off the frame does
+not fail and does not clamp — it returns an image of exactly the size asked for and pads the
+overhang, so "is the output w×h" passes on a figure that is half padding, and passes loudest on the
+rect that is most wrong. The script compares the rect to the master for that reason; your eyes are
+still what confirm it is the right part of it.
 
 ## The coverage audit — run 2026-08-14, at the end of the reference wing
 

@@ -5,8 +5,8 @@ Reached from the `Practice` card on Home. Everything in this region is part of R
 ## The hub
 
 <!-- shot: reference/practice-hub | role: screen
-     | alt: The Practice hub with the Today section, the Routines row and the Your units section holding Exercises and Loops
-     | state: seeded library, Practice hub -->
+     | alt: The Practice hub with the Today section, the Routines and Long-term goals rows, and the Your units section holding Exercises and Loops
+     | state: seeded library, Practice hub, goals and routines present -->
 
 Five rows in two sections, each carrying a count.
 
@@ -22,10 +22,6 @@ Five rows in two sections, each carrying a count.
 `Your units`. Routines are sessions; exercises and loops are the units a session is built from.
 
 ## `Today` — the planner
-
-<!-- shot: reference/planner | role: screen
-     | alt: The Today's session screen with the length presets, the away-from-your-instrument toggle, the Goals section and Generate today's session
-     | state: seeded library, Practice ▸ Today, no goals yet -->
 
 - **`How long do you have?`** — `Quick`, `Focused` and `Full`, each captioned with roughly how long
   the whole sitting runs.
@@ -78,8 +74,8 @@ sessions.* Procedure is in [Today's session](../sessions.md).
 ## `Routines`
 
 <!-- shot: reference/routines-library | role: screen
-     | alt: The Routines library with one routine row showing its block and rest counts and a play button
-     | state: seeded library, Practice ▸ Routines -->
+     | alt: The Routines library with one routine row showing its block and rest counts, a second line giving how many times it has been practised and when, and a play button
+     | state: seeded library, Practice ▸ Routines, at least one routine run before -->
 
 A list of routines, each row carrying its name and what it is made of — `4 blocks · 2 rests` — with a
 **play** control on the row itself and the routine's estimated length. A routine that estimates at

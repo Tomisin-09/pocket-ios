@@ -21,6 +21,13 @@ the manual's own manifest instead also catches the opposite error: a `capture` c
 a marker in any page, i.e. a figure nothing will ever place.
 
     ./scripts/file-shots.py shots/export shots/filed
+    ./scripts/file-shots.py --keep shots/export shots/filed   # add to the set, don't clear it
+
+**`--keep` is for the second pass onwards, and only that.** The shoot drives several passes, each
+against its own erased device (see `shoot-manual.sh`), and each files what it shot into the same
+directory. Clearing on every call would leave `filed/` holding the last pass alone; never clearing
+would let a renamed slug's old image survive to be shipped. So the first pass of a shoot clears and
+the rest keep, and which one is calling is the caller's to know.
 """
 
 import json
@@ -64,9 +71,12 @@ def parse(name):
 
 
 def main():
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    keep = "--keep" in args
+    args = [a for a in args if a != "--keep"]
+    if len(args) != 2:
         sys.exit(__doc__)
-    export, filed = Path(sys.argv[1]), Path(sys.argv[2])
+    export, filed = Path(args[0]), Path(args[1])
 
     manifest = export / "manifest.json"
     if not manifest.exists():
@@ -75,9 +85,10 @@ def main():
 
     slugs = known_slugs()
     filed.mkdir(parents=True, exist_ok=True)
-    for stale in filed.iterdir():
-        if stale.is_file():
-            stale.unlink()
+    if not keep:
+        for stale in filed.iterdir():
+            if stale.is_file():
+                stale.unlink()
 
     # slug -> [(attempt, source, suffix)], so a slug shot more than once is visible rather than
     # resolved by whichever the loop happened to reach last.
@@ -109,8 +120,57 @@ def main():
                 shutil.copy2(source, filed / f"{slug}{suffix}")
                 images += int(suffix == ".png")
 
-    print(f"\n  {images} image(s) filed into {filed}  ({len(slugs) - len(found)} of "
+    # One frame legitimately serves several markers — `capture(…, alsoServing:)` — and until now
+    # only the primary got a file. The shared slugs were recorded in an "also serves:" line inside
+    # the `.context` text and nowhere else, so a fully green shoot left ten markers with no image
+    # while every check agreed it had succeeded: C13 counts the `capture()` call, which covers all
+    # of them, and nothing counted files. Each marker places an image on its own page, so each
+    # needs one on disk.
+    #
+    # Copied rather than symlinked: these are uploaded to the site repo, where a link would arrive
+    # as a dangling file, and a figure is small.
+    aliases = 0
+    for context in sorted(filed.glob("*.context")):
+        primary = context.with_suffix(".png")
+        if not primary.exists():
+            continue
+        for raw in context.read_text(encoding="utf-8").splitlines():
+            if not raw.startswith("also serves:"):
+                continue
+            for shared in raw.split(":", 1)[1].split(","):
+                name = shared.strip().replace("/", "-")
+                if not name:
+                    continue
+                if name not in slugs:
+                    print(f"  ⚠️  '{shared.strip()}' is served by {context.stem} but is not a "
+                          f"marker in any page")
+                    continue
+                # **An alias's own `.context` is a copy of the primary's, `also serves:` line and
+                # all.** So once aliases survive into a later pass — which is exactly what `--keep`
+                # made possible — this loop reads one back and is asked to copy a file onto itself,
+                # and `shutil.copy2` raises `SameFileError`. That crashed the filing step of a pass
+                # whose tests had all passed, and the shoot reported the pass as failed: a green run
+                # turned red by its own bookkeeping.
+                #
+                # Skipped rather than guarded upstream, because the same check covers the other way
+                # in: a marker that legitimately names itself in `alsoServing:`.
+                target = filed / f"{name}.png"
+                if target.resolve() == primary.resolve():
+                    continue
+                shutil.copy2(primary, target)
+                shutil.copy2(context, filed / f"{name}.context")
+                aliases += 1
+                images += 1
+
+    # Counted off the **directory**, not off this call's tally, because a pass files into a set the
+    # passes before it also filed into: "still unshot" is a fact about `filed/`, not about the
+    # export being read. Reporting this call's share as the whole was how a mid-shoot pass would
+    # claim ninety figures were missing while they sat in the same folder.
+    on_disk = len({p.stem for p in filed.glob("*.png")} & slugs)
+    print(f"\n  {images} image(s) filed into {filed}  ({len(slugs) - on_disk} of "
           f"{len(slugs)} manual slugs still unshot)")
+    if aliases:
+        print(f"  {aliases} of those are shared frames, copied from the figure that shot them.")
     for slug in sorted(unplaced):
         print(f"  ⚠️  '{slug}' was captured but is not a marker in any page — check the slug "
               f"in the test against docs/manual/shots.md")

@@ -12,7 +12,7 @@ import SwiftData
 /// Real audio: drop `.mp3`/`.m4a` files into the app's `Documents/SeedAudio/` folder
 /// (copy them in from the Mac via `simctl get_app_container … data`). Each is imported
 /// with a genuine extracted waveform + bookmark, so it renders like a real import.
-/// The bundled `Song.sample()` ("Little Wing") is added too — it plays via the tone
+/// The bundled `Song.sample()` ("Slow Bend") is added too — it plays via the tone
 /// generator and ships with loops, so it drives the "loop playing" hero shot.
 ///
 /// Idempotent: skips entirely if the library already has songs.
@@ -20,6 +20,18 @@ enum ScreenshotSeed {
 
     /// One loop to attach to a seeded song. `start`/`end` are fractions of duration;
     /// `mastery` is 0–5. Positional init keeps the metadata table compact.
+    ///
+    /// **Every track is our own, and the three standards are labelled `(Cover)`.** This seed is
+    /// `#if DEBUG` and never ships, but its output is photographs and those images are published:
+    /// the library figures show every row with its artist. Three real musicians were named here
+    /// until 2026-08-20 — which was defensible (a title is not copyrightable, and an app whose
+    /// whole premise is your own files may fairly depict a library holding them) but is simply
+    /// not worth arguing, so the rows now say what they are: Jack Trader playing covers.
+    ///
+    /// **These keys are filenames.** `importReal` takes the title from the staged file's name, so
+    /// a key here that no master matches gets no metadata at all — the song imports with a blank
+    /// artist and no loops, which reads in a figure as a bug in the app rather than a gap in the
+    /// seed. Rename the masters in `POCKET_SEED_AUDIO` and these keys in the same commit.
     private struct LoopSpec {
         let name: String
         let start: Double
@@ -50,19 +62,19 @@ enum ScreenshotSeed {
     }
 
     private static let metadata: [String: Meta] = [
-        "Red Moon": Meta(
-            artist: "Tom Misch", genre: "Neo-Soul", bpm: 92, key: "D Major",
+        "Red Moon (Cover)": Meta(
+            artist: "Jack Trader", genre: "Neo-Soul", bpm: 92, key: "D Major",
             collections: ["solos", "chill"],
             loops: [
                 LoopSpec("Main lick", 0.30, 0.44, 1.0, 4, 3),
                 LoopSpec("Outro turnaround", 0.68, 0.79, 0.75, 3, 2)
             ]),
-        "I Don't Trust Myself With Loving You": Meta(
-            artist: "John Mayer", genre: "Blues", bpm: 80, key: "C# Minor",
+        "I Don't Trust Myself With Loving You (Cover)": Meta(
+            artist: "Jack Trader", genre: "Blues", bpm: 80, key: "C# Minor",
             collections: ["blues", "solos"],
             loops: [LoopSpec("Intro riff", 0.05, 0.18, 0.75, 6, 4)]),
-        "I'd Rather Go Blind": Meta(
-            artist: "Etta James", genre: "Blues", bpm: 68, key: "C Major",
+        "I'd Rather Go Blind (Cover)": Meta(
+            artist: "Jack Trader", genre: "Blues", bpm: 68, key: "C Major",
             collections: ["blues", "needs-work"],
             loops: [LoopSpec("Verse phrasing", 0.22, 0.36, 0.75, 4, 1)]),
         // Jack Trader's two tracks round the library out to five. Without entries here
@@ -101,7 +113,7 @@ enum ScreenshotSeed {
         let existing = (try? context.fetchCount(FetchDescriptor<Song>())) ?? 0
         guard existing == 0 else { return }
 
-        // Playable hero: Little Wing (tone-generator audio + pre-made loops).
+        // Playable hero: Slow Bend (tone-generator audio + pre-made loops).
         context.insert(Song.sample())
 
         // Real-file imports with genuine waveforms, in a stable display order.

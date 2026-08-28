@@ -10,7 +10,7 @@ private struct HomePreviewSeed {
     let practicedOffset: TimeInterval?
 
     static let library: [HomePreviewSeed] = [
-        .init(title: "Little Wing", artist: "Jimi Hendrix", mastery: 2, practicedOffset: -3600 * 5),
+        .init(title: "Slow Bend", artist: "Jack Trader", mastery: 2, practicedOffset: -3600 * 5),
         .init(title: "Blue Hour", artist: "The Allmans", mastery: 4, practicedOffset: -86400 * 2),
         .init(title: "Apex", artist: "Arc", mastery: 5, practicedOffset: -86400 * 9),
         .init(title: "Red Moon", artist: "Zydeco Trio", mastery: 1, practicedOffset: nil),

@@ -4,13 +4,27 @@ extension Song {
     /// In-memory demo song — the generated arpeggio (`SampleToneGenerator`) is its
     /// audio. Seeded into the store on first launch and used by previews.
     /// `bookmark == nil` flags it as the sample (no real file behind it).
+    ///
+    /// **Every field here is fabricated on purpose, and names nobody real.** This is the
+    /// only invented record that *ships* — `LibraryView.addDemo` inserts it behind
+    /// **Try the demo**, so whatever it claims to be, a released build claims on our
+    /// behalf. It used to be "Little Wing" by Jimi Hendrix, album "Axis: Bold as Love",
+    /// in a collection called "Hendrix study". The audio was always a generated arpeggio,
+    /// so nothing was ever reproduced — but a real artist's name and album carried as
+    /// commercial demo content is a trademark and publicity question rather than a
+    /// copyright one, and it is not one worth having. Keep this attributed to us.
+    ///
+    /// The loop and marker names are deliberately generic (`Verse riff`, `Chorus bend`,
+    /// `Intro turnaround`, `Tricky bend`): the user manual navigates by them in roughly
+    /// twenty figures, so they are the expensive half to rename and the half that never
+    /// needed renaming.
     static func sample() -> Song {
         let duration: TimeInterval = 30
-        let song = Song(title: "Little Wing", artist: "Jimi Hendrix",
-                        album: "Axis: Bold as Love", year: 1967, key: MusicalKey.gMinor.rawValue,
+        let song = Song(title: "Slow Bend", artist: "Jack Trader",
+                        album: "Demos", year: 2024, key: MusicalKey.gMinor.rawValue,
                         bpm: 76,
-                        collections: ["Hendrix study", "Bends & vibrato"],
-                        comment: "Watch the thumb-over chord voicings in the intro.",
+                        collections: ["Slow blues", "Bends & vibrato"],
+                        comment: "Let the bends sit just under pitch on the way up.",
                         duration: duration, amplitudes: demoAmplitudes(count: 120),
                         ref: SongRef(id: "sample", source: .localFile, bookmark: nil))
         let loops = [

@@ -1,10 +1,12 @@
 # ADR 0165 — the manual quotes the app
 
 - **Status:** **Accepted** — the whole manual is written and on `main`: 19 pages, ~24,000 words,
-  96 shot markers. Every check C1–C12 is live and passing; the coverage audit ran at
+  105 shot markers. Every check C1–C12 is live and passing; the coverage audit ran at
   the end of the reference wing and found nothing unticked (see
   [docs/manual/README.md](../manual/README.md)). What remains is Phase 5, the images — tracked by
-  **C13**, which is pending by design until the shoot finishes (16 of 94 drivable shots captured).
+  **C13**, which is pending by design until the shoot finishes (97 of 99 drivable shots have a
+  `capture()`; `routines/block-record` was the last one written, `songs/import-progress` is the one
+  still open — see the table in [docs/manual/README.md](../manual/README.md)).
   <br>Drafted 2026-08-13, accepted 2026-08-14. `CHANGELOG.md` still gets no entry until the manual
   **ports** to the site, which is the trigger set in Consequences and is unchanged by this.
 - **Date:** 2026-08-13
@@ -174,6 +176,20 @@ Driven-state is deliberately kept **out of `shots.md`**: C12 diffs that file, so
 would make editing a Swift test fail a docs check, coupling the two halves that
 `scripts/docs-only.sh` exists to keep apart.
 
+**The zero-capture guard was not enough, because the parse was never zero.** C13's pattern was
+anchored on `capture(`, and the harness has a second spelling: `captureChromeless`, used for every
+screen with no navigation bar — the song player, the between-blocks screen, the session recap, the
+reps editor, the first-run intake. Fifteen of seventy-nine calls, none of them matched. It found
+sixty-four, which is emphatically not zero, so the one defence written against a blind parser never
+fired. The quiet cost was a wrong number: fourteen finished figures reported as unshot, and Phase 5
+is tracked by that number. The loud cost is that the **ghost branch reads the same set** — the one
+thing C13 hard-fails on — so a `captureChromeless` naming a slug no marker defines could never have
+been caught at all, which is the failure the check exists for. **A check that parses a subset of
+what it guards passes by not looking**, and it does so while reporting a plausible number; the
+zero-guard only catches the case where the subset happens to be empty. The pattern now matches
+`capture\w*(`, and `captured_slugs` runs `strip_comments` first for the reason C9 does — a
+commented-out `capture()` is a figure nothing takes, and counting it marks the shot done.
+
 Two callers, one implementation — the `docs-only.sh` pattern from ADR 0133:
 
 1. `scripts/pre-push.sh`, **before** the tier logic, so it runs even under `POCKET_PREPUSH=skip`
@@ -227,6 +243,22 @@ page doesn't is a sixth source of truth with no check behind it.
 - **The manual is where "we never built that" becomes visible.** A page that cannot be written
   without an apology is a design finding, and the coverage audit at the end of the reference wing
   is the manual's definition of done.
+- **The shoot is where "we never seeded that" becomes visible, and it fails silently.** A marker
+  naming a populated state (`"two goals ranked"`, `"several routines saved"`) is a claim about the
+  *store*, and nothing in D8's checks can test it — C13 only asks whether a `capture()` exists.
+  Where the seed is short, the figure comes back a clean photograph of an empty screen, filed under
+  a page describing a full one, with a green verdict over it. Found twice in two ADRs: 0173 grew
+  `PracticeHistorySeed` for the routine history section before shooting it, and ADR 0171's
+  long-term goal list had shipped a screen and a marker with nothing writing a `LongTermGoal` at
+  all. **A feature that ships a screen ships its seed**, in `PracticeHistorySeed+Authored`.
+- **Three markers need a device the shoot cannot produce, and that is a gap in the harness rather
+  than in the pages.** `songs/empty-library`, `reference/loops-library` and
+  `getting-started/first-run` each specify a fresh install; `shoot-manual.sh` erases once and then
+  seeds six songs with loops attached, so on that device the loops library is never empty and the
+  first-run questions never appear. They need a **second unseeded pass** in the same script, which
+  does not exist yet. Shooting them from the seeded device instead would satisfy C13 while
+  photographing states the pages do not describe — the failure this whole phase is written against,
+  arriving through the progress metric.
 
 ## Alternatives rejected
 
