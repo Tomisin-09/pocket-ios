@@ -84,12 +84,149 @@ importer with id collisions and cross-version schemas is its own ADR. `schemaVer
 Worth pairing with a reconsideration of the **schema freeze** (2026-08-07). The freeze exists because
 a bad migration is unrecoverable — which stops being true for anyone holding an archive.
 
+**Sharpened 2026-08-31: this is only half of "import".** What is described above is *restore your
+own archive*. The other job is **receive someone else's** — a teacher's routine, a friend's
+exercise — written up under *Practice support — five ideas with no home yet* (item 2). It is
+one-unit, always additive and never destructive, which makes it the **easier** of the two despite
+being thought of second, and it shares an encoder with *A routine cannot be given away* (Routines
+item 4). Deciding which of the two ships first is now an open question this entry cannot answer
+alone.
+
 ## An automatic orphan sweep (logged 2026-08-23, ADR 0182)
 
 ADR 0182 ships *Reclaim space* as a manual action deliberately: a delete the player did not ask for
 and cannot see is the wrong first version, especially while the referenced set is only as good as the
 fetch that feeds it. Once the manual sweep has been observed doing the right thing on real devices,
 running it on launch or in the background is the obvious follow-up.
+
+## Practice support — five ideas with no home yet (logged 2026-08-31)
+
+Came out of a *"what else could we add that supports practice?"* pass over
+`docs/backlog.md`, `docs/positioning.md` and the journal code. Seven directions surfaced; three
+already had entries here and were amplified in place rather than duplicated (see the pointer lines
+on *An importer to close the export loop*, *A filter on the list screens*, *A song whose tempo
+changes at a section*, and Routines item 4). These five were recorded nowhere.
+
+**None of this is scheduled.** Each is written to be pickable cold: the gap, the file that proves
+it, and the decision that would break it.
+
+Two invariants every one of these is bound by, stated here once rather than five times:
+
+- **ADR 0070 / no-shame** (`docs/positioning.md` §3) — the app never grades the player *or their
+  habits*. No streak, no consistency score, no "on track". `scripts/check-manual.py` C7 has been
+  enforcing this on the manual for months.
+- **The multiplier thesis** (`docs/positioning.md` §1) — we own what happens between opening a
+  resource and being able to play the thing, and never ask the player to move their material or
+  their learning here.
+
+**Not on this list, deliberately: image attachments.** They are not an idea — they are Phase 2 of
+an Accepted ADR whose Phase 1 shipped, with the field already on disk. See the *Image attachments*
+entry further down; it needs a branch, not a park.
+
+### 1. The journal is written but not reviewed
+
+*Highest value of the five, and the cheapest: several small additive changes over a model that
+already holds the data.*
+
+Authoring is thoroughly covered — ADRs 0038 · 0058 · 0100 · 0143 · 0155 · 0160 · 0175. **Reviewing
+is not.** Four findings:
+
+- **A `JournalEntry` cannot be pinned.** `Exercise.isFavorite`
+  (`Pocket/Core/Models/Exercise.swift:273`), `Loop.isFavorite` (`Loop.swift:97`) and
+  `Routine.isFavorite` (`Routine.swift:40`) are each `Bool = false` — the additive-with-default
+  shape the **schema freeze permits**. After a year the two entries that mattered are buried under
+  the routine ones and the player has no way to mark them. **0070-safe by construction**: the
+  player marks it, the app never does. A *Pinned* scope falls out of it for free.
+- **The scope picker is blind to five-sixths of the model.** `JournalTimeline.Scope` is
+  `all, notes, takes` (`Pocket/Core/Models/JournalTimeline.swift:39-40`) while
+  `JournalEntryOwnerKind` carries **six** cases — exercise, loop, session, standalone, metronome,
+  orphan (`JournalEntry.swift:8-24`) — and `kindRaw` / `EntryKind` (`:85-97`) is a **second,
+  independent** axis that is also uncaptured. *"Just my session notes"* is unaskable.
+  ⚠ Note the trap before reading precedent into it: `searchHaystack` folds "metronome" in as a
+  typeable term (`JournalTimeline.swift:92`), so exactly one kind is filterable **by accident**.
+  That is not an affordance.
+- **There is no way to jump to a date.** The timeline is day-grouped and ordered `newest` or
+  `oldest`, nothing else (`Pocket/Features/Journal/JournalTabView.swift:38`). `MonthHeatmap`
+  (`Pocket/Features/PracticeLog/MonthHeatmap.swift`) is the obvious jump control and is **already
+  built** — currently reachable only from the Practice log.
+- ⚠ **Do not start with new filter UI.** Journal search is one of the four disagreeing matchers
+  documented under *A filter on the list screens* below, and `JournalTimeline.filter(_:query:)` is
+  the only one that is **not** diacritic-insensitive. That entry's order governs here too: collapse
+  the matchers onto `PickerSearch` first, then decide whether filters persist, then design the
+  affordance. Building a scope picker over the current matcher ships a uniform-looking control over
+  four different behaviours.
+
+**The shape of the space, so a future reader does not fight it.** ADR 0100 makes the Journal
+read-only for *owned* entries on purpose — authoring stays where the snapshot is honest — and ADR
+0155 §3 narrows that to standalone notes rather than overturning it. **A pin and a scope are
+review verbs and sit inside that rule.** Anything that edits an owned entry from the timeline does
+not, and is a different decision.
+
+### 2. Import is two different jobs wearing one word
+
+The importer logged above is **restore your own archive**. The second job is **receive someone
+else's** — a teacher's routine, a friend's exercise — and it is not the same work. Under the
+multiplier thesis a teacher handing over a session is the purest form of the product working
+(`docs/positioning.md` §5), and it is the receiving end of *A routine cannot be given away*
+(Routines item 4).
+
+- **Different trust models.** Your own archive is trusted. A stranger's file is not: id collisions
+  against units you already own, referenced audio you do not have, a routine whose blocks name
+  exercises that do not exist here.
+- **Different granularity.** Restore is whole-library and merge-vs-replace. Receiving is one unit,
+  always additive, never destructive — which makes it the **easier** of the two, and possibly the
+  one worth shipping first even though it was thought of second.
+- `schemaVersion` in `practice.json` is the seam for both, and nothing reads it yet (ADR 0181).
+
+### 3. Your hands are on the instrument
+
+**The one physical constraint of practice, and neither competitor cohort addresses it**
+(`docs/positioning.md` §2). The seam already exists and is deliberately shut:
+`Pocket/Core/Audio/NowPlayingController.swift:42-47` registers play / pause / toggle and explicitly
+**disables** `nextTrackCommand`, `previousTrackCommand`, `seekForward`/`Backward`,
+`skipForward`/`Backward` and `changePlaybackPositionCommand` *"so the system doesn't surface dead
+buttons"*. Enabling one is a decision about what it should mean, not new plumbing. Consumers today:
+`WaveformPracticeModel`, `StandaloneMetronomeEngine`, `RecordingPlayer`.
+
+- Candidate meanings: next → **the next routine block**; skip-forward → **re-trigger the loop**;
+  and the valuable one, a hands-free **mark a moment** (ADR 0175) — the gesture you most want
+  mid-run and can least reach for.
+- ⚠ **Decide the moment interaction first — it is the open question, not a free win.** ADR 0175
+  forbids putting a live timecode on *Add note here*, and a pedal-fired moment gets no chance to be
+  adjusted before it lands.
+- **BLE page-turner pedals (AirTurn / PageFlip) are a second, separate mechanism.** They present as
+  HID keyboards and arrive as key presses, not remote commands. Do not plan them as one job.
+- The command centre is process-global, and `teardown` removes exactly what it registered. Any new
+  command inherits that contract.
+
+### 4. Hear yourself then vs now
+
+ADRs 0174 / 0175 gave a take scrub, trim and timestamped notes. **A take still cannot sit next to
+an older take of the same loop.**
+
+This is the only form of progress the app is permitted to show, and it is 0070-safe *by
+construction* rather than by restraint: the app plays two files and says nothing, the player's ears
+do the judging. It is the story page's creed — *"there's no score here… because you're the one
+listening"* — as a feature.
+
+- ⚠ **ADR 0151**: a take outlives its loop (cascade → nullify), so "takes of the same loop" cannot
+  assume the loop still exists. The grouping key is the first thing to decide.
+- ⚠ **ADR 0175**: a trim **drops** the moments it cuts, so a trimmed take and its older self are
+  two different spans of time. Whatever is shown has to be honest about that.
+
+### 5. A reason to come back that isn't a streak
+
+There is no entry anywhere in this file for notifications, widgets or App Intents. Two facts make
+this cheaper than it looks, and one makes it dangerous:
+
+- **The notification permission is already exercised** —
+  `Pocket/Core/Monetization/TrialReminder.swift` / `TrialReminderPlan.swift` — so this adds no new
+  permission class (AGENTS.md: never add a permission the app doesn't use).
+- **There is no WidgetKit or App Intents target.** `project.yml` has `Pocket`, `PocketTests`,
+  `PocketUITests`, `PocketShootUITests`. A widget is a new target, not a new file.
+- ⚠ **The no-shame line is the entire design problem.** A nudge that counts days missed is exactly
+  what `docs/positioning.md` §3 rejects and what AxeLog ships. Facts only — what is next, never how
+  you are doing.
 
 ## Real guitar audio for chords and strums (parked 2026-08-20)
 
@@ -447,6 +584,14 @@ Also worth settling in the same pass: Routines has no search at all and no sort 
 and My chords, Takes and Glossary have neither. Those absences may be right — but they should be
 decided, not inherited.
 
+**2026-08-31 — this entry gates the journal-review work.** *Practice support — five ideas with no
+home yet* (item 1) wants an owner-kind scope on the Journal timeline, and it is explicitly blocked
+on the order stated above: **matchers first**. `JournalTimeline.filter(_:query:)` is the one matcher
+in the table that is not diacritic-insensitive, so a new scope picker built over it would be a
+uniform-looking control over four different behaviours — the exact failure this entry warns about.
+Read the "Routines / My chords / Takes / Glossary have neither" list alongside it: the Journal's
+missing scope is the same absence one screen further on.
+
 ## Filtering by two collections returns nothing — **SHIPPED as ADR 0159** (2026-08-12)
 
 **Done on branch `pocket-252`.** `Labels.matches(_:anyOf:)` added, `LibraryView` switched to it,
@@ -591,6 +736,15 @@ the *phase* there, but the beat *interval* is still 92's, so it is wrong again w
 bars and you would be planting an anchor every bar. 0154 says this in its own consequences:
 anchors stop error accumulating, they don't make one BPM correct. **Wobble wants anchors; a
 stated change wants a tempo.** That distinction is the whole design.
+
+**A second half, not previously written down (2026-08-31).** The word doing the work in this
+entry's title is *section*, and the app has no such thing. A tempo map gives the bridge its own
+BPM; it does not let you **name** the bridge or **go** to it. *"Practise the solo, then the
+outro"* is a practice affordance markers only half-provide — a marker is a point, a section is a
+span with a name, and choosing one is the navigation a player actually performs when learning a
+whole song. **The two are the same authoring surface**: whatever UI plants a tempo change at a
+boundary is the UI that would name the span it opens. Decide them together or the second one
+re-opens the first.
 
 **The finding that makes this cheap — everything downstream of the grid is already tempo-agnostic.**
 Nothing after `BeatGrid` sees a BPM. `MetronomeSchedule.upcoming` takes `[(time, isDownbeat)]`;
@@ -1729,6 +1883,35 @@ cost, and that cost should be weighed against the flag's value at that point rat
   `kindRaw` already carrying `.image`, so the image half is now a pure addition to a live table
   rather than a retype. Read `docs/swiftdata-gotchas.md` first: binary blobs on a `@Model`
   are exactly the class of thing that behaves in the simulator and bites on device.
+
+  **Promoted 2026-08-31 — this is build-ready, and it is the only thing in this file that is.**
+  It is not an idea to be weighed; it is **Phase 2 of an Accepted ADR whose Phase 1 has shipped**,
+  with the field already on disk (`Pocket/Core/Models/ReferenceLink.swift:17` —
+  `ReferenceLinkKind.image`, carried from day one precisely so this stays a pure addition). It is
+  filed under *Parked pending a clearer product story* only by inheritance; the story is no longer
+  unclear, and the entry should move out of that group the next time this section is touched.
+
+  **The four open questions above are the whole decision list.** Answer them and it is a branch:
+  1. **Upload path** — photo picker, camera, or Files?
+  2. **Downscale on import** — to what, and enforced where?
+  3. **Per-owner cap** — how many, and what happens at the limit?
+  4. **Alt text for VoiceOver** — a field, and whether it is required.
+
+  Three things Phase 1 taught that this entry predates using, each of which a fresh reader will
+  otherwise get wrong:
+  - **`ReferenceLinkStore` is the single write path**, over the `ReferenceLinkOwner` protocol
+    (`Pocket/Core/Models/ReferenceLink+Owners.swift`). An image path that does not go through it
+    forks the `order` renumbering across five surfaces.
+  - **There are four owners** — exercise · song · loop · routine — not just exercises, despite this
+    entry's title.
+  - ⚠ **Links cascade on owner delete.** *"Deleting an exercise now deletes its links silently"*
+    (ADR 0167, Consequences). That is the **opposite** of the nullify rule ADR 0151 gives notes and
+    takes, and anyone who internalised 0151 will assume wrongly. An image is bytes on disk, so the
+    cascade has to remove the file too or *Reclaim space* (ADR 0182) inherits the orphan.
+
+  **OCR stays out**, and that is a decision, not an omission: a tab screenshot is deliberately the
+  non-parsing version of `docs/research/feasibility-tab-to-fretboard.md`, whose Phase T3 is
+  explicitly *"not planned"*. A photo you look at collides with nothing.
 
 **Branding — SVG logo swap — DONE 2026-07-29.**
 
@@ -3272,6 +3455,16 @@ Ordered by value, highest first.
    what a teacher hands over** — and under the multiplier thesis, a teacher handing over
    a session is the purest form of the product working. Thesis-critical if the
    positioning holds.
+
+   **Cheaper than when this was logged (2026-08-31).** ADR 0181 (*a copy you can keep*,
+   merged `232e461`) has since shipped the encode-and-hand-over habit this item lacked a
+   precedent for — the export path, the `schemaVersion` seam, and 0181's *"stored
+   properties only, never computed ones"* rule, which names `RoutineItem.canRecordTake`
+   and `RoutineItem.isOrphaned` outright: *"exporting one freezes a rule that is meant to
+   be re-derived."* `Routine` is still not `Codable`, so the
+   work is unchanged in kind, but the cost estimate is not. Its **receiving end** is now
+   written up as *receive someone else's* under *Practice support — five ideas with no
+   home yet* (item 2) — one unit, additive, never destructive.
 5. **Hand-authoring cannot reach the model.** Every hand-added block is `.focused`
    (`RoutineItemRow.swift:6-9` states the reasoning); `warmup` and `play` are
    generator-only. The model carries three kinds and the editor can author one.
