@@ -51,6 +51,12 @@ struct ReferenceLinkEditing<Owner: ReferenceLinkOwner & AnyObject>: ViewModifier
         switch draft {
         case .adding:
             ReferenceLinkStore.add(title: title, url: url, note: note, to: owner, in: writeContext)
+        case .editing(let link) where link.isAttachment:
+            // A picture is renamed, never re-pointed. Branching on the **link's** kind rather than on
+            // what the editor sent means a URL string arriving here for an image is ignored rather
+            // than written — the model cannot be pushed into a state where a picture also has an
+            // address (ADR 0167 phase 2).
+            ReferenceLinkStore.updateAttachment(link, title: title, note: note)
         case .editing(let link):
             ReferenceLinkStore.update(link, title: title, url: url, note: note)
         }

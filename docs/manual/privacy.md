@@ -120,7 +120,7 @@ message: how many there were, since when, and what iOS called the most recent on
 logs, no file paths. As everywhere else, the contact form shows you that line in full before you
 send.
 
-## Links you save
+## What you save under "Where you learned it"
 
 The addresses you put in **Where you learned it** are stored on the device like everything else, and
 Red Moon never contacts them: it fetches no page titles, no previews and no thumbnails, so saving a
@@ -130,6 +130,12 @@ Opening one is different, and worth being clear about. Tapping a link hands the 
 app handles it — your browser, YouTube — and from that moment you are that app's visitor under that
 app's own policy, exactly as if you had typed the address there yourself. Red Moon is not in the
 middle of it and cannot be: it has no web view of its own.
+
+**Files go no further than links do.** A picture, PDF, text or Markdown file you attach is copied
+into Red Moon's own storage and stays there. It is never uploaded, never scanned, and never read for
+anything — no text recognition, no analysis of any kind. Red Moon does not get access to your photo
+library or your files either: the pickers that open belong to the system, hand over the one file you
+chose, and show Red Moon nothing else. There is no camera in the app, so it never asks for one.
 
 ## If that ever changes
 

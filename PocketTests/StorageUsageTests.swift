@@ -29,6 +29,26 @@ final class StorageUsageTests: XCTestCase {
             .write(to: try RecordingStore.url(for: name, fileManager))
     }
 
+    private func writeImage(_ name: String, bytes: Int) throws {
+        try Data(repeating: 0x49, count: bytes)
+            .write(to: try ReferenceAttachmentStore.url(for: name, fileManager))
+    }
+
+    /// Reference files are their own line on the screen (ADR 0167 phase 2), so they must be their
+    /// own figure here — folded into another category the total would still be right and the
+    /// breakdown would be a lie.
+    func testItMeasuresReferencePicturesSeparately() throws {
+        try writeImage("a.jpg", bytes: 300)
+        try writeImage("b.jpg", bytes: 200)
+
+        let usage = StorageUsage.measure(fileManager)
+
+        XCTAssertEqual(usage.attachmentBytes, 500)
+        XCTAssertEqual(usage.songBytes, 0)
+        XCTAssertEqual(usage.takeBytes, 0)
+        XCTAssertEqual(usage.total, 500)
+    }
+
     // MARK: - Measuring
 
     func testAnEmptyContainerUsesNothing() throws {
@@ -96,11 +116,12 @@ final class StorageUsageTests: XCTestCase {
     /// The screen lists the categories in this order, and the total is their sum. If the two ever
     /// disagree, the screen is accounting for less than the app is using.
     func testTheBreakdownNamesEveryCategoryAndSumsToTheTotal() {
-        let usage = StorageUsage(songBytes: 100, takeBytes: 20, storeBytes: 3)
+        let usage = StorageUsage(songBytes: 100, takeBytes: 20, attachmentBytes: 4, storeBytes: 3)
 
-        XCTAssertEqual(usage.breakdown.map(\.label), ["Songs", "Recordings", "Practice data"])
+        XCTAssertEqual(usage.breakdown.map(\.label),
+                       ["Songs", "Recordings", "Reference files", "Practice data"])
         XCTAssertEqual(usage.breakdown.reduce(0) { $0 + $1.bytes }, usage.total)
-        XCTAssertEqual(usage.total, 123)
+        XCTAssertEqual(usage.total, 127)
     }
 
     // MARK: - Formatting

@@ -95,9 +95,15 @@ struct StorageSection: View {
         do {
             let songs = Set(try context.fetch(FetchDescriptor<Song>()).compactMap(\.audioFileName))
             let takes = Set(try context.fetch(FetchDescriptor<Recording>()).map(\.fileName))
+            // Every reference row, filtered in memory — **never** a `#Predicate` on `kindRaw` or on
+            // an owner relationship. ADR 0167 says so and `docs/swiftdata-gotchas.md` says why:
+            // optional-relationship predicates starve the main thread.
+            let images = Set(try context.fetch(FetchDescriptor<ReferenceLink>())
+                .map(\.attachmentFileName).filter { !$0.isEmpty })
             Task {
                 let outcome = await Task.detached(priority: .userInitiated) {
-                    OrphanSweep.run(referencedSongFiles: songs, referencedTakeFiles: takes)
+                    OrphanSweep.run(referencedSongFiles: songs, referencedTakeFiles: takes,
+                                    referencedAttachmentFiles: images)
                 }.value
                 sweepResult = OrphanSweep.summary(outcome)
                 await measure()

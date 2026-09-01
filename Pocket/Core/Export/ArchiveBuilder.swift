@@ -212,7 +212,8 @@ enum ArchiveBuilder {
                                     urlString: $0.urlString,
                                     order: $0.order,
                                     dateAdded: $0.dateAdded,
-                                    kindRaw: $0.kindRaw)
+                                    kindRaw: $0.kindRaw,
+                                    attachmentFileName: $0.attachmentFileName)
             }
     }
 }

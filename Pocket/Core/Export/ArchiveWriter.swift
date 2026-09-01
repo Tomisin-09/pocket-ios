@@ -67,10 +67,14 @@ enum ArchiveWriter {
     ///   - takesDirectory: where the take audio lives — `RecordingStore.directory()` in the app, a
     ///     throwaway container in tests. Takes are staged only when this is non-`nil` **and** the
     ///     archive says it includes them; the caller keeps those two in step.
+    ///   - attachmentsDirectory: where reference pictures live — `ReferenceAttachmentStore.directory()` in the
+    ///     app, a throwaway container in tests. `nil` stages none, which is what a caller that has no
+    ///     container should do rather than guessing a path.
     ///   - temporaryDirectory: the parent to work in. Defaults to `tmp/`.
     /// - Returns: the zip, and the directory to delete when the share sheet is done with it.
     nonisolated static func write(_ archive: PracticeArchive,
                                   takesDirectory: URL?,
+                                  attachmentsDirectory: URL? = nil,
                                   fileManager: FileManager = .default,
                                   temporaryDirectory: URL? = nil) throws -> ExportedArchive {
         let parent = temporaryDirectory ?? fileManager.temporaryDirectory
@@ -97,6 +101,22 @@ enum ArchiveWriter {
                     } else {
                         missing.append(take.fileName)
                     }
+                }
+            }
+
+            // Reference pictures, staged unconditionally — see `referenceAttachmentFileNames` for why they
+            // are not behind the take-audio switch. A picture that has gone missing is skipped
+            // silently rather than counted: `takesMissing` exists because losing a recording is
+            // unrecoverable (ADR 0151 keeps a take's row for exactly that reason), while a reference
+            // picture whose bytes are gone is a pointer that stopped resolving.
+            let images = archive.referenceAttachmentFileNames
+            if !images.isEmpty, let attachmentsDirectory {
+                let staged = root.appending(path: "references", directoryHint: .isDirectory)
+                try fileManager.createDirectory(at: staged, withIntermediateDirectories: true)
+                for leaf in images {
+                    _ = stage(from: attachmentsDirectory.appending(path: leaf, directoryHint: .notDirectory),
+                              to: staged.appending(path: leaf, directoryHint: .notDirectory),
+                              fileManager: fileManager)
                 }
             }
 

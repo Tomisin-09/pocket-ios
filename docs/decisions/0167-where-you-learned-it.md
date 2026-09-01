@@ -303,3 +303,116 @@ tripwire counted **raw text**, so the doc comments *explaining* the `onLongPress
 decision registered as two extra hold sites and failed C8 against a file that wires up none.
 The counter now strips comments before counting, exactly as C9 already does and for exactly the
 same reason: this codebase documents itself heavily and names the APIs it discusses.
+
+## Phase 2 built — 2026-08-31 (`pocket-287-reference-attachments`)
+
+**A reference can now be a file you keep: a picture, a PDF, a `.txt` or a `.md`.** The four questions
+`docs/backlog.md` left open were the whole decision list; they are answered here, and everything else
+came off the shape phase 1 already had.
+
+### It stopped being "images" during the build, and that was right
+
+The entry, the backlog and the first day's code all said *image attachments*. What the feature is
+**for** is keeping the thread back to where something came from — and the honest observation, made
+while testing the file picker, is that **a downloaded guitar tab is usually a PDF or a `.txt`, and
+neither is ever in the camera roll.** Shipping images alone would have covered the screenshot case
+and missed the format the material actually arrives in.
+
+So `ReferenceLinkKind` carries four: `.image`, `.pdf`, `.text`, `.markdown`. Three consequences worth
+stating, because each one is a place a simpler design would have been wrong:
+
+- **Only images are re-encoded.** A photo is *material to look at*, so downscaling it costs nothing
+  anyone can see. A PDF is a **document**, and rewriting a document loses part of it — a tab
+  flattened to a JPEG of page one silently drops pages five to nine, which is a worse feature than
+  refusing PDFs. Documents are stored byte-for-byte, bounded instead by a 25 MB ceiling, since
+  nothing else bounds them.
+- **`.txt` and `.md` are separate kinds because they are drawn differently.** ASCII tab is a *grid*:
+  fixed-width, never wrapped, scrolling sideways, because soft-wrapping folds bar 3 under bar 1 and
+  the six strings stop being six strings. Markdown is *prose*: it wraps, in the app's own face, with
+  its emphasis rendered. Storing both as one kind would have meant picking one treatment and being
+  wrong about half the files. The known cost is stated in the manual — ASCII tab pasted inside a
+  `.md` wraps; save it as `.txt`.
+- **The bytes decide the kind, not the picker.** `contentType` is a hint. A `.txt` extension on a
+  JPEG, a PDF served with no type at all — the model must never say *picture* about something no
+  picture viewer can open. `resolve` tries ImageIO, then the PDF magic number, then text; and it
+  checks **Markdown before plain text**, because `net.daringfireball.markdown` *conforms to*
+  `public.plain-text`, so asking the plain-text question first answers `true` for every `.md`.
+
+### The picker was offering files the app would then refuse
+
+`allowedContentTypes: [.image]` looks right and is not. `UTType.image` is the abstract supertype, so
+the filter offers everything conforming to it — including **SVG, which ImageIO cannot decode**
+(measured on iOS, not assumed: a throwaway probe listing `CGImageSourceCopyTypeIdentifiers()`). The
+picker advertised a file and the app then rejected it. `pickerTypes` is now derived from what ImageIO
+actually reads, plus the document types, so a file that appears selectable is one that will work.
+
+The same probe settled what *is* accepted, and it is worth having written down: JPEG, PNG, HEIC/HEIF,
+GIF, TIFF, BMP, ICO, WebP and about thirty camera RAW formats.
+
+- **Photos and Files. No camera.** Both are out-of-process pickers, so neither needs an
+  `Info.plist` usage string — and `AGENTS.md` forbids adding one the app does not exercise. A camera
+  would be a real new capability for a feature whose commonest input (a tab screenshot) is already in
+  the roll. Photographing a book page goes through the camera app and the roll, one extra step, for a
+  permission the app never has to ask for. Reversal condition: if that step is what stops people using
+  it, `NSCameraUsageDescription` plus a third menu item is the change, and nothing else moves.
+- **2048px longest edge, JPEG 0.85, enforced in `ReferenceAttachmentStore.adopt`.** In the store, not at
+  the picker, because that is the single write path: a 48-megapixel photo entering through Files must
+  arrive the same size as one from Photos, and an import surface added later must not be able to opt
+  out. ImageIO rather than `UIImage`, for three reasons that all bite here — it reads HEIC, which is
+  what the roll actually hands over; `kCGImageSourceCreateThumbnailWithTransform` bakes in the EXIF
+  orientation, so a sideways photo is stored the way it was seen; and it touches no UIKit, so the rule
+  stays testable on bytes with no container, no picker and no device.
+- **Five per owner; the control disables and the footer says the number.** Files are capped and links
+  are not, which reads as inconsistent until the two are priced: a link is a hundred bytes and a row,
+  a file is megabytes and a thumbnail in a card `RoutineBlockPreview` already has to keep short. The limit **replaces** the footer's second sentence rather than appending a third clause —
+  a footer that grows when you hit a cap reads as telling you off (§3.5).
+- **The title is the alt text, and it is not required.** No fifth string on the model. An unnamed
+  attachment reads as its kind — *Picture*, *PDF*, *Text file*, *Markdown file* — and the Name
+  field's footer is where that is said. Requiring a name in
+  front of a photo just chosen is friction exactly where the feature is weakest, and the row is a
+  plain `Button` — SwiftUI folds the title and note into one combined label with no work from us.
+
+### What the ADR did not anticipate
+
+- **`attachmentFileName` is a new field, not a reuse of `urlString`.** Storing the leaf in the URL column
+  would have been free and wrong at the first read: `destination` would have handed a container file
+  URL to `openURL`. `destination` now returns `nil` for an image by construction, so a picture cannot
+  be opened *out* of the app however the row is wired.
+- **The bytes are written before the row exists.** `adopt` is the throwing half, so a picture that
+  cannot be decoded leaves the store exactly as it was — no row pointing at a file that was never
+  written. That forces the `uid` to be minted in `ReferenceLinkStore.addImage` rather than by
+  `makeReference()`, because the file is named for it.
+- ⚠ **`OrphanSweep` is the *primary* collector for this directory, not a backstop.** For songs and
+  takes the sweep catches interrupted writes. Here the cascade — the rule this ADR chose over nullify
+  — deletes reference rows without running a line of our code, so **deleting an exercise strands every
+  file attached to it**. `ReferenceLinkStore.delete` removes the file on the paths that do run
+  through us, which is what makes space come back when the player deletes one rather than the next
+  time they open Settings; everything else lands in *Reclaim space* (ADR 0182). `StorageUsage` gained
+  a *Reference files* category so the figure stays honest.
+- **The routine editor's Cancel deletes the bytes it discards.** That screen defers every save
+  (phase 1, constraint 3), but a picture's file is written the moment it is picked — so discarding
+  the sandbox's rows alone would strand a file on a path the player takes on purpose, not on an
+  edge case. `cancelEdits` now sweeps `editContext.insertedModelsArray` for reference links before
+  rebuilding the sandbox: that set is exactly the uncommitted rows, because the context never
+  autosaves, so a picture the player *kept* is never in it. Everywhere else the orphan sweep is the
+  right answer; here, space that only comes back via Settings is space they would notice going.
+- **The export carries them** (ADR 0181), staged into `references/` and **not** behind the
+  take-audio switch. That switch exists because recordings are the bulk of a library; five capped
+  attachments are not, and a second toggle for them would be a choice offered for no reason. An
+  export that named a file it did not carry would be a record the player cannot reassemble.
+- **The picture viewer does not zoom; the PDF viewer does.** A picture is glanced at beside the
+  thing being practised — which is exactly why 2048px is enough — and a pinch-zoom image reader is the
+  first step towards parsing a tab, which
+  `docs/research/feasibility-tab-to-fretboard.md` Phase T3 explicitly does not plan. A PDF is
+  different in kind: it *arrived* as a document, it is stored whole, and a multi-page tab you cannot
+  page through is not a tab. PDFKit does that properly and we do not reimplement it.
+- **`ReferenceImagePresentation` is a third piece of host-owned state**, alongside
+  `ReferenceLinkDraft`. `.photosPicker` and `.fileImporter` are presentations too, so they hit the
+  same trap phase 1 paid six minutes a run to find: attached inside another sheet's `Form`, they fight
+  the presentation that already owns the screen. The read-only surfaces take the viewer half alone
+  (`.referenceImageViewing`) — looking at a picture is reading, which is what those screens do.
+
+**Not built, and not owed by this ADR:** no reordering of files relative to links beyond the one
+`order` they already share, no captions burnt into an image, no in-app editing of any attachment, and
+**no OCR** — that last one is a decision, not an omission, and taking `.txt` and PDF makes it *less*
+tempting rather than more: the tab arrives as text already, and we still do not read it.

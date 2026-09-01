@@ -127,8 +127,12 @@ struct ExportSection: View {
                 includesTakeAudio: includesRecordings
             )
             let takesDirectory = includesRecordings ? try? RecordingStore.directory() : nil
+            // Not behind the recordings switch: reference pictures are capped and few, and they are
+            // the player's own material rather than the bulk that switch exists to control.
+            let attachmentsDirectory = try? ReferenceAttachmentStore.directory()
             phase = .ready(try await Task.detached(priority: .userInitiated) {
-                try ArchiveWriter.write(archive, takesDirectory: takesDirectory)
+                try ArchiveWriter.write(archive, takesDirectory: takesDirectory,
+                                        attachmentsDirectory: attachmentsDirectory)
             }.value)
         } catch {
             phase = .failed("Couldn't prepare a copy — \(error.localizedDescription)")

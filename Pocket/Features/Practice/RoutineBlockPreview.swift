@@ -57,6 +57,9 @@ struct ExerciseBlockPreview: View {
     /// themselves write straight to the model (see the actions below).
     @State private var showSettings = false
     @State private var showSteps = false
+    /// The reference picture being looked at (ADR 0167 phase 2). This screen reads references and
+    /// does not edit them, so it hosts the viewer alone — no pickers, no editor.
+    @State private var referenceAttachments: ReferenceAttachmentPresentation?
 
     /// The strum pattern to audition, if this is a strumming or strum-&-chords drill (R5). Other
     /// templates have no strum rhythm, so they fall back to the plain command-tempo click.
@@ -104,7 +107,8 @@ struct ExerciseBlockPreview: View {
                 BlockRecordControl(recordsTake: $recordsTake, tint: PocketColor.practice)
                 // Read-only here (ADR 0167): checking what is in a session without starting it is a
                 // reading moment, so the preview shows the sources and sends editing to Details.
-                ReferencesCard(owner: exercise, accent: PocketColor.practice)
+                ReferencesCard(owner: exercise, accent: PocketColor.practice,
+                               presenting: $referenceAttachments)
                 if let strumPattern {
                     PreviewAudioButton(isPlaying: strumPreview.isPlaying,
                                        idleTitle: "Hear the strum") {
@@ -121,6 +125,9 @@ struct ExerciseBlockPreview: View {
             .padding(24)
         }
         .background(PocketColor.background.ignoresSafeArea())
+        // At the root, not on the card inside the `ScrollView` — the rule `ReferenceLinkEditing`
+        // records, applied to the one presentation this read-only screen offers.
+        .referenceAttachmentViewing($referenceAttachments)
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .onDisappear { preview.stop(); strumPreview.stop() }

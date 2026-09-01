@@ -113,4 +113,9 @@ struct ReferenceLinkRecord: Codable, Equatable, Sendable {
     var order: Int
     var dateAdded: Date
     var kindRaw: String
+    /// The leaf name of this reference's picture, staged under `references/` in the zip (ADR 0167
+    /// phase 2), or empty for a link. Written even though nothing imports it yet, for the reason the
+    /// whole archive exists: an export that named a picture it did not carry — or carried one it did
+    /// not name — would be a record the player cannot put back together.
+    var attachmentFileName: String = ""
 }

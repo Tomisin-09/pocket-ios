@@ -56,3 +56,24 @@ struct PracticeArchive: Codable, Equatable, Sendable {
 
     var profile: ProfileRecord?
 }
+
+extension PracticeArchive {
+    /// Every reference picture in the archive, by leaf name (ADR 0167 phase 2).
+    ///
+    /// Gathered from all four owners because references nest under whichever one holds them — there
+    /// is no flat list to read. Deduplicated: an image belongs to exactly one owner, so a repeat
+    /// would mean the tree is wrong, and staging it twice would only hide that.
+    ///
+    /// **Unlike take audio, pictures are not optional.** The take toggle exists because recordings
+    /// are the bulk of a library and an export of them can be hundreds of megabytes; five capped
+    /// JPEGs per owner are not that, and a second switch for them would be a choice offered for no
+    /// reason (`docs/design-brief.md` §3.5).
+    var referenceAttachmentFileNames: [String] {
+        var seen = Set<String>()
+        let nested = songs.flatMap { $0.references + $0.loops.flatMap(\.references) }
+            + exercises.flatMap(\.references)
+            + routines.flatMap(\.references)
+        return nested.map(\.attachmentFileName)
+            .filter { !$0.isEmpty && seen.insert($0).inserted }
+    }
+}

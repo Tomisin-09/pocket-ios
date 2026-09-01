@@ -72,6 +72,9 @@ struct RoutineDetailView: View {
     /// binds it. Held here because a sheet presented from inside the `List` does not present — see
     /// `ReferenceLinkEditing`.
     @State var editingReference: ReferenceLinkDraft?
+    /// The picture being viewed, or the picker being opened (ADR 0167 phase 2) — held here for the
+    /// same reason as `editingReference`: `.photosPicker` and `.fileImporter` are presentations too.
+    @State var referenceAttachments: ReferenceAttachmentPresentation?
 
     /// The session length the user asked the planner for, in minutes — set only on a provisional
     /// generated session so the review screen can show its estimate against a soft budget (R3).
@@ -228,6 +231,10 @@ struct RoutineDetailView: View {
         // sandbox and defers the save, so links follow this screen's Cancel/Save contract.
         .referenceLinkEditing($editingReference, owner: routine, accent: PocketColor.practice,
                               context: editContext, savesImmediately: false)
+        // Same sandbox and the same deferred save as the editor above: a picture added here is a
+        // change to the routine being edited, so it lives or dies with Cancel/Save like every other.
+        .referenceAttachments($referenceAttachments, owner: routine, accent: PocketColor.practice,
+                         context: editContext, savesImmediately: false)
         .navigationDestination(item: $previewTarget) { blockPreview($0) }
     }
 
@@ -348,6 +355,7 @@ struct RoutineDetailView: View {
         // affordance, and their only way out is hidden once the add section goes.
         insertingRests = false
         restGuardSlot = nil
+        discardUnsavedReferenceImages()
         guard existsInStore else { dismiss(); return }
         let context = ModelContext(container)
         context.autosaveEnabled = false

@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The routine's **Where you learned it** section (ADR 0167), split out of `RoutineDetailView` to
@@ -35,10 +36,31 @@ extension RoutineDetailView {
             if isEditing {
                 ReferencesSection(owner: routine, accent: PocketColor.practice,
                                   context: editContext, savesImmediately: false,
-                                  editing: $editingReference)
+                                  editing: $editingReference, presenting: $referenceAttachments)
             } else {
-                ReferencesReadOnlySection(owner: routine, accent: PocketColor.practice)
+                // Outside edit mode a picture can still be **looked at** — that is reading, which
+                // this screen does. What it cannot do is add or rename one.
+                ReferencesReadOnlySection(owner: routine, accent: PocketColor.practice,
+                                          presenting: $referenceAttachments)
             }
+        }
+    }
+
+    /// Cancel throws away the sandbox's rows — but a picture's **bytes were written the moment it was
+    /// picked**, before any save, so discarding the row alone would leave the file behind (ADR 0167
+    /// phase 2). Everywhere else that is the orphan sweep's job; here it is a routine action a player
+    /// takes on purpose, and space that only comes back via Settings is space they will notice going.
+    ///
+    /// `insertedModelsArray` is exactly the right set: this context never autosaves, so anything still
+    /// listed as inserted is a row that has not been committed. A saved link is not in it, which is
+    /// what stops this deleting a picture the player kept.
+    ///
+    /// Internal rather than `private` because `cancelEdits()` lives in `RoutineDetailView.swift` and
+    /// `private` is file-scoped.
+    func discardUnsavedReferenceImages() {
+        for link in editContext.insertedModelsArray.compactMap({ $0 as? ReferenceLink })
+        where !link.attachmentFileName.isEmpty {
+            try? ReferenceAttachmentStore.delete(fileName: link.attachmentFileName)
         }
     }
 }

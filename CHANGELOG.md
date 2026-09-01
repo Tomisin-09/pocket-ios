@@ -15,6 +15,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **A reference can be a file you keep, not just a link.** *Where you learned it* — on an exercise, a
+  song, a loop or a routine — now takes the **picture**, the **PDF**, the **`.txt`** or the **`.md`**
+  the material actually came as. **Add a file** offers **Choose a photo** or **Choose a file**, and
+  each kind opens the way it is meant to be read: a picture full width, a PDF with all its pages and
+  proper zooming, an ASCII tab fixed-width and unwrapped so the strings line up, and your Markdown
+  notes wrapped like prose. Red Moon copies whatever you attach, so it stays even if you delete the
+  original — pictures are shrunk on the way in, documents are stored exactly as they arrived, and
+  anything over 25 MB is turned away with a reason. Tap one and it opens **inside** Red Moon: a file
+  is the one kind of reference that doesn't take you out of the app mid-decision. Name it if you
+  like; that name is what VoiceOver reads. Five files per thing, and links stay uncapped. Nothing is
+  scanned, no text is recognised, nothing is uploaded, and Red Moon never asks for camera access.
+  Deleting one gives the space straight back, **Settings ▸ Your data ▸ Storage** counts *Reference
+  files* as its own line, and your export carries them.
 - **You can take a copy of everything out.** A new **Settings ▸ Your data** holds **Export**: one tap
   prepares a zip of everything you have built — songs, loops, markers, exercises, chords, routines,
   goals, your whole journal and your practice history, plus the audio of your recordings — and hands

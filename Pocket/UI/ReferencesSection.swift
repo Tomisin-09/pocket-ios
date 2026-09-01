@@ -58,10 +58,17 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
     /// `.referenceLinkEditing(…)`. So this section raises the intent and the host presents it.
     @Binding var editing: ReferenceLinkDraft?
 
+    /// The picture being looked at, or the picker being opened — raised here, presented by the host
+    /// through `.referenceAttachments(…)`, for exactly the reason `editing` is (ADR 0167 phase 2). A
+    /// `.photosPicker` or `.fileImporter` attached inside this `Form` is a presentation competing
+    /// with the sheet that already owns the screen, the same way that sheet was.
+    @Binding var presenting: ReferenceAttachmentPresentation?
+
     var body: some View {
         Section {
             if owner.references.isEmpty {
-                Text("Nothing linked yet — add the lesson, tab or course this \(owner.referenceOwnerNoun) came from.")
+                Text("Nothing here yet — add the lesson, tab, course or file this "
+                     + "\(owner.referenceOwnerNoun) came from.")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             } else {
@@ -77,10 +84,11 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
                     // `onLongPressGesture` on a `Button` does. Delete is `role: .destructive` here
                     // because this section deletes immediately — there is no deferred-delete seam
                     // on these hosts, so nothing can disappear on a promise it doesn't keep.
-                    ReferenceLinkRow(link: link, accent: accent) { open(link) }
+                    ReferenceLinkRow(link: link, accent: accent) { activate(link) }
                         .contextMenu {
                             Button { editing = .editing(link) } label: {
-                                Label("Edit link", systemImage: "pencil")
+                                Label(link.isAttachment ? "Edit details" : "Edit link",
+                                      systemImage: "pencil")
                             }
                             Button(role: .destructive) { delete(link) } label: {
                                 Label("Delete", systemImage: "trash")
@@ -104,21 +112,49 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
                 Label("Add a link", systemImage: "plus.circle")
                     .foregroundStyle(accent)
             }
+            // A `Menu` of two actions, not a picker of options — the two are different things, and
+            // the rule against growing popup menus is about **option sets** with nowhere to put
+            // prose (`OptionListSection` is the answer there). Two sources, named plainly, with the
+            // explanation in the section footer where it already lives.
+            Menu {
+                Button { presenting = .pickingPhoto } label: {
+                    Label("Choose a photo", systemImage: "photo.on.rectangle")
+                }
+                Button { presenting = .pickingFile } label: {
+                    Label("Choose a file", systemImage: "folder")
+                }
+            } label: {
+                Label("Add a file", systemImage: "paperclip")
+                    .foregroundStyle(owner.canAddAttachment ? accent : PocketColor.textSecondary)
+            }
+            .disabled(!owner.canAddAttachment)
         } header: {
             Text("Where you learned it")
         } footer: {
-            Text("A lesson, a tab page, a teacher's write-up. Tapping one opens it in its own app — "
-                 + "so save it for between sessions, not during.")
+            Text(footer)
         }
+    }
+
+    /// What the section says under itself. The limit line replaces the second sentence rather than
+    /// being appended to it: a footer that grows a third clause the moment you hit a cap reads as
+    /// telling you off, and `docs/design-brief.md` §3.5 says no owner is nagged for what it holds.
+    private var footer: String {
+        let sources = "A lesson, a tab page, a teacher's write-up — or a picture, PDF, text or "
+            + "Markdown file you keep here."
+        guard owner.canAddAttachment else {
+            return sources + " Files are capped at \(ReferenceAttachmentStore.maxPerOwner) — remove "
+                + "one to add another."
+        }
+        return sources + " Tapping a link opens it in its own app, so save it for between sessions, "
+            + "not during."
     }
 
     // MARK: - Actions
 
-    /// Open the source. A link whose stored string no longer normalises is left inert rather than
-    /// handed to `openURL` — the same gate as the save, read at the other end.
-    private func open(_ link: ReferenceLink) {
-        guard let destination = link.destination else { return }
-        openURL(destination)
+    /// Tap. Shared with the read-only surfaces through `ReferenceRowAction`, which is where the
+    /// difference between opening a link and opening a picture is written down.
+    private func activate(_ link: ReferenceLink) {
+        ReferenceRowAction.activate(link, presenting: $presenting, openURL: openURL)
     }
 
     /// Delete one link — the menu's route in. The `IndexSet` overload below is the swipe's, and
@@ -153,6 +189,9 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
 struct ReferencesReadOnlySection<Owner: ReferenceLinkOwner & AnyObject>: View {
     let owner: Owner
     let accent: Color
+    /// Looking at a picture is **reading**, so it belongs on a read-only surface — presented by the
+    /// host through `.referenceAttachmentViewing(…)`, which carries the viewer without the pickers.
+    @Binding var presenting: ReferenceAttachmentPresentation?
 
     @Environment(\.openURL) private var openURL
 
@@ -162,7 +201,7 @@ struct ReferencesReadOnlySection<Owner: ReferenceLinkOwner & AnyObject>: View {
                 ForEach(owner.referencesInOrder, id: \.uid) { link in
                     // No menu: this surface reads, it does not edit.
                     ReferenceLinkRow(link: link, accent: accent) {
-                        if let destination = link.destination { openURL(destination) }
+                        ReferenceRowAction.activate(link, presenting: $presenting, openURL: openURL)
                     }
                 }
             }
@@ -176,6 +215,8 @@ struct ReferencesReadOnlySection<Owner: ReferenceLinkOwner & AnyObject>: View {
 struct ReferencesCard<Owner: ReferenceLinkOwner & AnyObject>: View {
     let owner: Owner
     let accent: Color
+    /// See `ReferencesReadOnlySection.presenting`.
+    @Binding var presenting: ReferenceAttachmentPresentation?
 
     @Environment(\.openURL) private var openURL
 
@@ -188,7 +229,7 @@ struct ReferencesCard<Owner: ReferenceLinkOwner & AnyObject>: View {
                 ForEach(owner.referencesInOrder, id: \.uid) { link in
                     // No menu: this surface reads, it does not edit.
                     ReferenceLinkRow(link: link, accent: accent) {
-                        if let destination = link.destination { openURL(destination) }
+                        ReferenceRowAction.activate(link, presenting: $presenting, openURL: openURL)
                     }
                 }
             }
@@ -220,12 +261,17 @@ struct ReferenceLinkRow: View {
     var body: some View {
         Button(action: open) {
             HStack(spacing: 10) {
+                if link.isAttachment {
+                    ReferenceAttachmentThumbnail(link: link)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(link.displayTitle)
                         .font(.futura(.body))
                         .foregroundStyle(PocketColor.textPrimary)
                         .multilineTextAlignment(.leading)
-                    if let host = link.displayHost, host != link.displayTitle {
+                    // An attachment has no host, and no second line stands in for one: "Picture"
+                    // under the title would say what the thumbnail beside it already shows.
+                    if !link.isAttachment, let host = link.displayHost, host != link.displayTitle {
                         Text(host)
                             .font(.futura(.caption))
                             .foregroundStyle(PocketColor.textSecondary)
@@ -248,13 +294,17 @@ struct ReferenceLinkRow: View {
                     }
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "arrow.up.right.square")
+                // The icon says where the tap goes: out of the app, or bigger within it.
+                Image(systemName: link.isAttachment ? "arrow.up.left.and.arrow.down.right"
+                                                    : "arrow.up.right.square")
                     .foregroundStyle(accent)
                     .accessibilityHidden(true)
             }
         }
         .buttonStyle(.plain)
         // Red Moon, not Pocket — the internal target name must not reach a VoiceOver string either.
-        .accessibilityHint("Opens \(link.displayHost ?? "this link") outside Red Moon")
+        .accessibilityHint(link.isAttachment
+                           ? "Opens this \(link.kind.noun) in Red Moon"
+                           : "Opens \(link.displayHost ?? "this link") outside Red Moon")
     }
 }

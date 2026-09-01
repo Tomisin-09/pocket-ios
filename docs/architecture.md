@@ -1218,15 +1218,40 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   outlive the unit they were made against, while a reference link is a record of *the owner* — a
   pointer to where **this exercise** came from, meaningless once the exercise is gone. A reader who
   has internalised the nullify rule will read the cascade as a bug, so it is stated at the model, in
-  `PROJECT.md`, and here. `kindRaw` is a `String` with a computed `kind` accessor (`.link` today,
-  `.image` carried from day one so the sequenced-second image half is a pure addition rather than a
-  retype after the freeze), and the relationship is never filtered in a `#Predicate` — the
-  optional-relationship freeze.
+  `PROJECT.md`, and here. `kindRaw` is a `String` with a computed `kind` accessor, and the
+  relationship is never filtered in a `#Predicate` — the optional-relationship freeze. **The file
+  half shipped 2026-08-31** (ADR 0167 phase 2) and was the pure addition `.image` had been carried
+  for since day one — as **four** kinds rather than one: `.image`, `.pdf`, `.text` and `.markdown`,
+  because a downloaded guitar tab is usually a PDF or a `.txt` and neither is ever in the camera roll.
+  One new attribute, `attachmentFileName`, holds a leaf name in `Application Support/References/` —
+  never bytes on the model, and never `@Attribute(.externalStorage)`, which appears nowhere in this
+  codebase and is the wrong shape for CloudKit. `destination` returns `nil` for an attachment by
+  construction, and **`isAttachment` keys on that filename rather than on `kind`**: an unknown
+  `kindRaw` from a newer build falls back to `.link`, and a row that fell back while still carrying a
+  file is exactly the one that must not reach `openURL`. The filename is the fact; the kind is the
+  interpretation.
   **Every write funnels through `ReferenceLinkStore`** (`Core/Models/ReferenceLink+Owners.swift`),
   over a small `ReferenceLinkOwner` protocol the four owners conform to. That is not tidiness: it
   makes the pure **`ReferenceURL`** gate the single place a URL enters the store, so no view can add
   a link the allowlist would refuse, and it keeps the contiguous-`order` renumbering identical across
-  the five surfaces that host a section. `ReferenceURL` accepts **`http` and `https` only** — an
+  the five surfaces that host a section — including the file paths, `addAttachment`/`updateAttachment`
+  (ADR 0167 phase 2), whose bytes go through **`ReferenceAttachmentStore`**: the third instance of the
+  `RecordingStore`/`SongFileStore` shape, and the one that enforces the storage rules. **Only images
+  are re-encoded** — 2048px longest edge, JPEG 0.85, *inside* `adopt`, so a photo entering through
+  Files cannot arrive larger than one from Photos — while a PDF, a `.txt` and a `.md` are stored
+  byte-for-byte under a 25 MB ceiling, because rewriting a document loses part of it. **The bytes
+  decide the kind, not the picker**: `resolve` tries ImageIO, then the `%PDF-` magic number, then
+  text, and checks Markdown *before* plain text because `net.daringfireball.markdown` conforms to
+  `public.plain-text`. The claim chooses only the encoding ladder — a file that says it is text gets
+  the legacy single-byte fallbacks, because every single-byte encoding decodes anything and offering
+  them unconditionally would turn a `.zip` into kilobytes of mojibake. The Files filter is
+  `pickerTypes`, derived from `CGImageSourceCopyTypeIdentifiers()` plus the document types, rather
+  than `[.image]` — that abstract supertype offers SVG, which ImageIO cannot decode, so the picker
+  would advertise a file the app then refused. ⚠ Because the owner inverses **cascade**, a deleted
+  owner takes the reference *rows* without running any of our code, which strands the files:
+  `OrphanSweep` is this directory's **primary** collector rather than its backstop, and
+  `ReferenceLinkStore.delete` removes the file only on the paths that do run through us.
+  `ReferenceURL` accepts **`http` and `https` only** — an
   allowlist, because `openURL` will happily take `shortcuts://`, `mailto:` or an app's own scheme and
   a practice-log field is not the place to have opinions about those — and reads a **scheme-less
   paste as `https`**, which is the input the feature exists for (a phone share sheet hands over a
@@ -1428,8 +1453,9 @@ true (ADR 0150 §118-121).
 What the app is holding, and the two leaks that ran behind ADR 0148 §8's unkept promise of honest
 disk use. Surfaced as *Settings ▸ Your data ▸ Storage*, under Export on the same screen.
 
-- **`StorageUsage`** — pure and `Sendable`; sums `Songs/` and `Recordings/` through the two stores'
-  existing `filesOnDisk`/`fileSize`, plus the SwiftData store and its `-wal`/`-shm` siblings. The
+- **`StorageUsage`** — pure and `Sendable`; sums `Songs/`, `Recordings/` and `References/` through
+  the three stores' existing `filesOnDisk`/`fileSize`, plus the SwiftData store and its
+  `-wal`/`-shm` siblings. The
   store URL comes off the live `ModelContainer`'s configuration, never a guessed
   `Application Support/default.store`, which keeps the type free of SwiftData. `.file` count style so
   the figure is comparable with *iPhone Storage*. It is also the app's **one** `ByteCountFormatter`:
