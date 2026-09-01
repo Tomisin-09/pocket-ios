@@ -4,6 +4,15 @@ This is the canonical copy of the public user manual. It is written here, review
 code it describes, and rendered by the `.co.uk` site at `/redmoon/manual/<slug>` — **one markdown
 file, one route, no exceptions.** The site is a rendering target, not an author.
 
+**Ported so far: `references`, as the route `/redmoon/manual/references`** (built on the site repo's
+`decops-061-manual-references`; it is live once that merges into `uk-site`, which auto-deploys). It
+went first because it is the one page whose feature and whose prose landed together, so nothing in
+it was waiting on a build.
+The port is a hand-written route in the site repo, `app/redmoon/manual/references/page.tsx`, reusing
+the `.privacy-*` prose classes the beta guide already reuses; figures come from `shots/figures/` at
+640px wide, dropped into `public/redmoon/manual/`. **A page is not ported until its figures are
+current** — see the `references/section` row in the shoot table below for what that cost.
+
 The decision behind all of it is [ADR 0165 — the manual quotes the app](../decisions/0165-the-manual-quotes-the-app.md).
 Read it before writing a page. The short version:
 
@@ -133,6 +142,7 @@ is a device the shoot cannot currently produce.
 | `songs/empty-library` · `reference/loops-library` · `getting-started/first-run` | a launch with **no seed flags** — the seeded device has six songs with loops attached and skips the first-run questions | **solved — the `bare` pass.** `shoot-manual.sh` now drives an unseeded device as a pass of its own (`ManualBareShots`); `reference/loops-library` turned out not to need it and is shot in `base` |
 | `songs/missing-audio` | a song whose file cannot be found | **solved — break the link mid-session, do not seed it.** `ScreenshotSeed.importReal` builds every seeded song with a bookmark into `Documents/SeedAudio/` and **no** `audioFileName`, so a seeded song is pre-0148-shaped and resolves through that bookmark alone until it is first opened. Delete one staged file (and the song's owned copy, if it has since adopted) and `SongAudioResolver.resolve` returns `nil` for that song and nothing else. Reversible — copy the master back. Recipe in `docs/manual-shoot-list.md` |
 | `subscription/settings-pro` · `subscription/trial-row` | a Pro entitlement and a running trial | no launch hook exists, and `AppTransaction.shared` prompts for sign-in on a simulator and leaves the app untappable — treat as `device:`, as `subscription/paywall` already is |
+| `references/section` | a reference with a **file** attached, not just links | **open — and it is a staleness gap, not a seeding one.** The image on disk is a clean, correct photograph of the section as it was before ADR 0167 phase 2 shipped file attachments: two links and an `Add a link` button, under a paragraph that now describes a picture row and `Add a file`. Nothing catches this. `shoot-progress.py` asks whether a file exists, `check-manual.py` never opens one, and the marker itself was updated with the prose — so the set reads 91 of 93 with a figure in it that contradicts its own page. The site port ships without it. **A prose change that renames or adds a control invalidates every figure showing that control**, and only a person comparing the two can say which |
 | `toolkit/tuner` · `reference/tuner` | a microphone hearing a real string | already `device:`, noted in `ManualToolkitShots` |
 | `songs/import-progress` | a multi-file import **caught in flight** | **open — it needs a hold, not a faster tap.** The picker itself is reachable (`ManualImportShots.resolvedPicker` already crosses into its process), but the overlay exists only for as long as the decode takes, and a driven attempt that arrives late photographs the library with nothing over it — clean, and wrong, which is the one failure this harness is built to refuse. `-uiTesting` has no equivalent of the undo window's 4s→120s stretch for an import. The fix has a known shape — seed the batch so it does not go through the picker, and hold `SongImportModel.progress` under the test flag — and it is an app-side seam, so it is a decision rather than a tap |
 

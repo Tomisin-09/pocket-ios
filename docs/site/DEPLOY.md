@@ -13,14 +13,15 @@ Three public URLs App Store Connect needs, across your existing hosting.
 > purpose.** Discovered 2026-08-07, when this guide still described deploying
 > `support.html` to a URL that had been serving a different page for weeks.
 >
-> **When you edit those routes, remember they are JSX, not HTML.** A plain space
-> between `</strong>` and the next word does not survive the build — use `{' '}`,
-> as the support page already does. Four words on the live privacy policy were
-> joined to the ones before them before this was caught. After any edit:
-> `npm run build`, then
+> **When you edit those routes, remember they are JSX, not HTML.** A space between
+> `</strong>` and the next word survives on the same line, but is eaten across a
+> line break — and, separately, is eaten *on the same line* when what follows is an
+> HTML entity. Both need fixing; the second is the one that bites a prose page.
+> Four words on the live privacy policy were joined to the ones before them before
+> any of this was caught. After any edit: `npm run build`, then
 >
 > ```
-> grep -rhoE "</(strong|em)>[a-zA-Z]" .next/server/app --include="*.html"
+> grep -rhoE "</(strong|em|code|a)>[A-Za-z0-9—–(]" .next/server/app --include="*.html"
 > ```
 >
 > should return nothing. **Use that recursive form, not `.next/server/app/*.html`.**
@@ -28,7 +29,25 @@ Three public URLs App Store Connect needs, across your existing hosting.
 > inside `redmoon/support.html` or `redmoon/story.html` — and on 2026-08-12 it was
 > found to have been missing a live joined pair on the support page
 > (`Subscriptions</strong>on your iPhone`) for as long as that sentence existed.
-> `</em>` is included for the same reason `</strong>` is.
+> `</em>` is included for the same reason `</strong>` is; `</code>` and `</a>` were
+> added on 2026-09-01, when the first manual route used both.
+>
+> **Two corrections from that route, and the second is why the character class
+> widened.** The old `[a-zA-Z]` class only catches a join where a *letter* follows,
+> so it is blind to `</strong>—`, which is what a manual page produces most: ten of
+> the fourteen joins on that page were em dashes and the documented grep reported
+> the page clean. The class above names what is definitely wrong — a letter, a
+> digit, a dash, an opening bracket — rather than excluding what is allowed. The
+> excluding form was tried first and immediately flagged `<em>to rise</em>”` on the
+> story page, where a closing quote against emphasis is correct typography; a check
+> that false-fails gets switched off, so it names the wrong forms instead.
+>
+> **The cause is the entity, not the space.** `</strong> &mdash;` loses its space;
+> `</strong> —`, written as the literal character, keeps it — and every other page
+> on the site already writes the literal, which is why none of them has the bug.
+> Same for `&#9432;` and friends. **Write the character, not the entity**, and
+> `{' '}` is then needed only across a genuine line break. Confirmed by changing
+> nothing but the entities on one page and rebuilding: fourteen joins to zero.
 
 **All three live on the same Vercel site (`decooperations.co.uk`) — decided 2026-08-07.**
 Support was previously planned for AWS under `.click`; that split existed only to
