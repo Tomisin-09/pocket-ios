@@ -119,9 +119,9 @@ Two invariants every one of these is bound by, stated here once rather than five
   resource and being able to play the thing, and never ask the player to move their material or
   their learning here.
 
-**Not on this list, deliberately: image attachments.** They are not an idea — they are Phase 2 of
-an Accepted ADR whose Phase 1 shipped, with the field already on disk. See the *Image attachments*
-entry further down; it needs a branch, not a park.
+**Not on this list, and no longer pending: image attachments.** They were Phase 2 of an Accepted ADR
+whose Phase 1 had shipped, and they **shipped 2026-08-31**. See the *Image attachments*
+entry further down for what was decided.
 
 ### 1. The journal is written but not reviewed
 
@@ -1884,6 +1884,18 @@ cost, and that cost should be weighed against the flag's value at that point rat
   rather than a retype. Read `docs/swiftdata-gotchas.md` first: binary blobs on a `@Model`
   are exactly the class of thing that behaves in the simulator and bites on device.
 
+  **SHIPPED 2026-08-31 (`pocket-287-reference-attachments`).** The four open questions below were the whole
+  decision list and are now answered in ADR 0167's *Phase 2 built* section: **Photos and Files, no
+  camera** (out-of-process pickers, so no `Info.plist` usage string); **2048px longest edge, JPEG
+  0.85, enforced inside `ReferenceAttachmentStore.adopt`** so no import surface can opt out; **five per
+  owner**, the control disabling with the number in the footer, links uncapped; and **the title
+  doubles as the alt text**, not required, an unnamed picture reading as *Image*. The cascade warning
+  below turned out to be the sharpest part of the build: `OrphanSweep` is now this directory's
+  *primary* collector rather than its backstop. This entry stays here as the record of what was
+  decided; it is no longer parked, no longer pending, and nothing in it is owed.
+
+  <details><summary>What the entry said while it was still open</summary>
+
   **Promoted 2026-08-31 — this is build-ready, and it is the only thing in this file that is.**
   It is not an idea to be weighed; it is **Phase 2 of an Accepted ADR whose Phase 1 has shipped**,
   with the field already on disk (`Pocket/Core/Models/ReferenceLink.swift:17` —
@@ -1911,7 +1923,10 @@ cost, and that cost should be weighed against the flag's value at that point rat
 
   **OCR stays out**, and that is a decision, not an omission: a tab screenshot is deliberately the
   non-parsing version of `docs/research/feasibility-tab-to-fretboard.md`, whose Phase T3 is
-  explicitly *"not planned"*. A photo you look at collides with nothing.
+  explicitly *"not planned"*. A photo you look at collides with nothing. **Still true after the
+  build** — the viewer deliberately does not even zoom.
+
+  </details>
 
 **Branding — SVG logo swap — DONE 2026-07-29.**
 

@@ -80,48 +80,12 @@ struct ReferenceLinkEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    TextField("Link", text: $urlString, axis: .vertical)
-                        .accessibilityIdentifier(UITestHooks.referenceLinkField)
-                        .textContentType(.URL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                        .onChange(of: urlString) { _, _ in showingRejection = false }
-                    // **`PasteButton`, not a `Button` that reads `UIPasteboard`.** The first version
-                    // did the latter, inside `body`, so it could name the site it would paste. Two
-                    // things wrong with that, one of them severe: reading the pasteboard
-                    // programmatically raises the system's *Allow Paste?* prompt, so merely opening
-                    // this sheet would ask permission to look at the clipboard — and it re-read on
-                    // every body evaluation. It hung the app for 60s under UI test (measured
-                    // 2026-08-17: `App event loop idle notification not received`).
-                    //
-                    // `PasteButton` is the control designed for exactly this: the tap *is* the
-                    // consent, so nothing is read until the player asks and no prompt appears. The
-                    // cost is that it says "Paste" rather than naming the host, which is a fair
-                    // trade for not interrogating the clipboard behind their back.
-                    PasteButton(payloadType: String.self) { strings in
-                        guard let pasted = strings.first else { return }
-                        urlString = pasted.trimmingCharacters(in: .whitespacesAndNewlines)
-                        showingRejection = false
-                    }
-                    .labelStyle(.titleAndIcon)
-                    .buttonBorderShape(.capsule)
-                } header: {
-                    Text("Link")
-                } footer: {
-                    if showingRejection {
-                        Text(Self.rejection)
-                            .foregroundStyle(PocketColor.danger)
-                    } else {
-                        // **Red Moon, not Pocket.** `Pocket` is the Xcode target and the bundle id;
-                        // the app has never gone by it. The CHANGELOG carries a Fixed entry for
-                        // this exact leak in two other strings, found while writing the manual —
-                        // whose rule is that it quotes the app's own words, and it cannot quote a
-                        // name the product does not use.
-                        Text("A web address — Red Moon opens it in its own app and never fetches "
-                             + "anything from it.")
-                    }
+                // **A file has no address to correct.** The editor is reached for an attachment only
+                // through the row's hold menu, and what there is to change is what it is called and
+                // what you took from it. Showing an empty, unfillable Link field would invite a
+                // player to try to re-point a file at a URL.
+                if !isAttachmentDraft {
+                    linkSection
                 }
 
                 Section {
@@ -129,7 +93,14 @@ struct ReferenceLinkEditor: View {
                 } header: {
                     Text("Name")
                 } footer: {
-                    Text("Optional. Left empty, the row shows the site instead.")
+                    // The title doubles as the alt text (ADR 0167 phase 2 decision 4), so for a
+                    // picture this footer is the only place that says so — and it says it as a
+                    // reason to name it, not as a requirement, because requiring a name in front of
+                    // a photo you just chose is friction where the feature is weakest.
+                    Text(isAttachmentDraft
+                         ? "Optional — and it's what VoiceOver reads. Left empty, the row just says "
+                           + "what kind of file it is."
+                         : "Optional. Left empty, the row shows the site instead.")
                 }
 
                 Section {
@@ -145,11 +116,14 @@ struct ReferenceLinkEditor: View {
                 } header: {
                     Text("Note")
                 } footer: {
-                    Text("Optional. What this taught you, or where in it to look — the row shows "
-                         + "it under the site.")
+                    Text(isAttachmentDraft
+                         ? "Optional. What this shows you, or which bit of it matters — the row "
+                           + "shows it under the name."
+                         : "Optional. What this taught you, or where in it to look — the row shows "
+                           + "it under the site.")
                 }
             }
-            .navigationTitle(isEditing ? "Edit link" : "Add a link")
+            .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .tint(accent)
             .toolbar {
@@ -157,9 +131,57 @@ struct ReferenceLinkEditor: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
+                    // A file is already saved — its bytes were written when it was picked, and this
+                    // sheet only renames it. There is nothing to require, so nothing disables.
                     Button("Save") { attemptSave() }
-                        .disabled(urlString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(!isAttachmentDraft
+                                  && urlString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
+            }
+        }
+    }
+
+    /// The address half — hidden entirely for an attachment, which has none.
+    private var linkSection: some View {
+        Section {
+            TextField("Link", text: $urlString, axis: .vertical)
+                .accessibilityIdentifier(UITestHooks.referenceLinkField)
+                .textContentType(.URL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+                .onChange(of: urlString) { _, _ in showingRejection = false }
+            // **`PasteButton`, not a `Button` that reads `UIPasteboard`.** The first version did the
+            // latter, inside `body`, so it could name the site it would paste. Two things wrong with
+            // that, one of them severe: reading the pasteboard programmatically raises the system's
+            // *Allow Paste?* prompt, so merely opening this sheet would ask permission to look at
+            // the clipboard — and it re-read on every body evaluation. It hung the app for 60s under
+            // UI test (measured 2026-08-17: `App event loop idle notification not received`).
+            //
+            // `PasteButton` is the control designed for exactly this: the tap *is* the consent, so
+            // nothing is read until the player asks and no prompt appears. The cost is that it says
+            // "Paste" rather than naming the host, which is a fair trade for not interrogating the
+            // clipboard behind their back.
+            PasteButton(payloadType: String.self) { strings in
+                guard let pasted = strings.first else { return }
+                urlString = pasted.trimmingCharacters(in: .whitespacesAndNewlines)
+                showingRejection = false
+            }
+            .labelStyle(.titleAndIcon)
+            .buttonBorderShape(.capsule)
+        } header: {
+            Text("Link")
+        } footer: {
+            if showingRejection {
+                Text(Self.rejection)
+                    .foregroundStyle(PocketColor.danger)
+            } else {
+                // **Red Moon, not Pocket.** `Pocket` is the Xcode target and the bundle id; the app
+                // has never gone by it. The CHANGELOG carries a Fixed entry for this exact leak in
+                // two other strings, found while writing the manual — whose rule is that it quotes
+                // the app's own words, and it cannot quote a name the product does not use.
+                Text("A web address — Red Moon opens it in its own app and never fetches "
+                     + "anything from it.")
             }
         }
     }
@@ -173,10 +195,29 @@ struct ReferenceLinkEditor: View {
         return false
     }
 
+    /// Whether this sheet was opened on an attachment. There is no *adding* case for one: files
+    /// arrive through a picker, and this editor only ever corrects one that already exists.
+    private var isAttachmentDraft: Bool {
+        if case .editing(let link) = draft { return link.isAttachment }
+        return false
+    }
+
+    private var navigationTitle: String {
+        if isAttachmentDraft { return "Edit details" }
+        return isEditing ? "Edit link" : "Add a link"
+    }
+
     /// Validate here *and* in `ReferenceLinkStore`. The store's gate is the one that protects the
     /// model from every caller; this one exists so the player sees why, instead of a Save button
     /// that silently does nothing.
     private func attemptSave() {
+        if isAttachmentDraft {
+            // No URL to gate. The commit side branches on the link's own kind, so what is passed
+            // here for the URL is ignored rather than trusted.
+            save(title, urlString, note)
+            dismiss()
+            return
+        }
         guard ReferenceURL.isValid(urlString) else {
             showingRejection = true
             return

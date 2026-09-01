@@ -40,6 +40,9 @@ struct LoopEditSheet: View {
     /// sheet below it — a sheet presented from inside this `Form` dismisses *this* sheet instead of
     /// opening. See `ReferenceLinkEditing`.
     @State var editingReference: ReferenceLinkDraft?
+    /// The picture being viewed, or the picker being opened (ADR 0167 phase 2) — held here for the
+    /// same reason as `editingReference`: `.photosPicker` and `.fileImporter` are presentations too.
+    @State var referenceAttachments: ReferenceAttachmentPresentation?
     @State private var name: String
     @State private var colorChoice: LoopColorChoice
     // Structured practice fields (ADR 0036 slice 3) — edited as local copies, written
@@ -191,7 +194,7 @@ struct LoopEditSheet: View {
                 // straight through rather than waiting for Done — a link is a discrete add, like a
                 // journal entry, not part of the local-copy edit Cancel discards.
                 ReferencesSection(owner: loop, accent: PocketColor.practice,
-                                  editing: $editingReference)
+                                  editing: $editingReference, presenting: $referenceAttachments)
                 tagsSection
                 Section {
                     LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
@@ -234,6 +237,7 @@ struct LoopEditSheet: View {
         }
         .presentationDetents([.medium, .large])
         .referenceLinkEditing($editingReference, owner: loop, accent: PocketColor.practice)
+        .referenceAttachments($referenceAttachments, owner: loop, accent: PocketColor.practice)
         .sheet(isPresented: $showingJournal) {
             // Authorable again from song loops (ADR 0088, reversing 0058's waveform read-only) —
             // the same `JournalWriter` path the Practice run screen uses, each entry snapshotting

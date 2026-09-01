@@ -43,6 +43,9 @@ struct ExerciseDetailSheet: View {
     /// because a sheet presented from inside this `Form` dismisses *this* sheet instead of opening —
     /// the same reason `showingSongPicker` lives here. See `ReferenceLinkEditing`.
     @State private var editingReference: ReferenceLinkDraft?
+    /// The picture being viewed, or the picker being opened (ADR 0167 phase 2) — held here for the
+    /// same reason as `editingReference`: `.photosPicker` and `.fileImporter` are presentations too.
+    @State private var referenceAttachments: ReferenceAttachmentPresentation?
     @State private var notes: String
     /// The exercise's self-rated mastery (0–5, `nil` = unrated), held locally and committed on
     /// Done — the planner's dueScore *need* signal (V2 planner Slice 1, ADR 0070: self-set, never
@@ -86,7 +89,7 @@ struct ExerciseDetailSheet: View {
                     // because provenance is what you read when you have forgotten what a drill was
                     // for; the meter is what you check once you already know.
                     ReferencesSection(owner: exercise, accent: PocketColor.practice,
-                                      editing: $editingReference)
+                                      editing: $editingReference, presenting: $referenceAttachments)
                     if !isFreeform { feelSection }
                     templateSection
                 }
@@ -109,6 +112,7 @@ struct ExerciseDetailSheet: View {
             }
             .referenceLinkEditing($editingReference, owner: exercise,
                                   accent: PocketColor.practice)
+            .referenceAttachments($referenceAttachments, owner: exercise, accent: PocketColor.practice)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {

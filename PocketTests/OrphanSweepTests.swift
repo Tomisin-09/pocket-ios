@@ -32,10 +32,49 @@ final class OrphanSweepTests: XCTestCase {
         return name
     }
 
+    @discardableResult
+    private func writeImage(_ name: String, bytes: Int = 700) throws -> String {
+        try Data(repeating: 0x49, count: bytes)
+            .write(to: try ReferenceAttachmentStore.url(for: name, fileManager))
+        return name
+    }
+
     private func songsOnDisk() -> Set<String> { Set(SongFileStore.filesOnDisk(fileManager)) }
     private func takesOnDisk() -> Set<String> { Set(RecordingStore.filesOnDisk(fileManager)) }
 
+    private func imagesOnDisk() -> Set<String> { Set(ReferenceAttachmentStore.filesOnDisk(fileManager)) }
+
     // MARK: - What it deletes
+
+    /// **The case this directory needs the sweep for** (ADR 0167 phase 2). Reference links *cascade*
+    /// on owner delete — the opposite of the nullify rule notes and takes follow — and a SwiftData
+    /// cascade removes rows without running any code of ours. So deleting an exercise leaves its
+    /// pictures on disk with nothing else coming for them. Neutralise this by dropping
+    /// `referencedAttachmentFiles` from the call and the picture that should have survived goes too.
+    func testAPictureNoSurvivingLinkPointsAtIsReaped() throws {
+        let kept = try writeImage("\(UUID().uuidString).jpg", bytes: 900)
+        try writeImage("\(UUID().uuidString).jpg", bytes: 1100)
+
+        let outcome = OrphanSweep.run(referencedSongFiles: [], referencedTakeFiles: [],
+                                      referencedAttachmentFiles: [kept], fileManager)
+
+        XCTAssertEqual(outcome.attachmentFiles.count, 1)
+        XCTAssertEqual(outcome.bytesFreed, 1100)
+        XCTAssertEqual(imagesOnDisk(), [kept])
+        XCTAssertEqual(outcome.fileCount, 1, "pictures count towards what the summary reports")
+    }
+
+    /// The default is the empty set, so a caller that forgets the new argument reaps every picture in
+    /// the container. Pinned deliberately: it is the one way this change could delete a player's data,
+    /// and `StorageSection` is the only caller that must never take the default.
+    func testOmittingTheImageSetReapsEveryPicture() throws {
+        try writeImage("\(UUID().uuidString).jpg")
+
+        let outcome = OrphanSweep.run(referencedSongFiles: [], referencedTakeFiles: [], fileManager)
+
+        XCTAssertEqual(outcome.attachmentFiles.count, 1)
+        XCTAssertTrue(imagesOnDisk().isEmpty)
+    }
 
     /// The leak this ADR exists for: a song row deleted, its audio left behind forever.
     func testAnUnreferencedSongFileIsRemovedAndCounted() throws {

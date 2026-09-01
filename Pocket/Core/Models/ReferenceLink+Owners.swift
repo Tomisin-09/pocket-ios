@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UniformTypeIdentifiers
 
 /// The four owners of a `ReferenceLink` (ADR 0167), given one shared shape so every References
 /// section reads and mutates its links the same way — and so `Exercise.swift`, `Song.swift`,
@@ -10,7 +11,7 @@ import SwiftData
 protocol ReferenceLinkOwner: AnyObject {
     /// The raw relationship. Order is not dependable here — read `referencesInOrder`.
     var references: [ReferenceLink] { get }
-    /// A fresh, unsaved link already pointed at this owner. The caller fills in title and URL.
+    /// A fresh, unsaved link already pointed at this owner. The caller fills in the rest.
     func makeReference() -> ReferenceLink
     /// What the References section calls this owner in its footer, in the player's words.
     var referenceOwnerNoun: String { get }
@@ -22,6 +23,15 @@ extension ReferenceLinkOwner {
 
     /// Whether this owner has anything to show. Cheap enough to read in a `body`.
     var hasReferences: Bool { !references.isEmpty }
+
+    /// How many of this owner's references are files we hold. Counted rather than stored: a count
+    /// kept on the owner would be a second source of truth that a cascade could not update.
+    var attachmentReferenceCount: Int { references.filter(\.isAttachment).count }
+
+    /// Whether another file may be attached (ADR 0167 phase 2 —
+    /// `ReferenceAttachmentStore.maxPerOwner`). Links are deliberately uncapped; see that constant
+    /// for why the two differ.
+    var canAddAttachment: Bool { attachmentReferenceCount < ReferenceAttachmentStore.maxPerOwner }
 }
 
 /// Insert, delete and reorder, in one place so the renumbering discipline cannot drift between the
@@ -72,12 +82,76 @@ enum ReferenceLinkStore {
         return true
     }
 
+    /// Attach a file to `owner` at the end of its list (ADR 0167 phase 2) — a picture, a PDF or a
+    /// text file, decided by the bytes rather than by the caller.
+    ///
+    /// **The bytes are written before the row exists.** `ReferenceAttachmentStore.adopt` is the
+    /// throwing half — it identifies, size-checks and (for images) re-encodes — so doing it first
+    /// means a file that cannot be read leaves the store exactly as it was, rather than a row
+    /// pointing at a file that was never written. The `uid` is minted here for the same reason: the
+    /// file is named for it, so it has to exist before either the file or the link does.
+    ///
+    /// The cap is checked by the caller, not here: the control that adds is the thing that should be
+    /// disabled, and a store call that silently no-ops would look like a bug from the outside. What
+    /// *is* enforced here is the format, because this is the only way a file reaches the model.
+    ///
+    /// - Parameter contentType: what the picker claimed. A hint the store is free to overrule — see
+    ///   `ReferenceAttachmentStore.adopt`.
+    @discardableResult
+    static func addAttachment(_ data: Data,
+                              contentType: UTType? = nil,
+                              title: String = "",
+                              note: String = "",
+                              to owner: some ReferenceLinkOwner,
+                              in context: ModelContext,
+                              _ fileManager: FileManager = .default) throws -> ReferenceLink {
+        let uid = UUID()
+        let stored = try ReferenceAttachmentStore.adopt(data, contentType: contentType, for: uid,
+                                                        fileManager)
+        // Same ordering trap as `add`: `makeReference()` wires the owner, and SwiftData fills the
+        // inverse straight away, so the new link is already in `owner.references` at order 0.
+        let order = ReferenceLink.nextOrder(after: owner.references)
+        let link = owner.makeReference()
+        link.uid = uid
+        link.kind = stored.kind
+        link.attachmentFileName = stored.fileName
+        link.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        link.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        link.order = order
+        context.insert(link)
+        return link
+    }
+
+    /// Rename or re-note an attachment. There is no URL to gate, so unlike `update` this cannot fail
+    /// — but `note` still takes no default, for the same reason it takes none there: correcting a
+    /// reference must not be able to erase words the player wrote.
+    static func updateAttachment(_ link: ReferenceLink, title: String, note: String) {
+        link.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        link.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     /// Remove `links` from `owner` and close the gaps in `order`.
+    ///
+    /// **An attachment's bytes go with its row**, on this path. They cannot go on every path: the owner
+    /// inverses cascade (ADR 0167), and a SwiftData cascade deletes rows without running a line of
+    /// ours — delete the exercise and these files are orphaned in place. That is what
+    /// `ReferenceAttachmentStore.orphanedFiles` and *Reclaim space* (ADR 0182) exist for. Deleting here
+    /// as well is not redundant: it is the difference between space coming back when the player
+    /// deletes a picture and space coming back the next time they visit Settings.
     static func delete(_ links: [ReferenceLink],
                        from owner: some ReferenceLinkOwner,
-                       in context: ModelContext) {
+                       in context: ModelContext,
+                       _ fileManager: FileManager = .default) {
         let doomed = Set(links.map(\.uid))
-        for link in links { context.delete(link) }
+        for link in links {
+            if link.isAttachment {
+                // Swallowed like `SongDeletion`'s: a reference the player asked to remove must go
+                // whether or not its file could be reached, and what is left behind is exactly what
+                // the sweep is for.
+                try? ReferenceAttachmentStore.delete(fileName: link.attachmentFileName, fileManager)
+            }
+            context.delete(link)
+        }
         ReferenceLink.renumber(owner.references.filter { !doomed.contains($0.uid) })
     }
 

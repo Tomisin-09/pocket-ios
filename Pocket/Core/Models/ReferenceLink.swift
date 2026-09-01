@@ -11,14 +11,54 @@ import SwiftData
 enum ReferenceLinkKind: String, CaseIterable {
     /// A URL the player typed or pasted — a lesson, a tab page, a course, a teacher's write-up.
     case link
-    /// A picture of the source (a tab screenshot, a page of a book). **Not built** — ADR 0167
-    /// phase 2. Deliberately the non-parsing version of `docs/research/feasibility-tab-to-fretboard.md`,
-    /// whose OCR phase is explicitly not planned: a photo you look at collides with nothing.
+    /// A picture of the source: a tab screenshot, a photo of a page, a diagram somebody drew you.
     case image
+    /// A PDF — which is what a downloaded tab very often *is*. Stored whole and rendered by PDFKit,
+    /// never flattened to a picture of page one: a six-page tab that silently lost five pages would
+    /// be a worse feature than refusing PDFs.
+    case pdf
+    /// A plain-text file — ASCII tab, the format the internet taught guitarists in before anything
+    /// else. Stored as bytes and rendered fixed-width without wrapping, because that is the only way
+    /// it is readable at all.
+    case text
+    /// A Markdown file — somebody's written lesson notes. **A separate kind from `.text` on purpose,
+    /// and the difference is how it is drawn:** `.txt` is a *grid* (tab only lines up fixed-width and
+    /// unwrapped), Markdown is *prose* (it wraps, in a proportional font, with its emphasis
+    /// rendered). Storing both as `.text` would have meant picking one treatment and being wrong
+    /// about half the files.
+    case markdown
+
+    /// The kinds that are **a file on disk** rather than a pointer out of the app.
+    static let attachmentKinds: [ReferenceLinkKind] = [.image, .pdf, .text, .markdown]
+
+    /// The extension a stored file of this kind carries. Load-bearing: `filesOnDisk` recognises our
+    /// own files by it during a sweep, and it is what makes an exported archive openable by hand.
+    var fileExtension: String {
+        switch self {
+        case .link: return ""
+        case .image: return "jpg"
+        case .pdf: return "pdf"
+        case .text: return "txt"
+        case .markdown: return "md"
+        }
+    }
+
+    /// What the app calls one of these in a sentence.
+    var noun: String {
+        switch self {
+        case .link: return "link"
+        case .image: return "picture"
+        case .pdf: return "PDF"
+        case .text: return "text file"
+        case .markdown: return "Markdown file"
+        }
+    }
 }
 
-/// **Where you learned it** (ADR 0167): a URL and a title hung off the thing it explains — an
-/// exercise, a song, a loop or a routine.
+/// **Where you learned it** (ADR 0167): a source hung off the thing it explains — an exercise, a
+/// song, a loop or a routine. A source is either a **URL** the player pasted (phase 1) or an
+/// **image** they picked (phase 2); `kind` says which, and the two halves share this one row, one
+/// order and one section rather than forking into parallel lists.
 ///
 /// Pocket does not own the material and does not own the method. Somebody else is teaching the
 /// thing, and the app's job is what happens between opening that resource and being able to play
@@ -78,6 +118,18 @@ final class ReferenceLink {
     /// `ReferenceLinkKind` through a `String` — see the type's note. Read `kind`, never this.
     var kindRaw: String = ReferenceLinkKind.link.rawValue
 
+    /// The leaf filename of this reference's file in `Application Support/References/` — a picture, a
+    /// PDF or a text file — or empty when it is a link (ADR 0167 phase 2). **The bytes are never
+    /// stored here**: this is the `RecordingStore`/`SongFileStore` shape the ADR names, and not
+    /// `@Attribute(.externalStorage)`, which appears nowhere in this codebase and is the wrong choice
+    /// for the day sync lands.
+    ///
+    /// Plain non-optional `String` with a **declaration default**, like `note` above and for the same
+    /// reason: an `init`-only default is the CoreData 134110 failure this file's discipline exists to
+    /// prevent. Additive on a live table, which the schema freeze permits (`docs/backlog.md`) — and
+    /// additive is the whole point of `kindRaw` having carried `.image` since day one.
+    var attachmentFileName: String = ""
+
     // MARK: - Owners (exactly one is non-nil)
 
     /// The exercise this came from — a drill built out of somebody's lesson.
@@ -94,6 +146,7 @@ final class ReferenceLink {
          title: String = "",
          note: String = "",
          urlString: String = "",
+         attachmentFileName: String = "",
          order: Int = 0,
          dateAdded: Date = .now,
          kind: ReferenceLinkKind = .link,
@@ -105,6 +158,7 @@ final class ReferenceLink {
         self.title = title
         self.note = note
         self.urlString = urlString
+        self.attachmentFileName = attachmentFileName
         self.order = order
         self.dateAdded = dateAdded
         self.kindRaw = kind.rawValue
@@ -120,6 +174,11 @@ final class ReferenceLink {
 extension ReferenceLink {
     /// The stored `kindRaw` as its enum. An unrecognised string reads as `.link` rather than
     /// crashing — a store written by a newer build must stay openable by an older one.
+    ///
+    /// ⚠ **Do not use this to ask "is this a file?"** — use `isAttachment`. That fallback means a row
+    /// written by a *newer* build, in a kind this build has never heard of, reads as `.link` while
+    /// still carrying a filename; deciding on `kind` alone would send it to `openURL` with an empty
+    /// address. `kind` answers *how do I render this*, and only that.
     var kind: ReferenceLinkKind {
         get { ReferenceLinkKind(rawValue: kindRaw) ?? .link }
         set { kindRaw = newValue.rawValue }
@@ -132,9 +191,15 @@ extension ReferenceLink {
     /// What the row's first line shows: the player's title, or the host when they saved without
     /// naming it, or the raw string as a last resort. Never empty, never "Untitled" — a link with
     /// no name is still a place, so we show the place.
+    ///
+    /// An **attachment** has no place to fall back to, so an unnamed one reads as its kind —
+    /// "Picture", "PDF", "Text file". That word is also what VoiceOver says (ADR 0167 phase 2
+    /// decision 4: the title *is* the alt text, and it is not required — a file you just picked
+    /// should not need naming before it can be saved).
     var displayTitle: String {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty { return trimmed }
+        if isAttachment { return kind.noun.capitalizedFirst }
         return displayHost ?? urlString
     }
 
@@ -146,8 +211,27 @@ extension ReferenceLink {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    /// The destination to hand `openURL`, or `nil` if it is no longer openable.
-    var destination: URL? { ReferenceURL.normalised(urlString) }
+    /// The destination to hand `openURL`, or `nil` if it is no longer openable. Always `nil` for an
+    /// attachment: nothing we store is openable *outside* the app, and handing a container file URL
+    /// to `openURL` is how a row would quietly start doing something else.
+    var destination: URL? {
+        guard !isAttachment else { return nil }
+        return ReferenceURL.normalised(urlString)
+    }
+
+    /// Whether this reference is a **file we hold** rather than a pointer out of the app.
+    ///
+    /// Keyed on the filename, deliberately **not** on `kind`. An unknown `kindRaw` — a row written by
+    /// a newer build — falls back to `.link`, and a row that fell back while still carrying a file is
+    /// exactly the case that must not be handed to `openURL`. The filename is the fact; the kind is
+    /// the interpretation.
+    var isAttachment: Bool { !attachmentFileName.isEmpty }
+}
+
+private extension String {
+    /// "picture" → "Picture". Only ever applied to the fixed nouns above, so there is no locale
+    /// subtlety here that `localizedCapitalized` would handle better.
+    var capitalizedFirst: String { prefix(1).uppercased() + dropFirst() }
 }
 
 // MARK: - Ordering

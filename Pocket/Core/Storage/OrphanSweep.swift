@@ -16,13 +16,14 @@ enum OrphanSweep {
     struct Outcome: Equatable, Sendable {
         var songFiles: [String] = []
         var takeFiles: [String] = []
+        var attachmentFiles: [String] = []
         var bytesFreed: Int64 = 0
 
-        var fileCount: Int { songFiles.count + takeFiles.count }
+        var fileCount: Int { songFiles.count + takeFiles.count + attachmentFiles.count }
         var isEmpty: Bool { fileCount == 0 }
     }
 
-    /// Sweep both directories.
+    /// Sweep all three directories.
     ///
     /// - Parameters:
     ///   - referencedSongFiles: every surviving `Song.audioFileName`.
@@ -31,11 +32,18 @@ enum OrphanSweep {
     ///     (ADR 0179 and ADR 0180 let a routine block record), and a take whose loop was deleted keeps
     ///     its row on purpose (ADR 0151), so a set built from any single owner would classify real
     ///     recordings as rubbish and delete them.
+    ///   - referencedAttachmentFiles: every surviving `ReferenceLink.attachmentFileName`
+    ///     (ADR 0167 phase 2).
+    ///     **This directory is the one where the sweep is the primary collector, not the backstop.**
+    ///     A reference link's owner inverses *cascade*, and a SwiftData cascade deletes rows without
+    ///     running any code of ours — so deleting an exercise silently strands every file attached
+    ///     to it. Nothing else ever reclaims those.
     ///
     /// Sizes are read **before** the delete, because afterwards there is nothing left to measure. A
     /// file that fails to delete is left out of the total rather than counted optimistically.
     static func run(referencedSongFiles: Set<String>,
                     referencedTakeFiles: Set<String>,
+                    referencedAttachmentFiles: Set<String> = [],
                     _ fileManager: FileManager = .default) -> Outcome {
         var outcome = Outcome()
 
@@ -52,6 +60,14 @@ enum OrphanSweep {
             let size = RecordingStore.fileSize(fileName: leaf, fileManager) ?? 0
             guard (try? RecordingStore.delete(fileName: leaf, fileManager)) != nil else { continue }
             outcome.takeFiles.append(leaf)
+            outcome.bytesFreed += size
+        }
+
+        for leaf in ReferenceAttachmentStore.orphanedFiles(onDisk: ReferenceAttachmentStore.filesOnDisk(fileManager),
+                                                      referenced: referencedAttachmentFiles) {
+            let size = ReferenceAttachmentStore.fileSize(fileName: leaf, fileManager) ?? 0
+            guard (try? ReferenceAttachmentStore.delete(fileName: leaf, fileManager)) != nil else { continue }
+            outcome.attachmentFiles.append(leaf)
             outcome.bytesFreed += size
         }
 

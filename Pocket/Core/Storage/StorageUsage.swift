@@ -3,7 +3,8 @@ import Foundation
 /// What Red Moon is holding on disk, in bytes (ADR 0182).
 ///
 /// The app owns two directories of full-size audio — `Songs/` (ADR 0148) and `Recordings/`
-/// (ADR 0069) — and until now had no way to say how big either was. ADR 0148 §8 put it plainly:
+/// (ADR 0069) — plus reference files in `References/` (ADR 0167 phase 2), and until ADR 0182 had
+/// no way to say how big any of them was. ADR 0148 §8 put it plainly:
 /// owning a player's files means owing them honesty about the space those files take. This is the
 /// arithmetic half of that debt; the screen that shows it is ADR 0182's.
 ///
@@ -22,6 +23,11 @@ struct StorageUsage: Equatable, Sendable {
     /// Practice takes — `Application Support/Recordings/`.
     var takeBytes: Int64 = 0
 
+    /// Reference files — `Application Support/References/` (ADR 0167 phase 2). Small next to the
+    /// audio, and listed anyway for the reason `storeBytes` is: a player comparing this screen
+    /// against *iPhone Storage* and finding a gap cannot tell a missing category from a bug.
+    var attachmentBytes: Int64 = 0
+
     /// The SwiftData store and its journal — everything *written* rather than recorded. Years of
     /// journal entries, every loop and its settings, the whole practice log.
     ///
@@ -31,17 +37,18 @@ struct StorageUsage: Equatable, Sendable {
     var storeBytes: Int64 = 0
 
     /// Everything the app is holding.
-    var total: Int64 { songBytes + takeBytes + storeBytes }
+    var total: Int64 { songBytes + takeBytes + attachmentBytes + storeBytes }
 
     static let none = StorageUsage()
 
     /// The categories, in the order the screen lists them: biggest cause first, and the one a player
     /// can actually act on at the top.
     var breakdown: [(label: String, bytes: Int64)] {
-        [("Songs", songBytes), ("Recordings", takeBytes), ("Practice data", storeBytes)]
+        [("Songs", songBytes), ("Recordings", takeBytes), ("Reference files", attachmentBytes),
+         ("Practice data", storeBytes)]
     }
 
-    /// Measure both directories. The only impure function on the type.
+    /// Measure all three directories. The only impure function on the type.
     ///
     /// A file whose size cannot be read counts as zero rather than failing the measurement — a
     /// storage figure that refuses to appear because one file is unreadable is worse than one that is
@@ -57,6 +64,8 @@ struct StorageUsage: Equatable, Sendable {
                 .reduce(into: 0) { $0 += SongFileStore.fileSize(fileName: $1, fileManager) ?? 0 },
             takeBytes: RecordingStore.filesOnDisk(fileManager)
                 .reduce(into: 0) { $0 += RecordingStore.fileSize(fileName: $1, fileManager) ?? 0 },
+            attachmentBytes: ReferenceAttachmentStore.filesOnDisk(fileManager)
+                .reduce(into: 0) { $0 += ReferenceAttachmentStore.fileSize(fileName: $1, fileManager) ?? 0 },
             storeBytes: storeBytes(at: storeURL, fileManager)
         )
     }

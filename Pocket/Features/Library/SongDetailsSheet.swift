@@ -52,6 +52,9 @@ struct SongDetailsSheet: View {
     /// `ReferencesSection` — a sheet presented from inside this `Form` dismisses *this* sheet
     /// instead of opening. See `ReferenceLinkEditing`.
     @State private var editingReference: ReferenceLinkDraft?
+    /// The picture being viewed, or the picker being opened (ADR 0167 phase 2) — held here for the
+    /// same reason as `editingReference`: `.photosPicker` and `.fileImporter` are presentations too.
+    @State private var referenceAttachments: ReferenceAttachmentPresentation?
 
     var body: some View {
         NavigationStack {
@@ -69,7 +72,7 @@ struct SongDetailsSheet: View {
                     if !song.collections.isEmpty { collectionsSection }
                     linkedExercisesSection
                     ReferencesSection(owner: song, accent: PocketColor.library,
-                                      editing: $editingReference)
+                                      editing: $editingReference, presenting: $referenceAttachments)
                     statsSection
                 }
             }
@@ -118,6 +121,7 @@ struct SongDetailsSheet: View {
         }
         .presentationDetents([.large])
         .referenceLinkEditing($editingReference, owner: song, accent: PocketColor.library)
+        .referenceAttachments($referenceAttachments, owner: song, accent: PocketColor.library)
         // Edit is a nested sheet over the details so dismissing it returns here; the
         // edited values write straight back to the persisted `Song`, which this view
         // observes, so the read view refreshes on save.

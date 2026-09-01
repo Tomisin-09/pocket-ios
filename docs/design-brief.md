@@ -262,11 +262,23 @@ the narrower form `PROJECT.md:9` already states.
 **That example stopped being hypothetical on 2026-08-17.** ADR 0167 shipped it: a
 **Where you learned it** section on exercises, songs, loops and routines. Read the copy
 there as the worked instance of this principle — the empty state says what the section is
-*for* ("Nothing linked yet — add the lesson, tab or course this exercise came from"),
+*for* ("Nothing here yet — add the lesson, tab, course or photo this exercise came from"),
 never what the player has failed to do; the count is never mentioned, let alone judged;
 and the app opens the source **in its own app** rather than embedding it, because
 embedding is a small step towards being the source. The section header is the musician's
 phrasing (principle 4) over the productivity tool's *Resources*.
+
+**Phase 2 (2026-08-31) added files, and with them the one place this section states a
+limit.** Five per owner, and at the limit the footer's second sentence is **replaced**, not
+extended: *"Files are capped at 5 — remove one to add another."* A footer that grows an
+extra clause the moment you hit a cap reads as being told off, which is the failure mode
+principle 2 is about. The limit disables the control and says the number; it does not count
+what you have on the way there.
+
+It is also where principle 1 stopped being about links alone. A reference can now be the
+**PDF or the `.txt` the tab actually came as** — kept, not fetched, and shown in the form
+it was written in. That is the multiplier read literally: the material stays the player's,
+and the app's job is to have it to hand when they are deciding what to practise.
 
 **2. No shame.** The app never grades your *playing* (ADR 0070) and never grades your
 *habits* either. It does not congratulate you for consistency or note your absence.
