@@ -9,11 +9,19 @@ import SwiftUI
 enum ReferenceLinkDraft: Identifiable {
     case adding
     case editing(ReferenceLink)
+    /// A file that has **just been picked and written**, waiting to be described.
+    ///
+    /// Its own case rather than a reuse of `.editing`, because the two are different moments and the
+    /// sheet has to say so. Editing is a correction of something that has been sitting there; this is
+    /// the second half of adding, and the file is already on disk by the time it appears — so the way
+    /// out is **Skip**, not Cancel. A Cancel that left the file in place would be a lie, and one that
+    /// deleted it would throw away a pick over a naming step both fields call optional.
+    case naming(ReferenceLink)
 
     var id: UUID {
         switch self {
         case .adding: return Self.addingID
-        case .editing(let link): return link.uid
+        case .editing(let link), .naming(let link): return link.uid
         }
     }
 
@@ -25,21 +33,30 @@ enum ReferenceLinkDraft: Identifiable {
     var title: String {
         switch self {
         case .adding: return ""
-        case .editing(let link): return link.title
+        case .editing(let link), .naming(let link): return link.title
         }
     }
 
     var urlString: String {
         switch self {
         case .adding: return ""
-        case .editing(let link): return link.urlString
+        case .editing(let link), .naming(let link): return link.urlString
         }
     }
 
     var note: String {
         switch self {
         case .adding: return ""
-        case .editing(let link): return link.note
+        case .editing(let link), .naming(let link): return link.note
+        }
+    }
+
+    /// The row this draft points at — `nil` only while adding a link, which has none yet. What the
+    /// sheet reads to decide whether it is describing a file, and to show which one.
+    var link: ReferenceLink? {
+        switch self {
+        case .adding: return nil
+        case .editing(let link), .naming(let link): return link
         }
     }
 }
@@ -80,11 +97,14 @@ struct ReferenceLinkEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                // **A file has no address to correct.** The editor is reached for an attachment only
-                // through the row's hold menu, and what there is to change is what it is called and
-                // what you took from it. Showing an empty, unfillable Link field would invite a
-                // player to try to re-point a file at a URL.
-                if !isAttachmentDraft {
+                // **A file has no address to correct.** What there is to change is what it is
+                // called and what you took from it. Showing an empty, unfillable Link field would
+                // invite a player to try to re-point a file at a URL. What stands in its place is
+                // the file itself, which is the same question answered a different way: the Link
+                // field tells you what you are describing, and so does a picture of it.
+                if isAttachmentDraft {
+                    attachmentSection
+                } else {
                     linkSection
                 }
 
@@ -128,7 +148,11 @@ struct ReferenceLinkEditor: View {
             .tint(accent)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    // **Skip, not Cancel, while naming.** The bytes were copied in when the picker
+                    // handed them over, so there is nothing here to cancel — what this button
+                    // declines is the describing, and both fields below already say it is optional.
+                    // A file picked by mistake goes the way every other row goes: hold, Delete.
+                    Button(isNaming ? "Skip" : "Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     // A file is already saved — its bytes were written when it was picked, and this
@@ -137,6 +161,35 @@ struct ReferenceLinkEditor: View {
                         .disabled(!isAttachmentDraft
                                   && urlString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
+            }
+        }
+    }
+
+    /// The file half — what you are describing, shown rather than typed.
+    ///
+    /// **The link sheet shows you the address; this shows you the file.** Naming a photo you have
+    /// just chosen out of a grid of four thousand, from memory of a picker you have already left, is
+    /// where the wrong one gets kept and described. Read-only on purpose: a file is renamed, never
+    /// re-pointed (ADR 0167 phase 2), so there is nothing here to type into.
+    @ViewBuilder
+    private var attachmentSection: some View {
+        if let link = draft.link {
+            Section {
+                HStack(spacing: 12) {
+                    ReferenceAttachmentThumbnail(link: link, side: 64)
+                    Text(link.kind.capitalizedNoun)
+                        .font(.futura(.body))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+                // The thumbnail hides itself from VoiceOver so a row does not say its kind twice
+                // (see `ReferenceAttachmentThumbnail`), which leaves the noun beside it as the whole
+                // label here. That is the right amount: what the picture *is* cannot be read aloud,
+                // and the Name field below exists precisely to fix that.
+            } header: {
+                Text("File")
+            } footer: {
+                Text("Kept inside Red Moon — this is the copy, so it stays even if you delete "
+                     + "the original.")
             }
         }
     }
@@ -195,14 +248,24 @@ struct ReferenceLinkEditor: View {
         return false
     }
 
-    /// Whether this sheet was opened on an attachment. There is no *adding* case for one: files
-    /// arrive through a picker, and this editor only ever corrects one that already exists.
-    private var isAttachmentDraft: Bool {
-        if case .editing(let link) = draft { return link.isAttachment }
+    /// Whether this sheet is describing a file rather than a link.
+    ///
+    /// Read off the **row**, not off the case, for the same reason `ReferenceLink.isAttachment` keys
+    /// on the filename rather than on `kind`: the filename is the fact. `.naming` is always a file
+    /// and `.adding` never is, but neither of those needs saying twice.
+    private var isAttachmentDraft: Bool { draft.link?.isAttachment ?? false }
+
+    /// Whether this is the second half of *adding* a file, rather than a later correction. Only the
+    /// way out differs — see `ReferenceLinkDraft.naming`.
+    private var isNaming: Bool {
+        if case .naming = draft { return true }
         return false
     }
 
     private var navigationTitle: String {
+        // "Add a file" while naming, not "Edit details": it is the same act the menu item started,
+        // and the sheet finishing it should be called what started it — the way "Add a link" is.
+        if isNaming { return "Add a file" }
         if isAttachmentDraft { return "Edit details" }
         return isEditing ? "Edit link" : "Add a link"
     }

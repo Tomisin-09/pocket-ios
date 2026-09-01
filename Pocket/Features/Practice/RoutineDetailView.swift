@@ -233,8 +233,9 @@ struct RoutineDetailView: View {
                               context: editContext, savesImmediately: false)
         // Same sandbox and the same deferred save as the editor above: a picture added here is a
         // change to the routine being edited, so it lives or dies with Cancel/Save like every other.
-        .referenceAttachments($referenceAttachments, owner: routine, accent: PocketColor.practice,
-                         context: editContext, savesImmediately: false)
+        .referenceAttachments($referenceAttachments, naming: $editingReference, owner: routine,
+                              accent: PocketColor.practice, context: editContext,
+                              savesImmediately: false)
         .navigationDestination(item: $previewTarget) { blockPreview($0) }
     }
 

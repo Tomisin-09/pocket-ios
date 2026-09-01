@@ -237,7 +237,8 @@ struct LoopEditSheet: View {
         }
         .presentationDetents([.medium, .large])
         .referenceLinkEditing($editingReference, owner: loop, accent: PocketColor.practice)
-        .referenceAttachments($referenceAttachments, owner: loop, accent: PocketColor.practice)
+        .referenceAttachments($referenceAttachments, naming: $editingReference, owner: loop,
+                              accent: PocketColor.practice)
         .sheet(isPresented: $showingJournal) {
             // Authorable again from song loops (ADR 0088, reversing 0058's waveform read-only) —
             // the same `JournalWriter` path the Practice run screen uses, each entry snapshotting

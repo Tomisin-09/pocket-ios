@@ -51,6 +51,11 @@ struct ReferenceLinkEditing<Owner: ReferenceLinkOwner & AnyObject>: ViewModifier
         switch draft {
         case .adding:
             ReferenceLinkStore.add(title: title, url: url, note: note, to: owner, in: writeContext)
+        case .naming(let link):
+            // A file being described for the first time, straight off the picker. The same write as
+            // a later correction: the bytes went in when it was picked, and this sheet only ever
+            // touched words. Skip takes the other road and writes nothing at all.
+            ReferenceLinkStore.updateAttachment(link, title: title, note: note)
         case .editing(let link) where link.isAttachment:
             // A picture is renamed, never re-pointed. Branching on the **link's** kind rather than on
             // what the editor sent means a URL string arriving here for an image is ignored rather
