@@ -65,7 +65,8 @@ enum ReferenceRowAction {
 /// Attach at the host's **root** — the `NavigationStack` or the `List` — never inside the `Form`:
 ///
 /// ```swift
-/// .referenceAttachments($attachments, owner: exercise, accent: PocketColor.practice)
+/// .referenceAttachments($attachments, naming: $editingReference, owner: exercise,
+///                       accent: PocketColor.practice)
 /// ```
 ///
 /// **Photos and Files, no camera** (ADR 0167 phase 2 decision 1). Both are out-of-process pickers
@@ -77,6 +78,14 @@ enum ReferenceRowAction {
 /// is ever in the camera roll.
 struct ReferenceAttachmentPicking<Owner: ReferenceLinkOwner & AnyObject>: ViewModifier {
     @Binding var presenting: ReferenceAttachmentPresentation?
+    /// Where a just-imported file is sent to be described — the host's `ReferenceLinkDraft` state,
+    /// the same one **Add a link** writes to, so both halves of the section finish in one sheet.
+    ///
+    /// This modifier raises the intent; `ReferenceLinkEditing` presents it. That split is not
+    /// tidiness: both modifiers hang off the host's root because a sheet presented from inside a
+    /// `Form` fights the presentation that already owns the screen (ADR 0167 phase 1), and a picker
+    /// is a presentation too.
+    @Binding var naming: ReferenceLinkDraft?
     let owner: Owner
     let accent: Color
     /// See `ReferencesSection.context` — `RoutineDetailView` must pass its sandbox, or the insert
@@ -185,14 +194,29 @@ struct ReferenceAttachmentPicking<Owner: ReferenceLinkOwner & AnyObject>: ViewMo
             return
         }
         do {
-            try ReferenceLinkStore.addAttachment(data, contentType: contentType,
-                                                 to: owner, in: writeContext)
+            let link = try ReferenceLinkStore.addAttachment(data, contentType: contentType,
+                                                            to: owner, in: writeContext)
             if savesImmediately { try? writeContext.save() }
+            describe(link)
         } catch ReferenceAttachmentStore.ImportError.tooLarge {
             failure = Self.tooLarge
         } catch {
             failure = Self.unreadable
         }
+    }
+
+    /// Hand the new file to the editor to be named and noted — the second half of adding one, and
+    /// the reason a file is now described the way a link always has been.
+    ///
+    /// **Raised a turn late, and only after the picker's own intent is cleared.** The picker is
+    /// still dismissing when it hands the bytes back, and asking SwiftUI to present a sheet on a
+    /// root that is mid-dismiss is the same fight ADR 0167 phase 1 paid six-minute runs to learn
+    /// about. The `Task` hop puts the sheet on the next main-actor turn, by which point the picker
+    /// has gone.
+    @MainActor
+    private func describe(_ link: ReferenceLink) {
+        presenting = nil
+        Task { @MainActor in naming = .naming(link) }
     }
 
     static var unreadable: String {
@@ -240,13 +264,15 @@ extension View {
     /// `ReferenceLinkEditing` for the failure that rule comes from.
     func referenceAttachments<Owner: ReferenceLinkOwner & AnyObject>(
         _ presenting: Binding<ReferenceAttachmentPresentation?>,
+        naming: Binding<ReferenceLinkDraft?>,
         owner: Owner,
         accent: Color,
         context: ModelContext? = nil,
         savesImmediately: Bool = true
     ) -> some View {
-        modifier(ReferenceAttachmentPicking(presenting: presenting, owner: owner, accent: accent,
-                                       context: context, savesImmediately: savesImmediately))
+        modifier(ReferenceAttachmentPicking(presenting: presenting, naming: naming, owner: owner,
+                                            accent: accent, context: context,
+                                            savesImmediately: savesImmediately))
     }
 
     /// Host only the viewer — for a surface that shows references without offering to change them.

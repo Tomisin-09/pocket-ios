@@ -44,6 +44,10 @@ enum ReferenceLinkKind: String, CaseIterable {
     }
 
     /// What the app calls one of these in a sentence.
+    /// The noun with a capital, for the places that name a kind on its own rather than mid-sentence
+    /// — a row with no title of its own, and the file preview in the editor.
+    var capitalizedNoun: String { noun.capitalizedFirst }
+
     var noun: String {
         switch self {
         case .link: return "link"
@@ -199,7 +203,7 @@ extension ReferenceLink {
     var displayTitle: String {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty { return trimmed }
-        if isAttachment { return kind.noun.capitalizedFirst }
+        if isAttachment { return kind.capitalizedNoun }
         return displayHost ?? urlString
     }
 

@@ -62,6 +62,10 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
     /// through `.referenceAttachments(…)`, for exactly the reason `editing` is (ADR 0167 phase 2). A
     /// `.photosPicker` or `.fileImporter` attached inside this `Form` is a presentation competing
     /// with the sheet that already owns the screen, the same way that sheet was.
+    ///
+    /// The two bindings meet on the way back: a file that imports cleanly is handed straight to
+    /// `editing` as a `.naming` draft, so adding one finishes in the same sheet adding a link does
+    /// (ADR 0185).
     @Binding var presenting: ReferenceAttachmentPresentation?
 
     var body: some View {
@@ -116,6 +120,10 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
             // the rule against growing popup menus is about **option sets** with nowhere to put
             // prose (`OptionListSection` is the answer there). Two sources, named plainly, with the
             // explanation in the section footer where it already lives.
+            //
+            // Either one leads into the naming sheet once the bytes are in (ADR 0185), so this menu
+            // is the *first* half of adding a file, exactly as `Add a link` above is the first half
+            // of adding a link.
             Menu {
                 Button { presenting = .pickingPhoto } label: {
                     Label("Choose a photo", systemImage: "photo.on.rectangle")

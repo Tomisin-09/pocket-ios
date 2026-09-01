@@ -121,7 +121,8 @@ struct SongDetailsSheet: View {
         }
         .presentationDetents([.large])
         .referenceLinkEditing($editingReference, owner: song, accent: PocketColor.library)
-        .referenceAttachments($referenceAttachments, owner: song, accent: PocketColor.library)
+        .referenceAttachments($referenceAttachments, naming: $editingReference, owner: song,
+                              accent: PocketColor.library)
         // Edit is a nested sheet over the details so dismissing it returns here; the
         // edited values write straight back to the persisted `Song`, which this view
         // observes, so the read view refreshes on save.

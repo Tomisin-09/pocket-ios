@@ -112,7 +112,8 @@ struct ExerciseDetailSheet: View {
             }
             .referenceLinkEditing($editingReference, owner: exercise,
                                   accent: PocketColor.practice)
-            .referenceAttachments($referenceAttachments, owner: exercise, accent: PocketColor.practice)
+            .referenceAttachments($referenceAttachments, naming: $editingReference, owner: exercise,
+                                  accent: PocketColor.practice)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {

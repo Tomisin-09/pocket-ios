@@ -203,3 +203,49 @@ final class ReferenceLinkAttachmentTests: XCTestCase {
         return ModelContext(container)
     }
 }
+
+// MARK: - The draft that describes a file as it is added
+
+extension ReferenceLinkAttachmentTests {
+
+    /// **A file is named as it is added, the way a link always has been.** `.naming` is the second
+    /// half of adding one, so the sheet has to open on the row that was just written — not on a
+    /// blank draft, and not on the fixed id `.adding` uses.
+    func testNamingADraftIdentifiesTheRowItWasOpenedOn() {
+        let link = ReferenceLink(attachmentFileName: "a.jpg", kind: .image)
+        XCTAssertEqual(ReferenceLinkDraft.naming(link).id, link.uid)
+        XCTAssertNotEqual(ReferenceLinkDraft.naming(link).id, ReferenceLinkDraft.adding.id)
+    }
+
+    /// The sheet reads the row it points at, so a file that arrived with words already on it — which
+    /// nothing does today, but a future import path could — opens showing them rather than blank.
+    func testNamingReadsTheRowsWordsRatherThanStartingEmpty() {
+        let link = ReferenceLink(title: "Bar 12 chart", note: "Only the second system matters",
+                                 attachmentFileName: "a.jpg", kind: .image)
+        let draft = ReferenceLinkDraft.naming(link)
+        XCTAssertEqual(draft.title, "Bar 12 chart")
+        XCTAssertEqual(draft.note, "Only the second system matters")
+        XCTAssertTrue(draft.urlString.isEmpty)
+    }
+
+    /// What the editor branches on to hide the Link field and show the file instead. It reads the
+    /// **row**, not the case, for the same reason `isAttachment` keys on the filename: a draft that
+    /// said "attachment" while pointing at a link would offer an unfillable address field.
+    func testTheDraftHandsBackTheRowSoTheSheetCanTellAFileFromALink() {
+        let file = ReferenceLink(attachmentFileName: "a.pdf", kind: .pdf)
+        let web = ReferenceLink(urlString: "https://example.com/x")
+        XCTAssertEqual(ReferenceLinkDraft.naming(file).link?.isAttachment, true)
+        XCTAssertEqual(ReferenceLinkDraft.editing(file).link?.isAttachment, true)
+        XCTAssertEqual(ReferenceLinkDraft.editing(web).link?.isAttachment, false)
+        XCTAssertNil(ReferenceLinkDraft.adding.link)
+    }
+
+    /// The word the file preview shows beside the thumbnail, and the one an unnamed row falls back
+    /// to — one accessor now, so the two cannot drift into disagreeing about what a `.md` is called.
+    func testTheCapitalisedNounIsWhatAnUnnamedRowFallsBackTo() {
+        XCTAssertEqual(ReferenceLinkKind.image.capitalizedNoun, "Picture")
+        XCTAssertEqual(ReferenceLinkKind.markdown.capitalizedNoun, "Markdown file")
+        XCTAssertEqual(ReferenceLink(attachmentFileName: "a.md", kind: .markdown).displayTitle,
+                       ReferenceLinkKind.markdown.capitalizedNoun)
+    }
+}

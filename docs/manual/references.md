@@ -77,11 +77,16 @@ PDF is stored exactly as it arrived. Anything over 25 MB is refused, and says so
 footer says so; remove one and it comes back. Links are not capped — they cost almost nothing to
 keep, and a file does.
 
-A file has no address, so its editor has two fields rather than three:
+Once you have picked one, the same fields a link gets open over it, with the file itself at the top
+so you can see what you are naming. A file has no address, so there are two rather than three:
 
 - **Name** — optional, and it is what VoiceOver reads. Leave it empty and the row just says what
   kind of file it is.
 - **Note** — optional. What it shows you, or which bit of it matters.
+
+The button out of that is **Skip**, not Cancel, and it means what it says: the file was copied in the
+moment you chose it, so skipping declines the describing and nothing else. If the right words turn up
+later, hold the row and choose **Edit details**.
 
 ## Using them
 
