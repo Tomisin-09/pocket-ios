@@ -1,0 +1,20 @@
+// Pocket — Debug build configuration (ADR 0187 S0).
+//
+// **Why this file exists at all.** A backend base URL cannot be written inline in `project.yml`,
+// because Xcode treats `//` inside a build setting as the start of a comment — `https://host`
+// silently becomes `https:`. The escape is `$()`, which expands to nothing but breaks the `//`
+// pair so the parser never sees it, and it only works from an `.xcconfig`. `project.yml` has
+// carried a comment prescribing exactly this since Phase 0; this is the first file to do it.
+//
+// The value is surfaced to Swift through `Info.plist` (`POCKET_API_BASE_URL`) and read by
+// `OracleEndpoint`. It is not read anywhere else.
+
+// Debug points at a proxy you run yourself — `wrangler dev` or equivalent on 8787 (ADR 0002,
+// ADR 0187 S2). Nothing listens here until you start one, and that is a supported state: the
+// request fails to connect and the Oracle falls back to `LocalOracle`, exactly as it does
+// offline (ADR 0092 §A2).
+//
+// Note for S2: `http` on localhost needs an ATS exception (`NSAllowsLocalNetworking`) before a
+// simulator build can actually reach it. That key is deliberately *not* added here — it belongs
+// with the code that first makes the call, not with the setting that names the address.
+POCKET_API_BASE_URL = http:/$()/localhost:8787

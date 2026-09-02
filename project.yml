@@ -87,13 +87,8 @@ targets:
         # load-bearing — the SDK derives the ingest host from it, so a US key would silently
         # send EU users' events to the wrong region. AptabaseSinkTests pins that.
         APTABASE_APP_KEY: "A-EU-2959015188"
-      # Backend base URL is injected per-config in Phase 4 (when the proxy
-      # exists). Note: '//' in an Xcode build setting is treated as a comment,
-      # so the URL is supplied via an .xcconfig using the `$()//` escape, not
-      # inline here. Placeholders below are host-only to avoid that footgun.
       configs:
         Debug:
-          POCKET_API_HOST: "localhost:8787"
           # Warnings are errors for *our* code (AGENTS.md step 2 asks for a warning-free
           # build anyway). This lives here rather than on the pre-push hook's xcodebuild
           # command line because a command-line setting applies to every target in the
@@ -103,8 +98,15 @@ targets:
           # push after Aptabase landed. Debug-only on purpose: an archive should never fail
           # because a future SDK deprecates something.
           SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
-        Release:
-          POCKET_API_HOST: "api.pocket.example.com"
+    # The backend base URL lives in these, not in `settings` above (ADR 0187 S0). It has to:
+    # Xcode reads `//` in a build setting as a comment, so `https://host` written inline here
+    # becomes `https:`. The `$()` escape that fixes it is only available in an `.xcconfig`.
+    # Debug points at a proxy you run locally; Release is deliberately empty until S4, which is
+    # what makes a shipped build structurally incapable of an Oracle network call. Each file
+    # explains its own value.
+    configFiles:
+      Debug: Configuration/Pocket-Debug.xcconfig
+      Release: Configuration/Pocket-Release.xcconfig
     entitlements:
       path: Pocket/Resources/Pocket.entitlements
 

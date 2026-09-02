@@ -106,11 +106,19 @@ bookmark orphans loops/markers, because identity is the `(id, source)` pair alon
 
 ## Environments
 
-| Env | App build | Backend |
+| Env | App build | Backend base URL (`POCKET_API_BASE_URL`) |
 |---|---|---|
-| Local dev | Debug scheme, simulator/device | Local proxy (or none, for Phases 1–3) |
-| TestFlight | Release scheme, merge to `main` | AWS dev/prod stage |
-| App Store | Tagged release | AWS prod |
+| Local dev | Debug scheme, simulator/device | `http://localhost:8787` — a proxy you run yourself. Absent one, the Oracle serves its deterministic local reading (ADR 0092 §A2) |
+| TestFlight | Release scheme, merge to `main` | **Empty** until ADR 0187 S4 |
+| App Store | Tagged release | **Empty** until ADR 0187 S4 |
+
+The value comes from `Configuration/Pocket-{Debug,Release}.xcconfig` — an `.xcconfig` because Xcode
+reads `//` inside a build setting as a comment, so a URL needs the `$()` escape — is surfaced into
+the hand-maintained `Info.plist` as `POCKET_API_BASE_URL`, and is read **only** by
+`Pocket/Core/Oracle/OracleEndpoint.swift`. An empty value resolves to `nil`, so a Release build is
+structurally incapable of an Oracle network call until S4 fills it in alongside the privacy-policy
+and manifest changes ADR 0187 D19 requires in the same change. This replaces the dead
+`POCKET_API_HOST` setting and its `api.pocket.example.com` placeholder — a domain we do not own.
 
 ## Status
 
