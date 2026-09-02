@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 // Per-screen orientation control (ADR 0042). Pure SwiftUI has no first-class per-view
 // orientation lock, so the app is portrait-locked by default and individual screens opt
@@ -7,8 +8,16 @@ import SwiftUI
 // `supportedInterfaceOrientationsFor` from app state. Without the gate every screen would
 // become rotatable the moment landscape is added to `Info.plist`.
 
-/// App delegate whose sole job is to answer UIKit's orientation query from a mutable mask.
-/// Registered via `@UIApplicationDelegateAdaptor` on `PocketApp`.
+/// App delegate: answers UIKit's orientation query from a mutable mask, and — since ADR 0186 D6 —
+/// receives notification taps.
+///
+/// **The second job is unrelated to the first, and that is a real (small) cost noted rather than
+/// hidden.** A `UNUserNotificationCenterDelegate` must be set *before the app finishes launching*,
+/// or a tap that woke the app cold is delivered to nobody; `@UIApplicationDelegateAdaptor` on
+/// `PocketApp` is the app's only hook that early, and introducing a second delegate to keep this
+/// file single-purpose would mean two of them competing for the same registration. The tap handling
+/// itself lives in the extension at the foot of this file, and it does one thing: hand a `uid` to
+/// `NotificationRouter`.
 final class AppDelegate: NSObject, UIApplicationDelegate {
     /// The orientations currently allowed. Defaults to portrait — only a screen that opts
     /// in (via `.landscapeEnabled()`) widens it, and reverts on disappear.
@@ -39,6 +48,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         if UITestRuntime.isActive {
             UIView.setAnimationsEnabled(false)
         }
+        // Receive notification taps (ADR 0186 D6). Set here, in `didFinishLaunching`, because a tap
+        // that launched the app cold is delivered to the delegate as soon as launch completes — set
+        // it any later and that delivery has already been dropped, silently, on exactly the path
+        // that matters most.
+        UNUserNotificationCenter.current().delegate = self
         return true
     }
 
@@ -77,5 +91,47 @@ extension View {
     /// when it disappears. ADR 0042: only the practice screen uses this.
     func landscapeEnabled() -> some View {
         modifier(LandscapeEnabled())
+    }
+}
+
+/// Notification taps (ADR 0186 D6), kept apart from the orientation work above so the two
+/// responsibilities at least read separately.
+///
+/// It resolves nothing and navigates nothing — it reads a `uid` out of the payload and posts it.
+/// Resolving a `uid` needs a `ModelContext`, which is a SwiftUI-environment thing and not something
+/// an app delegate should be reaching for; `HomeView` does that, where the store already is.
+///
+/// **Both methods are `nonisolated`, and they have to be.** `UIApplicationDelegate` conformance
+/// makes `AppDelegate` main-actor isolated, but these protocol requirements are not — so a
+/// main-actor implementation means the caller sends `UNUserNotificationCenter`,
+/// `UNNotificationResponse` and `UNNotification` across an isolation boundary, none of which is
+/// `Sendable`, and the build fails with *"non-Sendable parameter type … cannot be sent from caller
+/// of protocol requirement"*. This is the third face of the trap `TrialReminder`'s
+/// `usesSystemNotifications` documents: the fix is the same one, which is to keep the notification
+/// types out of an actor's region entirely and hop with a **value** — here a `UUID`.
+extension AppDelegate: UNUserNotificationCenterDelegate {
+
+    /// A tap. The **`uid`**, never a `persistentModelID` — see `PracticeReminder.content`.
+    ///
+    /// The payload is read here, in the nonisolated context, so nothing but the extracted `UUID`
+    /// crosses onto the main actor.
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                            didReceive response: UNNotificationResponse) async {
+        let info = response.notification.request.content.userInfo
+        guard let raw = info[PracticeReminder.routineUIDKey] as? String,
+              let uid = UUID(uuidString: raw) else { return }
+        await MainActor.run { NotificationRouter.shared.open(routineUID: uid) }
+    }
+
+    /// Show the reminder even when the app is already open.
+    ///
+    /// It is an appointment the player made, not an interruption the app decided on, so suppressing
+    /// it in the foreground would be the app quietly overruling them. `.banner` only — **no
+    /// `.badge`**, ever (ADR 0186 D2): a badge is a running tally of things left undone, which is
+    /// the absence frame wearing a number.
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                            willPresent notification: UNNotification)
+        async -> UNNotificationPresentationOptions {
+        [.banner, .sound]
     }
 }

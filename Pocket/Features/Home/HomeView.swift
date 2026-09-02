@@ -15,8 +15,15 @@ struct HomeView: View {
     /// Non-private (like the `@Query`s below) so the `HomeView+Cards` extension can gate its CTA.
     @Environment(\.isPro) var isPro
     @Environment(\.presentPaywall) var presentPaywall
+    /// Practice reminders (ADR 0186). Home owns the launch sweep (D3) and the tap landing (D6),
+    /// because both need a `ModelContext` to resolve a `uid` against and this is where the store is.
+    @Environment(PracticeReminder.self) var practiceReminder
+    /// The mailbox `AppDelegate` posts a tapped reminder's routine into (ADR 0186 D6). A shared
+    /// instance rather than an environment value because the delegate that fills it lives outside
+    /// the SwiftUI environment entirely; `@Observable` still tracks it from here.
+    let notificationRouter = NotificationRouter.shared
     @Query(sort: \Song.title) private var songs: [Song]
-    @Query private var routines: [Routine]
+    @Query var routines: [Routine]
     // Non-private so the `HomeView+ProfileMoment` extension (a separate file, for the length cap) can
     // read them when deciding which one-time profile moment to surface (ADR 0113).
     @Query var exercises: [Exercise]
@@ -50,6 +57,9 @@ struct HomeView: View {
     /// The song a single-file import just created — pushed straight to its waveform instead of the
     /// library ("open on create"). A batch still lands in the library.
     @State private var openingSong: Song?
+    /// The routine a tapped reminder asked for (ADR 0186 D6), resolved out of the store; `nil` when
+    /// none. Bool-bound below for the same reason `openingSong` is — see that destination.
+    @State var openingRoutine: Routine?
     @State private var showingMetronome = false
     /// Set when `seedFirstRunContent()` finishes, purely so `seedingMarker` can publish it to the UI
     /// tests (ADR 0146 pass 2). Nothing the player sees depends on it — seeded content appears
@@ -159,6 +169,11 @@ struct HomeView: View {
                     WaveformPracticeView(song: song, context: context)
                 }
             }
+            // Where a tapped reminder lands (ADR 0186 D6) — see `HomeView+Routines`.
+            .navigationDestination(isPresented: Binding(get: { openingRoutine != nil },
+                                                        set: { if !$0 { openingRoutine = nil } })) {
+                openedRoutineDestination
+            }
             .fullScreenCover(isPresented: $showingMetronome) {
                 MetronomeView()
             }
@@ -187,7 +202,11 @@ struct HomeView: View {
                                          regionCode: Locale.current.region?.identifier))
                              })
             .onAppear(perform: maybeOfferProfileMoment)
-            .task { await seedFirstRunContent() }
+            // Seeding first, then the reminder sweep — the ordering is load-bearing, see
+            // `sweepOrphanedReminders`.
+            .task { await seedFirstRunContent(); await sweepOrphanedReminders() }
+            .onChange(of: notificationRouter.pendingRoutineUID) { _, _ in openRoutineFromReminder() }
+            .onAppear(perform: openRoutineFromReminder)
             .overlay(alignment: .topLeading) { seedingMarker }
         }
     }
@@ -329,33 +348,6 @@ struct HomeView: View {
 
     // MARK: - Recent routines rail
 
-    /// The last few routines you actually **practised** (newest first). A tap **reopens the routine's
-    /// detail** (`RoutineDetailView` — blocks + Edit + Start), rather than replaying it straight into
-    /// the player, so you can glance at the blocks or tweak before starting (device feedback
-    /// 2026-07-11; supersedes ADR 0066's one-tap replay *from home* — the library ▶ still replays
-    /// directly). Reads `Routine.lastPracticed` (stamped on run); never-run routines don't appear.
-    private var recentRoutinesRail: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Recent routines")
-                .font(.futura(.title3, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(recentRoutines) { routine in
-                        // Gated for the same reason as "Jump back in" — a rail card is another door
-                        // into a Pro surface (ADR 0144 D4).
-                        proGated(.routine) {
-                            RoutineDetailView(container: context.container, existing: routine)
-                        } label: {
-                            RecentRoutineCard(routine: routine, locked: !isPro)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-    }
-
     // MARK: - Derived
 
     /// The single most-recently-practised song — the "Jump back in" subject — or `nil` on a
@@ -365,7 +357,7 @@ struct HomeView: View {
     }
 
     /// The recent-routines rail contents: routines actually practised, newest first, capped.
-    private var recentRoutines: [Routine] {
+    var recentRoutines: [Routine] {
         HomeFeed.recentlyPracticed(routines, limit: recentRoutineLimit,
                                    practicedAt: \.lastPracticed, id: \.uid)
     }

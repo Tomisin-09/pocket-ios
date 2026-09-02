@@ -24,6 +24,9 @@ struct RoutineLibraryView: View {
     /// free-taste routine a free player may run (but not edit).
     @Environment(\.isPro) var isPro
     @Environment(\.presentPaywall) private var presentPaywall
+    /// Per-routine practice reminders (ADR 0186 D3) — a deleted routine's pending notifications
+    /// have to go with it, and nothing else on this screen knows they exist.
+    @Environment(PracticeReminder.self) private var practiceReminder
     @Query private var routines: [Routine]
     /// Every exercise in the library — the raw material the planner's Quick session draws from
     /// (V2 planner Slice 1). Ranked by dueness, warm-up LRU-picked; no goals yet.
@@ -227,8 +230,23 @@ struct RoutineLibraryView: View {
         PocketRowFavorite(isFavorite: routine.isFavorite) { routine.isFavorite.toggle() }
     }
 
+    /// Deleting a routine cancels its reminders (ADR 0186 D3).
+    ///
+    /// **This is the half that is not sufficient**, and it is written knowing that. A cascade
+    /// delete, a Pro-lapse sweep or a future bulk action can remove a routine without ever routing
+    /// through this closure; the pending request would survive in the system and fire days later on
+    /// a lock screen, naming something the app has already forgotten. The sweep that actually holds
+    /// is `PracticeReminder.reconcile`, run at launch from `HomeView` against the system's own list
+    /// of pending requests. This one just makes the common path immediate.
+    ///
+    /// The `uid` is captured by value, so the closure needs nothing from a model object that is
+    /// about to be deleted.
     private func deletion(for routine: Routine) -> PocketRowDelete {
-        PocketRowDelete(id: routine.uid, name: displayName(routine)) { context.delete(routine) }
+        let uid = routine.uid
+        return PocketRowDelete(id: uid, name: displayName(routine)) { [practiceReminder] in
+            practiceReminder.cancel(routineUID: uid)
+            context.delete(routine)
+        }
     }
 
     /// Fork a session into an editable copy — the point of it is variation ("Tuesday, but with the

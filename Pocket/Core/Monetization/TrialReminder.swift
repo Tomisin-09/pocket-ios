@@ -30,6 +30,14 @@ final class TrialReminder {
 
     /// Whether the player asked for the notification, from the paywall's opt-in toggle. Persisted so
     /// reconciliation on a later launch knows whether it is allowed to reschedule.
+    ///
+    /// **Intent only — never "the app has permission"** (ADR 0186 D5). Until that ADR this flag was
+    /// assigned straight from the authorization result, which conflated *this feature is wanted*
+    /// with *notifications are allowed at all*. The two must be separate because the system prompt
+    /// is one-shot **for the whole app**: with them conflated, a player who declines the prompt at
+    /// the practice reminder finds this toggle flipping itself back off with no explanation — and
+    /// that is the one with revenue attached. Permission is read through
+    /// `NotificationAuthorization`, per feature, at the point of use.
     var remindersEnabled: Bool {
         didSet { defaults.set(remindersEnabled, forKey: Key.trialReminderEnabled) }
     }
@@ -81,22 +89,22 @@ final class TrialReminder {
     /// requested. Asked after the buy it reads as "now we'd like to send you things", and gets denied
     /// once, permanently.
     ///
-    /// Returns whether permission is now granted. A denial is not an error — the in-app countdown is
-    /// unaffected, so the promise is still kept, just more quietly.
+    /// **Records the intent either way** (ADR 0186 D5). A denial is not an error and is not a change
+    /// of mind: the player asked for the reminder, and the app failing to have permission is the
+    /// app's problem to explain, not a reason to quietly un-ask. The in-app countdown is unaffected,
+    /// so the promise is still kept, just more quietly — and the returned permission is what lets
+    /// the paywall offer the Settings app instead of reverting a control the player just set.
+    ///
+    /// - Returns: the permission after the attempt. `.denied` here can mean *just now* or *months
+    ///   ago in another feature*; both need the same interface, which is why the caller is handed
+    ///   the permission rather than a `Bool`.
     @discardableResult
-    func requestAuthorization() async -> Bool {
-        guard usesSystemNotifications else { return false }
-        let granted = await Self.requestSystemAuthorization()
-        remindersEnabled = granted
-        return granted
-    }
-
-    /// The one `await` that touches the notification centre, deliberately **`nonisolated`**: there is
-    /// no actor region to send the centre *out of*, so the non-`Sendable` receiver never crosses an
-    /// isolation boundary on any SDK. See `usesSystemNotifications` for why that matters.
-    private nonisolated static func requestSystemAuthorization() async -> Bool {
-        (try? await UNUserNotificationCenter.current()
-            .requestAuthorization(options: [.alert, .sound])) ?? false
+    func requestAuthorization() async -> NotificationPermission {
+        remindersEnabled = true
+        // No service to ask, so nothing has been determined — the honest answer in a preview or a
+        // unit test, and the one that renders no permission warning where there is no permission.
+        guard usesSystemNotifications else { return .notDetermined }
+        return await NotificationAuthorization.request()
     }
 
     // MARK: - Recording and reconciling

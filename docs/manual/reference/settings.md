@@ -18,7 +18,7 @@ answered without opening anything.
 | `You` | Your name, and what you play |
 | `Appearance` | Theme, motion, and how notes are spelled |
 | `Sound & feel` | Haptics, and which click the metronome plays |
-| `Practice` | Count-in, screen, and the strumming click |
+| `Practice` | Count-in, screen, the strumming click, and reminder defaults |
 | `Routines` | How a routine moves from block to block |
 | `Song player` | Four things about the waveform screen |
 | `Your data` | A copy of everything, and what it takes up |
@@ -80,6 +80,10 @@ Every one of these is optional, and none of it leaves the device.
 - **`Strumming click follows the pattern`** — *For a strumming drill, the metronome plays the pattern's rhythm (down/up/accent). Turned off, it's a plain click you strum the rhythm against.*
 - **`Tempo changes`** — `Off` or `Show`, for whether a climbing ramp announces the tempo it is moving
   to.
+- **`Reminder defaults`** — the days and the **`Time`** a *new* routine reminder starts from. It sets
+  a starting position and nothing else: it never changes a reminder already set, and there is no
+  switch here that turns reminders on. A reminder is switched on from the routine itself — see
+  [Reminding yourself](../routines.md#reminding-yourself).
 
 ## `Routines`
 

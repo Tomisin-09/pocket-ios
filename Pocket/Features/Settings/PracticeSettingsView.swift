@@ -5,7 +5,9 @@ import SwiftUI
 /// whether a ramp announces a tempo change before taking it.
 ///
 /// The tempo-change warning (ADR 0131) was its own top-level section; it belongs with Count-in
-/// because both are the run telling you what happens next.
+/// because both are the run telling you what happens next. Practice **reminder defaults** (ADR 0186)
+/// join for the same reason ADR 0162 D2 gives — a reminder changes how you practise — and add no
+/// tenth row to the hub.
 struct PracticeSettingsView: View {
     @AppStorage(AppSettings.Key.countInEnabled) private var countInEnabled = true
     @AppStorage(AppSettings.Key.countInBars) private var countInBars = AppSettings.countInBarsRange.lowerBound
@@ -34,6 +36,10 @@ struct PracticeSettingsView: View {
 
             // Whether a ramp announces its next step before taking it (ADR 0131).
             TempoWarningSection()
+
+            // Where a new routine reminder starts (ADR 0186 D12). The reminder itself is set on the
+            // routine (ADR 0163); this is only its starting position.
+            PracticeReminderSection()
         }
         .settingsScreen(title: "Practice")
     }

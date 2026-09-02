@@ -158,6 +158,9 @@ under the session rather than under whichever drill happened to be last.
 - **Rest length** — how long a rest lasts.
 - **Loop song blocks** — whether a song block repeats as an open jam rather than ending.
 
+**Settings ▸ Practice** holds one more that touches routines: **Reminder defaults**, the days and
+time a new routine reminder starts from. See [Reminding yourself](#reminding-yourself).
+
 ## Reading a routine without playing it
 
 Opening a routine gives you the read-only view. Tapping a block there pushes a preview of it — its
@@ -229,6 +232,29 @@ evening count as two.
 
 It counts and it dates, and that is all it does. There is no target to hit, nothing that goes up or
 down against last week, and nothing anywhere that remarks on a gap.
+
+### Reminding yourself
+
+A saved routine can carry a **Reminder**: switch on **Remind me**, pick the days, pick the **Time**.
+Red Moon then says, on those days at that time, what is waiting — the routine's name and how many
+blocks it holds. Tapping it opens that routine.
+
+The footer tells you when the next one is due. Nothing else is ever said about it. **If you miss
+one, nothing happens** — no second reminder, no note of it, no number on the app icon, and nothing
+anywhere that mentions the days you didn't play. Red Moon does not watch for your absence, so there
+is nothing for it to react to. A reminder is an appointment you made, and the only thing that
+changes it is you.
+
+Deleting a routine takes its reminder with it.
+
+**Settings ▸ Practice ▸ Reminder defaults** sets the days and time a *new* reminder starts from, so
+you set your week once instead of on every routine. It changes nothing about a reminder you have
+already set, and there is no switch there that turns reminders on for everything at once — a
+reminder is always something you asked for on a particular routine.
+
+If you have turned notifications off for Red Moon, the reminder stays where you set it and the
+routine screen says it cannot be delivered, with a way through to iOS Settings. Everything else
+works exactly as it did.
 
 A routine also carries a **Description** — what the session is for, in as many words as you like.
 It is the thing that will not fit in a name: who it is for, which week of the course it covers, why

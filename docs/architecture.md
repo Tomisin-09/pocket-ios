@@ -58,7 +58,22 @@
 │              `TrialReminderPlan` (pure: schedule/cancel + days remaining); paywall wording comes from
 │              `TrialPeriodCopy` over the product's own intro-offer period, never a hardcoded length. The
 │              two are wired at the app root by `StoreManager.onSubscriptionStateChange`, so StoreKit and
-│              UserNotifications never import each other. **Local notifications only — no `aps-environment`**
+│              UserNotifications never import each other. **Local notifications only — no `aps-environment`,
+│              no push server, and none is possible**: ADR 0113 keeps the app account-free, so there is no
+│              address to mail. That is a structural guarantee rather than a promise, and it now covers two
+│              features rather than one.
+│ Notifications — ADR 0186. `PracticeReminder` (`@MainActor @Observable`) schedules one repeating weekday
+│              request per routine, decided by the pure `PracticeReminderPlan`, whose inputs are the days
+│              and time the player chose plus `now` — and **nothing else**. It is handed no practice log,
+│              no `lastPracticed`, no recency map, so the app cannot notice your absence even in principle
+│              (D1), and a missed reminder is therefore silent by construction rather than by copy (D2).
+│              Schedules live as JSON in `UserDefaults` keyed by routine `uid`: no `@Model`, no migration,
+│              nothing added to the frozen schema. `NotificationPermission` / `NotificationAuthorization`
+│              are shared with the trial reminder and read `authorizationStatus` **before** asking, because
+│              the system prompt is one-shot for the whole app (D5 — a bug fix to shipped code).
+│              `reconcile` sweeps orphaned requests at launch from `HomeView`, against the system's own
+│              pending list rather than the app's bookkeeping (D3). Taps arrive at the existing
+│              `AppDelegate` and are posted to `HomeView` as a `uid` through `NotificationRouter` (D6).
 │   Analytics — ADR 0120, region-split by ADR 0147. `AnalyticsPolicy.consentModel(regionCode:)` is the
 │              pure rule: `.ask` (EEA + CH, default off, ePrivacy Art 5(3)) vs `.notify` (UK + RoW,
 │              default on, DUAA 2025 Sch A1 para 5). It decides only the DEFAULT — never whether an

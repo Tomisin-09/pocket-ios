@@ -1,9 +1,11 @@
 # ADR 0186 — a reason to come back that isn't a streak
 
-- **Status:** Proposed — nothing built. D1–D7 (the reminder) are the first slice; D8–D12 (the widget)
-  are the second and carry an entitlement and a target the first does not. **D5 also names a latent
-  bug in shipped code** and should be fixed with the first slice whether or not the rest is built.
-- **Date:** 2026-09-01 (`pocket-290-a-reason-to-come-back`)
+- **Status:** **Accepted — the reminder is built** (`pocket-291-practice-reminder`). D1–D7 and D12
+  ship, and **D5's bug fix to shipped code ships with them**. D8–D11 (the widget) remain **proposed**
+  and unbuilt: they carry an App Group entitlement, a new target and manual-signing churn that the
+  reminder does not, and D8 says plainly that they ship second on cost alone.
+- **Date:** 2026-09-01 (proposed, `pocket-290-a-reason-to-come-back`); built 2026-09-02
+  (`pocket-291-practice-reminder`)
 - **Relates to:** ADR 0070 (no performance feedback — this extends it one level up, from playing to
   habits), ADR 0144 D6 (`TrialReminder` / `TrialReminderPlan` — the pattern both halves copy, the
   app's only existing notification, and the shipped code D5 corrects), ADR 0144 D4 (the Pro wall the
@@ -386,6 +388,39 @@ target list), and `docs/design-brief.md` if D7's copy rule graduates into the vo
 
 **`docs/backlog.md:217` is superseded by this file** and should point at it rather than restating it.
 
+**What was learned building it.** Four things the ADR did not predict, kept because the next slice
+will meet them:
+
+1. **The `Sendable` trap has a third face.** `TrialReminder` documented it for a *stored* centre, and
+   D4 repeated that warning. It bit somewhere else entirely: `AppDelegate` is main-actor isolated by
+   its `UIApplicationDelegate` conformance, while `UNUserNotificationCenterDelegate`'s requirements
+   are not — so implementing them normally makes the *caller* send `UNNotificationResponse` and
+   `UNNotification` across an isolation boundary, and the build fails. Both callbacks are
+   `nonisolated`, and the payload is reduced to a `UUID` before hopping. `PracticeReminder.routineUIDKey`
+   had to become `nonisolated static` for the same reason.
+2. **The reminder is the one control on the routine screen that ignores Cancel/Save.** Everything
+   else there writes into the editing sandbox. A reminder is not a property of the routine — no
+   `@Model` field, per this ADR's header — so making it provisional would mean switching one on,
+   backing out of a screen you were only reading, and silently getting no reminder. It is read-only
+   mode only, where there is no Save to contradict.
+3. **D12's "global default" had to be given a meaning, and the meaning is narrow.** It is the days
+   and time a *new* reminder starts from — nothing more. It never reaches a reminder already set
+   (that would be the app rescheduling an appointment somebody else made), and there is deliberately
+   **no global on switch**, which would arm every routine at once and is the app deciding you should
+   be reminded rather than you asking to be.
+4. **Two files hit the 400-line cap** and were split as the house pattern requires:
+   `RoutineDetailView` shed its Start bar to `+Start.swift`, and `HomeView` — already at 395 — shed
+   the recent-routines rail into `HomeView+Routines.swift`, which now also holds the launch sweep and
+   the tap landing. Both belong to Home's routine surfaces, so the file is coherent rather than a
+   dumping ground.
+
+**D7's third custom lint rule was not added,** and that is unchanged rather than forgotten. D7 left
+it as a proposal because, unlike the two rules `.swiftlint.yml` already carries, it has no incident
+behind it — and a regex over English is a worse instrument than a regex over `AnalyticsEvent` cases.
+Nothing in building this produced the incident. The copy is instead pinned where it can be: the
+notification's content is one method with the rule in its doc comment, and `check-manual.py` C7
+already fails the build on the manual page.
+
 **Nothing here is proven by a green simulator run.** A repeating calendar trigger cannot be usefully
 driven from a test — the same wall `TrialReminderPlan` hit, and the reason
 `docs/plans/storekit-sandbox-validation.md:280` records the trial reminder as *not testable in
@@ -393,3 +428,13 @@ sandbox*. `PracticeReminderPlan` carries every assertion; delivery is verified o
 in particular need a device and patience: **D2's absence of a follow-up**, which is verified by
 deliberately missing a reminder and *waiting*, and **D3's orphan sweep**, which is verified by
 scheduling a reminder, deleting its routine, and leaving the app closed until the fire date.
+
+**So this is built and not yet verified, and the difference matters here more than usual.** 29 unit
+tests cover the decisions — which weekdays produce which requests, that an off or dayless or
+impossible schedule produces none, that identifiers are stable and that a foreign one (the trial
+reminder's) is not claimed, that the next fire date rolls forward rather than back, that the sweep
+drops exactly the dead routines — and the whole suite is green (2579 tests). None of that is
+evidence that a notification arrives. **A device pass is owed before this is called done**, and its
+list is the two items above plus: the tap landing on the right routine from a *cold* launch, and D5
+on a device that has actually denied the prompt, which is the only state where the shipped bug was
+visible in the first place.
