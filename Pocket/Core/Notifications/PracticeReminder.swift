@@ -35,44 +35,73 @@ final class PracticeReminder {
     /// `TrialReminder.usesSystemNotifications`, which pays for this lesson in full.
     private let usesSystemNotifications: Bool
 
-    init(defaults: UserDefaults = .standard, usesSystemNotifications: Bool = true) {
-        self.defaults = defaults
-        self.usesSystemNotifications = usesSystemNotifications
-    }
-
-    // MARK: - Schedules
-
-    private func storageKey(_ routineUID: UUID) -> String {
-        "practiceReminder.\(routineUID.uuidString)"
-    }
+    /// **The observable state, and the reason it is held in memory at all.**
+    ///
+    /// Everything here persists to `UserDefaults`, and the first version of this type read and wrote
+    /// it there directly — no stored properties but two `let`s. That compiles, passes every unit
+    /// test, and is **silently broken in the UI**: `@Observable` tracks *stored properties*, and
+    /// writing to `UserDefaults` mutates none of them, so a view reading `schedule(for:)` in its
+    /// body is never invalidated when a schedule changes. On device this looked like a lag — the
+    /// weekday strip stayed after the toggle went off, and appeared only when some unrelated change
+    /// happened to repaint the screen (device-verified 2026-09-02).
+    ///
+    /// So the dictionary is the read path and `UserDefaults` is the mirror, rather than the other
+    /// way round. Loaded once at `init`, which also makes every read cheap enough to call from a
+    /// `body`.
+    private var schedules: [UUID: PracticeReminderPlan.Schedule]
 
     /// The days and time a routine's reminder **starts** at when it is first switched on
     /// (ADR 0186 D12) — set in Settings ▸ Practice, per ADR 0163's second door.
     ///
     /// A default, and nothing more: changing it never reaches a routine whose reminder is already
     /// set, because that would be the app rescheduling an appointment the player made. Its own
-    /// `isOn` is meaningless and always read as `false` — a global switch that armed every routine
+    /// `isOn` is meaningless and always stored as `false` — a global switch that armed every routine
     /// at once is not a thing this feature has.
-    var defaultSchedule: PracticeReminderPlan.Schedule {
-        get {
-            guard let data = defaults.data(forKey: Key.defaultSchedule),
+    private(set) var defaultSchedule: PracticeReminderPlan.Schedule
+
+    init(defaults: UserDefaults = .standard, usesSystemNotifications: Bool = true) {
+        self.defaults = defaults
+        self.usesSystemNotifications = usesSystemNotifications
+
+        var loaded: [UUID: PracticeReminderPlan.Schedule] = [:]
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix(Key.prefix) {
+            guard let uid = UUID(uuidString: String(key.dropFirst(Key.prefix.count))),
+                  let data = defaults.data(forKey: key),
                   let stored = try? JSONDecoder().decode(
-                    PracticeReminderPlan.Schedule.self, from: data)
-            else { return .unset }
-            return stored
+                    PracticeReminderPlan.Schedule.self, from: data) else { continue }
+            loaded[uid] = stored
         }
-        set {
-            var stored = newValue
-            stored.isOn = false
-            guard let data = try? JSONEncoder().encode(stored) else { return }
-            defaults.set(data, forKey: Key.defaultSchedule)
+        self.schedules = loaded
+
+        if let data = defaults.data(forKey: Key.defaultSchedule),
+           let stored = try? JSONDecoder().decode(PracticeReminderPlan.Schedule.self, from: data) {
+            self.defaultSchedule = stored
+        } else {
+            self.defaultSchedule = .unset
         }
     }
 
+    // MARK: - Schedules
+
+    private func storageKey(_ routineUID: UUID) -> String {
+        "\(Key.prefix)\(routineUID.uuidString)"
+    }
+
     private enum Key {
-        /// Deliberately **outside** the `practiceReminder.` prefix that `storedRoutineUIDs` scans, so
-        /// the default can never be mistaken for a routine's schedule by a sweep.
+        static let prefix = "practiceReminder."
+        /// Deliberately **outside** `prefix`, so the default can never be loaded as, or swept away
+        /// with, a routine's own schedule.
         static let defaultSchedule = "practiceReminderDefault"
+    }
+
+    /// Set the starting position for a *new* reminder. Never touches one already set.
+    func setDefaultSchedule(_ schedule: PracticeReminderPlan.Schedule) {
+        var stored = schedule
+        stored.isOn = false
+        defaultSchedule = stored
+        if let data = try? JSONEncoder().encode(stored) {
+            defaults.set(data, forKey: Key.defaultSchedule)
+        }
     }
 
     /// The schedule stored for a routine, or — when it has none — the player's default with `isOn`
@@ -82,9 +111,7 @@ final class PracticeReminder {
     /// as far as *firing* goes, on purpose: both mean nothing fires, and neither is a fact about the
     /// player worth keeping apart.
     func schedule(for routineUID: UUID) -> PracticeReminderPlan.Schedule {
-        guard let data = defaults.data(forKey: storageKey(routineUID)),
-              let stored = try? JSONDecoder().decode(PracticeReminderPlan.Schedule.self, from: data)
-        else {
+        guard let stored = schedules[routineUID] else {
             var starting = defaultSchedule
             starting.isOn = false
             return starting
@@ -95,7 +122,7 @@ final class PracticeReminder {
     /// Whether any routine has a reminder switched on — drives the Settings row's summary, without
     /// that row needing to know how schedules are stored.
     func hasAnyReminder() -> Bool {
-        storedRoutineUIDs().contains { schedule(for: $0).isOn }
+        schedules.values.contains(where: \.isOn)
     }
 
     /// Record what the player asked for, and bring the pending requests in line with it.
@@ -110,6 +137,8 @@ final class PracticeReminder {
                      for routineUID: UUID,
                      name: String,
                      blockCount: Int) {
+        // The dictionary first, so the view observing it invalidates; `UserDefaults` mirrors it.
+        schedules[routineUID] = schedule
         if let data = try? JSONEncoder().encode(schedule) {
             defaults.set(data, forKey: storageKey(routineUID))
         }
@@ -131,6 +160,7 @@ final class PracticeReminder {
     /// that has already given up its model object — and from `reconcile`, where the routine is gone
     /// by definition.
     func cancel(routineUID: UUID) {
+        schedules.removeValue(forKey: routineUID)
         defaults.removeObject(forKey: storageKey(routineUID))
         guard usesSystemNotifications else { return }
         let identifiers = PracticeReminderPlan.weekdayRange.map {
@@ -154,7 +184,10 @@ final class PracticeReminder {
     /// app, naming something the app has already forgotten. This is ADR 0151 — *a take outlives its
     /// loop* — with the wreckage in a place the app cannot see.
     func reconcile(liveRoutineUIDs: Set<UUID>) async {
-        for stored in storedRoutineUIDs() where !liveRoutineUIDs.contains(stored) {
+        // `Array(...)` snapshots the keys: `schedules.keys` is a live view over the dictionary, and
+        // removing from it while iterating that view is mutation-during-iteration.
+        for stored in Array(schedules.keys) where !liveRoutineUIDs.contains(stored) {
+            schedules.removeValue(forKey: stored)
             defaults.removeObject(forKey: storageKey(stored))
         }
         guard usesSystemNotifications else { return }
@@ -174,15 +207,6 @@ final class PracticeReminder {
     /// boundary to cross.
     private nonisolated static func pendingIdentifiers() async -> [String] {
         await UNUserNotificationCenter.current().pendingNotificationRequests().map(\.identifier)
-    }
-
-    /// The routines this type holds a schedule for, recovered from the defaults keys themselves so
-    /// there is no separate index to fall out of step with what is actually stored.
-    private func storedRoutineUIDs() -> [UUID] {
-        defaults.dictionaryRepresentation().keys.compactMap { key in
-            guard key.hasPrefix("practiceReminder.") else { return nil }
-            return UUID(uuidString: String(key.dropFirst("practiceReminder.".count)))
-        }
     }
 
     // MARK: - The notifications themselves
@@ -235,10 +259,7 @@ final class PracticeReminder {
         return content
     }
 
-    /// The one key in a reminder's payload.
-    ///
-    /// **`nonisolated`**, because the reader is `AppDelegate`'s nonisolated tap callback — see the
-    /// note on that extension for why it cannot be on the main actor. A `let String` has nothing to
-    /// race on, so this costs nothing.
+    /// The one key in a reminder's payload. `nonisolated` because it is an immutable constant with
+    /// nothing to race on, so no reader has to be on this type's actor to look at it.
     nonisolated static let routineUIDKey = "routineUID"
 }

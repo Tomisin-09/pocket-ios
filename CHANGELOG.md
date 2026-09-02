@@ -23,9 +23,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   you did or didn't do. Red Moon does not watch for your absence, so there is nothing for it to
   react to — that is a decision about what this app is, not a feature we haven't got round to.
   Deleting a routine takes its reminder with it, even if the app was closed at the time.
-  **Settings ▸ Practice ▸ Reminder defaults** sets the days and time a *new* reminder starts from,
-  so you set your week once rather than on every routine; it changes nothing already set, and there
-  is no switch anywhere that turns reminders on for everything at once.
+  **Settings ▸ Practice** holds two things about reminders, neither of which sends anything:
+  **Starting point for new reminders** (the days and time a *new* one begins from, so you set your
+  week once rather than on every routine) and **Reminders you've set**, every routine that has one —
+  tap it to change its days, its time, or switch it off without going to the routine. Nothing there arms anything — a reminder is always something you switched on
+  for a particular routine.
 - **A reference can be a file you keep, not just a link.** *Where you learned it* — on an exercise, a
   song, a loop or a routine — now takes the **picture**, the **PDF**, the **`.txt`** or the **`.md`**
   the material actually came as. **Add a file** offers **Choose a photo** or **Choose a file**, and

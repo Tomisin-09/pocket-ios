@@ -304,6 +304,48 @@ so it belongs on the existing **Practice** destination. Per ADR 0163, the per-ro
 **on the routine**, where you are using it, with the global default in Settings. The hub keeps its ten
 rows and `check-manual.py`'s C1 count is untouched.
 
+**Amended 2026-09-02, from device use.** The above says what the Settings half *is* and says nothing
+about how it reads, and the difference turned out to matter. As first built it was two pickers — a
+weekday strip and a time — under the header *Reminder defaults*, with one explanatory sentence in the
+**footer**. That is the routine's own control with its toggle removed, so it was used as one: days
+picked, time set, nothing fired, and the sentence explaining why sat below the controls it should
+have preceded (owner feedback on the first device build).
+
+The fault is not the copy, it is offering two near-identical controls where only one of them is live.
+So D12 now also requires:
+
+1. **The explanation goes above the controls**, not in a footer. A footer is read after the thing it
+   qualifies has already been used.
+2. **The header names it as a starting point**, not a "default". *Default* describes where a value
+   comes from and says nothing about whether the thing is armed, which is the only question being
+   asked at that moment.
+3. **The reminders that exist are listed on the same screen** — routine name and schedule, or
+   *"None yet"* — and **each row opens that reminder for editing**. This is the part that answers
+   the question rather than deflecting it, and it is what makes the screen worth visiting at all: it
+   is now the one place that says what is set, and the place you can change it.
+
+**The rows were briefly read-only, and that was wrong.** The reasoning was that every existing door
+into a routine sits behind `proGated(.routine)` (D10's own subject, ADR 0144 D4) while `proGated` is
+a `HomeView` method rather than a shared modifier, so a tappable row would be a new *ungated* door
+into a Pro surface — D10's bug, introduced in Settings first. The premise is right and the conclusion
+did not follow: the row does not have to open the **routine**. `RoutineReminderSheet` opens the
+**reminder**, carries the same `ReminderSection` the routine screen does, and offers no route into
+the routine itself, so nothing Pro is reachable through it.
+
+And there is a second reason it must not be gated, which the read-only version had backwards.
+Schedules live in `UserDefaults`, so **a lapsed subscription does not cancel a reminder**. A player
+whose Pro has ended can still be receiving notifications they set while subscribed, with every door
+to the routine now locked. Gating this sheet would mean a notification the player cannot switch off
+because they stopped paying. **Turning something off is never the gated half** — that is
+user-hostile, and the sort of thing App Review is right to object to.
+
+The controls are shared rather than copied (`ReminderSection`). Two implementations of the same three
+controls would drift, and the half most likely to drift is the footer, which is where every rule
+about what this feature may *say* is enforced (D7).
+
+**No global on switch, still.** The confusion was about which control is live, not a wish to arm
+every routine at once, and nothing here reopens that.
+
 ## Alternatives considered
 
 **Absence-triggered re-engagement** — *"You haven't practised in 3 days."* Rejected outright, and the
@@ -388,8 +430,9 @@ target list), and `docs/design-brief.md` if D7's copy rule graduates into the vo
 
 **`docs/backlog.md:217` is superseded by this file** and should point at it rather than restating it.
 
-**What was learned building it.** Four things the ADR did not predict, kept because the next slice
-will meet them:
+**What was learned building it.** Six things the ADR did not predict, kept because the next slice
+will meet them — and two of them only appeared on a device, after a green build, a green test suite
+and a clean lint:
 
 1. **The `Sendable` trap has a third face.** `TrialReminder` documented it for a *stored* centre, and
    D4 repeated that warning. It bit somewhere else entirely: `AppDelegate` is main-actor isolated by
@@ -408,7 +451,26 @@ will meet them:
    (that would be the app rescheduling an appointment somebody else made), and there is deliberately
    **no global on switch**, which would arm every routine at once and is the app deciding you should
    be reminded rather than you asking to be.
-4. **Two files hit the 400-line cap** and were split as the house pattern requires:
+4. **`@Observable` tracks stored properties, and this type had none.** Every read and write went
+   straight to `UserDefaults`, which SwiftUI cannot observe — so a view reading `schedule(for:)` in
+   its body was never invalidated. It compiled, and every unit test passed, while on device the
+   weekday strip did not follow its own toggle and moved only when something unrelated repainted the
+   screen. Schedules are now an in-memory dictionary mirrored to `UserDefaults`, rather than the
+   other way round. The test that catches it asserts *"a view reading this would be told"* via
+   `withObservationTracking`, because every assertion of the form *"the value was stored"* passes
+   against the broken version.
+5. **`nonisolated` on the notification-delegate methods is the fix that compiles and crashes.**
+   `AppDelegate` is main-actor isolated by its `UIApplicationDelegate` conformance while
+   `UNUserNotificationCenterDelegate`'s requirements are not, so a plain implementation fails to
+   build on the non-`Sendable` parameters. Marking the methods `nonisolated` clears that and aborts
+   the app on **every tap** — UIKit finishes handling the response off-main and its snapshot and
+   state-restoration work asserts (`SIGABRT`, device-verified twice). To the player it looks like the
+   notification unlocking the phone to the home screen. `@preconcurrency` on the conformance is the
+   correct tool: it downgrades the sending error to a runtime check and keeps the isolation UIKit
+   relies on. The narrower lesson, which the `TrialReminder` note did not draw: keep non-`Sendable`
+   OS types out of an actor region **when you own the call**, and reach for `@preconcurrency` when
+   the OS owns it and hands you the values.
+6. **Two files hit the 400-line cap** and were split as the house pattern requires:
    `RoutineDetailView` shed its Start bar to `+Start.swift`, and `HomeView` — already at 395 — shed
    the recent-routines rail into `HomeView+Routines.swift`, which now also holds the launch sweep and
    the tap landing. Both belong to Home's routine surfaces, so the file is coherent rather than a

@@ -158,8 +158,9 @@ under the session rather than under whichever drill happened to be last.
 - **Rest length** — how long a rest lasts.
 - **Loop song blocks** — whether a song block repeats as an open jam rather than ending.
 
-**Settings ▸ Practice** holds one more that touches routines: **Reminder defaults**, the days and
-time a new routine reminder starts from. See [Reminding yourself](#reminding-yourself).
+**Settings ▸ Practice** holds two more that touch routines: **Starting point for new reminders**,
+and **Reminders you've set** — the list of live ones, each editable from there. See
+[Reminding yourself](#reminding-yourself).
 
 ## Reading a routine without playing it
 
@@ -247,10 +248,13 @@ changes it is you.
 
 Deleting a routine takes its reminder with it.
 
-**Settings ▸ Practice ▸ Reminder defaults** sets the days and time a *new* reminder starts from, so
-you set your week once instead of on every routine. It changes nothing about a reminder you have
-already set, and there is no switch there that turns reminders on for everything at once — a
-reminder is always something you asked for on a particular routine.
+**Settings ▸ Practice** holds two things about reminders, and neither of them sends anything.
+**Starting point for new reminders** is the days and time a *new* reminder begins from, so you set
+your week once instead of on every routine; it changes nothing you have already set, and there is no
+switch there that turns reminders on for everything at once — a reminder is always something you
+asked for on a particular routine. Under it, **Reminders you've set** lists every routine that has
+one, with its days and time, so there is one place that answers "what is actually set" — and tapping
+a row opens that reminder, so you can change its days, its time, or switch it off from there.
 
 If you have turned notifications off for Red Moon, the reminder stays where you set it and the
 routine screen says it cannot be delivered, with a way through to iOS Settings. Everything else

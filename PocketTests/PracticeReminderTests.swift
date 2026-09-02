@@ -1,3 +1,4 @@
+import Observation
 import XCTest
 @testable import Pocket
 
@@ -27,7 +28,7 @@ final class PracticeReminderTests: XCTestCase {
     /// **off**. Nothing fires until they switch it on, which is the only legal trigger (D1).
     func testANewRoutineStartsFromTheDefaultButSwitchedOff() throws {
         let reminder = try makeReminder()
-        reminder.defaultSchedule = schedule(days: [3, 5], hour: 7)
+        reminder.setDefaultSchedule(schedule(days: [3, 5], hour: 7))
 
         let fresh = reminder.schedule(for: UUID())
         XCTAssertFalse(fresh.isOn)
@@ -39,7 +40,7 @@ final class PracticeReminderTests: XCTestCase {
     /// deciding you should be reminded rather than you asking to be.
     func testTheDefaultCannotBeSwitchedOn() throws {
         let reminder = try makeReminder()
-        reminder.defaultSchedule = schedule(days: [2])
+        reminder.setDefaultSchedule(schedule(days: [2]))
         XCTAssertFalse(reminder.defaultSchedule.isOn)
     }
 
@@ -51,7 +52,7 @@ final class PracticeReminderTests: XCTestCase {
         reminder.setSchedule(schedule(days: [2], hour: 8), for: routine, name: "Warm-up",
                              blockCount: 4)
 
-        reminder.defaultSchedule = schedule(days: [7], hour: 20)
+        reminder.setDefaultSchedule(schedule(days: [7], hour: 20))
 
         XCTAssertEqual(reminder.schedule(for: routine).weekdays, [2])
         XCTAssertEqual(reminder.schedule(for: routine).hour, 8)
@@ -104,11 +105,64 @@ final class PracticeReminderTests: XCTestCase {
     /// be mistaken for a routine's own schedule and swept away with one.
     func testTheDefaultIsNotMistakenForARoutine() async throws {
         let reminder = try makeReminder()
-        reminder.defaultSchedule = schedule(days: [2, 3])
+        reminder.setDefaultSchedule(schedule(days: [2, 3]))
         XCTAssertFalse(reminder.hasAnyReminder())
 
         await reminder.reconcile(liveRoutineUIDs: [])
         XCTAssertEqual(reminder.defaultSchedule.weekdays, [2, 3])
+    }
+
+    // MARK: - Observation
+
+    /// **The one that catches a silent UI bug.** `@Observable` tracks *stored properties*, and the
+    /// first version of this type had none — every read and write went straight to `UserDefaults`,
+    /// which SwiftUI cannot observe. It compiled, and every other test here passed, while on device
+    /// the weekday strip simply did not follow its own toggle: it changed only when something
+    /// unrelated happened to repaint the screen.
+    ///
+    /// So this asserts the thing the feature actually needs, which is not "the value was stored"
+    /// but "a view reading it would be told". Nothing else in this file can tell the difference.
+    func testChangingAScheduleNotifiesObservers() throws {
+        let reminder = try makeReminder()
+        let routine = UUID()
+        // An `XCTestExpectation` rather than a captured `Bool`: `onChange` is `@Sendable`, so a
+        // captured var is a concurrency error rather than a style choice.
+        let notified = expectation(description: "a view reading this schedule is invalidated")
+        withObservationTracking {
+            _ = reminder.schedule(for: routine)
+        } onChange: {
+            notified.fulfill()
+        }
+
+        reminder.setSchedule(schedule(days: [2]), for: routine, name: "Warm-up", blockCount: 4)
+        wait(for: [notified], timeout: 1)
+    }
+
+    func testCancellingNotifiesObservers() throws {
+        let reminder = try makeReminder()
+        let routine = UUID()
+        reminder.setSchedule(schedule(days: [2]), for: routine, name: "Warm-up", blockCount: 4)
+
+        let notified = expectation(description: "a view reading this schedule is invalidated")
+        withObservationTracking {
+            _ = reminder.schedule(for: routine)
+        } onChange: {
+            notified.fulfill()
+        }
+        reminder.cancel(routineUID: routine)
+        wait(for: [notified], timeout: 1)
+    }
+
+    func testChangingTheDefaultNotifiesObservers() throws {
+        let reminder = try makeReminder()
+        let notified = expectation(description: "a view reading the default is invalidated")
+        withObservationTracking {
+            _ = reminder.defaultSchedule
+        } onChange: {
+            notified.fulfill()
+        }
+        reminder.setDefaultSchedule(schedule(days: [5], hour: 9))
+        wait(for: [notified], timeout: 1)
     }
 
     // MARK: - Cancelling and the orphan sweep (D3)

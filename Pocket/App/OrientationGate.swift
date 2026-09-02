@@ -101,26 +101,36 @@ extension View {
 /// Resolving a `uid` needs a `ModelContext`, which is a SwiftUI-environment thing and not something
 /// an app delegate should be reaching for; `HomeView` does that, where the store already is.
 ///
-/// **Both methods are `nonisolated`, and they have to be.** `UIApplicationDelegate` conformance
-/// makes `AppDelegate` main-actor isolated, but these protocol requirements are not — so a
-/// main-actor implementation means the caller sends `UNUserNotificationCenter`,
-/// `UNNotificationResponse` and `UNNotification` across an isolation boundary, none of which is
-/// `Sendable`, and the build fails with *"non-Sendable parameter type … cannot be sent from caller
-/// of protocol requirement"*. This is the third face of the trap `TrialReminder`'s
-/// `usesSystemNotifications` documents: the fix is the same one, which is to keep the notification
-/// types out of an actor's region entirely and hop with a **value** — here a `UUID`.
-extension AppDelegate: UNUserNotificationCenterDelegate {
+/// **The conformance is `@preconcurrency`, and the methods stay on the main actor.** This was got
+/// wrong once, on device, and the wrong version is the one that compiles.
+///
+/// `UIApplicationDelegate` conformance makes `AppDelegate` main-actor isolated, while these
+/// requirements are declared nonisolated — so a plain main-actor implementation fails to build:
+/// *"non-Sendable parameter type … cannot be sent from caller of protocol requirement"*, because
+/// `UNNotificationResponse` and `UNNotification` would cross an isolation boundary. Marking the
+/// methods `nonisolated` silences that, and **crashes the app on every tap**: UIKit finishes
+/// handling the response on whatever thread the async method completed on, and its snapshot and
+/// state-restoration work then asserts off-main. `SIGABRT` inside this method, on
+/// `com.apple.root.user-initiated-qos.cooperative` — device-verified 2026-09-02, twice. To the
+/// player it looks like the notification unlocking the phone to the home screen.
+///
+/// `@preconcurrency` on the conformance is the tool for exactly this shape: an API that predates
+/// concurrency annotations but does in fact always call back on the main thread. It downgrades the
+/// sending error to a runtime check and lets the methods keep the isolation UIKit is relying on.
+///
+/// So the rule the `Sendable` family of traps actually teaches is narrower than "make it
+/// nonisolated": keep non-`Sendable` OS types out of an actor region **when you own the call**
+/// (`TrialReminder.usesSystemNotifications`, `NotificationAuthorization`), and use
+/// `@preconcurrency` when the OS owns it and hands you the values.
+extension AppDelegate: @preconcurrency UNUserNotificationCenterDelegate {
 
     /// A tap. The **`uid`**, never a `persistentModelID` — see `PracticeReminder.content`.
-    ///
-    /// The payload is read here, in the nonisolated context, so nothing but the extracted `UUID`
-    /// crosses onto the main actor.
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                            didReceive response: UNNotificationResponse) async {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse) async {
         let info = response.notification.request.content.userInfo
         guard let raw = info[PracticeReminder.routineUIDKey] as? String,
               let uid = UUID(uuidString: raw) else { return }
-        await MainActor.run { NotificationRouter.shared.open(routineUID: uid) }
+        NotificationRouter.shared.open(routineUID: uid)
     }
 
     /// Show the reminder even when the app is already open.
@@ -129,8 +139,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     /// it in the foreground would be the app quietly overruling them. `.banner` only — **no
     /// `.badge`**, ever (ADR 0186 D2): a badge is a running tally of things left undone, which is
     /// the absence frame wearing a number.
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                            willPresent notification: UNNotification)
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification)
         async -> UNNotificationPresentationOptions {
         [.banner, .sound]
     }
