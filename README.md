@@ -108,9 +108,10 @@ C14 guards the one way back — a `Manual*` class written into `PocketUITests`.
 Pocket/
   App/         App entry, root scene
   Features/    Home · Library · Waveform · Metronome · Practice · Repertoire
-  Core/        Audio (engine + pure tempo math) · Models · Services · Export (ADR 0181) · Storage · Diagnostics (MetricKit, ADR 0183)
+  Core/        Audio (engine + pure tempo math) · Models · Services · Export (ADR 0181) · Storage · Diagnostics (MetricKit, ADR 0183) · Oracle (ADR 0187)
   UI/          Shared components, design tokens
   Resources/   Info.plist, PrivacyInfo.xcprivacy
+Configuration/    Per-config .xcconfig (the backend base URL) + RedMoonPro.storekit
 PocketTests/      Unit tests (pure logic)
 PocketUITests/    XCUITest flows
 PocketShootUITests/  The user manual's screenshot run — not tests (ADR 0165)

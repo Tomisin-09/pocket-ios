@@ -1,0 +1,22 @@
+// Pocket — Release build configuration (ADR 0187 S0).
+//
+// See `Pocket-Debug.xcconfig` for why an `.xcconfig` is required at all (the `//`-is-a-comment
+// footgun and the `$()` escape).
+
+// **Deliberately empty, and this is the guard rather than an omission.**
+//
+// `docs/backlog.md` carries a standing rule: *"No live host in Release until the proxy exists.
+// The Release `POCKET_API_HOST` is a placeholder and nothing calls it. Before any feature uses
+// it, replace it and guard against the placeholder leaking into a release build."*
+//
+// The placeholder it refers to was `api.pocket.example.com` — a domain we do not own, sitting in
+// `project.yml` where a typo'd feature flag could have pointed a shipped build at someone else's
+// server. An empty value is a stronger guard than a fake hostname: `OracleEndpoint.resolve`
+// returns `nil` for it, the proxy is reported unavailable, and the Oracle serves its deterministic
+// local reading. A Release build therefore cannot make an Oracle network call at all until this
+// line is filled in — which happens in S4, alongside the privacy-policy and manifest changes that
+// ADR 0187 D19 requires to land in the same change.
+//
+// When S4 fills this in it becomes the Oracle's own subdomain in the existing Deco Operations
+// Route53 zone (ADR 0187 D18), never a path on Docket's ALB hostname.
+POCKET_API_BASE_URL =

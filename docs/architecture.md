@@ -1477,10 +1477,20 @@ disk use. Surfaced as *Settings ▸ Your data ▸ Storage*, under Export on the 
 
 ## Backend
 
-- Single proxy endpoint for AI session suggestions; key held server-side.
-- Base URL by build config (Debug → dev, Release → prod). See `docs/decisions/0002`.
-- **Not built.** `infrastructure/prod/` is a placeholder and the Release `POCKET_API_HOST` is still
-  `api.pocket.example.com`. Nothing calls it.
+- Single proxy endpoint for the Red Moon Oracle; key held server-side. See `docs/decisions/0002`
+  and `docs/decisions/0187` (which supersedes 0002's Sign-in-with-Apple bullet: the Oracle
+  authenticates with App Attest and meters quota against an opaque purchase token, so it brings no
+  account).
+- **Still not built, and nothing calls it.** `infrastructure/prod/` is a placeholder.
+- **The base URL is now real config rather than a dead build setting** (ADR 0187 S0). It comes from
+  `Configuration/Pocket-{Debug,Release}.xcconfig` — an `.xcconfig` because Xcode reads `//` in a
+  build setting as a comment, so a URL needs the `$()` escape — is surfaced into `Info.plist` as
+  `POCKET_API_BASE_URL`, and is read by `Pocket/Core/Oracle/OracleEndpoint.swift`.
+  - **Debug** → `http://localhost:8787`, a proxy you run yourself.
+  - **Release** → **deliberately empty.** The old `api.pocket.example.com` placeholder was a domain
+    we do not own; an empty value is the stronger guard, because `OracleEndpoint.resolve` returns
+    `nil` for it and a shipped build is therefore structurally incapable of an Oracle network call
+    until ADR 0187 S4 fills it in alongside the privacy-policy and manifest changes.
 
 ## Outbound network (Core/Support, ADR 0161)
 

@@ -216,6 +216,11 @@ listening"* — as a feature.
 
 ### 5. A reason to come back that isn't a streak
 
+**Promoted to [ADR 0186](decisions/0186-a-reason-to-come-back.md) (2026-09-01, Proposed, nothing
+built).** The warning below turned out to be the entire design rather than a caveat on it, so it is
+a decision now: the only legal trigger is a date the player chose, and the widget reads a bounded
+snapshot rather than moving the SwiftData store. Original note preserved.
+
 There is no entry anywhere in this file for notifications, widgets or App Intents. Two facts make
 this cheaper than it looks, and one makes it dangerous:
 
@@ -2457,9 +2462,14 @@ not code. Re-run the audit any time with the `/ready-to-ship` skill.
 - **Permissions stay minimal & specific.** Add an `Info.plist` usage string only
   when a shipping feature exercises it (the parked pedal modeller's mic string is
   correctly absent). Vague strings cause rejection.
-- **No live host in Release until the proxy exists.** The Release `POCKET_API_HOST`
-  is a placeholder and nothing calls it. Before any feature uses *it*, replace it
-  and guard against the placeholder leaking into a release build.
+- **No live host in Release until the proxy exists.** ✅ **Now enforced rather than
+  remembered** (ADR 0187 S0). The `POCKET_API_HOST` setting and its
+  `api.pocket.example.com` placeholder — a domain we do not own — are gone. The
+  base URL is `POCKET_API_BASE_URL`, set per-config in
+  `Configuration/Pocket-{Debug,Release}.xcconfig`, and **Release is deliberately
+  empty**: `OracleEndpoint.resolve` returns `nil` for it, so a shipped build cannot
+  make an Oracle call at all until ADR 0187 S4 fills it in. An absent address is a
+  stronger guard than a fake hostname somebody has to remember to replace.
   **The "zero `URLSession` in V1" line is retired** (ADR 0161): the in-app contact
   form posts to Formspree, which is a fixed third-party form endpoint and
   deliberately *not* `POCKET_API_HOST`. The narrower rule that replaces it: the

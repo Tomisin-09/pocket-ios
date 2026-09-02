@@ -2,8 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Empty for Phase 0. CloudKit + iCloud container entitlements are added in
-	     Phase 4 when sync lands; Sign in with Apple is added with the AI planner.
+	<!-- Still empty, and now deliberately so rather than merely not-yet.
+
+	     CloudKit + iCloud container entitlements are added if and when sync lands.
+
+	     This file used to say "Sign in with Apple is added with the AI planner", which was the
+	     plan in ADR 0002 / ADR 0092 §A3 and is no longer true: ADR 0187 D3 supersedes it. The
+	     Oracle authenticates with App Attest (no entitlement needed for the default
+	     environment) and meters quota against an opaque token minted at purchase, so it brings
+	     no account — which is what keeps ADR 0113 intact and keeps Apple's mandatory in-app
+	     account-deletion requirement from ever attaching.
+
 	     Do not add entitlements before the feature that needs them. -->
 </dict>
 </plist>
