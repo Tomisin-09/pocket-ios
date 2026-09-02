@@ -26,7 +26,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   **Settings ▸ Practice** holds two things about reminders, neither of which sends anything:
   **Starting point for new reminders** (the days and time a *new* one begins from, so you set your
   week once rather than on every routine) and **Reminders you've set**, every routine that has one —
-  tap it to change its days, its time, or switch it off without going to the routine. Nothing there arms anything — a reminder is always something you switched on
+  tap it to change its days, its time, or switch it off without going to the routine. If
+  notifications are off for Red Moon, nothing claims otherwise: the reminder stays where you set it,
+  but the app says **Not being delivered** instead of naming a time it can't keep, and points you at
+  iOS Settings. Nothing there arms anything — a reminder is always something you switched on
   for a particular routine.
 - **A reference can be a file you keep, not just a link.** *Where you learned it* — on an exercise, a
   song, a loop or a routine — now takes the **picture**, the **PDF**, the **`.txt`** or the **`.md`**

@@ -113,7 +113,13 @@ struct PracticeReminderSection: View {
                 Text(summary(entry) ?? "")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
+                if !isDeliverable {
+                    Text("Not being delivered")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
             }
+            .opacity(isDeliverable ? 1 : 0.55)
             Spacer(minLength: 8)
             Image(systemName: "chevron.right")
                 .font(.futura(.footnote, weight: .semibold))
@@ -122,6 +128,12 @@ struct PracticeReminderSection: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
+
+    /// A schedule this row can state as a fact. **Only when it can actually arrive** — with
+    /// notifications denied, "Mon, Wed & Fri at 08:00" describes something that will not happen, so
+    /// the row says so in words rather than leaving the fade to carry it. A dim row is a hint; only
+    /// a sentence survives VoiceOver, and only a sentence is unambiguous at a glance.
+    private var isDeliverable: Bool { permission != .denied }
 
     private func summary(_ entry: RoutineReminderTarget) -> String? {
         PracticeReminderPlan.summary(for: practiceReminder.schedule(for: entry.uid))

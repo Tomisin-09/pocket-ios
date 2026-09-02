@@ -34,10 +34,12 @@ struct ReminderSection: View {
             if schedule.isOn {
                 WeekdayPicker(weekdays: $schedule.weekdays)
                     .listRowBackground(PocketColor.background)
+                    .opacity(isDeliverable ? 1 : dimmed)
                 DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
                     .font(.futura(.body))
                     .foregroundStyle(PocketColor.textPrimary)
                     .listRowBackground(PocketColor.background)
+                    .opacity(isDeliverable ? 1 : dimmed)
             }
         } header: {
             Text(header)
@@ -46,24 +48,42 @@ struct ReminderSection: View {
         }
     }
 
+    /// Whether anything set here can actually arrive. `nil` permission — not looked yet — reads as
+    /// deliverable, so the section does not flash a warning on every appear and then withdraw it.
+    private var isDeliverable: Bool { permission != .denied }
+
+    /// How far the day and time controls fade when nothing they describe can be delivered.
+    ///
+    /// They stay **enabled**, not disabled, and that is the point: the control a player most needs
+    /// when notifications are off is the one that switches the reminder *off*, and locking the
+    /// others would be the app taking away the settings it is complaining about. Appearance says
+    /// "not live"; behaviour stays available. The toggle itself never fades, because it is the one
+    /// control that still does exactly what it says.
+    private var dimmed: Double { 0.45 }
+
     /// **Future tense, and nothing else** (ADR 0186 D7). "Next: Monday at 18:00" — what is waiting,
     /// never how long it has been, never how many were missed. D2's silence has no copy at all,
     /// which is what makes it silence.
+    ///
+    /// **A promise is only made when it can be kept.** With notifications denied this used to print
+    /// *"Next: Thursday 12:00"* and the "notifications are off" note directly beneath it — the
+    /// screen naming a delivery that could not happen, and contradicting itself two lines later.
+    /// A dimmed control is a hint and a sentence is a statement, so the sentence does the work here
+    /// and the fade only agrees with it (found on device, 2026-09-02).
     @ViewBuilder
     private var footer: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if schedule.isOn {
-                if let next = PracticeReminderPlan.nextFireDate(for: schedule, after: .now) {
-                    Text("Next: \(next.formatted(.dateTime.weekday(.wide).hour().minute()))")
-                } else {
-                    Text("Pick at least one day.")
-                }
-            } else {
+            switch PracticeReminderPlan.status(for: schedule, permission: permission, now: .now) {
+            case .off:
                 Text("A reminder on the days you choose. Red Moon never notices when you don't "
                      + "practise, so nothing follows a missed one.")
-            }
-            if schedule.isOn, permission == .denied {
+            case .noDays:
+                Text("Pick at least one day.")
+            case .notDelivered:
+                Text("Not being delivered.")
                 NotificationsOffNote(message: deniedMessage)
+            case .next(let date):
+                Text("Next: \(date.formatted(.dateTime.weekday(.wide).hour().minute()))")
             }
         }
         .font(.futura(.caption))

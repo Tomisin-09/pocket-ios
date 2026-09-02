@@ -133,6 +133,42 @@ enum PracticeReminderPlan {
         }.min()
     }
 
+    /// What the screen may say about a schedule right now.
+    ///
+    /// In the pure half because *"never promise a delivery that cannot happen"* is precisely the
+    /// kind of rule that is silent when it breaks: it looks correct in every simulator run, on any
+    /// device where the prompt has not been denied. It shipped broken once — the footer printed
+    /// "Next: Thursday 12:00" with the "notifications are off" note directly beneath it (found on
+    /// device, 2026-09-02).
+    enum Status: Equatable {
+        /// Switched off. Nothing to say and nothing to promise.
+        case off
+        /// On, but no days ticked, so it will never fire.
+        case noDays
+        /// On and dated, but notifications are off for the app — so there is a schedule and there
+        /// is **no promise**.
+        case notDelivered
+        /// On, dated, and deliverable. The one case that may name a time.
+        case next(Date)
+    }
+
+    /// **The one input beyond the player's own choices**, and it is deliberately not the sort D1
+    /// forbids: permission is a fact about the app's access, not about whether anybody practised.
+    /// Nothing here can still learn that a reminder was missed.
+    static func status(for schedule: Schedule,
+                       permission: NotificationPermission?,
+                       now: Date,
+                       calendar: Calendar = .current) -> Status {
+        guard schedule.isOn else { return .off }
+        // `nil` — not looked yet — reads as deliverable, so a screen does not flash a warning on
+        // every appear and then withdraw it.
+        guard permission != .denied else { return .notDelivered }
+        guard let next = nextFireDate(for: schedule, after: now, calendar: calendar) else {
+            return .noDays
+        }
+        return .next(next)
+    }
+
     // MARK: - Saying it
 
     /// "Mon, Wed & Fri at 18:00" — what the routine's row reads when the reminder is on, and `nil`

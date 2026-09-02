@@ -168,3 +168,69 @@ final class PracticeReminderPlanTests: XCTestCase {
         XCTAssertEqual(decoded, original)
     }
 }
+
+/// **What a screen is allowed to say about a schedule** (ADR 0186 D7).
+///
+/// Its own suite because the rule it pins — *never name a delivery that cannot happen* — is invisible
+/// in every simulator run and on any device whose notification prompt has not been denied. It
+/// shipped broken: the footer printed "Next: Thursday 12:00" with the "notifications are off" note
+/// directly underneath, so the screen promised a delivery and contradicted itself two lines later.
+final class PracticeReminderStatusTests: XCTestCase {
+
+    private var calendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        calendar.firstWeekday = 2
+        return calendar
+    }()
+
+    /// Wednesday, 09:00 UTC.
+    private var now: Date {
+        calendar.date(from: DateComponents(year: 2026, month: 9, day: 2, hour: 9)) ?? .distantPast
+    }
+
+    private func schedule(isOn: Bool = true, days: Set<Int>) -> PracticeReminderPlan.Schedule {
+        PracticeReminderPlan.Schedule(isOn: isOn, weekdays: days, hour: 18, minute: 0)
+    }
+
+    private func status(_ schedule: PracticeReminderPlan.Schedule,
+                        _ permission: NotificationPermission?) -> PracticeReminderPlan.Status {
+        PracticeReminderPlan.status(for: schedule, permission: permission, now: now,
+                                    calendar: calendar)
+    }
+
+    /// **The one this exists for.** A denial must erase the promise, not sit underneath it.
+    func testADeniedPermissionNamesNoTime() {
+        XCTAssertEqual(status(schedule(days: [4]), .denied), .notDelivered)
+    }
+
+    func testAGrantedPermissionNamesTheNextTime() {
+        guard case .next = status(schedule(days: [4]), .granted) else {
+            return XCTFail("A deliverable reminder should name when it is next due")
+        }
+    }
+
+    /// Not looked yet reads as deliverable, so a screen does not flash a warning on every appear and
+    /// then withdraw it a moment later.
+    func testAnUnreadPermissionIsNotTreatedAsADenial() {
+        guard case .next = status(schedule(days: [4]), nil) else {
+            return XCTFail("An unread permission must not be assumed denied")
+        }
+    }
+
+    /// Off outranks denied: a reminder nobody switched on makes no promise to break, so there is
+    /// nothing to warn about and no reason to mention permission at all.
+    func testSwitchedOffSaysNothingAboutPermission() {
+        XCTAssertEqual(status(schedule(isOn: false, days: [4]), .denied), .off)
+    }
+
+    func testNoDaysIsItsOwnState() {
+        XCTAssertEqual(status(schedule(days: []), .granted), .noDays)
+    }
+
+    /// A denial outranks a dayless schedule: "pick a day" is advice that would achieve nothing,
+    /// since the reminder still could not arrive.
+    func testADenialOutranksAnEmptyWeek() {
+        XCTAssertEqual(status(schedule(days: []), .denied), .notDelivered)
+    }
+}

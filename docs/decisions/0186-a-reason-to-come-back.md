@@ -190,6 +190,26 @@ are on" generally (see *Consequences*).
 visible on the routine — the same split that keeps the trial *countdown* working when the trial
 *notification* is refused.
 
+**And it stops promising.** Added 2026-09-02, after device use. "Visible" is not enough: as first
+built the routine's footer printed *"Next: Thursday 12:00"* **and**, immediately beneath it, the note
+saying notifications were off. The screen named a delivery that could not happen and then contradicted
+itself two lines later. A schedule that survives a denial is right; a *promise* that survives one is a
+lie the app tells every time the screen is opened.
+
+So `PracticeReminderPlan.Status` is where "what may this screen say" is decided, in the pure half with
+the rest of the decisions, for the reason that governs all of them: it is silent when it breaks. It
+looks correct in every simulator run and on any device whose prompt has not been denied.
+
+Permission is the one input beyond the player's own choices, and it does not weaken D1 — it is a fact
+about the app's access, not about whether anybody practised. Nothing gains a way to learn that a
+reminder was missed.
+
+The day and time controls **fade but stay enabled**. The control a player most needs when
+notifications are off is the one that switches the reminder *off*, and disabling the rest would be
+the app confiscating the settings it is complaining about. The toggle never fades, because it is the
+one control that still does exactly what it says. The fade is a hint; the sentence is the mechanism —
+only a sentence survives VoiceOver.
+
 ### D6 — the tap lands on the routine, routed by `uid`
 
 A notification whose tap opens Home has wasted the only interaction it gets. `TrialReminder` sets no

@@ -86,7 +86,8 @@ Every one of these is optional, and none of it leaves the device.
   switched on from the routine itself — see [Reminding yourself](../routines.md#reminding-yourself).
 - **`Reminders you've set`** — every routine that currently has one, with its days and time, or
   **`None yet`**. Tap one to change its days, its time, or to switch it off, without going to the
-  routine.
+  routine. With notifications off for Red Moon each row reads **`Not being delivered`** rather than
+  naming a time it cannot keep.
 
 ## `Routines`
 
