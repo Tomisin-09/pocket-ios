@@ -204,6 +204,17 @@ Permission is the one input beyond the player's own choices, and it does not wea
 about the app's access, not about whether anybody practised. Nothing gains a way to learn that a
 reminder was missed.
 
+**And it leads the block rather than trailing it.** Second correction, same day, same cause: the
+"notifications are off" note first shipped as caption-grey text in a section *footer*, which put the
+one fact that invalidates everything above it at the bottom of the screen, in the smallest type on
+it, after two sections the player had already read and acted on. A warning that arrives after the
+decision it should have informed is decoration. It is now a banner at the **head** of the reminder
+block on both surfaces — its own section above *Starting point for new reminders* in Settings, and
+the first row inside the routine's Reminder section — at `.subheadline`, on a filled ground with a
+struck-through bell. While it is true, nothing below it can happen, so it may not be the last thing
+read. The per-schedule *"Not being delivered"* lines stay: the banner explains once and offers the
+way out, the lines say which schedules it applies to.
+
 The day and time controls **fade but stay enabled**. The control a player most needs when
 notifications are off is the one that switches the reminder *off*, and disabling the rest would be
 the app confiscating the settings it is complaining about. The toggle never fades, because it is the

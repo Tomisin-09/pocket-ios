@@ -23,6 +23,12 @@ struct ReminderSection: View {
 
     var body: some View {
         Section {
+            // Above the controls, never in the footer: while this is true, nothing below it can
+            // happen, so it cannot be the last thing on the screen. See `NotificationsOffNote`.
+            if schedule.isOn, !isDeliverable {
+                NotificationsOffNote(message: deniedMessage)
+                    .listRowBackground(PocketColor.background)
+            }
             Toggle(isOn: isOnBinding) {
                 Text("Remind me")
                     .font(.futura(.body))
@@ -80,8 +86,9 @@ struct ReminderSection: View {
             case .noDays:
                 Text("Pick at least one day.")
             case .notDelivered:
+                // The banner at the head of the section carries the explanation and the way out;
+                // this only states what the schedule above it currently amounts to.
                 Text("Not being delivered.")
-                NotificationsOffNote(message: deniedMessage)
             case .next(let date):
                 Text("Next: \(date.formatted(.dateTime.weekday(.wide).hour().minute()))")
             }

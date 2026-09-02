@@ -52,6 +52,19 @@ struct PracticeReminderSection: View {
     @State private var permission: NotificationPermission?
 
     var body: some View {
+        // First, above everything about reminders: while notifications are off, nothing in the two
+        // sections below can happen. It used to sit in the *last* footer on the screen, in the
+        // smallest type on it — see `NotificationsOffNote`.
+        if !isDeliverable, !scheduled.isEmpty {
+            Section {
+                NotificationsOffNote(
+                    message: "Notifications are off for Red Moon, so your reminders can't be "
+                        + "delivered. They stay exactly as you set them, and everything else in "
+                        + "the app works as it does now.")
+                    .listRowBackground(PocketColor.background)
+            }
+        }
+
         Section {
             Text("A reminder is switched on from the routine itself. This only sets the days and "
                  + "time a new one starts from — nothing here sends anything.")
@@ -80,17 +93,10 @@ struct PracticeReminderSection: View {
         } header: {
             Text("Reminders you've set")
         } footer: {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Red Moon never notices when you don't practise, so nothing follows a missed "
-                     + "reminder.")
-                if !scheduled.isEmpty, permission == .denied {
-                    NotificationsOffNote(
-                        message: "Notifications are off for Red Moon, so reminders can't be "
-                            + "delivered. Everything else works as it does now.")
-                }
-            }
-            .font(.futura(.caption))
-            .foregroundStyle(PocketColor.textSecondary)
+            Text("Red Moon never notices when you don't practise, so nothing follows a missed "
+                 + "reminder.")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
         }
         .task {
             draft = practiceReminder.defaultSchedule

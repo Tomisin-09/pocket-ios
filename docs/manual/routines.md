@@ -257,10 +257,10 @@ one, with its days and time, so there is one place that answers "what is actuall
 a row opens that reminder, so you can change its days, its time, or switch it off from there.
 
 If you have turned notifications off for Red Moon, the reminder stays exactly where you set it —
-but the app stops claiming it will arrive. The footer reads **Not being delivered** instead of naming
-a next time, the days and time fade, and there is a way through to iOS Settings. The switch itself
-stays live, because turning a reminder off is the one thing you must always be able to do.
-Everything else works exactly as it did.
+but the app stops claiming it will arrive. A note at the top of the Reminder section says so and
+offers a way through to iOS Settings, the footer reads **Not being delivered** instead of naming a
+next time, and the days and time fade. The switch itself stays live, because turning a reminder off
+is the one thing you must always be able to do. Everything else works exactly as it did.
 
 A routine also carries a **Description** — what the session is for, in as many words as you like.
 It is the thing that will not fit in a name: who it is for, which week of the course it covers, why
