@@ -343,6 +343,22 @@ Largest, last, and the only slice that reads a zip.
   player was *told*; the store governs what is *written*, and D1's skip is what makes the two safe to
   differ.
 
+**The door reads its own copy of the archive, not the file the player chose.** `.fileImporter` hands
+back a URL behind a security scope that lasts for the call, and `ZipArchiveReader` memory-maps what it
+opens — while a restore reads take audio out of that map *after* the player has confirmed, by which
+time the scope is closed. So `inspect` copies the zip into `tmp/` under the scope and everything
+downstream reads the copy, which is deleted whichever way the sheet ends. S2 does the equivalent by
+reading a whole `.redmoonpractice` into memory inside the scope; an archive is as large as the library
+it came from, so here it is a file rather than a `Data`. This also settles a question the sheet would
+otherwise have had: **a restore writes the archive the player was shown**, not whatever is at that
+path by the time they say yes.
+
+**And the split is the same one ADR 0181 made, in the other direction.** Export reads the store on the
+main actor and does the encoding, staging and zipping off it. A restore inverts that: the copy and the
+inflate are detached, the plan and the insert are on the actor because they touch the store, and the
+file write is detached again *after* the save — which keeps D7's ordering while stopping a library of
+recordings from hanging the UI.
+
 **Restore is deliberately not Pro-gated, and S2's receive door deliberately is.** That looks
 inconsistent and is not:
 

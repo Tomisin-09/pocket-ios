@@ -1570,6 +1570,13 @@ true (ADR 0150 §118-121).
     writes `ref.source.rawValue` and `SongRef.Source` resolves an unknown to `.localFile`, so
     `sourceRaw` is assigned after the initialiser. Links resolve against both what is landing and
     what the library already held, so a routine points at an exercise you still have.
+  - **The door reads its own copy.** `.fileImporter` hands back a URL behind a security scope that
+    lasts only for the call, and `ZipArchiveReader` memory-maps what it opens — while the restore
+    reads take audio out of that map *after* the player confirms. So `inspect` copies the zip into
+    `tmp/` under the scope, everything downstream reads the copy, and it is deleted whichever way the
+    sheet ends (a restore in flight discards its own, because the write is still reading it). Reading
+    and the file write are both detached; only the plan and the insert are on the main actor, which is
+    ADR 0181's export split run in the other direction.
   - **`RestoreCoordinator` is ordered by D7**: build the rows, insert, **save**, and only then write
     files out of the zip. ADR 0182's `OrphanSweep` builds its referenced set from every row in the
     store, so a take written before its row exists is an orphan by the sweep's own definition, and
