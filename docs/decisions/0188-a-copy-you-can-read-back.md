@@ -1,8 +1,9 @@
 # ADR 0188 — a copy you can read back, and a routine you can hand over
 
-- **Status:** Proposed — nothing built. Three slices (S1–S3), each independently shippable. **S1 and
-  S2 are additive-only and touch no existing row**; the archive door in S3 is the one that reads a
-  file the app did not write in this installation, and it is deliberately last.
+- **Status:** Accepted — **S1 built** (2026-09-03), S2 and S3 not started. Three slices (S1–S3),
+  each independently shippable. **S1 and S2 are additive-only and touch no existing row**; the
+  archive door in S3 is the one that reads a file the app did not write in this installation, and it
+  is deliberately last.
 - **Date:** 2026-09-03 (`pocket-293-import-both-doors`)
 - **Relates to:** ADR 0181 (the export this closes the loop on — **amends its
   `CFBundleDocumentTypes` alternative, see D3**), ADR 0182 (the orphan sweep this must not trip,
@@ -203,9 +204,28 @@ the player could have said no.
 
 ## Slices
 
-**S1 — hand it over.** `Routine` → `.redmoonpractice`, `ShareLink` on the routine detail screen, the
-UTType and document-type declarations. Closes `docs/backlog.md` Routines item 4. No import yet, which
-means it is shippable and testable on its own: the file it writes is the fixture S2 is built against.
+**S1 — hand it over. Built 2026-09-03.** `Routine` → `.redmoonpractice`, `ShareLink` in the routine
+detail screen's toolbar, the UTType declaration. Closes the *sending* half of `docs/backlog.md`
+Routines item 4. No import yet, which means it is shippable and testable on its own: the file it
+writes is the fixture S2 is built against.
+
+**Two corrections this slice made to the text above, both worth reading:**
+
+- **The document-type declaration is not part of S1.** `CFBundleDocumentTypes` declares the app a
+  *handler* — it is what puts Red Moon in the system's Open-with list — and until S2 there is nothing
+  behind that door. Shipping it here would advertise a capability the app does not exercise, which is
+  exactly what AGENTS.md forbids and what D3 spends its length defending against. **S1 declares
+  `UTExportedTypeDeclarations` only**; the handler declaration lands with S2, the code that honours
+  it. This narrows D3's Info.plist change rather than reversing it.
+- **D5's "exactly that path" is loose, and the tables are right.** `Exercise.duplicated(named:)`
+  *keeps* `commandTempo` and `commandNotesPerBeat` — correctly, since a duplicate stays in the
+  library that measured them. A share does not, so the built path is duplication's drops **plus**
+  those two and `linkedSongIDs`, which is what D4's table and D5's own argument already say.
+
+**One thing S1 deliberately does not carry, which this ADR did not decide:** references. Half of them
+are attachments (ADR 0167 phase 2) whose bytes stay on the sender's device, and carrying only the
+URL-backed half is a call D4's table does not make. `SharedPracticeBuilder` clears them in one line
+that is easy to reverse once the call is made.
 
 **S2 — receive one.** Both doors (tap-to-open and `.fileImporter`), D5's duplication path, D9's
 preview. Closes practice-support item 2.

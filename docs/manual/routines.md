@@ -274,6 +274,32 @@ drill in it. It sits behind the same **Edit** gate as the blocks — you can rea
 time, and adding or removing one is a change you keep with **Save**. A block's preview shows the
 drill's own links too, read-only. See [Where you learned it](references.md).
 
+## Handing one to somebody else
+
+A saved routine carries a share control in its toolbar, beside **Edit**. Tapping it writes the whole
+session into one small file and hands it to the share sheet, so you send it however you send
+anything else.
+
+Every exercise the routine uses travels **inside** that file. The person you send it to gets the
+session complete — the blocks in order, the rests, the reps, the name, the description — on a phone
+that has never seen your library.
+
+Blocks built on **your own loops and songs** are the exception, and the file is honest about it
+rather than quiet. That audio is yours and stays on your device, so those blocks arrive named — the
+loop and the song it came from, in words — and the person at the other end fills them in with their
+own material. The routine they receive is the same length as the one you sent.
+
+**What you have done with the routine does not go with it.** Not when you last practised it, not
+your star, and nothing you have measured — no mastery ratings, no command tempos. A tempo you
+worked up to is a fact about your playing, not about the drill, and it would be somebody else's
+number sitting on their screen. Recordings never cross at all.
+
+Nothing is uploaded. The file is written on your device and handed to the share sheet, and where it
+goes after that is your choice alone.
+
+**Red Moon cannot yet read one of these back in.** For now this is a way to give a routine away, not
+a way to receive one — sending yourself a file will not put it in your library.
+
 ## Next
 
 - [Let the app plan a session around a goal](sessions.md)

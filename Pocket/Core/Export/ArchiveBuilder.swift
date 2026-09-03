@@ -82,50 +82,21 @@ enum ArchiveBuilder {
         )
     }
 
-    /// ISO-8601 **including fractional seconds**.
-    ///
-    /// Foundation's built-in `.iso8601` strategy truncates to the second, which silently moves every
-    /// date in the archive by up to a second on the way back in — caught by the round-trip test, which
-    /// failed against two values that printed identically. A backup that cannot reproduce its own
-    /// timestamps is not one, so the format carries milliseconds.
-    ///
-    /// `Date.ISO8601FormatStyle` rather than `ISO8601DateFormatter`: it is a `Sendable` value type, and
-    /// the strategy closures below are `@Sendable` under Swift 6 — capturing a class-based formatter in
-    /// one compiles locally and fails on CI's stricter toolchain.
-    nonisolated static var dateStyle: Date.ISO8601FormatStyle {
-        Date.ISO8601FormatStyle(includingFractionalSeconds: true)
-    }
+    /// ISO-8601 including fractional seconds — see `ArchiveCoding.dateStyle`, which owns the reason.
+    /// Kept here as the name the archive's own call sites already use.
+    nonisolated static var dateStyle: Date.ISO8601FormatStyle { ArchiveCoding.dateStyle }
 
     /// Encode an archive. `nonisolated` — it touches no model and no actor state, so it runs wherever
     /// the caller is, which for an export of any size should not be the main thread.
-    ///
-    /// Sorted keys and readable dates, both so the output is stable and legible: a person opening
-    /// `practice.json` gets dates they can read rather than seconds since 2001, and a diff between two
-    /// archives shows what changed rather than what the encoder felt like ordering differently.
     nonisolated static func encode(_ archive: PracticeArchive) throws -> Data {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        encoder.dateEncodingStrategy = .custom { date, encoder in
-            var container = encoder.singleValueContainer()
-            try container.encode(date.formatted(dateStyle))
-        }
-        return try encoder.encode(archive)
+        try ArchiveCoding.encode(archive)
     }
 
-    /// Read an archive back. Nothing in the app calls this yet — an importer is out of scope for 0181
-    /// — but the encoder above is only trustworthy if something proves it round-trips, and the tests
+    /// Read an archive back. Nothing in the app calls this yet — the archive door is ADR 0188's S3 —
+    /// but the encoder above is only trustworthy if something proves it round-trips, and the tests
     /// use this to do it.
-    ///
-    /// Falls back to whole-second ISO-8601 so a hand-edited file, or one written before fractional
-    /// seconds were carried, still parses rather than failing the whole archive over a timestamp.
     nonisolated static func decode(_ data: Data) throws -> PracticeArchive {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let text = try decoder.singleValueContainer().decode(String.self)
-            if let date = try? Date(text, strategy: dateStyle) { return date }
-            return try Date(text, strategy: Date.ISO8601FormatStyle())
-        }
-        return try decoder.decode(PracticeArchive.self, from: data)
+        try ArchiveCoding.decode(PracticeArchive.self, from: data)
     }
 
     // MARK: - Songs

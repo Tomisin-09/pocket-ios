@@ -71,6 +71,46 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Red Moon uses the microphone to tune your guitar and to record your own playing as practice takes, so you can listen back to how you sounded. Audio is analysed and stored on your device, and is never uploaded.</string>
 
+	<!-- The file a routine is handed over in (ADR 0188 D3). `UTType(exportedAs:)`
+	     in SharedPracticeFile.swift reads this declaration and traps at launch
+	     without it, so the two move together.
+
+	     EXPORTED, not imported: this app defines the type. It conforms to
+	     public.json so a phone without Red Moon can still open one as text
+	     rather than treating it as an opaque blob.
+
+	     There is deliberately NO CFBundleDocumentTypes here. That key declares
+	     the app a *handler* — it is what puts Red Moon in the system's Open-with
+	     list — and nothing opens one of these until ADR 0188's S2 ships. A
+	     declared capability the app does not exercise is exactly what AGENTS.md
+	     forbids and what gets a submission rejected, so the handler declaration
+	     lands with the code that honours it. UIFileSharingEnabled is not added
+	     here either, now or then: ADR 0181 refused it, and the container stays
+	     un-browsable.
+
+	     UTTypeDescription is user-facing — it is what Files, Mail and AirDrop
+	     print beside the file — so it says Red Moon, never the target name. -->
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>click.decooperations.pocket.practice</string>
+			<key>UTTypeDescription</key>
+			<string>Red Moon practice</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>redmoonpractice</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
