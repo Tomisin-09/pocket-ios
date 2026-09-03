@@ -25,7 +25,7 @@ enum ZipReadFailure: Error, Equatable {
 ///
 /// Split from its bytes on purpose: an archive's `takes/` directory can be hundreds of megabytes, so
 /// the reader lists what is there cheaply and the caller decides what to pull into memory.
-struct ZipEntry: Equatable {
+struct ZipEntry: Equatable, Sendable {
 
     /// The path as stored, with `/` separators, relative to the zip's root.
     let path: String
@@ -66,7 +66,7 @@ struct ZipEntry: Equatable {
 ///
 /// `nonisolated` throughout and free of SwiftData and SwiftUI: reading a large archive must not
 /// happen on the main actor.
-struct ZipArchiveReader {
+struct ZipArchiveReader: Sendable {
 
     /// Every file in the zip, in central-directory order. Directory entries are dropped — they carry
     /// no bytes and a restore has no use for them.
