@@ -92,6 +92,14 @@ being thought of second, and it shares an encoder with *A routine cannot be give
 item 4). Deciding which of the two ships first is now an open question this entry cannot answer
 alone.
 
+**Answered 2026-09-03: receive shipped first** (ADR 0188 S2), for the reason above — it needed no
+zip reader, no merge rules and no destructive path, so it could be built and tested against a file
+S1 already wrote. **This entry stays open**, and what is left of it is exactly the hard half: the
+zip reader (D8 — Foundation has no public unzip on iOS, so the reader is ours and only ever reads
+archives this app wrote), the uid-skip merge that makes restore idempotent (D1), and the attachment
+leaf-name rewrite (D7 — the row is written before the file, or ADR 0182's orphan sweep would collect
+it). `schemaVersion` now **has** a reader: `SchemaVersionGate`, shared by both doors.
+
 ## An automatic orphan sweep (logged 2026-08-23, ADR 0182)
 
 ADR 0182 ships *Reclaim space* as a manual action deliberately: a delete the player did not ask for
@@ -162,7 +170,26 @@ read-only for *owned* entries on purpose — authoring stays where the snapshot 
 review verbs and sit inside that rule.** Anything that edits an owned entry from the timeline does
 not, and is a different decision.
 
-### 2. Import is two different jobs wearing one word
+### 2. Import is two different jobs wearing one word — ~~open~~ **SHIPPED as ADR 0188 S2**
+
+**Closed 2026-09-03** (branch `pocket-294-receive-a-routine`). Both doors ship: tapping a
+`.redmoonpractice` file anywhere in the system opens Red Moon (`CFBundleDocumentTypes` + the app's
+first `.onOpenURL`), and *Routines ▸ options ▸ Receive a routine…* picks one from Files. Nothing is
+written until the player has seen what is in the file (D9), every received row **mints a new uid**
+rather than resolving against the library (D1), and there is no "replace" anywhere (D6). The trust
+asymmetry this entry identified is the ADR's D1 table, and the "easier of the two" prediction held:
+the receiving door needed no zip reader and no merge rules.
+
+**What is still open is the *other* job** — restore your own archive, ADR 0188's S3, the zip reader
+and the uid-skip merge. See *An importer to close the export loop*, which S2 does not close.
+
+**One thing S2 leaves on the table:** a block whose loop or song could not cross arrives as a
+skipped block, and the sender's label for it ("Chorus — Slow Bend") is shown in the preview and then
+discarded — `RoutineItem` has nowhere to keep it, and ADR 0188 is explicitly a no-schema change. An
+additive `orphanLabel: String?` would let the landed block say what it *was* rather than only that
+it is missing. Cheap, additive, and blocked only by the schema freeze being worth re-opening for.
+
+Original note follows.
 
 The importer logged above is **restore your own archive**. The second job is **receive someone
 else's** — a teacher's routine, a friend's exercise — and it is not the same work. Under the
@@ -3543,7 +3570,8 @@ Ordered by value, highest first.
    estimated length in the same section as its history. The search-and-sort half stays open,
    now with a length worth sorting by — and, since ADR 0177, with a **description** that
    whatever search lands should match alongside the name.
-4. **A routine cannot be given away — the *sending* half SHIPPED as ADR 0188 S1**
+4. ~~**A routine cannot be given away**~~ — **BOTH halves SHIPPED (ADR 0188 S1 + S2).** The
+   *sending* half first:
    (2026-09-03, branch `pocket-293-import-both-doors`). A saved routine now has a share
    control in its detail toolbar and travels as a `.redmoonpractice` file: the routine,
    its blocks, and every exercise they name carried **inline**, since a block points at
@@ -3554,14 +3582,18 @@ Ordered by value, highest first.
    blocks arrive as **named orphans** rather than being silently dropped, so the routine
    that lands is never quietly shorter than the one that was sent.
 
-   **Still open: nothing reads one.** ADR 0188's S2 is the receiving door and S3 the
-   archive restore; `schemaVersion` is written into both file kinds and read by neither.
-   Until S2 ships, the app declares the *type* but not the *handler*
-   (`UTExportedTypeDeclarations`, no `CFBundleDocumentTypes`) — tapping one of these files
-   in Messages will not open Red Moon, deliberately. **References do not cross** in S1
-   either: half of them are attachments whose bytes stay on the sender's device, and
-   carrying only the URL-backed half is a call ADR 0188's D4 table does not make.
-   Original note follows.
+   **The receiving half SHIPPED too, as ADR 0188 S2** (2026-09-03, branch
+   `pocket-294-receive-a-routine`), which closes this item: a shared routine now opens by
+   tapping the file anywhere in the system (`CFBundleDocumentTypes` is declared and the app
+   has its first `.onOpenURL`) or from *Routines ▸ options ▸ Receive a routine…*. The
+   player sees what is in the file before anything is written, every received row mints a
+   new uid, and nothing in the library is changed or replaced. `schemaVersion` finally has
+   a reader (`SchemaVersionGate`).
+
+   **Still open elsewhere: the archive restore** (ADR 0188 S3) — see *An importer to close
+   the export loop*. **References still do not cross**: half of them are attachments whose
+   bytes stay on the sender's device, and carrying only the URL-backed half is a call ADR
+   0188's D4 table does not make. Original note follows.
 
    **A routine cannot be given away.** No export, no import, no share; `Routine` is not
    `Codable`. ADR 0064 named the *exercise* as the shareable unit, but **the routine is

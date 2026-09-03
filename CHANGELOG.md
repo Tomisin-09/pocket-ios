@@ -15,6 +15,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **And now you can open one somebody sent you.** Tap a routine file wherever it arrived — Messages,
+  Mail, Files, an AirDrop — and Red Moon opens it; or fetch one yourself from Routines ▸ the options
+  control ▸ **Receive a routine…**. Either way you see **what is in the file before it lands**: the
+  routine's name, how many blocks and how many exercises, which version of Red Moon wrote it and
+  when, and a **Won't come across** list if the sender built a block on their own audio. **Add**
+  puts it in your library, **Cancel** leaves nothing behind. It becomes your copy the moment you add
+  it — nothing already in your library is changed, merged over or replaced, and adding the same file
+  twice gives you two routines rather than the app guessing they are the same one. The sender's
+  practice stays with the sender: no last-practised date, no star, no mastery ratings and no command
+  tempos. Blocks built on their loops and songs arrive as skipped blocks, keeping the routine's shape
+  and length, for you to point at your own material. A file written by a **newer version** of Red
+  Moon is refused rather than half-read, and says so.
 - **You can hand a routine to somebody else.** Open a saved routine and tap the share control beside
   **Edit**: Red Moon writes the whole session — its name, what it's for, every block in order, the
   rests, the reps — into one small file you can send however you send things. Every exercise the
@@ -26,8 +38,7 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   your star, and nothing you have measured: no mastery ratings and no command tempos. Somebody
   else's tempo is not a fact about your playing, so the drill crosses and the achievement doesn't.
   Recordings never cross at all. **Nothing is uploaded** — the file is made on your device and
-  handed to the share sheet, and where it goes from there is yours alone. Red Moon cannot yet read
-  one of these files back in, so for now this is a way to *give* a routine, not to receive one.
+  handed to the share sheet, and where it goes from there is yours alone.
 - **A routine can remind you, and it will never mention the days you missed.** Open a saved routine
   and switch on **Remind me**: pick your days, pick the time, and Red Moon says what is waiting —
   the routine's name and how many blocks it holds. Tap it and that routine opens. The only thing

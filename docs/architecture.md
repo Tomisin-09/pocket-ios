@@ -1484,13 +1484,53 @@ true (ADR 0150 §118-121).
     that owns it, so those ids are nulled and a `SharedBlockPlaceholder` carries the label instead —
     the block lands as the orphan the app already draws (`RoutineItem.isOrphaned`). Dropping it
     would hand over a routine quietly shorter than the one that was sent.
-  - **The file type is declared, the handler is not.** `Info.plist` gains
-    `UTExportedTypeDeclarations` only; `UTType(exportedAs:)` traps at launch without it.
-    `CFBundleDocumentTypes` — the key that puts Red Moon in the system's Open-with list — lands with
-    ADR 0188's S2, which is the code that honours it. `UIFileSharingEnabled` is not added at all
-    (ADR 0181 refused it; the container stays un-browsable).
-- **Still no import.** `schemaVersion` is written into both files and read by nothing; ADR 0188's S2
-  and S3 are its first readers.
+  - **The type and its handler are both declared** (S2). `UTExportedTypeDeclarations` defines the
+    type — `UTType(exportedAs:)` traps at launch without it — and `CFBundleDocumentTypes` declares
+    the app a *handler*, which is what puts Red Moon in the system's Open-with list. The handler key
+    was deliberately withheld until S2 shipped the code that honours it.
+    `LSSupportsOpeningDocumentsInPlace` is `false`: the system hands over a copy in
+    `Documents/Inbox`, and the app writes a routine of its own rather than editing the file.
+    `UIFileSharingEnabled` is still not added at all (ADR 0181 refused it; the container stays
+    un-browsable).
+- **Reading one back is the first file-in path** (ADR 0188 S2, `ReceivedRoutineBuilder.swift`,
+  `SchemaVersionGate.swift`, `RoutineReceiveHost.swift`). Two doors, one path behind them.
+  - **`SchemaVersionGate` is `schemaVersion`'s first reader.** Written into every file since ADR
+    0181 and read by nothing until now, it branches three ways (D2): equal proceeds, lower migrates,
+    higher is **refused** with a sentence the player can act on rather than a decode failure. There
+    is nothing to migrate at v1 and the `.migrate` case exists anyway, so the first real migration
+    has somewhere to land. A version ≤ 0 is refused, not migrated.
+  - **`ReceivedRoutineBuilder` is pure over `Data` and returns uninserted models.** `evaluate`
+    decodes, gates the version, checks the `kind` and unwraps the routine into a `ReceivedRoutine`
+    whose `routine` is non-optional; `materialize` turns that into a `HydratedRoutine`
+    (routine + exercises + blocks), which `insert(into:)` writes in the one order that works —
+    drills, routine, then blocks. Nothing here touches a `ModelContext`, which is what makes the
+    whole door unit-testable: inserting a full graph in the XCTest host traps
+    (`docs/swiftdata-gotchas.md`).
+  - **D1's trust asymmetry costs no code.** `Exercise.init` and `Routine.init` mint a fresh `uid`
+    unconditionally, so a received row is a new thing rather than a claim on an existing one. The
+    file's uids are used only as join keys *inside* the payload. Receiving is additive and never
+    deduped: the same file twice is two routines, on purpose (D6 — there is no "replace").
+  - **The four enum columns are assigned raw, never through their typed setters.** `ExerciseTemplate`,
+    `Instrument`, `Subdivision` and `MetronomeIntervalUnit` resolve with a `?? default` in their
+    getters, so a typed setter would normalise a value this build does not recognise and write the
+    default back — a drill authored on a future template arriving as "Basic" with a payload nothing
+    can read. Raw, it survives for the build that understands it: the forward compatibility
+    `JSONValue` gives the way out, given on the way in.
+  - **The sender's history is dropped again on the way in** (D5). `SharedPracticeBuilder` already
+    clears it, and the receiving side does not depend on that — this is the untrusted door, and the
+    file may have been written by a hand, an older build, or one that has not shipped.
+  - **`RoutineReceiveHost` is the app's one inbound door**, applied at the root **inside**
+    `paywallHost()` (it reads `\.isPro` and `\.presentPaywall`). It owns `.onOpenURL` — the app's
+    first and only inbound-URL path — publishes `\.receiveRoutineFile` for the in-app
+    `.fileImporter` in `RoutineLibraryView+Receive.swift`, and presents the one preview sheet both
+    doors go through. The Pro gate lives here as well as in front of the picker, because
+    tap-to-open has no button to guard. Only the tap-to-open copy is deleted after reading; a picked
+    URL points at the player's own file.
+  - **Nothing is written before the player sees what is in the file** (D9):
+    `ReceivedRoutinePreviewSheet` names the routine, counts the blocks and drills, shows the
+    sender's build and date, and lists what will arrive unresolvable.
+- **Still no archive import.** ADR 0188's S3 is the zip reader and the uid-skip merge; the archive
+  door remains write-only.
 
 ## Storage (Core/Storage, ADR 0182)
 

@@ -13,6 +13,11 @@ enum RoutineGate: String, CaseIterable, Equatable {
     case duplicate
     /// Accepting a session generated from a collection, a song, or the quick-session wand.
     case generate
+    /// Opening a routine somebody else shared (ADR 0188 S2) — either door. Its own case rather than
+    /// folded into `new`, because it is the one routine gate the player did not walk up to: a tapped
+    /// file arrives, and a wall in front of a teacher's handover is very different evidence about
+    /// where the free line belongs from a wall in front of an empty editor.
+    case receive
 }
 
 /// Which locked **top-level Home destination** a `.home` gate fired from (ADR 0144 D4). The Toolkit

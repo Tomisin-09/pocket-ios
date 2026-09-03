@@ -63,6 +63,12 @@ enum AnalyticsEvent: Equatable {
     /// produced by the collection/session generator.
     case routineCreated(items: Int, generated: Bool)
 
+    /// A routine somebody else shared was added to the library (ADR 0188 S2). `orphanedBlocks` is the
+    /// one number worth watching here: it counts the blocks whose loop or song could not cross, so it
+    /// answers how much of a shared routine actually arrives usable — the question behind D4's choice
+    /// to carry those blocks as named placeholders rather than drop them.
+    case routineReceived(items: Int, orphanedBlocks: Int)
+
     // MARK: - Monetization
 
     /// A Pro gate presented the paywall. The trigger names *which* surface was locked — the single
@@ -100,6 +106,7 @@ extension AnalyticsEvent {
         case .exerciseCreated: return "exercise_created"
         case .exerciseAuthoringAbandoned: return "exercise_authoring_abandoned"
         case .routineCreated: return "routine_created"
+        case .routineReceived: return "routine_received"
         case .paywallShown: return "paywall_shown"
         case .paywallDismissed: return "paywall_dismissed"
         case .purchaseCompleted: return "purchase_completed"
@@ -141,6 +148,10 @@ extension AnalyticsEvent {
         case let .routineCreated(items, generated):
             return ["items": .number(items),
                     "generated": .flag(generated)]
+
+        case let .routineReceived(items, orphanedBlocks):
+            return ["items": .number(items),
+                    "orphaned_blocks": .number(orphanedBlocks)]
 
         // Two axes, not one composite string: `trigger` stays the coarse six-way "which capability
         // was locked" and `detail` narrows it to the template or routine action, so the dashboard

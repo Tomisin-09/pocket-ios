@@ -29,8 +29,9 @@ opens the routine to read or edit.
 Hold a row for **Play**, **Edit**, **Duplicate**, **Favourite** and **Delete**. As everywhere else,
 delete waits behind an undo toast.
 
-The toolbar's options control holds the favourites filter, the sort keys, and **Generate a quick
-session**, which is covered in [Today's session](sessions.md).
+The toolbar's options control holds the favourites filter, the sort keys, **Generate a quick
+session**, which is covered in [Today's session](sessions.md), and **Receive a routine…**, for a
+session somebody sent you — see [Receiving one](#receiving-one).
 
 **Sort by** offers four: **Recently Added**, which is where the list starts and where it stays until
 you change it; **Name**; **Last Practised**, most recent first, with routines you have never run at
@@ -297,8 +298,32 @@ number sitting on their screen. Recordings never cross at all.
 Nothing is uploaded. The file is written on your device and handed to the share sheet, and where it
 goes after that is your choice alone.
 
-**Red Moon cannot yet read one of these back in.** For now this is a way to give a routine away, not
-a way to receive one — sending yourself a file will not put it in your library.
+## Receiving one
+
+The same file opens on the other side, and there are two ways in.
+
+**Tap it wherever it arrived** — in Messages, in Mail, in Files, in an AirDrop — and Red Moon opens.
+If another app offers to open it, choose Red Moon from the list. Nothing has to be set up first.
+
+**Or fetch it yourself.** Routines ▸ the options control ▸ **Receive a routine…** opens a file
+picker showing the practice files it can read and nothing else, which is the way in when the file
+has been sitting in Files or iCloud Drive for a week.
+
+Either way, the same thing happens next: Red Moon shows you **what is in the file before it lands** —
+its name, how many blocks and how many exercises, the sender's version and the day they wrote it, and
+a **Won't come across** list if any block was built on their own audio. **Add** puts it in your
+library; **Cancel** leaves nothing behind.
+
+**It is your copy from the moment you add it.** The routine and its exercises are new rows with your
+own ids, so renaming or reworking them touches nothing the sender has, and nothing already in your
+library is changed, merged over or replaced. Add the same file twice and you get two routines — the
+app never guesses that two things with the same name are the same thing.
+
+The blocks on their audio arrive as **skipped blocks** — the routine keeps its shape and its length,
+and you point each one at your own loop or song when you get to it.
+
+A file written by a **newer version** of Red Moon is refused rather than half-read, and says so:
+update the app and open it again.
 
 ## Next
 

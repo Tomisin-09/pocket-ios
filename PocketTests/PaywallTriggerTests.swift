@@ -69,10 +69,10 @@ final class PaywallTriggerTests: XCTestCase {
 
     func testEveryRoutineActionReportsDistinctly() {
         let details = RoutineGate.allCases.map { PaywallTrigger.routine($0).reportingDetail }
-        XCTAssertEqual(details, ["new", "play", "edit", "duplicate", "generate"])
+        XCTAssertEqual(details, ["new", "play", "edit", "duplicate", "generate", "receive"])
         XCTAssertEqual(Set(details.compactMap { $0 }).count, RoutineGate.allCases.count,
-                       "Five routine producers previously collapsed into one trigger; they must "
-                       + "now be separable.")
+                       "Five routine producers previously collapsed into one trigger, and receiving "
+                       + "a shared routine (ADR 0188 S2) is the sixth; they must now be separable.")
     }
 
     func testTriggersWithoutDetailReportNone() {
