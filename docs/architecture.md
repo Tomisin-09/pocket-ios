@@ -722,7 +722,12 @@ the Library is filtered to a single collection with ≥1 linked exercise/loop. T
 (ADR 0066) is the multi-unit *session* container — an ordered list of typed blocks (`focused` /
 `warmup` / `play` / `rest`), each non-rest block referencing exactly one `Exercise`/`Loop`/`Song`
 via a typed optional relationship (nullify-on-unit-delete, so a deleted unit orphans the block
-rather than deleting the routine). An additive optional `Routine.lastPracticed: Date?` is stamped
+rather than deleting the routine). An orphan block can also arrive that way from **somebody else's
+routine**, and `RoutineItem.orphanLabel: String?` (additive optional, ADR 0188 S2) is what it was
+called when it did — written only by the receiving door, only onto a block that resolved nothing,
+and read only while `isOrphaned`, so `RoutineItemRow` can say *Chorus — Slow Bend · Skipped — not on
+this device* where a locally-deleted unit still reads *Unit removed · Skipped — the unit was
+deleted*. Two facts that had been sharing one row. An additive optional `Routine.lastPracticed: Date?` is stamped
 when a session starts (safe SwiftData lightweight migration) and drives the home hub's "recent
 routines" rail. Its pacing rules (only focused work budgeted; block caps;
 proposed rests — ADR 0014) live in a pure, SwiftData-free `RoutineBudget`, which also holds the

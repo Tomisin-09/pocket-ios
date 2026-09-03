@@ -250,6 +250,36 @@ final class SharedPracticeTests: XCTestCase {
         XCTAssertTrue(shared.placeholders.isEmpty)
     }
 
+    /// **Unless it arrived named** (ADR 0188 S2 follow-up). A block received as a named orphan
+    /// carries `orphanLabel`, so forwarding somebody's routine keeps the labels instead of losing
+    /// one hop at a time — while a block orphaned by a deletion still has nothing to say.
+    func testAnOrphanThatArrivedNamedIsForwardedWithItsName() throws {
+        let routine = Routine(name: "Forwarded", dateAdded: fixedDate)
+        let carried = RoutineItem(kind: .focused, order: 0)
+        carried.orphanLabel = "Chorus — Slow Bend"
+        let blank = RoutineItem(kind: .focused, order: 1)
+        routine.items = [carried, blank]
+
+        let shared = share(routine)
+
+        XCTAssertEqual(shared.placeholders.count, 1)
+        let placeholder = try XCTUnwrap(shared.placeholders.first)
+        XCTAssertEqual(placeholder.itemUID, carried.uid)
+        XCTAssertEqual(placeholder.label, "Chorus — Slow Bend")
+        XCTAssertNil(shared.placeholders.first { $0.itemUID == blank.uid })
+    }
+
+    /// A whitespace-only label is not a label. It can only arrive from a file the app did not write,
+    /// and forwarding it would put a placeholder with nothing in it on the receiver's screen.
+    func testABlankCarriedLabelIsNotForwarded() {
+        let routine = Routine(name: "Blank", dateAdded: fixedDate)
+        let orphan = RoutineItem(kind: .focused, order: 0)
+        orphan.orphanLabel = "   "
+        routine.items = [orphan]
+
+        XCTAssertTrue(share(routine).placeholders.isEmpty)
+    }
+
     /// A take is the one thing ADR 0181 §7 keeps parked behind ADR 0150's legal question, and a share
     /// is exactly the path that would reopen it by accident.
     func testNoRecordingReachesTheFile() throws {

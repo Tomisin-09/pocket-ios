@@ -183,11 +183,14 @@ the receiving door needed no zip reader and no merge rules.
 **What is still open is the *other* job** — restore your own archive, ADR 0188's S3, the zip reader
 and the uid-skip merge. See *An importer to close the export loop*, which S2 does not close.
 
-**One thing S2 leaves on the table:** a block whose loop or song could not cross arrives as a
-skipped block, and the sender's label for it ("Chorus — Slow Bend") is shown in the preview and then
-discarded — `RoutineItem` has nowhere to keep it, and ADR 0188 is explicitly a no-schema change. An
-additive `orphanLabel: String?` would let the landed block say what it *was* rather than only that
-it is missing. Cheap, additive, and blocked only by the schema freeze being worth re-opening for.
+**The one thing S2 first left on the table is now done too.** A block whose loop or song could not
+cross arrived as a skipped block reading *Unit removed*, with the sender's label ("Chorus — Slow
+Bend") shown in the preview and then discarded. `RoutineItem.orphanLabel: String?` — additive,
+optional, migration-exempt, which is what the schema freeze permits — keeps it, so the row says what
+the block was and its caption says *why* it will not run (not on this device, versus a unit you
+deleted). It is carried in `RoutineItemRecord` too, so an archive backs it up and S3 has a label
+source, and `SharedPracticeBuilder` forwards it, so passing a routine on does not lose the names one
+hop at a time. ADR 0188's "Schema: none" header was amended rather than quietly broken.
 
 Original note follows.
 

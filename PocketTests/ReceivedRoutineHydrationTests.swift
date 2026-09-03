@@ -205,6 +205,56 @@ final class ReceivedRoutineHydrationTests: XCTestCase {
         XCTAssertFalse(rest.isOrphaned, "A rest carries no unit by design")
     }
 
+    /// The label is kept, not just previewed (ADR 0188 S2 follow-up). Without `orphanLabel` the
+    /// sender's words were shown once, before the routine landed, and the block then read *Unit
+    /// removed* for the rest of its life.
+    func testAnUnresolvableBlockKeepsTheNameItArrivedWith() throws {
+        let items = try landed(Fixture.shared(Fixture.routine().routine)).items
+
+        let loopBlock = try XCTUnwrap(items.first { $0.order == 1 })
+        XCTAssertTrue(loopBlock.isOrphaned)
+        XCTAssertEqual(loopBlock.orphanLabel, "Chorus — Slow Bend")
+
+        XCTAssertNil(items.first { $0.order == 0 }?.orphanLabel,
+                     "A block that resolved its drill has nothing to be named instead")
+        XCTAssertNil(items.first { $0.order == 2 }?.orphanLabel, "A rest names nothing")
+    }
+
+    /// A label only ever lands on a block that resolved nothing. A well-formed file never names an
+    /// exercise block, but this door reads files the app did not write, and a label on a block that
+    /// *does* resolve would be a stored fact that is not true.
+    func testALabelIsNotWrittenOntoABlockThatResolves() throws {
+        var payload = Fixture.shared(Fixture.routine().routine)
+        let drillBlock = try XCTUnwrap(payload.routine?.items.first { $0.exerciseUID != nil })
+        payload.placeholders.append(SharedBlockPlaceholder(itemUID: drillBlock.uid,
+                                                           label: "Not a real placeholder"))
+
+        let landing = try landed(payload)
+        let block = try XCTUnwrap(landing.items.first { $0.exercise != nil })
+
+        XCTAssertNil(block.orphanLabel)
+    }
+
+    /// An archive has no placeholder list, so the record's own `orphanLabel` is the fallback — and
+    /// the only source S3 will have.
+    func testTheRecordsOwnLabelIsUsedWhenNoPlaceholderNamesTheBlock() throws {
+        var payload = Fixture.shared(Fixture.routine().routine)
+        payload.placeholders = []
+        var record = try XCTUnwrap(payload.routine)
+        record.items = record.items.map {
+            var block = $0
+            if block.exerciseUID == nil && block.kindRaw != RoutineItemKind.rest.rawValue {
+                block.orphanLabel = "Bridge — Some Song"
+            }
+            return block
+        }
+        payload.routine = record
+
+        let items = try landed(payload).items
+
+        XCTAssertEqual(items.first { $0.order == 1 }?.orphanLabel, "Bridge — Some Song")
+    }
+
     // MARK: - Forward compatibility
 
     /// The four enum columns are written raw, never through their typed setters — those resolve with a

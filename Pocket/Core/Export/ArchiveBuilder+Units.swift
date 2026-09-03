@@ -91,7 +91,8 @@ extension ArchiveBuilder {
                           loopRunModeRaw: item.loopRunModeRaw,
                           exerciseUID: item.exercise?.uid,
                           loopUID: item.loop?.uid,
-                          songSourceID: item.song?.sourceID)
+                          songSourceID: item.song?.sourceID,
+                          orphanLabel: item.orphanLabel)
     }
 
     // MARK: - Goals

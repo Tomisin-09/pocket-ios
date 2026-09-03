@@ -166,8 +166,14 @@ enum ReceivedRoutineBuilder {
         // written by anything.
         routine.notes = received.routine.notes
 
+        // The sender's words for the blocks that cannot cross (D4), keyed by the file's item uid so
+        // each block can be handed its own. Preview-only until the S2 follow-up gave `RoutineItem`
+        // somewhere to keep them.
+        let labels = Dictionary(received.placeholders.map { ($0.itemUID, $0.label) },
+                                uniquingKeysWith: { first, _ in first })
+
         let items = ordered(received.routine.items).enumerated().map { index, record in
-            block(from: record, order: index, exercises: byFileUID)
+            block(from: record, order: index, exercises: byFileUID, labels: labels)
         }
         return HydratedRoutine(routine: routine, exercises: drills.map(\.1), items: items)
     }
@@ -193,8 +199,13 @@ enum ReceivedRoutineBuilder {
     /// relationships `nil`. That is precisely `RoutineItem.isOrphaned`, which the routine screen
     /// already draws as a skipped block — D4's "exactly what the app already knows how to draw",
     /// reached by writing no drawing code.
+    ///
+    /// It also lands **named**, when the file said what it was. The placeholder wins over the
+    /// record's own `orphanLabel` because it is what *this* sender could not send; the record is the
+    /// fallback, and the only source an archive restore (S3) will have.
     private static func block(from record: RoutineItemRecord, order: Int,
-                              exercises: [UUID: Exercise]) -> RoutineItem {
+                              exercises: [UUID: Exercise],
+                              labels: [UUID: String]) -> RoutineItem {
         let item = RoutineItem(order: order)
         // The raw column verbatim, not `RoutineItemKind(raw:)`. The typed setter would fold a kind
         // this build does not recognise into `.rest` and write that, turning a drill block from a
@@ -206,6 +217,13 @@ enum ReceivedRoutineBuilder {
         item.recordsTake = record.recordsTake
         item.loopRunModeRaw = record.loopRunModeRaw
         if let uid = record.exerciseUID { item.exercise = exercises[uid] }
+        // Only onto a block that resolved nothing. A well-formed file never names an exercise block
+        // here, but this door's input is a file somebody else wrote: a label stored on a block that
+        // *does* resolve would be a fact about the block that is not true, sitting there waiting for
+        // a future reader to trust it.
+        if item.exercise == nil {
+            item.orphanLabel = labels[record.uid] ?? record.orphanLabel
+        }
         return item
     }
 

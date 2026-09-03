@@ -99,8 +99,12 @@ enum SharedPracticeBuilder {
 
     /// What a loop or song block was, for a receiver who cannot have it (D4).
     ///
-    /// `nil` for everything else — an exercise block carries its unit inline, a rest has none, and a
-    /// block that was *already* an orphan on the sender's device has nothing left to name.
+    /// `nil` for everything else — an exercise block carries its unit inline, and a rest has none.
+    ///
+    /// **An already-orphaned block is the exception it looks like, and only sometimes.** A block
+    /// orphaned by a *deletion* has nothing left to name and gets no placeholder, as it always did.
+    /// A block that arrived as a named orphan does (`orphanLabel`, the S2 follow-up), so forwarding
+    /// a routine somebody sent you keeps the labels rather than degrading them one hop at a time.
     static func placeholder(for item: RoutineItem) -> SharedBlockPlaceholder? {
         let label: String
         if let loop = item.loop {
@@ -115,6 +119,9 @@ enum SharedPracticeBuilder {
             label = song.title.trimmingCharacters(in: .whitespaces)
             return SharedBlockPlaceholder(itemUID: item.uid,
                                           label: label.isEmpty ? "Song" : label)
+        }
+        if let carried = item.orphanLabel?.trimmingCharacters(in: .whitespaces), !carried.isEmpty {
+            return SharedBlockPlaceholder(itemUID: item.uid, label: carried)
         }
         return nil
     }

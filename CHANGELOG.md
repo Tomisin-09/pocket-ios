@@ -24,9 +24,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   it — nothing already in your library is changed, merged over or replaced, and adding the same file
   twice gives you two routines rather than the app guessing they are the same one. The sender's
   practice stays with the sender: no last-practised date, no star, no mastery ratings and no command
-  tempos. Blocks built on their loops and songs arrive as skipped blocks, keeping the routine's shape
-  and length, for you to point at your own material. A file written by a **newer version** of Red
-  Moon is refused rather than half-read, and says so.
+  tempos. Blocks built on their loops and songs arrive as **skipped blocks that still say what they
+  were** — *Chorus — Slow Bend*, in the sender's words — so the routine keeps its shape and its
+  length and you know what to put there. A block skipped because you deleted its own unit still
+  reads *Unit removed*; those are different facts and the rows say so. A file written by a **newer
+  version** of Red Moon is refused rather than half-read, and says so.
 - **You can hand a routine to somebody else.** Open a saved routine and tap the share control beside
   **Edit**: Red Moon writes the whole session — its name, what it's for, every block in order, the
   rests, the reps — into one small file you can send however you send things. Every exercise the

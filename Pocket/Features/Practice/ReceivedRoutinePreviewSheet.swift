@@ -57,8 +57,8 @@ struct ReceivedRoutinePreviewSheet: View {
                         Text("Won’t come across")
                     } footer: {
                         Text("These blocks played the sender's own song files, which stay on their "
-                             + "device. The blocks still arrive, in their place in the sitting, for "
-                             + "you to point at your own material.")
+                             + "device. The blocks still arrive — named, and in their place in the "
+                             + "sitting — for you to point at your own material.")
                     }
                 }
             }

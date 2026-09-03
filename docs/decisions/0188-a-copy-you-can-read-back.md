@@ -13,9 +13,19 @@
   restraint D8 spends nothing of), ADR 0148 (Red Moon owns its song copies, which is why no audio
   crosses in a share), ADR 0151 (a take outlives its loop), ADR 0127 / 0177 / 0178 (the routine
   this hands over), ADR 0162 (the Settings hub), ADR 0165 (the manual quotes the app)
-- **Schema:** none. No `@Model` changes and no field is added. Both doors write rows through the
-  ordinary initialisers, which is what makes this ADR safe to build under the freeze — and what
-  lets it argue, in Consequences, that the freeze can now end.
+- **Schema:** **one additive optional attribute**, `RoutineItem.orphanLabel: String?`, added in an
+  S2 follow-up (see S2's slice note). Everything else is unchanged: no relationship changes, no
+  renames, nothing removed, and both doors write rows through the ordinary initialisers. It is the
+  migration-exempt shape (optional, no declaration default — CoreData 134110, ADR 0012), so every
+  existing block reads `nil`, which is the truth.
+
+  **This line said "none" until 2026-09-03, and the change is deliberate rather than a drift.** The
+  original was written to make the ADR safe to build under the schema freeze (2026-08-07), and it
+  did — S2 shipped without it. What S2 then demonstrated is that "no schema change" bought its
+  safety by *losing information the file already carried*: D4's placeholder label was shown in the
+  preview and discarded on landing. The freeze forbids **destructive** model changes; an additive
+  optional is what it explicitly permits, so paying one field is the smaller cost. See the
+  Consequences on ending the freeze, which this does not do.
 
 ## Context
 
@@ -255,12 +265,27 @@ the only reason the whole door is unit-testable (inserting a graph in the XCTest
   That is `.incomplete`, with its own sentence — reporting it as corrupt would be a lie about a file
   that parsed. `ReceivedRoutine` holds a **non-optional** `RoutineRecord` so nothing downstream can
   re-ask the question.
-- **A landed placeholder loses its label, and that is a real cost of "Schema: none".** D4's
-  placeholder crosses in the file and is shown in the preview (D9), but a `RoutineItem` has nowhere
-  to keep it: the block lands as `isOrphaned` and reads *Unit removed*, so the player is told what
-  the block **was** only before they add the routine, never afterwards. An additive
-  `orphanLabel: String?` would fix it and is parked in `docs/backlog.md` under practice-support
-  item 2 — deliberately not smuggled into a no-schema ADR.
+- **A landed placeholder lost its label, and fixing it cost the ADR its "Schema: none".** D4's
+  placeholder crosses in the file and is shown in the preview (D9), but a `RoutineItem` had nowhere
+  to keep it: the block landed as `isOrphaned` reading *Unit removed*, so the player was told what
+  it **was** only in the seconds before they added the routine. Shipped that way, parked as an
+  additive field, and **taken off the park the same day** on the owner's call — the header's schema
+  line and its reasoning are amended above.
+
+  `RoutineItem.orphanLabel: String?` is written only by the receiving door and only onto a block
+  that resolved nothing; `RoutineItemRow` reads it only while `isOrphaned`, so it cannot appear on a
+  block that resolves. Nothing can go stale: an orphan block is inert everywhere in the editor and
+  is never re-pointed at a unit, so it either keeps the label or is deleted. The caption splits with
+  it — *Skipped — not on this device* for a block that arrived named, *Skipped — the unit was
+  deleted* for one orphaned here. **Two facts that had been sharing one row.**
+
+  It reaches two more places for reasons worth stating. `RoutineItemRecord` carries it, because a
+  stored field absent from the DTO silently stops being backed up (ADR 0181's own Consequence) —
+  and it is the only label source an archive restore will have, so S3 gets it free.
+  `SharedPracticeBuilder.placeholder(for:)` falls back to it, so **forwarding** a routine somebody
+  sent you keeps the labels instead of degrading them one hop at a time; a block orphaned by a
+  deletion still has nothing to name and still gets no placeholder. The version was **not** bumped:
+  `PracticeArchive.currentSchemaVersion` moves when a field changes meaning, not when one is added.
 
 **And one thing S2 leaves for S3:** the "can't read an archive back in" claim turns out to live in
 three places rather than the one this ADR's Consequences named. All three are still true after S2 —

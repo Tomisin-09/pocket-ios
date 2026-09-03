@@ -319,8 +319,10 @@ own ids, so renaming or reworking them touches nothing the sender has, and nothi
 library is changed, merged over or replaced. Add the same file twice and you get two routines — the
 app never guesses that two things with the same name are the same thing.
 
-The blocks on their audio arrive as **skipped blocks** — the routine keeps its shape and its length,
-and you point each one at your own loop or song when you get to it.
+The blocks on their audio arrive as **skipped blocks that still say what they were** — *Chorus — Slow
+Bend*, in the sender's words, under *Skipped — not on this device*. The routine keeps its shape and
+its length, and you know what to put there when you get to it. A block skipped because *you* deleted
+its unit still reads **Unit removed**: those are different facts and the rows say so.
 
 A file written by a **newer version** of Red Moon is refused rather than half-read, and says so:
 update the app and open it again.
