@@ -343,6 +343,25 @@ Largest, last, and the only slice that reads a zip.
   player was *told*; the store governs what is *written*, and D1's skip is what makes the two safe to
   differ.
 
+**Restore is deliberately not Pro-gated, and S2's receive door deliberately is.** That looks
+inconsistent and is not:
+
+- **Export is not gated** (`ExportSection` touches neither `isPro` nor `presentPaywall`), and gating
+  the way back in when the way out is free would mean a lapsed subscriber could take their library
+  out and not put it back — at the one moment a backup exists for.
+- **Every entitlement gate in this app is at *read*, computed live from `isPro`** (ADR 0112, kept by
+  ADR 0144 D3, enforced through `AccessPolicy`). A restored exercise is locked or unlocked by exactly
+  the rule that governs one the player made, so a restore grants no access it did not already grant.
+  There is nothing here to bypass.
+- **Receiving is authoring; restoring is recovery.** S2 gated `receive` because it mints a new
+  routine out of somebody else's file — new material, which is what Pro buys. A restore adds nothing
+  the player did not already have; it puts back what they exported.
+
+**And no analytics event.** ADR 0181's export emits none, and a restore emitting one would make the
+inbound half of the loop measured and the outbound half not, for a pair of operations a player thinks
+of as one thing. If the question *"do people ever restore?"* becomes worth answering, both ends
+should be instrumented in the same change (ADR 0120's rule: no free `String` in an event).
+
 **And one thing S3 could not settle: the schema freeze.** The Consequences below argue this ADR makes
 ending it possible, and say ending it is a separate decision that should be written as an ADR. That
 is still true and still unwritten. Nothing in S3 ends the freeze.

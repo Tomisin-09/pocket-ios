@@ -23,7 +23,9 @@ extension ArchiveRestoreWriter {
                            existing: RestoreExistingKeys,
                            into landing: inout RestoredLibrary,
                            resolver: RestoreResolver) {
+        var seen = Set<UUID>()
         for record in records where !existing.journalUIDs.contains(record.uid) {
+            guard seen.insert(record.uid).inserted else { continue }
             let entry = JournalEntry(text: record.text,
                                      kind: .note,
                                      masteryAtEntry: record.masteryAtEntry,
@@ -66,7 +68,9 @@ extension ArchiveRestoreWriter {
                          existing: RestoreExistingKeys,
                          into landing: inout RestoredLibrary,
                          resolver: RestoreResolver) {
+        var seen = Set<UUID>()
         for record in records where !existing.takeUIDs.contains(record.uid) {
+            guard seen.insert(record.uid).inserted else { continue }
             let take = Recording(fileName: record.fileName,
                                  duration: record.duration,
                                  uid: record.uid,

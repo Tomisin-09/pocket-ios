@@ -51,7 +51,9 @@ struct ArchiveRestorePreviewSheet: View {
                     }
                 }
             }
-            .settingsScreen(title: "Restore")
+            // A question, matching `ReceivedRoutinePreviewSheet`: both doors ask before they write,
+            // and a sheet titled with a noun reads like a screen you are already inside.
+            .settingsScreen(title: "Restore this copy?")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -61,6 +63,7 @@ struct ArchiveRestorePreviewSheet: View {
                         onRestore()
                         dismiss()
                     }
+                    .tint(PocketColor.practice)
                     .disabled(plan.isEmpty)
                 }
             }

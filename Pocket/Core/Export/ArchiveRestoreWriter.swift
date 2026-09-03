@@ -63,16 +63,37 @@ struct RestoredLibrary {
 
     /// Write the graph into `context`, in the one order that works.
     ///
-    /// Owners before the rows that point at them, and the to-many relationships assigned after the
-    /// owner is in the context — the sequence `HydratedRoutine.insert` established in S2 and that
-    /// `RoutineLibraryView.duplicate(_:)` uses for a duplicate.
+    /// **Every to-many relationship is assigned after its owner is in the context**, never before.
+    /// That is the house rule, not a preference: `RoutineLibraryView.duplicate(_:)` and
+    /// `ExerciseLibraryView.duplicate(_:)` both insert and then assign, and `HydratedRoutine.insert`
+    /// says so in as many words. `materialize` builds the graph whole — which is what makes it
+    /// assertable in a test host that traps on inserting one — so the relationships are lifted off
+    /// here, the owner goes in, and they go back on.
+    ///
+    /// Loops are the nested case: a song owns them and each of them owns its own links, so the links
+    /// are re-attached after the loops are, rather than riding in on an assignment made before the
+    /// song existed.
     func insert(into context: ModelContext) {
-        songs.forEach(context.insert)
-        exercises.forEach(context.insert)
+        for song in songs {
+            let (loops, markers, references) = (song.loops, song.markers, song.references)
+            let loopReferences = loops.map { ($0, $0.references) }
+            context.insert(song)
+            song.loops = loops
+            song.markers = markers
+            song.references = references
+            for (loop, links) in loopReferences { loop.references = links }
+        }
+        for drill in exercises {
+            let references = drill.references
+            context.insert(drill)
+            drill.references = references
+        }
         savedChords.forEach(context.insert)
         for (routine, items) in routines {
+            let references = routine.references
             context.insert(routine)
             routine.items = items
+            routine.references = references
         }
         goals.forEach(context.insert)
         longTermGoals.forEach(context.insert)
@@ -91,6 +112,12 @@ struct RestoredLibrary {
 /// **Nothing here deletes or overwrites anything** (D6). A row whose key the library already has is
 /// skipped entirely — not merged, not compared field by field, not replaced — which is what makes a
 /// restore idempotent: running it twice leaves the library exactly as running it once did.
+///
+/// **A uid repeated inside one file produces one row.** An archive this app wrote cannot contain
+/// two rows with one uid, and this door reads a file that may have been hand-edited or concatenated.
+/// `RestorePlan` counts a repeat once, so without the same guard here the preview would promise a
+/// number the writer then exceeded — and the result would be two rows sharing the key that every
+/// journal entry, take and block joins on.
 ///
 /// **Every enum column is assigned raw**, never through a typed setter, for the reason S2 wrote into
 /// `ReceivedRoutineBuilder`: `ExerciseTemplate`, `Instrument`, `Subdivision` and

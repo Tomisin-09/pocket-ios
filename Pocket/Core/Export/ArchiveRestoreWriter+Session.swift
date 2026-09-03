@@ -17,7 +17,9 @@ extension ArchiveRestoreWriter {
                             existing: RestoreExistingKeys,
                             into landing: inout RestoredLibrary,
                             resolver: RestoreResolver) {
+        var seen = Set<UUID>()
         for record in records where !existing.routineUIDs.contains(record.uid) {
+            guard seen.insert(record.uid).inserted else { continue }
             let routine = Routine(name: record.name, dateAdded: record.dateAdded)
             routine.uid = record.uid
             routine.notes = record.notes
@@ -75,7 +77,9 @@ extension ArchiveRestoreWriter {
                          existing: RestoreExistingKeys,
                          into landing: inout RestoredLibrary,
                          resolver: RestoreResolver) {
+        var seen = Set<UUID>()
         for record in archive.goals where !existing.goalUIDs.contains(record.uid) {
+            guard seen.insert(record.uid).inserted else { continue }
             let goal = Goal(title: record.title,
                             weight: record.weight,
                             skillIDs: record.skillIDs,
@@ -86,6 +90,7 @@ extension ArchiveRestoreWriter {
             landing.goals.append(goal)
         }
         for record in archive.longTermGoals where !existing.longTermGoalUIDs.contains(record.uid) {
+            guard seen.insert(record.uid).inserted else { continue }
             let goal = LongTermGoal(title: record.title,
                                     skillIDs: record.skillIDs,
                                     order: record.order,
@@ -105,7 +110,9 @@ extension ArchiveRestoreWriter {
     static func addRuns(_ records: [SessionRecord],
                         existing: RestoreExistingKeys,
                         into landing: inout RestoredLibrary) {
+        var seen = Set<UUID>()
         for record in records where !existing.runUIDs.contains(record.id) {
+            guard seen.insert(record.id).inserted else { continue }
             landing.runs.append(PracticeRun(uid: record.id,
                                             startedAt: record.startedAt,
                                             durationSeconds: record.durationSeconds,

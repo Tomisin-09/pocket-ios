@@ -171,7 +171,9 @@ extension ArchiveRestoreWriter {
     static func addSavedChords(_ records: [SavedChordRecord],
                                existing: RestoreExistingKeys,
                                into landing: inout RestoredLibrary) {
+        var seen = Set<UUID>()
         for record in records where !existing.savedChordUIDs.contains(record.uid) {
+            guard seen.insert(record.uid).inserted else { continue }
             guard let voicing = record.voicing, let data = try? JSONEncoder().encode(voicing) else { continue }
             landing.savedChords.append(SavedChord(uid: record.uid, name: record.name,
                                                   createdAt: record.createdAt, voicingData: data))

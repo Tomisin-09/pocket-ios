@@ -27,6 +27,7 @@ struct RestoreSection: View {
     private enum Phase: Equatable {
         case idle
         case reading
+        case restoring
         case done(RestoreOutcome)
     }
 
@@ -36,6 +37,9 @@ struct RestoreSection: View {
     @State private var isChoosing = false
     @State private var pending: PendingRestore?
     @State private var failure: String?
+    /// Held beside `pending` because cleanup has to outlive it: `.sheet(item:)` nils its binding
+    /// before `onDismiss` runs, so a discard expressed in terms of `pending` would find nothing.
+    @State private var working: URL?
 
     var body: some View {
         Section {
@@ -50,13 +54,25 @@ struct RestoreSection: View {
         // to choose a photo.
         .fileImporter(isPresented: $isChoosing, allowedContentTypes: [.zip]) { result in
             switch result {
-            case let .success(url): inspect(url)
+            case let .success(url): Task { await inspect(url) }
             case .failure: failure = RestoreFailure.notAnArchive.message
             }
         }
-        .sheet(item: $pending) { arrival in
-            ArchiveRestorePreviewSheet(pending: arrival) { restore(arrival) }
+        // `onDismiss` runs after the sheet has closed — after `restore` if the player confirmed, and
+        // straight away if they cancelled — so it is the one place that catches both endings. The
+        // copy in `tmp/` is a second full-size archive, and `tmp/` is not somewhere a player can see
+        // or reclaim; `ExportSection` throws its export away on exactly the same reasoning.
+        .sheet(item: $pending, onDismiss: discardPending) { arrival in
+            ArchiveRestorePreviewSheet(pending: arrival) {
+                // The phase is set **synchronously**, before the task is spawned, because the sheet
+                // dismisses itself on the next line and `onDismiss` must be able to see that a
+                // restore is in flight. Setting it inside the task would leave a window where the
+                // cleanup below deletes the archive the write is still reading.
+                phase = .restoring
+                Task { await restore(arrival) }
+            }
         }
+        .onDisappear { discardPending() }
         .alert("Couldn’t open that archive", isPresented: presenting($failure)) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -69,10 +85,11 @@ struct RestoreSection: View {
         switch phase {
         case .idle, .done:
             Button("Restore from a copy…") { isChoosing = true }
-        case .reading:
+        case .reading, .restoring:
             HStack(spacing: 10) {
                 ProgressView()
-                Text("Reading…").foregroundStyle(PocketColor.textSecondary)
+                Text(phase == .reading ? "Reading…" : "Restoring…")
+                    .foregroundStyle(PocketColor.textSecondary)
             }
         }
     }
@@ -98,11 +115,12 @@ struct RestoreSection: View {
         }
     }
 
-    private func inspect(_ url: URL) {
+    private func inspect(_ url: URL) async {
         phase = .reading
-        switch RestoreCoordinator.inspect(url, in: context) {
+        switch await RestoreCoordinator.inspect(url, in: context) {
         case let .success(arrival):
             phase = .idle
+            working = arrival.workingDirectory
             pending = arrival
         case let .failure(reason):
             phase = .idle
@@ -110,9 +128,28 @@ struct RestoreSection: View {
         }
     }
 
-    private func restore(_ arrival: PendingRestore) {
-        phase = .done(RestoreCoordinator.restore(arrival, in: context))
-        pending = nil
+    /// `pending` is deliberately **not** cleared here. The sheet dismisses itself, and
+    /// `.sheet(item:)` nils the binding as it goes; doing both would set the same state twice while
+    /// the dismissal is animating. `RoutineReceiveHost` leaves it to the sheet for the same reason.
+    ///
+    /// The zip is still open at this point and has to be: the files are written out of it *after* the
+    /// rows are saved (D7). `discardPending` runs later, from `onDismiss`.
+    /// The files are written out of the zip **after** the rows are saved (D7), so the archive has to
+    /// stay on disk for the whole of this — which is why the discard is here and not in `onDismiss`.
+    private func restore(_ arrival: PendingRestore) async {
+        phase = .done(await RestoreCoordinator.restore(arrival, in: context))
+        RestoreCoordinator.discard(arrival.workingDirectory)
+        working = nil
+    }
+
+    /// Delete the door's copy of the archive when the sheet closed **without** a restore.
+    ///
+    /// A restore in flight is still reading that copy, and cleans up after itself when it finishes.
+    /// Deleting it here as well would be racing the one operation this door exists to complete.
+    private func discardPending() {
+        guard phase != .restoring, let working else { return }
+        RestoreCoordinator.discard(working)
+        self.working = nil
     }
 
     /// A `Bool` binding that clears the message when the alert closes — the same helper shape
