@@ -216,8 +216,9 @@ listening"* — as a feature.
 
 ### 5. A reason to come back that isn't a streak
 
-**Promoted to [ADR 0186](decisions/0186-a-reason-to-come-back.md) (2026-09-01, Proposed, nothing
-built).** The warning below turned out to be the entire design rather than a caveat on it, so it is
+**Promoted to [ADR 0186](decisions/0186-a-reason-to-come-back.md) (2026-09-01). The reminder half
+shipped 2026-09-02 (`2267881`, #283); the widget half is parked — see *The widget half of ADR 0186*
+below.** The warning below turned out to be the entire design rather than a caveat on it, so it is
 a decision now: the only legal trigger is a date the player chose, and the widget reads a bounded
 snapshot rather than moving the SwiftData store. Original note preserved.
 
@@ -232,6 +233,73 @@ this cheaper than it looks, and one makes it dangerous:
 - ⚠ **The no-shame line is the entire design problem.** A nudge that counts days missed is exactly
   what `docs/positioning.md` §3 rejects and what AxeLog ships. Facts only — what is next, never how
   you are doing.
+
+## The widget half of ADR 0186 (parked 2026-09-03)
+
+**The design is not here.** [ADR 0186](decisions/0186-a-reason-to-come-back.md) D8–D11 hold what the
+widget is and why — pull rather than push, a bounded JSON snapshot rather than a relocated SwiftData
+store, and a Pro wall it has to draw itself. That does not need restating and must not be copied.
+
+This entry holds what the ADR does **not**: what a second target costs in this repo. It was scoped
+on 2026-09-03 and deferred, and everything below was verified against the source that day. Without
+it, all of it gets re-derived.
+
+### Three things decided before deferring
+
+- **What it shows: the next reminder if one is set, otherwise the most recent material.** D11 says
+  the widget "says what Home already says" — and Home says three different things. This settles it.
+- **`systemSmall` + `systemMedium` only.** No lock-screen accessories in a first slice.
+- The reminder half's **device pass is still owed** (ADR 0186's closing section) and is *not* a
+  blocker for this.
+
+### Six things that will bite
+
+1. **The signing wall — the reason this is parked, and the only part that cannot be done in code.**
+   `fastlane/Matchfile:7` and `fastlane/Appfile:2` each pin the single id
+   `click.decooperations.pocket`, and `fastlane/Fastfile:29` is
+   `match(type: "appstore", readonly: true)`. A widget is a second bundle id with no profile in the
+   match repo, and `readonly: true` means the lane **fails rather than provisions**. Before any
+   device build: register the App Group, create the second app id, regenerate both profiles,
+   repopulate the match repo. CI is unaffected — `ci.yml:127` and both pre-push tiers pass
+   `CODE_SIGNING_ALLOWED=NO`.
+2. ⚠ **The Red Moon lint rule would not cover the widget.** `.swiftlint.yml`'s
+   `internal_name_in_user_copy` is scoped `included: ".*/Pocket/.*\.swift"` — a path component
+   *exactly* `Pocket`. A `PocketWidget/` directory does not match, so widget copy would be unguarded
+   by the rule that exists precisely because that bug shipped twice, invisibly to every other check.
+   Widen the regex or put the sources under `Pocket/`. `scripts/check-manual.py` has the same shape:
+   `SOURCE` is `<repo>/Pocket` (`:54`) and `source_files()` walks it only (`:150-153`), so widget
+   literals are invisible to C9.
+3. **An unattached target is compiled by nothing.** The scheme is `build: targets: {Pocket: all}`
+   (`project.yml:172-176`), so neither CI nor the pre-push hook builds anything outside the `Pocket`
+   target's dependency graph — the widget must be an embedded dependency or it silently isn't built
+   at all. Related: `SWIFT_TREAT_WARNINGS_AS_ERRORS: YES` sits on the **Pocket target's Debug
+   config** (`project.yml:100`) rather than the command line, so a second target does not inherit
+   it. SwiftLint is the opposite — `.swiftlint.yml` has no `included:` key, so a new directory is
+   linted automatically, and the default 400-line file-length warning is an error under `--strict`.
+4. **`PocketColor` is 33 asset-catalog named colours** (`Pocket/UI/DesignTokens.swift` —
+   `Color("Teal")`, `Color("Background")`, …), and an asset catalog does not cross a target
+   boundary. They are already grouped under `Assets.xcassets/Colors/`, so splitting them into their
+   own catalog included by both targets is the cheap route; a second definition of Teal is exactly
+   the drift this repo keeps writing ADRs against. **`Font.futura` costs nothing** — it is
+   `.custom("Futura-Medium")` and Futura ships with iOS, so there is no font file to embed.
+5. **The deep link is new plumbing.** There is **no `CFBundleURLTypes` in
+   `Pocket/Resources/Info.plist`, and no `onOpenURL` anywhere in the app** — both confirmed absent.
+   A widget's `widgetURL(_:)` needs a scheme to open, and D10's locked case needs one that lands on
+   the paywall rather than Home. `NotificationRouter`
+   (`Pocket/Core/Notifications/NotificationRouter.swift` — *"a mailbox, not a state"*) is the
+   landing pattern, already carrying the reminder's tap.
+6. **The obvious test seam does not reach an App Group.**
+   `PocketTests/TempContainerFileManager.swift:19-25` overrides
+   `url(for:in:appropriateFor:create:)` to redirect `.applicationSupportDirectory` — how every
+   existing file store is tested. An App Group container comes from
+   `containerURL(forSecurityApplicationGroupIdentifier:)`, which that override does **not**
+   intercept. Either add a second override or give the snapshot store an injected directory.
+
+### One thing already built
+
+`HomeFeed.mostRecentlyPracticed` / `recentlyPracticed` (`Pocket/Core/Models/HomeFeed.swift:56-80`)
+are pure, Foundation-only and already compute "what Home shows", including the tie-break. The
+snapshot builder should call them rather than reimplement the sort.
 
 ## Real guitar audio for chords and strums (parked 2026-08-20)
 

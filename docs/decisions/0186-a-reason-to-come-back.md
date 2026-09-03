@@ -300,8 +300,10 @@ ADR 0182 D3's toggle. Nobody misses a restored widget cache, and it is rebuilt o
 
 Every re-entry surface on Home is gated: `JumpBackInCard` routes through `proGated(.song)`,
 `RecentRoutineCard` through `proGated(.routine)`, and both take `locked: !isPro`
-(`HomeView.swift:76-79`, `:347-350`). ADR 0144 D4 made that lock **visible** rather than silent,
-because the rail *"was the one door on Home that looked open while it wasn't."*
+(`HomeView.swift:82-92`, `HomeView+Routines.swift:29-34` — corrected 2026-09-03; the citations this
+paragraph shipped with went stale in its own PR, when `HomeView` hit the 400-line cap and shed the
+rail). ADR 0144 D4 made that lock **visible** rather than silent, because the rail *"was the one
+door on Home that looked open while it wasn't."*
 
 A widget is a fifth door, on the home screen, in a process where `proGated` does not exist. Left
 unaddressed it is 0144 D4's bug again, one surface further out.
