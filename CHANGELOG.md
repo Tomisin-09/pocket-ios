@@ -15,6 +15,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **You can hand a routine to somebody else.** Open a saved routine and tap the share control beside
+  **Edit**: Red Moon writes the whole session — its name, what it's for, every block in order, the
+  rests, the reps — into one small file you can send however you send things. Every exercise the
+  routine uses travels **inside** the file, so it arrives complete on a phone that has never seen
+  your library. Blocks built on your own loops and songs come across as named placeholders — the
+  audio stays on your device, so the person at the other end sees *what* the block was and fills it
+  in with their own material, rather than the routine quietly arriving shorter than you sent it.
+  **What you have done with the routine does not go with it.** Not when you last practised it, not
+  your star, and nothing you have measured: no mastery ratings and no command tempos. Somebody
+  else's tempo is not a fact about your playing, so the drill crosses and the achievement doesn't.
+  Recordings never cross at all. **Nothing is uploaded** — the file is made on your device and
+  handed to the share sheet, and where it goes from there is yours alone. Red Moon cannot yet read
+  one of these files back in, so for now this is a way to *give* a routine, not to receive one.
 - **A routine can remind you, and it will never mention the days you missed.** Open a saved routine
   and switch on **Remind me**: pick your days, pick the time, and Red Moon says what is waiting —
   the routine's name and how many blocks it holds. Tap it and that routine opens. The only thing

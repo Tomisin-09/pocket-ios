@@ -3543,7 +3543,27 @@ Ordered by value, highest first.
    estimated length in the same section as its history. The search-and-sort half stays open,
    now with a length worth sorting by — and, since ADR 0177, with a **description** that
    whatever search lands should match alongside the name.
-4. **A routine cannot be given away.** No export, no import, no share; `Routine` is not
+4. **A routine cannot be given away — the *sending* half SHIPPED as ADR 0188 S1**
+   (2026-09-03, branch `pocket-293-import-both-doors`). A saved routine now has a share
+   control in its detail toolbar and travels as a `.redmoonpractice` file: the routine,
+   its blocks, and every exercise they name carried **inline**, since a block points at
+   its unit by live relationship and a file that only named uids would resolve to nothing
+   on another device. What is *not* in it is the point — the sender's practice
+   (`lastPracticed`, the pin, the preset slug) and the sender's measurements (mastery,
+   command tempo, linked songs) both stay behind, and no take ever crosses. Loop and song
+   blocks arrive as **named orphans** rather than being silently dropped, so the routine
+   that lands is never quietly shorter than the one that was sent.
+
+   **Still open: nothing reads one.** ADR 0188's S2 is the receiving door and S3 the
+   archive restore; `schemaVersion` is written into both file kinds and read by neither.
+   Until S2 ships, the app declares the *type* but not the *handler*
+   (`UTExportedTypeDeclarations`, no `CFBundleDocumentTypes`) — tapping one of these files
+   in Messages will not open Red Moon, deliberately. **References do not cross** in S1
+   either: half of them are attachments whose bytes stay on the sender's device, and
+   carrying only the URL-backed half is a call ADR 0188's D4 table does not make.
+   Original note follows.
+
+   **A routine cannot be given away.** No export, no import, no share; `Routine` is not
    `Codable`. ADR 0064 named the *exercise* as the shareable unit, but **the routine is
    what a teacher hands over** — and under the multiplier thesis, a teacher handing over
    a session is the purest form of the product working. Thesis-critical if the

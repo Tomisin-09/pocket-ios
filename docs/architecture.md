@@ -1423,9 +1423,9 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   flat screen had grown one section per ADR until `SettingsView` sat at 344 of SwiftLint's 400 lines
   and three files carried "add no row here" warnings — a structure out of room.
 
-## Export (Core/Export, ADR 0181)
+## Export (Core/Export, ADRs 0181 and 0188)
 
-The app's **only file-out path**, and its first. `Settings ▸ Your data ▸ Export` writes everything a
+Two file-out paths now, sharing one DTO tree and one encoder. `Settings ▸ Your data ▸ Export` writes everything a
 player has built into one zip and hands it to the system share sheet; the app transmits nothing and
 does not know where the file goes, which is what keeps the published "no audio upload path" claim
 true (ADR 0150 §118-121).
@@ -1460,8 +1460,37 @@ true (ADR 0150 §118-121).
   does not keep the library resident for as long as Settings is open.
 - **Storage figures come from `Core/Storage/StorageUsage.swift`** (see below). Export needs it to
   state a size before the tap.
-- **No import.** `practice.json` carries a `schemaVersion` so an importer stays possible; nothing
-  reads it yet.
+- **`ArchiveCoding` owns the encoder, the decoder and the date format**, and `ArchiveBuilder`'s
+  `dateStyle`/`encode`/`decode` are one-line delegations to it. Split out the moment a second root
+  type arrived: an archive and a shared file must agree exactly about formatting because one reader
+  parses both, and two copies of that configuration would be two chances to drift — as dates that
+  move on the way back in, not as a compile error. Dates carry **fractional seconds**; Foundation's
+  stock `.iso8601` truncates to the second.
+- **A shared routine is the second file-out path** (ADR 0188 S1, `SharedPractice*.swift`). A routine
+  travels as a `.redmoonpractice` file — plain JSON, the same `RoutineRecord` / `RoutineItemRecord` /
+  `ExerciseRecord` shapes and the same `schemaVersion` as an archive, plus a `kind` discriminator
+  whose only value today is `routine`. Sent with a `ShareLink` in the routine detail screen's
+  toolbar, read-only mode only (`RoutineDetailView+Share.swift`): the editing sandbox's contents are
+  provisional and a file is not.
+  - **`SharedPracticeBuilder` reuses `ArchiveBuilder`'s mapping and then subtracts**, rather than
+    mapping a second time. A field added to a record therefore reaches the share automatically, and
+    the only way it can be wrong is by being *carried* — a visible line, not a silent omission.
+  - **What it subtracts is the point.** The sender's practice (`lastPracticed`, `isFavorite`,
+    `presetSlug`) and the sender's *measurements* (`mastery*`, `commandTempo`,
+    `commandNotesPerBeat`, `linkedSongIDs`) both stay behind — a command tempo is a measured number
+    (ADR 0045), and inheriting one you did not measure is ADR 0070 through a side door. No
+    `Recording` ever crosses (ADR 0181 §7, ADR 0150 still parked). References do not cross in S1.
+  - **A loop or song block arrives named, not dropped.** A `loopUID` is meaningless without the song
+    that owns it, so those ids are nulled and a `SharedBlockPlaceholder` carries the label instead —
+    the block lands as the orphan the app already draws (`RoutineItem.isOrphaned`). Dropping it
+    would hand over a routine quietly shorter than the one that was sent.
+  - **The file type is declared, the handler is not.** `Info.plist` gains
+    `UTExportedTypeDeclarations` only; `UTType(exportedAs:)` traps at launch without it.
+    `CFBundleDocumentTypes` — the key that puts Red Moon in the system's Open-with list — lands with
+    ADR 0188's S2, which is the code that honours it. `UIFileSharingEnabled` is not added at all
+    (ADR 0181 refused it; the container stays un-browsable).
+- **Still no import.** `schemaVersion` is written into both files and read by nothing; ADR 0188's S2
+  and S3 are its first readers.
 
 ## Storage (Core/Storage, ADR 0182)
 

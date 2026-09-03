@@ -284,6 +284,10 @@ struct RoutineDetailView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        // Declared first so it sits *left* of Edit: the primary action stays rightmost, and the
+        // group's width is fixed (a symbol beside a one-word button), which is the property ADR 0126
+        // asked every navigation bar in the app to keep. Hides itself in edit mode — see `+Share`.
+        shareToolbarItem
         if isEditing {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Cancel") { cancelEdits() }
