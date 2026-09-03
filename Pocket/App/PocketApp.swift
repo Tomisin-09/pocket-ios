@@ -43,6 +43,12 @@ struct PocketApp: App {
     var body: some Scene {
         WindowGroup {
             HomeView()
+                // The inbound door for shared routines (ADR 0188 S2) — `.onOpenURL` plus the one
+                // preview sheet both doors present. **Inside** `.paywallHost()`, i.e. applied first:
+                // it reads `\.isPro` and `\.presentPaywall` to gate a receive, and those are
+                // published by the host below it. Tap-to-open can arrive on a cold launch with no
+                // screen of the app's own on top, which is why it lives at the root at all.
+                .routineReceiveHost()
                 // `.environment(store)` must sit **outside** `.paywallHost()`, so the host (which
                 // reads `@Environment(StoreManager.self)` to publish `isPro`) resolves the store from
                 // above it; applied the other way round the host is a parent of the injection and traps.

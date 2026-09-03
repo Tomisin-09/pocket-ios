@@ -46,6 +46,16 @@ struct RoutineItemRecord: Codable, Equatable, Sendable {
     var exerciseUID: UUID?
     var loopUID: UUID?
     var songSourceID: String?
+
+    /// What a block that can never resolve its unit was pointing at, in the words of whoever sent it
+    /// (ADR 0188 S2 follow-up) — `nil` for every block the app made itself.
+    ///
+    /// Carried here as well as in `SharedBlockPlaceholder` because the two answer different
+    /// questions. The placeholder is what *this file's* sender could not send, and is read once by
+    /// the receive preview; this is a stored fact about the block, and an archive that omitted it
+    /// would silently stop backing it up — the failure ADR 0181's Consequences names. It is also how
+    /// a forwarded routine keeps its labels: a block received as a named orphan is re-shared as one.
+    var orphanLabel: String?
 }
 
 /// A goal for the current stretch of practice (ADR 0113), weighting what the planner reaches for.

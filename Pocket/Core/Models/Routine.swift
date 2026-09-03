@@ -202,6 +202,32 @@ final class RoutineItem {
     /// migrates to the standard trainer with no store wipe (CoreData 134110).
     var loopRunModeRaw: String = LoopRunMode.default.rawValue
 
+    /// **What this block pointed at, in words, for a block that can never resolve it** (ADR 0188 S2
+    /// follow-up). `nil` on every block the app itself made — which is all of them until a routine
+    /// arrives from somebody else.
+    ///
+    /// A received routine's loop and song blocks cannot cross: a loop's bounds are fractions of a
+    /// song whose audio never leaves the sender's device (ADR 0148), so the block lands with all
+    /// three unit relationships `nil` — the orphan the app already draws (`isOrphaned`). The file
+    /// carries the sender's label for it (`SharedBlockPlaceholder`), and until this field existed
+    /// that label was shown in the receive preview and then thrown away: the player was told what
+    /// the block *was* only in the seconds before they added the routine, and afterwards it read
+    /// *Unit removed* forever.
+    ///
+    /// **Not the same fact as a deleted unit.** A block orphaned by a deletion has nothing to name
+    /// and stays `nil`, which is why this is not a general "last known name" cache: it records what
+    /// a block arrived describing, and nothing in the app ever writes it for a unit it had.
+    ///
+    /// Nothing can go stale, because an orphan block is inert everywhere — it is never re-pointed at
+    /// a unit (`RoutineDetailView+BlockPreview.swift` makes it untappable in both modes), so a block
+    /// carrying this either keeps it or is deleted. Read only through `RoutineItemRow` while
+    /// `isOrphaned`, so it cannot leak onto a block that resolves.
+    ///
+    /// Optional with **no declaration default** — the migration-exempt shape (CoreData 134110 rule,
+    /// ADR 0012), so every block saved before this reads `nil`, which is exactly the truth. It is
+    /// the one field ADR 0188 adds, and the one additive attribute the schema freeze permits.
+    var orphanLabel: String?
+
     /// Typed view over `loopRunModeRaw` — whether a loop block runs the standard trainer or ear
     /// training (ADR 0104). Unrecognised/empty reads as `.trainer`. Meaningless on non-loop blocks.
     var loopRunMode: LoopRunMode {

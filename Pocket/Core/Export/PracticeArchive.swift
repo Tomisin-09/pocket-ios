@@ -26,8 +26,12 @@ import Foundation
 struct PracticeArchive: Codable, Equatable, Sendable {
 
     /// The archive format's own version, bumped when a field changes meaning rather than when one is
-    /// added. Nothing in the app reads it today — it exists so that an importer, whenever it is built,
-    /// can tell what it is looking at instead of guessing from which keys happen to be present.
+    /// added — which is why `RoutineItemRecord.orphanLabel`, an additive optional, did not move it.
+    ///
+    /// **`SchemaVersionGate` reads it** (ADR 0188 D2), and is the only thing that does: equal
+    /// proceeds, lower migrates, higher is refused. It was written into every file for two slices
+    /// before anything read it, exactly so that this reader could tell what it was looking at
+    /// instead of guessing from which keys happen to be present.
     static let currentSchemaVersion = 1
 
     var schemaVersion: Int = PracticeArchive.currentSchemaVersion

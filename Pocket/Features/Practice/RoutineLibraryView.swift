@@ -23,7 +23,11 @@ struct RoutineLibraryView: View {
     /// Entitlement + the shared paywall (ADR 0112). **Routines are Pro**, apart from the one curated
     /// free-taste routine a free player may run (but not edit).
     @Environment(\.isPro) var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
+    @Environment(\.presentPaywall) var presentPaywall
+    /// The app's one receiving door (ADR 0188 S2) — this screen picks a file and hands it over;
+    /// the host at the app root decodes it, previews it and writes it. See
+    /// `RoutineLibraryView+Receive.swift`.
+    @Environment(\.receiveRoutineFile) var receiveRoutineFile
     /// Per-routine practice reminders (ADR 0186 D3) — a deleted routine's pending notifications
     /// have to go with it, and nothing else on this screen knows they exist.
     @Environment(PracticeReminder.self) private var practiceReminder
@@ -48,6 +52,8 @@ struct RoutineLibraryView: View {
     /// A freshly-generated Quick session awaiting review — pushed as a **provisional** detail
     /// (nothing persists until the user Saves or Starts it, V2 planner Slice 1); `nil` when none.
     @State private var quickDraft: QuickSessionDraft?
+    /// Whether the document picker for a shared routine is up (ADR 0188 S2).
+    @State var importingRoutine = false
     /// Whether the list is narrowed to favourited routines (ADR 0119) — a session toggle, not persisted.
     @State private var favoritesOnly = false
     /// Sort key + direction, persisted across launches (ADR 0178), defaulting to the newest-first
@@ -156,6 +162,7 @@ struct RoutineLibraryView: View {
                               systemImage: isPro ? "wand.and.stars" : "lock.fill")
                     }
                     .disabled(isPro && !exercises.contains { $0.template != .warmup })
+                    receiveRoutineButton
                 }, sortControls: {
                     LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
                 })
@@ -189,6 +196,9 @@ struct RoutineLibraryView: View {
         .fullScreenCover(item: $playing) { routine in
             RoutinePlayerView(routine: routine)
         }
+        // The picked file goes straight to the app-root host, which owns the preview and the write
+        // (ADR 0188 S2) — this screen never decodes anything.
+        .routineFileImporter(isPresented: $importingRoutine, onPick: receiveRoutineFile)
     }
 
     /// Run the session — gated on `canRunRoutine`, so the curated free-taste routine plays for a

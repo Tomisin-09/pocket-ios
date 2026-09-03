@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// One block in the routine editor (ADR 0066, slice 2): a type icon plus the referenced
-/// unit's title and progress line — or a plain "Rest" / "Unit removed" for a rest or an
-/// orphaned block. Read-only display; the editor owns reorder/delete.
+/// unit's title and progress line — or "Rest" for a rest, and for an orphaned block either
+/// the label it arrived with (ADR 0188 S2) or a plain "Unit removed". Read-only display;
+/// the editor owns reorder/delete.
 ///
 /// Blocks carry no user-editable *kind* (Focus/Warm-up/Play) in the manual editor — every
 /// unit block is focused work and rests are authored separately, so there's no
@@ -108,9 +109,15 @@ struct RoutineItemRow: View {
     }
 
     /// The block's headline: the unit's name, "Rest", or an orphaned marker.
+    ///
+    /// An orphan that **arrived named** says what it was (ADR 0188 S2 follow-up) — a routine
+    /// somebody sent reads *Chorus — Slow Bend*, not *Unit removed*, because the sender's audio
+    /// staying on their device is a different fact from a unit having been deleted, and the player
+    /// needs the name to know what to put there. The glyph and the muted tint are unchanged, so it
+    /// still reads as a block that will not run.
     private var title: String {
         if item.kind == .rest { return "Rest" }
-        if item.isOrphaned { return "Unit removed" }
+        if item.isOrphaned { return orphanTitle }
         if let exercise = item.exercise {
             return exercise.name.isEmpty ? "Untitled exercise" : exercise.name
         }
@@ -120,13 +127,32 @@ struct RoutineItemRow: View {
         if let song = item.song {
             return song.title.isEmpty ? "Untitled song" : song.title
         }
-        return "Unit removed"
+        return orphanTitle
     }
+
+    /// The label an orphan block arrived with, or `nil` — trimmed and emptiness-checked in **one**
+    /// place, because the title and the caption both branch on it and a whitespace-only label
+    /// (this door reads files the app did not write) would otherwise give a row that says *Unit
+    /// removed* over a caption claiming it was somebody else's audio.
+    private var carriedLabel: String? {
+        guard let label = item.orphanLabel?.trimmingCharacters(in: .whitespaces),
+              !label.isEmpty else { return nil }
+        return label
+    }
+
+    /// What an unresolvable block calls itself.
+    private var orphanTitle: String { carriedLabel ?? "Unit removed" }
 
     /// The block's supporting line — the unit's command→reach, its song, or a rest hint.
     private var subtitle: String? {
         if item.kind == .rest { return "Breather" }
-        if item.isOrphaned { return "Skipped — the unit was deleted" }
+        // Two different reasons a block will not run, and the caption is the only place they can be
+        // told apart: the unit was deleted here, or it never crossed because it was the sender's own
+        // audio (ADR 0188 D4). Both skip; only one is something the player can do anything about.
+        if item.isOrphaned {
+            return carriedLabel == nil ? "Skipped — the unit was deleted"
+                                       : "Skipped — not on this device"
+        }
         if let exercise = item.exercise {
             // Empty for a freeform block with no click — nil so the row drops the line entirely.
             let label = exercise.commandProgressLabel

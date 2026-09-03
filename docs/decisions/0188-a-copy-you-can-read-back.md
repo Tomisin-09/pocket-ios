@@ -1,6 +1,6 @@
 # ADR 0188 — a copy you can read back, and a routine you can hand over
 
-- **Status:** Accepted — **S1 built** (2026-09-03), S2 and S3 not started. Three slices (S1–S3),
+- **Status:** Accepted — **S1 and S2 built** (both 2026-09-03), S3 not started. Three slices (S1–S3),
   each independently shippable. **S1 and S2 are additive-only and touch no existing row**; the
   archive door in S3 is the one that reads a file the app did not write in this installation, and it
   is deliberately last.
@@ -13,9 +13,19 @@
   restraint D8 spends nothing of), ADR 0148 (Red Moon owns its song copies, which is why no audio
   crosses in a share), ADR 0151 (a take outlives its loop), ADR 0127 / 0177 / 0178 (the routine
   this hands over), ADR 0162 (the Settings hub), ADR 0165 (the manual quotes the app)
-- **Schema:** none. No `@Model` changes and no field is added. Both doors write rows through the
-  ordinary initialisers, which is what makes this ADR safe to build under the freeze — and what
-  lets it argue, in Consequences, that the freeze can now end.
+- **Schema:** **one additive optional attribute**, `RoutineItem.orphanLabel: String?`, added in an
+  S2 follow-up (see S2's slice note). Everything else is unchanged: no relationship changes, no
+  renames, nothing removed, and both doors write rows through the ordinary initialisers. It is the
+  migration-exempt shape (optional, no declaration default — CoreData 134110, ADR 0012), so every
+  existing block reads `nil`, which is the truth.
+
+  **This line said "none" until 2026-09-03, and the change is deliberate rather than a drift.** The
+  original was written to make the ADR safe to build under the schema freeze (2026-08-07), and it
+  did — S2 shipped without it. What S2 then demonstrated is that "no schema change" bought its
+  safety by *losing information the file already carried*: D4's placeholder label was shown in the
+  preview and discarded on landing. The freeze forbids **destructive** model changes; an additive
+  optional is what it explicitly permits, so paying one field is the smaller cost. See the
+  Consequences on ending the freeze, which this does not do.
 
 ## Context
 
@@ -227,8 +237,59 @@ are attachments (ADR 0167 phase 2) whose bytes stay on the sender's device, and 
 URL-backed half is a call D4's table does not make. `SharedPracticeBuilder` clears them in one line
 that is easy to reverse once the call is made.
 
-**S2 — receive one.** Both doors (tap-to-open and `.fileImporter`), D5's duplication path, D9's
-preview. Closes practice-support item 2.
+**S2 — receive one. Built 2026-09-03** (`pocket-294-receive-a-routine`). Both doors (tap-to-open and
+`.fileImporter`), D5's duplication path, D9's preview. Closes practice-support item 2.
+`SchemaVersionGate` is `schemaVersion`'s first reader and is shared with S3;
+`ReceivedRoutineBuilder` is pure over `Data` and returns an uninserted `HydratedRoutine`, which is
+the only reason the whole door is unit-testable (inserting a graph in the XCTest host traps).
+`CFBundleDocumentTypes` lands here, as S1's first correction said it would.
+
+**Five things this slice settled that the text above did not:**
+
+- **D1's "mint a new one" costs no code at all.** `Exercise.init` and `Routine.init` assign
+  `self.uid = UUID()` unconditionally, so the trust asymmetry is what the existing initialisers
+  already do. There was nothing to write, and nothing that could be forgotten.
+- **Enum columns are written raw, and the typed setters are the trap.** D5's "arrives the way a
+  duplicated one does" reads as *call the same initialiser*, and doing that would have been a quiet
+  data loss: only `RoutineItemKind`, `LoopRunMode` and `EntryKind` have an `init(raw:)`, while
+  `ExerciseTemplate`, `Instrument`, `Subdivision` and `MetronomeIntervalUnit` resolve with a
+  `?? default` **inside their getters**. A drill authored on a future template would have arrived as
+  "Basic" carrying a `templatePayload` nothing can read — the exact loss `JSONValue` exists to
+  prevent on the way out. Hydration assigns `templateRaw` / `instrumentRaw` / `subdivisionRaw` /
+  `rampIntervalUnitRaw` / `kindRaw` verbatim instead.
+- **The receiving side drops the sender's history again**, rather than trusting that
+  `SharedPracticeBuilder` cleared it. D5 is written as a rule about what a share carries, and on
+  this door the file may have been written by a hand, an older build, or one that has not shipped.
+- **A fourth refusal exists that D2 and D9 did not name.** D2 covers the version and D9 covers an
+  unknown `kind`, but a file can decode, agree about the version, name `routine` and carry none.
+  That is `.incomplete`, with its own sentence — reporting it as corrupt would be a lie about a file
+  that parsed. `ReceivedRoutine` holds a **non-optional** `RoutineRecord` so nothing downstream can
+  re-ask the question.
+- **A landed placeholder lost its label, and fixing it cost the ADR its "Schema: none".** D4's
+  placeholder crosses in the file and is shown in the preview (D9), but a `RoutineItem` had nowhere
+  to keep it: the block landed as `isOrphaned` reading *Unit removed*, so the player was told what
+  it **was** only in the seconds before they added the routine. Shipped that way, parked as an
+  additive field, and **taken off the park the same day** on the owner's call — the header's schema
+  line and its reasoning are amended above.
+
+  `RoutineItem.orphanLabel: String?` is written only by the receiving door and only onto a block
+  that resolved nothing; `RoutineItemRow` reads it only while `isOrphaned`, so it cannot appear on a
+  block that resolves. Nothing can go stale: an orphan block is inert everywhere in the editor and
+  is never re-pointed at a unit, so it either keeps the label or is deleted. The caption splits with
+  it — *Skipped — not on this device* for a block that arrived named, *Skipped — the unit was
+  deleted* for one orphaned here. **Two facts that had been sharing one row.**
+
+  It reaches two more places for reasons worth stating. `RoutineItemRecord` carries it, because a
+  stored field absent from the DTO silently stops being backed up (ADR 0181's own Consequence) —
+  and it is the only label source an archive restore will have, so S3 gets it free.
+  `SharedPracticeBuilder.placeholder(for:)` falls back to it, so **forwarding** a routine somebody
+  sent you keeps the labels instead of degrading them one hop at a time; a block orphaned by a
+  deletion still has nothing to name and still gets no placeholder. The version was **not** bumped:
+  `PracticeArchive.currentSchemaVersion` moves when a field changes meaning, not when one is added.
+
+**And one thing S2 leaves for S3:** the "can't read an archive back in" claim turns out to live in
+three places rather than the one this ADR's Consequences named. All three are still true after S2 —
+they are about the archive — and all three are now listed there so S3 cannot fix one of three.
 
 **S3 — restore an archive.** The zip reader, the uid-skip merge, the attachment rewrite. Closes *An
 importer to close the export loop*. Largest, last, and the only slice that reads a zip.
@@ -264,8 +325,17 @@ resolving against exercises *it seeded itself* in the same pass, which is a diff
   false for anyone who can *read one back*. The freeze is recorded only in memory and
   `docs/backlog.md:835` and has never been an ADR — **ending it is a separate decision and should be
   written as one**, not assumed to have happened here.
-- **`docs/manual/privacy.md:36-38` becomes wrong on the day S3 ships** and must change in the same PR.
-  It currently tells the player the app cannot read an archive back in.
+- **The "can't read an archive back in" claim lives in THREE places, not one**, and all three become
+  wrong on the day S3 ships. This entry named only the first; S2 found the other two while checking
+  whether it had falsified any of them (it had not — all three are about the *archive*, and S2 only
+  reads a shared routine):
+  - `docs/manual/privacy.md:37`
+  - `docs/manual/reference/settings.md:134`
+  - **in-app copy**, `Pocket/Features/Settings/ExportSection.swift:100` — the one a player actually
+    reads, and the one no docs checklist covers.
+
+  Fixing one of three is the likely failure, so S3 must change all three in the same PR. Nothing
+  enforces this: `scripts/check-manual.py` has no rule naming these sentences.
 - **Every future `@Model` field is now an import decision as well as an export one.** 0181's
   Consequences noted a field added without a DTO field silently stops being exported; it will now
   also silently fail to restore. The mapping tests remain the only guard.
