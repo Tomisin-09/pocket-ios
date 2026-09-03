@@ -15,6 +15,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **Your archive can come home.** **Settings ▸ Your data ▸ Restore** now reads an archive you
+  exported earlier — the loop Export left half-open. Choose the zip and Red Moon opens it and shows
+  you what is inside **before anything is written**: a count for each kind of thing, how many of them
+  it already has, and which version of Red Moon wrote the archive and when. **Restore** adds what is
+  missing; **Cancel** leaves nothing behind. **Nothing is ever changed, merged over or replaced** —
+  anything already in your library is left exactly as it is, which means restoring the same archive
+  twice changes nothing the second time. Your recordings come back with their audio when the archive
+  was made with **Include recordings** on; when it wasn't, everything written about them still comes
+  back and the sheet says how many are without sound. **Songs come back with their loops, markers,
+  tempo grid and notes, and without their audio** — the files themselves never travel in an archive —
+  so you point each song at your own copy again. An archive from a **newer** version of Red Moon is
+  refused in a sentence that says to update the app, rather than as an error about a file. An archive
+  is a plain zip, so you come to this screen and choose it rather than tapping it in Files.
 - **And now you can open one somebody sent you.** Tap a routine file wherever it arrived — Messages,
   Mail, Files, an AirDrop — and Red Moon opens it; or fetch one yourself from Routines ▸ the options
   control ▸ **Receive a routine…**. Either way you see **what is in the file before it lands**: the

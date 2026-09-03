@@ -85,7 +85,12 @@ struct ExportSection: View {
     }
 
     /// One line under the section, and it has three jobs: say what is in the file, warn about the
-    /// thing ADR 0150 asked to be warned about, and be honest that there is no way back in yet.
+    /// thing ADR 0150 asked to be warned about, and point at the way back in.
+    ///
+    /// **That third job used to be an apology** — *"Red Moon can't read one back in yet"* — and it was
+    /// one of three places that sentence lived (ADR 0188's Consequences names all three, because
+    /// fixing one of them was the likely failure). This is the copy a player actually reads, and the
+    /// one no docs checklist covers.
     private var footer: String {
         switch phase {
         case let .failed(message):
@@ -97,9 +102,8 @@ struct ExportSection: View {
         default:
             return "A zip holding practice.json — your songs, loops, markers, exercises, chords, "
                 + "routines, goals, journal and practice history — plus your recordings. Keep it "
-                + "somewhere safe: Red Moon can't read one back in yet, so this is a copy for you, "
-                + "not a restore. A take recorded next to a playing song may have picked that song "
-                + "up through the mic."
+                + "somewhere safe: Restore, below, reads one back in. A take recorded next to a "
+                + "playing song may have picked that song up through the mic."
         }
     }
 

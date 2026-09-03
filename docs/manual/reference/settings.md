@@ -131,8 +131,22 @@ and practice history — and a `takes` folder with the audio of your recordings.
 Preparing and sharing are two taps rather than one: the file has to exist before the share sheet can
 carry it, and on a large library that takes a moment.
 
-**Red Moon cannot read an archive back in.** This is a copy for you to keep, not a restore. If a
-recording's audio has gone missing from the device, the copy says how many and carries on.
+If a recording's audio has gone missing from the device, the copy says how many and carries on.
+
+### Restore
+
+**`Restore from a copy…`** opens the file picker for an archive you exported earlier. Red Moon reads
+it, then shows you what is inside — a count per kind, and how many of those it already has — before
+anything is written. Nothing you have is changed or replaced: only what is missing is added, so
+restoring the same archive twice changes nothing the second time.
+
+Songs come back with their loops, markers, tempo grid and notes, and without their audio: the files
+themselves never travel in an archive, so you point each song at your own copy again. Recordings come
+back with their audio when the archive was made with `Include recordings` on; when it wasn't, their
+notes and moments still come back and the sheet says how many are without sound.
+
+An archive is a plain zip, so it does not open by tapping it — you come here and choose it. A shared
+routine is a different thing and does open by tapping; see [routines](../routines.md).
 
 A take recorded next to a playing song may have picked that song up through the mic. That is worth
 knowing before you send an archive anywhere.

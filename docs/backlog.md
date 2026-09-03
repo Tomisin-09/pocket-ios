@@ -94,11 +94,30 @@ alone.
 
 **Answered 2026-09-03: receive shipped first** (ADR 0188 S2), for the reason above — it needed no
 zip reader, no merge rules and no destructive path, so it could be built and tested against a file
-S1 already wrote. **This entry stays open**, and what is left of it is exactly the hard half: the
-zip reader (D8 — Foundation has no public unzip on iOS, so the reader is ours and only ever reads
-archives this app wrote), the uid-skip merge that makes restore idempotent (D1), and the attachment
-leaf-name rewrite (D7 — the row is written before the file, or ADR 0182's orphan sweep would collect
-it). `schemaVersion` now **has** a reader: `SchemaVersionGate`, shared by both doors.
+S1 already wrote.
+
+**CLOSED 2026-09-03 by ADR 0188 S3.** `Settings ▸ Your data ▸ Restore` reads an archive back in. The
+zip reader is ours (D8), stored and deflate only, refusing encryption, spanning and ZIP64 by name,
+and tested against archives the real exporter wrote rather than a fixture — because the export's zip
+method is now part of the file format. The merge is uid-skip and additive (D1, D6), which makes a
+restore idempotent. `schemaVersion` has a reader: `SchemaVersionGate`, shared by both doors.
+
+Two things the entry above got wrong, kept here because the reasoning is the useful part:
+
+- **The attachment leaf-name rewrite never happened, and should not have.** D7 assumes a minted uid;
+  a restore preserves uids, so `<uid>.<ext>` is unchanged and a colliding name would mean a colliding
+  uid — which the owner's skip has already handled. The rewrite belongs to the *receive* door, which
+  does not carry attachments today. D7's other half (row before file, or the orphan sweep collects
+  it) applied in full and is what `RestoreCoordinator` is ordered around.
+- **Song audio was never in the loop to close.** An archive carries take audio and reference
+  pictures, not song files — they are the player's own imported media (`SongRecord.audioFileName`).
+  So a restored song comes back with its loops, markers and grid and needs relinking (ADR 0152), and
+  the preview says so before the restore rather than leaving it to be found on play.
+
+**The schema freeze reconsideration is still open** and is now the only part of this entry that is.
+ADR 0188's Consequences argue the freeze can end — it rests on "a bad migration is unrecoverable",
+which is false for anyone who can read an archive back — and say explicitly that ending it is a
+separate decision that should be written as an ADR rather than assumed to have happened.
 
 ## An automatic orphan sweep (logged 2026-08-23, ADR 0182)
 

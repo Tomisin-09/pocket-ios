@@ -34,8 +34,8 @@ loops, markers, exercises, chords, routines, goals, journal and practice history
 folder holding the audio of your recordings, which you can leave out if you only want the writing.
 
 Nothing is uploaded. The file is written on your device and handed to the share sheet; where it goes
-after that is your choice alone, and Red Moon has no idea. **The app cannot read an archive back
-in** — it is a copy for you, not a restore.
+after that is your choice alone, and Red Moon has no idea. **Settings ▸ Your data ▸ Restore reads one
+back in**, so an archive is a real backup rather than only a copy to keep.
 
 Two things worth knowing before you send one anywhere. It contains your notes and your recordings in
 full. And a take recorded next to a playing song may have picked that song up through the

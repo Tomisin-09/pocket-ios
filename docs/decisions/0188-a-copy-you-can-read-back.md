@@ -1,9 +1,11 @@
 # ADR 0188 — a copy you can read back, and a routine you can hand over
 
-- **Status:** Accepted — **S1 and S2 built** (both 2026-09-03), S3 not started. Three slices (S1–S3),
-  each independently shippable. **S1 and S2 are additive-only and touch no existing row**; the
-  archive door in S3 is the one that reads a file the app did not write in this installation, and it
-  is deliberately last.
+- **Status:** Accepted — **all three slices built** (S1 and S2 2026-09-03, S3 2026-09-03
+  `pocket-295-restore-an-archive`). Three slices (S1–S3), each independently shippable. **S1 and S2
+  are additive-only and touch no existing row**; the archive door in S3 is the one that reads a file
+  the app did not write in this installation, and it was deliberately last. **S3 corrected two things
+  in the text below — D7's attachment rewrite and an unstated fact about song audio — and both
+  corrections are recorded in its slice note rather than edited silently into the decisions.**
 - **Date:** 2026-09-03 (`pocket-293-import-both-doors`)
 - **Relates to:** ADR 0181 (the export this closes the loop on — **amends its
   `CFBundleDocumentTypes` alternative, see D3**), ADR 0182 (the orphan sweep this must not trip,
@@ -291,8 +293,59 @@ the only reason the whole door is unit-testable (inserting a graph in the XCTest
 three places rather than the one this ADR's Consequences named. All three are still true after S2 —
 they are about the archive — and all three are now listed there so S3 cannot fix one of three.
 
-**S3 — restore an archive.** The zip reader, the uid-skip merge, the attachment rewrite. Closes *An
-importer to close the export loop*. Largest, last, and the only slice that reads a zip.
+**S3 — restore an archive. Built 2026-09-03** (`pocket-295-restore-an-archive`). The zip reader, the
+uid-skip merge, `Settings ▸ Your data ▸ Restore`. Closes *An importer to close the export loop*.
+Largest, last, and the only slice that reads a zip.
+
+**Two corrections this slice made to the decisions above, both worth reading:**
+
+- **D7's attachment leaf-name rewrite belongs to the receive door, and does not happen here.** D7
+  reasons that "a new uid means `attachmentFileName` is rewritten as the row is made" — and that is
+  right *given a new uid*, which is what the **receive** door mints (D1). A restore preserves uids.
+  So the leaf stays `<uid>.<ext>`, and a name that collided would mean a uid that collided, which the
+  owner's skip has already handled by not building the row at all. Nothing was written to perform a
+  rewrite, because performing one would have been the bug. **D7's other half applies in full and is
+  what `RestoreCoordinator` is ordered around**: build, insert, save, *then* write files, because
+  ADR 0182's sweep defines an orphan as a file with no row and *Reclaim space* is a button the player
+  can press while a restore is running. Saving between the two closes that window rather than
+  narrowing it. Note that the rewrite becomes real the day a *share* carries references — which D4
+  leaves undecided — so D7 is not wrong, it is early.
+- **Song audio was never in an archive, and this ADR never said so.** `SongRecord.audioFileName`
+  names a file the export deliberately does not carry: the player's own imported media, which they
+  still have, and which would multiply the size of a file whose point is the writing. The
+  consequence for a restore is concrete and had to be surfaced rather than discovered — **every**
+  restored song arrives with its loops, markers, tempo grid and notes and **no audio**, needing a
+  relink (ADR 0152). `RestorePlan.songsNeedingRelink` exists so the preview says it beforehand.
+
+**Four more things this slice settled that the text above did not:**
+
+- **The archive door is the picker only, and that is D3's rule applied rather than an omission.** A
+  `.redmoonpractice` file is a type this app owns and declares; an archive is a plain `.zip`.
+  Declaring the app a handler for every zip on the phone would put Red Moon in the Open-with list for
+  a folder of holiday photos — exactly the over-broad capability AGENTS.md forbids and that D3 spends
+  its length arguing this ADR does *not* do. So restoring is something the player comes to
+  `Settings ▸ Your data` to do, which is also the right weight for an operation that touches the whole
+  library.
+- **The raw-enum trap has a fifth site, and it is hidden behind a struct.** S2 named four columns
+  whose typed getters resolve with `?? default`. `Song` has no such setter — it has something worse:
+  `Song.init` takes a `SongRef` and writes `ref.source.rawValue`, and `SongRef.Source` resolves an
+  unknown raw value to `.localFile`. So a source this build does not recognise is normalised *by the
+  initialiser*, not by a setter, and `sourceRaw` has to be assigned afterwards like every other raw
+  column.
+- **The version is probed before the payload is decoded**, with a one-field `Decodable`. Decoding
+  the whole archive and checking `schemaVersion` afterwards reads naturally and is wrong: an archive
+  from the future decodes perfectly well — the fields it shares with this build are the fields this
+  build wrote — so by the time the check ran, everything new in the file would already have been
+  dropped.
+- **The keys are read twice: once for the preview, once at the write.** The player can add or delete
+  rows between seeing the summary and confirming it, and a key set carried over from the preview
+  would duplicate a row that now exists or skip one that no longer does. The plan governs what the
+  player was *told*; the store governs what is *written*, and D1's skip is what makes the two safe to
+  differ.
+
+**And one thing S3 could not settle: the schema freeze.** The Consequences below argue this ADR makes
+ending it possible, and say ending it is a separate decision that should be written as an ADR. That
+is still true and still unwritten. Nothing in S3 ends the freeze.
 
 ## Alternatives considered
 
@@ -336,6 +389,13 @@ resolving against exercises *it seeded itself* in the same pass, which is a diff
 
   Fixing one of three is the likely failure, so S3 must change all three in the same PR. Nothing
   enforces this: `scripts/check-manual.py` has no rule naming these sentences.
+
+  **Done 2026-09-03, all three in S3's PR.** The manual pages now point at
+  `Settings ▸ Your data ▸ Restore`; `reference/settings.md` gained a *Restore* subsection describing
+  the control, what it adds, and the two things it cannot bring back. The in-app footer says *"Restore,
+  below, reads one back in"*. Still nothing enforces it — a fourth copy of the claim written tomorrow
+  would go unnoticed the same way, and the honest guard would be a `check-manual.py` rule that names
+  these sentences rather than a note in an ADR.
 - **Every future `@Model` field is now an import decision as well as an export one.** 0181's
   Consequences noted a field added without a DTO field silently stops being exported; it will now
   also silently fail to restore. The mapping tests remain the only guard.
