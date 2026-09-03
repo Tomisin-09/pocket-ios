@@ -18,7 +18,7 @@ answered without opening anything.
 | `You` | Your name, and what you play |
 | `Appearance` | Theme, motion, and how notes are spelled |
 | `Sound & feel` | Haptics, and which click the metronome plays |
-| `Practice` | Count-in, screen, and the strumming click |
+| `Practice` | Count-in, screen, the strumming click, and reminders |
 | `Routines` | How a routine moves from block to block |
 | `Song player` | Four things about the waveform screen |
 | `Your data` | A copy of everything, and what it takes up |
@@ -80,6 +80,14 @@ Every one of these is optional, and none of it leaves the device.
 - **`Strumming click follows the pattern`** — *For a strumming drill, the metronome plays the pattern's rhythm (down/up/accent). Turned off, it's a plain click you strum the rhythm against.*
 - **`Tempo changes`** — `Off` or `Show`, for whether a climbing ramp announces the tempo it is moving
   to.
+- **`Starting point for new reminders`** — the days and the **`Time`** a *new* routine reminder
+  starts from. It sets a starting position and nothing else: **nothing here sends anything**, it
+  never changes a reminder already set, and there is no switch that turns reminders on. A reminder is
+  switched on from the routine itself — see [Reminding yourself](../routines.md#reminding-yourself).
+- **`Reminders you've set`** — every routine that currently has one, with its days and time, or
+  **`None yet`**. Tap one to change its days, its time, or to switch it off, without going to the
+  routine. With notifications off for Red Moon each row reads **`Not being delivered`** rather than
+  naming a time it cannot keep.
 
 ## `Routines`
 

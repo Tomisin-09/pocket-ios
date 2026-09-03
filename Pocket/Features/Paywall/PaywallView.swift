@@ -26,6 +26,10 @@ struct PaywallView: View {
     @State var monthlyEligible = true
     @State var purchasing = false
     @State var purchaseError: String?
+    /// Notification permission as of the last time this screen looked (ADR 0186 D5). `nil` until
+    /// read. Re-read in `load()` rather than cached across presentations, because the player can
+    /// change it in the Settings app while the app is backgrounded and come back to a stale answer.
+    @State var notificationPermission: NotificationPermission?
 
     var body: some View {
         ScrollView {
@@ -184,22 +188,35 @@ struct PaywallView: View {
     @ViewBuilder
     private var reminderOptIn: some View {
         if eligibleForTrial {
-            Toggle(isOn: reminderBinding) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Remind me before the trial ends")
-                        .font(.futura(.subheadline, weight: .semibold))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Text("A single notification, 24 hours before you'd be charged.")
-                        .font(.futura(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
+            VStack(alignment: .leading, spacing: 10) {
+                Toggle(isOn: reminderBinding) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Remind me before the trial ends")
+                            .font(.futura(.subheadline, weight: .semibold))
+                            .foregroundStyle(PocketColor.textPrimary)
+                        Text("A single notification, 24 hours before you'd be charged.")
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                }
+                .tint(PocketColor.practice)
+
+                if trialReminder.remindersEnabled, notificationPermission == .denied {
+                    NotificationsOffNote(
+                        message: "Notifications are off for Red Moon, so this reminder can't be "
+                            + "delivered. The trial countdown still shows in the app.")
                 }
             }
-            .tint(PocketColor.practice)
         }
     }
 
-    /// Turning the toggle on asks the system for permission; a denial turns it straight back off, so
-    /// the control never claims a reminder it can't deliver. The in-app countdown runs either way.
+    /// Turning the toggle on records the intent and asks for permission **only if the prompt is
+    /// still available** (ADR 0186 D5).
+    ///
+    /// It used to assign the authorization result straight back into `remindersEnabled`, so on a
+    /// *remembered* denial — the prompt is one-shot for the whole app, and any other feature may
+    /// have spent it — the toggle flipped visibly back off with nothing said. That looked like the
+    /// control breaking. Now the intent sticks and the blocker is named, with a route to fix it.
     private var reminderBinding: Binding<Bool> {
         Binding(
             get: { trialReminder.remindersEnabled },
@@ -208,7 +225,7 @@ struct PaywallView: View {
                     trialReminder.remindersEnabled = false
                     return
                 }
-                Task { await trialReminder.requestAuthorization() }
+                Task { notificationPermission = await trialReminder.requestAuthorization() }
             })
     }
 

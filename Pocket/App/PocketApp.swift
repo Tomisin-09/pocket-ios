@@ -27,6 +27,12 @@ struct PocketApp: App {
     // dropped by the OS the moment that view goes away, silently and with nothing to notice.
     @State private var diagnostics = DiagnosticsRecorder()
 
+    // Per-routine practice reminders (ADR 0186 D4) — owns the pending requests and the stored
+    // schedules. Lives here for the app's lifetime beside the trial reminder, and is read from the
+    // environment by the routine screen's reminder row and by Settings ▸ Practice. Its launch sweep
+    // (D3) runs from `HomeView`, which is where a `ModelContext` to resolve routines against is.
+    @State private var practiceReminder = PracticeReminder()
+
     init() {
         // The composition root, and the only place that knows a vendor exists (ADR 0120). Installing
         // the sink does **not** start the SDK — `AptabaseSink` initialises on its first *delivered*
@@ -44,6 +50,7 @@ struct PocketApp: App {
                 .environment(store)
                 .environment(trialReminder)
                 .environment(diagnostics)
+                .environment(practiceReminder)
                 .preferredColorScheme(appearance.colorScheme)
                 // The composition seam between StoreKit and notifications (ADR 0144 D6): the store
                 // publishes renewal state, the reminder decides what to do with it. Set once, and it

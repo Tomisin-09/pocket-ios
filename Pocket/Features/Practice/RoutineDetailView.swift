@@ -36,6 +36,11 @@ struct RoutineDetailView: View {
     @State var isEditing: Bool
     /// Raised when a swipe tries to mark a block for recording and the microphone is off (ADR 0180).
     @State var micAccessBlocked = false
+    /// Per-routine practice reminders (ADR 0186). Internal for `RoutineDetailView+Reminder`.
+    @Environment(PracticeReminder.self) var practiceReminder
+    /// Notification permission as of the last look (ADR 0186 D5) — `nil` until read. Re-read on
+    /// appear, because it can change in the Settings app while this screen is backgrounded.
+    @State var notificationPermission: NotificationPermission?
 
     /// Entitlement (ADR 0112) — internal so the access extension reads it. Routines are Pro; the
     /// curated free-taste routine opens as a rearrange-only demo.
@@ -56,7 +61,7 @@ struct RoutineDetailView: View {
     @State var restGuardSlot: Int?
     /// The routine to run, resolved into the main context — drives the full-screen player. `nil`
     /// when not playing.
-    @State private var playingRoutine: Routine?
+    @State var playingRoutine: Routine?
     /// The block being previewed (ADR 0071 R4b) — tapping an exercise/loop block in read-only mode
     /// pushes a read-only preview (content · tempo · staircase · audio audition). Resolved into the app
     /// context, so any drill-down edits write to the real store, not this view's sandbox. `nil` = none.
@@ -189,6 +194,11 @@ struct RoutineDetailView: View {
             // one out among the five that host a section, in three ways written up there.
             referencesSection
 
+            // The appointment you made with this routine (ADR 0186). Lives in
+            // `RoutineDetailView+Reminder.swift`, which explains why it is the one control here
+            // that ignores the Cancel/Save contract rather than joining it.
+            reminderSection
+
             if canAddBlocks {
                 Section {
                     if insertingRests {
@@ -237,43 +247,21 @@ struct RoutineDetailView: View {
                               accent: PocketColor.practice, context: editContext,
                               savesImmediately: false)
         .navigationDestination(item: $previewTarget) { blockPreview($0) }
-    }
-
-    /// The bottom **Start** button that launches the player — the primary action once a routine is
-    /// built (ADR 0066/0071). Shown only in read-only mode (editing has Save/Cancel instead) and only
-    /// when there's something runnable. Pinned to the bottom via `safeAreaInset` so it floats over the
-    /// block list; every routine detail screen carries it.
-    @ViewBuilder
-    private var startBar: some View {
-        if !isEditing && hasPlayableBlock {
-            Button(action: startPlaying) {
-                Label("Start", systemImage: "play.fill")
-                    .font(.futura(.body, weight: .bold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(PocketColor.practice, in: Capsule())
-                    .foregroundStyle(PocketColor.background)
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 8)
-            .accessibilityLabel("Start routine")
+        // Read, never asked for (ADR 0186 D5): opening a routine is not a request to be notified.
+        // Also re-applies the stored schedule against the routine's current name and block count,
+        // which is how a rename reaches an already-pending request.
+        .task {
+            notificationPermission = await NotificationAuthorization.current()
+            practiceReminder.refresh(routineUID: routine.uid, name: routine.name,
+                                     blockCount: routine.items.count)
         }
-    }
-
-    /// Start the session in the player. A **provisional** generated session is committed first
-    /// (Start is a deliberate keep, and running must write real practice history), then resolved into
-    /// the main context so its run screens write to the real store — not this view's editing sandbox.
-    private func startPlaying() {
-        if !existsInStore { commitProvisional(named: routine.name) }
-        playingRoutine = appContext.model(for: routine.persistentModelID) as? Routine
-        haptic(.medium)
     }
 
     /// Commit a provisional generated session to the library under `name` (the inline Name field),
     /// de-duplicated against the existing routines, and flip it into a normal stored routine. If the
     /// field was blanked, fall back to a fresh dated default rather than saving an unnamed session.
     /// Idempotent — a no-op once already stored.
-    private func commitProvisional(named name: String) {
+    func commitProvisional(named name: String) {
         guard !existsInStore else { return }
         trimDescription()
         let others = ((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])

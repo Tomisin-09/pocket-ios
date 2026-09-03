@@ -15,6 +15,22 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **A routine can remind you, and it will never mention the days you missed.** Open a saved routine
+  and switch on **Remind me**: pick your days, pick the time, and Red Moon says what is waiting —
+  the routine's name and how many blocks it holds. Tap it and that routine opens. The only thing
+  that ever makes a reminder fire is a day you chose. **If you miss one, nothing happens**: no
+  second reminder, no note of it, no number on the app icon, and nothing anywhere that counts what
+  you did or didn't do. Red Moon does not watch for your absence, so there is nothing for it to
+  react to — that is a decision about what this app is, not a feature we haven't got round to.
+  Deleting a routine takes its reminder with it, even if the app was closed at the time.
+  **Settings ▸ Practice** holds two things about reminders, neither of which sends anything:
+  **Starting point for new reminders** (the days and time a *new* one begins from, so you set your
+  week once rather than on every routine) and **Reminders you've set**, every routine that has one —
+  tap it to change its days, its time, or switch it off without going to the routine. If
+  notifications are off for Red Moon, nothing claims otherwise: the reminder stays where you set it,
+  but the app says **Not being delivered** instead of naming a time it can't keep, and points you at
+  iOS Settings. Nothing there arms anything — a reminder is always something you switched on
+  for a particular routine.
 - **A reference can be a file you keep, not just a link.** *Where you learned it* — on an exercise, a
   song, a loop or a routine — now takes the **picture**, the **PDF**, the **`.txt`** or the **`.md`**
   the material actually came as. **Add a file** offers **Choose a photo** or **Choose a file**, and
@@ -59,6 +75,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   there yet.
 
 ### Fixed
+- **Turning on the trial reminder no longer switches itself back off.** iOS asks about
+  notifications **once, ever, for the whole app** — so if you had already said no to it anywhere,
+  the paywall's *Remind me before the trial ends* toggle flipped straight back off, silently, with
+  nothing said about why. It now stays where you put it, tells you notifications are off for Red
+  Moon, and offers a way through to iOS Settings. The in-app trial countdown was never affected and
+  still isn't.
 - **A picking pattern can start on any finger now.** The finger row would never let you delete the
   first finger, so every generated run in the app began on your index finger — a descending
   G♯-G-F♯-F could only be typed as 1-4-3-2-1. Backspace now clears the row completely, and a new

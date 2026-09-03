@@ -48,6 +48,10 @@ extension PaywallView {
         if let sub = monthlyProduct?.subscription {
             monthlyEligible = await sub.isEligibleForIntroOffer
         }
+        // Read, never asked for (ADR 0186 D5). Opening a paywall is not a request to be notified, so
+        // this must not be `NotificationAuthorization.request()` — it only tells the opt-in row
+        // whether it already has a blocker worth naming.
+        notificationPermission = await NotificationAuthorization.current()
     }
 
     func buy() async {

@@ -158,6 +158,10 @@ under the session rather than under whichever drill happened to be last.
 - **Rest length** — how long a rest lasts.
 - **Loop song blocks** — whether a song block repeats as an open jam rather than ending.
 
+**Settings ▸ Practice** holds two more that touch routines: **Starting point for new reminders**,
+and **Reminders you've set** — the list of live ones, each editable from there. See
+[Reminding yourself](#reminding-yourself).
+
 ## Reading a routine without playing it
 
 Opening a routine gives you the read-only view. Tapping a block there pushes a preview of it — its
@@ -229,6 +233,34 @@ evening count as two.
 
 It counts and it dates, and that is all it does. There is no target to hit, nothing that goes up or
 down against last week, and nothing anywhere that remarks on a gap.
+
+### Reminding yourself
+
+A saved routine can carry a **Reminder**: switch on **Remind me**, pick the days, pick the **Time**.
+Red Moon then says, on those days at that time, what is waiting — the routine's name and how many
+blocks it holds. Tapping it opens that routine.
+
+The footer tells you when the next one is due. Nothing else is ever said about it. **If you miss
+one, nothing happens** — no second reminder, no note of it, no number on the app icon, and nothing
+anywhere that mentions the days you didn't play. Red Moon does not watch for your absence, so there
+is nothing for it to react to. A reminder is an appointment you made, and the only thing that
+changes it is you.
+
+Deleting a routine takes its reminder with it.
+
+**Settings ▸ Practice** holds two things about reminders, and neither of them sends anything.
+**Starting point for new reminders** is the days and time a *new* reminder begins from, so you set
+your week once instead of on every routine; it changes nothing you have already set, and there is no
+switch there that turns reminders on for everything at once — a reminder is always something you
+asked for on a particular routine. Under it, **Reminders you've set** lists every routine that has
+one, with its days and time, so there is one place that answers "what is actually set" — and tapping
+a row opens that reminder, so you can change its days, its time, or switch it off from there.
+
+If you have turned notifications off for Red Moon, the reminder stays exactly where you set it —
+but the app stops claiming it will arrive. A note at the top of the Reminder section says so and
+offers a way through to iOS Settings, the footer reads **Not being delivered** instead of naming a
+next time, and the days and time fade. The switch itself stays live, because turning a reminder off
+is the one thing you must always be able to do. Everything else works exactly as it did.
 
 A routine also carries a **Description** — what the session is for, in as many words as you like.
 It is the thing that will not fit in a name: who it is for, which week of the course it covers, why

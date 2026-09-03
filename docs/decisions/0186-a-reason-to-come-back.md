@@ -1,9 +1,11 @@
 # ADR 0186 — a reason to come back that isn't a streak
 
-- **Status:** Proposed — nothing built. D1–D7 (the reminder) are the first slice; D8–D12 (the widget)
-  are the second and carry an entitlement and a target the first does not. **D5 also names a latent
-  bug in shipped code** and should be fixed with the first slice whether or not the rest is built.
-- **Date:** 2026-09-01 (`pocket-290-a-reason-to-come-back`)
+- **Status:** **Accepted — the reminder is built** (`pocket-291-practice-reminder`). D1–D7 and D12
+  ship, and **D5's bug fix to shipped code ships with them**. D8–D11 (the widget) remain **proposed**
+  and unbuilt: they carry an App Group entitlement, a new target and manual-signing churn that the
+  reminder does not, and D8 says plainly that they ship second on cost alone.
+- **Date:** 2026-09-01 (proposed, `pocket-290-a-reason-to-come-back`); built 2026-09-02
+  (`pocket-291-practice-reminder`)
 - **Relates to:** ADR 0070 (no performance feedback — this extends it one level up, from playing to
   habits), ADR 0144 D6 (`TrialReminder` / `TrialReminderPlan` — the pattern both halves copy, the
   app's only existing notification, and the shipped code D5 corrects), ADR 0144 D4 (the Pro wall the
@@ -188,6 +190,37 @@ are on" generally (see *Consequences*).
 visible on the routine — the same split that keeps the trial *countdown* working when the trial
 *notification* is refused.
 
+**And it stops promising.** Added 2026-09-02, after device use. "Visible" is not enough: as first
+built the routine's footer printed *"Next: Thursday 12:00"* **and**, immediately beneath it, the note
+saying notifications were off. The screen named a delivery that could not happen and then contradicted
+itself two lines later. A schedule that survives a denial is right; a *promise* that survives one is a
+lie the app tells every time the screen is opened.
+
+So `PracticeReminderPlan.Status` is where "what may this screen say" is decided, in the pure half with
+the rest of the decisions, for the reason that governs all of them: it is silent when it breaks. It
+looks correct in every simulator run and on any device whose prompt has not been denied.
+
+Permission is the one input beyond the player's own choices, and it does not weaken D1 — it is a fact
+about the app's access, not about whether anybody practised. Nothing gains a way to learn that a
+reminder was missed.
+
+**And it leads the block rather than trailing it.** Second correction, same day, same cause: the
+"notifications are off" note first shipped as caption-grey text in a section *footer*, which put the
+one fact that invalidates everything above it at the bottom of the screen, in the smallest type on
+it, after two sections the player had already read and acted on. A warning that arrives after the
+decision it should have informed is decoration. It is now a banner at the **head** of the reminder
+block on both surfaces — its own section above *Starting point for new reminders* in Settings, and
+the first row inside the routine's Reminder section — at `.subheadline`, on a filled ground with a
+struck-through bell. While it is true, nothing below it can happen, so it may not be the last thing
+read. The per-schedule *"Not being delivered"* lines stay: the banner explains once and offers the
+way out, the lines say which schedules it applies to.
+
+The day and time controls **fade but stay enabled**. The control a player most needs when
+notifications are off is the one that switches the reminder *off*, and disabling the rest would be
+the app confiscating the settings it is complaining about. The toggle never fades, because it is the
+one control that still does exactly what it says. The fade is a hint; the sentence is the mechanism —
+only a sentence survives VoiceOver.
+
 ### D6 — the tap lands on the routine, routed by `uid`
 
 A notification whose tap opens Home has wasted the only interaction it gets. `TrialReminder` sets no
@@ -302,6 +335,48 @@ so it belongs on the existing **Practice** destination. Per ADR 0163, the per-ro
 **on the routine**, where you are using it, with the global default in Settings. The hub keeps its ten
 rows and `check-manual.py`'s C1 count is untouched.
 
+**Amended 2026-09-02, from device use.** The above says what the Settings half *is* and says nothing
+about how it reads, and the difference turned out to matter. As first built it was two pickers — a
+weekday strip and a time — under the header *Reminder defaults*, with one explanatory sentence in the
+**footer**. That is the routine's own control with its toggle removed, so it was used as one: days
+picked, time set, nothing fired, and the sentence explaining why sat below the controls it should
+have preceded (owner feedback on the first device build).
+
+The fault is not the copy, it is offering two near-identical controls where only one of them is live.
+So D12 now also requires:
+
+1. **The explanation goes above the controls**, not in a footer. A footer is read after the thing it
+   qualifies has already been used.
+2. **The header names it as a starting point**, not a "default". *Default* describes where a value
+   comes from and says nothing about whether the thing is armed, which is the only question being
+   asked at that moment.
+3. **The reminders that exist are listed on the same screen** — routine name and schedule, or
+   *"None yet"* — and **each row opens that reminder for editing**. This is the part that answers
+   the question rather than deflecting it, and it is what makes the screen worth visiting at all: it
+   is now the one place that says what is set, and the place you can change it.
+
+**The rows were briefly read-only, and that was wrong.** The reasoning was that every existing door
+into a routine sits behind `proGated(.routine)` (D10's own subject, ADR 0144 D4) while `proGated` is
+a `HomeView` method rather than a shared modifier, so a tappable row would be a new *ungated* door
+into a Pro surface — D10's bug, introduced in Settings first. The premise is right and the conclusion
+did not follow: the row does not have to open the **routine**. `RoutineReminderSheet` opens the
+**reminder**, carries the same `ReminderSection` the routine screen does, and offers no route into
+the routine itself, so nothing Pro is reachable through it.
+
+And there is a second reason it must not be gated, which the read-only version had backwards.
+Schedules live in `UserDefaults`, so **a lapsed subscription does not cancel a reminder**. A player
+whose Pro has ended can still be receiving notifications they set while subscribed, with every door
+to the routine now locked. Gating this sheet would mean a notification the player cannot switch off
+because they stopped paying. **Turning something off is never the gated half** — that is
+user-hostile, and the sort of thing App Review is right to object to.
+
+The controls are shared rather than copied (`ReminderSection`). Two implementations of the same three
+controls would drift, and the half most likely to drift is the footer, which is where every rule
+about what this feature may *say* is enforced (D7).
+
+**No global on switch, still.** The confusion was about which control is live, not a wish to arm
+every routine at once, and nothing here reopens that.
+
 ## Alternatives considered
 
 **Absence-triggered re-engagement** — *"You haven't practised in 3 days."* Rejected outright, and the
@@ -386,6 +461,59 @@ target list), and `docs/design-brief.md` if D7's copy rule graduates into the vo
 
 **`docs/backlog.md:217` is superseded by this file** and should point at it rather than restating it.
 
+**What was learned building it.** Six things the ADR did not predict, kept because the next slice
+will meet them — and two of them only appeared on a device, after a green build, a green test suite
+and a clean lint:
+
+1. **The `Sendable` trap has a third face.** `TrialReminder` documented it for a *stored* centre, and
+   D4 repeated that warning. It bit somewhere else entirely: `AppDelegate` is main-actor isolated by
+   its `UIApplicationDelegate` conformance, while `UNUserNotificationCenterDelegate`'s requirements
+   are not — so implementing them normally makes the *caller* send `UNNotificationResponse` and
+   `UNNotification` across an isolation boundary, and the build fails. Both callbacks are
+   `nonisolated`, and the payload is reduced to a `UUID` before hopping. `PracticeReminder.routineUIDKey`
+   had to become `nonisolated static` for the same reason.
+2. **The reminder is the one control on the routine screen that ignores Cancel/Save.** Everything
+   else there writes into the editing sandbox. A reminder is not a property of the routine — no
+   `@Model` field, per this ADR's header — so making it provisional would mean switching one on,
+   backing out of a screen you were only reading, and silently getting no reminder. It is read-only
+   mode only, where there is no Save to contradict.
+3. **D12's "global default" had to be given a meaning, and the meaning is narrow.** It is the days
+   and time a *new* reminder starts from — nothing more. It never reaches a reminder already set
+   (that would be the app rescheduling an appointment somebody else made), and there is deliberately
+   **no global on switch**, which would arm every routine at once and is the app deciding you should
+   be reminded rather than you asking to be.
+4. **`@Observable` tracks stored properties, and this type had none.** Every read and write went
+   straight to `UserDefaults`, which SwiftUI cannot observe — so a view reading `schedule(for:)` in
+   its body was never invalidated. It compiled, and every unit test passed, while on device the
+   weekday strip did not follow its own toggle and moved only when something unrelated repainted the
+   screen. Schedules are now an in-memory dictionary mirrored to `UserDefaults`, rather than the
+   other way round. The test that catches it asserts *"a view reading this would be told"* via
+   `withObservationTracking`, because every assertion of the form *"the value was stored"* passes
+   against the broken version.
+5. **`nonisolated` on the notification-delegate methods is the fix that compiles and crashes.**
+   `AppDelegate` is main-actor isolated by its `UIApplicationDelegate` conformance while
+   `UNUserNotificationCenterDelegate`'s requirements are not, so a plain implementation fails to
+   build on the non-`Sendable` parameters. Marking the methods `nonisolated` clears that and aborts
+   the app on **every tap** — UIKit finishes handling the response off-main and its snapshot and
+   state-restoration work asserts (`SIGABRT`, device-verified twice). To the player it looks like the
+   notification unlocking the phone to the home screen. `@preconcurrency` on the conformance is the
+   correct tool: it downgrades the sending error to a runtime check and keeps the isolation UIKit
+   relies on. The narrower lesson, which the `TrialReminder` note did not draw: keep non-`Sendable`
+   OS types out of an actor region **when you own the call**, and reach for `@preconcurrency` when
+   the OS owns it and hands you the values.
+6. **Two files hit the 400-line cap** and were split as the house pattern requires:
+   `RoutineDetailView` shed its Start bar to `+Start.swift`, and `HomeView` — already at 395 — shed
+   the recent-routines rail into `HomeView+Routines.swift`, which now also holds the launch sweep and
+   the tap landing. Both belong to Home's routine surfaces, so the file is coherent rather than a
+   dumping ground.
+
+**D7's third custom lint rule was not added,** and that is unchanged rather than forgotten. D7 left
+it as a proposal because, unlike the two rules `.swiftlint.yml` already carries, it has no incident
+behind it — and a regex over English is a worse instrument than a regex over `AnalyticsEvent` cases.
+Nothing in building this produced the incident. The copy is instead pinned where it can be: the
+notification's content is one method with the rule in its doc comment, and `check-manual.py` C7
+already fails the build on the manual page.
+
 **Nothing here is proven by a green simulator run.** A repeating calendar trigger cannot be usefully
 driven from a test — the same wall `TrialReminderPlan` hit, and the reason
 `docs/plans/storekit-sandbox-validation.md:280` records the trial reminder as *not testable in
@@ -393,3 +521,13 @@ sandbox*. `PracticeReminderPlan` carries every assertion; delivery is verified o
 in particular need a device and patience: **D2's absence of a follow-up**, which is verified by
 deliberately missing a reminder and *waiting*, and **D3's orphan sweep**, which is verified by
 scheduling a reminder, deleting its routine, and leaving the app closed until the fire date.
+
+**So this is built and not yet verified, and the difference matters here more than usual.** 29 unit
+tests cover the decisions — which weekdays produce which requests, that an off or dayless or
+impossible schedule produces none, that identifiers are stable and that a foreign one (the trial
+reminder's) is not claimed, that the next fire date rolls forward rather than back, that the sweep
+drops exactly the dead routines — and the whole suite is green (2579 tests). None of that is
+evidence that a notification arrives. **A device pass is owed before this is called done**, and its
+list is the two items above plus: the tap landing on the right routine from a *cold* launch, and D5
+on a device that has actually denied the prompt, which is the only state where the shipped bug was
+visible in the first place.
