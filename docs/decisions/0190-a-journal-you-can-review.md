@@ -146,7 +146,9 @@ finding rather than a simplification:
 `.orphan` for both. So an orphaned note cannot be filtered to *Loop*, because the app genuinely no
 longer knows it was one.
 
-The consequence is stated on the screen, not hidden: an orphan appears only under **All**. Adding an
+The consequence is stated on the screen, not hidden: an orphan appears only under **All** — which,
+since D10 made the facet multi-select, means the *empty* selection specifically: ticking all five
+kinds still excludes it, because it matches none of them. Adding an
 `ownerKindAtEntry` snapshot beside the label would fix it, is additive, and is **not done here** — it
 would only ever help entries written after it shipped, which is not the entries this ADR exists for.
 Logged to `docs/backlog.md` rather than built.
@@ -202,6 +204,59 @@ search that already works (finding 3).
   grades your compliance with a habit *the app asked you for*. ADR 0117 held streaks and goals back
   for a reason and this is the same reason.
 
+### D10 — Show is a **union**, and that moves it out of the menu
+
+*Added 2026-09-04, from device use of the S2 build. It changes D5's control and D7's placement of
+it; the reasoning in both stands.*
+
+**One kind at a time was the wrong shape.** D5 justified the facet on a question a player actually
+asks — *just my session notes* — and shipped a `Picker`, which answers exactly that one and no
+neighbouring one. But *my session and loop notes* is the same question asked by a player who runs
+routines around loop work, and single-select answers it only by making them look twice and hold the
+comparison in their head. The Journal space exists because a note and a take about the same evening
+belong in one place (ADR 0100); a filter that can only ever show one kind reintroduces the split it
+was built to remove.
+
+**The relation is a union, and here that is not a preference.** ADR 0159 settled the general rule —
+*OR within a facet, AND across facets* — after the library's collection filter shipped as an
+intersection and reliably emptied the screen on the second tick. This facet is the sharper case: an
+item has exactly **one** owner kind, so an intersection of two would return nothing *every time*, not
+merely often. AND is not the worse option here; it is not an option.
+
+**There is no `All` value, because empty already means everything.** The selection is a `Set` and the
+unfiltered feed is the empty one. Two representations of one state is a bug waiting for the day they
+disagree, and ADR 0159 §2 already requires the symmetry — clearing a filter must not behave
+differently from never having set one. The sheet's *All* row is a **clear**, checked exactly when
+nothing else is.
+
+**Ticking all five is not the same as ticking none**, and the difference is D6's. An orphan matches
+none of the five offered kinds, so it is hidden by the first and shown by the second. That falls out
+of the union honestly — the five are the kinds the app can still name — and the empty state spells
+out which kinds are ticked, so the omission is legible rather than mysterious.
+
+**And it leaves the menu.** D7 put both filters behind the options glyph, which was right for a
+boolean and for a single choice. Multi-select breaks it on three counts, and the first is fatal:
+
+- **A popup `Menu` dismisses on every tap.** Ticking three kinds would mean opening the menu three
+  times. There is no SwiftUI equivalent of `UIMenuElement.Attributes.keepsMenuPresented`.
+- **A `Menu` has nowhere to put prose**, and a union needs one sentence — *ticking more shows more* —
+  because every other list a player uses narrows on a second tick. This is the standing reason
+  `OptionListSection` and its siblings exist rather than more menu rows.
+- **The submenu never showed its own value.** S2 found that `.pickerStyle(.menu)` draws a bare
+  *Show ›*, leaving the filled glyph and the empty state as the only places the active kind was
+  legible. A row that opens a sheet can say *Show: Loop or Session* on its face.
+
+So **Show** becomes a row that opens a sheet, beside *Jump to…* which is already one for the second
+of those reasons. `MultiOptionListSection` is added next to `OptionListSection` — same section, same
+`OptionRow`, a `Set` instead of one value, and a footer that is required rather than optional.
+*Pinned only* stays a `Toggle` in the menu: it is a boolean, it states itself, and it needs no prose.
+
+**The migration is free.** The stored key held one bare kind (`"session"`), which parses as a
+one-kind selection — the same feed the player left on — and the old `"all"` sentinel is no longer a
+case, so it drops to empty, which is precisely what it meant. Unknown tokens are dropped rather than
+failing the parse, because `@AppStorage` falls back to its default for an *absent* key and not an
+unparseable one, and the unfiltered feed is the only always-safe landing.
+
 ## Slices
 
 - **S1 — the pin. BUILT** (`pocket-295-a-journal-you-can-review`). Two columns, the hold-menu verb on
@@ -214,16 +269,100 @@ search that already works (finding 3).
   left on are three different messages, and only the first is good news. It is now
   `JournalTabView+EmptyState.swift`, which is where D8's rule (*name the thing that emptied it*) is
   written down for whoever adds the fourth.
-- **S2 — the owner filter and persistence.** `JournalTimeline.OwnerFilter`, the menu section, the
-  `@AppStorage` migration of scope / sort / both filters, and the empty-state cases for D6/D8.
-- **S3 — jump to a date.** The date picker and the `ScrollViewReader` scroll.
+- **S2 — the owner filter and persistence. BUILT** (`pocket-296-journal-filters-and-jump`).
+  `JournalTimeline.OwnerFilter`, the menu section, the `@AppStorage` migration of scope / sort / both
+  filters, and the empty-state cases for D6/D8.
+
+  **What D5 and D6 did not ask: what a *take* filters as.** Both decisions are written over
+  `JournalEntryOwnerKind`, and half this feed is takes with an owner enum of their own
+  (`Recording.OwnerKind`). Leaving them out was never really available — the space's premise is one
+  feed (ADR 0100), and *Loop* that showed a loop's notes but not its recordings would mean something
+  different depending on which rows a day happened to hold, which is D2's argument arriving one
+  decision later. So a take is bucketed on the same axis: loop → *Loop*, exercise → *Exercise*.
+
+  That leaves a **song**-owned take, which is not one of D6's five. No screen records one today (a
+  song stage has no recorder, ADR 0179 D6), so it joins the orphans under *All* — but for a different
+  reason, and the code says which: an orphan is unbucketable because the app **no longer knows**; a
+  song take is unbucketable because *Song* was **never offered**. If songs gain a recorder, that is
+  the line to grow a case on.
+
+  Two smaller things the decision did not predict:
+  - **The options menu earned a file**, exactly as S1's empty state did and for the same cap.
+    `JournalTabView+Options.swift` now holds the menu, the filled-glyph rule and (with S3) the jump.
+  - **The empty state has to name *both* filters at once, in the title and in the sentence under it.**
+    D8 says name the filter that emptied the screen; with two of them, naming only the first one hit
+    sends the player to turn that one off and leaves them on a screen still empty for the other
+    reason — the same wrong conclusion D8 exists to prevent, reached one step later. The first build
+    got the title right (*No pinned entries under Metronome*) and the message wrong: it offered the
+    pin's route only. Found by photographing the built screen, not by reading the diff.
+
+  **Two things only a screenshot could have caught**, both in the menu:
+  - **The owner picker had to become `.pickerStyle(.menu)`.** Left inline — as Sort is — a `Picker`
+    in a SwiftUI `Menu` renders its options with **no title at all**, so *Exercise · Loop · Session*
+    sat directly under *Newest first / Oldest first* and read as more sort options. Wrapping them in
+    `Section("Show")` does not help: a `Menu` drops section headers. Sort survives an invisible title
+    because its rows are verbs that say what they do; these six are subjects, and a subject with no
+    question attached is a guess. The submenu costs a tap, is labelled, and shortens the menu.
+  - **A UI-visible label is not a UI-writable instruction.** The empty state told the player to *"Set
+    Show back to All"* while no control on screen said *Show*. Now every word of that sentence is a
+    thing on the menu — and the rule generalises: an instruction may only name what the player can
+    see once they follow it.
+- **S3 — jump to a date. BUILT** (same branch). The date picker and the `ScrollViewReader` scroll.
+
+  **The at-or-before rule needs an escape hatch, and it is to fall forwards.** A day earlier than the
+  whole journal has nothing at or before it; doing nothing there is indistinguishable from a broken
+  control, so the jump lands on the earliest section instead. `JournalTimeline.jumpTarget(for:in:)`
+  holds both halves, pure and tested, and reads the *set* of days — so `newest` and `oldest` jump to
+  the same section rather than to opposite ends of the feed.
+
+  The picker is bounded to the **currently visible** days rather than to every entry's, so it never
+  offers a date the active filters have removed from the list. That bound is also the affordance: the
+  calendar greys every day outside the journal's own span, so the shape of what you have written is
+  visible in the picker without a heatmap being drawn anywhere.
+
+  One layout finding, again from looking: at the `.medium` detent a graphical `DatePicker` takes
+  whatever height it is offered, and the caption beneath it was the thing that gave — squeezed to a
+  single truncated row ending in an ellipsis, losing the half of the sentence that carries the rule.
+  It takes `fixedSize` and a layout priority.
+
+- **S4 — Show becomes multi-select (D10). BUILT** (same branch, after device use of S2/S3).
+  `OwnerSelection`, `MultiOptionListSection`, the sheet, and the empty-state and VoiceOver strings
+  that now name a set of kinds rather than one.
+
+  **S2's own best finding is the thing this supersedes.** S2 recorded that a `Picker` left inline in
+  a `Menu` draws no title at all, and fixed it with `.pickerStyle(.menu)` — a submenu that got the
+  label back at the cost of never showing its own value. That fix was right for a single choice and
+  is simply unavailable for a set: a `Menu` dismisses on every tap. The record is kept rather than
+  rewritten, because the sequence is the useful part — a control that was hard to label in a menu
+  turned out to be a control that did not belong in one.
+
+  Two things that came out cheaper than expected, and one that came out dearer:
+  - **The migration is nothing.** Parsing the stored string tolerantly makes the old single value
+    and the retired `all` sentinel both land correctly, so the key is reused untouched.
+  - **The empty state needed no new branch**, only a different string: it already handled *both
+    filters on at once*, and swapping one label for a joined phrase was the whole change.
+  - **The footer first said "Pick none to see everything", which is not a gesture.** An empty
+    selection is how the *model* says "everything"; a player cannot perform it. The row they can
+    actually tap is **All**, and the corrected line names it — the same correction D8's empty-state
+    copy took when it instructed the player to "set Show back to All" while no control on screen said
+    *Show*. An instruction has to name something that is drawn.
+  - **The prose is now in four places** — the sheet footer, the empty state, the VoiceOver label and
+    the menu row — each saying a different amount of the same thing. That is the cost of a relation
+    the control cannot show by itself, and it is worth paying only because ADR 0159 already proved
+    what happens when a filter states a count and hides the relation.
 
 ## Consequences
 
-- **`JournalTimeline` grows a second filter and stays pure.** `filter(_:ownerKinds:)` and
+- **`JournalTimeline` grows a second filter and stays pure.** `filter(_:owner:)` and
   `filter(_:pinnedOnly:)` join the existing scope and query filters, all four composed in `items`.
   They read only model *properties*, so the tests keep building owners uninserted — the property this
-  file's doc comment exists to protect.
+  file's doc comment exists to protect. (Drafted as `filter(_:ownerKinds:)`, built as
+  `filter(_:owner:)` taking a single `OwnerFilter`, and now taking an `OwnerSelection` — a set —
+  after D10. The draft's plural was right about the shape and a decision early about the reason.)
+- **The owner facet earns its own file, on both sides.** `OwnerFilter` and `OwnerSelection` move to
+  `JournalOwnerFilter.swift`, and their tests to `JournalOwnerFilterTests.swift` — the selection type
+  and the union's edge cases are more than `JournalTimeline` and `JournalReviewTests` had room for
+  under the 400-line cap.
 - **`Scope` and `SortOrder` need `String` raw values** to cross `@AppStorage`. Both gain one; the
   raw strings are their own names, and each default is written **once** as a `static let` that both
   the `@AppStorage` initialiser and the enum read. A duplicated default literal that drifts from its
@@ -240,6 +379,14 @@ search that already works (finding 3).
   the jump, since all three are procedure. `scripts/check-manual.py` C7 already enforces the no-shame
   rule on that text, and D1's *the player pins, the app never does* is the sentence it will be
   checking.
+- **A persisted filter has to be reset under UI testing, and this is the first one.** A simulator
+  keeps its `UserDefaults` between runs, so without `AppSettings.resetJournalFilters()` (called from
+  `PocketApp.init` under `-uiTesting`) a driven run inherits whatever the last one left behind. The
+  manual's shoot is where that bites: `testJournalTakes` sorts before `testJournalTimeline`, so the
+  timeline figure would be shot through the takes filter and come back a clean, plausible photograph
+  of the wrong list — the exact failure the shoot harness exists to prevent, reintroduced by a
+  feature. `shoot-manual.sh` erases the device, which covers *between* runs and not *within* one.
+  **Whoever persists the next screen's filters inherits this obligation.**
 - **A precedent is set for the other list screens, and not retro-applied.** D8's rule — persist only
   what the screen shows is on — answers the backlog's persistence question for the Journal only.
   Exercises, Loops, Routines and Songs keep their transient filters until someone decides for them;

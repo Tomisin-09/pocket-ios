@@ -32,17 +32,33 @@ struct JournalTabView: View {
     @Query private var routines: [Routine]
 
     /// Which medium the feed shows. Not `private`: `private` is file-scoped, and the empty state
-    /// that has to *name* this filter lives in `JournalTabView+EmptyState.swift`.
-    @State var scope: JournalTimeline.Scope = .all
+    /// that has to *name* this filter lives in `JournalTabView+EmptyState.swift` (and the menu that
+    /// sets the other three in `JournalTabView+Options.swift`).
+    ///
+    /// **Persisted, along with the sort and both filters below** (ADR 0190 D8). Every other list
+    /// filter in the app is transient `@State` that resets on each visit; this screen persists
+    /// because it earns it under one rule — *a filter may persist exactly when the screen shows,
+    /// unopened, that it is in force.* The segmented control shows itself; the menu's two filters show
+    /// themselves through the filled options glyph, and the empty state names whichever emptied the
+    /// screen. The literal in each initialiser is what SwiftUI actually uses for an unset key, so
+    /// every one of them reads the enum's own `default` rather than repeating a value.
+    @AppStorage(AppSettings.Key.journalScope) var scope = JournalTimeline.Scope.default
     /// Free-text search over song / loop / exercise / template / date (`JournalTimeline.searchHaystack`).
-    /// Not `private`, for the same reason as `scope`.
+    /// Deliberately **not** persisted: a search is a question you are asking now, and it is the one
+    /// filter with no unopened resting state to show — the field empties itself when you leave.
     @State var query = ""
-    /// Day order — newest-first by default; flip to walk the history forwards.
-    @State private var sortOrder: JournalTimeline.SortOrder = .newest
-    /// Show only what the player has pinned (ADR 0190). Transient `@State` for now — ADR 0190 D8
-    /// persists this and the scope together, and that is S2's work, not S1's. Not `private`, for the
-    /// same reason as `scope`.
-    @State var pinnedOnly = false
+    /// Day order — newest-first by default; flip to walk the history forwards. Not `private`: the
+    /// menu that sets it lives in `JournalTabView+Options.swift`.
+    @AppStorage(AppSettings.Key.journalSortOrder) var sortOrder = JournalTimeline.SortOrder.default
+    /// Show only what the player has pinned (ADR 0190 D4).
+    @AppStorage(AppSettings.Key.journalPinnedOnly) var pinnedOnly = false
+    /// Which **owner kinds** the feed shows — *just my session notes*, or session **and** loop notes
+    /// together (ADR 0190 D5, D10). Empty by default, which means everything; ticking kinds widens.
+    @AppStorage(AppSettings.Key.journalOwnerFilter)
+    var ownerFilter = JournalTimeline.OwnerSelection.default
+    /// Whether the owner-kind sheet is up. A sheet rather than a submenu because the facet is
+    /// multi-select: every tap in a popup `Menu` dismisses it (ADR 0190 D10).
+    @State var choosingKinds = false
     /// The standalone-note composer (ADR 0155 §3).
     @State private var composing = false
     /// Whether the Practice log screen is pushed. Still a flag rather than a `NavigationLink`: the
@@ -72,6 +88,17 @@ struct JournalTabView: View {
     /// The take being named, by stable `uid` — never `persistentModelID` (ADR 0090). Not `private`:
     /// the hold menu that sets it lives in `JournalTabView+Deletion.swift`.
     @State var renaming: StableRef<Recording>?
+    /// Whether the **Jump to…** date picker is up (ADR 0190 D9). Not `private`: the menu item and the
+    /// sheet both live in `JournalTabView+Options.swift`.
+    @State var jumping = false
+    /// The day that picker is sitting on. Seeded from the feed each time the sheet opens, so it
+    /// starts somewhere the journal actually reaches rather than on today by default.
+    @State var jumpDay = Date()
+    /// The day section the list has been asked to scroll to, consumed and cleared by the
+    /// `ScrollViewReader` in `list`. A one-shot signal rather than a stored position: the feed's
+    /// resting state is wherever the player left it, and a persisted scroll target would fight that
+    /// every time a filter changed the sections underneath it.
+    @State var scrollTarget: Date?
 
     /// The scope- then search-filtered feed, minus anything awaiting deletion. Filtering here rather
     /// than at the row is what makes `sections` and the empty state follow automatically.
@@ -79,7 +106,8 @@ struct JournalTabView: View {
         let merged = JournalTimeline.merge(entries: entries, takes: takes)
             .filter { !rowDeletion.isPending($0.id) }
         let scoped = JournalTimeline.filter(merged, scope: scope)
-        let pinned = JournalTimeline.filter(scoped, pinnedOnly: pinnedOnly)
+        let owned = JournalTimeline.filter(scoped, owner: ownerFilter)
+        let pinned = JournalTimeline.filter(owned, pinnedOnly: pinnedOnly)
         return JournalTimeline.filter(pinned, query: query)
     }
 
@@ -121,6 +149,8 @@ struct JournalTabView: View {
             // log its discoverability — ADR 0176 gives it a row on the screen instead, and the menu
             // keeps only Sort, a two-state flip that isn't even persisted and had the weakest claim
             // on a top-level slot all along.
+            // The menu itself is `JournalTabView+Options.swift` — it grew a second filter with ADR
+            // 0190 S2 and took this file past the 400-line cap.
             ToolbarItem(placement: .topBarTrailing) { optionsMenu }
             ToolbarItem(placement: .topBarTrailing) {
                 QuickJournalButton(isPresented: $composing)
@@ -144,6 +174,10 @@ struct JournalTabView: View {
         .sheet(isPresented: $composing) {
             QuickJournalSheet(owner: .standalone)
         }
+        // Jump to a date (ADR 0190 D9) — the sheet and its rule live in `JournalTabView+Options`.
+        .sheet(isPresented: $jumping) { jumpSheet }
+        // The owner-kind facet (ADR 0190 D5, D10), in the same file.
+        .sheet(isPresented: $choosingKinds) { ownerFilterSheet }
         .onDisappear { player.stop() }
     }
 
@@ -194,39 +228,6 @@ struct JournalTabView: View {
         openingOwner = route
     }
 
-    // MARK: - Toolbar
-
-    /// Sort, behind one fixed-width glyph (ADR 0126). The practice log used to share this menu and
-    /// no longer does (ADR 0176) — it is a *destination*, and a destination reached only from a menu
-    /// is a destination most players never find.
-    private var optionsMenu: some View {
-        Menu {
-            Picker("Sort", selection: $sortOrder) {
-                Label("Newest first", systemImage: "arrow.down").tag(JournalTimeline.SortOrder.newest)
-                Label("Oldest first", systemImage: "arrow.up").tag(JournalTimeline.SortOrder.oldest)
-            }
-            Section {
-                Toggle(isOn: $pinnedOnly) {
-                    Label("Pinned only", systemImage: pinnedOnly ? "pin.fill" : "pin")
-                }
-            }
-        } label: {
-            // Filled while a filter is in force — `LibraryOptionsMenu.isFiltered`'s rule, applied to
-            // the one list screen that doesn't use that control. An active filter has to be legible
-            // without opening the menu, and the glyph must not change width on a nav bar (ADR 0126).
-            Image(systemName: isFiltered ? "ellipsis.circle.fill" : "ellipsis.circle")
-        }
-        .accessibilityLabel(optionsLabel)
-    }
-
-    /// Whether the feed is showing something other than everything the scope allows. Sort is not a
-    /// filter and doesn't count: it reorders the same rows.
-    private var isFiltered: Bool { pinnedOnly }
-
-    private var optionsLabel: String {
-        pinnedOnly ? "Journal options, showing pinned only" : "Journal options"
-    }
-
     // MARK: - Scope filter
 
     private var scopePicker: some View {
@@ -243,19 +244,37 @@ struct JournalTabView: View {
 
     // MARK: - List
 
+    /// Wrapped in a `ScrollViewReader` for **Jump to…** (ADR 0190 D9). The `ForEach` is already keyed
+    /// by day, so each section's view id *is* the day and `scrollTo` needs no second identifier —
+    /// which is also why the jump filters nothing: the days either side stay exactly where they are,
+    /// and that is the whole difference between jumping to a date and searching for one.
     private var list: some View {
-        List {
-            ForEach(sections, id: \.day) { section in
-                Section(dayHeader(section.day)) {
-                    ForEach(section.entries) { item in
-                        row(item).listRowBackground(PocketColor.background)
+        ScrollViewReader { proxy in
+            List {
+                ForEach(sections, id: \.day) { section in
+                    Section(dayHeader(section.day)) {
+                        ForEach(section.entries) { item in
+                            row(item).listRowBackground(PocketColor.background)
+                        }
                     }
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            // Cleared as it is consumed, so asking for the same day twice scrolls twice — with the
+            // value left set, the second request would be no change at all and simply not fire.
+            .onChange(of: scrollTarget) { _, day in
+                guard let day else { return }
+                withAnimation { proxy.scrollTo(day, anchor: .top) }
+                scrollTarget = nil
+            }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
     }
+
+    /// The days the feed is currently showing — what a jump can land on, and what bounds its picker.
+    /// Read from `sections` rather than from every entry: you can only jump to a day that is on
+    /// screen, so a picker offering days the filters have removed would be offering a dead end.
+    var visibleDays: [Date] { sections.map(\.day) }
 
     @ViewBuilder private func row(_ item: JournalTimeline.Item) -> some View {
         switch item {

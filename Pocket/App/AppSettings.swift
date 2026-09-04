@@ -91,10 +91,38 @@ enum AppSettings {
         static let hasPracticed = "hasPracticed"
         static let songsInBackup = "songsInBackup"
         static let attachDiagnostics = "attachDiagnostics"
+        /// The Journal feed's four persisted list controls (ADR 0190 D8). Named here rather than
+        /// written inline at the `@AppStorage` — unlike the four library sort keys, these are read
+        /// from a second place (`resetJournalFilters`), and a key spelled twice is a key that
+        /// eventually disagrees with itself.
+        static let journalScope = "journalScope"
+        static let journalSortOrder = "journalSortOrder"
+        static let journalPinnedOnly = "journalPinnedOnly"
+        static let journalOwnerFilter = "journalOwnerFilter"
         #if DEBUG
         /// DEBUG-only A/B for ADR 0140 §3. Never read in Release, which always compensates.
         static let compensateStretchLatency = "compensateStretchLatency"
         #endif
+    }
+
+    /// Clear the Journal's four persisted list controls (ADR 0190 D8).
+    ///
+    /// **Called once at launch under `-uiTesting`, and nowhere else.** These are the first filters in
+    /// the app that survive leaving a screen, and a simulator keeps its `UserDefaults` between runs —
+    /// so without this a test that switches the feed to *Takes* leaves it there for the next test,
+    /// and for the next *run*. The manual's shoot is where that bites hardest: `testJournalTakes`
+    /// sorts before `testJournalTimeline`, so the timeline figure would be shot through the takes
+    /// filter and come back a clean, plausible photograph of the wrong list — with nothing in the run
+    /// to object. (`shoot-manual.sh` erases the device first, which handles it *between* runs and not
+    /// at all *within* one.)
+    ///
+    /// A UI test wanting to exercise the persistence itself writes the keys and asserts on them; what
+    /// it cannot have is an unstated starting point inherited from whatever ran last.
+    static func resetJournalFilters() {
+        for key in [Key.journalScope, Key.journalSortOrder,
+                    Key.journalPinnedOnly, Key.journalOwnerFilter] {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
     }
 
     /// Count-in length is offered as whole bars in this range.

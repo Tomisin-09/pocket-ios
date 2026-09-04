@@ -38,6 +38,12 @@ struct PocketApp: App {
         // the sink does **not** start the SDK — `AptabaseSink` initialises on its first *delivered*
         // event, and the consent gate means that can only happen after an explicit opt-in.
         Analytics.install(AptabaseSink())
+
+        // The Journal's list filters persist (ADR 0190 D8), and a simulator keeps its `UserDefaults`
+        // between runs — so a driven test starts from whatever the last one left behind unless the
+        // state is cleared here. See `AppSettings.resetJournalFilters` for the figure it silently
+        // corrupted.
+        if UITestRuntime.isActive { AppSettings.resetJournalFilters() }
     }
 
     var body: some Scene {

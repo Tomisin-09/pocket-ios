@@ -7,6 +7,10 @@ import Foundation
 /// owner-label logic stays unit-testable without a SwiftData container. It reads only *properties*
 /// of the models (never inserts a graph), so tests can build owners uninserted. The view layer
 /// feeds `merge` → `filter` into `JournalGrouping.byDay` for day-sectioning.
+///
+/// The **owner-kind facet** (`OwnerFilter`, `OwnerSelection` and the filter over them) lives in the
+/// sibling `JournalOwnerFilter.swift` — it grew a multi-select selection type of its own (ADR 0190
+/// D10) and the two together are more than this file has room for.
 enum JournalTimeline {
 
     /// One item on the feed — a written **note** or an audio **take**. Both carry a date and a
@@ -43,16 +47,26 @@ enum JournalTimeline {
         }
     }
 
-    /// Which items the feed shows. `all` is the default; `notes`/`takes` are the escape valve as
-    /// the aggregate grows.
-    enum Scope: CaseIterable {
+    /// Which items the feed shows — the **medium** axis, and the one that stays in content rather
+    /// than moving into the options menu (ADR 0190 D7). `all` is the default; `notes`/`takes` are the
+    /// escape valve as the aggregate grows.
+    ///
+    /// `String`-raw so it crosses `@AppStorage` (ADR 0190 D8). The raw values are the case names, and
+    /// the default is a `static let` both the enum and the view's `@AppStorage` initialiser read — a
+    /// declared literal is what SwiftUI actually uses for an unset key, and a second literal that
+    /// drifts from its accessor is a trap this project has already paid for.
+    enum Scope: String, CaseIterable {
         case all, notes, takes
+
+        static let `default` = Scope.all
     }
 
     /// Display order for the day-grouped feed. `newest` (default) is the reflective default; `oldest`
-    /// walks the history forwards.
-    enum SortOrder: CaseIterable {
+    /// walks the history forwards. `String`-raw and single-sourced for the same reason as `Scope`.
+    enum SortOrder: String, CaseIterable {
         case newest, oldest
+
+        static let `default` = SortOrder.newest
     }
 
     /// Merge notes + takes into one **newest-first** feed.
@@ -80,6 +94,27 @@ enum JournalTimeline {
     /// what the record says.
     static func filter(_ items: [Item], pinnedOnly: Bool) -> [Item] {
         pinnedOnly ? items.filter(\.isPinned) : items
+    }
+
+    /// The day section a **Jump to…** should land on (ADR 0190 D9) — the nearest day **at or
+    /// before** the one chosen, or `nil` when there is nothing to jump to.
+    ///
+    /// At-or-before, because most days have no entry: picking the 14th when you last played on the
+    /// 11th has to land somewhere, and landing *after* the chosen day would scroll past the work the
+    /// player was reaching for. Falling **forwards** is the one exception — a day earlier than the
+    /// whole journal has nothing at or before it, and the earliest section is the only honest answer
+    /// left. Doing nothing there would be indistinguishable from a broken control.
+    ///
+    /// Order-independent by construction: it reads the *set* of days, so it gives the same answer
+    /// under `newest` and `oldest`, and the caller scrolls to the day it names.
+    ///
+    /// `days` are section keys — already start-of-day, from `JournalGrouping.byDay` — and `day` is
+    /// normalised here, since a `DatePicker` hands back an instant partway through one.
+    static func jumpTarget(for day: Date, in days: [Date],
+                           calendar: Calendar = .current) -> Date? {
+        let target = calendar.startOfDay(for: day)
+        let atOrBefore = days.filter { $0 <= target }
+        return atOrBefore.max() ?? days.min()
     }
 
     /// A human **owner label** for an item — the aggregated feed's attribution, since (unlike the
