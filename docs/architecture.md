@@ -1428,9 +1428,9 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   flat screen had grown one section per ADR until `SettingsView` sat at 344 of SwiftLint's 400 lines
   and three files carried "add no row here" warnings — a structure out of room.
 
-## Export (Core/Export, ADRs 0181 and 0188)
+## Export and restore (Core/Export, ADRs 0181 and 0188)
 
-Two file-out paths now, sharing one DTO tree and one encoder. `Settings ▸ Your data ▸ Export` writes everything a
+Two file-out paths and two file-in paths, sharing one DTO tree, one encoder and one version gate. `Settings ▸ Your data ▸ Export` writes everything a
 player has built into one zip and hands it to the system share sheet; the app transmits nothing and
 does not know where the file goes, which is what keeps the published "no audio upload path" claim
 true (ADR 0150 §118-121).
@@ -1534,8 +1534,66 @@ true (ADR 0150 §118-121).
   - **Nothing is written before the player sees what is in the file** (D9):
     `ReceivedRoutinePreviewSheet` names the routine, counts the blocks and drills, shows the
     sender's build and date, and lists what will arrive unresolvable.
-- **Still no archive import.** ADR 0188's S3 is the zip reader and the uid-skip merge; the archive
-  door remains write-only.
+- **And the archive can be read back** (ADR 0188 S3), which closes the loop ADR 0181 named as
+  half-open in its own Consequences. Five pieces, each pure until the last:
+  - **`ZipArchiveReader`** is ours, and D8 argues why: `NSFileCoordinator` gives zipping out and has
+    no read side, Foundation has no public unzip on iOS, and a package would spend the restraint
+    ADR 0120 pins for the same trade 0181 already declined. Stored and deflate entries via
+    `libcompression`'s `COMPRESSION_ZLIB` — Apple's name for raw RFC 1951, which is exactly what a
+    zip entry holds — and encryption, spanning and ZIP64 refused **by name** rather than
+    mis-parsed. Every field read is bounds-checked, because the door parses a file this run did not
+    write and an out-of-range `Data` subscript is a crash the door cannot report. CRC is checked on
+    every entry: a corrupt `practice.json` fails to decode and says so, while a corrupt `.m4a` lands
+    silently and is discovered months later, and a take is the one thing in an archive that cannot
+    be recreated (ADR 0151). Traversal paths are rejected at the reader, because a zip path is an
+    instruction to create a file.
+  - **The export's zip method is now part of the file format.** `ZipArchiveReaderTests` reads
+    archives `ArchiveWriter.write` produced rather than a checked-in fixture, so the day
+    `.forUploading` changes — or is replaced — is the day a test fails. That is D8's requirement
+    stated as a test rather than as a comment.
+  - **`ArchiveRestoreReader`** gates the version through the same `SchemaVersionGate` both doors
+    share, and probes `schemaVersion` with a one-field `Decodable` **before** decoding the payload:
+    an archive from the future decodes perfectly well, because the fields it shares with this build
+    are the fields this build wrote, and decoding it anyway would drop whatever is new in it.
+  - **`RestorePlan`** is the skip rule, pure over plain values (D1): keyed on `uid`, and on
+    `sourceID` for `Song`, which has none. It counts what lands *and* what is already present, and
+    it is the same value the writer consumes — so the preview is a promise rather than a second
+    opinion. Skipping a key that already exists is what makes a restore idempotent (D6).
+  - **`ArchiveRestoreWriter`** mirrors `ReceivedRoutineBuilder` and inverts it field by field, which
+    is D1's asymmetry rather than an inconsistency: uids are **preserved**, because journal entries
+    and takes point at a loop by uid and a minted one would restore a library in which nothing
+    written about a loop still found it; mastery, `commandTempo`, `lastPracticed`, `isFavorite` and
+    `presetSlug` all come back, because a receive drops a stranger's achievement (D5, ADR 0070) and
+    a backup that reset the player's own would be worse than none; block `order` is kept rather than
+    renumbered, because an archive that could not reproduce the library it was taken from is not a
+    backup. Same raw-enum discipline as S2, plus **a fifth site hidden behind a struct**: `Song.init`
+    writes `ref.source.rawValue` and `SongRef.Source` resolves an unknown to `.localFile`, so
+    `sourceRaw` is assigned after the initialiser. Links resolve against both what is landing and
+    what the library already held, so a routine points at an exercise you still have.
+  - **The door reads its own copy.** `.fileImporter` hands back a URL behind a security scope that
+    lasts only for the call, and `ZipArchiveReader` memory-maps what it opens — while the restore
+    reads take audio out of that map *after* the player confirms. So `inspect` copies the zip into
+    `tmp/` under the scope, everything downstream reads the copy, and it is deleted whichever way the
+    sheet ends (a restore in flight discards its own, because the write is still reading it). Reading
+    and the file write are both detached; only the plan and the insert are on the main actor, which is
+    ADR 0181's export split run in the other direction.
+  - **`RestoreCoordinator` is ordered by D7**: build the rows, insert, **save**, and only then write
+    files out of the zip. ADR 0182's `OrphanSweep` builds its referenced set from every row in the
+    store, so a take written before its row exists is an orphan by the sweep's own definition, and
+    *Reclaim space* is a button the player can press while a restore is running. `ArchiveRestoreFiles`
+    never overwrites a file already on disk: a leaf is `<uid>.<ext>`, so a name already there is that
+    row's own audio, and overwriting truncates the real file first.
+  - **The door is the picker only**, in `RestoreSection` under Export on the same screen. A
+    `.redmoonpractice` file is a type this app owns and declares (D3); an archive is a plain zip, and
+    declaring the app a handler for every zip would put Red Moon in the Open-with list for a folder of
+    holiday photos — the over-broad capability AGENTS.md forbids and D3 spends its length defending
+    against.
+- **Two things S3 corrected in ADR 0188**, both written back into it. **D7's attachment leaf-name
+  rewrite is the receive door's problem, not the restore door's**: it assumes a minted uid, and a
+  preserved one cannot collide on name without colliding on uid, which the owner's skip has already
+  handled. And **song audio was never in an archive** — an archive carries take audio and reference
+  pictures, not song files (`SongRecord.audioFileName`) — so every restored song needs relinking
+  (ADR 0152), and `RestorePlan.songsNeedingRelink` exists so the preview says so beforehand.
 
 ## Storage (Core/Storage, ADR 0182)
 

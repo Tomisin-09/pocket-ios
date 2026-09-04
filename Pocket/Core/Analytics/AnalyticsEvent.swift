@@ -69,6 +69,26 @@ enum AnalyticsEvent: Equatable {
     /// to carry those blocks as named placeholders rather than drop them.
     case routineReceived(items: Int, orphanedBlocks: Int)
 
+    // MARK: - The archive
+
+    /// A copy of the library was written out (ADR 0181). `includesTakeAudio` is the one switch the
+    /// export offers, and 0181 argued its default from first principles with no evidence either way;
+    /// this is the evidence.
+    case archiveExported(includesTakeAudio: Bool, takes: Int)
+
+    /// An archive was read back in (ADR 0188 S3).
+    ///
+    /// **Not `restoreCompleted`** — that name is taken, and by a different thing: a StoreKit purchase
+    /// restore. Two events called "restore" on one dashboard would be a reporting bug nobody would
+    /// notice until they were being read as one number.
+    ///
+    /// `alreadyPresent` is the number worth watching, the way `orphanedBlocks` is for a received
+    /// routine. It separates the two cases D6 reasoned about with no evidence: a restore into an
+    /// empty library (real recovery, on a new phone) counts zero, while a restore into a populated
+    /// one counts what the skip rule left alone. If that number is always zero, merge-only was free;
+    /// if it rarely is, players are using this as a merge and the no-replace decision is load-bearing.
+    case archiveRestored(itemsAdded: Int, alreadyPresent: Int, takeFiles: Int)
+
     // MARK: - Monetization
 
     /// A Pro gate presented the paywall. The trigger names *which* surface was locked — the single
@@ -107,6 +127,8 @@ extension AnalyticsEvent {
         case .exerciseAuthoringAbandoned: return "exercise_authoring_abandoned"
         case .routineCreated: return "routine_created"
         case .routineReceived: return "routine_received"
+        case .archiveExported: return "archive_exported"
+        case .archiveRestored: return "archive_restored"
         case .paywallShown: return "paywall_shown"
         case .paywallDismissed: return "paywall_dismissed"
         case .purchaseCompleted: return "purchase_completed"
@@ -152,6 +174,15 @@ extension AnalyticsEvent {
         case let .routineReceived(items, orphanedBlocks):
             return ["items": .number(items),
                     "orphaned_blocks": .number(orphanedBlocks)]
+
+        case let .archiveExported(includesTakeAudio, takes):
+            return ["includes_take_audio": .flag(includesTakeAudio),
+                    "takes": .number(takes)]
+
+        case let .archiveRestored(itemsAdded, alreadyPresent, takeFiles):
+            return ["items_added": .number(itemsAdded),
+                    "already_present": .number(alreadyPresent),
+                    "take_files": .number(takeFiles)]
 
         // Two axes, not one composite string: `trigger` stays the coarse six-way "which capability
         // was locked" and `detail` narrows it to the template or routine action, so the dashboard

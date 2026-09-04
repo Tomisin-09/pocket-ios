@@ -1,9 +1,11 @@
 # ADR 0188 — a copy you can read back, and a routine you can hand over
 
-- **Status:** Accepted — **S1 and S2 built** (both 2026-09-03), S3 not started. Three slices (S1–S3),
-  each independently shippable. **S1 and S2 are additive-only and touch no existing row**; the
-  archive door in S3 is the one that reads a file the app did not write in this installation, and it
-  is deliberately last.
+- **Status:** Accepted — **all three slices built** (S1 and S2 2026-09-03, S3 2026-09-03
+  `pocket-295-restore-an-archive`). Three slices (S1–S3), each independently shippable. **S1 and S2
+  are additive-only and touch no existing row**; the archive door in S3 is the one that reads a file
+  the app did not write in this installation, and it was deliberately last. **S3 corrected two things
+  in the text below — D7's attachment rewrite and an unstated fact about song audio — and both
+  corrections are recorded in its slice note rather than edited silently into the decisions.**
 - **Date:** 2026-09-03 (`pocket-293-import-both-doors`)
 - **Relates to:** ADR 0181 (the export this closes the loop on — **amends its
   `CFBundleDocumentTypes` alternative, see D3**), ADR 0182 (the orphan sweep this must not trip,
@@ -291,8 +293,98 @@ the only reason the whole door is unit-testable (inserting a graph in the XCTest
 three places rather than the one this ADR's Consequences named. All three are still true after S2 —
 they are about the archive — and all three are now listed there so S3 cannot fix one of three.
 
-**S3 — restore an archive.** The zip reader, the uid-skip merge, the attachment rewrite. Closes *An
-importer to close the export loop*. Largest, last, and the only slice that reads a zip.
+**S3 — restore an archive. Built 2026-09-03** (`pocket-295-restore-an-archive`). The zip reader, the
+uid-skip merge, `Settings ▸ Your data ▸ Restore`. Closes *An importer to close the export loop*.
+Largest, last, and the only slice that reads a zip.
+
+**Two corrections this slice made to the decisions above, both worth reading:**
+
+- **D7's attachment leaf-name rewrite belongs to the receive door, and does not happen here.** D7
+  reasons that "a new uid means `attachmentFileName` is rewritten as the row is made" — and that is
+  right *given a new uid*, which is what the **receive** door mints (D1). A restore preserves uids.
+  So the leaf stays `<uid>.<ext>`, and a name that collided would mean a uid that collided, which the
+  owner's skip has already handled by not building the row at all. Nothing was written to perform a
+  rewrite, because performing one would have been the bug. **D7's other half applies in full and is
+  what `RestoreCoordinator` is ordered around**: build, insert, save, *then* write files, because
+  ADR 0182's sweep defines an orphan as a file with no row and *Reclaim space* is a button the player
+  can press while a restore is running. Saving between the two closes that window rather than
+  narrowing it. Note that the rewrite becomes real the day a *share* carries references — which D4
+  leaves undecided — so D7 is not wrong, it is early.
+- **Song audio was never in an archive, and this ADR never said so.** `SongRecord.audioFileName`
+  names a file the export deliberately does not carry: the player's own imported media, which they
+  still have, and which would multiply the size of a file whose point is the writing. The
+  consequence for a restore is concrete and had to be surfaced rather than discovered — **every**
+  restored song arrives with its loops, markers, tempo grid and notes and **no audio**, needing a
+  relink (ADR 0152). `RestorePlan.songsNeedingRelink` exists so the preview says it beforehand.
+
+**Four more things this slice settled that the text above did not:**
+
+- **The archive door is the picker only, and that is D3's rule applied rather than an omission.** A
+  `.redmoonpractice` file is a type this app owns and declares; an archive is a plain `.zip`.
+  Declaring the app a handler for every zip on the phone would put Red Moon in the Open-with list for
+  a folder of holiday photos — exactly the over-broad capability AGENTS.md forbids and that D3 spends
+  its length arguing this ADR does *not* do. So restoring is something the player comes to
+  `Settings ▸ Your data` to do, which is also the right weight for an operation that touches the whole
+  library.
+- **The raw-enum trap has a fifth site, and it is hidden behind a struct.** S2 named four columns
+  whose typed getters resolve with `?? default`. `Song` has no such setter — it has something worse:
+  `Song.init` takes a `SongRef` and writes `ref.source.rawValue`, and `SongRef.Source` resolves an
+  unknown raw value to `.localFile`. So a source this build does not recognise is normalised *by the
+  initialiser*, not by a setter, and `sourceRaw` has to be assigned afterwards like every other raw
+  column.
+- **The version is probed before the payload is decoded**, with a one-field `Decodable`. Decoding
+  the whole archive and checking `schemaVersion` afterwards reads naturally and is wrong: an archive
+  from the future decodes perfectly well — the fields it shares with this build are the fields this
+  build wrote — so by the time the check ran, everything new in the file would already have been
+  dropped.
+- **The keys are read twice: once for the preview, once at the write.** The player can add or delete
+  rows between seeing the summary and confirming it, and a key set carried over from the preview
+  would duplicate a row that now exists or skip one that no longer does. The plan governs what the
+  player was *told*; the store governs what is *written*, and D1's skip is what makes the two safe to
+  differ.
+
+**The door reads its own copy of the archive, not the file the player chose.** `.fileImporter` hands
+back a URL behind a security scope that lasts for the call, and `ZipArchiveReader` memory-maps what it
+opens — while a restore reads take audio out of that map *after* the player has confirmed, by which
+time the scope is closed. So `inspect` copies the zip into `tmp/` under the scope and everything
+downstream reads the copy, which is deleted whichever way the sheet ends. S2 does the equivalent by
+reading a whole `.redmoonpractice` into memory inside the scope; an archive is as large as the library
+it came from, so here it is a file rather than a `Data`. This also settles a question the sheet would
+otherwise have had: **a restore writes the archive the player was shown**, not whatever is at that
+path by the time they say yes.
+
+**And the split is the same one ADR 0181 made, in the other direction.** Export reads the store on the
+main actor and does the encoding, staging and zipping off it. A restore inverts that: the copy and the
+inflate are detached, the plan and the insert are on the actor because they touch the store, and the
+file write is detached again *after* the save — which keeps D7's ordering while stopping a library of
+recordings from hanging the UI.
+
+**Restore is deliberately not Pro-gated, and S2's receive door deliberately is.** That looks
+inconsistent and is not:
+
+- **Export is not gated** (`ExportSection` touches neither `isPro` nor `presentPaywall`), and gating
+  the way back in when the way out is free would mean a lapsed subscriber could take their library
+  out and not put it back — at the one moment a backup exists for.
+- **Every entitlement gate in this app is at *read*, computed live from `isPro`** (ADR 0112, kept by
+  ADR 0144 D3, enforced through `AccessPolicy`). A restored exercise is locked or unlocked by exactly
+  the rule that governs one the player made, so a restore grants no access it did not already grant.
+  There is nothing here to bypass.
+- **Receiving is authoring; restoring is recovery.** S2 gated `receive` because it mints a new
+  routine out of somebody else's file — new material, which is what Pro buys. A restore adds nothing
+  the player did not already have; it puts back what they exported.
+
+**And no analytics event.** ADR 0181's export emits none, and a restore emitting one would make the
+inbound half of the loop measured and the outbound half not, for a pair of operations a player thinks
+of as one thing. If the question *"do people ever restore?"* becomes worth answering, both ends
+should be instrumented in the same change (ADR 0120's rule: no free `String` in an event).
+
+**And one thing S3 could not settle: the schema freeze — now ADR 0189.** The Consequences below argue
+this ADR makes ending it possible. Writing 0189 found that argument **stronger than the code
+supports**, and the correction belongs here as much as there: a failed migration traps in
+`.modelContainer(for:)`, so the app does not launch and this door is unreachable at precisely the
+moment it exists for. The recovery is delete-and-reinstall, then restore into the empty library — D6's
+two deliberate steps, arrived at from the other direction. That is a real improvement on "the library
+is gone", and it is not "recoverable". 0189 replaces the freeze with criteria rather than lifting it.
 
 ## Alternatives considered
 
@@ -336,6 +428,13 @@ resolving against exercises *it seeded itself* in the same pass, which is a diff
 
   Fixing one of three is the likely failure, so S3 must change all three in the same PR. Nothing
   enforces this: `scripts/check-manual.py` has no rule naming these sentences.
+
+  **Done 2026-09-03, all three in S3's PR.** The manual pages now point at
+  `Settings ▸ Your data ▸ Restore`; `reference/settings.md` gained a *Restore* subsection describing
+  the control, what it adds, and the two things it cannot bring back. The in-app footer says *"Restore,
+  below, reads one back in"*. Still nothing enforces it — a fourth copy of the claim written tomorrow
+  would go unnoticed the same way, and the honest guard would be a `check-manual.py` rule that names
+  these sentences rather than a note in an ADR.
 - **Every future `@Model` field is now an import decision as well as an export one.** 0181's
   Consequences noted a field added without a DTO field silently stops being exported; it will now
   also silently fail to restore. The mapping tests remain the only guard.

@@ -9,8 +9,16 @@ import XCTest
 /// that change loud rather than silent.
 ///
 /// `AnalyticsEvent` has associated values so it cannot be `CaseIterable`; `everyEvent` stands in for
-/// exhaustiveness, and `testVocabularyIsComplete` fails when an event is added without being pinned
-/// here — which is the point. Adding an event must be a deliberate act.
+/// exhaustiveness. **Read that limitation exactly**: `everyEvent` is hand-maintained, so
+/// `testVocabularyIsComplete` compares the list against a number *also* written here. It catches a
+/// case being **removed** from the list, and it cannot catch a case being **added to the enum** and
+/// never listed — nothing here reads the enum.
+///
+/// That is not hypothetical. `routine_received` shipped with ADR 0188 S2 and sat unpinned until S3
+/// added two more events and someone counted: the enum had 16 cases and this file knew about 13. The
+/// three assertions below were all green the whole time, on a vocabulary that was a quarter wrong.
+/// If this happens a third time, the fix is to move the sample list next to the enum it samples, so
+/// that adding a case and forgetting the sample are not two edits in two targets.
 final class AnalyticsEventTests: XCTestCase {
 
     /// One of every case in the vocabulary.
@@ -23,6 +31,9 @@ final class AnalyticsEventTests: XCTestCase {
         .exerciseCreated(template: .scales, instrument: .guitar),
         .exerciseAuthoringAbandoned(template: .chords),
         .routineCreated(items: 5, generated: false),
+        .routineReceived(items: 4, orphanedBlocks: 1),
+        .archiveExported(includesTakeAudio: true, takes: 12),
+        .archiveRestored(itemsAdded: 40, alreadyPresent: 8, takeFiles: 12),
         .paywallShown(trigger: .newExercise(.scales)),
         .paywallDismissed(trigger: .routine(.play), purchased: true),
         .purchaseCompleted(product: .annual, trial: true),
@@ -33,7 +44,7 @@ final class AnalyticsEventTests: XCTestCase {
     // MARK: - Wire format
 
     func testVocabularyIsComplete() {
-        XCTAssertEqual(everyEvent.count, 13,
+        XCTAssertEqual(everyEvent.count, 16,
                        "The vocabulary changed. Pin the new event's name and payload here, and "
                        + "check it against the 20k/month free tier before shipping it.")
     }
@@ -48,6 +59,9 @@ final class AnalyticsEventTests: XCTestCase {
                         "exercise_created",
                         "exercise_authoring_abandoned",
                         "routine_created",
+                        "routine_received",
+                        "archive_exported",
+                        "archive_restored",
                         "paywall_shown",
                         "paywall_dismissed",
                         "purchase_completed",
@@ -73,6 +87,9 @@ final class AnalyticsEventTests: XCTestCase {
             ["instrument", "template"],
             ["template"],
             ["generated", "items"],
+            ["items", "orphaned_blocks"],
+            ["includes_take_audio", "takes"],
+            ["already_present", "items_added", "take_files"],
             ["detail", "trigger"],
             ["detail", "purchased", "trigger"],
             ["product", "trial"],
