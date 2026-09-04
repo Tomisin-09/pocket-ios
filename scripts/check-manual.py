@@ -998,6 +998,97 @@ def check_c14():
                 % len(shoot)]
 
 
+# --- C15: a claim stated in more than one place -----------------------------
+
+CLAIMS = [
+    {
+        "name": "the archive can be read back in",
+        "owner": "ADR 0188 S3",
+        # Every place that states this fact. Adding a fourth home means adding it here, which is
+        # the point: the register is the lookup you consult when the product changes.
+        "sites": [
+            os.path.join(MANUAL, "privacy.md"),
+            os.path.join(MANUAL, "reference", "settings.md"),
+            os.path.join(SOURCE, "Features", "Settings", "ExportSection.swift"),
+        ],
+        "states": re.compile(r"\bRestore\b"),
+        "retired": re.compile(
+            r"(cannot|can\s?not|can['\u2019]?t)\s+read\s+(an\s+archive|one)\s+back",
+            re.IGNORECASE),
+    },
+]
+
+
+def swept_text():
+    """Every place a *player* meets the app's words: the manual's prose, and the app's literals.
+
+    **Swift sources arrive comment-stripped, and that is C8 and C9's precedent rather than a
+    concession.** Their reasoning — "a doc comment explaining *why* a row uses
+    `onLongPressGesture` is not a tenth place the app wires up a hold" — is exactly this case: a
+    doc comment quoting a sentence the copy used to carry is not another place the app says it.
+    `ExportSection.swift` does precisely that, deliberately, to record why its footer changed. A
+    check that forbade the note would be a check against explaining your own edits.
+
+    Line numbers stay usable because `strip_comments` preserves newlines.
+    """
+    for path in prose_pages():
+        yield path, read(path)
+    for path in source_files():
+        yield path, strip_comments(read(path))
+
+
+def check_c15():
+    """A fact the product states in several places changes in all of them at once.
+
+    **This check exists because of a specific near-miss**, and the shape is worth stating.
+    ADR 0181 shipped export and wrote "Red Moon cannot read an archive back in" in what
+    everyone believed was one place. It was three: `docs/manual/privacy.md`,
+    `docs/manual/reference/settings.md`, and — the one no docs checklist covers, because it
+    is not a doc — the in-app footer in `ExportSection.swift`. When ADR 0188 S3 shipped
+    restore, all three became false on the same day, and fixing one of three was the likely
+    failure. 0188's Consequences said so and could only ask a human to remember.
+
+    Two halves, and they fail for different reasons:
+
+    - **Every site still states the claim.** Catches a site being reverted, rewritten past
+      the fact, or moved without the register following it.
+    - **The retired wording appears nowhere** in the manual or the app. Catches the real
+      failure mode, which is not a revert — it is a *fourth* copy being born somewhere new,
+      months later, by someone repeating a sentence they half-remember.
+
+    `docs/decisions/` is deliberately out of scope for the sweep. An ADR is a record of what
+    was decided *and of what a claim used to say*; ADR 0188 quotes the retired sentence four
+    times on purpose, and a check that forbade that would be a check against keeping history.
+    Engineering prose (`docs/architecture.md`, the backlog) is out for the same reason. The
+    remit here is what a *player* reads: the manual, and the app.
+    """
+    problems = []
+
+    for claim in CLAIMS:
+        for site in claim["sites"]:
+            if not os.path.exists(site):
+                problems.append("%s: site for %r no longer exists — the register in "
+                                "check-manual.py needs updating" % (relative(site), claim["name"]))
+                continue
+            if not claim["states"].search(read(site)):
+                problems.append("%s no longer states %r (%s) — either it drifted, or the "
+                                "register is stale" % (relative(site), claim["name"], claim["owner"]))
+
+        for path, text in swept_text():
+            for number, line in enumerate(text.splitlines(), start=1):
+                hit = claim["retired"].search(line)
+                if hit:
+                    problems.append("%s:%d revives retired wording %r — %r is the current "
+                                    "fact (%s)" % (relative(path), number, hit.group(0),
+                                                   claim["name"], claim["owner"]))
+
+    if problems:
+        return FAIL, problems
+    sites = sum(len(claim["sites"]) for claim in CLAIMS)
+    return OK, ["%d claim%s held across %d site%s" % (len(CLAIMS), "" if len(CLAIMS) == 1 else "s",
+                                                      sites, "" if sites == 1 else "s")]
+
+
 CHECKS = [
     ("C1", "Settings destinations are named in the reference", check_c1),
     ("C2", "Toolkit sections are named in toolkit.md", check_c2),
@@ -1012,6 +1103,7 @@ CHECKS = [
     ("C12", "shots.md matches the markers", check_c12),
     ("C13", "markers and the shoot harness name the same shots", check_c13),
     ("C14", "shoot classes are driven by the shoot, not by CI", check_c14),
+    ("C15", "multi-site claims stay in step", check_c15),
     ("C8", "count tripwires still match the source", check_c8),
 ]
 
