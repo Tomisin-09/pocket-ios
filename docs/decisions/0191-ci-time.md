@@ -1,6 +1,6 @@
 # ADR 0191 — what CI's twenty minutes is actually spent on
 
-- **Status:** Accepted — **D1 measured and REJECTED**, D2 and D3 adopted (branch `pocket-297-ci-time`)
+- **Status:** Accepted — **D1 and D3 measured and REJECTED**; only D2 ships (branch `pocket-297-ci-time`)
 - **Date:** 2026-09-04
 - **Relates to:** ADR 0146 (test-suite reliability — the retry allowance and the simulator pre-boot
   this builds on) · ADR 0133 (never `paths-ignore` on `ci.yml`; the `scope` job is the sanctioned way
@@ -97,7 +97,7 @@ is one place to turn it back on. That trap is worth naming, because `shoot-manua
 instrumentation is decided **when the binary is built**, so a flag passed only to
 `test-without-building` skips gathering the data while still paying for it.
 
-### D3 — run UI tests in parallel on cloned simulators
+### D3 — run UI tests in parallel on cloned simulators — **TRIED, MEASURED, REVERTED**
 
 `-parallel-testing-enabled YES -maximum-parallel-testing-workers 2`. Each worker gets its own cloned
 simulator, which also **helps** the hazard this project has already been bitten by: a simulator keeps
@@ -105,6 +105,11 @@ its `UserDefaults` between runs, so tests that share one inherit each other's st
 
 Two workers, not more. The runner has limited cores, and contention is how a parallel suite converts
 a time saving into a flake — which ADR 0146 spent two passes buying back.
+
+**Reverted.** It failed on time and, far more seriously, it blinded ADR 0146's flake guard. See *The
+parallel run went green and could not prove it*, below. The reasoning above is kept as written,
+because it was not obviously wrong — it was wrong for a reason nobody would have predicted from the
+flag's description.
 
 ## Rejected
 
@@ -151,6 +156,37 @@ does not work here. Anyone reaching for it again should have to argue past this 
 **What it did establish**, and this is the number the next lever needs: a cold compile on this
 project is **~413s**, consistently, across two runs on different boxes.
 
+## The parallel run went green and could not prove it
+
+**D3 is reverted, for two reasons, and the second is the one that matters.**
+
+**It was slower.** The test phase roughly doubled:
+
+| Run | build | tests |
+|---|---|---|
+| run 1 (serial) | 413s | 312s |
+| run 2 (serial) | 414s | 411s |
+| **run 3 (parallel, 2 workers)** | 549s | **792s** |
+
+Two simulators contending for a limited-core runner make every UI test slower, and each clone pays
+its own boot — the cost this ADR predicted it was adding back, at a size it did not predict. The
+regression is far outside the ±100s noise band, which is what made a one-sided test worth running.
+
+**And it silently disabled the flake detector.** `scripts/report-test-retries.sh` reported:
+
+> `##[warning]No 'Test Case' lines found in 'xcodebuild-raw.log' — the run probably died before the
+> tests started. This is NOT a clean suite; check the build step.`
+
+Parallel testing changes `xcodebuild`'s output format. The per-test `Test Case '-[…]' passed` lines
+the script parses are not emitted the same way, so the guard that exists precisely because **a green
+run with retries is not a clean run** (ADR 0146) could see nothing at all — while the job reported
+success.
+
+That is the exact failure this project has a script to prevent, arriving through a flag that has
+nothing to do with retries. **A check that silently stops checking is worse than a slow one**, and it
+would have shipped as a speed improvement. If parallel testing is ever revisited, the retry reporter
+has to be taught the parallel output format *first*, as a precondition rather than a follow-up.
+
 ## The measurement did not survive contact with the runners
 
 **A single run cannot measure a two-minute change on `macos-15`, and the first run proved it.**
@@ -182,11 +218,15 @@ So the levers are held to different standards, deliberately:
 - **D1 was taken on measurement** — the only one large enough to clear the noise floor, and the only
   one measurable *cleanly*. It failed that test and was reverted. The method worked: it cost two runs
   and it stopped a plausible, well-reasoned, useless change from landing.
-- **D2 and D3 are taken on reasoning plus a green run, and were NOT individually measured.** Saying so
-  is the point: claiming a measured saving that cannot be distinguished from runner variance would be
-  worse than claiming nothing. What a green run *does* give is a **one-sided test** — it cannot prove
-  a small win, but it would expose a large regression, which is the failure mode worth guarding
-  against for both.
+- **D2 and D3 were taken on reasoning plus a green run, and were NOT individually measured.** Saying
+  so is the point: claiming a measured saving that cannot be distinguished from runner variance would
+  be worse than claiming nothing. What a green run *does* give is a **one-sided test** — it cannot
+  prove a small win, but it would expose a large regression.
+
+  **That one-sided test earned its keep immediately.** It caught D3's doubled test phase, and the
+  green-but-unverifiable run underneath it. Two of the three changes in this ADR were killed by
+  their own measurements; the discipline is the deliverable here, more than the
+one surviving line of JSON.
 
 D2 needs the least defending of the three anyway, and not because of timing: **`PocketAll` was the
 only plan with coverage on.** `PocketLogic` and `PocketShoot` are both already `false`. The question
@@ -200,10 +240,12 @@ consistency fix that happens to save time.
 - **Coverage is off everywhere now.** If a coverage number is ever wanted, the switch is
   `PocketAll.xctestplan`, and it must be turned on *there* rather than by a flag on a test step —
   instrumentation is decided when the binary is built (`shoot-manual.sh` learned this the hard way).
-- **UI tests now run on cloned simulators**, which is worth remembering the next time one flakes: a
-  clone does not inherit the pre-booted destination ADR 0146 arranged, and two tests that pass alone
-  may now overlap. If flakes return, `-maximum-parallel-testing-workers 1` is the first thing to try
-  and the cheapest way to tell whether parallelism is the cause.
+- **UI tests still run serially, on one pre-booted simulator.** Parallelism was tried and reverted;
+  do not reach for it again without first teaching `report-test-retries.sh` the parallel output
+  format, or the flake guard goes blind exactly when the suite gets more concurrent.
+- **`report-test-retries.sh` is load-bearing and fragile.** It parses `Test Case` lines out of the
+  raw log, so anything that changes `xcodebuild`'s output shape disarms it. It failed loudly here,
+  which is the only reason this was caught — that warning is worth keeping loud.
 - **The next lever is sharding, and it now has a number to beat: ~413s of compile.** Sharding pays
   only if the build is done *once* and the products are handed to test jobs — `build-for-testing` →
   artifact → `test-without-building`. Note what D1 proved about that plan, because it cuts both ways:
@@ -212,5 +254,7 @@ consistency fix that happens to save time.
   anything, or it inherits the same mtime problem.
 - **Do not trust a single CI run to measure anything under ~100s.** UI-test time alone swings 35% on
   identical code. Anything smaller needs medians over several runs, or an argument instead.
+- **What actually shipped is one line of JSON.** `PocketAll.xctestplan` stops gathering coverage
+  nobody reads. Whether that is worth measurable time is unknown and unclaimed.
 - **Nothing was traded away from the required check.** `lint-build-test` still lints, still builds
   Swift-6-strict, and still runs the whole `PocketAll` plan including every UI test.

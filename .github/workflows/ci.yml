@@ -117,24 +117,7 @@ jobs:
           # enough for a lost runner or a genuinely unlucky box, not enough for a test to
           # flake twice and still come out green. Removing it entirely is the endpoint;
           # that wants a stretch of retry-free runs behind it first.
-          # `-parallel-testing-enabled` distributes test **classes** (not methods) across cloned
-          # simulators. There are seven UI classes and the two long poles — RoutineLibraryUITests
-          # (~89s) and ExerciseInstrumentUITests (~92s) — are the ones worth landing on different
-          # workers.
-          #
-          # **The tension with ADR 0146, stated rather than discovered later:** that ADR pre-boots the
-          # destination so boot and SpringBoard settling sit outside the timed window. A clone does
-          # not inherit that — each worker boots its own, which is new cost this flag adds back. Two
-          # workers is the balance: enough to halve the 282s of UI tests, few enough that the added
-          # boots and the CPU contention do not eat the saving. Contention is also how a parallel
-          # suite turns a time saving into a flake, which 0146 spent two passes buying back.
-          #
-          # Not individually measured — runner variance on macos-15 is wider than the effect (ADR
-          # 0191). A green run cannot prove a small win, but it can rule out a large regression,
-          # which is the one-sided test this is kept on.
           xcodebuild test \
-            -parallel-testing-enabled YES \
-            -maximum-parallel-testing-workers 2 \
             -scheme Pocket \
             -testPlan PocketAll \
             -destination "id=$UDID" \
