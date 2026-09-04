@@ -169,6 +169,22 @@ A take with a note, a moment, or both gets the small marker on its row.
 
 **Trim** stays dim until you actually move a handle: keeping the whole take is not a trim.
 
+## Keeping something to hand
+
+After a year the two entries that changed how you play are somewhere under a few hundred ordinary
+ones. **Pin** them.
+
+Hold any row — a note or a take — and choose **Pin**. A pinned row carries a small gold pin beside
+its time, and **⋯ ▸ Pinned only** narrows the feed to what you have pinned. Hold and choose **Unpin**
+to take the mark off.
+
+Pinning is yours alone. Red Moon never pins anything for you, and never decides which of your
+practice was worth keeping — a breakthrough is pinned because you pinned it, not because the app
+formed a view about it.
+
+A pin **filters** the feed; it never reorders it. Pinned entries stay in the days they happened in,
+because the day is part of what the entry says.
+
 ## Finding something again
 
 - The **All · Notes · Takes** control at the top narrows the feed to one or the other.
@@ -176,6 +192,8 @@ A take with a note, a moment, or both gets the small marker on its row.
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you
   read forwards through a stretch of work rather than backwards.
+- **⋯ ▸ Pinned only** shows just what you have pinned. While it is on, the **⋯** is filled in, so
+  you can tell the feed is narrowed without opening the menu.
 - Days are grouped under **Today**, **Yesterday** and then dated headers.
 
 The caption under a note or take names what it was about — *Slow Bend · Verse riff*, *Spider ·
@@ -191,7 +209,7 @@ its own loop's or exercise's journal — because that is the only screen where i
 anything.
 
 Deleting works everywhere here, and it is **hold-only**. Hold a row and the menu offers **Delete**
-(with the naming verb above it, on a take). There is no delete swipe in this list on purpose: a note about
+(under **Pin**, and the naming verb on a take). There is no delete swipe in this list on purpose: a note about
 how a session went and a recording of someone playing have no source to regenerate them from, so the
 gesture is a deliberate one rather than the cheapest one in a list.
 

@@ -461,6 +461,22 @@ alongside the seconds, doomed pins draw faint while the handles move, and the wh
 **after** `TakeTrimmer` returns so a failed trim leaves the notes as byte-identical as the file.
 Moments stay off the Journal feed and its search rail for the reason the whole-take note does, harder.
 
+**A row on the feed can be pinned** (ADR 0190). `JournalEntry.isPinned` and `Recording.isPinned` are
+plain `Bool = false` columns — the additive, migration-exempt shape, ordinary work under ADR 0189 —
+set from the same hold menu that deletes and filtered by `JournalTimeline.filter(_:pinnedOnly:)`. The
+column is on **both** models rather than only on notes: the Journal space's premise is that notes and
+takes are one feed, so a verb that worked on one row and not the row beneath it would make the gesture
+depend on which kind the player is standing on.
+
+It is the first **write** this space makes that is not a deletion, and it sits inside ADR 0100's
+read-only rule rather than against it. That rule protects an entry's *snapshot* — a claim about where
+the owner stood at write time, honest only from the screen that wrote it. A pin touches no snapshot and
+asserts nothing about the practice; it records the reader's relationship to a record already written.
+Nothing but the player sets it — no kind auto-pins, which would be the app deciding which of your
+practice mattered (ADR 0070). And it **filters without reordering**: the feed is day-grouped, so a pin
+floated to the top would have to render under a day it did not happen in. Pins cross into an archive as
+`isPinned: Bool?` (absent = unpinned) and need no `schemaVersion` bump.
+
 A journal entry may also belong to **nothing at all** (ADR 0155). `JournalEntryOwnerKind` carries a
 fifth case, `.standalone`, backed by one additive optional column (`JournalEntry.isStandalone`) — a
 *stored* flag rather than the absence of an owner, because **absence is already spoken for**: ADR

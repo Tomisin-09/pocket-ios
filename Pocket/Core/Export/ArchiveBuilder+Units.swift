@@ -154,7 +154,8 @@ extension ArchiveBuilder {
             metronomeBeatsAtEntry: entry.metronomeBeatsAtEntry,
             metronomeNoteValueAtEntry: entry.metronomeNoteValueAtEntry,
             metronomeSubdivisionRaw: entry.metronomeSubdivisionRaw,
-            metronomeWithdrawalRaw: entry.metronomeWithdrawalRaw
+            metronomeWithdrawalRaw: entry.metronomeWithdrawalRaw,
+            isPinned: entry.isPinned
         )
     }
 
@@ -176,7 +177,8 @@ extension ArchiveBuilder {
                 .sorted { ($0.time, $0.uid.uuidString) < ($1.time, $1.uid.uuidString) }
                 .map {
                     TakeNoteRecord(uid: $0.uid, time: $0.time, text: $0.text, createdAt: $0.createdAt)
-                }
+                },
+            isPinned: recording.isPinned
         )
     }
 }

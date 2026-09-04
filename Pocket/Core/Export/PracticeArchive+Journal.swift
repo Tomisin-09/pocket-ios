@@ -39,6 +39,14 @@ struct JournalEntryRecord: Codable, Equatable, Sendable {
     var metronomeNoteValueAtEntry: Int?
     var metronomeSubdivisionRaw: String?
     var metronomeWithdrawalRaw: String?
+
+    /// The player's pin (ADR 0190). **Optional**, exactly like `isStandalone` above: an archive
+    /// written before this decodes as `nil` and restores unpinned. A pin is a small thing to lose and
+    /// an invisible one — the library comes back looking complete — which is why it travels at all.
+    ///
+    /// No `schemaVersion` bump. `SchemaVersionGate` exists to refuse a file from a **newer** app; an
+    /// added optional field is the shape old and new readers already agree about.
+    var isPinned: Bool?
 }
 
 /// A practice take, and the moments pinned inside it.
@@ -68,6 +76,9 @@ struct RecordingRecord: Codable, Equatable, Sendable {
     var songSourceID: String?
 
     var moments: [TakeNoteRecord]
+
+    /// The player's pin (ADR 0190) — the same optional, on the same terms, as `JournalEntryRecord`'s.
+    var isPinned: Bool?
 }
 
 /// A note pinned to a point in a take (ADR 0175).

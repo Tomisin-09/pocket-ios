@@ -32,6 +32,15 @@ enum JournalTimeline {
 
         var isNote: Bool { if case .note = self { true } else { false } }
         var isTake: Bool { if case .take = self { true } else { false } }
+
+        /// Whether the player has pinned this item (ADR 0190). Polymorphic like `date`, because both
+        /// models carry the column — the feed's verbs must not depend on which row you are on.
+        var isPinned: Bool {
+            switch self {
+            case .note(let entry): entry.isPinned
+            case .take(let take): take.isPinned
+            }
+        }
     }
 
     /// Which items the feed shows. `all` is the default; `notes`/`takes` are the escape valve as
@@ -59,6 +68,18 @@ enum JournalTimeline {
         case .notes: items.filter(\.isNote)
         case .takes: items.filter(\.isTake)
         }
+    }
+
+    /// Keep only the **pinned** items when the filter is on (order preserved); everything when it is
+    /// off (ADR 0190 D4).
+    ///
+    /// A filter and never a sort. The feed is day-grouped, so floating pinned items to the top would
+    /// have to render them under a day they did not happen in — or in a second band above the first
+    /// section, which is two competing groupings on one list. Narrowing leaves the chronology alone,
+    /// which is also what keeps the pin honest as a *review* verb: it changes what you can find, not
+    /// what the record says.
+    static func filter(_ items: [Item], pinnedOnly: Bool) -> [Item] {
+        pinnedOnly ? items.filter(\.isPinned) : items
     }
 
     /// A human **owner label** for an item — the aggregated feed's attribution, since (unlike the

@@ -151,4 +151,40 @@ final class ArchiveRestoreHydrationTests: XCTestCase {
         })
         XCTAssertEqual(landing.routines.first?.items.first?.kindRaw, "improviseAlong")
     }
+
+    // MARK: - Pins (ADR 0190)
+
+    func testAPinComesBackOnBothKindsOfRow() {
+        let entryUID = UUID()
+        let takeUID = UUID()
+        let landing = landed(archive {
+            var entry = Fixture.journalEntry(uid: entryUID)
+            entry.isPinned = true
+            $0.journal = [entry]
+            var take = Fixture.take(uid: takeUID, fileName: "take-1.m4a")
+            take.isPinned = true
+            $0.takes = [take]
+        })
+
+        XCTAssertEqual(landing.journal.first?.isPinned, true)
+        XCTAssertEqual(landing.takes.first?.0.isPinned, true)
+    }
+
+    /// An archive written before pins existed carries `nil`, and `nil` means **unpinned**, not
+    /// unknown — the model column is a non-optional `Bool`. A restore that left it unset would still
+    /// land `false` by declaration default; asserting it here is what stops a later refactor from
+    /// turning the absent field into a pinned row.
+    func testAnArchiveWrittenBeforePinsRestoresEverythingUnpinned() {
+        let landing = landed(archive {
+            var entry = Fixture.journalEntry(uid: UUID())
+            entry.isPinned = nil
+            $0.journal = [entry]
+            var take = Fixture.take(uid: UUID(), fileName: "take-1.m4a")
+            take.isPinned = nil
+            $0.takes = [take]
+        })
+
+        XCTAssertEqual(landing.journal.first?.isPinned, false)
+        XCTAssertEqual(landing.takes.first?.0.isPinned, false)
+    }
 }

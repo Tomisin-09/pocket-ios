@@ -15,6 +15,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **Pin what matters in your journal.** Hold any row in the Journal — a note or a take — and choose
+  **Pin**. Pinned rows carry a small gold pin beside the time, and **⋯ ▸ Pinned only** narrows the
+  feed to just those. While it is on, the **⋯** is filled in, so a narrowed feed never looks like an
+  empty one; if nothing is pinned yet, the screen says so and says where the gesture is. Pinning
+  filters and never reorders — a pinned entry stays in the day it happened in. Red Moon never pins
+  anything for you. Pins travel in an export and come back on a restore.
 - **Two new analytics events**, `archive_exported` and `archive_restored` — counts only, no titles,
   no file names, no text you wrote (ADR 0120's rule is that no event can carry free text, enforced by
   a lint rule). They answer one question the export/restore pair could not otherwise answer: whether

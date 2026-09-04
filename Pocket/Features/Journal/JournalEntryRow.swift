@@ -27,6 +27,10 @@ struct JournalEntryRow: View {
             HStack(spacing: 8) {
                 KindChip(kind: entry.kind)
                 Spacer(minLength: 0)
+                // The pin's *state*, so it is legible without opening the hold menu that sets it
+                // (ADR 0190 D3). Beside the time rather than in the row's leading edge: it is a
+                // property of the record, not a control, and nothing here is tappable.
+                if entry.isPinned { PinnedGlyph() }
                 Text(entry.createdAt.formatted(date: .omitted, time: .shortened))
                     .font(.pocketMono(.caption))
                     .foregroundStyle(PocketColor.textSecondary)

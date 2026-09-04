@@ -31,11 +31,18 @@ struct JournalTabView: View {
     @Query private var loops: [Loop]
     @Query private var routines: [Routine]
 
-    @State private var scope: JournalTimeline.Scope = .all
+    /// Which medium the feed shows. Not `private`: `private` is file-scoped, and the empty state
+    /// that has to *name* this filter lives in `JournalTabView+EmptyState.swift`.
+    @State var scope: JournalTimeline.Scope = .all
     /// Free-text search over song / loop / exercise / template / date (`JournalTimeline.searchHaystack`).
-    @State private var query = ""
+    /// Not `private`, for the same reason as `scope`.
+    @State var query = ""
     /// Day order — newest-first by default; flip to walk the history forwards.
     @State private var sortOrder: JournalTimeline.SortOrder = .newest
+    /// Show only what the player has pinned (ADR 0190). Transient `@State` for now — ADR 0190 D8
+    /// persists this and the scope together, and that is S2's work, not S1's. Not `private`, for the
+    /// same reason as `scope`.
+    @State var pinnedOnly = false
     /// The standalone-note composer (ADR 0155 §3).
     @State private var composing = false
     /// Whether the Practice log screen is pushed. Still a flag rather than a `NavigationLink`: the
@@ -71,7 +78,9 @@ struct JournalTabView: View {
     private var items: [JournalTimeline.Item] {
         let merged = JournalTimeline.merge(entries: entries, takes: takes)
             .filter { !rowDeletion.isPending($0.id) }
-        return JournalTimeline.filter(JournalTimeline.filter(merged, scope: scope), query: query)
+        let scoped = JournalTimeline.filter(merged, scope: scope)
+        let pinned = JournalTimeline.filter(scoped, pinnedOnly: pinnedOnly)
+        return JournalTimeline.filter(pinned, query: query)
     }
 
     /// Day-sectioned for display (pure helper, shared with `JournalSheet`); `oldest` reverses both the
@@ -196,10 +205,26 @@ struct JournalTabView: View {
                 Label("Newest first", systemImage: "arrow.down").tag(JournalTimeline.SortOrder.newest)
                 Label("Oldest first", systemImage: "arrow.up").tag(JournalTimeline.SortOrder.oldest)
             }
+            Section {
+                Toggle(isOn: $pinnedOnly) {
+                    Label("Pinned only", systemImage: pinnedOnly ? "pin.fill" : "pin")
+                }
+            }
         } label: {
-            Image(systemName: "ellipsis.circle")
+            // Filled while a filter is in force — `LibraryOptionsMenu.isFiltered`'s rule, applied to
+            // the one list screen that doesn't use that control. An active filter has to be legible
+            // without opening the menu, and the glyph must not change width on a nav bar (ADR 0126).
+            Image(systemName: isFiltered ? "ellipsis.circle.fill" : "ellipsis.circle")
         }
-        .accessibilityLabel("Journal options")
+        .accessibilityLabel(optionsLabel)
+    }
+
+    /// Whether the feed is showing something other than everything the scope allows. Sort is not a
+    /// filter and doesn't count: it reorders the same rows.
+    private var isFiltered: Bool { pinnedOnly }
+
+    private var optionsLabel: String {
+        pinnedOnly ? "Journal options, showing pinned only" : "Journal options"
     }
 
     // MARK: - Scope filter
@@ -258,56 +283,6 @@ struct JournalTabView: View {
         }
     }
 
-    // MARK: - Empty state
-
-    private var emptyState: some View {
-        VStack(spacing: 8) {
-            Image(systemName: searching ? "magnifyingglass" : "book.closed")
-                .font(.futura(.largeTitle))
-                .foregroundStyle(PocketColor.textSecondary)
-            Text(emptyTitle)
-                .font(.futura(.headline))
-                .foregroundStyle(PocketColor.textPrimary)
-            Text(emptyMessage)
-                .font(.futura(.subheadline))
-                .foregroundStyle(PocketColor.textSecondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(32)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    /// Whether a live search is narrowing the feed (drives the "no matches" empty state).
-    private var searching: Bool {
-        !query.trimmingCharacters(in: .whitespaces).isEmpty
-    }
-
-    private var emptyTitle: String {
-        if searching { return "No matches" }
-        switch scope {
-        case .all: return "Nothing here yet"
-        case .notes: return "No notes yet"
-        case .takes: return "No takes yet"
-        }
-    }
-
-    private var emptyMessage: String {
-        if searching {
-            return "Nothing matches “\(query)”. Try a song, exercise, template, or date."
-        }
-        switch scope {
-        case .all:
-            return "Notes you write and takes you record gather here — from your loops and "
-                + "exercises, or straight from this screen."
-        case .notes:
-            // This is the line that teaches the ＋ exists, so it is doing more work than it looks
-            // (ADR 0155). Before that button, "after a run" was the only true answer.
-            return "Jot a goal, a breakthrough or a struggle — after a run, or any time with ＋."
-        case .takes:
-            return "Arm recording next to Start training to capture your playing."
-        }
-    }
-
     // MARK: - Day header
 
     /// "Today" / "Yesterday" / a medium date for a section's day (mirrors `JournalSheet`).
@@ -361,6 +336,9 @@ private enum JournalTabPreview {
                                                     kind: .breakthrough, commandBpmAtEntry: 96,
                                                     createdAt: now.addingTimeInterval(-3600))
         breakthrough.exercise = drill
+        // Pinned in the seed (ADR 0190) so the canvas shows the gold `PinnedGlyph` on a note row
+        // without anyone having to drive the hold menu to see it.
+        breakthrough.isPinned = true
         context.insert(breakthrough)
 
         let struggle = JournalEntry.forLoop(text: "Barre still buzzing on the B string.",
@@ -372,6 +350,9 @@ private enum JournalTabPreview {
 
         let take = Recording(fileName: "demo.m4a", duration: 48,
                              createdAt: now.addingTimeInterval(-7200), loop: loop)
+        // The take is pinned too: the mark has to read identically on both row kinds (ADR 0190 D2),
+        // and a preview showing only one of them would hide exactly the drift that matters.
+        take.isPinned = true
         context.insert(take)
 
         // A session entry (ADR 0143), with one pill that resolves and one that doesn't — the deleted
