@@ -6,7 +6,14 @@ import XCTest
 ///
 /// An empty in-memory container is enough: `inspect` only *fetches*, and the project's test-host trap
 /// is about inserting a graph. Nothing here inserts one.
-@MainActor
+///
+/// **The class is deliberately not `@MainActor`; the test methods are.** A `@MainActor` class whose
+/// `setUp`/`tearDown` hold a fixture is the shape that has failed CI five times
+/// (`ci-swift6-xcode16-strictness`): an override cannot add isolation its superclass method lacks, so
+/// the property silently inherits the class annotation and Xcode 16 rejects touching it from
+/// `setUpWithError`. The fixture here is a `URL` and needs no actor, so it stays nonisolated and the
+/// annotation goes where the main-actor work actually is — `PracticeAudioEngineTests`' idiom, proven
+/// green on CI.
 final class RestoreCoordinatorTests: XCTestCase {
 
     private var root: URL!
@@ -21,6 +28,7 @@ final class RestoreCoordinatorTests: XCTestCase {
         try? FileManager.default.removeItem(at: root)
     }
 
+    @MainActor
     private func makeContext() throws -> ModelContext {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
@@ -46,6 +54,7 @@ final class RestoreCoordinatorTests: XCTestCase {
         return picked
     }
 
+    @MainActor
     func testInspectingAnArchiveReportsWhatItWouldAdd() async throws {
         let context = try makeContext()
         guard case let .success(pending) = await RestoreCoordinator.inspect(try pickedArchive(), in: context) else {
@@ -62,6 +71,7 @@ final class RestoreCoordinatorTests: XCTestCase {
     /// so a restore reading take audio *after* the player confirms would be reading a map into a file
     /// the app is no longer permitted to touch. Deleting the source here stands in for that: if the
     /// door were reading the picked file directly, everything below would fail.
+    @MainActor
     func testTheArchiveStaysReadableAfterTheChosenFileIsGone() async throws {
         let context = try makeContext()
         let picked = try pickedArchive()
@@ -79,6 +89,7 @@ final class RestoreCoordinatorTests: XCTestCase {
                          "the door reads its own copy, not the file the player chose")
     }
 
+    @MainActor
     func testDiscardingRemovesTheCopy() async throws {
         let context = try makeContext()
         guard case let .success(pending) = await RestoreCoordinator.inspect(try pickedArchive(), in: context) else {
@@ -93,6 +104,7 @@ final class RestoreCoordinatorTests: XCTestCase {
 
     /// A refused file must not leave a full-size copy of itself in `tmp/`, which the player cannot see
     /// or reclaim — `ArchiveWriter` takes the same care on its own error path.
+    @MainActor
     func testARefusedFileLeavesNothingBehind() async throws {
         let context = try makeContext()
         let notAnArchive = root.appending(path: "notes.txt", directoryHint: .notDirectory)

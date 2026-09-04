@@ -27,6 +27,18 @@ struct RestoreOutcome: Equatable {
     var filesFailed: Int = 0
 }
 
+/// An archive copied into `tmp/` and opened, or the reason it could not be.
+///
+/// **File scope, not nested inside `RestoreCoordinator`.** A type declared inside a `@MainActor` type
+/// inherits that isolation, and `RestoreCoordinator.open` is `nonisolated` precisely so it can run off
+/// the actor — constructing a main-actor-isolated value from there is the kind of thing local Xcode
+/// waves through and CI's older toolchain rejects (`ci-swift6-xcode16-strictness`). Out here it is
+/// genuinely `Sendable`, which is what crossing a `Task.detached` boundary requires.
+struct OpenedArchive: Sendable {
+    let read: ReadArchive
+    let workingDirectory: URL
+}
+
 /// Reading an archive, pricing it, and — once the player says yes — writing it (ADR 0188 S3).
 ///
 /// The order below is D7's, and it is the whole of this type's job:
@@ -76,12 +88,6 @@ enum RestoreCoordinator {
         case let .failure(failure):
             return .failure(failure)
         }
-    }
-
-    /// An archive copied into `tmp/` and opened, or the reason it could not be.
-    struct OpenedArchive: Sendable {
-        let read: ReadArchive
-        let workingDirectory: URL
     }
 
     /// The copy and the read, with no actor and no store — the half that can run anywhere.

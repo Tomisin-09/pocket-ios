@@ -120,7 +120,11 @@ extension RestorePlan {
                                  takeAudio: Set<String>) -> RestorePlan {
         var plan = RestorePlan()
 
-        plan.lines = [
+        // Annotated rather than inferred. Nine generic calls in one array literal is the shape that
+        // blew CI's type-check budget once already (a long inferred chain, ADR 0113-era) — local
+        // Xcode has a bigger budget than CI's, so the annotation is free insurance rather than a
+        // response to a measured problem.
+        let lines: [Line?] = [
             line(.songs, keys: archive.songs.map(\.sourceID), existing: existing.songSourceIDs),
             line(.exercises, keys: archive.exercises.map(\.uid), existing: existing.exerciseUIDs),
             line(.savedChords, keys: archive.savedChords.map(\.uid), existing: existing.savedChordUIDs),
@@ -130,7 +134,8 @@ extension RestorePlan {
             line(.practiceLog, keys: archive.practiceRuns.map(\.id), existing: existing.runUIDs),
             line(.journal, keys: archive.journal.map(\.uid), existing: existing.journalUIDs),
             line(.takes, keys: archive.takes.map(\.uid), existing: existing.takeUIDs)
-        ].compactMap { $0 }
+        ]
+        plan.lines = lines.compactMap { $0 }
 
         // Audio is counted only for the takes that are actually landing: a take the library already
         // has keeps the recording it already has, and re-writing the file would be work with no
