@@ -189,6 +189,25 @@ final class JournalEntry {
                                 withdrawalRaw: metronomeWithdrawalRaw)
     }
 
+    /// A manual **pin** (ADR 0190) — the player's "keep this where I can reach it", surfaced by the
+    /// Journal space's *Pinned only* filter.
+    ///
+    /// Deliberately **not** `isFavorite`, the word `Exercise`/`Loop`/`Routine` use for the same
+    /// gesture (ADR 0119). A favourite is something you want to come back *to*; a journal entry worth
+    /// keeping is as often the record of a bad week, and *favourite struggle* is not a thing anyone
+    /// says. The pin says *keep this to hand* and takes no view on whether it went well.
+    ///
+    /// **The player sets it and nothing else does** (ADR 0190 D1). No kind auto-pins — not a
+    /// `.breakthrough`, not a long session — because an app that decided which of your practice
+    /// mattered would be grading it (ADR 0070), in the form of that rule hardest to see coming.
+    ///
+    /// It filters and never sorts (ADR 0190 D4): the feed is day-grouped, and a pinned entry lifted
+    /// to the top would have to render in a day it did not happen in.
+    ///
+    /// A plain `Bool` with a declaration default, so lightweight migration fills every pre-0190 row
+    /// with `false` — additive, no store wipe (CoreData 134110 rule; ordinary work under ADR 0189).
+    var isPinned: Bool = false
+
     /// **The** owner discriminator — read this rather than testing a relationship for `nil` by hand.
     /// Order matters: the two unit relationships win, so an entry can never be mistaken for a session
     /// just because a `routineUID` was also stamped on it — and the standalone flag is read *last*, so

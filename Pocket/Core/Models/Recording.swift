@@ -84,6 +84,16 @@ final class Recording {
     /// CoreData 134110 mandatory-attribute rule. `nil` for takes captured before this shipped.
     var ownerLabelAtTake: String?
 
+    /// A manual **pin** (ADR 0190) — the same mark, on the same terms, as `JournalEntry.isPinned`.
+    ///
+    /// A take takes the column because the Journal space's premise is that notes and takes are **one
+    /// feed** (ADR 0100): a verb that works on one row and not the row beneath it makes the gesture
+    /// depend on which kind the player happens to be standing on. See `JournalEntry.isPinned` for why
+    /// it is a pin rather than a favourite, and for the rule that nothing but the player sets it.
+    ///
+    /// A plain `Bool` with a declaration default — additive, migration-exempt (CoreData 134110).
+    var isPinned: Bool = false
+
     init(fileName: String, duration: TimeInterval, uid: UUID = UUID(), createdAt: Date = Date(),
          loop: Loop? = nil, exercise: Exercise? = nil, song: Song? = nil) {
         self.uid = uid

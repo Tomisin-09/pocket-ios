@@ -185,4 +185,30 @@ final class PracticeArchiveTests: XCTestCase {
         XCTAssertEqual(result.takes.first?.fileName, "take-2.m4a",
                        "The name of the absent file is what a reader needs to know what is missing")
     }
+
+    // MARK: - Pins (ADR 0190)
+
+    /// A pin is small and its loss is **invisible**: a restored library comes back looking complete,
+    /// and the player only finds out the next time they reach for the two entries that mattered.
+    /// That is the whole reason it travels.
+    func testAPinCrossesIntoTheArchiveOnBothKindsOfRow() {
+        let entry = JournalEntry.forExercise(text: "Locked it.", kind: .breakthrough,
+                                             commandBpmAtEntry: 96)
+        entry.isPinned = true
+        let take = Recording(fileName: "take-3.m4a", duration: 8)
+        take.isPinned = true
+
+        let result = archive(ArchiveSource(journal: [entry], recordings: [take]))
+
+        XCTAssertEqual(result.journal.first?.isPinned, true)
+        XCTAssertEqual(result.takes.first?.isPinned, true)
+    }
+
+    func testAnUnpinnedRowExportsAsUnpinnedRatherThanAsUnknown() {
+        let entry = JournalEntry.forExercise(text: "Fine.", kind: .note, commandBpmAtEntry: 90)
+        let result = archive(ArchiveSource(journal: [entry]))
+
+        XCTAssertEqual(result.journal.first?.isPinned, false,
+                       "The model column is a non-optional Bool, so `false` is a recorded fact")
+    }
 }

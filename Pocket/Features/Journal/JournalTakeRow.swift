@@ -49,6 +49,9 @@ struct JournalTakeRow: View {
                                 .accessibilityLabel("Has notes")
                         }
                         Spacer(minLength: 0)
+                        // Same position and same reasoning as `JournalEntryRow`'s (ADR 0190 D3) —
+                        // one feed, so the mark must read identically on either kind of row.
+                        if take.isPinned { PinnedGlyph() }
                         Text(take.createdAt.formatted(date: .omitted, time: .shortened))
                             .font(.pocketMono(.caption))
                             .foregroundStyle(PocketColor.textSecondary)

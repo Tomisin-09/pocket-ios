@@ -52,6 +52,10 @@ extension ArchiveRestoreWriter {
             entry.metronomeNoteValueAtEntry = record.metronomeNoteValueAtEntry
             entry.metronomeSubdivisionRaw = record.metronomeSubdivisionRaw
             entry.metronomeWithdrawalRaw = record.metronomeWithdrawalRaw
+            // `?? false` rather than an optional assignment: the model column is a non-optional
+            // `Bool` with a declaration default (ADR 0190), and an archive written before pins
+            // existed carries `nil`, which means unpinned rather than unknown.
+            entry.isPinned = record.isPinned ?? false
             landing.journal.append(entry)
         }
     }
@@ -81,6 +85,7 @@ extension ArchiveRestoreWriter {
             take.title = record.title
             take.note = record.note
             take.ownerLabelAtTake = record.ownerLabelAtTake
+            take.isPinned = record.isPinned ?? false
             let moments = record.moments.map { moment in
                 TakeNote(time: moment.time, text: moment.text, uid: moment.uid, createdAt: moment.createdAt)
             }

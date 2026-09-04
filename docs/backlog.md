@@ -179,7 +179,27 @@ Two invariants every one of these is bound by, stated here once rather than five
 whose Phase 1 had shipped, and they **shipped 2026-08-31**. See the *Image attachments*
 entry further down for what was decided.
 
-### 1. The journal is written but not reviewed
+### 1. The journal is written but not reviewed — **ACCEPTED as ADR 0190** (2026-09-04)
+
+**Decided 2026-09-04** (branch `pocket-295-a-journal-you-can-review`), once the matcher gate below
+opened. `docs/decisions/0190-a-journal-you-can-review.md` takes findings 1–3 and answers them: a
+**pin** on both notes and takes (a pin, not a favourite — the entries worth keeping are often records
+of a bad week), an **owner-kind** filter, and a **jump to a date** that scrolls rather than filters.
+Three things this entry assumed were settled the other way:
+
+- **The heatmap is rejected**, not reused (D9). It would mean *minutes practised* one screen away and
+  *entries written* here, and shading a month by how often you wrote grades a habit the app asked for.
+- **An entry-kind filter is deferred** (D5), because `EntryKind.default` is `.note` — a filter over it
+  would mostly separate "picked a chip" from "didn't".
+- **An orphan cannot be filtered by kind at all** (D6), and this is a finding: ADR 0151 keeps
+  `ownerLabelAtEntry` but nothing records *which* of loop/exercise the entry had been, so `ownerKind`
+  returns `.orphan` for both. An `ownerKindAtEntry` snapshot would fix it for future entries only —
+  **logged here, not built** (see below).
+
+ADR 0190 also answers this file's standing **persistence** question for one screen: a filter may
+persist exactly when the screen shows, unopened, that it is in force (D8).
+
+Original note follows.
 
 *Highest value of the five, and the cheapest: several small additive changes over a model that
 already holds the data.*
@@ -217,6 +237,25 @@ read-only for *owned* entries on purpose — authoring stays where the snapshot 
 0155 §3 narrows that to standalone notes rather than overturning it. **A pin and a scope are
 review verbs and sit inside that rule.** Anything that edits an owned entry from the timeline does
 not, and is a different decision.
+
+### 1b. Two things ADR 0190 left unbuilt (logged 2026-09-04)
+
+Both are deliberate deferrals from `docs/decisions/0190-a-journal-you-can-review.md`, recorded here so
+they are not re-derived as fresh findings.
+
+- **`JournalEntry.ownerKindAtEntry`** — an additive `String?` snapshot beside `ownerLabelAtEntry`, so a
+  note that outlives its unit still knows whether it was a loop's or an exercise's. Today `ownerKind`
+  returns `.orphan` for both and the owner filter cannot offer an orphan any bucket but *All* (ADR 0190
+  D6). Migration-exempt, so this is ordinary work under ADR 0189. **The reason it was not built with
+  0190:** it only ever helps entries written *after* it ships, and 0190 exists for the year of entries
+  already in the store. Worth doing the next time `JournalEntry` is opened for another reason.
+- **An entry-kind filter** — the second uncaptured axis (`kindRaw` / `EntryKind`, seven cases). Blocked
+  on a data question, not a design one: `EntryKind.default` is `.note` and the composer offers the kind
+  rather than requiring it, so an unknown share of entries are `.note` by omission. A filter over that
+  separates "the player picked a chip" from "the player didn't" while looking like it partitions the
+  journal. **What would unblock it:** evidence the field is populated deliberately — either from
+  analytics (ADR 0120, opt-in) or from making the chip a required choice in the composer, which is its
+  own decision.
 
 ### 2. Import is two different jobs wearing one word — ~~open~~ **SHIPPED as ADR 0188 S2**
 
@@ -748,6 +787,15 @@ uniform-looking control over four different behaviours.
 Also worth settling in the same pass: Routines has no search at all and no sort (fixed newest-first),
 and My chords, Takes and Glossary have neither. Those absences may be right — but they should be
 decided, not inherited.
+
+**2026-09-04 — the persistence question now has an answer, for one screen.** ADR 0190 D8 persists the
+Journal's sort, scope, pinned-only and owner filter, on a rule the other screens can adopt: **a filter
+may persist exactly when the screen shows, unopened, that it is in force.** A segmented control shows
+itself; a menu shows itself through the filled glyph `LibraryOptionsMenu.isFiltered` already renders.
+A persisted filter with no visible active state is how a player opens a screen, sees three rows out of
+four hundred, and concludes the app lost their data. Exercises, Loops, Routines and Songs are
+**untouched** — they keep their transient filters until someone decides for them, and the glyph that
+would make persistence safe is already there when they do.
 
 **2026-08-31 — this entry gated the journal-review work; the gate is now open (2026-09-04).**
 *Practice support — five ideas with no home yet* (item 1) wants an owner-kind scope on the Journal
