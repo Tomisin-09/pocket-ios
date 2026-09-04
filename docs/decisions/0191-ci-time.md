@@ -225,8 +225,8 @@ So the levers are held to different standards, deliberately:
 
   **That one-sided test earned its keep immediately.** It caught D3's doubled test phase, and the
   green-but-unverifiable run underneath it. Two of the three changes in this ADR were killed by
-  their own measurements; the discipline is the deliverable here, more than the
-one surviving line of JSON.
+  their own measurements; the discipline is the deliverable here, more than the one surviving line
+  of JSON.
 
 D2 needs the least defending of the three anyway, and not because of timing: **`PocketAll` was the
 only plan with coverage on.** `PocketLogic` and `PocketShoot` are both already `false`. The question
