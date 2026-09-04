@@ -68,12 +68,7 @@ jobs:
       # simulator runtime isn't installed (the "iOS NN.0 is not installed" error).
       - name: Show Xcode
         if: needs.scope.outputs.docs_only != 'true'
-        run: |
-          xcodebuild -version
-          # Into the environment, so the cache key below can carry it: build products are not
-          # portable across toolchains, and a restore from a different Xcode is the one failure
-          # here that would present as a mysterious compile error rather than a slow run.
-          echo "XCODE_BUILD=$(xcodebuild -version | tr '\n' '-' | tr -d ' ')" >> "$GITHUB_ENV"
+        run: xcodebuild -version
 
       - name: Install tools
         if: needs.scope.outputs.docs_only != 'true'
@@ -86,28 +81,6 @@ jobs:
       - name: SwiftLint
         if: needs.scope.outputs.docs_only != 'true'
         run: swiftlint --strict
-
-      # Build products, keyed so a near-miss still helps (ADR 0191).
-      #
-      # Before this, every run compiled the app and both test targets from cold — about half
-      # the job's wall clock, on a change that usually touches a handful of files. The exact
-      # key is the whole source tree, so any edit misses it; the `restore-keys` prefixes then
-      # hand Xcode the *previous* build to do an incremental compile against, which is the
-      # case that actually matters. A run that misses entirely is no slower than the old
-      # behaviour plus the restore attempt.
-      #
-      # The Xcode version is in the key because build products are not portable across
-      # toolchains, and a stale restore is the one failure mode here that would look like a
-      # mysterious compile error rather than a slow run.
-      - name: Cache build products
-        if: needs.scope.outputs.docs_only != 'true'
-        uses: actions/cache@v4
-        with:
-          path: DerivedData
-          key: dd-${{ runner.os }}-${{ env.XCODE_BUILD }}-${{ hashFiles('project.yml') }}-${{ hashFiles('**/*.swift') }}
-          restore-keys: |
-            dd-${{ runner.os }}-${{ env.XCODE_BUILD }}-${{ hashFiles('project.yml') }}-
-            dd-${{ runner.os }}-${{ env.XCODE_BUILD }}-
 
       - name: Build & test
         if: needs.scope.outputs.docs_only != 'true'
@@ -149,7 +122,6 @@ jobs:
             -testPlan PocketAll \
             -destination "id=$UDID" \
             -resultBundlePath TestResults.xcresult \
-            -derivedDataPath DerivedData \
             -retry-tests-on-failure \
             -test-iterations 2 \
             CODE_SIGNING_ALLOWED=NO \

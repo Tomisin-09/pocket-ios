@@ -1,6 +1,6 @@
 # ADR 0191 — what CI's twenty minutes is actually spent on
 
-- **Status:** Proposed — measuring (branch `pocket-297-ci-time`)
+- **Status:** Accepted — **D1 measured and REJECTED**, D2 and D3 adopted (branch `pocket-297-ci-time`)
 - **Date:** 2026-09-04
 - **Relates to:** ADR 0146 (test-suite reliability — the retry allowance and the simulator pre-boot
   this builds on) · ADR 0133 (never `paths-ignore` on `ci.yml`; the `scope` job is the sanctioned way
@@ -64,7 +64,7 @@ the identical commit** (`gh run rerun`) once the cache exists: same tree, same e
 difference being a populated cache. D2 and D3 then each get their own push, with the cache warm on
 both sides of the comparison.
 
-### D1 — cache build products, keyed to miss usefully
+### D1 — cache build products — **TRIED, MEASURED, REVERTED**
 
 `-derivedDataPath DerivedData` plus `actions/cache`. The exact key is the whole source tree, so any
 edit misses it; the **`restore-keys` prefixes** are the working part, handing Xcode the previous
@@ -76,8 +76,9 @@ a stale restore is the one failure mode here that would present as a **mysteriou
 rather than a slow run** — which is the kind of failure that costs far more than the cache saves.
 
 Cross-runner incremental Swift builds are genuinely finicky (module fingerprints, absolute paths).
-This is adopted on measurement, not on principle: two runs are needed, one to populate and one to
-hit.
+This was adopted on measurement, not on principle — and **the measurement rejected it.** See *The
+cache restored perfectly and saved nothing*, below. The description above is kept as written so the
+reasoning that looked sound can be compared against what happened.
 
 ### D2 — code coverage is gathered and read by nobody
 
@@ -122,6 +123,94 @@ a time saving into a flake — which ADR 0146 spent two passes buying back.
   only re-runs what failed. Removing it is a reliability decision (ADR 0146 wants a stretch of
   retry-free runs first), not a time one.
 
+## The cache restored perfectly and saved nothing
+
+**D1 is reverted.** It was measured exactly as designed — the same commit re-run with the cache cold
+on one side and warm on the other — and the answer was unambiguous:
+
+| Run | Build & test | unit | UI | **rest ≈ compile** |
+|---|---|---|---|---|
+| baseline #290 (no cache) | 1149s | 23s | 333s | 793s |
+| run 1 — D1, **cold** cache | 725s | 30s | 282s | **413s** |
+| run 2 — D1, **warm** cache | 825s | 29s | 382s | **414s** |
+
+The cache worked *mechanically* and completely: `Cache restored from key: dd-macOS-Xcode16.4-…`,
+`Cache hit occurred on the primary key`. And the compile portion moved from **413s to 414s**. Xcode
+rebuilt the entire tree anyway.
+
+**Why, and it is not subtle in hindsight:** a fresh `git checkout` gives every source file a new
+mtime, and Xcode's incremental build keys on mtimes. Every file looks modified, so every file is
+recompiled, and the restored `DerivedData` is dead weight — 8s to restore and 9s to save, for
+nothing. Restoring build products cannot help a build whose invalidation signal was destroyed by the
+checkout that preceded it.
+
+This is worth keeping as a finding rather than a deleted branch, because *"add a DerivedData cache"*
+is the first suggestion anyone makes about slow Xcode CI, it is what the internet recommends, and it
+does not work here. Anyone reaching for it again should have to argue past this table.
+
+**What it did establish**, and this is the number the next lever needs: a cold compile on this
+project is **~413s**, consistently, across two runs on different boxes.
+
+## The measurement did not survive contact with the runners
+
+**A single run cannot measure a two-minute change on `macos-15`, and the first run proved it.**
+
+Run 1 carried D1 and had a **provably cold** cache — the log says `Cache not found for input keys`.
+It should therefore have matched the 1149s baseline. It came in at **725s**, a 36% drop the cache
+cannot explain, on nearly the same tree:
+
+| | Baseline (#290) | Run 1 (cold cache) |
+|---|---|---|
+| Unit tests | 23s | 30s |
+| UI tests | 333s | 282s |
+| Everything else (mostly compile) | **~750s** | **~380s** |
+
+Two cold builds, and the compile half differs by **2×**. GitHub's `macos-15` pool spans hardware
+generations; which box a run draws is worth more than any change in this ADR.
+
+The re-run then produced the sharper version of the same point: **identical code, identical commit,
+and UI tests took 282s on one run and 382s on the other** — a 35% swing with nothing changed but the
+machine and the day. That ~100s of noise is larger than the entire expected effect of D2 and D3
+combined.
+
+The consequence is a change of method, recorded because the original plan was wrong in a way that
+would have produced confident nonsense: **one run per lever was under-powered, and would have
+reported noise as a result.** D2 and D3 are each plausibly 60–120s — comfortably inside that band.
+
+So the levers are held to different standards, deliberately:
+
+- **D1 was taken on measurement** — the only one large enough to clear the noise floor, and the only
+  one measurable *cleanly*. It failed that test and was reverted. The method worked: it cost two runs
+  and it stopped a plausible, well-reasoned, useless change from landing.
+- **D2 and D3 are taken on reasoning plus a green run, and were NOT individually measured.** Saying so
+  is the point: claiming a measured saving that cannot be distinguished from runner variance would be
+  worse than claiming nothing. What a green run *does* give is a **one-sided test** — it cannot prove
+  a small win, but it would expose a large regression, which is the failure mode worth guarding
+  against for both.
+
+D2 needs the least defending of the three anyway, and not because of timing: **`PocketAll` was the
+only plan with coverage on.** `PocketLogic` and `PocketShoot` are both already `false`. The question
+had been settled twice and the one plan CI actually runs was never revisited, so this is a
+consistency fix that happens to save time.
+
 ## Consequences
 
-To be completed when the three runs land.
+- **CI has no build cache, deliberately and on evidence.** Do not add one without defeating the mtime
+  problem first; the table above is the argument to beat.
+- **Coverage is off everywhere now.** If a coverage number is ever wanted, the switch is
+  `PocketAll.xctestplan`, and it must be turned on *there* rather than by a flag on a test step —
+  instrumentation is decided when the binary is built (`shoot-manual.sh` learned this the hard way).
+- **UI tests now run on cloned simulators**, which is worth remembering the next time one flakes: a
+  clone does not inherit the pre-booted destination ADR 0146 arranged, and two tests that pass alone
+  may now overlap. If flakes return, `-maximum-parallel-testing-workers 1` is the first thing to try
+  and the cheapest way to tell whether parallelism is the cause.
+- **The next lever is sharding, and it now has a number to beat: ~413s of compile.** Sharding pays
+  only if the build is done *once* and the products are handed to test jobs — `build-for-testing` →
+  artifact → `test-without-building`. Note what D1 proved about that plan, because it cuts both ways:
+  transferring build products between runners is exactly what the cache did successfully, so the
+  transfer is not the risk; the risk is that a `test-without-building` job must not re-derive
+  anything, or it inherits the same mtime problem.
+- **Do not trust a single CI run to measure anything under ~100s.** UI-test time alone swings 35% on
+  identical code. Anything smaller needs medians over several runs, or an argument instead.
+- **Nothing was traded away from the required check.** `lint-build-test` still lints, still builds
+  Swift-6-strict, and still runs the whole `PocketAll` plan including every UI test.
