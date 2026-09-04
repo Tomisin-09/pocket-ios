@@ -372,6 +372,6 @@ enum PracticeLibrarySort {
     // MARK: - Shared
 
     private static func contains(_ haystack: String, _ needle: String) -> Bool {
-        haystack.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        TextMatch.contains(haystack, needle)
     }
 }

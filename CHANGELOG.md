@@ -119,6 +119,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   there yet.
 
 ### Fixed
+- **Search in the Journal now finds accented words.** Searching *Andalusian* found nothing if you
+  had written it *Andalusían* — the Journal was one of two screens that matched letters exactly
+  while the rest of the app ignored accents. Every search field in Red Moon now answers the same
+  way, so what you type finds what you meant on whichever screen you happen to be standing on. The
+  Journal's search still narrows with each word you add, and adding a block to a routine still shows
+  nothing until you type something.
 - **Turning on the trial reminder no longer switches itself back off.** iOS asks about
   notifications **once, ever, for the whole app** — so if you had already said no to it anywhere,
   the paywall's *Remind me before the trial ends* toggle flipped straight back off, silently, with

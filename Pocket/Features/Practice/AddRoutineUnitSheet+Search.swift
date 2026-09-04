@@ -15,9 +15,13 @@ extension AddRoutineUnitSheet {
 
     var query: String { searchText.trimmingCharacters(in: .whitespacesAndNewlines) }
 
+    /// Empty query returns **false**, unlike every other matcher in the app, and that is load-bearing
+    /// here: `searchResults` renders "No matches." when all six buckets come back empty, so an empty
+    /// query matching everything would flatten the sheet's buckets into a full result list the moment
+    /// the field was focused. The call site gates on `isSearching`; this is the second belt.
     private func matches(_ text: String?) -> Bool {
         guard let text, !query.isEmpty else { return false }
-        return text.localizedCaseInsensitiveContains(query)
+        return TextMatch.contains(text, query)
     }
 
     private var matchingExercises: [Exercise] { exercises.filter { matches($0.name) } }

@@ -188,6 +188,27 @@ final class JournalTimelineTests: XCTestCase {
         XCTAssertEqual(JournalTimeline.filter([.note(entry)], query: "chords").count, 0)
     }
 
+    /// **The feed folds diacritics, like every other search field in the app.** This was the one
+    /// matcher that didn't, which is why the backlog gated the journal-review work on collapsing them
+    /// — a scope picker built over an inconsistent matcher is a uniform-looking control over
+    /// non-uniform behaviour.
+    func testSearchIgnoresDiacritics() {
+        let entry = note(at: noon)
+        entry.exercise = Exercise(name: "Andalusían cadence", currentTempo: 80, commandTempo: 96)
+        XCTAssertEqual(JournalTimeline.filter([.note(entry)], query: "andalusian").count, 1)
+        XCTAssertEqual(JournalTimeline.filter([.note(entry)], query: "ANDALUSIAN").count, 1,
+                       "and case, which it already folded")
+    }
+
+    /// Token-AND survives the collapse: the feed's own semantics stay, only the per-token substring
+    /// rule was delegated.
+    func testTokenAndSemanticsSurviveTheDiacriticFold() {
+        let entry = note(at: noon)
+        entry.exercise = Exercise(name: "Andalusían cadence", currentTempo: 80, commandTempo: 96)
+        XCTAssertEqual(JournalTimeline.filter([.note(entry)], query: "andalusian cadence").count, 1)
+        XCTAssertEqual(JournalTimeline.filter([.note(entry)], query: "andalusian arpeggio").count, 0)
+    }
+
     func testSearchTokensAreAndedAndDateMatches() {
         let exercise = Exercise(name: "Box drill", currentTempo: 80, commandTempo: 96)
         exercise.templateRaw = ExerciseTemplate.scales.rawValue
