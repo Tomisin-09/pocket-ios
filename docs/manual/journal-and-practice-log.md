@@ -192,9 +192,56 @@ because the day is part of what the entry says.
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you
   read forwards through a stretch of work rather than backwards.
-- **⋯ ▸ Pinned only** shows just what you have pinned. While it is on, the **⋯** is filled in, so
-  you can tell the feed is narrowed without opening the menu.
+- **⋯ ▸ Show** opens a list of the kinds of thing the journal holds: **All**, **Exercise**, **Loop**,
+  **Session**, **Metronome** and **Just me**. That last one is the notes you wrote from the journal
+  itself, about nothing in particular. Tick as many as you like — see below.
+- **⋯ ▸ Pinned only** shows just what you have pinned.
+- **⋯ ▸ Jump to…** opens a date picker and takes you to that day — see below.
 - Days are grouped under **Today**, **Yesterday** and then dated headers.
+
+**Ticking a second kind in Show shows you more, not less.** Tick **Loop** and you get loop work;
+tick **Session** as well and you get both, not the entries that are somehow both at once. Tick
+nothing — or tap **All** — and you are back to the whole journal. The **⋯** row says what is on, so
+*Show: Loop or Session* is readable before you open anything.
+
+**Show** takes takes with it. Filtering to **Loop** shows a loop's recordings beside its notes,
+because the journal is one feed and not two. The exception is an entry whose loop or exercise you
+have since deleted: it appears only under **All**. Red Moon keeps what such a note was *called* —
+*Slow Bend · Verse riff* — but not which kind of thing it had been, so it would rather show the note
+everywhere than guess. Ticking all six is not the same as ticking none, for exactly that reason.
+
+While either filter is on, the **⋯** is filled in, so you can tell the feed is narrowed without
+opening the menu. If a filter leaves nothing on screen, the screen says which filter did it and how
+to turn it off.
+
+### It stays how you left it
+
+The **All · Notes · Takes** control, the sort, **Pinned only** and **Show** all survive leaving the
+screen — come back tomorrow and the journal is set up the way you had it.
+
+They persist because you can see them. That is the rule, and it is why the ⋯ fills in and why an
+empty screen names the filter that emptied it: a setting that quietly narrowed your journal with
+nothing on screen to say so would just look like a journal that had lost most of itself. **Search**
+is the one thing that does not persist — a search is a question you are asking now, so the field
+empties itself when you leave.
+
+### Jumping to a day
+
+**⋯ ▸ Jump to…** opens a date picker over the span your journal covers. Pick a day and **Jump**, and
+the timeline scrolls to it.
+
+Most days have nothing written on them, so the jump lands on the **nearest day at or before** the one
+you picked — pick the 14th and, if you last played on the 11th, that is where you arrive. Picking a
+date earlier than anything you have written takes you to the start of the journal.
+
+Nothing is filtered by a jump: the days either side are still there to scroll through. That is the
+difference between jumping to a date and searching for one — searching for *July 2026* throws away
+everything else, which is exactly the context you were reading toward.
+
+There is no calendar grid of how often you wrote. The shaded grid in the practice log counts
+**minutes played**; one that counted entries written would look identical and mean something else,
+one tap away — and shading a month by how diligently you kept a journal would be Red Moon marking
+your homework, which it does not do.
 
 The caption under a note or take names what it was about — *Slow Bend · Verse riff*, *Spider ·
 exercise* — and where it has somewhere to go it is a link with a chevron. Tap it to open the thing

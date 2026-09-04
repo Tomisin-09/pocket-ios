@@ -46,6 +46,66 @@ struct OptionListSection<Value: Hashable>: View {
     }
 }
 
+/// The **multi-select** sibling — same section, same rows, a `Set` instead of one value, and an
+/// optional leading row that clears it.
+///
+/// Ticking a second option **widens** the result (ADR 0159: *OR within a facet, AND across facets*),
+/// which is why the footer is not optional here the way it is above: within one axis, adding a tick
+/// normally narrows in a player's experience of every other list they use, and a control that does
+/// the opposite has to say so. A menu could not hold that sentence, which is the whole reason this
+/// family of components exists.
+///
+/// **An empty set means "everything", and `clearTitle` is how you get back to it.** That row is
+/// checked exactly when nothing else is, so the section always has precisely one thing to read as
+/// its current state rather than a blank list that could equally be "nothing selected yet".
+struct MultiOptionListSection<Value: Hashable>: View {
+    let header: String
+    /// Prose under the section — see above: it says that ticking more shows more.
+    let footer: String
+    /// The unfiltered row's title ("All", "Any kind", …), or `nil` for a section where the empty set
+    /// is not a state worth offering directly.
+    var clearTitle: String?
+    let options: [PickerItem<Value>]
+    @Binding var selection: Set<Value>
+    var tint: Color = PocketColor.practice
+
+    var body: some View {
+        Section {
+            if let clearTitle {
+                Button {
+                    guard !selection.isEmpty else { return }
+                    selection.removeAll()
+                    haptic(.light)
+                } label: {
+                    OptionRow(title: clearTitle, isSelected: selection.isEmpty, tint: tint)
+                }
+                .buttonStyle(.plain)
+                .listRowBackground(PocketColor.background)
+            }
+            ForEach(options) { option in
+                Button {
+                    toggle(option.value)
+                    haptic(.light)
+                } label: {
+                    OptionRow(title: option.title, context: option.context,
+                              isSelected: selection.contains(option.value), tint: tint)
+                }
+                .buttonStyle(.plain)
+                .listRowBackground(PocketColor.background)
+            }
+        } header: {
+            Text(header)
+        } footer: {
+            Text(footer)
+                .font(.futura(.caption))
+        }
+    }
+
+    private func toggle(_ value: Value) {
+        if selection.contains(value) { selection.remove(value) } else { selection.insert(value) }
+    }
+}
+
 /// One row of a picker — title over an optional context line, with a trailing checkmark when it is
 /// the current choice.
 ///

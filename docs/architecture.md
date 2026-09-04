@@ -1320,6 +1320,49 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   month's own busiest day — an absolute scale would need a number to be absolute against, and picking
   one would be setting a daily goal by the back door.
 
+- **Reviewing the feed** (ADR 0190). The Journal's read-back controls are three independent filters
+  and a jump, all resolved in the pure `JournalTimeline` and composed in one place (`JournalTabView.items`):
+  scope (medium) → owner kind → pinned → free-text query. `OwnerFilter` buckets **takes on the same
+  axis as notes**, mapping `Recording.OwnerKind` alongside `JournalEntryOwnerKind`, because the space's
+  premise is one feed; the kinds that bucket to nothing (an orphan, an ownerless take, a song-owned
+  take) reach the reader only in the unfiltered feed, and the two reasons for that — *no longer known*
+  versus *never offered* — are kept as separate branches rather than one fall-through.
+
+  The owner facet is **multi-select and a union** (D10): `OwnerSelection` wraps a `Set<OwnerFilter>`
+  in which **empty means everything**, so no value competes with the empty set to represent the
+  unfiltered feed, and ticking a second kind *widens* — ADR 0159's *OR within a facet, AND across
+  facets*, which on this facet is the only coherent relation, since an item has exactly one owner kind
+  and an intersection of two would always return nothing. It is a `RawRepresentable` wrapper because
+  that is what crosses `@AppStorage`; the raw string is ordered by `allCases` rather than by the set
+  (a `Set` has no order, and an unordered join would rewrite the key on every launch), and unknown
+  tokens are dropped rather than failing the parse — `@AppStorage` falls back to its default only for
+  an *absent* key, so degrading to the unfiltered feed is the only safe landing. That same tolerance is
+  the whole migration from the single-select build.
+
+  **A multi-select cannot live in a popup `Menu`**, which dismisses on every tap and has nowhere to put
+  the sentence a union needs; *Show* therefore became a row that opens a sheet, over the new
+  `MultiOptionListSection` beside `OptionListSection` (same `OptionRow`, a `Set`, an optional clearing
+  row, a required footer). This is the third surface to leave a menu for that component family, and the
+  reason has been the same every time: options a player cannot be expected to already understand need
+  their explanation in the same place as the control.
+
+  This is the **first screen in the app to persist a filter**, and the rule it establishes is narrower
+  than "persist list preferences": *a filter may persist exactly when the screen shows, unopened, that
+  it is in force.* The segmented control shows itself, the menu's two filters show themselves through
+  the `ellipsis.circle.fill` variant (`LibraryOptionsMenu.isFiltered`'s rule, applied to the one list
+  screen that doesn't use that control), and the empty state names whichever filter emptied the screen
+  — all three, or the persisted state is how a player opens a year-old journal, sees nothing, and
+  concludes the app lost it. The other four list screens keep their transient filters until someone
+  decides for them; nothing here is retro-applied.
+
+  **Jump to a date** is a `ScrollViewReader` over the day-keyed `ForEach`, resolved by the pure
+  `JournalTimeline.jumpTarget(for:in:)` — nearest day at or before the pick, falling forwards when the
+  pick precedes the journal. It filters nothing, which is the entire difference between it and the
+  date search `searchHaystack` has always supported. `MonthHeatmap` was rejected for it: the practice
+  log's grid counts minutes played, a journal grid would count entries written, and two grids that
+  look identical and count different things one tap apart is worse than one grid — quite apart from
+  shading a month by how diligently you kept a journal, which is ADR 0070's line applied to habits.
+
 - **`Profile`** (ADR 0113 Slice 1) is the local, account-free artist profile — a **singleton** `@Model`
   (`uid` + optional `artistName` + `createdAt`), added as an additive new table (nothing existing
   migrates). It is created **lazily**: `Profile.setArtistName` is a fetch-or-create that inserts a row

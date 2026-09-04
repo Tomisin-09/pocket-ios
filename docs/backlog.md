@@ -257,6 +257,23 @@ they are not re-derived as fresh findings.
   analytics (ADR 0120, opt-in) or from making the chip a required choice in the composer, which is its
   own decision.
 
+- **Entry counts per day in Jump to…** (logged 2026-09-04, from device use). The picker offers every
+  day in the journal's span, and most of them have nothing — the at-or-before rule only tells you
+  that *after* you have picked. Showing what a day holds before you commit is the obvious fix.
+  **The data is free**: `JournalTabView.sections` already carries each day's items, so a
+  `[Date: Int]` is one `mapValues(\.count)` away. **The control is not.** SwiftUI's graphical
+  `DatePicker` exposes no per-day decoration hook on iOS 17 or 18 — badging a day means hand-building
+  a month grid, which is `MonthHeatmap`-shaped, which is what ADR 0190 D9 rejected. So this needs an
+  ADR, and it has to answer one question: **a count is a fact, but a month grid shaded by counts
+  grades a habit** (ADR 0070). The distinction is real — a section header saying "3 entries" is
+  navigation, a calendar that goes darker the more you wrote is a compliance chart — but it is thin
+  enough that building toward it by eye would cross it without anyone deciding to.
+  **Cheaper first step, worth trying before the grid:** leave the `DatePicker` alone and put a live
+  line under it — *"Nearest: 26 Aug · 3 entries"* — updating as the player scrolls the months. That
+  answers the same question, needs no custom control, and stays clear of the shading question
+  entirely. It also makes the at-or-before rule visible instead of merely stated, which is the
+  footnote that line currently has to do in prose.
+
 ### 2. Import is two different jobs wearing one word — ~~open~~ **SHIPPED as ADR 0188 S2**
 
 **Closed 2026-09-03** (branch `pocket-294-receive-a-routine`). Both doors ship: tapping a

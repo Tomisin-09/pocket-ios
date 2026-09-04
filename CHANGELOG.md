@@ -15,6 +15,23 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **Show the kinds of journal entry you want.** **⋯ ▸ Show** in the Journal opens a list of the kinds
+  the journal holds — **Exercise**, **Loop**, **Session**, **Metronome** and **Just me** (notes
+  written from the journal itself) — and you can tick as many as you like. Ticking a second kind
+  shows you **more**, not less: *Loop* and *Session* together gives you both. Tap **All** to clear it.
+  It takes takes with it: filtering to *Loop* shows a loop's recordings beside its notes, because they
+  are one feed. An entry whose loop or exercise has since been deleted appears only when nothing is
+  ticked — Red Moon keeps what such a note was *called*, but not which kind of thing it had been, and
+  would rather show it everywhere than guess.
+- **Jump to a date in your journal.** **⋯ ▸ Jump to…** opens a date picker and scrolls the timeline
+  to that day — the nearest one at or before it, since most days have nothing written on them.
+  Nothing is filtered, so the days either side stay where they are; that is the difference between
+  jumping to a date and searching for one.
+- **The Journal remembers how you left it.** The **All / Notes / Takes** control, the sort, **Pinned
+  only** and the new **Show** filter all survive leaving the screen. Every one of them is visible
+  without opening a menu — the ⋯ fills in while either filter is on — and if a filter empties the
+  screen, the screen says which one and how to turn it off, so a narrowed journal never looks like a
+  lost one.
 - **Pin what matters in your journal.** Hold any row in the Journal — a note or a take — and choose
   **Pin**. Pinned rows carry a small gold pin beside the time, and **⋯ ▸ Pinned only** narrows the
   feed to just those. While it is on, the **⋯** is filled in, so a narrowed feed never looks like an
