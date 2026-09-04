@@ -18,10 +18,17 @@ enum TextMatch {
 
     /// Whether `haystack` contains `needle`, ignoring case and diacritics.
     ///
-    /// An **empty needle matches everything**, which is what `range(of:)` already returns for one —
-    /// stated here because callers rely on it in opposite directions and must not each re-decide it.
+    /// An **empty needle matches everything**, and that is decided *here* rather than inherited from
+    /// `range(of:)` — because `range(of:)` does not agree with itself across toolchains. Xcode 16
+    /// (which CI runs) returns `nil` for an empty needle; Xcode 26.5 returns a range. Resting the
+    /// rule on the framework meant the one thing this type exists to stop: the same search answering
+    /// differently depending on where it ran. Caught by `TextMatchTests` on CI, 2026-09-04.
+    ///
+    /// No caller reaches this branch today — every one guards its query for emptiness first, in
+    /// whichever direction it needs — but a shared primitive cannot leave its edge case to chance.
     static func contains(_ haystack: String, _ needle: String) -> Bool {
-        haystack.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        guard !needle.isEmpty else { return true }
+        return haystack.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
     }
 
     /// Whether **every** whitespace-separated token in `query` appears somewhere in `haystack`.

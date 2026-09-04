@@ -25,9 +25,15 @@ final class TextMatchTests: XCTestCase {
         XCTAssertTrue(TextMatch.contains("Andalusían cadence", "andalusian"))
     }
 
+    /// **A portability guard, not a style assertion.** `range(of:)` answers this differently on
+    /// different toolchains — `nil` on CI's Xcode 16, a range on local Xcode 26.5 — so `contains`
+    /// decides it rather than inheriting it. This test is what caught that (CI, 2026-09-04), and it
+    /// fails again the moment the explicit guard is removed on a machine where the framework
+    /// disagrees.
     func testAnEmptyNeedleMatchesEverything() {
         XCTAssertTrue(TextMatch.contains("anything", ""),
                       "callers rely on this in both directions and must not each re-decide it")
+        XCTAssertTrue(TextMatch.contains("", ""), "and an empty haystack too")
     }
 
     func testANeedleThatIsAbsentDoesNotMatch() {
