@@ -7,7 +7,7 @@
     }
   ],
   "defaultOptions": {
-    "codeCoverage": true,
+    "codeCoverage": false,
     "targetForVariableExpansion": {
       "containerPath": "container:Pocket.xcodeproj",
       "identifier": "7D169845C7D92117E36B994A",
