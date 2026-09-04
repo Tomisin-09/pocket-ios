@@ -710,17 +710,31 @@ Recorded with its findings, because the reason this isn't small is not the UI.
 3. **An in-content segmented control** — the Journal's All / Notes / Takes scope picker, the only one
    of its kind.
 
-**Four search implementations disagree**, which is the part that actually costs:
+**Four search implementations disagree** — **collapsed onto one rule 2026-09-04, see below.**
 
 | Matcher | Behaviour |
 |---|---|
 | `PickerSearch` (`Pocket/UI/PickerItem.swift`) | case **and diacritic**-insensitive, searches the context line |
 | `JournalTimeline.filter(_:query:)` | whitespace-tokenised AND, case-folded only |
-| `PracticeLibrarySort.exerciseMatches` / `loopMatches` | case-insensitive contains |
-| `AddRoutineUnitSheet+Search.matches` | case-insensitive contains, name + song title only |
+| `PracticeLibrarySort.exerciseMatches` / `loopMatches` / `routineMatches` | case **and diacritic**-insensitive contains |
+| `AddRoutineUnitSheet+Search.matches` | case-insensitive contains, name + song title only, **empty query matches nothing** |
 
-Only the first is diacritic-insensitive. A player searching "Andalusian" vs "Andalusían" gets
-different results depending on which screen they are standing on.
+**Corrected 2026-09-04.** The table above said "only the first is diacritic-insensitive", and that
+was wrong: `PracticeLibrarySort` carried its own private `contains` with **exactly** `PickerSearch`'s
+options (`PracticeLibrarySort.swift:374-376`) — two copies of the identical rule, which is its own
+problem but not this one. The real outliers were **two, not three**:
+`JournalTimeline.filter(_:query:)` and `AddRoutineUnitSheet+Search.matches`. A player searching
+"Andalusian" for "Andalusían" got a different answer on those two screens only.
+
+**SHIPPED 2026-09-04 — branch `pocket-294-one-matcher`.** `TextMatch`
+(`Pocket/Core/Models/TextMatch.swift`) now states the substring rule once — case- and
+diacritic-insensitive containment, plus the token-AND helper the Journal needs — and all four
+matchers call it. Two behaviours were deliberately **preserved, not unified**, because they are
+semantics rather than divergence: `JournalTimeline`'s token-AND (a second word narrows the feed),
+and `AddRoutineUnitSheet`'s empty-query-is-false (its `searchResults` renders "No matches." when
+every bucket is empty, so an empty query matching everything would flatten the sheet the moment its
+field was focused). What remains open below — whether filters persist, and what a consistent filter
+affordance looks like — is untouched.
 
 **Persistence is inconsistent too.** Sort keys and collapsed-section state use `@AppStorage`; *every*
 filter — favourites, instrument, backing-only, show-all, journal scope — is transient `@State` and
@@ -735,13 +749,14 @@ Also worth settling in the same pass: Routines has no search at all and no sort 
 and My chords, Takes and Glossary have neither. Those absences may be right — but they should be
 decided, not inherited.
 
-**2026-08-31 — this entry gates the journal-review work.** *Practice support — five ideas with no
-home yet* (item 1) wants an owner-kind scope on the Journal timeline, and it is explicitly blocked
-on the order stated above: **matchers first**. `JournalTimeline.filter(_:query:)` is the one matcher
-in the table that is not diacritic-insensitive, so a new scope picker built over it would be a
-uniform-looking control over four different behaviours — the exact failure this entry warns about.
-Read the "Routines / My chords / Takes / Glossary have neither" list alongside it: the Journal's
-missing scope is the same absence one screen further on.
+**2026-08-31 — this entry gated the journal-review work; the gate is now open (2026-09-04).**
+*Practice support — five ideas with no home yet* (item 1) wants an owner-kind scope on the Journal
+timeline, and it was explicitly blocked on the order stated above: **matchers first**.
+`JournalTimeline.filter(_:query:)` was one of the two matchers that was not diacritic-insensitive, so
+a scope picker built over it would have been a uniform-looking control over inconsistent behaviour —
+the exact failure this entry warns about. `TextMatch` discharged that, so the journal-review work is
+unblocked. Read the "Routines / My chords / Takes / Glossary have neither" list alongside it: the
+Journal's missing scope is the same absence one screen further on.
 
 ## Filtering by two collections returns nothing — **SHIPPED as ADR 0159** (2026-08-12)
 

@@ -141,13 +141,13 @@ enum JournalTimeline {
     /// Keep the items matching a free-text `query` — **every** whitespace-separated token must appear
     /// in the item's haystack (so "scales jul" narrows to scale-template items in July). An empty or
     /// all-whitespace query keeps everything.
+    ///
+    /// Token-AND is this feed's own semantics and is deliberately preserved; what it delegates is the
+    /// per-token *substring* rule, which is `TextMatch`'s and shared with every other search field.
+    /// Before that, this was the one matcher in the app that folded case but not diacritics.
     static func filter(_ items: [Item], query: String) -> [Item] {
-        let tokens = query.lowercased().split(whereSeparator: \.isWhitespace)
-        guard !tokens.isEmpty else { return items }
-        return items.filter { item in
-            let haystack = searchHaystack(for: item)
-            return tokens.allSatisfy { haystack.contains($0) }
-        }
+        guard !query.split(whereSeparator: \.isWhitespace).isEmpty else { return items }
+        return items.filter { TextMatch.matchesAllTokens(searchHaystack(for: $0), query: query) }
     }
 
     /// The owner label for a live owner — **also the snapshot** taken at write time (ADR 0151), so
