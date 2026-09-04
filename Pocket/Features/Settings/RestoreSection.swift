@@ -137,7 +137,14 @@ struct RestoreSection: View {
     /// The files are written out of the zip **after** the rows are saved (D7), so the archive has to
     /// stay on disk for the whole of this — which is why the discard is here and not in `onDismiss`.
     private func restore(_ arrival: PendingRestore) async {
-        phase = .done(await RestoreCoordinator.restore(arrival, in: context))
+        let outcome = await RestoreCoordinator.restore(arrival, in: context)
+        // `alreadyPresent` comes off the plan rather than the outcome: it is what the skip rule left
+        // alone, which is the number that separates a recovery onto a new phone from a merge into a
+        // library that is already there (ADR 0188 D6).
+        Analytics.send(.archiveRestored(itemsAdded: outcome.rowsAdded,
+                                        alreadyPresent: arrival.plan.alreadyPresentCount,
+                                        takeFiles: outcome.takeFilesWritten))
+        phase = .done(outcome)
         RestoreCoordinator.discard(arrival.workingDirectory)
         working = nil
     }

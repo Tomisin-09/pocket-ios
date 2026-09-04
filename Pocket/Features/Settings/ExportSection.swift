@@ -134,10 +134,17 @@ struct ExportSection: View {
             // Not behind the recordings switch: reference pictures are capped and few, and they are
             // the player's own material rather than the bulk that switch exists to control.
             let attachmentsDirectory = try? ReferenceAttachmentStore.directory()
-            phase = .ready(try await Task.detached(priority: .userInitiated) {
+            let export = try await Task.detached(priority: .userInitiated) {
                 try ArchiveWriter.write(archive, takesDirectory: takesDirectory,
                                         attachmentsDirectory: attachmentsDirectory)
-            }.value)
+            }.value
+            // Counted at *prepare*, which is the honest moment: the share sheet is the system's and
+            // the app never learns whether the file was saved, sent or dismissed. So this measures
+            // "a copy was made", not "a copy was kept" — and the pair with `archive_restored` is what
+            // makes either number readable (ADR 0188 S3).
+            Analytics.send(.archiveExported(includesTakeAudio: includesRecordings,
+                                            takes: archive.takes.count))
+            phase = .ready(export)
         } catch {
             phase = .failed("Couldn't prepare a copy — \(error.localizedDescription)")
         }

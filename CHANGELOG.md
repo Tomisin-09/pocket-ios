@@ -15,6 +15,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **Two new analytics events**, `archive_exported` and `archive_restored` — counts only, no titles,
+  no file names, no text you wrote (ADR 0120's rule is that no event can carry free text, enforced by
+  a lint rule). They answer one question the export/restore pair could not otherwise answer: whether
+  a restore lands into an empty library on a new phone, or merges into one that is already there.
+  Off unless you turned analytics on.
 - **Your archive can come home.** **Settings ▸ Your data ▸ Restore** now reads an archive you
   exported earlier — the loop Export left half-open. Choose the zip and Red Moon opens it and shows
   you what is inside **before anything is written**: a count for each kind of thing, how many of them
