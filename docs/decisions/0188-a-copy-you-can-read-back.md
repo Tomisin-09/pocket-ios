@@ -378,9 +378,13 @@ inbound half of the loop measured and the outbound half not, for a pair of opera
 of as one thing. If the question *"do people ever restore?"* becomes worth answering, both ends
 should be instrumented in the same change (ADR 0120's rule: no free `String` in an event).
 
-**And one thing S3 could not settle: the schema freeze.** The Consequences below argue this ADR makes
-ending it possible, and say ending it is a separate decision that should be written as an ADR. That
-is still true and still unwritten. Nothing in S3 ends the freeze.
+**And one thing S3 could not settle: the schema freeze — now ADR 0189.** The Consequences below argue
+this ADR makes ending it possible. Writing 0189 found that argument **stronger than the code
+supports**, and the correction belongs here as much as there: a failed migration traps in
+`.modelContainer(for:)`, so the app does not launch and this door is unreachable at precisely the
+moment it exists for. The recovery is delete-and-reinstall, then restore into the empty library — D6's
+two deliberate steps, arrived at from the other direction. That is a real improvement on "the library
+is gone", and it is not "recoverable". 0189 replaces the freeze with criteria rather than lifting it.
 
 ## Alternatives considered
 

@@ -114,10 +114,39 @@ Two things the entry above got wrong, kept here because the reasoning is the use
   So a restored song comes back with its loops, markers and grid and needs relinking (ADR 0152), and
   the preview says so before the restore rather than leaving it to be found on play.
 
-**The schema freeze reconsideration is still open** and is now the only part of this entry that is.
-ADR 0188's Consequences argue the freeze can end — it rests on "a bad migration is unrecoverable",
-which is false for anyone who can read an archive back — and say explicitly that ending it is a
-separate decision that should be written as an ADR rather than assumed to have happened.
+**The schema freeze reconsideration is now ADR 0189** (proposed 2026-09-04), which replaces the
+freeze with criteria rather than lifting it: a destructive change must argue that additive cannot do
+the job, ship a migration tested against a store the *previous* build wrote, and be verified on a
+device. Writing it turned up that ADR 0188's argument was stronger than the code supports — the
+restore door is unreachable after a failed migration, because `.modelContainer(for:)` traps, so the
+recovery path is delete-and-reinstall rather than opening Settings. **This entry is closed;** 0189
+carries what is left.
+
+## A restore door that survives a failed migration (logged 2026-09-04, ADR 0189)
+
+`PocketApp` builds its store with `.modelContainer(for:)`, the SwiftUI convenience, which **traps**
+if the container cannot be created. So a migration that fails is not an error the app reports — it
+fails to launch, every launch, and *Settings ▸ Your data ▸ Restore* is unreachable at exactly the
+moment it exists for. The recovery path today is delete the app, reinstall, restore into the empty
+library (ADR 0188 D6's two deliberate steps, arrived at the hard way).
+
+Build the container by hand with `do`/`catch` and, on failure, boot a bare screen offering *Restore
+from a copy* into a fresh store. That converts delete-reinstall into one tap.
+
+**This is the change that would justify lifting the schema freeze outright** rather than replacing it
+with ADR 0189's criteria. Not scheduled: it touches app startup, wants its own ADR, and should be
+weighed against how often the state occurs — which, so far, is never.
+
+## An archive the player did not have to remember to make (logged 2026-09-04, ADR 0189)
+
+Every recovery story ADR 0181 and ADR 0188 built rests on the player having exported, which is manual
+and opt-in. The players a bad migration would hurt most are the ones who never did.
+
+A periodic reminder, or an automatic archive on version change, would close it. Neither is small:
+storage (an archive is as large as the library), iCloud, and the privacy questions that come with
+writing a full copy somewhere the player did not choose. `archive_exported` (ADR 0188 S3) is the
+first evidence about whether this matters — if exports are common, this is a nice-to-have; if they
+are rare, ADR 0189's D5 precondition is not really met and the freeze arguably should come back.
 
 ## An automatic orphan sweep (logged 2026-08-23, ADR 0182)
 
