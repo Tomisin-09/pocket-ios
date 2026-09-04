@@ -341,6 +341,11 @@ unparseable one, and the unfiltered feed is the only always-safe landing.
     and the retired `all` sentinel both land correctly, so the key is reused untouched.
   - **The empty state needed no new branch**, only a different string: it already handled *both
     filters on at once*, and swapping one label for a joined phrase was the whole change.
+  - **The footer first said "Pick none to see everything", which is not a gesture.** An empty
+    selection is how the *model* says "everything"; a player cannot perform it. The row they can
+    actually tap is **All**, and the corrected line names it — the same correction D8's empty-state
+    copy took when it instructed the player to "set Show back to All" while no control on screen said
+    *Show*. An instruction has to name something that is drawn.
   - **The prose is now in four places** — the sheet footer, the empty state, the VoiceOver label and
     the menu row — each saying a different amount of the same thing. That is the cost of a relation
     the control cannot show by itself, and it is worth paying only because ADR 0159 already proved

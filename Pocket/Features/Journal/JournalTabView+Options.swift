@@ -121,8 +121,12 @@ extension JournalTabView {
             Form {
                 MultiOptionListSection(
                     header: "Show",
+                    // **"Tap All", not "pick none".** An empty selection is how the *model* says
+                    // "everything"; it is not a gesture, and a player cannot perform it. Naming a
+                    // row they can actually tap is the same correction D8's empty-state copy already
+                    // took — an instruction has to name a control that is on the screen.
                     footer: "Pick more than one to see more — an entry shows if it matches any of "
-                        + "them. Pick none to see everything.",
+                        + "them. Tap All to see everything.",
                     clearTitle: "All",
                     options: JournalTimeline.OwnerFilter.allCases.map {
                         PickerItem(value: $0, title: $0.label)

@@ -200,8 +200,8 @@ because the day is part of what the entry says.
 - Days are grouped under **Today**, **Yesterday** and then dated headers.
 
 **Ticking a second kind in Show shows you more, not less.** Tick **Loop** and you get loop work;
-tick **Session** as well and you get both, not the entries that are somehow both at once. Tick
-nothing — or tap **All** — and you are back to the whole journal. The **⋯** row says what is on, so
+tick **Session** as well and you get both, not the entries that are somehow both at once. Tap **All**
+and you are back to the whole journal. The **⋯** row says what is on, so
 *Show: Loop or Session* is readable before you open anything.
 
 **Show** takes takes with it. Filtering to **Loop** shows a loop's recordings beside its notes,
