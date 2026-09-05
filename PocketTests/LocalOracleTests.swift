@@ -109,6 +109,46 @@ final class LocalOracleTests: XCTestCase {
         XCTAssertEqual(line?.contains("20"), false, "The difference between the two tempos was stated")
     }
 
+    /// The two-number form degenerates into "played at 72 on 22 Jul, and at 72 on 28 Aug" when a
+    /// drill's tempo has not moved — one fact stated twice, which reads as a bug. It was caught by
+    /// looking at the screen, not by a test, so it gets a test.
+    func testATempoThatHasNotMovedIsStatedOnceNotTwice() {
+        let steady = OracleContext.Tempo(points: [.init(date: day(0), bpm: 72),
+                                                  .init(date: day(4), bpm: 72)],
+                                         notesPerBeat: 2, otherRhythmRuns: 0)
+        let line = try? XCTUnwrap(oracle.tempoLines(context(units: [unit("Alternate Picking", tempo: steady)])).first)
+
+        XCTAssertEqual(line?.contains("held at 72"), true, line ?? "no line")
+        XCTAssertEqual(line?.components(separatedBy: "72").count, 2,
+                       "The tempo was named twice: \(line ?? "")")
+        // "held" must not shade into "plateaued" — that is the word D12's tempo band exists for.
+        XCTAssertNil(OracleToneGuard.check(line ?? ""))
+    }
+
+    /// Beyond three, the reading stops being prose and becomes a table.
+    func testTempoLinesAreCappedSoTheReadingStaysProse() {
+        let tempo = OracleContext.Tempo(points: [.init(date: day(0), bpm: 60),
+                                                 .init(date: day(3), bpm: 80)],
+                                        notesPerBeat: 4, otherRhythmRuns: 0)
+        let many = (1...6).map { index in
+            OracleContext.Unit(handle: "u\(index)", name: "Drill \(index)", kind: .exercise,
+                               template: "scales", mastery: nil, tempo: tempo, runs: 2, minutes: 10,
+                               lastPractisedOn: self.day(2))
+        }
+        XCTAssertEqual(oracle.tempoLines(context(units: many)).count, LocalOracle.maxTempoLines)
+    }
+
+    /// A trajectory is drawn from the whole log, so its dates sit outside the week the paragraph
+    /// above just named. On screen that reads as a mistake unless something says so.
+    func testTheReadingSaysTheTemposCoverMoreThanTheWeek() {
+        let tempo = OracleContext.Tempo(points: [.init(date: day(-40), bpm: 60),
+                                                 .init(date: day(3), bpm: 80)],
+                                        notesPerBeat: 4, otherRhythmRuns: 0)
+        let reading = oracle.paragraphs(for: context(units: [unit("Bend study", tempo: tempo)]))
+        XCTAssertTrue(reading.contains { $0.text == LocalOracle.tempoLead },
+                      "The tempo lines quote dates outside the window with nothing explaining why")
+    }
+
     // MARK: - Quoting
 
     /// The player's own words come back marked, so the tone guard does not read them. Otherwise the

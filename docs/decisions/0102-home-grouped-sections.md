@@ -47,6 +47,14 @@ section beside Oracle — a one-card move plus one new card, scoped as that
 feature's own PR. "Your stuff" is a deliberately temporary home for Toolkit
 (impersonal *reference* material); it gets its right label ("Learn") on the split.
 
+> **Done — ADR 0187 S1.** Home is now **Practice · Your stuff · Learn**, and it went exactly as
+> scoped: one card moved, one card added, inside the Oracle's own PR. `toolkitCard` was carried
+> across **verbatim** into `HomeView+Learn.swift` — same body, same hues, same accessibility label —
+> so §1's UI-test contract held and `ToolkitUITests` never saw the move. The new file was needed for
+> a second reason §2 could not have known: `private` is file-scoped in Swift, so an extension
+> elsewhere cannot see a `private var`, and `HomeView.swift` was close enough to the 400-line
+> ceiling that the sixth card had nowhere else to land.
+
 ### 3 — The durable rule
 New top-level home destinations join an existing **section** (or open a new one),
 never a sixth flat peer strip. This is what keeps the home calm as it accrues

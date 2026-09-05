@@ -1698,6 +1698,56 @@ disk use. Surfaced as *Settings ▸ Your data ▸ Storage*, under Export on the 
     `nil` for it and a shipped build is therefore structurally incapable of an Oracle network call
     until ADR 0187 S4 fills it in alongside the privacy-policy and manifest changes.
 
+## The Red Moon Oracle (Core/Oracle + Features/Oracle, ADR 0187)
+
+Stages S0 and S1 are built. **Neither contains a network call**, and together they are a complete
+feature: the reading is written on the device by `LocalOracle`, which ADR 0092 §A2 requires as a
+deterministic fallback regardless. Building it first is the point — every safety mechanism is
+exercised by real material before a token is spent, and D17's eval fixtures come out of it.
+
+**No schema.** No `@Model`, no field, no migration. The Oracle reads the store and writes back
+through paths that already exist (`PracticePlanner.materialise`, `NewExercisePlan.finalise`, from
+S3); its own state is `UserDefaults` behind `OracleReadingLog`. ADR 0189's criteria never engage.
+
+The pipeline, in the order `OracleCoordinator` runs it — one place, one order, no way around it:
+
+1. **Read the store.** `OracleContextSource.forReading(in:)` is the only SwiftData in the module,
+   split into its own file for the reason `ArchiveSource+Store.swift` gives and which binds harder
+   here: the builder holds the privacy contract, and a builder handed a `ModelContext` stops being
+   unit-testable over uninserted models. `Profile` is **not fetched** — D6 R3 keeps `artistName` on
+   the device, and the way to keep a field from crossing is to not read it.
+2. **Build the context.** `OracleContextBuilder` produces `OracleContext` — a purpose-built DTO,
+   never `PracticeArchive` (ADR 0092 §B2 forbids a serialised SwiftData graph in terms; the archive
+   is a backup format whose frozen `schemaVersion` must not move when a token budget changes). D6's
+   seven rules each have a test: per-request handles rather than `uid`s, no song/artist/file names,
+   no `artistName`, capped free text with a total budget that drops **whole notes oldest-first**,
+   stored properties only, **no computed judgement** (effort is counts, minutes and dates —
+   `TempoTrajectory.change` is deliberately left behind), and a tempo that never travels without its
+   note rate (ADR 0121).
+3. **D13, before anything is sent.** `OracleSafetySignal` scans for distress — which means the model
+   is **not called at all** — and then for pain, which suppresses the proposal capabilities and
+   leaves the reflection standing. Both fail towards the safe branch. The matcher is a floor, not a
+   guarantee, and what actually bounds the harm is D7–D12.
+4. **The reading**, through the `OracleReading` seam (`SupportSending`'s shape, and hired for the
+   same job: replacing the implementation is a second conformance, and no view, test or ADR moves).
+   Conformances today are `LocalOracle` and `RecordingOracle`; `ProxyOracle` lands at S2.
+5. **D12, after.** `OracleToneGuard` reads the Oracle's own prose only and **rejects wholesale** — a
+   partially scrubbed sentence is still a sentence somebody wrote in order to judge you. A trip
+   falls back to the local reading. It runs over `LocalOracle`'s output too: a guard with an
+   exemption is a guard with a hole in it, and the suite asserts it never trips.
+
+**The one asymmetry worth knowing.** A quoted note is marked `isQuotedFromPlayer` and the guard does
+not read it. The player may judge themselves; the app may not judge them — and without that
+distinction the app would refuse to show someone their own journal because of what they wrote in it.
+
+**Cadence** is weekly (`OracleCadence`): the reading covers the last *complete* calendar week, and
+`nextReading` returns `nil` exactly when one is available, so no screen can render "available now"
+and a future date at once. The reading itself is persisted so it stays readable all week — the gate
+limits drawing a **new** one, never re-reading the one you have.
+
+**The only door is Home ▸ Learn** (D16). Not the Journal, whose ADR 0144 D2 trust argument a paid
+door would undo; not the Toolkit, whose whole proposition is being gate-free.
+
 ## Outbound network (Core/Support, ADR 0161)
 
 The app makes exactly two kinds of outbound call, both of which the player switched on or typed:

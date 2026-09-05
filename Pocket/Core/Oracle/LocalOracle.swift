@@ -42,7 +42,11 @@ struct LocalOracle: OracleReading {
     func paragraphs(for context: OracleContext) -> [OracleReadingText.Paragraph] {
         var written: [OracleReadingText.Paragraph] = [OracleReadingText.Paragraph(opening(context))]
         if let spend = whereItWent(context) { written.append(OracleReadingText.Paragraph(spend)) }
-        for line in tempoLines(context) { written.append(OracleReadingText.Paragraph(line)) }
+        let tempos = tempoLines(context)
+        if !tempos.isEmpty {
+            written.append(OracleReadingText.Paragraph(Self.tempoLead))
+            for line in tempos { written.append(OracleReadingText.Paragraph(line)) }
+        }
         if let quote = quotedNote(context) {
             written.append(OracleReadingText.Paragraph(quote.lead))
             written.append(OracleReadingText.Paragraph(quote.text, isQuotedFromPlayer: true))
@@ -84,26 +88,54 @@ struct LocalOracle: OracleReading {
         return line
     }
 
+    /// The one sentence that keeps the tempo lines honest.
+    ///
+    /// A trajectory is drawn from the **whole log**, not the week — a tempo history that started in
+    /// July did not start on Monday, and clipping it to the window would show a line that appears to
+    /// begin wherever the request did. But that means the dates in those lines sit outside the week
+    /// the paragraph above just named, which on screen reads as a mistake unless something says so.
+    /// This says so, once, rather than qualifying every line.
+    static let tempoLead = "Tempos below cover each drill's whole history, not only this week."
+
     /// One line per unit with a trajectory, with the note rate attached (ADR 0121, D6 R7).
     ///
     /// The two tempos are stated, never subtracted. "76, and later 96" is a pair of facts; "up 20"
     /// is a delta, and a delta has a direction the player did not ask anyone to have an opinion
     /// about. `otherRhythmRuns` is surfaced for the same reason the underlying type surfaces it —
     /// so a partial history admits it instead of quietly showing a shorter one.
+    ///
+    /// **A drill whose tempo has not moved gets a different sentence.** The two-number form
+    /// degenerates into *"played at 72 on 22 Jul, and at 72 on 28 Aug"*, which states one fact
+    /// twice and reads as a bug. Saying it **held** at 72 is the same fact said once — and it is
+    /// still a fact, not a verdict: nothing here calls a steady tempo a plateau, which is exactly
+    /// the word D12's tempo band exists to catch.
+    ///
+    /// Capped at three lines. Beyond that the reading stops being a reflection and becomes a table.
     func tempoLines(_ context: OracleContext) -> [String] {
-        context.units.compactMap { unit in
+        context.units.prefix(Self.maxTempoLines * 2).compactMap { unit in
             guard let tempo = unit.tempo, let first = tempo.points.first,
                   let latest = tempo.points.last, tempo.points.count >= 2 else { return nil }
             let rate = tempo.notesPerBeat.map { NoteRate(perBeat: $0).compactLabel } ?? "no stated rhythm"
-            var line = "\(unit.name) was played at \(first.bpm) on \(dayLabel(first.date)), "
-                + "and at \(latest.bpm) on \(dayLabel(latest.date)), both in \(rate)."
+            var line: String
+            if first.bpm == latest.bpm {
+                line = "\(unit.name) has held at \(first.bpm) in \(rate), "
+                    + "from \(dayLabel(first.date)) to \(dayLabel(latest.date))."
+            } else {
+                line = "\(unit.name) was played at \(first.bpm) on \(dayLabel(first.date)), "
+                    + "and at \(latest.bpm) on \(dayLabel(latest.date)), both in \(rate)."
+            }
             if tempo.otherRhythmRuns > 0 {
                 line += " \(count(tempo.otherRhythmRuns, singular: "run", plural: "runs")) "
                     + "at other rhythms sit outside that line."
             }
             return line
         }
+        .prefix(Self.maxTempoLines)
+        .map { $0 }
     }
+
+    /// Three. A reading is prose, and a fourth tempo line turns it into a table.
+    static let maxTempoLines = 3
 
     /// The player's own words, handed back.
     ///

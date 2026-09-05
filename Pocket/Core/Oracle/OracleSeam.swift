@@ -46,7 +46,7 @@ struct OracleReadingRequest: Codable, Equatable, Sendable {
 /// Paragraphs rather than one string, because the screen sets them with space between them and
 /// joining-then-splitting on newlines is a round trip that loses to the first note containing a
 /// blank line.
-struct OracleReadingText: Equatable, Sendable {
+struct OracleReadingText: Codable, Equatable, Sendable {
 
     let paragraphs: [Paragraph]
     let source: Source
@@ -66,7 +66,7 @@ struct OracleReadingText: Equatable, Sendable {
     /// not the app saying it. `isQuotedFromPlayer` carries that on the value rather than in a
     /// convention, so `guardedText` can be the only thing D12 reads and no future caller has to
     /// remember the distinction.
-    struct Paragraph: Equatable, Sendable {
+    struct Paragraph: Codable, Equatable, Sendable {
         let text: String
         let isQuotedFromPlayer: Bool
 
@@ -80,7 +80,7 @@ struct OracleReadingText: Equatable, Sendable {
     /// the device and a reading written by a model are different things, and letting the player
     /// assume the second when they have the first would be the kind of small lie that makes the
     /// rest of the app's promises harder to believe.
-    enum Source: String, Equatable, Sendable, CaseIterable {
+    enum Source: String, Codable, Equatable, Sendable, CaseIterable {
         /// `LocalOracle` — deterministic, on-device, no network (ADR 0092 §A2).
         case local
         /// A model, through the proxy.
