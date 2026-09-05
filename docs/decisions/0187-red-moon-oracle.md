@@ -1,8 +1,10 @@
 # ADR 0187 — Red Moon Oracle: a mirror that cannot grade you
 
-- **Status:** Proposed — nothing built. Six stages (S0–S5), each independently shippable or
-  independently reversible. **S0 and S1 contain no network at all** and are a complete feature on
-  their own; the proxy does not appear until S2, and nothing reaches production until S4.
+- **Status:** Accepted — **S0 shipped** (`e3f7566`, #282: the `.xcconfig` pair and
+  `OracleEndpoint`); **S1 in progress** (`pocket-298-oracle-local-reading`). Six stages (S0–S5),
+  each independently shippable or independently reversible. **S0 and S1 contain no network at all**
+  and are a complete feature on their own; the proxy does not appear until S2, and nothing reaches
+  production until S4.
 - **Date:** 2026-09-02 (`pocket-291-red-moon-oracle`)
 - **Relates to:** ADR 0092 (the AI charter this executes — still *Proposed*, and this ADR amends it
   rather than merely obeying it), ADR 0002 (the proxy design, **whose Sign-in-with-Apple bullet
