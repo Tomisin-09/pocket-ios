@@ -2626,6 +2626,7 @@ docs so this stays a pointer list:
   first (it powers preset guides and shares its clock/substrate with the
   strumming-pattern animation), ASCII-tab import second, Guitar Pro/MusicXML
   later (licensing-gated), OCR never-planned.
+  *Direction: `docs/directions-2026-09.md` §3 — bar ruler and tempo map come first.*
 - **Tab → song metadata (FUTURE, gated on the AI/parse phase).** From the notes session
   2026-07-11, flagged "for the future" by the user. Translate imported song tablature into
   structured **song metadata** — key, chord progression, time signature, and played
@@ -3444,6 +3445,8 @@ update the privacy section (the "if a future version processes data differently,
 opt-in and disclosed" clause is already pre-written), aligned with ADR 0092.
 
 ## AI phase (late — gated on backend + pricing)
+
+*Direction: `docs/directions-2026-09.md` §1 — the Oracle as a layer, and the cadence answer.*
 
 Parked until the foundations above are solid (see Release sequencing). Captured
 so the intent isn't lost:
