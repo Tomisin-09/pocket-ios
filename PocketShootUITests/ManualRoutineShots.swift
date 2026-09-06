@@ -153,9 +153,22 @@ final class ManualRoutineShots: ManualShotCase {
         let app = launchForShoot()
         openRoutines(in: app)
 
+        // **ADR 0195 puts a question here**, by default: starting a routine asks `Tune up first?`
+        // before block 1. These figures are of a session that declined it — the tuner has a page of
+        // its own — so the walk answers `Not now` and carries on. Two taps rather than one, because
+        // the helper's `revealing:` is what it waits on, and what the first tap reveals is the
+        // question. It is an ordinary `app.buttons` query and not `app.alerts`: the prompt is the
+        // app's own screen (ADR 0195 D7), not a system alert.
+        //
+        // ⚠ **Written without a shoot run** (2026-09-07): the run was deliberately deferred to the
+        // Home tile-grid work, which owes this set two stale figures anyway. If the selector is
+        // wrong this fails loudly at `the tune-up question` rather than shooting the wrong state.
+        // See the Tier 3 entry in `docs/directions-2026-09.md`.
+        tap(app.buttons["Play Morning Routine"], labelled: "Play Morning Routine",
+            revealing: app.buttons["Not now"], called: "the tune-up question")
         // Gated on the chrome's own Skip control — the one thing a block inside a routine has that
         // the same drill run standalone does not.
-        tap(app.buttons["Play Morning Routine"], labelled: "Play Morning Routine",
+        tap(app.buttons["Not now"], labelled: "Not now",
             revealing: app.buttons["Skip to next block"], called: "the first block")
 
         // **A block does not wait to be started, and this test used to say it did.** The comment

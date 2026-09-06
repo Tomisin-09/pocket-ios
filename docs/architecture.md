@@ -1191,6 +1191,22 @@ view shows the note, an arc-needle cents gauge, the nearest standard-tuning stri
 scene leaves `.active`, so the mic is never held open. It reports pitch, never grades (ADR 0070).
 Instrument / tuning / chromatic-mode / reference-pitch settings land in Slice 4 (Tune Settings sheet).
 
+**ADR 0195 gives the tuner a second home, inside the routine player** — a `Tune up first?` question
+before block 1 (whose `Tune up` answer leads to the full tuner screen) and an ungated `tuningfork`
+button on the rest and Done screens. The question is a screen of the app's own (D7), not a system
+alert: an alert has no font or colour hook, so it was the only thing in the routine flow not set in
+Futura, and it needed a full-height backdrop to sit over anyway. It is deliberately *not* the
+`ArtistNamePromptSheet` ceremony — that is earned by happening once ever, and this asks at the top of
+every routine. The placement is an *audio session*
+decision, not a UI one: a block renders under `.playback`, a tuner needs `.playAndRecord`, and flipping
+the category under a live `AVAudioEngine` risks both a configuration-change stall and — where the block
+was authored to capture a take (ADR 0179) — the take deletion `AudioPlumbing.ensurePlaybackSession`
+exists to document. Every placement is therefore a screen the *player* owns, on which the block's run
+screen has already been torn down, so its engine is stopped and its take finalised before the tuner is
+built. `TunerEngine` also stops restoring `.playback` unconditionally: it now remembers whether it was
+the thing that flipped the category, so a future call site with a take armed underneath cannot reach the
+same trap. Tuning **during** a block is declined; the honest answer is a `Tune up` block type.
+
 The four home strips (Song library / Metronome / Practice / Toolkit) share one presentational
 `HomeNavCard` component (icon + title + subtitle + chevron on a washed card); each home card just
 supplies its copy and its `PocketColor` hue trio, keeping the owning link/button in `HomeView`.
@@ -1320,7 +1336,13 @@ supplies its copy and its `PocketColor` hue trio, keeping the owning link/button
   was dropped from Home in the 2026-07-09 hub rework (`a0c754e1`) and has been dead code since; Journal
   is already the read-only practice-history destination (ADR 0100), so the Practice log lives behind the same
   door and Home's grouped layout (ADR 0102) stays untouched until the deferred year tier and card
-  evolution land together. **ADR 0176** renamed the screen (*Progress* → *Practice log*, `PracticeLogView`
+  evolution land together. **ADR 0196** closes that loop from the other end: `HomeStatsStrip` gives Home
+  the *promise* tier ADR 0117 drafted — `This week` over `Minutes` · `Days` · `Notes`, one horizon,
+  windowed through the new pure `PracticeLog.count(_:in:)` so a note and a run land in the same week —
+  while the payoff screen stays exactly where 0176 put it, because the strip **does not navigate**. It
+  holds its own queries (`TrialCountdownRow`'s precedent) and draws nothing while `runs.isEmpty`.
+  `PracticeStatsCard` is **deleted** with it: its *Mastered* tile totals up self-ratings, which is a
+  score (ADR 0070), and a dead card beside a live strip is an invitation to use the wrong one. **ADR 0176** renamed the screen (*Progress* → *Practice log*, `PracticeLogView`
   in `Features/PracticeLog/`) and moved its entry point out of the Journal's ⋯ menu onto a row above the
   timeline (`JournalTabView+PracticeLog.swift`) — a menu may hold verbs and settings, but a place needs a
   surface. Still free (ADR 0144); the pure `PracticeProgress` / `PracticeLog` types under it kept their

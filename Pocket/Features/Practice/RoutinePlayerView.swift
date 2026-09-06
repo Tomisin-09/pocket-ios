@@ -37,6 +37,22 @@ struct RoutinePlayerView: View {
     /// the "Take saved" row. A `Bool`, deliberately: the stage is already in scope where it's
     /// presented, so there is no model to key a `.sheet(item:)` on.
     @State var showingTakes = false
+    /// Whether the tune-up **question** (ADR 0195) is up, holding the session back behind it.
+    @State var showingTuneUpPrompt = false
+    /// Whether the tuner screen — what answering `Tune up` leads to — has the screen.
+    @State var showingTuneUpOffer = false
+    /// Whether the question has already been put — once per presentation of the player, never once
+    /// per `onAppear`. See `promptTuneUpIfWanted()`.
+    @State var tuneUpDecided = false
+    /// Whether a routine asks about tuning at all. Bound to the constant and not a literal, because
+    /// the value an `@AppStorage` declares is what SwiftUI uses for an unset key and it does not
+    /// consult the accessor; the prompt's own `Don't ask again` writes this same binding, so the
+    /// Settings row can never disagree with what the player just said here.
+    @AppStorage(AppSettings.Key.routineTunerOffer)
+    var tuneUpAsk = AppSettings.routineTunerOfferDefault
+    /// Whether the between-blocks tuner sheet is up. Reachable from the rest and Done screens, both
+    /// of which are silent and both of which the block's run screen has already left.
+    @State var showingTuner = false
 
     init(routine: Routine) {
         self.routine = routine
@@ -55,6 +71,15 @@ struct RoutinePlayerView: View {
             Group {
                 if !runnable {
                     lockedView
+                } else if showingTuneUpOffer {
+                    // Ahead of every other phase, because it is the thing that happens before the
+                    // session does — and the session has not been started underneath it (ADR 0195).
+                    tuneUpOfferView
+                } else if showingTuneUpPrompt {
+                    // The question itself, drawn on the app's own ground rather than handed to a
+                    // system alert. No block is built here — one would start its engine under the
+                    // question, which is the one thing the prompt must not do.
+                    tuneUpPrompt
                 } else if let stage = doneStage {
                     doneView(for: stage)
                 } else if player.isFinished {
@@ -74,10 +99,21 @@ struct RoutinePlayerView: View {
         .keepAwakeDuringPractice()
         .onAppear {
             guard runnable else { return }
-            player.start()
-            markPracticed()
+            // The question holds the session back; whichever answer the player gives starts it —
+            // immediately, or after the tuner (ADR 0195).
+            guard !promptTuneUpIfWanted() else { return }
+            beginSession()
         }
+        .sheet(isPresented: $showingTuner) { tunerSheet }
         .onDisappear(perform: player.end)
+    }
+
+    /// Begin the session: run the first block, and stamp the routine as practised. One call because
+    /// the two belong together — a routine that has begun is a routine that has been practised —
+    /// and because the tune-up offer (ADR 0195) has to be able to defer both.
+    func beginSession() {
+        player.start()
+        markPracticed()
     }
 
     /// Stamp the routine as practised *now* — for the home hub's "recent routines" rail. Only when
@@ -241,6 +277,9 @@ struct RoutinePlayerView: View {
         .padding(24)
         .navigationTitle("Rest")
         .routineSessionChrome(context)
+        // A rest is the moment a tune-up costs nothing — the countdown is silent and the block
+        // before it has already been torn down (ADR 0195 D3).
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { tuneUpButton } }
         // Kept, though the host now claims it for the whole session: a rest is a practice surface in
         // its own right, and the claim is reference-counted so asserting it twice costs nothing.
         .keepAwakeDuringPractice()   // ADR 0050
@@ -276,7 +315,11 @@ extension RoutinePlayerView {
     }
 }
 
-#Preview("Routine player") {
+/// Scaffold for the previews below. Shared rather than pasted twice, because the point of the pair
+/// is that the *same* screen is checked in both appearances — the design brief's rule that a colour
+/// is verified light and dark, never assumed from one.
+@MainActor
+private func previewRoutinePlayer() -> some View {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
         for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self, PracticeRun.self,
@@ -291,5 +334,14 @@ extension RoutinePlayerView {
     try? container.mainContext.save()
     return RoutinePlayerView(routine: routine)
         .modelContainer(container)
-        .preferredColorScheme(.dark)
+}
+
+// Both open on the **tune-up question** (ADR 0195 D7), since `Ask to tune up` defaults on — answer
+// `Not now` in the canvas to walk on into the blocks.
+#Preview("Routine player · dark") {
+    previewRoutinePlayer().preferredColorScheme(.dark)
+}
+
+#Preview("Routine player · light") {
+    previewRoutinePlayer().preferredColorScheme(.light)
 }

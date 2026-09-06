@@ -37,6 +37,16 @@ final class TunerEngine {
     private var smoother = TunerSmoother()
     private var hold = TuneHold(requiredHold: 1.2)
     private var tapInstalled = false
+    /// Whether **this** engine is the thing that put the shared session into `.playAndRecord`, and so
+    /// the thing that owes it a restore. `false` when something else already had it there — a take
+    /// armed on the block underneath (ADR 0069 §3).
+    ///
+    /// The restore is why this has to be remembered rather than assumed. `configurePlaybackSession`
+    /// is the exact move that removes input from the route, stops the `AVAudioRecorder` underneath,
+    /// and gets a real take deleted as an accidental half-second tap — see `ensurePlaybackSession`,
+    /// which exists because that destroyed real playing on 2026-08-05. Closing the tuner must not be
+    /// a second way to reach it, whatever ends up presenting the tuner (ADR 0195 D5).
+    private var flippedSessionToRecord = false
     /// Monotonic time until which detection is frozen (during the post-confirmation chime).
     private var suppressUntil: TimeInterval = 0
 
@@ -50,14 +60,15 @@ final class TunerEngine {
     /// double-invocation that the scene-phase churn around the permission dialog can cause.
     func start() {
         guard !isRunning, !tapInstalled else { return }
-        AudioPlumbing.configureRecordSession(label: "tuner")
+        flippedSessionToRecord = AVAudioSession.sharedInstance().category != .playAndRecord
+        AudioPlumbing.ensureRecordSession(label: "tuner")
 
         let input = engine.inputNode
         // Sanity-check the mic route is up before tapping; bail cleanly if not (no crash, just no tune).
         let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else {
             AudioPlumbing.log.error("tuner: no usable input format (mic unavailable?)")
-            AudioPlumbing.configurePlaybackSession(label: "tuner")
+            restoreSessionIfFlipped()
             return
         }
         let detector = self.detector                       // value type → safe to capture
@@ -94,13 +105,22 @@ final class TunerEngine {
             tapInstalled = false
         }
         engine.stop()
-        AudioPlumbing.configurePlaybackSession(label: "tuner")   // flip back off .playAndRecord
+        restoreSessionIfFlipped()
         smoother.reset()
         hold.reset()
         suppressUntil = 0
         reading = nil
         isConfirmed = false
         isRunning = false
+    }
+
+    /// Put the session back to `.playback` **only if this engine is what took it off it**. Leaving a
+    /// session someone else configured exactly as it was found is the whole rule; see
+    /// `flippedSessionToRecord`.
+    private func restoreSessionIfFlipped() {
+        guard flippedSessionToRecord else { return }
+        flippedSessionToRecord = false
+        AudioPlumbing.configurePlaybackSession(label: "tuner")
     }
 
     /// Freeze pitch detection for the next `seconds` — used while the view sounds a **reference tone**

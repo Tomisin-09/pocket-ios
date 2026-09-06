@@ -90,6 +90,12 @@ struct HomeView: View {
                     // Which unit this offers is the player's choice since ADR 0193; the card, its
                     // Pro gate and the hold that changes the choice live in `HomeView+Resume`.
                     if let target = resumeTarget { resumeCard(target) }
+                    // The one thing on Home that changed since yesterday (ADR 0196). Below the
+                    // resume card, because what you were doing outranks how much of it there has
+                    // been; above the navigation sections, because those are static for the life of
+                    // the app. Draws nothing at all until something has been practised, so a fresh
+                    // install is unchanged.
+                    HomeStatsStrip()
                     // The navigation strips are grouped into titled sections (ADR 0102) rather than
                     // one flat run: hierarchy keeps the home calm as destinations accrue and gives a
                     // new arrival a section to join instead of becoming a sixth same-weight peer.

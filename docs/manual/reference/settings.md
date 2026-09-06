@@ -97,13 +97,15 @@ Every one of these is optional, and none of it leaves the device.
 ## `Routines`
 
 <!-- shot: reference/settings-routines | role: panel
-     | alt: The Routines settings screen with auto-start, advance automatically, rest length and loop song blocks
+     | alt: The Routines settings screen with auto-start, advance automatically, rest length, loop song blocks and ask to tune up
      | state: Settings ▸ Routines -->
 
 - **`Auto-start blocks`** — *In a routine, each block after the first starts on its own — the first always waits for you.*
 - **`Advance automatically`** — *When a block finishes, a Done screen lets you rate how it felt and jot a note. Turn this on to skip it and go straight to the next block.*
 - **`Rest length`** — *The breather between blocks.*
 - **`Loop song blocks`** — *A song block loops as an open jam and moves on only when you skip. Off plays it through once, then auto-advances.*
+- **`Ask to tune up`** — *Starting a routine asks whether you want to tune first. Answering it, or turning this off, takes one tap — it never keeps you from playing.* On unless you turn it off, and
+  the prompt's own **`Don't ask again`** turns it off from there. See [Tuning up](../routines.md#tuning-up).
 
 ## `Song player`
 
