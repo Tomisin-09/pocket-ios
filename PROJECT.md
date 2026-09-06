@@ -61,6 +61,8 @@ and appears in App Store Connect.
 
 - **App data (solo):** SwiftData, with CloudKit sync planned (Phase 4). Apple's
   iCloud — **not AWS**.
+  ⚠ CloudKit is Apple-only, and sync is unbuilt — so an Android decision is free now
+  and expensive later: `docs/directions-2026-09.md` §4.
 - **AI planner backend:** a thin proxy that holds the Claude API key. The app
   never holds the key. Base URL is chosen by build config:
   - Debug → local / non-AWS dev proxy (accessible, fast to iterate)
