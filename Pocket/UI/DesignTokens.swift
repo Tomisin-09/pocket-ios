@@ -166,6 +166,29 @@ enum PocketColor {
     static let journalCardWash = Color("GoldCardWash")
     static let journalCircleWash = Color("GoldCircleWash")
 
+    /// **Oracle** — the identity hue of the Red Moon Oracle (ADR 0187 D16, the **sixth** home card
+    /// and the first in the new *Learn* section). A deep **crimson/wine**.
+    ///
+    /// **Not ADR 0081's Blood Moon, and the reason is worth keeping.** D16 nominated Blood Moon
+    /// (`#c24a2c` / `#e3694a`) as the candidate on the strength of the artwork already existing.
+    /// Measured against the palette it turns out to *be* the terracotta family: its light value is
+    /// `#C24A2C`, byte-for-byte the Song library's, and its dark value sits a few degrees from
+    /// `#E07E57`. Shipping it would have given two home spaces one colour in light mode, which is
+    /// precisely what `docs/design-brief.md` §3.1 says the per-space accent families exist to
+    /// prevent — the cue that tells you which space you are in.
+    ///
+    /// Crimson keeps the red the name asks for while reading as wine rather than orange, so it is
+    /// distinguishable from the library's terracotta and clear of the metronome's violet plum.
+    /// Blood Moon remains available as a **theme** (ADR 0081 Slice 2), which is what it was always
+    /// for; it just cannot also be one space's accent while terracotta is another's.
+    ///
+    /// Baked flat per appearance like every other card hue — *not* a shared opacity on `oracle`
+    /// (ADR 0062 lesson: a low-opacity blend reads washed-grey on cream and near-invisible on
+    /// near-black). No `oracleCTA`: a reading is opened, never transported.
+    static let oracle = Color("Crimson")
+    static let oracleCardWash = Color("CrimsonCardWash")
+    static let oracleCircleWash = Color("CrimsonCircleWash")
+
     /// Full-opacity **CTA fill** for the Metronome/Practice primary transport buttons
     /// (Start/Pause/Resume; the run screens' big pill) and Home's "Start today's session".
     /// A deepened per-appearance fill (not the base hue at opacity) so the cream

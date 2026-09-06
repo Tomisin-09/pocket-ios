@@ -93,9 +93,10 @@ struct HomeView: View {
                     // The navigation strips are grouped into titled sections (ADR 0102) rather than
                     // one flat run: hierarchy keeps the home calm as destinations accrue and gives a
                     // new arrival a section to join instead of becoming a sixth same-weight peer.
-                    // Interim two-section split — Toolkit rides in "Your stuff" until Red Moon Oracle
-                    // ships, when Toolkit + Oracle break out into their own "Learn" section. Sections
-                    // breathe at the 20-pt rhythm; strips within a section stay tight at 10.
+                    // Three sections, as ADR 0102 §2 pre-scoped and ADR 0187 D16 makes real:
+                    // Toolkit leaves "Your stuff" and pairs with the Oracle under **Learn**. The
+                    // interim two-section split was always waiting on this card. Sections breathe at
+                    // the 20-pt rhythm; strips within a section stay tight at 10.
                     VStack(alignment: .leading, spacing: 20) {
                         HomeSection(title: "Practice") {
                             practiceCard
@@ -104,6 +105,9 @@ struct HomeView: View {
                         HomeSection(title: "Your stuff") {
                             songLibraryCard
                             journalCard
+                        }
+                        HomeSection(title: "Learn") {
+                            oracleCard
                             toolkitCard
                         }
                     }
@@ -249,35 +253,6 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Practice, your exercises and training runs")
-    }
-
-    // MARK: - Toolkit card
-
-    /// The **Toolkit** hub (ADR 0096) — the free, deterministic reference destination (My Chords +
-    /// Glossary in Slice 1). A push (it's a *place* with its own list of sections), in the new
-    /// indigo/violet "study/reference" accent (`PocketColor.toolkit`), the fourth home hue kept clear
-    /// of the teal · plum · terracotta triad above it.
-    private var toolkitCard: some View {
-        NavigationLink { ToolkitView() } label: {
-            // The subtitle **names the tuner first**, deliberately. The pocket-170 rewrite that
-            // replaced "Chords, scales & theory reference" was fixing an over-promise and was right
-            // on the day — but the Tuner (ADR 0115) and Help & FAQs (ADR 0145) both landed inside
-            // the Toolkit afterwards and neither reached this card, so it started *under*-promising
-            // instead. The tuner is free forever (ADR 0144), needs no song and no library, and is
-            // the thing a guitarist reaches for every time they pick the instrument up — it is the
-            // strongest daily-habit hook in the app, and it was sitting behind a card that didn't
-            // mention it. Help & FAQs stays unlisted: one line only holds so much, and it has a
-            // second door in Settings → About.
-            HomeNavCard(icon: "books.vertical.fill", title: "Toolkit",
-                        subtitle: "Tuner, your chords & a glossary",
-                        tint: PocketColor.toolkit,
-                        cardWash: PocketColor.toolkitCardWash,
-                        circleWash: PocketColor.toolkitCircleWash)
-        }
-        .buttonStyle(.plain)
-        // Kept in step with the subtitle by hand. `ToolkitUITests` matches on `BEGINSWITH "Toolkit,"`
-        // rather than the whole string, so the copy can move without breaking the smoke test.
-        .accessibilityLabel("Toolkit, tuner, your chords and a glossary")
     }
 
     // MARK: - Journal card

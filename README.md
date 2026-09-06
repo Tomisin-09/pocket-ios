@@ -26,6 +26,14 @@ worked on in one place.
   usage string goes back in the same commit.
 - AI session suggestions (later) run through a backend proxy that holds the API
   key; the app never does. See `docs/decisions/0002-ai-proxy-backend.md`.
+- **The Red Moon Oracle** — the weekly reading, reached from Home ▸ Learn — is built
+  through stage S1 of `docs/decisions/0187-red-moon-oracle.md`, and **S0 and S1 contain
+  no network at all**. The reading is written on the device by `LocalOracle`, which
+  ADR 0092 §A2 requires as a deterministic fallback regardless; building it first means
+  every safety mechanism (the tone guard, the pain and distress matchers, the whole
+  request DTO and its seven privacy rules) is exercised by real material before a token
+  is ever spent. A **Release build cannot make an Oracle call**: `POCKET_API_BASE_URL`
+  is deliberately empty until S4, so there is no address to call.
 
 ## Getting set up
 
@@ -107,7 +115,7 @@ C14 guards the one way back — a `Manual*` class written into `PocketUITests`.
 ```
 Pocket/
   App/         App entry, root scene
-  Features/    Home · Library · Waveform · Metronome · Practice · Repertoire
+  Features/    Home · Library · Waveform · Metronome · Practice · Repertoire · Oracle (ADR 0187)
   Core/        Audio (engine + pure tempo math) · Models · Services · Export and restore (ADRs 0181, 0188) · Storage · Diagnostics (MetricKit, ADR 0183) · Oracle (ADR 0187)
   UI/          Shared components, design tokens
   Resources/   Info.plist, PrivacyInfo.xcprivacy

@@ -43,7 +43,15 @@ struct PocketApp: App {
         // between runs — so a driven test starts from whatever the last one left behind unless the
         // state is cleared here. See `AppSettings.resetJournalFilters` for the figure it silently
         // corrupted.
-        if UITestRuntime.isActive { AppSettings.resetJournalFilters() }
+        if UITestRuntime.isActive {
+            AppSettings.resetJournalFilters()
+            // The Oracle's cadence is the same trap with a longer fuse (ADR 0187 D15). Its gate is
+            // driven by a stored date, so the *second* run of a suite finds the week already spent
+            // and the screen showing a persisted reading instead of the button. A test written
+            // against that lands on whichever side the last run left — the failure this block
+            // exists to stop, and one that reads as a broken gate rather than a dirty simulator.
+            OracleReadingLog().clear()
+        }
     }
 
     var body: some Scene {
