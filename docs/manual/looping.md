@@ -62,9 +62,14 @@ Tapping a saved loop in the **Loops** panel makes it the active one, and playbac
 that span, going round until you stop it. Each row carries the loop's name, its start and end times
 and its mastery, plus two controls: one to adjust its range, one to set up its automator.
 
-While a loop is active the transport switches to its compact form: the loop's name reads above the
-centre controls, rewind restarts the loop, a double-tap on rewind goes to the previous loop, and
-forward moves to the next one.
+While a loop is active the transport switches to its compact form and the loop's name reads above the
+centre controls. The skip buttons keep doing what they do on the full song — they move you back and
+forward by their own number of seconds — except that inside a loop they move you around **inside the
+loop**. A skip toward either end stops at that end and the loop keeps running, so nothing you tap
+here can turn the loop off. The **✕** on the colour strip is what does that.
+
+To move to a different loop, tap its row in the **Loops** panel. To start the loop again from the
+top, tap where it starts on the waveform.
 
 <!-- shot: looping/loop-active | role: band
      | alt: The transport in its active form with the loop's name above the controls and the loop's colour strip on the right

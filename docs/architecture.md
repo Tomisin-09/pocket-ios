@@ -1125,9 +1125,14 @@ block on large or not-yet-downloaded iCloud files), so the UI stays responsive; 
 model exposes `isLoadingAudio` and the view shows a dimming **loading overlay**
 (`AudioLoadingOverlay`) that also blocks taps on the half-ready controls until ready.
 
-The transport bar (ADR 0030 / 0041) carries a **rewind · pause · forward** playback cluster
-alongside the A/B and Marker identity dots; skip targets are loops ordered by start
-(neighbour lookup is the pure, unit-tested `TransportNav`; cross-song skip is deferred).
+The transport bar (ADR 0030 / 0041 / 0192) carries a **skip · pause · skip** playback cluster
+alongside the A/B and Marker identity dots. Both outer glyphs are **timed skips in either state**;
+the armed loop changes their *scope*, not their meaning — pure, unit-tested `TransportSkip` clamps
+the target to `bounds(loopRegion:duration:)`, read off the **engine's** region so an unsaved A/B span
+counts, falling back to the whole song. That matters because an armed loop plays a pre-rendered
+crossfaded buffer (ADR 0008): a skip past its end would be a disarm, not a seek. Loop-to-loop
+navigation is the Loops panel's `activate(_:)`, and `TransportNav` is gone with the mapping it
+served.
 An **active-loop colour strip** (the loop's identity hue via the shared `LoopColor`, the
 same slot the waveform/minimap use) makes the looping state unmistakable. A scrub starting
 near the screen edge is stopped from popping the screen: the model brackets each waveform

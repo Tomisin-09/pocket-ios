@@ -132,8 +132,10 @@ final class ManualPlayerShots: ManualShotCase {
     /// `looping/loop-active` · `getting-started/loop-active` — the transport in its looping form.
     ///
     /// Gated on `Looping Verse riff`, which is the transport's own label once a loop is active and
-    /// does not exist before. `Deactivate loop` and `Restart` are the two controls the active form
-    /// adds, and requiring them is what separates this from a player that is merely playing.
+    /// does not exist before. `Deactivate loop` is the control the active form adds, and requiring it
+    /// is what separates this from a player that is merely playing. `Back 10 seconds` is required
+    /// alongside it because ADR 0192 is exactly the claim that the skip pair survives into this
+    /// state — the figure would be wrong, not merely different, if it were the old rewind glyph.
     ///
     /// `getting-started/loop-active` additionally asks for the loop's span drawn across the waveform.
     /// That is drawn, not labelled — there is no accessibility element for it — so it is the one part
@@ -150,7 +152,7 @@ final class ManualPlayerShots: ManualShotCase {
         captureChromeless(app, slug: "looping/loop-active",
                           screen: "the song player, looping",
                           ownedBy: ["Looping Verse riff"],
-                          alsoRequiring: ["Deactivate loop", "Restart", "Waveform"],
+                          alsoRequiring: ["Deactivate loop", "Back 10 seconds", "Waveform"],
                           alsoServing: ["getting-started/loop-active"])
     }
 

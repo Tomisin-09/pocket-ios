@@ -180,12 +180,14 @@ again to close an ephemeral **A↔B span** that loops with no ✓/✗ gate; drag
 Dragging a saved loop's **edge knob** lifts it back into A/B for a range edit (**Save
 changes** writes back). **Hold-drag** the waveform is the spatial set (A pins at the
 playhead, the drag sets B; ADR 0005 round 5). The transport
-bar carries a **rewind · pause · forward** playback cluster whose outer glyphs depend on whether a
-loop is armed (ADR 0124): **armed** → restart / prev-loop / next-loop, as ADR 0030 shipped them;
-**idle** → **−N / +N second skips** (`gobackward.10`/`goforward.10`, clamped to the song by pure
-`TransportSkip`), holding either for the 5 · 10 · 15 · 30 · 1 min increment menu shared by both and
-stored in `AppSettings.Key.transportSkipSeconds`. Idle rewind-to-restart and the never-implemented
-cross-song forward are withdrawn with it. Plus an **active-loop colour strip** with an ✕ deactivator (ADR 0030);
+bar carries a **skip · pause · skip** playback cluster whose outer glyphs mean the same thing in both
+states (ADR 0192): **−N / +N second skips** (`gobackward.10`/`goforward.10`), holding either for the
+5 · 10 · 15 · 30 · 1 min increment menu shared by both and stored in
+`AppSettings.Key.transportSkipSeconds`. What an armed loop changes is the **bounds**, not the
+gesture — pure `TransportSkip.bounds` clamps the skip to the engine's armed region (a saved loop or
+an unsaved A/B span) and to the song otherwise, so a skip can never disarm a loop. ADR 0030's
+restart / prev-loop / next-loop mapping, ADR 0124's idle rewind-to-restart and the never-implemented
+cross-song forward are all withdrawn; loop-to-loop is the Loops panel. Plus an **active-loop colour strip** with an ✕ deactivator (ADR 0030);
 a left-edge **swipe-back guard** stops a scrub from popping back to the library mid-adjust.
 On **release**, a dragged A/B edge / tap-seek **snaps to a nearby marker or
 saved-loop edge** within an on-screen tolerance (pure `WaveformGesture.snap`, light haptic;

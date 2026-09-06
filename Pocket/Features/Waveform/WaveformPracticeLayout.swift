@@ -106,11 +106,6 @@ struct PracticeCockpit<Header: View>: View {
         // the transport live (ADR 0041).
         TransportBar(isPlaying: model.engine.isPlaying,
                      onPlayPause: model.engine.togglePlay,
-                     onRestart: model.transportRestart,
-                     onPrevious: model.transportPrevious,
-                     onNext: model.transportNext,
-                     hasPrevious: model.hasPreviousTarget,
-                     hasNext: model.hasNextTarget,
                      onSkip: model.transportSkip(bySeconds:),
                      loop: model.activeLoop,
                      loopColor: model.activeLoopColor,

@@ -55,6 +55,10 @@ The drawing of the song, with a time ruler beneath it and the playhead across it
 `Back 10 seconds` · **`Play`** · `Forward 10 seconds`, with **`Loop`** beside them. Hold either skip
 button to change how far it jumps. Which side `Loop` sits on is a setting.
 
+The three buttons are the same three with a loop running, and the skips then move within the loop
+rather than the song — they stop at its ends, and never turn it off. Moving between loops is a tap on
+a row in the Loops panel below.
+
 ## The panels
 
 Two collapsible lists under the transport, each headed with its name and, when collapsed, a count.
