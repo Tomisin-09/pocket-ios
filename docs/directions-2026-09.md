@@ -401,6 +401,12 @@ so nothing has to move. `canRepeatSong` is unaffected.
 **Would become:** its own ADR — it **reunifies ADR 0030 and ADR 0124**, and the transport is
 documented in the manual.
 
+> **Built** — `docs/decisions/0192-one-transport-grammar.md` (2026-09-06). It came out as forecast: a
+> net deletion, `TransportNav` and its tests gone with the mapping they served, the pure tests
+> extended onto `target(from:by:within:)`. One thing the sketch did not name — the bounds are read
+> off the **engine's** armed region, not off `activeLoop`, so an unsaved A/B span scopes the buttons
+> too.
+
 ### 5d. Six other things that would help players get the most out of it
 
 Ranked. Every one is already recorded somewhere; none is new invention.
@@ -434,7 +440,7 @@ Ranked by cost, not by value, because everything here is argued for above.
 
 **Tier 1 — small, pure, no schema change:**
 
-1. **The transport unification (5c) — and it is a net deletion.** Give
+1. ~~**The transport unification (5c) — and it is a net deletion.**~~ **Built — ADR 0192.** Give
    `TransportSkip.target` a bounds range instead of a duration, point the buttons at it in
    both states, then delete `transportPrevious`, `transportNext`, `hasPreviousTarget`,
    `hasNextTarget` and their wiring. More lines out than in; the pure tests extend onto the

@@ -195,21 +195,19 @@ import SwiftUI
     ZStack {
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: false, onPlayPause: {},
-                     onRestart: {}, onPrevious: {}, onNext: {},
-                     hasPrevious: false, hasNext: true,
+                     onSkip: { _ in },
                      loop: song.loops.first,
                      loopColor: song.loops.first.map { LoopColor.color(for: $0, among: song.loopsByStart) },
                      onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()
     }
 }
 
-/// Idle: the centre glyphs are the timed skips (ADR 0124), holding either to change the increment.
+/// Idle: the centre glyphs are the timed skips (ADR 0124) — and so are the active preview's above,
+/// which is the whole of ADR 0192. Holding either changes the increment.
 #Preview("Transport bar — no loop") {
     ZStack {
         PocketColor.background.ignoresSafeArea()
         TransportBar(isPlaying: true, onPlayPause: {},
-                     onRestart: {}, onPrevious: {}, onNext: {},
-                     hasPrevious: false, hasNext: false,
                      onSkip: { _ in },
                      loop: nil, loopColor: nil,
                      onClearLoop: {}, onDropMarker: {}, onPunch: {}, isPunchActive: false).padding()

@@ -12,7 +12,7 @@ import XCTest
 ///
 /// Two ordinary gestures reach it: scrubbing the waveform to its far-right edge
 /// (`seekToFraction(1.0)`), and skipping forward inside the last increment (`TransportSkip.target`
-/// clamps to `duration`). The repair is that `primeSchedule` claims `scheduled` only when something
+/// clamps to the end of whatever is playing). The repair is that `primeSchedule` claims `scheduled` only when something
 /// was really queued, and a `play()` that finds nothing left rewinds to the top — the same reset
 /// `handleReachedEnd` makes when playback reaches the end on its own.
 ///
@@ -107,6 +107,27 @@ final class PracticeAudioEngineTests: XCTestCase {
         engine.seek(toSeconds: engine.duration)
         engine.setLoop(start: 0.5, end: 1.5)
         engine.play()
+        XCTAssertTrue(engine.isPlaying)
+    }
+
+    /// ADR 0192's other half, at engine level: a skip **inside** an armed loop is an ordinary seek
+    /// and must leave the loop armed. The pure clamp (`TransportSkipTests`) is what keeps the target
+    /// inside the region; this pins that landing there costs nothing — the region survives, so the
+    /// player does not silently fall out of the loop they are working.
+    @MainActor
+    func testSeekingInsideAnArmedLoopKeepsItArmed() async throws {
+        let engine = try await loadedEngine()
+        defer { engine.stop() }
+
+        engine.setLoop(start: 0.5, end: 1.5)
+        engine.play()
+        engine.seek(toSeconds: TransportSkip.target(from: 1.4, by: 0.5,
+                                                    within: TransportSkip.bounds(
+                                                        loopRegion: engine.loopRegion,
+                                                        duration: engine.duration)))
+
+        XCTAssertEqual(engine.currentTime, 1.5, accuracy: 0.001, "clamped to the loop end, not 1.9")
+        XCTAssertNotNil(engine.loopRegion, "a skip is a seek, never a disarm")
         XCTAssertTrue(engine.isPlaying)
     }
 }

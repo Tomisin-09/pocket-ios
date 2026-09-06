@@ -182,6 +182,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   there; it now says *Missing*.
 
 ### Changed
+- **The transport's skip buttons work inside a loop now, and mean one thing everywhere.** The two
+  buttons either side of play used to change jobs depending on whether a loop was running: on the
+  full song they moved you back and forward by a few seconds, but the moment you armed a loop they
+  became loop navigation — rewind restarted it, a second tap on rewind left for the previous loop,
+  forward left for the next one. So the move you make most while working a passage, nudging back a
+  few seconds to take the run-in again, was missing from the one place you do it, and an impatient
+  second tap threw you out of the loop entirely. They are now **−N / +N seconds in both states**,
+  and inside a loop they move you around **inside that loop** — a skip toward the end stops at the
+  end and keeps looping, so nothing you tap can disarm the loop by accident. Hold either button to
+  change how far it jumps, as before. Moving between loops is a tap on the loop's row in the **Loops**
+  panel, which is where loops are; restarting one is a tap on where it starts.
 - **Across now shows you the strings.** Choosing how far a picking run travels was two dropdowns and
   an arrow that never moved. It is now the neck itself: tap a string to move the nearer end of the
   run, tap an end again to narrow it to that one string, and **⇄** sends the run the other way. The

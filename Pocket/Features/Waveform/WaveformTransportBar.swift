@@ -12,32 +12,24 @@ import SwiftUI
 //   Loop / Marker column on the left and the loop's identity-colour ✕ strip on the right — because
 //   the running loop now reads on the Loops panel below, so the bar steps back out of the way
 //   (feedback #1 round 2).
-// The centre cluster is the header over rewind · pause · forward; the header reserves a fixed height
+// The centre cluster is the header over skip · pause · skip; the header reserves a fixed height
 // and reads the loop's name when active, else stays empty — the live playhead time renders as the
 // `TimeBubble` on the waveform canvas, so the redundant idle timecode was dropped (ADR 0075).
 //
-// The centre glyphs themselves change with the same two states (ADR 0124):
-// • **Idle** — **−N / +N second skips** in circular-arrow glyphs, holding either to change the
-//   increment. Rewind's single-tap "restart" is deliberately given up: moving freely inside the
-//   waveform is the thing you do constantly, and restarting is a tap on the start of the wave.
-// • **Active** — unchanged: rewind restarts the loop (double-tap → previous), forward → next loop.
+// The centre glyphs do **not** change with those states (ADR 0192): they are **−N / +N second
+// skips** in circular-arrow glyphs in both, holding either to change the increment. What the armed
+// loop changes is the scope — the caller clamps the skip to the loop region rather than the song —
+// so one gesture keeps one meaning. Rewind's single-tap "restart" and the loop-to-loop steps are
+// given up: moving freely inside what is playing is the thing you do constantly, restarting is a
+// tap on the start of the region, and the Loops panel below is where loops are chosen.
 
 // MARK: - 8. Transport bar
 
 struct TransportBar: View {
     let isPlaying: Bool
     let onPlayPause: () -> Void
-    /// Rewind single tap — restart the loop / song.
-    let onRestart: () -> Void
-    /// Rewind double tap — previous loop.
-    let onPrevious: () -> Void
-    /// Forward single tap — next loop.
-    let onNext: () -> Void
-    /// Whether previous / next have a target right now (else the affordance dims).
-    let hasPrevious: Bool
-    let hasNext: Bool
-    /// Seek by a signed number of seconds — the idle skip buttons (ADR 0124). The caller clamps to
-    /// the song. Defaulted to a no-op for previews and standalone use.
+    /// Seek by a signed number of seconds — the skip buttons, in both states (ADR 0124, ADR 0192).
+    /// The caller clamps to whatever is armed. Defaulted to a no-op for previews and standalone use.
     var onSkip: (TimeInterval) -> Void = { _ in }
 
     let loop: Loop?
@@ -63,7 +55,7 @@ struct TransportBar: View {
     /// column + colour strip keep their sides (the strip must stay where the loop identity reads).
     @AppStorage(AppSettings.Key.transportLoopOnLeft)
     private var loopOnLeft = AppSettings.transportLoopOnLeftDefault
-    /// How far the idle skip buttons move, in seconds (ADR 0124). Lives here rather than on the
+    /// How far the skip buttons move, in seconds (ADR 0124). Lives here rather than on the
     /// model because it's a standing habit, not per-song state — the same reasoning as `loopOnLeft`.
     @AppStorage(AppSettings.Key.transportSkipSeconds) private var skipSeconds = Int(TransportSkip.defaultIncrement)
 
@@ -170,22 +162,14 @@ struct TransportBar: View {
         .transition(.opacity)
     }
 
+    /// One row, both states (ADR 0192) — the skip pair either side of play/pause. The armed loop
+    /// changes what a skip is clamped to, not what the buttons are.
     private var transportRow: some View {
         HStack(spacing: compact ? 32 : 40) {
-            if loopActive {
-                RewindButton(onRestart: onRestart, onPrevious: onPrevious,
-                             hasPrevious: hasPrevious, size: glyphSize)
-            } else {
-                skipButton(forward: false)
-            }
+            skipButton(forward: false)
             TransportGlyph(icon: isPlaying ? "pause.fill" : "play.fill",
                            label: isPlaying ? "Pause" : "Play", size: glyphSize, action: onPlayPause)
-            if loopActive {
-                TransportGlyph(icon: "forward.fill", label: "Next loop",
-                               isEnabled: hasNext, size: glyphSize, action: onNext)
-            } else {
-                skipButton(forward: true)
-            }
+            skipButton(forward: true)
         }
     }
 
@@ -257,11 +241,12 @@ private struct TransportControl: View {
     }
 }
 
-/// A background-free transport glyph (pause / forward / play). No pill behind it.
+/// A background-free transport glyph (skip / play / pause). No pill behind it. Nothing here dims:
+/// every glyph in the row is live in both states now (ADR 0192), so the disabled variant the
+/// loop-navigation buttons needed went with them.
 private struct TransportGlyph: View {
     let icon: String
     let label: String
-    var isEnabled: Bool = true
     var size: CGFloat = transportGlyphSize
     let action: () -> Void
 
@@ -269,33 +254,10 @@ private struct TransportGlyph: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.futura(size: size, weight: .semibold))
-                .foregroundStyle(isEnabled ? PocketColor.textPrimary : PocketColor.textSecondary.opacity(0.35))
+                .foregroundStyle(PocketColor.textPrimary)
         }
         .buttonStyle(.plain)
-        .disabled(!isEnabled)
         .accessibilityLabel(label)
-    }
-}
-
-/// The rewind glyph: single tap restarts (loop / song); double tap skips to the
-/// previous loop. The `count: 2` tap is registered before `count: 1` so SwiftUI
-/// disambiguates them; VoiceOver reaches "previous" via a custom action (its own
-/// double-tap is the activation gesture, so it maps to the single action).
-private struct RewindButton: View {
-    let onRestart: () -> Void
-    let onPrevious: () -> Void
-    let hasPrevious: Bool
-    var size: CGFloat = transportGlyphSize
-
-    var body: some View {
-        Image(systemName: "backward.fill")
-            .font(.futura(size: size, weight: .semibold))
-            .foregroundStyle(PocketColor.textPrimary)
-            .contentShape(Rectangle())
-            .onTapGesture(count: 2) { if hasPrevious { onPrevious() } }
-            .onTapGesture(count: 1) { onRestart() }
-            .accessibilityLabel("Restart")
-            .accessibilityAction(named: "Previous loop") { if hasPrevious { onPrevious() } }
     }
 }
 
