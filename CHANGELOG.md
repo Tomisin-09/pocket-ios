@@ -169,6 +169,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   there yet.
 
 ### Fixed
+- **The Loop controls cheatsheet no longer cuts off its last line.** Tapping `Loop controls` on the
+  song player opens a nine-row summary of the gestures, and the bottom row — **Follow** — was being
+  sliced through the middle by the edge of the panel, with nothing on screen to say there was more.
+  It scrolls now, so every row is reachable however long the list gets and however large you have set
+  your text size.
 - **Search in the Journal now finds accented words.** Searching *Andalusian* found nothing if you
   had written it *Andalusían* — the Journal was one of two screens that matched letters exactly
   while the rest of the app ignored accents. Every search field in Red Moon now answers the same
