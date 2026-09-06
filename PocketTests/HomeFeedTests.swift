@@ -133,4 +133,69 @@ final class HomeFeedTests: XCTestCase {
         XCTAssertEqual(HomeFeed.orderedForHome(items, practicedAt: \.practiced, title: \.name).map(\.name),
                        ["alpha", "Beta"])
     }
+
+    // MARK: - The resume card's subject (ADR 0193)
+
+    private let day: TimeInterval = 86_400
+
+    private func kind(_ preference: JumpBackInPreference,
+                      song: Double? = nil, routine: Double? = nil,
+                      exercise: Double? = nil) -> HomeFeed.ResumeKind? {
+        let base = Date(timeIntervalSince1970: 1_700_000_000)
+        func at(_ daysAgo: Double?) -> Date? { daysAgo.map { base.addingTimeInterval(-$0 * day) } }
+        return HomeFeed.resumeKind(preference: preference,
+                                   songPracticedAt: at(song),
+                                   routinePracticedAt: at(routine),
+                                   exercisePracticedAt: at(exercise))
+    }
+
+    func testMostRecentPicksTheNewestOfAnyKind() {
+        XCTAssertEqual(kind(.mostRecent, song: 3, routine: 1, exercise: 5), .routine)
+        XCTAssertEqual(kind(.mostRecent, song: 3, routine: 4, exercise: 1), .exercise)
+        XCTAssertEqual(kind(.mostRecent, song: 0, routine: 4, exercise: 1), .song)
+    }
+
+    func testNothingPractisedHidesTheCard() {
+        XCTAssertNil(kind(.mostRecent))
+        // A pin does not conjure a card out of an empty install either.
+        XCTAssertNil(kind(.routine))
+    }
+
+    func testAPinWinsOverAMoreRecentOtherKind() {
+        // The whole point of the setting: the song was practised today, the routine a week ago,
+        // and the card still offers the routine.
+        XCTAssertEqual(kind(.routine, song: 0, routine: 7, exercise: 1), .routine)
+        XCTAssertEqual(kind(.exercise, song: 0, routine: 1, exercise: 30), .exercise)
+        XCTAssertEqual(kind(.song, song: 30, routine: 1, exercise: 0), .song)
+    }
+
+    func testAPinWithNothingToShowFallsBackToTheMostRecent() {
+        // Pinned to routines, never run one — the card shows the newest of what there is rather
+        // than going blank.
+        XCTAssertEqual(kind(.routine, song: 2, exercise: 1), .exercise)
+        XCTAssertEqual(kind(.exercise, song: 2, routine: 9), .song)
+    }
+
+    func testTiesBreakSongThenRoutineThenExercise() {
+        // Same instant on all three: the declaration order decides, matching
+        // `mostRecentlyPracticed`'s first-maximal rule.
+        XCTAssertEqual(kind(.mostRecent, song: 1, routine: 1, exercise: 1), .song)
+        XCTAssertEqual(kind(.mostRecent, routine: 1, exercise: 1), .routine)
+    }
+
+    func testPinnedKindMapsEveryPreference() {
+        XCTAssertNil(JumpBackInPreference.mostRecent.pinnedKind)
+        XCTAssertEqual(JumpBackInPreference.song.pinnedKind, .song)
+        XCTAssertEqual(JumpBackInPreference.routine.pinnedKind, .routine)
+        XCTAssertEqual(JumpBackInPreference.exercise.pinnedKind, .exercise)
+    }
+
+    /// The `@AppStorage` trap this project has paid for seven times: an unset key must read as the
+    /// default, and a raw value written by some later build must degrade rather than trap.
+    func testResolvedPreferenceHonoursTheDefault() {
+        XCTAssertEqual(AppSettings.resolvedJumpBackIn(storedValue: nil), .mostRecent)
+        XCTAssertEqual(AppSettings.resolvedJumpBackIn(storedValue: "loop"), .mostRecent)
+        XCTAssertEqual(AppSettings.resolvedJumpBackIn(storedValue: "routine"), .routine)
+        XCTAssertEqual(AppSettings.jumpBackInPreferenceDefault, .mostRecent)
+    }
 }

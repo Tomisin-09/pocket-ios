@@ -19,8 +19,14 @@ Under it, `Ready to practice?`.
 **`Start today's session`** is the filled teal card, and the primary action. It builds a session from
 your goals. Without Red Moon Pro it draws a padlock and opens the paywall instead.
 
-**`JUMP BACK IN`** appears once you have practised a song, and carries that song, its artist, when
-you last played it and its mastery. Tapping it reopens the [song player](song-player.md).
+**`JUMP BACK IN`** appears once you have practised anything, and carries the last thing you
+practised — a song with its artist and mastery, a routine with its block count, or an exercise with
+its command tempos — along with when you last played it. Tapping it reopens that thing: a song in the
+[song player](song-player.md), a routine on its own screen, an exercise on its run screen.
+
+**Hold the card** to pin what it offers: `Most recent`, `Song`, `Routine` or `Exercise`. The same
+choice is in [Settings ▸ Practice](settings.md#practice) under `Jump back in`. A pin you have nothing
+for yet — `Routine`, before you have run one — shows the most recent of any kind until you do.
 
 **`Practice`** — one card, subtitled `Your exercises & training runs`, opening the
 [Practice hub](practice.md). **`Metronome`** sits beside it, subtitled

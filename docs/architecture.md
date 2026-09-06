@@ -170,7 +170,15 @@ me to that structure") snaps to the full set including beats, while a free **scr
 the playhead exactly here") drops the dense beat grid and catches only the sparse landmarks
 (markers + loop edges) — the same candidate set the minimap uses, so a deliberate scrub
 between beats lands where the finger lifts. Beat snap for *placement* (loop-edge commit,
-Fine-handle release, the downbeat) is unaffected; only the seek scrub stops catching beats. Tempo and the downbeat are set behind the **metronome control** on the speed bar (`BPMSheet`, opened by holding it — or by a plain tap while the song has no tempo, the state it badges; ADR 0124 retired the "Set BPM" capsule and gave its slot to whole-song **repeat**; **ADR 0170 made that control the *only* handle on the editor**, specialising the BPM callout beside it into a gateway *out* — see below):
+Fine-handle release, the downbeat) is unaffected; only the seek scrub stops catching beats.
+**ADR 0194 narrows that pair without collapsing it**: one `SeekSnapping` preference —
+`Structure and beat` (default, today) / `Structure only` / `Off` — where `includesBeats(scrubbing:)`
+takes the *gesture*, so a scrub drops the grid at every setting that snaps and the middle value only
+makes a **tap** behave the way a scrub always has. Read off `AppSettings` at release, the way
+`zoomFollowsPlayhead` is read at pinch. Scoped to **seeking**, on the detail waveform and the
+minimap alike (the strip already excludes beats, so `Off` is the only value that reaches it);
+loop-edge releases and ADR 0099's neighbour-aware yielding are deliberately out of reach, since
+`Off` there would make loops hard to place at all. Tempo and the downbeat are set behind the **metronome control** on the speed bar (`BPMSheet`, opened by holding it — or by a plain tap while the song has no tempo, the state it badges; ADR 0124 retired the "Set BPM" capsule and gave its slot to whole-song **repeat**; **ADR 0170 made that control the *only* handle on the editor**, specialising the BPM callout beside it into a gateway *out* — see below):
 **tap-tempo** captures the engine's song-time per tap (pure `TempoMath.bpm(fromTapTimes:)`,
 so in-loop / slowed tapping reads the true tempo) or **manual** entry, and **the 1** is
 placed by a draggable waveform handle that **snaps to the loudest transient** near the drop

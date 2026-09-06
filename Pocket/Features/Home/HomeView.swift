@@ -22,7 +22,8 @@ struct HomeView: View {
     /// instance rather than an environment value because the delegate that fills it lives outside
     /// the SwiftUI environment entirely; `@Observable` still tracks it from here.
     let notificationRouter = NotificationRouter.shared
-    @Query(sort: \Song.title) private var songs: [Song]
+    /// Non-private since ADR 0193: `HomeView+Resume` reads them to pick the card's subject.
+    @Query(sort: \Song.title) var songs: [Song]
     @Query var routines: [Routine]
     // Non-private so the `HomeView+ProfileMoment` extension (a separate file, for the length cap) can
     // read them when deciding which one-time profile moment to surface (ADR 0113).
@@ -35,6 +36,13 @@ struct HomeView: View {
     @AppStorage(AppSettings.Key.artistNamePromptSeen) var artistNamePromptSeen = false
     /// One-time gate for the first-launch curation intake (ADR 0113 S2), so it's offered once.
     @AppStorage(AppSettings.Key.artistIntakeSeen) var artistIntakeSeen = false
+    /// Which kind the "Jump back in" card offers (ADR 0193). Stored raw and resolved through
+    /// `AppSettings`, so an unrecognised value degrades to the default instead of trapping — and
+    /// bound to `AppSettings.jumpBackInPreferenceDefault`, never a literal, because the value an
+    /// `@AppStorage` declares is what SwiftUI uses for an unset key and it does not consult the
+    /// accessor. The hold menu writes this binding directly.
+    @AppStorage(AppSettings.Key.jumpBackIn)
+    var jumpBackInRaw = AppSettings.jumpBackInPreferenceDefault.rawValue
     /// One-time gate for the analytics sheet, so it appears once and never nags. Covers being
     /// *told* as well as being *asked* (ADR 0147) — the key string is unchanged so no install
     /// re-sees it.
@@ -79,17 +87,9 @@ struct HomeView: View {
                     // otherwise, so it costs the ordinary Home nothing.
                     TrialCountdownRow()
                     startTodaySessionCard
-                    if let song = resumeSong {
-                        // Gated with the nav strips (ADR 0144 D4): this card is a *second* door into
-                        // the same Pro surface the Song library card leads to, and a lapsed player
-                        // who dismissed the launch wall would otherwise walk straight through it.
-                        proGated(.song) {
-                            WaveformPracticeView(song: song, context: context)
-                        } label: {
-                            JumpBackInCard(song: song, locked: !isPro)
-                        }
-                        .buttonStyle(.plain)
-                    }
+                    // Which unit this offers is the player's choice since ADR 0193; the card, its
+                    // Pro gate and the hold that changes the choice live in `HomeView+Resume`.
+                    if let target = resumeTarget { resumeCard(target) }
                     // The navigation strips are grouped into titled sections (ADR 0102) rather than
                     // one flat run: hierarchy keeps the home calm as destinations accrue and gives a
                     // new arrival a section to join instead of becoming a sixth same-weight peer.
@@ -324,12 +324,6 @@ struct HomeView: View {
     // MARK: - Recent routines rail
 
     // MARK: - Derived
-
-    /// The single most-recently-practised song — the "Jump back in" subject — or `nil` on a
-    /// fresh library where nothing has been practised yet (the card hides).
-    private var resumeSong: Song? {
-        HomeFeed.mostRecentlyPracticed(songs, practicedAt: \.lastPracticed)
-    }
 
     /// The recent-routines rail contents: routines actually practised, newest first, capped.
     var recentRoutines: [Routine] {

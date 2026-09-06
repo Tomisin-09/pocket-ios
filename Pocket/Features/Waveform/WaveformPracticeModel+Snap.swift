@@ -50,8 +50,19 @@ extension WaveformPracticeModel {
     /// deliberate scrub between beats lands where the finger lifts (ADR 0080) — the same
     /// candidate set the minimap uses. Separate from `seekToFraction` so the continuous
     /// scrub (`onChanged`) stays raw; this fires once, on release.
+    ///
+    /// Since ADR 0194 the player can narrow that pair — *Structure only* drops the beat grid from a
+    /// tap as well, *Off* snaps nothing — which is why the mode is asked for the gesture rather than
+    /// consulted as a flag: the tap/scrub distinction survives every setting that snaps at all. Read
+    /// straight off `AppSettings` at release, the way `zoomFollowsPlayhead` is read at pinch.
+    ///
+    /// ⚠ **Seeking only.** Loop-edge releases go through `loopEdgeSnapTarget`, whose
+    /// neighbour-aware yielding (ADR 0099) is what stops a tight neighbour hijacking a handle;
+    /// letting *Off* reach that would make loops hard to place at all.
     func seekSnapping(_ fraction: Double, scrubbing: Bool = false) {
-        let candidates = snapCandidates(includingBeats: !scrubbing)
+        let mode = AppSettings.seekSnapping
+        guard mode.snapsToAnything else { return seekToFraction(fraction) }
+        let candidates = snapCandidates(includingBeats: mode.includesBeats(scrubbing: scrubbing))
         if let target = WaveformGesture.snap(fraction, to: candidates, tolerance: snapTolerance) {
             haptic(.light)
             seekToFraction(target)
@@ -94,7 +105,14 @@ extension WaveformPracticeModel {
     /// edges are the sparse landmarks actually drawn there. Sources the same
     /// `landmarkCandidates` as a scrub release (ADR 0080), so the "sparse landmarks vs dense
     /// pulse" rule lives in one place. The live drag stays un-snapped; this fires on release.
+    ///
+    /// **Honours the ADR 0194 preference, and can only be turned off by it.** The strip already
+    /// excludes beats, so *Structure only* is what it has always done and changes nothing here;
+    /// *Off* is the one value that reaches it. A seek is a seek whichever surface it is made on, and
+    /// a preference that governed one of the two would be a preference the player had to discover
+    /// twice.
     func seekMinimapSnapping(_ fraction: Double) {
+        guard AppSettings.seekSnapping.snapsToAnything else { return seekToFraction(fraction) }
         if let target = WaveformGesture.snap(fraction, to: landmarkCandidates(),
                                              tolerance: WaveformGesture.snapTolerance) {
             haptic(.light)

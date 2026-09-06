@@ -76,6 +76,7 @@ enum AppSettings {
         static let waveformMinimapVisible = "waveformMinimapVisible"
         static let waveformMarkerLabels = "waveformMarkerLabels"
         static let zoomFollowsPlayhead = "zoomFollowsPlayhead"
+        static let seekSnapping = "seekSnapping"
         static let artistNamePromptSeen = "artistNamePromptSeen"
         static let artistIntakeSeen = "artistIntakeSeen"
         static let clickTimbre = "clickTimbre"
@@ -99,6 +100,9 @@ enum AppSettings {
         static let journalSortOrder = "journalSortOrder"
         static let journalPinnedOnly = "journalPinnedOnly"
         static let journalOwnerFilter = "journalOwnerFilter"
+        /// Home's resume-card preference (ADR 0193). Read from a second place
+        /// (`resetJumpBackInPreference`), so it is named here for the same reason the four above are.
+        static let jumpBackIn = "jumpBackIn"
         #if DEBUG
         /// DEBUG-only A/B for ADR 0140 §3. Never read in Release, which always compensates.
         static let compensateStretchLatency = "compensateStretchLatency"
@@ -147,22 +151,10 @@ enum AppSettings {
     /// whichever waveform view reads it, that last being what SwiftUI actually uses for an unset key.
     /// Since a hold on the player opens the *same* screen the Settings hub does, a drifted literal
     /// would show two different "off"s for one key. Do not inline these back to literals.
-    /// Whether imported song copies ride along in device backups. **Default on, which is today's
-    /// behaviour** — ADR 0148 traded bigger backups for song custody deliberately, and ADR 0182 turns
-    /// that trade into an informed choice rather than reversing it.
-    ///
-    /// Named for the same reason the constants below are: the literal a `@AppStorage` declares is what
-    /// SwiftUI actually uses for an unset key, and it does **not** consult the accessor. A drifted
-    /// literal here would tell a player their songs are in their backup while the app acts otherwise.
-    static let songsInBackupDefault = true
-
     static let transportLoopOnLeftDefault = false
     static let waveformMinimapVisibleDefault = true
     static let waveformMarkerLabelsDefault = true
     static let zoomFollowsPlayheadDefault = false
-
-    /// Whether song copies stay in device backups (ADR 0182). Default on.
-    static var songsInBackup: Bool { bool(Key.songsInBackup, default: songsInBackupDefault) }
 
     /// Gesture-confirmation haptics on/off. Default on.
     static var hapticsEnabled: Bool { bool(Key.hapticsEnabled) }

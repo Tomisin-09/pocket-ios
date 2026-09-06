@@ -45,6 +45,10 @@ struct PocketApp: App {
         // corrupted.
         if UITestRuntime.isActive {
             AppSettings.resetJournalFilters()
+            // Home's resume-card preference is the same trap on the app's front door (ADR 0193): a
+            // test that pins the card to *Routine* leaves it pinned for the next test and the next
+            // run, and `reference/home` is shot through that card.
+            AppSettings.resetJumpBackInPreference()
             // The Oracle's cadence is the same trap with a longer fuse (ADR 0187 D15). Its gate is
             // driven by a stored date, so the *second* run of a suite finds the week already spent
             // and the screen showing a persisted reading instead of the button. A test written

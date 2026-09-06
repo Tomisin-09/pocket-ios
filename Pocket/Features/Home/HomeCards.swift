@@ -68,11 +68,37 @@ struct HomeNavCard: View {
     }
 }
 
-/// The "Jump back in" card: the song you last practised, with its mastery and when you last
-/// touched it. Resumes the song (at its last-practiced tempo, ADR 0044) on tap. Neutral
-/// chrome — the metronome card owns the screen's one accent colour.
+/// The "Jump back in" card: the unit you last practised — a song, a routine or an exercise, per the
+/// player's preference (ADR 0193) — with when you last touched it and a trailing readout. Resumes it
+/// on tap; a song resumes at its last-practiced tempo (ADR 0044). Neutral chrome — the metronome card
+/// owns the screen's one accent colour.
+///
+/// **The eyebrow does not vary.** `JUMP BACK IN` names the card's *job*, and a card that renamed
+/// itself with its contents would read as three different cards that happen to share a slot. Only the
+/// body changes shape.
 struct JumpBackInCard: View {
-    let song: Song
+    /// What the card is offering, flattened out of the model so the card draws a song, a routine and
+    /// an exercise through one body rather than three branches. The hub owns the mapping; this view
+    /// knows nothing about `Song`, and so has no opinion about where a tap goes.
+    struct Content {
+        let title: String
+        /// The artist for a song, the family for an exercise; `nil` where there is nothing to say.
+        let subtitle: String?
+        let practiced: Date?
+        let trailing: Trailing
+    }
+
+    /// The readout on the right. A routine has **no mastery** and never gains one (ADR 0070 keeps
+    /// grades off practice), so it cannot borrow `MasteryReadout`'s `nil` — that renders an em dash
+    /// meaning *unrated*, which for a routine would state something untrue rather than nothing.
+    enum Trailing {
+        /// A song or an exercise: its mastery out of five, or `nil` for genuinely unrated.
+        case mastery(Int?)
+        /// A routine: how many playable blocks it holds, the same figure `RecentRoutineCard` shows.
+        case blocks(Int)
+    }
+
+    let content: Content
     /// Whether this card is behind the Pro wall (ADR 0144 D4). The card is a *second* door into the
     /// Song library's Pro surface and has always routed through `proGated(.song)`; the lock makes that
     /// visible, matching `HomeNavCard` and the recent-routines rail. Rides on the eyebrow rather than
@@ -98,24 +124,31 @@ struct JumpBackInCard: View {
             }
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(song.title)
+                    Text(content.title)
                         .font(.futura(.title3, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
                         .lineLimit(1)
-                    if !song.artist.isEmpty {
-                        Text(song.artist)
+                    if let subtitle = content.subtitle, !subtitle.isEmpty {
+                        Text(subtitle)
                             .font(.futura(.subheadline))
                             .foregroundStyle(PocketColor.textSecondary)
                             .lineLimit(1)
                     }
-                    if let practiced = song.lastPracticed {
+                    if let practiced = content.practiced {
                         Text("Last practised \(Self.relative(practiced))")
                             .font(.futura(.footnote))
                             .foregroundStyle(PocketColor.textSecondary)
                     }
                 }
                 Spacer(minLength: 8)
-                MasteryReadout(mastery: song.mastery)
+                switch content.trailing {
+                case .mastery(let mastery):
+                    MasteryReadout(mastery: mastery)
+                case .blocks(let count):
+                    Text("\(count) block\(count == 1 ? "" : "s")")
+                        .font(.futura(.footnote))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
             }
         }
         .padding(16)
@@ -192,4 +225,25 @@ struct RecentRoutineCard: View {
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: .now)
     }
+}
+
+/// The three shapes one card takes (ADR 0193), side by side — the check the build cannot make:
+/// that a routine's block count and an exercise's command line sit where a song's artist and mastery
+/// do, and that the fixed eyebrow still reads as one card rather than three.
+#Preview("Jump back in — three shapes") {
+    VStack(spacing: 16) {
+        JumpBackInCard(content: .init(title: "Slow Bend", subtitle: "Jack Trader",
+                                      practiced: .now.addingTimeInterval(-3600),
+                                      trailing: .mastery(3)))
+        JumpBackInCard(content: .init(title: "Evening warm-up", subtitle: nil,
+                                      practiced: .now.addingTimeInterval(-86_400),
+                                      trailing: .blocks(4)))
+        JumpBackInCard(content: .init(title: "Minor pentatonic, position 1",
+                                      subtitle: "Command 90 → 120 BPM · 8ths",
+                                      practiced: .now.addingTimeInterval(-172_800),
+                                      trailing: .mastery(nil)), locked: true)
+    }
+    .padding(20)
+    .background(PocketColor.background)
+    .preferredColorScheme(.dark)
 }

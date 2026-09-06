@@ -18,9 +18,9 @@ answered without opening anything.
 | `You` | Your name, and what you play |
 | `Appearance` | Theme, motion, and how notes are spelled |
 | `Sound & feel` | Haptics, and which click the metronome plays |
-| `Practice` | Count-in, screen, the strumming click, and reminders |
+| `Practice` | Count-in, screen, the strumming click, reminders, and what Home offers you |
 | `Routines` | How a routine moves from block to block |
-| `Song player` | Four things about the waveform screen |
+| `Song player` | Five things about the waveform screen |
 | `Your data` | A copy of everything, and what it takes up |
 | `Privacy` | The one analytics switch |
 | `Help & About` | Version, help, contact, diagnostics, and the legal links |
@@ -88,6 +88,11 @@ Every one of these is optional, and none of it leaves the device.
   **`None yet`**. Tap one to change its days, its time, or to switch it off, without going to the
   routine. With notifications off for Red Moon each row reads **`Not being delivered`** rather than
   naming a time it cannot keep.
+- **`Home`** ▸ **`Jump back in`** — what Home's resume card carries: `Most recent`, `Song`,
+  `Routine` or `Exercise`. Its footer: *The card under today's session carries the last thing you
+  practised. Pin it to a song, a routine or an exercise if that is what you always come back to. You
+  can also hold the card itself to change this. Whichever you pick, the most recent of any kind shows
+  until there is one of that kind to show.*
 
 ## `Routines`
 
@@ -102,13 +107,18 @@ Every one of these is optional, and none of it leaves the device.
 
 ## `Song player`
 
-The same four switches the [player](song-player.md#the-player-settings-sheet) carries behind a hold
+The same five controls the [player](song-player.md#the-player-settings-sheet) carries behind a hold
 on `Loop controls` — one setting, two doors.
 
 - **`Loop control on left`** — *Big Loop and Marker buttons flank the transport bar while idle. Marker sits on the left and Loop on the right by default — turn this on to swap them.*
 - **`Show minimap`** — *The full-song overview strip under the waveform. Off gives the waveform and loops a little more room.*
 - **`Show marker labels`** — *Floats a marker's name over the timeline as you play up to it. Off keeps labels in the Markers panel only.*
 - **`Zoom follows playhead`** — *Pinch-zoom normally keeps the spot under your fingers still. Turn this on to have the window re-center on the playhead as you zoom instead.*
+- **`Snap when seeking`** — `Structure and beat`, `Structure only` or `Off`. Its footer: *Tapping the
+  waveform lands on the nearest marker, loop edge or beat, so the playhead lines up with what you can
+  see. Dragging already ignores the beats and keeps the markers. Structure only drops the beats from
+  a tap too; Off puts the playhead exactly where you lifted your finger. Loop edges still line up
+  either way.*
 
 ## `Your data`
 

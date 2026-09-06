@@ -15,6 +15,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **Jump back in can be a song, a routine or an exercise — and you choose which.** Home's resume card
+  used to offer the last **song** you practised and nothing else, even if everything you had done
+  that week was routines. It now offers whatever you last practised of any kind, and you can pin it:
+  **hold the card**, or open **Settings ▸ Practice ▸ Jump back in**, and set it to *Most recent*
+  (the default, and what it does now), *Song*, *Routine* or *Exercise*. A song still carries its
+  artist and mastery, a routine its block count, an exercise its command tempos, and each opens the
+  screen it always did. Pin it to something you have never practised and it shows the most recent of
+  any kind until you do.
+- **`Snap when seeking`** in **Settings ▸ Song player** — and behind a hold on `Loop controls`.
+  Tapping the waveform lands on the nearest marker, loop edge or beat so the playhead lines up with
+  what you can see; dragging already ignores the beats. **Structure only** drops the beats from a tap
+  as well, for a song whose grid is dense enough that every tap lands on a pulse, and **Off** puts the
+  playhead exactly where you lifted your finger. Loop edges still line up either way.
 - **The Red Moon Oracle reads your week back to you.** A new **Learn** section on the home screen —
   the Oracle, with the Toolkit moving in beside it — leads to a weekly **reading**: what you
   practised, how long for, on which days, the tempos you played things at and the rhythm they were

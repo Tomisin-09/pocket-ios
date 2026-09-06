@@ -72,7 +72,7 @@ one you wanted.
      | crop: 0,370,1206,280 -->
 
 **Tapping and holding the Loop controls line do different things.** A tap gives you the cheatsheet
-above; a hold opens the player's settings — the same four switches as **Settings ▸ Song player**,
+above; a hold opens the player's settings — the same five controls as **Settings ▸ Song player**,
 put where you are actually using them.
 
 ## Holds that open a menu
@@ -92,8 +92,9 @@ Not every list offers all of it, because not every item has all of it:
 | **Where you learned it** links | **Edit link** and **Delete** — a link has no favourite, and this delete is immediate rather than undoable |
 
 The transport's skip buttons use the same kind of menu for a different job: hold either one and pick
-how far it jumps — **5s**, **10s**, **15s**, **30s** or **1 min**. Journal entries and recorded
-takes have their own hold menus too.
+how far it jumps — **5s**, **10s**, **15s**, **30s** or **1 min**. Holding Home's **Jump back in**
+card picks what that card offers — see [Home](reference/home-and-library.md#home). Journal entries
+and recorded takes have their own hold menus too.
 
 ## Swipes
 
@@ -114,7 +115,9 @@ when the toast does.
 
 The waveform is the one place where dragging means several things depending on where you start.
 
-- **Tap or drag anywhere** on it to move the playhead.
+- **Tap or drag anywhere** on it to move the playhead. A tap lands on the nearest marker, loop edge
+  or beat; a drag ignores the beats and keeps the markers, so it lands where you lifted your finger.
+  How much of that catching happens is the **Snap when seeking** setting in the player's settings.
 - **Pinch** to zoom in and out. Whether the view stays put or follows the playhead is the **Zoom
   follows playhead** switch in the player's settings.
 - **Hold, then drag** across it to draw a loop in one gesture, instead of tapping **Loop** twice.
