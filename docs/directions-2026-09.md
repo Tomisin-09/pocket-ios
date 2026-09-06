@@ -446,11 +446,15 @@ Ranked by cost, not by value, because everything here is argued for above.
    `hasNextTarget` and their wiring. More lines out than in; the pure tests extend onto the
    new signature. The only reason it is not trivial is that it needs an ADR (it reunifies
    0030 and 0124) and the transport is documented in the manual.
-2. **The Jump-back-in preference (§2).** No model change — the data is already persisted and
-   unread. One pure `HomeFeed.resumeTarget`, one `PracticeSettingsView` row, one hold menu,
-   three destinations.
-3. **The snapping preference (5b).** One key, one row on an existing screen, one branch in
-   `seekSnapping`. The design thinking is the expensive part and 5b does it.
+2. ~~**The Jump-back-in preference (§2).**~~ **Built — ADR 0193.** No model change — the data is
+   already persisted and unread. One pure `HomeFeed.resumeKind`, one `PracticeSettingsView` row, one
+   hold menu, three destinations. Landed **without a Home reshoot**: the default resolves the seeded
+   figure to the same song it always showed, so it did not have to wait to be batched with the stat
+   strip and the tile grid below.
+3. ~~**The snapping preference (5b).**~~ **Built — ADR 0194.** One key, one row on an existing
+   screen, one branch in `seekSnapping`. The design thinking was the expensive part and 5b did it;
+   the open question it left — whether *Off* should reach ADR 0099's loop-edge yielding — is decided
+   **no** in 0194 D3, and the minimap is brought in scope for the same reason.
 
 **Tier 2 — small, but clear one unknown first:**
 

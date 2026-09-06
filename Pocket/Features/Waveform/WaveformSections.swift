@@ -170,8 +170,27 @@ struct ModeDescriptionLine: View {
 }
 
 /// The gesture cheatsheet shown by the **Loop controls** popover (ADR 0041).
+///
+/// **Scrollable, because the content outgrew the popover.** A popover sizes itself to its content
+/// and is then clipped by the screen — it does not shrink to fit and gives no sign it has been cut.
+/// At nine rows, three of which wrap to two lines, the stack wants ~484pt against the ~411pt the
+/// anchor leaves on a 6.1" phone, so the last row was sliced through the middle with nothing to say
+/// so. That arrived a row at a time (the ninth was ADR 0170's *Carry the tempo*) and would arrive
+/// again with the tenth, so the fix is the container and not the copy.
+///
+/// Dynamic Type is the same bug with a much bigger margin: at an accessibility size this content is
+/// several screens tall whatever the row count, and no amount of trimmed spacing reaches that.
+/// `scrollBounceBehavior(.basedOnSize)` keeps it feeling like a fixed panel — no rubber-banding —
+/// whenever it does happen to fit.
 private struct LoopControlsInfo: View {
     var body: some View {
+        ScrollView {
+            content
+        }
+        .scrollBounceBehavior(.basedOnSize)
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 11) {
             Text("Loop controls")
                 .font(.futura(.subheadline, weight: .semibold))

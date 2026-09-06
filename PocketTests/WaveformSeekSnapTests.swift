@@ -72,4 +72,66 @@ final class WaveformSeekSnapTests: XCTestCase {
                                  tolerance: tolerance),
             "a scrub release lands where the finger lifts — no beat catch")
     }
+
+    // MARK: - The seek-snapping preference (ADR 0194)
+
+    /// The two rules the release branch is made of, one per decision it takes.
+    func testSnappingModeRules() {
+        XCTAssertTrue(SeekSnapping.structureAndBeat.snapsToAnything)
+        XCTAssertTrue(SeekSnapping.structureOnly.snapsToAnything)
+        XCTAssertFalse(SeekSnapping.off.snapsToAnything)
+
+        // A tap admits beats only at the full setting; a scrub never does, at any setting — the
+        // ADR 0080 distinction the preference narrows rather than flattens.
+        XCTAssertTrue(SeekSnapping.structureAndBeat.includesBeats(scrubbing: false))
+        XCTAssertFalse(SeekSnapping.structureAndBeat.includesBeats(scrubbing: true))
+        XCTAssertFalse(SeekSnapping.structureOnly.includesBeats(scrubbing: false))
+        XCTAssertFalse(SeekSnapping.structureOnly.includesBeats(scrubbing: true))
+        XCTAssertFalse(SeekSnapping.off.includesBeats(scrubbing: false))
+    }
+
+    /// `Structure only` makes a **tap** behave the way a scrub always has: the isolated beat that
+    /// catches a tap at the default setting stops catching one.
+    func testStructureOnlyDropsTheBeatGridFromATap() throws {
+        let model = try makeModel()
+        let landmarks = model.landmarkCandidates()
+        let tolerance = model.snapTolerance
+        let isolatedBeat = try XCTUnwrap(
+            model.beatGrid.map(\.fraction).first { beat in
+                landmarks.allSatisfy { abs($0 - beat) > tolerance }
+            })
+
+        func caught(_ mode: SeekSnapping, scrubbing: Bool) -> Double? {
+            guard mode.snapsToAnything else { return nil }
+            let candidates = model.snapCandidates(includingBeats: mode.includesBeats(scrubbing: scrubbing))
+            return WaveformGesture.snap(isolatedBeat, to: candidates, tolerance: tolerance)
+        }
+
+        XCTAssertEqual(caught(.structureAndBeat, scrubbing: false), isolatedBeat)
+        XCTAssertNil(caught(.structureOnly, scrubbing: false),
+                     "Structure only means a tap lands where the finger did, off the grid")
+        XCTAssertNil(caught(.off, scrubbing: false))
+    }
+
+    /// `Off` withdraws the landmarks too — the case a "drop the beats" reading would miss.
+    func testOffDoesNotCatchAMarker() throws {
+        let model = try makeModel()
+        let marker = try XCTUnwrap(model.landmarkCandidates().first)
+        for mode in [SeekSnapping.structureAndBeat, .structureOnly] {
+            let candidates = model.snapCandidates(includingBeats: mode.includesBeats(scrubbing: false))
+            XCTAssertEqual(
+                WaveformGesture.snap(marker, to: candidates, tolerance: model.snapTolerance),
+                marker, "\(mode.rawValue) still lines up with structure")
+        }
+        XCTAssertFalse(SeekSnapping.off.snapsToAnything, "Off never reaches the candidate set at all")
+    }
+
+    /// The `@AppStorage` default trap: an unset key reads as today's behaviour, and an unrecognised
+    /// raw value degrades towards snapping rather than trapping or silently going Off.
+    func testResolvedSnappingHonoursTheDefault() {
+        XCTAssertEqual(AppSettings.resolvedSeekSnapping(storedValue: nil), .structureAndBeat)
+        XCTAssertEqual(AppSettings.resolvedSeekSnapping(storedValue: "markersOnly"), .structureAndBeat)
+        XCTAssertEqual(AppSettings.resolvedSeekSnapping(storedValue: "off"), .off)
+        XCTAssertEqual(AppSettings.seekSnappingDefault, .structureAndBeat)
+    }
 }
