@@ -32,6 +32,25 @@ What's needed:
 Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
 is the deliverable ADR 0165 defines.
 
+## The manual has no page for the Oracle (logged 2026-09-05, ADR 0187 S1)
+
+ADR 0187 S1 shipped a new screen and a new Home section, so the manual's spine wants an `oracle`
+page — *what a reading is, what it will never tell you, and why there is one a week*. The half that
+could be done without figures **has** been: `docs/manual/reference/home-and-library.md` now names
+the **Learn** section and both its cards, so the reference wing is not lying about Home.
+
+The page itself is deliberately deferred rather than forgotten, for two reasons that are both about
+not repeating a mistake already in this file:
+
+- **A page is not ported until its figures are current** (`docs/manual/README.md`), and the Oracle's
+  figures need a shoot — at minimum the Learn section, the gate stating a next-reading date, and a
+  drawn reading with a quoted note in it. `PocketShootUITests` is the harness; the reading's content
+  depends on seeded practice history, so the states are not free.
+- **The site route problem above is unresolved.** Adding an eighth page that links to a `.co.uk`
+  route nobody has written would widen the very gap the BLOCKING item describes.
+
+Worth doing together with that item, and with a shoot run, rather than as a prose-only page.
+
 ## The beta grant needs a structural guard (logged 2026-08-23, blind-spot review 2026-08-22) — RISK
 
 `betaGrantIsActive = Self.betaGrantIsReadable` is true in **every non-Debug build**, so a Release

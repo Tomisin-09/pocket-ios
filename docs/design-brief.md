@@ -119,6 +119,8 @@ near-invisible on near-black (ADR 0063).
 | `toolkitCardWash` / `toolkitCircleWash` | `#231D48` / `#2D2657` | `#D4CEEC` / `#CEC7E9` | Toolkit strip + hub-section card/icon-circle tint — baked flat per appearance |
 | `journal` | gold `#D2A954` | `#9A7521` | The **Journal** space (ADR 0100) — the fifth home card + read-only practice-history destination. A warm "notebook/ink" hue clear of the teal · plum · terracotta triad and the indigo hub; also tints the space's owner-attribution captions. Theme-invariant for now (no Blood Moon swap) |
 | `journalCardWash` / `journalCircleWash` | `#2A2211` / `#342A15` | `#F0E7CE` / `#EBDFBE` | Journal strip card/icon-circle tint — baked flat per appearance |
+| `oracle` | crimson `#E4738F` | `#A33052` | The **Red Moon Oracle** (ADR 0187 D16) — the sixth home card, leading the new **Learn** section. **Deliberately not ADR 0081's Blood Moon**, which D16 nominated: measured against this table, Blood Moon *is* the terracotta family (its light value `#C24A2C` is `library`'s, byte for byte; its dark `#E3694A` sits a few degrees off `#E07E57`), so shipping it would have given two home spaces one colour in light mode — the exact failure §3.1 says the accent families exist to prevent. Crimson keeps the red the name asks for while reading as **wine** rather than orange: clear of terracotta, clear of plum's violet. Blood Moon stays available as a **theme** (Slice 2), which is what it was always for |
+| `oracleCardWash` / `oracleCircleWash` | `#371C22` / `#44222B` | `#EBD1D9` / `#E7C9D2` | Oracle strip + reading-card tint — baked flat per appearance, ratios lifted from the Indigo trio so the sixth hue sits at the same weight as the five before it |
 | `confirmWash` | `#13421E` | `#B4DAAF` | "Add a song" tint — baked flat, same rationale (ADR 0063) |
 | `fine` | `#EAF2FF` (high-key) | `#1F3651` (low-key) | Fine-mode precision selection — same cool hue, inverted key |
 | `mastery` | teal `#60A8C7` | `#2B6982` | Mastery dots/stars (Home, Library, waveform loop picker) — **tracks the brand hero** `practice` (teal by default; follows it to terracotta in Blood Moon, ADR 0081), never the metronome plum |
@@ -153,11 +155,15 @@ wordmark** — artwork, not set type, because the tier word is deliberately *rec
 It replaces the crescent seal on that one screen; the seal still leads Settings, the
 artist-name prompt and the icon. That is now within a hair of `TealCTA`
 (`18698B`) — a coincidence of the same palette, not a binding. **Don't flatten them
-together.** The per-space accent families (Teal / Terracotta / Plum / Gold / Indigo) are
+together.** The per-space accent families (Teal / Terracotta / Plum / Gold / Indigo / Crimson) are
 what tell you which space you're in; retuning one must never be able to desync the mark, so
 logo-adjacent chrome takes its colour from the artwork, not from `PocketColor.practice`.
 (The **Blood Moon** theme's variant already exists as artwork — `#c24a2c` / `#e3694a` — and
-is one `scripts/derive-brand-svgs.py --variants blood` away when Slice 2 / ADR 0081 lands.)
+is one `scripts/derive-brand-svgs.py --variants blood` away when Slice 2 / ADR 0081 lands.
+⚠ **Those two hex values are the Terracotta family**, near enough to `library`'s `#C24A2C` /
+`#E07E57` to be indistinguishable in light mode. That is fine for a *theme*, which reskins
+everything at once, and fatal for a *space accent*, which exists to differ from the others —
+which is why ADR 0187's Oracle took Crimson instead of the Blood Moon its D16 nominated.)
 Elsewhere, don't reach for a literal hex in views; go through
 `PocketColor.practice`/`.metronome`/`.library`, and use the other tokens for the rest.
 

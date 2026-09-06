@@ -5,7 +5,7 @@
 The whole map. There is no tab bar: every screen opens from here and comes back here.
 
 <!-- shot: reference/home | role: screen
-     | alt: The Home screen with the greeting, Start today's session, Jump back in, the Practice section and the Your stuff section
+     | alt: The Home screen with the greeting, Start today's session, Jump back in, and the Practice, Your stuff and Learn sections
      | state: seeded library, Home, one song recently practised -->
 
 **Top bar.** A gear on the left opens [Settings](settings.md); the label is `Settings`. A green **+**
@@ -26,8 +26,11 @@ you last played it and its mastery. Tapping it reopens the [song player](song-pl
 [Practice hub](practice.md). **`Metronome`** sits beside it, subtitled
 `Standalone click & tempo trainer`, and opens over the whole screen.
 
-**`Your stuff`** holds three more: **`Song library`** with its song count, **`Journal`**
-(`Your notes & practice takes`) and **`Toolkit`** (`Tuner, your chords & a glossary`).
+**`Your stuff`** holds two more: **`Song library`** with its song count and **`Journal`**
+(`Your notes & practice takes`).
+
+**`Learn`** holds **`Red Moon Oracle`** (`A reading of your week`) and **`Toolkit`**
+(`Tuner, your chords & a glossary`).
 
 **`Recent routines`** is a horizontal rail of routines you have played, each showing its block count.
 

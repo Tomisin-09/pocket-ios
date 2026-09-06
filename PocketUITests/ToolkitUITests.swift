@@ -18,9 +18,11 @@ final class ToolkitUITests: UITestCase {
         let toolkitCard = app.buttons
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Toolkit,")).firstMatch
         XCTAssertTrue(toolkitCard.waitForExistence(timeout: Self.uiTimeout), "Toolkit card missing on Home")
-        // Home groups its strips into titled sections (ADR 0102); Toolkit sits in the "Your stuff"
-        // section and starts below the fold — scroll it into view before tapping rather than assuming
-        // it's on the first screen.
+        // Home groups its strips into titled sections (ADR 0102); Toolkit sits in the **Learn**
+        // section — it moved out of "Your stuff" when the Red Moon Oracle landed beside it (ADR 0187
+        // D16) — and starts below the fold, so scroll it into view before tapping rather than
+        // assuming it's on the first screen. The move is invisible to this test by design: the card
+        // and its accessibility label were carried across verbatim.
         XCTAssertTrue(scrollIntoView(toolkitCard, in: app), "Toolkit card not reachable by scrolling")
         toolkitCard.tap()
 

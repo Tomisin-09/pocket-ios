@@ -15,6 +15,20 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **The Red Moon Oracle reads your week back to you.** A new **Learn** section on the home screen —
+  the Oracle, with the Toolkit moving in beside it — leads to a weekly **reading**: what you
+  practised, how long for, on which days, the tempos you played things at and the rhythm they were
+  measured in, and the goals you still have written down. It hands you back the longest thing you
+  wrote that week, in your own words, set apart so you can see which sentences are yours.
+  **It cannot grade you, and that is enforced rather than promised.** It never says you were
+  consistent, behind, on track, stalled or faster than before; a reading containing anything of the
+  kind is thrown away in full and the plain one shown instead. It never suggests a tempo and never
+  suggests you practise more. If something you wrote mentions pain or strain, it says so and stops
+  suggesting things to play. **One reading a week**, because a week's reflection needs a week of
+  material — and the screen always tells you the date the next one opens, never just that you have
+  to wait. The one you have stays readable all week.
+  In this release the reading is **written entirely on your phone, from your own practice log.
+  Nothing is sent anywhere** — there is no address in the app for it to be sent to.
 - **Show the kinds of journal entry you want.** **⋯ ▸ Show** in the Journal opens a list of the kinds
   the journal holds — **Exercise**, **Loop**, **Session**, **Metronome** and **Just me** (notes
   written from the journal itself) — and you can tick as many as you like. Ticking a second kind

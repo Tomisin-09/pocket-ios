@@ -1,8 +1,11 @@
 # ADR 0187 — Red Moon Oracle: a mirror that cannot grade you
 
-- **Status:** Proposed — nothing built. Six stages (S0–S5), each independently shippable or
-  independently reversible. **S0 and S1 contain no network at all** and are a complete feature on
-  their own; the proxy does not appear until S2, and nothing reaches production until S4.
+- **Status:** Accepted — **S0 and S1 shipped** (S0: `e3f7566`, #282, the `.xcconfig` pair and
+  `OracleEndpoint`; S1: `pocket-298-oracle-local-reading`, the whole safety envelope plus the Learn
+  section, `OracleView` and the local reading). **S2–S5 not started.** Six stages (S0–S5),
+  each independently shippable or independently reversible. **S0 and S1 contain no network at all**
+  and are a complete feature on their own; the proxy does not appear until S2, and nothing reaches
+  production until S4.
 - **Date:** 2026-09-02 (`pocket-291-red-moon-oracle`)
 - **Relates to:** ADR 0092 (the AI charter this executes — still *Proposed*, and this ADR amends it
   rather than merely obeying it), ADR 0002 (the proxy design, **whose Sign-in-with-Apple bullet
@@ -289,6 +292,23 @@ adjective away from a scoreboard.
 a partially scrubbed sentence is still a sentence somebody wrote in order to judge you, and the
 half that survives redaction is not reliably the harmless half.
 
+> **Found at S1: the guard must not read the player's own words.**
+>
+> The best thing a reading does is hand the player their own writing back — that is what *a mirror
+> that cannot grade you* means literally. But players write exactly what this table catches, about
+> themselves: *"fell off this week"*, *"stalled on the bend again"*, *"no excuses"*. Running the
+> guard over a quoted note rejects the reading for something **the player said**, and the app ends
+> up refusing to show someone their own journal.
+>
+> The rule, therefore: **the player may judge themselves; the app may not judge them.** Quoting is
+> not the app saying it. `OracleReadingText.Paragraph` carries `isQuotedFromPlayer`, and D12 reads
+> only `guardedText` — the paragraphs the Oracle wrote. That makes the distinction structural rather
+> than a convention every future caller has to remember, and the screen renders a quoted paragraph
+> set apart behind a rule so the same distinction is visible to the reader.
+>
+> This does not weaken the guard. A model cannot reach the exempt path: the flag is set by the
+> builder from the context's own notes, never by anything a response contains.
+
 ### D13 — pain and distress are handled locally, and never sent
 
 Two deterministic matchers, Foundation-only, run **before** the request, over both the journal
@@ -341,6 +361,26 @@ It never notifies that a reading is ready (D2).
 A **fair-use ceiling** on the on-demand half remains necessary, set far above typical use, stated
 plainly, with a per-day soft limit to catch runaway loops rather than to shape behaviour.
 
+> **Settled at S1: weekly.** A week of journal entries, runs and tempo points is enough material for
+> a reflection that is not repeating itself, and it matches the rhythm practice actually has. A
+> month is long enough that the reading is about a person the player has stopped being.
+>
+> Two consequences fall out of taking "it reads a period" literally, and `OracleCadence` is shaped
+> by both. The window is the **last complete calendar week**, not a rolling seven days and not the
+> week in progress — open it on Monday evening and a trailing window reads one day and calls it a
+> week, while a rolling one would creep the boundary forward every time it was used. And
+> `nextReading(after:now:)` returns `nil` *exactly* when a reading is available, so no caller can
+> render "available now" and a future date at once; the requirement above is met by the signature
+> rather than by remembering to meet it.
+>
+> **The gate limits drawing a new reading, never re-reading the one you have.** The reading is
+> persisted (`OracleReadingLog`) and stays readable all week. Without that the cadence would look
+> like a bug: take a reading, leave the screen, come back an hour later and the week's reflection
+> would be gone, replaced by a date.
+>
+> A `distress` outcome (D13) never spends the week. Nothing was drawn and nothing was sent, so the
+> player is not put behind a seven-day gate for having written what they wrote.
+
 ### D16 — the Oracle's only door is the Home "Learn" section
 
 ADR 0102 §2 pre-scoped this: Toolkit moves out of "Your stuff" into a new **Learn** section
@@ -361,6 +401,22 @@ undercut the App Review mitigation 0144 requires to be named in the review notes
 
 The Oracle takes a sixth home hue. ADR 0081's parked Blood Moon variant is the candidate, and
 `docs/design-brief.md:159-160` records that the artwork already exists.
+
+> **Amended at S1 — the candidate did not survive contact with the palette.** Blood Moon is
+> `#c24a2c` / `#e3694a`. The Song library's terracotta is `#C24A2C` / `#E07E57`. The light values
+> are **identical**, byte for byte, and the dark ones sit a few degrees apart. Blood Moon is not a
+> sixth hue; it *is* the terracotta family, which is unsurprising in hindsight — a red-moon theme
+> and a warm-red accent were drawn from the same idea.
+>
+> That is fine for a **theme**, which reskins everything at once and so has no neighbour to be
+> confused with, and fatal for a **space accent**, whose whole job per `docs/design-brief.md` §3.1
+> is to differ from the other five. Two home cards sharing a colour in light mode would have removed
+> the cue that tells you which space you are in.
+>
+> S1 therefore ships **crimson** — `#A33052` light, `#E4738F` dark — which keeps the red the name
+> asks for while reading as wine rather than orange: clear of terracotta, clear of plum's violet.
+> Blood Moon stays parked as the ADR 0081 Slice 2 *theme* it was always meant to be. The token is
+> still `PocketColor.oracle`, so nothing about D16's structure moves — only which hex it resolves to.
 
 ### D17 — evaluation is a fixture set over the validator, and CI never calls the API
 
