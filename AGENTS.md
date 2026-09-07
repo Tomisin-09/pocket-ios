@@ -76,9 +76,30 @@ Run these before every commit that touches app code. Do not push until all pass.
    | `PROJECT.md` | New/changed screen, data model, service, entitlement, env/config, or architecture decision |
    | `docs/architecture.md` | New/changed module, audio pipeline stage, persistence/sync change, or third-party service |
    | `docs/decisions/` | Any decision that closes off an alternative (new ADR, numbered) |
+   | `docs/decisions/` (the **target**) | An ADR supersedes or amends another — see the backlink rule below |
    | `docs/design-brief.md` | Changes to the design system/tokens, screen inventory, or the design working protocol |
    | `docs/manual/` | A screen gains or loses a control, a control is renamed, a navigation path changes, or what's free vs Pro moves |
    | `README.md` | Changes to project structure, build/CI, or the "How it works" summary |
+
+   **ADRs are a graph — write the back edge in the same commit.** When a new ADR
+   supersedes, amends, or changes the status of an older one, **edit the older
+   file too, in that same change**: a line in its header saying what was
+   superseded, by which ADR and which decision, and what still stands. Saying it
+   only in the new ADR's Consequences does not do it — that sentence describes
+   an edit, it does not perform one. This already went wrong once: ADR 0187
+   recorded that 0092 *"moves from Proposed to Accepted"* and superseded parts of
+   0002, 0144 and 0112, and none of the four files mentioned 0187 at all, so
+   0144 went on stating a price that had been replaced. A reader lands on the
+   old ADR, not the new one, which is exactly when the pointer has to be there.
+
+   **Declare it in a header field**, not only in prose: `- **Supersedes:** … ADR
+   NNNN …` or `- **Amends:** … ADR NNNN …` (26 ADRs already do). `check-manual.py`
+   **C16** reads those fields and fails if the named ADR does not refer back —
+   prose alone is invisible to it, which is the deal: the field is what buys you
+   the check. The 31 back edges already missing when C16 landed are listed in
+   `KNOWN_MISSING_BACK_EDGES` and reported on every run; that number is a backlog
+   to burn down, and repairing a pair means writing the note **and** deleting the
+   line, which C16 also checks.
 
    **What counts as significant:** new screen, new model/service, schema or
    persistence change, removed behaviour, new entitlement or permission string,

@@ -59,20 +59,74 @@ line — which is already D9's rule, generalised. It is greppable, and it is a U
 guard is scoped to readings today. A routine's rationale and a goal's restatement are both
 text addressed to the player, and both can judge.
 
-### The four jobs, ranked by leverage
+### The five jobs, ranked by leverage
 
 | Job | Surface | Output | Local fallback (0092 §A2) |
 |---|---|---|---|
 | **Clarify a goal** | `GoalEditorView` / `LongTermGoalEditorView`, via the shared `GoalAuthoringSections` | a `Goal` proposal — title, skill trim, priority, optional target song | `GoalTemplateLibrary` (4 curated templates), the incumbent |
-| **Propose a session** | `PlannerView` ▸ Generate | `[SessionBlock]` → `PracticePlanner.materialise` | `SessionBuilder.buildSession` — not a degraded fallback, the shipping product |
 | **Propose an exercise** | ADR 0187 D9's prompt box | a `NewExercisePlan` pre-fill; `ExerciseTemplate` stays closed | none needed — the control is simply absent offline |
+| **Explain a session** | `RoutineDetailView`, on a generated routine | one tone- and focus-guarded paragraph over a session `SessionBuilder` already built | none needed — the session stands without it |
 | **Mirror** | `OracleView` — **shipped** | the weekly reading | `LocalOracle` — **shipped** |
+| **Propose a session** | `PlannerView` ▸ Generate | `[SessionBlock]` → `PracticePlanner.materialise` | `SessionBuilder.buildSession` — not a degraded fallback, the shipping product |
 
 **Goals go first, ahead of ADR 0187's own S3 ordering.** It is the cheapest call, the most
 structured output, and it has the strongest fallback already built — but the real argument
 is that every downstream feature is bounded by goal quality: `DueScore` is
 `goalWeight × dueness × (1 − mastery/5)`, so a vague goal degrades the entire planner. And
 `GoalTemplateLibrary` carries four templates; the long tail is exactly what a model is for.
+
+**Amended 2026-09-07 — the ranking below is a re-ranking, and generation drops to last.**
+
+1. **Clarify a goal** — unchanged, and for the reason already given.
+2. **Propose an exercise** — the safest output in the plan (a closed vocabulary, a sheet the
+   player edits, one insert path) against real friction: the gap between knowing what you want to
+   practise and having built it is where people stop. **One rule it needs before it ships:** *"no
+   template fits that"* is a first-class outcome with its own copy, never a fall-through to the
+   nearest match. A near miss is worse than a refusal, because the player cannot tell the
+   difference and will go and practise the wrong thing believing it is what they asked for. A
+   validator rule, not prompt advice.
+3. **Explain a session** — new, and it is the job that was missing. The reason a generated routine
+   gets abandoned is that its shape is opaque: why three blocks and not one, why the hardest thing
+   is not first. `SessionBuilder` knows all of that and says none of it. One paragraph over a
+   session the deterministic planner already built is cheap, grounded in our own output, and is
+   the honest answer to *what does £9.99 buy that £2.99 does not* (ADR 0187 D20) — because a
+   marginally different generated session is not.
+4. **Mirror** — shipped.
+5. **Propose a session** — last, and possibly never. See below.
+
+### Why session generation goes last, and may never go at all
+
+The tempting version of this is *"same logic, but with AI."* It is not the same logic, and the
+planner is the wrong organ to replace.
+
+- **The logic is arithmetic over the whole library, not judgement.** `DueScore` is
+  `goalWeight × dueness × (1 − mastery/5)` with `dueness = 1 − e^(−elapsed/7 days)`, applied to
+  every candidate and ranked. Consistent numeric ranking across dozens of items, reproduced
+  identically every week, is the thing language models are worst at — and an approximation is
+  indistinguishable from the real thing by inspection. Nothing would tell us it had drifted.
+- **The invariants are decisions with tests behind them.** The 60-minute ceiling (ADR 0014 R7),
+  the U-shape that puts the most-due item **last**, R2 block sizes, the R4 micro-rest cadence, and
+  `SessionBuilder`'s deliberate inversion where a block's share sets an item's minutes rather than
+  the reverse. Handing those to a model does not delete the decisions; it converts tested
+  invariants into unwritten ones.
+- **We have no evaluation function, by design.** ADR 0070 means the app never measures whether a
+  session was good. So a model-built planner could not be hill-climbed, A/B'd, or even shown to
+  have regressed — we would be making untestable changes to a tested system. This is the decisive
+  argument, and it is a permanent one.
+- **It would delete its own fallback.** ADR 0092 §A2 requires a deterministic local fallback for
+  every AI surface. `SessionBuilder` *is* that fallback. Replacing it leaves the requirement with
+  nothing to point at, and turns a free, offline, instant, every-tier feature into a metered,
+  networked, latency-bound, Oracle-tier one — against ADR 0144's free floor.
+
+**Where the leverage actually is: the inputs to the formula, not the formula.** `goalWeight`
+comes from goals, and a vague goal degrades every session forever — which is why job 1 is job 1.
+A richer library from job 2 gives the ranking more to choose between. Better session *names*
+(`QuickSessionNaming`) and the explanation of job 3 change what the player understands without
+changing what the planner decides. Improve the fuel, not the engine.
+
+The one honest opening for a model — that the U-shape and item count are one-size-fits-all and
+could in principle be personalised — is closed by the third bullet, not the first two. It is not
+that a model could not do it better. It is that we could never find out.
 
 ### The fifth job, scoped: the grounded explainer
 

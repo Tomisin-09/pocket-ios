@@ -1,7 +1,17 @@
 # 0092 — AI strategy: boundaries, guardrails, and the foundations it must land on
 
-- **Status:** Proposed (2026-07-13)
+- **Status:** **Accepted** (2026-09-02, by ADR 0187, which executes this charter) — **as amended
+  below.** It stood *Proposed* from 2026-07-13 until 0187 shipped the first surface built on it.
 - **Date:** 2026-07-13
+- **Amended by ADR 0187**, in two places that a reader of this file alone would get wrong:
+  - **§A3's Sign in with Apple** is superseded by **0187 D3**. Abuse resistance is **App Attest**
+    and per-subscriber quota is an **opaque token minted at purchase**; the app stays account-free
+    (ADR 0113) and Apple's account-deletion obligation never attaches. §A3's rejection of
+    *on-device / client-side model calls* is untouched and still stands.
+  - **§B5's "one bounded, named AI surface"** had implied no free-text input anywhere. **0187 D9**
+    widens this deliberately: a prompt box exists on the **exercise-suggestion capability only**,
+    one-shot, with no conversation history, returning a structured proposal rather than prose.
+    0187 records it as a widening rather than a drift; so does this line.
 
 ## Context
 

@@ -6,7 +6,14 @@
   each independently shippable or independently reversible. **S0 and S1 contain no network at all**
   and are a complete feature on their own; the proxy does not appear until S2, and nothing reaches
   production until S4.
-- **Date:** 2026-09-02 (`pocket-291-red-moon-oracle`)
+- **Date:** 2026-09-02 (`pocket-291-red-moon-oracle`); **amended 2026-09-07**
+  (`pocket-303-oracle-pedagogy-amendments`) with D22, D23 and the re-inflection of D6 rule 6, after
+  a pedagogy review of the plan. See also ADR 0198, which the D22 mirror depends on for material.
+- **Supersedes:** the Sign-in-with-Apple bullet of **ADR 0002** (by D3), the price half of
+  **ADR 0144** (by D20), and the ~£10–12 Oracle tier sketched by **ADR 0112** (by D20). Each of
+  those three ADRs carries the note saying so; everything else in them stands.
+- **Amends:** **ADR 0092**, which this ADR also moves from *Proposed* to *Accepted* — §A3's Sign in
+  with Apple (D3) and §B5's implied absence of any text input (D9).
 - **Relates to:** ADR 0092 (the AI charter this executes — still *Proposed*, and this ADR amends it
   rather than merely obeying it), ADR 0002 (the proxy design, **whose Sign-in-with-Apple bullet
   this supersedes**), ADR 0070 (no performance feedback — the line this feature walks), ADR 0117
@@ -199,6 +206,14 @@ say *"a trajectory that goes down is not reported as a regression"* and *"not a 
 personal best table."* Feeding the Oracle the types rather than the columns inherits that
 discipline instead of re-deriving it.
 
+> **Amended by D22 — rule 6 is re-inflected, not relaxed.** As written, rule 6 bans every derived
+> value, which also bans the structural facts D22 needs the mirror to reflect: which span was
+> looped, how often it was re-entered, the order units took within a sitting, whether a ramp was
+> stepped down. Those are not judgements. The rule now reads: **no computed *evaluation* crosses;
+> structural facts about how the time was shaped do.** The test is in D22, and the forbidden list
+> is unchanged — streak, consistency score, days-since, delta, ratio, target, denominator,
+> personal best all stay out.
+
 ### D7 — a routine proposal cannot say anything
 
 The model never returns a `Routine`. It returns a value decoding to `[SessionBlock]`
@@ -287,6 +302,9 @@ push through, no excuses, discipline, lazy, fallen off, only … days*. The temp
 stalled, regressed, slipped, backwards, personal best, PB, record, faster than you*. The second
 matters most, because `TempoRecord` is literally "faster than you'd played it before" and sits one
 adjective away from a scoreboard.
+
+> **D23 adds a second guard beside this one.** The tone guard catches what a sentence *claims*;
+> the focus guard catches where a sentence *points*. Both reject wholesale, both fall back locally.
 
 **A tripped reading is rejected in full and the `LocalOracle` fallback shown.** It is not scrubbed:
 a partially scrubbed sentence is still a sentence somebody wrote in order to judge you, and the
@@ -551,6 +569,91 @@ would overwrite the hand-maintained `Info.plist` (`project.yml:62-65`).
 **S1 ships before any inference happens.** ADR 0092 §A2 requires a deterministic local fallback
 regardless, so building it first costs nothing and buys everything: every safety mechanism is
 exercised by real players before a single token is spent, and the eval fixtures come out of it.
+
+### D22 — the mirror reflects the shape of the practice, not its volume
+
+**Added 2026-09-07. This changes shipped S1 code and the DTO; it does not change any guarantee.**
+
+`LocalOracle.opening` currently opens on minutes, days and sittings. That is the wrong variable,
+for two reasons that point the same way.
+
+**It is the weakest thing the app knows.** In the closest study there is to this problem — Duke,
+Simmons & Cash, *It's Not How Much; It's How* (2009) — the highest-rated performers did not differ
+from the rest in time spent, number of repetitions, or number of complete run-throughs. They
+differed in how they handled the parts they got wrong: located precisely, isolated to the smallest
+failing unit, addressed immediately, usually by slowing down. Volume was the variable that
+predicted nothing.
+
+**It is also the most shame-adjacent thing the app knows.** D12 bans the adjective, but the noun
+has already done the work: *"12 minutes over 2 days"* has an implied denominator that no matcher
+can strip. A reader supplies "only". This is ADR 0186's *"the interesting cell is always the empty
+one"* reappearing one level down — not in whether the Oracle speaks, but in what it counts.
+
+The resolution is not a looser guard. It is a different mirror.
+
+**What the reading reflects instead:** which span was looped and how often it was re-entered, the
+order units took within a sitting, the tempo points with the rhythm they were measured in
+(D6 rule 7), whether a ramp was stepped down. *"Bars 9–12, three sittings, 68 to 72 in eighths;
+on Thursday you took it to 60 and stayed there"* names what and where. It contains no comparison,
+because none of those values needs a second value to mean anything.
+
+> **The test, which is also the re-inflection of D6 rule 6:** a **structural fact** names *what and
+> where*. An **evaluation** names *how much, relative to something else*. If a value is meaningless
+> without a second value, it is a comparison and it does not cross.
+
+Minutes do not disappear — `PracticeLog` is unchanged and the Practice log still shows them. They
+stop being the **opening paragraph**, which is the only place they were doing damage.
+
+Three consequences:
+
+- `LocalOracle` is revised, not replaced. Its suite already asserts that everything it generates
+  passes `OracleToneGuard`, so the revision inherits the guarantee rather than re-arguing it.
+- The DTO gains structural fields (span identity, re-entry counts, per-sitting unit order, ramp
+  step-downs). D6 rule 4's total payload budget is unchanged and still binds; structural facts are
+  small, and free text is what the cap exists for.
+- **The fixtures for D17 come out of the revised `LocalOracle`, not the current one.** Recording
+  them before this change would bake the volume mirror into the eval set.
+
+This also strengthens the positioning rather than costing it. The motor-learning literature on
+feedback frequency (the guidance hypothesis) finds that frequent feedback improves performance
+*during* practice and degrades *retention*; faded, reduced feedback produces better learning. ADR
+0070's refusal to grade is therefore not a value the product pays for — on the evidence it is a
+mechanism that produces better players than `docs/positioning.md` §3's graded competitor. Say so
+once, in 0070, and let positioning and this feature's copy inherit it.
+
+### D23 — a second guard: the Oracle never phrases an instruction at the body
+
+`OracleToneGuard` catches verdicts. It does not catch the other way copy can work against the
+player, which is **where the sentence points their attention**.
+
+Wulf's external-focus findings are among the most replicated results in motor learning: an
+instruction directed at the *effect* — the sound, the string, the note ringing — produces better
+immediate performance **and** better retention than the same instruction directed at the body
+part producing it. *"Let the note ring cleanly"* and *"curl your finger more"* ask for the same
+thing and do not produce the same result.
+
+`OracleFocusGuard` is pure and table-driven, roughly sixty lines, the same family as D12 and as the
+two custom rules in `.swiftlint.yml`. It matches **a body noun inside an instruction context** —
+*curl your finger, your wrist, relax your shoulder, keep your thumb, arch your knuckle, your
+elbow, press harder with* — not the bare noun, because a quoted player note saying *"my wrist
+hurts"* must pass through untouched. That exemption already exists structurally: `Paragraph.
+isQuotedFromPlayer` (D12), and pain is D13's branch, not a guard's.
+
+Scope is **every sentence the Oracle addresses to the player**: reading paragraphs, the single
+rationale line D9 allows on an exercise proposal, a goal restatement, and any explanation of a
+generated session. Rejection is wholesale with the local fallback, exactly as D12.
+
+D9's exercise rationale is where this bites first, and it is the reason the guard cannot wait for
+the reading to go live: a one-line rationale on a drill is precisely the sentence most likely to
+reach for a finger.
+
+This is not a style rule. It is the one place where the app's own words touch what the player
+attends to while playing, and therefore what they retain. It is in the same category as D12 —
+prose that looks fine in review and ships anyway.
+
+> **Stages.** D22 lands as **S1a**, a revision of shipped S1: no network, no new stage boundary,
+> and it must precede any recorded fixture. D23 lands with **S3**, alongside the validators, because
+> S3 is where the first player-addressed sentence that is not a reading gets generated.
 
 ---
 
