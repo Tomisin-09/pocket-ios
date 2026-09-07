@@ -975,6 +975,65 @@ a fumble matter more, not less.
 reading that section's tempo — which is what a trailing window produces and an all-taps mean
 cannot. See the next entry.
 
+## Bars instead of time on the song player's ruler (parked 2026-09-07, §3 step 1)
+
+**Decided, not scheduled.** `docs/directions-2026-09.md` §3 step 1 asked for "a bar ruler you can
+seek from" and §6 ranked it the last Tier 3 item. Three shapes were drawn against the real cockpit
+on 2026-09-07 and **the cheapest one was chosen, made switchable**. This entry holds the decision
+and what it costs; it is not a priority, and it is deliberately smaller than what §3 asked for.
+
+### The decision
+
+**`TimeRuler` keeps its six evenly-spaced slots and prints a bar number in each, behind a setting.**
+The other two shapes are closed off:
+
+- **A ruler with ticks on the bar lines, time surviving as the viewport ends.** Rejected as more
+  than the value is worth right now, not as wrong — it is the shape to revisit if this is ever
+  promoted past a readout.
+- **A 44-pt tappable strip above the waveform** (what §3 literally described, and what a DAW does).
+  Rejected on height: `PracticeCockpit` is already squeezed for landscape by ADR 0042, and the
+  strip does not replace the ruler below it, so time would have to go to pay for it.
+
+### What this does and does not deliver
+
+**It delivers reading, not control.** §3's underlying ask was *"control the position from the
+tab"* — tap and drag to seek by bar. Six text labels are not a hit target, so **the seek is not in
+this**. Anyone picking this up should not record §3 step 1 as done: the readout is done, the
+gesture is a separate, later thing that would want one of the rejected shapes.
+
+**The labels do not line up with the bar lines.** The slots are sixths of the viewport; the bar
+lines are wherever `BeatGrid` puts them. So a label reads *"the bar playing at this point"*, not
+*"a bar line is here"* — which is honest for a readout and is exactly why this shape does not scale
+into a ruler. Do not add ticks to it as a compromise; that is the rejected middle shape, arrived at
+by accident.
+
+### Four things that will bite
+
+1. **The grid is already drawn; the numbers are the only new thing.** `WaveformDownbeat`
+   `drawBeatGrid` (ADR 0022, restyled 0051) draws a line at every downbeat and 0051 deliberately
+   dropped sub-beat lines for crowding. Nothing about the drawing changes here — resist "while we
+   are in there".
+2. **A song can have no bar number at all.** The grid needs a tempo *and* a placed 1
+   (`model.needsDownbeat`, `gridAvailable`). With either missing there is no bar to print, so the
+   setting cannot be a formatter swap: **it must degrade to timecode per song**, and the setting
+   then reads as a preference the song silently overrides. Decide whether the ruler says so.
+3. **The last slot overruns the song.** 85 bars over six slots is one label every ~17 bars, and
+   the sixth slot sits at the viewport end — which at whole-song zoom is bar 85.6, printing 86 for
+   a song with 85 bars. Round toward the song, or the ruler names a bar that does not exist.
+4. **A settings row is not free in this repo.** The natural home is the first `Section` of
+   `SongPlayerSettingsView` — the same section as `Loop control on left`, which is the transport
+   precedent — reachable both from the Settings hub (ADR 0162) and by holding `Loop controls` on
+   the player (ADR 0163). That means: a new `AppSettings.Key`, a new `SettingsInfo` entry, and
+   `scripts/check-manual.py` C5 rising from 19 quoted explanations to 20, plus a manual update for
+   a control the song-player reference page does not currently list. C9 will hold any backticked
+   name in the manual to the real string literal.
+
+### Where the drawings are
+
+Three shapes, the zoom-density study, and the full cockpit at 390×844, drawn against the real
+tokens and dimensions: <https://claude.ai/code/artifact/45c5b4bb-962e-4c87-8150-d813fef51e32>.
+Option A is the chosen one. The artboards are mockups, not source.
+
 ## A song whose tempo changes at a section — NEXT (would be ADR 0168)
 
 **The observation.** A song that runs 92 in the verse and 78 in the bridge cannot be gridded.
