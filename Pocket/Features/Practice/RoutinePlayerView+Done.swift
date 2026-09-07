@@ -104,6 +104,9 @@ extension RoutinePlayerView {
                 .tint(PocketColor.textSecondary)
                 .accessibilityLabel("Exit routine")
             }
+            // The other silent surface between two blocks, and the one most players actually sit on
+            // — manual advance is the default (ADR 0071 R4), so this is where the pause is (ADR 0195).
+            ToolbarItem(placement: .topBarTrailing) { tuneUpButton }
         }
     }
 

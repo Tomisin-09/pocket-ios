@@ -115,6 +115,27 @@ a block you set to record shows its recording timer here, which is a readout, no
 
 Every block gets a **3 · 2 · 1** count-in, so an auto-started block never begins mid-stride.
 
+### Tuning up
+
+Starting a routine asks first: **Tune up first?**, over three answers.
+
+- **Tune up** opens the whole tuner — the same one in the [Toolkit](toolkit.md#the-tuner) — with
+  **Start practising** pinned to the bottom. Tune, then tap that and the routine begins.
+- **Not now** starts the routine straight away.
+- **Don't ask again** starts it and never asks again. That is the same switch as
+  **Settings ▸ Routines ▸ Ask to tune up**, so you can put it back from there.
+
+It is asked once at the start of a session and never again during it, and nothing about it tells you
+whether you are in tune with anything.
+
+Between blocks the tuner is always one tap away, whether or not you left that question switched on:
+the **tuning fork** in the corner of a rest countdown, and of a block's completion screen, opens it
+over the session. **Done** puts you back where you were.
+
+There is no tuner **during** a block. A block is playing audio and the tuner needs the microphone,
+which are two things the phone cannot do at once here — so tuning happens in the gaps, or you leave
+the block with **›** or **✕** first.
+
 ### Between blocks
 
 Finish a block and you land on its own completion screen: **Nice work**, an optional mastery rating,
@@ -151,13 +172,14 @@ under the session rather than under whichever drill happened to be last.
 
 ## How it moves — the settings
 
-**Settings ▸ Routines** holds four:
+**Settings ▸ Routines** holds five:
 
 - **Auto-start blocks** — whether each block begins on its own. The first block always waits for a
   deliberate start.
 - **Advance automatically** — whether to skip the between-blocks screen entirely.
 - **Rest length** — how long a rest lasts.
 - **Loop song blocks** — whether a song block repeats as an open jam rather than ending.
+- **Ask to tune up** — whether starting a routine asks. See [Tuning up](#tuning-up).
 
 **Settings ▸ Practice** holds two more that touch routines: **Starting point for new reminders**,
 and **Reminders you've set** — the list of live ones, each editable from there. See

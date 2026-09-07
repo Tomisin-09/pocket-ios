@@ -15,6 +15,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **Home shows how much you practised this week.** A `This week` strip below the resume card, with
+  three numbers: **Minutes**, **Days** and **Notes** — all covering the same seven days. It appears
+  once you have practised something and is invisible until then, so a fresh install still opens on a
+  clean screen. It is a readout and nothing more: no goal, no streak, no comparison with last week,
+  and no verdict on any of it. The full picture stays where it is, on **Practice log** in the
+  Journal.
+- **A tuner before a routine, and between its blocks.** Starting a routine now asks
+  **Tune up first?** — **Tune up** opens the tuner with **Start practising** waiting at the bottom,
+  **Not now** goes straight in, and **Don't ask again** goes straight in and stops asking (the same
+  switch as **Settings ▸ Routines ▸ Ask to tune up**, so you can put it back). Between blocks — on
+  the rest countdown and on a block's Done screen — a tuning fork in the corner opens the tuner
+  without leaving the session. It only ever offers: it never holds up a routine, and it never tells
+  you that you are out of tune.
 - **Jump back in can be a song, a routine or an exercise — and you choose which.** Home's resume card
   used to offer the last **song** you practised and nothing else, even if everything you had done
   that week was routines. It now offers whatever you last practised of any kind, and you can pin it:

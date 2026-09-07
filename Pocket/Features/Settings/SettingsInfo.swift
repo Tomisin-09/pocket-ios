@@ -30,6 +30,9 @@ enum SettingsInfo {
     static let routineSongLoop =
         "A song block loops as an open jam and moves on only when you skip. Off plays it through once, "
         + "then auto-advances."
+    static let routineTunerOffer =
+        "Starting a routine asks whether you want to tune first. Answering it, or turning this off, "
+        + "takes one tap — it never keeps you from playing."
     static let transportLoopOnLeft =
         "Big Loop and Marker buttons flank the transport bar while idle. Marker sits on the left and "
         + "Loop on the right by default — turn this on to swap them."

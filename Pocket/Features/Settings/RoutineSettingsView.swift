@@ -5,12 +5,19 @@ import SwiftUI
 /// song block loops as an open jam.
 ///
 /// Unchanged from the flat screen's "Routines" section but for its home; the hub row reports the
-/// auto-start state, which is the setting people come here to check.
+/// auto-start state, which is the setting people come here to check. **Ask to tune up** (ADR 0195)
+/// joins on the same reading: it is one more thing a routine does between its blocks — here, before
+/// the first one. It is the only row on this screen the player can also set from somewhere else,
+/// because the prompt it governs carries its own `Don't ask again`.
 struct RoutineSettingsView: View {
     @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
     @AppStorage(AppSettings.Key.routineAutoAdvance) private var routineAutoAdvance = false
     @AppStorage(AppSettings.Key.routineRestSeconds) private var routineRestSeconds = 20
     @AppStorage(AppSettings.Key.routineSongLoop) private var routineSongLoop = true
+    /// Bound to the constant, never a literal — the `@AppStorage` default is what SwiftUI uses for an
+    /// unset key and it does not consult `AppSettings.routineTunerOffer` (ADR 0195 D4).
+    @AppStorage(AppSettings.Key.routineTunerOffer)
+    private var routineTunerOffer = AppSettings.routineTunerOfferDefault
 
     var body: some View {
         Form {
@@ -30,6 +37,12 @@ struct RoutineSettingsView: View {
                 }
                 Toggle(isOn: $routineSongLoop) {
                     FieldInfoLabel(title: "Loop song blocks", info: SettingsInfo.routineSongLoop)
+                }
+                // The tune-up prompt (ADR 0195). Here rather than under Practice because it is a
+                // thing a *routine* does when it starts, which is what this screen is a list of.
+                // The prompt's own `Don't ask again` writes this same key, so the two never disagree.
+                Toggle(isOn: $routineTunerOffer) {
+                    FieldInfoLabel(title: "Ask to tune up", info: SettingsInfo.routineTunerOffer)
                 }
             }
         }

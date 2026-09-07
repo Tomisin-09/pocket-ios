@@ -5,7 +5,7 @@
 The whole map. There is no tab bar: every screen opens from here and comes back here.
 
 <!-- shot: reference/home | role: screen
-     | alt: The Home screen with the greeting, Start today's session, Jump back in, and the Practice, Your stuff and Learn sections
+     | alt: The Home screen with the greeting, Start today's session, Jump back in, the This week strip, and the Practice, Your stuff and Learn sections
      | state: seeded library, Home, one song recently practised -->
 
 **Top bar.** A gear on the left opens [Settings](settings.md); the label is `Settings`. A green **+**
@@ -28,6 +28,12 @@ its command tempos — along with when you last played it. Tapping it reopens th
 choice is in [Settings ▸ Practice](settings.md#practice) under `Jump back in`. A pin you have nothing
 for yet — `Routine`, before you have run one — shows the most recent of any kind until you do.
 
+**`This week`** is three numbers over the last seven days: `Minutes`, `Days` and `Notes`. All three
+count the same week, and none of them is a target — nothing here sets you a number to reach or
+measures this week against the last one. It is a readout only: tapping it does nothing, and the counted-up version lives on
+`Practice log` in the [Journal](tools-and-journal.md#the-journal). The strip is not there at all
+until you have practised something.
+
 **`Practice`** — one card, subtitled `Your exercises & training runs`, opening the
 [Practice hub](practice.md). **`Metronome`** sits beside it, subtitled
 `Standalone click & tempo trainer`, and opens over the whole screen.
@@ -47,8 +53,8 @@ Of those, only Journal and Toolkit are outside Red Moon Pro. The rest draw a pad
 A fresh install asks a short set of optional questions before anything else — your name and how you
 play — and then, once you have practised, may ask about anonymous usage counts depending on where
 you are. Both are covered in [getting started](../getting-started.md) and [privacy](../privacy.md).
-The library starts empty; Home shows no `JUMP BACK IN` card and no rail until there is something to put
-in them.
+The library starts empty; Home shows no `JUMP BACK IN` card, no `This week` strip and no rail until
+there is something to put in them.
 
 ## The Song library
 

@@ -458,15 +458,40 @@ Ranked by cost, not by value, because everything here is argued for above.
 
 **Tier 2 — small, but clear one unknown first:**
 
-4. **The tuner in the routine player (5a).** Placement is trivial; the **audio session** is
-   the unknown (`.playAndRecord` against the player's `.playback`). Spike that before
-   estimating — clean makes it Tier 1, not clean makes it a day.
-5. **The Home stat strip alone, without the tile grid.** `PracticeProgress.summarize` and
-   `PracticeStatsCard` both exist. Purely additive, so **no copy leaves the screen** and the
-   manual does not churn. Delivers most of *the scroll pays* on its own, and de-risks the
-   tile grid by proving the content half first.
+4. ~~**The tuner in the routine player (5a).**~~ **Built — ADR 0195.** The spike came back *not
+   clean*, and that decided the design rather than the estimate. A block holds `.playback`, a tuner
+   needs `.playAndRecord`, and the restore afterwards is the move that deletes an armed take
+   (ADR 0179) — so the tuner is placed only on screens the player itself owns and the block has
+   already left: before block 1, and an ungated button on the rest and Done screens. Mid-block is
+   **declined**, and 5a's *later* `Tune up` block type is named as its real answer.
+   ⚠ **A device pass reversed the shape of the first placement**, and the lesson generalises past
+   this feature: 5a's *"one skippable screen before block 1, default off"* was built exactly as
+   written and was wrong twice over — a full screen greets badly, and **a default-off setting is
+   found by nobody**, so it would have left the tuner as buried as the backlog found it. It is now a
+   three-button question asked **by default**, with the screen as what *yes* leads to. Anything else
+   in this document specified as *opt-in, default off* deserves the same second look.
+5. ~~**The Home stat strip alone, without the tile grid.**~~ **Built — ADR 0196.** One correction to
+   the sketch above: the three tiles all read **one horizon**, because *minutes this week · days ·
+   notes* paired two week figures with an all-time count and would have read as three facts about a
+   week without being three. `PracticeStatsCard` was **deleted** rather than left beside it. The
+   manual did not churn but the **figure did** — `launchForShoot()` seeds history, so `reference/home`
+   is now stale, and is left so on purpose to be shot once with the tile grid (see Tier 3).
 
-**Tier 3 — real work:** option A's tile grid (six call sites, subtitles leave the screen →
+**Tier 3 — real work (and the whole of what is left of §2).**
+
+⚠ **It opens owing two figures.** Tier 2 changed `reference/home` (the `This week` strip) and
+`reference/settings-routines` (a fifth row) and **deliberately did not reshoot either** — the tile
+grid changes the Home figure again, and one ~6-minute run over a five-trap harness beats two. Both
+are stale in the filed set today. Shoot them with this work, and check nothing else drifted in the
+meantime; `check-manual.py` cannot see a stale figure, only a missing one.
+
+⚠ **And `ManualRoutineShots.testPlayThrough` carries an unrun edit.** ADR 0195's tune-up question
+now stands between *Play* and block 1, so the walk answers `Not now` — written but never executed,
+because the shoot was deferred. It is the first thing to check on the next run; it fails loudly if
+the selector is wrong rather than photographing the wrong state. Worth deciding then whether the
+prompt deserves a figure of its own on `routines.md`, which currently describes it in prose alone.
+
+Then: option A's tile grid (six call sites, subtitles leave the screen →
 manual copy + `check-manual.py` + a Home reshoot), then the bar ruler (§3 step 1, which must
 adopt ADR 0153's leaf-only playhead split).
 

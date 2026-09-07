@@ -30,6 +30,17 @@ enum PracticeLog {
             .sorted { $0.startedAt < $1.startedAt }
     }
 
+    /// How many of `dates` fall inside `interval` — the same **start-inclusive, end-exclusive**
+    /// window `records(in:from:)` applies, so a note and a run written in the same minute always
+    /// land in the same week.
+    ///
+    /// Here rather than on `PracticeProgress` because a journal note is not a `SessionRecord` and
+    /// never will be: it is a thing you wrote, not a run that was timed. Home's stat strip (ADR
+    /// 0196) counts notes this way so all three of its numbers describe the same seven days.
+    static func count(_ dates: [Date], in interval: DateInterval) -> Int {
+        dates.lazy.filter { interval.start <= $0 && $0 < interval.end }.count
+    }
+
     /// The calendar week containing `date`, honouring the calendar's own `firstWeekday` (Monday in
     /// most of the world, Sunday in the US) rather than hard-coding one — the week chart must start
     /// where the player's phone says the week starts.

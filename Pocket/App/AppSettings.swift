@@ -71,6 +71,7 @@ enum AppSettings {
         static let routineAutoAdvance = "routineAutoAdvance"
         static let routineRestSeconds = "routineRestSeconds"
         static let routineSongLoop = "routineSongLoop"
+        static let routineTunerOffer = "routineTunerOffer"
         static let transportLoopOnLeft = "transportLoopOnLeft"
         static let transportSkipSeconds = "transportSkipSeconds"
         static let waveformMinimapVisible = "waveformMinimapVisible"

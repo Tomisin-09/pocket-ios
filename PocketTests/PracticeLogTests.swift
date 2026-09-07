@@ -28,6 +28,22 @@ final class PracticeLogTests: XCTestCase {
 
     // MARK: - Windows
 
+    /// Notes are counted through the same window as runs (ADR 0196), so Home's three numbers all
+    /// describe the same seven days.
+    func testCountOfDatesUsesTheSameHalfOpenWindowAsRecords() {
+        let week = PracticeLog.weekInterval(containing: date(10), calendar: calendar)
+        let dates = [date(7, 23),    // the Sunday before — out
+                     date(8, 0),     // the boundary instant — in
+                     date(10),
+                     date(15, 0)]    // the next week's boundary — out
+        XCTAssertEqual(PracticeLog.count(dates, in: week), 2)
+    }
+
+    func testCountOfNoDatesIsZero() {
+        let week = PracticeLog.weekInterval(containing: date(10), calendar: calendar)
+        XCTAssertEqual(PracticeLog.count([], in: week), 0)
+    }
+
     func testWeekIntervalStartsOnTheCalendarsFirstWeekday() {
         // 2026-06-10 is a Wednesday; a Monday-first week runs Mon 8th → Mon 15th.
         let week = PracticeLog.weekInterval(containing: date(10), calendar: calendar)
