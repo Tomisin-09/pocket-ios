@@ -240,6 +240,8 @@ T1 (ASCII import) never started.
    **on a phone**, with no notation, no parsing and no licensing — and it lets a marker
    read *bar 33* instead of *1:47*. It must adopt ADR 0153's split: only a leaf that draws
    a moving playhead may read one.
+   **Descoped 2026-09-07 — see §6 Tier 3.** What was chosen is the readout half only: bar numbers
+   in `TimeRuler`'s existing slots, behind a setting. The seekable ruler described here is parked.
 2. **A tempo map** — the parked ADR 0168. One BPM per song is the wall. Anything that
    follows audio through a tempo change drifts, and 0154's half-interval invariant is the
    mechanism that would fight it. This is a prerequisite, not a nicety.
@@ -543,8 +545,23 @@ things the ranking did not price:
   stat strip** rather than making Home one screen (0197 D10). Anything planned on the assumption
   that Home now fits is still unbuilt work — which matters for the iPad sidebar in §2.
 
-Then the bar ruler (§3 step 1, which must adopt ADR 0153's leaf-only playhead split) — the one Tier 3
-item still to start.
+~~Then the bar ruler (§3 step 1, which must adopt ADR 0153's leaf-only playhead split) — the one
+Tier 3 item still to start.~~ **Descoped and parked — 2026-09-07.** Three shapes were drawn against
+the real cockpit and the **cheapest was chosen**: `TimeRuler` prints a bar number in each of its
+existing six slots, behind a setting, rather than becoming a ruler you can seek from.
 
-**Tier 4 — not now:** the tempo map (ADR 0168), notation, the iPad root, Android, and the
-Oracle's ADR 0187 S2–S5.
+That is a **readout, not the control §3 asked for.** Six text labels are not a hit target, so the
+tap-and-drag seek is not in it — and both shapes that would have delivered it are closed off (a
+tick ruler in `TimeRuler`'s slot; a 44-pt strip above the waveform, which the cockpit cannot afford
+in landscape). Do not record §3 step 1 as done when this ships. `docs/backlog.md` holds the
+decision, the four things that will bite — chief among them that a song with no tempo or no placed
+**1** has no bar to print, so the setting must degrade per song rather than swap a formatter — and
+the drawings. No ADR yet, by this repo's own rule: the backlog promotes to one *when it is time to
+act*.
+
+**Tier 3 is therefore empty**, and nothing above Tier 4 is now waiting. The next thing picked up
+comes either from Tier 4 or from the six-item list in §5 that this ranking was drawn against.
+
+**Tier 4 — not now:** the tempo map (ADR 0168), notation, the iPad root, Android, the Oracle's
+ADR 0187 S2–S5, and — as of 2026-09-07 — the bar-ruler **seek**, whatever is left of it once the
+readout above ships.
