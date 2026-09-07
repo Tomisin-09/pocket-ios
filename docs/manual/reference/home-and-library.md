@@ -5,7 +5,7 @@
 The whole map. There is no tab bar: every screen opens from here and comes back here.
 
 <!-- shot: reference/home | role: screen
-     | alt: The Home screen with the greeting, Start today's session, Jump back in, the This week strip, and the Practice, Your stuff and Learn sections
+     | alt: The Home screen with the greeting, Start today's session, Jump back in, the This week strip, and the six destination tiles in the Practice, Your stuff and Learn sections
      | state: seeded library, Home, one song recently practised -->
 
 **Top bar.** A gear on the left opens [Settings](settings.md); the label is `Settings`. A green **+**
@@ -34,15 +34,17 @@ measures this week against the last one. It is a readout only: tapping it does n
 `Practice log` in the [Journal](tools-and-journal.md#the-journal). The strip is not there at all
 until you have practised something.
 
-**`Practice`** — one card, subtitled `Your exercises & training runs`, opening the
-[Practice hub](practice.md). **`Metronome`** sits beside it, subtitled
-`Standalone click & tempo trainer`, and opens over the whole screen.
+**The six destinations** are tiles, two to a row, under three headings. Each is a glyph and a name
+in its own colour, and the colour is how you find it again — nothing else on Home is that hue.
 
-**`Your stuff`** holds two more: **`Song library`** with its song count and **`Journal`**
-(`Your notes & practice takes`).
+- **`Practice`** opens the [Practice hub](practice.md); **`Metronome`** beside it opens over the
+  whole screen.
+- **`Your stuff`** holds **`Song library`** and **`Journal`**.
+- **`Learn`** holds **`Red Moon Oracle`** and **`Toolkit`**.
 
-**`Learn`** holds **`Red Moon Oracle`** (`A reading of your week`) and **`Toolkit`**
-(`Tuner, your chords & a glossary`).
+The tiles carry no description. VoiceOver still reads one — *Practice, your exercises and training
+runs* — so nothing was lost from the spoken screen. Before you have added a song, the `Song library`
+tile carries one line of its own, `Add a song to get started`, and loses it once you have.
 
 **`Recent routines`** is a horizontal rail of routines you have played, each showing its block count.
 
@@ -54,7 +56,7 @@ A fresh install asks a short set of optional questions before anything else — 
 play — and then, once you have practised, may ask about anonymous usage counts depending on where
 you are. Both are covered in [getting started](../getting-started.md) and [privacy](../privacy.md).
 The library starts empty; Home shows no `JUMP BACK IN` card, no `This week` strip and no rail until
-there is something to put in them.
+there is something to put in them, and the `Song library` tile reads `Add a song to get started`.
 
 ## The Song library
 

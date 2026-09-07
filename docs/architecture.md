@@ -1207,9 +1207,16 @@ built. `TunerEngine` also stops restoring `.playback` unconditionally: it now re
 the thing that flipped the category, so a future call site with a take armed underneath cannot reach the
 same trap. Tuning **during** a block is declined; the honest answer is a `Tune up` block type.
 
-The four home strips (Song library / Metronome / Practice / Toolkit) share one presentational
-`HomeNavCard` component (icon + title + subtitle + chevron on a washed card); each home card just
-supplies its copy and its `PocketColor` hue trio, keeping the owning link/button in `HomeView`.
+The six home destinations (Practice / Metronome · Song library / Journal · Red Moon Oracle / Toolkit)
+share one presentational `HomeTile` component — a glyph in a washed circle over a centred title, on a
+washed card, two to a row inside the `HomeSection` each belongs to (ADR 0197). Each tile supplies its
+copy and its `PocketColor` hue trio, keeping the owning link/button and the **accessibility label** in
+`HomeView+Map`. That file is the whole map: it replaced `HomeNavCard`'s full-width strip, whose
+subtitle and chevron went with it, and it gathered the six from the three files SwiftLint's 400-line
+cap had scattered them across. The labels did not change with the layout — they are ADR 0102 §1's
+UI-test contract and six shoot classes read them — so the description a strip showed is now spoken
+rather than drawn. One exception carries a caption: the `Song library` tile, while the library is
+empty, because that line was Home's only word about adding a first song.
 
 ## Persistence
 
