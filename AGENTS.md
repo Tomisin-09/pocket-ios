@@ -92,6 +92,15 @@ Run these before every commit that touches app code. Do not push until all pass.
    0144 went on stating a price that had been replaced. A reader lands on the
    old ADR, not the new one, which is exactly when the pointer has to be there.
 
+   **Declare it in a header field**, not only in prose: `- **Supersedes:** … ADR
+   NNNN …` or `- **Amends:** … ADR NNNN …` (26 ADRs already do). `check-manual.py`
+   **C16** reads those fields and fails if the named ADR does not refer back —
+   prose alone is invisible to it, which is the deal: the field is what buys you
+   the check. The 31 back edges already missing when C16 landed are listed in
+   `KNOWN_MISSING_BACK_EDGES` and reported on every run; that number is a backlog
+   to burn down, and repairing a pair means writing the note **and** deleting the
+   line, which C16 also checks.
+
    **What counts as significant:** new screen, new model/service, schema or
    persistence change, removed behaviour, new entitlement or permission string,
    new build config / env var, infrastructure change. Pure refactors that don't

@@ -52,6 +52,7 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANUAL = os.path.join(REPO, "docs", "manual")
 SOURCE = os.path.join(REPO, "Pocket")
+DECISIONS = os.path.join(REPO, "docs", "decisions")
 UITESTS = os.path.join(REPO, "PocketUITests")
 # The shoot has its own target (ADR 0165 Phase 5) so `PocketAll` cannot reach it. C13 reads the
 # `capture()` calls from here; C14 keeps the boundary honest.
@@ -1089,6 +1090,142 @@ def check_c15():
                                                       sites, "" if sites == 1 else "s")]
 
 
+
+# ---------------------------------------------------------------------------
+# C16 — ADRs are a graph, and the back edge has to exist
+
+
+SUPERSESSION_FIELD = re.compile(
+    r"^- \*\*(?:Supersedes|Amends|Superseded by|Amended by):\*\*(.*?)(?=^- \*\*|^#|\Z)",
+    re.M | re.S)
+ADR_REF = re.compile(r"\bADR (\d{4})\b")
+
+# The back edges that were already missing when C16 landed (2026-09-07), as
+# (source, target). **This is a backlog to burn down, not an exemption.** The
+# check reports its size on every run rather than staying quiet about it, so the
+# number is visible and can only go down: repairing a pair means writing the note
+# in the target ADR and deleting the line here, and a pair that is repaired but
+# left in this list is caught by the stale-entry branch below.
+#
+# It exists because C16 found 31 of these on the day it was written, and a check
+# that fails 31 times on arrival is a check that gets bypassed. Everything
+# declared from here on is held to the rule with no grandfathering.
+KNOWN_MISSING_BACK_EDGES = frozenset([
+    ("0008", "0006"),
+    ("0072", "0014"),
+    ("0075", "0045"),
+    ("0081", "0023"),
+    ("0081", "0062"),
+    ("0081", "0063"),
+    ("0101", "0084"),
+    ("0118", "0111"),
+    ("0125", "0019"),
+    ("0125", "0023"),
+    ("0125", "0028"),
+    ("0125", "0034"),
+    ("0125", "0119"),
+    ("0126", "0056"),
+    ("0126", "0066"),
+    ("0126", "0119"),
+    ("0127", "0066"),
+    ("0127", "0071"),
+    ("0127", "0104"),
+    ("0127", "0112"),
+    ("0128", "0046"),
+    ("0128", "0111"),
+    ("0128", "0116"),
+    ("0128", "0120"),
+    ("0129", "0014"),
+    ("0129", "0045"),
+    ("0129", "0118"),
+    ("0155", "0100"),
+    ("0156", "0144"),
+    ("0161", "0145"),
+    ("0162", "0050"),
+])
+
+
+def decision_files():
+    """Every numbered ADR, as {number: (path, text)}. Unnumbered files are skipped."""
+    found = {}
+    if not os.path.isdir(DECISIONS):
+        return found
+    for name in sorted(os.listdir(DECISIONS)):
+        match = re.match(r"^(\d{4})-.*\.md$", name)
+        if match:
+            path = os.path.join(DECISIONS, name)
+            found[match.group(1)] = (path, read(path))
+    return found
+
+
+def supersession_claims(number, text):
+    """The ADRs `number` declares it supersedes or amends, from its header fields only.
+
+    **Only a declared field counts** — `- **Supersedes:** ADR NNNN …` and its three
+    siblings, which 26 ADRs already use. A first draft of this check read the whole
+    body for a supersede/amend verb near an `ADR NNNN`, and it found 94 things, at
+    least one of which was a false positive: ADR 0053 mentions 0165 in an unrelated
+    aside that happened to sit near the word "amended". That is the failure
+    `scripts/docs-only.sh` warns about in its own header — a clever pattern gets it
+    silently wrong, and a narrow declared allowlist does not. The cost is that an
+    ADR which supersedes something only in its prose is not caught; the fix for
+    that is to declare the field, which is the convention anyway.
+    """
+    targets = set()
+    for field in SUPERSESSION_FIELD.finditer(text):
+        for ref in ADR_REF.finditer(field.group(1)):
+            if ref.group(1) != number:
+                targets.add(ref.group(1))
+    return targets
+
+
+def check_c16():
+    """Every ADR named in a Supersedes/Amends field refers back to the ADR naming it.
+
+    ADR 0187 recorded in its Consequences that 0092 *"moves from Proposed to
+    Accepted"*, and superseded parts of 0002, 0144 and 0112 — and none of the four
+    mentioned 0187, so 0144 went on stating a price that had been replaced. A
+    Consequences section that describes an edit does not perform one, and the
+    reader who needs the pointer is the one who landed on the *old* ADR.
+
+    Deliberately asymmetric: this asks only that the target names the source
+    somewhere. It cannot judge whether the note is any good, and a check that
+    tried to would be guessing. What it makes impossible is the silent case — a
+    superseded ADR with no idea it was superseded.
+    """
+    decisions = decision_files()
+    if not decisions:
+        return PENDING, ["docs/decisions/ has no numbered ADRs"]
+
+    broken, stale, claims, backlog = [], [], 0, 0
+    for number in sorted(decisions):
+        for target in sorted(supersession_claims(number, decisions[number][1])):
+            if target not in decisions:
+                broken.append("ADR %s names ADR %s, which does not exist" % (number, target))
+                continue
+            claims += 1
+            present = re.search(r"\b%s\b" % number, decisions[target][1])
+            known = (number, target) in KNOWN_MISSING_BACK_EDGES
+            if present and known:
+                stale.append("ADR %s now refers back to %s — drop the pair from "
+                             "KNOWN_MISSING_BACK_EDGES" % (target, number))
+            elif not present and known:
+                backlog += 1
+            elif not present:
+                broken.append(
+                    "ADR %s declares it supersedes or amends ADR %s — but %s never mentions %s"
+                    % (number, target, target, number))
+
+    notes = broken + stale
+    if notes:
+        return FAIL, notes + ["the back edge lands in the same commit (AGENTS.md)"]
+    summary = "%d declared supersessions, every back edge present" % claims
+    if backlog:
+        summary += "; %d pre-existing pairs still owed a note (see " \
+                   "KNOWN_MISSING_BACK_EDGES)" % backlog
+    return OK, [summary]
+
+
 CHECKS = [
     ("C1", "Settings destinations are named in the reference", check_c1),
     ("C2", "Toolkit sections are named in toolkit.md", check_c2),
@@ -1104,6 +1241,7 @@ CHECKS = [
     ("C13", "markers and the shoot harness name the same shots", check_c13),
     ("C14", "shoot classes are driven by the shoot, not by CI", check_c14),
     ("C15", "multi-site claims stay in step", check_c15),
+    ("C16", "superseded ADRs know they were superseded", check_c16),
     ("C8", "count tripwires still match the source", check_c8),
 ]
 

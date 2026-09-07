@@ -9,6 +9,11 @@
 - **Date:** 2026-09-02 (`pocket-291-red-moon-oracle`); **amended 2026-09-07**
   (`pocket-303-oracle-pedagogy-amendments`) with D22, D23 and the re-inflection of D6 rule 6, after
   a pedagogy review of the plan. See also ADR 0198, which the D22 mirror depends on for material.
+- **Supersedes:** the Sign-in-with-Apple bullet of **ADR 0002** (by D3), the price half of
+  **ADR 0144** (by D20), and the ~£10–12 Oracle tier sketched by **ADR 0112** (by D20). Each of
+  those three ADRs carries the note saying so; everything else in them stands.
+- **Amends:** **ADR 0092**, which this ADR also moves from *Proposed* to *Accepted* — §A3's Sign in
+  with Apple (D3) and §B5's implied absence of any text input (D9).
 - **Relates to:** ADR 0092 (the AI charter this executes — still *Proposed*, and this ADR amends it
   rather than merely obeying it), ADR 0002 (the proxy design, **whose Sign-in-with-Apple bullet
   this supersedes**), ADR 0070 (no performance feedback — the line this feature walks), ADR 0117
