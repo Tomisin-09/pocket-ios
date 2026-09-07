@@ -1,6 +1,9 @@
 # 0112 — Freemium monetization: free play-along tools, a flat Pro tier, and a future Oracle tier
 
-- **Status:** Accepted
+- **Status:** Accepted — **tier half superseded by ADR 0144**, and the **Oracle tier it reserved is
+  now realised by ADR 0187 D20 (2026-09-02)** at **£9.99/mo · £79.99/yr**, not the ~£10–12 sketched
+  below. This ADR remains the record of why a free line existed, what it cost, and why it was
+  withdrawn before it met a user.
 - **Date:** 2026-07-23 (`pocket-182-monetization-adr`)
 - **Builds on:** ADR 0092 (AI = the paid lever, not storage; local fallback; opt-in). ADR 0069 (recording feature; its monetization was parked). ADR 0070 (Pocket never grades the player — holds at every tier).
 

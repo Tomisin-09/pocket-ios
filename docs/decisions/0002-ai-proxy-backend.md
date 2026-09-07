@@ -1,6 +1,9 @@
 # 0002 — AI planner runs through a backend proxy; local dev + tiny AWS prod
 
-- **Status:** Accepted
+- **Status:** Accepted — **partly superseded by ADR 0187 (2026-09-02).** The Lambda / API Gateway
+  / Terraform shape stands and is realised by 0187 D18 on the existing Deco Operations estate. The
+  **second bullet's Sign in with Apple is superseded by 0187 D3**: App Attest for abuse resistance,
+  an opaque purchase token for quota, and no account. Do not implement SIWA from this file.
 - **Date:** 2026-06-15
 
 ## Context
