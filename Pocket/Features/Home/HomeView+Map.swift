@@ -1,0 +1,231 @@
+import SwiftUI
+
+/// Home's **map** (ADR 0197) — the six destinations, two to a row, inside the three sections ADR
+/// 0102 grouped them into. This file replaces `HomeView+Learn.swift` and the four card properties
+/// that were still in `HomeView.swift`: the six had ended up in three files for no reason but the
+/// 400-line cap, which meant nothing could see the map whole. Now one file owns it.
+///
+/// ### Why tiles
+///
+/// ADR 0102 considered a tile grid and rejected it — at **four** cards, when the strips still fit
+/// and the subtitles still earned their height. Six strips do not fit: Home became a scroll whose
+/// bottom half is a menu that has not changed since the app shipped and will not change again.
+/// ADR 0197 reverses that call on the stated grounds that the count moved, and spends the reclaimed
+/// height on `HomeStatsStrip` (ADR 0196) and the recent-routines rail — the two things on this
+/// screen that are different from yesterday.
+///
+/// The subtitles go with the strips. That is the cost, and it is paid once: *"Your exercises &
+/// training runs"* was worth reading on day one and has been re-read every day since. A hue and a
+/// glyph are a map, learned once. `docs/manual/reference/home-and-library.md` stopped quoting them
+/// in the same commit, because `scripts/check-manual.py` C9 holds every backticked token in the
+/// reference wing to a real string literal and would otherwise have failed on six of them.
+///
+/// ### Two things that did **not** move
+///
+/// - **The accessibility labels are byte-identical**, subtitle wording and all. ADR 0102 §1 makes
+///   them the UI-test contract — `RowUndoUITests`, `PracticeRunUITests`, `ExerciseInstrumentUITests`,
+///   `RoutineLibraryUITests`, `OracleUITests`, `ToolkitUITests` and six shoot classes match on them —
+///   and a description that has left the screen has not stopped being true. VoiceOver still gets the
+///   sentence; the eye gets the map.
+/// - **The Oracle's door and the Toolkit's freedom.** `toolkitCard` alone does not route through
+///   `proGated` (ADR 0144 D2), and the Oracle appears here and in no other section: not in the
+///   Journal, whose promise is that a lapsed subscription takes nothing back, and not inside the
+///   Toolkit, whose proposition is being gate-free. `HomeView+Learn.swift` argued both at length and
+///   they are the reason its content is carried here rather than deleted with it.
+extension HomeView {
+
+    /// The three sections, in the order ADR 0102 fixed: what you do, what you own, what you learn
+    /// from. Sections breathe at the 20-pt rhythm; the two tiles inside one stay tight at 10.
+    var homeMap: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HomeSection(title: "Practice") {
+                HomeTileRow {
+                    practiceTile
+                    metronomeTile
+                }
+            }
+            HomeSection(title: "Your stuff") {
+                HomeTileRow {
+                    songLibraryTile
+                    journalTile
+                }
+            }
+            HomeSection(title: "Learn") {
+                HomeTileRow {
+                    oracleTile
+                    toolkitTile
+                }
+            }
+        }
+    }
+
+    // MARK: - Practice
+
+    /// The top-level **Practice** space (ADR 0046) — where trainable units live and
+    /// command-anchored runs happen. A push (it's a *place* with its own list and run screens),
+    /// in the brand teal accent (`PocketColor.practice`, the brand hero).
+    private var practiceTile: some View {
+        proGated(.practice) { PracticeView() } label: {
+            HomeTile(icon: "figure.run", title: "Practice",
+                     tint: PocketColor.practice,
+                     cardWash: PocketColor.practiceCardWash,
+                     circleWash: PocketColor.practiceCircleWash,
+                     locked: !isPro)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Practice, your exercises and training runs")
+    }
+
+    /// The standalone metronome (plum, `PocketColor.metronome` — the one theme-invariant home
+    /// hue), presented full-screen (it owns its own navigation + dismiss, ADR 0043).
+    private var metronomeTile: some View {
+        Button {
+            showingMetronome = true
+            Analytics.send(.toolOpened(tool: .metronome))
+        } label: {
+            HomeTile(icon: "metronome.fill", title: "Metronome",
+                     tint: PocketColor.metronome,
+                     cardWash: PocketColor.metronomeCardWash,
+                     circleWash: PocketColor.metronomeCircleWash)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Metronome, standalone click and tempo trainer")
+    }
+
+    // MARK: - Your stuff
+
+    /// The songs place, in its own warm **terracotta** identity (baked `library` tokens — no opacity
+    /// blend, ADR 0062/0081). Together with the teal Practice and plum Metronome tiles this is the
+    /// teal · plum · terracotta home triad (content / tool / songs).
+    ///
+    /// **The one tile that can carry a caption**, and only while the library is empty. The strip's
+    /// subtitle was count-aware, and on a fresh install — six drills, one routine, no song
+    /// (ADR 0112) — the count line read *Add a song to get started* and was Home's only word about
+    /// it. The toolbar's green **+** is still the door; this keeps the sentence that points at it.
+    private var songLibraryTile: some View {
+        proGated(.library) { LibraryView() } label: {
+            HomeTile(icon: "music.note.list", title: "Song library",
+                     tint: PocketColor.library,
+                     cardWash: PocketColor.libraryCardWash,
+                     circleWash: PocketColor.libraryCircleWash,
+                     caption: songs.isEmpty ? librarySubtitle : nil,
+                     locked: !isPro)
+        }
+        .buttonStyle(.plain)
+        // Still the whole sentence, count included — `ManualLibraryShots`, `ManualBareShots`,
+        // `ManualMissingAudioShots` and `ManualShotCase+SongPlayer` all match `Song library,` as a
+        // prefix and read what follows.
+        .accessibilityLabel("Song library, \(librarySubtitle)")
+    }
+
+    /// The **Journal** space (ADR 0100) — the read-only practice-history destination that aggregates
+    /// notes + takes across loops and exercises, in its own warm **gold** identity
+    /// (`PocketColor.journal`), a fifth home hue kept clear of the teal · plum · terracotta triad and
+    /// the indigo reference hub.
+    ///
+    /// **Ungated** (ADR 0144 D2): what you wrote and what you recorded is yours, and a lapsed
+    /// subscription doesn't take it back. The doors *out* of the Journal — an entry's caption
+    /// opening its exercise or routine — stay gated inside `JournalTabView`.
+    private var journalTile: some View {
+        NavigationLink { JournalTabView() } label: {
+            HomeTile(icon: "book.closed.fill", title: "Journal",
+                     tint: PocketColor.journal,
+                     cardWash: PocketColor.journalCardWash,
+                     circleWash: PocketColor.journalCircleWash)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Journal, your notes and practice takes")
+    }
+
+    // MARK: - Learn
+
+    /// The **Red Moon Oracle** (ADR 0187) — the reflective reading over the practice you have
+    /// already done. The **sixth** home hue: crimson (`PocketColor.oracle`), kept clear of the
+    /// teal · plum · terracotta triad, the indigo hub and the journal's gold. Not ADR 0081's Blood
+    /// Moon, which D16 nominated and which turned out to *be* the terracotta family.
+    ///
+    /// A push, like the Toolkit beside it — it is a *place*, and one the player walks to. That is
+    /// D2 in the navigation: the Oracle is **pull**. Nothing notifies that a reading is ready, this
+    /// tile carries no badge and no count, and a reading that has become available waits silently
+    /// until somebody opens it. A dot here would be the interruption ADR 0186 objected to, wearing
+    /// a smaller coat.
+    ///
+    /// **The full name stays.** The mockup shortened it to *Oracle* to fit; it is `Red Moon Oracle`
+    /// on its own navigation bar, in the manual and in `OracleUITests`, and a map whose tile calls a
+    /// place something the place does not call itself is a map with a mistake on it. It wraps to two
+    /// lines, and `HomeTile`'s equal-height row is what keeps the Toolkit level with it.
+    private var oracleTile: some View {
+        NavigationLink { OracleView() } label: {
+            HomeTile(icon: "moon.stars.fill", title: "Red Moon Oracle",
+                     tint: PocketColor.oracle,
+                     cardWash: PocketColor.oracleCardWash,
+                     circleWash: PocketColor.oracleCircleWash)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Red Moon Oracle, a reading of your week")
+    }
+
+    /// The **Toolkit** hub (ADR 0096) — the free, deterministic reference destination (tuner, My
+    /// Chords, Glossary, Help & FAQs). A push, in the indigo/violet "study/reference" accent
+    /// (`PocketColor.toolkit`).
+    ///
+    /// The label still **names the tuner first**. It is free forever (ADR 0144), needs no song and no
+    /// library, and is the thing a guitarist reaches for every time they pick the instrument up — the
+    /// strongest daily-habit hook in the app. That argument was made about a subtitle nobody sees any
+    /// more, and it survives where the subtitle went: `ToolkitUITests` and `ManualToolkitShots` both
+    /// match `Toolkit,` as a prefix, so the copy after the comma can still move.
+    private var toolkitTile: some View {
+        NavigationLink { ToolkitView() } label: {
+            HomeTile(icon: "books.vertical.fill", title: "Toolkit",
+                     tint: PocketColor.toolkit,
+                     cardWash: PocketColor.toolkitCardWash,
+                     circleWash: PocketColor.toolkitCircleWash)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Toolkit, tuner, your chords and a glossary")
+    }
+}
+
+/// The map alone, at phone width, in both appearances — the check the build cannot make: that six
+/// hues read as six places rather than a swatch card, that `Red Moon Oracle` wrapping does not leave
+/// a step in the Learn row, and that the locked tiles read as inviting rather than broken.
+#Preview("Home map — locked and unlocked") {
+    ScrollView {
+        VStack(alignment: .leading, spacing: 20) {
+            HomeSection(title: "Practice") {
+                HomeTileRow {
+                    HomeTile(icon: "figure.run", title: "Practice", tint: PocketColor.practice,
+                             cardWash: PocketColor.practiceCardWash,
+                             circleWash: PocketColor.practiceCircleWash, locked: true)
+                    HomeTile(icon: "metronome.fill", title: "Metronome", tint: PocketColor.metronome,
+                             cardWash: PocketColor.metronomeCardWash,
+                             circleWash: PocketColor.metronomeCircleWash)
+                }
+            }
+            HomeSection(title: "Your stuff") {
+                HomeTileRow {
+                    HomeTile(icon: "music.note.list", title: "Song library",
+                             tint: PocketColor.library, cardWash: PocketColor.libraryCardWash,
+                             circleWash: PocketColor.libraryCircleWash,
+                             caption: "Add a song to get started", locked: true)
+                    HomeTile(icon: "book.closed.fill", title: "Journal", tint: PocketColor.journal,
+                             cardWash: PocketColor.journalCardWash,
+                             circleWash: PocketColor.journalCircleWash)
+                }
+            }
+            HomeSection(title: "Learn") {
+                HomeTileRow {
+                    HomeTile(icon: "moon.stars.fill", title: "Red Moon Oracle",
+                             tint: PocketColor.oracle, cardWash: PocketColor.oracleCardWash,
+                             circleWash: PocketColor.oracleCircleWash)
+                    HomeTile(icon: "books.vertical.fill", title: "Toolkit",
+                             tint: PocketColor.toolkit, cardWash: PocketColor.toolkitCardWash,
+                             circleWash: PocketColor.toolkitCircleWash)
+                }
+            }
+        }
+        .padding(20)
+    }
+    .background(PocketColor.background)
+    .preferredColorScheme(.dark)
+}

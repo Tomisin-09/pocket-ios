@@ -181,6 +181,21 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   before you send. iOS hands these over about once a day, so something that just happened won't be
   there yet.
 
+### Changed
+- **Home is a screen again, not a menu.** The six destinations — **Practice**, **Metronome**,
+  **Song library**, **Journal**, **Red Moon Oracle** and **Toolkit** — are now tiles, two to a row,
+  still under the headings they were already grouped by. Each keeps its own colour, which is how you
+  find it without reading. The one-line descriptions have gone with the full-width rows they sat on:
+  they were worth reading the first week and were taking up the room every launch after. VoiceOver
+  still reads every one of them, so nothing has been lost from the spoken screen — and before you
+  have added a song, the **Song library** tile still says `Add a song to get started`. What you get
+  back is height: the six destinations take three rows where they took six, and that is what paid for
+  the new **This week** strip sitting above them.
+- **The Journal tile is easier to pick out in light mode.** Its gold was so pale it was almost the
+  background — fine on the old full-width rows, which had edges and two lines of text to give them
+  away, and not fine on a tile whose colour is most of what makes it a tile. It is a deeper gold now.
+  Dark mode is unchanged.
+
 ### Fixed
 - **The Loop controls cheatsheet no longer cuts off its last line.** Tapping `Loop controls` on the
   song player opens a nine-row summary of the gestures, and the bottom row — **Follow** — was being

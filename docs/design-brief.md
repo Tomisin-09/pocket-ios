@@ -107,7 +107,7 @@ near-invisible on near-black (ADR 0063).
 | `gridLine` | `#202020` | `#968F88` | Beat-grid downbeat lines — baked flat, not `ink.opacity()` (ADR 0062/0063) |
 | `active` / `confirm` | green | green | Live state / confirm-save (system dynamic colour) |
 | `danger` | red | red | Discard / delete / destructive (system dynamic colour) |
-| `metronome` | plum `#9272CA` | `#603B9B` | The metronome **tool** — the one **theme-invariant** home hue (ADR 0081). Accent on the home card and the standalone metronome screen. (Plum values from ADR 0063; handed teal to `practice`.) |
+| `metronome` | plum `#9272CA` | `#603B9B` | The metronome **tool** — the one **theme-invariant** home hue (ADR 0081). Accent on the home tile and the standalone metronome screen. (Plum values from ADR 0063; handed teal to `practice`.) |
 | `metronomeCTA` | `#8D7EA6` | `#593399` | Metronome's primary-button fill — a solid CTA fill needs its own contrast recipe (ADR 0062 follow-up) |
 | `metronomeCardWash` / `metronomeCircleWash` | `#2C203E` / `#3E2C56` | `#C2A7CF` / `#D0BAD2` | Home metronome card/icon-circle tint — baked flat per appearance |
 | `practice` | teal `#60A8C7` | `#2B6982` | The **Practice** space (ADR 0046) and the app's **brand hero** (ADR 0081) — leads the home + the "Start today's session" CTA; ~120 call sites reskin from this one token |
@@ -115,11 +115,11 @@ near-invisible on near-black (ADR 0063).
 | `practiceCardWash` / `practiceCircleWash` | `#153A44` / `#1D4E5C` | `#ACCBD3` / `#C2D2D5` | Home/Practice-hub card/icon-circle tint — baked flat per appearance |
 | `library` | terracotta `#E07E57` | `#C24A2C` | The **songs place** — the home "Song library" strip (ADR 0081), completing the teal · plum · terracotta home triad; retires the ADR 0023 song-blue |
 | `libraryCardWash` / `libraryCircleWash` | `#37241B` / `#4A2C1E` | `#E8C7B6` / `#EFD6C7` | Song-library strip card/icon-circle tint — baked flat per appearance |
-| `toolkit` | indigo/violet `#9E8CE6` | `#4B3F94` | The **Toolkit** hub (ADR 0096) — the fourth home card + reference destination. A "study/reference" hue kept clear of the teal · plum · terracotta triad; theme-invariant for now (no Blood Moon swap) |
+| `toolkit` | indigo/violet `#9E8CE6` | `#4B3F94` | The **Toolkit** hub (ADR 0096) — the fourth home tile + reference destination. A "study/reference" hue kept clear of the teal · plum · terracotta triad; theme-invariant for now (no Blood Moon swap) |
 | `toolkitCardWash` / `toolkitCircleWash` | `#231D48` / `#2D2657` | `#D4CEEC` / `#CEC7E9` | Toolkit strip + hub-section card/icon-circle tint — baked flat per appearance |
-| `journal` | gold `#D2A954` | `#9A7521` | The **Journal** space (ADR 0100) — the fifth home card + read-only practice-history destination. A warm "notebook/ink" hue clear of the teal · plum · terracotta triad and the indigo hub; also tints the space's owner-attribution captions. Theme-invariant for now (no Blood Moon swap) |
-| `journalCardWash` / `journalCircleWash` | `#2A2211` / `#342A15` | `#F0E7CE` / `#EBDFBE` | Journal strip card/icon-circle tint — baked flat per appearance |
-| `oracle` | crimson `#E4738F` | `#A33052` | The **Red Moon Oracle** (ADR 0187 D16) — the sixth home card, leading the new **Learn** section. **Deliberately not ADR 0081's Blood Moon**, which D16 nominated: measured against this table, Blood Moon *is* the terracotta family (its light value `#C24A2C` is `library`'s, byte for byte; its dark `#E3694A` sits a few degrees off `#E07E57`), so shipping it would have given two home spaces one colour in light mode — the exact failure §3.1 says the accent families exist to prevent. Crimson keeps the red the name asks for while reading as **wine** rather than orange: clear of terracotta, clear of plum's violet. Blood Moon stays available as a **theme** (Slice 2), which is what it was always for |
+| `journal` | gold `#D2A954` | `#9A7521` | The **Journal** space (ADR 0100) — the fifth home tile + read-only practice-history destination. A warm "notebook/ink" hue clear of the teal · plum · terracotta triad and the indigo hub; also tints the space's owner-attribution captions. Theme-invariant for now (no Blood Moon swap) |
+| `journalCardWash` / `journalCircleWash` | `#2A2211` / `#342A15` | `#E2D1A1` / `#DDC991` | Journal tile card/icon-circle tint — baked flat per appearance. **The light pair was darkened on device (ADR 0197 D9).** The old `#F0E7CE` sat at a **1.02** luminance ratio against the `#F0E3D8` background — last of the six by a distance, the next weakest being crimson at 1.14 and the median 1.23 — so on a full-width strip it read as a faint tint and at tile size it read as nothing at all. Same hue (44°) and same saturation (0.53), lightness 0.875 → 0.76, which lands it at **1.20**, mid-pack between crimson and terracotta. The circle moved with it by the same 0.042 of lightness, so the glyph disc keeps its 1.08 separation from the card. Dark mode was untouched — it was never the weak one |
+| `oracle` | crimson `#E4738F` | `#A33052` | The **Red Moon Oracle** (ADR 0187 D16) — the sixth home tile, leading the **Learn** section. **Deliberately not ADR 0081's Blood Moon**, which D16 nominated: measured against this table, Blood Moon *is* the terracotta family (its light value `#C24A2C` is `library`'s, byte for byte; its dark `#E3694A` sits a few degrees off `#E07E57`), so shipping it would have given two home spaces one colour in light mode — the exact failure §3.1 says the accent families exist to prevent. Crimson keeps the red the name asks for while reading as **wine** rather than orange: clear of terracotta, clear of plum's violet. Blood Moon stays available as a **theme** (Slice 2), which is what it was always for |
 | `oracleCardWash` / `oracleCircleWash` | `#371C22` / `#44222B` | `#EBD1D9` / `#E7C9D2` | Oracle strip + reading-card tint — baked flat per appearance, ratios lifted from the Indigo trio so the sixth hue sits at the same weight as the five before it |
 | `confirmWash` | `#13421E` | `#B4DAAF` | "Add a song" tint — baked flat, same rationale (ADR 0063) |
 | `fine` | `#EAF2FF` (high-key) | `#1F3651` (low-key) | Fine-mode precision selection — same cool hue, inverted key |
@@ -336,8 +336,8 @@ vision if useful, but know that **Phase 1** is what gets built first.
 | ~~P2~~ | ~~Song info / Repertoire panel~~ | **Removed (ADR 0042).** Key / mastery / collections now live only in the song-details sheet (hold the title); not duplicated in the practice scroll area. |
 | **P1** | **Home hub** | The app's front door (ADR 0044). Header shows the "Red Moon" wordmark graphic (ADR 0063) in place of plain title text. Greeting · "Jump back in" resume card · **Practice card** · Metronome card · Song library strip · **Journal card** (→ the notes+takes practice-history space, ADR 0100, the 4th strip) · **Toolkit card** (→ the chords/theory reference hub, ADR 0096, now 5th/last) · Add a song. **Planner-free for V1** — see §4.2. |
 | **P1** | **Practice space** | A top-level destination (ADR 0046), plum `practice` accent. A list of **your exercises** (command → reach) above a live **"Build today's session"** planner entry (V2 planner Slice 3). Tap **+** to create; tap a unit → its **training run** (own engine, `engine.run(ramp:)`): set up working/command/reach + warm-up steps with a routine staircase, then a live BPM/beat/session readout while it plays. |
-| **P1** | **Journal space** | A top-level **read-only** practice-history destination (ADR 0100), the fourth home card in the warm-gold `journal` accent — *look back*, distinct from Practice's *author* and Toolkit's *explore*. One newest-first, day-grouped timeline merging journal **notes** and audio **takes** across loops + exercises, with an **All / Notes / Takes** filter, **search** (song / exercise / template / date), a **Newest ↔ Oldest** sort toggle, and gold owner-attribution captions; takes play in place. Authoring stays on the owner (`JournalSheet`). |
-| **P1** | **Toolkit hub** | A top-level **reference** destination (ADR 0096), the fifth home card (now after Journal) in the indigo/violet `toolkit` accent — *explore / keep*, distinct from Practice's *author*. A landing list of sections; **Slice 1**: **My chords** (the `SavedChord` library as a full grid; tap → large diagram + rename/delete; **+** builds via the placer in "Save" mode) and a searchable **Glossary** of chord/scale/theory terms; then the **Tuner** (ADR 0115) and **Help & FAQs** (ADR 0145). *Hear* / identifier / scales / ear-training are later slices, each its own ADR. The hub is **free forever** (ADR 0144 D2) and gate-free by construction, which is why help lives here rather than behind the paywall. |
+| **P1** | **Journal space** | A top-level **read-only** practice-history destination (ADR 0100), the fourth home tile in the warm-gold `journal` accent — *look back*, distinct from Practice's *author* and Toolkit's *explore*. One newest-first, day-grouped timeline merging journal **notes** and audio **takes** across loops + exercises, with an **All / Notes / Takes** filter, **search** (song / exercise / template / date), a **Newest ↔ Oldest** sort toggle, and gold owner-attribution captions; takes play in place. Authoring stays on the owner (`JournalSheet`). |
+| **P1** | **Toolkit hub** | A top-level **reference** destination (ADR 0096), the fifth home tile (now after Journal) in the indigo/violet `toolkit` accent — *explore / keep*, distinct from Practice's *author*. A landing list of sections; **Slice 1**: **My chords** (the `SavedChord` library as a full grid; tap → large diagram + rename/delete; **+** builds via the placer in "Save" mode) and a searchable **Glossary** of chord/scale/theory terms; then the **Tuner** (ADR 0115) and **Help & FAQs** (ADR 0145). *Hear* / identifier / scales / ear-training are later slices, each its own ADR. The hub is **free forever** (ADR 0144 D2) and gate-free by construction, which is why help lives here rather than behind the paywall. |
 | **P1** | **Help & FAQs** | The Toolkit's fourth tenant (ADR 0145), same indigo chrome as the Glossary. Area-grouped questions that **expand in place** on tap — light haptic, 0.2s ease, rotating chevron, borrowed from `CollapsibleLibrarySection` without reusing it (help opens closed every time, so nothing persists). `.searchable` matches **inside answers**, and a non-empty search **force-expands every match**. Also pushed from Settings ▸ Help & About. Carries the app's first support address, in plain selectable text as well as the **Contact Support** form row (ADR 0161 — a `mailto:` until it proved to fail silently without a Mail account). |
 | **V2** | **Practice planner** | The "Build today's session" path **inside Practice** (ADR 0046 re-homes ADRs 0014–0016; ADR 0015/0072/0073). `PlannerView`: a duration selector (Quick 15 / Focused 30 / Full 60, default short) · a short list of **goals** that steer selection · **Generate** → a provisional `Routine` you review, then Start in the shipped player. `GoalEditorView`: template picker (four in-house `GoalTemplate`s) → name → priority (Low/Normal/High over the stored weight) → skill trim → optional target song → met toggle. No active goals ⇒ Generate falls back to a due-based Quick session. AI decomposition remains deferred (Slice 5). |
 
@@ -450,28 +450,45 @@ implemented; a linear slider stands in for now.
 ### 4.2 Home hub — layout
 
 The app's front door (ADR 0044), in place of launching straight into the library.
-**Dark-first**, a single scrolling column, top → bottom:
+**Dark-first**, a single scrolling column with one rule behind its order (ADR 0197):
+**what changed since yesterday is above the map, and the map is at the bottom.**
 
-1. **Greeting** — a quiet time-of-day lead-in ("Good evening") over a fixed
-   **"Ready to practice"** headline. (V2: planner "today's routine" cards slot in
-   directly under here — the layout leaves room.)
-2. **"Jump back in"** card — the single most-recently-practised song
-   (`Song.lastPracticed`), with its **mastery** and a relative **last-practised**
-   time. **Hidden on first launch** (no history). Tap → the practice screen, which
-   resumes the song at its **last-practiced tempo** (ADR 0044). Neutral chrome.
-3. **Metronome card** — the screen's **one accent** (teal, `PocketColor.metronome`).
-   Tap → the standalone metronome (full-screen; it owns its own navigation). This is
-   the metronome's permanent home — it retires the temporary Library toolbar button
-   (ADR 0043).
-4. **"Your songs"** — a **vertical list** (not a carousel) reusing the library's
-   `SongCard`, ordered by recent practice, the resume song dropped (it already
-   headlines above), capped to a short preview. **"See all"** pushes the full
-   `LibraryView` (grouped / searchable — unchanged, just no longer the root).
-5. **"Add a song"** — opens the file importer (creation reachable from the front door).
+1. **Greeting** — a quiet time-of-day lead-in ("Good evening", carrying the artist name
+   once one is given, ADR 0113) over a fixed **"Ready to practice?"** headline.
+2. **Trial countdown** — drawn only while a free trial is running (ADR 0144 D6).
+3. **"Start today's session"** — the filled teal CTA and the primary action, pushing
+   `PlannerView`. Pro; a free player gets the paywall and a padlock (ADR 0112).
+4. **"Jump back in"** card — the most-recently-practised **song, routine or exercise**,
+   whichever the player pinned (ADR 0193; the hold menu is on the card, ADR 0163), with a
+   relative last-practised time and a mastery or block-count readout. **Hidden until
+   something has been practised.** Neutral chrome. A song resumes at its last-practiced
+   tempo (ADR 0044).
+5. **"This week"** — three numbers over the last seven days: minutes, days, notes
+   (ADR 0196). One horizon, effort facts only, never a grade (ADR 0070). Hidden on a fresh
+   install rather than showing three zeroes; not tappable — the payoff screen stays on
+   `Practice log` in the Journal (ADR 0176).
+6. **The map** — the six destinations as a **2-up tile grid**, inside the three titled
+   sections ADR 0102 grouped them into: **Practice · Metronome**, then **Song library ·
+   Journal**, then **Red Moon Oracle · Toolkit**. A tile is a glyph in a washed circle over
+   a centred name, in that destination's own hue — the six-hue family in §3.1 is what makes
+   the grid a map rather than a list. **No subtitle and no chevron** (ADR 0197 reverses
+   0102's tile-grid rejection, which was decided at four cards): the descriptions were true
+   on day one and re-read every day after, and they cost the height this screen needed for
+   items 4 and 5. They survive in the **accessibility labels**, which did not change.
+   A tile locks with a corner padlock rather than hiding (ADR 0144 D4); Journal and Toolkit
+   never do (D2).
+7. **"Recent routines"** — a horizontal rail of routines actually practised, newest first,
+   capped at three.
 
-**Navigation:** the home hub is the **app root**; Library, the metronome, and the
-practice screen are reached from it. Nothing is lost — the full library is one tap
-away under "See all".
+**Add a song** lives in the toolbar's green **+** disc; the gear opposite it opens Settings.
+While the library is empty the `Song library` tile carries the one line that points at that
+button — the single exception to the map's no-descriptions rule, and it goes as soon as it is
+followed.
+
+**Navigation:** the home hub is the **app root**; every other space is reached from it and
+comes back to it. There is no tab bar on the phone — ADR 0102 deferred that decision and
+§2 of `docs/directions-2026-09.md` takes it up again at the iPad, where the same six become
+a sidebar.
 
 ### 4.3 Analytics consent — the one-time ask
 

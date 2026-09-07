@@ -454,8 +454,8 @@ if grep -qE "TEST FAILED|TEST EXECUTE FAILED" "$RUN_LOG"; then
     # earlier run against an earlier build — sixteen slug-named PNGs that look exactly like a
     # finished set, because last time they were one. Say so *in the directory*: that is where
     # someone reaching for the images looks, and the terminal telling them not to has by then
-    # scrolled past. The marker is a plain file, so the next successful filing deletes it along
-    # with everything else it clears out.
+    # scrolled past. It is removed explicitly by the filing step below rather than by being
+    # cleared with the images — a partial run files in `keep` mode and clears nothing.
     if [ -d "$FILED" ]; then
         cat > "$FILED/STALE-DO-NOT-SHIP.txt" <<STALE
 The shoot that ran at $(date "+%Y-%m-%d %H:%M") FAILED, and these images are from before it.
@@ -511,6 +511,21 @@ if [ "$keep_filed" = "keep" ]; then
 else
     ./scripts/file-shots.py "$OUT_DIR/export" "$FILED"
 fi
+
+# **Clear the stale marker explicitly, because the clear-on-file reasoning does not hold.**
+#
+# The marker written above says of itself: *"this file disappears when a run files a fresh set"*,
+# on the reasoning that it is a plain file and the next successful filing empties the directory
+# before writing. That is true of a **complete** shoot, which owns `filed/` and clears it. It is
+# false of a **partial** one, which files with `--keep` precisely so it cannot destroy the passes
+# it did not drive — so the marker outlived the run that fixed the failure, and a directory of
+# freshly shot images sat under a note calling all of them stale.
+#
+# Found on 2026-09-07 (ADR 0197 D8): a `base` pass failed on two unrelated timing flakes, was
+# re-run green, filed 56 fresh images, and left `STALE-DO-NOT-SHIP.txt` sitting on top of them.
+# The failure mode is the worse direction of the two — a marker that under-claims freshness gets
+# good work thrown away, quietly, by whoever reads the directory next week.
+rm -f "$FILED/STALE-DO-NOT-SHIP.txt"
 }
 
 # --- 6. drive every pass -------------------------------------------------------------------------

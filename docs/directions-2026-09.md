@@ -190,6 +190,32 @@ grid on **one** branch and shoot once.
 on the stated grounds that it was decided at four cards; and a second, small one for the
 resume preference.
 
+> **Built** — `docs/decisions/0197-a-map-you-read-once.md` (2026-09-07), together with the resume
+> preference (ADR 0193) and the stat strip (ADR 0196) that landed ahead of it. Four corrections to
+> the sketch above, all found by building it:
+>
+> - **`HomeTile` did not land *beside* `HomeNavCard` — it replaced it.** Once all six call sites
+>   were tiles the strip had no caller, and a shared component nothing draws is dead code with a
+>   doc comment. The whole map moved into `HomeView+Map.swift` and `HomeView+Learn.swift` was
+>   deleted into it, because the six had been split across three files for no reason but the
+>   400-line cap and nothing could see the map whole.
+> - **The accessibility label to keep is `"Toolkit, tuner, your chords and a glossary"`** — lower
+>   case *tuner*, and *and* rather than `&`. The warning above quotes the *subtitle*'s casing; the
+>   label is a separate literal and always has been. Keeping the wrong one byte-identical would
+>   have broken the exact test the warning exists to protect.
+> - **One subtitle was an instruction, not a description.** `Song library`'s was count-aware and
+>   read `Add a song to get started` on an empty library — the only thing on Home that pointed at
+>   the toolbar's **+** for a player with ADR 0112's first-run state (no song). It survives as a
+>   caption on that one tile, and goes as soon as it is followed. Dropping all six would have been
+>   a silent onboarding regression that no check could see.
+> - **The tile says `Red Moon Oracle`, not the mockup's `Oracle`.** It wraps to two lines and the
+>   row equalises height, which costs nothing; a tile that calls a place something the place does
+>   not call itself is a map with a mistake on it.
+>
+> `check-manual.py` C9 named the five broken manual backticks by name the moment the subtitles
+> left — which is the machinery working, and the reason the manual moved in the same commit rather
+> than a follow-up.
+
 ---
 
 ## 3. Notation on a timeline, and the iPad
@@ -479,21 +505,46 @@ Ranked by cost, not by value, because everything here is argued for above.
 
 **Tier 3 — real work (and the whole of what is left of §2).**
 
-⚠ **It opens owing two figures.** Tier 2 changed `reference/home` (the `This week` strip) and
-`reference/settings-routines` (a fifth row) and **deliberately did not reshoot either** — the tile
-grid changes the Home figure again, and one ~6-minute run over a five-trap harness beats two. Both
-are stale in the filed set today. Shoot them with this work, and check nothing else drifted in the
-meantime; `check-manual.py` cannot see a stale figure, only a missing one.
+⚠ ~~**It opens owing two figures.**~~ **Paid — 2026-09-07, with the tile grid (ADR 0197 D8).**
+`reference/home` and `reference/settings-routines` were both reshot in one `base` pass, and the run
+came back **27/27** with `shoot-progress.py --verify` clean at 91 of 93 (the two outstanding are the
+subscription screens, which need a real phone and always have).
 
-⚠ **And `ManualRoutineShots.testPlayThrough` carries an unrun edit.** ADR 0195's tune-up question
-now stands between *Play* and block 1, so the walk answers `Not now` — written but never executed,
-because the shoot was deferred. It is the first thing to check on the next run; it fails loudly if
-the selector is wrong rather than photographing the wrong state. Worth deciding then whether the
-prompt deserves a figure of its own on `routines.md`, which currently describes it in prose alone.
+> It took **two** runs, and the reason is worth keeping: the first was driven while a device build
+> and a verification build were running alongside it. Load average hit **184** with 5.3 GB of swap
+> in use, and two unrelated tests failed — `testMetronome` ("the + stepper stopped responding at
+> 90 BPM") and `testTakeTrim` (a `Trim…` button with an `{inf, inf}` frame). Both passed on an
+> unloaded machine, and the pass ran in **714s** rather than 1100s. Neither failure was near the
+> change. **Do not run a shoot next to anything else** — the harness's five recorded traps now have
+> a sixth, and it is the cheapest of them to avoid.
+>
+> It also surfaced a harness bug, now fixed in `scripts/shoot-manual.sh`: the
+> `STALE-DO-NOT-SHIP.txt` a failed pass writes says *"this file disappears when a run files a fresh
+> set"*, which is true only of a **complete** shoot. A partial run files with `--keep` and clears
+> nothing, so the marker survived the green re-run and sat on top of 56 fresh images calling them
+> stale. It is now deleted explicitly after filing.
 
-Then: option A's tile grid (six call sites, subtitles leave the screen →
-manual copy + `check-manual.py` + a Home reshoot), then the bar ruler (§3 step 1, which must
-adopt ADR 0153's leaf-only playhead split).
+⚠ ~~**And `ManualRoutineShots.testPlayThrough` carries an unrun edit.**~~ **Run, and correct.** The
+`routines` pass came back 3/3; the walk found `Not now` and tapped it. ADR 0195's selector was right
+as written. Whether the prompt deserves a figure of its own on `routines.md` is **still open** — it
+is described there in prose alone.
+
+~~Then: option A's tile grid~~ **Built — ADR 0197.** Six call sites, the subtitles off the screen,
+`check-manual.py` C9 naming the five manual backticks that broke, and the Home reshoot above. Two
+things the ranking did not price:
+
+- **A tile is a much smaller field of colour than a strip**, and the six washes were all chosen
+  against a full-width card. The Journal's gold was at a **1.02** luminance ratio against the light
+  background — last of six, next-weakest 1.14 — and at tile size it read as background. Found on
+  device, not in a preview and not by any check. Darkened to 1.20 (0197 D9); crimson at 1.14 is the
+  next candidate and was judged acceptable by eye.
+- **"The whole app fits above the rail" is not what happened.** Learn and the rail are still below
+  the fold; what now fits in front of them is the `This week` strip. The tile grid **paid for the
+  stat strip** rather than making Home one screen (0197 D10). Anything planned on the assumption
+  that Home now fits is still unbuilt work — which matters for the iPad sidebar in §2.
+
+Then the bar ruler (§3 step 1, which must adopt ADR 0153's leaf-only playhead split) — the one Tier 3
+item still to start.
 
 **Tier 4 — not now:** the tempo map (ADR 0168), notation, the iPad root, Android, and the
 Oracle's ADR 0187 S2–S5.

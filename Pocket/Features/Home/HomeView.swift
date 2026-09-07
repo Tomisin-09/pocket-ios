@@ -1,18 +1,25 @@
 import SwiftData
 import SwiftUI
 
-/// The app's **front door** (V1 home hub, ADR 0044 follow-on): a time-of-day greeting, a
-/// "Jump back in" card for the song you last practised, the standalone metronome, a short
-/// preview of your songs (full library one tap away), and a way to add one. Becomes the app
-/// root in place of `LibraryView` and retires the temporary metronome toolbar button (ADR
-/// 0043). The planner that the design brief once pencilled in here is V2 — this is a
-/// deliberately planner-free V1 home.
+/// The app's **front door** (ADR 0044), and since ADR 0197 a screen with a shape: what changed
+/// since yesterday on top, the map underneath.
+///
+/// Top to bottom — a time-of-day greeting, the trial countdown while one is running, the
+/// `Start today's session` CTA, the `Jump back in` card for whichever unit the player pinned
+/// (ADR 0193), the `This week` strip (ADR 0196), the six destinations as a tile grid
+/// (`HomeView+Map`), and the recent-routines rail. It is the app root in place of `LibraryView`
+/// and retires the temporary metronome toolbar button (ADR 0043).
+///
+/// **The ordering is the argument.** Everything above the map is different from yesterday and
+/// everything in it is not: the six destinations have been the same six since the Oracle landed
+/// and will not change again this year. Six full-width strips put that unchanging half in the
+/// player's way every launch — ADR 0197 is what shrank it back to an index.
 struct HomeView: View {
     /// Internal, not private: `HomeView+Seeding` writes the first-run content through it.
     @Environment(\.modelContext) var context
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112). Both carry safe preview defaults
     /// (free / no-op), so `HomeView` previews render without a `StoreManager` in the environment.
-    /// Non-private (like the `@Query`s below) so the `HomeView+Cards` extension can gate its CTA.
+    /// Non-private (like the `@Query`s below) so the `HomeView+Actions` extension can gate its CTA.
     @Environment(\.isPro) var isPro
     @Environment(\.presentPaywall) var presentPaywall
     /// Practice reminders (ADR 0186). Home owns the launch sweep (D3) and the tap landing (D6),
@@ -53,7 +60,7 @@ struct HomeView: View {
     @State var showingNamePrompt = false
     /// Drives the first-launch curation intake sheet.
     @State var showingIntake = false
-    /// Drives the file importer — non-private for the add-song button in `HomeView+Cards`.
+    /// Drives the file importer — non-private for the add-song button in `HomeView+Actions`.
     @State var importing = false
     @State private var importError: String?
     /// Drives multi-select import: progress overlay + partial-failure summary (shared
@@ -68,7 +75,9 @@ struct HomeView: View {
     /// The routine a tapped reminder asked for (ADR 0186 D6), resolved out of the store; `nil` when
     /// none. Bool-bound below for the same reason `openingSong` is — see that destination.
     @State var openingRoutine: Routine?
-    @State private var showingMetronome = false
+    /// Drives the full-screen metronome — non-private since ADR 0197, because the tile that sets
+    /// it lives in `HomeView+Map`.
+    @State var showingMetronome = false
     /// Set when `seedFirstRunContent()` finishes, purely so `seedingMarker` can publish it to the UI
     /// tests (ADR 0146 pass 2). Nothing the player sees depends on it — seeded content appears
     /// through `@Query` as each seeder commits, exactly as before. Internal, not private, because
@@ -96,27 +105,11 @@ struct HomeView: View {
                     // the app. Draws nothing at all until something has been practised, so a fresh
                     // install is unchanged.
                     HomeStatsStrip()
-                    // The navigation strips are grouped into titled sections (ADR 0102) rather than
-                    // one flat run: hierarchy keeps the home calm as destinations accrue and gives a
-                    // new arrival a section to join instead of becoming a sixth same-weight peer.
-                    // Three sections, as ADR 0102 §2 pre-scoped and ADR 0187 D16 makes real:
-                    // Toolkit leaves "Your stuff" and pairs with the Oracle under **Learn**. The
-                    // interim two-section split was always waiting on this card. Sections breathe at
-                    // the 20-pt rhythm; strips within a section stay tight at 10.
-                    VStack(alignment: .leading, spacing: 20) {
-                        HomeSection(title: "Practice") {
-                            practiceCard
-                            metronomeCard
-                        }
-                        HomeSection(title: "Your stuff") {
-                            songLibraryCard
-                            journalCard
-                        }
-                        HomeSection(title: "Learn") {
-                            oracleCard
-                            toolkitCard
-                        }
-                    }
+                    // The six destinations, grouped into the titled sections ADR 0102 fixed and
+                    // drawn as a 2-up tile grid since ADR 0197 — hierarchy keeps the home calm as
+                    // destinations accrue, and the tiles are what stop the map from owning the
+                    // screen it is only the index to. It lives whole in `HomeView+Map`.
+                    homeMap
                     if !recentRoutines.isEmpty { recentRoutinesRail }
                 }
                 .padding(20)
@@ -240,94 +233,17 @@ struct HomeView: View {
         .accessibilityElement(children: .combine)
     }
 
-    // MARK: - Start today's session (primary CTA)
+    // MARK: - Song library subtitle
 
-    // MARK: - Practice card
-
-    /// The top-level **Practice** space (ADR 0046) — where trainable units live and
-    /// command-anchored runs happen. A push (it's a *place* with its own list and run screens),
-    /// in the brand teal accent (`PocketColor.practice`, the brand hero) so it reads as distinct
-    /// from the metronome tool below it.
-    private var practiceCard: some View {
-        proGated(.practice) { PracticeView() } label: {
-            HomeNavCard(icon: "figure.run", title: "Practice",
-                        subtitle: "Your exercises & training runs",
-                        tint: PocketColor.practice,
-                        cardWash: PocketColor.practiceCardWash,
-                        circleWash: PocketColor.practiceCircleWash,
-                        locked: !isPro)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Practice, your exercises and training runs")
-    }
-
-    // MARK: - Journal card
-
-    /// The **Journal** space (ADR 0100) — the read-only practice-history destination that aggregates
-    /// notes + takes across loops and exercises. The 4th strip (between Practice and Toolkit), in its
-    /// own warm **gold** identity (`PocketColor.journal`), a fifth home hue kept clear of the
-    /// teal · plum · terracotta triad and the indigo reference hub.
-    private var journalCard: some View {
-        // **Ungated** (ADR 0144 D2): what you wrote and what you recorded is yours, and a lapsed
-        // subscription doesn't take it back. The doors *out* of the Journal — an entry's caption
-        // opening its exercise or routine — stay gated inside `JournalTabView`.
-        NavigationLink { JournalTabView() } label: {
-            HomeNavCard(icon: "book.closed.fill", title: "Journal",
-                        subtitle: "Your notes & practice takes",
-                        tint: PocketColor.journal,
-                        cardWash: PocketColor.journalCardWash,
-                        circleWash: PocketColor.journalCircleWash)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Journal, your notes and practice takes")
-    }
-
-    // MARK: - Metronome card
-
-    /// The standalone metronome (plum, `PocketColor.metronome` — the one theme-invariant home
-    /// hue), presented full-screen (it owns its own navigation + dismiss, ADR 0043).
-    private var metronomeCard: some View {
-        Button {
-            showingMetronome = true
-            Analytics.send(.toolOpened(tool: .metronome))
-        } label: {
-            HomeNavCard(icon: "metronome.fill", title: "Metronome",
-                        subtitle: "Standalone click & tempo trainer",
-                        tint: PocketColor.metronome,
-                        cardWash: PocketColor.metronomeCardWash,
-                        circleWash: PocketColor.metronomeCircleWash)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Metronome, standalone click and tempo trainer")
-    }
-
-    // MARK: - Song library strip
-
-    /// The songs place, folded into a single nav strip (matching the Metronome/Practice pattern) in
-    /// its own warm **terracotta** identity (baked `library` tokens — no opacity blend, ADR
-    /// 0062/0081). Replaces the old inline "Your songs" preview list; adding a song now lives in the
-    /// toolbar's green button. Together with the teal Practice and plum Metronome strips this forms
-    /// the teal · plum · terracotta home triad (content / tool / songs).
-    private var songLibraryCard: some View {
-        proGated(.library) { LibraryView() } label: {
-            HomeNavCard(icon: "music.note.list", title: "Song library",
-                        subtitle: librarySubtitle,
-                        tint: PocketColor.library,
-                        cardWash: PocketColor.libraryCardWash,
-                        circleWash: PocketColor.libraryCircleWash,
-                        locked: !isPro)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Song library, \(librarySubtitle)")
-    }
-
-    /// Count-aware subtitle: nudges an empty library toward the toolbar's add button.
-    private var librarySubtitle: String {
+    /// Count-aware library copy: it nudges an empty library toward the toolbar's add button, and
+    /// carries the count otherwise. Since ADR 0197 it is the **accessibility label's** tail on every
+    /// install and the Song library tile's visible caption on an empty one — one string either way,
+    /// so a fresh install's nudge and what VoiceOver reads cannot drift apart. Non-private because
+    /// the tile that reads it lives in `HomeView+Map`.
+    var librarySubtitle: String {
         songs.isEmpty ? "Add a song to get started"
                       : "\(songs.count) song\(songs.count == 1 ? "" : "s")"
     }
-
-    // MARK: - Recent routines rail
 
     // MARK: - Derived
 
