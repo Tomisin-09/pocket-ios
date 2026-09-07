@@ -68,4 +68,25 @@ progress ("2 of 5"), or a plain recording to listen back to. The line is between
 - **Timing-only feedback** (grade rhythm, ignore pitch). Rejected: same framing
   problem at the edge of comfort, where rushing/dragging is expected.
 
+## Addendum, 2026-09-07 — this is a mechanism, not only a value
+
+Recorded here because this ADR is where every later feature comes to check itself, and it has been
+read as a principle the product pays a price for.
+
+The motor-learning literature on feedback frequency — the guidance hypothesis, Winstein & Schmidt
+and the work that followed — finds that frequent feedback improves performance **during** practice
+and degrades **retention**: learners come to depend on it, and do worse when it is withdrawn.
+Faded, reduced feedback schedules produce better long-term learning than constant ones.
+
+So the refusal above is not restraint bought at the cost of usefulness. On the evidence it is more
+likely to produce better players than `docs/positioning.md` §3's graded competitor, whose AI report
+supplies exactly the constant feedback that harms retention.
+
+Two things follow. Future proposals to add "just a little" scoring are arguing against the
+evidence, not only against a value — they carry the burden. And this is a claim the marketing may
+make plainly, which is a claim only a product that does not grade you can make credibly.
+
+ADR 0187 D22 and D23 are this addendum applied to what the Oracle reflects and how it phrases
+things.
+
 [ADR 0066]: 0066-practice-routine-model.md
