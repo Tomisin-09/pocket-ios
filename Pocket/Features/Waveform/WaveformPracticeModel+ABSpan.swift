@@ -45,7 +45,7 @@ extension WaveformPracticeModel {
     /// creation surfaces never fight.
     func tapAB() {
         abEditingLoop = nil          // a fresh play-along span is a new loop, not an edit
-        let next = abSpan.tappingPlayhead(playheadFraction)
+        let next = abSpan.tappingPlayhead(playheadFraction, duration: duration)
         abSpan = next
         switch next {
         case .armed:
@@ -78,6 +78,7 @@ extension WaveformPracticeModel {
     func saveABSpan() {
         guard case .set(let start, let end) = abSpan else { return }
         if let loop = abEditingLoop {
+            recordSpanChange(on: loop, toStart: start, end: end)   // before the overwrite (ADR 0199)
             loop.start = start          // mutating the @Model persists the new range
             loop.end = end
             abSpan = .idle
@@ -91,6 +92,27 @@ extension WaveformPracticeModel {
         haptic(.medium)
     }
 
+    /// Record what this edit did to the loop's span, **before** `saveABSpan` overwrites it
+    /// (ADR 0199). `Loop.start`/`end` are mutated in place, so this is the only moment the old
+    /// bounds still exist — miss it and the narrowing is gone for good.
+    ///
+    /// This is the sole write site: `saveABSpan` is the one place a *saved* loop's range is ever
+    /// rewritten (creation goes through `createLoop`, and a new loop has no history to add to —
+    /// its first recorded change carries the creation bounds as its `previous` pair).
+    ///
+    /// A save that moved nothing writes nothing: opening the range editor and pressing Save must
+    /// not manufacture a row claiming an edit that did not happen.
+    private func recordSpanChange(on loop: Loop, toStart start: Double, end: Double) {
+        guard SpanHistory.changed(fromStart: loop.start, end: loop.end, toStart: start, end: end)
+        else { return }
+        let change = LoopSpanChange(start: start, end: end,
+                                    previousStart: loop.start, previousEnd: loop.end,
+                                    speed: speed,
+                                    songDuration: duration > 0 ? duration : nil)
+        context.insert(change)
+        change.loop = loop            // attach → persists, and cascades with the loop
+    }
+
     /// Lift the active loop into the A/B span for a direct edge edit (ADR 0041): seed the
     /// span with its bounds and mark it the edit target. Triggered by grabbing the loop's
     /// edge on the waveform; the drag then refines it and Save writes the new range back.
@@ -101,11 +123,12 @@ extension WaveformPracticeModel {
     }
 
     /// Drag an A/B span edge in place (ADR 0041) — the same handle mechanics as Fine,
-    /// but on the live span and with no mode hop. Bounds stay ordered and `minLoopWidth`
-    /// apart; the engine loop re-arms on release (`endABHandle`), not per drag-frame.
+    /// but on the live span and with no mode hop. Bounds stay ordered and a half-second
+    /// apart (ADR 0199); the engine loop re-arms on release (`endABHandle`), not per drag-frame.
     func moveABHandle(_ handle: WaveformGesture.Handle, _ fraction: Double) {
         guard case .set(let start, let end) = abSpan else { return }
-        let bounds = WaveformGesture.movingHandle(handle, toFraction: fraction, start: start, end: end)
+        let bounds = WaveformGesture.movingHandle(handle, toFraction: fraction, start: start, end: end,
+                                                  minWidth: WaveformGesture.minWidth(forDuration: duration))
         abSpan = .set(start: bounds.start, end: bounds.end)
     }
 
@@ -122,7 +145,8 @@ extension WaveformPracticeModel {
                 ?? snapTarget(movingFraction))
             : nil
         if let target {
-            let bounds = WaveformGesture.movingHandle(handle, toFraction: target, start: start, end: end)
+            let bounds = WaveformGesture.movingHandle(handle, toFraction: target, start: start, end: end,
+                                                      minWidth: WaveformGesture.minWidth(forDuration: duration))
             abSpan = .set(start: bounds.start, end: bounds.end)
             haptic(.light)
         }

@@ -1278,6 +1278,38 @@ empty, because that line was Home's only word about adding a first song.
   them is a live ranking change owed its own decision. This makes the write path above a *ranking*
   concern as well as a stats one — a seam that silently failed to log would leave its unit max-due
   forever — which is why all three seams were verified against the on-device store before it shipped.
+- **`LoopSpanChange`** (ADR 0199) is *how the loop got this narrow* — one row per edit to a loop's
+  span, carrying `changedAt`, the span after, **the span before**, the playback `speed` in force and
+  the song's `songDuration` at write time. It exists because `Loop.start` / `Loop.end` are
+  **overwritten in place**: a loop reading `1:58 – 2:04` cannot say whether it was set there or
+  arrived there from `1:44 – 2:18` across three sittings, and the second reading is the one worth
+  having. It is also the rare signal that costs the player nothing — unlike mastery, tags or prose,
+  narrowing a loop *is* the statement, made by everyone who does it.
+
+  **One write site.** `saveABSpan` is the only place a saved loop's range is ever rewritten
+  (creation goes through `createLoop`; everything else reads), and the row is written **before** the
+  overwrite, which is the only moment the old bounds still exist. A save that moved nothing writes
+  nothing — the guard is float hygiene (`SpanHistory.epsilon`, `1e-9`), deliberately not a
+  "meaningful change" threshold, since every save is an explicit act and a two-frame trim is a small
+  number and a real one.
+
+  **Each row is self-contained**, carrying both spans, so one row answers *widen back to where it
+  was* without walking the chain and a loop created before this ADR loses nothing — its first
+  recorded change carries the bounds it was created with. That is also why **no row is written at
+  creation**: the first change's `previous` pair *is* the creation record, which keeps the write to
+  one site. The `speed` is on the row because the narrowing and the slowing are one behaviour rather
+  than two facts; the `songDuration` is on it so a span reads back in seconds without depending on
+  the audio still being linked (ADR 0152).
+
+  Attributes are primitives and there is **no stored enum** (the ADR 0036 device-only migration
+  trap): narrowed / widened / **moved** is derived by the pure `SpanHistory.kind`, where a span that
+  keeps its width and slides along the song is *neither* — calling it either would put a false claim
+  into everything downstream. ⚠ The inverse **cascades**, like `ReferenceLink` below and unlike
+  `JournalEntry` / `Recording`: ADR 0151 keeps a take past its loop because the take is a recording
+  of *you*, while a fact *about a span* has nothing to be about once the span is gone. **Nothing
+  reads it back yet** — the span-editor section, the widen-back affordance and the Oracle context
+  payload are later slices, and the record lands first so history accrues before the surfaces that
+  need it exist.
 - **`ReferenceLink`** (ADR 0167) is *where you learned it* — a title, a URL and an optional note hung
   off the thing it explains. The note (added by the ADR's 2026-08-19 revision) is *what you took from
   the source*, as against the title's *what the source is*: a plain non-optional `String` with a

@@ -164,14 +164,15 @@ extension WaveformPracticeModel {
         abSpan = .set(start: bounds.start, end: bounds.end)
     }
 
-    /// The hold-drag released — finalise the A/B span (widened to `minLoopWidth` if tiny,
+    /// The hold-drag released — finalise the A/B span (widened to the half-second floor if tiny,
     /// edges snapped to nearby markers / loop boundaries, ADR 0021) and loop it at once.
     /// The A/B strip (Save as loop · ✕) then appears — same living span as a play-along set.
     func endDragSelection() {
         guard let raw = abSpan.bounds, dragSelectAnchor != nil else { return }
         let snappedStart = snapTarget(raw.start) ?? raw.start
         let snappedEnd = snapTarget(raw.end) ?? raw.end
-        let bounds = WaveformGesture.loopBounds(snappedStart, snappedEnd)
+        let bounds = WaveformGesture.loopBounds(snappedStart, snappedEnd,
+                                                minWidth: WaveformGesture.minWidth(forDuration: duration))
         abSpan = .set(start: bounds.start, end: bounds.end)
         dragSelectAnchor = nil
         isDragSelecting = false

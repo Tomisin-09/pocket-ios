@@ -14,6 +14,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+- **Loops can be much shorter.** The smallest loop you could set used to be **2% of the song**, so it
+  grew with the material — nearly five seconds on a four-minute track and over nine on an
+  eight-minute one, which put a single bar out of reach at any normal tempo and made looping a
+  couple of beats impossible on anything but a short song. The floor is now **half a second of
+  audio**, whatever the song's length, so you can isolate the one move that's actually going wrong.
+  Take trimming gets the same floor.
+
 ### Added
 - **Home shows how much you practised this week.** A `This week` strip below the resume card, with
   three numbers: **Minutes**, **Days** and **Notes** — all covering the same seven days. It appears

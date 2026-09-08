@@ -81,13 +81,16 @@ extension TakeDetailView {
         player.limitPlayback(until: nil)
     }
 
-    /// Move one handle, keeping the span ordered and at least `minLoopWidth` wide, then teach the
+    /// Move one handle, keeping the span ordered and at least half a second wide (ADR 0199 — the
+    /// same floor a loop gets, and in the same unit; the old fraction-of-the-media floor was only
+    /// ever harmless here because takes are short), then teach the
     /// player the new end so pressing play auditions the span you are choosing rather than the whole
     /// take. Seeking to the new start on a *start* drag is what makes that audible immediately.
     func moveTrimHandle(_ handle: WaveformGesture.Handle, to fraction: Double) {
         guard let span = trim.bounds else { return }
         let moved = WaveformGesture.movingHandle(handle, toFraction: fraction,
-                                                 start: span.start, end: span.end)
+                                                 start: span.start, end: span.end,
+                                                 minWidth: WaveformGesture.minWidth(forDuration: audioDuration))
         trim = .set(start: moved.start, end: moved.end)
         let keep = TakeTrim.span(from: moved.start, to: moved.end, duration: audioDuration)
         player.limitPlayback(until: keep.end)
