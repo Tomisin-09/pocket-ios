@@ -12,8 +12,12 @@ import Foundation
 ///     idle ──tap──▶ armed(A) ──tap──▶ set(A↔B) ──tap──▶ idle ──▶ …
 ///
 /// First tap drops **A** at the playhead; the second closes the span to **A↔B**
-/// (ordered, widened to `minLoopWidth`); a third clears it. The closed span loops
+/// (ordered, widened to the gesture floor); a third clears it. The closed span loops
 /// ephemerally until promoted to a saved loop or cleared.
+///
+/// The song's `duration` is threaded through the two closing calls because the floor is
+/// **half a second**, not a fraction of the song (ADR 0199) — the type stays pure, it just
+/// takes one more number.
 enum ABSpan: Equatable {
     /// Nothing set.
     case idle
@@ -25,23 +29,25 @@ enum ABSpan: Equatable {
     /// The play-along set control was tapped while the playhead sits at
     /// `playhead` (a song fraction). Advances the three-state cycle: drop A, close
     /// to a span (ordered + widened via `WaveformGesture.loopBounds`), or clear.
-    func tappingPlayhead(_ playhead: Double) -> ABSpan {
+    /// `duration` is the song's length in seconds, for the half-second floor (ADR 0199).
+    func tappingPlayhead(_ playhead: Double, duration: TimeInterval) -> ABSpan {
         switch self {
         case .idle:
             return .armed(playhead)
         case .armed(let pointA):
-            return Self.closed(from: pointA, to: playhead)
+            return Self.closed(from: pointA, to: playhead, duration: duration)
         case .set:
             return .idle
         }
     }
 
     /// Close a span from two points — A at `anchor`, B at `current` — ordering them
-    /// and widening to `minLoopWidth` if they landed too close (via
+    /// and widening to the half-second floor if they landed too close (via
     /// `WaveformGesture.loopBounds`). The shared exit for both set gestures: the
     /// second play-along tap and a released spatial hold-drag.
-    static func closed(from anchor: Double, to current: Double) -> ABSpan {
-        let bounds = WaveformGesture.loopBounds(anchor, current)
+    static func closed(from anchor: Double, to current: Double, duration: TimeInterval) -> ABSpan {
+        let bounds = WaveformGesture.loopBounds(anchor, current,
+                                                minWidth: WaveformGesture.minWidth(forDuration: duration))
         return .set(start: bounds.start, end: bounds.end)
     }
 

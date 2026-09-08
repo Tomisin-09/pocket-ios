@@ -196,6 +196,19 @@ final class Loop {
     @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.loop)
     var references: [ReferenceLink] = []
 
+    /// Every recorded edit to this loop's span (ADR 0199). **`.cascade`, like `references` and
+    /// unlike `journal` / `recordings`**: ADR 0151 keeps a take alive past its loop because the take
+    /// is a recording of the player. A row saying "this span narrowed from there to here" is a fact
+    /// *about the span* — with the loop gone there is no span for it to be about. Additive
+    /// relationship, so pre-0199 loops migrate to an empty array (CoreData 134110 rule).
+    @Relationship(deleteRule: .cascade, inverse: \LoopSpanChange.loop)
+    var spanChanges: [LoopSpanChange] = []
+
+    /// Span edits newest-first — the order any history reads back in.
+    var spanChangesByRecent: [LoopSpanChange] {
+        spanChanges.sorted { $0.changedAt > $1.changedAt }
+    }
+
     init(name: String, start: Double, end: Double, speed: Double, repeats: Int) {
         self.uid = UUID()
         self.name = name

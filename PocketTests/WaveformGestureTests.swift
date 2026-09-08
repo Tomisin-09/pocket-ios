@@ -33,7 +33,7 @@ final class WaveformGestureTests: XCTestCase {
     func testLoopBoundsWidensWhenTooNarrow() {
         // Two near-identical taps grow to the minimum width around the midpoint.
         let bounds = WaveformGesture.loopBounds(0.500, 0.505)
-        XCTAssertEqual(bounds.end - bounds.start, WaveformGesture.minLoopWidth, accuracy: 0.0001)
+        XCTAssertEqual(bounds.end - bounds.start, WaveformGesture.minLoopWidthFallback, accuracy: 0.0001)
         XCTAssertEqual((bounds.start + bounds.end) / 2, 0.5025, accuracy: 0.0001)
     }
 
@@ -41,7 +41,7 @@ final class WaveformGestureTests: XCTestCase {
         // A too-narrow tap pair at the very end can't spill past 1.0.
         let bounds = WaveformGesture.loopBounds(1.0, 1.0)
         XCTAssertEqual(bounds.end, 1.0, accuracy: 0.0001)
-        XCTAssertEqual(bounds.end - bounds.start, WaveformGesture.minLoopWidth, accuracy: 0.0001)
+        XCTAssertEqual(bounds.end - bounds.start, WaveformGesture.minLoopWidthFallback, accuracy: 0.0001)
     }
 
     func testLoopBoundsClampsOutOfRangeInputs() {
@@ -69,7 +69,7 @@ final class WaveformGestureTests: XCTestCase {
         // Unlike loopBounds, a tiny drag stays tiny — no min-width widening live.
         let bounds = WaveformGesture.selectionBounds(anchor: 0.500, current: 0.502)
         XCTAssertEqual(bounds.end - bounds.start, 0.002, accuracy: 0.0001)
-        XCTAssertLessThan(bounds.end - bounds.start, WaveformGesture.minLoopWidth)
+        XCTAssertLessThan(bounds.end - bounds.start, WaveformGesture.minLoopWidthFallback)
     }
 
     func testSelectionBoundsClampsOutOfRange() {
@@ -115,14 +115,14 @@ final class WaveformGestureTests: XCTestCase {
     func testMovingStartHandleCannotCrossEnd() {
         // Dragging start past end is capped at end − minLoopWidth.
         let bounds = WaveformGesture.movingHandle(.start, toFraction: 0.95, start: 0.30, end: 0.70)
-        XCTAssertEqual(bounds.start, 0.70 - WaveformGesture.minLoopWidth, accuracy: 0.0001)
+        XCTAssertEqual(bounds.start, 0.70 - WaveformGesture.minLoopWidthFallback, accuracy: 0.0001)
         XCTAssertEqual(bounds.end, 0.70, accuracy: 0.0001)
     }
 
     func testMovingEndHandleCannotCrossStart() {
         let bounds = WaveformGesture.movingHandle(.end, toFraction: 0.10, start: 0.30, end: 0.70)
         XCTAssertEqual(bounds.start, 0.30, accuracy: 0.0001)
-        XCTAssertEqual(bounds.end, 0.30 + WaveformGesture.minLoopWidth, accuracy: 0.0001)
+        XCTAssertEqual(bounds.end, 0.30 + WaveformGesture.minLoopWidthFallback, accuracy: 0.0001)
     }
 
     func testMovingHandleClampsToTrack() {

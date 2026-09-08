@@ -2,6 +2,13 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-15
+- **Amended by:** ADR 0199 — the minimum loop width below is now **half a second of audio**
+  (`WaveformGesture.minLoopSeconds`, resolved per song by `minWidth(forDuration:)`), not 2% of the
+  song. The gesture-hygiene reason this ADR gives for having a floor still stands and is the only
+  reason there is one; only the unit changed, because a fraction made the floor grow with the song
+  (4.8 s on a four-minute track) and put a single bar out of reach. `minLoopWidth` is renamed
+  `minLoopWidthFallback` and now applies only when the duration is unknown. Everything else here —
+  the one drag recogniser, the pure math, the mode dispatch — is untouched.
 
 > **Amendment (2026-06-21, `pocket-036`):** the long-press-drag select (round 5)
 > originally anchored the selection at the **touch point** where the hold fired.
@@ -56,8 +63,10 @@ start of a drag, a long-press that should suppress the trailing tap).
   actions to the waveform is a follow-up.
 - The 650 ms hold uses a `Timer`, invalidated on gesture end/cancel so a stale
   hold can't drop a marker after the finger lifts.
-- Gesture-created loops enforce a minimum width (`WaveformGesture.minLoopWidth`),
-  so a stray double-tap or pinched Fine selection can't make a zero-width loop.
+- Gesture-created loops enforce a minimum width, so a stray double-tap or pinched
+  Fine selection can't make a zero-width loop. **Amended by ADR 0199:** that width is
+  half a second of audio (`minLoopSeconds`), not the 2%-of-the-song `minLoopWidth`
+  this ADR shipped.
 - Thresholds (scrub 6 px, hold-cancel 10 px, handle tolerance 0.06) are tuned by
   feel on device; they live as constants on `WaveformView`.
 

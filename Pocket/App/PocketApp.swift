@@ -115,6 +115,6 @@ struct PocketApp: App {
         .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,
                               Exercise.self, Routine.self, RoutineItem.self, Goal.self,
                               LongTermGoal.self, Recording.self, TakeNote.self, SavedChord.self, Profile.self,
-                              PracticeRun.self, ReferenceLink.self])
+                              PracticeRun.self, ReferenceLink.self, LoopSpanChange.self])
     }
 }

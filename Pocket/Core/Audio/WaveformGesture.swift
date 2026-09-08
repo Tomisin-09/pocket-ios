@@ -8,10 +8,35 @@ import Foundation
 /// breaks silently without coverage — is exhaustively unit-tested (AGENTS.md).
 enum WaveformGesture {
 
-    /// Smallest loop width, as a fraction of the song, a gesture may create.
-    /// Stops a stray double-tap or a pinched Fine selection from making a
-    /// zero-width loop.
-    static let minLoopWidth = 0.02
+    /// Smallest loop a gesture may create, in **seconds** (ADR 0199).
+    ///
+    /// The floor exists for gesture hygiene only — it stops a stray double-tap or a pinched
+    /// selection collapsing to zero width. It is **not** an audio constraint: the engine's real
+    /// requirement is the 15 ms crossfade, which `PracticeAudioEngine+LoopBuffer` already clamps
+    /// to `regionFrames / 2`, so a short region degrades to a shorter fade rather than breaking.
+    /// Half a second is ~33× that, and short enough to isolate a single beat at 120 bpm.
+    static let minLoopSeconds: TimeInterval = 0.5
+
+    /// The floor as a song fraction, for a song of `duration` seconds.
+    ///
+    /// **Why this is not a constant.** It used to be `0.02` — 2% *of the song* — which made the
+    /// floor grow with the material: 4.8 s on a four-minute song, 9.6 s on an eight-minute one. A
+    /// bar of 4/4 at 90 bpm is 2.7 s, so isolating a single bar was impossible on anything but a
+    /// short track, and got harder the longer the piece — exactly backwards, since long songs hold
+    /// more detail worth isolating. Narrowing onto the one move that is failing is the whole point
+    /// of a loop, so the floor belongs in the unit the player hears.
+    ///
+    /// Clamped to half the song so a pathologically short file can still be looped at all, and
+    /// falls back to `minLoopWidthFallback` when the duration is unknown (`0`, a song whose audio
+    /// has not resolved yet) rather than dividing by zero.
+    static func minWidth(forDuration duration: TimeInterval) -> Double {
+        guard duration > 0 else { return minLoopWidthFallback }
+        return (minLoopSeconds / duration).clamped(to: 0...0.5)
+    }
+
+    /// The floor used when the duration is not known. Deliberately small: an unknown duration is a
+    /// transient state, and a too-large floor there would silently widen a span the player set.
+    static let minLoopWidthFallback = 0.02
 
     /// Tightest pinch-zoom: the smallest fraction of the song the detail waveform
     /// will show (≈20× zoom). `1` is the whole song (no zoom).
@@ -109,7 +134,7 @@ enum WaveformGesture {
     /// bounds (`start <= end`), clamped to `0...1`. Unlike `loopBounds` this does
     /// **not** widen to a minimum width — the live drag region tracks the finger
     /// exactly, so you see precisely what you're selecting. Widening to
-    /// `minLoopWidth` is applied only when the drag commits (`loopBounds`).
+    /// the floor is applied only when the drag commits (`loopBounds`).
     static func selectionBounds(anchor: Double, current: Double) -> (start: Double, end: Double) {
         (Swift.min(anchor, current).clamped(to: 0...1),
          Swift.max(anchor, current).clamped(to: 0...1))
@@ -119,7 +144,7 @@ enum WaveformGesture {
     /// `minWidth` if the points landed too close together, keeping the result
     /// inside `0...1`.
     static func loopBounds(_ first: Double, _ second: Double,
-                           minWidth: Double = minLoopWidth) -> (start: Double, end: Double) {
+                           minWidth: Double = minLoopWidthFallback) -> (start: Double, end: Double) {
         let lower = Swift.min(first, second).clamped(to: 0...1)
         let upper = Swift.max(first, second).clamped(to: 0...1)
         guard upper - lower < minWidth else { return (lower, upper) }
@@ -192,7 +217,7 @@ enum WaveformGesture {
     /// least `minWidth` and clamped to `0...1`. The other handle stays put.
     static func movingHandle(_ handle: Handle, toFraction point: Double,
                              start: Double, end: Double,
-                             minWidth: Double = minLoopWidth) -> (start: Double, end: Double) {
+                             minWidth: Double = minLoopWidthFallback) -> (start: Double, end: Double) {
         let frac = point.clamped(to: 0...1)
         switch handle {
         case .start: return (Swift.min(frac, end - minWidth).clamped(to: 0...1), end)
