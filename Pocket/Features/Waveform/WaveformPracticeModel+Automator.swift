@@ -42,5 +42,17 @@ extension WaveformPracticeModel {
     /// loop's ramp, so it stops fighting the manual setting.
     func userAdjustedSpeed() {
         activeLoop?.automatorEnabled = false
+        // From here the speed is the player's until the app sets it itself (ADR 0201) — this is
+        // what lets `speed`'s observer tell a deliberate drop from an arming-speed write.
+        speedIsUserDriven = true
+    }
+
+    /// Take the offer: go back to the speed the drop started from, and retire the pill (ADR 0201).
+    /// A plain speed change like any other — nothing is stored, and the automator stays stood down.
+    func returnToSpeedBeforeDrop() {
+        guard let target = speedBeforeDrop else { return }
+        speed = target
+        speedBeforeDrop = nil
+        haptic(.medium)
     }
 }

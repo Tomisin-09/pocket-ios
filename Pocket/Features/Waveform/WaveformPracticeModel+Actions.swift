@@ -206,6 +206,25 @@ extension WaveformPracticeModel {
         engine.play()
     }
 
+    /// **Widen back** to an earlier recorded span (ADR 0201): activate the loop and lift it into
+    /// an A/B span at the older bounds, looping so the wider range is heard immediately.
+    ///
+    /// Identical contract to `startRangeEdit`, and identical for the same reason — this proposes a
+    /// range rather than writing one. **Save changes** commits it through `saveABSpan`, which
+    /// records the widening exactly like any other edit (ADR 0199); ✕ discards it and the loop
+    /// keeps the bounds it has. Isolating is only half the behaviour; putting it back is where you
+    /// find out whether it stuck, and that is a thing to hear rather than a number to accept.
+    func startWidenEdit(_ loop: Loop, toStart start: TimeInterval, end: TimeInterval) {
+        guard duration > 0 else { return }
+        activeLoopID = loop.uid
+        abEditingLoop = loop
+        abSpan = .set(start: start / duration, end: end / duration)
+        engine.setLoop(start: start, end: end)
+        engine.seek(toSeconds: start)
+        engine.play()
+        haptic(.medium)
+    }
+
     /// "Adjust range" from a loop's edit sheet → lift the loop into the A/B span (ADR
     /// 0041) seeded with its bounds, looping it so you hear it while you drag the A/B
     /// handles; **Save changes** writes the new range back, ✕ discards. Activates the
@@ -254,6 +273,11 @@ extension WaveformPracticeModel {
             return
         }
         activeLoopID = loop.uid               // didSet records the outgoing loop's leave speed
+        // Arming is the app setting the speed, not the player: stand the return offer down and
+        // stop treating writes as user-driven, so a new loop never inherits the last one's pill
+        // (ADR 0201).
+        speedIsUserDriven = false
+        speedBeforeDrop = nil
         speed = loop.armingSpeed              // command-anchored: its command tempo, else 100% (ADR 0089)
         engine.setRate(speed)                 // push the rate NOW (not via the async speed onChange) so the
                                               // new loop starts at its own tempo — no mid-switch lurch (ADR 0089)

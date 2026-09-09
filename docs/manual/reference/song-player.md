@@ -17,6 +17,10 @@ open [Song details](home-and-library.md#song-details) — there is no button for
 - **`Playback speed`** — the slider that slows the song down without changing its pitch. Its
   accessibility label states the current value.
 - **`Reset`**, and the shortcuts beside it, return it to full speed or jump to a fixed fraction.
+- **The return pill** appears beside the readout once you slow the song down, showing the speed you
+  dropped from — tap it to go back. It remembers where the drop started, so slowing down in stages
+  still returns you to the top. It goes when you take it, when you get back to that speed yourself,
+  and when you leave the song; nothing is saved.
 - **The BPM readout** shows the song's tempo, captioned `BPM`. It reads *Tempo not set* until you
   give the song one.
 - **Holding the BPM readout** carries that tempo out of the song — to the metronome, or into a new
@@ -74,6 +78,20 @@ first, and `Save changes` is what commits it. If your snags are spread across th
 offered — that spread is telling you the trouble is not in one place.
 
 Nothing counts them or scores them. `Snag` is for you.
+
+## A loop's span history
+
+Hold a loop's row to open its settings, and under **Range** there is **How it got here** — every
+time you changed that loop's range, newest first, with the speed you were playing at when you
+changed it. A row reads *Narrowed · 0.85×*, or *Widened*, or *Moved* when the range shifted along
+the song without getting shorter or longer.
+
+Where an earlier range was wider than the one you are on now, the section offers to **widen back to
+it** — one step back, to the range you were working at before, rather than all the way to where you
+started. It does not change the loop: it opens that wider range as a live A / B span so you hear it
+first, and `Save changes` is what commits it.
+
+The section only appears once a loop has a history.
 
 ## The panels
 

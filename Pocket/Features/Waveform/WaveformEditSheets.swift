@@ -13,6 +13,9 @@ struct LoopEditSheet: View {
     let onDelete: () -> Void
     /// Enter Fine mode on the waveform to adjust this loop's bounds.
     let onAdjustRange: () -> Void
+    /// Widen back to an earlier recorded span (ADR 0201) — same contract as `onAdjustRange`:
+    /// dismiss, then lift it as a live A/B span so it is heard before it is saved.
+    let onWiden: (TimeInterval, TimeInterval) -> Void
     /// Called after Done writes edits that actually changed something, with a closure that
     /// reverts them — the parent shows an Undo toast (ADR 0019 undo, extended to saves).
     let onSaved: (@escaping () -> Void) -> Void
@@ -74,6 +77,7 @@ struct LoopEditSheet: View {
 
     init(loop: Loop, autoColor: Color,
          onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void,
+         onWiden: @escaping (TimeInterval, TimeInterval) -> Void = { _, _ in },
          onSaved: @escaping (@escaping () -> Void) -> Void,
          onPracticeNow: @escaping () -> Void = {},
          onOpenNestedAudio: @escaping () -> Void = {}) {
@@ -81,6 +85,7 @@ struct LoopEditSheet: View {
         self.autoColor = autoColor
         self.onDelete = onDelete
         self.onAdjustRange = onAdjustRange
+        self.onWiden = onWiden
         self.onSaved = onSaved
         self.onPracticeNow = onPracticeNow
         self.onOpenNestedAudio = onOpenNestedAudio
@@ -186,6 +191,13 @@ struct LoopEditSheet: View {
                         Label("Adjust range on waveform", systemImage: "slider.horizontal.below.rectangle")
                     }
                 }
+                // How the span got where it is (ADR 0201), reading back what ADR 0199 records.
+                // Directly under Range because it is the same subject — where this loop sits, and
+                // how it came to sit there. Absent entirely until there is a history to show.
+                LoopSpanSection(loop: loop, onWiden: { start, end in
+                    dismiss()
+                    onWiden(start, end)
+                })
                 practiceSection
                 backingTrackSection
                 journalSection

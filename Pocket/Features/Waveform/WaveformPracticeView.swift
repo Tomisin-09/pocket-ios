@@ -141,14 +141,7 @@ struct WaveformPracticeView: View {
             }
         }
         .sheet(item: $model.editingLoop, onDismiss: model.launchPendingPractice) { ref in
-            let loop = ref.value
-            LoopEditSheet(loop: loop,
-                          autoColor: model.editingLoopAutoColor,
-                          onDelete: { model.deleteLoop(loop) },
-                          onAdjustRange: { model.startRangeEdit(loop) },
-                          onSaved: { restore in model.presentUndo("Saved changes", undo: restore) },
-                          onPracticeNow: { model.pendingPracticeLoop = loop },
-                          onOpenNestedAudio: model.pauseForNestedAudio)
+            loopEditSheet(ref.value)
         }
         .fullScreenCover(item: $model.practiceLoop) { loop in
             // "Practice now" from the edit sheet (ADR 0082): the loop trainer full-screen. The back
@@ -363,4 +356,28 @@ struct WaveformPracticeView: View {
     container.mainContext.insert(song)
     return WaveformPracticeView(song: song, context: container.mainContext)
         .modelContainer(container)
+}
+
+// The loop editor's construction, in an extension rather than the struct body — see the comment
+// on the method. Adding ADR 0201's `onWiden` inline broke the type-checker, and lifting it into a
+// named method pushed the struct past SwiftLint's body-length cap, so it lives out here.
+private extension WaveformPracticeView {
+    /// The loop editor, extracted from the `.sheet` closure.
+    ///
+    /// **Not tidiness — a compile error.** Adding ADR 0201's `onWiden` to the inline construction
+    /// tipped this body past the Swift type-checker's time limit ("unable to type-check this
+    /// expression in reasonable time"), and explicitly typing the closure's parameters was not
+    /// enough. A named function gives the checker a boundary, and the next callback added here
+    /// will not re-cross it.
+    @ViewBuilder
+    private func loopEditSheet(_ loop: Loop) -> some View {
+        LoopEditSheet(loop: loop,
+                      autoColor: model.editingLoopAutoColor,
+                      onDelete: { model.deleteLoop(loop) },
+                      onAdjustRange: { model.startRangeEdit(loop) },
+                      onWiden: { start, end in model.startWidenEdit(loop, toStart: start, end: end) },
+                      onSaved: { restore in model.presentUndo("Saved changes", undo: restore) },
+                      onPracticeNow: { model.pendingPracticeLoop = loop },
+                      onOpenNestedAudio: model.pauseForNestedAudio)
+    }
 }

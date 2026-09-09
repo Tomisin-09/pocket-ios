@@ -15,7 +15,21 @@ final class WaveformPracticeModel {
     let context: ModelContext
 
     // UI state.
-    var speed: Double = 1.0
+    /// Playback rate (× of original). The observer feeds `TempoReturn` (ADR 0201), and only for
+    /// player-driven changes — arming a loop writes this too (ADR 0089), and offering a "return"
+    /// to the previous loop's tempo would be nonsense.
+    var speed: Double = 1.0 {
+        didSet {
+            guard speedIsUserDriven, speed != oldValue else { return }
+            speedBeforeDrop = TempoReturn.remembered(speedBeforeDrop, movingFrom: oldValue, to: speed)
+        }
+    }
+
+    /// The speed to offer going back to (ADR 0201). **Not persisted** — it lives as long as the
+    /// screen, like the A/B span; a stored one would offer last week's tempo. `speedIsUserDriven`
+    /// is how the observer above tells a player's drag from the app's own write.
+    var speedBeforeDrop: Double?
+    var speedIsUserDriven = false
     /// True while a finger is down on the waveform (scrub / handle drag). Drives the
     /// swipe-back guard so a scrub near the left edge can't pop the screen (ADR 0030).
     var isScrubbing = false
@@ -209,14 +223,9 @@ final class WaveformPracticeModel {
     var abSpan: ABSpan = .idle
     var abEditingLoop: Loop?
 
-    /// True while the *tighten to your snags* offer is showing (ADR 0200).
-    ///
-    /// Gated on a flag rather than simply on "a proposal exists", because a proposal exists for as
-    /// long as the marks do — and a permanent offer would evict `ModeDescriptionLine`, which holds
-    /// Loop controls, Follow and Grid, from the screen forever. Set by `dropSnag` at the moment the
-    /// marks first point somewhere, cleared when the player takes it, dismisses it, or moves to
-    /// another loop. That makes it a **transient mode**, which is exactly what the status line's
-    /// ZStack is for — the same slot the A/B and downbeat bars borrow and give back.
+    /// True while the *tighten to your snags* offer is showing (ADR 0200 D4). A flag rather than
+    /// "a proposal exists" — the latter is true for as long as the marks are, and would evict
+    /// `ModeDescriptionLine` (Loop controls · Follow · Grid) from the status line permanently.
     var offeringSnagTighten = false
 
     /// Hold-drag spatial set (ADR 0041, secondary to play-along): the anchor fraction

@@ -1278,6 +1278,27 @@ empty, because that line was Home's only word about adding a first song.
   them is a live ranking change owed its own decision. This makes the write path above a *ranking*
   concern as well as a stats one — a seam that silently failed to log would leave its unit max-due
   forever — which is why all three seams were verified against the on-device store before it shipped.
+- **Reading the span history back** (ADR 0201) happens in `LoopEditSheet`, not the cockpit — a
+  *How it got here* section under *Range*, absent until there is a history. The practice screen has
+  no room to give: the status line holds Loop controls / Follow / Grid, the transport is full, and
+  ADR 0200 took the one transient slot. The sheet is already reachable by the 0.4s hold every loop
+  row has carried for a year, so the history costs the screen nothing.
+
+  `SpanHistory.widenTarget` walks the history **newest first** and offers the first genuinely wider
+  span — a loop narrowed in three steps widens back to yesterday's size, not to the whole lick it
+  started as, because isolating is a ladder and you come back down it a rung at a time. Same-width
+  entries are skipped, which quietly handles `.moved`. `startWidenEdit` lands the result as an
+  **A/B span** (ADR 0041), never a write: putting a loop back is where you find out whether the
+  narrowing stuck, and that is a thing to hear. Save commits through `saveABSpan`, recorded by
+  ADR 0199 with no second write site.
+
+  The **return pill** (`TempoReturn`) is the other half: dropping the speed always worked, coming
+  back never did — the codebase had no `previousSpeed`/`restoreSpeed`/`revertTempo` at all. It is
+  **screen-lived and unstored** (a persisted one would offer last week's tempo) and gated on
+  `speedIsUserDriven`, because `speed` is also written by the app when a loop arms at its
+  command-anchored speed (ADR 0089) and offering a return to the *previous* loop's tempo would be
+  nonsense. The first drop of a drag wins, a sub-0.05 nudge is not a drop, and getting back by hand
+  clears it.
 - **`Snag`** (ADR 0200) is *a place it went wrong* — `markedAt`, `seconds`, the `speed` in force,
   and `loopUID`. Cascade-owned by its `Song`, like `Marker` and for the same reason rather than by
   copying it: both are points on that song's timeline, and a point on a song that no longer exists

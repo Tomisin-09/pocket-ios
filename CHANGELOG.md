@@ -15,6 +15,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **A loop remembers how it got this narrow.** Hold a loop's row and, under **Range**, **How it got
+  here** lists every change to its range — newest first, each with the speed you were playing at.
+  Where an earlier range was wider, it offers to **widen back to it**: one step back rather than all
+  the way, and it opens that range as a live A / B span so you hear it before `Save changes` commits
+  it. The section appears once a loop has a history.
+- **A way back from slowing down.** Once you drop the song's speed, a small pill beside the readout
+  shows the speed you dropped from — tap it to go back. It remembers where the drop *started*, so
+  slowing in stages still returns you to the top, and it goes when you take it, get back there
+  yourself, or leave the song.
 - **Snag — mark the spot that went wrong, without stopping.** While a loop is running, the song
   player's transport carries a single **Snag** button. One tap marks where you are: nothing to name,
   nothing to confirm, so you can keep playing. Each snag shows as a short crimson tick under the
