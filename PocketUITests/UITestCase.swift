@@ -101,33 +101,4 @@ class UITestCase: XCTestCase {
         let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
         return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
     }
-
-    /// Tap `element` once it is actually **hittable**, not merely present.
-    ///
-    /// Lifted here from `RoutineLibraryUITests`, where it was private, when a second file needed it
-    /// (ADR 0209). The distinction it draws is the one `waitForExistence` cannot: an element can
-    /// exist, report a frame, and still not be tappable — and `tap()` on one of those does not wait,
-    /// it asks the accessibility layer to scroll the element into view first. On a **navigation-bar**
-    /// button there is nothing to scroll, so that request fails outright with
-    /// `kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction`, which reads like a
-    /// missing element and is nothing of the kind.
-    ///
-    /// That failure is toolchain-sensitive: it passed on local Xcode 26.5 and failed on CI's older
-    /// one, twice, deterministically. Pair this with a `navigationBars`-scoped query for anything in
-    /// a bar — the scope keeps the query off whatever scroll view happens to be underneath.
-    ///
-    /// The other half of what it buys, from its original home: `waitForExistence` returns when an
-    /// element joins the tree, not when it has settled, and a tap synthesised into a still-animating
-    /// push is **swallowed** — the run then fails at the next step, describing something two screens
-    /// away. That cost one full run in `RoutineLibraryUITests` before it was applied, and
-    /// `docs/backlog.md` records the same trap costing the shoot harness a CI round.
-    @MainActor
-    func tapWhenHittable(_ element: XCUIElement, called name: String,
-                         file: StaticString = #filePath, line: UInt = #line) {
-        let hittable = expectation(for: NSPredicate(format: "isHittable == true"),
-                                   evaluatedWith: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [hittable], timeout: Self.uiTimeout), .completed,
-                       "\(name) never became tappable", file: file, line: line)
-        element.tap()
-    }
 }

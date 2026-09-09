@@ -47,13 +47,28 @@ final class ExerciseShareUITests: UITestCase {
         let app = launchApp()
         try openExercisesLibrary(in: app)
 
-        // **`navigationBars`-scoped, and tapped only once hittable.** A bare `app.buttons[…]` here
-        // passed locally and failed on CI twice, deterministically: `tap()` asks the accessibility
-        // layer to scroll the element into view first, and a nav-bar button has nothing to scroll,
-        // so it fails with `kAXErrorCannotComplete` — which reads like a missing control and is not.
+        // **Scoped to the nav bar, then tapped by coordinate.** Two CI rounds went into this line,
+        // and both failed on the *tap*, never on finding the control:
+        //
+        // 1. `app.buttons["List options"].tap()` — `tap()` asks the accessibility layer to scroll the
+        //    element into view first, and a nav-bar button has nothing to scroll, so it failed with
+        //    `kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction`.
+        // 2. Waiting for `isHittable` — never satisfied on CI within the timeout, though the control
+        //    exists and reports a sane nav-bar frame (x 304.7, w 42 on a 402pt-wide iPhone 16 Pro,
+        //    which is exactly where the second trailing item belongs).
+        //
+        // Both are consistent with the label sitting on a SwiftUI `Menu` wrapper whose hit-testing
+        // resolves elsewhere on iOS 18 — CI is Xcode 16.4 / iOS 18, local is iOS 26, and this passes
+        // locally either way. A coordinate tap goes to the middle of the frame the element itself
+        // reports and skips the hittability question.
+        //
+        // **That is not papering over a bug, and the next assertion is why.** If the control really
+        // were covered or dead, this tap lands on whatever covers it, no menu opens, and the check
+        // below fails — so a genuine defect still turns this test red. The coordinate tap can only
+        // rescue the case where the control works and the accessibility layer misreports it.
         let options = app.navigationBars.buttons["List options"]
         XCTAssertTrue(options.waitForExistence(timeout: Self.uiTimeout), "no options control on Exercises")
-        tapWhenHittable(options, called: "List options")
+        options.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
 
         XCTAssertTrue(app.buttons["Receive an exercise…"].waitForExistence(timeout: Self.uiTimeout),
                       "the options menu offers no way to receive a shared drill")

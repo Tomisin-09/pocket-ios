@@ -125,6 +125,22 @@ final class RoutineLibraryUITests: UITestCase {
 
     // MARK: - Taps that survive a slow runner
 
+    /// Tap `element` once it is actually hittable.
+    ///
+    /// `waitForExistence` returns when an element joins the tree, not when it has settled, and a tap
+    /// synthesised into a still-animating push is **swallowed** — the run then fails at the next
+    /// step, describing something two screens away. This cost one full run here before it was
+    /// applied (and `docs/backlog.md` records the same trap costing the shoot harness a CI round).
+    @MainActor
+    private func tapWhenHittable(_ element: XCUIElement, called name: String,
+                                 file: StaticString = #filePath, line: UInt = #line) {
+        let hittable = expectation(for: NSPredicate(format: "isHittable == true"),
+                                   evaluatedWith: element)
+        XCTAssertEqual(XCTWaiter().wait(for: [hittable], timeout: Self.uiTimeout), .completed,
+                       "\(name) never became tappable", file: file, line: line)
+        element.tap()
+    }
+
     /// Commit the editor. Reached through `navigationBars` rather than `app.buttons[…]`: while the
     /// keyboard is up the screen carries a second toolbar, and `firstMatch` over the whole app is a
     /// promise about tree order that nothing enforces.
