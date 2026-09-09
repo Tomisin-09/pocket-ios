@@ -52,6 +52,18 @@ final class Routine {
     /// read it per-object in memory at the gate.
     var presetSlug: String?
 
+    /// The **folders** this routine is filed in (ADR 0210 D2) — canonical S3-style key prefixes,
+    /// written only through `FolderPath`. The routine's **first** grouping axis of any kind: until
+    /// this it had no label field at all, so a Routines library was a flat list however long it got.
+    ///
+    /// Deliberately the same namespace as `Exercise.folders` (D3): `"Beginner"` means one folder,
+    /// and the two libraries are two views onto it. A namespace per model would make a teacher type
+    /// the structure twice, guarantee the two drift, and make handing over a *Beginner* folder that
+    /// carries both the drills and the routines impossible — which is the actual deliverable.
+    ///
+    /// Flat `[String]`, never a relationship, for the reasons `Exercise.folders` gives.
+    var folders: [String] = []
+
     /// The ordered blocks. **Cascade-owned**: deleting the routine deletes its items (but
     /// never the units those items *reference* — that link nullifies, see `RoutineItem`).
     /// Declaration default keeps SwiftData lightweight migration additive (CoreData 134110).

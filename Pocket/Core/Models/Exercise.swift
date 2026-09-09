@@ -189,10 +189,17 @@ final class Exercise {
         set { rampIntervalUnitRaw = newValue.rawValue }
     }
 
-    /// Open descriptive tags ("warmup", "picking"), routed through the shared `Labels`
-    /// canonicaliser at the write site, like `Loop.tags`. Declaration default keeps
-    /// migration additive (CoreData 134110 rule).
+    /// Open descriptive tags ("warmup", "picking"). **Vestigial since ADR 0210 D7** — folders
+    /// replaced it, the backfill copied every tag into one, and removing a column is destructive
+    /// under ADR 0189. Still written into a share as the folders' leaf names (D8); read it nowhere
+    /// else.
     var tags: [String] = []
+
+    /// The **folders** this drill is filed in (ADR 0210 D2) — canonical S3-style key prefixes, one
+    /// entry per place it sits, written only through `FolderPath`. Flat and declaration-defaulted so
+    /// the migration stays exempt (CoreData 134110), and **never a `@Relationship`**: that is what
+    /// buys multi-membership and costs no reparenting decision. Empty means *unfiled*.
+    var folders: [String] = []
 
     /// Optional free-text notes about the exercise. On a **freeform** block this is not a note
     /// *about* the drill — it **is** the drill (ADR 0136 F2): the player's own written instructions,

@@ -24,6 +24,10 @@ extension HomeView {
         // Move the retired click subdivision into `notesPerBeat` and bind every measured
         // command to its rhythm (ADR 0121), so no later read branches on provenance.
         ExerciseNoteRateBackfill.runIfNeeded(into: context)
+        // Copy every drill's tags into top-level folders (ADR 0210 D7), so a library that already
+        // has content opens already organised instead of showing an empty new axis. Copies, never
+        // moves: `tags` is retired in place, not removed.
+        ExerciseFolderBackfill.runIfNeeded(into: context)
         await Task.yield()
         RoutinePresets.seedIfNeeded(into: context)
         await Task.yield()

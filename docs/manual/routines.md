@@ -26,12 +26,20 @@ The row also says roughly how long the routine runs — the same estimate you se
 The row has two halves and they do different things: **▶** starts the session, and tapping the name
 opens the routine to read or edit.
 
-Hold a row for **Play**, **Edit**, **Duplicate**, **Favourite** and **Delete**. As everywhere else,
-delete waits behind an undo toast.
+Hold a row for **Play**, **Edit**, **Add to folder…**, **Duplicate**, **Favourite** and **Delete**.
+As everywhere else, delete waits behind an undo toast.
 
 The toolbar's options control holds the favourites filter, the sort keys, **Generate a quick
-session**, which is covered in [Today's session](sessions.md), and **Receive a routine…**, for a
-session somebody sent you — see [Receiving one](#receiving-one).
+session**, which is covered in [Today's session](sessions.md), **New folder…**, and **Receive a
+routine…**, for a session somebody sent you — see [Receiving one](#receiving-one).
+
+Routines can be filed into **folders**, the same folders your exercises use — hold a row and tap
+**Add to folder…**, or make one with **New folder…**. Folders work the same way here as they do in
+the Exercises library, and they are the same folders: a folder called **Beginner** holds whichever
+of your drills and whichever of your sessions you put in it, and each library shows you its own
+side. So a folder with six drills in it and no sessions reads **0** here — there is nothing of *this*
+library in it yet. The whole of how they work is written up once, under
+[Folders](exercises.md#folders).
 
 **Sort by** offers four: **Recently Added**, which is where the list starts and where it stays until
 you change it; **Name**; **Last Practised**, most recent first, with routines you have never run at

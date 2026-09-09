@@ -31,6 +31,9 @@ enum SharedPracticeBuilder {
         record.lastPracticed = nil
         record.isFavorite = false
         record.presetSlug = nil
+        // Where the sender kept it is not part of the routine (ADR 0210 D8) — the same call
+        // `shareable(_ exercise:)` makes, for the same reason.
+        record.folders = nil
         // References do not cross in S1. Half of them are attachments (ADR 0167 phase 2) whose bytes
         // stay on the sender's device, and carrying only the URL-backed half would be a decision
         // ADR 0188's D4 table does not make. A link that ought to travel can be added here in one
@@ -104,8 +107,22 @@ enum SharedPracticeBuilder {
     ///
     /// The teacher's *shape* crosses: the drill, the rhythm, the ramp, the notes. The teacher's
     /// *achievement* does not.
+    ///
+    /// **Nor does the teacher's filing** (ADR 0210 D8). A drill sent on its own arrives unfiled: its
+    /// paths are positions in *the sender's* tree — `Students/2026/Beginner/Warm-ups` — and
+    /// reproducing that on a stranger's phone would be handing over a filing cabinet along with the
+    /// drill. Sharing a whole folder is a different act with a different answer (D11 rebases the tree
+    /// onto the shared root rather than dropping it).
+    ///
+    /// What crosses instead is the folders' **leaf names, added to `tags`** — added, not substituted,
+    /// so a drill with tags and no folders shares exactly what it always did. That is the one job
+    /// left to the vestigial column: a build without folders shows a received drill something
+    /// meaningful rather than nothing.
     static func shareable(_ exercise: Exercise) -> ExerciseRecord {
         var record = ArchiveBuilder.exerciseRecord(exercise)
+        let leaves = exercise.folders.map { FolderPath.leaf($0) }
+        record.tags = Labels.normalized(record.tags + leaves).sorted()
+        record.folders = nil
         record.lastPracticed = nil
         record.isFavorite = false
         record.presetSlug = nil

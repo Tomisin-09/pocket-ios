@@ -16,6 +16,11 @@ struct RoutineRecord: Codable, Equatable, Sendable {
     var isFavorite: Bool
     var presetSlug: String?
 
+    /// The folders this routine is filed in (ADR 0210 D8) — the same namespace the drills use (D3).
+    /// `Optional` for the reason `ExerciseRecord.folders` states at length: a non-optional array
+    /// breaks the decode of every archive written before it.
+    var folders: [String]?
+
     var items: [RoutineItemRecord]
     var references: [ReferenceLinkRecord]
 }

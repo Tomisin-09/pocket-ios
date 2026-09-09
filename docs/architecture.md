@@ -1230,6 +1230,36 @@ empty, because that line was Home's only word about adding a first song.
   existing migrates). Surfaced as the **My chords** group in the chord picker's Insert grid (ADR 0103,
   tap-to-insert); saved from the placer's **Save to My chords**; and **managed** on the Toolkit hub's
   `MyChordsView` (grid + rename/delete, ADR 0096 — see above).
+- **Folders** (ADR 0210, S1) group exercises and routines, and are modelled on **S3 key prefixes,
+  not buckets**: membership is a flat `folders: [String]` of canonical paths on each item
+  (`"Technique/Alternate picking"`), `/` is just a character, and the hierarchy is **derived**. Both
+  fields are declaration-defaulted primitive arrays, so the migration is exempt (CoreData 134110) and
+  ADR 0189's D1–D4 do not apply. **Not a `@Relationship`**, and the model file says so in as many
+  words: the flat array is what buys multi-membership — one drill in two folders, which for a teacher
+  is the normal case — and what avoids every reparenting and cascade decision this project has
+  already paid for twice (ADR 0151). One namespace serves both libraries, so `Beginner` is one
+  folder seen from two sides.
+  **`PracticeFolder`** is the one new table: a zero-byte **marker** row (`path`, `dateAdded`)
+  recording that a folder *exists* while empty — a teacher builds *Grade 1…4* before filling them —
+  and never who is in it, because a second source of truth about membership would be invisible in
+  both the first time they disagreed. The browsable folder list is the **union** of marker paths and
+  paths derived from members, ancestors included, so a library restored from an archive written
+  before markers still browses correctly.
+  All the arithmetic is in **`FolderPath`** — pure, SwiftUI- and SwiftData-free, beside `Labels` and
+  delegating to it **per segment** so the app keeps one normaliser (ADR 0034). Two of its rules are
+  where the real bugs live and both are pinned by tests named for them: `isUnder` compares **segment
+  arrays**, never `hasPrefix`, or `"Beginner"` silently swallows `"Beginners/Warm-ups"`; and case
+  folding is **positional**, so `Grade 1/Picking` cannot rename `Grade 2/picking`. `children(of:in:)`
+  is S3's `CommonPrefixes` verbatim. **`PracticeFolderStore`** is the only writer that spans models:
+  rename and delete are one pass over exercises, routines *and* markers, because a rename is a
+  copy-then-delete (S3 cannot rename a prefix either — there is nothing to rename), and three holders
+  edited separately are three chances to disagree about what a folder is called. Deleting a folder
+  **never deletes an item**.
+  `Exercise.tags` is **retired in place**: `ExerciseFolderBackfill` copies each canonical tag into a
+  top-level folder once at launch (`UserDefaults`-guarded, idempotent, pure `apply(to:namespace:)`,
+  shaped like `ExerciseNoteRateBackfill`), and the column stays because *removing* one is destructive
+  under ADR 0189 while copying costs nothing. Its one remaining job is crossing in a share as the
+  folders' leaf names.
 - **`PracticeRun`** (ADR 0117, Slice 1) is the **practice log** — the app's only record of *when* you
   practised, and the substrate every time-windowed stat needs. Append-only, **one row per completed
   unit-run** rather than per practice sit: a routine of six exercises at six tempos writes six rows, and
@@ -1738,6 +1768,24 @@ true (ADR 0150 §118-121).
     `commandNotesPerBeat`, `linkedSongIDs`) both stay behind — a command tempo is a measured number
     (ADR 0045), and inheriting one you did not measure is ADR 0070 through a side door. No
     `Recording` ever crosses (ADR 0181 §7, ADR 0150 still parked). References do not cross in S1.
+    Since ADR 0210 the sender's **folders** stay behind too — those paths are positions in the
+    sender's tree, and reproducing `Students/2026/Beginner/Warm-ups` on a stranger's phone hands over
+    a filing cabinet with the drill. The folders' **leaf names are added to `tags`** instead (added,
+    not substituted), which is the one job the retired-in-place column has left. Sharing a whole
+    folder is a different act with a different answer: 0210 D11 rebases the tree onto the shared root
+    rather than dropping it, and is not built.
+  - **The archive gained three optional folder fields** (ADR 0210 D8): `ExerciseRecord.folders`,
+    `RoutineRecord.folders` and `PracticeArchive.folderMarkers`, all `[String]?`. **Optional is
+    load-bearing, not stylistic**: Swift's synthesized `Decodable` calls `decode(_:forKey:)` and
+    throws `keyNotFound` for a missing key — a declaration default does *not* save it — so a
+    non-optional array would make every archive written before 0210 fail to decode outright rather
+    than arrive without folders. And no `KeyedDecodingContainer` overload for `[String]` was written
+    to paper over it: ADR 0205 D5 forbids the generic over `[T]`, and `[String]` is barely narrower,
+    since it would silently cover `tags` and `collections` too. A test encodes a real archive, strips
+    the keys from the JSON, and decodes it. `folderMarkers` carries only the **empty** folders —
+    everything else is implied by its members' paths — and restored markers are deliberately absent
+    from `RestoredLibrary.rowCount`, because the restore preview promises a number of library items
+    and a folder is not one.
   - **A loop or song block arrives named, not dropped.** A `loopUID` is meaningless without the song
     that owns it, so those ids are nulled and a `SharedBlockPlaceholder` carries the label instead —
     the block lands as the orphan the app already draws (`RoutineItem.isOrphaned`). Dropping it

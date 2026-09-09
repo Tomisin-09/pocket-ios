@@ -141,6 +141,42 @@ restore door is unreachable after a failed migration, because `.modelContainer(f
 recovery path is delete-and-reinstall rather than opening Settings. **This entry is closed;** 0189
 carries what is left.
 
+## A folders door on Home (parked 2026-09-09, ADR 0210)
+
+Folders (0210 S1) are reached through **Practice ▸ Exercises** or **Practice ▸ Routines** — three
+taps from Home to a folder you use daily. A rail or a tile on Home would be one.
+
+**Parked deliberately, twice over.** ADR 0197 has just cut Home to six tiles precisely so that what
+*changes* is not competing with a fixed menu, and a folder rail is more of what changes. The larger
+cost is hidden in D3: folders are **one namespace across two libraries**, so a folder tapped on Home
+has to open the exercises in it, the routines in it, or a combined folder-first view — and no slice
+of 0210 builds that third thing. A door is therefore not a small addition; it is a screen.
+
+Revisit after living with S1. If the three taps do grate, the likely answer is a rail that appears
+only once a couple of folders exist — the progressive disclosure the instrument filter already uses
+— and the third screen is the decision to make first, not the rail.
+
+**What would tell us:** `folder_created`'s `depth` (0210 D13). If nobody nests, the walk is cheap and
+a flat rail is easy; if people do nest, a Home door needs to answer "which level" as well as "which
+library", and is more expensive than it looks.
+
+## The analytics sample list should live next to the enum (logged 2026-09-09, ADR 0210)
+
+`AnalyticsEventTests.everyEvent` is a hand-maintained list standing in for the exhaustiveness
+`AnalyticsEvent` cannot have (it has associated values, so it is not `CaseIterable`). Its own header
+says the failure mode plainly — the three assertions can catch a case being *removed from the list*
+and can never catch one being *added to the enum and never listed* — and ends: *"If this happens a
+third time, the fix is to move the sample list next to the enum it samples."*
+
+**It has now happened a third time.** ADR 0209's `exercise_received` was added to the enum and never
+listed, and it was still unlisted when 0210 came to add `folder_created` — found the same way, by
+counting. Both are pinned now, and the count assertion reads 18.
+
+The fix its own header asks for: move the sample array into `AnalyticsEvent.swift` as a
+`static let everyEvent`, so adding a case and forgetting the sample are one edit in one file rather
+than two edits in two targets. A `#if DEBUG` guard keeps it out of a release binary if that matters.
+Cheap, and the next miss is otherwise silent for however long it takes somebody to count again.
+
 ## `attachmentFileName` is not absent-tolerant (logged 2026-09-09, ADR 0205 D5)
 
 `ReferenceLinkRecord.attachmentFileName: String = ""` (ADR 0167 phase 2, `b135422`) was added to the

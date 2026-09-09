@@ -132,6 +132,23 @@ extension ArchiveRestoreWriter {
     /// `linkedSongIDs` because a teacher's achievement must not arrive wearing the receiver's name
     /// (D5, ADR 0070). This one keeps every one of them, because they are the player's own and a
     /// backup that quietly reset a year of mastery would be worse than no backup.
+    /// Mint a marker for each empty folder the archive carried (ADR 0210 D4), skipping the paths the
+    /// library already has. Case-insensitive, like every other folder comparison — two markers whose
+    /// paths differ only in case are one folder drawn twice.
+    ///
+    /// Only *empty* folders are here. Everything else is implied by its members' paths, which landed
+    /// with the exercises and routines above.
+    static func addFolderMarkers(_ paths: [String],
+                                 existing: RestoreExistingKeys,
+                                 into landing: inout RestoredLibrary) {
+        var seen = existing.folderPaths
+        for path in paths {
+            let canonical = FolderPath.canonical(path)
+            guard !canonical.isEmpty, seen.insert(canonical.lowercased()).inserted else { continue }
+            landing.folders.append(PracticeFolder(path: canonical))
+        }
+    }
+
     static func addExercises(_ records: [ExerciseRecord],
                              existing: RestoreExistingKeys,
                              into landing: inout RestoredLibrary,
@@ -156,6 +173,11 @@ extension ArchiveRestoreWriter {
                                  tags: record.tags,
                                  notes: record.notes)
             drill.uid = record.uid
+            // `?? []` is the whole cost of the field being optional (ADR 0210 D8): an archive
+            // written before folders existed says nothing about them, which is not the same as
+            // saying "no folders" — but for a restore the two land identically, and the alternative
+            // was every one of those archives failing to decode at all.
+            drill.folders = FolderPath.normalized(record.folders ?? [])
             drill.dateAdded = record.dateAdded
             drill.lastPracticed = record.lastPracticed
             drill.isFavorite = record.isFavorite

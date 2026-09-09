@@ -26,16 +26,54 @@ Each row carries the drill's name, the climb it is set up for — **Command → 
 its rhythm — and a star when you have favourited it. Tap one to open its run screen.
 
 - **Search** narrows by name.
-- The **⋯** control in the toolbar holds **Favourites only**, **Sort by** and **Order**.
+- The **⋯** control in the toolbar holds **Favourites only**, **Sort by**, **Order**,
+  **New folder…** and **Receive an exercise…**.
 - **+** starts a new drill.
 
 If your library holds drills for more than one instrument, a row of chips appears across the top —
 **All**, then one per instrument you have. It is not there until it has something to do, and it goes
 away again if it stops having something to do.
 
-Hold any row for **Details**, **Duplicate**, **Favourite** and **Delete**. Duplicate is the quickest
-way to make a variant of something you have already tuned. Delete goes behind an undo toast — the
-drill is only really gone once the toast has passed.
+Hold any row for **Details**, **Add to folder…**, **Duplicate**, **Favourite** and **Delete**.
+Duplicate is the quickest way to make a variant of something you have already tuned. Delete goes
+behind an undo toast — the drill is only really gone once the toast has passed.
+
+## Folders
+
+Folders group your drills however you want to group them — by grade, by technique, by student. They
+are shared with your routines: a folder called **Beginner** is one folder, and each library shows
+you its own half of it.
+
+**Making one.** **New folder…** in the **⋯** menu makes a folder where you are currently standing.
+Make one at the top of the library and it sits at the top; open a folder first and the new one goes
+inside it. That is the only way to nest, and it is why a name with a `/` in it makes one folder with
+a slash-shaped gap in the name rather than two levels you did not ask for.
+
+**Filing something.** Hold a drill and tap **Add to folder…**, or open its **ⓘ** sheet and use the
+**Folders** section. Either way you get the folders you already have, offered so you reuse them
+instead of retyping them.
+
+**A drill can be in more than one folder.** That is why the verb is *add* and never *move*. A
+warm-up that belongs in both **Grade 2** and **Picking** simply sits in both, and taking it out of
+one leaves it in the other.
+
+**Walking around.** Your folders live in a **Folders** section above your drills, which starts
+folded — tap its header to open it, and it stays how you leave it. Each folder carries a count; tap
+one to go in, and a trail appears across the top that takes you back from any part of it. A folder shows everything at or below it,
+so opening **Beginner** shows the drills filed in **Beginner/Warm-ups** too, and the top of the
+library still shows everything you own.
+
+Because a drill can be in two folders, **the counts do not add up to your library's total**. That is
+the arithmetic of a drill being in two places rather than a mistake.
+
+Search, sort and the favourites filter all work inside the folder you are standing in. If a search
+finds nothing there, **Search all folders** is offered underneath — it keeps what you typed and
+takes you back to the top.
+
+**Renaming and deleting.** Hold a folder row for **Rename…** and **Delete folder**. Renaming carries
+everything inside it along. **Deleting a folder never deletes a drill** — the folder goes, and the
+drills in it stay in your library, in whatever other folders they were in. The confirmation counts
+them for you before you decide.
 
 ## Running a drill
 
@@ -194,9 +232,13 @@ A drill can go to another player on its own, without the routine around it. Open
 sheet and tap the share control in the toolbar: Red Moon writes the drill into one small file and
 hands it to the share sheet, so you send it however you send anything else.
 
-The shape is what crosses — the drill, its meter and subdivision, its tempo plan and ramp, its tags,
-and the description you wrote. If you have just typed into that description and not yet tapped
-**Done**, the words on screen are the ones that travel.
+The shape is what crosses — the drill, its meter and subdivision, its tempo plan and ramp, and the
+description you wrote. If you have just typed into that description and not yet tapped **Done**, the
+words on screen are the ones that travel.
+
+**Where you keep it does not cross.** Your folders are your filing, and a drill arrives in the other
+player's library unfiled, for them to put wherever they put things. The folder *names* travel with
+it as plain labels, so they can see what you considered the drill to be.
 
 **What you have done with the drill does not go with it.** Not your mastery rating, not the tempo you
 worked up to, not when you last practised it, not your star. A tempo you reached is a fact about your

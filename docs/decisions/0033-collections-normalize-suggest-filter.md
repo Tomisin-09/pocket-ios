@@ -1,6 +1,13 @@
 # 0033 — Collections: normalize, suggest, and filter (still `[String]`)
 
 - **Status:** Accepted (build sliced below) — **the filter *relation* superseded by ADR 0159 (2026-08-12)**: multi-select is a union, not an intersection. Everything else here stands.
+- **Amended by:** ADR 0210 — the naming rule below gains a **third scope**: exercises and routines
+  are **Folders** (0210 D1), alongside songs = Collections and loops = Tags. This ADR's deferred
+  promotion trigger — a many-to-many and a browse surface — is what 0210 argues has now arrived, and
+  its three failure modes (no reuse, no normalisation, no payoff) are answered there rather than
+  rediscovered. **Song collections themselves are untouched**: everything below still describes them
+  exactly, and `Labels` is still the one normaliser (0210's `FolderPath` delegates to it per path
+  segment rather than replacing it).
 - **Date:** 2026-06-22
 
 ## Context
