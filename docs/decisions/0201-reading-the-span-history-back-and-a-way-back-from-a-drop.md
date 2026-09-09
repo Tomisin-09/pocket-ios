@@ -7,6 +7,12 @@
   audition paths land in), ADR 0089 (the arming speed, which is why the return pill has to tell a
   drag from a write), ADR 0124 (the one speed axis)
 - **Schema:** none. No model, no new stored field — the return offer is deliberately screen-lived.
+- **Amended by:** ADR 0202 — **D4's rule is replaced.** "The first drop wins" is gone: the pill now
+  offers the rung above (0202 D4), matching D2 below, and the rule is anchored to the *gesture* the
+  player made rather than to consecutive writes of `speed` — which the continuous slider fires
+  dozens of times per drag, so as written here the pill never appeared from a drag at all. D1's
+  *How it got here* section also caps at three rows (0202 D5). **D1's surface, D2, D3 and D5
+  stand** — only the list's length and the return rule change.
 
 ## Context
 
@@ -76,10 +82,13 @@ the loop's command-anchored speed (ADR 0089) — and being offered a "return" to
 tempo would be nonsense. So arming stands the offer down and marks subsequent writes as not
 user-driven; touching a speed control marks them as user-driven again.
 
-The rule itself is pure (`TempoReturn`) and has three parts worth stating:
+The rule itself is pure (`TempoReturn`) and has three parts worth stating. **The first of them was
+replaced by ADR 0202 D4** — read that one for what the rule does now:
 
-- **The first drop wins.** Dragging 1.0 → 0.9 → 0.72 is one gesture and one intent; the speed worth
-  returning to is where the drag started, not a value it passed through.
+- ~~**The first drop wins.**~~ Dragging 1.0 → 0.9 → 0.72 is one gesture and one intent; the speed
+  worth returning to is where the drag started, not a value it passed through. *(0202 D4: it is the
+  rung above, not the top of the ladder — and the comparison is against where the gesture began,
+  not against the previous write, which on a continuous slider is the previous frame.)*
 - **A nudge is not a drop** (`minimumDrop`, 0.05). A pill after a slider wobble is noise, and noise
   beside the tempo readout is worse than nothing.
 - **Getting back by hand clears it.** Once the speed is at or above what was remembered, the offer
@@ -97,8 +106,9 @@ when you are least expecting it. A loop sitting narrow is not news; it is a choi
   each row carrying **the span and the speed together**, because the narrowing and the slowing are
   one behaviour rather than two facts.
 - Dropping the speed stopped being one-way.
-- **`WaveformPracticeModel.swift` is now at exactly 400 lines**, the SwiftLint cap. The next stored
-  property added to it forces a split.
+- ~~**`WaveformPracticeModel.swift` is now at exactly 400 lines**~~, the SwiftLint cap. The next
+  stored property added to it forces a split. *(It did, one day later: ADR 0202 needed two, and the
+  Now Playing block moved to `WaveformPracticeModel+NowPlaying.swift`.)*
 - ⚠️ **`WaveformPracticeView`'s loop-edit sheet had to move out of its `.sheet` closure.** Adding one
   callback tipped the body past the Swift type-checker's time limit — *"unable to type-check this
   expression in reasonable time"* — and explicitly typing the closure parameters was not enough. It

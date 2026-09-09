@@ -278,6 +278,7 @@ extension WaveformPracticeModel {
         // (ADR 0201).
         speedIsUserDriven = false
         speedBeforeDrop = nil
+        speedAtGestureStart = nil
         speed = loop.armingSpeed              // command-anchored: its command tempo, else 100% (ADR 0089)
         engine.setRate(speed)                 // push the rate NOW (not via the async speed onChange) so the
                                               // new loop starts at its own tempo — no mid-switch lurch (ADR 0089)

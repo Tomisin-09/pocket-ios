@@ -12,13 +12,28 @@ import SwiftUI
 /// behaviour rather than two facts: *narrowed · 0.85×* is the sentence worth being able to read.
 ///
 /// Nothing here is a verdict. It says what the span did and when — never whether that was good.
+///
+/// **It shows three, and grows only when asked** (ADR 0202 D5). The history has no end: a loop
+/// worked on for a month accumulates a row per edit, and an unbounded list would push *Delete* —
+/// and everything else in the sheet — a scroll away, for a log almost nobody reads past the top of.
+/// The newest rows are the ones with anything to say, and the **Widen back** action stays outside
+/// the fold, because an action buried under *Show all* is an action nobody finds.
 struct LoopSpanSection: View {
     let loop: Loop
     /// Widen back to an earlier span — dismisses the sheet and lifts it as a live A/B span, so the
     /// wider loop is **auditioned before it is saved**, the same contract Adjust range has.
     let onWiden: (TimeInterval, TimeInterval) -> Void
 
+    /// How many rows show before the list has to be asked for.
+    private static let collapsedRowCount = 3
+
+    @State private var showingAll = false
+
     private var changes: [LoopSpanChange] { loop.spanChangesByRecent }
+
+    private var visibleChanges: [LoopSpanChange] {
+        showingAll ? changes : Array(changes.prefix(Self.collapsedRowCount))
+    }
 
     private var widenTarget: (start: Double, end: Double)? {
         SpanHistory.widenTarget(currentWidth: loop.end - loop.start,
@@ -28,8 +43,19 @@ struct LoopSpanSection: View {
     var body: some View {
         if !changes.isEmpty {
             Section {
-                ForEach(changes) { change in
+                ForEach(visibleChanges) { change in
                     row(change)
+                }
+                if changes.count > Self.collapsedRowCount {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) { showingAll.toggle() }
+                    } label: {
+                        Text(showingAll
+                             ? "Show fewer"
+                             : "Show all \(changes.count) changes")
+                            .font(.futura(.footnote, weight: .medium))
+                            .foregroundStyle(PocketColor.active)
+                    }
                 }
                 if let target = widenTarget, let duration = loop.song?.duration, duration > 0 {
                     Button {
@@ -44,7 +70,9 @@ struct LoopSpanSection: View {
                 Text("How it got here")
             } footer: {
                 // Says what the list is, not how the player is doing.
-                Text("Every time you changed this loop's range.")
+                Text(changes.count > Self.collapsedRowCount && !showingAll
+                     ? "The last \(Self.collapsedRowCount) times you changed this loop's range."
+                     : "Every time you changed this loop's range.")
             }
         }
     }

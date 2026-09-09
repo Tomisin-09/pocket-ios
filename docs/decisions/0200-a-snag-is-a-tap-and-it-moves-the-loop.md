@@ -4,6 +4,13 @@
 - **Date:** 2026-09-09 (`pocket-306-snag`)
 - **Amends:** ADR 0030 — the armed-state transport's stacked **Loop / Marker** column is removed.
   The idle state's two big identity circles, which that ADR is mostly about, are untouched.
+- **Amended by:** ADR 0202 — device feedback on this ADR's own first build. The snag ticks are
+  resized and the playhead's time bubble moves off them (0202 D1, which they overlapped), and snags
+  gain a panel so a mark can be reached and removed (0202 D2/D3) — this ADR shipped a mark that
+  could be made and never unmade. **The tap, `SnagCluster` and the tighten offer stand unchanged.**
+- **Amended by:** ADR 0203 — the ticks are no longer one flat opacity. Marks inside the **armed
+  loop's span** draw full and the rest recede (0203 D1), keyed on position rather than on the
+  `loopUID` recorded here, so the drawing agrees with `SnagCluster`'s own positional filter.
 - **Relates to:** ADR 0199 (the half-second floor, which this composes with and depends on),
   ADR 0192 (the transport grammar whose D2 argument this finishes), ADR 0041 (the A/B span the
   accept path lands in), ADR 0070 (never grading — the line this feature runs along),

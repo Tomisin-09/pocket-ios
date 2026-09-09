@@ -18,9 +18,9 @@ open [Song details](home-and-library.md#song-details) — there is no button for
   accessibility label states the current value.
 - **`Reset`**, and the shortcuts beside it, return it to full speed or jump to a fixed fraction.
 - **The return pill** appears beside the readout once you slow the song down, showing the speed you
-  dropped from — tap it to go back. It remembers where the drop started, so slowing down in stages
-  still returns you to the top. It goes when you take it, when you get back to that speed yourself,
-  and when you leave the song; nothing is saved.
+  dropped from — tap it to go back. Slow down twice and it offers the speed you were on before the
+  second drop, not the one you started the session at: one step back at a time. It goes when you
+  take it, when you get back to that speed yourself, and when you leave the song; nothing is saved.
 - **The BPM readout** shows the song's tempo, captioned `BPM`. It reads *Tempo not set* until you
   give the song one.
 - **Holding the BPM readout** carries that tempo out of the song — to the metronome, or into a new
@@ -72,10 +72,17 @@ colour strip with its ✕ takes the other side.
 nothing to confirm, so you can keep playing. Each one shows as a short crimson tick under the
 waveform, so several in the same place read as a cluster.
 
+Marks **inside the loop you are running** are drawn at full strength and the rest fade back, so what
+stands out is what is in front of you. It goes by where a mark sits, not by which loop you made it
+in — so a mark another loop left behind still counts if it falls inside this one. With no loop
+running, all of them are drawn at full strength.
+
 When your snags land close together, the status line offers to **tighten the loop around them**.
 Taking it does not change the loop: it opens the shorter range as a live A / B span so you hear it
 first, and `Save changes` is what commits it. If your snags are spread across the loop, nothing is
 offered — that spread is telling you the trouble is not in one place.
+
+Snags live in the `Snags` panel below, where you can jump to one or remove it.
 
 Nothing counts them or scores them. `Snag` is for you.
 
@@ -91,11 +98,12 @@ it** — one step back, to the range you were working at before, rather than all
 started. It does not change the loop: it opens that wider range as a live A / B span so you hear it
 first, and `Save changes` is what commits it.
 
-The section only appears once a loop has a history.
+The section shows the three most recent changes, with `Show all` when there are more. It only
+appears once a loop has a history.
 
 ## The panels
 
-Two collapsible lists under the transport, each headed with its name and, when collapsed, a count.
+Three collapsible lists under the transport, each headed with its name and, when collapsed, a count.
 
 ### `Loops`
 
@@ -115,6 +123,19 @@ that opens the loop automator.
 
 One row per marker: its name and its time. Tapping a row seeks there. Holding one opens its edit
 sheet. Marker names can also float over the timeline as you play up to them — a setting.
+
+### `Snags`
+
+One row per snag, in the order they fall in the song: the time, the loop you were running when you
+marked it, and the speed you were playing at if it was not full tempo. Tapping a row goes there and
+plays. The ✕ removes it.
+
+The rows stay in song order rather than being grouped by loop, so two marks a beat apart sit
+together even when you made them under different loops. A snag whose loop you have since deleted
+keeps its place and simply shows no loop name.
+
+There is nothing else to a snag — no name, no colour, no rating — so there is no edit sheet and no
+holding a row. It starts collapsed.
 
 ## The sheets
 

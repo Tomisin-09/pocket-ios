@@ -1282,7 +1282,10 @@ empty, because that line was Home's only word about adding a first song.
   *How it got here* section under *Range*, absent until there is a history. The practice screen has
   no room to give: the status line holds Loop controls / Follow / Grid, the transport is full, and
   ADR 0200 took the one transient slot. The sheet is already reachable by the 0.4s hold every loop
-  row has carried for a year, so the history costs the screen nothing.
+  row has carried for a year, so the history costs the screen nothing. It shows the **three** most
+  recent rows with *Show all N changes* beyond that (ADR 0202 D5) — the list has no end, and an
+  unbounded one pushes *Delete* and everything else in the sheet a scroll away. **Widen back stays
+  outside the fold**: it is the only thing in the section anyone acts on.
 
   `SpanHistory.widenTarget` walks the history **newest first** and offers the first genuinely wider
   span — a loop narrowed in three steps widens back to yesterday's size, not to the whole lick it
@@ -1297,8 +1300,20 @@ empty, because that line was Home's only word about adding a first song.
   **screen-lived and unstored** (a persisted one would offer last week's tempo) and gated on
   `speedIsUserDriven`, because `speed` is also written by the app when a loop arms at its
   command-anchored speed (ADR 0089) and offering a return to the *previous* loop's tempo would be
-  nonsense. The first drop of a drag wins, a sub-0.05 nudge is not a drop, and getting back by hand
-  clears it.
+  nonsense. A sub-0.05 nudge is not a drop, and getting back by hand clears it.
+
+  **The rule is anchored to a gesture, not to consecutive writes** (ADR 0202 D4, replacing 0201 D4).
+  `userAdjustedSpeed` — which the slider's *grab*, a preset pill and numeric entry all already call
+  — captures the settled speed the hand started from, and the rule compares against that. The
+  version it replaces compared each write of `speed` against the previous one, which on a
+  **continuous** slider is the previous frame: every step of a drag was far under `minimumDrop`, no
+  frame ever counted as a drop, and **the pill could not be raised by dragging at all** — only by a
+  preset, a typed value or the automator. The unit tests could not see it either, because they
+  called the rule with the large discrete jumps a slider never makes; `TempoReturnTests` now walks a
+  real drag a hundredth at a time and asserts *inside the loop* that a per-write rule would find
+  nothing. What the offer returns to also changed: **the rung above, not the top of the ladder** —
+  a second drop offers where that drop started, matching what `SpanHistory.widenTarget` already did
+  for spans one decision earlier in the same ADR.
 - **`Snag`** (ADR 0200) is *a place it went wrong* — `markedAt`, `seconds`, the `speed` in force,
   and `loopUID`. Cascade-owned by its `Song`, like `Marker` and for the same reason rather than by
   copying it: both are points on that song's timeline, and a point on a song that no longer exists
@@ -1325,6 +1340,43 @@ empty, because that line was Home's only word about adding a first song.
   transient tenant of the status line's ZStack, gated on a flag rather than on "a proposal exists":
   the latter is true for as long as the marks are, and would evict Loop controls / Follow / Grid
   permanently.
+
+  **ADR 0202** answers the two things 0200 shipped without.
+
+  A snag could be *made* and never *unmade*: there was no row, no list and no delete anywhere in the
+  app, only a tick on the canvas. `SnagsPanel` gives them one home — a `CollapsiblePanel` after
+  Markers, folded by default, rows ordered **by position in the song** (a map of where this song
+  gives trouble; recency order would scatter three marks in one bar across the list). It borrows the
+  loops/markers grammar and **trims what a snag has no use for**: no multi-select, no edit sheet, no
+  hold, because there is nothing to rename, recolour or rate. Deleting has **no undo toast**, unlike
+  a loop or marker (ADR 0125) — those carry authored content a mis-tap loses, an anonymous timestamp
+  does not.
+
+  The tick geometry also became a **shared constant**, `WaveformCanvas.snagBand`. `drawSnags` grew
+  its ticks 11 pt up from the loop band while the playhead's time bubble sat 12 pt up from the same
+  edge, in a different file, and the bubble landed squarely across the marks. Neither number was
+  wrong alone — the class of bug is *two elements measured from one edge by two literals*. The ticks
+  are now 9 × 1.5 pt, quieter, which is what the ADR's own "not in the marker band, no halo, no
+  label" argument asked for in the first place.
+
+  **ADR 0203** then makes the ticks state-bearing: marks inside the **armed loop's span** draw at
+  full strength, the rest at `snagFadedOpacity`. The test is **position, not `loopUID`** — and that
+  is the whole decision. `SnagCluster.proposal` and `snagsInActiveLoop` filter by position, so
+  fading by the recorded loop would dim a mark that is still being counted in *"3 snags close
+  together"* and still driving the offer in the line directly above it. Keyed on position the two
+  agree: the bright marks **are** the offer's input. With no loop armed everything draws full —
+  deliberately the opposite of `drawLoopLines`, which dims all lines when none is active, because
+  that dimming exists to make one line pop out of many rather than to mark a work area. The contrast
+  is made **upward** (in-loop to 1.0) rather than by pushing the rest below the old flat 0.85, since
+  1.5 pt of the canvas's quietest colour does not survive being dimmed twice. No plumbing was needed:
+  `WaveformView` already holds `loop` for the region tint.
+
+  The panel rows gained the **loop's name** as a caption (0203 D2), resolved through the loops that
+  still exist so a deleted one leaves the row nameless rather than inventing an owner. **Grouping by
+  loop was declined**: it splits a cluster — two marks a beat apart made under different loops, which
+  is precisely what narrowing between attempts produces (ADRs 0199/0201) — and it asserts a single
+  owner that D1 above deliberately ignores. A bare timecode being anonymous was the real complaint,
+  and a caption answers it without charging section headers against a panel made cheap to open.
 - **`LoopSpanChange`** (ADR 0199) is *how the loop got this narrow* — one row per edit to a loop's
   span, carrying `changedAt`, the span after, **the span before**, the playback `speed` in force and
   the song's `songDuration` at write time. It exists because `Loop.start` / `Loop.end` are

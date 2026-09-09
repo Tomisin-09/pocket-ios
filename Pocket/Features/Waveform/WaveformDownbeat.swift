@@ -148,18 +148,37 @@ extension WaveformView {
     /// a *cluster* at a glance without competing with the marker triangles above or the loop lines
     /// below. There is no halo, no label and no collision merging: overlapping ticks stacking into
     /// a denser mark is the correct rendering — density is the signal.
+    ///
+    /// Trimmed to `snagBand` × 1.5pt on device feedback (ADR 0202 D1): at 11 × 2 they read as
+    /// annotations in their own right rather than as a texture, which is the wrong weight for the
+    /// quietest mark on the canvas. The height is the shared constant the time bubble measures
+    /// itself against — the two used to overlap.
+    ///
+    /// **Marks inside the armed loop are full strength; the rest recede** (ADR 0203 D1). The test is
+    /// **position**, not the `loopUID` the mark was made under — because `SnagCluster` filters by
+    /// position too, so keying the fade on the recorded loop would dim a mark that is still being
+    /// counted in *"3 snags close together"* and still driving the offer above it. Bright marks are
+    /// exactly the offer's input. With no loop armed there is no work area to contrast against, so
+    /// everything draws full rather than everything dim.
+    ///
+    /// The contrast is made by **raising** the in-loop marks to full, not by dimming from the old
+    /// 0.85 baseline: these are already the quietest thing on the canvas, and taking them further
+    /// down would erase them.
     func drawSnags(in context: GraphicsContext, size: CGSize, atX: (Double) -> CGFloat) {
         guard !snags.isEmpty else { return }
         let bottom = size.height - Self.loopBand
-        let top = bottom - 11
+        let top = bottom - Self.snagBand
+        let armed = loop.map { (start: $0.start, end: $0.end) }
         for fraction in snags {
             let tickX = atX(fraction)
             guard tickX > -2, tickX < size.width + 2 else { continue }   // off-screen
+            let inLoop = armed.map { fraction >= $0.start && fraction <= $0.end } ?? true
             var tick = Path()
             tick.move(to: CGPoint(x: tickX, y: top))
             tick.addLine(to: CGPoint(x: tickX, y: bottom))
-            context.stroke(tick, with: .color(PocketColor.oracle.opacity(0.85)),
-                           style: StrokeStyle(lineWidth: 2, lineCap: .round))
+            context.stroke(tick,
+                           with: .color(PocketColor.oracle.opacity(inLoop ? 1.0 : Self.snagFadedOpacity)),
+                           style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
         }
     }
 

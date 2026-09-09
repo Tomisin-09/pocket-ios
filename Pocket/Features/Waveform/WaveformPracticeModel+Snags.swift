@@ -38,6 +38,40 @@ extension WaveformPracticeModel {
         return song.snags.map { $0.seconds / duration }
     }
 
+    /// Every snag in playing order — the Snags panel's list (ADR 0202 D2). **By position, not by
+    /// when it was tapped**: the panel is a map of where the song gives trouble, and a list sorted
+    /// by recency would scatter three marks in one bar across it.
+    var snagsByTime: [Snag] {
+        song.snags.sorted { $0.seconds < $1.seconds }
+    }
+
+    /// Loop names by `uid`, for the Snags panel's row captions (ADR 0203 D2). Built once per render
+    /// rather than searched per row, and it resolves **only what still exists** — a snag whose loop
+    /// was deleted simply has no caption, which is the honest rendering: the mark outlives the loop
+    /// by design (ADR 0200), so its caption has to be allowed to not.
+    var loopNamesByUID: [UUID: String] {
+        Dictionary(loops.map { ($0.uid, $0.name) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    /// Tap a snag row — go there and play, like a marker row.
+    func seekToSnag(_ snag: Snag) {
+        engine.seek(toSeconds: snag.seconds)
+        engine.play()
+        haptic(.light)
+    }
+
+    /// Remove one snag. **No undo toast**, unlike a loop or a marker (ADR 0202 D3): those carry
+    /// authored content — a name, a colour, a mastery — and losing one by a mis-tap costs work. A
+    /// snag is an anonymous timestamp, so the toast would guard nothing and would cost the panel a
+    /// row of chrome per tap. Deleting the last one also folds the panel away, which is the only
+    /// state it has to say something about.
+    func deleteSnag(_ snag: Snag) {
+        context.delete(snag)
+        // The offer was raised from marks that no longer describe the same cluster.
+        if offeringSnagTighten, snagTightenProposal == nil { offeringSnagTighten = false }
+        haptic(.light)
+    }
+
     /// Snags inside the armed loop, newest first — the count the Loops panel row shows.
     var snagsInActiveLoop: [Snag] {
         guard let loop = activeLoop else { return [] }
