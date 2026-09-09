@@ -153,23 +153,26 @@ final class ManualShotsUITests: ManualShotCase {
     @MainActor
     func testPracticeLog() {
         let app = launchForShoot()
-        openJournal(in: app)
 
-        // One tap now, not two. This figure used to be reached through the ⋯ menu, and that hop was
-        // the shoot's second recurring failure — the button was found, the event was synthesised, and
-        // the menu never came up (see `tap(_:labelled:revealing:called:)`). ADR 0176 moved the
-        // practice log onto a row on the Journal itself, so the menu that swallowed the tap is no
-        // longer on the path. The retry stays: the row is still an unguarded tap, which is the shape
-        // that recurs.
-        let row = app.buttons["Practice log"]
-        XCTAssertTrue(row.waitForExistence(timeout: Self.shootTimeout),
-                      "the Practice log row never appeared on the Journal. \(stepLog)")
+        // **Home, not the Journal, and no hop at all.** This figure was first reached through the ⋯
+        // menu — the shoot's second recurring failure, where the button was found, the event was
+        // synthesised, and the menu never came up (see `tap(_:labelled:revealing:called:)`). ADR 0176
+        // moved it to a row on the Journal; ADR 0208 moved it again, onto Home's *This week* strip,
+        // which is where the shoot now starts. The retry stays: it is still an unguarded tap.
+        //
+        // Found by **identifier**, because the strip's label is its three numbers and those change
+        // with the seed. `UITestHooks.practiceLogDoor` says why the app puts one up.
+        let door = app.buttons[UITestHooks.practiceLogDoor]
+        XCTAssertTrue(door.waitForExistence(timeout: Self.shootTimeout),
+                      "the This week strip never appeared on Home. \(stepLog)")
 
-        // `THIS WEEK` is the screen's first section, and — unlike "Practice log" — it is not also the
-        // name of the control we just tapped. Gating on "Practice log" here would be the metronome
-        // mistake again: an assertion already true of the screen we are leaving.
-        tap(row, labelled: "Practice log",
-            revealing: app.staticTexts["THIS WEEK"], called: "the Practice log screen")
+        // ⚠ **Gated on the navigation bar, never on `THIS WEEK`.** `HomeSection` uppercases its
+        // title and *both* screens use it for their first section, so `staticTexts["THIS WEEK"]` —
+        // what this line asserted until ADR 0208 — is true of Home before the tap. That is the
+        // metronome mistake exactly: an assertion already true of the screen we are leaving, which
+        // fails by passing. The bar is the screen's identity and is what `capture` itself resolves.
+        tap(door, labelled: "This week",
+            revealing: app.navigationBars["Practice log"], called: "the Practice log screen")
 
         // No scroll, and one frame for all three markers. `THIS WEEK` is the first section; `Less` and
         // `More` are the key under the month grid, so requiring all three *in frame* is what proves

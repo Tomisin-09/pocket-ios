@@ -42,6 +42,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Days are grouped under their month**, so a long scroll back says where you are.
 - **Show moved out of the ⋯ menu** onto the timeline itself, where it says what it is filtering to
   without being opened.
+- **The practice log moved to Home.** Tap the **This week** numbers to open it — the summary and the
+  screen it summarises are now one gesture apart. It has left the Journal, where it sat as a row
+  above the timeline. The strip only appears once you have practised something, so the way in
+  appears with it.
 
 ### Added
 - **A loop row says how many snags are in it.** The **Loops** panel shows a snag count beside a

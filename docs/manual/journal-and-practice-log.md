@@ -7,8 +7,8 @@ The **Practice log** is the same history counted up: minutes, days, and the thin
 Both are **free forever**. Notes and takes are yours whatever happens to a subscription, which is
 why they are the one part of the app that is never behind a lock.
 
-Reach the journal from **Journal** on Home. The practice log is one step further in — the
-**Practice log** row above the timeline.
+Reach the journal from **Journal** on Home. The practice log is on Home too — tap the **This week**
+strip, the three numbers under your last session.
 
 <!-- shot: journal/timeline | role: screen
      | alt: The Journal timeline with the All / Notes / Takes filter across the top and day sections beneath, mixing written notes and recorded takes
@@ -291,13 +291,17 @@ take's audio file, which is what makes offering the delete safe at all.
 
 ## The practice log
 
-**Practice log**, above the timeline, opens the counted-up version of the same history: three
+Tapping the **This week** strip on Home opens the counted-up version of the same history: three
 sections, at three scales. Where the timeline holds what you *wrote*, this holds what you *did* — and
 Red Moon fills it in by itself as you finish drills, so there is nothing to keep up.
 
+The strip is the promise and this screen is the payoff, which is why they sit together: the three
+numbers are a summary of what is here in full. Neither appears until you have finished something —
+there is no counting to read before there is anything to count.
+
 <!-- shot: journal/progress | role: screen
      | alt: The Practice log screen showing This week with its seven-day bar chart above This month with its shaded calendar grid and Less to More key, with All-time beginning at the foot
-     | state: seeded library, Practice log, several weeks of practice history -->
+     | state: seeded library, Home, This week strip tapped, several weeks of practice history -->
 
 Before you have finished anything it says **Nothing here yet** and describes what will fill it — one
 statement rather than three empty sections.

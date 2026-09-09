@@ -74,11 +74,6 @@ struct JournalTabView: View {
     var lookbackPeriod = JournalLookback.Period.default.rawValue
     /// The standalone-note composer (ADR 0155 §3).
     @State private var composing = false
-    /// Whether the Practice log screen is pushed. Still a flag rather than a `NavigationLink`: the
-    /// row that sets it sits outside the `List`, in the same `VStack` as the scope picker, and a bare
-    /// `NavigationLink` there would draw list chrome that belongs to neither. Not `private`: the row
-    /// lives in `JournalTabView+PracticeLog.swift`, and `private` is file-scoped.
-    @State var showingPracticeLog = false
     /// One take plays at a time; stopped on dismiss (mirrors `TakesSheet`). Not `private`: the
     /// deletion glue lives in `JournalTabView+Deletion.swift`, and `private` is file-scoped.
     @State var player = RecordingPlayer()
@@ -157,7 +152,10 @@ struct JournalTabView: View {
             // Above the practice-log row and always on when there is history, because it carries the
             // Show chip — the thing ADR 0190 D8 requires to be legible without opening anything.
             monthRail
-            if !searching { practiceLogRow }
+            // **No Practice log row** since ADR 0208 — Home's *This week* strip is the door now, and
+            // two doors to one screen is what ADR 0176 was tidying up. The band it occupied is the
+            // band the month rail spends, so the screen carries the same amount above the list as it
+            // did before ADR 0207, not one thing more.
             if sections.isEmpty { emptyState } else { list }
         }
         // Above the list-vs-empty-state branch on purpose: deleting the last row swaps the `List` for
@@ -175,9 +173,10 @@ struct JournalTabView: View {
             // ADR 0126's grammar is `ellipsis.circle` then `+`, and three bare trailing items is
             // exactly the shape it was written to stop (ADR 0155, the open toolbar question). That
             // resolution folded **both** Progress and Sort into this menu, which cost the practice
-            // log its discoverability — ADR 0176 gives it a row on the screen instead, and the menu
-            // keeps only Sort, a two-state flip that isn't even persisted and had the weakest claim
-            // on a top-level slot all along.
+            // log its discoverability — ADR 0176 gave it a row on this screen instead, and ADR 0208
+            // moved it off the Journal altogether onto Home's *This week* strip. The menu keeps only
+            // Sort, a two-state flip that isn't even persisted and had the weakest claim on a
+            // top-level slot all along.
             // The menu itself is `JournalTabView+Options.swift` — it grew a second filter with ADR
             // 0190 S2 and took this file past the 400-line cap.
             ToolbarItem(placement: .topBarTrailing) { optionsMenu }
@@ -194,9 +193,6 @@ struct JournalTabView: View {
         .navigationDestination(item: $openedTake) { ref in
             TakeDetailView(take: ref.value, player: player) { requestDelete(.take(ref.value)) }
         }
-        // The row sets a flag and the push happens out here, so the destination is declared once
-        // whether the timeline or the empty state is on screen (ADR 0176).
-        .navigationDestination(isPresented: $showingPracticeLog) { PracticeLogView() }
         // The Journal space's own write seam (ADR 0155 §3): standalone notes, and *only* standalone
         // notes. No owner picker — filing a note against a unit you are not currently practising is
         // what makes a snapshot dishonest, and that prohibition outlives this screen.
