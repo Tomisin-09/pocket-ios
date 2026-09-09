@@ -52,6 +52,11 @@ struct ExerciseLibraryView: View {
     /// persisted, since it's only reachable once the library holds more than one instrument, and it
     /// resets whenever that stops being true (`showsInstrumentFilter`).
     @State private var instrumentFilter: Instrument?
+    /// Whether the file picker for a shared drill is up (ADR 0209 D4). The picking is all this screen
+    /// does — the file goes to the app-wide door, which reads it and decides what it holds.
+    @State var importingExercise = false
+    /// The app's one receiving door (ADR 0188 S2, ADR 0209 D4), shared with the Routines library.
+    @Environment(\.receivePracticeFile) var receivePracticeFile
 
     /// The drills actually on screen — everything except rows whose delete is pending behind the
     /// Undo toast (Slice 3). The empty state reads from here too, so deleting your last drill says
@@ -157,12 +162,19 @@ struct ExerciseLibraryView: View {
         // trailing control so the inline title sits centred and stops moving with the sort key.
         // See `LibraryOptionsMenu`.
         .toolbar {
-            if !presentExercises.isEmpty {
-                ToolbarItem(placement: .topBarTrailing) {
-                    LibraryOptionsMenu(favoritesOnly: $favoritesOnly, sortControls: {
-                        LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
-                    })
-                }
+            // The menu itself is **unconditional**, and only the favourites filter takes the
+            // emptiness — the shape `RoutineLibraryView` already uses, adopted here when the receive
+            // row arrived (ADR 0209). Hiding the whole menu on an empty library would hide
+            // *Receive an exercise…* at precisely the moment a player most wants it: a first drill
+            // arriving from somebody else, with nothing of their own to show yet.
+            ToolbarItem(placement: .topBarTrailing) {
+                LibraryOptionsMenu(favoritesOnly: $favoritesOnly,
+                                   showsFavoritesFilter: !presentExercises.isEmpty,
+                                   actions: {
+                    receiveExerciseButton
+                }, sortControls: {
+                    LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
+                })
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { creating = true; haptic(.light) } label: {
@@ -172,6 +184,8 @@ struct ExerciseLibraryView: View {
                 .accessibilityLabel("New exercise")
             }
         }
+        // The same picker the Routines library uses, handing off to the same door (ADR 0209 D4).
+        .practiceFileImporter(isPresented: $importingExercise, onPick: receivePracticeFile)
         .sheet(isPresented: $creating, onDismiss: openJustCreated) {
             NewExerciseSheet(initialCommand: defaultCommand, defaultInstrument: defaultInstrument,
                              onCreate: create)

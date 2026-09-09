@@ -93,17 +93,30 @@ enum ReceivedRoutineFixture {
     }
 
     /// A payload read back through the real door.
+    ///
+    /// **Throws rather than skipping** if the door reports a drill: since ADR 0209 the reader can
+    /// return either payload, and a routine fixture that quietly arrived as an exercise would make
+    /// every assertion below it vacuous rather than failing.
     static func received(_ payload: SharedPractice) throws -> ReceivedRoutine {
-        try ReceivedRoutineBuilder.evaluate(data: try encoded(payload)).get()
+        switch try ReceivedPracticeBuilder.evaluate(data: try encoded(payload)).get() {
+        case let .routine(routine): return routine
+        case let .exercise(exercise): throw UnexpectedKind(name: exercise.displayName)
+        }
     }
 
     /// A file the door was expected to refuse. **Throws rather than skipping** if it was accepted: a
     /// skipped test reads as green, which is the one thing a refusal test must not do.
     static func failure(of data: Data) throws -> ReceiveFailure {
-        switch ReceivedRoutineBuilder.evaluate(data: data) {
-        case let .success(value): throw UnexpectedlyReadable(name: value.displayName)
+        switch ReceivedPracticeBuilder.evaluate(data: data) {
+        case let .success(.routine(value)): throw UnexpectedlyReadable(name: value.displayName)
+        case let .success(.exercise(value)): throw UnexpectedlyReadable(name: value.displayName)
         case let .failure(reason): return reason
         }
+    }
+
+    /// The door opened the file and found the other payload.
+    struct UnexpectedKind: Error {
+        let name: String
     }
 
     struct UnexpectedlyReadable: Error {

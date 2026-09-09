@@ -19,14 +19,19 @@ enum ReceiveFailure: Error, Equatable {
     /// its own, so the two doors refuse in the same words.
     case futureVersion(message: String)
 
-    /// A payload kind this build has never heard of — an exercise share from a later version, most
-    /// likely. `SharedPractice.kindRaw` is a `String` precisely so this is reportable instead of
+    /// A payload kind this build has never heard of. Named an exercise share from a later version
+    /// when this was written; ADR 0209 shipped exactly that, and the case now covers whatever comes
+    /// after it. `SharedPractice.kindRaw` is a `String` precisely so this is reportable instead of
     /// arriving as a decode failure.
     case unsupportedKind
 
-    /// The file says it holds a routine and holds none. Distinct from `.corrupt`: the JSON parsed,
-    /// the version agreed, and the contents still contradict the header.
-    case incomplete
+    /// The file names a payload it does not carry. Distinct from `.corrupt`: the JSON parsed, the
+    /// version agreed, and the contents still contradict the header.
+    ///
+    /// Carries **which** kind was promised (ADR 0209) so the sentence stays as specific as it was
+    /// when a routine was the only thing it could be. "The contents are missing" would be a worse
+    /// message bought by a smaller diff.
+    case incomplete(SharedPracticeKind)
 
     /// What the player is told.
     var message: String {
@@ -37,8 +42,13 @@ enum ReceiveFailure: Error, Equatable {
             return message
         case .unsupportedKind:
             return "This file holds something this version of Red Moon can’t open yet."
-        case .incomplete:
-            return "This file says it holds a routine, but the routine is missing."
+        case let .incomplete(kind):
+            switch kind {
+            case .routine:
+                return "This file says it holds a routine, but the routine is missing."
+            case .exercise:
+                return "This file says it holds an exercise, but the exercise is missing."
+            }
         }
     }
 }
@@ -125,22 +135,14 @@ struct HydratedRoutine {
 @MainActor
 enum ReceivedRoutineBuilder {
 
-    /// Read a file's bytes and decide whether there is anything to offer the player (D2, D9).
+    /// The routine half of a checked file, once `ReceivedPracticeBuilder.evaluate` has established
+    /// the version agrees and the payload really is a routine (D2, D9).
     ///
-    /// Pure over `Data`, so every branch below is reachable from a test without a picker, a document
-    /// type or a simulator.
-    static func evaluate(data: Data) -> Result<ReceivedRoutine, ReceiveFailure> {
-        guard let payload = try? ArchiveCoding.decode(SharedPractice.self, from: data) else {
-            return .failure(.corrupt)
-        }
-        // Version first, before anything else is believed about the contents (D2). A file from the
-        // future may well decode — the records are additive — and the fields this build cannot see
-        // are precisely the ones that would make the import wrong.
-        if case let .refuse(message) = SchemaVersionGate.evaluate(fileVersion: payload.schemaVersion) {
-            return .failure(.futureVersion(message: message))
-        }
-        guard payload.kind == .routine else { return .failure(.unsupportedKind) }
-        guard let routine = payload.routine else { return .failure(.incomplete) }
+    /// Pure over the decoded payload rather than over `Data`: reading the bytes, gating the version
+    /// and reading the kind are one job shared by both payloads, and it moved to
+    /// `ReceivedPracticeBuilder` when the second one arrived (ADR 0209 D4).
+    static func received(_ payload: SharedPractice) -> Result<ReceivedRoutine, ReceiveFailure> {
+        guard let routine = payload.routine else { return .failure(.incomplete(.routine)) }
         return .success(ReceivedRoutine(routine: routine,
                                         exercises: payload.exercises,
                                         placeholders: payload.placeholders,
@@ -242,7 +244,12 @@ enum ReceivedRoutineBuilder {
     /// them to the empty answer. `SharedPracticeBuilder` already clears them on the way out, and this
     /// side deliberately does not rely on that: this is the untrusted door, and the file may have
     /// been written by a hand, an older build, or a build that has not shipped yet.
-    private static func exercise(from record: ExerciseRecord) -> Exercise {
+    ///
+    /// **Not `private` since ADR 0209:** a drill sent on its own hydrates through this same function.
+    /// A second copy for the standalone door would be two answers to "what does a received drill
+    /// keep", and the day they disagreed the same file would land differently depending on how it was
+    /// sent.
+    static func exercise(from record: ExerciseRecord) -> Exercise {
         let drill = Exercise(name: record.name,
                              currentTempo: record.currentTempo,
                              targetTempo: record.targetTempo,

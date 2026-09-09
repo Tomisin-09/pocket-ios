@@ -298,8 +298,8 @@ final class ReceivedRoutineHydrationTests: XCTestCase {
             SharedPracticeBuilder.routine(fixture.routine, appVersion: "1.2 (7)",
                                           exportedAt: Fixture.fixedDate))
 
-        guard case let .success(value) = ReceivedRoutineBuilder.evaluate(data: bytes) else {
-            return XCTFail("A file this app just wrote could not be read back")
+        guard case let .success(.routine(value)) = ReceivedPracticeBuilder.evaluate(data: bytes) else {
+            return XCTFail("A file this app just wrote could not be read back as a routine")
         }
         let landing = ReceivedRoutineBuilder.materialize(value)
 

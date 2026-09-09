@@ -15,6 +15,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **Hand a single exercise to somebody else.** A drill's **ⓘ** sheet gains a share control: it writes
+  the drill into one small file and hands it to the share sheet, the same way a routine already
+  travels. The shape crosses — the drill, its meter, its tempo plan and ramp, its tags and your
+  description — and nothing you have done with it does: no mastery rating, no worked-up tempo, no
+  last-practised date, no song or reference links. You do not need Pro to send one, and nothing is
+  uploaded.
+- **Receive one.** Tap a shared exercise wherever it arrived, or fetch it from
+  **Exercises ▸ the options control ▸ Receive an exercise…**. Red Moon shows you what is in the file
+  — the drill's name, kind, meter, tempo plan, and who sent it when — before anything is written, and
+  what lands is your own copy. Either library's picker takes either kind: a drill picked from the
+  Routines screen still lands in your exercises, and the app says where it went.
 - **The journal hands something back.** At the top of the timeline, a card quotes one entry from a
   year ago — the day itself if you wrote one, otherwise that week or that month, and it says which.
   Tap it to go to that day. It picks purely by date: nothing decides which of your entries mattered.

@@ -331,6 +331,10 @@ If another app offers to open it, choose Red Moon from the list. Nothing has to 
 picker showing the practice files it can read and nothing else, which is the way in when the file
 has been sitting in Files or iCloud Drive for a week.
 
+A single exercise can be shared the same way, and the picker does not mind which it is handed: a
+shared drill picked here lands in your exercises rather than your routines, and Red Moon says so.
+See [Handing one to somebody else](exercises.md#handing-one-to-somebody-else).
+
 Either way, the same thing happens next: Red Moon shows you **what is in the file before it lands** —
 its name, how many blocks and how many exercises, the sender's version and the day they wrote it, and
 a **Won't come across** list if any block was built on their own audio. **Add** puts it in your
