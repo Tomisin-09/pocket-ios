@@ -1,7 +1,24 @@
 # ADR 0190 — a journal you can review
 
-- **Status:** Accepted
+- **Status:** Accepted — **partly amended by ADR 0207** (2026-09-09)
 - **Date:** 2026-09-04 (`pocket-295-a-journal-you-can-review`)
+- **Amended by:** ADR 0207 (*a journal worth opening*), in three places. **D5's deferral of the
+  entry-kind filter is discharged**, on the condition D5 itself set — *ship it when there is a reason
+  to believe the field is populated deliberately*. That reason is that only `.note` is ever a default:
+  nothing in the app writes 🎯, ⚡️, 🧗, 💡, 👂 or 🎸 on a player's behalf, so the one untrustworthy
+  bucket is a single row, and it is labelled **"Note or untagged"** rather than hidden. 🎬 Session is
+  **not** offered — the app sets it itself, and it would duplicate this decision's own *Session* row.
+  **D7's placement of the owner
+  filter** is superseded: *Show* leaves the ⋯ menu for a fixed chip on a new month rail, which states
+  the active kinds in words rather than through a filled glyph — a strictly better answer to **D8**,
+  whose rule is unchanged and is the reason that chip may not scroll out of view. **D9's rejection of
+  a month grid** is narrowed: a grid *marked by presence* replaces the graphical `DatePicker` behind
+  *Jump to…*, on the finding that D9's no-grading argument was thin (as `docs/backlog.md` had already
+  recorded) while its `MonthHeatmap`-confusion argument was the strong one — so the new grid is
+  stroked, unshaded and carries no legend. **Everything else here stands**, D1 and D4 in particular:
+  the player still pins and the app still never does, and pinned is still a filter and never a sort.
+  D9's at-or-before rule survives in `JournalTimeline.jumpTarget`, now used by the look-back card
+  rather than by the picker.
 - **Relates to:** ADR 0100 (the Journal space is read-only for owned entries — this establishes that
   a *review verb* sits inside that rule), ADR 0038 / 0058 / 0143 / 0155 / 0160 / 0175 (the authoring
   half, which is what made the imbalance), ADR 0151 (a note outlives its unit — and what it loses
@@ -119,6 +136,10 @@ only* narrows it. That also keeps the pin honest as a review verb: it changes wh
 what the record says.
 
 ### D5 — the owner-kind filter ships; the entry-kind filter does not
+
+> **Discharged by ADR 0207 D11 (2026-09-09).** The entry-kind filter now ships, on the condition this
+> decision set for it — see the header. The reasoning below is unchanged and is what shaped the
+> control: it is why 📝 Note's row reads *"Note or untagged"* rather than *"Note"*.
 
 Finding 2 names two uncaptured axes. This ships **one**.
 
@@ -391,5 +412,5 @@ unparseable one, and the unfiltered feed is the only always-safe landing.
   what the screen shows is on — answers the backlog's persistence question for the Journal only.
   Exercises, Loops, Routines and Songs keep their transient filters until someone decides for them;
   `LibraryOptionsMenu` already has the filled glyph that would make it safe.
-- **Two things stay unbuilt and are logged, not forgotten:** an entry-kind filter (D5) and
-  `ownerKindAtEntry` (D6).
+- **Two things stay unbuilt and are logged, not forgotten:** an entry-kind filter (D5 — **built,
+  ADR 0207 D11**) and `ownerKindAtEntry` (D6, still unbuilt).

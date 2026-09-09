@@ -15,15 +15,32 @@ import SwiftUI
 /// section takes arbitrary content and has no opinion about what it wraps.
 struct HomeSection<Content: View>: View {
     let title: String
+    /// Draws a trailing chevron on the header, for a section that is **itself** a way somewhere
+    /// (ADR 0208's *This week*). Off everywhere else, because a header that promises a destination
+    /// it does not have is worse than a plain one.
+    ///
+    /// A `Bool` rather than a second `@ViewBuilder` accessory: one caller wants one glyph, and a
+    /// generic slot would be a shape invented for a need that does not exist yet.
+    var chevron = false
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title.uppercased())
-                .font(.futura(.caption, weight: .semibold))
-                .tracking(1.4)
-                .foregroundStyle(PocketColor.textSecondary)
-                .accessibilityAddTraits(.isHeader)
+            HStack(spacing: 6) {
+                Text(title.uppercased())
+                    .font(.futura(.caption, weight: .semibold))
+                    .tracking(1.4)
+                    .foregroundStyle(PocketColor.textSecondary)
+                if chevron {
+                    Image(systemName: "chevron.right")
+                        .font(.futura(.caption2, weight: .semibold))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+            }
+            // The trait sits on the assembled header, not on the title alone, so a chevron that is
+            // decoration for sighted readers does not become a second element after it.
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
             content
         }
     }

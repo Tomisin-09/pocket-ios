@@ -4,11 +4,19 @@ import SwiftUI
 /// Home's **This week** strip (ADR 0196) — three numbers over the practice log: minutes, days, and
 /// notes, all describing the same seven days.
 ///
-/// It is the *promise* half of the two-tier design ADR 0117 drafted for Home and then had nowhere to
-/// put: the payoff screen stays where ADR 0176 moved it, one row inside the Journal, and this strip
-/// is deliberately **not a way in**. It reads back; it does not navigate. A tappable strip would
-/// reopen 0176's placement as a side effect of adding a number, and that is a decision worth taking
-/// on its own or not at all.
+/// It is the *promise* half of the two-tier design ADR 0117 drafted for Home and could not place —
+/// and since **ADR 0208 it is also the door to the payoff**, which is the whole of that design
+/// finally in one screen.
+///
+/// **ADR 0196 D3 wrote the condition this satisfies.** It left the strip deliberately inert, on the
+/// reasoning that a tappable strip *"would reopen 0176's placement as a side effect of adding a
+/// number, and settle by accident a decision that deserves to be taken deliberately."* ADR 0208 is
+/// that decision taken deliberately; the Journal's *Practice log* row is deleted rather than kept,
+/// because two doors to one screen is the thing ADR 0176 was tidying up.
+///
+/// **The door appears exactly when there is something behind it.** The strip already drew nothing
+/// with no runs, so a fresh install gets no strip, no door, and no empty payoff screen — the
+/// fresh-install objection this repo keeps re-hitting, answered by a guard that was already here.
 ///
 /// **Its own view, with its own queries.** `HomeView` is close to SwiftLint's 400-line cap and holds
 /// six `@Query`s already; two more for a strip it does not otherwise touch would be paid on every
@@ -37,14 +45,29 @@ struct HomeStatsStrip: View {
         if !runs.isEmpty {
             let week = PracticeProgress.week(records: runs.map(\.record),
                                              now: .now, calendar: .current)
-            HomeSection(title: "This week") {
-                HStack(spacing: 10) {
-                    tile(week.minutes, "Minutes")
-                    tile(week.daysActive, "Days")
-                    tile(PracticeLog.count(journalEntries.map(\.createdAt), in: week.interval),
-                         "Notes")
+            // A `NavigationLink`, not a flag plus a `navigationDestination` on `HomeView`.
+            // `PracticeLogView` takes no model, so none of ADR 0090's reasoning applies — that rule
+            // is about a just-inserted `@Model` whose `persistentModelID` flips on first autosave and
+            // pops an item-bound destination. A link here costs `HomeView` no state at all.
+            NavigationLink {
+                PracticeLogView()
+            } label: {
+                HomeSection(title: "This week", chevron: true) {
+                    HStack(spacing: 10) {
+                        tile(week.minutes, "Minutes")
+                        tile(week.daysActive, "Days")
+                        tile(PracticeLog.count(journalEntries.map(\.createdAt), in: week.interval),
+                             "Notes")
+                    }
                 }
             }
+            .buttonStyle(.plain)
+            // **An identifier, and no label of its own.** The label is left to concatenate from the
+            // header and the three tiles, so VoiceOver still hears the numbers — which are the point
+            // of the strip. Naming the button "Practice log" for the harness's benefit would replace
+            // all of that with a destination name. See `UITestHooks.practiceLogDoor`.
+            .accessibilityIdentifier(UITestHooks.practiceLogDoor)
+            .accessibilityHint("Opens the practice log")
         }
     }
 
@@ -82,10 +105,14 @@ struct HomeStatsStrip: View {
             PracticeRun(startedAt: .now.addingTimeInterval(Double(-offset) * 86_400),
                         durationSeconds: 900, kind: .exercise, unitUID: UUID()))
     }
-    return HomeStatsStrip()
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .background(PocketColor.background)
-        .modelContainer(container)
-        .preferredColorScheme(.dark)
+    // In a `NavigationStack`, because the strip is a `NavigationLink` since ADR 0208 and a link with
+    // no stack around it renders inert.
+    return NavigationStack {
+        HomeStatsStrip()
+            .padding(20)
+            .frame(maxWidth: .infinity)
+    }
+    .background(PocketColor.background)
+    .modelContainer(container)
+    .preferredColorScheme(.dark)
 }

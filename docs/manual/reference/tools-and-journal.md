@@ -60,9 +60,6 @@ search field prompting `Search by song, exercise, template or date`.
 
 **`Journal options`** holds a `Sort` picker of `Newest first` / `Oldest first`.
 
-**`Practice log`** sits above the feed, between the scope control and the first day
-heading. It is hidden while a search is running.
-
 **The scope control** — `All`, `Notes`, `Takes`.
 
 **The feed** groups by day under `Today`, `Yesterday` and then dated headers.
@@ -93,11 +90,12 @@ rather than seven. The full table is in [the journal](../journal-and-practice-lo
 
 ## `Practice log`
 
-Reached from the `Practice log` row on the `Journal`.
+Reached from the `This week` strip on `Home`. The strip is not drawn until something has
+been practised, so neither is the way in.
 
 <!-- shot: reference/progress | role: screen
      | alt: The Practice log screen with This week's bar chart and This month's shaded grid in full, and All-time beginning at the foot
-     | state: seeded library, Practice log, several weeks of history -->
+     | state: seeded library, Home, This week strip tapped, several weeks of history -->
 
 - **`This week`** — minutes and days, over a bar per day.
 - **The month section** — its header names the month it is showing (*This month · August*), because

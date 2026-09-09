@@ -77,4 +77,18 @@ enum UITestHooks {
     /// menu carries an item with the *same words*, so a label match has two hits on one screen and
     /// picks whichever the query orders first. The section's button is the one the shoot aims at.
     static let takeAddMoment = "take.addMoment"
+
+    /// Home's **This week** strip, which became the way into the Practice log (ADR 0208).
+    ///
+    /// An identifier rather than a label, and this one buys something the other two do not. The
+    /// strip's job is to *say the three numbers*; if the harness needed a stable label to aim at,
+    /// the button would have to be called something fixed like "Practice log" — and VoiceOver would
+    /// then announce a bare destination name in place of the minutes, days and notes that are the
+    /// entire reason the strip exists. An identifier lets the label stay the numbers.
+    ///
+    /// The screen it opens is still gated on `navigationBars["Practice log"]`, never on a static
+    /// text: `HomeSection` uppercases its title, so **Home and the Practice log both render
+    /// `THIS WEEK`** — the string the shoot used to gate on, which after this move would have been
+    /// true of the screen it was leaving.
+    static let practiceLogDoor = "home.practiceLogDoor"
 }

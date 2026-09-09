@@ -11,6 +11,7 @@ final class EntryKindTests: XCTestCase {
         XCTAssertEqual(EntryKind.goal.rawValue, "goal")
         XCTAssertEqual(EntryKind.breakthrough.rawValue, "breakthrough")
         XCTAssertEqual(EntryKind.struggle.rawValue, "struggle")
+        XCTAssertEqual(EntryKind.idea.rawValue, "idea")   // ADR 0207 D10 — 💡 something to try
         XCTAssertEqual(EntryKind.note.rawValue, "note")
         XCTAssertEqual(EntryKind.session.rawValue, "session")
         XCTAssertEqual(EntryKind.ear.rawValue, "ear")   // ADR 0104 — ear-training note tag
@@ -33,6 +34,24 @@ final class EntryKindTests: XCTestCase {
         XCTAssertEqual(EntryKind.improvise.emoji, "🎸")
         XCTAssertEqual(EntryKind.improvise.label, "Improv")
         XCTAssertTrue(EntryKind.pickerOrder.contains(.improvise))
+    }
+
+    func testIdeaKindDecodesAndHasGlyph() {
+        // The ADR 0207 D10 addition: 💡 "Idea", a direction to try rather than a result. Added the
+        // established safe way — a new case on the `String`-raw enum, never a stored enum attribute —
+        // so an older build reading a newer store folds it to `.note` rather than faulting. That
+        // fold is the one cost: an archive written with `idea` and restored on an older build comes
+        // back as Note.
+        XCTAssertEqual(EntryKind(raw: "idea"), .idea)
+        XCTAssertEqual(EntryKind.idea.emoji, "💡")
+        XCTAssertEqual(EntryKind.idea.label, "Idea")
+        XCTAssertTrue(EntryKind.pickerOrder.contains(.idea))
+    }
+
+    func testIdeaSitsWithTheDeliberateKindsNotAfterTheLogs() {
+        // Order is an argument here (ADR 0207 D10): 💡 is never a default and never set by the app,
+        // which is the property the Journal's tag filter is built on.
+        XCTAssertEqual(EntryKind.pickerOrder.prefix(4), [.goal, .breakthrough, .struggle, .idea])
     }
 
     func testRawValueRoundTrips() {

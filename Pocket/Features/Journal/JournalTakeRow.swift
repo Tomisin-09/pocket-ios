@@ -20,7 +20,10 @@ struct JournalTakeRow: View {
     let onOpen: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 10) {
+            // Gold, not a kind tint: a take has no `EntryKind`. Same rail, same position, so the
+            // two row types read as siblings in one feed (ADR 0100).
+            JournalKindRail(tint: PocketColor.journal)
             Button(action: onToggle) {
                 Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
                     .font(.futura(.title))
@@ -35,8 +38,11 @@ struct JournalTakeRow: View {
                         // `displayTitle` falls back to the generic word every take used to be stuck
                         // with, so an unnamed take renders exactly as it always did (ADR 0069
                         // amendment).
+                        // `.body`, matching `JournalEntryRow`'s note text: on a take the title *is*
+                        // the content line, so the two rows must set their content at one size or
+                        // takes read as a lesser kind of row.
                         Text(take.displayTitle)
-                            .font(.futura(.subheadline))
+                            .font(.futura(.body))
                             .foregroundStyle(PocketColor.textPrimary)
                             .lineLimit(1)
                         Text(take.durationLabel)
@@ -66,6 +72,6 @@ struct JournalTakeRow: View {
                 }
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 6)
     }
 }

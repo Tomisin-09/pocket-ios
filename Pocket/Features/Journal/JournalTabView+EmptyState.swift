@@ -4,9 +4,9 @@ import SwiftUI
 ///
 /// Split out of `JournalTabView` for the 400-line cap, the same reason `JournalTakeRow` and
 /// `JournalTabView+Deletion` were. It earns a file rather than a few lines because the screen now has
-/// four ways to be empty and they mean different things: a journal with nothing in it yet, a search
-/// that matched nothing, and **either of two filters the player left on**. Only the first is good
-/// news.
+/// five ways to be empty and they mean different things: a journal with nothing in it yet, a search
+/// that matched nothing, and **any of three filters the player left on** — pinned, owner kind, and
+/// since ADR 0207 D11 the tag. Only the first is good news.
 ///
 /// The rule this file exists to hold (ADR 0190 D8): **the empty state names the thing that emptied
 /// it.** A persisted filter is only safe when the screen admits it is in force — the options glyph
@@ -50,7 +50,7 @@ extension JournalTabView {
         // The one glyph that says "a filter is on" without naming which — the same
         // `line.3.horizontal.decrease.circle` `LibraryOptionsMenu` gives its widen filter. The words
         // below do the naming; a per-kind glyph here would say it twice and agree only by luck.
-        if ownerFilter.isFiltering { return "line.3.horizontal.decrease.circle" }
+        if showIsFiltering { return "line.3.horizontal.decrease.circle" }
         return "book.closed"
     }
 
@@ -72,8 +72,8 @@ extension JournalTabView {
         // Both filters are named when both are on. A title that reported only one would send the
         // player to turn that one off and leave them on a screen still empty for the other reason,
         // which is the same wrong conclusion this whole file exists to prevent.
-        if pinnedOnly { return "No pinned \(scopeNoun)\(underOwner)" }
-        if ownerFilter.isFiltering { return "No \(scopeNoun)\(underOwner)" }
+        if pinnedOnly { return "No pinned \(scopeNoun)\(underShow)" }
+        if showIsFiltering { return "No \(scopeNoun)\(underShow)" }
         switch scope {
         case .all: return "Nothing here yet"
         case .notes: return "No notes yet"
@@ -81,31 +81,58 @@ extension JournalTabView {
         }
     }
 
-    /// " under Loop or Session" — the ticked kinds as a trailing phrase, empty when none are.
+    /// What the *Show* chip is holding, as a trailing phrase — " filed under Loop or Session",
+    /// " tagged Idea", " filed under Loop or Session and tagged Idea" — empty when it holds nothing.
+    ///
+    /// **"and" between the facets, "or" inside each**, which is not a stylistic choice: it is ADR
+    /// 0159's composition rule written out in words. Ticking *Loop* and *Session* widens; ticking
+    /// *Loop* and *Idea* narrows. One sentence has to carry both, or the player is left to guess
+    /// which of the two a second tick did.
+    ///
+    /// **Both facets are named when both are on** (ADR 0207 D11), for the same reason the title names
+    /// the pin alongside them: a sentence reporting one of two live filters sends the player to clear
+    /// that one and leaves them on a screen still empty for the other reason.
     ///
     /// It quotes the sheet's own rows **verbatim** rather than inflecting nouns of its own: *Just me*
     /// has no lower-case form that survives being pushed into a sentence ("no just me entries"), and
-    /// a second wording for a filter is a second thing to keep in step with the control.
+    /// a second wording for a filter is a second thing to keep in step with the control. That is also
+    /// why the tag phrase can read *"tagged Note or untagged"* — clumsy, and exactly what the row the
+    /// player ticked says.
     ///
-    /// **Every ticked kind is named, and joined with "or".** A count would be shorter and would lose
-    /// the two things this sentence exists to give: which filters are on, and that they are a union
-    /// (ADR 0159 §3). There are at most five.
-    private var underOwner: String {
-        guard let phrase = ownerFilter.phrase else { return "" }
-        return " under \(phrase)"
+    /// **Every ticked value is named, and joined with "or".** A count would be shorter and would lose
+    /// the two things this sentence exists to give: which filters are on, and that each is a union
+    /// (ADR 0159 §3). There are at most five kinds and seven tags.
+    private var underShow: String {
+        switch (ownerFilter.phrase, tagFilter.phrase) {
+        case (let owner?, let tag?): return " filed under \(owner) and tagged \(tag)"
+        case (let owner?, nil): return " filed under \(owner)"
+        case (nil, let tag?): return " tagged \(tag)"
+        case (nil, nil): return ""
+        }
+    }
+
+    /// The one sentence a player on **Takes** with a tag ticked cannot work out for themselves: the
+    /// screen in front of them can never fill, however far back they scroll.
+    ///
+    /// Drawn only in that state. Under **All** a tag filter also removes every take, but there are
+    /// usually notes left to show, so the empty state is not reached and the sentence would be noise
+    /// on the occasions it is.
+    private var takesCarryNoTag: String {
+        guard tagFilter.isFiltering, scope == .takes else { return "" }
+        return " Takes carry no tag, so a tag filter always leaves them out."
     }
 
     private var emptyMessage: String {
         if searching {
             return "Nothing matches “\(query)”. Try a song, exercise, template, or date."
         }
-        if pinnedOnly, let phrase = ownerFilter.phrase {
+        if pinnedOnly, showIsFiltering {
             // **Both routes, because both filters are on.** Offering only the pin sends the player to
             // turn it off and leaves them on a screen still empty under the ticked kinds — the
             // same wrong conclusion this file exists to prevent, reached one step later. Found by
             // looking at the built screen: the title said both and the sentence under it said one.
-            return "Nothing you have pinned is filed under \(phrase). Turn off Pinned "
-                + "only, or open ⋯ ▸ Show and choose All."
+            return "Nothing you have pinned is\(underShow).\(takesCarryNoTag) Turn off Pinned "
+                + "only, or tap Show above the timeline and clear it."
         }
         if pinnedOnly {
             // Says where the gesture is, because the hold menu is the only place it lives and a menu
@@ -113,15 +140,15 @@ extension JournalTabView {
             return "Hold any row and choose Pin to keep it here. Turn off Pinned only to see "
                 + "everything again."
         }
-        if let phrase = ownerFilter.phrase {
-            // Names the route, not the state, because the player has to undo this from a menu they
-            // cannot see from here. **Every word is something on that menu**: ⋯ opens it, *Show* is
-            // a row on it, *All* is the first row of the sheet that opens. An instruction naming a
-            // control that isn't drawn is worse than none — this line first said "Set Show back to
-            // All" while the picker rendered inline with no title at all, which is what sent the
-            // picker out of the menu altogether.
-            return "Nothing in your journal is filed under \(phrase). "
-                + "Open ⋯ ▸ Show and choose All to see everything again."
+        if showIsFiltering {
+            // **Every word names something drawn on this screen.** That rule cost this line three
+            // rewrites: it first said "Set Show back to All" while the picker rendered inline with
+            // no title, then "Open ⋯ ▸ Show" — which stopped being true the moment ADR 0207 D6 moved
+            // Show onto the month rail — and it said "choose All" until D11 put a second facet behind
+            // the same chip, whose clear row is called *Any tag*. "Clear it" names the outcome rather
+            // than one of two rows, and stays true whichever facet did the emptying.
+            return "Nothing in your journal is\(underShow).\(takesCarryNoTag) "
+                + "Tap Show above the timeline to widen it."
         }
         switch scope {
         case .all:

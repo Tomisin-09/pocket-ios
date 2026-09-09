@@ -28,7 +28,7 @@ marker grammar in [README.md](README.md).
 | `getting-started/home` | `screen` | `getting-started` | seeded library, Home, morning greeting |  |
 | `getting-started/loop-active` | `band` | `getting-started` | seeded library, Slow Bend, a loop active and repeating |  |
 | `journal/month-heatmap` | `panel` | `journal-and-practice-log` | seeded library, Practice log, two or more weeks of history in the current month |  |
-| `journal/progress` | `screen` | `journal-and-practice-log` | seeded library, Practice log, several weeks of practice history |  |
+| `journal/progress` | `screen` | `journal-and-practice-log` | seeded library, Home, This week strip tapped, several weeks of practice history |  |
 | `journal/quick-note` | `screen` | `journal-and-practice-log` | an exercise run screen, quick note tapped |  |
 | `journal/quick-note-button` | `glyph` | `journal-and-practice-log` | — |  |
 | `journal/record-arm` | `glyph` | `journal-and-practice-log` | — |  |
@@ -62,7 +62,7 @@ marker grammar in [README.md](README.md).
 | `reference/metronome-settings` | `screen` | `tools-and-journal` | Metronome open, meter control tapped, scrolled to the top |  |
 | `reference/player` | `screen` | `song-player` | seeded library, Slow Bend, idle, Loops panel expanded |  |
 | `reference/practice-hub` | `screen` | `practice` | seeded library, Practice hub, goals and routines present |  |
-| `reference/progress` | `screen` | `tools-and-journal` | seeded library, Practice log, several weeks of history |  |
+| `reference/progress` | `screen` | `tools-and-journal` | seeded library, Home, This week strip tapped, several weeks of history |  |
 | `reference/quick-note` | `screen` | `tools-and-journal` | an exercise run screen, quick note tapped |  |
 | `reference/routines-library` | `screen` | `practice` | seeded library, Practice ▸ Routines, at least one routine run before |  |
 | `reference/settings-hub` | `screen` | `settings` | Settings open |  |

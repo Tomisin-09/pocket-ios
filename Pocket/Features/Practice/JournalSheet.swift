@@ -210,14 +210,11 @@ struct JournalSheet: View {
         return day.formatted(date: .abbreviated, time: .omitted)
     }
 
-    /// Absolute-BPM label for an exercise's command snapshot — "not yet measured" when un-promoted,
-    /// and carrying the rhythm it was measured in when the entry recorded one (ADR 0121). An entry
-    /// written before that snapshot existed shows the bare BPM: the snapshot is immutable (ADR 0038),
-    /// so an unknown rhythm is left unstated rather than filled in from today's drill.
+    /// The BPM label now lives on `LoopProgressFormat`, beside its `percentLabel` sibling and free of
+    /// `@MainActor` (ADR 0207 D9). Kept here as a forwarding alias because four call sites and a test
+    /// comment name it through this type, and renaming those is churn with no reader benefit.
     static func bpmLabel(_ bpm: Int?, notesPerBeat: Int? = nil) -> String {
-        guard let bpm else { return "not yet measured" }
-        guard let notesPerBeat else { return "\(bpm) BPM" }
-        return "\(bpm) BPM · \(NoteRate(perBeat: notesPerBeat).compactLabel)"
+        LoopProgressFormat.bpmLabel(bpm, notesPerBeat: notesPerBeat)
     }
 }
 

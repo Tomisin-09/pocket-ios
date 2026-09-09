@@ -4,6 +4,22 @@
 - **Date:** 2026-08-21 (`pocket-279-practice-log-rename`)
 - **Amends:** ADR 0117 (practice stats & the Progress screen) — the screen it built keeps its
   content, its constraints and its deferrals, and changes only its name and its door.
+- **Amended by:** ADR 0208 (*the strip becomes the door*, 2026-09-09) — **D2's door moves.** The
+  Practice log is no longer reached from a row on the Journal but from Home's *This week* strip, and
+  the row is **deleted rather than kept**, which is this ADR's own one-door rule applied to the pair.
+  D4 (hide while searching) goes with the row, having existed only because a navigation row above
+  *No matches* claims the screen still has somewhere to go. **D3's refusal of a live summary strip is
+  affirmed, not reversed** — that objection was about putting a permanent number above *this
+  timeline*, and the strip is on Home. The rename and every constraint here stand.
+- **Amended by:** ADR 0207 (*a journal worth opening*, 2026-09-09) — and this ADR's central refusal
+  **stands**. It declined *"a live summary strip above the timeline"* because such a strip *"puts a
+  permanent number above a timeline whose entire content is words"* and hands a fresh install a zero
+  to read. ADR 0207 D8 adds a look-back card to that screen and is bound by exactly those three
+  terms: it carries **words** rather than a number, it sits **inside the `List`** and scrolls away
+  rather than standing permanently above it, and it is **absent entirely** when there is nothing to
+  show. This ADR's other finding — that **a destination reached only from a menu is one most players
+  never find** — is what ADR 0207 D7 applies to *Jump to…*, giving it the pinned day header as a
+  second, discoverable door.
 - **Relates to:** ADR 0070 (Pocket never grades the player), ADR 0100 (the Journal is the
   read-only, cross-cutting practice-history space), ADR 0126 (toolbar grammar), ADR 0144 (one
   app, one price — the Journal is free forever), ADR 0155 (the Journal's ＋, and the toolbar
@@ -54,6 +70,10 @@ no direction and so cannot report the absence of one. It also makes the user-fac
 with `PracticeLog` and `PracticeRun` underneath, which have been the internal names for this
 data since 0117 Slice 1 — the app has been calling it a log in code and *progress* on screen for
 three weeks.
+
+> **D2's door moved again in ADR 0208 (2026-09-09)** — to Home's *This week* strip, with this row
+> deleted. The one-door rule below is what decided that: two doors a screen apart would be the same
+> redundancy this decision was removing. D3 is untouched and was the thing 0208 had to work around.
 
 **2 — It is reached from a row on the Journal, above the timeline, and leaves the ⋯ menu.** The
 menu keeps Sort alone. One door, not two: a row and a menu item a few centimetres apart on the

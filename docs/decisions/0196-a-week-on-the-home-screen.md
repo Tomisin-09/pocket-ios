@@ -1,7 +1,14 @@
 # ADR 0196 — a week on the home screen, and the payoff stays where it is
 
-- **Status:** Accepted
+- **Status:** Accepted — **D3 discharged by ADR 0208** (2026-09-09)
 - **Date:** 2026-09-07 (`pocket-302-tuner-and-stat-strip`)
+- **Amended by:** ADR 0208 (*the strip becomes the door*). **D3's refusal to make the strip tappable
+  is discharged on the condition D3 itself set** — it declined the door only because doing so would
+  settle 0176's placement *by accident*, and asked for the decision to be taken on its own. 0208 is
+  that decision: the strip now opens the Practice log, and the Journal's row is deleted rather than
+  kept. **D4 stands and becomes load-bearing** — nothing logged still draws nothing, which is now
+  what keeps a fresh install from meeting a door onto an empty screen. Everything else here is
+  untouched, D1 and D2 in particular: three effort facts, never a grade.
 - **Relates to:** builds the Home summary tier **ADR 0117** designed and could not place, over the
   aggregation that ADR's Slice 2 made pure. Leaves **ADR 0176**'s placement of the payoff screen
   intact. Retires the card **ADR 0060** introduced and ADR 0117 §113 left in place. Sits inside the
@@ -62,6 +69,11 @@ still uses it.
 
 ### D3 — It reads back; it does not navigate
 
+> **Discharged by ADR 0208 (2026-09-09).** The strip is now the door to the Practice log, and the
+> Journal's row is gone. The reasoning below is not overturned — it is what the later ADR satisfied:
+> it asked for the placement to be decided on its own rather than settled as a side effect, and it
+> was.
+
 The strip is not tappable.
 
 ADR 0176 moved the Practice log into the Journal on an argument about what that screen is, and
@@ -113,4 +125,5 @@ a home screen is the worst place to introduce one. Every number here describes w
   strip is headed `This week` in a practice app, and a week with nothing practised in it is the state
   D4 exists to keep quiet.
 - **Not covered:** the tile grid, the year tier, the "wrapped" card, and whether the Practice log
-  should be closer than two taps. The last one is now the only part of §2 still to argue.
+  should be closer than two taps. The last one is now the only part of §2 still to argue — **and was
+  argued in ADR 0208**, which made this strip the door.

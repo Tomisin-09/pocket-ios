@@ -37,15 +37,9 @@ extension JournalTabView {
         Menu {
             // Actions above list options — `LibraryOptionsMenu`'s own grammar. Jumping is not a
             // filter: it changes where you are looking, not what is in the list.
-            if visibleDays.count > 1 {
+            if canJump {
                 Section {
-                    Button {
-                        // Seeded from the newest visible day rather than today, so the picker opens
-                        // somewhere the journal actually reaches. A wheel resting on a date the feed
-                        // has nothing at is a control that looks broken before it is touched.
-                        jumpDay = visibleDays.max() ?? Date()
-                        jumping = true
-                    } label: {
+                    Button { beginJump() } label: {
                         Label("Jump to…", systemImage: "calendar")
                     }
                 }
@@ -55,22 +49,21 @@ extension JournalTabView {
                 Label("Oldest first", systemImage: "arrow.up").tag(JournalTimeline.SortOrder.oldest)
             }
             Section {
-                // **A row that opens a sheet, not a submenu — because the facet is multi-select**
-                // (ADR 0190 D10). Every tap inside a popup `Menu` dismisses it, so ticking three
-                // kinds there would mean opening the menu three times; and the union relation needs
-                // a sentence saying that ticking more shows *more*, which a menu has nowhere to put.
-                // That is the standing reason `OptionListSection` and friends exist at all.
-                //
-                // The row states the selection where the old submenu could not: `.pickerStyle(.menu)`
-                // drew a bare "Show ›" and left the filled glyph and the empty state as the only
-                // places the active kinds were legible. Both still carry it — this is the third.
-                Button {
-                    choosingKinds = true
-                } label: {
-                    Label(showRowTitle, systemImage: "line.3.horizontal.decrease")
-                }
+                // **Show has left this menu** (ADR 0207 D6, amending ADR 0190 D7). It is now a fixed
+                // chip on the month rail, which states the active kinds in words on a control that
+                // is always on screen — a strictly better answer to D8's requirement than a filled
+                // glyph, and the reason `showRowTitle` now has its reader elsewhere.
                 Toggle(isOn: $pinnedOnly) {
                     Label("Pinned only", systemImage: pinnedOnly ? "pin.fill" : "pin")
+                }
+            }
+            // Settings where you use them (ADR 0163) — this changes what the top of *this* feed
+            // shows, so it belongs on this screen and not in the Settings hub. A `Picker` is safe
+            // here where the owner facet was not: it is single-select, so the menu closing on the
+            // first tap is the whole interaction rather than a third of it (ADR 0190 D10).
+            Picker("Look back", selection: $lookbackPeriod) {
+                ForEach(JournalLookback.Period.allCases) { period in
+                    Text(period.label).tag(period.rawValue)
                 }
             }
         } label: {
@@ -79,48 +72,73 @@ extension JournalTabView {
         .accessibilityLabel(optionsLabel)
     }
 
-    /// Whether the feed is showing something other than everything the scope allows. Sort is not a
-    /// filter and doesn't count: it reorders the same rows.
-    var isFiltered: Bool { pinnedOnly || ownerFilter.isFiltering }
+    /// Whether **this menu** is holding a filter in force. Sort is not a filter and doesn't count:
+    /// it reorders the same rows.
+    ///
+    /// The owner facet dropped out of this when it moved to the rail (ADR 0207 D6). The rule is
+    /// unchanged and its application follows the control: a glyph fills to announce a filter the
+    /// player would otherwise have to open it to see, and the owner filter is now announced by a
+    /// chip that says it in words. Leaving it in here would fill the glyph for a filter this menu
+    /// no longer contains — pointing at the wrong control.
+    var isFiltered: Bool { pinnedOnly }
 
-    /// **Show** on its own, or the kinds in force — `"Show: Loop or Session"`, `"Show: 3 kinds"`.
-    /// Capped at two by `summary`, because a menu row is one line and four labels are not.
+    /// **Show** on its own, or what is in force — `"Show: Loop or Session"`, `"Show: Idea"`,
+    /// `"Show: Loop · Idea"`, `"Show: 3 kinds · 4 tags"`.
+    ///
+    /// Each facet is capped at two labels by its own `summary`, and the two are joined with **·**
+    /// rather than "and": they are separate axes composed with AND (ADR 0159), and a chip that read
+    /// *"Loop and Idea"* would say the same word the union inside each facet is deliberately not.
+    /// The counts each name their own facet — *3 kinds*, *4 tags* — because on this chip they can
+    /// appear side by side, and a bare number would not say which control to open.
+    ///
+    /// This is the whole of ADR 0190 D8's guarantee for both facets: whatever is narrowing the feed
+    /// is legible without opening anything.
     var showRowTitle: String {
-        guard let summary = ownerFilter.summary else { return "Show…" }
-        return "Show: \(summary)"
+        let parts = [ownerFilter.summary, tagFilter.summary].compactMap { $0 }
+        guard !parts.isEmpty else { return "Show…" }
+        return "Show: \(parts.joined(separator: " · "))"
     }
+
+    /// Whether the *Show* chip is holding anything — either facet. Fills the chip, and is the reason
+    /// both facets can live behind one control: one chip, one filled state, one sentence.
+    var showIsFiltering: Bool { ownerFilter.isFiltering || tagFilter.isFiltering }
 
     /// Named for VoiceOver, which cannot see the glyph fill that carries this for everyone else.
-    /// Both filters are reported when both are on: "showing pinned only" alone would be a half-truth
-    /// about a feed narrowed twice.
+    ///
+    /// **Reports only what this menu now holds**, which since ADR 0207 D6 is the pin alone. Both
+    /// *Show* facets travel with their control to the rail, where the chip's own accessibility label
+    /// carries them — announcing them here too would tell a VoiceOver user that a filter lives behind
+    /// a menu that no longer offers it.
     var optionsLabel: String {
-        var parts = ["Journal options"]
-        if pinnedOnly { parts.append("showing pinned only") }
-        // Names the **relation**, not just the count (ADR 0159 §3): "filtered to 2 kinds" states the
-        // number and hides the thing a VoiceOver user has no other way to learn — that ticking a
-        // second kind widened the feed rather than narrowing it. `phrase` spells the kinds out with
-        // "or" between them, and there are at most five.
-        if let phrase = ownerFilter.phrase { parts.append("showing \(phrase)") }
-        return parts.joined(separator: ", ")
+        pinnedOnly ? "Journal options, showing pinned only" : "Journal options"
     }
 
-    // MARK: - Which kinds (ADR 0190 D5, D10)
+    // MARK: - Show: what it's about, and what it's tagged (ADR 0190 D5, D10; ADR 0207 D11)
 
-    /// The owner-kind facet as a sheet: **All**, then the five kinds, each independently tickable.
+    /// The **two facets behind one chip**: what an entry is *about* (its owner kind), and what it is
+    /// *tagged* (its `EntryKind`).
     ///
-    /// Ticking two **widens** the feed (ADR 0159's *OR within a facet*), which is the opposite of
-    /// what every list a player has priors from does with a second tick — so the section footer says
-    /// it outright. That sentence is the reason this is a sheet: a `Menu` has nowhere to put prose,
-    /// and this is a control that needs one line of it.
+    /// **Both live here rather than on two chips**, and that is the placement decision. D6's month
+    /// rail spends its horizontal space on one fixed chip plus scrolling months; a second fixed chip
+    /// would take that space from the months, and — worse — the two chips would have to truncate
+    /// against each other exactly when both are in force, which is when D8 most needs them readable.
+    /// One chip states both (`showRowTitle`), and this sheet is where they are set.
     ///
-    /// *All* is a **clear**, not a sixth kind. An empty selection already means "everything", so
-    /// there is no `all` value in the model competing to represent the same state — the row is
-    /// checked exactly when nothing else is.
-    var ownerFilterSheet: some View {
+    /// Ticking two **within** a section widens the feed (ADR 0159's *OR within a facet*), which is the
+    /// opposite of what every list a player has priors from does with a second tick — so each footer
+    /// says it outright. Ticking across the two sections narrows: *Loop* + *Idea* is the ideas you had
+    /// on a loop. That is ADR 0159's rule entire, and this is the first screen to show both halves of
+    /// it at once.
+    ///
+    /// The clear rows are **clears**, not extra values. An empty selection already means "everything"
+    /// in both models, so nothing competes to represent that state — each row is checked exactly when
+    /// nothing else in its section is. They are named differently (*All*, *Any tag*) because two rows
+    /// reading *All* in one form would look like one control drawn twice.
+    var showSheet: some View {
         NavigationStack {
             Form {
                 MultiOptionListSection(
-                    header: "Show",
+                    header: "What it's about",
                     // **"Tap All", not "pick none".** An empty selection is how the *model* says
                     // "everything"; it is not a gesture, and a player cannot perform it. Naming a
                     // row they can actually tap is the same correction D8's empty-state copy already
@@ -132,6 +150,22 @@ extension JournalTabView {
                         PickerItem(value: $0, title: $0.label)
                     },
                     selection: kindsBinding,
+                    tint: PocketColor.journal)
+                MultiOptionListSection(
+                    header: "Tagged",
+                    // Two sentences, and the second one is the load-bearing half. A tag filter
+                    // **necessarily** removes every take — a take carries no tag at all — so a player
+                    // who ticks 💡 Idea while the feed is on **Takes** is looking at a screen that can
+                    // never fill. Saying it here is cheaper than letting them find out; the empty
+                    // state says it again if they get there anyway.
+                    footer: "Pick more than one to see more. Takes carry no tag, so any pick here "
+                        + "leaves them out — tap Any tag to bring them back.",
+                    clearTitle: "Any tag",
+                    options: JournalTimeline.TagSelection.offered.map {
+                        PickerItem(value: $0,
+                                   title: "\($0.emoji)  \(JournalTimeline.TagSelection.label(for: $0))")
+                    },
+                    selection: tagsBinding,
                     tint: PocketColor.journal)
             }
             .scrollContentBackground(.hidden)
@@ -157,6 +191,12 @@ extension JournalTabView {
                 set: { ownerFilter = JournalTimeline.OwnerSelection($0) })
     }
 
+    /// The same adaptor for the tag facet.
+    private var tagsBinding: Binding<Set<EntryKind>> {
+        Binding(get: { tagFilter.tags },
+                set: { tagFilter = JournalTimeline.TagSelection($0) })
+    }
+
     // MARK: - Jump to a date (ADR 0190 D9)
 
     /// The date picker behind **Jump to…**. Choosing a day scrolls the feed to that day's section —
@@ -174,23 +214,10 @@ extension JournalTabView {
     var jumpSheet: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                DatePicker("Day", selection: $jumpDay, in: jumpRange,
-                           displayedComponents: .date)
-                    .datePickerStyle(.graphical)
-                    .tint(PocketColor.journal)
-                    .padding(.horizontal, 12)
-                // `fixedSize` and the layout priority are both required at the `.medium` detent: the
-                // graphical `DatePicker` grows to whatever it is offered, and without them this line
-                // is the thing that gives — squeezed to one truncated row ending in an ellipsis,
-                // which is the half of the sentence that carries the rule.
-                Text("Lands on the nearest day at or before the one you pick.")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .layoutPriority(1)
-                    .padding(.horizontal, 32)
-                    .padding(.top, 4)
+                JournalMonthGrid(daysWithEntries: Set(visibleDays),
+                                 month: $jumpMonth,
+                                 onPick: { day in jump(to: day) })
+                    .padding(.top, 8)
                 Spacer(minLength: 0)
             }
             .background(PocketColor.background.ignoresSafeArea())
@@ -201,30 +228,30 @@ extension JournalTabView {
                     Button("Cancel") { jumping = false }
                         .tint(PocketColor.journal)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Jump") { jump(to: jumpDay) }
-                        .font(.futura(.body, weight: .bold))
-                        .tint(PocketColor.journal)
-                }
+                // **No Jump button.** There is nothing left to confirm: only a day that holds
+                // something is tappable, so the tap *is* the choice. The graphical `DatePicker` had
+                // to be confirmed because it would happily rest on a day the feed could not reach.
             }
         }
         .presentationDetents([.medium, .large])
     }
 
-    /// The span the picker offers — the visible feed's own first and last day. Falls back to a single
-    /// day on an empty feed, which the menu item's `count > 1` gate means is never actually reached;
-    /// it is here because `DatePicker` needs a non-optional range and a crash-on-empty would be a
-    /// worse way to record that invariant.
-    private var jumpRange: ClosedRange<Date> {
-        guard let first = visibleDays.min(), let last = visibleDays.max() else {
-            let today = Calendar.current.startOfDay(for: Date())
-            return today...today
-        }
-        return first...last
+    /// Open the jump sheet on a month the journal actually reaches.
+    ///
+    /// Seeded from the newest visible day rather than today: a grid opening on a month with nothing
+    /// in it is a control that looks broken before it is touched — the same reasoning the old picker's
+    /// seed carried, applied to a month instead of a day.
+    func beginJump() {
+        jumpMonth = JournalMonthLayout.month(containing: visibleDays.max() ?? Date())
+        jumping = true
     }
 
-    /// Dismiss, then scroll. Resolving through the pure `JournalTimeline.jumpTarget` keeps the
-    /// at-or-before rule (and its fall-forwards edge case) testable without a view.
+    /// Dismiss, then scroll.
+    ///
+    /// **The at-or-before rule no longer has anywhere to fire**, because the grid only offers days
+    /// the feed holds — which is why the sheet lost the footnote that used to explain it.
+    /// `JournalTimeline.jumpTarget` is still the resolver: it is pure and tested, it costs nothing,
+    /// and the look-back card (ADR 0207 D8) hands it dates that genuinely need the rule.
     private func jump(to day: Date) {
         jumping = false
         scrollTarget = JournalTimeline.jumpTarget(for: day, in: visibleDays)

@@ -510,9 +510,9 @@ Ranked. Every one is already recorded somewhere; none is new invention.
 5. **First-song-to-first-loop.** ADR 0001 leaves the app nearly empty for a player with no
    material, and `docs/positioning.md` §8 names that as an excluded audience. Shortening
    that path compounds more than anything downstream of it.
-6. **The practice log is still two taps inside the Journal.** Option A's stat strip is a
-   promise; the payoff screen stays buried (ADR 0176 moved it there deliberately — this
-   reopens that, gently).
+6. ~~**The practice log is still two taps inside the Journal.**~~ **Closed by ADR 0208**
+   (2026-09-09): Option A's stat strip is now the door, and the Journal's row is deleted.
+   This was the last open item of §2.
 
 ---
 

@@ -30,9 +30,10 @@ for yet — `Routine`, before you have run one — shows the most recent of any 
 
 **`This week`** is three numbers over the last seven days: `Minutes`, `Days` and `Notes`. All three
 count the same week, and none of them is a target — nothing here sets you a number to reach or
-measures this week against the last one. It is a readout only: tapping it does nothing, and the counted-up version lives on
-`Practice log` in the [Journal](tools-and-journal.md#the-journal). The strip is not there at all
-until you have practised something.
+measures this week against the last one. **Tap it** for the
+[`Practice log`](tools-and-journal.md#practice-log), the counted-up version of the same history at
+three scales. The strip is not there at all until you have practised something — and neither,
+therefore, is the way in.
 
 **The six destinations** are tiles, two to a row, under three headings. Each is a glyph and a name
 in its own colour, and the colour is how you find it again — nothing else on Home is that hue.
