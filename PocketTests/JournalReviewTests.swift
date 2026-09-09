@@ -164,11 +164,17 @@ final class JournalReviewTests: XCTestCase {
     /// *Takes* leaves it there for the next test — and `testJournalTakes` sorts before
     /// `testJournalTimeline`, so the timeline figure comes back a clean photograph of the wrong list.
     ///
-    /// Writes and restores the four keys around itself, so running this test is not itself a way to
+    /// Writes and restores every key around itself, so running this test is not itself a way to
     /// change how the app opens.
-    func testResettingJournalFiltersClearsAllFourKeys() {
+    ///
+    /// **The list grows with the screen, and that is the point of the test.** It was four keys under
+    /// ADR 0190 D8; ADR 0207 added the look-back period and then the tag facet. Each one that joined
+    /// `resetJournalFilters` without joining this assertion would have been a silent hole in exactly
+    /// the guarantee the reset exists for.
+    func testResettingJournalFiltersClearsEveryPersistedKey() {
         let keys = [AppSettings.Key.journalScope, AppSettings.Key.journalSortOrder,
-                    AppSettings.Key.journalPinnedOnly, AppSettings.Key.journalOwnerFilter]
+                    AppSettings.Key.journalPinnedOnly, AppSettings.Key.journalOwnerFilter,
+                    AppSettings.Key.journalTagFilter, AppSettings.Key.journalLookbackPeriod]
         let defaults = UserDefaults.standard
         let saved = keys.map { defaults.object(forKey: $0) }
         defer {
@@ -182,9 +188,18 @@ final class JournalReviewTests: XCTestCase {
         defaults.set(true, forKey: AppSettings.Key.journalPinnedOnly)
         defaults.set(JournalTimeline.OwnerFilter.session.rawValue,
                      forKey: AppSettings.Key.journalOwnerFilter)
+        defaults.set(JournalTimeline.TagSelection([.idea]).rawValue,
+                     forKey: AppSettings.Key.journalTagFilter)
+        defaults.set(JournalLookback.Period.twoYears.rawValue,
+                     forKey: AppSettings.Key.journalLookbackPeriod)
 
         AppSettings.resetJournalFilters()
 
+        // Asserted against a **hand-written** list, not `journalFilterKeys` — reading the same array
+        // the reset iterates would make this test true by construction and blind to the one mistake
+        // it exists to catch. The cross-check keeps the two lists honest about each other.
+        XCTAssertEqual(Set(AppSettings.journalFilterKeys), Set(keys),
+                       "a key joined resetJournalFilters without joining this test, or the reverse")
         for key in keys {
             XCTAssertNil(defaults.object(forKey: key),
                          "\(key) survived the reset, so a driven run inherits it")

@@ -20,15 +20,16 @@ extension JournalTabView {
     /// Shown whenever the journal holds **anything at all**, filters aside.
     ///
     /// Not gated on the *filtered* feed, because the Show chip is the thing ADR 0190 D8 requires to
-    /// be visible: hiding the rail when a filter empties the screen would hide the filter exactly
-    /// when it most needs stating. Gated on a genuinely empty journal, because a fresh install should
+    /// be visible — and since ADR 0207 D11 it carries **both** facets, so hiding the rail when a
+    /// filter empties the screen would hide two filters exactly when they most need stating. Gated on
+    /// a genuinely empty journal, because a fresh install should
     /// not meet a filter control before it has met a single entry — the same rule `HomeStatsStrip`
     /// applies to a week with no runs.
     @ViewBuilder var monthRail: some View {
         if hasAnyHistory {
             JournalMonthRail(months: monthsInFeed,
                              showTitle: showRowTitle,
-                             isFiltering: ownerFilter.isFiltering,
+                             isFiltering: showIsFiltering,
                              onChooseKinds: { choosingKinds = true },
                              onPickMonth: { month in
                                  scrollTarget = JournalMonthLayout.firstDay(inMonth: month,

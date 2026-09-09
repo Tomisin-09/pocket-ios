@@ -232,6 +232,12 @@ struct KindChip: View {
         case .goal: return .blue
         case .breakthrough: return PocketColor.active
         case .struggle: return .orange
+        // 💡 **Pink, not yellow** (ADR 0207 D10). Yellow is the obvious read for a lightbulb and is
+        // the one colour this palette cannot spend: `PocketColor.journal` is gold, it tints the whole
+        // space and it is already 👂 Ear's. Pink is the furthest thing left from blue, green, orange,
+        // grey, purple, gold and teal — and since D1 restored the kind's *word* to the row, a tint
+        // that only has to be distinguishable is doing less work than it used to.
+        case .idea: return .pink
         case .note: return PocketColor.textSecondary
         case .session: return .purple
         case .ear: return PocketColor.journal   // 👂 ear-training note (ADR 0104)

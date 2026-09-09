@@ -101,6 +101,10 @@ enum AppSettings {
         static let journalSortOrder = "journalSortOrder"
         static let journalPinnedOnly = "journalPinnedOnly"
         static let journalOwnerFilter = "journalOwnerFilter"
+        /// The Journal feed's **tag** facet (ADR 0207 D11) — the second half of the *Show* sheet,
+        /// stored separately from the owner facet because they are separate axes that compose
+        /// (ADR 0159) and one clearing must not clear the other.
+        static let journalTagFilter = "journalTagFilter"
         /// How far back the feed's look-back card reaches, or `off` (ADR 0207 D8). Reset with the
         /// four above: it changes what the top of the feed shows, so a driven run that inherited it
         /// would shoot the timeline with — or without — a card the shot never asked for.
@@ -114,26 +118,8 @@ enum AppSettings {
         #endif
     }
 
-    /// Clear the Journal's four persisted list controls (ADR 0190 D8).
-    ///
-    /// **Called once at launch under `-uiTesting`, and nowhere else.** These are the first filters in
-    /// the app that survive leaving a screen, and a simulator keeps its `UserDefaults` between runs —
-    /// so without this a test that switches the feed to *Takes* leaves it there for the next test,
-    /// and for the next *run*. The manual's shoot is where that bites hardest: `testJournalTakes`
-    /// sorts before `testJournalTimeline`, so the timeline figure would be shot through the takes
-    /// filter and come back a clean, plausible photograph of the wrong list — with nothing in the run
-    /// to object. (`shoot-manual.sh` erases the device first, which handles it *between* runs and not
-    /// at all *within* one.)
-    ///
-    /// A UI test wanting to exercise the persistence itself writes the keys and asserts on them; what
-    /// it cannot have is an unstated starting point inherited from whatever ran last.
-    static func resetJournalFilters() {
-        for key in [Key.journalScope, Key.journalSortOrder,
-                    Key.journalPinnedOnly, Key.journalOwnerFilter,
-                    Key.journalLookbackPeriod] {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
-    }
+    // `resetJournalFilters()` lives in `AppSettings+Journal.swift` — see `AppSettings+Home.swift`
+    // for why this file sheds behaviour rather than growing: it sits on SwiftLint's 400-line cap.
 
     /// Count-in length is offered as whole bars in this range.
     static let countInBarsRange = 1...2

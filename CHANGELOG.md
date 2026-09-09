@@ -27,6 +27,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   afterwards it was empty. Reach it by tapping the day header at the top of the feed, or from **⋯**.
 - **Quick note says what it will keep.** Writing a note on a drill, a loop or the metronome now
   shows the tempo, mastery or click it is about to record with it, before you save.
+- **💡 Idea**, a new tag for a note. Something to try — a direction rather than a result, which the
+  other tags had no room for. Offered everywhere you can write, including from the journal itself.
+- **Filter by tag.** **Show** now holds two lists: what an entry is about, and what it is tagged.
+  Tick **Idea** to read only your ideas, or **Loop** and **Idea** together for the ideas you had on
+  a loop. 📝 Note appears as **Note or untagged**, because that is honestly what it holds. Takes
+  carry no tag, so picking one leaves them out — the sheet and the empty screen both say so.
 
 ### Changed
 - **The journal reads like a journal.** Each entry now leads with what you wrote, at a readable

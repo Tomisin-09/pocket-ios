@@ -46,13 +46,16 @@ happened.
 | 🎯 **Goal** | An intention you are setting. |
 | ⚡️ **Breakthrough** | It clicked. |
 | 🧗 **Struggle** | What is fighting back. |
+| 💡 **Idea** | Something to try — a direction, not a result. |
 | 📝 **Note** | A neutral observation — the default. |
 | 🎬 **Session** | A log of a whole sitting. |
 | 👂 **Ear** | What you heard, on an ear-training loop. |
 | 🎸 **Improv** | What you played over a backing loop. |
 
 The last three assert that the note was written *during* something, so they are offered only where
-that is true. A note written from the journal or at the metronome gets the first four.
+that is true. A note written from the journal or at the metronome gets the first five.
+
+The tag is worth picking, because you can filter by it later — see **Finding something again**.
 
 ### What a note remembers
 
@@ -192,10 +195,12 @@ because the day is part of what the entry says.
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you
   read forwards through a stretch of work rather than backwards.
-- **Show**, the chip above the timeline, opens a list of the kinds of thing the journal holds:
-  **All**, **Exercise**, **Loop**, **Session**, **Metronome** and **Just me**. That last one is the
-  notes you wrote from the journal itself, about nothing in particular. Tick as many as you like —
-  see below.
+- **Show**, the chip above the timeline, opens two lists. **What it's about** is the kinds of thing
+  the journal holds: **All**, **Exercise**, **Loop**, **Session**, **Metronome** and **Just me** —
+  that last one is the notes you wrote from the journal itself, about nothing in particular.
+  **Tagged** is the chips you put on your notes: **Any tag**, then **Goal**, **Breakthrough**,
+  **Struggle**, **Idea**, **Note or untagged**, **Ear** and **Improv**. Tick as many as you like in
+  either — see below.
 - **⋯ ▸ Pinned only** shows just what you have pinned.
 - **The months** beside that chip are the months your journal actually has something in — tap one to
   go there. A month with nothing in it is simply not listed.
@@ -204,10 +209,14 @@ because the day is part of what the entry says.
 - Days are grouped under **Today**, **Yesterday** and then dated headers, under the month they fall
   in.
 
-**Ticking a second kind in Show shows you more, not less.** Tick **Loop** and you get loop work;
+**Ticking a second row in one list shows you more, not less.** Tick **Loop** and you get loop work;
 tick **Session** as well and you get both, not the entries that are somehow both at once. Tap **All**
 and you are back to the whole journal. The chip says what is on, so *Show: Loop or Session* is
 readable without opening anything.
+
+**Ticking across the two lists shows you less.** **Loop** in one and **Idea** in the other is the
+ideas you had on a loop — the chip reads *Show: Loop · Idea*. Within a list, more is more; between
+them, each one narrows the other.
 
 **Show** takes takes with it. Filtering to **Loop** shows a loop's recordings beside its notes,
 because the journal is one feed and not two. The exception is an entry whose loop or exercise you
@@ -215,9 +224,21 @@ have since deleted: it appears only under **All**. Red Moon keeps what such a no
 *Slow Bend · Verse riff* — but not which kind of thing it had been, so it would rather show the note
 everywhere than guess. Ticking all six is not the same as ticking none, for exactly that reason.
 
-While either filter is on, the **⋯** is filled in, so you can tell the feed is narrowed without
-opening the menu. If a filter leaves nothing on screen, the screen says which filter did it and how
-to turn it off.
+**Tagged** does not. A recording has no chip on it — there was nothing to tag — so picking any tag
+leaves every take out. Tap **Any tag** to bring them back. The catch worth knowing: if the feed is
+set to **Takes** and a tag is ticked, nothing can appear at all, and the screen says so rather than
+letting you scroll for it.
+
+**Note or untagged** is one row on purpose. 📝 **Note** is what a note is tagged with when you do not
+pick a chip, so Red Moon cannot tell a note you deliberately called neutral from one you never
+tagged. Rather than guess, the row says both.
+
+🎬 **Session** is not in **Tagged**. Red Moon writes that tag itself when you finish a routine, so it
+is not a mark you made — and **What it's about ▸ Session** already finds the same entries.
+
+While any of these is on, the **Show** chip fills in and says what it is holding, and the **⋯** fills
+in for **Pinned only** — so you can tell the feed is narrowed without opening anything. If a filter
+leaves nothing on screen, the screen says which filter did it and how to turn it off.
 
 ### It stays how you left it
 

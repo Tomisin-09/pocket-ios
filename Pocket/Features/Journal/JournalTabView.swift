@@ -58,6 +58,11 @@ struct JournalTabView: View {
     /// together (ADR 0190 D5, D10). Empty by default, which means everything; ticking kinds widens.
     @AppStorage(AppSettings.Key.journalOwnerFilter)
     var ownerFilter = JournalTimeline.OwnerSelection.default
+    /// Which **entry tags** the feed shows — 💡 Idea, 🧗 Struggle, and the rest (ADR 0207 D11). A
+    /// second, independent facet beside the owner one: they compose with AND, so *Loop* + *Idea* is
+    /// the ideas you had on a loop. Empty by default, which means everything.
+    @AppStorage(AppSettings.Key.journalTagFilter)
+    var tagFilter = JournalTimeline.TagSelection.default
     /// Whether the owner-kind sheet is up. A sheet rather than a submenu because the facet is
     /// multi-select: every tap in a popup `Menu` dismisses it (ADR 0190 D10). Opened from the month
     /// rail's Show chip since ADR 0207 D6.
@@ -126,7 +131,8 @@ struct JournalTabView: View {
             .filter { !rowDeletion.isPending($0.id) }
         let scoped = JournalTimeline.filter(merged, scope: scope)
         let owned = JournalTimeline.filter(scoped, owner: ownerFilter)
-        let pinned = JournalTimeline.filter(owned, pinnedOnly: pinnedOnly)
+        let tagged = JournalTimeline.filter(owned, tags: tagFilter)
+        let pinned = JournalTimeline.filter(tagged, pinnedOnly: pinnedOnly)
         return JournalTimeline.filter(pinned, query: query)
     }
 
@@ -199,8 +205,9 @@ struct JournalTabView: View {
         }
         // Jump to a date (ADR 0190 D9) — the sheet and its rule live in `JournalTabView+Options`.
         .sheet(isPresented: $jumping) { jumpSheet }
-        // The owner-kind facet (ADR 0190 D5, D10), in the same file.
-        .sheet(isPresented: $choosingKinds) { ownerFilterSheet }
+        // The two Show facets — owner kind and tag (ADR 0190 D5, D10; ADR 0207 D11) — in the same
+        // file.
+        .sheet(isPresented: $choosingKinds) { showSheet }
         .onDisappear { player.stop() }
     }
 

@@ -12,6 +12,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
     case goal           // an intention set — "get the bend clean at full tempo"
     case breakthrough   // it clicked — progress worth marking
     case struggle       // a sticking point — what's fighting back
+    case idea           // something to try — a direction, not a result (ADR 0207 D10)
     case note           // neutral observation (default)
     case session        // a practice-session log
     case ear            // what you heard, training your ear on a loop (ADR 0104)
@@ -25,6 +26,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
         case .goal: return "🎯"
         case .breakthrough: return "⚡️"
         case .struggle: return "🧗"
+        case .idea: return "💡"
         case .note: return "📝"
         case .session: return "🎬"
         case .ear: return "👂"
@@ -38,6 +40,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
         case .goal: return "Goal"
         case .breakthrough: return "Breakthrough"
         case .struggle: return "Struggle"
+        case .idea: return "Idea"
         case .note: return "Note"
         case .session: return "Session"
         case .ear: return "Ear"
@@ -51,10 +54,15 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
     /// Decode a stored raw value, folding empty/unknown to the default.
     init(raw: String) { self = EntryKind(rawValue: raw) ?? .default }
 
-    /// Picker order: the action kinds first (goal → breakthrough → struggle),
+    /// Picker order: the deliberate kinds first (goal → breakthrough → struggle → idea),
     /// then the two neutral logs (note default, then session), then the two
     /// mode-specific tags a loop earns (ear, improv).
+    ///
+    /// 💡 **Idea sits with the first three, not after the logs** (ADR 0207 D10). Like them it is
+    /// something a player reaches for on purpose; unlike `.note` and `.session` it is never a
+    /// default and never set by the app. That is the property the tag filter is built on, so the
+    /// order states it.
     static var pickerOrder: [EntryKind] {
-        [.goal, .breakthrough, .struggle, .note, .session, .ear, .improvise]
+        [.goal, .breakthrough, .struggle, .idea, .note, .session, .ear, .improvise]
     }
 }

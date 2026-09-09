@@ -82,13 +82,15 @@ struct QuickJournalSheet: View {
 
     /// The tags this sheet offers. An **ownerless** note can't honestly carry the three tags that
     /// assert it was written during something (ADR 0155 §6); every other owner gets the full
-    /// vocabulary. The four that survive are the four ADR 0100's own composer led with.
+    /// vocabulary. The four that survive are the four ADR 0100's own composer led with — plus 💡
+    /// Idea (ADR 0207 D10), which asserts nothing about where you were when you had it and so
+    /// belongs on every surface.
     private var offeredKinds: [EntryKind] {
         switch owner {
         // A metronome note shares the narrowing, not by analogy but by the same argument (ADR 0160
         // §7): 👂 Ear, 🎸 Improv and 🎬 Session each assert the note was written during something with
         // a unit behind it, and a click is not that.
-        case .standalone, .metronome: [.goal, .breakthrough, .struggle, .note]
+        case .standalone, .metronome: [.goal, .breakthrough, .struggle, .idea, .note]
         case .loop, .exercise, .session: EntryKind.pickerOrder
         }
     }

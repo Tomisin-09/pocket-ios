@@ -3,9 +3,10 @@
 - **Status:** Accepted
 - **Date:** 2026-09-09 (`pocket-309-a-journal-worth-opening`)
 - **Amends:** ADR 0190 — **D9's rejection of a month grid** is narrowed rather than upheld (D5
-  below: a grid *marked by presence* is not the grid D9 refused), and **D7's placement of the owner
-  filter** moves from the ⋯ menu to a pinned chip on the new month rail (D6). Everything else in
-  0190 stands, including D1, D4 and D8, which this ADR leans on rather than touches.
+  below: a grid *marked by presence* is not the grid D9 refused); **D7's placement of the owner
+  filter** moves from the ⋯ menu to a pinned chip on the new month rail (D6); and **D5's deferral of
+  the entry-kind filter** is discharged (D11 below), on the condition D5 itself set. Everything else
+  in 0190 stands, including D1, D4 and D8, which this ADR leans on rather than touches.
 - **Amends:** ADR 0176 — its refusal of *"a live summary strip above the timeline"* is affirmed and
   distinguished: D4's look-back card sits **inside** the scroll and carries **words, not a number**,
   which is the exact property that objection turned on.
@@ -265,6 +266,89 @@ The wording lives on `JournalOwner.captureSummary` beside `destinationLine`, for
 `.standalone` returns `nil` so the composer omits the line rather than labelling a value that means
 "there isn't one". *"log"* stays out of it (ADR 0176 D6).
 
+### D10 — 💡 Idea joins the vocabulary
+
+An eighth `EntryKind`: **💡 Idea** — something to try, a direction rather than a result.
+
+**It comes from reading the journal, not from designing it.** The gap was found the way gaps in a
+vocabulary are: by going back through real entries and noticing how many of them were ideas wearing
+📝 Note. 🎯 Goal is an intention you are committing to; ⚡️ Breakthrough and 🧗 Struggle are reports
+on what happened. *"Try the barre from the third fret instead"* is none of those, and it was landing
+in the default bucket along with everything else nobody tagged — which is precisely the pile D11
+below has to be able to see past.
+
+**Additive with no migration.** `JournalEntry` stores `kindRaw` as a `String` and `EntryKind(raw:)`
+folds anything unrecognised to `.default` (the SwiftData enum-attribute rule, ADR 0038); the archive
+carries `kindRaw` as a raw string too. So nothing to migrate and nothing to version. **The one cost,
+stated rather than discovered:** an archive written with `idea` and restored on a build that predates
+this ADR decodes as *Note*. That is the same graceful degradation every kind added since 0038 has
+had, and it is why the fold exists.
+
+**Offered everywhere, including the ownerless composer.** ADR 0155 §6 narrows `QuickJournalSheet`'s
+chips for `.standalone` and `.metronome` because 👂 Ear, 🎸 Improv and 🎬 Session each *assert the
+note was written during something*. 💡 asserts nothing about where you were when you had it — that
+is close to its definition — so it joins the four that survive that narrowing, and it sits with 🎯,
+⚡️ and 🧗 in `pickerOrder` rather than after the neutral logs.
+
+**Pink, and not yellow.** Yellow is the obvious read for a lightbulb and is the one colour this
+palette cannot spend: `PocketColor.journal` is gold, it tints the entire space, and it is already
+👂 Ear's. Pink is the furthest thing left from blue, green, orange, grey, purple, gold and teal. It
+is also a smaller decision than it was a week ago — D1 put the kind's *word* back on the row, so a
+tint now only has to be distinguishable, not identifiable.
+
+### D11 — the tag filter ships, and the untrustworthy bucket says so on its own row
+
+The *Show* sheet gains a second section, **Tagged**, over `EntryKind`. ADR 0190 D5 deferred exactly
+this control; this discharges it **on D5's own terms** rather than over its objection.
+
+**D5's argument was about data, not design**, and it named its own condition: `.note` is the default
+and the composer *offers* the tag rather than requiring it, so *"a filter over that field would look
+like it partitions the journal and would in fact mostly separate 'the player picked a chip' from 'the
+player didn't'"* — *"ship it when there is a reason to believe the field is populated deliberately."*
+
+Two things now answer that.
+
+**Only `.note` is ever a default.** Nothing in the app writes 🎯, ⚡️, 🧗, 💡, 👂 or 🎸 on a player's
+behalf. Every one of those is a chip somebody tapped, so filtering to one is filtering on a
+deliberate mark — which is exactly the property D5 asked for, and it was already true when D5 was
+written. What D5 correctly saw is that *one* bucket poisons the set.
+
+**So that bucket is labelled with what it actually holds: "Note or untagged".** The filter cannot
+tell a note tagged 📝 from a note nobody tagged, and it must not pretend to — so the row says both.
+This turns D5's objection from a hidden defect into the row's own words, which is the cheapest honest
+answer available and better than the alternatives: dropping `.note` from the filter would make a
+large share of the journal unreachable through a control that claims to cover it, and inventing an
+"untagged" state would mean a schema change to record a distinction nobody has been storing.
+
+**🎬 Session is not offered**, and dropping it is a finding rather than a tidy-up. It is the one tag
+the app sets itself (`RoutinePlayerView+Finished` writes `kind: .session`), so it fails the
+deliberateness test the other six pass. It would also sit one section above the owner facet's own
+**Session** row meaning very nearly the same thing — two controls that look like a choice and are
+not. A `.session` entry is therefore in no tag bucket, the same way an orphan is in no owner bucket
+(ADR 0190 D6), and it is reachable through the owner facet, which is where it belongs.
+
+**A take carries no tag, so any tag filter hides every take.** Not an oversight, and not fixable by
+being generous: a take has no `EntryKind` at all — not an unknown one, *none* — so it falls under no
+ticked tag. Letting takes through a facet they cannot participate in would mean a filter reading
+*Idea* that shows rows which are not ideas. The consequence is stated in three places rather than
+discovered: the section footer, the empty state, and the manual. The sharp case is a player on
+**Takes** with a tag ticked, who is looking at a screen that can never fill however far they
+scroll — the empty state names that outright.
+
+**Both facets live behind the one *Show* chip**, and this is the placement decision. D6's rail spends
+its width on one fixed chip plus scrolling months; a second fixed chip would take that width from the
+months and — worse — the two chips would truncate against each other exactly when both are in force,
+which is when D8 most needs them readable. One chip states both: *Show: Loop · Idea*, *Show: 3 kinds
+· 4 tags*, each half capped at two labels by its own summary and each count naming its own facet, so
+a number always says which control to open.
+
+**This is the first screen where both halves of ADR 0159 are visible at once.** Ticking two rows
+*inside* a section widens (an entry has one owner and one tag, so an intersection would empty the
+screen on the second tick every time); ticking across the two sections narrows — *Loop* + *Idea* is
+the ideas you had on a loop. One empty-state sentence has to carry both, which is why it reads
+*"filed under Loop or Session **and** tagged Idea"*: **"or" inside a facet, "and" between them**, in
+words, because the relation is the part a player cannot see.
+
 ## Slices
 
 - **S1 — the row. BUILT** (`pocket-309-a-journal-worth-opening`). The rail, the emoji, the `.body`
@@ -341,6 +425,24 @@ The wording lives on `JournalOwner.captureSummary` beside `destinationLine`, for
   argue**; the argument belongs in the body, and any other ADR named in the field has to be named
   without the words "ADR".
 
+- **S5 — the tag, and a filter over it. BUILT** (same branch). `EntryKind.idea`,
+  `JournalTimeline.TagSelection` and its tests, the second section in the *Show* sheet, a chip title
+  that composes two facets, and an empty state that names both.
+
+  **`AppSettings.swift` hit the 400-line cap on the `journalTagFilter` key** — two lines over — and
+  the file has now shed behaviour twice for the same reason (`+Home`, `+Tuner`). `resetJournalFilters`
+  moved to `AppSettings+Journal.swift` and gained `journalFilterKeys` beside it; the **keys stay in
+  `AppSettings.Key`**, which is the standing rule, because a single alphabet of every key the app has
+  written is what stops two of them sharing a string.
+
+  **The reset test asserted four keys while the reset cleared six.** ADR 0190 D8 made joining
+  `resetJournalFilters` an explicit obligation for whoever persists the next thing, and it was met
+  both times — but the *test* naming those keys was not, so the look-back period had been outside the
+  assertion since S3. It now checks all six against a **hand-written** list plus a cross-check on
+  `journalFilterKeys`: reading the array the reset iterates would make the test true by construction
+  and blind to the only mistake it exists to catch. **An obligation stated in an ADR needs a test that
+  fails when it is missed, or the ADR is the only thing holding it.**
+
 ## Consequences
 
 - **The manual's prose survives; two of its figures do not.** Nothing this ADR changes contradicts a
@@ -357,4 +459,19 @@ The wording lives on `JournalOwner.captureSummary` beside `destinationLine`, for
 - **`KindChip` now has two readers with different needs** — the composer draws the pill, the feed
   reads only `tint(for:)`. That is the intended shape (one colour table, two presentations), but it
   means a future kind added to `EntryKind` has to be checked in both places, and only one of them is
-  where the enum's author will be looking.
+  where the enum's author will be looking. D10 is the first case of that and it went the easy way:
+  `tint(for:)` is an exhaustive `switch`, so the compiler asked.
+- **`EntryKind` is now filtered on, and `EntryKindChipRow` used to promise it never would be.** That
+  doc comment said in as many words that the tag *"drives this chip's emoji, label and colour and
+  nothing else"* and that a wrong tag is *"a misleading label, not broken behaviour"*. It is now
+  corrected in place rather than deleted, because it is the sentence that made ADR 0155 §6's
+  narrowing look optional. It is not: offering 🎬 Session on an ownerless sheet would file entries
+  into a bucket the feed can be narrowed to.
+- **The tag facet is the fifth axis over one feed** — scope, owner, tag, pinned, query — all composed
+  in `JournalTabView.items` and all pure, property-reading functions on `JournalTimeline`. That is
+  what has kept the tests able to build owners uninserted, and it is worth protecting: the first of
+  these that reaches for a relationship or a `ModelContext` takes the whole facet family with it.
+- ⚠ **An archive written with `idea` and restored on an older build comes back as *Note*.** Additive
+  and graceful by design (D10), but it is a real one-way loss on a downgrade, and nothing in the
+  restore reports it — the same shape as every kind added since ADR 0038, recorded here so the next
+  one is not the first to notice.

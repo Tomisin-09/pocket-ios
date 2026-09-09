@@ -17,14 +17,17 @@ struct EntryKindChipRow: View {
     var title: String? = "Tag this"
     /// Which tags this surface offers — the whole vocabulary by default.
     ///
-    /// Narrowed by exactly one caller (ADR 0155 §6): three of the seven tags **assert the note was
+    /// Narrowed by exactly one caller (ADR 0155 §6): three of the eight tags **assert the note was
     /// written during something** — 👂 Ear (ear-training on a loop), 🎸 Improv (jamming over a backing
     /// loop), 🎬 Session (a routine sitting just finished) — so offering them on a surface with no
     /// owner lets a player file a session note about no session.
     ///
-    /// Worth stating plainly: `EntryKind` is **never** filtered, queried or branched on anywhere in
-    /// the app — it drives this chip's emoji, label and colour and nothing else. A wrong tag is a
-    /// misleading label, not broken behaviour. This parameter is bought for honesty, not correctness.
+    /// **The tag is now filtered on** (ADR 0207 D11), which this comment used to say it never was.
+    /// The Journal's *Show* sheet has a **Tagged** section over these same values, so a chip tapped
+    /// here decides which searches an entry turns up in later — a wrong tag is no longer only a
+    /// misleading label. That raises what this parameter is worth rather than changing what it does:
+    /// offering 🎬 Session on an ownerless sheet would file entries into a bucket the feed can then
+    /// be narrowed to.
     var kinds: [EntryKind] = EntryKind.pickerOrder
 
     var body: some View {
