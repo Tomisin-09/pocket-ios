@@ -39,15 +39,20 @@ extension RoutineLibraryView {
 
 extension View {
     /// The document picker for a `.redmoonpractice` file, filtered to the one type the app declares
-    /// (ADR 0188 D3) — so a player browsing Files sees their shared routines and nothing else
+    /// (ADR 0188 D3) — so a player browsing Files sees their shared practice and nothing else
     /// selectable.
+    ///
+    /// **Not filtered by payload kind**, and there is no way for it to be: the kind lives inside the
+    /// file, and the system filters on type. Both libraries use this same picker, and the host reads
+    /// what is actually in the file and says where it went (ADR 0209 D4) — so picking a drill from the
+    /// Routines screen works rather than presenting a file the picker then refuses to open.
     ///
     /// A `View` extension so `UniformTypeIdentifiers` and the type itself stay in this file rather
     /// than in the library screen, which cares about neither. Follows
     /// `ReferenceAttachmentPresentation.swift:111`'s shape: a picker failure needs no alert of its
     /// own — cancelling is the common "failure" and the player already knows they cancelled.
-    func routineFileImporter(isPresented: Binding<Bool>,
-                             onPick: @escaping @MainActor (URL) -> Void) -> some View {
+    func practiceFileImporter(isPresented: Binding<Bool>,
+                              onPick: @escaping @MainActor (URL) -> Void) -> some View {
         fileImporter(isPresented: isPresented, allowedContentTypes: [.redMoonPractice]) { result in
             if case let .success(url) = result { onPick(url) }
         }

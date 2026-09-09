@@ -54,6 +54,28 @@ enum SharedPracticeBuilder {
                               placeholders: blocks.compactMap(placeholder))
     }
 
+    /// Build the file's payload for one drill on its own (ADR 0209 D1).
+    ///
+    /// Almost nothing to it, and that is the finding rather than an apology for a thin function: the
+    /// hard question — what a drill loses when it crosses to somebody who has practised none of it —
+    /// was answered once by `shareable(_ exercise:)` for the routine door, and a drill sent on its
+    /// own is the same drill under the same argument. Any subtraction added here and not there would
+    /// mean the same file said two different things depending on how it was sent.
+    ///
+    /// `notes` is a parameter rather than read off the model because the sheet that sends a drill
+    /// keeps its description in `@State` until Done (ADR 0209 D3). `nil` — the default, and what a
+    /// test or any other caller passes — takes the model's own.
+    static func exercise(_ exercise: Exercise, appVersion: String,
+                         notes: String? = nil, exportedAt: Date = .now) -> SharedPractice {
+        var record = shareable(exercise)
+        if let notes { record.notes = notes }
+        return SharedPractice(kindRaw: SharedPracticeKind.exercise.rawValue,
+                              exportedAt: exportedAt,
+                              appVersion: appVersion,
+                              routine: nil,
+                              exercises: [record])
+    }
+
     /// A block with the ids that mean nothing elsewhere removed (D1).
     ///
     /// `exerciseUID` stays: the exercise travels inline in the same file, so within this payload the

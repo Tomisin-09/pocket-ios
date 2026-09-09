@@ -22,7 +22,9 @@ extension UTType {
     static let redMoonPractice = UTType(exportedAs: "click.decooperations.pocket.practice")
 }
 
-/// One shared routine on its way to the share sheet (ADR 0188 S1).
+/// One piece of shared practice on its way to the share sheet — a routine (ADR 0188 S1) or a single
+/// drill (ADR 0209 S1). The type does not distinguish them: `SharedPractice.kind` does, and this
+/// carries whatever it is handed.
 ///
 /// Carries the payload rather than encoded bytes, so building it costs a walk over the blocks and
 /// nothing more — `ShareLink` reconstructs its item on every pass of the view's body, and JSON
@@ -44,16 +46,20 @@ struct SharedPracticeFile: Transferable, Sendable, Equatable {
         .suggestedFileName { $0.fileName }
     }
 
-    /// A file name from a routine's own name: its words, hyphenated, with anything a file system
-    /// would rather not see removed.
+    /// A file name from what the player called the thing: its words, hyphenated, with anything a file
+    /// system would rather not see removed.
     ///
     /// Not `title.replacingOccurrences` over a blocklist — a blocklist of illegal characters is a
     /// list somebody has to keep correct. This keeps what it knows is safe and drops the rest, so an
     /// emoji, a slash or a routine named entirely in a script this happens not to handle all end at
     /// the same defensible place rather than at a file the share sheet refuses.
-    static func fileName(for routineName: String) -> String {
+    ///
+    /// `fallback` is what an unnamed thing is called — a routine and a drill can both legitimately be
+    /// saved without a name, and "routine.redmoonpractice" on a drill would be the file lying about
+    /// its contents before anyone opens it (ADR 0209).
+    static func fileName(for name: String, fallback: String = "routine") -> String {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
-        let stem = routineName
+        let stem = name
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .unicodeScalars
             .map { allowed.contains($0) ? Character($0) : "-" }
@@ -63,6 +69,6 @@ struct SharedPracticeFile: Transferable, Sendable, Equatable {
                 result.append(character)
             }
             .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-        return "\(stem.isEmpty ? "routine" : stem).redmoonpractice"
+        return "\(stem.isEmpty ? fallback : stem).redmoonpractice"
     }
 }

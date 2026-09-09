@@ -47,7 +47,7 @@ same commit.
 
 **The same rule shapes the app's one declared file type.** `Info.plist` gains
 `UTExportedTypeDeclarations` for `.redmoonpractice` (ADR 0188 D3), the file a routine
-is handed over in — `UTType(exportedAs:)` traps at launch without it — and, since S2
+— or, since ADR 0209, a single exercise — is handed over in — `UTType(exportedAs:)` traps at launch without it — and, since S2
 shipped the code that opens one, `CFBundleDocumentTypes`, which declares the app a
 *handler* and puts Red Moon in the system's Open-with list. That key was deliberately
 withheld through S1 for exactly the rule above: it advertises a capability, and until

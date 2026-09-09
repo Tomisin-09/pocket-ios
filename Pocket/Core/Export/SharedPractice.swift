@@ -7,9 +7,17 @@ import Foundation
 /// teacher's routine, a friend's exercise": an extension that names the payload would force a second
 /// file type, a second `Info.plist` entry and a second door the first time an exercise share ships.
 /// One type with a `kind` inside it costs a field now and nothing later.
+///
+/// ADR 0209 spent that "nothing later" and found the estimate honest: the second kind cost this
+/// case, a branch in the reader, and no change to the file type, the `Info.plist` declaration or
+/// either inbound door.
 enum SharedPracticeKind: String, Codable, Sendable, CaseIterable {
-    /// A routine and the exercises its blocks name. The only value today.
+    /// A routine and the exercises its blocks name.
     case routine
+
+    /// One drill on its own (ADR 0209 D1) — the smallest thing a teacher hands over, and the more
+    /// frequent one: "try this at 80 this week" is a smaller act than handing over a whole sitting.
+    case exercise
 }
 
 /// The payload of a shared practice file (ADR 0188).
@@ -26,6 +34,12 @@ struct SharedPractice: Codable, Equatable, Sendable {
     /// Deliberately the **same** number as an archive's. The two files carry the same record shapes,
     /// so a change that breaks one breaks the other, and two independent counters would be two
     /// stories about one format.
+    ///
+    /// **Adding a payload kind does not touch this number** (ADR 0209 D1). The version is about record
+    /// *shapes*, and no record changed; the `kind` discriminator is what tells an older build it is
+    /// looking at something it cannot open, and it already says so in words (`.unsupportedKind`).
+    /// Bumping would instead make **routine** files written by this build refused by every build
+    /// already in the wild — a regression bought for nothing.
     static let currentSchemaVersion = PracticeArchive.currentSchemaVersion
 
     /// Read before anything else on the way in (ADR 0188 D2): equal proceeds, lower migrates, higher
@@ -46,10 +60,17 @@ struct SharedPractice: Codable, Equatable, Sendable {
     var appVersion: String
 
     /// The routine, when `kind` is `routine`. Optional so an unknown payload still decodes far enough
-    /// to be reported rather than thrown away.
+    /// to be reported rather than thrown away — and `nil` on an exercise share, which has no sitting
+    /// around the drill.
     var routine: RoutineRecord?
 
-    /// Every exercise the routine's blocks name, **inline**.
+    /// The drills travelling **inline** — every exercise a shared routine's blocks name, or, on an
+    /// exercise share, the single drill that *is* the payload (ADR 0209 D1).
+    ///
+    /// One field for both because a drill crosses on identical terms either way: same record, same
+    /// subtractions, same hydration. A `var exercise: ExerciseRecord?` beside this one would be a
+    /// second spelling of the same fact, and the first divergence between them would be a bug nobody
+    /// could see in the file.
     ///
     /// A block points at its unit by live relationship and the archive invents ids at DTO time
     /// (`ArchiveBuilder.routineItemRecord`), so a shared routine that only named uids would resolve to

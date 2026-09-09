@@ -1727,7 +1727,7 @@ true (ADR 0150 §118-121).
 - **A shared routine is the second file-out path** (ADR 0188 S1, `SharedPractice*.swift`). A routine
   travels as a `.redmoonpractice` file — plain JSON, the same `RoutineRecord` / `RoutineItemRecord` /
   `ExerciseRecord` shapes and the same `schemaVersion` as an archive, plus a `kind` discriminator
-  whose only value today is `routine`. Sent with a `ShareLink` in the routine detail screen's
+  (`routine`, and since ADR 0209 `exercise`). Sent with a `ShareLink` in the routine detail screen's
   toolbar, read-only mode only (`RoutineDetailView+Share.swift`): the editing sandbox's contents are
   provisional and a file is not.
   - **`SharedPracticeBuilder` reuses `ArchiveBuilder`'s mapping and then subtracts**, rather than
@@ -1787,6 +1787,33 @@ true (ADR 0150 §118-121).
   - **Nothing is written before the player sees what is in the file** (D9):
     `ReceivedRoutinePreviewSheet` names the routine, counts the blocks and drills, shows the
     sender's build and date, and lists what will arrive unresolvable.
+- **A single drill is the file's second payload** (ADR 0209, `ReceivedPracticeBuilder.swift`,
+  `ExerciseDetailSheet+Share.swift`, `ReceivedExercisePreviewSheet.swift`). Same file type, same
+  records, **same `schemaVersion`** — the version describes record shapes, none of which changed, and
+  bumping it would make routine files written by this build unreadable on every build already
+  shipped. An older build meeting one says `.unsupportedKind`, which is the sentence 0188 wrote for
+  exactly this case.
+  - **Both directions reuse the routine door's drill functions rather than copying them.**
+    `SharedPracticeBuilder.shareable(_ exercise:)` on the way out and
+    `ReceivedRoutineBuilder.exercise(from:)` on the way in both stopped being private. Two copies
+    would be two answers to "what does a received drill keep", and the day they disagreed the same
+    file would land differently depending on how it was sent.
+  - **`ReceivedPracticeBuilder.evaluate` is now the single reader** for both payloads: decode,
+    version gate, then kind, returning a two-case `ReceivedPractice`. `RoutineReceiveHost` became
+    `PracticeReceiveHost` and `\.receiveRoutineFile` became `\.receivePracticeFile`; both doors and
+    both library pickers accept either kind, since the kind lives *inside* the file and the system
+    filters on type.
+  - **The Pro gate moved behind the read** (0209 D5, amending 0188). An exercise's gate depends on
+    its template, which is a fact inside the file, so the file must be read to know which question to
+    ask. A valid file walls exactly as before; a corrupt or future-version file now reports itself
+    instead of presenting a paywall for a file that was never going to open.
+  - **The send control is ungated and reads the sheet's in-flight description.**
+    `ExerciseDetailSheet` keeps `notes` in `@State` until Done, so the payload takes it as a
+    parameter — otherwise a drill shared mid-edit carries the description the sender just replaced,
+    silently.
+  - **No placeholders, unlike a routine.** `SharedBlockPlaceholder` exists because a routine would
+    otherwise arrive quietly shorter; a drill's shape arrives whole, so the preview's footer states
+    once what never crosses instead of the file enumerating it.
 - **And the archive can be read back** (ADR 0188 S3), which closes the loop ADR 0181 named as
   half-open in its own Consequences. Five pieces, each pure until the last:
   - **`ZipArchiveReader`** is ours, and D8 argues why: `NSFileCoordinator` gives zipping out and has

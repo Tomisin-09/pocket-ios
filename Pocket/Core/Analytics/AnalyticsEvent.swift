@@ -69,6 +69,12 @@ enum AnalyticsEvent: Equatable {
     /// to carry those blocks as named placeholders rather than drop them.
     case routineReceived(items: Int, orphanedBlocks: Int)
 
+    /// A drill somebody else shared was added to the library (ADR 0209 D7). `template` is the one
+    /// property worth carrying: it says what kind of practice actually gets passed between players,
+    /// which is the question behind building the door at all — and whether that differs from what
+    /// people author for themselves (`exerciseCreated`), which is the comparison this makes possible.
+    case exerciseReceived(template: ExerciseTemplate)
+
     // MARK: - The archive
 
     /// A copy of the library was written out (ADR 0181). `includesTakeAudio` is the one switch the
@@ -127,6 +133,7 @@ extension AnalyticsEvent {
         case .exerciseAuthoringAbandoned: return "exercise_authoring_abandoned"
         case .routineCreated: return "routine_created"
         case .routineReceived: return "routine_received"
+        case .exerciseReceived: return "exercise_received"
         case .archiveExported: return "archive_exported"
         case .archiveRestored: return "archive_restored"
         case .paywallShown: return "paywall_shown"
@@ -174,6 +181,9 @@ extension AnalyticsEvent {
         case let .routineReceived(items, orphanedBlocks):
             return ["items": .number(items),
                     "orphaned_blocks": .number(orphanedBlocks)]
+
+        case let .exerciseReceived(template):
+            return ["template": .text(template.rawValue)]
 
         case let .archiveExported(includesTakeAudio, takes):
             return ["includes_take_audio": .flag(includesTakeAudio),

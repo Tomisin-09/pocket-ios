@@ -46,7 +46,10 @@ struct ExerciseDetailSheet: View {
     /// The picture being viewed, or the picker being opened (ADR 0167 phase 2) — held here for the
     /// same reason as `editingReference`: `.photosPicker` and `.fileImporter` are presentations too.
     @State private var referenceAttachments: ReferenceAttachmentPresentation?
-    @State private var notes: String
+    /// The description, held locally and committed on Done. **Not `private`** because the share
+    /// control reads it: a drill handed over while a description sits uncommitted must carry the
+    /// words on screen, not the ones in the store (ADR 0209 D3). See `ExerciseDetailSheet+Share`.
+    @State var notes: String
     /// The exercise's self-rated mastery (0–5, `nil` = unrated), held locally and committed on
     /// Done — the planner's dueScore *need* signal (V2 planner Slice 1, ADR 0070: self-set, never
     /// measured). Mirrors the loop editor's mastery dots.
@@ -115,6 +118,7 @@ struct ExerciseDetailSheet: View {
             .referenceAttachments($referenceAttachments, naming: $editingReference, owner: exercise,
                                   accent: PocketColor.practice)
             .toolbar {
+                shareToolbarItem
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         commitNotes(); commitMastery()

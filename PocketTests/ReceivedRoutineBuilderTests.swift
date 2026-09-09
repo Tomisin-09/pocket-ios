@@ -59,9 +59,17 @@ final class ReceivedRoutineBuilderTests: XCTestCase {
     /// `kindRaw` is a `String` so that a payload this build has never heard of can be *reported*. If
     /// it were the enum the whole file would fail to decode and the player would be told it was
     /// corrupt, which would be false.
+    /// `kindRaw` is a `String` so that a payload this build has never heard of can be *reported*. If
+    /// it were the enum the whole file would fail to decode and the player would be told it was
+    /// corrupt, which would be false.
+    ///
+    /// **The value here used to be `"exercise"`, and ADR 0209 shipping made that a real kind** — the
+    /// test would have gone on passing as an exercise arriving instead of an unknown kind being
+    /// refused, which is the quietest way for a refusal test to stop testing anything. It names
+    /// something no build has ever written.
     func testAnUnknownPayloadKindIsReportedRatherThanReadAsCorrupt() throws {
         var payload = Fixture.shared(Fixture.routine().routine)
-        payload.kindRaw = "exercise"
+        payload.kindRaw = "sea-shanty"
 
         XCTAssertEqual(try Fixture.failure(of: try Fixture.encoded(payload)), .unsupportedKind)
     }
@@ -70,7 +78,7 @@ final class ReceivedRoutineBuilderTests: XCTestCase {
         var payload = Fixture.shared(Fixture.routine().routine)
         payload.routine = nil
 
-        XCTAssertEqual(try Fixture.failure(of: try Fixture.encoded(payload)), .incomplete)
+        XCTAssertEqual(try Fixture.failure(of: try Fixture.encoded(payload)), .incomplete(.routine))
     }
 
     /// Every refusal says something specific. A shared or empty sentence would mean an alert with a
@@ -79,7 +87,13 @@ final class ReceivedRoutineBuilderTests: XCTestCase {
         let messages = [ReceiveFailure.corrupt,
                         .futureVersion(message: SchemaVersionGate.refusalMessage),
                         .unsupportedKind,
-                        .incomplete].map(\.message)
+                        // Both incompletes, because ADR 0209 gave the case a payload precisely so the
+                        // two would not read the same. `CaseIterable` over the kinds, so a third
+                        // payload kind fails here until it is given its own sentence.
+                        .incomplete(.routine),
+                        .incomplete(.exercise)].map(\.message)
+        XCTAssertEqual(SharedPracticeKind.allCases.count, 2,
+                       "A new payload kind needs its own incomplete sentence above")
 
         XCTAssertEqual(Set(messages).count, messages.count, "Two refusals read the same")
         XCTAssertFalse(messages.contains(where: \.isEmpty))

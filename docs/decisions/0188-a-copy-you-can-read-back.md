@@ -10,6 +10,19 @@
 - **Amended by:** ADR 0205 — restore hydrates snags onto the song and span changes onto the loop
   (0205 D3). D1's trust asymmetry, `SchemaVersionGate` and the raw-enum-column rule are untouched,
   and the receive door is unchanged: `SharedPractice` carries no loops, so there was no hole there.
+- **Amended by:** ADR 0209 — the `.redmoonpractice` file gains its **second payload kind**, an
+  exercise on its own (0209 D1), and the receive door branches on it (0209 D4). `RoutineReceiveHost`
+  is now `PracticeReceiveHost` and `\.receiveRoutineFile` is now `\.receivePracticeFile`.
+  **One decision here is reversed:** the Pro gate below runs *before* the file is read, and 0209 D5
+  moves it *after* — an exercise's gate is asked per **template**, which is a fact inside the file, so
+  the file must be read to know which question to ask. (Every template is `.pro` today, so the verdict
+  is unchanged on every file that exists; the shape is kept for ADR 0144 D3's seam.) A valid file
+  walls exactly as it did; a corrupt or future-version file now reports itself rather than presenting
+  a paywall for a file that was never going to open. **Everything else stands:** D1's trust asymmetry, D2's version gate (the number is
+  deliberately *not* bumped for a new kind), D3's file type and its `Info.plist` declaration, D4's
+  placeholders, D5's list of what a drill loses, and D9's preview-before-landing. The routine door
+  behaves exactly as it did. This ADR's own note that a second kind would cost "a field now and
+  nothing later" was checked by 0209 and held.
 - **Relates to:** ADR 0181 (the export this closes the loop on — **amends its
   `CFBundleDocumentTypes` alternative, see D3**), ADR 0182 (the orphan sweep this must not trip,
   D7), ADR 0150 (take sharing, still parked — **D4 stays on 0181 §7's side of the line**),

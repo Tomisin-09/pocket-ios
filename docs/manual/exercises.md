@@ -188,6 +188,46 @@ Opening a song from either would strand the thing you were in the middle of.
 Changing how many notes per beat a drill plays asks you what should happen to its command tempo,
 because the two mean nothing apart.
 
+## Handing one to somebody else
+
+A drill can go to another player on its own, without the routine around it. Open its **ⓘ** detail
+sheet and tap the share control in the toolbar: Red Moon writes the drill into one small file and
+hands it to the share sheet, so you send it however you send anything else.
+
+The shape is what crosses — the drill, its meter and subdivision, its tempo plan and ramp, its tags,
+and the description you wrote. If you have just typed into that description and not yet tapped
+**Done**, the words on screen are the ones that travel.
+
+**What you have done with the drill does not go with it.** Not your mastery rating, not the tempo you
+worked up to, not when you last practised it, not your star. A tempo you reached is a fact about your
+playing rather than about the drill, and it would arrive as somebody else's number on their screen.
+Your song links and your **Where you learned it** links stay with you too — those point at files and
+pages on your device.
+
+You do not need Pro to send one. Nothing is uploaded: the file is written on your device and handed
+to the share sheet, and where it goes after that is your choice alone.
+
+## Receiving one
+
+The same file opens on the other side, and there are two ways in — the same two a shared routine
+uses.
+
+**Tap it wherever it arrived** — in Messages, in Mail, in Files, in an AirDrop — and Red Moon opens.
+If another app offers to open it, choose Red Moon from the list.
+
+**Or fetch it yourself.** Exercises ▸ the options control ▸ **Receive an exercise…** opens a file
+picker showing the practice files it can read and nothing else, which is the way in when the file has
+been sitting in Files or iCloud Drive for a week.
+
+Either way, Red Moon shows you **what is in the file before it lands**: the drill's name, its kind,
+its meter and its tempo plan, the sender's version and the day they wrote it. Nothing is written
+until you tap **Add**, and what lands is your own copy — nothing already in your library is changed
+or replaced. Adding the same file twice gives you two drills, which is the honest answer when the app
+cannot know whether you meant to.
+
+The two pickers are not fussy about which is which: a shared exercise picked from the Routines screen
+still lands in your exercises, and Red Moon says where it went.
+
 ## Your own practice
 
 The last template is the one for practice the app does not model — sight-reading, transcribing,

@@ -51,6 +51,12 @@ enum PaywallTrigger: Identifiable, Equatable {
     case newExercise(ExerciseTemplate?)
     /// Opening a Pro-authored library exercise to edit it.
     case proExercise
+    /// Accepting a drill somebody else shared (ADR 0209 D5) — either door. Its own case rather than
+    /// folded into `newExercise`, for `RoutineGate.receive`'s reason: it is the one exercise gate the
+    /// player did not walk up to. A wall in front of a file that arrived unbidden is very different
+    /// evidence about where the free line belongs from a wall in front of an empty editor. Carries the
+    /// **file's** template, which is what the gate reads.
+    case receivedExercise(ExerciseTemplate?)
     /// The deterministic "Today's session" planner.
     case planner
     /// Any routine surface — running a Pro routine, building one by hand, or accepting a session
@@ -84,6 +90,7 @@ enum PaywallTrigger: Identifiable, Equatable {
         case .drawYourOwn: return "Draw your own is part of Red Moon Pro"
         case .newExercise: return "Build your own exercises with Red Moon Pro"
         case .proExercise: return "This exercise is part of Red Moon Pro"
+        case .receivedExercise: return "Adding a shared exercise is part of Red Moon Pro"
         case .planner: return "Today's session is part of Red Moon Pro"
         case .routine: return "Routines are part of Red Moon Pro"
         case let .home(gate): return gate.headline
@@ -104,6 +111,7 @@ enum PaywallTrigger: Identifiable, Equatable {
         case .drawYourOwn: return "draw_your_own"
         case .newExercise: return "new_exercise"
         case .proExercise: return "pro_exercise"
+        case .receivedExercise: return "received_exercise"
         case .planner: return "planner"
         case .routine: return "routine"
         case .home: return "home"
@@ -116,6 +124,7 @@ enum PaywallTrigger: Identifiable, Equatable {
     var reportingDetail: String? {
         switch self {
         case let .newExercise(template): return template?.rawValue
+        case let .receivedExercise(template): return template?.rawValue
         case let .routine(gate): return gate.rawValue
         case let .home(gate): return gate.rawValue
         case .drawYourOwn, .proExercise, .planner, .launch, .general: return nil

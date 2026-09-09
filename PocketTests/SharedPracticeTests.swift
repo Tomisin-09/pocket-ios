@@ -326,10 +326,13 @@ final class SharedPracticeTests: XCTestCase {
 
         XCTAssertTrue(try encodedJSON(shared).contains("\"kind\" : \"routine\""))
 
-        shared.kindRaw = "exercise"
+        // **This said `"exercise"` until ADR 0209 shipped one**, at which point the test went on
+        // passing while asserting nothing: a known kind decodes to a known kind, and `XCTAssertNil`
+        // would have been the only thing to notice. The value has to name a payload no build writes.
+        shared.kindRaw = "sea-shanty"
         let decoded = try ArchiveCoding.decode(SharedPractice.self, from: ArchiveCoding.encode(shared))
 
-        XCTAssertEqual(decoded.kindRaw, "exercise")
+        XCTAssertEqual(decoded.kindRaw, "sea-shanty")
         XCTAssertNil(decoded.kind, "A payload this build does not know reads as nil, not as a throw")
     }
 

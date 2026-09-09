@@ -27,7 +27,7 @@ struct RoutineLibraryView: View {
     /// The app's one receiving door (ADR 0188 S2) — this screen picks a file and hands it over;
     /// the host at the app root decodes it, previews it and writes it. See
     /// `RoutineLibraryView+Receive.swift`.
-    @Environment(\.receiveRoutineFile) var receiveRoutineFile
+    @Environment(\.receivePracticeFile) var receivePracticeFile
     /// Per-routine practice reminders (ADR 0186 D3) — a deleted routine's pending notifications
     /// have to go with it, and nothing else on this screen knows they exist.
     @Environment(PracticeReminder.self) private var practiceReminder
@@ -198,7 +198,7 @@ struct RoutineLibraryView: View {
         }
         // The picked file goes straight to the app-root host, which owns the preview and the write
         // (ADR 0188 S2) — this screen never decodes anything.
-        .routineFileImporter(isPresented: $importingRoutine, onPick: receiveRoutineFile)
+        .practiceFileImporter(isPresented: $importingRoutine, onPick: receivePracticeFile)
     }
 
     /// Run the session — gated on `canRunRoutine`, so the curated free-taste routine plays for a

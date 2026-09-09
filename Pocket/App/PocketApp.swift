@@ -66,7 +66,7 @@ struct PocketApp: App {
                 // it reads `\.isPro` and `\.presentPaywall` to gate a receive, and those are
                 // published by the host below it. Tap-to-open can arrive on a cold launch with no
                 // screen of the app's own on top, which is why it lives at the root at all.
-                .routineReceiveHost()
+                .practiceReceiveHost()
                 // `.environment(store)` must sit **outside** `.paywallHost()`, so the host (which
                 // reads `@Environment(StoreManager.self)` to publish `isPro`) resolves the store from
                 // above it; applied the other way round the host is a parent of the injection and traps.
