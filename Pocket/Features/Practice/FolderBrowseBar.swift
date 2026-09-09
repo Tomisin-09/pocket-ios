@@ -102,6 +102,51 @@ struct FolderRow: View {
     }
 }
 
+/// The **invitation** to make a first folder (ADR 0210 D7), shown in a library that has none.
+///
+/// This is what the tag backfill used to be. That version filled a seeded library with ten
+/// one-drill folders derived from preset tags — organisation nobody had asked for, arranged by a
+/// vocabulary nobody had chosen — and it was obvious the moment it was on a phone. A folder is worth
+/// having because a player decided it should exist, so the app offers to make one and otherwise says
+/// nothing.
+///
+/// Modelled on the empty song library's offer to import (`LibraryEmptyState`), scaled to a row: the
+/// library here is not empty, it simply has no folders yet, so a full-screen block would be talking
+/// over content that is perfectly fine as it is. It disappears the moment a folder exists.
+struct FolderInviteRow: View {
+    /// "drills" / "sessions" — what this library holds, for the one line of why.
+    let noun: String
+    let create: () -> Void
+
+    var body: some View {
+        Button {
+            create()
+            haptic(.light)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "folder.badge.plus")
+                    .font(.futura(.title3))
+                    .foregroundStyle(PocketColor.practice)
+                    .frame(width: 30)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("New folder")
+                        .font(.futura(.body, weight: .semibold))
+                        .foregroundStyle(PocketColor.practice)
+                    Text("Group \(noun) by grade, technique, or student.")
+                        .font(.futura(.footnote))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("New folder")
+        .accessibilityHint("Groups \(noun) however you like")
+    }
+}
+
 #Preview("Folder browsing") {
     List {
         Section {

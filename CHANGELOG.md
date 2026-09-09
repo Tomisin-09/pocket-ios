@@ -22,8 +22,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   libraries, so **Beginner** is one folder holding whichever drills *and* whichever sessions you
   put in it, and each library shows you its own side.
 
-  Folders live in their own section above your drills, folded up until you open it, so a library
-  you have not filed anything in looks exactly as it did.
+  **You start with none.** A library with no folders shows a single **New folder** row above your
+  drills, and nothing else changes until you tap it — no folders are made for you, and none appear
+  until you make one.
 
   A drill can sit in as many folders as you want — the verb is *add*, never *move* — so a warm-up
   can be in **Grade 2** and **Picking** at once. Because of that, a folder's count is what is at or
@@ -33,11 +34,7 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
   **Deleting a folder never deletes a drill** — the folder goes, the drills stay, and the
   confirmation counts them before you decide. Renaming one carries everything inside it along.
-- **Drills you had tagged arrive already filed.** Every tag on an exercise became a folder the first
-  time this version opens, so a library that was already labelled opens organised rather than empty.
-  Nothing was moved or removed to do it. Tags no longer appear on the **ⓘ** sheet, which now shows
-  **Folders** instead. A shared drill still carries its folder names as plain labels, so somebody on
-  an older version sees something meaningful; your filing itself stays yours.
+  Where you keep a drill is yours: sharing one hands over the drill, never your folders.
 - **Hand a single exercise to somebody else.** A drill's **ⓘ** sheet gains a share control: it writes
   the drill into one small file and hands it to the share sheet, the same way a routine already
   travels. The shape crosses — the drill, its meter, its tempo plan and ramp, its tags and your

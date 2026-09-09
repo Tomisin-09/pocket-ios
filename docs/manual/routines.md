@@ -34,7 +34,8 @@ session**, which is covered in [Today's session](sessions.md), **New folder…**
 routine…**, for a session somebody sent you — see [Receiving one](#receiving-one).
 
 Routines can be filed into **folders**, the same folders your exercises use — hold a row and tap
-**Add to folder…**, or make one with **New folder…**. Folders work the same way here as they do in
+**Add to folder…**, or make one with **New folder…**. You start with none, and a library that has
+none offers a **New folder** row above your routines. Folders work the same way here as they do in
 the Exercises library, and they are the same folders: a folder called **Beginner** holds whichever
 of your drills and whichever of your sessions you put in it, and each library shows you its own
 side. So a folder with six drills in it and no sessions reads **0** here — there is nothing of *this*

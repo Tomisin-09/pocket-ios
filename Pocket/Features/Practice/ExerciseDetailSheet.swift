@@ -165,13 +165,29 @@ struct ExerciseDetailSheet: View {
     /// identical; what changes is what it means to the player, and what belongs beside it.
     private var isFreeform: Bool { exercise.template == .freeform }
 
-    // MARK: - Description (editable)
+    // MARK: - Description (editable) + tags
 
     private var descriptionSection: some View {
         Section {
             TextField("Technique cues, target feel, where it's from…", text: $notes, axis: .vertical)
                 .lineLimit(3...8)
                 .keyboardDoneButton()
+            // Still here. ADR 0210's first cut took these out, on the grounds that its backfill had
+            // copied every tag into a folder; with the backfill gone they are the only place a
+            // drill's tags are visible at all, and removing them would have lost information with
+            // nothing put in its place.
+            if !exercise.tags.isEmpty {
+                FlowLayout(spacing: 6) {
+                    ForEach(exercise.tags, id: \.self) { tag in
+                        Text(tag)
+                            .font(.futura(.caption, weight: .semibold))
+                            .foregroundStyle(PocketColor.practice)
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Capsule().fill(PocketColor.practice.opacity(0.16)))
+                    }
+                }
+                .padding(.vertical, 2)
+            }
         } header: {
             Text("Description")
         } footer: {

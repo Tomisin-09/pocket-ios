@@ -71,11 +71,10 @@ struct RoutineLibraryView: View {
     @AppStorage("routineLibrarySort") private var sortKey: RoutineSortKey = .recentlyAdded
     @AppStorage("routineLibrarySortAscending") private var sortAscending = true
     @State var searchText = ""
-    /// Whether the **Folders** section is open, persisted across launches and **default off** — the
-    /// same call the Exercises library makes and for the same reason (ADR 0210 D6): folders are a
-    /// second axis over a screen that already worked, so the screen has to still look like itself.
-    /// This library has never had a section of any kind before.
-    @AppStorage("routineLibraryFoldersExpanded") var foldersExpanded = false
+    /// Whether the **Folders** section is open, persisted across launches and **default on** — the
+    /// same call the Exercises library makes, and its reasoning. This library has never had a
+    /// section of any kind before.
+    @AppStorage("routineLibraryFoldersExpanded") var foldersExpanded = true
 
     /// The routines on screen: narrowed by the favourites filter (ADR 0119) and the search query,
     /// then ordered by the chosen key (ADR 0178).

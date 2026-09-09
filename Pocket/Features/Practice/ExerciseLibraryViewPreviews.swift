@@ -24,6 +24,7 @@ import SwiftUI
     container.mainContext.insert(Exercise(name: "E minor pentatonic", currentTempo: 60,
                                           template: .scales, instrument: .bass))
     // An empty folder — the marker row (ADR 0210 D4), and the one thing derived paths cannot show.
+    // Remove every `folders` assignment above and this insert to see the invite row instead.
     container.mainContext.insert(PracticeFolder(path: "Grade 3"))
     return NavigationStack { ExerciseLibraryView() }
         .modelContainer(container)

@@ -1255,11 +1255,13 @@ empty, because that line was Home's only word about adding a first song.
   copy-then-delete (S3 cannot rename a prefix either — there is nothing to rename), and three holders
   edited separately are three chances to disagree about what a folder is called. Deleting a folder
   **never deletes an item**.
-  `Exercise.tags` is **retired in place**: `ExerciseFolderBackfill` copies each canonical tag into a
-  top-level folder once at launch (`UserDefaults`-guarded, idempotent, pure `apply(to:namespace:)`,
-  shaped like `ExerciseNoteRateBackfill`), and the column stays because *removing* one is destructive
-  under ADR 0189 while copying costs nothing. Its one remaining job is crossing in a share as the
-  folders' leaf names.
+  `Exercise.tags` is **untouched**, and that is a reversal worth reading (D7). 0210's first cut
+  retired it and backfilled every tag into a top-level folder at launch; on a device that produced
+  **ten one-drill folders** from the seeded presets' keyword tags — a tag list rendered as folders,
+  in a vocabulary the player never chose — so the backfill was deleted, the ⓘ sheet's tag chips went
+  back where they were, and a library now starts with **no folders at all**, offering a
+  `FolderInviteRow` (modelled on the empty song library's offer to import) until somebody makes one.
+  A folder exists because it was asked for; nothing derives one.
 - **`PracticeRun`** (ADR 0117, Slice 1) is the **practice log** — the app's only record of *when* you
   practised, and the substrate every time-windowed stat needs. Append-only, **one row per completed
   unit-run** rather than per practice sit: a routine of six exercises at six tempos writes six rows, and

@@ -189,10 +189,10 @@ final class Exercise {
         set { rampIntervalUnitRaw = newValue.rawValue }
     }
 
-    /// Open descriptive tags ("warmup", "picking"). **Vestigial since ADR 0210 D7** — folders
-    /// replaced it, the backfill copied every tag into one, and removing a column is destructive
-    /// under ADR 0189. Still written into a share as the folders' leaf names (D8); read it nowhere
-    /// else.
+    /// Open descriptive tags ("warmup", "picking"), routed through the shared `Labels`
+    /// canonicaliser at the write site, like `Loop.tags`. Declaration default keeps migration
+    /// additive (CoreData 134110). **Untouched by ADR 0210**, whose first cut retired it and
+    /// backfilled every tag into a folder — folders nobody had chosen, so the backfill went.
     var tags: [String] = []
 
     /// The **folders** this drill is filed in (ADR 0210 D2) — canonical S3-style key prefixes, one

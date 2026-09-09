@@ -114,14 +114,12 @@ enum SharedPracticeBuilder {
     /// drill. Sharing a whole folder is a different act with a different answer (D11 rebases the tree
     /// onto the shared root rather than dropping it).
     ///
-    /// What crosses instead is the folders' **leaf names, added to `tags`** — added, not substituted,
-    /// so a drill with tags and no folders shares exactly what it always did. That is the one job
-    /// left to the vestigial column: a build without folders shows a received drill something
-    /// meaningful rather than nothing.
+    /// The drill's own `tags` cross exactly as they did before folders existed. An earlier cut added
+    /// the folders' leaf names to them, which was harmless while `tags` was a retired column and
+    /// stopped being so the moment it was not: it would put the sender's filing vocabulary into the
+    /// receiver's tags, on a field they can see and did not write.
     static func shareable(_ exercise: Exercise) -> ExerciseRecord {
         var record = ArchiveBuilder.exerciseRecord(exercise)
-        let leaves = exercise.folders.map { FolderPath.leaf($0) }
-        record.tags = Labels.normalized(record.tags + leaves).sorted()
         record.folders = nil
         record.lastPracticed = nil
         record.isFavorite = false

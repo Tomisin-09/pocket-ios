@@ -44,6 +44,9 @@ Folders group your drills however you want to group them — by grade, by techni
 are shared with your routines: a folder called **Beginner** is one folder, and each library shows
 you its own half of it.
 
+**You start with none.** Red Moon does not make any for you. Until you make one, the library shows a
+single **New folder** row above your drills and is otherwise exactly as it was.
+
 **Making one.** **New folder…** in the **⋯** menu makes a folder where you are currently standing.
 Make one at the top of the library and it sits at the top; open a folder first and the new one goes
 inside it. That is the only way to nest, and it is why a name with a `/` in it makes one folder with
@@ -57,9 +60,9 @@ instead of retyping them.
 warm-up that belongs in both **Grade 2** and **Picking** simply sits in both, and taking it out of
 one leaves it in the other.
 
-**Walking around.** Your folders live in a **Folders** section above your drills, which starts
-folded — tap its header to open it, and it stays how you leave it. Each folder carries a count; tap
-one to go in, and a trail appears across the top that takes you back from any part of it. A folder shows everything at or below it,
+**Walking around.** Your folders live in a **Folders** section above your drills. Each carries a
+count; tap one to go in, and a trail appears across the top that takes you back from any part of it.
+The section folds away like any other — tap its header — and stays how you leave it. A folder shows everything at or below it,
 so opening **Beginner** shows the drills filed in **Beginner/Warm-ups** too, and the top of the
 library still shows everything you own.
 
@@ -232,13 +235,12 @@ A drill can go to another player on its own, without the routine around it. Open
 sheet and tap the share control in the toolbar: Red Moon writes the drill into one small file and
 hands it to the share sheet, so you send it however you send anything else.
 
-The shape is what crosses — the drill, its meter and subdivision, its tempo plan and ramp, and the
-description you wrote. If you have just typed into that description and not yet tapped **Done**, the
+The shape is what crosses — the drill, its meter and subdivision, its tempo plan and ramp, its tags,
+and the description you wrote. If you have just typed into that description and not yet tapped **Done**, the
 words on screen are the ones that travel.
 
 **Where you keep it does not cross.** Your folders are your filing, and a drill arrives in the other
-player's library unfiled, for them to put wherever they put things. The folder *names* travel with
-it as plain labels, so they can see what you considered the drill to be.
+player's library unfiled, for them to put wherever they put things.
 
 **What you have done with the drill does not go with it.** Not your mastery rating, not the tempo you
 worked up to, not when you last practised it, not your star. A tempo you reached is a fact about your

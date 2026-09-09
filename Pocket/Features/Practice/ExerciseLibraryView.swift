@@ -72,14 +72,13 @@ struct ExerciseLibraryView: View {
     @Query var routines: [Routine]
     /// The drill whose folder picker is open (D9), or `nil`.
     @State var filing: Exercise?
-    /// Whether the **Folders** section is open, persisted across launches and **default off**.
+    /// Whether the **Folders** section is open, persisted across launches and **default on**.
     ///
-    /// The opposite default to the template sections, deliberately (ADR 0210 D6). Folders are not
-    /// new content; they are a second axis over a screen that already worked, and D6b's claim is
-    /// that the root stays the library you already had. Expanded it did not: the tag backfill gives
-    /// a seeded library ten one-drill folders, which filled the display and pushed every drill below
-    /// the fold — four UI tests stopped finding a seeded drill, which is that defect as a failure.
-    @AppStorage("exerciseLibraryFoldersExpanded") var foldersExpanded = false
+    /// It was default *off* while the tag backfill existed, because that gave a seeded library ten
+    /// one-drill folders which filled the display and pushed every drill below the fold. With the
+    /// backfill gone a folder exists only because the player made it, and hiding what somebody just
+    /// asked for is its own kind of wrong. A library with no folders shows no section at all.
+    @AppStorage("exerciseLibraryFoldersExpanded") var foldersExpanded = true
 
     /// The drills actually on screen — everything except rows whose delete is pending behind the
     /// Undo toast (Slice 3). The empty state reads from here too, so deleting your last drill says

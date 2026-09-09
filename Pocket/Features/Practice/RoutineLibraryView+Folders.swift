@@ -35,7 +35,16 @@ extension RoutineLibraryView {
     /// sessions reads `0` here and `6` in the Exercises library, which is the honest reading of one
     /// namespace seen from two libraries: each shows its own members (D3).
     @ViewBuilder var folderRows: some View {
-        if !childFolders.isEmpty {
+        if childFolders.isEmpty {
+            // No folders anywhere yet: offer to make the first one, and only at the root — inside a
+            // folder the ⋯ menu is the door, and a nag on every empty leaf would be a nag.
+            if folderBrowse.path.isEmpty && !presentRoutines.isEmpty {
+                Section {
+                    FolderInviteRow(noun: "sessions") { folderBrowse.beginCreate() }
+                        .listRowBackground(PocketColor.background)
+                }
+            }
+        } else {
             CollapsibleLibrarySection(title: Self.foldersSectionTitle,
                                       count: childFolders.count,
                                       isExpanded: $foldersExpanded,

@@ -116,15 +116,15 @@ final class FolderArchiveTests: XCTestCase {
     /// A drill handed over on its own arrives **unfiled** (D8): its paths are positions in the
     /// sender's tree, and reproducing them would hand over a filing cabinet with the drill.
     @MainActor
-    func testASharedDrillCarriesLeafNamesAsTagsAndNoFolders() {
+    func testASharedDrillCarriesNoFoldersAndItsTagsUntouched() {
         let exercise = Exercise(name: "Alternating picking")
         exercise.folders = ["Students/2026/Beginner", "Technique/Alternate picking"]
-        exercise.tags = ["old-tag"]
+        exercise.tags = ["warm-up"]
 
         let record = SharedPracticeBuilder.shareable(exercise)
 
         XCTAssertNil(record.folders, "The sender's tree must not cross on a single-drill share")
-        XCTAssertEqual(record.tags, ["Alternate picking", "Beginner", "old-tag"],
-                       "Leaf names are added to the tags, not substituted for them")
+        XCTAssertEqual(record.tags, ["warm-up"],
+                       "Tags cross as they always did — the sender's folder names are not tags")
     }
 }

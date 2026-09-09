@@ -214,32 +214,40 @@ Two consequences, both visible and neither a bug:
 Found by drawing the screens rather than by writing the plan, which is the argument for having drawn
 them.
 
-### D7 — tags fold in as a **value** migration, never a schema one
+### D7 — you start with **no folders**, and an offer to make one
 
-Folding tags in does **not** mean deleting `Exercise.tags`. Removing a column is destructive under
-ADR 0189 and would cost D1–D4: an argument that additive is genuinely worse, a `VersionedSchema` and
-`SchemaMigrationPlan` (this project has never written one), a migration test against a store *the
-previous build wrote*, and a device upgrade verification. Copying values costs none of it, and
-0189 D1 names the additive alternative as the thing a destructive change has to beat. It does not
-beat it.
+**This decision was reversed after the build was on a phone, and the reversal is the decision.**
 
-So: **`ExerciseFolderBackfill`**, in the shape of `ExerciseNoteRateBackfill` — `UserDefaults`-guarded,
-run once at launch beside the preset seeders, with a pure `apply(to:namespace:)` unit-tested away
-from a store. Each canonical tag becomes a **top-level folder**; a marker is written for each.
+The design said: fold tags in as a *value* migration. Not a schema one — removing `Exercise.tags` is
+destructive under ADR 0189 and would cost D1–D4, while copying values costs none of it. So an
+`ExerciseFolderBackfill`, shaped like `ExerciseNoteRateBackfill`, turned every canonical tag into a
+top-level folder at launch, and the payoff was to be the empty state: a library that opens *already
+organised* rather than showing a new axis with nothing in it, which is how a fresh grouping feature
+usually fails.
 
-`tags` is then **retired in place**: the column stays, stops being written by the app, stops being
-shown on the ⓘ sheet. It keeps exactly one job — crossing in a share, carrying the folders' leaf
-names (D8).
+What it actually produced, on a real device and in the first screenshot of the built screen, was
+**ten folders holding one drill each** — `chords`, `fretting`, `lead`, `legato`, `picking`,
+`rhythm`, `scales`, `synchronization`, `technique`, `warmup` — derived from the seeded presets'
+keyword tags. That is not organisation. It is a tag list rendered as folders, in a vocabulary the
+player never chose, filling the screen and pushing every actual drill below the fold. The failure
+mode the backfill existed to avoid is *an empty new axis*; what it produced instead is a worse one,
+**a full axis that is somebody else's**.
 
-One caution the precedent itself raises: `ExerciseNoteRateBackfill`'s header says its assumption was
-affordable *"because the release is being held and there are no users yet"*. **That is no longer
-true.** This backfill runs against real libraries, which is exactly why it copies rather than moves
-and why idempotence is a tested property rather than a hope — including the case that matters most,
-a player who has already filed a drill somewhere else by hand.
+So: **no backfill, and no folders at the start.** A library that has none shows a single
+`FolderInviteRow` — a folder glyph, *New folder*, and one line saying what folders are for —
+modelled on the empty song library's offer to import (`LibraryEmptyState`), scaled to a row because
+this library is not empty, it merely has no folders yet. It disappears the moment a folder exists.
 
-**The payoff is the empty state.** The seeded presets ship with tags (`picking`, `technique`,
-`scales`, `warmup`, `rhythm`, `chords`…), so a library opens **already organised** rather than
-showing a new axis with nothing in it — the way a fresh grouping feature usually fails.
+Two consequences follow, and both are restorations rather than new decisions:
+
+- **`Exercise.tags` is not retired.** Nothing copies it anywhere now, so hiding it would lose
+  information with nothing put in its place. The chips are back on the ⓘ sheet exactly as they were,
+  the column is live, and the **Folders** section sits beside them. ADR 0033's *"a grouping you
+  can't filter by is just a note"* still indicts tags — folders are the answer to it, but only for
+  the drills a player deliberately files.
+- **The folder section is expanded by default again.** It was shut only because the backfill made
+  ten of them; a folder now exists because somebody asked for it, and hiding what they just made is
+  its own kind of wrong. A library with no folders shows no section at all.
 
 ### D8 — the wire keeps `tags`, and gains an **Optional** `folders`
 
@@ -262,9 +270,11 @@ promises a number of drills and sessions.
 
 **A drill handed over on its own arrives unfiled.** Its paths are positions in the *sender's* tree
 (`Students/2026/Beginner/Warm-ups`), and reproducing that on a stranger's phone would be handing
-over a filing cabinet with the drill. What crosses is the folders' **leaf names, added to `tags`** —
-added, not substituted, so a drill with tags and no folders shares exactly what it always did.
-Sharing a whole folder is a different act with a different answer (D11).
+over a filing cabinet with the drill. Its own `tags` cross exactly as they did before folders
+existed; an earlier cut added the folders' leaf names to them, which was harmless while `tags` was a
+retired column and stopped being so the moment it was not — it would put the sender's filing
+vocabulary into a field the receiver can see and did not write. Sharing a whole folder is a
+different act with a different answer (D11).
 
 `schemaVersion` is **not** bumped — third time, same argument as ADR 0209 D1: the version is about
 record *shapes*, and bumping would make files written by this build refused by every build in the
@@ -331,9 +341,9 @@ here by construction.
 ## Slices
 
 **S1 — the axis. Built.** `folders` on both models; `PracticeFolder`; `FolderPath`;
-`PracticeFolderStore`; the backfill; browse (folder rows, breadcrumb, prefix-scoped search) in both
-libraries; `FolderPickerSheet`; the ⓘ and hold-menu doors; rename and delete; the archive fields.
-Answers *"can I organise this at all"* and ships alone.
+`PracticeFolderStore`; browse (folder rows, breadcrumb, prefix-scoped search) in both libraries;
+`FolderInviteRow`; `FolderPickerSheet`; the ⓘ and hold-menu doors; rename and delete; the archive
+fields. Answers *"can I organise this at all"* and ships alone.
 
 **S2 — share a folder.** The `.folder` payload kind and the share control on the browse surface.
 Writes a file and reads none, so nothing in it can damage a library — 0188's own reason for shipping
@@ -348,9 +358,13 @@ a send half first — and it produces the fixture S3 is built against.
   keep. That is a new entity in the container — additive, but a real addition.
 - **Counts do not sum** (D6b), and the library total is not the sum of its folders. This is inherent to
   multi-membership, not a rounding problem to be fixed later.
-- **`Exercise.tags` is now dead weight with one job.** It is documented as vestigial in three places
-  (the model, the backfill, D7 here) precisely so the next person to find it does not read the
-  absence of readers as an invitation to drop the column.
+- **A decision was reversed by looking at it**, and D7 records the reversal rather than the tidied
+  outcome. The backfill was reasoned about carefully, cost nothing under ADR 0189, and was wrong on
+  a phone in about two seconds. The general form: *a migration that invents structure on the
+  player's behalf has to be judged by the structure it invents, not by what it costs to run.*
+- **`Exercise.tags` is unchanged and still unbrowsable.** ADR 0033's *"a grouping you can't filter
+  by is just a note"* still indicts it. Folders answer that complaint only for the drills somebody
+  deliberately files, which is now the point rather than a shortfall.
 - **Two analytics events were found unpinned** while D13 was being added — ADR 0209's
   `exercise_received` had never been listed in `AnalyticsEventTests.everyEvent`, which is the third
   time that file has caught itself out. Both are pinned now, and the fix its own header has asked

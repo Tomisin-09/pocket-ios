@@ -45,7 +45,16 @@ extension ExerciseLibraryView {
     /// **closed until asked for** — see `foldersExpanded` for why the default is the opposite of the
     /// template sections'.
     @ViewBuilder var folderRows: some View {
-        if !childFolders.isEmpty {
+        if childFolders.isEmpty {
+            // No folders anywhere yet: offer to make the first one, and only at the root — inside a
+            // folder the ⋯ menu is the door, and a nag on every empty leaf would be a nag.
+            if folderBrowse.path.isEmpty && !presentExercises.isEmpty {
+                Section {
+                    FolderInviteRow(noun: "drills") { folderBrowse.beginCreate() }
+                        .listRowBackground(PocketColor.background)
+                }
+            }
+        } else {
             CollapsibleLibrarySection(title: Self.foldersSectionTitle,
                                       count: childFolders.count,
                                       isExpanded: $foldersExpanded,
