@@ -101,6 +101,10 @@ enum AppSettings {
         static let journalSortOrder = "journalSortOrder"
         static let journalPinnedOnly = "journalPinnedOnly"
         static let journalOwnerFilter = "journalOwnerFilter"
+        /// How far back the feed's look-back card reaches, or `off` (ADR 0207 D8). Reset with the
+        /// four above: it changes what the top of the feed shows, so a driven run that inherited it
+        /// would shoot the timeline with — or without — a card the shot never asked for.
+        static let journalLookbackPeriod = "journalLookbackPeriod"
         /// Home's resume-card preference (ADR 0193). Read from a second place
         /// (`resetJumpBackInPreference`), so it is named here for the same reason the four above are.
         static let jumpBackIn = "jumpBackIn"
@@ -125,7 +129,8 @@ enum AppSettings {
     /// it cannot have is an unstated starting point inherited from whatever ran last.
     static func resetJournalFilters() {
         for key in [Key.journalScope, Key.journalSortOrder,
-                    Key.journalPinnedOnly, Key.journalOwnerFilter] {
+                    Key.journalPinnedOnly, Key.journalOwnerFilter,
+                    Key.journalLookbackPeriod] {
             UserDefaults.standard.removeObject(forKey: key)
         }
     }

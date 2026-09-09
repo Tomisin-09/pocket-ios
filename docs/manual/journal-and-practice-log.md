@@ -192,17 +192,22 @@ because the day is part of what the entry says.
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you
   read forwards through a stretch of work rather than backwards.
-- **⋯ ▸ Show** opens a list of the kinds of thing the journal holds: **All**, **Exercise**, **Loop**,
-  **Session**, **Metronome** and **Just me**. That last one is the notes you wrote from the journal
-  itself, about nothing in particular. Tick as many as you like — see below.
+- **Show**, the chip above the timeline, opens a list of the kinds of thing the journal holds:
+  **All**, **Exercise**, **Loop**, **Session**, **Metronome** and **Just me**. That last one is the
+  notes you wrote from the journal itself, about nothing in particular. Tick as many as you like —
+  see below.
 - **⋯ ▸ Pinned only** shows just what you have pinned.
-- **⋯ ▸ Jump to…** opens a date picker and takes you to that day — see below.
-- Days are grouped under **Today**, **Yesterday** and then dated headers.
+- **The months** beside that chip are the months your journal actually has something in — tap one to
+  go there. A month with nothing in it is simply not listed.
+- **Jump to…** opens a month you can read: tap the day header at the top of the feed, or use
+  **⋯ ▸ Jump to…** — see below.
+- Days are grouped under **Today**, **Yesterday** and then dated headers, under the month they fall
+  in.
 
 **Ticking a second kind in Show shows you more, not less.** Tick **Loop** and you get loop work;
 tick **Session** as well and you get both, not the entries that are somehow both at once. Tap **All**
-and you are back to the whole journal. The **⋯** row says what is on, so
-*Show: Loop or Session* is readable before you open anything.
+and you are back to the whole journal. The chip says what is on, so *Show: Loop or Session* is
+readable without opening anything.
 
 **Show** takes takes with it. Filtering to **Loop** shows a loop's recordings beside its notes,
 because the journal is one feed and not two. The exception is an entry whose loop or exercise you

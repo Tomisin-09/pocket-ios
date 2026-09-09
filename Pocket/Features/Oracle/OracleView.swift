@@ -251,16 +251,10 @@ private struct ParagraphView: View {
 
     var body: some View {
         if paragraph.isQuotedFromPlayer {
-            HStack(alignment: .top, spacing: 12) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(PocketColor.oracle)
-                    .frame(width: 3)
-                Text(paragraph.text)
-                    .font(.futura(.body))
-                    .italic()
-                    .foregroundStyle(PocketColor.textPrimary)
-            }
-            .fixedSize(horizontal: false, vertical: true)
+            // The treatment now lives in `QuotedNoteView` (ADR 0207 D8), because the Journal's
+            // look-back card quotes the player back at themselves for the same reason this does.
+            // The tint stays here: crimson is how you know you are in the Oracle.
+            QuotedNoteView(text: paragraph.text, tint: PocketColor.oracle)
         } else {
             Text(paragraph.text)
                 .font(.futura(.body))

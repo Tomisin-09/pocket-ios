@@ -16,4 +16,21 @@ enum LoopProgressFormat {
     static func percentLabel(_ commandTempo: Double?) -> String {
         percent(commandTempo).map { "\($0)%" } ?? "—"
     }
+
+    /// Absolute-BPM label for an **exercise's** command snapshot — "not yet measured" when
+    /// un-promoted, and carrying the rhythm it was measured in when the entry recorded one
+    /// (ADR 0121). An entry written before that snapshot existed shows the bare BPM: the snapshot is
+    /// immutable (ADR 0038), so an unknown rhythm is left unstated rather than filled in from
+    /// today's drill.
+    ///
+    /// **Moved here from `JournalSheet` by ADR 0207 D9.** It had been a `static` on a SwiftUI
+    /// `View`, which under Swift 6 makes it `@MainActor` — so the first non-view caller
+    /// (`JournalOwner.captureSummary`) failed to compile against a pure string formatter. That is
+    /// AGENTS.md's *pure logic stays pure* arriving as a build error rather than as a style note,
+    /// and this file is where its sibling `percentLabel` already lived.
+    static func bpmLabel(_ bpm: Int?, notesPerBeat: Int? = nil) -> String {
+        guard let bpm else { return "not yet measured" }
+        guard let notesPerBeat else { return "\(bpm) BPM" }
+        return "\(bpm) BPM · \(NoteRate(perBeat: notesPerBeat).compactLabel)"
+    }
 }

@@ -97,10 +97,35 @@ struct QuickJournalSheet: View {
     /// unit on screen is one of several — "which of these am I writing about" is a real question here
     /// in a way it never is on the per-owner sheet. The whole sentence comes from the owner (ADR 0155
     /// §5): assembling it from fragments here has no honest form for an owner that records nothing.
+    /// Where the note lands, and — since ADR 0207 D9 — **what it will keep**.
+    ///
+    /// The capture line is drawn only when there is something to draw: a standalone note snapshots
+    /// nothing, and a labelled row whose value is a word meaning "nothing" is worse than no row.
     private var destinationLine: some View {
-        Text(owner.destinationLine)
-            .font(.futura(.caption))
-            .foregroundStyle(PocketColor.textSecondary)
+        VStack(alignment: .leading, spacing: 10) {
+            if let summary = owner.captureSummary {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("This note will remember")
+                        .font(.futura(.caption2, weight: .semibold))
+                        .tracking(0.8)
+                        .foregroundStyle(PocketColor.journal)
+                    Text(summary)
+                        .font(.pocketMono(.caption))
+                        .foregroundStyle(PocketColor.textPrimary)
+                }
+                .padding(.leading, 10)
+                .overlay(alignment: .leading) {
+                    // The same 3pt rule the feed's rail and the quoted note use — this is the value
+                    // the row it becomes will carry, shown in the shape it will be shown in.
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(PocketColor.journal)
+                        .frame(width: 3)
+                }
+            }
+            Text(owner.destinationLine)
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
     }
 
     private func save() {

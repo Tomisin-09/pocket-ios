@@ -4,6 +4,15 @@
 - **Date:** 2026-08-21 (`pocket-279-practice-log-rename`)
 - **Amends:** ADR 0117 (practice stats & the Progress screen) — the screen it built keeps its
   content, its constraints and its deferrals, and changes only its name and its door.
+- **Amended by:** ADR 0207 (*a journal worth opening*, 2026-09-09) — and this ADR's central refusal
+  **stands**. It declined *"a live summary strip above the timeline"* because such a strip *"puts a
+  permanent number above a timeline whose entire content is words"* and hands a fresh install a zero
+  to read. ADR 0207 D8 adds a look-back card to that screen and is bound by exactly those three
+  terms: it carries **words** rather than a number, it sits **inside the `List`** and scrolls away
+  rather than standing permanently above it, and it is **absent entirely** when there is nothing to
+  show. This ADR's other finding — that **a destination reached only from a menu is one most players
+  never find** — is what ADR 0207 D7 applies to *Jump to…*, giving it the pinned day header as a
+  second, discoverable door.
 - **Relates to:** ADR 0070 (Pocket never grades the player), ADR 0100 (the Journal is the
   read-only, cross-cutting practice-history space), ADR 0126 (toolbar grammar), ADR 0144 (one
   app, one price — the Journal is free forever), ADR 0155 (the Journal's ＋, and the toolbar

@@ -1,7 +1,18 @@
 # ADR 0190 — a journal you can review
 
-- **Status:** Accepted
+- **Status:** Accepted — **partly amended by ADR 0207** (2026-09-09)
 - **Date:** 2026-09-04 (`pocket-295-a-journal-you-can-review`)
+- **Amended by:** ADR 0207 (*a journal worth opening*), in two places. **D7's placement of the owner
+  filter** is superseded: *Show* leaves the ⋯ menu for a fixed chip on a new month rail, which states
+  the active kinds in words rather than through a filled glyph — a strictly better answer to **D8**,
+  whose rule is unchanged and is the reason that chip may not scroll out of view. **D9's rejection of
+  a month grid** is narrowed: a grid *marked by presence* replaces the graphical `DatePicker` behind
+  *Jump to…*, on the finding that D9's no-grading argument was thin (as `docs/backlog.md` had already
+  recorded) while its `MonthHeatmap`-confusion argument was the strong one — so the new grid is
+  stroked, unshaded and carries no legend. **Everything else here stands**, D1 and D4 in particular:
+  the player still pins and the app still never does, and pinned is still a filter and never a sort.
+  D9's at-or-before rule survives in `JournalTimeline.jumpTarget`, now used by the look-back card
+  rather than by the picker.
 - **Relates to:** ADR 0100 (the Journal space is read-only for owned entries — this establishes that
   a *review verb* sits inside that rule), ADR 0038 / 0058 / 0143 / 0155 / 0160 / 0175 (the authoring
   half, which is what made the imbalance), ADR 0151 (a note outlives its unit — and what it loses

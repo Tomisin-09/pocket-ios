@@ -15,6 +15,29 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Added
+- **The journal hands something back.** At the top of the timeline, a card quotes one entry from a
+  year ago — the day itself if you wrote one, otherwise that week or that month, and it says which.
+  Tap it to go to that day. It picks purely by date: nothing decides which of your entries mattered.
+  Set it to **6 months**, **a year**, **2 years** or **Off** under **⋯ ▸ Look back**, and it stays
+  out of the way entirely when there is nothing near the date.
+- **The months you have written in, above the timeline.** A row of months you can tap to jump
+  straight there. A month you wrote nothing in is simply not listed.
+- **Jump to a day you can see.** **Jump to…** now opens a month you can read: days that hold
+  something are ringed, and only those can be picked — so you no longer land on a day and find out
+  afterwards it was empty. Reach it by tapping the day header at the top of the feed, or from **⋯**.
+- **Quick note says what it will keep.** Writing a note on a drill, a loop or the metronome now
+  shows the tempo, mastery or click it is about to record with it, before you save.
+
+### Changed
+- **The journal reads like a journal.** Each entry now leads with what you wrote, at a readable
+  size, with a slim colour edge for its kind instead of a label taking up the first line. Long notes
+  are trimmed to four lines — tap to open one out. Entries written on a drill now show the mastery
+  they were written at, which was being recorded and never shown. Takes carry the same shape.
+- **Days are grouped under their month**, so a long scroll back says where you are.
+- **Show moved out of the ⋯ menu** onto the timeline itself, where it says what it is filtering to
+  without being opened.
+
+### Added
 - **A loop row says how many snags are in it.** The **Loops** panel shows a snag count beside a
   loop's range and mastery, when there are any — so you can see which passage has been giving
   trouble without opening the Snags panel. It counts marks by where they fall, so a mark you made

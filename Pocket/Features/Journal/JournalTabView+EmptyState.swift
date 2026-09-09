@@ -105,7 +105,7 @@ extension JournalTabView {
             // same wrong conclusion this file exists to prevent, reached one step later. Found by
             // looking at the built screen: the title said both and the sentence under it said one.
             return "Nothing you have pinned is filed under \(phrase). Turn off Pinned "
-                + "only, or open ⋯ ▸ Show and choose All."
+                + "only, or tap Show above the timeline and choose All."
         }
         if pinnedOnly {
             // Says where the gesture is, because the hold menu is the only place it lives and a menu
@@ -114,14 +114,13 @@ extension JournalTabView {
                 + "everything again."
         }
         if let phrase = ownerFilter.phrase {
-            // Names the route, not the state, because the player has to undo this from a menu they
-            // cannot see from here. **Every word is something on that menu**: ⋯ opens it, *Show* is
-            // a row on it, *All* is the first row of the sheet that opens. An instruction naming a
-            // control that isn't drawn is worse than none — this line first said "Set Show back to
-            // All" while the picker rendered inline with no title at all, which is what sent the
-            // picker out of the menu altogether.
+            // **Every word names something drawn on this screen.** That rule cost this line two
+            // rewrites: it first said "Set Show back to All" while the picker rendered inline with
+            // no title, and then "Open ⋯ ▸ Show" — which stopped being true the moment ADR 0207 D6
+            // moved Show onto the month rail. It is now the shortest it has ever been, because the
+            // control it names is finally visible from here rather than two taps inside a menu.
             return "Nothing in your journal is filed under \(phrase). "
-                + "Open ⋯ ▸ Show and choose All to see everything again."
+                + "Tap Show above the timeline and choose All to see everything again."
         }
         switch scope {
         case .all:

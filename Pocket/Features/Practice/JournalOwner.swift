@@ -131,6 +131,41 @@ enum JournalOwner {
             return "Saves straight to your Journal, snapshotting the click you're playing to."
         }
     }
+
+    /// **The values this note will actually keep**, in the units the row will later show them in —
+    /// `"96 BPM · 16ths"`, `"Mastery ●●●○○ · 90%"`, the click, the units practised. `nil` for a
+    /// standalone note, which snapshots nothing (ADR 0155 §5).
+    ///
+    /// `JournalSheet` has previewed this since ADR 0058 and the **compact composer never has**
+    /// (ADR 0207 D9) — which is the wrong way round, because the compact one is the door most notes
+    /// are written through, and `destinationLine` tells you *where* a note lands without telling you
+    /// *what it takes with it*. The manual calls that snapshot "the point of writing where you
+    /// played"; a composer that never shows it is asking for trust it could simply demonstrate.
+    ///
+    /// A plain `String` rather than a view, so both composers render one truth and the wording is
+    /// unit-testable without a host.
+    var captureSummary: String? {
+        switch self {
+        case .loop(let loop):
+            let mastery = loop.mastery.map { "Mastery \($0) of 5" } ?? "Unrated"
+            return "\(mastery) · \(LoopProgressFormat.percentLabel(loop.commandTempo))"
+        case .exercise(let exercise):
+            return LoopProgressFormat.bpmLabel(exercise.commandTempo,
+                                               notesPerBeat: exercise.commandNotesPerBeat)
+        case .session(let context):
+            // A session snapshots *what was practised*, never a tempo (ADR 0143) — it spans several
+            // units at several tempos, and any single number would be a claim about one of them.
+            return context.units.isEmpty
+                ? "What you practised"
+                : context.units.map(\.title).joined(separator: ", ")
+        case .metronome(let sitting):
+            return sitting.summary
+        case .standalone:
+            // Not "Nothing": absence is the honest answer and the composer omits the line entirely,
+            // rather than drawing a label whose value is a word meaning there isn't one.
+            return nil
+        }
+    }
 }
 
 /// The single write path for journal entries (ADR 0058), shared by the Practice run screens.
