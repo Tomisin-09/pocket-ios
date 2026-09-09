@@ -47,9 +47,13 @@ final class ExerciseShareUITests: UITestCase {
         let app = launchApp()
         try openExercisesLibrary(in: app)
 
-        let options = app.buttons["List options"]
+        // **`navigationBars`-scoped, and tapped only once hittable.** A bare `app.buttons[…]` here
+        // passed locally and failed on CI twice, deterministically: `tap()` asks the accessibility
+        // layer to scroll the element into view first, and a nav-bar button has nothing to scroll,
+        // so it fails with `kAXErrorCannotComplete` — which reads like a missing control and is not.
+        let options = app.navigationBars.buttons["List options"]
         XCTAssertTrue(options.waitForExistence(timeout: Self.uiTimeout), "no options control on Exercises")
-        options.tap()
+        tapWhenHittable(options, called: "List options")
 
         XCTAssertTrue(app.buttons["Receive an exercise…"].waitForExistence(timeout: Self.uiTimeout),
                       "the options menu offers no way to receive a shared drill")
