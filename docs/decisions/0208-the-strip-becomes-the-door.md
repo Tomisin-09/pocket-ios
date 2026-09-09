@@ -154,6 +154,12 @@ its *drive state*, which is a harness and `shots.md` edit.
 - **`journal/timeline` needs reshooting for a second reason.** ADR 0207 changed the row treatment;
   this removes the Practice log row above it. One reshoot covers both, which is why it was not done
   between the two.
+
+  **Done 2026-09-09** (`pocket-307-journal-manual-reshoot`). One pass of `ManualShotsUITests`, 6/6,
+  covered `journal/timeline`, `journal/take-row` and `journal/progress` — the new drive state
+  through Home's *This week* strip photographed the Practice log, gated on the navigation bar as
+  decided above. `reference/home` was re-taken by the same pass and now carries the chevron; the
+  ADR 0196 half of its bill (six tiles that do not fit one frame) is untouched and still owed.
 - **`HomeSection` grew a `chevron` flag** — a `Bool`, not a `@ViewBuilder` accessory slot. One caller
   wants one glyph; a generic slot would be a shape invented for a need that does not exist.
 - **A screen with one call site is easy to move and easy to lose.** `PracticeLogView` has now been

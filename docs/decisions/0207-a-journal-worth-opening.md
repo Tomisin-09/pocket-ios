@@ -456,6 +456,12 @@ words, because the relation is the part a player cannot see.
   from the new shot rather than carried over, and this is the general hazard: **a `crop:` is a
   figure that cannot go stale loudly.** Every shot slug with one is exposed to any layout change on
   its screen, and nothing in the pipeline says so.
+
+  **Re-derived and shot 2026-09-09** (`pocket-307-journal-manual-reshoot`): the rect is now
+  `35,913,1135,183`, against a master whose row content measures y 943–1065. The old
+  `35,855,1135,185` ended at y 1040, so carried over it would have cut the owner caption and taken
+  the `Yesterday` header in with it — the failure this bullet predicted, in the shape it predicted.
+  Measured off the master rather than estimated, then cut and looked at before the rect was written.
 - **`KindChip` now has two readers with different needs** — the composer draws the pill, the feed
   reads only `tint(for:)`. That is the intended shape (one colour table, two presentations), but it
   means a future kind added to `EntryKind` has to be checked in both places, and only one of them is
