@@ -286,6 +286,16 @@ The wording lives on `JournalOwner.captureSummary` beside `destinationLine`, for
   now cheap to satisfy, because the control it names is finally on the screen the instruction appears
   on. `docs/manual/journal-and-practice-log.md` documented the same dead route and moved with it.
 
+  ⚠ **`Color.clear` is greedy, and it broke the grid at the `.large` detent — visible only on
+  device.** Blank cells (the days belonging to a neighbouring month) were `Color.clear`, and a
+  `Color` expands in **both** axes, so each blank grew to fill whatever height the sheet offered.
+  The effect was not a uniformly stretched grid, which would have been obvious: only the **two weeks
+  that contained blanks** moved, flung to the top and bottom of the sheet while the four full weeks
+  stayed tightly spaced in the middle. At the `.medium` detent there was no slack to expand into and
+  it looked perfect. The fix is a **hidden day label** rather than a spacer — it occupies exactly
+  what a day occupies at every Dynamic Type size, because it is one. **The general rule: a blank
+  cell in a grid should be the real cell made invisible, never a different view chosen to be empty.**
+
   **`JournalTabView` had to shed the list to stay under the cap** — `JournalTabView+List.swift` is
   the fifth file that view has spun off. Moving `row` out immediately failed the build on four
   `private` members, which is `private`-is-file-scoped arriving for the fifth time in this feature and

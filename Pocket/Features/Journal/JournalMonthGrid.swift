@@ -134,9 +134,15 @@ struct JournalMonthGrid: View {
                     .accessibilityLabel("\(date.formatted(.dateTime.day().month(.wide))), no entries")
             }
         } else {
-            // A cell belonging to a neighbouring month. `Color.clear` rather than an empty `Text`,
-            // so the column keeps its width without carrying a baseline that shifts the row.
-            Color.clear.frame(maxWidth: .infinity, minHeight: 34)
+            // A cell belonging to a neighbouring month — **a hidden day label, never `Color.clear`.**
+            // `Color` is greedy in *both* axes, so at the `.large` detent each blank expanded to fill
+            // whatever height the sheet offered: the two weeks that contain blanks were flung to the
+            // top and bottom of the sheet while the four full weeks stayed tight together. A hidden
+            // label occupies exactly what a real day occupies, at every Dynamic Type size, because it
+            // *is* one.
+            dayLabel(0, marked: false)
+                .hidden()
+                .accessibilityHidden(true)
         }
     }
 
