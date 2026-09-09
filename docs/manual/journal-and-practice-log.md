@@ -84,7 +84,7 @@ run does and ends when it does. Takes land in this same timeline alongside your 
 <!-- shot: journal/take-row | role: detail
      | alt: A take in the timeline with its play button, name, duration, time and the owner caption beneath
      | state: seeded library, Journal, Takes filter, at least one take
-     | crop: 35,855,1135,185 -->
+     | crop: 35,913,1135,183 -->
 
 - **▶** plays it. One plays at a time, and it stops when you leave the screen.
 - Its row shows the take's name, how long it runs, and when it was made.
