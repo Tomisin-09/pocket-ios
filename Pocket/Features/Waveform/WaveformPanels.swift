@@ -27,6 +27,9 @@ struct LoopsPanel: View {
     @Binding var expanded: Bool
     let activeLoopID: UUID?
     let isPlaying: Bool
+    /// How many snags sit inside each loop's span (ADR 0206 D1), keyed by `uid`. A loop with none is
+    /// **absent from the dictionary**, not zero — the row draws nothing for it.
+    var snagCounts: [UUID: Int] = [:]
     /// Tap the row — activate (and play / toggle) this loop.
     let onActivate: (Loop) -> Void
     /// Swipe-Edit or hold the row — open the edit sheet (ADR 0028). Replaces the pencil.
@@ -67,6 +70,7 @@ struct LoopsPanel: View {
                                 isPlaying: isPlaying,
                                 isSelecting: selection.isActive,
                                 isSelected: selection.selection.contains(loop.uid),
+                                snagCount: snagCounts[loop.uid] ?? 0,
                                 onActivate: { onActivate(loop) },
                                 onToggleSelection: { selection.toggle(loop.uid) },
                                 onAdjustRange: { onAdjustRange(loop) },
@@ -90,6 +94,8 @@ private struct LoopRow: View {
     let isPlaying: Bool
     let isSelecting: Bool
     let isSelected: Bool
+    /// Marks inside this loop's span (ADR 0206 D1); `0` draws nothing.
+    let snagCount: Int
     let onActivate: () -> Void
     let onToggleSelection: () -> Void
     let onAdjustRange: () -> Void
@@ -125,7 +131,7 @@ private struct LoopRow: View {
                     // practice state (mastery + command tempo) make the row glanceable —
                     // each shown only when set, so an untouched loop reads as just a range
                     // and never a fake rating (ADR 0039).
-                    LoopRowProgress(loop: loop, compact: compact)
+                    LoopRowProgress(loop: loop, snagCount: snagCount, compact: compact)
                 }
                 Spacer(minLength: 0)
             }
@@ -197,6 +203,9 @@ private struct LoopRow: View {
 /// so it reads as a small pill badge.
 private struct LoopRowProgress: View {
     let loop: Loop
+    /// Marks inside this loop's span (ADR 0206 D1). Shown only when there are some — the row's own
+    /// rule for mastery and command tempo, and the reason an untouched loop reads as just a range.
+    var snagCount: Int = 0
     /// Landscape drawer: drop the time range (it's on the waveform) to keep the narrow
     /// row uncluttered — just the mastery dots + command-tempo badge remain (ADR 0042).
     var compact: Bool = false
@@ -225,6 +234,26 @@ private struct LoopRowProgress: View {
                         .background(Capsule().fill(PocketColor.surfaceStandard))
                         .accessibilityLabel("Command tempo \(percent) percent")
                 }
+            }
+            // Where the marks are, never how many mistakes were made (ADR 0200). It is the same
+            // count the Snags panel shows and the same set that draws bright on the canvas, because
+            // all three read position rather than the loop a mark was tapped under (ADR 0203 D1).
+            // Kept in the compact drawer too: it is two glyphs wide and it is the row's only reason
+            // to say "start here."
+            if snagCount > 0 {
+                if !compact { Text("·").foregroundStyle(PocketColor.textSecondary) }
+                HStack(spacing: 3) {
+                    SnagCatch()
+                        .stroke(PocketColor.oracle,
+                                style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round))
+                        .frame(width: 11, height: 11)
+                    Text("\(snagCount)")
+                        .font(.pocketMono(.caption2).weight(.semibold))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
+                .fixedSize()
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(snagCount) snag\(snagCount == 1 ? "" : "s")")
             }
         }
     }

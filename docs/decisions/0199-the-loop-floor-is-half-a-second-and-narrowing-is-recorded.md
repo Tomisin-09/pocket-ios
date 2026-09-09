@@ -5,6 +5,11 @@
 - **Amends:** ADR 0005 — its Consequences state that gesture-created loops enforce a minimum width
   via `WaveformGesture.minLoopWidth`. The minimum stays; its **unit** changes from a fraction of the
   song to seconds of audio, and the constant is renamed. Nothing else in 0005 moves.
+- **Amended by:** ADR 0204 — the span history gets its first reader outside the app: it crosses to
+  the Oracle as two widths in seconds per edit, and **never** as a `SpanHistory.Kind` verdict
+  (0204 D2). The record, the cascade and the `SpanHistory` rules are unchanged.
+- **Amended by:** ADR 0205 — the history is now carried in the export and restored from it
+  (0205 D2, D3), with each row's `songDuration` preserved exactly as written.
 - **Relates to:** ADR 0041 (the A/B span, whose two closing calls now take a duration and whose
   Save now writes a history row), ADR 0008 (the crossfaded loop buffer — the constraint the old
   floor was mistaken for), ADR 0036 (the enum-attribute migration crash, which is why this model

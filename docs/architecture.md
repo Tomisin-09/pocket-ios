@@ -1347,9 +1347,9 @@ empty, because that line was Home's only word about adding a first song.
   app, only a tick on the canvas. `SnagsPanel` gives them one home — a `CollapsiblePanel` after
   Markers, folded by default, rows ordered **by position in the song** (a map of where this song
   gives trouble; recency order would scatter three marks in one bar across the list). It borrows the
-  loops/markers grammar and **trims what a snag has no use for**: no multi-select, no edit sheet, no
-  hold, because there is nothing to rename, recolour or rate. Deleting has **no undo toast**, unlike
-  a loop or marker (ADR 0125) — those carry authored content a mis-tap loses, an anonymous timestamp
+  loops/markers grammar and **trims what a snag has no use for**: no edit sheet, no hold on a row,
+  because there is nothing to rename, recolour or rate. Deleting one has **no undo toast**, unlike a
+  loop or marker (ADR 0125) — those carry authored content a mis-tap loses, an anonymous timestamp
   does not.
 
   The tick geometry also became a **shared constant**, `WaveformCanvas.snagBand`. `drawSnags` grew
@@ -1377,6 +1377,16 @@ empty, because that line was Home's only word about adding a first song.
   is precisely what narrowing between attempts produces (ADRs 0199/0201) — and it asserts a single
   owner that D1 above deliberately ignores. A bare timecode being anonymous was the real complaint,
   and a caption answers it without charging section headers against a panel made cheap to open.
+
+  **ADR 0206** adds the one surface that survived: a **Loops panel row shows the count** of marks
+  inside its span (`snagCountsByLoop`), absent rather than zero — the row's own rule for mastery
+  (ADR 0039), and keyed on position so the row's number, the panel's rows and the bright ticks are
+  one set. **Multi-select and a *clear all in this loop* control were built on this branch and taken
+  back out before merge** (0206 D2, on the device pass): they put a fourth mode on a screen with
+  three, for the cheapest object in the app, on a panel that is folded by default *because* a snag is
+  not something you administer. So 0202 D2's "no multi-select" and D3's "no undo toast" stand with no
+  exception, and `snagsByTime` deliberately carries **no** pending-delete filter — `loops` and
+  `markers` need one because their delete is deferred behind an undo window, and a snag's is not.
 - **`LoopSpanChange`** (ADR 0199) is *how the loop got this narrow* — one row per edit to a loop's
   span, carrying `changedAt`, the span after, **the span before**, the playback `speed` in force and
   the song's `songDuration` at write time. It exists because `Loop.start` / `Loop.end` are
@@ -1405,10 +1415,13 @@ empty, because that line was Home's only word about adding a first song.
   keeps its width and slides along the song is *neither* — calling it either would put a false claim
   into everything downstream. ⚠ The inverse **cascades**, like `ReferenceLink` below and unlike
   `JournalEntry` / `Recording`: ADR 0151 keeps a take past its loop because the take is a recording
-  of *you*, while a fact *about a span* has nothing to be about once the span is gone. **Nothing
-  reads it back yet** — the span-editor section, the widen-back affordance and the Oracle context
-  payload are later slices, and the record lands first so history accrues before the surfaces that
-  need it exist.
+  of *you*, while a fact *about a span* has nothing to be about once the span is gone.
+
+  **Three readers now**, all landed after the record: `LoopSpanSection` and the widen-back offer
+  (ADR 0201), the Oracle context payload (ADR 0204 D2 — two widths in seconds per edit, oldest
+  first, and never a `SpanHistory.Kind` verdict, which is derived), and the export (ADR 0205 D2,
+  which preserves each row's `songDuration` rather than recomputing it from the song's current one).
+  The record landing a slice before any of them is why they had a history to read on day one.
 - **`ReferenceLink`** (ADR 0167) is *where you learned it* — a title, a URL and an optional note hung
   off the thing it explains. The note (added by the ADR's 2026-08-19 revision) is *what you took from
   the source*, as against the title's *what the source is*: a plain non-optional `String` with a
@@ -1681,6 +1694,14 @@ true (ADR 0150 §118-121).
   any statistic — ADR 0117 and ADR 0070 permit a count and a date and refuse anything that grades.
   The three JSON-in-`Data` columns (`Exercise.templatePayload`, `SavedChord.voicingData`,
   `JournalEntry.practisedUnitsRaw`) are **decoded and nested** as real JSON rather than base64.
+  **ADR 0205** adds the two children 0181 left on the floor: `SongRecord.snags` and
+  `LoopRecord.spanChanges`. A snag nests under the **song** because that is what cascade-owns it —
+  nesting it under a loop would assert an ownership the store does not have *and* silently drop every
+  mark made with no loop armed — and its `loopUID` resolves on restore because a restore preserves
+  the loop's own `uid` (ADR 0188 D1). A span change keeps the `songDuration` it was **written** with,
+  so a relink cannot rewrite history. Both take a declaration default of `[]`, so an older archive
+  decodes, and `currentSchemaVersion` stays at **1** under this file's own rule: a version moves when
+  a field changes meaning, not when one is added.
   `SessionRecord` was already export-shaped and simply gained `Codable`. Every collection is sorted
   with `uid` as tie-breaker and the encoder uses `.sortedKeys`, so two exports of an unchanged library
   are byte-identical.
@@ -1897,6 +1918,20 @@ The pipeline, in the order `OracleCoordinator` runs it — one place, one order,
    stored properties only, **no computed judgement** (effort is counts, minutes and dates —
    `TempoTrajectory.change` is deliberately left behind), and a tempo that never travels without its
    note rate (ADR 0121).
+
+   **ADR 0204 adds an eighth rule and three fields on `Unit`.** A loop carries its `snags` — each one
+   a **position measured from the loop's own start**, plus the date and the speed — because D6 R2
+   keeps titles off the wire, so an absolute `128.2` would be an offset into something the model
+   cannot name. Which marks belong to a loop is decided by **position, not `Snag.loopUID`** (ADR 0203
+   D1), so the payload's set is the set lit on the player's own canvas. Over `maxSnagsPerUnit` the
+   oldest go and **`droppedSnags` says so** — a snag set is a *map*, and a map trimmed in silence is
+   read as the whole terrain (contrast `Tempo.points`, capped silently because a trajectory is read
+   from its recent end). `spans` carries each edit as **two widths in seconds** and never a
+   `SpanHistory.Kind`, which is derived — `80s → 20s` says what "narrowed" says, as a measurement
+   rather than a characterisation. **R8**: a snag crosses as a position, never as a count or a rate,
+   and the prompt derives neither. Both are exempt from R4's free-text budget (they carry no text),
+   and a mark outside every loop does not travel at all — there is no song entity for it to hang from
+   and inventing one would put a song into a payload that has never contained one.
 3. **D13, before anything is sent.** `OracleSafetySignal` scans for distress — which means the model
    is **not called at all** — and then for pain, which suppresses the proposal capabilities and
    leaves the reflection standing. Both fail towards the safe branch. The matcher is a floor, not a

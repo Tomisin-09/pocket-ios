@@ -51,6 +51,16 @@ struct SongRecord: Codable, Equatable, Sendable {
     var loops: [LoopRecord]
     var markers: [MarkerRecord]
     var references: [ReferenceLinkRecord]
+    /// The song's snags (ADR 0205). Nests here rather than under `LoopRecord` because that is where
+    /// the model puts them: a snag is cascade-owned by its `Song` and only *tagged* with a loop, so
+    /// that 2:01 is 2:01 whether or not the loop armed at the time still exists (ADR 0200). Nesting
+    /// it under a loop would make the archive assert an ownership the store does not have, and would
+    /// silently drop every mark made with no loop armed.
+    ///
+    /// **Additive, with a declaration default**, so an archive written before this decodes with an
+    /// empty list rather than failing — the `schemaVersion` stays at 1 because no field changed
+    /// meaning (`PracticeArchive.currentSchemaVersion`).
+    var snags: [SnagRecord] = []
 }
 
 /// A practice loop over a region of a song, with every authored setting that governs how it runs.
@@ -94,6 +104,43 @@ struct LoopRecord: Codable, Equatable, Sendable {
     var customColorHex: String?
 
     var references: [ReferenceLinkRecord]
+    /// Every recorded edit to this loop's span (ADR 0205). Nests, because `Loop.spanChanges` is
+    /// `.cascade` (ADR 0199 D5) — with the loop gone there is no span for a row to be about.
+    ///
+    /// Additive with a declaration default, like `SongRecord.snags`.
+    var spanChanges: [LoopSpanChangeRecord] = []
+}
+
+/// A place the player fluffed it (ADR 0200) — a point on the song, and the cheapest thing in the
+/// library to make.
+///
+/// **`loopUID` is a loose id copy, not a relationship**, and it is written as the id it is. It
+/// resolves on the way back in because a restore preserves the loop's own `uid` rather than minting
+/// one (`ArchiveRestoreWriter+Library.loop(from:)`); a mark whose loop is not in the archive keeps
+/// the id and simply shows no caption, which is what the app already does for a deleted loop.
+struct SnagRecord: Codable, Equatable, Sendable {
+    var uid: UUID
+    var markedAt: Date
+    var seconds: TimeInterval
+    var speed: Double?
+    var loopUID: UUID?
+}
+
+/// One recorded edit to a loop's span (ADR 0199).
+///
+/// Both pairs of bounds travel, because each row is self-contained by design — it answers "widen
+/// back to where it was" without walking the chain. `songDuration` travels too: it is the duration
+/// **at write time**, which is what lets a span read back in seconds after a relink (ADR 0152), and
+/// recomputing it from the song's current duration on restore would quietly rewrite history.
+struct LoopSpanChangeRecord: Codable, Equatable, Sendable {
+    var uid: UUID
+    var changedAt: Date
+    var start: Double
+    var end: Double
+    var previousStart: Double
+    var previousEnd: Double
+    var speed: Double?
+    var songDuration: TimeInterval?
 }
 
 /// A named point in a song.

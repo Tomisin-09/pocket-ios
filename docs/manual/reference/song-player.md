@@ -82,9 +82,12 @@ Taking it does not change the loop: it opens the shorter range as a live A / B s
 first, and `Save changes` is what commits it. If your snags are spread across the loop, nothing is
 offered — that spread is telling you the trouble is not in one place.
 
-Snags live in the `Snags` panel below, where you can jump to one or remove it.
+Snags live in the `Snags` panel below, where you can jump to one or remove it. A loop's row in the
+`Loops` panel also shows how many marks fall inside it, so you can see which passage has been giving
+trouble without opening anything.
 
-Nothing counts them or scores them. `Snag` is for you.
+Nothing scores them, and nothing charts them over time. A count says *where* the marks are, never
+how you played. `Snag` is for you.
 
 ## A loop's span history
 
@@ -107,7 +110,8 @@ Three collapsible lists under the transport, each headed with its name and, when
 
 ### `Loops`
 
-One row per loop: its name, its range as times, and its mastery. Each row carries **play**, an
+One row per loop: its name, its range as times, its mastery, and — when there are any — how many
+snags fall inside its range. Each row carries **play**, an
 **adjust range** control that takes you back to the waveform to drag the ends, and a **ramp** control
 that opens the loop automator.
 
@@ -134,8 +138,8 @@ The rows stay in song order rather than being grouped by loop, so two marks a be
 together even when you made them under different loops. A snag whose loop you have since deleted
 keeps its place and simply shows no loop name.
 
-There is nothing else to a snag — no name, no colour, no rating — so there is no edit sheet and no
-holding a row. It starts collapsed.
+There is nothing else to a snag — no name, no colour, no rating — so there is no edit sheet, no
+holding a row, and no selection mode. It starts collapsed.
 
 ## The sheets
 

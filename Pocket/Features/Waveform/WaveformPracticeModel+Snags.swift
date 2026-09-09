@@ -41,8 +41,32 @@ extension WaveformPracticeModel {
     /// Every snag in playing order — the Snags panel's list (ADR 0202 D2). **By position, not by
     /// when it was tapped**: the panel is a map of where the song gives trouble, and a list sorted
     /// by recency would scatter three marks in one bar across it.
+    ///
+    /// **No pending-delete filter, unlike `loops` and `markers`.** Those defer a delete behind an
+    /// undo window (ADR 0125) and have to hide a row that still exists; removing a snag is immediate
+    /// and unconditional (ADR 0202 D3), so there is no such state to filter out.
     var snagsByTime: [Snag] {
         song.snags.sorted { $0.seconds < $1.seconds }
+    }
+
+    /// How many marks sit inside each loop's **current** span — the Loops panel's row count
+    /// (ADR 0206 D1). Keyed by `uid`, and a loop with none is **absent** rather than zero: the row
+    /// renders nothing for it, the same way an unrated loop shows no dots rather than five empty
+    /// ones (ADR 0039).
+    ///
+    /// Position, not `Snag.loopUID` — the rule ADR 0203 D1 settled. A row's count and the bright
+    /// ticks on the canvas are then the same set, which is the only way the two can be read together.
+    var snagCountsByLoop: [UUID: Int] {
+        let marks = song.snags.map(\.seconds)
+        guard !marks.isEmpty else { return [:] }
+        var counts: [UUID: Int] = [:]
+        for loop in loops {
+            let start = loop.startSeconds
+            let end = loop.endSeconds
+            let count = marks.filter { $0 >= start && $0 <= end }.count
+            if count > 0 { counts[loop.uid] = count }
+        }
+        return counts
     }
 
     /// Loop names by `uid`, for the Snags panel's row captions (ADR 0203 D2). Built once per render
@@ -72,7 +96,7 @@ extension WaveformPracticeModel {
         haptic(.light)
     }
 
-    /// Snags inside the armed loop, newest first — the count the Loops panel row shows.
+    /// Snags inside the armed loop, newest first — the count the tighten offer reports.
     var snagsInActiveLoop: [Snag] {
         guard let loop = activeLoop else { return [] }
         let start = loop.startSeconds

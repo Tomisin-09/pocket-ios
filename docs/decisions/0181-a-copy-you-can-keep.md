@@ -2,6 +2,9 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-23 (`pocket-283-a-copy-you-can-keep`)
+- **Amended by:** ADR 0205 — the archive gains `SongRecord.snags` and `LoopRecord.spanChanges`
+  (0205 D1, D2). Additive with declaration defaults, so `schemaVersion` stays at **1** under this
+  ADR's own bump rule (0205 D4). The nesting discipline and the two deliberate exclusions stand.
 - **Relates to:** ADR 0150 (take sharing — **superseded in part**, see §7), ADR 0148 (Red Moon owns
   its song copies), ADR 0069 (practice takes and their retention), ADR 0151 (a take outlives its
   loop), ADR 0090 (stable `uid`s, never `persistentModelID`), ADR 0117 and ADR 0070 (a record, never

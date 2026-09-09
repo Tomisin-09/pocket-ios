@@ -83,6 +83,59 @@ extension OracleContext {
         /// difference between "last practised on the 3rd" and "neglected for 19 days" is the
         /// difference between a fact and an accusation, and only one of them is this app's job.
         let lastPractisedOn: Date?
+        // The three below are `var`s with defaults, unlike everything above them, so the memberwise
+        // init defaults them — a test fixture about tempo or handles should not have to state that a
+        // unit has no marks. The default is also the **safe** direction: a future field that forgot
+        // to pass them under-sends rather than over-sends, which is the only way round this DTO is
+        // allowed to be wrong.
+        /// Where this loop's snags fall inside its **current** span (ADR 0204 D1). Always empty
+        /// for an exercise, which has no timeline to mark.
+        var snags: [SnagMark] = []
+        /// Marks that did not fit `OracleContextBudget.maxSnagsPerUnit`. A snag set is a **map**,
+        /// so a capped one has to say it is partial — the `droppedNotes` rule, for the same reason
+        /// (D6 R4): a truncated map that looks complete is read as complete.
+        var droppedSnags: Int = 0
+        /// What this loop's span has done over time (ADR 0204 D2). Always empty for an exercise.
+        var spans: [SpanEdit] = []
+    }
+
+    /// One snag, as a **position inside the loop it sits in** (ADR 0204 D1).
+    ///
+    /// Never an absolute point in a song, and never a count. `atSeconds` is measured from the
+    /// loop's current start, so the value means something without the song it came from — which is
+    /// also what keeps D6 R2 intact: there is no title here for an offset to be an offset *into*.
+    ///
+    /// The date travels because *when* the marks were made separates two readings that the
+    /// positions alone cannot: four marks in one sitting is a passage fought over once, four marks
+    /// across three weeks is one that keeps coming back. What must not be derived from it is a
+    /// rate — see D3, which is a rule about the prompt, not about this type.
+    struct SnagMark: Codable, Equatable, Sendable {
+        /// Seconds from the start of the loop's current span.
+        let atSeconds: TimeInterval
+        let markedOn: Date
+        /// The playback speed in force at the tap, or `nil` when it could not be read. A snag at
+        /// 0.6× and a snag at full tempo are not the same admission (ADR 0200).
+        let speed: Double?
+    }
+
+    /// One recorded edit to a loop's span (ADR 0204 D2), in seconds.
+    ///
+    /// Both widths travel, so a row is self-contained exactly as `LoopSpanChange` is: narrowing
+    /// from 34s to 6s is one fact, and reconstructing it from a neighbouring row's value would
+    /// break the moment a row was dropped by the cap.
+    ///
+    /// **The classification does not travel.** `SpanHistory.Kind` — narrowed, widened, moved — is
+    /// derived, and D6 R5 keeps derived values on this side of the wire. The two numbers say the
+    /// same thing without the app having put an adjective on it first.
+    struct SpanEdit: Codable, Equatable, Sendable {
+        let changedOn: Date
+        /// The span's width before the edit.
+        let fromSeconds: TimeInterval
+        /// The span's width after it.
+        let toSeconds: TimeInterval
+        /// The playback speed in force when the edit was made, or `nil`. Stored because the
+        /// narrowing and the slowing are one behaviour, not two facts (ADR 0199).
+        let speed: Double?
     }
 
     /// Nested one level under `OracleContext` rather than inside `Unit`: SwiftLint caps nesting at
@@ -204,4 +257,16 @@ enum OracleContextBudget {
     /// Enough of a trajectory to see a shape; the oldest points beyond it are dropped, because a
     /// trajectory is read from the recent end.
     static let maxTempoPoints = 12
+
+    /// Marks per loop. Generous, because the shape of a snag set — clustered at one move, or spread
+    /// across the passage — is the entire signal, and a set cut down to a handful loses it. Over the
+    /// cap the **oldest** are dropped and `Unit.droppedSnags` says how many.
+    static let maxSnagsPerUnit = 30
+
+    /// Span edits per loop, dropped from the **old** end like `maxTempoPoints` and unlike
+    /// `maxSnagsPerUnit`. The asymmetry is deliberate and is the difference between the two things:
+    /// a span history is a *trajectory*, read from where it is now, so the recent end is the end
+    /// worth keeping; a snag set is a *map*, where completeness is the axis and a silent trim would
+    /// misdescribe the terrain.
+    static let maxSpanEditsPerUnit = 10
 }

@@ -8,6 +8,9 @@
 - **Amends:** ADR 0201 — the tempo-return rule is **re-anchored to a gesture** and now offers the
   rung above rather than the top of the ladder (D4); the span history collapses to three rows (D5).
   D1's "no cockpit surface" and D3's "widening auditions, it never writes" stand.
+- **Relates to:** ADR 0206 — its D2 records that multi-select and a bulk clear were **built on the
+  snags panel and taken back out before merge**. D2's *no multi-select, no edit sheet* and D3's *no
+  undo toast* therefore stand exactly as written, with no exception.
 - **Relates to:** ADR 0199 (the spans this reads), ADR 0023 (the annotation bands the tick geometry
   lives in), ADR 0125 (the panel grammar this borrows and trims), ADR 0070 (never grading)
 - **Schema:** none. No model, no new stored field.

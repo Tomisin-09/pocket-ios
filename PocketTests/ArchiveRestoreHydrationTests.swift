@@ -187,4 +187,49 @@ final class ArchiveRestoreHydrationTests: XCTestCase {
         XCTAssertEqual(landing.journal.first?.isPinned, false)
         XCTAssertEqual(landing.takes.first?.0.isPinned, false)
     }
+
+    // MARK: - ADR 0205, the marks and the span history come home
+
+    /// A snag's `loopUID` is a loose id copy, and it resolves on the way back in **because** the loop
+    /// keeps the file's own uid rather than being minted a new one (D1). If that ever changed, every
+    /// restored mark would lose the caption naming the loop it was made under.
+    func testASnagComesBackStillPointingAtItsLoop() throws {
+        let loopUID = UUID()
+        let snagUID = UUID()
+        let landing = landed(archive {
+            $0.songs = [{
+                var song = Fixture.song(sourceID: "song-1", loops: [Fixture.loop(uid: loopUID)])
+                song.snags = [SnagRecord(uid: snagUID, markedAt: Fixture.date, seconds: 42,
+                                         speed: 0.7, loopUID: loopUID)]
+                return song
+            }()]
+        })
+
+        let song = try XCTUnwrap(landing.songs.first)
+        XCTAssertEqual(song.snags.map(\.uid), [snagUID])
+        XCTAssertEqual(song.snags.first?.loopUID, song.loops.first?.uid)
+        XCTAssertEqual(song.snags.first?.seconds, 42)
+        XCTAssertEqual(song.snags.first?.speed, 0.7)
+    }
+
+    /// The duration recorded **at write time** must land unchanged. Recomputing it from the song's
+    /// current duration would rewrite history the first time a relink changed the file (ADR 0152).
+    func testASpanHistoryComesBackWithTheDurationItWasWrittenWith() throws {
+        let loopUID = UUID()
+        let landing = landed(archive {
+            $0.songs = [Fixture.song(sourceID: "song-1", loops: [{
+                var loop = Fixture.loop(uid: loopUID)
+                loop.spanChanges = [LoopSpanChangeRecord(uid: UUID(), changedAt: Fixture.date,
+                                                         start: 0.25, end: 0.4,
+                                                         previousStart: 0.2, previousEnd: 0.5,
+                                                         speed: 0.7, songDuration: 214.5)]
+                return loop
+            }()])]
+        })
+
+        let change = try XCTUnwrap(landing.songs.first?.loops.first?.spanChanges.first)
+        XCTAssertEqual(change.previousStart, 0.2)
+        XCTAssertEqual(change.previousEnd, 0.5)
+        XCTAssertEqual(change.songDuration, 214.5)
+    }
 }

@@ -11,6 +11,15 @@
 - **Amended by:** ADR 0203 — the ticks are no longer one flat opacity. Marks inside the **armed
   loop's span** draw full and the rest recede (0203 D1), keyed on position rather than on the
   `loopUID` recorded here, so the drawing agrees with `SnagCluster`'s own positional filter.
+- **Amended by:** ADR 0204 — marks cross to the Oracle as **positions inside a loop**, never as a
+  count or a rate (0204 D1, D3). This ADR's "where the marks are, never how many mistakes" line is
+  what R8 makes into a rule on the way out.
+- **Amended by:** ADR 0205 — snags are carried in the export, nested under the **song** because that
+  is what owns them (0205 D1), and restored with the `loopUID` they were tagged with (0205 D3).
+- **Amended by:** ADR 0206 — the Loops panel row shows how many marks sit in a loop's span
+  (0206 D1). Its D2 records that the rest of this ADR's "not built" list — multi-select and a bulk
+  clear — was built and **removed before merge**, so it stays unbuilt deliberately rather than
+  by omission.
 - **Relates to:** ADR 0199 (the half-second floor, which this composes with and depends on),
   ADR 0192 (the transport grammar whose D2 argument this finishes), ADR 0041 (the A/B span the
   accept path lands in), ADR 0070 (never grading — the line this feature runs along),

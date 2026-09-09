@@ -56,3 +56,31 @@ enum ArchiveCoding {
         return try decoder.decode(type, from: data)
     }
 }
+
+/// **A field added to the archive after v1 shipped must be absent-tolerant** (ADR 0205 D5).
+///
+/// Swift's synthesized `Decodable` does **not** fall back to a property's default value when a key
+/// is missing — it calls `decode(_:forKey:)`, which throws `keyNotFound`. So a declaration default
+/// on a new record field does nothing on the way in: an archive written before that field existed
+/// fails to decode **entirely**, and a restore of a real backup dies on one absent key.
+///
+/// An `Optional` field is free of this (the synthesizer uses `decodeIfPresent` for those, which is
+/// why `RoutineItemRecord.orphanLabel` was safe and why ADR 0181 could say an additive field does
+/// not move `schemaVersion`). A **non-optional collection with a default** is not, and that is the
+/// shape an added child list wants to be.
+///
+/// These overloads are how it is bought back, and they are deliberately **named types, not a generic
+/// over `[T]`**. A generic one would make every missing array in every `Codable` type in the app
+/// decode as empty, including required ones — turning a corrupt file into a silently half-read one,
+/// which is the single failure a backup format must not have. Adding an entry here is therefore a
+/// per-field decision, taken once, at the point the field is added.
+extension KeyedDecodingContainer {
+
+    func decode(_ type: [SnagRecord].Type, forKey key: Key) throws -> [SnagRecord] {
+        try decodeIfPresent(type, forKey: key) ?? []
+    }
+
+    func decode(_ type: [LoopSpanChangeRecord].Type, forKey key: Key) throws -> [LoopSpanChangeRecord] {
+        try decodeIfPresent(type, forKey: key) ?? []
+    }
+}

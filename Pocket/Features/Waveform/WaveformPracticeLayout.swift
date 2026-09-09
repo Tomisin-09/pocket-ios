@@ -162,6 +162,7 @@ struct PracticeReference: View {
                 VStack(spacing: 16) {
                     LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
                                activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
+                               snagCounts: model.snagCountsByLoop,                 // ADR 0206 D1
                                onActivate: model.activate, onEdit: model.editLoop,
                                onDelete: model.deleteLoop,
                                onAdjustRange: { model.startRangeEdit($0) },
