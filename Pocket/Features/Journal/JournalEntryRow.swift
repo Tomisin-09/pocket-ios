@@ -32,16 +32,24 @@ struct JournalEntryRow: View {
         HStack(alignment: .top, spacing: 10) {
             JournalKindRail(tint: KindChip.tint(for: entry.kind))
             VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
-                    // The emoji alone. The chip's *word* is the widest and least informative thing
-                    // on the row — the rail already carries the kind in colour, and the label was
-                    // grey for `.note`, which ADR 0190 D5 established is the plurality because it is
-                    // the default nobody changes. `KindChip` itself is untouched: the composer's
-                    // selector and `RoutineBlockDoneView` still draw the full pill, where the word is
-                    // the thing being chosen.
+                HStack(spacing: 6) {
+                    // Emoji **and word** (ADR 0207 D1, amended 2026-09-09). The first build showed
+                    // the glyph alone on the reasoning that the rail already carried the kind in
+                    // colour; on device that turned out to be wrong. A colour is *learned* and a
+                    // glyph at caption size is *guessed* — 🎯 against 🧗 at 11pt is not a reliable
+                    // read — whereas the word is simply known on sight, by everyone, immediately.
+                    //
+                    // Plain tinted text, **not** the `KindChip` capsule: the rail is already spending
+                    // this kind's colour two points to the left, and a filled pill beside it would be
+                    // accent-on-accent — the class of defect that survives a green build.
                     Text(entry.kind.emoji)
                         .font(.futura(.caption))
-                        .accessibilityLabel(entry.kind.label)
+                        // Hidden, or VoiceOver reads the kind twice: the label beside it is the
+                        // same word, now actually on screen.
+                        .accessibilityHidden(true)
+                    Text(entry.kind.label)
+                        .font(.futura(.caption, weight: .semibold))
+                        .foregroundStyle(KindChip.tint(for: entry.kind))
                     Spacer(minLength: 0)
                     // The pin's *state*, so it is legible without opening the hold menu that sets it
                     // (ADR 0190 D3). Beside the time rather than in the row's leading edge: it is a

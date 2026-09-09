@@ -75,10 +75,25 @@ write has to come from the journal being worth reading**, never from the app ask
 A 3pt leading `JournalKindRail` tinted by `KindChip.tint(for:)` replaces the leading chip **on the
 feed**, and `entry.text` moves to `.futura(.body)` at the top of the row's content.
 
-**The chip's word is what goes.** It is the widest thing on the row and the least informative — the
-rail carries the same fact in the periphery, and for `.note` it carries it *better*, because a
-colourless edge is calm where a grey label reading "Note" is noise. The emoji stays, so the kind is
-still nameable at a glance and still has an accessibility label.
+**The chip's capsule goes; the word stays.**
+
+*This is an amendment, dated 2026-09-09, and the original reasoning is kept because the correction is
+the useful part.* The first build dropped the **word** as well as the capsule, arguing it was the
+widest thing on the row and the least informative, since the rail carried the kind in colour and a
+grey label reading "Note" was noise. On device that was simply wrong, and obviously so: **a colour is
+learned, a glyph is guessed, but a word is known.** Seven kinds is more hue than anyone memorises,
+and 🎯 against 🧗 at caption size is not a reliable read — the row had stopped *stating* what an
+entry was and started asking you to infer it. Legibility is not a tax on a design; it is the design.
+
+So the row draws the emoji **and** the label. What stays dropped is the **capsule**: the rail is
+already spending this kind's colour three points to its left, and a filled pill beside it is
+accent-on-accent — the class of defect that survives every green build. Plain tinted text carries the
+word at a fraction of the width the chip needed.
+
+**`KindChip` itself is untouched** and remains the shared component the composer's `EntryKindChipRow`
+and `RoutineBlockDoneView` draw, where the word is the thing being *chosen* rather than *reported*.
+`KindChip.tint(for:)` stays the single source of truth for kind colour, now read by the rail and the
+label as well as the pill.
 
 **`KindChip` itself is untouched.** It remains the shared component the composer's `EntryKindChipRow`
 and `RoutineBlockDoneView` draw, where the word *is* the thing being chosen, and
@@ -151,6 +166,10 @@ different things is worse than one grid, and marking rather than shading does no
 So the new grid answers it in its own visual language: a **stroked ring**, never a filled cell; **no
 opacity ramp**; and **no Less→More key** — the absence of a legend being the clearest available
 statement that there is no scale, because nothing is being measured.
+
+**This was checked rather than argued.** Both grids were put on a device and compared by the owner
+on 2026-09-09: they read as sufficiently different. That is the evidence this decision rests on —
+the objection is about what two pictures look like to a person, and no test can discharge it.
 
 **Only a day that holds something is tappable**, and that is a simplification, not a restriction:
 ADR 0190 D9's at-or-before rule now has nowhere to fire from this control, so the sheet drops the
