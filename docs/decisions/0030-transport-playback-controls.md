@@ -5,6 +5,17 @@
 **Supersedes / amends:** builds on ADR 0027 (transport rework), ADR 0023 (loop
 identity colour), ADR 0029 (session-state lifecycle).
 
+> **Amended by ADR 0192 (2026-09-06):** the rewind · pause · forward cluster's
+> restart / previous-loop / next-loop mapping is withdrawn — both outer buttons are
+> timed skips in both states, clamped to whatever is playing.
+>
+> **Amended by ADR 0200 (2026-09-09):** the **armed-state** stacked *Loop / Marker*
+> column described below is removed, replaced by a single **Snag** control. Neither
+> was cut for space: `tapAB()` disarms the running loop, which is the trapdoor ADR
+> 0192 D2 closed on the skip buttons and left on this one, and Marker was doing
+> Snag's job unlabelled at 27pt. **The idle state — the two big flanking identity
+> circles this ADR is mostly about, and the ✕ colour strip — is untouched.**
+
 ## Context
 
 The transport bar had a single play/pause button and a text-labelled action row

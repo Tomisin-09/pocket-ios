@@ -89,4 +89,32 @@ final class SpanHistoryTests: XCTestCase {
         let change = LoopSpanChange(start: 0.4, end: 0.5, previousStart: 0.2, previousEnd: 0.8)
         XCTAssertNil(change.speed)
     }
+
+    // MARK: widenTarget — coming back down the ladder a rung at a time
+
+    func testWidensBackOneStepNotAllTheWay() {
+        // Narrowed Mon → Wed → Thu. From Thursday's span the offer is *Wednesday's*, not the whole
+        // lick it started as: isolating is a ladder, and you come back down it a rung at a time.
+        let previous = [(start: 0.36, end: 0.58),      // Thu's row records Wed's span
+                        (start: 0.24, end: 0.72)]      // Wed's row records Mon's span
+        let target = SpanHistory.widenTarget(currentWidth: 0.10, previous: previous)
+        XCTAssertEqual(target?.start ?? 0, 0.36, accuracy: 1e-9)
+        XCTAssertEqual(target?.end ?? 0, 0.58, accuracy: 1e-9)
+    }
+
+    func testSkipsRecordedSpansThatAreNotWider() {
+        // A slide (same width, different place) is in the history but is not somewhere to widen to.
+        let previous = [(start: 0.50, end: 0.60),      // same width as now — skipped
+                        (start: 0.24, end: 0.72)]
+        let target = SpanHistory.widenTarget(currentWidth: 0.10, previous: previous)
+        XCTAssertEqual(target?.start ?? 0, 0.24, accuracy: 1e-9)
+    }
+
+    func testNothingToWidenBackTo() {
+        // A loop that has only ever been widened has nowhere to go, and offering its own bounds
+        // would be an action that does nothing.
+        XCTAssertNil(SpanHistory.widenTarget(currentWidth: 0.50,
+                                             previous: [(start: 0.30, end: 0.60)]))
+        XCTAssertNil(SpanHistory.widenTarget(currentWidth: 0.10, previous: []))
+    }
 }

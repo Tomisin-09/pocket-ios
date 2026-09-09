@@ -108,6 +108,12 @@ final class Song {
 
     @Relationship(deleteRule: .cascade, inverse: \Loop.song) var loops: [Loop] = []
     @Relationship(deleteRule: .cascade, inverse: \Marker.song) var markers: [Marker] = []
+    /// Places the player marked as going wrong (ADR 0200). **`.cascade` like `markers`**, and for
+    /// the same reason rather than by copying it: both are points on *this song's* timeline, and a
+    /// point on a song that no longer exists is not a fact about anything. Contrast `takes`, which
+    /// nullify (ADR 0151) because a recording of someone playing is theirs. Additive relationship —
+    /// pre-0200 songs migrate to an empty array (CoreData 134110 rule).
+    @Relationship(deleteRule: .cascade, inverse: \Snag.song) var snags: [Snag] = []
     /// Practice takes recorded against this song (ADR 0069) — e.g. during a play-along.
     /// **Nullified, not cascaded** (ADR 0151), unlike `loops`/`markers`: removing a song from the
     /// library must not destroy recordings of the player, which are the one artifact here that can't

@@ -30,6 +30,22 @@ enum SpanHistory {
         case narrowed, widened, moved
     }
 
+    /// The span to offer widening back to (ADR 0201), or `nil` when there is nothing to go back to.
+    ///
+    /// `previous` is the recorded history **newest first**; the answer is the first entry that was
+    /// genuinely wider than where the loop sits now. Walking from the newest rather than reaching
+    /// for the widest matters: a loop narrowed in three steps should widen back **one step**, to
+    /// the size it was working at yesterday, not leap to the whole lick it started as. Isolating is
+    /// a ladder, and coming back down it a rung at a time is the point.
+    ///
+    /// Returns `nil` when every recorded span is the same width or narrower — a loop that has only
+    /// ever been widened has nowhere to go, and offering it its own bounds would be an action that
+    /// does nothing.
+    static func widenTarget(currentWidth: Double,
+                            previous: [(start: Double, end: Double)]) -> (start: Double, end: Double)? {
+        previous.first { $0.end - $0.start > currentWidth + epsilon }
+    }
+
     /// Classify an edit by comparing widths. Equal widths (within `epsilon`) are `.moved` — including
     /// the degenerate case where nothing moved at all, which `changed(...)` should have caught first.
     static func kind(fromStart previousStart: Double, end previousEnd: Double,

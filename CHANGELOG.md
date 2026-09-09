@@ -14,7 +14,35 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **A loop remembers how it got this narrow.** Hold a loop's row and, under **Range**, **How it got
+  here** lists every change to its range — newest first, each with the speed you were playing at.
+  Where an earlier range was wider, it offers to **widen back to it**: one step back rather than all
+  the way, and it opens that range as a live A / B span so you hear it before `Save changes` commits
+  it. It shows the three most recent changes, with **Show all** when there are more, and appears
+  once a loop has a history.
+- **A way back from slowing down.** Once you drop the song's speed, a small pill beside the readout
+  shows the speed you dropped from — tap it to go back. Slow down twice and it offers the speed you
+  were on before the second drop rather than the one you started at: one step back at a time. It
+  goes when you take it, get back there yourself, or leave the song.
+- **Snag — mark the spot that went wrong, without stopping.** While a loop is running, the song
+  player's transport carries a single **Snag** button. One tap marks where you are: nothing to name,
+  nothing to confirm, so you can keep playing. Each snag shows as a short crimson tick under the
+  waveform, and several in the same place read as a cluster. Marks inside the loop you're running are
+  drawn full strength and the rest fade back, by where they sit rather than which loop made them.
+  The **Snags** panel under the transport lists them in song order, each with the loop you were
+  running at the time — tap one to jump there, ✕ to remove it.
+- **Tighten the loop to your snags.** When your marks land close together the status line offers a
+  shorter loop around them. Taking it opens that range as a live A / B span so you hear it before
+  anything changes — `Save changes` commits it. When your snags are spread across the loop nothing
+  is offered, because that spread is telling you the trouble isn't in one place. Nothing counts or
+  scores your snags.
+
 ### Changed
+- **The song player's transport is simpler while a loop is running.** `Loop` and `Marker` are
+  replaced by `Snag`. `Loop` there used to switch the running loop off as a side effect of being
+  pressed, which was never intended; both still sit either side of the transport when no loop is
+  running, which is where they're used to make loops in the first place.
 - **Loops can be much shorter.** The smallest loop you could set used to be **2% of the song**, so it
   grew with the material — nearly five seconds on a four-minute track and over nine on an
   eight-minute one, which put a single bar out of reach at any normal tempo and made looping a

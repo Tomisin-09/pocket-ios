@@ -55,6 +55,8 @@ struct WaveformView: View {
     /// top border (ADR 0023), merging into a count chip where they collide at low zoom,
     /// with the nearest-the-playhead marker's label floating as a chip (P2).
     let markers: [WaveformMarker]
+    /// Snag positions as song fractions (ADR 0200) — short crimson ticks in the loop band.
+    var snags: [Double] = []
     /// The beat grid (ADR 0022): beats + bar-start downbeats as song fractions, drawn
     /// faintly behind the bars (downbeats brighter). Empty when the song has no tempo
     /// or no downbeat anchor, so the whole grid simply doesn't render. Defaulted so
@@ -165,8 +167,10 @@ struct WaveformView: View {
                 // Live time bubble, pinned to the playhead and vertically centred,
                 // clamped so it never runs off either edge.
                 TimeBubble(text: playheadLabel)
-                    // Low in the bar region: clears the mid-height handles + the loop band below.
-                    .position(x: bubbleX(width: geo.size.width), y: geo.size.height - Self.loopBand - 12)
+                    // Clears the mid-height handles, and sits *above* the snag ticks rather than
+                    // across them (ADR 0202 D1): half its ~19pt height plus air, off the tick band.
+                    .position(x: bubbleX(width: geo.size.width),
+                              y: geo.size.height - Self.loopBand - Self.snagBand - 13)
                     .allowsHitTesting(false)
             }
             .contentShape(Rectangle())
@@ -241,6 +245,7 @@ struct WaveformView: View {
         // bottom (lane-stacked), purple inverted triangles along the top.
         drawLoopLines(in: context, size: size, atX: atX)
         drawMarkers(in: context, size: size, atX: atX)
+        drawSnags(in: context, size: size, atX: atX)
 
         // A/B span handles in front of the bars (helper in `WaveformDownbeat.swift`). The
         // active loop's edges are *not* drawn as handles — they're no longer directly
@@ -352,6 +357,13 @@ struct WaveformView: View {
     static let markerBand: CGFloat = 16             // top: marker triangles (used by the helpers file)
     static let loopBand: CGFloat = 24               // bottom: loop lines (maxLanes × laneHeight + pad;
                                                      // used by the helpers file too)
+    /// How far snag ticks rise above the loop band (ADR 0200, sized by 0202 D1). **Shared** with the
+    /// time bubble, which sits down against it: a literal in only one of the two drew the bubble
+    /// straight across the marks, which is exactly what shipped.
+    static let snagBand: CGFloat = 9
+    /// A snag outside the armed loop (ADR 0203 D1). The contrast is made by taking the in-loop marks
+    /// *up* to full, not by pushing these below the old flat 0.85 until they vanish.
+    static let snagFadedOpacity: CGFloat = 0.35
 
     // Marker labelling / clustering (P2; used by the drawing helpers file).
     static let markerHalfWidth: CGFloat = 3.5       // px: half a triangle, for off-screen culling

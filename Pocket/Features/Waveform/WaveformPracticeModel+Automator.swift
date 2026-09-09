@@ -42,5 +42,22 @@ extension WaveformPracticeModel {
     /// loop's ramp, so it stops fighting the manual setting.
     func userAdjustedSpeed() {
         activeLoop?.automatorEnabled = false
+        // From here the speed is the player's until the app sets it itself (ADR 0201) — this is
+        // what lets `speed`'s observer tell a deliberate drop from an arming-speed write.
+        speedIsUserDriven = true
+        // Anchor the return offer to where this hand landed (ADR 0202 D4). Called on the slider's
+        // *grab*, and before a preset or a typed value commits, so `speed` is still the settled
+        // value at this point — which is exactly the rung a drop should offer to come back to.
+        speedAtGestureStart = speed
+    }
+
+    /// Take the offer: go back to the speed the drop started from, and retire the pill (ADR 0201).
+    /// A plain speed change like any other — nothing is stored, and the automator stays stood down.
+    func returnToSpeedBeforeDrop() {
+        guard let target = speedBeforeDrop else { return }
+        speedAtGestureStart = speed     // taking the offer is a gesture too, and it starts here
+        speed = target
+        speedBeforeDrop = nil
+        haptic(.medium)
     }
 }

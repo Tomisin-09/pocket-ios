@@ -31,6 +31,11 @@ struct SpeedBar: View {
     /// Fired when the user grabs the slider (or commits a typed speed), so a running loop automator
     /// can stand down — manual control wins. Defaults to a no-op for previews/standalone use.
     var onUserAdjust: () -> Void = {}
+    /// The speed a drop started from, or `nil` (ADR 0201). Shown as a small pill beside the
+    /// readout — the way back that never existed.
+    var speedBeforeDrop: Double?
+    /// Take the offer.
+    var onReturnToSpeed: () -> Void = {}
     /// In-song metronome click (ADR 0027 — relocated here from the transport bar, where it sat next
     /// to play/loop and read as another transport control). The click is tempo context, so it lives
     /// by the BPM readout. Defaulted off/disabled for previews and standalone use.
@@ -67,6 +72,13 @@ struct SpeedBar: View {
                     .accessibilityLabel("Playback speed")
 
                 if let displayedBPM { bpmReadout(displayedBPM) }
+
+                // The way back. Appears only after a real drop and only until it is taken or
+                // reached by hand, so it is an offer in the moment rather than standing furniture.
+                if let speedBeforeDrop {
+                    TempoReturnPill(target: speedBeforeDrop, action: onReturnToSpeed)
+                        .transition(.opacity)
+                }
 
                 // Packed so the two circular controls read as one trailing group rather than
                 // competing with the readouts for the slider's width.
@@ -351,5 +363,36 @@ private struct PresetPill: View {
                 )
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// The **return** pill (ADR 0201) — go back to the speed you dropped from.
+///
+/// Slowing down already works. What never existed is a way back: before this ADR the codebase had
+/// no `previousSpeed`, `restoreSpeed` or `revertTempo` of any kind, so a drop was a one-way cost
+/// paid by hand and undone by hand — which is a good part of why players are reluctant to take one.
+///
+/// It borrows the speed bar's own accent rather than introducing a colour, because it is a *way
+/// back to a value on this bar*, not a new kind of thing.
+private struct TempoReturnPill: View {
+    let target: Double
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.uturn.left")
+                    .font(.futura(.caption2, weight: .semibold))
+                Text(String(format: "%.2f×", target))
+                    .font(.pocketMono(.caption))
+            }
+            .foregroundStyle(PocketColor.waveformAccent)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(PocketColor.waveformAccent.opacity(0.16)))
+            .overlay(Capsule().stroke(PocketColor.waveformAccent.opacity(0.45), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Back to \(String(format: "%.2f", target)) times speed")
     }
 }

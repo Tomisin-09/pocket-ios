@@ -32,12 +32,17 @@ struct PracticeCockpit<Header: View>: View {
         let waveformMarkers = markers.map {
             WaveformMarker(fraction: $0.seconds / model.duration, label: $0.label)
         }
+        // Derived here with the markers, for the same reason (ADR 0200): reading `song.snags` walks
+        // a SwiftData relationship, which must not sit on the playhead's 120 Hz path.
+        let snagFractions = model.snagFractions
 
         return VStack(spacing: landscape ? 8 : 16) {
             header()                                                    // 1
             SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
                      onSetBPM: model.setBPM, onCarryTempo: model.carryTempo,
                      onUserAdjust: model.userAdjustedSpeed,
+                     speedBeforeDrop: model.speedBeforeDrop,
+                     onReturnToSpeed: model.returnToSpeedBeforeDrop,
                      metronomeOn: model.metronomeOn,
                      canUseMetronome: model.canUseMetronome,
                      onToggleMetronome: model.toggleMetronome,
@@ -51,6 +56,7 @@ struct PracticeCockpit<Header: View>: View {
                              loops: loops,
                              activeLoop: activeLoop,
                              markers: waveformMarkers,
+                             snags: snagFractions,
                              beats: model.beatGrid,
                              landscape: landscape,
                              showsMarkerLabels: markerLabelsVisible)
@@ -78,6 +84,12 @@ struct PracticeCockpit<Header: View>: View {
                             onMove: model.moveDownbeat,
                             onClearCorrections: model.clearDownbeatCorrections)
                     .transition(.opacity)
+            } else if model.offeringSnagTighten, let proposal = model.snagTightenProposal {
+                SnagTightenBar(count: model.snagsInActiveLoop.count,
+                               seconds: proposal.end - proposal.start,
+                               onTighten: model.tightenToSnags,
+                               onDismiss: model.dismissSnagTighten)
+                    .transition(.opacity)
             } else if model.abActive && !model.isDragSelecting {
                 ABSpanBar(isPlaying: model.engine.isPlaying,
                           isSet: model.abSpan.isSet,
@@ -98,6 +110,7 @@ struct PracticeCockpit<Header: View>: View {
             }
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.abActive)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.offeringSnagTighten)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
     }
 
@@ -111,6 +124,7 @@ struct PracticeCockpit<Header: View>: View {
                      loopColor: model.activeLoopColor,
                      onClearLoop: model.clearActiveLoop,
                      onDropMarker: model.dropMarkerAtPlayhead,
+                     onDropSnag: model.dropSnag,
                      onPunch: model.tapAB,
                      isPunchActive: model.abActive,
                      compact: landscape)
@@ -158,6 +172,11 @@ struct PracticeReference: View {
                                  onSeek: model.seekToMarker, onEdit: { model.editingMarker = StableRef(value: $0) },
                                  onDelete: model.deleteMarker,
                                  selection: model.markerSelectionSeam)
+                    // 12. Snags (ADR 0202) — last, and folded by default: the marks are made and
+                    // read on the waveform, and this is where you reach one to remove it.
+                    SnagsPanel(snags: model.snagsByTime, loopNames: model.loopNamesByUID,
+                               expanded: $model.snagsExpanded,
+                               onSeek: model.seekToSnag, onDelete: model.deleteSnag)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
