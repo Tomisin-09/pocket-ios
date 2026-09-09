@@ -157,11 +157,6 @@ struct PracticeReference: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
                     .transition(.move(edge: .top).combined(with: .opacity))
-            } else if model.snagSelection.isActive {
-                SnagSelectionBar(model: model)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
             }
             ScrollView {
                 VStack(spacing: 16) {
@@ -182,8 +177,7 @@ struct PracticeReference: View {
                     // read on the waveform, and this is where you reach one to remove it.
                     SnagsPanel(snags: model.snagsByTime, loopNames: model.loopNamesByUID,
                                expanded: $model.snagsExpanded,
-                               onSeek: model.seekToSnag, onDelete: model.deleteSnag,
-                               selection: model.snagSelectionSeam)               // ADR 0206 D2
+                               onSeek: model.seekToSnag, onDelete: model.deleteSnag)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)

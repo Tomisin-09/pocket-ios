@@ -17,7 +17,9 @@
 - **Amended by:** ADR 0205 — snags are carried in the export, nested under the **song** because that
   is what owns them (0205 D1), and restored with the `loopUID` they were tagged with (0205 D3).
 - **Amended by:** ADR 0206 — the Loops panel row shows how many marks sit in a loop's span
-  (0206 D1), the last item on this ADR's own "not built" list.
+  (0206 D1). Its D2 records that the rest of this ADR's "not built" list — multi-select and a bulk
+  clear — was built and **removed before merge**, so it stays unbuilt deliberately rather than
+  by omission.
 - **Relates to:** ADR 0199 (the half-second floor, which this composes with and depends on),
   ADR 0192 (the transport grammar whose D2 argument this finishes), ADR 0041 (the A/B span the
   accept path lands in), ADR 0070 (never grading — the line this feature runs along),

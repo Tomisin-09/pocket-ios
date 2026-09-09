@@ -1378,18 +1378,15 @@ empty, because that line was Home's only word about adding a first song.
   owner that D1 above deliberately ignores. A bare timecode being anonymous was the real complaint,
   and a caption answers it without charging section headers against a panel made cheap to open.
 
-  **ADR 0206** closes the three surfaces 0200 and 0202 listed as unbuilt. A **Loops panel row shows
-  the count** of marks inside its span (`snagCountsByLoop`), absent rather than zero when there are
-  none — the row's own rule for mastery (ADR 0039). The **panel multi-selects**, joining ADR 0125's
-  grammar with a delete-only bar; 0202 declined that alongside the edit sheet on the grounds that a
-  snag has nothing to set in bulk, which stands, because clearing is not an edit. *Clear all in this
-  loop* is `selectSnagsInActiveLoop`, and it **seeds the selection rather than deleting**: the marks
-  live in a folded panel and are judged against the loop's *current* span, so a one-tap wipe would be
-  the only destructive action in the app whose reach you cannot check first. A **bulk** delete does
-  get an undo toast — 0202 D3's "an anonymous timestamp needs no undo" is an argument about *one*
-  mark, and a set of marks encodes where a passage gives trouble, which can only be remade by playing
-  it again and tripping in the same places. All three surfaces plus the canvas now read
-  `snagsByTime`, so a mark inside an open undo window leaves panel and waveform in the same frame.
+  **ADR 0206** adds the one surface that survived: a **Loops panel row shows the count** of marks
+  inside its span (`snagCountsByLoop`), absent rather than zero — the row's own rule for mastery
+  (ADR 0039), and keyed on position so the row's number, the panel's rows and the bright ticks are
+  one set. **Multi-select and a *clear all in this loop* control were built on this branch and taken
+  back out before merge** (0206 D2, on the device pass): they put a fourth mode on a screen with
+  three, for the cheapest object in the app, on a panel that is folded by default *because* a snag is
+  not something you administer. So 0202 D2's "no multi-select" and D3's "no undo toast" stand with no
+  exception, and `snagsByTime` deliberately carries **no** pending-delete filter — `loops` and
+  `markers` need one because their delete is deferred behind an undo window, and a snag's is not.
 - **`LoopSpanChange`** (ADR 0199) is *how the loop got this narrow* — one row per edit to a loop's
   span, carrying `changedAt`, the span after, **the span before**, the playback `speed` in force and
   the song's `songDuration` at write time. It exists because `Loop.start` / `Loop.end` are

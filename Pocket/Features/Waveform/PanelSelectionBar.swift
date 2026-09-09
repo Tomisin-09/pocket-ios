@@ -127,36 +127,3 @@ struct MarkerSelectionBar: View {
         }
     }
 }
-
-/// The snags bar: **select the ones in this loop**, then delete (ADR 0206 D2).
-///
-/// The loop control is the "clear all in this loop" the panel was asked for, stopping one step
-/// short: it seeds the selection so the rows it means are visibly ticked, and the trash beside it
-/// is the same trash that empties any other selection. Two taps, one destructive control, and no
-/// action whose reach you cannot see.
-///
-/// It hides rather than greys when there is no armed loop with marks in it, unlike `PanelActionButton`'s
-/// disabled state: "in this loop" with no loop is not a control waiting to be usable, it is a control
-/// with no referent.
-struct SnagSelectionBar: View {
-    @Bindable var model: WaveformPracticeModel
-
-    var body: some View {
-        let seam = model.snagSelectionSeam
-        let inLoop = model.snagsInActiveLoop.count
-        PanelSelectionBar(title: PanelSelection.title(count: seam.selection.count,
-                                                      noun: "snag", plural: "snags"),
-                          allSelected: seam.selection.allSelected(of: model.snagsByTime.map(\.uid)),
-                          onToggleAll: seam.toggleAll,
-                          onDone: seam.end) {
-            PanelActionButton(systemImage: "trash", label: "Delete selected snags",
-                              isEnabled: !seam.selection.isEmpty,
-                              tint: PocketColor.danger, action: seam.delete)
-            if inLoop > 0 {
-                PanelActionButton(systemImage: "repeat",
-                                  label: "Select the \(inLoop) snag\(inLoop == 1 ? "" : "s") in the running loop",
-                                  action: model.selectSnagsInActiveLoop)
-            }
-        }
-    }
-}

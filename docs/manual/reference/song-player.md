@@ -82,9 +82,9 @@ Taking it does not change the loop: it opens the shorter range as a live A / B s
 first, and `Save changes` is what commits it. If your snags are spread across the loop, nothing is
 offered — that spread is telling you the trouble is not in one place.
 
-Snags live in the `Snags` panel below, where you can jump to one, remove it, or clear several at
-once. A loop's row in the `Loops` panel also shows how many marks fall inside it, so you can see
-which passage has been giving trouble without opening anything.
+Snags live in the `Snags` panel below, where you can jump to one or remove it. A loop's row in the
+`Loops` panel also shows how many marks fall inside it, so you can see which passage has been giving
+trouble without opening anything.
 
 Nothing scores them, and nothing charts them over time. A count says *where* the marks are, never
 how you played. `Snag` is for you.
@@ -138,14 +138,8 @@ The rows stay in song order rather than being grouped by loop, so two marks a be
 together even when you made them under different loops. A snag whose loop you have since deleted
 keeps its place and simply shows no loop name.
 
-There is nothing else to a snag — no name, no colour, no rating — so there is no edit sheet and
-holding a *row* does nothing. It starts collapsed.
-
-**Hold the panel header** to start selecting, then tap rows to choose several and the bin to clear
-them. While a loop is running the bar also offers a **loop** control that ticks every mark inside
-that loop's range in one tap — it selects them rather than removing them, so you can see what you
-are about to clear before you clear it. Clearing a selection can be undone; a single ✕ cannot, which
-is why it is one mark at a time.
+There is nothing else to a snag — no name, no colour, no rating — so there is no edit sheet, no
+holding a row, and no selection mode. It starts collapsed.
 
 ## The sheets
 

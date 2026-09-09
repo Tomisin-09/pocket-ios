@@ -32,25 +32,21 @@ extension WaveformPracticeModel {
         haptic(.light)
     }
 
-    /// Every snag on this song as a song fraction, for the waveform's tick band. Reads through
-    /// `snagsByTime`, so a mark hidden by an open undo window leaves the canvas and the panel in the
-    /// same frame rather than lingering as a tick with no row.
+    /// Every snag on this song as a song fraction, for the waveform's tick band.
     var snagFractions: [Double] {
         guard duration > 0 else { return [] }
-        return snagsByTime.map { $0.seconds / duration }
+        return song.snags.map { $0.seconds / duration }
     }
 
     /// Every snag in playing order — the Snags panel's list (ADR 0202 D2). **By position, not by
     /// when it was tapped**: the panel is a map of where the song gives trouble, and a list sorted
     /// by recency would scatter three marks in one bar across it.
     ///
-    /// Minus anything inside an open undo window, the `loops` / `markers` rule (ADR 0125): a bulk
-    /// delete hides the rows now and destroys the objects when the window closes, and this filter is
-    /// what makes them leave the panel and the waveform's tick band together.
+    /// **No pending-delete filter, unlike `loops` and `markers`.** Those defer a delete behind an
+    /// undo window (ADR 0125) and have to hide a row that still exists; removing a snag is immediate
+    /// and unconditional (ADR 0202 D3), so there is no such state to filter out.
     var snagsByTime: [Snag] {
-        let ordered = song.snags.sorted { $0.seconds < $1.seconds }
-        return pendingDeletedSnagUIDs.isEmpty ? ordered
-            : ordered.filter { !pendingDeletedSnagUIDs.contains($0.uid) }
+        song.snags.sorted { $0.seconds < $1.seconds }
     }
 
     /// How many marks sit inside each loop's **current** span — the Loops panel's row count
@@ -61,7 +57,7 @@ extension WaveformPracticeModel {
     /// Position, not `Snag.loopUID` — the rule ADR 0203 D1 settled. A row's count and the bright
     /// ticks on the canvas are then the same set, which is the only way the two can be read together.
     var snagCountsByLoop: [UUID: Int] {
-        let marks = snagsByTime.map(\.seconds)
+        let marks = song.snags.map(\.seconds)
         guard !marks.isEmpty else { return [:] }
         var counts: [UUID: Int] = [:]
         for loop in loops {
@@ -100,32 +96,14 @@ extension WaveformPracticeModel {
         haptic(.light)
     }
 
-    /// Snags inside the armed loop, newest first — what the tighten offer counts, and what the
-    /// snags bar's "in this loop" control selects (ADR 0206 D2).
+    /// Snags inside the armed loop, newest first — the count the tighten offer reports.
     var snagsInActiveLoop: [Snag] {
         guard let loop = activeLoop else { return [] }
         let start = loop.startSeconds
         let end = loop.endSeconds
-        return snagsByTime
+        return song.snags
             .filter { $0.seconds >= start && $0.seconds <= end }
             .sorted { $0.markedAt > $1.markedAt }
-    }
-
-    /// Select every mark inside the armed loop (ADR 0206 D2) — the "clear all in this loop" the
-    /// panel offers, stopping one step short of the clearing.
-    ///
-    /// It seeds the **selection**, not the delete. A single control that wiped every mark in a span
-    /// would be the one destructive action in the app whose blast radius you cannot see: the marks
-    /// are in a folded panel, and the span they are being judged against is the loop's *current*
-    /// one, which may not be the one they were made under. Seeding shows you the rows, in a mode
-    /// that already has a Done, and the trash beside it is the same trash that deletes any other
-    /// selection. One destructive control, and a shortcut to the choosing rather than to the act.
-    func selectSnagsInActiveLoop() {
-        let inside = snagsInActiveLoop.map(\.uid)
-        guard !inside.isEmpty else { return }
-        if !snagSelection.isActive { beginSnagSelection() }
-        snagSelection.select(inside)
-        haptic(.light)
     }
 
     /// The tighter loop the marks point at, or `nil` when there is nothing worth offering.
@@ -135,7 +113,7 @@ extension WaveformPracticeModel {
     /// fired anyway would move a loop the player deliberately set.
     var snagTightenProposal: (start: TimeInterval, end: TimeInterval)? {
         guard let loop = activeLoop else { return nil }
-        return SnagCluster.proposal(snagSeconds: snagsByTime.map(\.seconds),
+        return SnagCluster.proposal(snagSeconds: song.snags.map(\.seconds),
                                     loopStart: loop.startSeconds,
                                     loopEnd: loop.endSeconds)
     }

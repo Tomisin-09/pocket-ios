@@ -19,11 +19,6 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   loop's range and mastery, when there are any — so you can see which passage has been giving
   trouble without opening the Snags panel. It counts marks by where they fall, so a mark you made
   under another loop still counts if it sits inside this one. Nothing charts a count over time.
-- **Clear several snags at once.** Hold the **Snags** panel header to start selecting, tap rows,
-  and the bin clears them under a single **Undo**. While a loop is running the bar also carries a
-  loop control that ticks every mark inside that loop's range in one tap — it selects them rather
-  than deleting them, so you see exactly what you are about to clear. A single ✕ still removes one
-  mark immediately, as it always has.
 - **Snags and span histories are in the export.** A **Your data ▸ Export** archive now carries your
   snags and every recorded change to a loop's range, and a restore brings them back — so a backup
   keeps the marks on a passage and the record of how a loop got as tight as it is.
