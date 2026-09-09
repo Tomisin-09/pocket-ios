@@ -209,6 +209,16 @@ final class WaveformPracticeModel {
     var abSpan: ABSpan = .idle
     var abEditingLoop: Loop?
 
+    /// True while the *tighten to your snags* offer is showing (ADR 0200).
+    ///
+    /// Gated on a flag rather than simply on "a proposal exists", because a proposal exists for as
+    /// long as the marks do — and a permanent offer would evict `ModeDescriptionLine`, which holds
+    /// Loop controls, Follow and Grid, from the screen forever. Set by `dropSnag` at the moment the
+    /// marks first point somewhere, cleared when the player takes it, dismisses it, or moves to
+    /// another loop. That makes it a **transient mode**, which is exactly what the status line's
+    /// ZStack is for — the same slot the A/B and downbeat bars borrow and give back.
+    var offeringSnagTighten = false
+
     /// Hold-drag spatial set (ADR 0041, secondary to play-along): the anchor fraction
     /// (the playhead) where the hold fired; the drag extends A↔B from here.
     @ObservationIgnored var dragSelectAnchor: Double?

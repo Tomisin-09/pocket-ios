@@ -1278,6 +1278,32 @@ empty, because that line was Home's only word about adding a first song.
   them is a live ranking change owed its own decision. This makes the write path above a *ranking*
   concern as well as a stats one — a seam that silently failed to log would leave its unit max-due
   forever — which is why all three seams were verified against the on-device store before it shipped.
+- **`Snag`** (ADR 0200) is *a place it went wrong* — `markedAt`, `seconds`, the `speed` in force,
+  and `loopUID`. Cascade-owned by its `Song`, like `Marker` and for the same reason rather than by
+  copying it: both are points on that song's timeline, and a point on a song that no longer exists
+  is a fact about nothing. The loop is a **loose id copy, never a relationship** — the
+  `PracticeRun.unitUID` shape (ADR 0117) — because deleting a loop must not delete the record of
+  what happened while you played it, and it is never filtered in a `#Predicate` (the
+  optional-relationship freeze), so a bare `UUID?` is honest about how it is read.
+
+  What separates it from `Marker` is cost and scope, and that difference *is* the feature: a marker
+  is a named landmark you stop to write, a snag is anonymous and costs one tap, which is the only
+  price payable while playing.
+
+  **It is not an Oracle pipe.** The consumer that justifies it ships in the same slice: `SnagCluster`
+  (pure, no model call) turns marks into a proposed tighter loop, and `tightenToSnags` lands that as
+  an **A/B span** (ADR 0041) rather than writing `Loop.start`/`end` — so the player auditions a
+  suggestion built from taps made while distracted, and Save commits it through the ordinary
+  `saveABSpan` path, recorded by ADR 0199 with no second write site. It composes with that ADR in
+  both directions: a cluster is usually under a second wide, and a loop that tight was unreachable
+  until the floor moved to half a second.
+
+  `SnagCluster` **declines** more often than it fires — scattered marks (past `scatterRatio`, 0.6 of
+  the loop) propose nothing, because an even spread is a true reading that the trouble is not in one
+  place, and a suggestion there would move a loop the player deliberately set. The offer is a
+  transient tenant of the status line's ZStack, gated on a flag rather than on "a proposal exists":
+  the latter is true for as long as the marks are, and would evict Loop controls / Follow / Grid
+  permanently.
 - **`LoopSpanChange`** (ADR 0199) is *how the loop got this narrow* — one row per edit to a loop's
   span, carrying `changedAt`, the span after, **the span before**, the playback `speed` in force and
   the song's `songDuration` at write time. It exists because `Loop.start` / `Loop.end` are

@@ -46,18 +46,34 @@ The drawing of the song, with a time ruler beneath it and the playhead across it
 - **Tap or drag** to seek. `Song position` is the accessible handle for the same thing.
 - **Pinch** to zoom.
 - **Hold and drag across it** to draw a loop directly.
-- **`Marker`** drops a marker at the playhead.
+- **`Marker`** drops a marker at the playhead (when no loop is running).
 - A **minimap** strip under the waveform shows the whole song; it can be turned off in
   [Settings ▸ Song player](settings.md#song-player).
 
 ## The transport
 
-`Back 10 seconds` · **`Play`** · `Forward 10 seconds`, with **`Loop`** beside them. Hold either skip
-button to change how far it jumps. Which side `Loop` sits on is a setting.
+`Back 10 seconds` · **`Play`** · `Forward 10 seconds`, with **`Loop`** and **`Marker`** either side
+of them. Hold either skip button to change how far it jumps. Which side `Loop` sits on is a setting.
 
-The three buttons are the same three with a loop running, and the skips then move within the loop
-rather than the song — they stop at its ends, and never turn it off. Moving between loops is a tap on
-a row in the Loops panel below.
+The three middle buttons are the same three with a loop running, and the skips then move within the
+loop rather than the song — they stop at its ends, and never turn it off. Moving between loops is a
+tap on a row in the Loops panel below.
+
+With a loop running, `Loop` and `Marker` are replaced by a single **`Snag`** button, and the loop's
+colour strip with its ✕ takes the other side.
+
+## Snags
+
+`Snag` marks the spot you are playing as one that went wrong. One tap — there is nothing to name and
+nothing to confirm, so you can keep playing. Each one shows as a short crimson tick under the
+waveform, so several in the same place read as a cluster.
+
+When your snags land close together, the status line offers to **tighten the loop around them**.
+Taking it does not change the loop: it opens the shorter range as a live A / B span so you hear it
+first, and `Save changes` is what commits it. If your snags are spread across the loop, nothing is
+offered — that spread is telling you the trouble is not in one place.
+
+Nothing counts them or scores them. `Snag` is for you.
 
 ## The panels
 

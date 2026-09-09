@@ -55,6 +55,8 @@ struct WaveformView: View {
     /// top border (ADR 0023), merging into a count chip where they collide at low zoom,
     /// with the nearest-the-playhead marker's label floating as a chip (P2).
     let markers: [WaveformMarker]
+    /// Snag positions as song fractions (ADR 0200) — short crimson ticks in the loop band.
+    var snags: [Double] = []
     /// The beat grid (ADR 0022): beats + bar-start downbeats as song fractions, drawn
     /// faintly behind the bars (downbeats brighter). Empty when the song has no tempo
     /// or no downbeat anchor, so the whole grid simply doesn't render. Defaulted so
@@ -241,6 +243,7 @@ struct WaveformView: View {
         // bottom (lane-stacked), purple inverted triangles along the top.
         drawLoopLines(in: context, size: size, atX: atX)
         drawMarkers(in: context, size: size, atX: atX)
+        drawSnags(in: context, size: size, atX: atX)
 
         // A/B span handles in front of the bars (helper in `WaveformDownbeat.swift`). The
         // active loop's edges are *not* drawn as handles — they're no longer directly

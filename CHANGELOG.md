@@ -14,7 +14,22 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **Snag — mark the spot that went wrong, without stopping.** While a loop is running, the song
+  player's transport carries a single **Snag** button. One tap marks where you are: nothing to name,
+  nothing to confirm, so you can keep playing. Each snag shows as a short crimson tick under the
+  waveform, and several in the same place read as a cluster.
+- **Tighten the loop to your snags.** When your marks land close together the status line offers a
+  shorter loop around them. Taking it opens that range as a live A / B span so you hear it before
+  anything changes — `Save changes` commits it. When your snags are spread across the loop nothing
+  is offered, because that spread is telling you the trouble isn't in one place. Nothing counts or
+  scores your snags.
+
 ### Changed
+- **The song player's transport is simpler while a loop is running.** `Loop` and `Marker` are
+  replaced by `Snag`. `Loop` there used to switch the running loop off as a side effect of being
+  pressed, which was never intended; both still sit either side of the transport when no loop is
+  running, which is where they're used to make loops in the first place.
 - **Loops can be much shorter.** The smallest loop you could set used to be **2% of the song**, so it
   grew with the material — nearly five seconds on a four-minute track and over nine on an
   eight-minute one, which put a single bar out of reach at any normal tempo and made looping a

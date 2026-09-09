@@ -141,6 +141,28 @@ extension WaveformView {
         }
     }
 
+    /// Snag ticks (ADR 0200) — short crimson strokes rising from the bottom of the bar region.
+    ///
+    /// **Deliberately quiet, and deliberately not in the marker band.** A snag is not a landmark
+    /// you navigate by; it is a trace of what happened, and three of them in one bar should read as
+    /// a *cluster* at a glance without competing with the marker triangles above or the loop lines
+    /// below. There is no halo, no label and no collision merging: overlapping ticks stacking into
+    /// a denser mark is the correct rendering — density is the signal.
+    func drawSnags(in context: GraphicsContext, size: CGSize, atX: (Double) -> CGFloat) {
+        guard !snags.isEmpty else { return }
+        let bottom = size.height - Self.loopBand
+        let top = bottom - 11
+        for fraction in snags {
+            let tickX = atX(fraction)
+            guard tickX > -2, tickX < size.width + 2 else { continue }   // off-screen
+            var tick = Path()
+            tick.move(to: CGPoint(x: tickX, y: top))
+            tick.addLine(to: CGPoint(x: tickX, y: bottom))
+            context.stroke(tick, with: .color(PocketColor.oracle.opacity(0.85)),
+                           style: StrokeStyle(lineWidth: 2, lineCap: .round))
+        }
+    }
+
     /// One marker triangle (+ precision tick) at a screen x. Culled when fully off-screen.
     private func drawMarkerTriangle(in context: GraphicsContext, size: CGSize, atX pinX: CGFloat) {
         let halfWidth = Self.markerHalfWidth

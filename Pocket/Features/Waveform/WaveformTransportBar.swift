@@ -8,10 +8,17 @@ import SwiftUI
 // • **Idle** (no active loop): two large **circular** identity controls flank the centre transport —
 //   **Marker on the far left**, **Loop on the far right** — a glyph in a circle. The Loop button
 //   lights while an A/B span is forming.
-// • **Active** (a saved loop is running): the bar reverts to its **compact** form — a small stacked
-//   Loop / Marker column on the left and the loop's identity-colour ✕ strip on the right — because
-//   the running loop now reads on the Loops panel below, so the bar steps back out of the way
-//   (feedback #1 round 2).
+// • **Active** (a saved loop is running): the bar reverts to its **compact** form — **Snag** on the
+//   left and the loop's identity-colour ✕ strip on the right — because the running loop now reads
+//   on the Loops panel below, so the bar steps back out of the way (feedback #1 round 2).
+//
+// The armed state used to carry a stacked Loop / Marker column here. Both went in ADR 0200, and
+// neither was a trim for space: **Loop disarmed the loop you were working** — `tapAB()` sets
+// `activeLoopID = nil` and calls `engine.clearLoop()`, the exact trapdoor ADR 0192 D2 had just
+// closed on the skip buttons — and **Marker was doing Snag's job quietly at 27pt**, unlabelled and
+// song-scoped. One control replaces two, and the state that has your hands busiest gained the one
+// gesture you can make without looking. Idle keeps both big identity circles untouched: that is
+// where loops are *created*, and there both controls earn their place.
 // The centre cluster is the header over skip · pause · skip; the header reserves a fixed height
 // and reads the loop's name when active, else stays empty — the live playhead time renders as the
 // `TimeBubble` on the waveform canvas, so the redundant idle timecode was dropped (ADR 0075).
@@ -37,8 +44,10 @@ struct TransportBar: View {
     let loopColor: Color?
     /// Deactivate the active loop (the ✕ on the colour strip).
     let onClearLoop: () -> Void
-    /// Mark control — drop a marker at the playhead.
+    /// Mark control — drop a marker at the playhead (idle only).
     let onDropMarker: () -> Void
+    /// Snag control — mark the playhead as a place it went wrong (ADR 0200; armed only).
+    var onDropSnag: () -> Void = {}
     /// Loop control — advance the play-along loop cycle at the playhead (set start · set
     /// end · clear); internally the A/B span (ADR 0041).
     let onPunch: () -> Void
@@ -60,6 +69,9 @@ struct TransportBar: View {
     @AppStorage(AppSettings.Key.transportSkipSeconds) private var skipSeconds = Int(TransportSkip.defaultIncrement)
 
     private var glyphSize: CGFloat { compact ? 24 : 25 }
+    /// The armed-state Snag button. Bigger than the 27pt dots it replaces — it is now the only
+    /// control in the slot, and it has to be hittable without looking at the screen.
+    private var snagDiameter: CGFloat { compact ? 34 : 38 }
     /// The big flanking identity circles (idle only) — sized to "take up space" (feedback #1),
     /// trimmed a little in the shorter landscape bar so they still clear the edges.
     private var identityDiameter: CGFloat { compact ? 42 : 46 }
@@ -95,16 +107,8 @@ struct TransportBar: View {
     /// bar stays out of the way (feedback #1 round 2); the swap preference applies to idle only.
     @ViewBuilder private var leftControls: some View {
         if loopActive {
-            VStack(spacing: 0) {
-                TransportControl(icon: "repeat", color: PocketColor.active, isActive: isPunchActive,
-                                 label: "Loop", diameter: compactControlDiameter,
-                                 glyphSize: compactControlGlyph, action: onPunch)
-                Spacer(minLength: 0)
-                TransportControl(icon: "triangle.fill", rotation: 180, color: PocketColor.pin,
-                                 label: "Marker", diameter: compactControlDiameter,
-                                 glyphSize: compactControlGlyph, action: onDropMarker)
-            }
-            .transition(.opacity)
+            SnagControl(diameter: snagDiameter, action: onDropSnag)
+                .transition(.opacity)
         } else if loopOnLeft {
             idleLoopButton
         } else {
@@ -238,6 +242,35 @@ private struct TransportControl: View {
         .buttonStyle(.plain)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isActive ? [.isSelected] : [])
+    }
+}
+
+/// The **Snag** control (ADR 0200) — the armed transport's left slot.
+///
+/// Same chrome as `TransportControl` (a glyph in a circle on a faint fill), but the glyph is drawn
+/// rather than named: `SnagCatch` exists because every SF Symbol that fits is either a warning
+/// sign, a report flag, or a heartbeat. See that type for the argument.
+///
+/// **Crimson**, the Oracle's hue, because a snag's second life is being read back in a reading —
+/// the mark and the thing that reads it look related, which they are. The tone risk is real and was
+/// taken deliberately: a red mark on your own playing can read as a grade. What settles it is that
+/// the player put it there. ADR 0070 forbids *the app* judging, not the player noticing.
+private struct SnagControl: View {
+    var diameter: CGFloat
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            SnagCatch()
+                .stroke(PocketColor.oracle,
+                        style: StrokeStyle(lineWidth: diameter * 0.055, lineCap: .round, lineJoin: .round))
+                .frame(width: diameter * 0.62, height: diameter * 0.62)
+                .frame(width: diameter, height: diameter)
+                .background(Circle().fill(PocketColor.surfaceStandard))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Snag")
+        .accessibilityHint("Mark this spot as one that went wrong")
     }
 }
 

@@ -44,6 +44,9 @@ struct PlayheadWaveform: View {
     let loops: [Loop]
     let activeLoop: Loop?
     let markers: [WaveformMarker]
+    /// Snag fractions (ADR 0200) — derived in `PracticeCockpit`'s body like the markers beside
+    /// them, never read off `model` here: this view is on the 120 Hz playhead path.
+    let snags: [Double]
     let beats: [BeatGrid.Beat]
     let landscape: Bool
     let showsMarkerLabels: Bool
@@ -56,6 +59,7 @@ struct PlayheadWaveform: View {
                      loop: activeLoop,
                      loops: loops,
                      markers: markers,
+                     snags: snags,
                      beats: beats,
                      showsGrid: model.song.showsGridlines,
                      formingStart: model.formingMarker,
