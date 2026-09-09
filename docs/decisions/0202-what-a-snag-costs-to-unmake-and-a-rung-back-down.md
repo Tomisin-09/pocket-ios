@@ -8,6 +8,10 @@
 - **Amends:** ADR 0201 — the tempo-return rule is **re-anchored to a gesture** and now offers the
   rung above rather than the top of the ladder (D4); the span history collapses to three rows (D5).
   D1's "no cockpit surface" and D3's "widening auditions, it never writes" stand.
+- **Amended by:** ADR 0206 — the snags panel gains **multi-select** (0206 D2) and a **bulk** delete
+  carries an undo toast (0206 D3). D2's refusal of an edit sheet stands, and so does **D3's refusal
+  of a toast for a single ✕** — 0206 D3 argues that the one-mark case and the whole-set case are
+  different questions, not that this one was wrong.
 - **Relates to:** ADR 0199 (the spans this reads), ADR 0023 (the annotation bands the tick geometry
   lives in), ADR 0125 (the panel grammar this borrows and trims), ADR 0070 (never grading)
 - **Schema:** none. No model, no new stored field.

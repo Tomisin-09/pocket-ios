@@ -32,23 +32,48 @@ extension WaveformPracticeModel {
                            delete: { self.deleteSelectedMarkers() })
     }
 
+    /// The snags panel's seam (ADR 0206 D2). Delete-only, like the markers one — a snag has nothing
+    /// to rename, recolour or rate, which is what ADR 0202 D2 said when it declined an edit sheet.
+    var snagSelectionSeam: PanelSelectionSeam {
+        PanelSelectionSeam(selection: snagSelection,
+                           begin: { self.beginSnagSelection() },
+                           toggle: { uid in
+                               self.snagSelection.toggle(uid)
+                               haptic(.light)
+                           },
+                           toggleAll: { self.snagSelection.toggleAll(of: self.snagsByTime.map(\.uid)) },
+                           end: { self.snagSelection.end() },
+                           delete: { self.deleteSelectedSnags() })
+    }
+
     /// Only one panel selects at a time. Two live selections would put two selection
     /// headers and two sets of bulk actions on screen with no way to tell which Delete
     /// you're about to hit — and there is no bulk action that spans both kinds.
     private func beginLoopSelection() {
         markerSelection.end()
+        snagSelection.end()
         loopSelection.begin()
     }
 
     private func beginMarkerSelection() {
         loopSelection.end()
+        snagSelection.end()
         markerSelection.begin()
+    }
+
+    /// Internal rather than private: `selectSnagsInActiveLoop` enters the mode on the player's
+    /// behalf, and it lives in `+Snags.swift` where the rest of the marks' behaviour is.
+    func beginSnagSelection() {
+        loopSelection.end()
+        markerSelection.end()
+        snagSelection.begin()
     }
 
     // MARK: What's selected
 
     var selectedLoops: [Loop] { loops.filter { loopSelection.contains($0.uid) } }
     var selectedMarkers: [Marker] { markers.filter { markerSelection.contains($0.uid) } }
+    var selectedSnags: [Snag] { snagsByTime.filter { snagSelection.contains($0.uid) } }
 
     // MARK: Bulk actions
 

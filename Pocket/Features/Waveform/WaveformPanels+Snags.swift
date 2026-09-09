@@ -7,8 +7,12 @@ import SwiftUI
 // is not a cheap mark, it is a permanent one, and cheapness is the whole argument for the tap.
 //
 // It borrows the loops/markers grammar rather than inventing one — a `CollapsiblePanel`, a row you
-// tap to go there — with **no multi-select and no edit sheet**, because a snag has nothing to
-// rename, recolour or rate. What is left of a row's affordances is: go here, or forget it.
+// tap to go there — with **no edit sheet**, because a snag has nothing to rename, recolour or rate.
+// What is left of a row's affordances is: go here, or forget it.
+//
+// It *does* multi-select (ADR 0206 D2). ADR 0202 declined that alongside the edit sheet, on the
+// grounds that a snag has nothing to set in bulk — which is still true, and is why this bar carries
+// a trash and nothing else. Clearing a set of marks is not an edit.
 
 struct SnagsPanel: View {
     let snags: [Snag]
@@ -20,12 +24,17 @@ struct SnagsPanel: View {
     let onSeek: (Snag) -> Void
     /// Remove the mark. One tap, matching the one tap that made it (ADR 0202 D3).
     let onDelete: (Snag) -> Void
+    /// Multi-select (ADR 0206 D2) — delete-only, like the markers panel. ADR 0202 declined it when
+    /// there was nothing to *edit* in bulk; clearing a set of marks is not an edit.
+    var selection = PanelSelectionSeam()
 
     var body: some View {
         CollapsiblePanel(title: "Snags",
                          summary: snags.isEmpty ? "None"
                             : "\(snags.count) snag\(snags.count == 1 ? "" : "s")",
-                         expanded: $expanded) {
+                         expanded: $expanded,
+                         onBeginSelection: snags.isEmpty ? nil : selection.begin,
+                         isSelecting: selection.isActive) {
             if snags.isEmpty {
                 EmptyPanelMessage(
                     systemImage: "waveform.path.ecg",
@@ -36,7 +45,10 @@ struct SnagsPanel: View {
                     ForEach(snags) { snag in
                         SnagRow(snag: snag,
                                 loopName: snag.loopUID.flatMap { loopNames[$0] },
+                                isSelecting: selection.isActive,
+                                isSelected: selection.selection.contains(snag.uid),
                                 onSeek: { onSeek(snag) },
+                                onToggleSelection: { selection.toggle(snag.uid) },
                                 onDelete: { onDelete(snag) })
                     }
                 }
@@ -49,16 +61,18 @@ private struct SnagRow: View {
     let snag: Snag
     /// The loop this mark was made under, when it still exists.
     let loopName: String?
+    let isSelecting: Bool
+    let isSelected: Bool
     let onSeek: () -> Void
+    let onToggleSelection: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
         HStack(spacing: 10) {
-            // The transport's glyph at row scale, so the tick on the waveform, the button that made
-            // it and the row that holds it are visibly one thing.
-            SnagCatch()
-                .stroke(PocketColor.oracle,
-                        style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
+            // Browsing, the transport's glyph at row scale, so the tick on the waveform, the button
+            // that made it and the row that holds it are visibly one thing. Selecting, the same
+            // circle the loop and marker rows use — one selection grammar across all three panels.
+            glyph
                 .frame(width: 15, height: 15)
             Text(timecode(snag.seconds))
                 .font(.pocketMono(.subheadline))
@@ -86,28 +100,52 @@ private struct SnagRow: View {
             }
             // Delete is its own target rather than the row's hold, because the hold everywhere else
             // in these panels opens an edit sheet — and a hold that silently deletes instead would
-            // be the one destructive gesture in the app with no confirmation and no sheet.
-            Button(action: onDelete) {
-                Image(systemName: "xmark")
-                    .font(.futura(.caption, weight: .semibold))
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+            // be the one destructive gesture in the app with no confirmation and no sheet. It hides
+            // while selecting, so a mis-tap can't remove a row out from under the selection that is
+            // about to act on it — the loop row's rule for its own controls.
+            if !isSelecting {
+                Button(action: onDelete) {
+                    Image(systemName: "xmark")
+                        .font(.futura(.caption, weight: .semibold))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Remove this snag")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Remove this snag")
         }
         // Matches the marker row: a thin row needs the 44pt floor to sit level with the taller
         // loop rows above it. The delete button carries its own target inside that.
         .frame(minHeight: 44)
         .contentShape(Rectangle())
-        .onTapGesture(perform: onSeek)
+        .onTapGesture(perform: isSelecting ? onToggleSelection : onSeek)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(loopName.map { "Snag at \(timecode(snag.seconds)), \($0)" }
-                            ?? "Snag at \(timecode(snag.seconds))")
-        .accessibilityHint("Go to this spot")
-        .accessibilityAction(named: "Go here", onSeek)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityAddTraits(isSelecting && isSelected ? .isSelected : [])
+        .accessibilityHint(isSelecting ? "Double-tap to select" : "Go to this spot")
+        .accessibilityAction(named: isSelecting ? "Select" : "Go here",
+                             isSelecting ? onToggleSelection : onSeek)
         .accessibilityAction(named: "Remove", onDelete)
+    }
+
+    @ViewBuilder private var glyph: some View {
+        if isSelecting {
+            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                .font(.futura(.footnote))
+                .foregroundStyle(isSelected ? PocketColor.oracle : PocketColor.textSecondary)
+        } else {
+            SnagCatch()
+                .stroke(PocketColor.oracle,
+                        style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
+        }
+    }
+
+    private var accessibilityLabel: String {
+        let place = loopName.map { "Snag at \(timecode(snag.seconds)), \($0)" }
+            ?? "Snag at \(timecode(snag.seconds))"
+        guard isSelecting else { return place }
+        return isSelected ? "\(place), selected" : place
     }
 }
 

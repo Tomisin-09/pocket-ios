@@ -108,4 +108,29 @@ final class PanelSelectionTests: XCTestCase {
         XCTAssertEqual(PanelSelection.title(count: 4, noun: "marker", plural: "markers"),
                        "4 markers selected")
     }
+
+    // MARK: - ADR 0206 D2, seeding a selection
+
+    /// The snags panel's "in this loop" shortcut hands the selection a set rather than performing a
+    /// delete — the whole point being that the rows it means end up visibly ticked.
+    func testSelectingASubsetAddsToWhatIsAlreadyChosen() {
+        let first = UUID()
+        let second = UUID()
+        var selection = PanelSelection()
+        selection.begin()
+        selection.toggle(first)
+
+        selection.select([second])
+
+        XCTAssertEqual(selection.count, 2)
+        XCTAssertTrue(selection.contains(first), "Seeding a second span must not drop the first")
+    }
+
+    /// Every mutation on this type is inert outside the mode, so a stray call cannot conjure a
+    /// selection over a panel that is not selecting.
+    func testSelectingASubsetDoesNothingWhileBrowsing() {
+        var selection = PanelSelection()
+        selection.select([UUID(), UUID()])
+        XCTAssertTrue(selection.isEmpty)
+    }
 }

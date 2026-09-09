@@ -26,7 +26,7 @@ enum SpanHistory {
     /// move, slow it, re-enter it), widening is its inverse and the test of whether it stuck. A span
     /// that keeps its width and slides along the song is neither, and calling it either would put a
     /// false claim into anything that reads this back.
-    enum Kind: String {
+    enum Kind: String, CaseIterable {
         case narrowed, widened, moved
     }
 

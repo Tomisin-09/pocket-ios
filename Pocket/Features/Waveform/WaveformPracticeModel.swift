@@ -217,11 +217,16 @@ final class WaveformPracticeModel {
     /// drained by the commit that finalises the delete.
     var pendingDeletedLoopUIDs: Set<UUID> = []
     var pendingDeletedMarkerUIDs: Set<UUID> = []
+    /// Snags hidden by a deferred **bulk** delete (ADR 0206 D3). Single-row removal stays immediate
+    /// and toast-free, which is ADR 0202 D3 standing where it was written.
+    var pendingDeletedSnagUIDs: Set<UUID> = []
 
     /// Multi-select state for the two reference panels (ADR 0125) — entered by holding a
     /// panel header, exited by Done. Session-only, like every other practice-screen mode.
     var loopSelection = PanelSelection()
     var markerSelection = PanelSelection()
+    /// And for the snags panel (ADR 0206 D2) — delete-only, like the markers one.
+    var snagSelection = PanelSelection()
     /// Drives the bulk practice-categories sheet. A `Bool`, not the selected loops: a
     /// just-created loop's `persistentModelID` flips on first autosave and would dismiss an
     /// `item:`-bound sheet mid-edit (ADR 0090). The sheet reads `selectedLoops` on demand.

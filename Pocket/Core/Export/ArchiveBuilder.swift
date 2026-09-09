@@ -133,7 +133,16 @@ enum ArchiveBuilder {
             markers: song.markers
                 .sorted { ($0.seconds, $0.uid.uuidString) < ($1.seconds, $1.uid.uuidString) }
                 .map { MarkerRecord(uid: $0.uid, seconds: $0.seconds, label: $0.label) },
-            references: referenceRecords(song.references)
+            references: referenceRecords(song.references),
+            // Song order, `uid` breaking the tie — the Snags panel's own order (ADR 0202 D2), and
+            // deterministic for the same reason every other collection here is sorted.
+            snags: song.snags
+                .sorted { ($0.seconds, $0.uid.uuidString) < ($1.seconds, $1.uid.uuidString) }
+                .map { SnagRecord(uid: $0.uid,
+                                  markedAt: $0.markedAt,
+                                  seconds: $0.seconds,
+                                  speed: $0.speed,
+                                  loopUID: $0.loopUID) }
         )
     }
 
@@ -168,7 +177,19 @@ enum ArchiveBuilder {
             backoffSpeedOverride: loop.backoffSpeedOverride,
             colorIndex: loop.colorIndex,
             customColorHex: loop.customColorHex,
-            references: referenceRecords(loop.references)
+            references: referenceRecords(loop.references),
+            // Oldest first — the order a history is read in, and the order `LoopSpanSection` walks
+            // back down. `uid` breaks a tie between two edits saved in the same instant.
+            spanChanges: loop.spanChanges
+                .sorted { ($0.changedAt, $0.uid.uuidString) < ($1.changedAt, $1.uid.uuidString) }
+                .map { LoopSpanChangeRecord(uid: $0.uid,
+                                            changedAt: $0.changedAt,
+                                            start: $0.start,
+                                            end: $0.end,
+                                            previousStart: $0.previousStart,
+                                            previousEnd: $0.previousEnd,
+                                            speed: $0.speed,
+                                            songDuration: $0.songDuration) }
         )
     }
 

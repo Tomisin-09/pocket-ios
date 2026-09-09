@@ -7,6 +7,9 @@
   in the text below — D7's attachment rewrite and an unstated fact about song audio — and both
   corrections are recorded in its slice note rather than edited silently into the decisions.**
 - **Date:** 2026-09-03 (`pocket-293-import-both-doors`)
+- **Amended by:** ADR 0205 — restore hydrates snags onto the song and span changes onto the loop
+  (0205 D3). D1's trust asymmetry, `SchemaVersionGate` and the raw-enum-column rule are untouched,
+  and the receive door is unchanged: `SharedPractice` carries no loops, so there was no hole there.
 - **Relates to:** ADR 0181 (the export this closes the loop on — **amends its
   `CFBundleDocumentTypes` alternative, see D3**), ADR 0182 (the orphan sweep this must not trip,
   D7), ADR 0150 (take sharing, still parked — **D4 stays on 0181 §7's side of the line**),

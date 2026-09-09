@@ -46,7 +46,7 @@ them are in the song player.
 | The **Loop controls** line | The song player's settings |
 | A row in the **Loops** panel | That loop's edit sheet |
 | A row in the **Markers** panel | That marker's edit sheet |
-| A panel header — **Loops** or **Markers** | Selection mode, for acting on several at once |
+| A panel header — **Loops**, **Markers** or **Snags** | Selection mode, for acting on several at once |
 | **Insert rest**, while editing a routine | Rest-placing mode, to drop rests between blocks |
 
 Two of those are worth calling out because they are doors to somewhere you would otherwise go

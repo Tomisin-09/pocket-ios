@@ -58,6 +58,17 @@ extension ArchiveRestoreWriter {
                 return marker
             }
             song.references = references(record.references)
+            // The mark comes home with the loop id it was tagged with (ADR 0205). It resolves because
+            // `loop(from:)` below preserves the loop's own `uid` — and when it does not resolve, the
+            // snag is still right: it outlives its loop by design (ADR 0200).
+            song.snags = record.snags.map { made in
+                let snag = Snag(markedAt: made.markedAt,
+                                seconds: made.seconds,
+                                speed: made.speed,
+                                loopUID: made.loopUID)
+                snag.uid = made.uid
+                return snag
+            }
 
             landing.songs.append(song)
             resolver.songs[record.sourceID] = song
@@ -102,6 +113,15 @@ extension ArchiveRestoreWriter {
         made.colorIndex = record.colorIndex
         made.customColorHex = record.customColorHex
         made.references = references(record.references)
+        made.spanChanges = record.spanChanges.map { made in
+            let change = LoopSpanChange(changedAt: made.changedAt,
+                                        start: made.start, end: made.end,
+                                        previousStart: made.previousStart, previousEnd: made.previousEnd,
+                                        speed: made.speed,
+                                        songDuration: made.songDuration)
+            change.uid = made.uid
+            return change
+        }
         return made
     }
 

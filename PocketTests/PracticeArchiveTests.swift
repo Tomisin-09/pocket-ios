@@ -211,4 +211,82 @@ final class PracticeArchiveTests: XCTestCase {
         XCTAssertEqual(result.journal.first?.isPinned, false,
                        "The model column is a non-optional Bool, so `false` is a recorded fact")
     }
+
+    // MARK: - ADR 0205, the marks and the span history
+
+    /// A snag nests under the **song**, which is where the store puts it: it is cascade-owned by the
+    /// song and only tagged with a loop, so 2:01 is 2:01 whether or not that loop still exists.
+    func testSnagsAreCarriedUnderTheirSongWithTheLoopTheyWereTaggedWith() throws {
+        let song = makeSong()
+        let loop = Loop(name: "Verse riff", start: 0.1, end: 0.3, speed: 0.8, repeats: 4)
+        loop.song = song
+        let tagged = Snag(markedAt: Date(timeIntervalSince1970: 1_700_000_000.5),
+                          seconds: 42, speed: 0.7, loopUID: loop.uid)
+        tagged.song = song
+        // Made with no loop armed. Nesting snags under loops would have dropped this one entirely.
+        let loose = Snag(seconds: 12, speed: nil, loopUID: nil)
+        loose.song = song
+
+        let record = try XCTUnwrap(archive(ArchiveSource(songs: [song])).songs.first)
+
+        XCTAssertEqual(record.snags.map(\.seconds), [12, 42], "Song order, `uid` breaking the tie")
+        XCTAssertEqual(record.snags.last?.loopUID, loop.uid)
+        XCTAssertNil(record.snags.first?.loopUID)
+    }
+
+    /// The narrowing is the most informative thing a player does with a loop (ADR 0199), and an archive
+    /// that lost it would restore a library whose ladder back down had been cut.
+    func testALoopCarriesItsRecordedSpanHistoryOldestFirst() throws {
+        let song = makeSong()
+        let loop = Loop(name: "Verse riff", start: 0.1, end: 0.3, speed: 0.8, repeats: 4)
+        loop.song = song
+        for (index, pair) in [(0.15, 0.35), (0.1, 0.3)].enumerated() {
+            let change = LoopSpanChange(changedAt: Date(timeIntervalSince1970: Double(2 - index) * 86_400),
+                                        start: pair.0, end: pair.1,
+                                        previousStart: 0.05, previousEnd: 0.45,
+                                        speed: 0.7, songDuration: 200)
+            change.loop = loop
+        }
+
+        let record = try XCTUnwrap(archive(ArchiveSource(songs: [song])).songs.first?.loops.first)
+
+        XCTAssertEqual(record.spanChanges.map(\.start), [0.1, 0.15], "Oldest first")
+        XCTAssertEqual(record.spanChanges.first?.songDuration, 200,
+                       "The duration at write time must survive — it is what lets a span read back in seconds")
+    }
+
+    /// Both are additive, so an archive written before them still decodes — and the format version does
+    /// not move, because no field changed meaning.
+    ///
+    /// **Built by deleting the keys from a real archive** rather than by hand-writing a fixture. A
+    /// hand-written one has to name every key the format requires, so it goes stale the moment the
+    /// format grows and it fails for the wrong reason — which it did, on `exercises`, before this was
+    /// rewritten. Deleting from the real thing tests exactly the claim: *this key, absent*.
+    ///
+    /// A declaration default does **not** buy this on its own: Swift's synthesized `Decodable` calls
+    /// `decode(_:forKey:)` and throws `keyNotFound`. The `KeyedDecodingContainer` overloads in
+    /// `ArchiveCoding.swift` are what makes it true, and this is the test that says so (ADR 0205 D5).
+    func testAnArchiveWrittenBeforeSnagsAndSpanHistoriesStillDecodes() throws {
+        let song = makeSong()
+        let loop = Loop(name: "Verse riff", start: 0.1, end: 0.3, speed: 0.8, repeats: 4)
+        loop.song = song
+        let snag = Snag(seconds: 42, speed: 0.7, loopUID: loop.uid)
+        snag.song = song
+
+        let full = try encodedJSON(archive(ArchiveSource(songs: [song])))
+        // Positive control: the keys have to be there for removing them to mean anything.
+        XCTAssertTrue(full.contains("\"snags\""))
+        XCTAssertTrue(full.contains("\"spanChanges\""))
+
+        // Renamed rather than excised, so the JSON stays well-formed. An unknown key is ignored by
+        // the decoder, which is the same thing as the old key being absent.
+        let older = full
+            .replacingOccurrences(of: #""snags""#, with: #""snagsWasNotAKeyYet""#)
+            .replacingOccurrences(of: #""spanChanges""#, with: #""spanChangesWasNotAKeyYet""#)
+        let decoded = try ArchiveBuilder.decode(Data(older.utf8))
+
+        XCTAssertEqual(decoded.schemaVersion, PracticeArchive.currentSchemaVersion)
+        XCTAssertEqual(decoded.songs.first?.snags, [])
+        XCTAssertEqual(decoded.songs.first?.loops.first?.spanChanges, [])
+    }
 }

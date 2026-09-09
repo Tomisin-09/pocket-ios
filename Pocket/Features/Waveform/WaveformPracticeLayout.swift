@@ -157,11 +157,17 @@ struct PracticeReference: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
                     .transition(.move(edge: .top).combined(with: .opacity))
+            } else if model.snagSelection.isActive {
+                SnagSelectionBar(model: model)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
             ScrollView {
                 VStack(spacing: 16) {
                     LoopsPanel(loops: model.loops, expanded: $model.loopsExpanded,     // 10
                                activeLoopID: model.activeLoopID, isPlaying: model.engine.isPlaying,
+                               snagCounts: model.snagCountsByLoop,                 // ADR 0206 D1
                                onActivate: model.activate, onEdit: model.editLoop,
                                onDelete: model.deleteLoop,
                                onAdjustRange: { model.startRangeEdit($0) },
@@ -176,7 +182,8 @@ struct PracticeReference: View {
                     // read on the waveform, and this is where you reach one to remove it.
                     SnagsPanel(snags: model.snagsByTime, loopNames: model.loopNamesByUID,
                                expanded: $model.snagsExpanded,
-                               onSeek: model.seekToSnag, onDelete: model.deleteSnag)
+                               onSeek: model.seekToSnag, onDelete: model.deleteSnag,
+                               selection: model.snagSelectionSeam)               // ADR 0206 D2
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)

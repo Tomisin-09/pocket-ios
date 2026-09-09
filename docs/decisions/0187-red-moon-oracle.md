@@ -14,6 +14,10 @@
   those three ADRs carries the note saying so; everything else in them stands.
 - **Amends:** **ADR 0092**, which this ADR also moves from *Proposed* to *Accepted* — §A3's Sign in
   with Apple (D3) and §B5's implied absence of any text input (D9).
+- **Amended by:** ADR 0204 — **D6 gains an eighth rule (R8)**: a snag crosses as a position,
+  never as a count or a rate. `OracleContext.Unit` gains `snags`, `droppedSnags` and `spans`
+  (0204 D1, D2), and marks and spans are exempt from D6 R4's free-text budget (0204 D4). D6's
+  original seven rules and every output-side guarantee (D7, D8, D11, D12) stand unchanged.
 - **Relates to:** ADR 0092 (the AI charter this executes — still *Proposed*, and this ADR amends it
   rather than merely obeying it), ADR 0002 (the proxy design, **whose Sign-in-with-Apple bullet
   this supersedes**), ADR 0070 (no performance feedback — the line this feature walks), ADR 0117

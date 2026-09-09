@@ -141,6 +141,28 @@ restore door is unreachable after a failed migration, because `.modelContainer(f
 recovery path is delete-and-reinstall rather than opening Settings. **This entry is closed;** 0189
 carries what is left.
 
+## `attachmentFileName` is not absent-tolerant (logged 2026-09-09, ADR 0205 D5)
+
+`ReferenceLinkRecord.attachmentFileName: String = ""` (ADR 0167 phase 2, `b135422`) was added to the
+archive after ADR 0181 defined the format, with a **non-optional-plus-declaration-default** shape and
+no decoding tolerance. Swift's synthesized `Decodable` does not fall back to a default for a missing
+key — it throws `keyNotFound` — so an archive written without that key fails to decode **entirely**,
+and the restore of a whole backup dies on one absent string.
+
+**It is safe today and this is not urgent.** Export and that field are both still in `[Unreleased]`,
+so no archive in anyone's hands lacks the key. It becomes a real bug the moment the format is public
+and a later build adds a field the same way.
+
+ADR 0205 D5 states the rule and buys tolerance for the two collections it added, via named
+`KeyedDecodingContainer` overloads in `ArchiveCoding.swift`. This one is not fixed there because a
+`String` overload cannot be scoped the same way — it would default *every* missing string in *every*
+`Codable` type in the app to `""`, which is the blast radius D5 explicitly refuses.
+
+The options, in order of preference: make it `String?` with `?? ""` at its two read sites (the
+`orphanLabel` shape, and the one the format already treats as free); or give `ReferenceLinkRecord` a
+hand-written `init(from:)`, which is eight fields rather than `SongRecord`'s twenty-five. Do it
+before the release that first puts an archive in a player's hands.
+
 ## A restore door that survives a failed migration (logged 2026-09-04, ADR 0189)
 
 `PocketApp` builds its store with `.modelContainer(for:)`, the SwiftUI convenience, which **traps**

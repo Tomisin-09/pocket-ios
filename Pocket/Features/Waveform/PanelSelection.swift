@@ -36,6 +36,17 @@ struct PanelSelection: Equatable {
         if ids.contains(id) { ids.remove(id) } else { ids.insert(id) }
     }
 
+    /// Add a set of rows to the selection outright — the snags panel's "in this loop" shortcut
+    /// (ADR 0206 D2), which seeds a selection instead of performing a delete.
+    ///
+    /// Adds rather than replaces, so using it twice under two different loops selects both spans
+    /// instead of quietly dropping the first. Nothing else in the app selects a subset for you, and
+    /// nothing else has a natural subset to offer.
+    mutating func select(_ incoming: [UUID]) {
+        guard isActive else { return }
+        ids.formUnion(incoming)
+    }
+
     /// The header's Select-all control, which is really a **toggle**: it selects
     /// everything, unless everything already is, in which case it clears. That's the
     /// standard behaviour and it saves a second control for "none".
