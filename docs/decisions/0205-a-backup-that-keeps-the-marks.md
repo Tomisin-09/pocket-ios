@@ -6,6 +6,10 @@
   The format's rules, its nesting discipline and its two deliberate exclusions are unchanged.
 - **Amends:** ADR 0188 — restore hydrates both (D3). `SchemaVersionGate`, D1's trust asymmetry and
   the raw-enum-column rule are untouched; `currentSchemaVersion` does not move (D4).
+- **Amended by:** ADR 0212 — D5's parked sibling, `ReferenceLinkRecord.attachmentFileName`, is now
+  absent-tolerant, and the rule D5 states is extended to cover scalars, which it had no mechanism
+  for. D5's named-overload discipline for collections stands exactly as written, as does everything
+  else here; only D5's closing paragraph ("left as it is … parked in `docs/backlog.md`") is overtaken.
 - **Relates to:** ADR 0199 (the span history), ADR 0200 (the mark), ADR 0152 (relinking, which is why
   `songDuration` travels), ADR 0148 (why bookmarks do not)
 - **Schema:** none in the store. The **archive format** gains two additive optional collections; see
@@ -106,6 +110,11 @@ non-optional-plus-default shape and no tolerance. It has never shipped absent, b
 that field are both still in `[Unreleased]` — no archive in anyone's hands lacks the key. It is
 therefore left as it is rather than changed under this ADR, and it is parked in `docs/backlog.md`
 against the release that first makes the format public.
+
+**Done under ADR 0212**, before that release rather than at it. The field is `Optional` on the record
+and read through `?? ""`; 0212 D3 extends the rule above so that an additive **scalar** takes that
+shape rather than a container overload, because a `String` overload cannot be scoped the way the two
+above are.
 
 ## Consequences
 

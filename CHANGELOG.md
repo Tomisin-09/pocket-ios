@@ -328,6 +328,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   Dark mode is unchanged.
 
 ### Fixed
+- **An archive written by an older build still opens.** One field in the export format — the name of
+  a picture attached to a reference — was written in a way that would have made a backup taken before
+  it existed fail to load *in full*, rather than just loading without that one detail. Nobody has
+  such an archive, because export has not shipped, and now nobody can get one.
 - **The Loop controls cheatsheet no longer cuts off its last line.** Tapping `Loop controls` on the
   song player opens a nine-row summary of the gestures, and the bottom row — **Follow** — was being
   sliced through the middle by the edge of the panel, with nothing on screen to say there was more.

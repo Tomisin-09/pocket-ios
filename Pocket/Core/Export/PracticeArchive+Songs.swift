@@ -164,5 +164,15 @@ struct ReferenceLinkRecord: Codable, Equatable, Sendable {
     /// phase 2), or empty for a link. Written even though nothing imports it yet, for the reason the
     /// whole archive exists: an export that named a picture it did not carry — or carried one it did
     /// not name — would be a record the player cannot put back together.
-    var attachmentFileName: String = ""
+    ///
+    /// **`Optional`, not `String` with a default** (ADR 0212, obeying ADR 0205 D5). This field was
+    /// added after ADR 0181 defined the format, so an archive can predate it, and a declaration
+    /// default does not survive a missing key — the synthesized `Decodable` calls
+    /// `decode(_:forKey:)` and throws `keyNotFound`, which would fail the *whole* backup on one
+    /// absent string. `Optional` is the one shape the synthesizer decodes with `decodeIfPresent`.
+    /// It cannot take a `KeyedDecodingContainer` overload the way the additive collections do,
+    /// because a `String` overload would default every missing string in every `Codable` type in
+    /// the app to `""` — the blast radius D5 refuses. Read it through `?? ""`; absent and empty
+    /// both mean *this reference is a link, not a picture*, and nothing distinguishes them.
+    var attachmentFileName: String?
 }

@@ -88,7 +88,7 @@ extension PracticeArchive {
         let nested = songs.flatMap { $0.references + $0.loops.flatMap(\.references) }
             + exercises.flatMap(\.references)
             + routines.flatMap(\.references)
-        return nested.map(\.attachmentFileName)
+        return nested.compactMap(\.attachmentFileName)
             .filter { !$0.isEmpty && seen.insert($0).inserted }
     }
 }
