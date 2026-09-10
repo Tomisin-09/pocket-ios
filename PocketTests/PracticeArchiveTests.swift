@@ -289,4 +289,42 @@ final class PracticeArchiveTests: XCTestCase {
         XCTAssertEqual(decoded.songs.first?.snags, [])
         XCTAssertEqual(decoded.songs.first?.loops.first?.spanChanges, [])
     }
+
+    /// The same rule for the format's one additive **scalar** (ADR 0212, obeying ADR 0205 D5).
+    ///
+    /// `ReferenceLinkRecord.attachmentFileName` was added by ADR 0167 phase 2, after ADR 0181 had
+    /// defined the format, so an archive can predate it. It cannot buy tolerance the way the two
+    /// collections above do — a `KeyedDecodingContainer` overload on `String` would reach every
+    /// `Codable` type in the app — so it is declared `Optional`, which is the one shape the
+    /// synthesizer reads with `decodeIfPresent`.
+    ///
+    /// Built by deleting the key from a real archive, for the reason the test above states: a
+    /// hand-written fixture has to name every key the format requires and goes stale as it grows.
+    func testAnArchiveWrittenBeforeReferenceAttachmentsStillDecodes() throws {
+        let song = makeSong()
+        song.references = [
+            ReferenceLink(title: "Chord chart", attachmentFileName: "chart.jpg", kind: .image, song: song),
+            ReferenceLink(title: "The lesson", urlString: "https://example.com/lesson",
+                          order: 1, song: song)
+        ]
+
+        let full = try encodedJSON(archive(ArchiveSource(songs: [song])))
+        // Positive control: removing the key only means something if it was written.
+        XCTAssertTrue(full.contains(#""attachmentFileName" : "chart.jpg""#))
+
+        // Renamed rather than excised, so the JSON stays well-formed. An unknown key is ignored by
+        // the decoder, which is the same thing as the old key being absent.
+        let older = full.replacingOccurrences(of: #""attachmentFileName""#,
+                                              with: #""attachmentFileNameWasNotAKeyYet""#)
+        let decoded = try ArchiveBuilder.decode(Data(older.utf8))
+
+        XCTAssertEqual(decoded.schemaVersion, PracticeArchive.currentSchemaVersion)
+        XCTAssertEqual(decoded.songs.first?.references.count, 2,
+                       "One absent scalar must not cost the whole backup")
+        XCTAssertNil(decoded.songs.first?.references.first?.attachmentFileName)
+        XCTAssertEqual(decoded.songs.first?.references.first?.title, "Chord chart",
+                       "The rest of the record still reads")
+        XCTAssertEqual(decoded.referenceAttachmentFileNames, [],
+                       "An absent name stages no file, exactly as an empty one does not")
+    }
 }

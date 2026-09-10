@@ -239,7 +239,7 @@ extension ArchiveRestoreWriter {
                                      title: record.title,
                                      note: record.note,
                                      urlString: record.urlString,
-                                     attachmentFileName: record.attachmentFileName,
+                                     attachmentFileName: record.attachmentFileName ?? "",
                                      order: record.order,
                                      dateAdded: record.dateAdded)
             link.kindRaw = record.kindRaw

@@ -1732,9 +1732,23 @@ true (ADR 0150 §118-121).
   nesting it under a loop would assert an ownership the store does not have *and* silently drop every
   mark made with no loop armed — and its `loopUID` resolves on restore because a restore preserves
   the loop's own `uid` (ADR 0188 D1). A span change keeps the `songDuration` it was **written** with,
-  so a relink cannot rewrite history. Both take a declaration default of `[]`, so an older archive
-  decodes, and `currentSchemaVersion` stays at **1** under this file's own rule: a version moves when
-  a field changes meaning, not when one is added.
+  so a relink cannot rewrite history. `currentSchemaVersion` stays at **1** under this file's own
+  rule: a version moves when a field changes meaning, not when one is added.
+  **An additive field's tolerance is not free, and the rule for buying it now has two halves.** A
+  declaration default does *not* survive a missing key — the synthesized `Decodable` calls
+  `decode(_:forKey:)` and throws `keyNotFound`, so an archive written before the field fails to
+  decode entirely (ADR 0205 D5, found by the test written to assert the opposite). An additive
+  **collection** therefore takes a named `KeyedDecodingContainer` overload in `ArchiveCoding.swift`
+  — named types, never a generic over `[T]`, which would default every missing array in every
+  `Codable` type in the app and turn a corrupt file into a silently half-read one. An additive
+  **scalar** cannot use that mechanism at all, because `String`/`Int`/`Bool` are owned by nothing and
+  an overload on one would reach the whole app; it is declared `Optional` instead and read through
+  `??` at its call sites, which the compiler enumerates (ADR 0212 D3). That is what
+  `ReferenceLinkRecord.attachmentFileName: String?` is — ADR 0167 phase 2 added it after 0181 had
+  defined the format, in the non-optional-with-a-default shape, and 0212 D1 corrected it before the
+  release that first puts an archive in a player's hands. Both halves are tested the same way: encode
+  a **real** archive, rename the key out of the JSON, decode it — a hand-written fixture has to name
+  every key the format requires and goes stale as the format grows.
   `SessionRecord` was already export-shaped and simply gained `Codable`. Every collection is sorted
   with `uid` as tie-breaker and the encoder uses `.sortedKeys`, so two exports of an unchanged library
   are byte-identical.

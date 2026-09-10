@@ -74,6 +74,13 @@ enum ArchiveCoding {
 /// decode as empty, including required ones — turning a corrupt file into a silently half-read one,
 /// which is the single failure a backup format must not have. Adding an entry here is therefore a
 /// per-field decision, taken once, at the point the field is added.
+///
+/// **A scalar does not come here — it is declared `Optional` instead** (ADR 0212). The scoping that
+/// makes these safe comes from the element type being one this format owns; `String`, `Int` and
+/// `Bool` are not, so an overload on one would reach every `Codable` type in the app. An additive
+/// scalar therefore takes the shape the synthesizer already tolerates and is read through `?? …` at
+/// its call sites, which the compiler enumerates for you — see
+/// `ReferenceLinkRecord.attachmentFileName`.
 extension KeyedDecodingContainer {
 
     func decode(_ type: [SnagRecord].Type, forKey key: Key) throws -> [SnagRecord] {

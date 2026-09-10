@@ -244,27 +244,23 @@ The fix its own header asks for: move the sample array into `AnalyticsEvent.swif
 than two edits in two targets. A `#if DEBUG` guard keeps it out of a release binary if that matters.
 Cheap, and the next miss is otherwise silent for however long it takes somebody to count again.
 
-## `attachmentFileName` is not absent-tolerant (logged 2026-09-09, ADR 0205 D5)
+## Nothing catches an additive archive field declared the wrong way (logged 2026-09-10, ADR 0212)
 
-`ReferenceLinkRecord.attachmentFileName: String = ""` (ADR 0167 phase 2, `b135422`) was added to the
-archive after ADR 0181 defined the format, with a **non-optional-plus-declaration-default** shape and
-no decoding tolerance. Swift's synthesized `Decodable` does not fall back to a default for a missing
-key — it throws `keyNotFound` — so an archive written without that key fails to decode **entirely**,
-and the restore of a whole backup dies on one absent string.
+ADR 0205 D5 and ADR 0212 D3 between them give the archive format a complete rule: an additive
+**collection** takes a named `KeyedDecodingContainer` overload, an additive **scalar** is declared
+`Optional`. Both halves are stated in `ArchiveCoding.swift`, next to the overloads, and both are
+tested by decoding a real archive with the key renamed away.
 
-**It is safe today and this is not urgent.** Export and that field are both still in `[Unreleased]`,
-so no archive in anyone's hands lacks the key. It becomes a real bug the moment the format is public
-and a later build adds a field the same way.
+**The rule is a doc comment.** Nothing fails if the next field is declared `var thing: String = ""`
+and no overload or test comes with it, which is exactly how `attachmentFileName` arrived — after the
+format was defined, by somebody who had no reason to know. It cost two ADRs to notice.
 
-ADR 0205 D5 states the rule and buys tolerance for the two collections it added, via named
-`KeyedDecodingContainer` overloads in `ArchiveCoding.swift`. This one is not fixed there because a
-`String` overload cannot be scoped the same way — it would default *every* missing string in *every*
-`Codable` type in the app to `""`, which is the blast radius D5 explicitly refuses.
-
-The options, in order of preference: make it `String?` with `?? ""` at its two read sites (the
-`orphanLabel` shape, and the one the format already treats as free); or give `ReferenceLinkRecord` a
-hand-written `init(from:)`, which is eight fields rather than `SongRecord`'s twenty-five. Do it
-before the release that first puts an archive in a player's hands.
+A check would walk the record types in `PracticeArchive*.swift` and fail on any non-optional stored
+property with a declaration default that has no matching overload. Written against the source text it
+is a `check-manual.py`-shaped script; written against the types it wants reflection the format does
+not otherwise need. Neither is large. Not scheduled because the two tests cover the fields that
+exist, and the next field is the one at risk — so this is worth doing *before* the next one is added,
+not after.
 
 ## A restore door that survives a failed migration (logged 2026-09-04, ADR 0189)
 
