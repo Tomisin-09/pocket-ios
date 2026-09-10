@@ -174,10 +174,57 @@ before the report was worth reading, and the narrowing is the interesting part:
 - **Pass B — VoiceOver on a real device.** Nothing automated can hear focus order, swipe order, or
   whether a label reads like a sentence (ADR 0213 D3). Order: `RoutinePlayerView` /
   `RoutineSessionPlayer` first, then the run screens, then the song player, then paywall and Home.
-- **Pass C — the AX-size sweep.** `POCKET_SHOOT_CONTENT_SIZE=accessibility-extra-extra-extra-large`
-  with `POCKET_SHOT_OUT` pointed away from `shots/`. Unrun, so the Dynamic Type findings below are
-  from reading source, not from seeing them break.
-- **A full-app Pass A.** Only `ManualMetronomeShots` has been driven with the dump on.
+- **Pass C — the AX-size sweep. RUN 2026-09-10, and the run is the finding.** All **8 of 8 passes
+  failed** and **nothing was filed**, against 4 of 8 at the default size. The evidence came from the
+  11 screenshots XCUITest captures at the moment of a failed tap, still inside
+  `shots-ax-size/runs/*.xcresult` — `xcresulttool export attachments` gets them out. **Read the
+  pictures before believing the logs**: messages like *"in the tree but never became hittable"* read
+  as layout collapse and are mostly the harness's ten-swipe budget against a screen fitting two rows.
+
+  What the pictures actually show: **Settings and the metronome scale correctly** — rows grow, text
+  wraps, `Appear-ance` hyphenates, nothing overlaps. `DesignTokens.futura(_:relativeTo:)` is doing
+  its job, and that is why the failures are isolated rather than systemic. Three real defects:
+  the metronome's **TAP buttons truncated to a bare `…`** (`.frame(width: 56)` — **fixed**, ADR 0213
+  D6's width twin); **chord names truncate** (`Fmaj7 (no bar…`, which loses the distinguishing part);
+  and **chord cards clip** their grid once the name takes three lines.
+
+  **Owed before Pass C can be re-run usefully:** raise the scroll budget when
+  `POCKET_SHOOT_CONTENT_SIZE` is set. Ten swipes is tuned for ~6 rows a screen; at AX-XXXL it is
+  about two, so a reachable row reads as absent and the pass files nothing.
+
+  ⚠️ **The sweep left the simulator at `accessibility-extra-extra-extra-large`, and the next
+  `PocketAll` run failed 10 UI tests because of it** — *"Exercises library row missing"*, *"Practice
+  row missing from the Settings hub"*. Nothing in that output mentions text size; it reads exactly
+  like the change under test broke navigation, and it cost a full re-run to find. `shoot-manual.sh`
+  now sets `content_size` **unconditionally** (defaulting to `large`) and restores it on a `trap …
+  EXIT`. **A device-wide setting a script raises is a setting that script owns.**
+- **A full-app Pass A — ~half done, 2026-09-10.** 20 screens now carry a dump (the song player,
+  loops, sessions, goals, the empty and missing-audio states, the bare first run) where three did.
+  **The other half is blocked on the shoot, not on the audit:** four of eight passes — `base`,
+  `library`, `exercises`, `routines` — failed on a full cold run, and a failed pass files nothing.
+  The failures are four unrelated navigation and state problems (*"tapped 'Exercise details' and the
+  detail sheet never appeared"*, *"nothing in the frame had a label beginning 'File, WAV'"*, *"never
+  brought 'the Add a collection row' into the frame in 10 slow swipes"*, *"no matches for 'Skip to
+  next block' IN identifiers"*). **Whether the tree dump itself perturbs the timing is not yet
+  known** — it walks up to 800 elements per capture and these tests race timed subjects. The
+  diagnostic is one failed pass re-run without `POCKET_SHOOT_AX=1`, then the same on `main`.
+  Until that runs, this is also an open question about the **manual's** figures, not only the audit's.
+
+### What the full-app run returned, and why the number is not the finding
+
+**120 findings, 5 defects.** All five were unlabelled text fields — three name fields and the routine
+description — plus one decorative glyph read aloud as `1.circle`. All are fixed; the name-field fix
+went into `ClearableTextField` itself, so it covers every use rather than the two the run happened
+to see.
+
+The other 115 are the three over-report classes now written into **ADR 0213 D9**: children of a
+`.combine`d row, `Toggle`'s separately-rendered title, and the screen left in the tree behind a
+presented sheet. **None can be told from a real defect by geometry**, which is why the report stays
+noisy and A1 findings now print the labelled text beside them — enough to recognise a `Toggle` without
+opening Xcode.
+
+**Do not read the count as a score.** A tool that over-reports by 20:1 measures where to look, not
+how the app is doing.
 
 ### Advisory findings not acted on, with the reason
 

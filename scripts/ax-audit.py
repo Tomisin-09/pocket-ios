@@ -118,13 +118,35 @@ def described(element):
     return f"(no label, at {frame.get('x', 0):.0f},{frame.get('y', 0):.0f})"
 
 
+def beside(element, elements, slack=40):
+    """The nearest labelled text sharing this element's row, or None.
+
+    **This is the adjudication half of A1, and it is not decoration.** `Toggle("Mark as met",
+    isOn:)` — which is correct and needs no fix — renders in the tree as an unlabelled `switch`
+    with its title as a separate `staticText`, and VoiceOver reads the pair as one. It is
+    indistinguishable, in the tree alone, from a genuinely unnamed control. Printing what sits
+    beside it turns a finding you would have to open Xcode to judge into one you can judge here.
+    """
+    row = element.get("frame", {}).get("y", 0)
+    near = [e for e in elements
+            if e["type"] == "staticText"
+            and (e.get("label") or "").strip()
+            and abs(e.get("frame", {}).get("y", 0) - row) <= slack]
+    if not near:
+        return None
+    closest = min(near, key=lambda e: abs(e.get("frame", {}).get("y", 0) - row))
+    return (closest.get("label") or "").strip()
+
+
 def rule_a1(elements):
     """A control that can be reached and has nothing to say."""
     for element, covered in zip(elements, spoken_for(elements)):
         if covered or element["type"] not in NAMEABLE or not element.get("inWindow"):
             continue
         if not (element.get("label") or "").strip():
-            yield f"{element['type']} with an empty label — {described(element)}"
+            neighbour = beside(element, elements)
+            aside = f" — beside '{neighbour}'" if neighbour else ""
+            yield f"{element['type']} with an empty label — {described(element)}{aside}"
 
 
 def rule_a2(elements):
@@ -228,6 +250,19 @@ def main():
         print(f"⚠️  {len(truncated)} screen(s) hit the element cap and are PARTIAL — a control "
               f"missing from this report may simply be past it: {', '.join(sorted(truncated))}")
     print("Absence only. Focus order, swipe order and how a label sounds are the device pass.")
+    print()
+    print("Adjudicate every finding against the source before fixing it. The first full-app run "
+          "(2026-09-10) returned 120 findings and 5 were defects. The tree XCUITest exposes is not "
+          "the set VoiceOver focuses, and it over-reports in three known ways:")
+    print("  1. children of `.accessibilityElement(children: .combine)` appear separately, so a "
+          "glyph inside an already-labelled row reads as an unlabelled image (A2);")
+    print("  2. `Toggle(\"title\", isOn:)` splits into a staticText and an unlabelled switch, "
+          "which is correct SwiftUI and needs no fix (A1) — hence the 'beside' note;")
+    print("  3. a screen presented over another leaves the one behind in the tree, so its controls "
+          "reappear as phantom duplicates (A4) and phantom small targets (A3).")
+    print("None of the three can be told from a genuine defect by geometry alone — an earlier "
+          "attempt to suppress them by containment hid two real findings. The report is deliberately "
+          "noisy in preference to that.")
 
 
 if __name__ == "__main__":

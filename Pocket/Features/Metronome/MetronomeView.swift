@@ -193,7 +193,12 @@ struct MetronomeView: View {
             Text("TAP")
                 .font(.futura(.caption, weight: .bold))
                 .foregroundStyle(PocketColor.textPrimary)
-                .frame(width: 56, height: 44)
+                // `minWidth`, not `width` — the width twin of D6, and found the same way D6's row
+                // was: by looking. At an accessibility text size a hard 56pt truncated the word to
+                // a bare "…", so the two controls either side of the tempo slider became a pair of
+                // unreadable ellipses. A fixed height clips a row; a fixed width eats the label.
+                .frame(minWidth: 56, minHeight: 44)
+                .padding(.horizontal, 4)
                 .background(RoundedRectangle(cornerRadius: 12)
                     .fill(PocketColor.metronomeCardWash))
         }

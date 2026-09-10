@@ -115,6 +115,31 @@ Related: `.accessibilityAddTraits(.isButton)` **retypes** an element, so a `stat
 a `button` breaks queries written against the old type. Where a row needs an action, the answer is
 `.accessibilityAction(named:)`, not a trait.
 
+### D9 — the report is noisy on purpose, and every finding is adjudicated against the source
+
+Added after the first full-app run (2026-09-10), which is the run that could show this: **120
+findings across 20 screens, of which 5 were defects.** The tree `allElementsBoundByAccessibilityElement`
+returns is not the set VoiceOver focuses, and it over-reports in three ways that geometry cannot
+separate from a real defect:
+
+1. **Children of `.accessibilityElement(children: .combine)` appear separately.** `RoutineItemRow`
+   combines its row and writes an explicit label; the dump still lists the template glyph inside it,
+   so `square.grid.3x3` reads as an unlabelled image on a row that speaks perfectly well.
+2. **`Toggle("title", isOn:)` splits into a `staticText` and an unlabelled `switch`.** That is
+   correct SwiftUI. Every switch in this app reported as unlabelled, and none of them is a defect.
+3. **A screen presented over another leaves the one behind in the tree.** The tempo editor's two
+   `Play` buttons are the sheet's and the player's, 270pt apart and never reachable at once.
+
+**The answer is not more suppression.** Building it was the mistake this ADR nearly shipped: a
+containment rule that removed the symbol-name noise also removed two of the automator's three
+unlabelled fields, because the metronome is presented over Home and those fields fall inside a Home
+card's rectangle. A report showing one of three reads as complete. So the rules stay literal, the
+report stays noisy, and A1 findings carry the nearest labelled text beside them — which is what makes
+a `Toggle` identifiable at a glance rather than at a call site.
+
+The cost is real and worth stating: **this tool cannot be read as a score.** A falling finding count
+is not progress and a rising one is not regression. It is a list of places to look.
+
 ## Consequences
 
 The backlog item closes. The design brief's checklist gains a mechanism behind the VoiceOver line,

@@ -242,9 +242,22 @@ xcrun simctl status_bar "$SIM_NAME" override \
 # `accessibility-extra-extra-extra-large` is the top of the extended range — the size the app has
 # never been seen at. `simctl` validates the name itself, so a typo fails here rather than producing
 # a full set at the default size that looks exactly like a sweep.
+#
+# **Set unconditionally, and restore on the way out.** Both halves were learned the hard way, in the
+# same hour. The first version only ever *raised* the size, so the setting outlived the run: a sweep
+# left `iPhone 17` at `accessibility-extra-extra-extra-large`, and the next `xcodebuild test
+# -testPlan PocketAll` on that device failed ten UI tests with *"Exercises library row missing"* and
+# *"Practice row missing from the Settings hub"* — rows that were simply off-screen at that size.
+# Nothing in that output says "text size"; it reads exactly like the change under test broke
+# navigation. **A device-wide setting a script raises is a setting that script owns.**
+say "Setting content size to ${POCKET_SHOOT_CONTENT_SIZE:-large}"
+xcrun simctl ui "$SIM_NAME" content_size "${POCKET_SHOOT_CONTENT_SIZE:-large}"
 if [ -n "${POCKET_SHOOT_CONTENT_SIZE:-}" ]; then
-    say "Setting content size to $POCKET_SHOOT_CONTENT_SIZE (this run is partial by definition)"
-    xcrun simctl ui "$SIM_NAME" content_size "$POCKET_SHOOT_CONTENT_SIZE"
+    say "This run is partial by definition — see PARTIAL above"
+    # A `trap` on EXIT, so an interrupted or failed sweep restores it too. Belt and braces with the
+    # unconditional set above: the trap covers the *next* command on this device, the unconditional
+    # set covers the next *shoot* even when a kill skipped the trap.
+    trap 'xcrun simctl ui "$SIM_NAME" content_size large >/dev/null 2>&1 || true' EXIT
 fi
 
 say "Installing"

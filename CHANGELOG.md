@@ -333,6 +333,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   glyphs either side of an unlabelled field, so a screen-reader user met six buttons that announced
   themselves as "plus" and "minus" and three editable fields that said nothing at all. Every one of
   them now says what it changes: *Increase the interval*, *Decrease the target tempo*, and so on.
+- **Naming a loop, a routine, a goal or a session now says what you are naming.** Four text fields —
+  loop and marker names, the routine name, the goal name, and a session's description — announced
+  only what was already typed in them, with nothing saying what the field was for. The visible
+  *Name* beside each one is a separate piece of text and was never attached to the field; the
+  placeholder that would have named it disappears the moment you type. They are labelled now.
+- **The metronome's TAP buttons keep their word at large text sizes.** At the accessibility text
+  sizes the two buttons either side of the tempo slider were rendering as a bare `…` — the label had
+  been squeezed out of a fixed-width box, leaving two identical unreadable controls at exactly the
+  size where reading matters most. They now grow with the text.
+- **The beat-marking hint no longer opens by reading out a symbol's filename.** The small numbered
+  glyph beside *Play and tap the 1* was being announced as "one dot circle" ahead of the sentence
+  that explains it. It is decorative — the sentence says the whole thing — so it is silent now.
 - **The metronome no longer offers the same button twice to VoiceOver.** There are two **TAP**
   buttons, one either side of the tempo slider, so you can tap the beat with whichever thumb is
   free. That is a reason for eyes and hands, not for a screen reader, which simply heard the same

@@ -26,6 +26,10 @@ extension RoutineDetailView {
                 TextField("Routine name", text: $routine.name)
                     .font(.futura(.body))
                     .foregroundStyle(PocketColor.textPrimary)
+                    // The placeholder is gone as soon as the field holds anything, and the section's
+                    // `Name` header is a separate element — so a named session announced only its
+                    // own name (ADR 0213 D1).
+                    .accessibilityLabel("Routine name")
                     .listRowBackground(PocketColor.background)
             } header: {
                 Text("Name")
@@ -68,6 +72,10 @@ extension RoutineDetailView {
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(3...8)
                     .keyboardDoneButton()
+                    // **An identifier is not a label** (ADR 0213 D8). This field carried
+                    // `routine.descriptionField` for the UI tests and nothing for VoiceOver, which
+                    // is exactly the pair 0208 D5 warned reads as covered when it is not.
+                    .accessibilityLabel("Description")
                     .accessibilityIdentifier(UITestHooks.routineDescriptionField)
                     .listRowBackground(PocketColor.background)
             } header: {
