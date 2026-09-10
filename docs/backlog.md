@@ -138,7 +138,7 @@ comment is the record of why the fields say what they say. ⚠ A backlog item ca
 direction of *already fixed* as easily as the other way, and this one sat open for eighteen days
 while reading as a legal risk. Check the source before promoting an item like this to a blocker.
 
-## Accessibility has never been walked (logged 2026-08-23, blind-spot review 2026-08-22)
+## Accessibility has never been walked (logged 2026-08-23) — **the mechanism is built, ADR 0213**
 
 114 of 478 files carry an `accessibilityLabel`, so the coverage is deliberate rather than accidental
 — but there is no evidence anyone has run VoiceOver or AX-size Dynamic Type against the transport,
@@ -146,6 +146,51 @@ which is the screen where a mislabelled control costs the most.
 
 Cheap relative to building it: the shoot harness already drives every screen and can dump the
 accessibility tree, so the audit is mostly reading what it produces.
+
+> **The guess above was right, and the count in it was already stale — it is 166 of 613 for any
+> `.accessibility*` modifier.** `POCKET_SHOOT_AX=1` on the shoot plus `scripts/ax-audit.py` is
+> exactly the "mostly reading what it produces" this describes. **Pass A is built and Passes B and
+> C are owed** — see below. The item stays open until a person has held the phone.
+
+### What the first real run taught, kept because the script now depends on it
+
+Three screens produced **93 findings**, and almost none were defects. Two rules had to be narrowed
+before the report was worth reading, and the narrowing is the interesting part:
+
+- **A checker that reports everything reports nothing.** Read literally — a target under 44pt in
+  *either* axis — A3 returned 77 hits across three screens: disclosure chevrons, the `Red Moon`
+  wordmark, segmented-control segments, the Back button. Nobody scrolls past 70 non-defects to
+  reach the six real ones. It now takes **both** axes and no images.
+- **Geometry is not parentage, and the difference is where screens layer.** XCUITest exposes the
+  glyph inside a button as its own element, so suppressing anything drawn inside a labelled control
+  removed that noise — and also removed **two of the automator's three unlabelled number fields**,
+  because the metronome is presented over Home and those fields fall inside the rectangle of
+  `JUMP BACK IN, …`, which is still in the tree behind it. A report showing one of three reads as
+  complete. Suppression is now limited to **decoration** (`image`, `staticText`); a same-type escape
+  hatch for "the same control exposed twice" was tried and reintroduced the same bug for buttons.
+
+### Owed
+
+- **Pass B — VoiceOver on a real device.** Nothing automated can hear focus order, swipe order, or
+  whether a label reads like a sentence (ADR 0213 D3). Order: `RoutinePlayerView` /
+  `RoutineSessionPlayer` first, then the run screens, then the song player, then paywall and Home.
+- **Pass C — the AX-size sweep.** `POCKET_SHOOT_CONTENT_SIZE=accessibility-extra-extra-extra-large`
+  with `POCKET_SHOT_OUT` pointed away from `shots/`. Unrun, so the Dynamic Type findings below are
+  from reading source, not from seeing them break.
+- **A full-app Pass A.** Only `ManualMetronomeShots` has been driven with the dump on.
+
+### Advisory findings not acted on, with the reason
+
+- **Nine controls under 44pt in both axes**, all on the metronome: the six 32×32 automator nudges,
+  the 36×36 save-as-exercise bookmark, and the toolbar's 39×36 `Settings` and 41×36 journal buttons.
+  Growing them is a **layout change** — the nudges flank a fixed-width field, and the toolbar pair
+  is laid out by the system, whose own hit area is larger than the glyph frame the dump measures.
+  Wants eyes on the screen, which is Pass B.
+- **Dynamic Type, from source and not yet seen failing:** 16 hard-coded `.font(.system(size:))`
+  sites and 33 remaining fixed `.frame(height:)` sites. The sub-10pt glyph text in the fretboard and
+  strum editors (`size: 5`–`size: 9`) is a **design question** — it is already near-illegible and
+  scaling it would break the boards it sits on — not a mechanical fix. `PracticeRunStyle`'s shared
+  run-screen pill was fixed (0213 D6); the rest waits for Pass C to say which actually clip.
 
 ## Relink dead ends — `LoopRunView` and `SongPlayAlongView` (logged 2026-08-23, ADR 0182 §6)
 

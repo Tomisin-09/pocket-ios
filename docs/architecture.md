@@ -2151,5 +2151,17 @@ root beside `store` and `trialReminder`, injected via `.environment`. Both reade
   (ADR 0146). `Pocket/Core/Testing/` holds the two halves: `UITestHooks` (strings, compiled into
   **both** targets — a UI test cannot `@testable import` the app) and `UITestRuntime.isActive`, the
   single answer to "is XCUITest driving this process?".
+- **Accessibility (ADR 0213):** the shoot doubles as the audit. With `POCKET_SHOOT_AX=1` every
+  `capture` attaches the screen's accessibility tree as `<slug>.ax` beside the image, and
+  `scripts/ax-audit.py` reads the filed set for four absences: a control with no label, a label that
+  is an SF Symbol name, a target under 44pt, and two controls sharing a name. It rides the shoot
+  rather than walking the app itself, because a second copy of that navigation is one nothing would
+  notice breaking. Off by default and not reachable from CI — `PocketAll` cannot see
+  `PocketShootUITests`, and the audit needs a device the script has staged. **It proves absence
+  only:** XCUITest exposes no accessibility traits and nothing at all about VoiceOver's focus order,
+  so a clean report is not evidence the app is usable, and the device pass stays a step.
+  `POCKET_SHOOT_CONTENT_SIZE` drives the same states at an accessibility text size, and forces a
+  partial run whatever it drove — those images are correct for the sweep and wrong for every figure
+  in the manual.
 - Audio behaviour is validated on device/simulator, not unit-tested. (No MusicKit
   behaviour exists to validate — see the audio-source note above.)

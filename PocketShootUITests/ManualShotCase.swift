@@ -376,6 +376,16 @@ class ManualShotCase: UITestCase {
         context.name = "\(shot.name ?? slug).context"
         context.lifetime = .keepAlways
         add(context)
+
+        // The accessibility tree, when the audit is switched on (ADR 0213). Third artefact, same
+        // states, no extra navigation — see `ManualShotCase+Accessibility.swift` for why it rides
+        // here rather than owning a walk of its own, and for what it cannot see.
+        if Self.accessibilityAuditIsOn {
+            let tree = XCTAttachment(string: accessibilityDump(of: app, slug: slug, screen: title))
+            tree.name = "\(shot.name ?? slug).ax"
+            tree.lifetime = .keepAlways
+            add(tree)
+        }
     }
 
 }

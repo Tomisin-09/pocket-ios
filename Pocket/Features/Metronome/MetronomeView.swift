@@ -161,7 +161,7 @@ struct MetronomeView: View {
     /// tempos fill the centre, rather than the linear midpoint of ~165 making 90 BPM look slow.
     private var tempoControls: some View {
         HStack(spacing: 12) {
-            tapButton
+            tapButton(spoken: true)
             Slider(
                 value: Binding(
                     get: {
@@ -177,11 +177,18 @@ struct MetronomeView: View {
             )
             .tint(PocketColor.metronome)
             .accessibilityLabel("Tempo")
-            tapButton
+            tapButton(spoken: false)
         }
     }
 
-    private var tapButton: some View {
+    /// One of the two **TAP** buttons flanking the slider.
+    ///
+    /// - Parameter spoken: whether VoiceOver meets this one. **Exactly one of the pair says yes**
+    ///   (ADR 0213). The two exist so either thumb can reach one — an ergonomic reason that does not
+    ///   survive into VoiceOver, where the pair is one action announced twice with nothing to choose
+    ///   between them. The audit found it as two buttons sharing a label; the fix is not to invent a
+    ///   second name for the same thing, it is to stop offering the duplicate.
+    private func tapButton(spoken: Bool) -> some View {
         Button { recordTap() } label: {
             Text("TAP")
                 .font(.futura(.caption, weight: .bold))
@@ -192,6 +199,7 @@ struct MetronomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Tap to set tempo")
+        .accessibilityHidden(!spoken)
     }
 
     /// The tempo −/+ steppers: a single tap nudges ±1 BPM; holding auto-repeats and accelerates

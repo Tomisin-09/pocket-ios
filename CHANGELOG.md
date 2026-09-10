@@ -328,6 +328,20 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   Dark mode is unchanged.
 
 ### Fixed
+- **The metronome's automator can be used with VoiceOver.** Its three number rows — how much the
+  tempo climbs, how often, and what it climbs to — were built from a pair of unlabelled `−`/`+`
+  glyphs either side of an unlabelled field, so a screen-reader user met six buttons that announced
+  themselves as "plus" and "minus" and three editable fields that said nothing at all. Every one of
+  them now says what it changes: *Increase the interval*, *Decrease the target tempo*, and so on.
+- **The metronome no longer offers the same button twice to VoiceOver.** There are two **TAP**
+  buttons, one either side of the tempo slider, so you can tap the beat with whichever thumb is
+  free. That is a reason for eyes and hands, not for a screen reader, which simply heard the same
+  control announced twice with nothing to choose between them. It is announced once now; both are
+  still there, and both still work.
+- **The main button on a practice run no longer clips its own words at large text sizes.** The
+  filled pill every run screen is built around had a fixed height, so at the larger accessibility
+  text sizes its label was cut off — on the one control the screen exists to offer. It grows with
+  the text now. Nothing moves at the default sizes.
 - **An archive written by an older build still opens.** One field in the export format — the name of
   a picture attached to a reference — was written in a way that would have made a backup taken before
   it existed fail to load *in full*, rather than just loading without that one detail. Nobody has

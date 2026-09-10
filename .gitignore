@@ -57,6 +57,10 @@ infrastructure/**/*.tfvars
 # guide (0165 D7); processed shots are staged in ~/Documents/Red Moon Manual Shots/.
 # Re-runnable from scratch with ./scripts/shoot-manual.sh, so nothing here is a source.
 shots/
+# The accessibility audit's output (ADR 0213). Its own directory rather than a subdirectory of
+# `shots/`, because the point of the separation is that a run at an accessibility text size can
+# never reach the figure set — a shared parent is one `POCKET_SHOT_OUT` typo away from that.
+shots-ax*/
 
 # Third-party reference material — raw sources are reference-only, never
 # committed or shipped. Our derivatives live in docs/research/ instead.
