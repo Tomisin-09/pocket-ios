@@ -160,8 +160,10 @@ resources a multiplier multiplies*. Lands after ADR 0187 S4, as its own slice.
    forbids a free `String`, so the cases have to land in the same change as the first
    surface — or the first metered feature ships unmeasured.
 4. **ADR 0187 D20's two tiers are not in `Configuration/RedMoonPro.storekit`**,
-   `StoreManager.swift` ORs the beta grant into `isPro`, and unlocks everything under
-   `UITestRuntime.isActive`. The tier is untestable until `UITestHooks` gains a seam.
+   `StoreManager.swift` ~~ORs the beta grant into `isPro`, and~~ unlocks everything under
+   `UITestRuntime.isActive`. (The beta grant was removed 2026-09-10; the `UITestRuntime` unlock is
+   the half that remains, and it is the half that mattered.) The tier is untestable until
+   `UITestHooks` gains a seam.
 5. ~~**ADR 0092 still reads *Proposed*** while ADR 0187's Consequences say it moved to
    Accepted. Two files disagree about what happened.~~ **Stale — this was already fixed.**
    0092's status line has read **Accepted** since 0187 shipped, with both amendments

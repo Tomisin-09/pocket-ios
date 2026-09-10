@@ -657,6 +657,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   practised; it can now round up by at most half a minute, which is what the other two tiers have
   always done.
 
+### Internal
+- **The closed-beta Pro grant is gone.** Through the 2026-08 TestFlight round a build running in the
+  StoreKit sandbox was entitled to Red Moon Pro outright, so invited testers could study the practice
+  loop rather than a purchase decision. That path is now removed in full — the receipt probe, the
+  `AppTransaction` confirmation, the diagnostic line in **Settings ▸ Red Moon Pro**, and `betaGrant`
+  as an input to the entitlement decision — ahead of the next App Store submission. Nothing but a
+  real StoreKit entitlement (or a Debug override, which cannot exist in a shipping build) unlocks Pro.
+  Side effect worth naming: this removed the app's only use of `AppTransaction`, a **network read
+  that ran on every production launch** for the sake of a beta convenience.
+
 ## [1.2] — build 4, cut 2026-08-12 for the closed beta
 
 Distributed to the eight invited testers via TestFlight, not to the App Store. Two things

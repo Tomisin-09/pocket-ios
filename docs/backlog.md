@@ -102,26 +102,28 @@ Deliverable when it resumes: a register spec in `docs/research/`, whose sentence
 existing guards run against — **not** a report. D17's eval fixtures are still blocked on this, and
 they must be recorded against whatever register lands, not this one.
 
-## The beta grant needs a structural guard (logged 2026-08-23, blind-spot review 2026-08-22) — RISK
+## ~~The beta grant needs a structural guard~~ — **CLOSED by deletion** (logged 2026-08-23, closed 2026-09-10)
 
-⚠ **Corrected 2026-09-10 (ADR 0211 release pass): this is a branch risk, not a `main` risk, and the
-heading over-states it.** On `main`, `StoreManager.swift:89` reads
-`Self.betaGrantIsReadable && Self.resolveSandbox(receiptURL: Bundle.main.appStoreReceiptURL)` — the
-grant is **sandbox-gated**, so a production App Store receipt gets nothing and a release cut from
-`main` is safe. The unconditional form (`betaGrantIsActive = Self.betaGrantIsReadable`, true in every
-non-Debug build) exists **only on `pocket-273-beta-grant-unconditional`**, where a Release archive
-would ship Red Moon Pro free to everyone with a `TODO(beta)` comment as the only thing in the way.
-Read the branch before treating this as a blocker — as written, it reads as one and is not.
+**The guard is moot: there is no longer a grant to guard.** The whole closed-beta entitlement path
+came out ahead of the 1.3 submission — the receipt probe, `confirmBetaGrantIfNeeded()`,
+`betaDiagnostic`, its footer row in `ProSettingsView`, and `betaGrant` as an input to `resolveIsPro`.
+`pocket-273-beta-grant-unconditional`, the branch this item was really about, is deleted local and
+origin. See `docs/plans/beta-testing-plan.md` for the exit note.
 
-Still wants a CI check that fails when the grant is reachable under a Release configuration — the
-same shape as the lint rules that exist because the thing they catch already shipped. **Not gating a
-release from `main`**; it is gating the day somebody archives that branch by mistake, which is
-exactly the day nobody re-reads this file.
+⚠ **The correction this item carried is worth keeping, because the mistake it records was mine.** As
+originally written the heading said the grant was a `main` risk, and it was not: on `main` the grant
+was sandbox-gated, so a production receipt got nothing and a release cut from `main` was always safe.
+The unconditional form — true in every non-Debug build, with a `TODO(beta)` comment as the only thing
+in the way — existed **only on that branch**, from which build 6 was cut. A backlog item that names a
+branch risk in `main`'s voice reads as a release blocker for weeks and stops nothing. **Check ancestry
+before writing a risk down**, and say which ref it lives on.
 
-**Separately, and more urgent than the guard:** that branch is a long way behind `main`. Takes,
-moments, trim, long-term goals, carry-tempo, reference links and routine history are all absent from
-build 6, so testers are giving feedback on an app that has largely stopped existing. Decide which:
-cut a fresh beta off `main`, or accept that this round's feedback is about the older surface.
+The CI check this item asked for — fail the build when an entitlement path is reachable under a
+Release configuration — is **not** being written, and that is the deliberate answer rather than an
+omission. It would have exactly one thing to catch, and that thing is deleted. If a
+Release-only entitlement shortcut is ever added again, the rule from the beta plan is the one that
+applies: a Release-only code path needs a Debug-testable decision and a way to see it from the
+outside. A lint rule is the third-best version of that.
 
 ## ~~`Song+Sample.swift:9` still ships "Little Wing" / "Jimi Hendrix"~~ — **FIXED** (logged 2026-08-23, verified closed 2026-09-10)
 

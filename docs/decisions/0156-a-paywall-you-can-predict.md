@@ -171,6 +171,13 @@ decision and belongs in its own record — this one deliberately leaves the tria
   to `false`, plus the pure unit tests, which are the substance of the change. **This ADR should not
   move to Accepted until the beta Pro grant is removed and it has been run against a real
   non-entitled build.**
+
+  > **Update, 2026-09-10 — half of that condition is now met.** The closed-beta grant was removed in
+  > full before the 1.3 submission, so a TestFlight build no longer entitles itself and a tester
+  > *can* meet a paywall. **This ADR stays Proposed**, because the other half stands untouched: the
+  > policy is still unbuilt, so there is nothing yet to run against a real non-entitled build. What
+  > changed is that the blocker moved from "impossible to verify" to "not yet built" — a different
+  > kind of not-done, and the only one of the two that this ADR can act on.
 - **The unit tests are the real deliverable.** `PaywallPresentationPolicyTests` covers the
   boundaries: exactly at 24h and 72h, the 3→4 widening, a dismissal inside an otherwise-eligible
   window, and the three preconditions each independently blocking. None of it needs a simulator.

@@ -131,10 +131,11 @@ one-line promise and the three value lines, and stops before the Annual card.
 
 **Stage 2 — the two that differ from each other.** `subscription/settings-pro` needs no purchase at
 all: `ProSettingsView` branches on `isPro` alone, so **Settings ▸ Developer ▸ Entitlement → Pro**
-gives you `Manage Subscription`, `Restore Purchases` and the Pro footer. One caution — that footer
-also carries `store.betaDiagnostic`, a monospaced `receipt: … · grant: … · pro: yes` line marked
-`TODO(beta)` for removal. It must not be in the figure. The marker is `role: panel`, so give it a
-`crop:` that stops above the diagnostic, and measure that rect against the frame.
+gives you `Manage Subscription`, `Restore Purchases` and the Pro footer. **The caution that used to
+sit here is gone** (2026-09-10): the footer no longer carries a monospaced beta-diagnostic line, so
+there is nothing to crop above and the marker's `role: panel` can take the whole panel. If you find
+an older draft of this file telling you to stop the `crop:` short, ignore it — it was written
+against the closed-beta grant, which no longer exists.
 
 **`subscription/trial-row` is the one thing no toggle fakes.** `TrialCountdownRow` renders only when
 `TrialReminder.daysRemaining()` is non-nil, and that reads `trialEndsAt`, which is written from a

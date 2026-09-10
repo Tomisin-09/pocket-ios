@@ -363,12 +363,21 @@ convention: `// beta feedback 2026-08 #N`.
 - [ ] Triage written into `docs/backlog.md` in the established pass format.
 - [ ] ADR 0149 revisited — steps confirmed or corrected against the recordings, and moved
       from Proposed toward Accepted.
-- [ ] **The TestFlight Pro grant removed before the next App Store submission.** It is a
-      Release-build entitlement path; a `TODO(beta)` marker in
-      `Pocket/Core/Monetization/StoreManager.swift` exists so a grep finds it. **Four markers
-      now**, not one: the receipt probe in `init`, `confirmBetaGrantIfNeeded()`, `betaDiagnostic`,
-      and the diagnostic's footer row in `ProSettingsView`. Also delete the "Which build the grant
-      fires on" section of `PocketTests/StoreManagerTests.swift`.
+- [x] **The TestFlight Pro grant removed before the next App Store submission.** Done
+      2026-09-10, ahead of the 1.3 cut. All four `TODO(beta)` markers are gone — the receipt probe
+      in `init`, `confirmBetaGrantIfNeeded()`, `betaDiagnostic`, and the diagnostic's footer row in
+      `ProSettingsView` — along with the whole `// MARK: - Closed-beta entitlement grant` section
+      and nine of the fourteen tests in `PocketTests/StoreManagerTests.swift`. `resolveIsPro` is
+      back to two inputs. **This also removed the app's only use of `AppTransaction`**, a network
+      read that ran on every production launch for a beta convenience. **Nothing replaces the nine
+      deleted tests**, deliberately: the four that remain already assert the rule that survives, and
+      a new test saying "and not the beta grant either" would assert the absence of a symbol that no
+      longer compiles. `testNotEntitledWithNoOverrideIsNotPro` is that assertion and always was.
+      Branch `pocket-273-beta-grant-unconditional`, where the grant was unconditional in every
+      non-Debug build and from which build 6 was cut, was deleted local and origin in the same pass.
+      Its tip was **`ad87d82`** — written down here because a deleted branch is recoverable by SHA
+      and by nothing else, and because that binary is the one thing in this repo's history that must
+      never be submitted.
 
 ### What went wrong with the grant, and the rule it leaves behind
 

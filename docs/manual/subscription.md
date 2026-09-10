@@ -86,9 +86,9 @@ A **Trial ends in N days · Manage** row appears on **Home** and in **Settings �
 <!-- shot: subscription/trial-row | role: band
      | alt: The trial countdown row reading Trial ends in a number of days, with a Manage link on the right
      | state: an account inside a running trial, Home
-     | device: iPhone — a running trial is an entitlement, and no launch argument fakes one. On a
-       simulator `AppTransaction.shared` puts up a sign-in prompt that leaves the app untappable, so
-       a driven attempt at this figure hangs rather than failing -->
+     | device: iPhone — a running trial is an entitlement, and no launch argument fakes one. No
+       driven attempt should be made: `trialEndsAt` is written from a real StoreKit expiration and
+       from nowhere else, so a shoot can only produce the row's absence -->
 
 That row needs no permission and cannot be switched off, which is the point of it: even if you
 declined the notification, or never saw the offer of one, you can always see where you are and reach
