@@ -63,7 +63,7 @@ text addressed to the player, and both can judge.
 
 | Job | Surface | Output | Local fallback (0092 §A2) |
 |---|---|---|---|
-| **Clarify a goal** | `GoalEditorView` / `LongTermGoalEditorView`, via the shared `GoalAuthoringSections` | a `Goal` proposal — title, skill trim, priority, optional target song | `GoalTemplateLibrary` (4 curated templates), the incumbent |
+| **Clarify a goal** | `GoalEditorView` / `LongTermGoalEditorView`, via the shared `GoalAuthoringSections` | a `Goal` proposal — title, skill trim, priority, optional target song | `GoalTemplateLibrary` (10 curated templates), the incumbent |
 | **Propose an exercise** | ADR 0187 D9's prompt box | a `NewExercisePlan` pre-fill; `ExerciseTemplate` stays closed | none needed — the control is simply absent offline |
 | **Explain a session** | `RoutineDetailView`, on a generated routine | one tone- and focus-guarded paragraph over a session `SessionBuilder` already built | none needed — the session stands without it |
 | **Mirror** | `OracleView` — **shipped** | the weekly reading | `LocalOracle` — **shipped** |
@@ -73,7 +73,12 @@ text addressed to the player, and both can judge.
 structured output, and it has the strongest fallback already built — but the real argument
 is that every downstream feature is bounded by goal quality: `DueScore` is
 `goalWeight × dueness × (1 − mastery/5)`, so a vague goal degrades the entire planner. And
-`GoalTemplateLibrary` carries four templates; the long tail is exactly what a model is for.
+`GoalTemplateLibrary` carries ten templates; the long tail is exactly what a model is for.
+
+> **Settled 2026-09-10 by ADR 0187 D24, which this paragraph won.** The two documents disagreed:
+> D21's stage table had S3 as *"structured output ×2"*, both suggesters together. S3 is now **the
+> goal clarifier alone**, with the exercise proposer and the session explainer as **S3b**. The
+> reasoning above is quoted in D24 as the deciding argument.
 
 **Amended 2026-09-07 — the ranking below is a re-ranking, and generation drops to last.**
 
@@ -157,8 +162,15 @@ resources a multiplier multiplies*. Lands after ADR 0187 S4, as its own slice.
 4. **ADR 0187 D20's two tiers are not in `Configuration/RedMoonPro.storekit`**,
    `StoreManager.swift` ORs the beta grant into `isPro`, and unlocks everything under
    `UITestRuntime.isActive`. The tier is untestable until `UITestHooks` gains a seam.
-5. **ADR 0092 still reads *Proposed*** while ADR 0187's Consequences say it moved to
-   Accepted. Two files disagree about what happened.
+5. ~~**ADR 0092 still reads *Proposed*** while ADR 0187's Consequences say it moved to
+   Accepted. Two files disagree about what happened.~~ **Stale — this was already fixed.**
+   0092's status line has read **Accepted** since 0187 shipped, with both amendments
+   written into it. Checked 2026-09-10 while settling D24; nothing to do.
+6. **The DTO's shape fields are a floor, not a ceiling** (ADR 0187 D22, built 2026-09-10).
+   `Unit.runsInCurrentSpan`, `SpanEdit.runsInPreviousSpan` and `OracleContext.sittings`
+   are derived by joining the practice log against `LoopSpanChange` epochs — no schema
+   change, and none of them is a rate. A future field that needs a *rate* is a comparison
+   and does not cross; see D22's own test before adding one.
 
 **It also answers the cadence question the backlog left open:** the reading stays weekly
 because it reads a week (ADR 0187 D15). The suggesters are not periodic at all — they fire

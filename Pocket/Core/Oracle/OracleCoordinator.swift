@@ -81,7 +81,12 @@ struct OracleCoordinator: Sendable {
         guard let candidate = try? await oracle.reading(for: OracleReadingRequest(context: context)) else {
             return .reading(fallback, capabilities: capabilities)
         }
-        let shown = OracleToneGuard.passes(candidate.guardedText) ? candidate : fallback
-        return .reading(shown, capabilities: capabilities)
+        // Both guards, and both wholesale (D12, D23). They catch different faults — one grades the
+        // player, the other points their attention at their own hand — and a paragraph that trips
+        // either is replaced entire rather than edited, because the half that survives a redaction
+        // is not reliably the harmless half.
+        let clean = OracleToneGuard.passes(candidate.guardedText)
+            && OracleFocusGuard.passes(candidate.guardedText)
+        return .reading(clean ? candidate : fallback, capabilities: capabilities)
     }
 }

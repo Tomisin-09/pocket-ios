@@ -217,9 +217,15 @@ struct OracleView: View {
                                                window: window,
                                                promptVersion: Self.promptVersion)
 
-        // S1 has no proxy to call — `OracleEndpoint.isConfigured` is false in every build — so the
-        // seam is the local one. From S2 this is where `ProxyOracle` is chosen instead, with the
-        // same coordinator and the same fallback beneath it.
+        // S1 has no proxy to call, so the seam is the local one. From S2 this is where
+        // `ProxyOracle` is chosen instead, with the same coordinator and the same fallback beneath
+        // it.
+        //
+        // This comment used to say `OracleEndpoint.isConfigured` is false in every build. **It is
+        // not**: Release is empty and resolves to `nil`, but Debug's xcconfig carries
+        // `http://localhost:8787`, which parses fine — so `isConfigured` is already `true` in a
+        // Debug build. Harmless while nothing reads it, and actively misleading to whoever wires
+        // S2, which is the next change to touch this line.
         let coordinator = OracleCoordinator(oracle: LocalOracle())
         let outcome = await coordinator.run(context: built.context)
 

@@ -2009,6 +2009,31 @@ The pipeline, in the order `OracleCoordinator` runs it — one place, one order,
    and the prompt derives neither. Both are exempt from R4's free-text budget (they carry no text),
    and a mark outside every loop does not travel at all — there is no song entity for it to hang from
    and inventing one would put a song into a payload that has never contained one.
+
+   **ADR 0187 D22 adds the *shape* fields, derived in `OracleContextBuilder+Shape.swift`.** Two
+   joins, no schema change, and nothing new persisted. `OracleContext.sittings` carries the order
+   units were taken in within each sitting, as D6 R1 handles — worth sending precisely because
+   `units` is ordered by minutes descending (that is the order the handles are minted from), so a
+   sitting's sequence is genuinely new information rather than the array index restated.
+   Consecutive repeats collapse and a **return** later in the same sitting does not, because the
+   return is the shape; a step whose unit has no handle is dropped, and a sitting left with nothing
+   nameable is dropped whole. On `Unit`, `runsInCurrentSpan` and `SpanEdit.runsInPreviousSpan` come
+   from a second join: every `LoopSpanChange.changedAt` **closes a span epoch**, and the runs logged
+   against that loop inside an epoch belong to the row that closed it. The count sits on the row for
+   the reason both widths do — a row must survive its neighbour being dropped by the cap — and
+   `droppedSpans` reports edits that did not make it, because a dropped row takes its epoch's runs
+   with it and a list that looked complete would pour three epochs into two. Two honest edges: ADR
+   0199 writes no row at loop creation, so the oldest epoch has no start marker; and **a run is not
+   a lap** — one `PracticeRun` can hold fifty passes.
+
+   **What D22 removed is the point of it.** The reading used to open on minutes, days and sittings.
+   Volume is the weakest thing the app knows (Duke, Simmons & Cash: the best performers differed in
+   how they handled what they got wrong, not in time spent) and the most shame-adjacent (D12 bans
+   the adjective, but *"12 minutes over 2 days"* has a denominator the reader supplies). The test,
+   which is D6 R6 re-inflected: **a structural fact names what and where; an evaluation names how
+   much, relative to something else. If a value is meaningless without a second value, it is a
+   comparison and it does not cross.** `Effort` still carries the totals and the Practice log still
+   shows them — they simply stopped being the opening paragraph.
 3. **D13, before anything is sent.** `OracleSafetySignal` scans for distress — which means the model
    is **not called at all** — and then for pain, which suppresses the proposal capabilities and
    leaves the reflection standing. Both fail towards the safe branch. The matcher is a floor, not a
@@ -2016,10 +2041,23 @@ The pipeline, in the order `OracleCoordinator` runs it — one place, one order,
 4. **The reading**, through the `OracleReading` seam (`SupportSending`'s shape, and hired for the
    same job: replacing the implementation is a second conformance, and no view, test or ADR moves).
    Conformances today are `LocalOracle` and `RecordingOracle`; `ProxyOracle` lands at S2.
-5. **D12, after.** `OracleToneGuard` reads the Oracle's own prose only and **rejects wholesale** — a
-   partially scrubbed sentence is still a sentence somebody wrote in order to judge you. A trip
-   falls back to the local reading. It runs over `LocalOracle`'s output too: a guard with an
-   exemption is a guard with a hole in it, and the suite asserts it never trips.
+5. **D12 and D23, after.** **Two** guards, both reading the Oracle's own prose only and both
+   **rejecting wholesale** — a partially scrubbed sentence is still a sentence somebody wrote in
+   order to judge you, and the half that survives redaction is not reliably the harmless half. A
+   trip in either falls back to the local reading. Both run over `LocalOracle`'s output too: a guard
+   with an exemption is a guard with a hole in it, and the suite asserts neither ever trips.
+
+   `OracleToneGuard` catches **verdicts** — sentences that grade how often you showed up (ADR 0070)
+   or rank a tempo against a past one. `OracleFocusGuard` (ADR 0187 D23, shipped with S1a) catches
+   the other thing prose can do to a player: **point their attention at their own body.** Wulf's
+   external-focus findings are among the most replicated in motor learning — an instruction aimed at
+   the *effect* ("let the note ring cleanly") produces better performance **and** better retention
+   than the same instruction aimed at the body producing it ("curl your finger more"). It matches a
+   body noun **inside an instruction sentence**, never a bare noun, and four obvious body words are
+   deliberately absent from its table because the guitar owns them first: `neck`, `body`, `arm` and
+   `back`. Its scope is every sentence the Oracle addresses to the player, which is why it could not
+   wait for S3 — D9's one-line rationale on a drill is the sentence most likely to reach for a
+   finger.
 
 **The one asymmetry worth knowing.** A quoted note is marked `isQuotedFromPlayer` and the guard does
 not read it. The player may judge themselves; the app may not judge them — and without that

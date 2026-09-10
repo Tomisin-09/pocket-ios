@@ -65,6 +65,7 @@ enum OracleContextBuilder {
         }
         context.goals = goalLines(from: source)
         context.effort = effort(from: records, calendar: calendar)
+        context.sittings = sittings(from: sittingGroups(in: records), handleByUID: handleByUID)
 
         let allNotes = notes(from: source, window: window, handleByUID: handleByUID)
         let spentOnUnitsAndGoals = context.units.reduce(0) { $0 + $1.name.count }
@@ -142,14 +143,11 @@ enum OracleContextBuilder {
 
     /// Sittings as `PracticeLog` counts them — a gap of `PracticeLog.sittingGap` starts a new one.
     /// Counted here rather than borrowed so the builder stays a pure function of `records`.
+    ///
+    /// Derived from `sittingGroups` (ADR 0187 D22) rather than counted separately: the count and
+    /// the sequences must not be able to disagree about what a sitting is, and one of them being a
+    /// second implementation of the 30-minute rule is exactly how they would.
     private static func sittings(in records: [SessionRecord]) -> Int {
-        let ordered = records.sorted { $0.startedAt < $1.startedAt }
-        guard var previousEnd = ordered.first?.endedAt else { return 0 }
-        var count = 1
-        for record in ordered.dropFirst() {
-            if record.startedAt.timeIntervalSince(previousEnd) >= PracticeLog.sittingGap { count += 1 }
-            previousEnd = max(previousEnd, record.endedAt)
-        }
-        return count
+        sittingGroups(in: records).count
     }
 }

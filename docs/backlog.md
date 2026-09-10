@@ -51,6 +51,42 @@ not repeating a mistake already in this file:
 
 Worth doing together with that item, and with a shoot run, rather than as a prose-only page.
 
+## The Oracle's register is unsettled — the mechanism is built, the voice is not (parked 2026-09-10, ADR 0187 S1a)
+
+**S1a is shipped and the prose it produces was rejected on reading it.** D22's shape mirror, D23's
+`OracleFocusGuard`, the span/sitting/step-down derivations and their tests are all in. What came out
+reads like an engineer describing a data structure:
+
+> The week of 29 Aug to 5 Sep. You worked on Bend study, Chorus turnaround and Chromatic warm-up.
+> Chorus turnaround: 4 runs at 34 seconds, then on 31 Aug you took it to 6 seconds, and 9 runs since.
+
+Every sentence passes D12, D22 and D23. The register is the defect, and no guard has an opinion about
+register — the guards say what may not be said, never how it should sound. **Do not tune this by ear
+in another pass**; that is what produced the above. The parked question is what a guitar teacher
+actually says to these facts, and it wants research before it wants code.
+
+Three things any pass at it inherits:
+
+- **The two variables are already collected and deliberately unreadable.** `Profile` carries
+  `ArtistExperience` (*justStarting / fewChords / comfortable / aWhile*) and `MusicGenre` from
+  intake, and `OracleContextSource+Store.swift` fetches `Profile` **not at all** — D6 R3, *the way
+  to keep a field from crossing is to not read it*. So "vary the register by level and genre" is an
+  ADR-level decision, not an implementation detail. The shape that keeps R3 intact: the payload
+  stays structural, and **the client picks the words** from a register table.
+- **Teachers grade; this app never does.** ADR 0070, D12, and directions §1 (*the Oracle may explain
+  the app; it may not teach the instrument*). Any corpus of real teaching talk is mostly diagnosis
+  and prescription — the two things this feature has closed off — so a collected corpus needs a
+  filter before it yields anything usable.
+- **The stimulus nobody has ever had to respond to.** A teacher in a lesson is answering *sound*;
+  the Oracle is answering a week of structured facts with no audio. Eliciting sentences from
+  teachers against the app's own observations is likelier to produce the register than gathering
+  lesson material, and carries no copyright surface. Run `third-party-reference-ingestion` first if
+  any third-party material is collected at all.
+
+Deliverable when it resumes: a register spec in `docs/research/`, whose sentences become fixtures the
+existing guards run against — **not** a report. D17's eval fixtures are still blocked on this, and
+they must be recorded against whatever register lands, not this one.
+
 ## The beta grant needs a structural guard (logged 2026-08-23, blind-spot review 2026-08-22) — RISK
 
 `betaGrantIsActive = Self.betaGrantIsReadable` is true in **every non-Debug build**, so a Release

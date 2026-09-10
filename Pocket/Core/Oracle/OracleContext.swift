@@ -49,6 +49,14 @@ struct OracleContext: Codable, Equatable, Sendable {
     var goals: [GoalLine] = []
     var effort: Effort = Effort()
 
+    /// The order units were taken in, sitting by sitting (ADR 0187 D22).
+    ///
+    /// This is the field that makes the reading about **shape** rather than volume. `units` is
+    /// ordered by minutes descending, because that is the order D6 R1's handles are minted from —
+    /// so the sequence a player actually moved through in one sitting is not recoverable from it,
+    /// and is genuinely new information rather than the array index restated.
+    var sittings: [Sitting] = []
+
     /// Set when D6 R4's budget forced whole notes to be dropped. The model is told the excerpt is
     /// partial rather than left to read a truncated month as a quiet one — the same instinct as
     /// `TempoTrajectory.otherRhythmRuns`, which exists so a partial history admits it.
@@ -97,6 +105,21 @@ extension OracleContext {
         var droppedSnags: Int = 0
         /// What this loop's span has done over time (ADR 0204 D2). Always empty for an exercise.
         var spans: [SpanEdit] = []
+        /// Edits that did not fit `OracleContextBudget.maxSpanEditsPerUnit`, or that had no
+        /// recorded `songDuration` to be expressed in seconds.
+        ///
+        /// It exists for the reason `droppedSnags` does, and the reason is sharper here now that
+        /// each row carries a re-entry count (D22): a dropped edit takes its count with it, so a
+        /// list that looks complete would put the runs of three span epochs into two. The
+        /// `droppedNotes` discipline (D6 R4) — a truncated set says it is truncated.
+        var droppedSpans: Int = 0
+        /// Runs against this loop since its **most recent** span edit — the epoch that is still
+        /// open and therefore has no `SpanEdit` row to sit on (ADR 0187 D22).
+        ///
+        /// A loop that has never been edited has all of its runs here, which is also the case
+        /// ADR 0199 leaves open-ended at the far end: no row is written at loop creation, so the
+        /// first epoch has no start marker and pre-0199 loops have no rows at all.
+        var runsInCurrentSpan: Int = 0
     }
 
     /// One snag, as a **position inside the loop it sits in** (ADR 0204 D1).
@@ -136,6 +159,18 @@ extension OracleContext {
         /// The playback speed in force when the edit was made, or `nil`. Stored because the
         /// narrowing and the slowing are one behaviour, not two facts (ADR 0199).
         let speed: Double?
+        /// How many runs were logged against this loop while the span was at `fromSeconds` — i.e.
+        /// during the epoch **this edit closed** (ADR 0187 D22).
+        ///
+        /// It sits on the row rather than in a parallel list for the same reason both widths do:
+        /// a row has to survive its neighbour being dropped by the cap. Reconstructing it from the
+        /// gap between two rows breaks the moment one of them is gone.
+        ///
+        /// **A run is not a lap.** One `PracticeRun` row can hold fifty passes over the span; the
+        /// app has never counted passes, and this is a count of *runs*. A hand-stopped run logs
+        /// nothing at all (`PracticeLogWriter`), so this counts times the loop was finished, never
+        /// times it was armed.
+        let runsInPreviousSpan: Int
     }
 
     /// Nested one level under `OracleContext` rather than inside `Unit`: SwiftLint caps nesting at
@@ -233,6 +268,22 @@ extension OracleContext {
         /// fact about the log rather than a verdict on how it was spread.
         var sittings: Int = 0
     }
+
+    /// One sitting, as the sequence of units it moved through (ADR 0187 D22).
+    ///
+    /// **Order, not duration.** There are no minutes on this type and there must not be: the whole
+    /// point of D22 is that *what you did and in what order* is the structural fact, while *how
+    /// much* is the one that carries an implied denominator. `Effort.minutes` still exists for
+    /// anything that legitimately needs the total; this is deliberately not a second route to it.
+    ///
+    /// A unit taken twice in one sitting appears twice — the repeat **is** the shape, and deduping
+    /// would erase a warm-up returned to at the end.
+    struct Sitting: Codable, Equatable, Sendable {
+        /// The start of the first run in it. A date, never a days-since (D6 R6).
+        let startedOn: Date
+        /// D6 R1 handles, in the order the runs started. Never a `uid`, never a name.
+        let handles: [String]
+    }
 }
 
 /// The caps D6 R4 requires to be *stated* rather than assumed.
@@ -269,4 +320,14 @@ enum OracleContextBudget {
     /// worth keeping; a snag set is a *map*, where completeness is the axis and a silent trim would
     /// misdescribe the terrain.
     static let maxSpanEditsPerUnit = 10
+
+    /// Sittings per context, dropped from the **old** end — a week's reading is read forwards from
+    /// where the player is now, the `maxTempoPoints` rule rather than the `maxSnagsPerUnit` one.
+    /// Fourteen is two a day for the window D15 reads, which no real week exceeds; it is a ceiling
+    /// against a pathological log, not a shape the payload is expected to take.
+    static let maxSittings = 14
+
+    /// Units named inside one sitting. A sitting is a sequence to be read, and past a dozen steps
+    /// it stops being one — the same reason `LocalOracle` caps tempo lines at three.
+    static let maxUnitsPerSitting = 12
 }
