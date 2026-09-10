@@ -8,7 +8,9 @@ which is the only durable record of where a build was taken (there are no releas
 build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07), build 4 at the 1.2
 cut (2026-08-12 — squash hash added on merge, as the others were), build 5 at the beta-grant
 fix (2026-08-18 — the closed beta's second build, cut because build 4 walled every tester
-out of the app). One `### Added`
+out of the app), build 7 at the 1.3 cut (2026-09-10 — squash hash added on merge). **There is no
+build 6 here**: it was uploaded to TestFlight from `pocket-273-beta-grant-unconditional` and never
+merged, so no commit on `main` records it. One `### Added`
 group straddled that line — collection sessions landed after the 1.0 build was cut,
 ear training before it — so 1.0 and 1.1 each carry their own copy of that heading.
 
@@ -51,6 +53,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   supplies for themselves.
 
   The reading is still written on your device, still weekly, and still never grades you.
+
+## [1.3] — build 7, cut 2026-09-10
+
+The first App Store submission since 1.1 (build 3, approved 2026-08-12). Everything below landed
+while 1.2 was on TestFlight and never reached the store, so this section is a version's worth of
+work rather than a point release: takes and moments, trim, the journal redesign, folders, sharing
+an exercise and a routine, long-term goals, reference links, the archive, the tuner, carry-tempo
+and the practice log's move to Home.
 
 ### Added
 - **Folders, for exercises and routines.** Group your drills and sessions however you group them —

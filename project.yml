@@ -15,12 +15,16 @@ settings:
     # strings, so a "1.1.0" build will not appear in the build picker for a version
     # named "1.1". 1.0 is released ("Ready for Distribution") and therefore locked.
     #
-    # 1.2 is the closed-beta build. It does NOT supersede 1.1: that submission was
-    # rejected on metadata alone (3.1.2, the EULA link) with build 3 itself unfaulted,
-    # so the ASC "1.1" record still holds build 3 and is resubmitted with corrected
-    # metadata on its own track. A TestFlight build needs no App Store version record,
-    # so the two do not collide.
-    MARKETING_VERSION: "1.2"
+    # 1.3 is the next App Store submission, cut 2026-09-10.
+    #
+    # 1.2 was the closed-beta version and never had an App Store record: it existed only
+    # as TestFlight builds 4-6, and a TestFlight build needs no version record. It did
+    # NOT supersede 1.1 either — that submission was rejected on metadata alone (3.1.2,
+    # the EULA link) with build 3 itself unfaulted, so the ASC "1.1" record still holds
+    # build 3. So 1.3 is the **second** version to be submitted to review, not the third
+    # to ship; ASC's history will show 1.1 then 1.3 with nothing between them, and that
+    # gap is 1.2 having lived entirely on TestFlight.
+    MARKETING_VERSION: "1.3"
     # Monotonic, and must exceed every build already uploaded under this bundle id —
     # ASC rejects a duplicate build number outright. Bump this every archive, not just
     # every version. If an upload is refused as a duplicate, raise it again; there is
@@ -30,7 +34,12 @@ settings:
     # `latest_testflight_build_number + 1`, so the committed value is not what ships.
     # It is bumped anyway because the CHANGELOG cuts its sections at the commit that
     # moves this number — it is the only durable record of where a build was taken.
-    CURRENT_PROJECT_VERSION: "5"
+    #
+    # **7, not 6.** Build 6 was uploaded to TestFlight from
+    # `pocket-273-beta-grant-unconditional`, a branch since deleted, and never reached
+    # `main` — so no commit here records it, but ASC does, and ASC is what rejects a
+    # duplicate. The number skips because the upload happened, not because the code did.
+    CURRENT_PROJECT_VERSION: "7"
     DEVELOPMENT_TEAM: "" # set via CI / local xcconfig; do not hard-code
 
 # Per-configuration backend base URL (Debug → dev, Release → prod).
