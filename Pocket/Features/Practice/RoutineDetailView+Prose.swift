@@ -26,6 +26,10 @@ extension RoutineDetailView {
                 TextField("Routine name", text: $routine.name)
                     .font(.futura(.body))
                     .foregroundStyle(PocketColor.textPrimary)
+                    // The placeholder is gone as soon as the field holds anything, and the section's
+                    // `Name` header is a separate element — so a named session announced only its
+                    // own name (ADR 0213 D1).
+                    .accessibilityLabel("Routine name")
                     .listRowBackground(PocketColor.background)
             } header: {
                 Text("Name")
@@ -59,17 +63,38 @@ extension RoutineDetailView {
     /// the few, and it is written in the register the brief rules out (design-brief §3.5): a
     /// standing note about a thing you have not done. The field is found where every other change to
     /// a routine is found, behind **Edit**.
+    /// The editable description field, **extracted from the `Section` above it on purpose.**
+    ///
+    /// Adding one modifier to this chain in place — `.accessibilityLabel`, nothing more — crashed
+    /// the app on every launch of this screen: `EXC_BAD_ACCESS` in `swift_retain`, under
+    /// `initializeWithCopy for Section` / `initializeWithCopy for ClosedRange<>.Index` inside
+    /// `RoutineDetailView.body`. The `ClosedRange` is `lineLimit(3...8)`; the chain sits in a
+    /// `Section` in a `List` in a body that is already at this file's reason for existing. Extracting
+    /// it erases the nested generic into an opaque `some View`, and the crash goes with it.
+    ///
+    /// **So the field is not free to grow.** A modifier added back into the `Section`'s own
+    /// `ViewBuilder` may reintroduce this, and it will not look like an accessibility change when it
+    /// does — it presents as a segfault with no line of ours near the top of the stack. Reproduced
+    /// 2026-09-10: failed 2 of 2 runs with the modifier inline, passed with it removed, passed here.
+    @ViewBuilder private var descriptionField: some View {
+        TextField("What this session is for, who it's for, what to watch…",
+                  text: $routine.notes, axis: .vertical)
+            .font(.futura(.body))
+            .foregroundStyle(PocketColor.textPrimary)
+            .lineLimit(3...8)
+            .keyboardDoneButton()
+            // **An identifier is not a label** (ADR 0213 D8). This field carried
+            // `routine.descriptionField` for the UI tests and nothing for VoiceOver, which is
+            // exactly the pair 0208 D5 warned reads as covered when it is not.
+            .accessibilityLabel("Description")
+            .accessibilityIdentifier(UITestHooks.routineDescriptionField)
+            .listRowBackground(PocketColor.background)
+    }
+
     @ViewBuilder var descriptionSection: some View {
         if canEditProse {
             Section {
-                TextField("What this session is for, who it's for, what to watch…",
-                          text: $routine.notes, axis: .vertical)
-                    .font(.futura(.body))
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .lineLimit(3...8)
-                    .keyboardDoneButton()
-                    .accessibilityIdentifier(UITestHooks.routineDescriptionField)
-                    .listRowBackground(PocketColor.background)
+                descriptionField
             } header: {
                 Text("Description")
             } footer: {

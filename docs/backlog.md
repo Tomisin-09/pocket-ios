@@ -138,7 +138,7 @@ comment is the record of why the fields say what they say. ⚠ A backlog item ca
 direction of *already fixed* as easily as the other way, and this one sat open for eighteen days
 while reading as a legal risk. Check the source before promoting an item like this to a blocker.
 
-## Accessibility has never been walked (logged 2026-08-23, blind-spot review 2026-08-22)
+## Accessibility has never been walked (logged 2026-08-23) — **the mechanism is built, ADR 0213**
 
 114 of 478 files carry an `accessibilityLabel`, so the coverage is deliberate rather than accidental
 — but there is no evidence anyone has run VoiceOver or AX-size Dynamic Type against the transport,
@@ -146,6 +146,98 @@ which is the screen where a mislabelled control costs the most.
 
 Cheap relative to building it: the shoot harness already drives every screen and can dump the
 accessibility tree, so the audit is mostly reading what it produces.
+
+> **The guess above was right, and the count in it was already stale — it is 166 of 613 for any
+> `.accessibility*` modifier.** `POCKET_SHOOT_AX=1` on the shoot plus `scripts/ax-audit.py` is
+> exactly the "mostly reading what it produces" this describes. **Pass A is built and Passes B and
+> C are owed** — see below. The item stays open until a person has held the phone.
+
+### What the first real run taught, kept because the script now depends on it
+
+Three screens produced **93 findings**, and almost none were defects. Two rules had to be narrowed
+before the report was worth reading, and the narrowing is the interesting part:
+
+- **A checker that reports everything reports nothing.** Read literally — a target under 44pt in
+  *either* axis — A3 returned 77 hits across three screens: disclosure chevrons, the `Red Moon`
+  wordmark, segmented-control segments, the Back button. Nobody scrolls past 70 non-defects to
+  reach the six real ones. It now takes **both** axes and no images.
+- **Geometry is not parentage, and the difference is where screens layer.** XCUITest exposes the
+  glyph inside a button as its own element, so suppressing anything drawn inside a labelled control
+  removed that noise — and also removed **two of the automator's three unlabelled number fields**,
+  because the metronome is presented over Home and those fields fall inside the rectangle of
+  `JUMP BACK IN, …`, which is still in the tree behind it. A report showing one of three reads as
+  complete. Suppression is now limited to **decoration** (`image`, `staticText`); a same-type escape
+  hatch for "the same control exposed twice" was tried and reintroduced the same bug for buttons.
+
+### Owed
+
+- **Pass B — VoiceOver on a real device.** Nothing automated can hear focus order, swipe order, or
+  whether a label reads like a sentence (ADR 0213 D3). Order: `RoutinePlayerView` /
+  `RoutineSessionPlayer` first, then the run screens, then the song player, then paywall and Home.
+- **Pass C — the AX-size sweep. RUN 2026-09-10, and the run is the finding.** All **8 of 8 passes
+  failed** and **nothing was filed**, against 4 of 8 at the default size. The evidence came from the
+  11 screenshots XCUITest captures at the moment of a failed tap, still inside
+  `shots-ax-size/runs/*.xcresult` — `xcresulttool export attachments` gets them out. **Read the
+  pictures before believing the logs**: messages like *"in the tree but never became hittable"* read
+  as layout collapse and are mostly the harness's ten-swipe budget against a screen fitting two rows.
+
+  What the pictures actually show: **Settings and the metronome scale correctly** — rows grow, text
+  wraps, `Appear-ance` hyphenates, nothing overlaps. `DesignTokens.futura(_:relativeTo:)` is doing
+  its job, and that is why the failures are isolated rather than systemic. Three real defects:
+  the metronome's **TAP buttons truncated to a bare `…`** (`.frame(width: 56)` — **fixed**, ADR 0213
+  D6's width twin); **chord names truncate** (`Fmaj7 (no bar…`, which loses the distinguishing part);
+  and **chord cards clip** their grid once the name takes three lines.
+
+  **Owed before Pass C can be re-run usefully:** raise the scroll budget when
+  `POCKET_SHOOT_CONTENT_SIZE` is set. Ten swipes is tuned for ~6 rows a screen; at AX-XXXL it is
+  about two, so a reachable row reads as absent and the pass files nothing.
+
+  ⚠️ **The sweep left the simulator at `accessibility-extra-extra-extra-large`, and the next
+  `PocketAll` run failed 10 UI tests because of it** — *"Exercises library row missing"*, *"Practice
+  row missing from the Settings hub"*. Nothing in that output mentions text size; it reads exactly
+  like the change under test broke navigation, and it cost a full re-run to find. `shoot-manual.sh`
+  now sets `content_size` **unconditionally** (defaulting to `large`) and restores it on a `trap …
+  EXIT`. **A device-wide setting a script raises is a setting that script owns.**
+- **A full-app Pass A — ~half done, 2026-09-10.** 20 screens now carry a dump (the song player,
+  loops, sessions, goals, the empty and missing-audio states, the bare first run) where three did.
+  **The other half is blocked on the shoot, not on the audit:** four of eight passes — `base`,
+  `library`, `exercises`, `routines` — failed on a full cold run, and a failed pass files nothing.
+  The failures are four unrelated navigation and state problems (*"tapped 'Exercise details' and the
+  detail sheet never appeared"*, *"nothing in the frame had a label beginning 'File, WAV'"*, *"never
+  brought 'the Add a collection row' into the frame in 10 slow swipes"*, *"no matches for 'Skip to
+  next block' IN identifiers"*). **Whether the tree dump itself perturbs the timing is not yet
+  known** — it walks up to 800 elements per capture and these tests race timed subjects. The
+  diagnostic is one failed pass re-run without `POCKET_SHOOT_AX=1`, then the same on `main`.
+  Until that runs, this is also an open question about the **manual's** figures, not only the audit's.
+
+### What the full-app run returned, and why the number is not the finding
+
+**120 findings, 5 defects.** All five were unlabelled text fields — three name fields and the routine
+description — plus one decorative glyph read aloud as `1.circle`. All are fixed; the name-field fix
+went into `ClearableTextField` itself, so it covers every use rather than the two the run happened
+to see.
+
+The other 115 are the three over-report classes now written into **ADR 0213 D9**: children of a
+`.combine`d row, `Toggle`'s separately-rendered title, and the screen left in the tree behind a
+presented sheet. **None can be told from a real defect by geometry**, which is why the report stays
+noisy and A1 findings now print the labelled text beside them — enough to recognise a `Toggle` without
+opening Xcode.
+
+**Do not read the count as a score.** A tool that over-reports by 20:1 measures where to look, not
+how the app is doing.
+
+### Advisory findings not acted on, with the reason
+
+- **Nine controls under 44pt in both axes**, all on the metronome: the six 32×32 automator nudges,
+  the 36×36 save-as-exercise bookmark, and the toolbar's 39×36 `Settings` and 41×36 journal buttons.
+  Growing them is a **layout change** — the nudges flank a fixed-width field, and the toolbar pair
+  is laid out by the system, whose own hit area is larger than the glyph frame the dump measures.
+  Wants eyes on the screen, which is Pass B.
+- **Dynamic Type, from source and not yet seen failing:** 16 hard-coded `.font(.system(size:))`
+  sites and 33 remaining fixed `.frame(height:)` sites. The sub-10pt glyph text in the fretboard and
+  strum editors (`size: 5`–`size: 9`) is a **design question** — it is already near-illegible and
+  scaling it would break the boards it sits on — not a mechanical fix. `PracticeRunStyle`'s shared
+  run-screen pill was fixed (0213 D6); the rest waits for Pass C to say which actually clip.
 
 ## Relink dead ends — `LoopRunView` and `SongPlayAlongView` (logged 2026-08-23, ADR 0182 §6)
 

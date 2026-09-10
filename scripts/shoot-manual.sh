@@ -16,6 +16,16 @@
 #   POCKET_SHOOT_KEEP_RUNS=20 ./scripts/shoot-manual.sh               # keep more logs than the last 5
 #   POCKET_SHOOT_PREPARE=1 ./scripts/shoot-manual.sh                  # stage the device, then stop
 #
+# The accessibility audit (ADR 0213) — two passes, both wanting their own output directory so the
+# manual's figure set is never in reach:
+#
+#   POCKET_SHOOT_AX=1 POCKET_SHOT_OUT=shots-ax ./scripts/shoot-manual.sh   # dump the tree per figure
+#   POCKET_SHOOT_CONTENT_SIZE=accessibility-extra-extra-extra-large \
+#     POCKET_SHOT_OUT=shots-ax ./scripts/shoot-manual.sh                   # the Dynamic Type sweep
+#
+# then `./scripts/ax-audit.py shots-ax/filed-partial`. A content-size run is forced partial whatever
+# it drove — see PARTIAL below for why that is not a convenience.
+#
 # Every attempt lands in `$OUT_DIR/runs/<timestamp>.{log,xcresult}`, with `shoot.log` and
 # `shoot.xcresult` symlinked to the latest. A failed run's evidence therefore survives the re-run
 # that fixes it — see the note at RUN_ID for the shoot this was learned on.
@@ -119,6 +129,15 @@ fi
 # finished set with most of the manual missing.
 PARTIAL=""
 [ -n "${POCKET_SHOOT_ONLY:-}${POCKET_SHOOT_PASS:-}" ] && PARTIAL="1"
+
+# **An accessibility-size run is partial by definition, whatever it drove** (ADR 0213). The images
+# it produces are of a device at an accessibility text size: correct for the sweep, and wrong for
+# every figure in the manual. A complete AX run would otherwise satisfy the rule above and file
+# ninety photographs of oversized text straight into the set that gets shipped — the same shape as
+# the data loss this script already carries a guard for ("Seven passes ran; two images survived"),
+# arriving through the front door instead. Pair it with `POCKET_SHOT_OUT` so the two sets cannot
+# even share a parent.
+[ -n "${POCKET_SHOOT_CONTENT_SIZE:-}" ] && PARTIAL="1"
 BUNDLE_ID="click.decooperations.pocket"
 SEED_AUDIO_SRC="${POCKET_SEED_AUDIO:-$HOME/Documents/Red Moon Screenshots 2/seed-audio}"
 DERIVED="${POCKET_DERIVED:-build-sim}"
@@ -217,6 +236,29 @@ xcrun simctl ui "$SIM_NAME" appearance dark
 xcrun simctl status_bar "$SIM_NAME" override \
     --time "09:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \
     --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+
+# The Dynamic Type sweep (ADR 0213), staged here beside the appearance because it is the same kind
+# of thing: a device-wide setting the app reads at launch, not something a test can ask for.
+# `accessibility-extra-extra-extra-large` is the top of the extended range — the size the app has
+# never been seen at. `simctl` validates the name itself, so a typo fails here rather than producing
+# a full set at the default size that looks exactly like a sweep.
+#
+# **Set unconditionally, and restore on the way out.** Both halves were learned the hard way, in the
+# same hour. The first version only ever *raised* the size, so the setting outlived the run: a sweep
+# left `iPhone 17` at `accessibility-extra-extra-extra-large`, and the next `xcodebuild test
+# -testPlan PocketAll` on that device failed ten UI tests with *"Exercises library row missing"* and
+# *"Practice row missing from the Settings hub"* — rows that were simply off-screen at that size.
+# Nothing in that output says "text size"; it reads exactly like the change under test broke
+# navigation. **A device-wide setting a script raises is a setting that script owns.**
+say "Setting content size to ${POCKET_SHOOT_CONTENT_SIZE:-large}"
+xcrun simctl ui "$SIM_NAME" content_size "${POCKET_SHOOT_CONTENT_SIZE:-large}"
+if [ -n "${POCKET_SHOOT_CONTENT_SIZE:-}" ]; then
+    say "This run is partial by definition — see PARTIAL above"
+    # A `trap` on EXIT, so an interrupted or failed sweep restores it too. Belt and braces with the
+    # unconditional set above: the trap covers the *next* command on this device, the unconditional
+    # set covers the next *shoot* even when a kill skipped the trap.
+    trap 'xcrun simctl ui "$SIM_NAME" content_size large >/dev/null 2>&1 || true' EXIT
+fi
 
 say "Installing"
 xcrun simctl install "$SIM_NAME" "$APP_PATH"
@@ -423,6 +465,18 @@ ONLY_TESTING=()
 for class in "${classes[@]}"; do
     ONLY_TESTING+=("-only-testing:PocketShootUITests/$class")
 done
+
+# **The accessibility audit reaches the test process only through `TEST_RUNNER_`** (ADR 0213). A
+# plain `POCKET_SHOOT_AX=1` in this shell is read by this script and by nothing else: the UI tests
+# run in a separate runner app on the simulator, which inherits only variables xcodebuild is told to
+# forward, and that prefix is how it is told. Getting this wrong fails as a *silent no-op* — a full
+# shoot, every figure green, and an audit of nothing — so the prefix is added here rather than being
+# something a caller has to remember.
+#
+# Exported rather than passed as an `env` prefix: this script runs under `set -u`, and expanding an
+# empty array is an unbound-variable error on the bash macOS actually ships (3.2), so the
+# conditional-prefix form fails on the common path — the one where the audit is off.
+[ "${POCKET_SHOOT_AX:-}" = "1" ] && export TEST_RUNNER_POCKET_SHOOT_AX=1
 xcodebuild test-without-building \
     -scheme Pocket \
     -destination "platform=iOS Simulator,name=$SIM_NAME" \

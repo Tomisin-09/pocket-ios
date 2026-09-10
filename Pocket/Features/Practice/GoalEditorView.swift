@@ -82,6 +82,9 @@ struct GoalEditorView: View {
                 TextField("Goal name", text: $title)
                     .font(.futura(.body))
                     .foregroundStyle(PocketColor.textPrimary)
+                    // Same as the routine and loop name fields: the placeholder is not a label, and
+                    // the `Name` header is a separate element (ADR 0213 D1).
+                    .accessibilityLabel("Goal name")
                     .listRowBackground(PocketColor.background)
             }
 

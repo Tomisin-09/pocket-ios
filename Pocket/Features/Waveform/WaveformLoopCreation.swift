@@ -93,6 +93,9 @@ struct DownbeatBar: View {
                 Image(systemName: "1.circle")
                     .font(.futura(size: 14, weight: .semibold))
                     .foregroundStyle(PocketColor.fine)
+                    // Decorative: the sentence beside it says the whole thing. Unhidden, VoiceOver
+                    // read the symbol's own name — "one dot circle" — ahead of the instruction.
+                    .accessibilityHidden(true)
                 Text(hasAnchor ? "Mark where the 1 has drifted to"
                                : "Play and tap the 1 — or drag the handle")
                     .font(.futura(.footnote, weight: .medium))
@@ -183,6 +186,14 @@ struct ClearableTextField: View {
     var body: some View {
         HStack(spacing: 6) {
             TextField(placeholder, text: $text)
+                // A placeholder is not a label. SwiftUI reads it as the field's **value** while the
+                // field is empty and drops it the moment anything is typed, so a named loop
+                // announced only "Verse riff" with nothing saying what that text was for. The
+                // visible `Name` beside it is a separate `Text` in the Form row and never attached
+                // to the field. Labelling here covers every `ClearableTextField` at once — loop
+                // names, marker names — which is why the fix belongs in the component and not at
+                // each call site (ADR 0213 D1).
+                .accessibilityLabel(placeholder)
             if !text.isEmpty {
                 Button { text = "" } label: {
                     Image(systemName: "xmark.circle.fill")

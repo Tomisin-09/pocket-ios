@@ -51,7 +51,12 @@ tool. Animations should feel like a musical phrase, not a form submission.
   A/B dragging, with loops/markers in a slide-in drawer. All other screens stay portrait.
 - **Accessibility is not optional:** legible contrast on dark, Dynamic Type
   support, VoiceOver labels, and "Reduce Motion" alternatives for the musical
-  animations.
+  animations. **Half of that now has a mechanism** (ADR 0213): `POCKET_SHOOT_AX=1` on the shoot
+  plus `scripts/ax-audit.py` finds a control with no label, a label that is an SF Symbol name, a
+  target under 44pt, and two controls sharing a name — and `POCKET_SHOOT_CONTENT_SIZE` drives the
+  same screens at an accessibility text size. The other half cannot be mechanised: VoiceOver's
+  focus order, its swipe order and whether a label *reads* like a sentence need a person with the
+  phone. A green audit is "no absences", not "accessible".
 
 ---
 

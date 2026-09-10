@@ -164,22 +164,27 @@ struct MetronomeAutomatorPanel: View {
 
     private var fields: some View {
         VStack(spacing: 8) {
-            field("Increase by", value: engine.automatorStepBPM, range: 1...50, suffix: "BPM") {
-                engine.setAutomatorStepBPM($0)
-            }
+            // `adjusts:` is what the row's two nudge buttons say aloud. Spoken labels, not screen
+            // copy — the sighted reader has the row's own words beside the number, and VoiceOver
+            // reaches the button without them (ADR 0213).
+            field("Increase by", suffix: "BPM",
+                  AutomatorNumberField(value: engine.automatorStepBPM, range: 1...50,
+                                       onChange: { engine.setAutomatorStepBPM($0) },
+                                       adjusts: "BPM step"))
             // Bars are counted in small numbers; seconds in larger ones — so the range and
             // step differ by unit (the user's note).
-            field("Every", value: engine.automatorIntervalCount,
-                  range: intervalRange, step: intervalStep,
-                  suffix: engine.automatorMode == .bars ? "bars" : "secs") {
-                engine.setAutomatorIntervalCount($0)
-            }
+            field("Every", suffix: engine.automatorMode == .bars ? "bars" : "secs",
+                  AutomatorNumberField(value: engine.automatorIntervalCount,
+                                       range: intervalRange, step: intervalStep,
+                                       onChange: { engine.setAutomatorIntervalCount($0) },
+                                       adjusts: "interval"))
             // Hidden in infinite mode — there's no target to choose, the ramp climbs to the max.
             if !engine.automatorNoLimit {
-                field("Up to", value: engine.automatorCeiling,
-                      range: StandaloneMetronomeEngine.bpmRange, step: 5, suffix: "BPM") {
-                    engine.setAutomatorCeiling($0)
-                }
+                field("Up to", suffix: "BPM",
+                      AutomatorNumberField(value: engine.automatorCeiling,
+                                           range: StandaloneMetronomeEngine.bpmRange, step: 5,
+                                           onChange: { engine.setAutomatorCeiling($0) },
+                                           adjusts: "target tempo"))
             }
         }
     }
@@ -187,14 +192,20 @@ struct MetronomeAutomatorPanel: View {
     private var intervalRange: ClosedRange<Int> { engine.automatorMode == .bars ? 1...32 : 5...600 }
     private var intervalStep: Int { engine.automatorMode == .bars ? 1 : 5 }
 
-    private func field(_ label: String, value: Int, range: ClosedRange<Int>, step: Int = 1,
-                       suffix: String, onChange: @escaping (Int) -> Void) -> some View {
+    /// One labelled row: a word, the number, its unit.
+    ///
+    /// Takes the **built** `AutomatorNumberField` rather than its four values. Those values are
+    /// exactly that view's own properties, so forwarding them one by one made this a six-parameter
+    /// function that existed to retype another type's initialiser — which is what SwiftLint's
+    /// parameter-count rule is for, and it was right.
+    private func field(_ label: String, suffix: String,
+                       _ number: AutomatorNumberField) -> some View {
         HStack(spacing: 8) {
             Text(label)
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
             Spacer()
-            AutomatorNumberField(value: value, range: range, step: step, onChange: onChange)
+            number
             Text(suffix)
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
@@ -212,13 +223,33 @@ struct AutomatorNumberField: View {
     var step: Int = 1
     let onChange: (Int) -> Void
 
+    /// What this field adjusts, named for VoiceOver (ADR 0213) — a bare noun, no article.
+    ///
+    /// The two nudge buttons' content is an SF Symbol and nothing else, so without this they
+    /// announce as "plus" and "minus" — true of every such pair on the screen, and the panel has
+    /// three. The visible row already answers it ("Every … bars", "Up to … BPM"); the buttons simply
+    /// could not see their own row, which is the whole shape of this defect.
+    ///
+    /// **Bare, because two call sites need it differently**: the buttons want "Increase the
+    /// interval" and the field wants "Interval". A stored phrase with the article baked in would
+    /// mean one of them slicing it back off by length, which is a rule about a string's spelling
+    /// hiding inside a view.
+    var adjusts: String = ""
+
     @State private var text = ""
     @FocusState private var focused: Bool
 
     var body: some View {
         HStack(spacing: 6) {
-            nudge("minus") { commit(value - step) }
+            nudge("minus", says: adjusts.isEmpty ? "Decrease" : "Decrease the \(adjusts)") {
+                commit(value - step)
+            }
+            // `TextField("", …)` — an empty placeholder is an empty label, so VoiceOver reaches an
+            // editable field with nothing to say about it (ADR 0213). The placeholder stays empty:
+            // the number is always present, so a visible placeholder would never be seen, and this
+            // is the half only a listener needs.
             TextField("", text: $text)
+                .accessibilityLabel(adjusts.isEmpty ? "Value" : adjusts.capitalized)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .font(.pocketMono(.title3))
@@ -227,13 +258,16 @@ struct AutomatorNumberField: View {
                 .focused($focused)
                 .onChange(of: focused) { _, isFocused in if !isFocused { commit(Int(text) ?? value) } }
                 .keyboardDoneButton(tint: PocketColor.metronome)
-            nudge("plus") { commit(value + step) }
+            nudge("plus", says: adjusts.isEmpty ? "Increase" : "Increase the \(adjusts)") {
+                commit(value + step)
+            }
         }
         .onAppear { text = "\(value)" }
         .onChange(of: value) { _, newValue in if !focused { text = "\(newValue)" } }
     }
 
-    private func nudge(_ symbol: String, action: @escaping () -> Void) -> some View {
+    private func nudge(_ symbol: String, says label: String,
+                       action: @escaping () -> Void) -> some View {
         Button { action(); haptic(.light) } label: {
             Image(systemName: symbol)
                 .font(.futura(.subheadline, weight: .semibold))
@@ -242,6 +276,7 @@ struct AutomatorNumberField: View {
                 .background(Circle().fill(PocketColor.metronomeCircleWash))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private func commit(_ raw: Int) {
