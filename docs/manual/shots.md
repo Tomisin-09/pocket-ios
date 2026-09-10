@@ -100,9 +100,9 @@ marker grammar in [README.md](README.md).
        the sentence that would have carried it, and D6 keeps prices out of this manual |
 | `subscription/settings-pro` | `panel` | `subscription` | Settings ▸ Red Moon Pro, subscribed | iPhone — subscribed is an entitlement the shoot cannot grant, and the same sign-in
        prompt as the trial row applies |
-| `subscription/trial-row` | `band` | `subscription` | an account inside a running trial, Home | iPhone — a running trial is an entitlement, and no launch argument fakes one. On a
-       simulator `AppTransaction.shared` puts up a sign-in prompt that leaves the app untappable, so
-       a driven attempt at this figure hangs rather than failing |
+| `subscription/trial-row` | `band` | `subscription` | an account inside a running trial, Home | iPhone — a running trial is an entitlement, and no launch argument fakes one. No
+       driven attempt should be made: `trialEndsAt` is written from a real StoreKit expiration and
+       from nowhere else, so a shoot can only produce the row's absence |
 | `terms/command-tempo-info` | `detail` | `terms` | seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo |  |
 | `terms/info-button` | `glyph` | `terms` | — |  |
 | `terms/mastery-info` | `detail` | `terms` | seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Mastery |  |

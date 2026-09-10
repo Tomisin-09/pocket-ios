@@ -156,6 +156,11 @@ What it costs: App Attest is unavailable in the Simulator, so a Debug and UI-tes
 required — built as a runtime flag over a `#if`, copying `StoreManager.betaGrantIsReadable:264-270`
 and its reasoning (*"code that only compiles in Release is code nothing checks until upload"*).
 
+> **Note, 2026-09-10:** `betaGrantIsReadable` no longer exists — the closed-beta grant was removed
+> in full before the 1.3 submission. The **reasoning** is what this paragraph was borrowing and it
+> stands unchanged; only the worked example is gone. `git log -S betaGrantIsReadable` finds it if the
+> shape is wanted. The Oracle is shelved (ADR 0211), so nothing is blocked on this either way.
+
 The stale comment at `Pocket.entitlements:5-7` promising SIWA is corrected in the same change. A
 comment left standing is read by the next author as a decision.
 
@@ -548,11 +553,15 @@ so nothing is grandfathered and nothing is withdrawn.
 
 Two hazards in shipped code that this decision must route around:
 
-- **`StoreManager.swift:205-207` ORs the TestFlight beta grant into `isPro`**, and the closed beta
+- ~~**`StoreManager.swift:205-207` ORs the TestFlight beta grant into `isPro`**, and the closed beta
   grants it unconditionally. `resolveTier` must **explicitly exclude `betaGrant`** — otherwise every
   tester holds uncapped inference on our account, with no cap and no cliff. The exclusion is
   explicit rather than incidental, because the grant is already marked `TODO(beta)` in four places
-  and removal is not something to depend on.
+  and removal is not something to depend on.~~ **Gone, 2026-09-10.** The grant was removed before
+  the 1.3 submission and `resolveIsPro` is back to `debugOverride ?? entitled`, so there is nothing
+  left for `resolveTier` to exclude. Note the last sentence was right to be cautious and wrong about
+  the outcome: removal *was* depended on, and it happened — but the hazard would have been live for
+  every day between, which is why the exclusion was the correct call at the time.
 - **`StoreManager.swift:80-82` unlocks everything under `UITestRuntime.isActive`**, so no UI test
   could ever see an Oracle paywall. A launch-argument seam in `UITestHooks.swift` is required
   before the tier is testable at all.
