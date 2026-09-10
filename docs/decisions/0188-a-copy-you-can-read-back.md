@@ -24,6 +24,14 @@
   D5's list of what a drill loses, and D9's preview-before-landing. The routine door behaves exactly
   as it did. This ADR's own note that a second kind would cost "a field now and nothing later" was
   checked by 0209 and held.
+- **Amended by:** ADR 0210 — the archive gains three **optional** fields (`ExerciseRecord.folders`,
+  `RoutineRecord.folders`, `PracticeArchive.folderMarkers`) and the restore mints `PracticeFolder`
+  marker rows for the empty folders (0210 D8). Optional is load-bearing: a non-optional array would
+  make every archive written before 0210 fail to decode outright. **Nothing here is reversed** — the
+  version gate, the trust asymmetry, the skip-don't-merge restore rule and every existing record
+  shape are untouched, and restored markers are deliberately *not* counted as rows so the plan this
+  ADR shows the player still promises the same number. 0210's S2 will add the file's **third**
+  payload kind, a whole folder; that is not built.
 - **Relates to:** ADR 0181 (the export this closes the loop on — **amends its
   `CFBundleDocumentTypes` alternative, see D3**), ADR 0182 (the orphan sweep this must not trip,
   D7), ADR 0150 (take sharing, still parked — **D4 stays on 0181 §7's side of the line**),

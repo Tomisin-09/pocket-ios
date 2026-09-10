@@ -18,6 +18,9 @@ struct ArchiveSource {
     var longTermGoals: [LongTermGoal] = []
     var savedChords: [SavedChord] = []
     var profile: Profile?
+    /// The empty-folder markers (ADR 0210 D4). Only the markers are read: a folder with something in
+    /// it is already implied by its members' paths.
+    var folders: [PracticeFolder] = []
 }
 
 /// Turns the live store into a `PracticeArchive` (ADR 0181).
@@ -78,7 +81,8 @@ enum ArchiveBuilder {
             takes: source.recordings
                 .sorted { ($1.createdAt, $0.uid.uuidString) < ($0.createdAt, $1.uid.uuidString) }
                 .map(recordingRecord),
-            profile: source.profile.map(profileRecord)
+            profile: source.profile.map(profileRecord),
+            folderMarkers: source.folders.map(\.path).sorted()
         )
     }
 

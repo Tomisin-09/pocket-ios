@@ -190,9 +190,16 @@ final class Exercise {
     }
 
     /// Open descriptive tags ("warmup", "picking"), routed through the shared `Labels`
-    /// canonicaliser at the write site, like `Loop.tags`. Declaration default keeps
-    /// migration additive (CoreData 134110 rule).
+    /// canonicaliser at the write site, like `Loop.tags`. Declaration default keeps migration
+    /// additive (CoreData 134110). **Untouched by ADR 0210**, whose first cut retired it and
+    /// backfilled every tag into a folder — folders nobody had chosen, so the backfill went.
     var tags: [String] = []
+
+    /// The **folders** this drill is filed in (ADR 0210 D2) — canonical S3-style key prefixes, one
+    /// entry per place it sits, written only through `FolderPath`. Flat and declaration-defaulted so
+    /// the migration stays exempt (CoreData 134110), and **never a `@Relationship`**: that is what
+    /// buys multi-membership and costs no reparenting decision. Empty means *unfiled*.
+    var folders: [String] = []
 
     /// Optional free-text notes about the exercise. On a **freeform** block this is not a note
     /// *about* the drill — it **is** the drill (ADR 0136 F2): the player's own written instructions,

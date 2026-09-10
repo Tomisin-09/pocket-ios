@@ -20,6 +20,10 @@ struct RestoreExistingKeys: Sendable, Equatable {
     var journalUIDs: Set<UUID> = []
     var takeUIDs: Set<UUID> = []
     var hasProfile: Bool = false
+    /// The marker paths the library already has, **lower-cased** (ADR 0210 D4): a folder is
+    /// identified case-insensitively everywhere else, so a restore must not mint a second marker
+    /// that draws as the same folder.
+    var folderPaths: Set<String> = []
 }
 
 /// What a restore will do, worked out before it does any of it (ADR 0188 D9).

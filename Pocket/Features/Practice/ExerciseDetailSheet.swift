@@ -30,7 +30,9 @@ struct ExerciseDetailSheet: View {
     var onOpenSong: ((Song) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    // Internal, not private: `ExerciseDetailSheet+Folders` writes through it, and a same-module
+    // extension in another file cannot see `private`.
+    @Environment(\.modelContext) var modelContext
     /// Every song, to offer in the link picker (ADR 0111). Sorted by title, matching the library.
     @Query(sort: \Song.title) private var allSongs: [Song]
     /// The whole practice log, oldest first (ADR 0117) — filtered to *this* drill in memory rather
@@ -39,6 +41,10 @@ struct ExerciseDetailSheet: View {
     /// full fetch is cheap; it becomes worth revisiting when a Progress screen queries it per render.
     @Query(sort: \PracticeRun.startedAt) private var practiceRuns: [PracticeRun]
     @State private var showingSongPicker = false
+    /// Whether the folder picker is up (ADR 0210 D9). Held **here**, at the sheet's top level, for
+    /// the same reason `showingSongPicker` is: a sheet presented from inside the `Form` dismisses
+    /// *this* sheet instead of opening. Internal so `ExerciseDetailSheet+Folders` can reach it.
+    @State var filingFolders = false
     /// The reference link being added or edited (ADR 0167). Held here, not in `ReferencesSection`,
     /// because a sheet presented from inside this `Form` dismisses *this* sheet instead of opening —
     /// the same reason `showingSongPicker` lives here. See `ReferenceLinkEditing`.
@@ -80,6 +86,10 @@ struct ExerciseDetailSheet: View {
                     } else {
                         descriptionSection
                     }
+                    // Replaces the tag chips that used to sit inside the description (ADR 0210 D9):
+                    // a chip you could read but not act on was "a grouping you can't filter by",
+                    // which is what ADR 0033 called just a note.
+                    foldersSection
                     ExerciseProgressSection(mastery: $mastery,
                                             lastPracticed: exercise.lastPracticed,
                                             reading: exercise.masteryReading,
@@ -113,6 +123,7 @@ struct ExerciseDetailSheet: View {
                     toggle: { toggleLink($0) },
                     accent: PocketColor.practice)
             }
+            .sheet(isPresented: $filingFolders) { foldersPicker }
             .referenceLinkEditing($editingReference, owner: exercise,
                                   accent: PocketColor.practice)
             .referenceAttachments($referenceAttachments, naming: $editingReference, owner: exercise,
@@ -161,6 +172,10 @@ struct ExerciseDetailSheet: View {
             TextField("Technique cues, target feel, where it's from…", text: $notes, axis: .vertical)
                 .lineLimit(3...8)
                 .keyboardDoneButton()
+            // Still here. ADR 0210's first cut took these out, on the grounds that its backfill had
+            // copied every tag into a folder; with the backfill gone they are the only place a
+            // drill's tags are visible at all, and removing them would have lost information with
+            // nothing put in its place.
             if !exercise.tags.isEmpty {
                 FlowLayout(spacing: 6) {
                     ForEach(exercise.tags, id: \.self) { tag in

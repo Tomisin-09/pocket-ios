@@ -26,6 +26,7 @@ extension ArchiveRestoreWriter {
             routine.lastPracticed = record.lastPracticed
             routine.isFavorite = record.isFavorite
             routine.presetSlug = record.presetSlug
+            routine.folders = FolderPath.normalized(record.folders ?? [])
             routine.references = references(record.references)
 
             let items = record.items

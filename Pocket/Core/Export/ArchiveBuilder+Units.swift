@@ -13,6 +13,9 @@ extension ArchiveBuilder {
             name: exercise.name,
             notes: exercise.notes,
             tags: exercise.tags.sorted(),
+            // Sorted like every other collection here: two exports of an unchanged library have to
+            // produce byte-identical JSON, and `folders` is stored in the order things were filed.
+            folders: exercise.folders.sorted(),
             presetSlug: exercise.presetSlug,
             isFavorite: exercise.isFavorite,
             dateAdded: exercise.dateAdded,
@@ -68,6 +71,7 @@ extension ArchiveBuilder {
             lastPracticed: routine.lastPracticed,
             isFavorite: routine.isFavorite,
             presetSlug: routine.presetSlug,
+            folders: routine.folders.sorted(),
             // `orderedItems` is the model's own play order (ADR 0066 R2) — `order`, with `uid` breaking
             // ties. Reusing it keeps the archive in the sequence the player authored rather than a
             // second opinion about it.

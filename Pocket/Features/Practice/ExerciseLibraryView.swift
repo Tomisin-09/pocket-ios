@@ -13,7 +13,9 @@ import SwiftUI
 /// direction and the search query narrow the list in memory (ADR 0056) via the pure
 /// `PracticeLibrarySort`, so `@Query` stays unsorted and deletion indexes the *displayed* list.
 struct ExerciseLibraryView: View {
-    @Environment(\.modelContext) private var context
+    // Internal, not private, so `ExerciseLibraryView+Folders` can reach it — a same-module
+    // extension in another file cannot see `private` (the `+Row` precedent).
+    @Environment(\.modelContext) var context
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
     @Environment(\.isPro) private var isPro
     @Environment(\.presentPaywall) private var presentPaywall
@@ -21,7 +23,7 @@ struct ExerciseLibraryView: View {
     /// reads `isPending` itself to filter out a row awaiting its delete, and a modifier applied
     /// inside `body` can only publish to its descendants.
     @State private var rowDeletion = RowDeletionCoordinator()
-    @Query private var exercises: [Exercise]
+    @Query var exercises: [Exercise]
     /// The local profile (ADR 0113 S2): its self-rated experience seeds a new exercise's default
     /// command tempo, so a beginner starts near the floor and a seasoned player higher up.
     @Query private var profiles: [Profile]
@@ -42,7 +44,7 @@ struct ExerciseLibraryView: View {
     /// Sort key + direction, persisted across launches (ADR 0056).
     @AppStorage("exerciseLibrarySort") private var sortKey: ExerciseSortKey = .name
     @AppStorage("exerciseLibrarySortAscending") private var sortAscending = true
-    @State private var searchText = ""
+    @State var searchText = ""
     /// Which template sections are collapsed, persisted across launches (Slice 5). Collapsed is what's
     /// stored, so a template you first use tomorrow arrives open.
     @AppStorage("exerciseLibraryCollapsedSections") private var collapsedSections = ""
@@ -57,11 +59,31 @@ struct ExerciseLibraryView: View {
     @State var importingExercise = false
     /// The app's one receiving door (ADR 0188 S2, ADR 0209 D4), shared with the Routines library.
     @Environment(\.receivePracticeFile) var receivePracticeFile
+    /// Where in the folder tree this library is standing, and the three prompts that change it
+    /// (ADR 0210). Session state, not persisted: a folder is a place you stand, and a library that
+    /// reopened three levels down would look empty for reasons the player could not see.
+    @State var folderBrowse = FolderBrowseState()
+    /// The empty-folder markers (ADR 0210 D4). Queried rather than fetched so creating a folder
+    /// redraws the list.
+    @Query var folderMarkers: [PracticeFolder]
+    /// The routines — read **only** for their folder paths. Folders are one namespace across two
+    /// libraries (D3), so a folder holding nothing but routines still has to appear here; without
+    /// this the Exercises library would quietly show a different tree from the Routines one.
+    @Query var routines: [Routine]
+    /// The drill whose folder picker is open (D9), or `nil`.
+    @State var filing: Exercise?
+    /// Whether the **Folders** section is open, persisted across launches and **default on**.
+    ///
+    /// It was default *off* while the tag backfill existed, because that gave a seeded library ten
+    /// one-drill folders which filled the display and pushed every drill below the fold. With the
+    /// backfill gone a folder exists only because the player made it, and hiding what somebody just
+    /// asked for is its own kind of wrong. A library with no folders shows no section at all.
+    @AppStorage("exerciseLibraryFoldersExpanded") var foldersExpanded = true
 
     /// The drills actually on screen — everything except rows whose delete is pending behind the
     /// Undo toast (Slice 3). The empty state reads from here too, so deleting your last drill says
     /// "no exercises yet" rather than "nothing matches your search".
-    private var presentExercises: [Exercise] {
+    var presentExercises: [Exercise] {
         exercises.filter { !rowDeletion.isPending($0.uid) }
     }
 
@@ -69,7 +91,7 @@ struct ExerciseLibraryView: View {
     /// **template sections** (ADR 0068), each ordered by the current sort — the sectioned list the
     /// user sees, and what deletion indexes into (per section).
     private var sections: [LibrarySection<Exercise>] {
-        let matched = presentExercises.filter {
+        let matched = scopedExercises.filter {
             (!favoritesOnly || $0.isFavorite)
                 && PracticeLibrarySort.exerciseMatches(fields(for: $0), query: searchText,
                                                        instrument: activeInstrumentFilter)
@@ -126,11 +148,14 @@ struct ExerciseLibraryView: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else if !hasMatches {
+                folderRows
                 Text(noMatchMessage)
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
+                searchAllFoldersButton
             } else {
+                folderRows
                 ForEach(sections, id: \.title) { section in
                     CollapsibleLibrarySection(title: section.title,
                                               count: section.items.count,
@@ -146,8 +171,15 @@ struct ExerciseLibraryView: View {
         // Deferred delete + the Undo toast for every row on this screen (Slice 3).
         .pocketRowUndoHost(rowDeletion)
         .safeAreaInset(edge: .top) {
-            if showsInstrumentFilter {
-                InstrumentFilterBar(instruments: presentInstruments, selection: $instrumentFilter)
+            VStack(spacing: 0) {
+                if !folderBrowse.path.isEmpty {
+                    FolderBrowseBar(crumbs: folderBrowse.crumbs(root: "Exercises")) {
+                        folderBrowse.open($0)
+                    }
+                }
+                if showsInstrumentFilter {
+                    InstrumentFilterBar(instruments: presentInstruments, selection: $instrumentFilter)
+                }
             }
         }
         .onChange(of: showsInstrumentFilter) { _, shows in
@@ -171,6 +203,7 @@ struct ExerciseLibraryView: View {
                 LibraryOptionsMenu(favoritesOnly: $favoritesOnly,
                                    showsFavoritesFilter: !presentExercises.isEmpty,
                                    actions: {
+                    newFolderButton
                     receiveExerciseButton
                 }, sortControls: {
                     LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
@@ -217,6 +250,12 @@ struct ExerciseLibraryView: View {
             }
         })
         .linkedSongPlayer($songRoute)
+        // The three folder prompts (New folder, Rename, Delete), shared with the Routines library.
+        .folderBrowsing(folderBrowse)
+        .sheet(isPresented: Binding(get: { filing != nil },
+                                    set: { if !$0 { filing = nil } })) {
+            folderPicker
+        }
     }
 
     private func displayName(_ exercise: Exercise) -> String {
@@ -239,6 +278,8 @@ struct ExerciseLibraryView: View {
     /// The drill's own long-press actions: read what it is, or fork it (Slice 3).
     private func menuItems(for exercise: Exercise) -> [PocketRowMenuItem] {
         [PocketRowMenuItem("Details", systemImage: "info.circle") { detailExercise = exercise },
+         // "Add to folder…", never "Move to" (ADR 0210 D1) — a drill in two folders is the feature.
+         PocketRowMenuItem("Add to folder…", systemImage: "folder.badge.plus") { filing = exercise },
          PocketRowMenuItem("Duplicate", systemImage: "plus.square.on.square") { duplicate(exercise) }]
     }
 
@@ -321,8 +362,14 @@ struct ExerciseLibraryView: View {
     /// The message shown when nothing matches — favourites-aware so an empty favourites view reads
     /// as a prompt to pin something, not a false "no search matches".
     private var noMatchMessage: String {
-        favoritesOnly ? "No favourite exercises yet. Swipe or hold a drill and tap Favourite to pin it."
-                      : "No exercises match “\(searchText)”."
+        if favoritesOnly {
+            return "No favourite exercises yet. Swipe or hold a drill and tap Favourite to pin it."
+        }
+        if searchText.isEmpty, !folderBrowse.path.isEmpty {
+            return "Nothing filed in “\(FolderPath.leaf(folderBrowse.path))” yet. "
+                 + "Hold a drill anywhere in your library and tap Add to folder…"
+        }
+        return "No exercises match “\(searchText)”."
     }
 
     /// Create an exercise from a confirmed `NewExercisePlan` (ADR 0046 / 0068) and stage it for its
@@ -347,21 +394,4 @@ struct ExerciseLibraryView: View {
         opening = exercise
     }
 
-}
-
-#Preview("Exercises — with units") {
-    // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Exercise.self, PracticeRun.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
-    container.mainContext.insert(Exercise(name: "Alternating picking",
-                                          currentTempo: 70, commandTempo: 96, template: .picking))
-    container.mainContext.insert(Exercise(name: "Spider", currentTempo: 60, template: .warmup))
-    container.mainContext.insert(Exercise(name: "Down Up Down", currentTempo: 80,
-                                          template: .strumming))
-    // A bass exercise trips the progressive-disclosure instrument filter (ADR 0116 S4).
-    container.mainContext.insert(Exercise(name: "E minor pentatonic", currentTempo: 60,
-                                          template: .scales, instrument: .bass))
-    return NavigationStack { ExerciseLibraryView() }
-        .modelContainer(container)
-        .preferredColorScheme(.dark)
 }

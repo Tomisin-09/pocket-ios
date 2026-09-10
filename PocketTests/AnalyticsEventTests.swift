@@ -19,6 +19,11 @@ import XCTest
 /// three assertions below were all green the whole time, on a vocabulary that was a quarter wrong.
 /// If this happens a third time, the fix is to move the sample list next to the enum it samples, so
 /// that adding a case and forgetting the sample are not two edits in two targets.
+///
+/// **It happened a third time.** ADR 0209's `exercise_received` was added to the enum and never
+/// listed here, and it was still unlisted when ADR 0210 came to add `folder_created` — found the
+/// same way, by counting. Both are pinned below, and the move this paragraph has now asked for
+/// twice is logged in `docs/backlog.md`.
 final class AnalyticsEventTests: XCTestCase {
 
     /// One of every case in the vocabulary.
@@ -30,8 +35,10 @@ final class AnalyticsEventTests: XCTestCase {
         .loopCreated,
         .exerciseCreated(template: .scales, instrument: .guitar),
         .exerciseAuthoringAbandoned(template: .chords),
+        .folderCreated(depth: 2),
         .routineCreated(items: 5, generated: false),
         .routineReceived(items: 4, orphanedBlocks: 1),
+        .exerciseReceived(template: .picking),
         .archiveExported(includesTakeAudio: true, takes: 12),
         .archiveRestored(itemsAdded: 40, alreadyPresent: 8, takeFiles: 12),
         .paywallShown(trigger: .newExercise(.scales)),
@@ -44,7 +51,7 @@ final class AnalyticsEventTests: XCTestCase {
     // MARK: - Wire format
 
     func testVocabularyIsComplete() {
-        XCTAssertEqual(everyEvent.count, 16,
+        XCTAssertEqual(everyEvent.count, 18,
                        "The vocabulary changed. Pin the new event's name and payload here, and "
                        + "check it against the 20k/month free tier before shipping it.")
     }
@@ -58,8 +65,10 @@ final class AnalyticsEventTests: XCTestCase {
                         "loop_created",
                         "exercise_created",
                         "exercise_authoring_abandoned",
+                        "folder_created",
                         "routine_created",
                         "routine_received",
+                        "exercise_received",
                         "archive_exported",
                         "archive_restored",
                         "paywall_shown",
@@ -86,8 +95,10 @@ final class AnalyticsEventTests: XCTestCase {
             [],
             ["instrument", "template"],
             ["template"],
+            ["depth"],
             ["generated", "items"],
             ["items", "orphaned_blocks"],
+            ["template"],
             ["includes_take_audio", "takes"],
             ["already_present", "items_added", "take_files"],
             ["detail", "trigger"],

@@ -7,6 +7,13 @@
   0188's trust asymmetry (D1), its version gate (D2), the file type and its `Info.plist` declaration
   (D3), what a drill loses when it crosses (D5) and the preview-before-landing rule (D9) are all
   untouched, and the routine door behaves exactly as it did.
+- **Amended by:** ADR 0210 — D2's subtraction list gains one entry. A drill handed over on its own
+  now also loses its **folders**: those paths are positions in the *sender's* tree, and reproducing
+  them on a stranger's phone would hand over a filing cabinet along with the drill. The folders'
+  **leaf names are added to `tags`** instead — added, not substituted, so a drill with tags and no
+  folders shares exactly what it did before. Everything else here stands: the same
+  `shareable(_ exercise:)` still answers the question for both doors, and D4's generalised
+  `PracticeReceiveHost` is what 0210's S3 will receive a whole folder through.
 - **Relates to:** ADR 0077 (the read-only detail sheet this sends from), ADR 0112 / 0144 (the
   authoring gate the receiving side asks), ADR 0070 (never grading — the reason a drill's numbers do
   not cross), ADR 0148 (Red Moon owns its song copies, so no audio and no song links travel),

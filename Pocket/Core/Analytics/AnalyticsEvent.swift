@@ -59,6 +59,12 @@ enum AnalyticsEvent: Equatable {
     /// the player abandoned before even choosing one.
     case exerciseAuthoringAbandoned(template: ExerciseTemplate?)
 
+    /// A folder was made (ADR 0210 D13). `depth` is the one property worth carrying and it answers
+    /// the design's open question: nesting is derived from a `/` in a flat key, so whether anybody
+    /// actually goes below the top level is what says if the prefix walk earns its screen. `1` is a
+    /// top-level folder. No name, ever — a folder name is player-authored text (ADR 0120).
+    case folderCreated(depth: Int)
+
     /// A routine was saved for the first time. `generated` separates a hand-built routine from one
     /// produced by the collection/session generator.
     case routineCreated(items: Int, generated: Bool)
@@ -131,6 +137,7 @@ extension AnalyticsEvent {
         case .loopCreated: return "loop_created"
         case .exerciseCreated: return "exercise_created"
         case .exerciseAuthoringAbandoned: return "exercise_authoring_abandoned"
+        case .folderCreated: return "folder_created"
         case .routineCreated: return "routine_created"
         case .routineReceived: return "routine_received"
         case .exerciseReceived: return "exercise_received"
@@ -173,6 +180,9 @@ extension AnalyticsEvent {
         case let .exerciseAuthoringAbandoned(template):
             // `nil` is its own signal — abandoned before choosing a template at all.
             return ["template": .text(template?.rawValue ?? "none")]
+
+        case let .folderCreated(depth):
+            return ["depth": .number(depth)]
 
         case let .routineCreated(items, generated):
             return ["items": .number(items),

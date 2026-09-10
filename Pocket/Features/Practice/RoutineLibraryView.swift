@@ -15,7 +15,9 @@ import SwiftUI
 /// so `@Query` stays unsorted and deletion indexes the displayed order. Row rendering lives in
 /// `RoutineLibraryView+Row.swift`.
 struct RoutineLibraryView: View {
-    @Environment(\.modelContext) private var context
+    // Internal, not private, so `RoutineLibraryView+Folders` can reach it — a same-module
+    // extension in another file cannot see `private` (the `+Row` precedent).
+    @Environment(\.modelContext) var context
     /// Deferred, undoable row deletion (Slice 3). **Owned here, not by the modifier**: this view
     /// reads `isPending` itself so `ordered` can hide a row while its Undo window is open, and a
     /// modifier applied inside `body` can only publish to its descendants.
@@ -31,10 +33,10 @@ struct RoutineLibraryView: View {
     /// Per-routine practice reminders (ADR 0186 D3) — a deleted routine's pending notifications
     /// have to go with it, and nothing else on this screen knows they exist.
     @Environment(PracticeReminder.self) private var practiceReminder
-    @Query private var routines: [Routine]
+    @Query var routines: [Routine]
     /// Every exercise in the library — the raw material the planner's Quick session draws from
     /// (V2 planner Slice 1). Ranked by dueness, warm-up LRU-picked; no goals yet.
-    @Query private var exercises: [Exercise]
+    @Query var exercises: [Exercise]
     /// The practice log, for the per-row tally (ADR 0173). Fetched whole and reduced **once** into
     /// `sessionCounts` below — a `#Predicate` on the optional `routineUID` is the documented way to
     /// starve the main thread, and a per-row `routineHistory` call would rescan the log for every
@@ -54,6 +56,13 @@ struct RoutineLibraryView: View {
     @State private var quickDraft: QuickSessionDraft?
     /// Whether the document picker for a shared routine is up (ADR 0188 S2).
     @State var importingRoutine = false
+    /// Where in the folder tree this library is standing (ADR 0210). Its own walk, over the same
+    /// namespace the Exercises library browses (D3).
+    @State var folderBrowse = FolderBrowseState()
+    /// The empty-folder markers (D4) — queried so creating a folder redraws the list.
+    @Query var folderMarkers: [PracticeFolder]
+    /// The routine whose folder picker is open (D9), or `nil`.
+    @State var filing: Routine?
     /// Whether the list is narrowed to favourited routines (ADR 0119) — a session toggle, not persisted.
     @State private var favoritesOnly = false
     /// Sort key + direction, persisted across launches (ADR 0178), defaulting to the newest-first
@@ -61,7 +70,11 @@ struct RoutineLibraryView: View {
     /// until they change it.
     @AppStorage("routineLibrarySort") private var sortKey: RoutineSortKey = .recentlyAdded
     @AppStorage("routineLibrarySortAscending") private var sortAscending = true
-    @State private var searchText = ""
+    @State var searchText = ""
+    /// Whether the **Folders** section is open, persisted across launches and **default on** — the
+    /// same call the Exercises library makes, and its reasoning. This library has never had a
+    /// section of any kind before.
+    @AppStorage("routineLibraryFoldersExpanded") var foldersExpanded = true
 
     /// The routines on screen: narrowed by the favourites filter (ADR 0119) and the search query,
     /// then ordered by the chosen key (ADR 0178).
@@ -71,7 +84,7 @@ struct RoutineLibraryView: View {
     /// property here would rescan the whole log a second time on every redraw — the cost ADR 0173 D6
     /// went out of its way to pay only once.
     private func ordered(facts: RoutineListFacts) -> [Routine] {
-        let matched = presentRoutines.filter {
+        let matched = scopedRoutines.filter {
             (!favoritesOnly || $0.isFavorite)
                 && PracticeLibrarySort.routineMatches(fields(for: $0, facts: facts),
                                                       query: searchText)
@@ -93,13 +106,17 @@ struct RoutineLibraryView: View {
         if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return "No routines match “\(searchText)”."
         }
+        if !folderBrowse.path.isEmpty, !favoritesOnly {
+            return "Nothing filed in “\(FolderPath.leaf(folderBrowse.path))” yet. "
+                 + "Hold a routine anywhere in your library and tap Add to folder…"
+        }
         return "No favourite routines yet. Swipe or hold a routine and tap Favourite to pin it."
     }
 
     /// The routines actually on screen — everything except rows whose delete is pending behind the
     /// Undo toast (Slice 3). The empty state reads from here too, so deleting your last routine says
     /// "no routines yet" rather than "no favourites".
-    private var presentRoutines: [Routine] {
+    var presentRoutines: [Routine] {
         routines.filter { !rowDeletion.isPending($0.uid) }
     }
 
@@ -118,11 +135,14 @@ struct RoutineLibraryView: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else if visible.isEmpty {
+                folderRows
                 Text(noMatchMessage)
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
+                searchAllFoldersButton
             } else {
+                folderRows
                 ForEach(visible) { routine in
                     row(for: routine, facts: facts)
                         .listRowBackground(PocketColor.background)
@@ -138,6 +158,13 @@ struct RoutineLibraryView: View {
         .background(PocketColor.background.ignoresSafeArea())
         // Deferred delete + the Undo toast for every row on this screen (Slice 3).
         .pocketRowUndoHost(rowDeletion)
+        .safeAreaInset(edge: .top) {
+            if !folderBrowse.path.isEmpty {
+                FolderBrowseBar(crumbs: folderBrowse.crumbs(root: "Routines")) {
+                    folderBrowse.open($0)
+                }
+            }
+        }
         .navigationTitle("Routines")
         .navigationBarTitleDisplayMode(.inline)
         // **`.always`, not the default placement** (ADR 0178). Under an inline title the default
@@ -162,6 +189,7 @@ struct RoutineLibraryView: View {
                               systemImage: isPro ? "wand.and.stars" : "lock.fill")
                     }
                     .disabled(isPro && !exercises.contains { $0.template != .warmup })
+                    newFolderButton
                     receiveRoutineButton
                 }, sortControls: {
                     LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
@@ -199,6 +227,12 @@ struct RoutineLibraryView: View {
         // The picked file goes straight to the app-root host, which owns the preview and the write
         // (ADR 0188 S2) — this screen never decodes anything.
         .practiceFileImporter(isPresented: $importingRoutine, onPick: receivePracticeFile)
+        // The three folder prompts (New folder, Rename, Delete), shared with the Exercises library.
+        .folderBrowsing(folderBrowse)
+        .sheet(isPresented: Binding(get: { filing != nil },
+                                    set: { if !$0 { filing = nil } })) {
+            folderPicker
+        }
     }
 
     /// Run the session — gated on `canRunRoutine`, so the curated free-taste routine plays for a
@@ -233,6 +267,8 @@ struct RoutineLibraryView: View {
     private func menuItems(for routine: Routine) -> [PocketRowMenuItem] {
         [PocketRowMenuItem("Play", systemImage: "play.circle") { play(routine) },
          PocketRowMenuItem("Edit", systemImage: "pencil") { edit(routine) },
+         // "Add to folder…", never "Move to" (ADR 0210 D1).
+         PocketRowMenuItem("Add to folder…", systemImage: "folder.badge.plus") { filing = routine },
          PocketRowMenuItem("Duplicate", systemImage: "plus.square.on.square") { duplicate(routine) }]
     }
 
@@ -339,6 +375,7 @@ struct QuickSessionDraft: Identifiable, Hashable {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
         for: Routine.self, RoutineItem.self, Exercise.self, Song.self, Loop.self, PracticeRun.self,
+        PracticeFolder.self,
         configurations: .init(isStoredInMemoryOnly: true))
     let drill = Exercise(name: "Spider", currentTempo: 60)
     container.mainContext.insert(drill)

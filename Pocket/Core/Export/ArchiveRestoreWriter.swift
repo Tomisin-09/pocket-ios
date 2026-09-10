@@ -49,6 +49,12 @@ struct RestoredLibrary {
     var takes: [(take: Recording, moments: [TakeNote])] = []
     var profile: Profile?
 
+    /// Empty-folder markers to mint (ADR 0210 D4). Deliberately **absent from `rowCount`**: a folder
+    /// is not a thing a player counts among their drills and sessions, and the restore preview
+    /// promises a number of *library items*. A marker that lands unannounced adds no content — the
+    /// folder was in the archive because the same player made it.
+    var folders: [PracticeFolder] = []
+
     /// Take audio to write out of the zip once the rows exist, keyed by file name (D7).
     var takeAudio: [String: ZipEntry] = [:]
 
@@ -103,6 +109,7 @@ struct RestoredLibrary {
             context.insert(take)
             take.moments = moments
         }
+        folders.forEach(context.insert)
         if let profile { context.insert(profile) }
     }
 }
@@ -146,6 +153,7 @@ enum ArchiveRestoreWriter {
         keys.journalUIDs = Set(((try? context.fetch(FetchDescriptor<JournalEntry>())) ?? []).map(\.uid))
         keys.takeUIDs = Set(((try? context.fetch(FetchDescriptor<Recording>())) ?? []).map(\.uid))
         keys.hasProfile = ((try? context.fetchCount(FetchDescriptor<Profile>())) ?? 0) > 0
+        keys.folderPaths = Set(PracticeFolderStore.fetchMarkers(in: context).map { $0.path.lowercased() })
         return keys
     }
 
@@ -187,6 +195,7 @@ enum ArchiveRestoreWriter {
         addJournal(archive.journal, existing: existing, into: &landing, resolver: resolver)
         addTakes(archive.takes, existing: existing, into: &landing, resolver: resolver)
         addProfile(archive.profile, existing: existing, into: &landing)
+        addFolderMarkers(archive.folderMarkers ?? [], existing: existing, into: &landing)
 
         // Only the files the rows being added actually name. An archive carries the pictures and
         // audio for its whole library, and a restore into a populated one may be adding a fraction of

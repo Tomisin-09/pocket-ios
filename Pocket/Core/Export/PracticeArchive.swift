@@ -59,6 +59,17 @@ struct PracticeArchive: Codable, Equatable, Sendable {
     var takes: [RecordingRecord] = []
 
     var profile: ProfileRecord?
+
+    /// The **empty** folders (ADR 0210 D4) — the marker rows, as paths.
+    ///
+    /// Only markers, not the whole namespace: every folder with something in it is already implied
+    /// by its members' paths, so writing them here too would put the same fact in the archive twice
+    /// with two chances to disagree. What cannot be derived is a folder a teacher made and has not
+    /// filled yet, and that is exactly what this carries.
+    ///
+    /// `Optional`, like the two membership fields, so an archive written before folders still
+    /// decodes.
+    var folderMarkers: [String]?
 }
 
 extension PracticeArchive {

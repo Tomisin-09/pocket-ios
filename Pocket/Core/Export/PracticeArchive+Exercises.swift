@@ -9,6 +9,22 @@ struct ExerciseRecord: Codable, Equatable, Sendable {
     var name: String
     var notes: String
     var tags: [String]
+
+    /// The folders this drill is filed in (ADR 0210 D8), canonical paths.
+    ///
+    /// **Optional, and that is load-bearing.** A non-optional `[String]` with a declaration default
+    /// does nothing on the way in: Swift's synthesized `Decodable` calls `decode(_:forKey:)` and
+    /// throws `keyNotFound`, so **every archive written before this field would fail to decode
+    /// entirely** — not lose the folders, fail. `Optional` is exempt (`decodeIfPresent`).
+    ///
+    /// And deliberately **no `KeyedDecodingContainer` overload for `[String]`**: ADR 0205 D5 forbids
+    /// a generic over `[T]` because it would default every missing array everywhere, and `[String]`
+    /// is barely narrower — it would silently cover `tags` and `collections` too. Optional makes the
+    /// overload unnecessary, which is the whole point.
+    ///
+    /// `tags` above keeps being written, populated with these folders' leaf names, so a build
+    /// without folders still shows a received drill something meaningful.
+    var folders: [String]?
     var presetSlug: String?
     var isFavorite: Bool
     var dateAdded: Date
