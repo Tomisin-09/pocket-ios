@@ -18,8 +18,10 @@ import Foundation
 /// - **Nothing that grades playing** (ADR 0070). No mastery values, no achieved tempo, no accuracy.
 ///   Pocket does not judge how well you played and the telemetry must not create a back door to it.
 ///
-/// The set is kept deliberately small — a ~13-event vocabulary with nothing per-beat or per-tap —
-/// both because a large one goes unread and because the hosted free tier is 20k events/month.
+/// The set is kept deliberately small — **eighteen** events, nothing per-beat or per-tap — both
+/// because a large one goes unread and because the hosted free tier is 20k events/month. (It was
+/// thirteen when ADR 0120 wrote that number, and this sentence said "~13" until the count was
+/// checked; `everyEvent` below is the list, and `AnalyticsEventTests` pins its size.)
 enum AnalyticsEvent: Equatable {
 
     // MARK: - Engagement
@@ -121,6 +123,53 @@ enum AnalyticsEvent: Equatable {
     /// The outcome of a microphone permission request. Both the tuner and recording are dead ends
     /// without it, so a denial rate is a real product problem rather than a curiosity.
     case micPermission(outcome: MicOutcome)
+}
+
+// MARK: - The sample of the vocabulary
+
+extension AnalyticsEvent {
+
+    /// One of every case, standing in for the `CaseIterable` this type cannot have.
+    ///
+    /// **This lives here, beside the cases, because it lived somewhere else three times and drifted
+    /// three times.** It was a `private let` in `AnalyticsEventTests`, and the tests that read it
+    /// compare it against a count written in that same file — so they catch a case being *removed*
+    /// from the list and can never catch one being *added to the enum and never listed*. That is not
+    /// a hypothetical: `routine_received` sat unpinned through ADR 0188 until someone counted and
+    /// found the enum at 16 and the list at 13; then `exercise_received` (ADR 0209) arrived unlisted
+    /// and was still unlisted when ADR 0210 came to add `folder_created`. Every assertion was green
+    /// throughout, on a vocabulary a quarter wrong.
+    ///
+    /// The test file asked twice, in writing, for the list to move here. This is that move: adding a
+    /// case and forgetting its sample are now **one edit in one file**, three lines apart, instead of
+    /// two edits in two targets — and the compiler puts the cases and the samples on the same screen.
+    ///
+    /// Not `#if DEBUG`: eighteen enum values carrying no strings cost nothing in a release binary,
+    /// and `AnalyticsSink.RecordingSink` next door already declines the same guard for the same
+    /// reason — a conditional is another way for two things to disagree.
+    ///
+    /// **Adding a case? Add its sample here.** Nothing can force it, and that is exactly why the list
+    /// is now within three lines of the thing it samples.
+    static let everyEvent: [AnalyticsEvent] = [
+        .practiceStarted(kind: .exercise, source: .standalone, sinceInstall: .day1),
+        .practiceCompleted(kind: .loop),
+        .songImported(count: 3, failed: 1),
+        .toolOpened(tool: .tuner),
+        .loopCreated,
+        .exerciseCreated(template: .scales, instrument: .guitar),
+        .exerciseAuthoringAbandoned(template: .chords),
+        .folderCreated(depth: 2),
+        .routineCreated(items: 5, generated: false),
+        .routineReceived(items: 4, orphanedBlocks: 1),
+        .exerciseReceived(template: .picking),
+        .archiveExported(includesTakeAudio: true, takes: 12),
+        .archiveRestored(itemsAdded: 40, alreadyPresent: 8, takeFiles: 12),
+        .paywallShown(trigger: .newExercise(.scales)),
+        .paywallDismissed(trigger: .routine(.play), purchased: true),
+        .purchaseCompleted(product: .annual, trial: true),
+        .restoreCompleted(restored: false),
+        .micPermission(outcome: .granted)
+    ]
 }
 
 // MARK: - Wire format

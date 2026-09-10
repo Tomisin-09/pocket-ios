@@ -120,6 +120,21 @@ enum PaywallTrigger: Identifiable, Equatable {
         }
     }
 
+    /// One of every case, for the same reason `AnalyticsEvent.everyEvent` exists and in the same
+    /// place — beside the cases.
+    ///
+    /// **This is the fourth instance of that drift, found while fixing the third.** The privacy test
+    /// that proves no user-authored text can reach a payload enumerated this type's reporting names
+    /// as a **string literal** — six of them — and `reportingName` returns nine. `received_exercise`,
+    /// `home` and `launch` were missing, and `.launch` is genuinely emitted (`PaywallHost`). The test
+    /// stayed green because the event samples only ever exercised two triggers, so the other seven
+    /// were never asked. A list of literals describing an enum is the same defect wherever it is
+    /// written; the answer is the same too.
+    static let everyTrigger: [PaywallTrigger] = [
+        .drawYourOwn, .newExercise(.scales), .proExercise, .receivedExercise(.picking),
+        .planner, .routine(.play), .home(.practice), .launch, .general
+    ]
+
     /// What specifically was reached for, where the gate knows it.
     var reportingDetail: String? {
         switch self {

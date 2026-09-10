@@ -150,6 +150,13 @@ Two further rules the vocabulary obeys:
 Thirteen events, deliberately: a larger set goes unread, and the hosted free tier is 20k
 events/month. Nothing fires per-beat or per-tap.
 
+> **Count as of 2026-09-10: eighteen.** The reasoning above stands and the number in it does not —
+> five events have been added since (0188's two receive events, 0181/0183's archive pair, 0210's
+> `folder_created`), each argued on its own merits and none per-beat. Recorded here rather than
+> edited into the sentence, because what this ADR decided was *"deliberately small, and justify each
+> one"*, not *"thirteen"*. The live list is `AnalyticsEvent.everyEvent`, which is now where the enum
+> is; keeping a second count in prose is the drift this note exists to stop repeating.
+
 ### 5. Aptabase Cloud, EU region
 
 Chosen over TelemetryDeck, the other serious candidate, for one reason that outlives the choice:

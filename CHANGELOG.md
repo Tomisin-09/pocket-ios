@@ -104,6 +104,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   carry no tag, so picking one leaves them out — the sheet and the empty screen both say so.
 
 ### Changed
+- **Internal: the analytics vocabulary's sample list moved next to the vocabulary.** No behaviour
+  change and no new event — the list of "one of every event", used to prove no user-authored text
+  can reach telemetry, lived in the test target and had drifted out of step with the enum three
+  times running. It now sits beside the cases it samples. A fourth instance of the same drift, found
+  while fixing the third, is fixed with it: the check that no free text reaches a payload was reading
+  six of the nine paywall triggers from a hand-typed list, and never inspected the other seven.
 - **The journal reads like a journal.** Each entry now leads with what you wrote, at a readable
   size, with a slim colour edge for its kind instead of a label taking up the first line. Long notes
   are trimmed to four lines — tap to open one out. Entries written on a drill now show the mastery
