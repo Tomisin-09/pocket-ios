@@ -29,6 +29,21 @@ enum UITestHooks {
     /// the gate. Read app-side through `UITestRuntime.shotHour`.
     static let shotHourArgument = "-shotHour"
 
+    /// `-oracleDoor`: puts the **Red Moon Oracle**'s tile back on Home (ADR 0211).
+    ///
+    /// The Oracle's mechanism is finished and its voice is not, so ADR 0211 closes its door rather
+    /// than shipping a reading nobody wanted to read. The screen, the coordinator, the guards and
+    /// their tests all stay; only the way in is gone. This argument is what `OracleUITests` walks
+    /// through, so the smoke coverage keeps running against a feature no player can reach.
+    ///
+    /// **It is a second argument rather than `-uiTesting` alone, and that is the whole point.** The
+    /// shoot passes `-uiTesting` too (see `shotHourArgument`), so gating the tile on the test flag
+    /// would put it back into `reference/home` and `getting-started/home` — figures that would then
+    /// show a destination the release build does not have. A figure that lies is the one defect the
+    /// manual's checks cannot see, so the door the harness opens is deliberately narrower than the
+    /// harness itself. Read app-side through `UITestRuntime.oracleDoorIsOpen`.
+    static let oracleDoorArgument = "-oracleDoor"
+
     /// Marks Home as **finished seeding**, not merely rendered.
     ///
     /// First-launch seeding is a `.task` that paints Home before it completes, so "Home is on

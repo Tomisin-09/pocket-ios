@@ -20,6 +20,22 @@ enum UITestRuntime {
     /// seam for the manual's screenshots (see `UITestHooks.shotHourArgument`), not a setting.
     static let shotHour: Int? = parseShotHour(in: CommandLine.arguments)
 
+    /// Whether the **Red Moon Oracle**'s tile should appear on Home (ADR 0211).
+    ///
+    /// `false` in every normal launch, including the shoot's. The Oracle is shelved with its door
+    /// closed rather than its code deleted, and this is the seam `OracleUITests` opens so the smoke
+    /// coverage survives the shelving — see `UITestHooks.oracleDoorArgument` for why it is a second
+    /// argument and not `-uiTesting` on its own.
+    static let oracleDoorIsOpen = parseOracleDoor(in: CommandLine.arguments)
+
+    /// Split out from the `static let` for the same reason `parseShotHour` is, and named the same
+    /// way: the argument that must *also* be present is the entire guarantee here, and a guarantee
+    /// nothing checks is a comment.
+    static func parseOracleDoor(in arguments: [String]) -> Bool {
+        arguments.contains(UITestHooks.launchArgument)
+            && arguments.contains(UITestHooks.oracleDoorArgument)
+    }
+
     /// Split out from the `static let` so it can be tested: a launch argument cannot be varied
     /// inside a running process, which would otherwise make this the one piece of launch parsing
     /// with no way to check its edge cases.

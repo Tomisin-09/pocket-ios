@@ -11,9 +11,10 @@ import SwiftUI
 /// and retires the temporary metronome toolbar button (ADR 0043).
 ///
 /// **The ordering is the argument.** Everything above the map is different from yesterday and
-/// everything in it is not: the six destinations have been the same six since the Oracle landed
-/// and will not change again this year. Six full-width strips put that unchanging half in the
-/// player's way every launch — ADR 0197 is what shrank it back to an index.
+/// everything in it is not: the destinations barely move from one release to the next. Full-width
+/// strips put that unchanging half in the player's way every launch — ADR 0197 is what shrank it
+/// back to an index. (Five are reachable since ADR 0211 closed the Oracle's door; `learnRow` in
+/// `HomeView+Map` holds the reasoning.)
 struct HomeView: View {
     /// Internal, not private: `HomeView+Seeding` writes the first-run content through it.
     @Environment(\.modelContext) var context

@@ -32,7 +32,15 @@ What's needed:
 Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
 is the deliverable ADR 0165 defines.
 
-## The manual has no page for the Oracle (logged 2026-09-05, ADR 0187 S1)
+## The manual has no page for the Oracle (logged 2026-09-05, ADR 0187 S1) — now **correctly** absent
+
+> **Superseded in its urgency by ADR 0211 (2026-09-10), not closed.** The Oracle's door is shut, so
+> a manual with no page for it is now *accurate* rather than incomplete — ADR 0165's rule is that
+> the manual says what the app says, and the app currently says nothing about the Oracle. The page
+> is owed again on the day the door reopens, and it should be written **then**, against whatever
+> register lands: a page written now would document prose that is going to be replaced, and its
+> figures would be shot from a screen no player can open. The half already done was undone in the
+> same change — `reference/home-and-library.md` now names `Learn` as holding `Toolkit` alone.
 
 ADR 0187 S1 shipped a new screen and a new Home section, so the manual's spine wants an `oracle`
 page — *what a reading is, what it will never tell you, and why there is one a week*. The half that
@@ -52,6 +60,13 @@ not repeating a mistake already in this file:
 Worth doing together with that item, and with a shoot run, rather than as a prose-only page.
 
 ## The Oracle's register is unsettled — the mechanism is built, the voice is not (parked 2026-09-10, ADR 0187 S1a)
+
+> **⛔ The door is now closed (ADR 0211, 2026-09-10).** The Oracle's tile is drawn `.hidden()` on
+> Home, so no player can reach any of this; the code, the guards and the nine test files all stay in
+> the tree and `OracleUITests` still walks the screen through a launch argument. **This item is what
+> reopens it** — when a drawn reading sounds like something a person would say, `learnRow` loses one
+> condition and `PocketLaunchUITests.testTheOracleIsNotReachableWithoutItsDoor` is deleted. Nothing
+> else has to be rebuilt. Do not reopen the door as a side effect of some other Home change.
 
 **S1a is shipped and the prose it produces was rejected on reading it.** D22's shape mirror, D23's
 `OracleFocusGuard`, the span/sitting/step-down derivations and their tests are all in. What came out
@@ -89,23 +104,39 @@ they must be recorded against whatever register lands, not this one.
 
 ## The beta grant needs a structural guard (logged 2026-08-23, blind-spot review 2026-08-22) — RISK
 
-`betaGrantIsActive = Self.betaGrantIsReadable` is true in **every non-Debug build**, so a Release
-archive cut off `pocket-273-beta-grant-unconditional` ships Red Moon Pro free to everyone. The only
-thing standing between that and the App Store is a `TODO(beta)` comment and someone remembering.
+⚠ **Corrected 2026-09-10 (ADR 0211 release pass): this is a branch risk, not a `main` risk, and the
+heading over-states it.** On `main`, `StoreManager.swift:89` reads
+`Self.betaGrantIsReadable && Self.resolveSandbox(receiptURL: Bundle.main.appStoreReceiptURL)` — the
+grant is **sandbox-gated**, so a production App Store receipt gets nothing and a release cut from
+`main` is safe. The unconditional form (`betaGrantIsActive = Self.betaGrantIsReadable`, true in every
+non-Debug build) exists **only on `pocket-273-beta-grant-unconditional`**, where a Release archive
+would ship Red Moon Pro free to everyone with a `TODO(beta)` comment as the only thing in the way.
+Read the branch before treating this as a blocker — as written, it reads as one and is not.
 
-Wants a CI check that fails when the grant is reachable under a Release configuration — the same
-shape as the lint rules that exist because the thing they catch already shipped.
+Still wants a CI check that fails when the grant is reachable under a Release configuration — the
+same shape as the lint rules that exist because the thing they catch already shipped. **Not gating a
+release from `main`**; it is gating the day somebody archives that branch by mistake, which is
+exactly the day nobody re-reads this file.
 
 **Separately, and more urgent than the guard:** that branch is a long way behind `main`. Takes,
 moments, trim, long-term goals, carry-tempo, reference links and routine history are all absent from
 build 6, so testers are giving feedback on an app that has largely stopped existing. Decide which:
 cut a fresh beta off `main`, or accept that this round's feedback is about the older surface.
 
-## `Song+Sample.swift:9` still ships "Little Wing" / "Jimi Hendrix" (logged 2026-08-23)
+## ~~`Song+Sample.swift:9` still ships "Little Wing" / "Jimi Hendrix"~~ — **FIXED** (logged 2026-08-23, verified closed 2026-09-10)
 
-Two lines, and the one site the rename missed. The seeded songs were renamed to `(Cover)` titles by
+~~Two lines, and the one site the rename missed. The seeded songs were renamed to `(Cover)` titles by
 Jack Trader; `Song.sample()` was not, and it has **no `#if DEBUG`**, so ADR 0158 puts a real artist's
-real song title into every fresh install.
+real song title into every fresh install.~~
+
+**Verified closed against the source 2026-09-10, during the ADR 0211 release pass.** `Song.sample()`
+reads `title: "Slow Bend"`, `artist: "Jack Trader"`, `album: "Demos"`, and the collections are
+*Slow blues* / *Bends & vibrato*. What survives is only the **doc comment above it**, which narrates
+the old state in the past tense on purpose — *"It used to be 'Little Wing' by Jimi Hendrix…"* — so a
+grep for the artist's name still hits this file and reads like an open bug. It is not one; the
+comment is the record of why the fields say what they say. ⚠ A backlog item can go stale in the
+direction of *already fixed* as easily as the other way, and this one sat open for eighteen days
+while reading as a legal risk. Check the source before promoting an item like this to a blocker.
 
 ## Accessibility has never been walked (logged 2026-08-23, blind-spot review 2026-08-22)
 

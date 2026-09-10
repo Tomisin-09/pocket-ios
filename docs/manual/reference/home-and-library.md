@@ -35,13 +35,13 @@ measures this week against the last one. **Tap it** for the
 three scales. The strip is not there at all until you have practised something — and neither,
 therefore, is the way in.
 
-**The six destinations** are tiles, two to a row, under three headings. Each is a glyph and a name
+**The five destinations** are tiles, two to a row, under three headings. Each is a glyph and a name
 in its own colour, and the colour is how you find it again — nothing else on Home is that hue.
 
 - **`Practice`** opens the [Practice hub](practice.md); **`Metronome`** beside it opens over the
   whole screen.
 - **`Your stuff`** holds **`Song library`** and **`Journal`**.
-- **`Learn`** holds **`Red Moon Oracle`** and **`Toolkit`**.
+- **`Learn`** holds **`Toolkit`**, on its own.
 
 The tiles carry no description. VoiceOver still reads one — *Practice, your exercises and training
 runs* — so nothing was lost from the spoken screen. Before you have added a song, the `Song library`

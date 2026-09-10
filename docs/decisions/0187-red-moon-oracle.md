@@ -7,6 +7,9 @@
   (S0–S5) plus S1a, each independently shippable or independently reversible. **Everything shipped
   so far contains no network at all** and is a complete feature on its own; the proxy does not
   appear until S2, and nothing reaches production until S4.
+  ⚠ **Shipped but not reachable** since **ADR 0211** (2026-09-10): the Home door is closed while the
+  reading's register is unsettled. The code, the guards and the tests all stay; see the *Amended by*
+  line below.
 - **Date:** 2026-09-02 (`pocket-291-red-moon-oracle`); **amended 2026-09-07**
   (`pocket-303-oracle-pedagogy-amendments`) with D22, D23 and the re-inflection of D6 rule 6, after
   a pedagogy review of the plan; **amended 2026-09-10** (`pocket-308-oracle-shape-mirror`) with D24,
@@ -16,6 +19,13 @@
   those three ADRs carries the note saying so; everything else in them stands.
 - **Amends:** **ADR 0092**, which this ADR also moves from *Proposed* to *Accepted* — §A3's Sign in
   with Apple (D3) and §B5's implied absence of any text input (D9).
+- **Amended by:** ADR 0211 — **the door on Home is closed** (0211 D1). Everything below is still in
+  the tree, still builds and is still tested; `learnRow` draws the tile hidden, and only
+  `OracleUITests` reaches the screen, through a launch argument. **Nothing this ADR decided is
+  reversed** — the shelving is about *register*, which no decision here ever specified: the guards
+  say what may not be said, never how it should sound, so the prose S1a produced passed D12, D22 and
+  D23 and was still rejected on reading it. `docs/backlog.md` holds the research deliverable that
+  reopens it (0211 D6), and S2–S5 are untouched and still unstarted.
 - **Amended by:** ADR 0204 — **D6 gains an eighth rule (R8)**: a snag crosses as a position,
   never as a count or a rate. `OracleContext.Unit` gains `snags`, `droppedSnags` and `spans`
   (0204 D1, D2), and marks and spans are exempt from D6 R4's free-text budget (0204 D4). D6's

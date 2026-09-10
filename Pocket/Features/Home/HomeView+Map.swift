@@ -1,9 +1,13 @@
 import SwiftUI
 
-/// Home's **map** (ADR 0197) — the six destinations, two to a row, inside the three sections ADR
-/// 0102 grouped them into. This file replaces `HomeView+Learn.swift` and the four card properties
-/// that were still in `HomeView.swift`: the six had ended up in three files for no reason but the
-/// 400-line cap, which meant nothing could see the map whole. Now one file owns it.
+/// Home's **map** (ADR 0197) — the destinations, two to a row, inside the three sections ADR 0102
+/// grouped them into. This file replaces `HomeView+Learn.swift` and the four card properties that
+/// were still in `HomeView.swift`: they had ended up in three files for no reason but the 400-line
+/// cap, which meant nothing could see the map whole. Now one file owns it.
+///
+/// **Five are reachable, and six are drawn.** ADR 0211 closes the Red Moon Oracle's door while its
+/// register is unsettled; the sixth tile is still built here and still sets the Learn row's height,
+/// hidden. `learnRow` carries the reasoning.
 ///
 /// ### Why tiles
 ///
@@ -51,10 +55,7 @@ extension HomeView {
                 }
             }
             HomeSection(title: "Learn") {
-                HomeTileRow {
-                    oracleTile
-                    toolkitTile
-                }
+                HomeTileRow { learnRow }
             }
         }
     }
@@ -139,6 +140,43 @@ extension HomeView {
 
     // MARK: - Learn
 
+    /// The **Learn** row, which holds one tile and a gap (ADR 0211).
+    ///
+    /// The Oracle's mechanism is finished; its **voice is not**. The reading it draws was rejected
+    /// on reading it — every guard passes and the prose still sounds like an engineer describing a
+    /// data structure — and `docs/backlog.md` parks the register as research with an explicit
+    /// instruction not to tune it by ear again. So the door closes and nothing else moves: the
+    /// screen, `LocalOracle`, the coordinator, all four guards and their nine test files stay
+    /// exactly where they are, and reopening this is deleting a condition.
+    ///
+    /// **A dimmed *Coming soon* tile was considered and refused.** It ships a control that does
+    /// nothing, which is the placeholder App Store Guideline 2.1 names, and it promises a date on a
+    /// problem nobody has scoped. An absent door claims nothing.
+    ///
+    /// Two things about the shape, both of which have already cost this project a bug elsewhere:
+    ///
+    /// - **The gap is the real tile, hidden — never a `Color.clear`.** A clear filler is greedy in
+    ///   both axes and stretches whichever rows hold it; `.hidden()` keeps the frame and takes the
+    ///   view out of the accessibility tree, so VoiceOver finds five destinations and so does
+    ///   `PocketLaunchUITests`.
+    /// - **The row does not change height when the Oracle comes back** — `.hidden()` keeps the
+    ///   frame, so the hidden tile goes on contributing to `HomeTile`'s equal-height row.
+    ///   **Measured, not assumed:** the Learn row is **311px at y=2085 in both states** on an
+    ///   iPhone 17 at default Dynamic Type, captured with and without `-oracleDoor` and compared by
+    ///   decoding the pixels. That also settles something this file used to claim in passing —
+    ///   `Red Moon Oracle` does **not** wrap to two lines at tile width, because a wrapped title
+    ///   would make this row taller than the 311px `Practice` row above it, and it is not.
+    @ViewBuilder
+    private var learnRow: some View {
+        if UITestRuntime.oracleDoorIsOpen {
+            oracleTile
+            toolkitTile
+        } else {
+            toolkitTile
+            oracleTile.hidden()
+        }
+    }
+
     /// The **Red Moon Oracle** (ADR 0187) — the reflective reading over the practice you have
     /// already done. The **sixth** home hue: crimson (`PocketColor.oracle`), kept clear of the
     /// teal · plum · terracotta triad, the indigo hub and the journal's gold. Not ADR 0081's Blood
@@ -152,8 +190,16 @@ extension HomeView {
     ///
     /// **The full name stays.** The mockup shortened it to *Oracle* to fit; it is `Red Moon Oracle`
     /// on its own navigation bar, in the manual and in `OracleUITests`, and a map whose tile calls a
-    /// place something the place does not call itself is a map with a mistake on it. It wraps to two
-    /// lines, and `HomeTile`'s equal-height row is what keeps the Toolkit level with it.
+    /// place something the place does not call itself is a map with a mistake on it. (It was long
+    /// said here that the name wraps to two lines and that `HomeTile`'s equal-height row is what
+    /// keeps the Toolkit level with it. Measured 2026-09-10 on an iPhone 17 at default Dynamic
+    /// Type: **it does not wrap** — the Learn row is exactly as tall as the single-line `Practice`
+    /// row. The equal-height row still does its job at larger type; the wrapping was the part
+    /// nobody had checked.)
+    ///
+    /// ⚠ **Not reachable in a player's build** since ADR 0211 — `learnRow` draws this hidden unless
+    /// the test-only door is open. It is kept whole rather than commented out or deleted precisely
+    /// so that reopening it is a one-line change and this documentation is still true when it is.
     private var oracleTile: some View {
         NavigationLink { OracleView() } label: {
             HomeTile(icon: "moon.stars.fill", title: "Red Moon Oracle",
@@ -186,9 +232,11 @@ extension HomeView {
     }
 }
 
-/// The map alone, at phone width, in both appearances — the check the build cannot make: that six
-/// hues read as six places rather than a swatch card, that `Red Moon Oracle` wrapping does not leave
-/// a step in the Learn row, and that the locked tiles read as inviting rather than broken.
+/// The map alone, at phone width, in both appearances — the check the build cannot make: that five
+/// hues read as five places rather than a swatch card, that the locked tiles read as inviting rather
+/// than broken, and — since ADR 0211 — that the **Learn row's empty half reads as deliberate**
+/// rather than as a tile that failed to load. That last one is the whole reason this preview was
+/// touched, and it is a judgement no assertion makes.
 #Preview("Home map — locked and unlocked") {
     ScrollView {
         VStack(alignment: .leading, spacing: 20) {
@@ -215,12 +263,15 @@ extension HomeView {
             }
             HomeSection(title: "Learn") {
                 HomeTileRow {
-                    HomeTile(icon: "moon.stars.fill", title: "Red Moon Oracle",
-                             tint: PocketColor.oracle, cardWash: PocketColor.oracleCardWash,
-                             circleWash: PocketColor.oracleCircleWash)
                     HomeTile(icon: "books.vertical.fill", title: "Toolkit",
                              tint: PocketColor.toolkit, cardWash: PocketColor.toolkitCardWash,
                              circleWash: PocketColor.toolkitCircleWash)
+                    // The shelved Oracle, drawn exactly as `learnRow` draws it: the real tile,
+                    // hidden, holding the slot and the row's height.
+                    HomeTile(icon: "moon.stars.fill", title: "Red Moon Oracle",
+                             tint: PocketColor.oracle, cardWash: PocketColor.oracleCardWash,
+                             circleWash: PocketColor.oracleCircleWash)
+                        .hidden()
                 }
             }
         }
