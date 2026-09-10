@@ -25,6 +25,8 @@ extension OracleContextBuilder {
         var snags: [OracleContext.SnagMark] = []
         var droppedSnags: Int = 0
         var spans: [OracleContext.SpanEdit] = []
+        var droppedSpans: Int = 0
+        var runsInCurrentSpan: Int = 0
     }
 
     /// The units this reading is about: everything practised in the window, plus everything written
@@ -59,6 +61,9 @@ extension OracleContextBuilder {
         }
         for loop in source.loops where wanted.contains(loop.uid) {
             let marks = snagMarks(in: loop)
+            // Full history, not `records`: a span that has stood since March did not start standing
+            // on Monday, and the epoch counts would otherwise all be counts of this week.
+            let epochs = spanEpochs(of: loop, in: source.records)
             snapshots.append(UnitSnapshot(uid: loop.uid,
                                           name: truncate(loop.name, to: OracleContextBudget.unitNameCap).text,
                                           kind: .loop,
@@ -66,7 +71,9 @@ extension OracleContextBuilder {
                                           mastery: loop.mastery,
                                           snags: marks.kept,
                                           droppedSnags: marks.dropped,
-                                          spans: spanEdits(of: loop)))
+                                          spans: epochs.edits,
+                                          droppedSpans: epochs.dropped,
+                                          runsInCurrentSpan: epochs.runsInCurrentSpan))
         }
 
         let minutesByUID = minutes(byUnitIn: records)
@@ -103,7 +110,9 @@ extension OracleContextBuilder {
                                   lastPractisedOn: mine.map(\.startedAt).max(),
                                   snags: snapshot.snags,
                                   droppedSnags: snapshot.droppedSnags,
-                                  spans: snapshot.spans)
+                                  spans: snapshot.spans,
+                                  droppedSpans: snapshot.droppedSpans,
+                                  runsInCurrentSpan: snapshot.runsInCurrentSpan)
     }
 
     // MARK: - Snags and spans (ADR 0204)
@@ -149,33 +158,17 @@ extension OracleContextBuilder {
         return (marks, inside.count - kept.count)
     }
 
-    /// What this loop's span has done, oldest first (ADR 0204 D2).
-    ///
-    /// **In seconds**, from each row's own recorded `songDuration` rather than the song's current
-    /// one: `LoopSpanChange` stores the duration at write time precisely so a span reads back the
-    /// same after a relink (ADR 0152). A row that has no recorded duration cannot be expressed in
-    /// seconds at all and is left out — the only lossy case here, and it requires the audio to have
-    /// been unloaded at the moment of the save.
-    ///
-    /// Fractions were the alternative and are worse: "0.04 of the song" is unreadable without the
-    /// song, and the song is exactly what does not travel.
-    static func spanEdits(of loop: Loop) -> [OracleContext.SpanEdit] {
-        let usable = loop.spanChanges.filter { ($0.songDuration ?? 0) > 0 }
-        let newestFirst = usable.sorted { lhs, rhs in
-            if lhs.changedAt != rhs.changedAt { return lhs.changedAt > rhs.changedAt }
-            return lhs.uid.uuidString < rhs.uid.uuidString
-        }
-        return newestFirst
-            .prefix(OracleContextBudget.maxSpanEditsPerUnit)
-            .reversed()
-            .compactMap { change in
-                guard let after = change.widthSeconds, let before = change.previousWidthSeconds else { return nil }
-                return OracleContext.SpanEdit(changedOn: change.changedAt,
-                                              fromSeconds: before,
-                                              toSeconds: after,
-                                              speed: change.speed)
-            }
-    }
+    // What this loop's span has done, oldest first (ADR 0204 D2), now lives next door in
+    // `OracleContextBuilder+Shape.swift` as `spanEpochs(of:in:)` — because ADR 0187 D22 needs each
+    // row to carry the runs logged while that span stood, which is a join against the practice log
+    // and no longer a read of the loop alone.
+    //
+    // What did not change, and is the half most likely to be undone by accident: the widths are
+    // **in seconds**, taken from each row's own recorded `songDuration` rather than the song's
+    // current one, because `LoopSpanChange` stores the duration at write time precisely so a span
+    // reads back the same after a relink (ADR 0152). Fractions were the alternative and are worse:
+    // "0.04 of the song" is unreadable without the song, and the song is exactly what does not
+    // travel (D6 R2).
 
     /// The trajectory, rhythm-scoped, capped from the **old** end (D6 R7).
     ///

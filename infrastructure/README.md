@@ -20,7 +20,7 @@ infrastructure/
 
 | Env | Where | How the app reaches it |
 |---|---|---|
-| Local dev | A local server, or a non-AWS host (Cloudflare Worker / Vercel) | Debug build → `POCKET_API_HOST = localhost:8787` |
+| Local dev | A local server, or a non-AWS host (Cloudflare Worker / Vercel) | Debug build → `POCKET_API_BASE_URL = http://localhost:8787` |
 | Prod | AWS (Lambda + API Gateway), Terraform-managed | Release build → prod base URL |
 
 Running the proxy locally / off-AWS for dev is intentional: it keeps the
@@ -33,7 +33,14 @@ is needed to switch environments.
 - Keep Terraform state in a single remote backend (S3 + DynamoDB lock) once prod
   lands.
 - Apply one change at a time — concurrent applies race the state lock.
-- The proxy authenticates callers with the Sign-in-with-Apple identity token and
-  rate-limits per user; it never returns the API key to the client.
+- ~~The proxy authenticates callers with the Sign-in-with-Apple identity token and
+  rate-limits per user~~ — **superseded by ADR 0187 D3.** There is no Sign in with
+  Apple and no account: abuse resistance is **App Attest**, and the per-subscriber
+  quota rides an **opaque token minted at purchase**. The app stays account-free
+  (ADR 0113), so Apple's account-deletion obligation never attaches. It never
+  returns the API key to the client, which is the half that stands unchanged.
 
-> Terraform is added in Phase 4. This directory is a placeholder until then.
+> Terraform is added in Phase 4. This directory is a placeholder until then —
+> **still true as of 2026-09-10**: ADR 0187 S2 (a dev proxy on `localhost:8787`)
+> has not started, and nothing here has been built. The two corrections above were
+> made from the app side, because this is the first file S2 opens.

@@ -1,14 +1,16 @@
 # ADR 0187 — Red Moon Oracle: a mirror that cannot grade you
 
-- **Status:** Accepted — **S0 and S1 shipped** (S0: `e3f7566`, #282, the `.xcconfig` pair and
-  `OracleEndpoint`; S1: `pocket-298-oracle-local-reading`, the whole safety envelope plus the Learn
-  section, `OracleView` and the local reading). **S2–S5 not started.** Six stages (S0–S5),
-  each independently shippable or independently reversible. **S0 and S1 contain no network at all**
-  and are a complete feature on their own; the proxy does not appear until S2, and nothing reaches
-  production until S4.
+- **Status:** Accepted — **S0, S1 and S1a shipped** (S0: `e3f7566`, #282, the `.xcconfig` pair and
+  `OracleEndpoint`; S1: `9adae09`, #292, the whole safety envelope plus the Learn section,
+  `OracleView` and the local reading; S1a: `pocket-308-oracle-shape-mirror`, D22's revised mirror
+  **and D23's `OracleFocusGuard`, pulled forward from S3**). **S2–S5 not started.** Six stages
+  (S0–S5) plus S1a, each independently shippable or independently reversible. **Everything shipped
+  so far contains no network at all** and is a complete feature on its own; the proxy does not
+  appear until S2, and nothing reaches production until S4.
 - **Date:** 2026-09-02 (`pocket-291-red-moon-oracle`); **amended 2026-09-07**
   (`pocket-303-oracle-pedagogy-amendments`) with D22, D23 and the re-inflection of D6 rule 6, after
-  a pedagogy review of the plan. See also ADR 0198, which the D22 mirror depends on for material.
+  a pedagogy review of the plan; **amended 2026-09-10** (`pocket-308-oracle-shape-mirror`) with D24,
+  which settles what S3 contains. See also ADR 0198, which the D22 mirror depends on for material.
 - **Supersedes:** the Sign-in-with-Apple bullet of **ADR 0002** (by D3), the price half of
   **ADR 0144** (by D20), and the ~£10–12 Oracle tier sketched by **ADR 0112** (by D20). Each of
   those three ADRs carries the note saying so; everything else in them stands.
@@ -560,8 +562,10 @@ with no revenue, so the first *reading* is free rather than the first *fortnight
 |---|---|---|
 | **S0** | `Configuration/Pocket.xcconfig`, `OracleEndpoint`, the corrected entitlements comment | yes |
 | **S1** | Learn section, `OracleView`, cadence gate, the whole DTO, D12/D13 guards, `LocalOracle` | **yes — a complete feature with no network** |
+| **S1a** | D22's shape mirror (the revised `LocalOracle` and its DTO fields) + D23's `OracleFocusGuard` | **yes — still no network** |
 | **S2** | A dev proxy on `localhost:8787`, `ProxyOracle` | no (Debug only) |
-| **S3** | Structured output ×2, validators, eval fixtures | no (Debug only) |
+| **S3** | ~~Structured output ×2, validators, eval fixtures~~ **The goal clarifier: one suggester, its validator, its eval fixtures (D24)** | no (Debug only) |
+| **S3b** | The exercise proposer (D9), then the session explainer (D24) | no (Debug only) |
 | **S4** | Production Lambda, App Attest, quota, **and every artefact in D19** | yes |
 | **S5** | The tier and the paywall (D20) | yes |
 
@@ -656,8 +660,86 @@ attends to while playing, and therefore what they retain. It is in the same cate
 prose that looks fine in review and ships anyway.
 
 > **Stages.** D22 lands as **S1a**, a revision of shipped S1: no network, no new stage boundary,
-> and it must precede any recorded fixture. D23 lands with **S3**, alongside the validators, because
-> S3 is where the first player-addressed sentence that is not a reading gets generated.
+> and it must precede any recorded fixture. ~~D23 lands with **S3**, alongside the validators,
+> because S3 is where the first player-addressed sentence that is not a reading gets generated.~~
+> **D23 landed with S1a instead** (2026-09-10). It is sixty pure lines with no network in it, and
+> the load-bearing test — *everything `LocalOracle` generates passes its own guards* — should cover
+> both guards from the day the revised prose is written, rather than have the second guard arrive
+> after the prose it would have constrained.
+
+### What building S1a settled
+
+Three things the decisions above left open, each of which had to be answered in code.
+
+**1. A step-down is inferred from the tempo series, not recorded.** Nothing persists a settle:
+`Exercise.settleCommand(to:)` and `Loop.settleCommand(to:)` overwrite `commandTempo` in place —
+the situation ADR 0199 fixed for spans and has never fixed for tempo. Adding a column is additive
+and therefore cheap under ADR 0189, but it is a write-path change on the audio side bought for one
+sentence. Instead `LocalOracle` reads the whole `Tempo.points` series: `PracticeLogWriter` logs the
+**command** tempo per run, *before* the Done screen's promote or settle lands, so a settle shows up
+as the next run's point being lower. The cost of that choice, stated plainly: a lower point means
+the command tempo was lower at that run, which a settle causes and is not the only thing that can.
+The sentence therefore says what the numbers say and nothing about why.
+
+**2. The mirror carries the pair, never the adjective.** A step-down is definitionally relative to
+the tempo before it, which brushes D22's own test. D22 names it as a structural fact anyway, so it
+is a **stated exception** — and it stays one by carrying both numbers. A `steppedDown` flag, or the
+phrase *backed off*, would be the derived judgement D6 R5 keeps client-side; *backwards* is in
+D12's table for exactly this reason.
+
+**3. D22's worked example is two sentences, not one.** *"Bars 9–12, three sittings, 68 to 72 in
+eighths"* pairs a span with a tempo trajectory. In this app those are two different units:
+`TempoTrajectory.reading` filters to `.exercise`, and a loop logs `tempoPercent` rather than
+`tempoBPM` — a **different axis, not a missing value** — so a loop carries no `Tempo` at all.
+Building a loop percent trajectory to make the example fit is a larger change than the sentence is
+worth, and it would introduce a second speed axis into a payload that has one. The span half and
+the tempo half are two paragraphs. A loop speed trajectory is left to whoever needs it.
+
+A fourth thing the DTO had to admit: `maxSpanEditsPerUnit` drops from the old end, so a dropped
+edit now takes an epoch's run count with it. `Unit.droppedSpans` reports that, the `droppedNotes`
+discipline of D6 R4 — a list that looked complete would pour three epochs of runs into two.
+
+### D24 — S3 is the goal clarifier, and `docs/directions-2026-09.md` §1 wins the ordering
+
+**Added 2026-09-10.** Two documents described S3 differently, and the disagreement had to be
+settled before S3 could be scoped rather than during.
+
+D21's table calls S3 *"structured output ×2, validators, eval fixtures"* — two suggesters, landing
+together, ordered by this ADR's own reasoning. `docs/directions-2026-09.md` §1, written three days
+later with S1 shipped, re-ranks the Oracle's five jobs by leverage and says plainly that **goals go
+first, ahead of ADR 0187's own S3 ordering**.
+
+**§1 wins, and S3 becomes one job rather than two.** Three reasons, in descending order of weight:
+
+1. **The argument is about leverage, not convenience.** `DueScore` is
+   `goalWeight × dueness × (1 − mastery/5)`, and `goalWeight` comes from goals — so a vague goal
+   degrades every session the planner will ever build. Every other job is bounded by goal quality;
+   none of them bounds it back.
+2. **It is the cheapest first call and the best-defended one.** The most structured output in the
+   plan, and the only job whose local fallback (`GoalTemplateLibrary`) is already built and
+   already the incumbent, which is ADR 0092 §A2 satisfied before the stage starts rather than
+   during it.
+3. **Two suggesters landing together was never load-bearing.** D4's *"one seam, three
+   implementations, two protocols"* is about shape, not schedule, and it explicitly defers
+   `OracleRoutineSuggesting` to *"where its first conformance exists"*. Splitting S3 moves that
+   date; it does not change the design.
+
+**What this changes in D21's table:** S3 is *the goal clarifier — one suggester, its validator, its
+eval fixtures, and D23's guard applied to its restatement*. The exercise proposer (D9) and the
+session explainer become **S3b**, in that order, per §1's amended ranking. Session *generation*
+drops to last and may never happen at all — §1's fourth bullet is decisive and permanent: ADR 0070
+means the app never measures whether a session was good, so a model-built planner could not be
+hill-climbed, A/B'd, or shown to have regressed.
+
+Two things this ADR must not lose when S3 arrives, both from §1 and neither in D21: the **skill
+taxonomy and the goal templates belong in the prompt, not the DTO** — they are our tables, not
+player data, and `OracleContextBudget` erodes one feature at a time otherwise; and **analytics has
+no Oracle cases at all**, so the closed vocabulary must gain them in the same change as the first
+metered surface or it ships unmeasured.
+
+⚠ One correction to §1 while settling this: it lists *"ADR 0092 still reads Proposed"* as an open
+item. It does not — 0092's status line has said **Accepted** since 0187 shipped, with both
+amendments written into it. That bullet is stale and is struck in the directions doc.
 
 ---
 

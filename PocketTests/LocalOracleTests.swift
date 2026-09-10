@@ -27,7 +27,8 @@ final class LocalOracleTests: XCTestCase {
     private func context(units: [OracleContext.Unit] = [],
                          notes: [OracleContext.Note] = [],
                          goals: [OracleContext.GoalLine] = [],
-                         effort: OracleContext.Effort = .init()) -> OracleContext {
+                         effort: OracleContext.Effort = .init(),
+                         sittings: [OracleContext.Sitting] = []) -> OracleContext {
         var context = OracleContext(promptVersion: "test-1",
                                     generatedAt: day(7),
                                     windowStart: window.start,
@@ -36,6 +37,7 @@ final class LocalOracleTests: XCTestCase {
         context.notes = notes
         context.goals = goals
         context.effort = effort
+        context.sittings = sittings
         return context
     }
 
@@ -48,24 +50,42 @@ final class LocalOracleTests: XCTestCase {
 
     // MARK: - The rule that stops it drifting
 
-    /// Every shape of reading, past D12. Including the empty week, which is the one a future author
-    /// is most tempted to write an adverb into.
-    func testEveryLocalReadingPassesTheToneGuard() {
+    /// Every shape of reading, past **both** guards — D12's verdicts and D23's instructions at the
+    /// body. Including the empty week, which is the one a future author is most tempted to write an
+    /// adverb into, and the span and sitting paragraphs D22 added.
+    ///
+    /// This is the assertion the whole type is held up by. It is why a revision as large as D22
+    /// could be made to `LocalOracle` without re-arguing its guarantee: the prose changed, and the
+    /// thing that says the prose is safe did not have to.
+    func testEveryLocalReadingPassesBothGuards() {
         let tempo = OracleContext.Tempo(points: [.init(date: day(0), bpm: 76),
-                                                 .init(date: day(3), bpm: 96)],
+                                                 .init(date: day(2), bpm: 96),
+                                                 .init(date: day(3), bpm: 80)],
                                         notesPerBeat: 4, otherRhythmRuns: 2)
+        let loop = OracleContext.Unit(handle: "u2", name: "Chorus turnaround", kind: .loop,
+                                      template: nil, mastery: 2, tempo: nil, runs: 4, minutes: 12,
+                                      lastPractisedOn: day(3),
+                                      spans: [.init(changedOn: day(2), fromSeconds: 34, toSeconds: 6,
+                                                    speed: 0.6, runsInPreviousSpan: 3)],
+                                      droppedSpans: 2,
+                                      runsInCurrentSpan: 9)
         let shapes: [OracleContext] = [
             context(),
             context(effort: .init(runs: 1, minutes: 8, daysPractised: [day(0)], sittings: 1)),
-            context(units: [unit("Bend study", tempo: tempo)],
+            // A week with runs but no nameable units — the branch the opening needs a sentence for.
+            context(effort: .init(runs: 3, minutes: 20, daysPractised: [day(1)], sittings: 1)),
+            context(units: [unit("Bend study", tempo: tempo), loop],
                     notes: [note("The second half is finally sitting where it should, more or less.")],
                     goals: [.init(title: "Get the intro clean", rank: 1, isMet: false, horizon: .longTerm)],
-                    effort: .init(runs: 6, minutes: 130, daysPractised: [day(0), day(2), day(3)], sittings: 4))
+                    effort: .init(runs: 6, minutes: 130, daysPractised: [day(0), day(2), day(3)], sittings: 4),
+                    sittings: [.init(startedOn: day(2), handles: ["u1", "u2", "u1"])])
         ]
         for shape in shapes {
             let reading = OracleReadingText(paragraphs: oracle.paragraphs(for: shape), source: .local)
             XCTAssertNil(OracleToneGuard.check(reading.guardedText),
-                         "The local reading tripped its own guard: \(reading.guardedText)")
+                         "The local reading tripped the tone guard: \(reading.guardedText)")
+            XCTAssertNil(OracleFocusGuard.check(reading.guardedText),
+                         "The local reading tripped the focus guard: \(reading.guardedText)")
         }
     }
 
@@ -76,14 +96,20 @@ final class LocalOracleTests: XCTestCase {
 
     // MARK: - What it says
 
-    func testItStatesMinutesDaysAndSittingsWithoutComparingThem() {
+    /// Replaces `testItStatesMinutesDaysAndSittingsWithoutComparingThem`, which asserted the
+    /// opening said *"2 hours 10 min, over 4 days and 5 sittings"* — the volume mirror ADR 0187 D22
+    /// exists to remove. The assertion is kept as its own inverse: the totals are still in the
+    /// context and must not reach the prose.
+    func testTheOpeningNamesWhatWasWorkedOnAndNeverHowMuch() {
         let effort = OracleContext.Effort(runs: 6, minutes: 130,
                                           daysPractised: [day(0), day(2), day(3), day(5)], sittings: 5)
-        let opening = oracle.opening(context(effort: effort))
+        let opening = oracle.opening(context(units: [unit("Bend study")], effort: effort))
 
-        XCTAssertTrue(opening.contains("2 hours 10 min"), opening)
-        XCTAssertTrue(opening.contains("4 days"), opening)
-        XCTAssertTrue(opening.contains("5 sittings"), opening)
+        XCTAssertTrue(opening.contains("Bend study"), opening)
+        XCTAssertFalse(opening.contains("130"), "The minute total reached the opening: \(opening)")
+        XCTAssertFalse(opening.contains("hour"), "The minute total reached the opening: \(opening)")
+        XCTAssertFalse(opening.contains("sitting"), "The sitting count reached the opening: \(opening)")
+        XCTAssertFalse(opening.contains("4 days"), "The day count reached the opening: \(opening)")
     }
 
     /// "You did not practise" is a fact. "You only practised once" is a verdict, and the adverb is

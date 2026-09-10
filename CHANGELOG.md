@@ -14,6 +14,21 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+- **The Oracle's weekly reading reflects the shape of your week, not how much of it there was.**
+  It used to open on totals — *"2 hours 10 min of practice, over 4 days and 5 sittings"*. It now
+  opens on what you actually worked on, and goes on to what is harder to see anywhere else: the
+  order you took things in inside one sitting, including when you came back to something later;
+  what a loop's span did and how many times you played it at that width; and when a drill's tempo
+  went down and stayed there.
+
+  The totals have not gone anywhere — the Practice log still counts your minutes, days and
+  sittings. They are simply no longer the first thing the Oracle says about your week. Time spent
+  is the weakest thing the app knows about your practice, and a total has a denominator the reader
+  supplies for themselves.
+
+  The reading is still written on your device, still weekly, and still never grades you.
+
 ### Added
 - **Folders, for exercises and routines.** Group your drills and sessions however you group them —
   by grade, by technique, by student — with folders inside folders as deep as you like. Make one

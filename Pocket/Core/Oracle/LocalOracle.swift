@@ -10,9 +10,22 @@ import Foundation
 ///
 /// ### What it is allowed to say
 ///
-/// Facts, in the order they happened, and the player's own words. Minutes, days, sittings, run
-/// counts, tempo points with the rhythm they were measured in, and the goals the player wrote
-/// down. That is the whole vocabulary.
+/// Facts, in the order they happened, and the player's own words. What was worked on, the order it
+/// was taken in within a sitting, what a loop's span did and how often it was re-entered, tempo
+/// points with the rhythm they were measured in, and the goals the player wrote down. That is the
+/// whole vocabulary.
+///
+/// **Minutes are not in it, and their absence is the decision** (ADR 0187 D22). They were the
+/// opening paragraph until 2026-09, on two grounds that point the same way. Volume is the weakest
+/// thing the app knows — in the closest study to this problem, Duke, Simmons & Cash's *It's Not How
+/// Much; It's How*, the highest-rated performers did not differ from the rest in time spent, in
+/// repetitions, or in complete run-throughs; they differed in how they handled the parts they got
+/// wrong. And volume is the most shame-adjacent thing the app knows: D12 bans the adjective, but
+/// *"12 minutes over 2 days"* has an implied denominator no matcher can strip, and the reader
+/// supplies *only* themselves.
+///
+/// `PracticeLog` still counts minutes and the Practice log still shows them. They stopped being the
+/// opening paragraph, which is the only place they were doing damage.
 ///
 /// ### What it will not say, and why it cannot drift into saying it
 ///
@@ -41,7 +54,8 @@ struct LocalOracle: OracleReading {
     /// not a fallback.
     func paragraphs(for context: OracleContext) -> [OracleReadingText.Paragraph] {
         var written: [OracleReadingText.Paragraph] = [OracleReadingText.Paragraph(opening(context))]
-        if let spend = whereItWent(context) { written.append(OracleReadingText.Paragraph(spend)) }
+        if let order = orderTaken(context) { written.append(OracleReadingText.Paragraph(order)) }
+        for line in spanLines(context) { written.append(OracleReadingText.Paragraph(line)) }
         let tempos = tempoLines(context)
         if !tempos.isEmpty {
             written.append(OracleReadingText.Paragraph(Self.tempoLead))
@@ -57,36 +71,108 @@ struct LocalOracle: OracleReading {
 
     // MARK: - The paragraphs
 
-    /// The period, and what happened in it. Days and sittings are counted; nothing is compared.
+    /// The period, and **what** was in it — named, never measured (ADR 0187 D22).
+    ///
+    /// This paragraph opened on minutes, days and sittings until D22 replaced it. What it says now
+    /// is the same kind of fact the rest of the reading is made of: these are the things you worked
+    /// on. No total, no denominator, nothing that needs a second value to mean anything.
     ///
     /// A week with nothing in it gets a sentence that says so **without an adverb**. "You did not
     /// practise" is a fact; "you only practised once" is a verdict, and D12 catches the second form
     /// in the model's prose precisely because it is so easy to write.
     func opening(_ context: OracleContext) -> String {
         let span = "\(dayLabel(context.windowStart)) to \(dayLabel(lastDay(of: context)))"
-        let effort = context.effort
-        guard effort.runs > 0 else {
+        guard context.effort.runs > 0 else {
             return "The week of \(span) has nothing logged against it. "
                 + "That is all this says — a week with no runs in it is not a week this can read."
         }
-        let days = count(effort.daysPractised.count, singular: "day", plural: "days")
-        let sittings = count(effort.sittings, singular: "sitting", plural: "sittings")
-        return "The week of \(span): \(minutes(effort.minutes)) of practice, "
-            + "over \(days) and \(sittings)."
-    }
-
-    /// Where the time went, largest first. Names units, states minutes, draws no conclusion.
-    func whereItWent(_ context: OracleContext) -> String? {
-        let worked = context.units.filter { $0.minutes > 0 || $0.runs > 0 }
-        guard !worked.isEmpty else { return nil }
-        let named = worked.prefix(3).map { "\($0.name) (\(minutes($0.minutes)))" }
+        let worked = context.units.filter { $0.runs > 0 }
+        // Runs, but none of them naming a drill this reading can see: a row that carries no unit,
+        // or one whose unit fell past `maxUnits`. It says what it has rather than guessing why —
+        // "the drills were deleted" would be a claim the payload cannot support.
+        guard !worked.isEmpty else {
+            return "The week of \(span) has runs logged against it, "
+                + "but none of them naming something this can read back to you."
+        }
+        let named = worked.prefix(Self.maxNamedUnits).map(\.name)
+        var line = "The week of \(span). You worked on " + list(Array(named)) + "."
         let rest = worked.count - named.count
-        var line = "Most of it went to " + list(Array(named)) + "."
         if rest > 0 {
-            line += " \(count(rest, singular: "other thing", plural: "other things")) had time too."
+            line += " And \(count(rest, singular: "other", plural: "others"))."
         }
         return line
     }
+
+    /// Three. Past that the opening stops naming a week and starts listing a library.
+    static let maxNamedUnits = 3
+
+    /// The order things were taken in, inside one sitting (ADR 0187 D22).
+    ///
+    /// **The most recent sitting that has an order to describe** — one with at least two steps in
+    /// it. A single-item sitting is a fact already covered by the opening, and printing every
+    /// sitting turns a reflection into a log the player can already read on the Practice log.
+    ///
+    /// The word this paragraph exists for is *again*. Coming back to something later in the same
+    /// sitting is the shape D22 is after, and it is invisible in every other view the app has: the
+    /// practice log sorts by time but shows one row per run, and `units` here is ordered by minutes.
+    /// Consecutive repeats were already collapsed by the builder, so a repeat that survives to here
+    /// is a genuine return.
+    func orderTaken(_ context: OracleContext) -> String? {
+        let names = nameByHandle(context)
+        guard let sitting = context.sittings.last(where: { $0.handles.count >= 2 }) else { return nil }
+        let steps = sitting.handles.compactMap { names[$0] }
+        guard steps.count >= 2 else { return nil }
+
+        var seen: Set<String> = []
+        let told = steps.map { name -> String in
+            defer { seen.insert(name) }
+            return seen.contains(name) ? "\(name) again" : name
+        }
+        return "On \(dayLabel(sitting.startedOn)) you took " + told.joined(separator: ", then ") + "."
+    }
+
+    /// What a loop's span did, and how often it was played at that width (ADR 0187 D22, ADR 0204).
+    ///
+    /// Both widths are stated and neither is subtracted, for the reason the tempo lines state both
+    /// tempos: a difference has a direction somebody then has an opinion about. There is no
+    /// *narrowed* or *widened* here either, even though the app derives that classification
+    /// elsewhere — "from 34 seconds to 6" carries the direction without the app having put an
+    /// adjective on it first.
+    ///
+    /// Only the **most recent** edit per loop. A span's whole history is a trajectory, and this
+    /// paragraph is about where it arrived.
+    func spanLines(_ context: OracleContext) -> [String] {
+        context.units
+            .filter { $0.kind == .loop }
+            .compactMap { unit -> String? in
+                guard let edit = unit.spans.last else { return nil }
+                // Chronological, so it reads as the sequence it was: this many runs at that width,
+                // then the change, then this many since. Naming the loop and then saying "the loop"
+                // again — the first draft — is the app talking about itself instead of the week.
+                var line = "\(unit.name): "
+                if edit.runsInPreviousSpan > 0 {
+                    line += "\(count(edit.runsInPreviousSpan, singular: "run", plural: "runs")) "
+                        + "at \(seconds(edit.fromSeconds)), then on \(dayLabel(edit.changedOn)) "
+                        + "you took it to \(seconds(edit.toSeconds))"
+                } else {
+                    line += "\(seconds(edit.fromSeconds)) until \(dayLabel(edit.changedOn)), "
+                        + "then \(seconds(edit.toSeconds))"
+                }
+                if unit.runsInCurrentSpan > 0 {
+                    line += ", and \(count(unit.runsInCurrentSpan, singular: "run", plural: "runs")) since"
+                }
+                line += "."
+                if unit.droppedSpans > 0 {
+                    line += " Earlier changes to it are not in this reading."
+                }
+                return line
+            }
+            .prefix(Self.maxSpanLines)
+            .map { $0 }
+    }
+
+    /// Two. The same instinct as `maxTempoLines`, one paragraph earlier.
+    static let maxSpanLines = 2
 
     /// The one sentence that keeps the tempo lines honest.
     ///
@@ -124,6 +210,7 @@ struct LocalOracle: OracleReading {
                 line = "\(unit.name) was played at \(first.bpm) on \(dayLabel(first.date)), "
                     + "and at \(latest.bpm) on \(dayLabel(latest.date)), both in \(rate)."
             }
+            if let settle = steppedDown(tempo.points, alreadyStated: latest.bpm) { line += " " + settle }
             if tempo.otherRhythmRuns > 0 {
                 line += " \(count(tempo.otherRhythmRuns, singular: "run", plural: "runs")) "
                     + "at other rhythms sit outside that line."
@@ -136,6 +223,67 @@ struct LocalOracle: OracleReading {
 
     /// Three. A reading is prose, and a fourth tempo line turns it into a table.
     static let maxTempoLines = 3
+
+    /// The most recent time a drill's tempo went **down**, stated as the pair it is (ADR 0187 D22).
+    ///
+    /// ### Why this is inferred rather than recorded
+    ///
+    /// Nothing persists a settle. `Exercise.settleCommand(to:)` and `Loop.settleCommand(to:)`
+    /// overwrite `commandTempo` in place — the situation ADR 0199 fixed for spans and has never
+    /// fixed for tempo. But `PracticeLogWriter` logs the **command** tempo per run, before the Done
+    /// screen's promote or settle lands, so a settle shows up as the next run's point being lower.
+    /// That is the whole mechanism, and it is why this reads the series rather than a column.
+    ///
+    /// The consequence to keep in mind before trusting it too far: a lower point means the command
+    /// tempo was lower at that run, which a settle causes and is not the only thing that can.
+    /// The sentence therefore says what the numbers say and nothing about why.
+    ///
+    /// ### Why a pair, and never an adjective
+    ///
+    /// A step-down is definitionally relative to the tempo before it, which brushes D22's own test
+    /// — *if a value is meaningless without a second value, it is a comparison.* D22 names ramp
+    /// step-downs as a structural fact anyway, so this is a stated exception, and the way it stays
+    /// one is by carrying **both numbers**. A `steppedDown` flag, or the word *backed off*, would be
+    /// the derived judgement D6 R5 keeps on this side of the wire — and *backwards* is in D12's
+    /// table for exactly that reason.
+    ///
+    /// **Exercises only, in practice.** `TempoTrajectory.reading` filters to `.exercise` and a loop
+    /// logs `tempoPercent` rather than `tempoBPM` — a different axis, not a missing value — so a
+    /// loop has no `Tempo` here at all. D22's worked example pairs a span with a tempo; in this
+    /// app that is two units and two sentences, and building a loop percent trajectory to make it
+    /// one is a bigger change than the sentence is worth.
+    /// - Parameter alreadyStated: the BPM the sentence before this one has already named, so the
+    ///   clause does not say the same number twice. Found by reading a drawn reading, not by a
+    ///   test: *"played at 68 on 30 Jul, and at 60 on 3 Sep… On 1 Sep it went from 76 to 60 and
+    ///   stayed there"* states 60 twice and introduces 76 with no date, so a reader meets a number
+    ///   from nowhere and a fact they have already been told. Same family as the `held at 72` bug,
+    ///   and found the same way.
+    func steppedDown(_ points: [OracleContext.TempoPoint], alreadyStated: Int? = nil) -> String? {
+        guard points.count >= 2 else { return nil }
+        // The **most recent** downward step, not the largest: the reading is about where the drill
+        // is now, and the biggest backward move of the summer is a different sentence.
+        var stepIndex: Int?
+        for index in 1..<points.count where points[index].bpm < points[index - 1].bpm {
+            stepIndex = index
+        }
+        guard let index = stepIndex else { return nil }
+
+        let before = points[index - 1]
+        let landed = points[index]
+        let after = points[index...]
+        // "and stayed there" needs a *later* point that agrees. With nothing after the step there
+        // is no staying to report, only a last reading that happened to be lower.
+        let stayed = after.count > 1 && after.allSatisfy { $0.bpm == landed.bpm }
+
+        // The landing is where the drill still is, and the sentence above has just said so. Then
+        // the only thing left to add is the step it came down from — dated, so the number arrives
+        // attached to a day rather than out of the air.
+        if landed.bpm == alreadyStated {
+            return "It was at \(before.bpm) on \(dayLabel(before.date)) before that."
+        }
+        let tail = stayed ? " and stayed there" : ""
+        return "On \(dayLabel(landed.date)) it went from \(before.bpm) to \(landed.bpm)\(tail)."
+    }
 
     /// The player's own words, handed back.
     ///
@@ -169,14 +317,26 @@ struct LocalOracle: OracleReading {
         date.formatted(.dateTime.day().month(.abbreviated).locale(locale))
     }
 
-    private func minutes(_ total: Int) -> String {
-        guard total >= 60 else { return count(total, singular: "minute", plural: "minutes") }
-        let hours = total / 60
-        let rest = total % 60
-        let hoursLabel = count(hours, singular: "hour", plural: "hours")
-        guard rest > 0 else { return hoursLabel }
-        return "\(hoursLabel) \(rest) min"
+    /// D6 R1 handle → the unit's name, for the one paragraph that reads the sittings.
+    ///
+    /// A handle with no unit behind it is simply absent from the map and the step is dropped by the
+    /// caller. That is not defensive coding for its own sake: `maxUnits` caps the unit list, so a
+    /// sitting can legitimately name a unit that did not make the payload.
+    private func nameByHandle(_ context: OracleContext) -> [String: String] {
+        Dictionary(context.units.map { ($0.handle, $0.name) }, uniquingKeysWith: { first, _ in first })
     }
+
+    /// A span width, in whole seconds. Loop spans are short enough that a minutes form would round
+    /// the interesting cases — a six-second passage — into nothing.
+    private func seconds(_ interval: TimeInterval) -> String {
+        count(Int(interval.rounded()), singular: "second", plural: "seconds")
+    }
+
+    // The `minutes(_:)` formatter — "2 hours 10 min" — was deleted by ADR 0187 D22 along with its
+    // two call sites, rather than left here unused. `OracleContext.effort.minutes` is still sent
+    // and `PracticeLog` still counts it; what is gone is this type's ability to *phrase* it. A
+    // future author who wants a total in the reading has to write the formatter back, which is a
+    // deliberate act and a reviewable diff, instead of reaching for one already sitting in the file.
 
     private func count(_ value: Int, singular: String, plural: String) -> String {
         "\(value) \(value == 1 ? singular : plural)"
